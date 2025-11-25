@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+build/
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploaded images
+public/emeralds/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Reference files (not source code)
+*.pdf
+*.webarchive
+Home.html
+Instagram.html
+Legado*.html
+*_files/
