@@ -42,6 +42,7 @@ import { useAI } from '../hooks/useAI';
 import { EmeraldCategory } from '../types';
 import { brandColors } from '../theme';
 import { storage } from '../utils/storage';
+import { compressImage } from '../utils/imageNormalizer';
 
 interface EmeraldUploaderProps {
   onComplete?: () => void;
@@ -120,9 +121,12 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const base64 = e.target?.result as string;
-      setImageUrl(base64);
 
-      // Trigger AI analysis
+      // Compress image to reduce storage size (max 1200px, 85% quality for good PDF export)
+      const compressed = await compressImage(base64, 1200, 0.85);
+      setImageUrl(compressed);
+
+      // Trigger AI analysis (use original for better analysis)
       const result = await analyzeEmerald(base64);
       if (result) {
         setSuggestedNames(result.names);
@@ -142,12 +146,15 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
         reader.readAsDataURL(file);
       });
 
-      // Generate suggestions for each image
+      // Compress image to reduce storage size (max 1200px, 85% quality for good PDF export)
+      const compressed = await compressImage(base64, 1200, 0.85);
+
+      // Generate suggestions for each image (use original for better analysis)
       const result = await analyzeEmerald(base64);
 
       const newItem: BatchItem = {
         id: `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        imageUrl: base64,
+        imageUrl: compressed, // Store compressed version
         suggestedNames: result?.names || getRandomSuggestions(),
         selectedName: '',
         customName: '',
@@ -186,7 +193,10 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
   };
 
   const handleSave = () => {
-    if (!imageUrl) return;
+    if (!imageUrl) {
+      alert('Por favor sube una imagen primero');
+      return;
+    }
 
     const finalName = customName || selectedName;
     if (!finalName) {
@@ -194,30 +204,47 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
       return;
     }
 
-    addEmerald({
-      name: finalName,
-      imageUrl,
-      aiSuggestedNames: suggestedNames,
-      aiDescription: description,
-      weightCarats: weightCarats ? parseFloat(weightCarats) : undefined,
-      priceCOP: priceCOP ? parseInt(priceCOP.replace(/\D/g, '')) : undefined,
-      lotCode: lotCode || undefined,
-      category,
-      status: 'available',
-    });
+    try {
+      const saved = addEmerald({
+        name: finalName,
+        imageUrl,
+        aiSuggestedNames: suggestedNames,
+        aiDescription: description,
+        weightCarats: weightCarats ? parseFloat(weightCarats) : undefined,
+        priceCOP: priceCOP ? parseInt(priceCOP.replace(/\D/g, '')) : undefined,
+        lotCode: lotCode || undefined,
+        category,
+        status: 'available',
+      });
 
-    // Reset form
-    setImageUrl(null);
-    setSuggestedNames([]);
-    setSelectedName('');
-    setCustomName('');
-    setDescription('');
-    setWeightCarats('');
-    setPriceCOP('');
-    setLotCode('');
-    setCategory('loose');
+      console.log('Emerald saved:', saved);
 
-    onComplete?.();
+      // Show success message
+      alert(`"${finalName}" guardada exitosamente!`);
+
+      // Reset form
+      setImageUrl(null);
+      setSuggestedNames([]);
+      setSelectedName('');
+      setCustomName('');
+      setDescription('');
+      setWeightCarats('');
+      setPriceCOP('');
+      setLotCode('');
+      setCategory('loose');
+
+      // Navigate to gallery
+      onComplete?.();
+    } catch (error) {
+      console.error('Error saving emerald:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
+
+      if (errorMsg.includes('STORAGE_FULL')) {
+        alert('El almacenamiento está lleno. Por favor ve a la Galería y elimina algunas esmeraldas antiguas para liberar espacio.');
+      } else {
+        alert(`Error al guardar: ${errorMsg}`);
+      }
+    }
   };
 
   // Batch item handlers

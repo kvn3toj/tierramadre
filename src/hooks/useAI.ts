@@ -3,18 +3,28 @@ import { AIAnalysisResult } from '../types';
 import { storage } from '../utils/storage';
 import existingNames from '../data/existingNames.json';
 
-const NAMING_PROMPT = `Eres especialista en nombrar esmeraldas para Tierra Madre, marca colombiana de esmeraldas.
+const NAMING_PROMPT = `Eres poeta y experto en nombrar esmeraldas para Tierra Madre, marca colombiana premium.
 Tagline: "Esencia y Poder"
 
-Analiza esta esmeralda y sugiere 3 nombres únicos siguiendo estos patrones:
-- Mitología: Diosa, Venus, Gaia, Apolo, Cleopatra
-- Naturaleza: Amazonas, Pacífico, Madre Selva, Bambú
-- Cósmico: Galaxia, Lunera, Firmamento, Hijos del Sol
-- Emocional: Amor Eterno, Chispa Divina, Instante Perfecto
-- Realeza: La Reina Margot, Las Emperatrices
+OBSERVA CUIDADOSAMENTE la imagen y crea 3 nombres ÚNICOS e INVENTIVOS basados en:
+- Lo que VES: forma, color, brillo, inclusiones, corte
+- Inspiración de estas categorías (pero inventa nombres NUEVOS, no uses estos ejemplos):
+  * Mitología griega/romana/egipcia/colombiana
+  * Naturaleza colombiana: ríos, selvas, flores, aves
+  * Cosmos: estrellas, constelaciones, fenómenos celestes
+  * Emociones: momentos, sentimientos, estados del alma
+  * Realeza: títulos, joyas históricas
+  * Elementos: agua, fuego, tierra, luz
+  * Piedras preciosas personificadas
 
-Responde SOLO en JSON válido sin markdown ni backticks:
-{"names":["Nombre1","Nombre2","Nombre3"],"description":"Descripción poética breve en español","characteristics":["color","claridad","características únicas"]}`;
+REGLAS IMPORTANTES:
+1. INVENTA nombres completamente NUEVOS - sé creativo y poético
+2. Cada nombre debe ser diferente en estilo/categoría
+3. Inspírate en lo que VES en la piedra específica
+4. Usa español elegante, pueden ser 1-3 palabras
+
+Responde SOLO JSON válido (sin markdown, sin backticks):
+{"names":["NombreCreativo1","NombreCreativo2","NombreCreativo3"],"description":"Descripción poética de 2 oraciones basada en lo que ves","characteristics":["detalle visual 1","detalle visual 2","detalle visual 3"]}`;
 
 const CAPTION_PROMPT = `Escribe un caption para Instagram de Tierra Madre (@tierramadre.co).
 Voz de marca: Elegante, místico, orgulloso patrimonio colombiano.
@@ -45,65 +55,64 @@ export function useAI(): AIHookReturn {
     setAnalyzing(true);
     setError(null);
 
-    // Check for Gemini API key (free!) first, then Anthropic
-    const geminiKey = storage.getApiKey() || import.meta.env.VITE_GEMINI_API_KEY;
+    // Use Groq API with vision model
+    const groqKey = import.meta.env.VITE_GROQ_API_KEY;
 
-    if (!geminiKey) {
-      // Use smart local generator - no API needed!
-      // Simulate brief "thinking" for better UX
-      await new Promise(resolve => setTimeout(resolve, 500));
+    if (!groqKey) {
+      // Fallback to local generator
+      await new Promise(resolve => setTimeout(resolve, 800));
       setAnalyzing(false);
-      setError('local'); // Signal to UI that we're using local generator
       return generateSmartSuggestions();
     }
 
     try {
-      // Extract base64 data without prefix
-      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+      // Extract base64 data with proper format for Groq
+      const base64Data = imageBase64.includes('base64,')
+        ? imageBase64
+        : `data:image/jpeg;base64,${imageBase64}`;
 
-      // Use Google Gemini API (FREE!)
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${geminiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    inlineData: {
-                      mimeType: 'image/jpeg',
-                      data: base64Data,
-                    },
+      // Use Groq API with Llama Vision model
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${groqKey}`,
+        },
+        body: JSON.stringify({
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: base64Data,
                   },
-                  {
-                    text: NAMING_PROMPT,
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 1024,
+                },
+                {
+                  type: 'text',
+                  text: NAMING_PROMPT,
+                },
+              ],
             },
-          }),
-        }
-      );
+          ],
+          temperature: 0.95,
+          max_tokens: 1024,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Gemini API Error:', errorData);
+        console.error('Groq API Error:', errorData);
         throw new Error(`API error: ${response.status} - ${JSON.stringify(errorData)}`);
       }
 
       const data = await response.json();
-      console.log('Gemini Response:', data);
+      console.log('Groq Response:', data);
 
-      // Extract text from Gemini response
-      const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      // Extract text from Groq response
+      const content = data.choices?.[0]?.message?.content || '';
 
       // Clean up response - remove markdown code blocks if present
       const cleanedContent = content
@@ -111,28 +120,49 @@ export function useAI(): AIHookReturn {
         .replace(/```\n?/g, '')
         .trim();
 
-      // Parse JSON response
-      const parsed = JSON.parse(cleanedContent) as AIAnalysisResult;
-      setAnalyzing(false);
-      return parsed;
+      // Try to parse JSON response with fallback
+      try {
+        const parsed = JSON.parse(cleanedContent) as AIAnalysisResult;
+        setAnalyzing(false);
+        return parsed;
+      } catch (parseError) {
+        console.warn('JSON parse failed, trying to extract data manually:', parseError);
+
+        // Try to extract names from the response even if JSON is malformed
+        const namesMatch = cleanedContent.match(/"names"\s*:\s*\[(.*?)\]/s);
+        const descMatch = cleanedContent.match(/"description"\s*:\s*"([^"]+)"/);
+
+        if (namesMatch) {
+          const namesStr = namesMatch[1];
+          const names = namesStr.match(/"([^"]+)"/g)?.map(s => s.replace(/"/g, '')) || getRandomSuggestions();
+          const description = descMatch ? descMatch[1] : 'Esmeralda colombiana de belleza excepcional.';
+
+          setAnalyzing(false);
+          return {
+            names: names.slice(0, 3),
+            description,
+            characteristics: ['Verde natural', 'Origen colombiano', 'Calidad premium'],
+          };
+        }
+
+        // Final fallback to local generator
+        setAnalyzing(false);
+        return generateSmartSuggestions();
+      }
     } catch (err) {
       console.error('AI analysis error:', err);
-      setError(err instanceof Error ? err.message : 'Error analyzing image');
+      setError(err instanceof Error ? err.message : 'Error analyzing image - usando sugerencias locales');
       setAnalyzing(false);
 
       // Return fallback suggestions
-      return {
-        names: getRandomSuggestions(),
-        description: 'Esmeralda colombiana de excepcional belleza.',
-        characteristics: ['Verde natural', 'Origen colombiano'],
-      };
+      return generateSmartSuggestions();
     }
   }, []);
 
   const generateCaption = useCallback(async (emeraldName: string, description: string): Promise<string | null> => {
-    const geminiKey = storage.getApiKey() || import.meta.env.VITE_GEMINI_API_KEY;
+    const groqKey = import.meta.env.VITE_GROQ_API_KEY;
 
-    if (!geminiKey) {
+    if (!groqKey) {
       // Default caption template
       return `${emeraldName} ✨
 
@@ -144,37 +174,31 @@ Descubre la magia de las esmeraldas colombianas en tierramadre.co
     }
 
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: `Esmeralda: ${emeraldName}\nDescripción: ${description}\n\n${CAPTION_PROMPT}`,
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.8,
-              maxOutputTokens: 500,
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${groqKey}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-70b-versatile',
+          messages: [
+            {
+              role: 'user',
+              content: `Esmeralda: ${emeraldName}\nDescripción: ${description}\n\n${CAPTION_PROMPT}`,
             },
-          }),
-        }
-      );
+          ],
+          temperature: 0.8,
+          max_tokens: 500,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
 
       const data = await response.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+      return data.choices?.[0]?.message?.content || null;
     } catch (err) {
       console.error('Caption generation error:', err);
       return null;

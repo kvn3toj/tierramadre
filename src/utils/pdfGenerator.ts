@@ -108,7 +108,7 @@ async function addGridLayout(
           itemWidth,
           imageHeight,
           undefined,
-          'MEDIUM'
+          'FAST' // Best quality - no additional compression
         );
       } catch {
         // If image fails, add placeholder
@@ -209,7 +209,7 @@ async function addListLayout(
           imageSize,
           imageSize,
           undefined,
-          'MEDIUM'
+          'FAST' // Best quality - no additional compression
         );
       } catch {
         pdf.setFillColor(40, 40, 40);

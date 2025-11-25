@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4caf50"/>
+      <stop offset="50%" style="stop-color:#2e7d32"/>
+      <stop offset="100%" style="stop-color:#1b5e20"/>
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="#1b5e20"/>
+  <text x="50" y="38" font-family="Arial Black, sans-serif" font-size="28" font-weight="bold" fill="#fff" text-anchor="middle">TM</text>
+  <polygon points="50,45 35,60 42,75 58,75 65,60" fill="url(#emeraldGrad)" stroke="#81c784" stroke-width="1"/>
+  <polygon points="50,48 40,58 45,68 55,68 60,58" fill="#81c784" opacity="0.3"/>
+</svg>

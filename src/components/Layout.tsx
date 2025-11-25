@@ -13,6 +13,7 @@ import {
   Collections as GalleryIcon,
   CalendarMonth as CalendarIcon,
   PictureAsPdf as PdfIcon,
+  AutoFixHigh as NormalizerIcon,
 } from '@mui/icons-material';
 import { TabValue } from '../App';
 import { brandColors } from '../theme';
@@ -40,42 +41,15 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
         <Toolbar>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box
+              component="img"
+              src="/logo-tierra-madre.png"
+              alt="Tierra Madre"
               sx={{
-                width: 40,
-                height: 40,
-                bgcolor: brandColors.emeraldGreen,
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                height: 50,
+                width: 'auto',
+                objectFit: 'contain',
               }}
-            >
-              <Typography variant="h6" sx={{ color: 'white', fontWeight: 700 }}>
-                TM
-              </Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant="h6"
-                sx={{
-                  fontFamily: '"Libre Baskerville", serif',
-                  fontWeight: 700,
-                  letterSpacing: '0.05em',
-                }}
-              >
-                TIERRA MADRE
-              </Typography>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: brandColors.gold,
-                  letterSpacing: '0.15em',
-                  fontWeight: 500,
-                }}
-              >
-                ESENCIA Y PODER
-              </Typography>
-            </Box>
+            />
           </Box>
         </Toolbar>
         <Tabs
@@ -116,6 +90,12 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
             value="catalog"
             label="Catálogo"
             icon={<PdfIcon />}
+            iconPosition="start"
+          />
+          <Tab
+            value="normalizer"
+            label="Normalizar"
+            icon={<NormalizerIcon />}
             iconPosition="start"
           />
         </Tabs>

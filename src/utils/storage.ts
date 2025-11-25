@@ -20,7 +20,26 @@ export const storage = {
   },
 
   set(state: AppState): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        throw new Error('STORAGE_FULL: El almacenamiento está lleno. Por favor elimina algunas esmeraldas antiguas.');
+      }
+      throw error;
+    }
+  },
+
+  // Get storage usage info
+  getStorageInfo(): { used: number; available: number; percentage: number } {
+    const data = localStorage.getItem(STORAGE_KEY) || '';
+    const used = new Blob([data]).size;
+    const total = 5 * 1024 * 1024; // ~5MB typical localStorage limit
+    return {
+      used: Math.round(used / 1024), // KB
+      available: Math.round((total - used) / 1024), // KB
+      percentage: Math.round((used / total) * 100),
+    };
   },
 
   // Emerald operations
