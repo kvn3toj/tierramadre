@@ -168,7 +168,7 @@ export default function ThankYouTemplate({
   message = 'GRACIAS.',
   website = 'www.tierramadre.co',
   logoUrl = '/logo-tierra-madre.png',
-  backgroundImage,
+  backgroundImage = '/masterclass/11-thankyou.jpg',
 }: ThankYouTemplateProps) {
   return (
     <SlideContainer id={id} bgimage={backgroundImage}>

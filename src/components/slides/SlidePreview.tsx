@@ -7,10 +7,12 @@ import {
   ButtonGroup,
   CircularProgress,
   Alert,
-  Chip,
   Tooltip,
   Tabs,
   Tab,
+  Select,
+  MenuItem,
+  FormControl,
 } from '@mui/material';
 import {
   Download as DownloadIcon,
@@ -21,11 +23,43 @@ import {
   ZoomOut as ZoomOutIcon,
   Visibility as ViewIcon,
   Add as CreateIcon,
+  NavigateBefore as PrevIcon,
+  NavigateNext as NextIcon,
 } from '@mui/icons-material';
-import Slide2Purpose, { SLIDE_WIDTH, SLIDE_HEIGHT } from './Slide2Purpose';
+import { SLIDE_WIDTH, SLIDE_HEIGHT } from './Slide2Purpose';
 import SlideEditor from './SlideEditor';
 import { generateSlidePDF } from '../../utils/slidePdfGenerator';
 import { brandColors } from '../../theme';
+
+// Import Masterclass Templates
+import {
+  BrandCoverTemplate,
+  MissionTemplate,
+  GlobalValidationTemplate,
+  OpportunityTemplate,
+  ExpertTemplate,
+  DifferentiatorsTemplate,
+  CelebritiesTemplate,
+  ReasonsTemplate,
+  EthicalChainTemplate,
+  CTATemplate,
+} from '../templates/MasterclassTemplates';
+import { ThankYouTemplate } from '../templates';
+
+// Masterclass slide definitions
+const MASTERCLASS_SLIDES = [
+  { id: 'brandCover', name: '1. Portada de Marca', icon: '🏛️', component: BrandCoverTemplate },
+  { id: 'mission', name: '2. Declaración de Misión', icon: '🎯', component: MissionTemplate },
+  { id: 'globalValidation', name: '3. Validación Global', icon: '🌍', component: GlobalValidationTemplate },
+  { id: 'opportunity', name: '4. Oportunidad de Negocio', icon: '💰', component: OpportunityTemplate },
+  { id: 'expert', name: '5. Presentación Experto', icon: '👤', component: ExpertTemplate },
+  { id: 'differentiators', name: '6. Diferenciadores', icon: '⚡', component: DifferentiatorsTemplate },
+  { id: 'celebrities', name: '7. Celebridades', icon: '⭐', component: CelebritiesTemplate },
+  { id: 'reasons', name: '8. 5 Razones', icon: '📋', component: ReasonsTemplate },
+  { id: 'ethicalChain', name: '9. Cadena Ética', icon: '🤝', component: EthicalChainTemplate },
+  { id: 'cta', name: '10. Colección Fénix', icon: '🔥', component: CTATemplate },
+  { id: 'thankYou', name: '11. Gracias', icon: '🌿', component: ThankYouTemplate },
+] as const;
 
 type ExportFormat = 'pdf' | 'png' | 'jpg';
 type TabMode = 'preview' | 'create';
@@ -37,14 +71,27 @@ export default function SlidePreview() {
   const [error, setError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(0.35); // Default zoom to fit typical screens
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  const currentSlide = MASTERCLASS_SLIDES[currentSlideIndex];
+  const SlideComponent = currentSlide.component;
+
+  const handlePrevSlide = () => {
+    setCurrentSlideIndex(prev => prev > 0 ? prev - 1 : MASTERCLASS_SLIDES.length - 1);
+  };
+
+  const handleNextSlide = () => {
+    setCurrentSlideIndex(prev => prev < MASTERCLASS_SLIDES.length - 1 ? prev + 1 : 0);
+  };
 
   const handleExport = async () => {
     setExporting(true);
     setError(null);
 
     try {
-      await generateSlidePDF('slide-2-purpose', {
-        filename: 'tierra-madre-proposito-slide2',
+      const slideId = `slide-${currentSlide.id}`;
+      await generateSlidePDF(slideId, {
+        filename: `tierra-madre-${currentSlide.id}`,
         format: exportFormat,
         quality: 1.0,
         scale: 2,
@@ -113,16 +160,41 @@ export default function SlidePreview() {
         <>
           {/* Controls Bar */}
           <Paper sx={{ p: 2, mb: 3, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            {/* Slide Selector */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Chip
-                label="Slide 2: Propósito"
-                color="primary"
-                sx={{ bgcolor: brandColors.emeraldGreen }}
-              />
-              <Typography variant="caption" color="grey.500">
-                {SLIDE_WIDTH}x{SLIDE_HEIGHT}px (16:9)
-              </Typography>
+              <Tooltip title="Slide anterior">
+                <Button size="small" onClick={handlePrevSlide} sx={{ minWidth: 36 }}>
+                  <PrevIcon />
+                </Button>
+              </Tooltip>
+
+              <FormControl size="small" sx={{ minWidth: 220 }}>
+                <Select
+                  value={currentSlideIndex}
+                  onChange={(e) => setCurrentSlideIndex(e.target.value as number)}
+                  sx={{
+                    '& .MuiSelect-select': { display: 'flex', alignItems: 'center', gap: 1 },
+                  }}
+                >
+                  {MASTERCLASS_SLIDES.map((slide, idx) => (
+                    <MenuItem key={slide.id} value={idx}>
+                      <Typography component="span" sx={{ mr: 1 }}>{slide.icon}</Typography>
+                      {slide.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <Tooltip title="Slide siguiente">
+                <Button size="small" onClick={handleNextSlide} sx={{ minWidth: 36 }}>
+                  <NextIcon />
+                </Button>
+              </Tooltip>
             </Box>
+
+            <Typography variant="caption" color="grey.500">
+              {SLIDE_WIDTH}x{SLIDE_HEIGHT}px (16:9)
+            </Typography>
 
             <Box sx={{ flex: 1 }} />
 
@@ -205,23 +277,66 @@ export default function SlidePreview() {
               justifyContent: 'center',
               alignItems: 'center',
               bgcolor: 'grey.900',
-              overflow: 'auto',
-              maxHeight: isFullscreen ? '80vh' : 'calc(100vh - 350px)',
+              overflow: 'hidden',
+              minHeight: isFullscreen ? '80vh' : 'calc(100vh - 350px)',
               position: 'relative',
             }}
           >
-            {/* Slide with zoom applied */}
+            {/* Wrapper to contain scaled slide */}
             <Box
               sx={{
-                transform: `scale(${zoom})`,
-                transformOrigin: 'center center',
-                transition: 'transform 0.2s ease-out',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
-                borderRadius: '4px',
-                overflow: 'hidden',
+                width: `${SLIDE_WIDTH * zoom}px`,
+                height: `${SLIDE_HEIGHT * zoom}px`,
+                position: 'relative',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
               }}
             >
-              <Slide2Purpose id="slide-2-purpose" />
+              {/* Slide with zoom applied */}
+              <Box
+                sx={{
+                  transform: `scale(${zoom})`,
+                  transformOrigin: 'center center',
+                  transition: 'transform 0.2s ease-out',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  position: 'absolute',
+                }}
+              >
+                <SlideComponent id={`slide-${currentSlide.id}`} />
+              </Box>
+            </Box>
+          </Paper>
+
+          {/* Slide Thumbnails */}
+          <Paper sx={{ p: 2, mt: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 2 }}>
+              Masterclass: El Poder de la Esmeralda Colombiana ({MASTERCLASS_SLIDES.length} slides)
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 1 }}>
+              {MASTERCLASS_SLIDES.map((slide, idx) => (
+                <Box
+                  key={slide.id}
+                  onClick={() => setCurrentSlideIndex(idx)}
+                  sx={{
+                    minWidth: 80,
+                    height: 50,
+                    bgcolor: idx === currentSlideIndex ? brandColors.emeraldGreen : 'grey.800',
+                    borderRadius: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    border: idx === currentSlideIndex ? `2px solid ${brandColors.emeraldLight}` : '2px solid transparent',
+                    transition: 'all 0.2s',
+                    '&:hover': { bgcolor: idx === currentSlideIndex ? brandColors.emeraldGreen : 'grey.700' },
+                  }}
+                >
+                  <Typography sx={{ fontSize: '20px' }}>{slide.icon}</Typography>
+                </Box>
+              ))}
             </Box>
           </Paper>
 
