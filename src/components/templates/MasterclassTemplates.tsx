@@ -10,17 +10,29 @@ import { styled, alpha } from '@mui/material/styles';
 export const SLIDE_WIDTH = 1920;
 export const SLIDE_HEIGHT = 1080;
 
-// Luxury color palette (consistent across all templates)
+// Brand Guide Color Palette - "Lujo Consciente"
+// "Nuestro lujo es la Claridad y la Verdad"
+// Emerald green as the ONLY vibrant color
 const COLORS = {
-  gold: '#C9A962',
-  goldLight: '#E5D4A1',
-  goldDark: '#9A7B3C',
-  emerald: '#00BFA5',
-  emeraldDeep: '#006B5A',
+  // Primary - Deep Emerald (the only vibrant color)
+  emerald: '#0A4D3C',
+  emeraldRich: '#1B7A5E',
+  emeraldLight: '#2E9B7D',
+  emeraldDeep: '#0A4D3C', // alias
+  // Backgrounds
+  pureWhite: '#FFFFFF',
+  naturalWhite: '#FDFDFB',
+  white: '#FFFFFF', // alias for compatibility
   richBlack: '#0A0A0A',
-  darkTeal: '#1A2F2F',
-  white: '#FFFFFF',
+  darkTeal: '#0D1B1E',
+  // Text
+  charcoal: '#2C2C2C',
   textMuted: 'rgba(255, 255, 255, 0.7)',
+  // Accents (subtle, not gold)
+  silver: '#C5C5C0',
+  silverLight: '#E8E8E8',
+  // Legacy gold (use sparingly for special highlights only)
+  gold: '#C9A962',
 };
 
 // Shared styled components
@@ -32,28 +44,33 @@ const SlideContainer = styled(Box)({
   fontFamily: '"Cormorant Garamond", serif',
 });
 
+// Minimal corner decorations (silver, subtle)
 const CornerDecoration = styled(Box)<{ corner: 'tl' | 'tr' | 'bl' | 'br' }>(({ corner }) => ({
   position: 'absolute',
-  width: '100px',
-  height: '100px',
-  borderColor: `${COLORS.gold}40`,
+  width: '80px',
+  height: '80px',
+  borderColor: `${COLORS.silver}30`,
   borderStyle: 'solid',
   borderWidth: '0',
-  ...(corner === 'tl' && { top: 50, left: 50, borderTopWidth: '1px', borderLeftWidth: '1px' }),
-  ...(corner === 'tr' && { top: 50, right: 50, borderTopWidth: '1px', borderRightWidth: '1px' }),
-  ...(corner === 'bl' && { bottom: 50, left: 50, borderBottomWidth: '1px', borderLeftWidth: '1px' }),
-  ...(corner === 'br' && { bottom: 50, right: 50, borderBottomWidth: '1px', borderRightWidth: '1px' }),
+  ...(corner === 'tl' && { top: 40, left: 40, borderTopWidth: '1px', borderLeftWidth: '1px' }),
+  ...(corner === 'tr' && { top: 40, right: 40, borderTopWidth: '1px', borderRightWidth: '1px' }),
+  ...(corner === 'bl' && { bottom: 40, left: 40, borderBottomWidth: '1px', borderLeftWidth: '1px' }),
+  ...(corner === 'br' && { bottom: 40, right: 40, borderBottomWidth: '1px', borderRightWidth: '1px' }),
 }));
 
+// Emerald accent bar (the only vibrant element)
 const VerticalAccentBar = styled(Box)({
   position: 'absolute',
   left: 0,
   top: 0,
-  width: '4px',
+  width: '3px',
   height: '100%',
-  background: `linear-gradient(180deg, ${COLORS.gold} 0%, ${COLORS.emerald} 50%, ${COLORS.goldDark} 100%)`,
-  boxShadow: `0 0 30px ${COLORS.gold}40`,
+  background: COLORS.emerald,
+  boxShadow: `0 0 20px ${COLORS.emerald}40`,
 });
+
+// Logo path constant
+const LOGO_PATH = '/logo-tierra-madre.png';
 
 // ============================================================================
 // 1. BRAND COVER TEMPLATE - Portada de Marca
@@ -69,7 +86,7 @@ export function BrandCoverTemplate({
   id = 'brand-cover',
   title = 'TIERRA MADRE',
   subtitle = 'www.tierramadre.co | @tierramadre.co',
-  backgroundImage = '/masterclass/01-brand-cover.jpg',
+  backgroundImage = 'https://image.pollinations.ai/prompt/single%20stunning%20colombian%20emerald%20gemstone%20floating%20with%20sparkles%20and%20light%20rays%20on%20pure%20black%20background%20luxury%20jewelry%20photography%20dramatic%20spotlight%20ultra%20detailed%208K?width=1920&height=1080&nologo=true&seed=cover2024',
 }: BrandCoverProps) {
   return (
     <SlideContainer id={id} sx={{ background: COLORS.richBlack }}>
@@ -78,62 +95,77 @@ export function BrandCoverTemplate({
         <Box
           sx={{
             position: 'absolute',
-            inset: 0,
+            top: 0,
+            left: 0,
+            width: 1920,
+            height: 1080,
             backgroundImage: `url(${backgroundImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              inset: 0,
-              background: `linear-gradient(135deg, ${alpha(COLORS.richBlack, 0.7)}, ${alpha(COLORS.darkTeal, 0.6)})`,
-            },
           }}
         />
       )}
+
+      {/* Subtle vignette */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: 1920,
+          height: 1080,
+          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%)',
+        }}
+      />
 
       <CornerDecoration corner="tl" />
       <CornerDecoration corner="tr" />
       <CornerDecoration corner="bl" />
       <CornerDecoration corner="br" />
 
-      <Stack
-        sx={{
-          position: 'relative',
-          zIndex: 1,
-          height: '100%',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-        spacing={4}
-      >
+      {/* Title - Top */}
+      <Box sx={{ position: 'absolute', top: 200, left: 0, width: 1920, textAlign: 'center', zIndex: 10 }}>
         <Typography
           sx={{
-            fontSize: '140px',
-            fontWeight: 600,
-            color: COLORS.gold,
-            letterSpacing: '0.08em',
-            textShadow: `0 6px 40px ${alpha(COLORS.gold, 0.5)}`,
+            fontSize: 100,
+            fontWeight: 500,
+            color: COLORS.pureWhite,
+            letterSpacing: '0.2em',
+            textShadow: '0 4px 40px rgba(0,0,0,0.8)',
             fontFamily: '"Cormorant Garamond", serif',
           }}
         >
           {title}
         </Typography>
+      </Box>
 
-        <Box sx={{ width: '300px', height: '2px', background: `linear-gradient(90deg, transparent, ${COLORS.emerald}, transparent)` }} />
+      {/* Divider */}
+      <Box sx={{ position: 'absolute', top: 340, left: 760, width: 400, height: 2, background: `linear-gradient(90deg, transparent, ${COLORS.emerald}, transparent)` }} />
 
+      {/* Contact Info - Bottom */}
+      <Box sx={{ position: 'absolute', bottom: 150, left: 0, width: 1920, textAlign: 'center', zIndex: 10 }}>
         <Typography
           sx={{
-            fontSize: '28px',
+            fontSize: 24,
             fontWeight: 300,
-            color: COLORS.white,
-            letterSpacing: '0.15em',
-            fontFamily: '"Inter", sans-serif',
+            color: 'rgba(255,255,255,0.7)',
+            letterSpacing: '0.1em',
+            fontFamily: '"Montserrat", sans-serif',
           }}
         >
           {subtitle}
         </Typography>
-      </Stack>
+      </Box>
+
+      {/* Logo - Bottom Right */}
+      <Box sx={{ position: 'absolute', bottom: 30, right: 50, zIndex: 10 }}>
+        <Box
+          component="img"
+          src={LOGO_PATH}
+          alt="Tierra Madre"
+          sx={{ height: 60, filter: 'brightness(0) invert(1)', opacity: 0.9 }}
+        />
+      </Box>
     </SlideContainer>
   );
 }
@@ -149,8 +181,8 @@ interface MissionProps {
 
 export function MissionTemplate({
   id = 'mission',
-  mission = 'Posicionar la esmeralda colombiana como la piedra preciosa más valiosa del mundo',
-  backgroundImage = '/masterclass/02-mission.jpg',
+  mission = 'Expandimos la esencia y el poder de la esmeralda colombiana',
+  backgroundImage = 'https://image.pollinations.ai/prompt/mystical%20underground%20crystal%20cave%20with%20glowing%20green%20emerald%20on%20ancient%20stone%20pedestal%20ethereal%20light%20rays%20fantasy%20atmosphere%20cinematic%20lighting%20blue%20and%20green%20tones%208K%20dramatic?width=1920&height=1080&nologo=true&seed=mission2024',
 }: MissionProps) {
   return (
     <SlideContainer id={id} sx={{ background: COLORS.richBlack }}>
@@ -158,48 +190,61 @@ export function MissionTemplate({
         <Box
           sx={{
             position: 'absolute',
-            inset: 0,
+            top: 0,
+            left: 0,
+            width: 1920,
+            height: 1080,
             backgroundImage: `url(${backgroundImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              inset: 0,
-              background: `radial-gradient(circle at center, ${alpha(COLORS.richBlack, 0.4)}, ${alpha(COLORS.richBlack, 0.9)})`,
-            },
           }}
         />
       )}
 
-      <VerticalAccentBar />
+      {/* Subtle overlay */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: 1920,
+          height: 1080,
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.5) 100%)',
+        }}
+      />
 
-      <Stack sx={{ position: 'relative', zIndex: 1, height: '100%', justifyContent: 'center', alignItems: 'center', px: 10 }}>
-        <Box
+      <VerticalAccentBar />
+      <CornerDecoration corner="tl" />
+      <CornerDecoration corner="tr" />
+      <CornerDecoration corner="bl" />
+      <CornerDecoration corner="br" />
+
+      {/* Mission Quote - Bottom Left */}
+      <Box sx={{ position: 'absolute', bottom: 120, left: 80, maxWidth: 1200, zIndex: 10 }}>
+        <Typography
           sx={{
-            maxWidth: '1200px',
-            p: 8,
-            border: `3px solid ${COLORS.gold}`,
-            background: alpha(COLORS.darkTeal, 0.85),
-            backdropFilter: 'blur(10px)',
-            boxShadow: `0 0 80px ${alpha(COLORS.gold, 0.3)}`,
+            fontSize: 48,
+            fontWeight: 500,
+            color: COLORS.pureWhite,
+            lineHeight: 1.3,
+            fontStyle: 'italic',
+            fontFamily: '"Cormorant Garamond", serif',
+            textShadow: '0 4px 30px rgba(0,0,0,0.8)',
           }}
         >
-          <Typography
-            sx={{
-              fontSize: '56px',
-              fontWeight: 500,
-              color: COLORS.white,
-              textAlign: 'center',
-              lineHeight: 1.4,
-              fontStyle: 'italic',
-              fontFamily: '"Cormorant Garamond", serif',
-            }}
-          >
-            "{mission}"
-          </Typography>
-        </Box>
-      </Stack>
+          "{mission}"
+        </Typography>
+      </Box>
+
+      {/* Logo - Bottom Right */}
+      <Box sx={{ position: 'absolute', bottom: 30, right: 50, zIndex: 10 }}>
+        <Box
+          component="img"
+          src={LOGO_PATH}
+          alt="Tierra Madre"
+          sx={{ height: 60, filter: 'brightness(0) invert(1)', opacity: 0.9 }}
+        />
+      </Box>
     </SlideContainer>
   );
 }

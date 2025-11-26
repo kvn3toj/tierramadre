@@ -23,55 +23,58 @@ import {
   ZoomOut as ZoomOutIcon,
   Visibility as ViewIcon,
   Add as CreateIcon,
+  AutoAwesome as GenerateIcon,
   NavigateBefore as PrevIcon,
   NavigateNext as NextIcon,
 } from '@mui/icons-material';
 import { SLIDE_WIDTH, SLIDE_HEIGHT } from './Slide2Purpose';
 import SlideEditor from './SlideEditor';
-import { generateSlidePDF } from '../../utils/slidePdfGenerator';
-import { brandColors } from '../../theme';
+import PresentationGenerator from './PresentationGenerator';
+import { generateSlidePDF, generateMultiSlidePDF } from '../../utils/slidePdfGenerator';
+import { colors } from '../brand';
 
-// Import Masterclass Templates
+// Legacy imports (kept for reference)
+// import { MissionTemplate, OpportunityTemplate, ... } from '../templates/MasterclassTemplates';
+
+// Import Luxury Masterclass Templates v2 (optimized for PDF export)
 import {
-  BrandCoverTemplate,
-  MissionTemplate,
-  GlobalValidationTemplate,
-  OpportunityTemplate,
-  ExpertTemplate,
-  DifferentiatorsTemplate,
-  CelebritiesTemplate,
-  ReasonsTemplate,
-  EthicalChainTemplate,
-  CTATemplate,
-} from '../templates/MasterclassTemplates';
-import { ThankYouTemplate } from '../templates';
+  LuxuryCoverTemplate,
+  LuxuryMissionTemplate,
+  LuxuryWorldTourTemplate,
+  LuxuryFiveReasonsTemplate,
+  LuxuryOpportunityTemplate,
+  LuxuryExpertTemplate,
+  LuxuryDifferentiatorsTemplate,
+  LuxuryCollectionTemplate,
+  LuxuryThankYouTemplate,
+} from '../templates/LuxuryMasterclassTemplates';
 
-// Masterclass slide definitions
+// Masterclass slide definitions - Luxury v2 (PDF optimized)
 const MASTERCLASS_SLIDES = [
-  { id: 'brandCover', name: '1. Portada de Marca', icon: '🏛️', component: BrandCoverTemplate },
-  { id: 'mission', name: '2. Declaración de Misión', icon: '🎯', component: MissionTemplate },
-  { id: 'globalValidation', name: '3. Validación Global', icon: '🌍', component: GlobalValidationTemplate },
-  { id: 'opportunity', name: '4. Oportunidad de Negocio', icon: '💰', component: OpportunityTemplate },
-  { id: 'expert', name: '5. Presentación Experto', icon: '👤', component: ExpertTemplate },
-  { id: 'differentiators', name: '6. Diferenciadores', icon: '⚡', component: DifferentiatorsTemplate },
-  { id: 'celebrities', name: '7. Celebridades', icon: '⭐', component: CelebritiesTemplate },
-  { id: 'reasons', name: '8. 5 Razones', icon: '📋', component: ReasonsTemplate },
-  { id: 'ethicalChain', name: '9. Cadena Ética', icon: '🤝', component: EthicalChainTemplate },
-  { id: 'cta', name: '10. Colección Fénix', icon: '🔥', component: CTATemplate },
-  { id: 'thankYou', name: '11. Gracias', icon: '🌿', component: ThankYouTemplate },
+  { id: 'cover', name: '1. Portada', icon: '💎', component: LuxuryCoverTemplate },
+  { id: 'mission', name: '2. Nuestra Esencia', icon: '✨', component: LuxuryMissionTemplate },
+  { id: 'worldTour', name: '3. Recorriendo el Mundo', icon: '🌍', component: LuxuryWorldTourTemplate },
+  { id: 'fiveReasons', name: '4. 5 Razones', icon: '📋', component: LuxuryFiveReasonsTemplate },
+  { id: 'opportunity', name: '5. Oportunidad Diciembre', icon: '🎄', component: LuxuryOpportunityTemplate },
+  { id: 'expert', name: '6. Presentación Experto', icon: '👤', component: LuxuryExpertTemplate },
+  { id: 'differentiators', name: '7. Diferenciadores', icon: '⚡', component: LuxuryDifferentiatorsTemplate },
+  { id: 'collection', name: '8. Colección Fénix', icon: '🔥', component: LuxuryCollectionTemplate },
+  { id: 'thankYou', name: '9. Gracias', icon: '🌿', component: LuxuryThankYouTemplate },
 ] as const;
 
 type ExportFormat = 'pdf' | 'png' | 'jpg';
-type TabMode = 'preview' | 'create';
+type TabMode = 'preview' | 'generate' | 'create';
 
 export default function SlidePreview() {
   const [tabMode, setTabMode] = useState<TabMode>('preview');
   const [exporting, setExporting] = useState(false);
+  const [exportingAll, setExportingAll] = useState(false);
   const [exportFormat, setExportFormat] = useState<ExportFormat>('pdf');
   const [error, setError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(0.35); // Default zoom to fit typical screens
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [renderAllSlides, setRenderAllSlides] = useState(false);
 
   const currentSlide = MASTERCLASS_SLIDES[currentSlideIndex];
   const SlideComponent = currentSlide.component;
@@ -101,6 +104,29 @@ export default function SlidePreview() {
     }
 
     setExporting(false);
+  };
+
+  const handleExportAll = async () => {
+    setExportingAll(true);
+    setRenderAllSlides(true);
+    setError(null);
+
+    // Wait for all slides to render
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    try {
+      const slideIds = MASTERCLASS_SLIDES.map(slide => `slide-export-${slide.id}`);
+      await generateMultiSlidePDF(slideIds, {
+        filename: 'tierra-madre-masterclass-completa',
+        quality: 1.0,
+        scale: 2,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al exportar la presentación');
+    }
+
+    setRenderAllSlides(false);
+    setExportingAll(false);
   };
 
   const handleZoomIn = () => {
@@ -137,9 +163,9 @@ export default function SlidePreview() {
           mb: 3,
           '& .MuiTab-root': {
             color: 'grey.500',
-            '&.Mui-selected': { color: brandColors.emeraldLight },
+            '&.Mui-selected': { color: colors.emeraldRich },
           },
-          '& .MuiTabs-indicator': { bgcolor: brandColors.emeraldGreen },
+          '& .MuiTabs-indicator': { bgcolor: colors.emeraldDeep },
         }}
       >
         <Tab
@@ -149,8 +175,14 @@ export default function SlidePreview() {
           iconPosition="start"
         />
         <Tab
+          value="generate"
+          label="Generar Presentación"
+          icon={<GenerateIcon />}
+          iconPosition="start"
+        />
+        <Tab
           value="create"
-          label="Crear con IA"
+          label="Crear Slide"
           icon={<CreateIcon />}
           iconPosition="start"
         />
@@ -248,18 +280,31 @@ export default function SlidePreview() {
               </Tooltip>
             </ButtonGroup>
 
-            {/* Export Button */}
+            {/* Export Buttons */}
             <Button
               variant="contained"
               startIcon={exporting ? <CircularProgress size={18} color="inherit" /> : <DownloadIcon />}
               onClick={handleExport}
-              disabled={exporting}
+              disabled={exporting || exportingAll}
               sx={{
-                bgcolor: brandColors.emeraldGreen,
-                '&:hover': { bgcolor: brandColors.emeraldDark },
+                bgcolor: colors.emeraldDeep,
+                '&:hover': { bgcolor: colors.mysticalDark },
               }}
             >
               {exporting ? 'Exportando...' : `Descargar ${exportFormat.toUpperCase()}`}
+            </Button>
+
+            <Button
+              variant="contained"
+              startIcon={exportingAll ? <CircularProgress size={18} color="inherit" /> : <PdfIcon />}
+              onClick={handleExportAll}
+              disabled={exporting || exportingAll}
+              sx={{
+                bgcolor: '#C9A962',
+                '&:hover': { bgcolor: '#9A7B3C' },
+              }}
+            >
+              {exportingAll ? 'Generando PDF...' : 'Descargar Todo (PDF)'}
             </Button>
           </Paper>
 
@@ -323,15 +368,15 @@ export default function SlidePreview() {
                   sx={{
                     minWidth: 80,
                     height: 50,
-                    bgcolor: idx === currentSlideIndex ? brandColors.emeraldGreen : 'grey.800',
+                    bgcolor: idx === currentSlideIndex ? colors.emeraldDeep : 'grey.800',
                     borderRadius: 1,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    border: idx === currentSlideIndex ? `2px solid ${brandColors.emeraldLight}` : '2px solid transparent',
+                    border: idx === currentSlideIndex ? `2px solid ${colors.emeraldRich}` : '2px solid transparent',
                     transition: 'all 0.2s',
-                    '&:hover': { bgcolor: idx === currentSlideIndex ? brandColors.emeraldGreen : 'grey.700' },
+                    '&:hover': { bgcolor: idx === currentSlideIndex ? colors.emeraldDeep : 'grey.700' },
                   }}
                 >
                   <Typography sx={{ fontSize: '20px' }}>{slide.icon}</Typography>
@@ -352,8 +397,32 @@ export default function SlidePreview() {
             </Typography>
           </Box>
         </>
+      ) : tabMode === 'generate' ? (
+        <PresentationGenerator />
       ) : (
         <SlideEditor />
+      )}
+
+      {/* Offscreen container for exporting all slides */}
+      {renderAllSlides && (
+        <Box
+          sx={{
+            position: 'fixed',
+            left: '-9999px',
+            top: 0,
+            zIndex: -1,
+            opacity: 1,
+          }}
+        >
+          {MASTERCLASS_SLIDES.map((slide) => {
+            const SlideComp = slide.component;
+            return (
+              <Box key={slide.id} sx={{ mb: 2 }}>
+                <SlideComp id={`slide-export-${slide.id}`} />
+              </Box>
+            );
+          })}
+        </Box>
       )}
     </Box>
   );
