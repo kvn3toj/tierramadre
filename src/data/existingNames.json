@@ -1,7 +1,7 @@
 {
   "mythology": [
     "Diosa", "Apolo", "Venus", "Gaia", "Cleopatra", "Ojo de Zeus",
-    "Grecia", "Troya", "Rey Midas"
+    "Grecia", "Troya", "Rey Midas", "Hércules", "Ojo de Afrodita"
   ],
   "royalty": [
     "La Reina Margot", "La Reina Isabell", "Princesa Azul",
@@ -15,12 +15,13 @@
   ],
   "cosmic": [
     "Galaxia", "Lunera", "Firmamento", "5 Estrellas", "Hijos del Sol",
-    "Infinito", "Turquesa", "Aqua", "Resplandor"
+    "Infinito", "Turquesa", "Aqua", "Resplandor", "Ventana al Cielo",
+    "Ojos del Universo"
   ],
   "emotional": [
     "Amor Eterno", "Amor Platónico", "Chispa Divina", "Instante Perfecto",
     "Alma Verde", "Corazón Tierra Madre", "Inspiración Divina",
-    "Espejo Sagrado", "Dualidad", "Trilogía", "Mística"
+    "Espejo Sagrado", "Dualidad", "Trilogía", "Mística", "Diosa Tierra Madre"
   ],
   "disney": [
     "Rapunzel", "Blanca Nieves", "Pocahontas", "Aurora", "Bella",
@@ -30,14 +31,15 @@
     "Diosa de la Laguna", "Gota del Pacífico", "Baby Green",
     "La Diva", "Dos Luceritos", "Fuego", "Aria",
     "Madre e Hija", "Hijos de la Tierra", "Las Niñas",
-    "Las 3 Marías", "2 Pinticas", "Pachitas", "Rosario"
+    "Las 3 Marías", "2 Pinticas", "Pachitas", "Rosario",
+    "Dos Pequitas", "Lalala", "Adán y Eva"
   ],
   "fullCatalog": [
     "Diosa", "Amor Platónico", "Corazón Tierra Madre", "Rapunzel",
     "Blanca Nieves", "Rapunzel S.F.", "Pocahontas", "Aurora", "Bella",
     "Daenerys", "Anna", "La Reina Margot", "La Reina Isabell",
     "Gota del Pacífico", "Raíz de Gaia", "Espejo Sagrado", "Adán y Eva",
-    "Chispa Divina", "Apolo", "Firmamento", "Troya", "Ventana", "Fuego",
+    "Chispa Divina", "Apolo", "Firmamento", "Troya", "Ventana al Cielo", "Fuego",
     "Aria", "Ojos del Universo", "Dos Pintas", "Cleopatra", "Grecia",
     "Lalala", "La Diva", "Dos Luceritos", "Instante Perfecto",
     "Viento del Pacífico", "Bambú", "Jazmín", "Mística", "Pachitas",
@@ -49,6 +51,15 @@
     "Bombón Superpoderosa", "Baby Green", "Madre Selva", "Pacífico",
     "Dualidad", "Brasil", "Las Emperatrices", "Las 3 Marías",
     "Alma Verde", "Diosa de la Laguna", "Inspiración Divina",
-    "Lunera", "Galaxia", "Resplandor"
+    "Lunera", "Galaxia", "Resplandor", "Hércules", "Ojo de Afrodita",
+    "Diosa Tierra Madre", "Dos Pequitas"
+  ],
+  "coleccionFenix": [
+    "Espejo Sagrado", "Hércules", "Adán y Eva", "Chispa Divina", "Apolo",
+    "Firmamento", "Troya", "Ventana al Cielo", "Fuego", "Aria",
+    "Ojos del Universo", "Dos Pequitas", "Cleopatra", "Ojo de Afrodita",
+    "Grecia", "Lalala", "La Diva", "Dos Luceritos", "Instante Perfecto",
+    "Viento del Pacífico", "Amor Platónico", "Diosa Tierra Madre",
+    "Corazón Tierra Madre"
   ]
 }
