@@ -32,8 +32,8 @@ import {
 import { brandColors } from '../../theme';
 import { useEmeralds } from '../../hooks/useEmeralds';
 
-// Slide template types
-type SlideTemplate = 'purpose' | 'cover' | 'product' | 'stats' | 'quote' | 'team' | 'contact';
+// Slide template types (includes new catalog templates from PDFs)
+type SlideTemplate = 'purpose' | 'cover' | 'product' | 'stats' | 'quote' | 'team' | 'contact' | 'catalogCover' | 'productCatalog' | 'thankYou';
 
 // Logo position options
 type LogoPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'none';
@@ -80,6 +80,10 @@ const TEMPLATES: TemplateOption[] = [
   { id: 'quote', name: 'Cita', description: 'Testimonio o frase inspiradora', icon: '💬' },
   { id: 'team', name: 'Equipo', description: 'Presentación del equipo', icon: '👥' },
   { id: 'contact', name: 'Contacto', description: 'Información de contacto y cierre', icon: '📧' },
+  // New catalog templates based on Destellos_Verdes.pdf
+  { id: 'catalogCover', name: 'Catálogo Portada', description: 'Portada estilo Colección FENIX', icon: '📕' },
+  { id: 'productCatalog', name: 'Ficha Producto', description: 'Ficha con specs y precio (estilo PDF)', icon: '💠' },
+  { id: 'thankYou', name: 'Gracias', description: 'Slide de cierre con fondo natural', icon: '🌿' },
 ];
 
 const AI_PROMPT_SUGGESTIONS = [
