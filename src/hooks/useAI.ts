@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { AIAnalysisResult } from '../types';
-import { storage } from '../utils/storage';
 import existingNames from '../data/existingNames.json';
 
 const NAMING_PROMPT = `Eres poeta y experto en nombrar esmeraldas para Tierra Madre, marca colombiana premium.
@@ -134,7 +133,7 @@ export function useAI(): AIHookReturn {
 
         if (namesMatch) {
           const namesStr = namesMatch[1];
-          const names = namesStr.match(/"([^"]+)"/g)?.map(s => s.replace(/"/g, '')) || getRandomSuggestions();
+          const names = namesStr.match(/"([^"]+)"/g)?.map((s: string) => s.replace(/"/g, '')) || getRandomSuggestions();
           const description = descMatch ? descMatch[1] : 'Esmeralda colombiana de belleza excepcional.';
 
           setAnalyzing(false);

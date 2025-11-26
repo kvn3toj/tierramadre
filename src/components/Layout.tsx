@@ -14,6 +14,7 @@ import {
   CalendarMonth as CalendarIcon,
   PictureAsPdf as PdfIcon,
   AutoFixHigh as NormalizerIcon,
+  Slideshow as SlideshowIcon,
 } from '@mui/icons-material';
 import { TabValue } from '../App';
 import { brandColors } from '../theme';
@@ -96,6 +97,12 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
             value="normalizer"
             label="Normalizar"
             icon={<NormalizerIcon />}
+            iconPosition="start"
+          />
+          <Tab
+            value="slides"
+            label="Slides"
+            icon={<SlideshowIcon />}
             iconPosition="start"
           />
         </Tabs>

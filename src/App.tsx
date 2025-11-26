@@ -5,8 +5,9 @@ import EmeraldUploader from './components/EmeraldUploader';
 import CalendarGrid from './components/CalendarGrid';
 import PDFExport from './components/PDFExport';
 import ImageNormalizer from './components/ImageNormalizer';
+import { SlidePreview } from './components/slides';
 
-export type TabValue = 'upload' | 'gallery' | 'calendar' | 'catalog' | 'normalizer';
+export type TabValue = 'upload' | 'gallery' | 'calendar' | 'catalog' | 'normalizer' | 'slides';
 
 function App() {
   const [currentTab, setCurrentTab] = useState<TabValue>('gallery');
@@ -23,6 +24,8 @@ function App() {
         return <PDFExport />;
       case 'normalizer':
         return <ImageNormalizer />;
+      case 'slides':
+        return <SlidePreview />;
       default:
         return <Gallery />;
     }
