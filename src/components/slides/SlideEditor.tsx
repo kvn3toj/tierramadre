@@ -35,6 +35,23 @@ import { useEmeralds } from '../../hooks/useEmeralds';
 // Slide template types
 type SlideTemplate = 'purpose' | 'cover' | 'product' | 'stats' | 'quote' | 'team' | 'contact';
 
+// Logo position options
+type LogoPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'none';
+
+interface LogoPositionOption {
+  id: LogoPosition;
+  label: string;
+  icon: string;
+}
+
+const LOGO_POSITIONS: LogoPositionOption[] = [
+  { id: 'none', label: 'Sin Logo', icon: '⊘' },
+  { id: 'top-left', label: 'Arriba Izq', icon: '↖' },
+  { id: 'top-right', label: 'Arriba Der', icon: '↗' },
+  { id: 'bottom-left', label: 'Abajo Izq', icon: '↙' },
+  { id: 'bottom-right', label: 'Abajo Der', icon: '↘' },
+];
+
 interface SlideData {
   id: string;
   template: SlideTemplate;
@@ -45,6 +62,7 @@ interface SlideData {
   footer?: string;
   imageDescription?: string;
   imageUrl?: string;
+  logoPosition?: LogoPosition;
 }
 
 interface TemplateOption {
@@ -83,6 +101,7 @@ export default function SlideEditor() {
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [logoPosition, setLogoPosition] = useState<LogoPosition>('top-left');
 
   const handleGenerateWithAI = async () => {
     if (!prompt.trim()) {
@@ -106,6 +125,7 @@ export default function SlideEditor() {
         mainText: prompt,
         accentText: 'TIERRA MADRE',
         footer: '@tierramadre.co | www.tierramadre.co',
+        logoPosition,
       });
       setGenerating(false);
       return;
@@ -167,6 +187,7 @@ Responde SOLO JSON válido, sin markdown.`,
         accentText: parsed.accentText,
         imageDescription: parsed.imageDescription,
         footer: '@tierramadre.co | www.tierramadre.co',
+        logoPosition,
       });
     } catch (err) {
       console.error('AI generation error:', err);
@@ -272,6 +293,51 @@ Responde SOLO JSON válido, sin markdown.`,
                 </Grid>
               ))}
             </Grid>
+          </Paper>
+
+          {/* Logo Position Selection */}
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ImageIcon fontSize="small" />
+              Posición del Logo
+            </Typography>
+            <Grid container spacing={1}>
+              {LOGO_POSITIONS.map((pos) => (
+                <Grid item xs={4} sm={2.4} key={pos.id}>
+                  <Card
+                    sx={{
+                      border: logoPosition === pos.id
+                        ? `2px solid ${brandColors.emeraldGreen}`
+                        : '2px solid transparent',
+                      transition: 'all 0.2s',
+                      bgcolor: logoPosition === pos.id ? 'rgba(80, 200, 120, 0.1)' : 'transparent',
+                    }}
+                  >
+                    <CardActionArea onClick={() => setLogoPosition(pos.id)}>
+                      <CardContent sx={{ textAlign: 'center', py: 1.5 }}>
+                        <Typography variant="h6">{pos.icon}</Typography>
+                        <Typography variant="caption" display="block" sx={{ fontSize: '10px' }}>
+                          {pos.label}
+                        </Typography>
+                      </CardContent>
+                    </CardActionArea>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+            {logoPosition !== 'none' && (
+              <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  component="img"
+                  src="/logo-tierra-madre.png"
+                  alt="Logo Preview"
+                  sx={{ height: 32, width: 'auto', borderRadius: 1 }}
+                />
+                <Typography variant="caption" color="grey.500">
+                  Logo Tierra Madre
+                </Typography>
+              </Box>
+            )}
           </Paper>
 
           {/* AI Prompt Input */}
@@ -425,6 +491,26 @@ Responde SOLO JSON válido, sin markdown.`,
                         height: 100,
                         background: `radial-gradient(ellipse, ${brandColors.emeraldGreen}40 0%, transparent 70%)`,
                         filter: 'blur(20px)',
+                      }}
+                    />
+                  )}
+
+                  {/* Logo overlay based on position */}
+                  {logoPosition !== 'none' && (
+                    <Box
+                      component="img"
+                      src="/logo-tierra-madre.png"
+                      alt="Tierra Madre Logo"
+                      sx={{
+                        position: 'absolute',
+                        width: 48,
+                        height: 'auto',
+                        zIndex: 10,
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))',
+                        ...(logoPosition === 'top-left' && { top: 12, left: 12 }),
+                        ...(logoPosition === 'top-right' && { top: 12, right: 12 }),
+                        ...(logoPosition === 'bottom-left' && { bottom: 12, left: 12 }),
+                        ...(logoPosition === 'bottom-right' && { bottom: 12, right: 12 }),
                       }}
                     />
                   )}
