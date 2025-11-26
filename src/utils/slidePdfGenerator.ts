@@ -4,8 +4,80 @@ import jsPDF from 'jspdf';
 interface SlideExportOptions {
   filename?: string;
   format?: 'pdf' | 'png' | 'jpg';
-  quality?: number; // 0-1 for images
-  scale?: number; // Higher = better quality but slower
+  quality?: number;
+  scale?: number;
+}
+
+/**
+ * Convert external image URLs to base64 using a CORS proxy
+ */
+async function convertImagesToBase64(element: HTMLElement): Promise<void> {
+  const images = element.querySelectorAll('img');
+  const CORS_PROXY = 'https://corsproxy.io/?';
+
+  const promises = Array.from(images).map(async (img) => {
+    const src = img.src;
+
+    // Skip if already base64 or local
+    if (!src || src.startsWith('data:') || src.startsWith('/') || src.startsWith(window.location.origin)) {
+      return;
+    }
+
+    try {
+      // Use CORS proxy to fetch the image
+      const proxyUrl = CORS_PROXY + encodeURIComponent(src);
+      const response = await fetch(proxyUrl);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+
+      img.src = base64;
+    } catch (error) {
+      console.warn('Could not convert image to base64:', src, error);
+    }
+  });
+
+  await Promise.all(promises);
+}
+
+/**
+ * Wait for all images in element to be fully loaded
+ */
+async function waitForImages(element: HTMLElement): Promise<void> {
+  const images = element.querySelectorAll('img');
+
+  const loadPromises = Array.from(images).map((img) => {
+    if (img.complete && img.naturalHeight !== 0) {
+      return Promise.resolve();
+    }
+
+    return new Promise<void>((resolve) => {
+      const timeout = setTimeout(() => {
+        console.warn('Image load timeout:', img.src?.substring(0, 80));
+        resolve();
+      }, 10000);
+
+      img.onload = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
+      img.onerror = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
+    });
+  });
+
+  await Promise.all(loadPromises);
 }
 
 /**
@@ -18,7 +90,7 @@ export async function generateSlidePDF(
   const {
     filename = 'tierra-madre-slide',
     format = 'pdf',
-    quality = 1.0,
+    quality = 0.95,
     scale = 2,
   } = options;
 
@@ -29,20 +101,44 @@ export async function generateSlidePDF(
   }
 
   try {
-    // Capture the element as canvas with high quality
+    // Wait for images to load first
+    await waitForImages(element);
+
+    // Convert external images to base64 to avoid CORS
+    await convertImagesToBase64(element);
+
+    // Extra wait for rendering
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     const canvas = await html2canvas(element, {
       scale,
       useCORS: true,
       allowTaint: true,
       logging: false,
       backgroundColor: '#1a1a1f',
-      // Ensure we capture the full element
       width: element.scrollWidth,
       height: element.scrollHeight,
+      foreignObjectRendering: false,
+      // Clone and ensure all styles are computed for gradients/overlays
+      onclone: (clonedDoc) => {
+        const clonedElement = clonedDoc.getElementById(elementId);
+        if (clonedElement) {
+          // Force computed styles to be applied
+          const allElements = clonedElement.querySelectorAll('*');
+          allElements.forEach((el) => {
+            const computed = window.getComputedStyle(el as Element);
+            const htmlEl = el as HTMLElement;
+            // Ensure gradients are visible
+            if (computed.background.includes('gradient') || computed.backgroundImage.includes('gradient')) {
+              htmlEl.style.background = computed.background;
+              htmlEl.style.backgroundImage = computed.backgroundImage;
+            }
+          });
+        }
+      },
     });
 
     if (format === 'pdf') {
-      // Create PDF in landscape 16:9 format
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'px',
@@ -50,18 +146,13 @@ export async function generateSlidePDF(
         hotfixes: ['px_scaling'],
       });
 
-      // Add canvas as image to PDF
       const imgData = canvas.toDataURL('image/jpeg', quality);
       pdf.addImage(imgData, 'JPEG', 0, 0, 1920, 1080);
-
-      // Save the PDF
       pdf.save(`${filename}.pdf`);
     } else {
-      // Export as image (PNG or JPG)
       const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
       const imgData = canvas.toDataURL(mimeType, quality);
 
-      // Create download link
       const link = document.createElement('a');
       link.download = `${filename}.${format}`;
       link.href = imgData;
@@ -82,7 +173,7 @@ export async function generateMultiSlidePDF(
 ): Promise<void> {
   const {
     filename = 'tierra-madre-presentation',
-    quality = 1.0,
+    quality = 0.95,
     scale = 2,
   } = options;
 
@@ -103,6 +194,10 @@ export async function generateMultiSlidePDF(
     }
 
     try {
+      await waitForImages(element);
+      await convertImagesToBase64(element);
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const canvas = await html2canvas(element, {
         scale,
         useCORS: true,
@@ -111,11 +206,28 @@ export async function generateMultiSlidePDF(
         backgroundColor: '#1a1a1f',
         width: element.scrollWidth,
         height: element.scrollHeight,
+        foreignObjectRendering: false,
+        // Clone and ensure all styles are computed for gradients/overlays
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.getElementById(elementId);
+          if (clonedElement) {
+            // Force computed styles to be applied
+            const allElements = clonedElement.querySelectorAll('*');
+            allElements.forEach((el) => {
+              const computed = window.getComputedStyle(el as Element);
+              const htmlEl = el as HTMLElement;
+              // Ensure gradients are visible
+              if (computed.background.includes('gradient') || computed.backgroundImage.includes('gradient')) {
+                htmlEl.style.background = computed.background;
+                htmlEl.style.backgroundImage = computed.backgroundImage;
+              }
+            });
+          }
+        },
       });
 
       const imgData = canvas.toDataURL('image/jpeg', quality);
 
-      // Add new page for slides after the first
       if (i > 0) {
         pdf.addPage();
       }

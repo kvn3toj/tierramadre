@@ -13,6 +13,12 @@ import {
   Select,
   MenuItem,
   FormControl,
+  Card,
+  CardActionArea,
+  CardContent,
+  Slider,
+  Collapse,
+  IconButton,
 } from '@mui/material';
 import {
   Download as DownloadIcon,
@@ -26,6 +32,8 @@ import {
   AutoAwesome as GenerateIcon,
   NavigateBefore as PrevIcon,
   NavigateNext as NextIcon,
+  Settings as SettingsIcon,
+  ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
 import { SLIDE_WIDTH, SLIDE_HEIGHT } from './Slide2Purpose';
 import SlideEditor from './SlideEditor';
@@ -36,30 +44,36 @@ import { colors } from '../brand';
 // Legacy imports (kept for reference)
 // import { MissionTemplate, OpportunityTemplate, ... } from '../templates/MasterclassTemplates';
 
-// Import Luxury Masterclass Templates v2 (optimized for PDF export)
+// Import MClass Templates (based on MClass11.pdf design system)
 import {
-  LuxuryCoverTemplate,
-  LuxuryMissionTemplate,
-  LuxuryWorldTourTemplate,
-  LuxuryFiveReasonsTemplate,
-  LuxuryOpportunityTemplate,
-  LuxuryExpertTemplate,
-  LuxuryDifferentiatorsTemplate,
-  LuxuryCollectionTemplate,
-  LuxuryThankYouTemplate,
-} from '../templates/LuxuryMasterclassTemplates';
+  MClassCoverTemplate,
+  MClassQuoteTemplate,
+  MClassMissionTemplate,
+  MClassFiveReasonsTemplate,
+  MClassExpertTemplate,
+  MClassOriginsTemplate,
+  MClassQualityTemplate,
+  MClassOpportunityTemplate,
+  MClassCollectionTemplate,
+  MClassClosingTemplate,
+  // Logo types and constants
+  LOGO_POSITIONS,
+  LOGO_SIZES,
+  LogoPosition,
+} from '../templates/MClassTemplates';
 
-// Masterclass slide definitions - Luxury v2 (PDF optimized)
+// Masterclass slide definitions - MClass style (based on MClass11.pdf)
 const MASTERCLASS_SLIDES = [
-  { id: 'cover', name: '1. Portada', icon: '💎', component: LuxuryCoverTemplate },
-  { id: 'mission', name: '2. Nuestra Esencia', icon: '✨', component: LuxuryMissionTemplate },
-  { id: 'worldTour', name: '3. Recorriendo el Mundo', icon: '🌍', component: LuxuryWorldTourTemplate },
-  { id: 'fiveReasons', name: '4. 5 Razones', icon: '📋', component: LuxuryFiveReasonsTemplate },
-  { id: 'opportunity', name: '5. Oportunidad Diciembre', icon: '🎄', component: LuxuryOpportunityTemplate },
-  { id: 'expert', name: '6. Presentación Experto', icon: '👤', component: LuxuryExpertTemplate },
-  { id: 'differentiators', name: '7. Diferenciadores', icon: '⚡', component: LuxuryDifferentiatorsTemplate },
-  { id: 'collection', name: '8. Colección Fénix', icon: '🔥', component: LuxuryCollectionTemplate },
-  { id: 'thankYou', name: '9. Gracias', icon: '🌿', component: LuxuryThankYouTemplate },
+  { id: 'cover', name: '1. Portada', icon: '💎', component: MClassCoverTemplate },
+  { id: 'quote', name: '2. Cita', icon: '💬', component: MClassQuoteTemplate },
+  { id: 'mission', name: '3. Misión', icon: '✨', component: MClassMissionTemplate },
+  { id: 'fiveReasons', name: '4. 5 Razones', icon: '🔢', component: MClassFiveReasonsTemplate },
+  { id: 'expert', name: '5. Experto', icon: '👤', component: MClassExpertTemplate },
+  { id: 'origins', name: '6. Orígenes', icon: '🌍', component: MClassOriginsTemplate },
+  { id: 'quality', name: '7. Calidad GIA', icon: '🔬', component: MClassQualityTemplate },
+  { id: 'opportunity', name: '8. Oportunidad', icon: '📈', component: MClassOpportunityTemplate },
+  { id: 'collection', name: '9. Colección Fénix', icon: '🔥', component: MClassCollectionTemplate },
+  { id: 'closing', name: '10. Cierre', icon: '🌿', component: MClassClosingTemplate },
 ] as const;
 
 type ExportFormat = 'pdf' | 'png' | 'jpg';
@@ -76,6 +90,12 @@ export default function SlidePreview() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [renderAllSlides, setRenderAllSlides] = useState(false);
 
+  // Logo settings
+  const [logoPosition, setLogoPosition] = useState<LogoPosition>('top-right');
+  const [logoSize, setLogoSize] = useState(120);
+  const [showLogoSettings, setShowLogoSettings] = useState(false);
+  const [renderSingleSlide, setRenderSingleSlide] = useState(false);
+
   const currentSlide = MASTERCLASS_SLIDES[currentSlideIndex];
   const SlideComponent = currentSlide.component;
 
@@ -89,20 +109,25 @@ export default function SlidePreview() {
 
   const handleExport = async () => {
     setExporting(true);
+    setRenderSingleSlide(true);
     setError(null);
 
+    // Wait for offscreen slide to render
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
     try {
-      const slideId = `slide-${currentSlide.id}`;
+      const slideId = `slide-single-export-${currentSlide.id}`;
       await generateSlidePDF(slideId, {
         filename: `tierra-madre-${currentSlide.id}`,
         format: exportFormat,
-        quality: 1.0,
+        quality: 0.95,
         scale: 2,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al exportar la diapositiva');
     }
 
+    setRenderSingleSlide(false);
     setExporting(false);
   };
 
@@ -111,18 +136,20 @@ export default function SlidePreview() {
     setRenderAllSlides(true);
     setError(null);
 
-    // Wait for all slides to render
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Wait for all slides to render and images to load (increased for reliability)
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     try {
       const slideIds = MASTERCLASS_SLIDES.map(slide => `slide-export-${slide.id}`);
       await generateMultiSlidePDF(slideIds, {
         filename: 'tierra-madre-masterclass-completa',
-        quality: 1.0,
+        quality: 0.92,
         scale: 2,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al exportar la presentación');
+      console.error('PDF Export Error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error al exportar la presentación';
+      setError(errorMessage);
     }
 
     setRenderAllSlides(false);
@@ -306,7 +333,124 @@ export default function SlidePreview() {
             >
               {exportingAll ? 'Generando PDF...' : 'Descargar Todo (PDF)'}
             </Button>
+
+            {/* Logo Settings Toggle */}
+            <Tooltip title="Configurar Logo">
+              <IconButton
+                onClick={() => setShowLogoSettings(!showLogoSettings)}
+                sx={{
+                  bgcolor: showLogoSettings ? colors.emeraldDeep : 'transparent',
+                  color: showLogoSettings ? 'white' : 'inherit',
+                  '&:hover': { bgcolor: showLogoSettings ? colors.mysticalDark : 'action.hover' },
+                }}
+              >
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
           </Paper>
+
+          {/* Logo Settings Panel */}
+          <Collapse in={showLogoSettings}>
+            <Paper sx={{ p: 2, mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ImageIcon fontSize="small" />
+                  Configuración del Logo
+                </Typography>
+                <IconButton size="small" onClick={() => setShowLogoSettings(false)}>
+                  <ExpandLessIcon />
+                </IconButton>
+              </Box>
+
+              {/* Logo Position */}
+              <Typography variant="caption" color="grey.500" sx={{ mb: 1, display: 'block' }}>
+                Posición del Logo
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
+                {LOGO_POSITIONS.map((pos) => (
+                  <Card
+                    key={pos.id}
+                    sx={{
+                      minWidth: 70,
+                      border: logoPosition === pos.id
+                        ? `2px solid ${colors.emeraldDeep}`
+                        : '2px solid transparent',
+                      transition: 'all 0.2s',
+                      bgcolor: logoPosition === pos.id ? 'rgba(10, 77, 60, 0.1)' : 'transparent',
+                    }}
+                  >
+                    <CardActionArea onClick={() => setLogoPosition(pos.id)}>
+                      <CardContent sx={{ textAlign: 'center', py: 1, px: 1.5 }}>
+                        <Typography variant="h6" sx={{ lineHeight: 1 }}>{pos.icon}</Typography>
+                        <Typography variant="caption" sx={{ fontSize: '10px' }}>
+                          {pos.label}
+                        </Typography>
+                      </CardContent>
+                    </CardActionArea>
+                  </Card>
+                ))}
+              </Box>
+
+              {/* Logo Size */}
+              <Typography variant="caption" color="grey.500" sx={{ mb: 1, display: 'block' }}>
+                Tamaño del Logo: {logoSize}px
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  {LOGO_SIZES.map((size) => (
+                    <Button
+                      key={size.id}
+                      size="small"
+                      variant={logoSize === size.value ? 'contained' : 'outlined'}
+                      onClick={() => setLogoSize(size.value)}
+                      sx={{
+                        minWidth: 'auto',
+                        px: 1.5,
+                        ...(logoSize === size.value && {
+                          bgcolor: colors.emeraldDeep,
+                          '&:hover': { bgcolor: colors.mysticalDark },
+                        }),
+                      }}
+                    >
+                      {size.label}
+                    </Button>
+                  ))}
+                </Box>
+                <Box sx={{ flex: 1, maxWidth: 200 }}>
+                  <Slider
+                    value={logoSize}
+                    onChange={(_, value) => setLogoSize(value as number)}
+                    min={50}
+                    max={350}
+                    valueLabelDisplay="auto"
+                    sx={{
+                      color: colors.emeraldDeep,
+                      '& .MuiSlider-thumb': {
+                        '&:hover, &.Mui-focusVisible': {
+                          boxShadow: `0px 0px 0px 8px rgba(10, 77, 60, 0.16)`,
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+              </Box>
+
+              {/* Logo Preview */}
+              {logoPosition !== 'none' && (
+                <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box
+                    component="img"
+                    src="/logo.png"
+                    alt="Logo Preview"
+                    sx={{ height: 32, width: 'auto', borderRadius: 1 }}
+                  />
+                  <Typography variant="caption" color="grey.500">
+                    Vista previa del logo en posición: {LOGO_POSITIONS.find(p => p.id === logoPosition)?.label}
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
+          </Collapse>
 
           {error && (
             <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -350,7 +494,11 @@ export default function SlidePreview() {
                   position: 'absolute',
                 }}
               >
-                <SlideComponent id={`slide-${currentSlide.id}`} />
+                <SlideComponent
+                  id={`slide-${currentSlide.id}`}
+                  logoPosition={logoPosition}
+                  logoSize={logoSize}
+                />
               </Box>
             </Box>
           </Paper>
@@ -403,6 +551,25 @@ export default function SlidePreview() {
         <SlideEditor />
       )}
 
+      {/* Offscreen container for exporting single slide */}
+      {renderSingleSlide && (
+        <Box
+          sx={{
+            position: 'fixed',
+            left: '-9999px',
+            top: 0,
+            zIndex: -1,
+            opacity: 1,
+          }}
+        >
+          <SlideComponent
+            id={`slide-single-export-${currentSlide.id}`}
+            logoPosition={logoPosition}
+            logoSize={logoSize}
+          />
+        </Box>
+      )}
+
       {/* Offscreen container for exporting all slides */}
       {renderAllSlides && (
         <Box
@@ -418,7 +585,11 @@ export default function SlidePreview() {
             const SlideComp = slide.component;
             return (
               <Box key={slide.id} sx={{ mb: 2 }}>
-                <SlideComp id={`slide-export-${slide.id}`} />
+                <SlideComp
+                  id={`slide-export-${slide.id}`}
+                  logoPosition={logoPosition}
+                  logoSize={logoSize}
+                />
               </Box>
             );
           })}
