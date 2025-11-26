@@ -176,19 +176,41 @@ Responde SOLO JSON válido, sin markdown.`,
         .replace(/```\n?/g, '')
         .trim();
 
-      const parsed = JSON.parse(cleanedContent);
+      try {
+        const parsed = JSON.parse(cleanedContent);
 
-      setGeneratedSlide({
-        id: Date.now().toString(),
-        template: parsed.template || selectedTemplate || 'purpose',
-        title: parsed.title || 'TIERRA MADRE',
-        subtitle: parsed.subtitle,
-        mainText: parsed.mainText,
-        accentText: parsed.accentText,
-        imageDescription: parsed.imageDescription,
-        footer: '@tierramadre.co | www.tierramadre.co',
-        logoPosition,
-      });
+        setGeneratedSlide({
+          id: Date.now().toString(),
+          template: parsed.template || selectedTemplate || 'purpose',
+          title: parsed.title || 'TIERRA MADRE',
+          subtitle: parsed.subtitle,
+          mainText: parsed.mainText,
+          accentText: parsed.accentText,
+          imageDescription: parsed.imageDescription,
+          footer: '@tierramadre.co | www.tierramadre.co',
+          logoPosition,
+        });
+      } catch (parseError) {
+        // Fallback: try to extract data manually from malformed JSON
+        console.warn('JSON parse failed, using fallback:', parseError);
+
+        const titleMatch = cleanedContent.match(/"title"\s*:\s*"([^"]+)"/);
+        const subtitleMatch = cleanedContent.match(/"subtitle"\s*:\s*"([^"]+)"/);
+        const accentMatch = cleanedContent.match(/"accentText"\s*:\s*"([^"]+)"/);
+        const imageDescMatch = cleanedContent.match(/"imageDescription"\s*:\s*"([^"]+)"/);
+
+        setGeneratedSlide({
+          id: Date.now().toString(),
+          template: selectedTemplate || 'purpose',
+          title: titleMatch?.[1] || 'TIERRA MADRE',
+          subtitle: subtitleMatch?.[1] || prompt.substring(0, 50),
+          mainText: prompt,
+          accentText: accentMatch?.[1] || 'ESENCIA Y PODER',
+          imageDescription: imageDescMatch?.[1] || 'Esmeralda colombiana brillante',
+          footer: '@tierramadre.co | www.tierramadre.co',
+          logoPosition,
+        });
+      }
     } catch (err) {
       console.error('AI generation error:', err);
       setError(err instanceof Error ? err.message : 'Error generando contenido');
