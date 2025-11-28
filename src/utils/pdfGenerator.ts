@@ -7,20 +7,22 @@ interface CatalogOptions {
   showWeights: boolean;
   showLotCodes: boolean;
   layout: 'grid' | 'list' | 'carousel';
+  logoBase64?: string;
 }
 
 // Tierra Madre Brand Colors - Premium Palette
 const BRAND = {
   emeraldGreen: '#00AE7A',
-  emeraldDark: '#006B4D',
+  emeraldDark: '#008F63',
   emeraldLight: '#00C98C',
   gold: '#C9A962',
   goldLight: '#E5D4A1',
   darkBg: '#0A0A0A',
-  charcoal: '#141414',
-  surface: '#1C1C1C',
+  charcoal: '#111111',
+  surface: '#1A1A1A',
   white: '#FFFFFF',
   offWhite: '#F5F5F5',
+  cream: '#FAF8F5',
   lightGray: '#9A9A9A',
   mediumGray: '#5A5A5A',
   darkGray: '#2A2A2A',
@@ -38,49 +40,71 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
     : { r: 0, g: 0, b: 0 };
 }
 
-// Set fill color from hex
 function setFillFromHex(pdf: jsPDF, hex: string) {
   const rgb = hexToRgb(hex);
   pdf.setFillColor(rgb.r, rgb.g, rgb.b);
 }
 
-// Set draw color from hex
 function setDrawFromHex(pdf: jsPDF, hex: string) {
   const rgb = hexToRgb(hex);
   pdf.setDrawColor(rgb.r, rgb.g, rgb.b);
 }
 
-// Set text color from hex
 function setTextFromHex(pdf: jsPDF, hex: string) {
   const rgb = hexToRgb(hex);
   pdf.setTextColor(rgb.r, rgb.g, rgb.b);
+}
+
+// Load logo as base64 from public folder
+export async function loadLogoBase64(): Promise<string> {
+  try {
+    const response = await fetch('/logo-tierra-madre.png');
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Failed to load logo:', error);
+    return '';
+  }
 }
 
 export async function generateCatalog(
   emeralds: Emerald[],
   options: CatalogOptions
 ): Promise<jsPDF> {
+  // Load logo if not provided
+  let logoBase64 = options.logoBase64;
+  if (!logoBase64) {
+    logoBase64 = await loadLogoBase64();
+  }
+
+  // Use LANDSCAPE orientation for carousel, portrait for others
+  const isCarousel = options.layout === 'carousel';
   const pdf = new jsPDF({
-    orientation: 'portrait',
+    orientation: isCarousel ? 'landscape' : 'portrait',
     unit: 'mm',
     format: 'a4',
   });
 
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 15;
+  const margin = 12;
   const contentWidth = pageWidth - 2 * margin;
 
   // Cover Page
-  if (options.layout === 'carousel') {
-    addPremiumCoverPage(pdf, pageWidth, pageHeight, options.title, emeralds.length);
+  if (isCarousel) {
+    addHorizontalCoverPage(pdf, pageWidth, pageHeight, options.title, emeralds.length, logoBase64);
   } else {
     addCoverPage(pdf, pageWidth, pageHeight, options.title);
   }
 
   // Content Pages
-  if (options.layout === 'carousel') {
-    await addPremiumCarouselLayout(pdf, emeralds, options, margin, contentWidth, pageWidth, pageHeight);
+  if (isCarousel) {
+    await addHorizontalCarouselLayout(pdf, emeralds, options, margin, contentWidth, pageWidth, pageHeight, logoBase64);
   } else {
     pdf.addPage();
     if (options.layout === 'grid') {
@@ -93,260 +117,235 @@ export async function generateCatalog(
   return pdf;
 }
 
-// Premium Cover Page for Carousel Catalog
-function addPremiumCoverPage(
+// Horizontal Cover Page with Logo
+function addHorizontalCoverPage(
   pdf: jsPDF,
   pageWidth: number,
   pageHeight: number,
   title?: string,
-  totalItems?: number
+  totalItems?: number,
+  logoBase64?: string
 ) {
   // Rich dark background
   setFillFromHex(pdf, BRAND.darkBg);
   pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
-  // Subtle gradient effect with overlapping rectangles
-  setFillFromHex(pdf, BRAND.charcoal);
-  pdf.rect(0, pageHeight * 0.3, pageWidth, pageHeight * 0.4, 'F');
-
-  // Elegant border frame
-  const borderMargin = 12;
+  // Elegant gold border frame
+  const borderMargin = 10;
   setDrawFromHex(pdf, BRAND.gold);
-  pdf.setLineWidth(0.3);
+  pdf.setLineWidth(0.4);
   pdf.rect(borderMargin, borderMargin, pageWidth - borderMargin * 2, pageHeight - borderMargin * 2);
 
-  // Inner decorative line
+  // Inner border
   pdf.setLineWidth(0.15);
-  pdf.rect(borderMargin + 3, borderMargin + 3, pageWidth - borderMargin * 2 - 6, pageHeight - borderMargin * 2 - 6);
+  pdf.rect(borderMargin + 4, borderMargin + 4, pageWidth - borderMargin * 2 - 8, pageHeight - borderMargin * 2 - 8);
 
-  // Corner ornaments
-  const cornerSize = 20;
-  const corners = [
-    { x: borderMargin, y: borderMargin }, // top-left
-    { x: pageWidth - borderMargin - cornerSize, y: borderMargin }, // top-right
-    { x: borderMargin, y: pageHeight - borderMargin - cornerSize }, // bottom-left
-    { x: pageWidth - borderMargin - cornerSize, y: pageHeight - borderMargin - cornerSize }, // bottom-right
-  ];
+  // Corner accents
+  const cornerLength = 25;
+  pdf.setLineWidth(0.6);
+  // Top-left
+  pdf.line(borderMargin, borderMargin + cornerLength, borderMargin, borderMargin);
+  pdf.line(borderMargin, borderMargin, borderMargin + cornerLength, borderMargin);
+  // Top-right
+  pdf.line(pageWidth - borderMargin - cornerLength, borderMargin, pageWidth - borderMargin, borderMargin);
+  pdf.line(pageWidth - borderMargin, borderMargin, pageWidth - borderMargin, borderMargin + cornerLength);
+  // Bottom-left
+  pdf.line(borderMargin, pageHeight - borderMargin - cornerLength, borderMargin, pageHeight - borderMargin);
+  pdf.line(borderMargin, pageHeight - borderMargin, borderMargin + cornerLength, pageHeight - borderMargin);
+  // Bottom-right
+  pdf.line(pageWidth - borderMargin - cornerLength, pageHeight - borderMargin, pageWidth - borderMargin, pageHeight - borderMargin);
+  pdf.line(pageWidth - borderMargin, pageHeight - borderMargin - cornerLength, pageWidth - borderMargin, pageHeight - borderMargin);
 
-  pdf.setLineWidth(0.5);
-  corners.forEach((corner, idx) => {
-    // Draw L-shaped corner ornaments
-    if (idx === 0) {
-      pdf.line(corner.x, corner.y + cornerSize, corner.x, corner.y);
-      pdf.line(corner.x, corner.y, corner.x + cornerSize, corner.y);
-    } else if (idx === 1) {
-      pdf.line(corner.x, corner.y, corner.x + cornerSize, corner.y);
-      pdf.line(corner.x + cornerSize, corner.y, corner.x + cornerSize, corner.y + cornerSize);
-    } else if (idx === 2) {
-      pdf.line(corner.x, corner.y, corner.x, corner.y + cornerSize);
-      pdf.line(corner.x, corner.y + cornerSize, corner.x + cornerSize, corner.y + cornerSize);
-    } else {
-      pdf.line(corner.x, corner.y + cornerSize, corner.x + cornerSize, corner.y + cornerSize);
-      pdf.line(corner.x + cornerSize, corner.y, corner.x + cornerSize, corner.y + cornerSize);
-    }
-  });
-
-  // Top decorative element - emerald shape
   const centerX = pageWidth / 2;
-  const gemY = pageHeight * 0.22;
-  drawLuxuryEmeraldGem(pdf, centerX, gemY, 18);
+  const centerY = pageHeight / 2;
 
-  // Brand name - elegant typography
-  const brandY = pageHeight * 0.38;
-  setTextFromHex(pdf, BRAND.white);
-  pdf.setFontSize(42);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('TIERRA MADRE', centerX, brandY, { align: 'center' });
+  // Add Logo Image
+  if (logoBase64) {
+    try {
+      const logoWidth = 80;
+      const logoHeight = 45;
+      pdf.addImage(
+        logoBase64,
+        'PNG',
+        centerX - logoWidth / 2,
+        centerY - 35,
+        logoWidth,
+        logoHeight
+      );
+    } catch (e) {
+      console.error('Failed to add logo to PDF:', e);
+      // Fallback text
+      setTextFromHex(pdf, BRAND.emeraldGreen);
+      pdf.setFontSize(32);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('TIERRA MADRE', centerX, centerY - 10, { align: 'center' });
+    }
+  } else {
+    // Fallback text if no logo
+    setTextFromHex(pdf, BRAND.emeraldGreen);
+    pdf.setFontSize(32);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('TIERRA MADRE', centerX, centerY - 10, { align: 'center' });
+  }
 
-  // Decorative line under brand
+  // Decorative line under logo
   setDrawFromHex(pdf, BRAND.gold);
-  pdf.setLineWidth(0.8);
-  const lineWidth = 60;
-  pdf.line(centerX - lineWidth / 2, brandY + 8, centerX + lineWidth / 2, brandY + 8);
+  pdf.setLineWidth(0.5);
+  pdf.line(centerX - 50, centerY + 18, centerX + 50, centerY + 18);
 
   // Tagline
   setTextFromHex(pdf, BRAND.gold);
   pdf.setFontSize(11);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('E S E N C I A   Y   P O D E R', centerX, brandY + 20, { align: 'center' });
+  pdf.text('E S E N C I A   Y   P O D E R', centerX, centerY + 28, { align: 'center' });
 
   // Catalog title
   if (title) {
     setTextFromHex(pdf, BRAND.offWhite);
-    pdf.setFontSize(16);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(title, centerX, pageHeight * 0.55, { align: 'center' });
+    pdf.setFontSize(14);
+    pdf.text(title, centerX, centerY + 42, { align: 'center' });
   }
 
-  // Collection info
+  // Collection count
   if (totalItems) {
     setTextFromHex(pdf, BRAND.lightGray);
-    pdf.setFontSize(10);
-    pdf.text(`${totalItems} piezas exclusivas`, centerX, pageHeight * 0.60, { align: 'center' });
+    pdf.setFontSize(9);
+    pdf.text(`${totalItems} piezas exclusivas`, centerX, centerY + 52, { align: 'center' });
   }
 
-  // Bottom section - Colombian origin badge
-  const badgeY = pageHeight * 0.78;
+  // Bottom badge
   setDrawFromHex(pdf, BRAND.emeraldGreen);
   pdf.setLineWidth(0.3);
-  pdf.line(centerX - 35, badgeY, centerX + 35, badgeY);
+  const badgeY = pageHeight - borderMargin - 22;
+  pdf.line(centerX - 40, badgeY, centerX + 40, badgeY);
 
   setTextFromHex(pdf, BRAND.emeraldGreen);
-  pdf.setFontSize(9);
+  pdf.setFontSize(8);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('100% ESMERALDAS COLOMBIANAS', centerX, badgeY + 8, { align: 'center' });
+  pdf.text('100% ESMERALDAS COLOMBIANAS', centerX, badgeY + 6, { align: 'center' });
 
   setTextFromHex(pdf, BRAND.lightGray);
-  pdf.setFontSize(8);
+  pdf.setFontSize(7);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Certificadas • Naturales • Exclusivas', centerX, badgeY + 15, { align: 'center' });
+  pdf.text('Certificadas • Naturales • Exclusivas', centerX, badgeY + 12, { align: 'center' });
 
-  // Date at bottom
+  // Date and website
   setTextFromHex(pdf, BRAND.mediumGray);
-  pdf.setFontSize(9);
-  const date = new Date().toLocaleDateString('es-CO', {
-    year: 'numeric',
-    month: 'long',
-  });
-  pdf.text(date.charAt(0).toUpperCase() + date.slice(1), centerX, pageHeight - 20, { align: 'center' });
-
-  // Website
-  setTextFromHex(pdf, BRAND.gold);
   pdf.setFontSize(8);
-  pdf.text('tierramadre.co', centerX, pageHeight - 14, { align: 'center' });
+  const date = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long' });
+  pdf.text(date.charAt(0).toUpperCase() + date.slice(1), borderMargin + 8, pageHeight - borderMargin - 5);
+
+  setTextFromHex(pdf, BRAND.gold);
+  pdf.text('tierramadre.co', pageWidth - borderMargin - 8, pageHeight - borderMargin - 5, { align: 'right' });
 }
 
-// Draw luxury emerald gem shape
-function drawLuxuryEmeraldGem(pdf: jsPDF, x: number, y: number, size: number) {
-  setDrawFromHex(pdf, BRAND.emeraldGreen);
-  setFillFromHex(pdf, BRAND.emeraldGreen);
-
-  // Outer emerald shape
-  const s = size;
-  pdf.setLineWidth(1);
-
-  // Draw hexagonal emerald cut shape
-  const points = [
-    { x: x, y: y - s * 0.6 },        // top
-    { x: x + s * 0.5, y: y - s * 0.3 }, // top-right
-    { x: x + s * 0.5, y: y + s * 0.3 }, // bottom-right
-    { x: x, y: y + s * 0.6 },        // bottom
-    { x: x - s * 0.5, y: y + s * 0.3 }, // bottom-left
-    { x: x - s * 0.5, y: y - s * 0.3 }, // top-left
-  ];
-
-  // Draw outline
-  for (let i = 0; i < points.length; i++) {
-    const next = (i + 1) % points.length;
-    pdf.line(points[i].x, points[i].y, points[next].x, points[next].y);
-  }
-
-  // Inner facet lines
-  pdf.setLineWidth(0.3);
-  // Horizontal center line
-  pdf.line(x - s * 0.4, y, x + s * 0.4, y);
-  // Diagonal lines from top
-  pdf.line(x, y - s * 0.5, x - s * 0.35, y);
-  pdf.line(x, y - s * 0.5, x + s * 0.35, y);
-  // Diagonal lines from bottom
-  pdf.line(x, y + s * 0.5, x - s * 0.35, y);
-  pdf.line(x, y + s * 0.5, x + s * 0.35, y);
-}
-
-// Premium Carousel Layout - One emerald per page with luxury design
-async function addPremiumCarouselLayout(
+// Horizontal Carousel Layout - Landscape with image on left, info on right
+async function addHorizontalCarouselLayout(
   pdf: jsPDF,
   emeralds: Emerald[],
   options: CatalogOptions,
   margin: number,
   _contentWidth: number,
   pageWidth: number,
-  pageHeight: number
+  pageHeight: number,
+  logoBase64?: string
 ) {
   for (let i = 0; i < emeralds.length; i++) {
     const emerald = emeralds[i];
     pdf.addPage();
 
-    // Rich dark background
+    // Dark elegant background
     setFillFromHex(pdf, BRAND.darkBg);
     pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
-    // Subtle surface rectangle for content area
+    // Subtle surface area
     setFillFromHex(pdf, BRAND.charcoal);
     pdf.rect(margin - 2, margin - 2, pageWidth - margin * 2 + 4, pageHeight - margin * 2 + 4, 'F');
 
-    // Elegant gold border frame
+    // Gold border frame
     setDrawFromHex(pdf, BRAND.gold);
     pdf.setLineWidth(0.4);
     pdf.rect(margin, margin, pageWidth - margin * 2, pageHeight - margin * 2);
 
-    // === HEADER SECTION ===
-    const headerY = margin + 10;
-
-    // Brand name - smaller, elegant
-    setTextFromHex(pdf, BRAND.emeraldGreen);
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('TIERRA MADRE', pageWidth / 2, headerY, { align: 'center' });
-
-    // Small decorative line
-    setDrawFromHex(pdf, BRAND.gold);
-    pdf.setLineWidth(0.3);
-    pdf.line(pageWidth / 2 - 20, headerY + 4, pageWidth / 2 + 20, headerY + 4);
-
-    // === IMAGE SECTION - Large and prominent ===
-    const imageY = headerY + 12;
+    // === LEFT SIDE: IMAGE (55% of width) ===
+    const imageAreaWidth = (pageWidth - margin * 2) * 0.55;
     const imageMargin = margin + 8;
-    const maxImageWidth = pageWidth - imageMargin * 2;
-    const maxImageHeight = pageHeight * 0.48;
+    const imageWidth = imageAreaWidth - 16;
+    const imageHeight = pageHeight - margin * 2 - 30;
+    const imageY = margin + 15;
 
-    // Image frame with gold accent
+    // Image frame
     setDrawFromHex(pdf, BRAND.gold);
     pdf.setLineWidth(0.5);
-    pdf.rect(imageMargin - 1, imageY - 1, maxImageWidth + 2, maxImageHeight + 2);
-
-    // Inner dark border
-    setDrawFromHex(pdf, BRAND.darkGray);
-    pdf.setLineWidth(2);
-    pdf.rect(imageMargin, imageY, maxImageWidth, maxImageHeight);
+    pdf.rect(imageMargin - 1, imageY - 1, imageWidth + 2, imageHeight + 2);
 
     if (emerald.imageUrl) {
       try {
         pdf.addImage(
           emerald.imageUrl,
           'JPEG',
-          imageMargin + 1,
-          imageY + 1,
-          maxImageWidth - 2,
-          maxImageHeight - 2,
+          imageMargin,
+          imageY,
+          imageWidth,
+          imageHeight,
           undefined,
           'FAST'
         );
       } catch {
         setFillFromHex(pdf, BRAND.surface);
-        pdf.rect(imageMargin + 1, imageY + 1, maxImageWidth - 2, maxImageHeight - 2, 'F');
+        pdf.rect(imageMargin, imageY, imageWidth, imageHeight, 'F');
         setTextFromHex(pdf, BRAND.mediumGray);
-        pdf.setFontSize(12);
-        pdf.text('Imagen no disponible', pageWidth / 2, imageY + maxImageHeight / 2, { align: 'center' });
+        pdf.setFontSize(10);
+        pdf.text('Imagen no disponible', imageMargin + imageWidth / 2, imageY + imageHeight / 2, { align: 'center' });
       }
     }
 
-    // === PRODUCT INFO SECTION ===
-    const infoY = imageY + maxImageHeight + 12;
+    // === RIGHT SIDE: INFO (45% of width) ===
+    const infoX = margin + imageAreaWidth + 10;
+    const infoWidth = pageWidth - margin - infoX - 10;
+    let infoY = margin + 15;
 
-    // Product name - Large, gold, elegant
+    // Logo at top of info section
+    if (logoBase64) {
+      try {
+        const logoWidth = 60;
+        const logoHeight = 34;
+        pdf.addImage(
+          logoBase64,
+          'PNG',
+          infoX + (infoWidth - logoWidth) / 2,
+          infoY,
+          logoWidth,
+          logoHeight
+        );
+        infoY += logoHeight + 8;
+      } catch {
+        // Fallback to text
+        setTextFromHex(pdf, BRAND.emeraldGreen);
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('TIERRA MADRE', infoX + infoWidth / 2, infoY + 10, { align: 'center' });
+        infoY += 20;
+      }
+    }
+
+    // Decorative line
+    setDrawFromHex(pdf, BRAND.gold);
+    pdf.setLineWidth(0.3);
+    pdf.line(infoX + 20, infoY, infoX + infoWidth - 20, infoY);
+    infoY += 10;
+
+    // Product name - Large gold
     setTextFromHex(pdf, BRAND.gold);
-    pdf.setFontSize(28);
+    pdf.setFontSize(22);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(emerald.name.toUpperCase(), pageWidth / 2, infoY, { align: 'center' });
 
-    // Decorative separator
-    const sepY = infoY + 6;
-    setDrawFromHex(pdf, BRAND.emeraldGreen);
-    pdf.setLineWidth(0.5);
-    pdf.line(pageWidth / 2 - 25, sepY, pageWidth / 2 + 25, sepY);
+    // Word wrap for long names
+    const nameLines = pdf.splitTextToSize(emerald.name.toUpperCase(), infoWidth - 10);
+    pdf.text(nameLines, infoX + infoWidth / 2, infoY, { align: 'center' });
+    infoY += nameLines.length * 8 + 5;
 
-    // Category label
+    // Category
     setTextFromHex(pdf, BRAND.emeraldGreen);
     pdf.setFontSize(9);
     pdf.setFont('helvetica', 'normal');
@@ -356,115 +355,102 @@ async function addPremiumCarouselLayout(
       pendant: 'Dije / Colgante',
       earrings: 'Aretes con Esmeraldas',
     };
-    pdf.text(categoryLabels[emerald.category] || 'Esmeralda Colombiana', pageWidth / 2, sepY + 8, { align: 'center' });
+    pdf.text(categoryLabels[emerald.category] || 'Esmeralda Colombiana', infoX + infoWidth / 2, infoY, { align: 'center' });
+    infoY += 12;
 
-    // === DETAILS GRID ===
-    const detailsY = sepY + 18;
-    const colWidth = 55;
-    const col1X = pageWidth / 2 - colWidth - 5;
-    const col2X = pageWidth / 2 + 5;
-    let detailRow = 0;
-    const rowHeight = 12;
+    // Decorative separator
+    setDrawFromHex(pdf, BRAND.emeraldGreen);
+    pdf.setLineWidth(0.3);
+    pdf.line(infoX + infoWidth / 2 - 25, infoY, infoX + infoWidth / 2 + 25, infoY);
+    infoY += 12;
 
-    // Helper to add detail row
-    const addDetailRow = (label: string, value: string, highlight: boolean = false) => {
-      const y = detailsY + detailRow * rowHeight;
+    // Details section
+    const detailLabelX = infoX + 15;
+    const detailValueX = infoX + infoWidth - 15;
+    const detailRowHeight = 10;
 
-      // Label
+    const addDetail = (label: string, value: string, highlight = false) => {
       setTextFromHex(pdf, BRAND.lightGray);
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(label, col1X + colWidth, y, { align: 'right' });
+      pdf.text(label, detailLabelX, infoY);
 
-      // Value
       if (highlight) {
         setTextFromHex(pdf, BRAND.emeraldGreen);
       } else {
         setTextFromHex(pdf, BRAND.white);
       }
       pdf.setFont('helvetica', 'bold');
-      pdf.text(value, col2X, y);
-
-      detailRow++;
+      pdf.text(value, detailValueX, infoY, { align: 'right' });
+      infoY += detailRowHeight;
     };
 
-    // Weight
     if (options.showWeights && emerald.weightCarats) {
-      addDetailRow('Peso', `${emerald.weightCarats} quilates`);
+      addDetail('Peso', `${emerald.weightCarats} quilates`);
     }
-
-    // Lot code / Reference
     if (options.showLotCodes && emerald.lotCode) {
-      addDetailRow('Referencia', emerald.lotCode);
+      addDetail('Referencia', emerald.lotCode);
     }
+    addDetail('Origen', 'Colombia');
 
-    // Origin - always show
-    addDetailRow('Origen', 'Colombia');
-
-    // Status
     const statusLabels: Record<string, string> = {
       available: 'Disponible',
       sold: 'Vendida',
       reserved: 'Reservada',
     };
-    addDetailRow('Estado', statusLabels[emerald.status] || 'Disponible', true);
+    addDetail('Estado', statusLabels[emerald.status] || 'Disponible', true);
 
-    // === PRICE SECTION ===
+    infoY += 5;
+
+    // Price - prominent display in gold box
     if (options.showPrices && emerald.priceCOP) {
-      const priceY = detailsY + detailRow * rowHeight + 8;
+      const priceBoxWidth = infoWidth - 30;
+      const priceBoxX = infoX + 15;
 
-      // Price background accent
       setFillFromHex(pdf, BRAND.surface);
-      pdf.rect(pageWidth / 2 - 40, priceY - 5, 80, 14, 'F');
-
+      pdf.rect(priceBoxX, infoY, priceBoxWidth, 16, 'F');
       setDrawFromHex(pdf, BRAND.gold);
-      pdf.setLineWidth(0.3);
-      pdf.rect(pageWidth / 2 - 40, priceY - 5, 80, 14);
+      pdf.setLineWidth(0.4);
+      pdf.rect(priceBoxX, infoY, priceBoxWidth, 16);
 
       setTextFromHex(pdf, BRAND.gold);
-      pdf.setFontSize(18);
+      pdf.setFontSize(16);
       pdf.setFont('helvetica', 'bold');
       const price = new Intl.NumberFormat('es-CO', {
         style: 'currency',
         currency: 'COP',
         maximumFractionDigits: 0,
       }).format(emerald.priceCOP);
-      pdf.text(price, pageWidth / 2, priceY + 4, { align: 'center' });
+      pdf.text(price, priceBoxX + priceBoxWidth / 2, infoY + 11, { align: 'center' });
+      infoY += 22;
     }
 
-    // === AI DESCRIPTION ===
+    // AI Description
     if (emerald.aiDescription) {
-      const descY = options.showPrices && emerald.priceCOP
-        ? detailsY + detailRow * rowHeight + 28
-        : detailsY + detailRow * rowHeight + 12;
-
       setTextFromHex(pdf, BRAND.lightGray);
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'italic');
-
-      const maxDescWidth = pageWidth - margin * 2 - 20;
-      const lines = pdf.splitTextToSize(`"${emerald.aiDescription}"`, maxDescWidth);
-      const linesToShow = lines.slice(0, 2);
-      pdf.text(linesToShow, pageWidth / 2, descY, { align: 'center' });
+      const descLines = pdf.splitTextToSize(`"${emerald.aiDescription}"`, infoWidth - 20);
+      const linesToShow = descLines.slice(0, 3);
+      pdf.text(linesToShow, infoX + infoWidth / 2, infoY, { align: 'center' });
     }
 
     // === FOOTER ===
     const footerY = pageHeight - margin - 4;
 
-    // Page indicator
+    // Page indicator (left)
     setTextFromHex(pdf, BRAND.mediumGray);
     pdf.setFontSize(8);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(`${i + 1} de ${emeralds.length}`, pageWidth / 2, footerY - 6, { align: 'center' });
+    pdf.text(`${i + 1} de ${emeralds.length}`, margin + 8, footerY);
 
-    // Website / Contact
+    // Website (center)
     setTextFromHex(pdf, BRAND.emeraldGreen);
     pdf.setFontSize(7);
-    pdf.text('tierramadre.co  •  Esmeraldas Colombianas 100% Naturales', pageWidth / 2, footerY, { align: 'center' });
+    pdf.text('tierramadre.co • Esmeraldas Colombianas 100% Naturales', pageWidth / 2, footerY, { align: 'center' });
   }
 }
 
-// Original cover page for grid/list layouts
+// Original cover page for grid/list layouts (Portrait)
 function addCoverPage(
   pdf: jsPDF,
   pageWidth: number,
@@ -474,7 +460,7 @@ function addCoverPage(
   setFillFromHex(pdf, BRAND.darkBg);
   pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
-  setTextFromHex(pdf, BRAND.white);
+  setTextFromHex(pdf, BRAND.emeraldGreen);
   pdf.setFontSize(36);
   pdf.setFont('helvetica', 'bold');
   pdf.text('TIERRA MADRE', pageWidth / 2, pageHeight / 2 - 20, { align: 'center' });
@@ -491,10 +477,7 @@ function addCoverPage(
 
   setTextFromHex(pdf, BRAND.mediumGray);
   pdf.setFontSize(10);
-  const date = new Date().toLocaleDateString('es-CO', {
-    year: 'numeric',
-    month: 'long',
-  });
+  const date = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long' });
   pdf.text(date, pageWidth / 2, pageHeight - 20, { align: 'center' });
 }
 
@@ -520,16 +503,7 @@ async function addGridLayout(
 
     if (emerald.imageUrl) {
       try {
-        pdf.addImage(
-          emerald.imageUrl,
-          'JPEG',
-          currentX,
-          currentY,
-          itemWidth,
-          imageHeight,
-          undefined,
-          'FAST'
-        );
+        pdf.addImage(emerald.imageUrl, 'JPEG', currentX, currentY, itemWidth, imageHeight, undefined, 'FAST');
       } catch {
         setFillFromHex(pdf, BRAND.surface);
         pdf.rect(currentX, currentY, itemWidth, imageHeight, 'F');
@@ -539,9 +513,7 @@ async function addGridLayout(
     pdf.setFontSize(10);
     setTextFromHex(pdf, BRAND.gold);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(emerald.name, currentX, currentY + imageHeight + 5, {
-      maxWidth: itemWidth,
-    });
+    pdf.text(emerald.name, currentX, currentY + imageHeight + 5, { maxWidth: itemWidth });
 
     pdf.setFontSize(8);
     setTextFromHex(pdf, BRAND.lightGray);
@@ -561,11 +533,7 @@ async function addGridLayout(
 
     if (options.showPrices && emerald.priceCOP) {
       setTextFromHex(pdf, BRAND.white);
-      const price = new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        maximumFractionDigits: 0,
-      }).format(emerald.priceCOP);
+      const price = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(emerald.priceCOP);
       pdf.text(price, currentX, detailY);
     }
 
@@ -614,16 +582,7 @@ async function addListLayout(
 
     if (emerald.imageUrl) {
       try {
-        pdf.addImage(
-          emerald.imageUrl,
-          'JPEG',
-          margin,
-          currentY,
-          imageSize,
-          imageSize,
-          undefined,
-          'FAST'
-        );
+        pdf.addImage(emerald.imageUrl, 'JPEG', margin, currentY, imageSize, imageSize, undefined, 'FAST');
       } catch {
         setFillFromHex(pdf, BRAND.surface);
         pdf.rect(margin, currentY, imageSize, imageSize, 'F');
@@ -640,9 +599,7 @@ async function addListLayout(
       setTextFromHex(pdf, BRAND.lightGray);
       pdf.setFont('helvetica', 'normal');
       const description = emerald.aiDescription.substring(0, 80) + (emerald.aiDescription.length > 80 ? '...' : '');
-      pdf.text(description, margin + imageSize + 5, currentY + 12, {
-        maxWidth: contentWidth - imageSize - 50,
-      });
+      pdf.text(description, margin + imageSize + 5, currentY + 12, { maxWidth: contentWidth - imageSize - 50 });
     }
 
     const rightX = contentWidth + margin - 30;
@@ -662,11 +619,7 @@ async function addListLayout(
     if (options.showPrices && emerald.priceCOP) {
       pdf.setFontSize(9);
       setTextFromHex(pdf, BRAND.emeraldGreen);
-      const price = new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        maximumFractionDigits: 0,
-      }).format(emerald.priceCOP);
+      const price = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(emerald.priceCOP);
       pdf.text(price, rightX, currentY + 20);
     }
 
