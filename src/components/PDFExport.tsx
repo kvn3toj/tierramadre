@@ -21,6 +21,7 @@ import {
   Download as DownloadIcon,
   GridView as GridIcon,
   ViewList as ListIcon,
+  ViewCarousel as CarouselIcon,
   Check as CheckIcon,
 } from '@mui/icons-material';
 import { useEmeralds } from '../hooks/useEmeralds';
@@ -38,7 +39,7 @@ export default function PDFExport() {
   const [showPrices, setShowPrices] = useState(true);
   const [showWeights, setShowWeights] = useState(true);
   const [showLotCodes, setShowLotCodes] = useState(true);
-  const [layout, setLayout] = useState<'grid' | 'list'>('grid');
+  const [layout, setLayout] = useState<'grid' | 'list' | 'carousel'>('carousel');
 
   // UI state
   const [generating, setGenerating] = useState(false);
@@ -212,8 +213,11 @@ export default function PDFExport() {
               exclusive
               onChange={(_, v) => v && setLayout(v)}
               fullWidth
-              sx={{ mb: 3 }}
+              sx={{ mb: 2 }}
             >
+              <ToggleButton value="carousel">
+                <CarouselIcon sx={{ mr: 1 }} /> Carrusel
+              </ToggleButton>
               <ToggleButton value="grid">
                 <GridIcon sx={{ mr: 1 }} /> Grilla
               </ToggleButton>
@@ -221,6 +225,12 @@ export default function PDFExport() {
                 <ListIcon sx={{ mr: 1 }} /> Lista
               </ToggleButton>
             </ToggleButtonGroup>
+
+            {layout === 'carousel' && (
+              <Alert severity="info" sx={{ mb: 2, fontSize: '0.75rem' }}>
+                <strong>Carrusel Premium:</strong> Una página por esmeralda con imagen grande, información completa y branding de Tierra Madre.
+              </Alert>
+            )}
 
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
               Incluir información

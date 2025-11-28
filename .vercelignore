@@ -1,0 +1,18 @@
+# Dependencies
+node_modules
+
+# Build outputs
+release
+dist-electron
+
+# Documentation
+docs
+
+# Electron files
+electron
+
+# Development files
+.env.local
+.env.*.local
+*.log
+.DS_Store
