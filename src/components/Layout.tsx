@@ -15,6 +15,7 @@ import {
   PictureAsPdf as PdfIcon,
   AutoFixHigh as NormalizerIcon,
   Slideshow as SlideshowIcon,
+  Receipt as ReceiptIcon,
 } from '@mui/icons-material';
 import { TabValue } from '../App';
 import { brandColors } from '../theme';
@@ -103,6 +104,12 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
             value="slides"
             label="Slides"
             icon={<SlideshowIcon />}
+            iconPosition="start"
+          />
+          <Tab
+            value="receipts"
+            label="Recibos"
+            icon={<ReceiptIcon />}
             iconPosition="start"
           />
         </Tabs>

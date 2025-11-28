@@ -1,14 +1,23 @@
 import { createTheme } from '@mui/material/styles';
 
-// Tierra Madre brand colors
+// Tierra Madre brand colors - Based on logo green #00AE7A
 export const brandColors = {
-  emeraldGreen: '#2E7D32',
-  emeraldDark: '#1B5E20',
-  emeraldLight: '#4CAF50',
+  // Primary emerald palette (from logo)
+  emeraldGreen: '#00AE7A',      // Logo green - primary
+  emeraldDark: '#008A61',       // Darker for hover/pressed states
+  emeraldLight: '#00C98C',      // Lighter variant
+  emeraldDeep: '#006B4D',       // Deep for contrast
+
+  // Accent colors
   gold: '#D4AF37',
   goldLight: '#F5D76E',
+
+  // Dark theme surfaces
   darkBg: '#121212',
   darkSurface: '#1E1E1E',
+  darkElevated: '#252525',
+
+  // Light colors
   white: '#FFFFFF',
   offWhite: '#FAFAFA',
 };

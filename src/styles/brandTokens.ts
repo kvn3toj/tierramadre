@@ -14,10 +14,12 @@ const BASE_UNIT = 8;
 // ═══════════════════════════════════════════════════════════════
 
 export const colors = {
-  // Primary - Deep Emerald Green (Luxury + Nature)
-  emeraldDeep: '#0A4D3C',
-  emeraldRich: '#1B7A5E',
-  emeraldLight: '#2E9B7D',
+  // Primary - Logo Emerald Green (Luxury + Nature)
+  // Based on logo-white.png color: #00AE7A
+  emeraldPrimary: '#00AE7A',    // Logo green - main brand color
+  emeraldDeep: '#006B4D',       // Deep for high contrast
+  emeraldRich: '#008A61',       // Rich for hover states
+  emeraldLight: '#00C98C',      // Light variant
 
   // Backgrounds - Pure White (Let the stone breathe)
   pureWhite: '#FFFFFF',

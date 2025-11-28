@@ -58,3 +58,33 @@ export interface CatalogItem {
   showWeight: boolean;
   order: number;
 }
+
+// Receipt types
+export interface ReceiptProduct {
+  id: string;
+  name: string;
+  description?: string;
+  weightCarats?: number;
+  priceUSD: number;
+}
+
+export interface ReceiptData {
+  id: string;
+  receiptNumber: string;
+  date: string;
+  client: {
+    name: string;
+    phone?: string;
+    email?: string;
+    document?: string;
+  };
+  products: ReceiptProduct[];
+  subtotal: number;
+  discount?: number;
+  discountPercent?: number;
+  tax?: number;
+  total: number;
+  paymentMethod: 'cash' | 'card' | 'transfer' | 'crypto';
+  notes?: string;
+  createdAt: string;
+}
