@@ -23,6 +23,8 @@ import {
   ViewList as ListIcon,
   ViewCarousel as CarouselIcon,
   Check as CheckIcon,
+  DarkMode as DarkModeIcon,
+  LightMode as LightModeIcon,
 } from '@mui/icons-material';
 import { useEmeralds } from '../hooks/useEmeralds';
 import { generateCatalog, downloadPDF } from '../utils/pdfGenerator';
@@ -40,6 +42,7 @@ export default function PDFExport() {
   const [showWeights, setShowWeights] = useState(true);
   const [showLotCodes, setShowLotCodes] = useState(true);
   const [layout, setLayout] = useState<'grid' | 'list' | 'carousel'>('carousel');
+  const [catalogTheme, setCatalogTheme] = useState<'dark' | 'light'>('dark');
 
   // UI state
   const [generating, setGenerating] = useState(false);
@@ -80,6 +83,7 @@ export default function PDFExport() {
         showWeights,
         showLotCodes,
         layout,
+        theme: catalogTheme,
       });
 
       const filename = `tierra-madre-catalogo-${new Date().toISOString().split('T')[0]}`;
@@ -227,9 +231,29 @@ export default function PDFExport() {
             </ToggleButtonGroup>
 
             {layout === 'carousel' && (
-              <Alert severity="info" sx={{ mb: 2, fontSize: '0.75rem' }}>
-                <strong>Carrusel Premium:</strong> Una página por esmeralda con imagen grande, información completa y branding de Tierra Madre.
-              </Alert>
+              <>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Tema del catálogo
+                </Typography>
+                <ToggleButtonGroup
+                  value={catalogTheme}
+                  exclusive
+                  onChange={(_, v) => v && setCatalogTheme(v)}
+                  fullWidth
+                  sx={{ mb: 2 }}
+                >
+                  <ToggleButton value="dark">
+                    <DarkModeIcon sx={{ mr: 1 }} /> Oscuro
+                  </ToggleButton>
+                  <ToggleButton value="light">
+                    <LightModeIcon sx={{ mr: 1 }} /> Claro
+                  </ToggleButton>
+                </ToggleButtonGroup>
+
+                <Alert severity="info" sx={{ mb: 2, fontSize: '0.75rem' }}>
+                  <strong>Carrusel Premium:</strong> Una página por esmeralda con imagen grande, información completa y branding de Tierra Madre.
+                </Alert>
+              </>
             )}
 
             <Typography variant="subtitle2" sx={{ mb: 1 }}>

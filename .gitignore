@@ -37,3 +37,11 @@ Home.html
 Instagram.html
 Legado*.html
 *_files/
+.vercel
+
+# Large files
+release/
+docs/*.mp4
+
+# Large files - Electron builds
+release/
