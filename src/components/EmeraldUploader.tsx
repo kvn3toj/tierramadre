@@ -38,7 +38,7 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { useEmeralds } from '../hooks/useEmeralds';
-import { useAI } from '../hooks/useAI';
+import { useAI, markNameAsUsed } from '../hooks/useAI';
 import { EmeraldCategory } from '../types';
 import { brandColors } from '../theme';
 import { storage } from '../utils/storage';
@@ -219,6 +219,9 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
 
       console.log('Emerald saved:', saved);
 
+      // Mark name as used so it won't be suggested again
+      markNameAsUsed(finalName);
+
       // Show success message
       alert(`"${finalName}" guardada exitosamente!`);
 
@@ -287,6 +290,9 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
       status: 'available',
     });
 
+    // Mark name as used so it won't be suggested again
+    markNameAsUsed(finalName);
+
     removeBatchItem(item.id);
   };
 
@@ -298,8 +304,9 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
     }
 
     itemsToSave.forEach(item => {
+      const finalName = item.customName || item.selectedName;
       addEmerald({
-        name: item.customName || item.selectedName,
+        name: finalName,
         imageUrl: item.imageUrl,
         aiSuggestedNames: item.suggestedNames,
         aiDescription: item.description,
@@ -309,6 +316,8 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
         category: item.category,
         status: 'available',
       });
+      // Mark name as used so it won't be suggested again
+      markNameAsUsed(finalName);
     });
 
     setBatchItems(prev => prev.filter(item => !itemsToSave.includes(item)));

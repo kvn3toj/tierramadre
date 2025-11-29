@@ -1,29 +1,74 @@
 import { useState, useCallback } from 'react';
 import { AIAnalysisResult } from '../types';
-import existingNames from '../data/existingNames.json';
+import nameData from '../data/existingNames.json';
 
-const NAMING_PROMPT = `Eres poeta y experto en nombrar esmeraldas para Tierra Madre, marca colombiana premium.
+// LocalStorage key for used names
+const USED_NAMES_KEY = 'tierra-madre-used-names';
+
+// Get used names from localStorage
+function getUsedNames(): Set<string> {
+  try {
+    const stored = localStorage.getItem(USED_NAMES_KEY);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+// Save used name to localStorage
+function saveUsedName(name: string): void {
+  try {
+    const used = getUsedNames();
+    used.add(name);
+    localStorage.setItem(USED_NAMES_KEY, JSON.stringify([...used]));
+  } catch {
+    console.warn('Could not save used name to localStorage');
+  }
+}
+
+// Export function to mark a name as used (called when emerald is saved)
+export function markNameAsUsed(name: string): void {
+  saveUsedName(name);
+}
+
+// Export function to get count of used names
+export function getUsedNamesCount(): number {
+  return getUsedNames().size;
+}
+
+// Export function to clear used names (for admin/reset purposes)
+export function clearUsedNames(): void {
+  localStorage.removeItem(USED_NAMES_KEY);
+}
+
+const NAMING_PROMPT = `Eres poeta experto en nombrar esmeraldas colombianas para Tierra Madre.
 Tagline: "Esencia y Poder"
 
-OBSERVA CUIDADOSAMENTE la imagen y crea 3 nombres ÚNICOS e INVENTIVOS basados en:
-- Lo que VES: forma, color, brillo, inclusiones, corte
-- Inspiración de estas categorías (pero inventa nombres NUEVOS, no uses estos ejemplos):
-  * Mitología griega/romana/egipcia/colombiana
-  * Naturaleza colombiana: ríos, selvas, flores, aves
-  * Cosmos: estrellas, constelaciones, fenómenos celestes
-  * Emociones: momentos, sentimientos, estados del alma
-  * Realeza: títulos, joyas históricas
-  * Elementos: agua, fuego, tierra, luz
-  * Piedras preciosas personificadas
+ANALIZA la imagen cuidadosamente y crea 3 nombres ÚNICOS basados en:
 
-REGLAS IMPORTANTES:
-1. INVENTA nombres completamente NUEVOS - sé creativo y poético
-2. Cada nombre debe ser diferente en estilo/categoría
-3. Inspírate en lo que VES en la piedra específica
-4. Usa español elegante, pueden ser 1-3 palabras
+LO QUE VES EN LA PIEDRA:
+- Forma: ¿es redonda, ovalada, rectangular, irregular, gota?
+- Color: ¿verde intenso, claro, azulado, amarillento?
+- Brillo: ¿muy brillante, satinado, opaco?
+- Inclusiones: ¿tiene jardín interno, vetas, puntos?
+- Tamaño aparente: ¿grande, mediana, pequeña?
 
-Responde SOLO JSON válido (sin markdown, sin backticks):
-{"names":["NombreCreativo1","NombreCreativo2","NombreCreativo3"],"description":"Descripción poética de 2 oraciones basada en lo que ves","characteristics":["detalle visual 1","detalle visual 2","detalle visual 3"]}`;
+INSPÍRATE EN:
+- Lo que la piedra te EVOCA visualmente
+- Mitología (griega, egipcia, colombiana)
+- Naturaleza colombiana (fauna, flora, lugares)
+- Cosmos y estrellas
+- Emociones y sentimientos
+- Realeza y nobleza
+
+REGLAS:
+1. Cada nombre debe ser DIFERENTE en estilo
+2. Máximo 3 palabras por nombre
+3. Español elegante y poético
+4. Nombres que nadie haya usado antes
+
+Responde SOLO JSON válido:
+{"names":["Nombre1","Nombre2","Nombre3"],"description":"2 oraciones describiendo lo que VES en la piedra","characteristics":["característica visual 1","característica visual 2","característica visual 3"]}`;
 
 const CAPTION_PROMPT = `Escribe un caption para Instagram de Tierra Madre (@tierramadre.co).
 Voz de marca: Elegante, místico, orgulloso patrimonio colombiano.
@@ -54,23 +99,20 @@ export function useAI(): AIHookReturn {
     setAnalyzing(true);
     setError(null);
 
-    // Use Groq API with vision model
     const groqKey = import.meta.env.VITE_GROQ_API_KEY;
 
     if (!groqKey) {
-      // Fallback to local generator
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Fallback to smart local generator
+      await new Promise(resolve => setTimeout(resolve, 500));
       setAnalyzing(false);
       return generateSmartSuggestions();
     }
 
     try {
-      // Extract base64 data with proper format for Groq
       const base64Data = imageBase64.includes('base64,')
         ? imageBase64
         : `data:image/jpeg;base64,${imageBase64}`;
 
-      // Use Groq API with Llama Vision model
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -78,16 +120,14 @@ export function useAI(): AIHookReturn {
           'Authorization': `Bearer ${groqKey}`,
         },
         body: JSON.stringify({
-          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+          model: 'llama-3.2-90b-vision-preview',
           messages: [
             {
               role: 'user',
               content: [
                 {
                   type: 'image_url',
-                  image_url: {
-                    url: base64Data,
-                  },
+                  image_url: { url: base64Data },
                 },
                 {
                   type: 'text',
@@ -96,7 +136,7 @@ export function useAI(): AIHookReturn {
               ],
             },
           ],
-          temperature: 0.95,
+          temperature: 0.9,
           max_tokens: 1024,
         }),
       });
@@ -104,56 +144,65 @@ export function useAI(): AIHookReturn {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('Groq API Error:', errorData);
-        throw new Error(`API error: ${response.status} - ${JSON.stringify(errorData)}`);
+        // Fallback to local generator
+        setAnalyzing(false);
+        return generateSmartSuggestions();
       }
 
       const data = await response.json();
-      console.log('Groq Response:', data);
-
-      // Extract text from Groq response
       const content = data.choices?.[0]?.message?.content || '';
 
-      // Clean up response - remove markdown code blocks if present
+      // Clean and parse response
       const cleanedContent = content
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .trim();
 
-      // Try to parse JSON response with fallback
       try {
         const parsed = JSON.parse(cleanedContent) as AIAnalysisResult;
+        // Filter out already used names
+        const usedNames = getUsedNames();
+        const availableNames = parsed.names.filter(name => !usedNames.has(name));
+
+        // If AI returned used names, generate more
+        if (availableNames.length < 3) {
+          const extraNames = generateUniqueNames(3 - availableNames.length);
+          availableNames.push(...extraNames);
+        }
+
         setAnalyzing(false);
-        return parsed;
-      } catch (parseError) {
-        console.warn('JSON parse failed, trying to extract data manually:', parseError);
-
-        // Try to extract names from the response even if JSON is malformed
+        return {
+          ...parsed,
+          names: availableNames.slice(0, 3),
+        };
+      } catch {
+        // Try to extract names manually
         const namesMatch = cleanedContent.match(/"names"\s*:\s*\[(.*?)\]/s);
-        const descMatch = cleanedContent.match(/"description"\s*:\s*"([^"]+)"/);
-
         if (namesMatch) {
-          const namesStr = namesMatch[1];
-          const names = namesStr.match(/"([^"]+)"/g)?.map((s: string) => s.replace(/"/g, '')) || getRandomSuggestions();
-          const description = descMatch ? descMatch[1] : 'Esmeralda colombiana de belleza excepcional.';
+          const names = namesMatch[1].match(/"([^"]+)"/g)?.map((s: string) => s.replace(/"/g, '')) || [];
+          const usedNames = getUsedNames();
+          const availableNames = names.filter((name: string) => !usedNames.has(name));
+
+          if (availableNames.length < 3) {
+            const extraNames = generateUniqueNames(3 - availableNames.length);
+            availableNames.push(...extraNames);
+          }
 
           setAnalyzing(false);
           return {
-            names: names.slice(0, 3),
-            description,
+            names: availableNames.slice(0, 3),
+            description: 'Esmeralda colombiana de belleza excepcional.',
             characteristics: ['Verde natural', 'Origen colombiano', 'Calidad premium'],
           };
         }
 
-        // Final fallback to local generator
         setAnalyzing(false);
         return generateSmartSuggestions();
       }
     } catch (err) {
       console.error('AI analysis error:', err);
-      setError(err instanceof Error ? err.message : 'Error analyzing image - usando sugerencias locales');
+      setError('Usando generador local de nombres');
       setAnalyzing(false);
-
-      // Return fallback suggestions
       return generateSmartSuggestions();
     }
   }, []);
@@ -162,14 +211,7 @@ export function useAI(): AIHookReturn {
     const groqKey = import.meta.env.VITE_GROQ_API_KEY;
 
     if (!groqKey) {
-      // Default caption template
-      return `${emeraldName} ✨
-
-${description}
-
-Descubre la magia de las esmeraldas colombianas en tierramadre.co
-
-#TierraMadre #EsmeraldasColombianas #Esmeraldas #LujoConAlma #EsenciaYPoder`;
+      return `${emeraldName} ✨\n\n${description}\n\nDescubre la magia de las esmeraldas colombianas en tierramadre.co\n\n#TierraMadre #EsmeraldasColombianas #Esmeraldas #LujoConAlma #EsenciaYPoder`;
     }
 
     try {
@@ -192,14 +234,10 @@ Descubre la magia de las esmeraldas colombianas en tierramadre.co
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
+      if (!response.ok) return null;
       const data = await response.json();
       return data.choices?.[0]?.message?.content || null;
-    } catch (err) {
-      console.error('Caption generation error:', err);
+    } catch {
       return null;
     }
   }, []);
@@ -209,46 +247,133 @@ Descubre la magia de las esmeraldas colombianas en tierramadre.co
     error,
     analyzeEmerald,
     generateCaption,
-    getRandomSuggestions,
+    getRandomSuggestions: () => generateSmartSuggestions().names,
   };
 }
 
-// Smart name generator - no API needed!
-function generateSmartSuggestions(): AIAnalysisResult {
-  const categories = [
-    'mythology', 'royalty', 'nature', 'cosmic', 'emotional',
-    'elements', 'gems', 'places', 'time', 'abstract', 'descriptive'
-  ] as const;
-  const suggestions: string[] = [];
-  const usedCategories: string[] = [];
-  const usedNames = new Set<string>();
+// Generate a unique name that hasn't been used
+function generateUniqueNames(count: number): string[] {
+  const usedNames = getUsedNames();
+  const names: string[] = [];
+  let attempts = 0;
+  const maxAttempts = count * 50; // Prevent infinite loop
 
-  // Get names from 3 different categories for variety
-  while (suggestions.length < 3 && usedCategories.length < categories.length) {
-    // Shuffle and pick a random unused category
-    const availableCategories = categories.filter(c => !usedCategories.includes(c));
-    const category = availableCategories[Math.floor(Math.random() * availableCategories.length)];
-
-    const names = existingNames[category] as string[] | undefined;
-    if (!names || names.length === 0) {
-      usedCategories.push(category);
-      continue;
-    }
-
-    // Shuffle names within category for more randomness
-    const shuffledNames = [...names].sort(() => Math.random() - 0.5);
-    const randomName = shuffledNames.find(name => !usedNames.has(name));
-
-    if (randomName) {
-      suggestions.push(randomName);
-      usedNames.add(randomName);
-      usedCategories.push(category);
-    } else {
-      usedCategories.push(category);
+  while (names.length < count && attempts < maxAttempts) {
+    attempts++;
+    const name = generateSingleName();
+    if (!usedNames.has(name) && !names.includes(name)) {
+      names.push(name);
     }
   }
 
-  // Generate a poetic description
+  return names;
+}
+
+// Generate a single creative name
+function generateSingleName(): string {
+  const strategies = [
+    generateFromCategory,
+    generateWithPrefix,
+    generateWithSuffix,
+    generateCombination,
+    generatePoetic,
+  ];
+
+  const strategy = strategies[Math.floor(Math.random() * strategies.length)];
+  return strategy();
+}
+
+// Strategy 1: Pick from a category
+function generateFromCategory(): string {
+  const categories = [
+    'mythology', 'royalty', 'nature_flora', 'nature_fauna', 'nature_places',
+    'cosmic', 'emotional', 'elements', 'gems', 'legendary_places',
+    'time', 'abstract', 'colors_descriptive', 'poetic_combinations'
+  ] as const;
+
+  const category = categories[Math.floor(Math.random() * categories.length)];
+  const items = (nameData as Record<string, string[]>)[category];
+  if (!items || items.length === 0) return generateWithPrefix();
+
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+// Strategy 2: Prefix + base name
+function generateWithPrefix(): string {
+  const prefixes = nameData.prefixes;
+  const bases = [
+    ...nameData.mythology.slice(0, 20),
+    ...nameData.nature_fauna.slice(0, 15),
+    ...nameData.cosmic.slice(0, 15),
+    ...nameData.abstract.slice(0, 15),
+  ];
+
+  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+  const base = bases[Math.floor(Math.random() * bases.length)];
+
+  return `${prefix} ${base}`;
+}
+
+// Strategy 3: Base name + suffix
+function generateWithSuffix(): string {
+  const suffixes = nameData.suffixes;
+  const bases = [
+    ...nameData.mythology.slice(0, 20),
+    ...nameData.nature_flora.slice(0, 15),
+    ...nameData.gems.slice(0, 10),
+    ...nameData.emotional.slice(0, 15),
+  ];
+
+  const base = bases[Math.floor(Math.random() * bases.length)];
+  const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+
+  return `${base} ${suffix}`;
+}
+
+// Strategy 4: Creative combination
+function generateCombination(): string {
+  const adjectives = [
+    'Dorada', 'Sagrada', 'Mística', 'Eterna', 'Divina', 'Celestial',
+    'Ancestral', 'Imperial', 'Radiante', 'Sublime', 'Secreta', 'Encantada'
+  ];
+
+  const nouns = [
+    ...nameData.nature_fauna.slice(0, 10),
+    ...nameData.nature_flora.slice(0, 10),
+    ...nameData.cosmic.slice(0, 10),
+    ...nameData.gems.slice(0, 10),
+  ];
+
+  const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const noun = nouns[Math.floor(Math.random() * nouns.length)];
+
+  // Sometimes put adjective first, sometimes after
+  return Math.random() > 0.5 ? `${noun} ${adj}` : `${adj} ${noun}`;
+}
+
+// Strategy 5: Poetic/compound name
+function generatePoetic(): string {
+  const poeticParts1 = [
+    'Sueño', 'Suspiro', 'Eco', 'Reflejo', 'Danza', 'Canto', 'Vuelo',
+    'Abrazo', 'Beso', 'Caricia', 'Secreto', 'Misterio', 'Destello'
+  ];
+
+  const poeticParts2 = [
+    'del Alba', 'de Luna', 'del Sol', 'del Mar', 'del Bosque',
+    'de Estrellas', 'del Tiempo', 'de Jade', 'Esmeralda', 'Ancestral',
+    'del Río', 'de la Selva', 'del Páramo', 'de Muzo'
+  ];
+
+  const part1 = poeticParts1[Math.floor(Math.random() * poeticParts1.length)];
+  const part2 = poeticParts2[Math.floor(Math.random() * poeticParts2.length)];
+
+  return `${part1} ${part2}`;
+}
+
+// Smart name generator - main function
+function generateSmartSuggestions(): AIAnalysisResult {
+  const names = generateUniqueNames(3);
+
   const descriptions = [
     'Una gema de verde profundo que captura la esencia de las montañas colombianas.',
     'Esmeralda de brillo excepcional, nacida en las entrañas de la tierra madre.',
@@ -284,13 +409,8 @@ function generateSmartSuggestions(): AIAnalysisResult {
   ];
 
   return {
-    names: suggestions,
+    names,
     description: descriptions[Math.floor(Math.random() * descriptions.length)],
     characteristics: characteristics[Math.floor(Math.random() * characteristics.length)],
   };
-}
-
-// Legacy function for backwards compatibility
-function getRandomSuggestions(): string[] {
-  return generateSmartSuggestions().names;
 }
