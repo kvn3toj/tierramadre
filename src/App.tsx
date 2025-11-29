@@ -10,12 +10,13 @@ import PriceSimulator from './components/PriceSimulator';
 import PinLock from './components/PinLock';
 import { SlidePreview } from './components/slides';
 import { CatalogBrowser } from './components/CatalogBrowser';
+import InventoryBrowser from './components/InventoryBrowser';
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
-export type TabValue = 'gallery' | 'upload' | 'catalog' | 'calendar' | 'slides' | 'normalizer' | 'receipts' | 'biblioteca' | 'simulator';
+export type TabValue = 'gallery' | 'upload' | 'catalog' | 'calendar' | 'slides' | 'normalizer' | 'receipts' | 'biblioteca' | 'simulator' | 'inventory';
 
 // Tab categories for navigation logic
-export const PRIMARY_TABS: TabValue[] = ['gallery', 'upload', 'catalog', 'calendar'];
+export const PRIMARY_TABS: TabValue[] = ['gallery', 'upload', 'inventory', 'catalog', 'calendar'];
 export const SECONDARY_TABS: TabValue[] = ['slides', 'normalizer', 'receipts', 'biblioteca', 'simulator'];
 
 function App() {
@@ -49,6 +50,8 @@ function App() {
         return <CatalogBrowser />;
       case 'simulator':
         return <PriceSimulator />;
+      case 'inventory':
+        return <InventoryBrowser />;
       default:
         return <Gallery />;
     }

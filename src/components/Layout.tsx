@@ -40,6 +40,7 @@ import {
   Menu,
   Sun,
   Moon,
+  Package,
 } from 'lucide-react';
 import { TabValue } from '../App';
 import { useThemeMode } from '../context/ThemeContext';
@@ -66,6 +67,7 @@ const NAVIGATION_ITEMS: NavItem[] = [
   // Primary workflow
   { id: 'gallery', label: 'Galería', icon: <Images size={20} />, group: 'primary' },
   { id: 'upload', label: 'Subir', icon: <Upload size={20} />, group: 'primary' },
+  { id: 'inventory', label: 'Inventario', icon: <Package size={20} />, group: 'primary' },
   { id: 'catalog', label: 'Catálogo', icon: <FileText size={20} />, group: 'primary' },
   { id: 'calendar', label: 'Instagram', icon: <Instagram size={20} />, group: 'primary' },
   // Tools
