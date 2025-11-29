@@ -8,6 +8,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  useTheme,
 } from '@mui/material';
 import {
   MoreVert as MoreIcon,
@@ -16,6 +17,7 @@ import {
 import { useState } from 'react';
 import { Emerald, EmeraldStatus } from '../types';
 import { brandColors } from '../theme';
+import { useThemeMode } from '../context/ThemeContext';
 
 interface EmeraldCardProps {
   emerald: Emerald;
@@ -45,6 +47,9 @@ export default function EmeraldCard({
   selected,
 }: EmeraldCardProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const { mode } = useThemeMode();
+  const theme = useTheme();
+  const isLight = mode === 'light';
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
@@ -114,20 +119,23 @@ export default function EmeraldCard({
             position: 'absolute',
             top: 4,
             right: 4,
-            bgcolor: 'rgba(0,0,0,0.5)',
-            '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+            bgcolor: isLight ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.6)',
+            color: isLight ? '#374151' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            '&:hover': { bgcolor: isLight ? '#FFFFFF' : 'rgba(0,0,0,0.8)' },
           }}
         >
           <MoreIcon fontSize="small" />
         </IconButton>
       </Box>
-      <CardContent>
+      <CardContent sx={{ bgcolor: theme.palette.background.paper }}>
         <Typography
           variant="h6"
           sx={{
             fontFamily: '"Libre Baskerville", serif',
             fontWeight: 700,
-            color: brandColors.gold,
+            color: brandColors.emeraldGreen,
+            fontSize: '1rem',
           }}
         >
           {emerald.name}
@@ -138,6 +146,10 @@ export default function EmeraldCard({
               label={`${emerald.weightCarats} ct`}
               size="small"
               variant="outlined"
+              sx={{
+                borderColor: isLight ? '#E5E7EB' : '#3A3A3C',
+                color: theme.palette.text.primary
+              }}
             />
           )}
           {emerald.lotCode && (
@@ -145,13 +157,17 @@ export default function EmeraldCard({
               label={emerald.lotCode}
               size="small"
               variant="outlined"
+              sx={{
+                borderColor: isLight ? '#E5E7EB' : '#3A3A3C',
+                color: theme.palette.text.primary
+              }}
             />
           )}
         </Box>
         {emerald.priceCOP && (
           <Typography
             variant="body2"
-            sx={{ mt: 1, color: 'grey.400', fontWeight: 500 }}
+            sx={{ mt: 1, color: theme.palette.text.primary, fontWeight: 600 }}
           >
             {formatPrice(emerald.priceCOP)}
           </Typography>
@@ -159,13 +175,13 @@ export default function EmeraldCard({
         {emerald.aiDescription && (
           <Typography
             variant="caption"
-            color="grey.500"
             sx={{
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
               mt: 1,
+              color: theme.palette.text.secondary,
             }}
           >
             {emerald.aiDescription}
