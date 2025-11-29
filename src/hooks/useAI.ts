@@ -215,20 +215,35 @@ Descubre la magia de las esmeraldas colombianas en tierramadre.co
 
 // Smart name generator - no API needed!
 function generateSmartSuggestions(): AIAnalysisResult {
-  const categories = ['mythology', 'nature', 'cosmic', 'emotional', 'royalty', 'disney', 'descriptive'] as const;
+  const categories = [
+    'mythology', 'royalty', 'nature', 'cosmic', 'emotional',
+    'elements', 'gems', 'places', 'time', 'abstract', 'descriptive'
+  ] as const;
   const suggestions: string[] = [];
   const usedCategories: string[] = [];
+  const usedNames = new Set<string>();
 
   // Get names from 3 different categories for variety
-  while (suggestions.length < 3) {
-    const category = categories[Math.floor(Math.random() * categories.length)];
-    if (usedCategories.includes(category)) continue;
+  while (suggestions.length < 3 && usedCategories.length < categories.length) {
+    // Shuffle and pick a random unused category
+    const availableCategories = categories.filter(c => !usedCategories.includes(c));
+    const category = availableCategories[Math.floor(Math.random() * availableCategories.length)];
 
-    const names = existingNames[category] as string[];
-    const randomName = names[Math.floor(Math.random() * names.length)];
+    const names = existingNames[category] as string[] | undefined;
+    if (!names || names.length === 0) {
+      usedCategories.push(category);
+      continue;
+    }
 
-    if (!suggestions.includes(randomName)) {
+    // Shuffle names within category for more randomness
+    const shuffledNames = [...names].sort(() => Math.random() - 0.5);
+    const randomName = shuffledNames.find(name => !usedNames.has(name));
+
+    if (randomName) {
       suggestions.push(randomName);
+      usedNames.add(randomName);
+      usedCategories.push(category);
+    } else {
       usedCategories.push(category);
     }
   }
@@ -243,6 +258,14 @@ function generateSmartSuggestions(): AIAnalysisResult {
     'Esmeralda de belleza incomparable, herencia de las minas de Muzo.',
     'Verde intenso que refleja la pureza de las aguas del Pacífico.',
     'Joya de luz interior, guardiana de secretos milenarios.',
+    'Cristal de poder ancestral, forjado en las profundidades de Boyacá.',
+    'Piedra mística que susurra historias de civilizaciones perdidas.',
+    'Gema sagrada que brilla con la luz de mil amaneceres tropicales.',
+    'Esmeralda regia, digna de coronas y sueños eternos.',
+    'Verde que danza entre la luz y la sombra, revelando su alma.',
+    'Tesoro colombiano que guarda el ADN de la paz y la prosperidad.',
+    'Joya celestial caída del firmamento, atrapada en forma terrenal.',
+    'Piedra de transformación, símbolo de renacimiento y esperanza.',
   ];
 
   const characteristics = [
@@ -251,6 +274,13 @@ function generateSmartSuggestions(): AIAnalysisResult {
     ['Verde vibrante', 'Alta transparencia', 'Forma armoniosa'],
     ['Color saturado', 'Jardín interno característico', 'Talla precisa'],
     ['Verde azulado', 'Pureza notable', 'Proporciones ideales'],
+    ['Saturación perfecta', 'Luz interna brillante', 'Simetría exquisita'],
+    ['Verde bosque', 'Cristalización única', 'Peso excepcional'],
+    ['Tono sublime', 'Facetas perfectas', 'Origen certificado'],
+    ['Verde hierba', 'Transparencia cristalina', 'Forma oval elegante'],
+    ['Color musgo', 'Inclusiones tipo jardín', 'Corte esmeralda clásico'],
+    ['Verde primavera', 'Brillo sedoso', 'Proporciones áureas'],
+    ['Tono selva', 'Fluorescencia sutil', 'Calidad museo'],
   ];
 
   return {

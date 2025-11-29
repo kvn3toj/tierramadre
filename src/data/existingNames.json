@@ -1,65 +1,140 @@
 {
   "mythology": [
-    "Diosa", "Apolo", "Venus", "Gaia", "Cleopatra", "Ojo de Zeus",
-    "Grecia", "Troya", "Rey Midas", "Hércules", "Ojo de Afrodita"
+    "Ojo de Zeus", "Afrodita", "Hera", "Artemisa", "Atenea", "Perséfone",
+    "Deméter", "Hestia", "Selene", "Eos", "Nyx", "Gaia Ancestral",
+    "Prometeo", "Titania", "Oberón", "Circe", "Medusa Serena",
+    "Calipso", "Eurídice", "Pandora", "Helena de Troya", "Cassandra",
+    "Ifigenia", "Electra", "Antigona", "Ariadna", "Psique",
+    "Isis Dorada", "Nefertiti", "Cleopatra VII", "Hathor", "Bastet",
+    "Sekhmet", "Maat", "Anubis Esmeralda", "Thoth", "Osiris Verde",
+    "Freya Nórdica", "Valkiria", "Brunilda", "Idun", "Frigga",
+    "Pachakamaq", "Bachué", "Chía Lunar", "Bochica", "Huitaca",
+    "Quetzalcóatl", "Ixchel", "Coatlicue", "Tláloc Verde"
   ],
   "royalty": [
-    "La Reina Margot", "La Reina Isabell", "Princesa Azul",
-    "Las Emperatrices", "Anillo Corona"
+    "Corona Imperial", "Reina Victoria", "Emperatriz Catalina",
+    "Duquesa de Windsor", "Princesa Sofía", "Marquesa de Esmeralda",
+    "Condesa Verde", "Lady Esmeralda", "Dama de Honor",
+    "Baronesa del Bosque", "Archiduquesa", "Infanta Real",
+    "Sultana Esmeralda", "Maharaní", "Zarina Verde",
+    "Emperatriz Wu", "Reina Nzinga", "Cleopatra Regia",
+    "Isabel La Grande", "María Antonieta", "Ana Bolena",
+    "Josefina Bonaparte", "Sissi Imperial", "Grace de Mónaco",
+    "Diana Eterna", "Catalina la Grande", "Victoria Regina",
+    "Trono Esmeralda", "Cetro Real", "Tiara Imperial",
+    "Diadema Ancestral", "Joya de la Corona", "Tesoro Real"
   ],
   "nature": [
-    "Amazonas", "Pacífico", "Madre Selva", "Bambú", "Jazmín",
-    "Guajira", "Leticia", "Los Robles", "Los Tulipanes",
-    "Jardín Escondido", "Las Margaritas", "Raíz de Gaia",
-    "Viento del Pacífico", "Brasil"
+    "Amazonas Profundo", "Selva Esmeralda", "Bosque Encantado",
+    "Cascada Escondida", "Río Cristalino", "Laguna Sagrada",
+    "Manglar Místico", "Páramo Eterno", "Sierra Nevada",
+    "Nevado del Ruiz", "Cocora Mágica", "Tayrona Ancestral",
+    "Orquídea Silvestre", "Flor de Loto", "Heliconia Roja",
+    "Bromelia Dorada", "Jazmín del Valle", "Magnolia Blanca",
+    "Ceiba Milenaria", "Palma de Cera", "Guadua Verde",
+    "Colibrí Esmeralda", "Quetzal Sagrado", "Cóndor Andino",
+    "Tucán Amazónico", "Guacamaya Azul", "Mariposa Morpho",
+    "Jaguar Verde", "Delfín Rosado", "Tortuga Marina",
+    "Amanecer Tropical", "Atardecer Pacífico", "Lluvia de Estrellas",
+    "Niebla Andina", "Rocío del Alba", "Brisa Caribeña",
+    "Ola Esmeralda", "Coral Vivo", "Arena Dorada",
+    "Hoja de Coca", "Café Colombiano", "Cacao Ancestral"
   ],
   "cosmic": [
-    "Galaxia", "Lunera", "Firmamento", "5 Estrellas", "Hijos del Sol",
-    "Infinito", "Turquesa", "Aqua", "Resplandor", "Ventana al Cielo",
-    "Ojos del Universo"
+    "Galaxia Espiral", "Nebulosa Verde", "Supernova Brillante",
+    "Estrella Polar", "Constelación Orión", "Vía Láctea",
+    "Aurora Boreal", "Eclipse Total", "Cometa Halley",
+    "Meteorito Sagrado", "Asteroide Verde", "Satélite Lunar",
+    "Cosmos Infinito", "Universo Paralelo", "Dimensión Esmeralda",
+    "Agujero Negro", "Púlsar Brillante", "Quásar Distante",
+    "Luz de Sirio", "Alfa Centauri", "Andrómeda Verde",
+    "Pléyades Místicas", "Casiopea Regia", "Cygnus Celestial",
+    "Luna Nueva", "Luna Llena", "Cuarto Creciente",
+    "Sol Naciente", "Sol Poniente", "Solsticio Verde",
+    "Equinoccio Sagrado", "Medianoche Estelar", "Amanecer Cósmico",
+    "Horizonte Infinito", "Firmamento Eterno", "Cielo Profundo",
+    "Estrella Fugaz", "Lluvia de Meteoros", "Polvo Estelar"
   ],
   "emotional": [
-    "Amor Eterno", "Amor Platónico", "Chispa Divina", "Instante Perfecto",
-    "Alma Verde", "Corazón Tierra Madre", "Inspiración Divina",
-    "Espejo Sagrado", "Dualidad", "Trilogía", "Mística", "Diosa Tierra Madre"
+    "Amor Eterno", "Pasión Infinita", "Ternura Sublime",
+    "Esperanza Verde", "Fe Inquebrantable", "Alegría Pura",
+    "Serenidad", "Paz Interior", "Armonía Perfecta",
+    "Éxtasis Divino", "Felicidad Plena", "Gratitud Eterna",
+    "Compasión", "Empatía", "Bondad Infinita",
+    "Valentía", "Coraje Verde", "Fortaleza",
+    "Sabiduría Ancestral", "Intuición", "Claridad Mental",
+    "Inspiración Divina", "Creatividad Pura", "Imaginación",
+    "Sueño Eterno", "Despertar", "Renacimiento",
+    "Transformación", "Evolución", "Trascendencia",
+    "Momento Perfecto", "Instante Mágico", "Eternidad",
+    "Nostalgia Verde", "Melancolía Bella", "Añoranza",
+    "Deseo Profundo", "Anhelo", "Suspiro Esmeralda"
   ],
-  "disney": [
-    "Rapunzel", "Blanca Nieves", "Pocahontas", "Aurora", "Bella",
-    "Anna", "Daenerys"
+  "elements": [
+    "Fuego Esmeralda", "Llama Eterna", "Brasa Viva",
+    "Agua Cristalina", "Océano Profundo", "Manantial Sagrado",
+    "Tierra Fértil", "Montaña Sagrada", "Roca Ancestral",
+    "Aire Puro", "Viento Libre", "Brisa Suave",
+    "Luz Divina", "Resplandor", "Destello Verde",
+    "Sombra Mística", "Penumbra", "Claroscuro",
+    "Hielo Eterno", "Cristal de Nieve", "Escarcha",
+    "Trueno Verde", "Relámpago", "Tormenta",
+    "Arcoíris", "Prisma", "Espectro Verde",
+    "Niebla Mágica", "Vapor Sagrado", "Humo Místico",
+    "Metal Precioso", "Oro Verde", "Plata Lunar"
+  ],
+  "gems": [
+    "Esmeralda Reina", "Berilo Sagrado", "Jade Imperial",
+    "Peridoto Verde", "Turmalina Paraíba", "Tsavorita",
+    "Crisoberilo", "Alejandrita", "Demantoid",
+    "Ágata Verde", "Aventurina", "Malaquita Mística",
+    "Amazonita", "Fluorita Verde", "Prehnita",
+    "Moldavita Cósmica", "Serpentina", "Dioptasa",
+    "Esmeralda Trapiche", "Muzo Verde", "Chivor Ancestral",
+    "Coscuez Brillante", "La Pita", "Gachala",
+    "Esmeralda de Boyacá", "Piedra de Cundinamarca", "Gema Colombiana"
+  ],
+  "places": [
+    "Machu Picchu Verde", "Chichén Itzá", "Teotihuacán",
+    "Ciudad Perdida", "El Dorado", "Atlántida",
+    "Shangrila", "Avalon", "Camelot Verde",
+    "Babilonia", "Alejandría", "Constantinopla",
+    "Venecia Esmeralda", "Florencia", "Roma Eterna",
+    "París Verde", "Viena Imperial", "Praga Mágica",
+    "Kyoto Zen", "Angkor Wat", "Taj Mahal Verde",
+    "Cartagena Colonial", "Santa Marta", "Villa de Leyva",
+    "Barichara", "Guatapé", "Salento Verde"
+  ],
+  "time": [
+    "Amanecer Dorado", "Mediodía Brillante", "Atardecer Rosa",
+    "Crepúsculo", "Medianoche Azul", "Madrugada",
+    "Primavera Eterna", "Verano Infinito", "Otoño Dorado",
+    "Invierno Blanco", "Estaciones", "Ciclo Eterno",
+    "Siglo Verde", "Década Dorada", "Año Nuevo",
+    "Momento Fugaz", "Instante Eterno", "Segundo Mágico",
+    "Era Esmeralda", "Época Dorada", "Tiempo Sagrado",
+    "Pasado Glorioso", "Presente Perfecto", "Futuro Brillante"
+  ],
+  "abstract": [
+    "Infinito Verde", "Eternidad", "Perfección",
+    "Belleza Pura", "Elegancia", "Sofisticación",
+    "Misterio", "Enigma", "Secreto Verde",
+    "Magia Ancestral", "Encanto", "Hechizo",
+    "Destino", "Fortuna", "Prosperidad",
+    "Abundancia", "Riqueza Verde", "Tesoro",
+    "Poder", "Gloria", "Victoria",
+    "Honor", "Nobleza", "Dignidad",
+    "Pureza", "Inocencia", "Virtud",
+    "Verdad", "Justicia Verde", "Libertad"
   ],
   "descriptive": [
-    "Diosa de la Laguna", "Gota del Pacífico", "Baby Green",
-    "La Diva", "Dos Luceritos", "Fuego", "Aria",
-    "Madre e Hija", "Hijos de la Tierra", "Las Niñas",
-    "Las 3 Marías", "2 Pinticas", "Pachitas", "Rosario",
-    "Dos Pequitas", "Lalala", "Adán y Eva"
-  ],
-  "fullCatalog": [
-    "Diosa", "Amor Platónico", "Corazón Tierra Madre", "Rapunzel",
-    "Blanca Nieves", "Rapunzel S.F.", "Pocahontas", "Aurora", "Bella",
-    "Daenerys", "Anna", "La Reina Margot", "La Reina Isabell",
-    "Gota del Pacífico", "Raíz de Gaia", "Espejo Sagrado", "Adán y Eva",
-    "Chispa Divina", "Apolo", "Firmamento", "Troya", "Ventana al Cielo", "Fuego",
-    "Aria", "Ojos del Universo", "Dos Pintas", "Cleopatra", "Grecia",
-    "Lalala", "La Diva", "Dos Luceritos", "Instante Perfecto",
-    "Viento del Pacífico", "Bambú", "Jazmín", "Mística", "Pachitas",
-    "2 Pinticas", "Guajira", "Hijos del Sol", "Amor Eterno", "Infinito",
-    "Rey Midas", "Las Niñas", "Las Margaritas", "Los Robles",
-    "Los Tulipanes", "Jardín Escondido", "Trilogía", "Turquesa",
-    "Rosario", "Amazonas", "Leticia", "5 Estrellas", "Aqua",
-    "Madre e Hija", "Hijos de la Tierra", "Venus", "Gaia", "Ojo de Zeus",
-    "Bombón Superpoderosa", "Baby Green", "Madre Selva", "Pacífico",
-    "Dualidad", "Brasil", "Las Emperatrices", "Las 3 Marías",
-    "Alma Verde", "Diosa de la Laguna", "Inspiración Divina",
-    "Lunera", "Galaxia", "Resplandor", "Hércules", "Ojo de Afrodita",
-    "Diosa Tierra Madre", "Dos Pequitas"
-  ],
-  "coleccionFenix": [
-    "Espejo Sagrado", "Hércules", "Adán y Eva", "Chispa Divina", "Apolo",
-    "Firmamento", "Troya", "Ventana al Cielo", "Fuego", "Aria",
-    "Ojos del Universo", "Dos Pequitas", "Cleopatra", "Ojo de Afrodita",
-    "Grecia", "Lalala", "La Diva", "Dos Luceritos", "Instante Perfecto",
-    "Viento del Pacífico", "Amor Platónico", "Diosa Tierra Madre",
-    "Corazón Tierra Madre"
+    "Verde Profundo", "Verde Intenso", "Verde Vibrante",
+    "Brillo Excepcional", "Claridad Suprema", "Transparencia",
+    "Saturación Perfecta", "Tono Ideal", "Color Sublime",
+    "Jardín Interior", "Inclusiones Naturales", "Huella de Origen",
+    "Corte Perfecto", "Talla Magistral", "Facetas Brillantes",
+    "Gema Única", "Pieza Singular", "Ejemplar Raro",
+    "Calidad Superior", "Grado Premium", "Selección Especial",
+    "Coleccionista", "Museo", "Legado Familiar"
   ]
 }
