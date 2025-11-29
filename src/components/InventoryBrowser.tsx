@@ -30,7 +30,6 @@ import {
   ChevronDown,
   MapPin,
   User,
-  ShieldCheck,
   FileCheck,
 } from 'lucide-react';
 import { useThemeMode } from '../context/ThemeContext';
@@ -40,9 +39,9 @@ import {
   getUniqueColors,
 } from '../data/inventory';
 import { InventoryItem, TrustScoreBreakdown } from '../types';
-import TrustBadge, { TrustBadgeCompact } from './TrustBadge';
+import { TrustBadgeCompact } from './TrustBadge';
 import CertificationUpload from './CertificationUpload';
-import { calculateTrustScore, getTrustBadge, calculateInventoryTrustHealth } from '../utils/trustScore';
+import { calculateTrustScore, getTrustBadge } from '../utils/trustScore';
 
 // Format currency in COP
 const formatCurrency = (value: number): string => {
@@ -523,7 +522,7 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick }: InventoryCa
                 </Typography>
               </Box>
 
-              {/* Trust Score Section */}
+              {/* Product Certification Section */}
               <Box
                 sx={{
                   mt: 2,
@@ -532,9 +531,9 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick }: InventoryCa
                   borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
                   <Typography variant="caption" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
-                    Puntuacion de Confianza
+                    Certificacion del Producto
                   </Typography>
                   <Typography
                     variant="caption"
@@ -543,6 +542,17 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick }: InventoryCa
                     {trustScore.overall}/100
                   </Typography>
                 </Box>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: theme.palette.text.secondary,
+                    fontSize: '0.65rem',
+                    display: 'block',
+                    mb: 1,
+                  }}
+                >
+                  Autenticidad de la esmeralda (no del vendedor)
+                </Typography>
                 <LinearProgress
                   variant="determinate"
                   value={trustScore.overall}
@@ -577,7 +587,7 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick }: InventoryCa
                     },
                   }}
                 >
-                  Gestionar Certificaciones
+                  Ver Certificaciones
                 </Button>
               </Box>
             </Box>
@@ -616,11 +626,6 @@ export default function InventoryBrowser() {
       scores.set(item.item, calculateTrustScore(item));
     });
     return scores;
-  }, []);
-
-  // Calculate inventory-wide trust health
-  const trustHealth = useMemo(() => {
-    return calculateInventoryTrustHealth(inventoryData.filter(i => i.estado === 'DISPONIBLE'));
   }, []);
 
   // Handle opening certification dialog
