@@ -6,10 +6,17 @@ import CalendarGrid from './components/CalendarGrid';
 import PDFExport from './components/PDFExport';
 import ImageNormalizer from './components/ImageNormalizer';
 import ReceiptGenerator from './components/ReceiptGenerator';
+import PriceSimulator from './components/PriceSimulator';
 import PinLock from './components/PinLock';
 import { SlidePreview } from './components/slides';
+import { CatalogBrowser } from './components/CatalogBrowser';
 
-export type TabValue = 'upload' | 'gallery' | 'calendar' | 'catalog' | 'normalizer' | 'slides' | 'receipts';
+// Primary tabs (always visible) + secondary tabs (in "More" menu)
+export type TabValue = 'gallery' | 'upload' | 'catalog' | 'calendar' | 'slides' | 'normalizer' | 'receipts' | 'biblioteca' | 'simulator';
+
+// Tab categories for navigation logic
+export const PRIMARY_TABS: TabValue[] = ['gallery', 'upload', 'catalog', 'calendar'];
+export const SECONDARY_TABS: TabValue[] = ['slides', 'normalizer', 'receipts', 'biblioteca', 'simulator'];
 
 function App() {
   const [currentTab, setCurrentTab] = useState<TabValue>('gallery');
@@ -38,6 +45,10 @@ function App() {
         return <SlidePreview />;
       case 'receipts':
         return <ReceiptGenerator />;
+      case 'biblioteca':
+        return <CatalogBrowser />;
+      case 'simulator':
+        return <PriceSimulator />;
       default:
         return <Gallery />;
     }

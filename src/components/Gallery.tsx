@@ -10,18 +10,23 @@ import {
   Select,
   MenuItem,
   Paper,
+  useTheme,
 } from '@mui/material';
 import { Search as SearchIcon, Diamond as DiamondIcon } from '@mui/icons-material';
 import EmeraldCard from './EmeraldCard';
 import { useEmeralds } from '../hooks/useEmeralds';
 import { EmeraldStatus, EmeraldCategory } from '../types';
 import { brandColors } from '../theme';
+import { useThemeMode } from '../context/ThemeContext';
 
 export default function Gallery() {
   const { emeralds, deleteEmerald, updateStatus, totalCount, availableCount } = useEmeralds();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<EmeraldStatus | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<EmeraldCategory | 'all'>('all');
+  const { mode } = useThemeMode();
+  const theme = useTheme();
+  const isLight = mode === 'light';
 
   const filteredEmeralds = emeralds.filter(emerald => {
     const matchesSearch = emerald.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -63,21 +68,26 @@ export default function Gallery() {
   return (
     <Box>
       {/* Stats */}
-      <Paper sx={{ p: 2, mb: 3, bgcolor: brandColors.darkSurface }}>
-        <Box sx={{ display: 'flex', gap: 3 }}>
+      <Paper sx={{
+        p: 2.5,
+        mb: 3,
+        bgcolor: isLight ? '#F9FAFB' : '#1C1C1E',
+        border: `1px solid ${isLight ? '#E5E7EB' : '#2C2C2E'}`
+      }}>
+        <Box sx={{ display: 'flex', gap: 4 }}>
           <Box>
-            <Typography variant="caption" color="grey.500">
+            <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 500 }}>
               Total
             </Typography>
-            <Typography variant="h5" sx={{ color: brandColors.gold }}>
+            <Typography variant="h5" sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
               {totalCount}
             </Typography>
           </Box>
           <Box>
-            <Typography variant="caption" color="grey.500">
+            <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 500 }}>
               Disponibles
             </Typography>
-            <Typography variant="h5" sx={{ color: brandColors.emeraldGreen }}>
+            <Typography variant="h5" sx={{ color: brandColors.emeraldGreen, fontWeight: 600 }}>
               {availableCount}
             </Typography>
           </Box>
