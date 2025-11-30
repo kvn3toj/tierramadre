@@ -391,7 +391,7 @@ export default function AmbassadorDirectory({
           )}
         </Box>
       ) : viewMode === 'grid' ? (
-        <Grid container spacing={{ xs: 1.5, md: 2 }}>
+        <Grid container spacing={2}>
           {filteredAmbassadors.map((ambassador) => (
             <Grid item xs={12} sm={6} md={4} key={ambassador.id}>
               <AmbassadorCard
@@ -422,7 +422,7 @@ export default function AmbassadorDirectory({
 // Loading Skeleton
 export function AmbassadorDirectorySkeleton() {
   return (
-    <Grid container spacing={{ xs: 1.5, md: 2 }}>
+    <Grid container spacing={2}>
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <Grid item xs={12} sm={6} md={4} key={i}>
           <Box sx={{ p: 2.5 }}>
