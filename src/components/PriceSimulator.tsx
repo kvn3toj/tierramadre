@@ -38,10 +38,14 @@ import {
   Percent,
   DollarSign,
   ArrowUpRight,
+  ShoppingBag,
+  Layers,
+  X,
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { useEmeralds } from '../hooks/useEmeralds';
-import { Emerald } from '../types';
+import { Emerald, InventoryItem } from '../types';
+import { inventoryData } from '../data/inventory';
 import {
   studioColors,
   studioGradients,
@@ -83,18 +87,61 @@ const formatPercent = (value: number): string => {
   return `${value.toFixed(1)}%`;
 };
 
+// Product source type
+type ProductSource = 'gallery' | 'inventory';
+
 export default function PriceSimulator() {
   // Get emeralds from gallery
   const { emeralds } = useEmeralds();
 
-  // Selected emerald from gallery
+  // Selected product from gallery or inventory
   const [selectedEmerald, setSelectedEmerald] = useState<Emerald | null>(null);
+  const [selectedInventoryItem, setSelectedInventoryItem] = useState<InventoryItem | null>(null);
+  const [productSource, setProductSource] = useState<ProductSource>('gallery');
+
+  // Multi-select mode for collections (enabled by default)
+  const [multiSelectMode, setMultiSelectMode] = useState(true);
+  const [selectedProducts, setSelectedProducts] = useState<(Emerald | InventoryItem)[]>([]);
+
+  // Inventory filters
+  const [statusFilter, setStatusFilter] = useState<string>('todas');
+  const [productTypeFilter, setProductTypeFilter] = useState<string>('todas');
+  const [shapeFilter, setShapeFilter] = useState<string>('all');
+
+  // Filter inventory by status
+  const statusFilteredInventory = useMemo(() => {
+    if (statusFilter === 'todas') return inventoryData;
+    if (statusFilter === 'disponibles') return inventoryData.filter(item => item.estado === 'DISPONIBLE');
+    if (statusFilter === 'vendidas') return inventoryData.filter(item => item.estado === 'VENDIDA');
+    return inventoryData;
+  }, [statusFilter]);
+
+  // Filter by product type
+  const typeFilteredInventory = useMemo(() => {
+    if (productTypeFilter === 'todas') return statusFilteredInventory;
+    if (productTypeFilter === 'gemas') return statusFilteredInventory.filter(item => !item.isJewelry && item.cantidad === 1);
+    if (productTypeFilter === 'joyas') return statusFilteredInventory.filter(item => item.isJewelry);
+    if (productTypeFilter === 'lotes') return statusFilteredInventory.filter(item => !item.isJewelry && item.cantidad > 1);
+    return statusFilteredInventory;
+  }, [statusFilteredInventory, productTypeFilter]);
+
+  // Get unique shapes from type-filtered inventory
+  const uniqueShapes = useMemo(() => {
+    const shapes = new Set(typeFilteredInventory.map(item => item.talla).filter(Boolean));
+    return ['all', ...Array.from(shapes).sort()];
+  }, [typeFilteredInventory]);
+
+  // Filter inventory by shape
+  const filteredInventory = useMemo(() => {
+    if (shapeFilter === 'all') return typeFilteredInventory;
+    return typeFilteredInventory.filter(item => item.talla === shapeFilter);
+  }, [typeFilteredInventory, shapeFilter]);
 
   // Investment items state
   const [investments, setInvestments] = useState<InvestmentItem[]>([
-    { id: 'emerald', label: 'Valor de la Esmeralda', icon: <Gem size={18} />, value: 300000, unit: 'CTs', unitLabel: 'quilates', placeholder: '0' },
-    { id: 'gold', label: 'Oro (Estructura)', icon: <Award size={18} />, value: 0, unit: 'Grms', unitLabel: 'gramos', placeholder: '0' },
-    { id: 'silver', label: 'Plata (Estructura)', icon: <CircleDollarSign size={18} />, value: 320000, unit: 'Grms', unitLabel: 'gramos', placeholder: '0' },
+    { id: 'emerald', label: 'Valor de la Esmeralda', icon: <Gem size={18} />, value: 300000, unit: 'Precio Total', unitLabel: 'precio total', placeholder: '0' },
+    { id: 'gold', label: 'Oro (Estructura)', icon: <Award size={18} />, value: 0, unit: 'Precio Total', unitLabel: 'precio total', placeholder: '0' },
+    { id: 'silver', label: 'Plata (Estructura)', icon: <CircleDollarSign size={18} />, value: 320000, unit: 'Precio Total', unitLabel: 'precio total', placeholder: '0' },
     { id: 'setting', label: 'Engaste', icon: <Sparkles size={18} />, value: 60000, placeholder: '0' },
     { id: 'certification', label: 'Certificación', icon: <FileCheck size={18} />, value: 0, placeholder: '0' },
     { id: 'packaging', label: 'Empaque', icon: <Gift size={18} />, value: 0, placeholder: '0' },
@@ -117,12 +164,28 @@ export default function PriceSimulator() {
   // Export loading state
   const [isExporting, setIsExporting] = useState(false);
 
+  // Carat weight for price per carat calculation
+  const [caratWeight, setCaratWeight] = useState<number>(0);
+
+  // Calculate total investment from multiple products
+  const totalProductsValue = useMemo(() => {
+    if (!multiSelectMode || selectedProducts.length === 0) return 0;
+
+    return selectedProducts.reduce((sum, product) => {
+      if ('priceCOP' in product && product.priceCOP) {
+        return sum + product.priceCOP;
+      }
+      return sum;
+    }, 0);
+  }, [multiSelectMode, selectedProducts]);
+
   // Calculate total investment
   const totalInvestment = useMemo(() => {
     const baseTotal = investments.reduce((sum, item) => sum + item.value, 0);
     const customTotal = customItems.reduce((sum, item) => sum + item.value, 0);
-    return baseTotal + customTotal;
-  }, [investments, customItems]);
+    const productsTotal = multiSelectMode ? totalProductsValue : 0;
+    return baseTotal + customTotal + productsTotal;
+  }, [investments, customItems, multiSelectMode, totalProductsValue]);
 
   // Calculate pricing metrics
   const pricingMetrics = useMemo(() => {
@@ -130,14 +193,16 @@ export default function PriceSimulator() {
     const margin = ((salePrice - totalInvestment) / salePrice) * 100;
     const roi = ((salePrice - totalInvestment) / totalInvestment) * 100;
     const profit = salePrice - totalInvestment;
+    const pricePerCarat = caratWeight > 0 ? salePrice / caratWeight : 0;
 
     return {
       salePrice,
       margin,
       roi,
       profit,
+      pricePerCarat,
     };
-  }, [totalInvestment, priceFactor]);
+  }, [totalInvestment, priceFactor, caratWeight]);
 
   // Get tier based on current factor
   const currentTier = useMemo(() => {
@@ -180,12 +245,108 @@ export default function PriceSimulator() {
 
   // Handle emerald selection from gallery
   const handleEmeraldSelect = (emerald: Emerald | null) => {
-    setSelectedEmerald(emerald);
-    if (emerald) {
-      setProductName(emerald.name);
-      if (emerald.priceCOP && emerald.priceCOP > 0) {
-        updateInvestment('emerald', emerald.priceCOP);
+    if (multiSelectMode && emerald) {
+      // Add to collection
+      handleAddProduct(emerald);
+      // Clear the input and selection to allow adding more products
+      setProductName('');
+      setSelectedEmerald(null);
+    } else {
+      setSelectedEmerald(emerald);
+      setSelectedInventoryItem(null);
+      setProductSource('gallery');
+      if (emerald) {
+        setProductName(emerald.name);
+
+        // Load price
+        if (emerald.priceCOP && emerald.priceCOP > 0) {
+          updateInvestment('emerald', emerald.priceCOP);
+        }
+
+        // Set carat weight if available
+        if (emerald.weightCarats) {
+          setCaratWeight(emerald.weightCarats);
+        }
       }
+    }
+  };
+
+  // Handle inventory selection
+  const handleInventorySelect = (item: InventoryItem | null) => {
+    if (multiSelectMode && item) {
+      // Add to collection
+      handleAddProduct(item);
+      // Clear the input and selection to allow adding more products
+      setProductName('');
+      setSelectedInventoryItem(null);
+    } else {
+      setSelectedInventoryItem(item);
+      setSelectedEmerald(null);
+      setProductSource('inventory');
+      if (item) {
+        setProductName(item.nombre);
+
+        // Load price - handle both number and potential string formats
+        const price = typeof item.precioCOP === 'number' ? item.precioCOP :
+                     (item.precioCOP ? Number(item.precioCOP) : 0);
+
+        if (price > 0) {
+          updateInvestment('emerald', price);
+        }
+
+        // Set carat weight if available
+        if (typeof item.peso === 'number') {
+          setCaratWeight(item.peso);
+        } else if (typeof item.peso === 'string' && !item.isJewelry) {
+          // Try to parse string weight for non-jewelry items
+          const parsedWeight = parseFloat(item.peso.replace(',', '.'));
+          if (!isNaN(parsedWeight)) {
+            setCaratWeight(parsedWeight);
+          }
+        }
+
+        // Pre-fill metal cost if it's jewelry
+        if (item.isJewelry && item.metalType) {
+          if (item.metalType === 'Plata') {
+            updateInvestment('silver', item.costoTM || 0);
+          } else if (item.metalType === 'Oro 18k') {
+            updateInvestment('gold', item.costoTM || 0);
+          }
+        }
+      }
+    }
+  };
+
+  // Add product to multi-select collection
+  const handleAddProduct = (product: Emerald | InventoryItem) => {
+    const productId = 'item' in product ? product.item : product.id;
+    const isAlreadyAdded = selectedProducts.some(p =>
+      ('item' in p ? p.item : p.id) === productId
+    );
+
+    if (!isAlreadyAdded) {
+      setSelectedProducts(prev => [...prev, product]);
+    }
+  };
+
+  // Remove product from multi-select collection
+  const handleRemoveProduct = (product: Emerald | InventoryItem) => {
+    const productId = 'item' in product ? product.item : product.id;
+    setSelectedProducts(prev =>
+      prev.filter(p => ('item' in p ? p.item : p.id) !== productId)
+    );
+  };
+
+  // Toggle multi-select mode
+  const toggleMultiSelectMode = () => {
+    setMultiSelectMode(!multiSelectMode);
+    if (!multiSelectMode) {
+      // Entering multi-select mode
+      setSelectedProducts([]);
+      setProductName('Colección de Productos');
+    } else {
+      // Exiting multi-select mode
+      setSelectedProducts([]);
     }
   };
 
@@ -200,7 +361,7 @@ export default function PriceSimulator() {
     return labels[category] || category;
   };
 
-  // Export quotation as PDF with Tierra Madre branding
+  // Export quotation as PDF with Tierra Madre branding (Catalog Style)
   const exportQuotation = async () => {
     setIsExporting(true);
 
@@ -212,176 +373,353 @@ export default function PriceSimulator() {
       });
 
       const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 20;
-      let y = 25;
+      const contentWidth = pageWidth - (margin * 2);
 
-      // Header with Tierra Madre dark background
-      pdf.setFillColor(15, 23, 42); // Dark slate
-      pdf.rect(0, 0, pageWidth, 48, 'F');
+      // Brand colors (RGB)
+      const emeraldGreen = [0, 174, 122];
+      const gold = [212, 175, 55];
+      const darkSlate = [30, 41, 59];
+      const lightGray = [241, 245, 249];
+      const mediumGray = [148, 163, 184];
 
-      // Emerald accent line at top
-      pdf.setFillColor(0, 174, 122); // Brand emerald
-      pdf.rect(0, 0, pageWidth, 3, 'F');
+      let y = margin;
 
-      // Brand name
-      pdf.setTextColor(0, 174, 122); // Emerald
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('TM STUDIO', margin, y - 3);
+      // ==================== PREMIUM HEADER ====================
+      pdf.setFillColor(emeraldGreen[0], emeraldGreen[1], emeraldGreen[2]);
+      pdf.rect(0, 0, pageWidth, 45, 'F');
 
+      // Company name
       pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(24);
+      pdf.setFontSize(28);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('TIERRA MADRE', margin, y + 5);
+      pdf.text('TIERRA MADRE', margin, 20);
 
-      pdf.setFontSize(10);
+      // Tagline
+      pdf.setFontSize(11);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(255, 255, 255, 0.7);
-      pdf.text('Colombian Emeralds', margin, y + 12);
+      pdf.text('Esmeraldas Colombianas | Colombian Emeralds', margin, 28);
 
-      // Cotización title
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(0, 174, 122);
-      pdf.text('COTIZACIÓN', pageWidth - margin, y, { align: 'right' });
+      // Quotation info box (top right)
+      const quotationBoxX = pageWidth - margin - 60;
+      pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(quotationBoxX, 12, 60, 23, 2, 2, 'F');
 
+      pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
       pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      const docTitle = multiSelectMode && selectedProducts.length > 0 ? 'CATÁLOGO' : 'COTIZACIÓN';
+      pdf.text(docTitle, quotationBoxX + 30, 18, { align: 'center' });
+
+      pdf.setFontSize(8);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(255, 255, 255);
+      const quotationNumber = `TM-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${String(Date.now()).slice(-3)}`;
+      pdf.text(`No. ${quotationNumber}`, quotationBoxX + 30, 23, { align: 'center' });
+
       const today = new Date().toLocaleDateString('es-CO', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
       });
-      pdf.text(today, pageWidth - margin, y + 7, { align: 'right' });
+      pdf.text(today, quotationBoxX + 30, 32, { align: 'center' });
 
-      y = 65;
+      y = 55;
 
-      // Product name section
-      if (productName) {
-        pdf.setTextColor(15, 23, 42);
-        pdf.setFontSize(18);
+      // ==================== PRODUCT CATALOG SECTION ====================
+      if (multiSelectMode && selectedProducts.length > 0) {
+        // Catalog header
+        pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+        pdf.roundedRect(margin, y, contentWidth, 12, 3, 3, 'F');
+
+        pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
+        pdf.setFontSize(14);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(productName, margin, y);
-        y += 12;
+        pdf.text(`Catálogo de Productos (${selectedProducts.length} items)`, margin + 5, y + 8);
+
+        y += 20;
+
+        // List each product in catalog
+        selectedProducts.forEach((product, index) => {
+          const isInventory = 'item' in product;
+          const name = isInventory ? product.nombre : product.name;
+          const price = isInventory ? product.precioCOP : product.priceCOP || 0;
+          const weight = isInventory
+            ? (typeof product.peso === 'number' ? `${product.peso} ct` : '')
+            : (product.weightCarats ? `${product.weightCarats} ct` : '');
+          const category = !isInventory && product.category ? getCategoryLabel(product.category) : '';
+
+          // Product card
+          pdf.setFillColor(255, 255, 255);
+          pdf.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
+          pdf.setLineWidth(0.5);
+          pdf.roundedRect(margin, y, contentWidth, 22, 2, 2, 'FD');
+
+          // Product number badge
+          pdf.setFillColor(emeraldGreen[0], emeraldGreen[1], emeraldGreen[2]);
+          pdf.circle(margin + 8, y + 8, 4, 'F');
+          pdf.setTextColor(255, 255, 255);
+          pdf.setFontSize(8);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(`${index + 1}`, margin + 8, y + 9.5, { align: 'center' });
+
+          // Product name
+          pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(name, margin + 15, y + 8);
+
+          // Product details
+          pdf.setFontSize(9);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+          let details = [];
+          if (weight) details.push(weight);
+          if (category) details.push(category);
+          if (isInventory) details.push(`#${product.item}`);
+          if (details.length > 0) {
+            pdf.text(details.join(' • '), margin + 15, y + 14);
+          }
+
+          // Price
+          pdf.setTextColor(emeraldGreen[0], emeraldGreen[1], emeraldGreen[2]);
+          pdf.setFontSize(12);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(formatCurrency(price), pageWidth - margin - 5, y + 11, { align: 'right' });
+
+          y += 25;
+        });
+
+        y += 5;
+      } else {
+        // Single product section
+        if (productName) {
+          pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+          pdf.roundedRect(margin, y, contentWidth, 25, 3, 3, 'F');
+
+          pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
+          pdf.setFontSize(16);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(productName, margin + 5, y + 10);
+
+          if (caratWeight > 0) {
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+            pdf.text(`Peso: ${caratWeight} quilates`, margin + 5, y + 18);
+          }
+
+          y += 35;
+        }
       }
 
-      // Divider
-      pdf.setDrawColor(226, 232, 240);
+      // ==================== INVESTMENT BREAKDOWN ====================
+      pdf.setDrawColor(emeraldGreen[0], emeraldGreen[1], emeraldGreen[2]);
       pdf.setLineWidth(0.5);
       pdf.line(margin, y, pageWidth - margin, y);
-      y += 15;
+      y += 12;
 
-      // Investment breakdown section
-      pdf.setTextColor(71, 85, 105);
-      pdf.setFontSize(10);
+      pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
+      pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('DETALLE DE INVERSIÓN', margin, y);
+      pdf.text('Detalle de Inversión', margin, y);
       y += 10;
 
-      pdf.setFont('helvetica', 'normal');
+      // Investment items
       pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
 
-      investments.forEach(item => {
+      investments.forEach((item, index) => {
         if (item.value > 0) {
-          pdf.setTextColor(15, 23, 42);
-          pdf.text(item.label, margin, y);
-          pdf.text(formatCurrency(item.value), pageWidth - margin, y, { align: 'right' });
-          y += 7;
+          if (index % 2 === 0) {
+            pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+            pdf.rect(margin, y - 5, contentWidth, 8, 'F');
+          }
+          pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
+          pdf.text(item.label, margin + 5, y);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(formatCurrency(item.value), pageWidth - margin - 5, y, { align: 'right' });
+          pdf.setFont('helvetica', 'normal');
+          y += 8;
         }
       });
 
-      customItems.forEach(item => {
+      customItems.forEach((item, index) => {
         if (item.value > 0) {
-          pdf.setTextColor(15, 23, 42);
-          pdf.text(item.label, margin, y);
-          pdf.text(formatCurrency(item.value), pageWidth - margin, y, { align: 'right' });
-          y += 7;
+          const adjustedIndex = investments.filter(i => i.value > 0).length + index;
+          if (adjustedIndex % 2 === 0) {
+            pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+            pdf.rect(margin, y - 5, contentWidth, 8, 'F');
+          }
+          pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
+          pdf.text(item.label, margin + 5, y);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(formatCurrency(item.value), pageWidth - margin - 5, y, { align: 'right' });
+          pdf.setFont('helvetica', 'normal');
+          y += 8;
         }
       });
 
-      y += 3;
-      pdf.setDrawColor(226, 232, 240);
+      y += 5;
+      pdf.setDrawColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+      pdf.setLineWidth(0.3);
       pdf.line(margin, y, pageWidth - margin, y);
       y += 8;
 
+      // Subtotal
+      pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
+      pdf.setFontSize(11);
+      pdf.text('Subtotal:', margin + 5, y);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(15, 23, 42);
-      pdf.text('Total Inversión', margin, y);
-      pdf.text(formatCurrency(totalInvestment), pageWidth - margin, y, { align: 'right' });
+      pdf.text(formatCurrency(totalInvestment), pageWidth - margin - 5, y, { align: 'right' });
+
+      y += 15;
+
+      // ==================== MAIN PRICE SECTION ====================
+      pdf.setFillColor(emeraldGreen[0], emeraldGreen[1], emeraldGreen[2]);
+      pdf.roundedRect(margin, y, contentWidth, 35, 3, 3, 'F');
+
+      y += 12;
+
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('PRECIO TOTAL CON FACTOR DE CAMBIO', margin + 10, y);
+
+      y += 10;
+
+      pdf.setFontSize(24);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${formatCurrency(pricingMetrics.salePrice)} COP`, margin + 10, y);
+
+      y += 8;
+
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Factor aplicado: ${priceFactor.toFixed(1)}x (${currentTier.label})`, margin + 10, y);
+
       y += 20;
 
-      // Pricing section
-      pdf.setFillColor(248, 250, 252);
-      pdf.roundedRect(margin, y - 5, pageWidth - (margin * 2), 55, 3, 3, 'F');
+      // ==================== METRICS CARDS ====================
+      const cardWidth = (contentWidth - 10) / 3;
+      const cardHeight = 25;
+      const cardSpacing = 5;
 
-      pdf.setDrawColor(0, 174, 122);
-      pdf.setLineWidth(0.5);
-      pdf.roundedRect(margin, y - 5, pageWidth - (margin * 2), 55, 3, 3, 'S');
+      const metrics = [
+        {
+          label: 'Precio por Quilate',
+          value: caratWeight > 0 ? formatCurrency(pricingMetrics.pricePerCarat) : 'N/A',
+          icon: '💎'
+        },
+        {
+          label: 'Margen s/Venta',
+          value: formatPercent(pricingMetrics.margin),
+          icon: '📊'
+        },
+        {
+          label: 'Ganancia Neta',
+          value: formatCurrency(pricingMetrics.profit),
+          icon: '💰'
+        }
+      ];
 
-      pdf.setTextColor(71, 85, 105);
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('PRECIO PROPUESTO', margin + 5, y + 5);
+      metrics.forEach((metric, index) => {
+        const cardX = margin + (index * (cardWidth + cardSpacing));
 
-      pdf.setFont('helvetica', 'normal');
+        pdf.setFillColor(255, 255, 255);
+        pdf.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
+        pdf.setLineWidth(0.5);
+        pdf.roundedRect(cardX, y, cardWidth, cardHeight, 2, 2, 'FD');
+
+        pdf.setFontSize(16);
+        pdf.text(metric.icon, cardX + 5, y + 10);
+
+        pdf.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(metric.label, cardX + 5, y + 16, { maxWidth: cardWidth - 10 });
+
+        pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(metric.value, cardX + 5, y + 22);
+      });
+
+      y += cardHeight + 15;
+
+      // ==================== TRUST ELEMENTS ====================
+      pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      pdf.roundedRect(margin, y, contentWidth, 20, 2, 2, 'F');
+
+      y += 8;
+
+      pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
       pdf.setFontSize(9);
-      pdf.text(`Factor aplicado: ${priceFactor.toFixed(1)}x (${currentTier.label})`, margin + 5, y + 13);
-
-      pdf.setTextColor(0, 174, 122);
-      pdf.setFontSize(28);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(formatCurrency(pricingMetrics.salePrice), margin + 5, y + 32);
+      pdf.text('✓', margin + 5, y);
+      pdf.text('Certificado de Autenticidad Incluido', margin + 12, y);
 
-      const metricsY = y + 45;
-      const colWidth = (pageWidth - (margin * 2)) / 3;
+      y += 6;
 
-      pdf.setFontSize(8);
+      pdf.text('✓', margin + 5, y);
+      pdf.text('Garantía de Origen Colombiano', margin + 12, y);
+
+      y += 6;
+
+      pdf.text('✓', margin + 5, y);
+      pdf.text('Evaluación Gemológica Profesional', margin + 12, y);
+
+      // ==================== FOOTER ====================
+      const footerY = pageHeight - 40;
+
+      pdf.setDrawColor(emeraldGreen[0], emeraldGreen[1], emeraldGreen[2]);
+      pdf.setLineWidth(1);
+      pdf.line(margin, footerY, pageWidth - margin, footerY);
+
+      y = footerY + 8;
+
+      // Company info
+      pdf.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+      pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(71, 85, 105);
+      pdf.text('Tierra Madre - Esmeraldas Colombianas', margin, y);
 
-      pdf.text('Margen s/Venta', margin + 5, metricsY);
-      pdf.setTextColor(59, 130, 246);
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(formatPercent(pricingMetrics.margin), margin + 5, metricsY + 6);
+      y += 5;
+      pdf.text('Bogotá, Colombia | contacto@tierramadre.co', margin, y);
 
+      y += 5;
+      pdf.text('+57 (1) 234 5678 | www.tierramadre.co', margin, y);
+
+      // Validity notice
+      y = footerY + 8;
       pdf.setFontSize(8);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(71, 85, 105);
-      pdf.text('ROI', margin + colWidth + 5, metricsY);
-      pdf.setTextColor(139, 92, 246);
-      pdf.setFontSize(12);
+      pdf.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 15);
+      const expiryStr = expiryDate.toLocaleDateString('es-CO', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      pdf.text('Esta cotización es válida hasta:', pageWidth - margin, y, { align: 'right' });
+      y += 4;
       pdf.setFont('helvetica', 'bold');
-      pdf.text(formatPercent(pricingMetrics.roi), margin + colWidth + 5, metricsY + 6);
+      pdf.setTextColor(emeraldGreen[0], emeraldGreen[1], emeraldGreen[2]);
+      pdf.text(expiryStr, pageWidth - margin, y, { align: 'right' });
 
-      pdf.setFontSize(8);
+      y += 4;
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(71, 85, 105);
-      pdf.text('Ganancia Neta', margin + (colWidth * 2) + 5, metricsY);
-      pdf.setTextColor(0, 174, 122);
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(formatCurrency(pricingMetrics.profit), margin + (colWidth * 2) + 5, metricsY + 6);
+      pdf.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+      pdf.text('Los precios pueden variar según disponibilidad', pageWidth - margin, y, { align: 'right' });
 
-      // Footer
-      const footerY = pdf.internal.pageSize.getHeight() - 25;
-      pdf.setDrawColor(226, 232, 240);
-      pdf.line(margin, footerY - 10, pageWidth - margin, footerY - 10);
-
-      pdf.setFontSize(8);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(148, 163, 184);
-      pdf.text('Esta cotización es válida por 15 días a partir de la fecha de emisión.', margin, footerY);
-      pdf.text('Precios en Pesos Colombianos (COP). No incluye IVA.', margin, footerY + 5);
-
-      pdf.setTextColor(0, 174, 122);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Tierra Madre - Colombian Emeralds', pageWidth - margin, footerY + 5, { align: 'right' });
-
-      const fileName = productName
-        ? `Cotizacion_${productName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
-        : `Cotizacion_TierraMadre_${new Date().toISOString().split('T')[0]}.pdf`;
+      const dateStr = new Date().toISOString().split('T')[0];
+      const fileName = multiSelectMode && selectedProducts.length > 0
+        ? `Catalogo_TierraMadre_${selectedProducts.length}_Items_${dateStr}.pdf`
+        : productName
+          ? `Cotizacion_${productName.replace(/\s+/g, '_')}_${dateStr}.pdf`
+          : `Cotizacion_TierraMadre_${dateStr}.pdf`;
 
       pdf.save(fileName);
     } catch (error) {
@@ -538,22 +876,70 @@ export default function PriceSimulator() {
                     Nombre del Producto
                   </Typography>
                 </Box>
-                {emeralds.length > 0 && (
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                   <Chip
                     icon={<Image size={12} />}
-                    label={`${emeralds.length} en galería`}
+                    label={`Galería (${emeralds.length})`}
                     size="small"
+                    onClick={() => setProductSource('gallery')}
                     sx={{
                       height: 22,
                       fontSize: '0.625rem',
                       fontWeight: 500,
-                      bgcolor: alpha(studioColors.emerald, 0.1),
-                      color: studioColors.emerald,
-                      '& .MuiChip-icon': { color: studioColors.emerald },
+                      bgcolor: productSource === 'gallery' ? studioColors.emerald : alpha(studioColors.emerald, 0.1),
+                      color: productSource === 'gallery' ? '#FFFFFF' : studioColors.emerald,
+                      cursor: 'pointer',
+                      '& .MuiChip-icon': { color: productSource === 'gallery' ? '#FFFFFF' : studioColors.emerald },
+                      '&:hover': {
+                        bgcolor: productSource === 'gallery' ? studioColors.emerald : alpha(studioColors.emerald, 0.2),
+                      },
                     }}
                   />
-                )}
+                  <Chip
+                    icon={<ShoppingBag size={12} />}
+                    label={`Inventario (${filteredInventory.length})`}
+                    size="small"
+                    onClick={() => setProductSource('inventory')}
+                    sx={{
+                      height: 22,
+                      fontSize: '0.625rem',
+                      fontWeight: 500,
+                      bgcolor: productSource === 'inventory' ? studioColors.emerald : alpha(studioColors.emerald, 0.1),
+                      color: productSource === 'inventory' ? '#FFFFFF' : studioColors.emerald,
+                      cursor: 'pointer',
+                      '& .MuiChip-icon': { color: productSource === 'inventory' ? '#FFFFFF' : studioColors.emerald },
+                      '&:hover': {
+                        bgcolor: productSource === 'inventory' ? studioColors.emerald : alpha(studioColors.emerald, 0.2),
+                      },
+                    }}
+                  />
+                  <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: studioColors.border }} />
+                  <Chip
+                    icon={<Layers size={12} />}
+                    label="Multi-selección"
+                    size="small"
+                    onClick={toggleMultiSelectMode}
+                    sx={{
+                      height: 22,
+                      fontSize: '0.625rem',
+                      fontWeight: 500,
+                      bgcolor: multiSelectMode ? '#8B5CF6' : alpha('#8B5CF6', 0.1),
+                      color: multiSelectMode ? '#FFFFFF' : '#8B5CF6',
+                      cursor: 'pointer',
+                      border: '1px solid',
+                      borderColor: multiSelectMode ? '#8B5CF6' : alpha('#8B5CF6', 0.3),
+                      '& .MuiChip-icon': { color: multiSelectMode ? '#FFFFFF' : '#8B5CF6' },
+                      '&:hover': {
+                        bgcolor: multiSelectMode ? '#8B5CF6' : alpha('#8B5CF6', 0.2),
+                        borderColor: '#8B5CF6',
+                      },
+                    }}
+                  />
+                </Box>
               </Box>
+
+              {/* Gallery Autocomplete */}
+              {productSource === 'gallery' && (
               <Autocomplete
                 freeSolo
                 options={emeralds}
@@ -660,6 +1046,250 @@ export default function PriceSimulator() {
                   </Box>
                 }
               />
+              )}
+
+              {/* Inventory Autocomplete */}
+              {productSource === 'inventory' && (
+                <>
+                {/* Status Filter */}
+                <Box sx={{ mb: 1.5 }}>
+                  <Typography variant="caption" sx={{ color: studioColors.textSecondary, fontWeight: 600, mb: 0.75, display: 'block' }}>
+                    Estado
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    {['todas', 'disponibles', 'vendidas'].map(status => (
+                      <Chip
+                        key={status}
+                        label={status.charAt(0).toUpperCase() + status.slice(1)}
+                        size="small"
+                        onClick={() => setStatusFilter(status)}
+                        sx={{
+                          height: 26,
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          bgcolor: statusFilter === status ? studioColors.emerald : alpha(studioColors.emerald, 0.08),
+                          color: statusFilter === status ? '#FFFFFF' : studioColors.textSecondary,
+                          border: '1px solid',
+                          borderColor: statusFilter === status ? studioColors.emerald : 'transparent',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            bgcolor: statusFilter === status ? studioColors.emerald : alpha(studioColors.emerald, 0.15),
+                            borderColor: studioColors.emerald,
+                          },
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+
+                {/* Product Type Filter */}
+                <Box sx={{ mb: 1.5 }}>
+                  <Typography variant="caption" sx={{ color: studioColors.textSecondary, fontWeight: 600, mb: 0.75, display: 'block' }}>
+                    Tipo
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {[
+                      { value: 'todas', label: 'Todas' },
+                      { value: 'gemas', label: 'Gemas' },
+                      { value: 'joyas', label: 'Joyas' },
+                      { value: 'lotes', label: 'Lotes' },
+                    ].map(type => (
+                      <Chip
+                        key={type.value}
+                        label={type.label}
+                        size="small"
+                        onClick={() => setProductTypeFilter(type.value)}
+                        sx={{
+                          height: 26,
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          bgcolor: productTypeFilter === type.value ? alpha(studioColors.emerald, 0.15) : alpha(studioColors.emerald, 0.05),
+                          color: productTypeFilter === type.value ? studioColors.emerald : studioColors.textSecondary,
+                          border: '1px solid',
+                          borderColor: productTypeFilter === type.value ? studioColors.emerald : 'transparent',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            bgcolor: alpha(studioColors.emerald, 0.15),
+                            borderColor: studioColors.emerald,
+                          },
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+
+                {/* Shape Filter */}
+                <Box sx={{ mb: 1 }}>
+                  <Typography variant="caption" sx={{ color: studioColors.textSecondary, fontWeight: 600, mb: 0.75, display: 'block' }}>
+                    Talla
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {uniqueShapes.map(shape => (
+                    <Chip
+                      key={shape}
+                      label={shape === 'all' ? 'Todas' : shape}
+                      size="small"
+                      onClick={() => setShapeFilter(shape)}
+                      sx={{
+                        height: 24,
+                        fontSize: '0.6875rem',
+                        fontWeight: 500,
+                        bgcolor: shapeFilter === shape ? alpha(studioColors.emerald, 0.15) : alpha(studioColors.emerald, 0.05),
+                        color: shapeFilter === shape ? studioColors.emerald : studioColors.textSecondary,
+                        border: '1px solid',
+                        borderColor: shapeFilter === shape ? studioColors.emerald : 'transparent',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          bgcolor: alpha(studioColors.emerald, 0.15),
+                          borderColor: studioColors.emerald,
+                        },
+                      }}
+                    />
+                  ))}
+                  </Box>
+                </Box>
+                <Autocomplete
+                  freeSolo
+                  options={filteredInventory}
+                  value={selectedInventoryItem}
+                  inputValue={productName}
+                  onInputChange={(_, newValue) => setProductName(newValue)}
+                  onChange={(_, newValue) => {
+                    if (typeof newValue === 'string') {
+                      setProductName(newValue);
+                      setSelectedInventoryItem(null);
+                    } else {
+                      handleInventorySelect(newValue);
+                    }
+                  }}
+                  getOptionLabel={(option) => {
+                    if (typeof option === 'string') return option;
+                    return `${option.nombre} - ${option.item}`;
+                  }}
+                  renderOption={(props, option) => (
+                    <Box
+                      component="li"
+                      {...props}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        py: 1,
+                        '&:hover': { bgcolor: alpha(studioColors.emerald, 0.06) },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 1.5,
+                          bgcolor: alpha(studioColors.emerald, 0.1),
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: studioColors.emerald,
+                        }}
+                      >
+                        <Gem size={20} />
+                      </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            color: studioColors.textPrimary,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {option.nombre}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                          <Typography variant="caption" sx={{ color: studioColors.textSecondary }}>
+                            #{option.item}
+                          </Typography>
+                          {option.isJewelry && option.metalType && (
+                            <Chip
+                              label={option.metalType}
+                              size="small"
+                              sx={{
+                                height: 16,
+                                fontSize: '0.6rem',
+                                bgcolor: alpha(studioColors.gold, 0.1),
+                                color: studioColors.gold,
+                              }}
+                            />
+                          )}
+                          {!option.isJewelry && option.cantidad > 1 && (
+                            <Chip
+                              label={`Lote x${option.cantidad}`}
+                              size="small"
+                              sx={{
+                                height: 16,
+                                fontSize: '0.6rem',
+                                bgcolor: alpha('#8B5CF6', 0.1),
+                                color: '#8B5CF6',
+                                fontWeight: 600,
+                              }}
+                            />
+                          )}
+                          {!option.isJewelry && typeof option.peso === 'number' && (
+                            <Typography variant="caption" sx={{ color: studioColors.emerald, fontWeight: 500 }}>
+                              {option.peso} ct
+                            </Typography>
+                          )}
+                          {option.precioCOP && option.precioCOP > 0 && (
+                            <Typography variant="caption" sx={{ color: '#3B82F6', fontWeight: 500 }}>
+                              {formatCurrency(option.precioCOP)}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      size="small"
+                      placeholder="Busca en inventario por nombre o número..."
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          bgcolor: studioColors.surface,
+                          fontSize: '0.875rem',
+                          '& fieldset': { borderColor: studioColors.border },
+                          '&:hover fieldset': { borderColor: alpha(studioColors.emerald, 0.5) },
+                          '&.Mui-focused fieldset': { borderColor: studioColors.emerald, borderWidth: 2 },
+                        },
+                      }}
+                    />
+                  )}
+                  PaperComponent={(props) => (
+                    <Paper
+                      {...props}
+                      sx={{
+                        mt: 0.5,
+                        boxShadow: studioShadows.lg,
+                        border: `1px solid ${studioColors.border}`,
+                        borderRadius: 2,
+                      }}
+                    />
+                  )}
+                  noOptionsText={
+                    <Box sx={{ py: 2, textAlign: 'center' }}>
+                      <Typography variant="body2" sx={{ color: studioColors.textSecondary }}>
+                        No hay productos disponibles en inventario
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: studioColors.textMuted }}>
+                        Verifica el estado de los items
+                      </Typography>
+                    </Box>
+                  }
+                />
+                </>
+              )}
+
+              {/* Selected Product Badge */}
               {selectedEmerald && (
                 <Box
                   sx={{
@@ -695,6 +1325,173 @@ export default function PriceSimulator() {
                   </IconButton>
                 </Box>
               )}
+
+              {selectedInventoryItem && !multiSelectMode && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    mt: 1,
+                    p: 1,
+                    bgcolor: alpha('#3B82F6', 0.06),
+                    borderRadius: 1.5,
+                    border: `1px solid ${alpha('#3B82F6', 0.2)}`,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 1,
+                      bgcolor: alpha('#3B82F6', 0.1),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#3B82F6',
+                    }}
+                  >
+                    <ShoppingBag size={16} />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="caption" sx={{ color: '#3B82F6', fontWeight: 600 }}>
+                      Seleccionado de inventario #{selectedInventoryItem.item}
+                    </Typography>
+                  </Box>
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      setSelectedInventoryItem(null);
+                      setProductName('');
+                    }}
+                    sx={{ color: studioColors.textMuted, '&:hover': { color: '#EF4444' } }}
+                  >
+                    <RotateCcw size={14} />
+                  </IconButton>
+                </Box>
+              )}
+
+              {/* Multi-Select Collection Display */}
+              {multiSelectMode && selectedProducts.length > 0 && (
+                <Box
+                  sx={{
+                    mt: 2,
+                    p: 2,
+                    bgcolor: alpha('#8B5CF6', 0.04),
+                    borderRadius: 2,
+                    border: `1px solid ${alpha('#8B5CF6', 0.2)}`,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Layers size={16} color="#8B5CF6" />
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#8B5CF6' }}>
+                        Colección ({selectedProducts.length} productos)
+                      </Typography>
+                    </Box>
+                    <Typography variant="caption" sx={{ color: '#8B5CF6', fontWeight: 600 }}>
+                      {formatCurrency(totalProductsValue)}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {selectedProducts.map((product) => {
+                      const isInventory = 'item' in product;
+                      const productId = isInventory ? product.item : product.id;
+                      const productName = isInventory ? product.nombre : product.name;
+                      const productPrice = ('priceCOP' in product ? product.priceCOP : 0) || 0;
+
+                      return (
+                        <Box
+                          key={productId}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            p: 1,
+                            bgcolor: alpha('#FFFFFF', 0.8),
+                            borderRadius: 1,
+                            border: `1px solid ${alpha('#8B5CF6', 0.1)}`,
+                          }}
+                        >
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontWeight: 600,
+                                color: studioColors.textPrimary,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                display: 'block',
+                              }}
+                            >
+                              {productName}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#8B5CF6', fontWeight: 500 }}>
+                              {formatCurrency(productPrice)}
+                            </Typography>
+                          </Box>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleRemoveProduct(product)}
+                            sx={{
+                              color: studioColors.textMuted,
+                              '&:hover': { color: '#EF4444', bgcolor: alpha('#EF4444', 0.1) },
+                            }}
+                          >
+                            <X size={14} />
+                          </IconButton>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              )}
+            </Box>
+
+            <Divider sx={{ borderColor: studioColors.border, mb: 2.5 }} />
+
+            {/* Carat Weight Input */}
+            <Box sx={{ mb: 2.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.75 }}>
+                <Gem size={16} color={studioColors.emerald} />
+                <Typography variant="body2" sx={{ fontWeight: 600, color: studioColors.textPrimary }}>
+                  Peso en Quilates (opcional)
+                </Typography>
+                <Tooltip title="Ingresa el peso total en quilates para calcular el precio por quilate">
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Info size={14} color={studioColors.textMuted} />
+                  </Box>
+                </Tooltip>
+              </Box>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                value={caratWeight || ''}
+                onChange={(e) => setCaratWeight(Number(e.target.value) || 0)}
+                placeholder="Ej: 2.5"
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Typography sx={{ fontSize: '0.75rem', color: studioColors.emerald, fontWeight: 600 }}>
+                          ct
+                        </Typography>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: studioColors.surface,
+                    fontSize: '0.875rem',
+                    '& fieldset': { borderColor: studioColors.border },
+                    '&:hover fieldset': { borderColor: alpha(studioColors.emerald, 0.4) },
+                    '&.Mui-focused fieldset': { borderColor: studioColors.emerald },
+                  },
+                }}
+              />
             </Box>
 
             <Divider sx={{ borderColor: studioColors.border, mb: 2.5 }} />
@@ -1112,6 +1909,40 @@ export default function PriceSimulator() {
                     </Typography>
                   </Box>
                 </Box>
+
+                {/* Price per Carat Display */}
+                {caratWeight > 0 && (
+                  <Box sx={{ mt: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        p: 1.5,
+                        borderRadius: 2,
+                        bgcolor: alpha(studioColors.gold, 0.08),
+                        border: `1px solid ${alpha(studioColors.gold, 0.2)}`,
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Gem size={16} color={studioColors.gold} />
+                        <Typography variant="body2" sx={{ color: alpha('#FFFFFF', 0.85), fontWeight: 500 }}>
+                          Precio por Quilate
+                        </Typography>
+                      </Box>
+                      <Typography
+                        sx={{
+                          fontSize: '1.125rem',
+                          fontWeight: 700,
+                          color: studioColors.gold,
+                          fontFamily: 'monospace',
+                        }}
+                      >
+                        {formatCurrency(pricingMetrics.pricePerCarat)}/ct
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
 
                 {/* Margin Progress Bar */}
                 <Box sx={{ mt: 3 }}>
