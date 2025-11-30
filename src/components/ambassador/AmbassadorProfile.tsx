@@ -41,6 +41,7 @@ import { AmbassadorProfile as AmbassadorProfileType, Testimonial } from '../../t
 import { loadTestimonials } from '../../data/ambassadors';
 import AmbassadorTrustBadge, { AmbassadorBadgeDisplay } from './AmbassadorTrustBadge';
 import { getAmbassadorTrustLevel, getAmbassadorTrustColor } from '../../utils/ambassadorTrust';
+import PriceSimulator from '../PriceSimulator';
 
 interface AmbassadorProfileProps {
   ambassador: AmbassadorProfileType;
@@ -48,7 +49,7 @@ interface AmbassadorProfileProps {
   onContact?: (ambassador: AmbassadorProfileType) => void;
 }
 
-type TabValue = 'about' | 'reviews' | 'portfolio';
+type TabValue = 'about' | 'reviews' | 'portfolio' | 'simulator';
 
 export default function AmbassadorProfile({
   ambassador,
@@ -260,6 +261,7 @@ export default function AmbassadorProfile({
           <Tab label="Acerca de" value="about" />
           <Tab label={`Resenas (${testimonials.length})`} value="reviews" />
           <Tab label="Portafolio" value="portfolio" />
+          <Tab label="Simulador" value="simulator" />
         </Tabs>
       </Box>
 
@@ -274,6 +276,10 @@ export default function AmbassadorProfile({
 
       {activeTab === 'portfolio' && (
         <PortfolioTab ambassador={ambassador} />
+      )}
+
+      {activeTab === 'simulator' && (
+        <SimulatorTab />
       )}
     </Box>
   );
@@ -657,6 +663,15 @@ function PortfolioTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
         Pronto podras ver el trabajo destacado de {ambassador.displayName}.
       </Typography>
+    </Box>
+  );
+}
+
+// Simulator Tab - Price simulation tool for products
+function SimulatorTab() {
+  return (
+    <Box>
+      <PriceSimulator />
     </Box>
   );
 }
