@@ -694,7 +694,7 @@ export default function InventoryBrowser() {
   const hasFilters = search || colorFilter !== 'all' || qualityFilter !== 'all' || typeFilter !== 'all' || statusFilter !== 'available';
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
       {/* Premium Header - Simplified */}
       <Paper
         elevation={0}

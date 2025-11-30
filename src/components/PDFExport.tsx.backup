@@ -110,7 +110,7 @@ export default function PDFExport() {
 
   if (emeralds.length === 0) {
     return (
-      <Box sx={{ maxWidth: 600, mx: 'auto', px: { xs: 2, sm: 3, md: 0 }, textAlign: 'center', py: 8 }}>
+      <Box sx={{ maxWidth: 600, mx: 'auto', textAlign: 'center', py: 8 }}>
         <Paper
           elevation={0}
           sx={{
@@ -165,7 +165,7 @@ export default function PDFExport() {
   }
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
       {/* Premium Header */}
       <Paper
         elevation={0}
@@ -339,7 +339,7 @@ export default function PDFExport() {
         </Box>
       </Paper>
 
-      <Grid container spacing={{ xs: 2, md: 3 }}>
+      <Grid container spacing={3}>
         {/* Left: Selection */}
         <Grid item xs={12} md={8}>
           <Paper
@@ -395,7 +395,7 @@ export default function PDFExport() {
               </Button>
             </Box>
 
-            <Grid container spacing={{ xs: 1.5, md: 2 }}>
+            <Grid container spacing={2}>
               {emeralds.map((emerald) => {
                 const isSelected = selectedIds.has(emerald.id);
                 return (

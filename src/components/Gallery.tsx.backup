@@ -62,7 +62,7 @@ export default function Gallery() {
 
   if (totalCount === 0) {
     return (
-      <Box sx={{ maxWidth: 960, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
+      <Box sx={{ maxWidth: 960, mx: 'auto' }}>
         {/* TM Studio Header - Empty State */}
         <Paper
           elevation={0}
@@ -86,7 +86,7 @@ export default function Gallery() {
               background: headerStyle.accentLine,
             }}
           />
-          <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 }, pt: { xs: 2.5, md: 3.5 } }}>
+          <Box sx={{ p: 3, pt: 3.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
               <Box
                 sx={{
@@ -179,7 +179,7 @@ export default function Gallery() {
   }
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
       {/* TM Studio Header */}
       <Paper
         elevation={0}
@@ -203,7 +203,7 @@ export default function Gallery() {
             background: headerStyle.accentLine,
           }}
         />
-        <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 }, pt: { xs: 2.5, md: 3.5 } }}>
+        <Box sx={{ p: 3, pt: 3.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
               <Box
@@ -316,7 +316,7 @@ export default function Gallery() {
       </Paper>
 
       {/* Stats Cards */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: { xs: 1.5, md: 2 }, mb: { xs: 3, md: 4 } }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, mb: 4 }}>
         {/* Total */}
         <Paper
           elevation={0}
@@ -584,7 +584,7 @@ export default function Gallery() {
       </Box>
 
       {/* Grid */}
-      <Grid container spacing={{ xs: 2, md: 3 }}>
+      <Grid container spacing={3}>
         {filteredEmeralds.map((emerald) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={emerald.id}>
             <EmeraldCard

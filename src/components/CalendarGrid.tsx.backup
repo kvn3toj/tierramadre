@@ -100,7 +100,7 @@ export default function CalendarGrid() {
   }).length;
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
       {/* TM Studio Header */}
       <Paper
         elevation={0}
@@ -207,7 +207,7 @@ export default function CalendarGrid() {
       </Paper>
 
       {/* Stats Cards Row */}
-      <Grid container spacing={{ xs: 1.5, md: 2 }} sx={{ mb: 4 }}>
+      <Grid container spacing={2} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Paper
             elevation={0}
@@ -385,7 +385,7 @@ export default function CalendarGrid() {
           </Typography>
         </Box>
 
-        <Grid container spacing={{ xs: 1.5, md: 2 }}>
+        <Grid container spacing={2}>
           {weekDays.map((day) => {
             const dayPosts = getPostsForDay(day);
             const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
@@ -639,7 +639,7 @@ export default function CalendarGrid() {
             </Typography>
           </Paper>
         ) : (
-          <Grid container spacing={{ xs: 1.5, md: 2 }}>
+          <Grid container spacing={2}>
             {emeralds
               .filter(e => e.status === 'available')
               .slice(0, 8)

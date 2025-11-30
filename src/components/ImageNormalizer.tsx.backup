@@ -200,7 +200,7 @@ export default function ImageNormalizer() {
   const brandColor = tokens.interactive.primary;
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
       {/* Premium Header */}
       <Paper
         elevation={0}
@@ -326,7 +326,7 @@ export default function ImageNormalizer() {
         </Box>
       </Paper>
 
-      <Grid container spacing={{ xs: 2, md: 3 }}>
+      <Grid container spacing={3}>
         {/* Settings Panel */}
         <Grid item xs={12} md={4}>
           <Paper
@@ -891,7 +891,7 @@ export default function ImageNormalizer() {
                   Imágenes Procesadas ({images.length})
                 </Typography>
               </Box>
-              <Grid container spacing={{ xs: 1.5, md: 2 }}>
+              <Grid container spacing={2}>
                 {images.map((image) => (
                   <Grid item xs={6} sm={4} md={3} key={image.id}>
                     <Card
