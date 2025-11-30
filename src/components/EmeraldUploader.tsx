@@ -26,17 +26,17 @@ import {
   CardContent,
   CardActions,
   Badge,
+  alpha,
 } from '@mui/material';
 import {
-  CloudUpload as UploadIcon,
   AutoAwesome as AIIcon,
-  Settings as SettingsIcon,
   Check as CheckIcon,
   Refresh as RefreshIcon,
   Collections as BatchIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
+import { Upload, Settings, Image, Layers } from 'lucide-react';
 import { useEmeralds } from '../hooks/useEmeralds';
 import { useAI, markNameAsUsed } from '../hooks/useAI';
 import { EmeraldCategory } from '../types';
@@ -330,36 +330,137 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
   };
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h5" sx={{ fontFamily: '"Libre Baskerville", serif' }}>
-          Subir Esmeraldas
-        </Typography>
-        <Button
-          startIcon={<SettingsIcon />}
-          onClick={() => setSettingsOpen(true)}
-          size="small"
-        >
-          API Key
-        </Button>
-      </Box>
-
-      {/* Upload Mode Tabs */}
-      <Tabs
-        value={uploadMode}
-        onChange={(_, v) => setUploadMode(v)}
-        sx={{ mb: 2 }}
+    <Box sx={{ maxWidth: 1100, mx: 'auto' }}>
+      {/* Premium Header */}
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 4,
+          p: 3,
+          borderRadius: 4,
+          background: 'linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%)',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.15) 0%, transparent 50%)',
+            pointerEvents: 'none',
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: -50,
+            right: -50,
+            width: 200,
+            height: 200,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.08)',
+            pointerEvents: 'none',
+          },
+        }}
       >
-        <Tab icon={<UploadIcon />} label="Individual" />
-        <Tab
-          icon={
-            <Badge badgeContent={batchItems.length} color="primary">
-              <BatchIcon />
-            </Badge>
-          }
-          label="Lote (Batch)"
-        />
-      </Tabs>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: 3,
+                bgcolor: 'rgba(255,255,255,0.2)',
+                backdropFilter: 'blur(10px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+              }}
+            >
+              <Upload size={28} color="#FFFFFF" />
+            </Box>
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+                Subir Esmeraldas
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
+                Agrega nuevas joyas a tu colección
+              </Typography>
+            </Box>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<Settings size={18} />}
+            onClick={() => setSettingsOpen(true)}
+            sx={{
+              bgcolor: 'rgba(255,255,255,0.2)',
+              color: '#FFFFFF',
+              fontWeight: 600,
+              px: 2.5,
+              py: 1,
+              borderRadius: 2,
+              textTransform: 'none',
+              backdropFilter: 'blur(10px)',
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.3)',
+              },
+            }}
+          >
+            API Key
+          </Button>
+        </Box>
+      </Paper>
+
+      {/* Upload Mode Tabs - Premium Style */}
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 3,
+          borderRadius: 3,
+          bgcolor: '#F9FAFB',
+          border: '1px solid #E5E7EB',
+          p: 0.5,
+          display: 'inline-flex',
+        }}
+      >
+        <Tabs
+          value={uploadMode}
+          onChange={(_, v) => setUploadMode(v)}
+          sx={{
+            minHeight: 48,
+            '& .MuiTab-root': {
+              minHeight: 48,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              color: '#6B7280',
+              px: 3,
+              '&.Mui-selected': {
+                color: '#059669',
+                bgcolor: '#FFFFFF',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              },
+            },
+            '& .MuiTabs-indicator': {
+              display: 'none',
+            },
+          }}
+        >
+          <Tab icon={<Image size={18} />} iconPosition="start" label="Individual" />
+          <Tab
+            icon={
+              <Badge badgeContent={batchItems.length} color="primary" sx={{ '& .MuiBadge-badge': { bgcolor: '#059669' } }}>
+                <Layers size={18} />
+              </Badge>
+            }
+            iconPosition="start"
+            label="Lote (Batch)"
+          />
+        </Tabs>
+      </Paper>
 
       {aiError === 'local' && (
         <Alert severity="success" sx={{ mb: 2 }}>
@@ -378,20 +479,26 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
           {/* Left: Upload Zone */}
           <Grid item xs={12} md={6}>
             <Paper
+              elevation={0}
               onDrop={handleDrop}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               sx={{
-                p: 3,
-                border: `2px dashed ${dragOver ? brandColors.emeraldGreen : 'grey'}`,
-                bgcolor: dragOver ? `${brandColors.emeraldGreen}10` : 'transparent',
-                transition: 'all 0.2s',
+                p: 4,
+                borderRadius: 4,
+                border: `2px dashed ${dragOver ? '#059669' : '#D1D5DB'}`,
+                bgcolor: dragOver ? alpha('#059669', 0.06) : '#FAFAFA',
+                transition: 'all 0.3s ease',
                 cursor: 'pointer',
-                minHeight: 300,
+                minHeight: 340,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
+                '&:hover': {
+                  borderColor: '#059669',
+                  bgcolor: alpha('#059669', 0.04),
+                },
               }}
               onClick={() => document.getElementById('file-input')?.click()}
             >
@@ -405,27 +512,49 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
 
               {imageUrl ? (
                 <Box sx={{ width: '100%', textAlign: 'center' }}>
-                  <img
-                    src={imageUrl}
-                    alt="Preview"
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: 250,
-                      objectFit: 'contain',
-                      borderRadius: 8,
+                  <Box
+                    sx={{
+                      borderRadius: 3,
+                      overflow: 'hidden',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                      display: 'inline-block',
                     }}
-                  />
-                  <Typography variant="caption" color="grey.500" sx={{ mt: 1, display: 'block' }}>
+                  >
+                    <img
+                      src={imageUrl}
+                      alt="Preview"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: 280,
+                        objectFit: 'contain',
+                        display: 'block',
+                      }}
+                    />
+                  </Box>
+                  <Typography variant="caption" sx={{ color: '#6B7280', mt: 2, display: 'block' }}>
                     Haz clic para cambiar la imagen
                   </Typography>
                 </Box>
               ) : (
                 <>
-                  <UploadIcon sx={{ fontSize: 60, color: 'grey.500', mb: 2 }} />
-                  <Typography variant="h6" color="grey.500">
+                  <Box
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: 3,
+                      bgcolor: alpha('#059669', 0.1),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mb: 2,
+                    }}
+                  >
+                    <Upload size={36} color="#059669" />
+                  </Box>
+                  <Typography variant="h6" sx={{ color: '#374151', fontWeight: 600, mb: 0.5 }}>
                     Arrastra una imagen aquí
                   </Typography>
-                  <Typography variant="body2" color="grey.600">
+                  <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
                     o haz clic para seleccionar
                   </Typography>
                 </>
@@ -433,16 +562,38 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
             </Paper>
 
             {analyzing && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
-                <CircularProgress size={20} />
-                <Typography color="grey.500">Generando nombres...</Typography>
-              </Box>
+              <Paper
+                elevation={0}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  mt: 2,
+                  p: 2,
+                  borderRadius: 2,
+                  bgcolor: alpha('#059669', 0.06),
+                  border: '1px solid',
+                  borderColor: alpha('#059669', 0.2),
+                }}
+              >
+                <CircularProgress size={20} sx={{ color: '#059669' }} />
+                <Typography sx={{ color: '#059669', fontWeight: 500 }}>Generando nombres...</Typography>
+              </Paper>
             )}
           </Grid>
 
           {/* Right: Form */}
           <Grid item xs={12} md={6}>
-            <Paper sx={{ p: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                borderRadius: 4,
+                border: '1px solid #E5E7EB',
+                bgcolor: '#FFFFFF',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+              }}
+            >
               {/* AI Suggestions */}
               <Box sx={{ mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>

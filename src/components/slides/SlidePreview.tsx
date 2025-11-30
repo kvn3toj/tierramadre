@@ -19,6 +19,8 @@ import {
   Slider,
   Collapse,
   IconButton,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   Download as DownloadIcon,
@@ -39,7 +41,7 @@ import { SLIDE_WIDTH, SLIDE_HEIGHT } from './Slide2Purpose';
 import SlideEditor from './SlideEditor';
 import PresentationGenerator from './PresentationGenerator';
 import { generateSlidePDF, generateMultiSlidePDF } from '../../utils/slidePdfGenerator';
-import { colors } from '../brand';
+import { brand, getTokens, animation } from '../../design-system';
 
 // Legacy imports (kept for reference)
 // import { MissionTemplate, OpportunityTemplate, ... } from '../templates/MasterclassTemplates';
@@ -80,6 +82,10 @@ type ExportFormat = 'pdf' | 'png' | 'jpg';
 type TabMode = 'preview' | 'generate' | 'create';
 
 export default function SlidePreview() {
+  const theme = useTheme();
+  const mode = theme.palette.mode;
+  const tokens = getTokens(mode);
+
   const [tabMode, setTabMode] = useState<TabMode>('preview');
   const [exporting, setExporting] = useState(false);
   const [exportingAll, setExportingAll] = useState(false);
@@ -174,10 +180,14 @@ export default function SlidePreview() {
   };
 
   return (
-    <Box>
+    <Box sx={{ transition: animation.transition.default }}>
       <Typography
         variant="h5"
-        sx={{ mb: 2, fontFamily: '"Libre Baskerville", serif' }}
+        sx={{
+          mb: 2,
+          fontFamily: '"Libre Baskerville", serif',
+          color: tokens.text.primary,
+        }}
       >
         Presentaciones Tierra Madre
       </Typography>
@@ -189,10 +199,11 @@ export default function SlidePreview() {
         sx={{
           mb: 3,
           '& .MuiTab-root': {
-            color: 'grey.500',
-            '&.Mui-selected': { color: colors.emeraldRich },
+            color: tokens.text.secondary,
+            transition: animation.transition.default,
+            '&.Mui-selected': { color: tokens.interactive.primary },
           },
-          '& .MuiTabs-indicator': { bgcolor: colors.emeraldDeep },
+          '& .MuiTabs-indicator': { bgcolor: tokens.interactive.primary },
         }}
       >
         <Tab
@@ -218,7 +229,21 @@ export default function SlidePreview() {
       {tabMode === 'preview' ? (
         <>
           {/* Controls Bar */}
-          <Paper sx={{ p: 2, mb: 3, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              mb: 3,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              flexWrap: 'wrap',
+              bgcolor: tokens.background.surface,
+              border: `1px solid ${tokens.border.default}`,
+              borderRadius: 2,
+              transition: animation.transition.default,
+            }}
+          >
             {/* Slide Selector */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Tooltip title="Slide anterior">
@@ -314,8 +339,9 @@ export default function SlidePreview() {
               onClick={handleExport}
               disabled={exporting || exportingAll}
               sx={{
-                bgcolor: colors.emeraldDeep,
-                '&:hover': { bgcolor: colors.mysticalDark },
+                bgcolor: tokens.interactive.primary,
+                '&:hover': { bgcolor: tokens.interactive.primaryHover },
+                transition: animation.transition.default,
               }}
             >
               {exporting ? 'Exportando...' : `Descargar ${exportFormat.toUpperCase()}`}
@@ -327,8 +353,10 @@ export default function SlidePreview() {
               onClick={handleExportAll}
               disabled={exporting || exportingAll}
               sx={{
-                bgcolor: '#C9A962',
-                '&:hover': { bgcolor: '#9A7B3C' },
+                bgcolor: tokens.interactive.secondary,
+                color: mode === 'light' ? brand.slate[900] : '#1a1a1a',
+                '&:hover': { bgcolor: tokens.interactive.secondaryHover },
+                transition: animation.transition.default,
               }}
             >
               {exportingAll ? 'Generando PDF...' : 'Descargar Todo (PDF)'}
@@ -339,9 +367,10 @@ export default function SlidePreview() {
               <IconButton
                 onClick={() => setShowLogoSettings(!showLogoSettings)}
                 sx={{
-                  bgcolor: showLogoSettings ? colors.emeraldDeep : 'transparent',
-                  color: showLogoSettings ? 'white' : 'inherit',
-                  '&:hover': { bgcolor: showLogoSettings ? colors.mysticalDark : 'action.hover' },
+                  bgcolor: showLogoSettings ? tokens.interactive.primary : 'transparent',
+                  color: showLogoSettings ? 'white' : tokens.text.secondary,
+                  transition: animation.transition.default,
+                  '&:hover': { bgcolor: showLogoSettings ? tokens.interactive.primaryHover : alpha(tokens.interactive.primary, 0.1) },
                 }}
               >
                 <SettingsIcon />
@@ -351,38 +380,48 @@ export default function SlidePreview() {
 
           {/* Logo Settings Panel */}
           <Collapse in={showLogoSettings}>
-            <Paper sx={{ p: 2, mb: 2 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                mb: 2,
+                bgcolor: tokens.background.surface,
+                border: `1px solid ${tokens.border.default}`,
+                borderRadius: 2,
+              }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: tokens.text.primary }}>
                   <ImageIcon fontSize="small" />
                   Configuración del Logo
                 </Typography>
-                <IconButton size="small" onClick={() => setShowLogoSettings(false)}>
+                <IconButton size="small" onClick={() => setShowLogoSettings(false)} sx={{ color: tokens.text.secondary }}>
                   <ExpandLessIcon />
                 </IconButton>
               </Box>
 
               {/* Logo Position */}
-              <Typography variant="caption" color="grey.500" sx={{ mb: 1, display: 'block' }}>
+              <Typography variant="caption" sx={{ mb: 1, display: 'block', color: tokens.text.secondary }}>
                 Posición del Logo
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
                 {LOGO_POSITIONS.map((pos) => (
                   <Card
                     key={pos.id}
+                    elevation={0}
                     sx={{
                       minWidth: 70,
                       border: logoPosition === pos.id
-                        ? `2px solid ${colors.emeraldDeep}`
-                        : '2px solid transparent',
-                      transition: 'all 0.2s',
-                      bgcolor: logoPosition === pos.id ? 'rgba(10, 77, 60, 0.1)' : 'transparent',
+                        ? `2px solid ${tokens.interactive.primary}`
+                        : `1px solid ${tokens.border.default}`,
+                      transition: animation.transition.default,
+                      bgcolor: logoPosition === pos.id ? alpha(tokens.interactive.primary, 0.1) : tokens.background.muted,
                     }}
                   >
                     <CardActionArea onClick={() => setLogoPosition(pos.id)}>
                       <CardContent sx={{ textAlign: 'center', py: 1, px: 1.5 }}>
                         <Typography variant="h6" sx={{ lineHeight: 1 }}>{pos.icon}</Typography>
-                        <Typography variant="caption" sx={{ fontSize: '10px' }}>
+                        <Typography variant="caption" sx={{ fontSize: '10px', color: tokens.text.secondary }}>
                           {pos.label}
                         </Typography>
                       </CardContent>
@@ -392,7 +431,7 @@ export default function SlidePreview() {
               </Box>
 
               {/* Logo Size */}
-              <Typography variant="caption" color="grey.500" sx={{ mb: 1, display: 'block' }}>
+              <Typography variant="caption" sx={{ mb: 1, display: 'block', color: tokens.text.secondary }}>
                 Tamaño del Logo: {logoSize}px
               </Typography>
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -406,9 +445,10 @@ export default function SlidePreview() {
                       sx={{
                         minWidth: 'auto',
                         px: 1.5,
+                        transition: animation.transition.default,
                         ...(logoSize === size.value && {
-                          bgcolor: colors.emeraldDeep,
-                          '&:hover': { bgcolor: colors.mysticalDark },
+                          bgcolor: tokens.interactive.primary,
+                          '&:hover': { bgcolor: tokens.interactive.primaryHover },
                         }),
                       }}
                     >
@@ -424,10 +464,10 @@ export default function SlidePreview() {
                     max={350}
                     valueLabelDisplay="auto"
                     sx={{
-                      color: colors.emeraldDeep,
+                      color: tokens.interactive.primary,
                       '& .MuiSlider-thumb': {
                         '&:hover, &.Mui-focusVisible': {
-                          boxShadow: `0px 0px 0px 8px rgba(10, 77, 60, 0.16)`,
+                          boxShadow: `0px 0px 0px 8px ${alpha(tokens.interactive.primary, 0.16)}`,
                         },
                       },
                     }}
@@ -444,7 +484,7 @@ export default function SlidePreview() {
                     alt="Logo Preview"
                     sx={{ height: 32, width: 'auto', borderRadius: 1 }}
                   />
-                  <Typography variant="caption" color="grey.500">
+                  <Typography variant="caption" sx={{ color: tokens.text.secondary }}>
                     Vista previa del logo en posición: {LOGO_POSITIONS.find(p => p.id === logoPosition)?.label}
                   </Typography>
                 </Box>
@@ -460,15 +500,18 @@ export default function SlidePreview() {
 
           {/* Slide Preview Container */}
           <Paper
+            elevation={0}
             sx={{
               p: 3,
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              bgcolor: 'grey.900',
+              bgcolor: mode === 'dark' ? '#0A0A0A' : brand.slate[900],
               overflow: 'hidden',
               minHeight: isFullscreen ? '80vh' : 'calc(100vh - 350px)',
               position: 'relative',
+              borderRadius: 2,
+              border: `1px solid ${tokens.border.default}`,
             }}
           >
             {/* Wrapper to contain scaled slide */}
@@ -487,7 +530,7 @@ export default function SlidePreview() {
                 sx={{
                   transform: `scale(${zoom})`,
                   transformOrigin: 'center center',
-                  transition: 'transform 0.2s ease-out',
+                  transition: animation.transition.default,
                   boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
                   borderRadius: '4px',
                   overflow: 'hidden',
@@ -504,8 +547,17 @@ export default function SlidePreview() {
           </Paper>
 
           {/* Slide Thumbnails */}
-          <Paper sx={{ p: 2, mt: 2 }}>
-            <Typography variant="subtitle2" sx={{ mb: 2 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              mt: 2,
+              bgcolor: tokens.background.surface,
+              border: `1px solid ${tokens.border.default}`,
+              borderRadius: 2,
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ mb: 2, color: tokens.text.primary }}>
               Masterclass: El Poder de la Esmeralda Colombiana ({MASTERCLASS_SLIDES.length} slides)
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 1 }}>
@@ -516,15 +568,18 @@ export default function SlidePreview() {
                   sx={{
                     minWidth: 80,
                     height: 50,
-                    bgcolor: idx === currentSlideIndex ? colors.emeraldDeep : 'grey.800',
+                    bgcolor: idx === currentSlideIndex ? tokens.interactive.primary : tokens.background.muted,
                     borderRadius: 1,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    border: idx === currentSlideIndex ? `2px solid ${colors.emeraldRich}` : '2px solid transparent',
-                    transition: 'all 0.2s',
-                    '&:hover': { bgcolor: idx === currentSlideIndex ? colors.emeraldDeep : 'grey.700' },
+                    border: idx === currentSlideIndex ? `2px solid ${brand.emerald[400]}` : `2px solid ${tokens.border.default}`,
+                    transition: animation.transition.default,
+                    '&:hover': {
+                      bgcolor: idx === currentSlideIndex ? tokens.interactive.primary : alpha(tokens.interactive.primary, 0.15),
+                      borderColor: tokens.interactive.primary,
+                    },
                   }}
                 >
                   <Typography sx={{ fontSize: '20px' }}>{slide.icon}</Typography>
@@ -535,11 +590,11 @@ export default function SlidePreview() {
 
           {/* Info Footer */}
           <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <Typography variant="caption" color="grey.600">
+            <Typography variant="caption" sx={{ color: tokens.text.secondary }}>
               <ImageIcon fontSize="inherit" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
               Preview en tiempo real
             </Typography>
-            <Typography variant="caption" color="grey.600">
+            <Typography variant="caption" sx={{ color: tokens.text.secondary }}>
               <PdfIcon fontSize="inherit" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
               PDF generado en alta calidad (300 DPI)
             </Typography>
