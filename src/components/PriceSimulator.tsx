@@ -379,7 +379,6 @@ export default function PriceSimulator() {
 
       // Brand colors (RGB)
       const emeraldGreen = [0, 174, 122];
-      const gold = [212, 175, 55];
       const darkSlate = [30, 41, 59];
       const lightGray = [241, 245, 249];
       const mediumGray = [148, 163, 184];
