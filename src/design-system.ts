@@ -365,6 +365,7 @@ export const cardStyles = {
       borderRadius: radius.xl,
       boxShadow: shadows.light.card,
       transition: animation.transition.default,
+      p: { xs: 2, sm: 2.5, md: 3 }, // Responsive padding: 16px mobile, 20px tablet, 24px desktop
     },
     hover: {
       boxShadow: shadows.light.cardHover,
@@ -378,6 +379,7 @@ export const cardStyles = {
       borderRadius: radius.xl,
       boxShadow: shadows.dark.card,
       transition: animation.transition.default,
+      p: { xs: 2, sm: 2.5, md: 3 }, // Responsive padding: 16px mobile, 20px tablet, 24px desktop
     },
     hover: {
       boxShadow: shadows.dark.cardHover,
