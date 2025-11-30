@@ -25,18 +25,12 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  alpha,
 } from '@mui/material';
 import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Download as DownloadIcon,
-  Print as PrintIcon,
-  ContentCopy as CopyIcon,
-  DarkMode as DarkModeIcon,
-  LightMode as LightModeIcon,
-  Settings as SettingsIcon,
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
+import { Receipt, Plus, Trash2, Download, Printer, Copy, Moon, Sun, Settings } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { brandColors } from '../theme';
@@ -313,20 +307,144 @@ export default function ReceiptGenerator() {
   };
 
   return (
-    <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+    <Box sx={{ maxWidth: 1400, mx: 'auto' }}>
+      {/* Premium Header */}
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 4,
+          p: 3,
+          borderRadius: 4,
+          background: 'linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%)',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.15) 0%, transparent 50%)',
+            pointerEvents: 'none',
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: -50,
+            right: -50,
+            width: 200,
+            height: 200,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.08)',
+            pointerEvents: 'none',
+          },
+        }}
+      >
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
+              <Box
+                sx={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 3,
+                  bgcolor: 'rgba(255,255,255,0.2)',
+                  backdropFilter: 'blur(10px)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+                }}
+              >
+                <Receipt size={28} color="#FFFFFF" />
+              </Box>
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+                  Generador de Recibos
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
+                  Crea recibos elegantes para tus ventas
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Stats */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box
+                sx={{
+                  px: 2.5,
+                  py: 1.5,
+                  borderRadius: 2.5,
+                  bgcolor: 'rgba(255,255,255,0.15)',
+                  backdropFilter: 'blur(10px)',
+                  textAlign: 'center',
+                  minWidth: 80,
+                }}
+              >
+                <Typography sx={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>
+                  {(receipt.products || []).length}
+                </Typography>
+                <Typography sx={{ fontSize: '0.6875rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+                  Productos
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  px: 2.5,
+                  py: 1.5,
+                  borderRadius: 2.5,
+                  bgcolor: 'rgba(255,255,255,0.25)',
+                  backdropFilter: 'blur(10px)',
+                  textAlign: 'center',
+                  minWidth: 100,
+                }}
+              >
+                <Typography sx={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFFFFF', lineHeight: 1.2 }}>
+                  {formatCurrency(receipt.total || 0)}
+                </Typography>
+                <Typography sx={{ fontSize: '0.6875rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+                  Total
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Paper>
+
+      <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
       {/* Form Section */}
       <Paper
+        elevation={0}
         sx={{
           flex: '1 1 400px',
           p: 3,
-          bgcolor: brandColors.darkSurface,
-          maxHeight: 'calc(100vh - 200px)',
+          borderRadius: 3,
+          border: '1px solid #E5E7EB',
+          bgcolor: '#FFFFFF',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+          maxHeight: 'calc(100vh - 300px)',
           overflowY: 'auto',
         }}
       >
-        <Typography variant="h5" sx={{ color: brandColors.emeraldLight, mb: 3 }}>
-          Generar Recibo
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+          <Box
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+              bgcolor: alpha('#059669', 0.1),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Receipt size={18} color="#059669" />
+          </Box>
+          <Typography sx={{ fontWeight: 700, color: '#1F2937' }}>
+            Información del Recibo
+          </Typography>
+        </Box>
 
         {/* Receipt Settings Accordion */}
         <Accordion
@@ -338,17 +456,17 @@ export default function ReceiptGenerator() {
           }}
         >
           <AccordionSummary
-            expandIcon={<ExpandMoreIcon sx={{ color: 'grey.500' }} />}
+            expandIcon={<ExpandMoreIcon sx={{ color: '#6B7280' }} />}
             sx={{
-              bgcolor: brandColors.darkBg,
+              bgcolor: '#F9FAFB',
               borderRadius: 1,
               minHeight: 40,
               '& .MuiAccordionSummary-content': { my: 1 },
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <SettingsIcon sx={{ fontSize: 18, color: 'grey.500' }} />
-              <Typography variant="body2" sx={{ color: 'grey.400' }}>
+              <Settings size={16} color="#6B7280" />
+              <Typography variant="body2" sx={{ color: '#6B7280', fontWeight: 500 }}>
                 Configuración del Recibo
               </Typography>
             </Box>
@@ -603,10 +721,21 @@ export default function ReceiptGenerator() {
             <Button
               fullWidth
               variant="outlined"
-              startIcon={<AddIcon />}
+              startIcon={<Plus size={18} />}
               onClick={handleAddProduct}
               disabled={!newProduct.name || !newProduct.priceUSD}
-              sx={{ borderColor: brandColors.emeraldGreen, color: brandColors.emeraldLight }}
+              sx={{
+                borderColor: '#059669',
+                color: '#059669',
+                textTransform: 'none',
+                fontWeight: 600,
+                py: 1.25,
+                borderRadius: 2,
+                '&:hover': {
+                  borderColor: '#047857',
+                  bgcolor: alpha('#059669', 0.05),
+                },
+              }}
             >
               Agregar Producto
             </Button>
@@ -640,15 +769,18 @@ export default function ReceiptGenerator() {
                   )}
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2" sx={{ color: brandColors.emeraldLight }}>
+                  <Typography variant="body2" sx={{ color: '#059669', fontWeight: 600 }}>
                     {formatCurrency(product.priceUSD)}
                   </Typography>
                   <IconButton
                     size="small"
                     onClick={() => handleRemoveProduct(product.id)}
-                    sx={{ color: 'error.main' }}
+                    sx={{
+                      color: '#9CA3AF',
+                      '&:hover': { color: '#EF4444', bgcolor: alpha('#EF4444', 0.1) },
+                    }}
                   >
-                    <DeleteIcon fontSize="small" />
+                    <Trash2 size={16} />
                   </IconButton>
                 </Box>
               </Box>
@@ -705,10 +837,22 @@ export default function ReceiptGenerator() {
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <Button
             variant="contained"
-            startIcon={<DownloadIcon />}
+            startIcon={<Download size={18} />}
             onClick={handleExportPDF}
             disabled={(receipt.products || []).length === 0}
-            sx={{ bgcolor: brandColors.emeraldGreen, flex: 1 }}
+            sx={{
+              bgcolor: '#059669',
+              flex: 1,
+              textTransform: 'none',
+              fontWeight: 700,
+              py: 1.25,
+              borderRadius: 2,
+              boxShadow: '0 4px 16px rgba(5,150,105,0.3)',
+              '&:hover': {
+                bgcolor: '#047857',
+                boxShadow: '0 6px 20px rgba(5,150,105,0.4)',
+              },
+            }}
           >
             Descargar PDF
           </Button>
@@ -717,19 +861,28 @@ export default function ReceiptGenerator() {
               onClick={() => setReceiptTheme(receiptTheme === 'dark' ? 'light' : 'dark')}
               sx={{
                 border: '1px solid',
-                borderColor: receiptTheme === 'dark' ? 'grey.700' : logoGreen,
-                color: receiptTheme === 'dark' ? 'grey.400' : logoGreen,
+                borderColor: receiptTheme === 'dark' ? '#374151' : '#059669',
+                color: receiptTheme === 'dark' ? '#9CA3AF' : '#059669',
+                borderRadius: 2,
+                '&:hover': {
+                  bgcolor: receiptTheme === 'dark' ? alpha('#374151', 0.1) : alpha('#059669', 0.1),
+                },
               }}
             >
-              {receiptTheme === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+              {receiptTheme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             </IconButton>
           </Tooltip>
           <Tooltip title="Imprimir">
             <IconButton
               onClick={handlePrint}
-              sx={{ border: '1px solid', borderColor: 'grey.700' }}
+              sx={{
+                border: '1px solid #E5E7EB',
+                borderRadius: 2,
+                color: '#6B7280',
+                '&:hover': { bgcolor: alpha('#059669', 0.1), color: '#059669' },
+              }}
             >
-              <PrintIcon />
+              <Printer size={20} />
             </IconButton>
           </Tooltip>
           <Tooltip title="Nuevo Recibo">
@@ -746,9 +899,14 @@ export default function ReceiptGenerator() {
                 paymentMethod: 'cash',
                 notes: '',
               })}
-              sx={{ border: '1px solid', borderColor: 'grey.700' }}
+              sx={{
+                border: '1px solid #E5E7EB',
+                borderRadius: 2,
+                color: '#6B7280',
+                '&:hover': { bgcolor: alpha('#059669', 0.1), color: '#059669' },
+              }}
             >
-              <CopyIcon />
+              <Copy size={20} />
             </IconButton>
           </Tooltip>
         </Box>
@@ -1053,6 +1211,7 @@ export default function ReceiptGenerator() {
             </Box>
           </Box>
         </Box>
+      </Box>
       </Box>
 
       {/* Print Styles */}

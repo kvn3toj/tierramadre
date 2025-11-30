@@ -1,0 +1,99 @@
+	Item	FECHA INGRESO  INVENTARIO 	Nombre 	Peso  (ct) 	Color 	Calidad 	Cant.	Talla 	Medidas	Medidas	Imagen	 costo  T.madre 	 Precio COP	UBICACION 	ASESOR	ESTADO 	CAJA 
+	46	20-nov-2025	L:A Amor Platonico	2.63	Verde Vivido	Comercial  SuperFina 	1	Cushion	largo Ancho	8,0 8.9		$4,305,000	$9,566,667	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	47	20-nov-2025	L:A Corazon  Tierra Madre  	1.85	Verde Muzo	Fina 	1	Corazon	largo Ancho	7,3 8.7 5.6		$27,600,000	$27,600,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	49	23-nov-2025	L:II-JA Rapunzel	Plata	Verde Limón 	Comercial  Fina	1	7	largo Ancho	Anillo		$170,000	$377,778	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	50	23-nov-2025	L:II-JA Blanca Nieves	Plata	Verde Menta	Comercial  Estandar 	1	9	largo Ancho	Anillo		$170,000	$340,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	51	23-nov-2025	L:II-JA Rapunzel S.F.	Plata	Verde Menta	Comercial  Fina 	1	6	largo Ancho	Anillo		$170,000	$377,778	ASESOR	J.M.Escobar	VENDIDA 	Pte legalizar  50%
+	52	23-nov-2025	L:II-JA Pocahontas 	Plata	Verde Menta	Comercial  Superior	1	9	largo Ancho	Anillo		$170,000	$340,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	53	23-nov-2025	L:II-JA Aurora	Plata	Verde Menta	Comercial  Fina 	1	6	largo Ancho	Anillo		$170,000	$377,778	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	55	23-nov-2025	L:II-JA Daenerys	Plata	Verde Limón 	Comercial  Fina 	1	7	largo Ancho	Anillo		$170,000	$425,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	56	23-nov-2025	L:II-JA Anna	Plata	Verde Natural	Comercial  SuperFina 	1	9	largo Ancho	Anillo		$280,000	$560,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	61	23-nov-2025	L:II-JA Princesa Azul	Plata	Verde Menta	Comercial  Superior 	1	7	largo Ancho	Anillo	Vendido  en primicia	$170,000	$299,296	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	62	23-nov-2025	L:II-JA La Reina Margot	Plata	Verde Limón 	Comercial  Superior 	1	9	largo Ancho	Anillo		$280,000	$560,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	63	23-nov-2025	L:II-JA La Reina Isabell	Plata	Verde Menta	Comercial  Superior 	1	8	largo Ancho	Anillo		$280,000	$622,222	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	64	23-nov-2025	L:II-JA Gota del Pacifico	Oro  18k	Verde Muzo	Fina 	1	7	largo Ancho	Anillo		$2,500,000	$3,333,333	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	65	23-nov-2025	L:II-JA Raiz de Gaia	Oro  18k	Verde Muzo	Fina 	1	8	largo Ancho	Anillo		$2,500,000	$3,571,429	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	66	23-nov-2025	L:A-23F Espejo Sagrado	0,48	Verde Limón 	Comercial  SuperFina 	1	Esmeralda	largo Ancho	4.2 5.1		$61,000	$469,231	 ASESOR	K. Pineda	VENDIDA 	Legalizada
+	67	23-nov-2025	L:A-23F Hercules	0,70	Verde Limón 	Comercial  SuperFina 	1	Esmeralda	largo Ancho	5.8 4.5		$89,000	$444,112	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	69	23-nov-2025	L:A-105 Chispa Divina	0,89	Verde Limón 	Comercial  Fina	1	Esmeralda	largo Ancho	5,6 7.0		$312,000	$330,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	72	23-nov-2025	L:A-105 Troya 	0,81	Verde Limón 	Comercial  Fina	1	Esmeralda	largo Ancho	5,2 7.3		$306,000	$306,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	74	23-nov-2025	L:A-105 Fuego	0,66	Verde Limón 	Comercial  Estandar	1	Esmeralda	largo Ancho	4,7 6.1		$250,000	$250,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	75	24-nov-2025	L:A-104 Aria	0,32	Verde Limón 	Comercial  Estandar	1	Ovalo	largo Ancho	4.8 3.9		$226,000	$226,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	76	24-nov-2025	L:A-104 Ojos del  Universo	0.78	Verde Limón 	Comercial  Superior 	1	Ovalo	largo Ancho	3.9 3.7 4.7		$549,000	$549,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	77	24-nov-2025	L:A-104 Dos  Pequitas	0.47	Verde Limón 	Comercial  Fina	2	Ovalo	largo Ancho	3.5 4.3 3.3 4.3		$324,000	$324,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	81	24-nov-2025	L:A-104 Lalala	0.84	Verde Menta	Comercial  Estandar	1	Ovalo	largo Ancho	5.1 8.0		$580,000	$580,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	82	24-nov-2025	 La Diva	0.15	Verde  Natural	Comercial  SuperFina 	1	Redonda 	Diametro	3,5		$46,000	$115,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	84	24-nov-2025	Instante  Perfecto	0.16	Verde Limón 	Comercial  SuperFina 	1	Redonda 	Diametro	3.3		$49,000	$122,500	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	85	24-nov-2025	Viento  del Pacifico	0.22	Verde Menta	Comercial  Fina	1	Redonda 	Diametro	3.3		$67,400	$134,800	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	45	20-nov-2025	L:A Diosa  Tierra Madre	1,30	Verde Vivido	Comercial  SuperFina 	1	Esmeralda	largo Ancho	5,8 8.6		$2,128,000	$5,320,000	ASESOR	M.Restrepo	DISPONIBLE 	
+	57	23-nov-2025	Inventario  Molano	Plata	Verde Menta	Comercial  Fina 	1	0	largo Ancho	Anillo				 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	58	23-nov-2025	Inventario  Molano	Plata	Verde Menta	Comercial  Fina 	1	0	largo Ancho	Anillo				 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	59	23-nov-2025	Inventario  Molano	Plata	Verde Menta	Comercial  Fina 	1	0	largo Ancho	Anillo				 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	60	23-nov-2025	Inventario  Molano	Plata	Verde Menta	Comercial  Fina 	1	0	largo Ancho	Anillo				 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	68	23-nov-2025	L:A-23F Adan y Eva	0,95	Verde Limón 	Comercial  SuperFina 	2	Esmeralda	largo Ancho	4.4 5.0		$122,000	$305,000	ASESOR	Pablito	DISPONIBLE 	
+		10-nov-2025	TOTALES	2.62			30.00						19,942,478.00	 BOBEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	70	23-nov-2025	L:A-105 Apolo	1,29	Verde Limón 	Comercial  Superior 	1	Esmeralda	largo Ancho	5,4 8.1		$483,750	$483,750	ASESOR	J.M.Escobar	DISPONIBLE 	
+	71	23-nov-2025	L:A-105 Firmamento 	0,47	Verde Limón 	Comercial  Fina	1	Esmeralda	largo Ancho	4,2 6.2		$176,250	$176,250	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	73	23-nov-2025	L:A-105 Ventana al cielo 	0,70	Verde Limón 	Comercial  Superior 	1	Esmeralda	largo Ancho	4,7 5.8		$262,500	$262,500	ASESOR	M.GOMEZ	DISPONIBLE 	
+	78	24-nov-2025	L:A-104 Cleopatra	0.28	Verde Limón 	Comercial  Fina	1	Ovalo	largo Ancho	3.8 4.7		$198,000	$198,000	 BOVEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	79	24-nov-2025	L:A-104 Ojo de Afrodita	0.54	Verde Limón 	Comercial  Superior 	1	Ovalo	largo Ancho	4.5 5.5		$382,000	$382,000	ASESOR	J.M.Escobar	DISPONIBLE 	
+	80	24-nov-2025	L:A-104 Grecia	0.68	Verde Limón 	Comercial  Superior 	1	Ovalo	largo Ancho	6.2 4.8		$472,000	$472,000	ASESOR	K.Michel Moreno	DISPONIBLE 	
+	83	24-nov-2025	Dos  Luceritos	0.12	Verde Menta	Comercial  Fina	2	Redonda 	Diametro	2,7		$37,000	$92,500	ASESOR	M.GOMEZ	VENDIDA 	Legalizada
+	8	31-oct-2025	Bambú 	0.83	Verde  Natural	Estandar	1	Cuadrada	largo Ancho	0.0 0.0			$299,000	ASESOR	M.Echeverry	DISPONIBLE 	
+		10-nov-2025	TOTALES	2.45			9.00						2,366,000.00	 BOBEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	10	31-oct-2025	Jazmin	0.99	Verde Menta	Estandar	1	Esmeralda 	largo Ancho	0.0 0.0			$357,000	ASESOR	M.CAMPUZANO 	DISPONIBLE 	
+	17	31-oct-2025	Mistica 	0.38	Verde Limón 	Comercial  Fina	1	0	largo Ancho	0.0 0.0			$154,000	ASESOR	JM.ESCOBAR	DISPONIBLE 	
+	18	31-oct-2025	Pachitas	0.74	Verde Limón 	Comercial  Fina	2	Cuadrada	largo Ancho	0.0 0.0			$299,000	ASESOR	M.CAMPUZANO 	DISPONIBLE 	
+	20	31-oct-2025	2 Pinticas	0.73	Verde Limón 	Comercial  superior	2	Esmeralda	largo Ancho	0.0 0.0			$270,000	ASESOR	KEVIN- HERMANO 	DISPONIBLE 	
+	23	31-oct-2025	Guajira	0.58	Verde Limón 	Estandar	1	Redonda	largo Ancho	0.0 0.0			$195,000	ASESOR	M.CAMPUZANO 	DISPONIBLE 	
+	29	11-nov-2025	Hijos del sol	1.73	Verde Limón 	Comercial  Superfina 	2	Esmeralda	largo Ancho	6,2 5,4			$862,000	ASESOR	K.PINEDA	DISPONIBLE 	
+	30	11-nov-2025	Amor Eterno	1.08	Verde Limón 	Comercial  Superfina 	2	Esmeralda	largo Ancho	6,2 4.3			$625,000	ASESOR	M.ECHEVERRY	DISPONIBLE 	
+	38	11-nov-2025	Infinito	0.5	Verde Limón 	 Comercial  Final	1	Cuadrada	largo Ancho	4,8 4,8			$240,000	ASESOR	M.ECHEVERRY	DISPONIBLE 	
+			TOTALES	6.73			12.00						3,002,000.00	 BOBEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	42	13-nov-2025	Anillo de Plata ARE	Plata	Verde Menta	Plata - comercial	2	0	largo Ancho	Anillo			$6,004,000	ASESOR	D.Suarez	DISPONIBLE 	
+	48	15-nov-2025	Anillo Con Dorado ARE	Plata	Verde Menta	Plata - comercial	1	0	largo Ancho	Anillo			$380,000	ASESOR	K.PINEDA	DISPONIBLE 	
+	12	31-oct-2025	Baby Green	0.46	Verde Limón 	Comercial  superior	1		largo Ancho	0.0 0.0			$170,000	ASESOR	A.MOLANO	VENDIDA 	Pte legalizar  8 dic-2025
+	15	31-oct-2025	Madre Selva	0.75	Verde Limón 	Comercial  Fina	1	Cuadrada	largo Ancho	0.0 0.0			$303,000	ASESOR	A.MOLANO	VENDIDA 	Pte legalizar  8 dic-2025
+	16	31-oct-2025	Pacífico	0.55	Verde Limón 	Comercial  Fina	1	Cuadrada	largo Ancho	0.0 0.0			$222,000	ASESOR	A.MOLANO	VENDIDA 	Pte legalizar  8 dic-2025
+	21	31-oct-2025	Dualidad	1.63	Verde Limón 	Estandar	2	Cuadrada	largo Ancho	0.0 0.0			$548,000	ASESOR	A.MOLANO	VENDIDA 	Pte legalizar  8 dic-2025
+	22	31-oct-2025	Brasil	1.14	Verde Limón 	Estandar	1	Redonda	largo Ancho	0.0 0.0			$383,000	ASESOR	A.MOLANO	VENDIDA 	Legalizada
+	25	31-oct-2025	Las Emperatrices	0.41	Verde Menta	 Comercial  Fina	2	Cuadrada	largo Ancho	0.0 0.0			$166,000	ASESOR	A.MOLANO	VENDIDA 	Legalizada
+	28	31-oct-2025	Las 3 Marías	0.33	Verde Menta	 Comercial  Fina	3	Redonda	largo Ancho	0.0 0.0			$134,000	ASESOR	A.MOLANO	VENDIDA 	Legalizada
+	31	11-nov-2025	Alma Verde	0.48	Verde Limón 	Comercial  Superfina 	1	Cuadrada	largo Ancho	5.1 4.4			$222,000	ASESOR	A.MOLANO	VENDIDA 	Legalizada
+	33	11-nov-2025	Diosa de la Laguna 	0.45	Verde Limón 	Comercial  Superfina 	1	ovalo	largo Ancho	4 5			$291,000	ASESOR	A.MOLANO	VENDIDA 	Legalizada
+	35	11-nov-2025	Inspiracion Divina 	0.47	Verde Limón 	Comercial  Superfina 	1	ovalo	largo Ancho	4.9 4.1			$304,200	ASESOR	A.MOLANO	VENDIDA 	Legalizada
+	36	11-nov-2025	Lunera	0.46	Verde Limón 	 Comercial  superior	1	ovalo	largo Ancho	5.0 4.3			$205,000	ASESOR	A.MOLANO	VENDIDA 	Legalizada
+	39	11-nov-2025	Galaxia	0.55	Verde Limón 	 Comercial  superior	1	Redonda	largo Ancho	5,5			$254,000	ASESOR	A.MOLANO	VENDIDA 	Legalizada
+	40	11-nov-2025	Resplandor 	0.48	Verde Limón 	 Comercial  superior	1	Esmeralda	largo Ancho	5.6 4,2			$222,000	ASESOR	A.MOLANO	VENDIDA 	Legalizada
+	54	23-nov-2025	L:II-JA Bella	Plata	Verde Menta	Comercial  SuperFina 	1	5	largo Ancho	Anillo		$170,000	$425,000	ASESOR	J.M.Escobar	VENDIDA 	Pte legalizar
+	1	31-oct-2025	Rey Midas	1.47	Verde  Natural	Comercial Fina	1	Esmeralda 	largo Ancho	0.0 0.0			$635,000	ASESOR	M.CAMPUZANO 	VENDIDA 	Pte legalizar 28-nov-2025
+			TOTALES	4.36			22.00						10,868,200.00	 BOBEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	2	31-oct-2025	Las Niñas	0.43	Verde  Natural	Comercial Fina	2	Cuadrada	largo Ancho	0.0 0.0			$185,000	ASESOR	M.ECHEVERRY	VENDIDA 	Legalizada
+	3	31-oct-2025	Las Margaritas	1.36	Verde  Natural	Comercial Fina	2	Esmeralda 	largo Ancho	0.0 0.0			$294,000	ASESOR	LA VIKINGA 	VENDIDA 	Pte legalizar
+	4	31-oct-2025	Los Robles 	1.56	Verde  Natural	Comercial Fina	2	Esmeralda	largo Ancho	0.0 0.0			$674,000	ASESOR	A.MOLANO	VENDIDA 	Legalizada
+	5	31-oct-2025	Los Tulipanes 	1.26	Verde  Natural	Comercial Superior	2	Cuadrada	largo Ancho	0.0 0.0			$499,000	ASESOR	M.GOMEZ	VENDIDA 	Legalizada
+	6	31-oct-2025	Jardín Escondido 	1.23	Verde  Natural	Comercial Superior	1	Cuadrada	largo Ancho	0.0 0.0			$443,000	ASESOR	M.RESTREPO	VENDIDA 	pte legalizar   28-nov-22025
+	7	31-oct-2025	Trilogía 	1.43	Verde  Natural	Comercial Superior	3	Cuadrada	largo Ancho	0.0 0.0			$567,000	ASESOR	M.GOMEZ	VENDIDA 	Pte legalizar 5-dic-2025
+	9	31-oct-2025	Turquesa 	0.66	Verde  Natural	Estandar	1	Esmeralda 	largo Ancho	0.0 0.0			$238,000	ASESOR	LA VIKINGA 	VENDIDA 	Legalizada
+	11	31-oct-2025	Rosario	0.81	Verde  Natural	Estandar	1	Redonda	largo Ancho	0.0 0.0			$294,000	ASESOR	A.MOLANO	VENDIDA 	Legalizada
+	13	31-oct-2025	Amazonas	0.41	Verde Limón 	Comercial Fina	1	Ovalo	largo Ancho	0.0 0.0			$166,000	ASESOR	LA VIKINGA 	VENDIDA 	Legalizada
+	14	31-oct-2025	Leticia	0.33	Verde Limón 	Comercial Fina	1	Redonda	largo Ancho	0.0 0.0			$134,000	ASESOR	O.FLOREZ	VENDIDA 	Pte legalizar
+	19	31-oct-2025	5 estrellas 	2.14	Verde Limón 	Comercial superior	5	Cuadrada	largo Ancho	0.0 0.0			$791,000	ASESOR	M.GOMEZ	VENDIDA 	Legalizada
+	24	31-oct-2025	Aqua	0.44	Verde Limón 	Estandar	1	lagrima 	largo Ancho	0.0 0.0			$148,000	ASESOR	O.FLOREZ	VENDIDA 	Pte legalizar
+	26	31-oct-2025	Madre e Hija	0.21	Verde Menta	 Comercial Fina	2	Esmeralda 	largo Ancho	0.0 0.0			$85,000	ASESOR	LA VIKINGA 	VENDIDA 	Legalizada
+	27	31-oct-2025	Hijos de la Tierra	0.13	Verde Menta	 Comercial  superior	8	Redonda	largo Ancho	0.0 0.0			$418,000	ASESOR	M.CAMPUZANO 	DISPONIBLE 	
+	32	11-nov-2025	Venus	0.43	Verde Limón 	Comercial  Superfina 	1	Esmeralda	largo Ancho	4 5			$199,000	ASESOR	A.MOLANO	VENDIDA 	Pte legalizar  8 dic-2025
+	34	11-nov-2025	Gaia	0.55	Verde Limón 	Comercial  Superfina 	1	Redonda	Diametro	5,2			$274,000	ASESOR	A.MOLANO	VENDIDA 	Pte legalizar  8 dic-2025
+	37	11-nov-2025	Ojo de Zeus	0.35	Verde Limón 	 Comercial  Final	1	Redonda	Diametro	4.8			$168,000	ASESOR	LA NEGRA	VENDIDA 	Pte Legalizar
+																	
+	41	12-nov-2025	Anillo Corona  ARE	Plata	Verde Menta	Plata -comercial	1	0	largo Ancho	Anillo			$380,000	ASESOR	M.RESTREPO	VENDIDA 	Legalizada
+	43	13-nov-2025	Lote:23B ARE		Verde Menta	comercial	3	0	largo Ancho				$221,226	ASESOR	J.M.Escobar	VENDIDA 	Pte Legalizar
+	44	14-nov-2025	Bombon Superpoderosa  ARE	1,64	Verde Natural	Comercial  SuperFina 	1	Esmeralda	largo Ancho	0.0 0.0		$5,368,000	$5,368,000	ASESOR	J.Florez	VENDIDA 	Pte legalizar  5 dic-2025
+			TOTALES	13.73			40.00						11,546,226.00	 BOBEDA   OFI	M.CAMPUZANO 	DISPONIBLE 	
+	86																
+	87																
+	88																
+	89																
+	90																
+	91																
+	92																

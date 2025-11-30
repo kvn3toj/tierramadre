@@ -19,6 +19,8 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   AutoAwesome as AIIcon,
@@ -29,8 +31,8 @@ import {
   Image as ImageIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
-import { brandColors } from '../../theme';
 import { useEmeralds } from '../../hooks/useEmeralds';
+import { brand, getTokens, animation } from '../../design-system';
 
 // Slide template types (includes new catalog templates from PDFs)
 type SlideTemplate = 'purpose' | 'cover' | 'product' | 'stats' | 'quote' | 'team' | 'contact' | 'catalogCover' | 'productCatalog' | 'thankYou';
@@ -95,6 +97,10 @@ const AI_PROMPT_SUGGESTIONS = [
 ];
 
 export default function SlideEditor() {
+  const theme = useTheme();
+  const mode = theme.palette.mode;
+  const tokens = getTokens(mode);
+
   const { emeralds } = useEmeralds();
   const [selectedTemplate, setSelectedTemplate] = useState<SlideTemplate | null>(null);
   const [prompt, setPrompt] = useState('');
@@ -282,8 +288,8 @@ Responde SOLO JSON válido, sin markdown.`,
   };
 
   return (
-    <Box>
-      <Typography variant="h5" sx={{ mb: 3, fontFamily: '"Libre Baskerville", serif' }}>
+    <Box sx={{ transition: animation.transition.default }}>
+      <Typography variant="h5" sx={{ mb: 3, fontFamily: '"Libre Baskerville", serif', color: tokens.text.primary }}>
         Crear Nueva Diapositiva
       </Typography>
 
@@ -291,8 +297,17 @@ Responde SOLO JSON válido, sin markdown.`,
         {/* Left: Template Selection & Prompt */}
         <Grid item xs={12} md={7}>
           {/* Template Selection */}
-          <Paper sx={{ p: 2, mb: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              mb: 3,
+              bgcolor: tokens.background.surface,
+              border: `1px solid ${tokens.border.default}`,
+              borderRadius: 2,
+            }}
+          >
+            <Typography variant="subtitle1" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, color: tokens.text.primary }}>
               <PaletteIcon fontSize="small" />
               Selecciona un template (opcional)
             </Typography>
@@ -300,17 +315,19 @@ Responde SOLO JSON válido, sin markdown.`,
               {TEMPLATES.map((template) => (
                 <Grid item xs={6} sm={4} md={3} key={template.id}>
                   <Card
+                    elevation={0}
                     sx={{
                       border: selectedTemplate === template.id
-                        ? `2px solid ${brandColors.emeraldGreen}`
-                        : '2px solid transparent',
-                      transition: 'all 0.2s',
+                        ? `2px solid ${tokens.interactive.primary}`
+                        : `1px solid ${tokens.border.default}`,
+                      bgcolor: selectedTemplate === template.id ? alpha(tokens.interactive.primary, 0.08) : tokens.background.muted,
+                      transition: animation.transition.default,
                     }}
                   >
                     <CardActionArea onClick={() => setSelectedTemplate(template.id)}>
                       <CardContent sx={{ textAlign: 'center', py: 1.5 }}>
                         <Typography variant="h5">{template.icon}</Typography>
-                        <Typography variant="caption" display="block">
+                        <Typography variant="caption" display="block" sx={{ color: tokens.text.secondary }}>
                           {template.name}
                         </Typography>
                       </CardContent>
@@ -322,8 +339,17 @@ Responde SOLO JSON válido, sin markdown.`,
           </Paper>
 
           {/* Logo Position Selection */}
-          <Paper sx={{ p: 2, mb: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              mb: 3,
+              bgcolor: tokens.background.surface,
+              border: `1px solid ${tokens.border.default}`,
+              borderRadius: 2,
+            }}
+          >
+            <Typography variant="subtitle1" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, color: tokens.text.primary }}>
               <ImageIcon fontSize="small" />
               Posición del Logo
             </Typography>
@@ -331,12 +357,13 @@ Responde SOLO JSON válido, sin markdown.`,
               {LOGO_POSITIONS.map((pos) => (
                 <Grid item xs={4} sm={2.4} key={pos.id}>
                   <Card
+                    elevation={0}
                     sx={{
                       border: logoPosition === pos.id
-                        ? `2px solid ${brandColors.emeraldGreen}`
-                        : '2px solid transparent',
-                      transition: 'all 0.2s',
-                      bgcolor: logoPosition === pos.id ? 'rgba(80, 200, 120, 0.1)' : 'transparent',
+                        ? `2px solid ${tokens.interactive.primary}`
+                        : `1px solid ${tokens.border.default}`,
+                      bgcolor: logoPosition === pos.id ? alpha(tokens.interactive.primary, 0.08) : tokens.background.muted,
+                      transition: animation.transition.default,
                     }}
                   >
                     <CardActionArea onClick={() => setLogoPosition(pos.id)}>
@@ -369,7 +396,7 @@ Responde SOLO JSON válido, sin markdown.`,
           {/* AI Prompt Input */}
           <Paper sx={{ p: 3 }}>
             <Typography variant="subtitle1" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <AIIcon fontSize="small" sx={{ color: brandColors.emeraldGreen }} />
+              <AIIcon fontSize="small" sx={{ color: tokens.interactive.primary }} />
               Describe tu diapositiva
             </Typography>
 
@@ -413,8 +440,8 @@ Responde SOLO JSON válido, sin markdown.`,
               onClick={handleGenerateWithAI}
               disabled={generating || !prompt.trim()}
               sx={{
-                bgcolor: brandColors.emeraldGreen,
-                '&:hover': { bgcolor: brandColors.emeraldDark },
+                bgcolor: tokens.interactive.primary,
+                '&:hover': { bgcolor: tokens.interactive.primaryHover },
               }}
             >
               {generating ? 'Generando con IA...' : 'Generar Diapositiva con IA'}
@@ -481,7 +508,7 @@ Responde SOLO JSON válido, sin markdown.`,
                         fontFamily: '"Libre Baskerville", serif',
                         fontSize: '24px',
                         fontWeight: 700,
-                        color: brandColors.emeraldLight,
+                        color: brand.emerald[400],
                       }}
                     >
                       {generatedSlide.accentText}
@@ -515,7 +542,7 @@ Responde SOLO JSON válido, sin markdown.`,
                         transform: 'translateY(-50%)',
                         width: 80,
                         height: 100,
-                        background: `radial-gradient(ellipse, ${brandColors.emeraldGreen}40 0%, transparent 70%)`,
+                        background: `radial-gradient(ellipse, ${tokens.interactive.primary}40 0%, transparent 70%)`,
                         filter: 'blur(20px)',
                       }}
                     />
@@ -606,8 +633,8 @@ Responde SOLO JSON válido, sin markdown.`,
                     startIcon={<SaveIcon />}
                     onClick={handleSaveSlide}
                     sx={{
-                      bgcolor: brandColors.emeraldGreen,
-                      '&:hover': { bgcolor: brandColors.emeraldDark },
+                      bgcolor: tokens.interactive.primary,
+                      '&:hover': { bgcolor: tokens.interactive.primaryHover },
                     }}
                   >
                     Guardar Slide
@@ -693,7 +720,7 @@ Responde SOLO JSON válido, sin markdown.`,
                   <Card
                     sx={{
                       cursor: 'pointer',
-                      border: selectedImage === emerald.imageUrl ? `3px solid ${brandColors.emeraldGreen}` : '3px solid transparent',
+                      border: selectedImage === emerald.imageUrl ? `3px solid ${tokens.interactive.primary}` : '3px solid transparent',
                       transition: 'all 0.2s',
                       '&:hover': { transform: 'scale(1.02)' },
                     }}
