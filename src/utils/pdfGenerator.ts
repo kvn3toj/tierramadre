@@ -98,9 +98,55 @@ function setFillFromHex(pdf: jsPDF, hex: string) {
   pdf.setFillColor(rgb.r, rgb.g, rgb.b);
 }
 
+// Helper to load image and get dimensions
+async function getImageDimensions(src: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+// Calculate dimensions that fit within maxWidth x maxHeight while preserving aspect ratio
+function calculateAspectRatioFit(
+  srcWidth: number,
+  srcHeight: number,
+  maxWidth: number,
+  maxHeight: number
+): { width: number; height: number } {
+  const ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
+  return {
+    width: srcWidth * ratio,
+    height: srcHeight * ratio,
+  };
+}
+
 function setDrawFromHex(pdf: jsPDF, hex: string) {
   const rgb = hexToRgb(hex);
   pdf.setDrawColor(rgb.r, rgb.g, rgb.b);
+}
+
+// Add logo to top right corner of page
+function addLogoToPage(
+  pdf: jsPDF,
+  logoBase64: string | null | undefined,
+  pageWidth: number,
+  margin: number,
+  _theme?: 'dark' | 'light' // Reserved for future dark/light logo variants
+) {
+  if (!logoBase64) return;
+
+  try {
+    const logoWidth = 35; // 35mm wide
+    const logoHeight = logoWidth / LOGO_ASPECT_RATIO;
+    const logoX = pageWidth - margin - logoWidth;
+    const logoY = margin;
+
+    pdf.addImage(logoBase64, 'PNG', logoX, logoY, logoWidth, logoHeight, undefined, 'MEDIUM');
+  } catch (error) {
+    console.error('Failed to add logo to page:', error);
+  }
 }
 
 function setTextFromHex(pdf: jsPDF, hex: string) {
@@ -163,9 +209,9 @@ export async function generateCatalog(
   } else {
     pdf.addPage();
     if (options.layout === 'grid') {
-      await addGridLayout(pdf, emeralds, options, margin, contentWidth);
+      await addGridLayout(pdf, emeralds, options, margin, contentWidth, pageWidth, logoBase64, theme);
     } else {
-      await addListLayout(pdf, emeralds, options, margin, contentWidth, pageHeight);
+      await addListLayout(pdf, emeralds, options, margin, contentWidth, pageWidth, pageHeight, logoBase64, theme);
     }
   }
 
@@ -579,8 +625,12 @@ async function addGridLayout(
   emeralds: Emerald[],
   options: CatalogOptions,
   margin: number,
-  contentWidth: number
+  contentWidth: number,
+  pageWidth: number,
+  logoBase64?: string,
+  themeParam?: 'dark' | 'light'
 ) {
+  const theme = themeParam || options.theme || 'dark';
   const itemsPerRow = 3;
   const itemsPerPage = 6;
   const itemWidth = (contentWidth - 10 * (itemsPerRow - 1)) / itemsPerRow;
@@ -591,13 +641,41 @@ async function addGridLayout(
   let currentX = margin;
   let itemsOnPage = 0;
 
+  // Add logo to first page
+  if (emeralds.length > 0) {
+    addLogoToPage(pdf, logoBase64, pageWidth, margin, theme);
+  }
+
   for (let i = 0; i < emeralds.length; i++) {
     const emerald = emeralds[i];
 
     if (emerald.imageUrl) {
       try {
-        pdf.addImage(emerald.imageUrl, 'JPEG', currentX, currentY, itemWidth, imageHeight, undefined, 'FAST');
+        // Load image to get natural dimensions and preserve aspect ratio
+        const imgDimensions = await getImageDimensions(emerald.imageUrl);
+        const fitDimensions = calculateAspectRatioFit(
+          imgDimensions.width,
+          imgDimensions.height,
+          itemWidth,
+          imageHeight
+        );
+
+        // Center the image within the available space
+        const centeredX = currentX + (itemWidth - fitDimensions.width) / 2;
+        const centeredY = currentY + (imageHeight - fitDimensions.height) / 2;
+
+        pdf.addImage(
+          emerald.imageUrl,
+          'JPEG',
+          centeredX,
+          centeredY,
+          fitDimensions.width,
+          fitDimensions.height,
+          undefined,
+          'MEDIUM'
+        );
       } catch {
+        // Fallback if image fails to load
         setFillFromHex(pdf, BRAND.surface);
         pdf.rect(currentX, currentY, itemWidth, imageHeight, 'F');
       }
@@ -640,6 +718,7 @@ async function addGridLayout(
 
     if (itemsOnPage >= itemsPerPage && i < emeralds.length - 1) {
       pdf.addPage();
+      addLogoToPage(pdf, logoBase64, pageWidth, margin, theme);
       currentY = margin;
       currentX = margin;
       itemsOnPage = 0;
@@ -653,9 +732,12 @@ async function addListLayout(
   options: CatalogOptions,
   margin: number,
   contentWidth: number,
-  pageHeight: number
+  pageWidth: number,
+  pageHeight: number,
+  logoBase64?: string,
+  themeParam?: 'dark' | 'light'
 ) {
-  const theme = options.theme || 'dark';
+  const theme = themeParam || options.theme || 'dark';
   const colors = getThemeColors(theme);
   const isLight = theme === 'light';
 
@@ -666,6 +748,9 @@ async function addListLayout(
   let itemsOnPage = 0;
 
   const addPageHeader = () => {
+    // Add logo to top right
+    addLogoToPage(pdf, logoBase64, pageWidth, margin, theme);
+
     // Subtle background for header
     setFillFromHex(pdf, colors.surface);
     pdf.rect(margin - 6, margin - 6, contentWidth + 12, 20, 'F');
@@ -772,8 +857,31 @@ async function addListLayout(
 
     if (emerald.imageUrl) {
       try {
-        pdf.addImage(emerald.imageUrl, 'JPEG', imageX, imageY, imageSize, imageSize, undefined, 'FAST');
+        // Load image to get natural dimensions and preserve aspect ratio
+        const imgDimensions = await getImageDimensions(emerald.imageUrl);
+        const fitDimensions = calculateAspectRatioFit(
+          imgDimensions.width,
+          imgDimensions.height,
+          imageSize,
+          imageSize
+        );
+
+        // Center the image within the imageSize x imageSize space
+        const centeredX = imageX + (imageSize - fitDimensions.width) / 2;
+        const centeredY = imageY + (imageSize - fitDimensions.height) / 2;
+
+        pdf.addImage(
+          emerald.imageUrl,
+          'JPEG',
+          centeredX,
+          centeredY,
+          fitDimensions.width,
+          fitDimensions.height,
+          undefined,
+          'MEDIUM'
+        );
       } catch {
+        // Fallback if image fails to load
         setFillFromHex(pdf, colors.priceBox);
         pdf.rect(imageX, imageY, imageSize, imageSize, 'F');
         setTextFromHex(pdf, colors.textMuted);
