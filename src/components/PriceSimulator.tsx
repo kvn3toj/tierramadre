@@ -731,12 +731,16 @@ export default function PriceSimulator() {
   const marginProgress = Math.min((pricingMetrics.margin / 75) * 100, 100);
 
   return (
-    <Box sx={{ maxWidth: 960, mx: 'auto' }}>
+    <Box sx={{
+      maxWidth: 960,
+      mx: 'auto',
+      px: { xs: 2, sm: 3, md: 0 }, // Add horizontal padding on mobile
+    }}>
       {/* Jewelry Studio Header */}
       <Box
         sx={{
-          mb: 4,
-          borderRadius: 3,
+          mb: { xs: 3, md: 4 },
+          borderRadius: { xs: 2, md: 3 },
           overflow: 'hidden',
           boxShadow: studioShadows.lg,
         }}
@@ -744,7 +748,7 @@ export default function PriceSimulator() {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
+            p: { xs: 2, sm: 2.5, md: 3 },
             borderRadius: 0,
             background: studioGradients.header,
             position: 'relative',
@@ -775,18 +779,28 @@ export default function PriceSimulator() {
             }}
           />
 
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
+          <Box sx={{
+            display: 'flex',
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            justifyContent: 'space-between',
+            gap: 2,
+            flexWrap: 'wrap',
+            position: 'relative',
+            zIndex: 1,
+            flexDirection: { xs: 'column', sm: 'row' },
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, md: 2.5 } }}>
               <Box
                 sx={{
-                  width: 52,
-                  height: 52,
+                  width: { xs: 44, md: 52 },
+                  height: { xs: 44, md: 52 },
                   borderRadius: 2.5,
                   background: alpha(studioColors.emerald, 0.15),
                   border: `1px solid ${alpha(studioColors.emerald, 0.3)}`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
                 <Calculator size={26} color={studioColors.emerald} />
@@ -798,7 +812,7 @@ export default function PriceSimulator() {
                     color: studioColors.emerald,
                     fontWeight: 600,
                     letterSpacing: '0.12em',
-                    fontSize: '0.625rem',
+                    fontSize: { xs: '0.5625rem', md: '0.625rem' },
                     display: 'block',
                     mb: 0.25,
                   }}
@@ -812,7 +826,7 @@ export default function PriceSimulator() {
                     color: '#FFFFFF',
                     fontFamily: '"Libre Baskerville", Georgia, serif',
                     letterSpacing: '-0.02em',
-                    fontSize: '1.5rem',
+                    fontSize: { xs: '1.25rem', sm: '1.375rem', md: '1.5rem' },
                   }}
                 >
                   Simulador de Precios
@@ -822,7 +836,8 @@ export default function PriceSimulator() {
                   sx={{
                     color: alpha('#FFFFFF', 0.7),
                     fontWeight: 400,
-                    fontSize: '0.875rem',
+                    fontSize: { xs: '0.8125rem', md: '0.875rem' },
+                    display: { xs: 'none', sm: 'block' },
                   }}
                 >
                   Calcula el precio de venta ideal para tus esmeraldas
@@ -838,12 +853,13 @@ export default function PriceSimulator() {
                 background: studioGradients.emerald,
                 color: '#FFFFFF',
                 fontWeight: 600,
-                px: 3,
-                py: 1.25,
+                px: { xs: 2.5, md: 3 },
+                py: { xs: 1, md: 1.25 },
                 borderRadius: 2,
                 textTransform: 'none',
-                fontSize: '0.875rem',
+                fontSize: { xs: '0.8125rem', md: '0.875rem' },
                 boxShadow: studioShadows.emerald,
+                width: { xs: '100%', sm: 'auto' },
                 '&:hover': {
                   background: `linear-gradient(135deg, ${studioColors.emeraldLight} 0%, ${studioColors.emerald} 100%)`,
                   boxShadow: `0 6px 20px ${alpha(studioColors.emerald, 0.35)}`,
@@ -862,7 +878,11 @@ export default function PriceSimulator() {
         </Paper>
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+        gap: { xs: 2, sm: 2.5, md: 3 }
+      }}>
         {/* Left Column - Investments */}
         <Box>
           <Paper elevation={0} sx={{ ...studioCardStyles.card }}>
