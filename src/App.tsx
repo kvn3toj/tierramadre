@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, IconButton, useTheme, useMediaQuery } from '@mui/material';
 import { X } from 'lucide-react';
-import Layout from './components/Layout';
+import { IOSLayout } from './components/ios';
 import Gallery from './components/Gallery';
 import EmeraldUploader from './components/EmeraldUploader';
 import EmeraldUploaderIOS from './components/EmeraldUploader.ios';
@@ -31,21 +31,8 @@ export const SECONDARY_TABS: TabValue[] = ['slides', 'normalizer', 'receipts', '
 function AppContent() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const location = useLocation();
   const navigate = useNavigate();
   const [selectedAmbassador, setSelectedAmbassador] = useState<AmbassadorProfileType | null>(null);
-
-  // Determine current tab from URL
-  const getCurrentTab = (): TabValue => {
-    const path = location.pathname.split('/')[1] || 'gallery';
-    return path as TabValue;
-  };
-
-  const currentTab = getCurrentTab();
-
-  const handleTabChange = (tab: TabValue) => {
-    navigate(`/${tab}`);
-  };
 
   const handleViewAmbassadorProfile = useCallback((ambassador: AmbassadorProfileType) => {
     setSelectedAmbassador(ambassador);
@@ -72,7 +59,7 @@ function AppContent() {
 
   return (
     <>
-      <Layout currentTab={currentTab} onTabChange={handleTabChange}>
+      <IOSLayout>
         <Routes>
           <Route path="/" element={<Navigate to="/gallery" replace />} />
           <Route path="/gallery" element={<Gallery />} />
@@ -103,7 +90,7 @@ function AppContent() {
             }
           />
         </Routes>
-      </Layout>
+      </IOSLayout>
 
       {/* Ambassador Profile Dialog */}
       <Dialog
