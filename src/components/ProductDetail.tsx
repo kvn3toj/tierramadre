@@ -138,7 +138,6 @@ export default function ProductDetail() {
   const displayName = product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const quality = getQualityBadge(product.calidad);
   const colorDot = getColorDot(product.color);
-  const isLoose = !product.isJewelry;
   const weight = typeof product.peso === 'number' ? `${product.peso} ct` : product.metalType;
   const isAvailable = product.estado === 'DISPONIBLE';
 

@@ -130,7 +130,7 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
   const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails] = useState(false);
 
   const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const quality = getQualityBadge(item.calidad);
