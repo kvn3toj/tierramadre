@@ -5,6 +5,8 @@ import { X } from 'lucide-react';
 import Layout from './components/Layout';
 import Gallery from './components/Gallery';
 import EmeraldUploader from './components/EmeraldUploader';
+import EmeraldUploaderIOS from './components/EmeraldUploader.ios';
+import { getFeatureFlag } from './utils/featureFlags';
 import CalendarGrid from './components/CalendarGrid';
 import PDFExport from './components/PDFExport';
 import ImageNormalizer from './components/ImageNormalizer';
@@ -74,7 +76,14 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Navigate to="/gallery" replace />} />
           <Route path="/gallery" element={<Gallery />} />
-          <Route path="/upload" element={<EmeraldUploader onComplete={() => navigate('/gallery')} />} />
+          <Route
+            path="/upload"
+            element={
+              getFeatureFlag('IOS_UPLOAD')
+                ? <EmeraldUploaderIOS onComplete={() => navigate('/gallery')} />
+                : <EmeraldUploader onComplete={() => navigate('/gallery')} />
+            }
+          />
           <Route path="/calendar" element={<CalendarGrid />} />
           <Route path="/catalog" element={<PDFExport />} />
           <Route path="/normalizer" element={<ImageNormalizer />} />
