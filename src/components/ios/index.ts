@@ -7,19 +7,31 @@
  */
 
 // Core Components
-export { IOSCard } from './core/IOSCard';
+export { default as IOSCard } from './core/IOSCard';
 export type { IOSCardProps, IOSCardVariant, IOSCardPadding } from './core/IOSCard';
 
-export { IOSButton } from './core/IOSButton';
+export { default as IOSButton } from './core/IOSButton';
 export type { IOSButtonProps, IOSButtonVariant, IOSButtonSize } from './core/IOSButton';
 
-export { IOSTextField } from './core/IOSTextField';
+export { default as IOSTextField } from './core/IOSTextField';
 export type { IOSTextFieldProps } from './core/IOSTextField';
 
 // Input Components
-export { IOSFilePicker } from './input/IOSFilePicker';
+export { default as IOSFilePicker } from './input/IOSFilePicker';
 export type { IOSFilePickerProps, IOSFilePickerMode, FileWithPreview } from './input/IOSFilePicker';
 
 // Feedback Components
-export { IOSProgress } from './feedback/IOSProgress';
+export { default as IOSProgress } from './feedback/IOSProgress';
 export type { IOSProgressProps, IOSProgressVariant, IOSProgressSize } from './feedback/IOSProgress';
+
+// Navigation Components
+export { default as IOSTabBar } from './IOSTabBar';
+export type { TabConfig } from './IOSTabBar';
+
+export { default as IOSNavigationBar } from './IOSNavigationBar';
+export type { NavigationBarMode, NavigationAction } from './IOSNavigationBar';
+
+export { default as IOSMoreSheet } from './IOSMoreSheet';
+export type { MoreToolConfig } from './IOSMoreSheet';
+
+export { default as IOSLayout } from './IOSLayout';
