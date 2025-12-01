@@ -19,6 +19,7 @@ import {
   IconButton,
   Button,
   LinearProgress,
+  Slider,
 } from '@mui/material';
 import {
   Search,
@@ -28,6 +29,7 @@ import {
   List,
   Crown,
   ChevronDown,
+  ChevronUp,
   MapPin,
   User,
   FileCheck,
@@ -608,8 +610,12 @@ export default function InventoryBrowser() {
   const [colorFilter, setColorFilter] = useState<string>('all');
   const [qualityFilter, setQualityFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'loose' | 'jewelry'>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold'>('available');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold'>('all');
+  const [shapeFilter, setShapeFilter] = useState<string>('all');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000000]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<string>('price-desc');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Certification dialog state
   const [certDialogOpen, setCertDialogOpen] = useState(false);
@@ -618,6 +624,26 @@ export default function InventoryBrowser() {
   // Get filter options
   const colors = getUniqueColors();
   const stats = getInventoryStats();
+
+  // Get unique shapes and qualities
+  const shapes = useMemo(() => {
+    const uniqueShapes = new Set(inventoryData.map(item => item.talla).filter(Boolean));
+    return Array.from(uniqueShapes).sort();
+  }, []);
+
+  const qualities = useMemo(() => {
+    const uniqueQualities = new Set(inventoryData.map(item => item.calidad).filter(Boolean));
+    return Array.from(uniqueQualities).sort();
+  }, []);
+
+  // Get price range from inventory
+  const priceMinMax = useMemo(() => {
+    const prices = inventoryData.map(item => item.precioCOP).filter(p => p > 0);
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices)
+    };
+  }, []);
 
   // Calculate trust scores for all items (memoized)
   const itemTrustScores = useMemo(() => {
@@ -661,7 +687,8 @@ export default function InventoryBrowser() {
       const matchesSearch =
         !search ||
         item.nombre.toLowerCase().includes(searchLower) ||
-        item.color.toLowerCase().includes(searchLower);
+        item.color.toLowerCase().includes(searchLower) ||
+        item.item.toString().includes(searchLower);
 
       const matchesColor = colorFilter === 'all' || item.color === colorFilter;
       const matchesQuality = qualityFilter === 'all' || item.calidad === qualityFilter;
@@ -669,13 +696,53 @@ export default function InventoryBrowser() {
         typeFilter === 'all' ||
         (typeFilter === 'loose' && !item.isJewelry) ||
         (typeFilter === 'jewelry' && item.isJewelry);
+      const matchesShape = shapeFilter === 'all' || item.talla === shapeFilter;
+      const matchesPrice = item.precioCOP >= priceRange[0] && item.precioCOP <= priceRange[1];
 
-      return matchesSearch && matchesColor && matchesQuality && matchesType;
+      return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice;
     });
-  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter]);
+  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange]);
 
-  // Sort by price (high to low)
-  const sortedInventory = [...filteredInventory].sort((a, b) => b.precioCOP - a.precioCOP);
+  // Sort inventory based on selected option
+  const sortedInventory = useMemo(() => {
+    const sorted = [...filteredInventory];
+
+    switch (sortBy) {
+      case 'name-asc':
+        return sorted.sort((a, b) => a.nombre.localeCompare(b.nombre));
+      case 'name-desc':
+        return sorted.sort((a, b) => b.nombre.localeCompare(a.nombre));
+      case 'price-asc':
+        return sorted.sort((a, b) => a.precioCOP - b.precioCOP);
+      case 'price-desc':
+        return sorted.sort((a, b) => b.precioCOP - a.precioCOP);
+      case 'quality-premium':
+        return sorted.sort((a, b) => {
+          const qualityOrder: Record<string, number> = {
+            'SuperFina': 4,
+            'Fina': 3,
+            'Superior': 2,
+            'Comercial': 1,
+          };
+          const aScore = qualityOrder[a.calidad.split(' ').pop() || ''] || 0;
+          const bScore = qualityOrder[b.calidad.split(' ').pop() || ''] || 0;
+          return bScore - aScore;
+        });
+      case 'item-number':
+        return sorted.sort((a, b) => a.item - b.item);
+      case 'newest':
+        return sorted.sort((a, b) => {
+          // Parse dates in format "20-nov-2025"
+          const parseDate = (dateStr: string) => {
+            if (!dateStr) return 0;
+            return new Date(dateStr).getTime();
+          };
+          return parseDate(b.fechaIngreso) - parseDate(a.fechaIngreso);
+        });
+      default:
+        return sorted.sort((a, b) => b.precioCOP - a.precioCOP);
+    }
+  }, [filteredInventory, sortBy]);
 
   // Calculate filtered stats
   const filteredStats = useMemo(() => {
@@ -688,10 +755,12 @@ export default function InventoryBrowser() {
     setColorFilter('all');
     setQualityFilter('all');
     setTypeFilter('all');
-    setStatusFilter('available');
+    setStatusFilter('all');
+    setShapeFilter('all');
+    setPriceRange([priceMinMax.min, priceMinMax.max]);
   };
 
-  const hasFilters = search || colorFilter !== 'all' || qualityFilter !== 'all' || typeFilter !== 'all' || statusFilter !== 'available';
+  const hasFilters = search || colorFilter !== 'all' || qualityFilter !== 'all' || typeFilter !== 'all' || statusFilter !== 'all' || shapeFilter !== 'all' || priceRange[0] !== priceMinMax.min || priceRange[1] !== priceMinMax.max;
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
@@ -761,7 +830,7 @@ export default function InventoryBrowser() {
                   {stats.looseStones}
                 </Typography>
                 <Typography sx={{ fontSize: '0.7rem', color: theme.palette.text.secondary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Sueltas
+                  Gemas
                 </Typography>
               </Box>
               <Box
@@ -799,7 +868,7 @@ export default function InventoryBrowser() {
           borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
         }}
       >
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mb: showAdvancedFilters ? 2 : 0 }}>
           {/* Search */}
           <TextField
             placeholder="Buscar..."
@@ -852,6 +921,24 @@ export default function InventoryBrowser() {
             </Select>
           </FormControl>
 
+          {/* Sort dropdown */}
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <Select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              displayEmpty
+              sx={{ borderRadius: 2 }}
+            >
+              <MenuItem value="price-desc">💰 Precio: Mayor a Menor</MenuItem>
+              <MenuItem value="price-asc">💸 Precio: Menor a Mayor</MenuItem>
+              <MenuItem value="name-asc">🔤 Nombre A-Z</MenuItem>
+              <MenuItem value="name-desc">🔤 Nombre Z-A</MenuItem>
+              <MenuItem value="quality-premium">⭐ Mejor Calidad Primero</MenuItem>
+              <MenuItem value="item-number">🔢 Número de Item</MenuItem>
+              <MenuItem value="newest">✨ Más Recientes</MenuItem>
+            </Select>
+          </FormControl>
+
           {/* Type filter */}
           <FormControl size="small" sx={{ minWidth: 120 }}>
             <Select
@@ -861,30 +948,24 @@ export default function InventoryBrowser() {
               sx={{ borderRadius: 2 }}
             >
               <MenuItem value="all">Tipo</MenuItem>
-              <MenuItem value="loose">Sueltas</MenuItem>
+              <MenuItem value="loose">Gemas</MenuItem>
               <MenuItem value="jewelry">Joyería</MenuItem>
             </Select>
           </FormControl>
 
-          {/* Color filter */}
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <Select
-              value={colorFilter}
-              onChange={(e) => setColorFilter(e.target.value)}
-              displayEmpty
-              sx={{ borderRadius: 2 }}
-            >
-              <MenuItem value="all">Todos colores</MenuItem>
-              {colors.map((color) => (
-                <MenuItem key={color} value={color}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: getColorDot(color) }} />
-                    {color.replace('Verde ', '')}
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          {/* Advanced Filters Toggle */}
+          <Button
+            size="small"
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            startIcon={showAdvancedFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            sx={{
+              color: theme.palette.text.secondary,
+              textTransform: 'none',
+              fontWeight: 500,
+            }}
+          >
+            Filtros Avanzados
+          </Button>
 
           {/* Clear filters */}
           {hasFilters && (
@@ -918,6 +999,100 @@ export default function InventoryBrowser() {
             </ToggleButton>
           </ToggleButtonGroup>
         </Box>
+
+        {/* Collapsible Advanced Filters */}
+        <Collapse in={showAdvancedFilters}>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mt: 2, pt: 2, borderTop: '1px solid', borderColor: isLight ? '#E5E7EB' : '#3C3C3E' }}>
+            {/* Color filter */}
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <Select
+                value={colorFilter}
+                onChange={(e) => setColorFilter(e.target.value)}
+                displayEmpty
+                sx={{ borderRadius: 2 }}
+              >
+                <MenuItem value="all">Todos colores</MenuItem>
+                {colors.map((color) => (
+                  <MenuItem key={color} value={color}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: getColorDot(color) }} />
+                      {color.replace('Verde ', '')}
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Shape filter */}
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <Select
+                value={shapeFilter}
+                onChange={(e) => setShapeFilter(e.target.value)}
+                displayEmpty
+                sx={{ borderRadius: 2 }}
+              >
+                <MenuItem value="all">Talla</MenuItem>
+                {shapes.map((shape) => (
+                  <MenuItem key={shape} value={shape}>
+                    {shape}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Quality filter */}
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <Select
+                value={qualityFilter}
+                onChange={(e) => setQualityFilter(e.target.value)}
+                displayEmpty
+                sx={{ borderRadius: 2 }}
+              >
+                <MenuItem value="all">Calidad</MenuItem>
+                {qualities.map((quality) => (
+                  <MenuItem key={quality} value={quality}>
+                    {quality}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Price Range Slider */}
+          <Box sx={{ mt: 2, px: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+              Rango de Precio
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#059669', fontWeight: 600 }}>
+              {formatCurrency(priceRange[0])} - {formatCurrency(priceRange[1])}
+            </Typography>
+          </Box>
+          <Slider
+            value={priceRange}
+            onChange={(_, value) => setPriceRange(value as [number, number])}
+            min={priceMinMax.min}
+            max={priceMinMax.max}
+            step={100000}
+            valueLabelDisplay="auto"
+            valueLabelFormat={(value) => formatCurrency(value)}
+            sx={{
+              color: '#059669',
+              '& .MuiSlider-thumb': {
+                width: 20,
+                height: 20,
+              },
+              '& .MuiSlider-track': {
+                height: 4,
+              },
+              '& .MuiSlider-rail': {
+                height: 4,
+                bgcolor: isLight ? '#E5E7EB' : '#3C3C3E',
+              },
+            }}
+          />
+          </Box>
+        </Collapse>
       </Paper>
 
       {/* Results info */}
