@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, IconButton, useTheme, useMediaQuery } from '@mui/material';
 import { X } from 'lucide-react';
 import Layout from './components/Layout';
@@ -13,6 +14,7 @@ import PinLock from './components/PinLock';
 import { SlidePreview } from './components/slides';
 import { CatalogBrowser } from './components/CatalogBrowser';
 import InventoryBrowser from './components/InventoryBrowser';
+import ProductDetail from './components/ProductDetail';
 import { AmbassadorDirectory, AmbassadorProfile } from './components/ambassador';
 import { AmbassadorProfile as AmbassadorProfileType } from './types/ambassador';
 
@@ -23,19 +25,25 @@ export type TabValue = 'gallery' | 'upload' | 'catalog' | 'calendar' | 'slides' 
 export const PRIMARY_TABS: TabValue[] = ['gallery', 'upload', 'inventory', 'ambassadors', 'catalog', 'calendar'];
 export const SECONDARY_TABS: TabValue[] = ['slides', 'normalizer', 'receipts', 'biblioteca', 'simulator'];
 
-function App() {
+// Inner component that uses routing hooks
+function AppContent() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [currentTab, setCurrentTab] = useState<TabValue>('gallery');
-  const [isUnlocked, setIsUnlocked] = useState(() => {
-    // Check if already authenticated in this session
-    return sessionStorage.getItem('tierra-madre-auth') === 'true';
-  });
+  const location = useLocation();
+  const navigate = useNavigate();
   const [selectedAmbassador, setSelectedAmbassador] = useState<AmbassadorProfileType | null>(null);
 
-  const handleUnlock = useCallback(() => {
-    setIsUnlocked(true);
-  }, []);
+  // Determine current tab from URL
+  const getCurrentTab = (): TabValue => {
+    const path = location.pathname.split('/')[1] || 'gallery';
+    return path as TabValue;
+  };
+
+  const currentTab = getCurrentTab();
+
+  const handleTabChange = (tab: TabValue) => {
+    navigate(`/${tab}`);
+  };
 
   const handleViewAmbassadorProfile = useCallback((ambassador: AmbassadorProfileType) => {
     setSelectedAmbassador(ambassador);
@@ -60,49 +68,32 @@ function App() {
     }
   }, []);
 
-  const renderContent = () => {
-    switch (currentTab) {
-      case 'upload':
-        return <EmeraldUploader onComplete={() => setCurrentTab('gallery')} />;
-      case 'gallery':
-        return <Gallery />;
-      case 'calendar':
-        return <CalendarGrid />;
-      case 'catalog':
-        return <PDFExport />;
-      case 'normalizer':
-        return <ImageNormalizer />;
-      case 'slides':
-        return <SlidePreview />;
-      case 'receipts':
-        return <ReceiptGenerator />;
-      case 'biblioteca':
-        return <CatalogBrowser />;
-      case 'simulator':
-        return <PriceSimulator />;
-      case 'inventory':
-        return <InventoryBrowser />;
-      case 'ambassadors':
-        return (
-          <AmbassadorDirectory
-            onViewProfile={handleViewAmbassadorProfile}
-            onContact={handleContactAmbassador}
-          />
-        );
-      default:
-        return <Gallery />;
-    }
-  };
-
-  // Show PIN lock screen if not authenticated
-  if (!isUnlocked) {
-    return <PinLock onUnlock={handleUnlock} />;
-  }
-
   return (
     <>
-      <Layout currentTab={currentTab} onTabChange={setCurrentTab}>
-        {renderContent()}
+      <Layout currentTab={currentTab} onTabChange={handleTabChange}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/gallery" replace />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/upload" element={<EmeraldUploader onComplete={() => navigate('/gallery')} />} />
+          <Route path="/calendar" element={<CalendarGrid />} />
+          <Route path="/catalog" element={<PDFExport />} />
+          <Route path="/normalizer" element={<ImageNormalizer />} />
+          <Route path="/slides" element={<SlidePreview />} />
+          <Route path="/receipts" element={<ReceiptGenerator />} />
+          <Route path="/biblioteca" element={<CatalogBrowser />} />
+          <Route path="/simulator" element={<PriceSimulator />} />
+          <Route path="/inventory" element={<InventoryBrowser />} />
+          <Route path="/product/:itemId" element={<ProductDetail />} />
+          <Route
+            path="/ambassadors"
+            element={
+              <AmbassadorDirectory
+                onViewProfile={handleViewAmbassadorProfile}
+                onContact={handleContactAmbassador}
+              />
+            }
+          />
+        </Routes>
       </Layout>
 
       {/* Ambassador Profile Dialog */}
@@ -144,6 +135,28 @@ function App() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function App() {
+  const [isUnlocked, setIsUnlocked] = useState(() => {
+    // Check if already authenticated in this session
+    return sessionStorage.getItem('tierra-madre-auth') === 'true';
+  });
+
+  const handleUnlock = useCallback(() => {
+    setIsUnlocked(true);
+  }, []);
+
+  // Show PIN lock screen if not authenticated
+  if (!isUnlocked) {
+    return <PinLock onUnlock={handleUnlock} />;
+  }
+
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }
 
