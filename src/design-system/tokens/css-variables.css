@@ -1,0 +1,264 @@
+/**
+ * CSS Custom Properties
+ * "Emerald iOS" Design System
+ *
+ * Runtime-switchable theme variables.
+ * Auto-switches based on system preference or manual toggle.
+ */
+
+:root {
+  /* === EMERALD BRAND === */
+  --emerald-500: #00AE7A;
+  --emerald-400: #33FFBF;
+  --emerald-600: #008C62;
+  --emerald-50: #E6FFF7;
+  --emerald-900: #00281C;
+
+  /* === SPACING (8pt grid) === */
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-xxl: 32px;
+  --spacing-xxxl: 48px;
+
+  /* === DIMENSIONS === */
+  --touch-target: 44px;
+  --button-height-sm: 36px;
+  --button-height-md: 50px;
+  --button-height-lg: 56px;
+  --input-height-mobile: 52px;
+  --input-height-desktop: 40px;
+  --border-radius-sm: 10px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 16px;
+
+  /* === TYPOGRAPHY === */
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, monospace;
+  --font-luxury: "Playfair Display", "Libre Baskerville", Georgia, serif;
+
+  /* === MOTION === */
+  --duration-fast: 200ms;
+  --duration-normal: 300ms;
+  --duration-slow: 400ms;
+  --easing-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --easing-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* === BACKDROP BLUR === */
+  --backdrop-blur-ios: blur(20px) saturate(180%);
+}
+
+/* === LIGHT THEME (Default) === */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --surface-primary: #FFFFFF;
+  --surface-secondary: #F2F2F7;
+  --surface-tertiary: #FAFAFA;
+
+  /* Text */
+  --text-primary: #000000;
+  --text-secondary: #3A4654;
+  --text-tertiary: #6B7A8A;
+  --text-disabled: #8A99A8;
+  --text-on-emerald: #FFFFFF;
+  --text-placeholder: #8A99A8;
+
+  /* Brand */
+  --brand-primary: var(--emerald-500);
+  --brand-primary-hover: var(--emerald-600);
+  --brand-accent: #66FFCF;
+
+  /* Borders */
+  --border-default: #D1D9E0;
+  --border-subtle: #E8ECEF;
+  --border-strong: #B4BFC9;
+  --border-focus: var(--emerald-500);
+
+  /* Interactive States */
+  --button-primary-bg: var(--emerald-500);
+  --button-primary-text: #FFFFFF;
+  --button-secondary-bg: var(--emerald-50);
+  --button-secondary-text: #006B4B;
+
+  --input-bg: #E8ECEF;
+  --input-border: #D1D9E0;
+  --input-focus-border: var(--emerald-500);
+
+  --card-bg: #FFFFFF;
+  --card-border: #D1D9E0;
+  --card-hover-border: #99FFE0;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px rgba(15, 23, 42, 0.08), 0 4px 6px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 20px 25px rgba(15, 23, 42, 0.1), 0 8px 10px rgba(15, 23, 42, 0.04);
+  --shadow-emerald: 0 4px 14px rgba(0, 174, 122, 0.25);
+
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+
+  /* Overlay */
+  --overlay-modal: rgba(0, 0, 0, 0.5);
+  --overlay-sheet: rgba(0, 0, 0, 0.3);
+
+  /* Status */
+  --status-success: #34C759;
+  --status-warning: #FF9500;
+  --status-error: #FF3B30;
+  --status-info: #007AFF;
+}
+
+/* === DARK THEME === */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --surface-primary: #000000;
+  --surface-secondary: #1C1C1E;
+  --surface-tertiary: #0A0E13;
+
+  /* Text */
+  --text-primary: #FFFFFF;
+  --text-secondary: #B4BFC9;
+  --text-tertiary: #6B7A8A;
+  --text-disabled: #515F6E;
+  --text-on-emerald: #000000;
+  --text-placeholder: #515F6E;
+
+  /* Brand */
+  --brand-primary: var(--emerald-400);
+  --brand-primary-hover: #66FFCF;
+  --brand-accent: #99FFE0;
+
+  /* Borders */
+  --border-default: #252E3B;
+  --border-subtle: #121821;
+  --border-strong: #3A4654;
+  --border-focus: var(--emerald-400);
+
+  /* Interactive States */
+  --button-primary-bg: var(--emerald-400);
+  --button-primary-text: #000000;
+  --button-secondary-bg: var(--emerald-900);
+  --button-secondary-text: #66FFCF;
+
+  --input-bg: #121821;
+  --input-border: #252E3B;
+  --input-focus-border: var(--emerald-400);
+
+  --card-bg: #1C1C1E;
+  --card-border: #252E3B;
+  --card-hover-border: #00281C;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4), 0 4px 6px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5), 0 8px 10px rgba(0, 0, 0, 0.2);
+  --shadow-emerald: 0 4px 20px rgba(0, 174, 122, 0.3);
+
+  /* Glass */
+  --glass-bg: rgba(0, 0, 0, 0.5);
+  --glass-border: rgba(255, 255, 255, 0.1);
+
+  /* Overlay */
+  --overlay-modal: rgba(0, 0, 0, 0.75);
+  --overlay-sheet: rgba(0, 0, 0, 0.6);
+
+  /* Status */
+  --status-success: #32D74B;
+  --status-warning: #FF9F0A;
+  --status-error: #FF453A;
+  --status-info: #0A84FF;
+}
+
+/* === GLOBAL STYLES === */
+
+* {
+  /* iOS tap highlight removal */
+  -webkit-tap-highlight-color: transparent;
+
+  /* Smooth font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  /* iOS smooth scrolling */
+  scroll-behavior: smooth;
+}
+
+body {
+  /* Safe area support (iPhone notch, home indicator) */
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+
+  /* Base background */
+  background-color: var(--surface-primary);
+  color: var(--text-primary);
+
+  /* Base typography */
+  font-family: var(--font-text);
+  font-size: 17px;
+  line-height: 1.5;
+
+  /* Disable overscroll (iOS bounce) */
+  overscroll-behavior: none;
+}
+
+/* === SELECTION STYLES === */
+::selection {
+  background-color: rgba(0, 174, 122, 0.3);
+  color: var(--text-primary);
+}
+
+/* === FOCUS VISIBLE (Keyboard Navigation) === */
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* === DARK MODE AUTO-DETECTION === */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --surface-primary: #000000;
+    --surface-secondary: #1C1C1E;
+    --surface-tertiary: #0A0E13;
+    --text-primary: #FFFFFF;
+    --text-secondary: #B4BFC9;
+    --text-tertiary: #6B7A8A;
+    --text-disabled: #515F6E;
+    --brand-primary: var(--emerald-400);
+    --border-default: #252E3B;
+    --card-bg: #1C1C1E;
+    --input-bg: #121821;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+}
