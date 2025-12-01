@@ -709,6 +709,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                 sx={{
                   bgcolor: brandColors.emeraldGreen,
                   '&:hover': { bgcolor: brandColors.emeraldDark },
+                  minHeight: 48,
                 }}
               >
                 Guardar Esmeralda
@@ -775,6 +776,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                   sx={{
                     bgcolor: brandColors.emeraldGreen,
                     '&:hover': { bgcolor: brandColors.emeraldDark },
+                    minHeight: 44,
                   }}
                 >
                   Guardar Todas ({batchItems.filter(i => i.customName || i.selectedName).length})

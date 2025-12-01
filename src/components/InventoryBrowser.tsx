@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -122,9 +123,10 @@ interface InventoryCardProps {
   isCompact: boolean;
   trustScore: TrustScoreBreakdown;
   onCertClick: () => void;
+  onClick: () => void;
 }
 
-const InventoryCard = ({ item, isCompact, trustScore, onCertClick }: InventoryCardProps) => {
+const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: InventoryCardProps) => {
   const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -158,7 +160,7 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick }: InventoryCa
             bgcolor: isLight ? '#F0FDF4' : alpha('#059669', 0.08),
           },
         }}
-        onClick={() => setShowDetails(!showDetails)}
+        onClick={onClick}
       >
         {/* Color indicator */}
         <Box
@@ -228,6 +230,7 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick }: InventoryCa
   return (
     <Card
       elevation={0}
+      onClick={onClick}
       sx={{
         borderRadius: 3,
         border: '1px solid',
@@ -247,7 +250,6 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick }: InventoryCa
           },
         },
       }}
-      onClick={() => setShowDetails(!showDetails)}
     >
       {/* Minimal header - Small accent bar + icon (no green blocks - Moksart) */}
       <Box
@@ -604,6 +606,7 @@ export default function InventoryBrowser() {
   const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const navigate = useNavigate();
 
   // Filters
   const [search, setSearch] = useState('');
@@ -659,6 +662,10 @@ export default function InventoryBrowser() {
     setSelectedItem(item);
     setCertDialogOpen(true);
   }, []);
+
+  const handleProductClick = useCallback((item: InventoryItem) => {
+    navigate(`/product/${item.item}`);
+  }, [navigate]);
 
   // Handle saving certifications
   const handleSaveCertifications = useCallback((certifications: InventoryItem['certifications']) => {
@@ -1126,6 +1133,7 @@ export default function InventoryBrowser() {
               isCompact={false}
               trustScore={itemTrustScores.get(item.item) || calculateTrustScore(item)}
               onCertClick={() => handleCertClick(item)}
+              onClick={() => handleProductClick(item)}
             />
           ))}
         </Box>
@@ -1138,6 +1146,7 @@ export default function InventoryBrowser() {
               isCompact={true}
               trustScore={itemTrustScores.get(item.item) || calculateTrustScore(item)}
               onCertClick={() => handleCertClick(item)}
+              onClick={() => handleProductClick(item)}
             />
           ))}
         </Box>
