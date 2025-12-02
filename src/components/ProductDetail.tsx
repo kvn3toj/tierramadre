@@ -145,6 +145,11 @@ export default function ProductDetail() {
 
   const { inventory, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems, fetchCloudGallery } = useInventory();
 
+  // Scroll to top when navigating to this page
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [itemId]);
+
   // Find the product
   const product = useMemo(() => {
     return inventory.find(item => item.item.toString() === itemId);
