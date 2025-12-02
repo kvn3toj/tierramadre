@@ -80,7 +80,20 @@ async function getOrCreateFolder(drive) {
  * Upload file to Google Drive
  */
 async function uploadToDrive(drive, folderId, file, itemNumber) {
-  const fileExtension = file.originalFilename.split('.').pop();
+  // Handle missing filename (common on mobile)
+  const originalName = file.originalFilename || file.newFilename || 'upload';
+  const mimeToExt = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+    'video/mp4': 'mp4',
+    'video/quicktime': 'mov',
+    'video/webm': 'webm',
+  };
+  const fileExtension = originalName.includes('.')
+    ? originalName.split('.').pop()
+    : (mimeToExt[file.mimetype] || 'bin');
   const fileName = `product-${itemNumber}-${Date.now()}.${fileExtension}`;
 
   const fileMetadata = {

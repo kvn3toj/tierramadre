@@ -84,14 +84,14 @@ const CATALOG_HOTSPOTS: CatalogHotspot[] = [
     name: 'Exportadores',
     subtitle: 'Negocio Conjunto',
     pdfFile: '/catalogs/LOTE ORIGEN ARE TRÜST.pdf',
-    position: { top: '25%', left: '85%' }, // Top right - outside
+    position: { top: '25%', left: '105%' }, // Top right - outside
   },
   {
     id: 'acceso',
     name: 'Acceso Total',
     subtitle: 'Joyeros',
     pdfFile: '/catalogs/ACCESO TOTAL ESMERLADAS EN BRUTO-2.pdf',
-    position: { top: '72%', left: '85%' }, // Bottom right - outside
+    position: { top: '72%', left: '105%' }, // Bottom right - outside
   },
   {
     id: 'tierra',
@@ -105,14 +105,14 @@ const CATALOG_HOTSPOTS: CatalogHotspot[] = [
     name: 'Embajadores',
     subtitle: 'Tierra Madre',
     pdfFile: '/catalogs/EL PODER DE LA TIERRA MADRE -2.pdf',
-    position: { top: '72%', left: '15%' }, // Bottom left - outside
+    position: { top: '72%', left: '-5%' }, // Bottom left - outside
   },
   {
     id: 'gifts',
     name: 'Gifts',
     subtitle: 'Tierra Madre',
     pdfFile: '/catalogs/Copia de EMERALD GIFTs .pdf',
-    position: { top: '25%', left: '15%' }, // Top left - outside
+    position: { top: '25%', left: '-5%' }, // Top left - outside
   },
 ];
 
