@@ -143,7 +143,7 @@ export default function ProductDetail() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isEditing, setIsEditing] = useState(false);
 
-  const { inventory, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems } = useInventory();
+  const { inventory, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems, fetchCloudGallery } = useInventory();
 
   // Find the product
   const product = useMemo(() => {
@@ -163,27 +163,41 @@ export default function ProductDetail() {
     return product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   }, [product]);
 
-  // Load media items for the product
+  // Load media items for the product (local first, then cloud sync)
   useEffect(() => {
     if (product) {
-      const items = getMediaItems ? getMediaItems(product.item) : [];
-      // If no media items but has legacy image, convert it
-      if (items.length === 0 && product.imagen) {
-        const legacyItem: MediaItem = {
-          id: `legacy-${product.item}`,
-          url: product.imagen,
-          type: product.mediaType === 'video' ? 'video' : 'image',
-          thumbnailUrl: product.thumbnailUrl,
-          category: 'hero',
-          alt: displayName || `Producto ${product.item}`,
-          order: 0,
-        };
-        setMediaItems([legacyItem]);
-      } else {
-        setMediaItems(items);
-      }
+      const loadMedia = async () => {
+        // First, check local cache
+        const localItems = getMediaItems ? getMediaItems(product.item) : [];
+
+        if (localItems.length > 0) {
+          setMediaItems(localItems);
+        } else if (product.imagen) {
+          // If no local items but has legacy image, use it temporarily
+          const legacyItem: MediaItem = {
+            id: `legacy-${product.item}`,
+            url: product.imagen,
+            type: product.mediaType === 'video' ? 'video' : 'image',
+            thumbnailUrl: product.thumbnailUrl,
+            category: 'hero',
+            alt: displayName || `Producto ${product.item}`,
+            order: 0,
+          };
+          setMediaItems([legacyItem]);
+        }
+
+        // Then fetch from cloud to sync
+        if (fetchCloudGallery) {
+          const cloudItems = await fetchCloudGallery(product.item);
+          if (cloudItems.length > 0) {
+            setMediaItems(cloudItems);
+          }
+        }
+      };
+
+      loadMedia();
     }
-  }, [product, getMediaItems, displayName]);
+  }, [product, getMediaItems, fetchCloudGallery, displayName]);
 
   // Handle multi-media upload (for MediaUploadZone)
   const handleMediaUpload = useCallback(async (files: File[], category: MediaItem['category']) => {
