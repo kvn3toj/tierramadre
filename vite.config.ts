@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   // Use relative paths for Electron compatibility
-  base: './',
+  base: '/',
   plugins: [
     react(),
     VitePWA({
@@ -14,12 +14,13 @@ export default defineConfig({
         name: 'Tierra Madre Studio',
         short_name: 'TM Studio',
         description: 'Internal Advertising Agency - Emerald Collection Management',
-        theme_color: '#2e7d32',
-        background_color: '#121212',
+        theme_color: '#00AE7A',
+        background_color: '#000000',
         display: 'standalone',
-        orientation: 'portrait',
+        orientation: 'portrait-primary',
         scope: '/',
-        start_url: '/',
+        start_url: '/?source=pwa',
+        categories: ['business', 'productivity', 'photo'],
         icons: [
           {
             src: 'pwa-192x192.png',
