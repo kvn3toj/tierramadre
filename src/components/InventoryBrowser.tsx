@@ -387,6 +387,7 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
         {/* Key specs - single line */}
         <Typography
           variant="body2"
+          component="div"
           sx={{
             color: theme.palette.text.secondary,
             mb: 2,
