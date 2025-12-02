@@ -35,14 +35,11 @@ import {
   GridView,
   ViewCarousel,
   Download,
-  ZoomIn,
-  ZoomOut,
-  FitScreen,
   ErrorOutline,
   Refresh,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import { CATALOG_CATEGORIES, type CategoryKey } from '../styles/catalogTokens';
+import type { CategoryKey } from '../styles/catalogTokens';
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -92,8 +89,8 @@ const Header = styled(Box)(({ theme }) => ({
   top: 0,
   left: 0,
   right: 0,
-  padding: theme.spacing(2, 3),
-  background: 'linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)',
+  padding: theme.spacing(1.5, 2),
+  background: 'linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 80%, transparent 100%)',
   backdropFilter: 'blur(10px)',
   WebkitBackdropFilter: 'blur(10px)',
   display: 'flex',
@@ -101,6 +98,11 @@ const Header = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   zIndex: 10,
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+  gap: theme.spacing(1),
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(1, 1.5),
+    paddingTop: 'max(12px, env(safe-area-inset-top))',
+  },
 }));
 
 const PDFContainer = styled(Box)(() => ({
@@ -355,7 +357,7 @@ export const PDFShowroom: React.FC<PDFShowroomProps> = ({
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const minSwipeDistance = 50;
 
-  const category = CATALOG_CATEGORIES[catalogId];
+  // Catalog ID available: catalogId
 
   // Device pixel ratio for high-quality rendering
   const devicePixelRatio = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1;
@@ -604,113 +606,47 @@ export const PDFShowroom: React.FC<PDFShowroomProps> = ({
         cursor: showControls ? 'default' : 'none',
       }}
     >
-      {/* Header */}
+      {/* Header - Clean mobile-first design */}
       <Fade in={showControls}>
         <Header>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <ControlButton onClick={onClose} title="Cerrar (Esc)">
+          {/* Left: Close + Page Counter */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+            <ControlButton onClick={onClose} title="Cerrar (Esc)" sx={{ flexShrink: 0 }}>
               <Close />
             </ControlButton>
-            <Box>
-              <Typography
-                variant="h6"
-                sx={{
-                  color: '#fff',
-                  fontWeight: 600,
-                  fontSize: isSmallScreen ? '1rem' : '1.25rem',
-                  textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                }}
-              >
-                {category?.icon} {catalogName}
+            <Box
+              sx={{
+                backgroundColor: alpha(theme.palette.primary.main, 0.25),
+                px: 1.5,
+                py: 0.5,
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+              }}
+            >
+              <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '0.9rem' }}>
+                {currentPage}
               </Typography>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: alpha('#fff', 0.7),
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                }}
-              >
-                <Box
-                  component="span"
-                  sx={{
-                    backgroundColor: alpha(theme.palette.primary.main, 0.3),
-                    px: 1,
-                    py: 0.25,
-                    borderRadius: 1,
-                    fontWeight: 600,
-                  }}
-                >
-                  {currentPage} / {numPages}
-                </Box>
-                {isMobile && <span>• Desliza para navegar</span>}
+              <Typography sx={{ color: alpha('#fff', 0.5), fontSize: '0.8rem' }}>/</Typography>
+              <Typography sx={{ color: alpha('#fff', 0.7), fontSize: '0.85rem' }}>
+                {numPages}
               </Typography>
             </Box>
           </Box>
 
+          {/* Right: Essential controls only */}
           <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-            {/* Zoom controls - hidden on mobile when fit-to-screen */}
-            {(!isMobile || !fitToScreen) && (
-              <>
-                <ControlButton
-                  onClick={() => {
-                    setFitToScreen(false);
-                    setScale(s => Math.max(s - 0.2, 0.5));
-                  }}
-                  title="Zoom out (-)"
-                >
-                  <ZoomOut />
-                </ControlButton>
-                <Typography
-                  sx={{
-                    color: '#fff',
-                    minWidth: 56,
-                    textAlign: 'center',
-                    fontSize: '0.8rem',
-                    fontWeight: 500,
-                    opacity: 0.9,
-                  }}
-                >
-                  {fitToScreen ? 'Auto' : `${Math.round(scale * 100)}%`}
-                </Typography>
-                <ControlButton
-                  onClick={() => {
-                    setFitToScreen(false);
-                    setScale(s => Math.min(s + 0.2, 3));
-                  }}
-                  title="Zoom in (+)"
-                >
-                  <ZoomIn />
-                </ControlButton>
-              </>
-            )}
-            <ControlButton
-              onClick={() => setFitToScreen(f => !f)}
-              title={fitToScreen ? 'Zoom manual (F)' : 'Ajustar a pantalla (F)'}
-              sx={{
-                backgroundColor: fitToScreen ? alpha(theme.palette.primary.main, 0.2) : 'transparent',
-              }}
-            >
-              <FitScreen />
-            </ControlButton>
-            <Box sx={{ width: 1, height: 24, backgroundColor: alpha('#fff', 0.2), mx: 0.5 }} />
             <ControlButton
               onClick={() => setViewMode(v => v === 'carousel' ? 'grid' : 'carousel')}
-              title={viewMode === 'carousel' ? 'Ver cuadrícula (G)' : 'Ver páginas (G)'}
+              title={viewMode === 'carousel' ? 'Cuadrícula' : 'Páginas'}
             >
               {viewMode === 'carousel' ? <GridView /> : <ViewCarousel />}
             </ControlButton>
-            <ControlButton
-              onClick={handleDownload}
-              title="Descargar PDF"
-            >
+            <ControlButton onClick={handleDownload} title="Descargar">
               <Download />
             </ControlButton>
-            <ControlButton
-              onClick={toggleFullscreen}
-              title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
-            >
+            <ControlButton onClick={toggleFullscreen} title="Pantalla completa">
               {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
             </ControlButton>
           </Box>
