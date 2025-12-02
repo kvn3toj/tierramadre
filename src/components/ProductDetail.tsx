@@ -119,7 +119,7 @@ export default function ProductDetail() {
 
   const trustBadge = trustScore ? getTrustBadge(trustScore.overall) : null;
 
-  // Handle media upload (image or video)
+  // Handle media upload (image or video) - Upload to Google Drive
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !product) return;
@@ -135,28 +135,38 @@ export default function ProductDetail() {
     setUploadingImage(true);
 
     try {
-      if (isVideo) {
-        // Handle video upload
-        const thumbnail = await extractVideoThumbnail(file, 1);
-        await updateVideo(product.item, file, thumbnail);
-        setUploadingImage(false);
-      } else {
-        // Handle image upload
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const base64 = event.target?.result as string;
-          updateImage(product.item, base64);
-          setUploadingImage(false);
-        };
-        reader.onerror = () => {
-          alert('Error al cargar la imagen');
-          setUploadingImage(false);
-        };
-        reader.readAsDataURL(file);
+      // Create FormData for API upload
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('itemNumber', product.item.toString());
+
+      // Upload to Google Drive via API
+      const response = await fetch('/api/upload-to-drive', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Error al subir el archivo');
       }
+
+      const data = await response.json();
+      const driveUrl = data.url;
+
+      if (isVideo) {
+        // Extract thumbnail for video
+        const thumbnail = await extractVideoThumbnail(file, 1);
+        await updateVideo(product.item, driveUrl, thumbnail);
+      } else {
+        // Save image URL
+        updateImage(product.item, driveUrl);
+      }
+
+      setUploadingImage(false);
     } catch (error) {
       console.error('Error uploading media:', error);
-      alert('Error al subir el archivo');
+      alert(error instanceof Error ? error.message : 'Error al subir el archivo');
       setUploadingImage(false);
     }
   };

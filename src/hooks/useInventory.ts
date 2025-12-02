@@ -60,15 +60,13 @@ export function useInventory() {
     saveMedia(newMedia);
   };
 
-  // Update video for a specific item
-  const updateVideo = async (itemNumber: number, videoFile: File, thumbnailUrl: string) => {
+  // Update video for a specific item (now receives Drive URL instead of File)
+  const updateVideo = async (itemNumber: number, videoUrl: string, thumbnailUrl: string) => {
     try {
-      const videoId = `inventory-${itemNumber}-${Date.now()}`;
-      const videoRef = await saveVideo(videoId, videoFile);
       const newMedia = {
         ...media,
         [itemNumber]: {
-          url: videoRef,
+          url: videoUrl, // Google Drive URL
           mediaType: 'video' as MediaType,
           thumbnailUrl,
         },
@@ -82,15 +80,9 @@ export function useInventory() {
 
   // Remove media for a specific item
   const removeMedia = async (itemNumber: number) => {
-    const itemMedia = media[itemNumber];
-    if (itemMedia?.mediaType === 'video') {
-      // Delete video from IndexedDB
-      try {
-        await deleteVideo(itemMedia.url);
-      } catch (error) {
-        console.error('Error deleting video:', error);
-      }
-    }
+    // Note: Videos are now stored on Google Drive
+    // We only remove the reference from LocalStorage
+    // Actual Drive files remain (can be managed manually in Drive)
     const newMedia = { ...media };
     delete newMedia[itemNumber];
     saveMedia(newMedia);
