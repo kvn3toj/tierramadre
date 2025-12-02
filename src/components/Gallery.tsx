@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Grid,
@@ -13,11 +13,27 @@ import {
   alpha,
   Chip,
   useTheme,
+  Fab,
+  Dialog,
+  DialogContent,
+  IconButton,
+  Slide,
 } from '@mui/material';
-import { Gem, Search, Package, CheckCircle, Clock, ShoppingBag, Filter, LayoutGrid } from 'lucide-react';
+import { TransitionProps } from '@mui/material/transitions';
+import { Gem, Search, Package, CheckCircle, Clock, ShoppingBag, Filter, LayoutGrid, Plus, X } from 'lucide-react';
 import EmeraldCard from './EmeraldCard';
+import EmeraldUploader from './EmeraldUploader';
 import { useEmeralds } from '../hooks/useEmeralds';
 import { EmeraldStatus, EmeraldCategory } from '../types';
+
+// Slide up transition for dialog
+const Transition = React.forwardRef(function Transition(
+  props: TransitionProps & { children: React.ReactElement },
+  ref: React.Ref<unknown>,
+) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
+
 import {
   brand,
   gradients,
@@ -40,6 +56,7 @@ export default function Gallery() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<EmeraldStatus | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<EmeraldCategory | 'all'>('all');
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   const filteredEmeralds = emeralds.filter(emerald => {
     const matchesSearch = emerald.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -617,6 +634,62 @@ export default function Gallery() {
           </Typography>
         </Paper>
       )}
+
+      {/* Floating Action Button */}
+      <Fab
+        color="primary"
+        aria-label="agregar esmeralda"
+        onClick={() => setUploadDialogOpen(true)}
+        sx={{
+          position: 'fixed',
+          bottom: { xs: 'calc(80px + env(safe-area-inset-bottom))', md: 32 },
+          right: { xs: 16, md: 32 },
+          background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+          boxShadow: '0 4px 20px rgba(5, 150, 105, 0.4)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+            transform: 'scale(1.05)',
+          },
+          transition: 'all 0.2s ease',
+        }}
+      >
+        <Plus size={24} />
+      </Fab>
+
+      {/* Upload Dialog */}
+      <Dialog
+        fullScreen
+        open={uploadDialogOpen}
+        onClose={() => setUploadDialogOpen(false)}
+        TransitionComponent={Transition}
+        PaperProps={{
+          sx: {
+            bgcolor: tokens.background.app,
+          },
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 2,
+            py: 1.5,
+            borderBottom: `1px solid ${tokens.border.default}`,
+            bgcolor: tokens.background.surface,
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Agregar Esmeraldas
+          </Typography>
+          <IconButton onClick={() => setUploadDialogOpen(false)}>
+            <X size={24} />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ p: 0 }}>
+          <EmeraldUploader onComplete={() => setUploadDialogOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }
