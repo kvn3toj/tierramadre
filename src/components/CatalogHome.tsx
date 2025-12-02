@@ -2,6 +2,7 @@
  * CatalogHome - Landing page with real emerald image and clickable navigation
  * Matches the Integración ARE PDF layout with Tierra Madre branding
  * Enhanced UX with emerald glow effects and keyboard navigation
+ * Premium dark theme with glassmorphism effects
  */
 
 import React, { useState } from 'react';
@@ -15,17 +16,44 @@ import {
 import { styled } from '@mui/material/styles';
 import { CATALOG_TRANSITIONS } from '../styles/catalogTokens';
 
-// Emerald brand color
-const EMERALD_PRIMARY = '#047857';
+// Emerald brand colors - Premium palette
+const EMERALD_PRIMARY = '#059669';
 const EMERALD_GLOW = '#10b981';
+const EMERALD_LIGHT = '#34d399';
+const EMERALD_DARK = '#047857';
+
+// Dark theme colors
+const DARK_BG = '#0a0a0a';
+const DARK_SURFACE = '#141414';
+const DARK_ELEVATED = '#1a1a1a';
 
 // Subtle pulse animation for the center logo
 const pulseGlow = keyframes`
   0%, 100% {
-    filter: drop-shadow(0 0 8px ${alpha(EMERALD_GLOW, 0.3)});
+    filter: drop-shadow(0 0 12px ${alpha(EMERALD_GLOW, 0.4)});
   }
   50% {
-    filter: drop-shadow(0 0 16px ${alpha(EMERALD_GLOW, 0.5)});
+    filter: drop-shadow(0 0 24px ${alpha(EMERALD_GLOW, 0.7)});
+  }
+`;
+
+// Floating animation for hotspots
+const floatAnimation = keyframes`
+  0%, 100% {
+    transform: translate(-50%, -50%) translateY(0);
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(-3px);
+  }
+`;
+
+// Ambient glow animation
+const ambientGlow = keyframes`
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
   }
 `;
 
@@ -97,25 +125,58 @@ const HomeContainer = styled(Box)(() => ({
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  background: `linear-gradient(135deg, #fafafa 0%, ${alpha(EMERALD_GLOW, 0.03)} 50%, #f5f5f5 100%)`,
-  overflow: 'hidden',
-  padding: '20px',
+  background: `
+    radial-gradient(ellipse at 30% 20%, ${alpha(EMERALD_DARK, 0.15)} 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, ${alpha(EMERALD_GLOW, 0.08)} 0%, transparent 50%),
+    linear-gradient(180deg, ${DARK_BG} 0%, ${DARK_SURFACE} 50%, ${DARK_BG} 100%)
+  `,
+  overflow: 'visible',
+  padding: '20px 60px',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+    opacity: 0.03,
+    pointerEvents: 'none',
+  },
 }));
 
 const ContentWrapper = styled(Box)(() => ({
   position: 'relative',
   width: '100%',
-  maxWidth: '600px',
+  maxWidth: '800px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  margin: '40px 0',
+  margin: '40px auto',
+  padding: '0 80px',
+  // Subtle glow behind the emeralds
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '80%',
+    height: '80%',
+    background: `radial-gradient(ellipse, ${alpha(EMERALD_GLOW, 0.15)} 0%, transparent 70%)`,
+    animation: `${ambientGlow} 4s ease-in-out infinite`,
+    zIndex: 0,
+    filter: 'blur(40px)',
+  },
 }));
 
 const EmeraldImage = styled('img')(() => ({
   width: '100%',
   height: 'auto',
   objectFit: 'contain',
+  position: 'relative',
+  zIndex: 1,
+  filter: 'drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4))',
 }));
 
 const CenterLogo = styled(Box)(() => ({
@@ -133,6 +194,7 @@ const CenterLogo = styled(Box)(() => ({
     maxWidth: '100%',
     maxHeight: '100%',
     objectFit: 'contain',
+    filter: 'brightness(1.1)',
   },
 }));
 
@@ -153,32 +215,37 @@ const Hotspot = styled(Box, {
   cursor: 'pointer',
   pointerEvents: 'auto',
   textAlign: 'center',
-  padding: '10px 18px',
-  borderRadius: 12,
+  padding: '12px 20px',
+  borderRadius: 14,
   transition: `all ${CATALOG_TRANSITIONS.duration.normal}ms ${CATALOG_TRANSITIONS.easing.emphasis}`,
+  // Dark glassmorphism effect
   backgroundColor: isHovered
-    ? alpha(EMERALD_PRIMARY, 0.15)
-    : alpha('#fff', 0.85),
-  border: `2px solid ${isHovered ? EMERALD_PRIMARY : alpha('#000', 0.1)}`,
+    ? alpha(EMERALD_PRIMARY, 0.25)
+    : alpha(DARK_ELEVATED, 0.85),
+  border: `1px solid ${isHovered ? EMERALD_GLOW : alpha('#fff', 0.1)}`,
   boxShadow: isHovered
-    ? `0 4px 20px ${alpha(EMERALD_GLOW, 0.4)}, 0 0 30px ${alpha(EMERALD_GLOW, 0.2)}`
-    : `0 2px 8px ${alpha('#000', 0.1)}`,
-  backdropFilter: 'blur(8px)',
+    ? `0 8px 32px ${alpha(EMERALD_GLOW, 0.35)}, 0 0 60px ${alpha(EMERALD_GLOW, 0.15)}, inset 0 1px 0 ${alpha('#fff', 0.1)}`
+    : `0 4px 16px ${alpha('#000', 0.4)}, inset 0 1px 0 ${alpha('#fff', 0.05)}`,
+  backdropFilter: 'blur(16px)',
+  WebkitBackdropFilter: 'blur(16px)',
+  animation: isHovered ? 'none' : `${floatAnimation} 6s ease-in-out infinite`,
+  animationDelay: 'var(--animation-delay, 0s)',
   // Keyboard focus styles
   outline: 'none',
   '&:focus-visible': {
-    outline: `3px solid ${EMERALD_GLOW}`,
-    outlineOffset: 2,
-    boxShadow: `0 0 0 6px ${alpha(EMERALD_GLOW, 0.2)}`,
+    outline: `2px solid ${EMERALD_GLOW}`,
+    outlineOffset: 3,
+    boxShadow: `0 0 0 6px ${alpha(EMERALD_GLOW, 0.2)}, 0 8px 32px ${alpha(EMERALD_GLOW, 0.35)}`,
   },
   '&:hover': {
-    backgroundColor: alpha(EMERALD_PRIMARY, 0.15),
-    border: `2px solid ${EMERALD_PRIMARY}`,
-    transform: 'translate(-50%, -50%) scale(1.08)',
-    boxShadow: `0 6px 24px ${alpha(EMERALD_GLOW, 0.5)}, 0 0 40px ${alpha(EMERALD_GLOW, 0.3)}`,
+    backgroundColor: alpha(EMERALD_PRIMARY, 0.3),
+    border: `1px solid ${EMERALD_LIGHT}`,
+    transform: 'translate(-50%, -50%) scale(1.08) translateY(-4px)',
+    boxShadow: `0 12px 40px ${alpha(EMERALD_GLOW, 0.4)}, 0 0 80px ${alpha(EMERALD_GLOW, 0.2)}, inset 0 1px 0 ${alpha('#fff', 0.15)}`,
   },
   '&:active': {
     transform: 'translate(-50%, -50%) scale(0.98)',
+    boxShadow: `0 4px 16px ${alpha(EMERALD_GLOW, 0.3)}`,
   },
 }));
 
@@ -186,21 +253,23 @@ const HotspotName = styled(Typography, {
   shouldForwardProp: (prop) => prop !== 'isHovered',
 })<{ isHovered?: boolean }>(({ isHovered }) => ({
   fontWeight: 700,
-  fontSize: 'clamp(0.75rem, 1.8vw, 1rem)',
-  color: isHovered ? EMERALD_PRIMARY : '#1a1a1a',
+  fontSize: 'clamp(0.8rem, 1.8vw, 1rem)',
+  color: isHovered ? EMERALD_LIGHT : '#ffffff',
   textDecoration: 'none',
-  marginBottom: 2,
+  marginBottom: 3,
   transition: 'color 0.2s ease',
   whiteSpace: 'nowrap',
-  letterSpacing: '0.02em',
+  letterSpacing: '0.03em',
+  textShadow: isHovered ? `0 0 20px ${alpha(EMERALD_GLOW, 0.5)}` : 'none',
 }));
 
 const HotspotSubtitle = styled(Typography)(() => ({
-  fontSize: 'clamp(0.6rem, 1.2vw, 0.75rem)',
-  color: alpha('#000', 0.55),
+  fontSize: 'clamp(0.65rem, 1.2vw, 0.75rem)',
+  color: alpha('#fff', 0.6),
   fontStyle: 'italic',
   whiteSpace: 'nowrap',
   fontWeight: 500,
+  letterSpacing: '0.02em',
 }));
 
 interface CatalogHomeProps {
@@ -277,7 +346,7 @@ export const CatalogHome: React.FC<CatalogHomeProps> = ({ onCatalogSelect }) => 
           <Typography
             variant="body2"
             sx={{
-              color: alpha('#000', 0.45),
+              color: alpha('#fff', 0.45),
               fontStyle: 'italic',
               letterSpacing: '0.05em',
               fontSize: '0.875rem',
@@ -288,7 +357,7 @@ export const CatalogHome: React.FC<CatalogHomeProps> = ({ onCatalogSelect }) => 
           <Typography
             variant="caption"
             sx={{
-              color: alpha('#000', 0.3),
+              color: alpha('#fff', 0.3),
               display: 'block',
               marginTop: 0.5,
               fontSize: '0.7rem',

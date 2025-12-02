@@ -197,25 +197,44 @@ export function useInventory() {
     for (const file of files) {
       const isVideo = file.type.startsWith('video/');
 
-      // Create FormData for API upload
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('itemNumber', itemNumber.toString());
-
       try {
         // Upload to Google Drive via API
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('itemNumber', itemNumber.toString());
+
         const response = await fetch('/api/upload-to-drive', {
           method: 'POST',
           body: formData,
         });
 
+        // Get response text first to handle empty responses
+        const responseText = await response.text();
+
         if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Error al subir el archivo');
+          let errorMessage = 'Error al subir el archivo a Google Drive';
+          if (responseText) {
+            try {
+              const errorData = JSON.parse(responseText);
+              errorMessage = errorData.message || errorMessage;
+            } catch {
+              // If response is HTML (Vite dev server), show helpful message
+              if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
+                errorMessage = 'API no disponible. Usa "vercel dev" en lugar de "npm run dev"';
+              } else {
+                errorMessage = responseText;
+              }
+            }
+          }
+          throw new Error(errorMessage);
         }
 
-        const data = await response.json();
-        const driveUrl = data.url;
+        if (!responseText) {
+          throw new Error('Respuesta vacía del servidor');
+        }
+
+        const data = JSON.parse(responseText);
+        const mediaUrl = data.url;
 
         // Extract thumbnail for videos
         let thumbnailUrl: string | undefined;
@@ -226,7 +245,7 @@ export function useInventory() {
         // Add to gallery
         const mediaItem = await addToGallery(
           itemNumber,
-          driveUrl,
+          mediaUrl,
           isVideo ? 'video' : 'image',
           category,
           thumbnailUrl
@@ -242,6 +261,30 @@ export function useInventory() {
     return uploadedItems;
   }, [addToGallery]);
 
+  // Update full gallery at once
+  const updateMediaItems = useCallback((itemNumber: number, items: MediaItem[]) => {
+    const reorderedItems = items.map((item, index) => ({
+      ...item,
+      order: index,
+    }));
+
+    const newGalleries = {
+      ...galleries,
+      [itemNumber]: reorderedItems,
+    };
+
+    if (reorderedItems.length === 0) {
+      delete newGalleries[itemNumber];
+    }
+
+    saveGalleries(newGalleries);
+  }, [galleries, saveGalleries]);
+
+  // Get media items for a product (alias for getGallery)
+  const getMediaItems = useCallback((itemNumber: number): MediaItem[] => {
+    return galleries[itemNumber] || [];
+  }, [galleries]);
+
   return {
     // Legacy single media
     inventory: getInventoryWithMedia(),
@@ -256,6 +299,8 @@ export function useInventory() {
     removeFromGallery,
     reorderGallery,
     uploadToGallery,
+    updateMediaItems,
+    getMediaItems,
   };
 }
 
