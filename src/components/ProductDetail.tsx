@@ -312,7 +312,7 @@ export default function ProductDetail() {
         <Button
           variant="contained"
           startIcon={<ArrowLeft size={18} />}
-          onClick={() => navigate('/inventario')}
+          onClick={() => navigate('/inventory')}
           sx={{
             background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
             color: '#FFFFFF',
@@ -354,7 +354,7 @@ export default function ProductDetail() {
         <Link
           component="button"
           variant="body2"
-          onClick={() => navigate('/inventario')}
+          onClick={() => navigate('/inventory')}
           sx={{
             color: theme.palette.text.secondary,
             textDecoration: 'none',
@@ -371,7 +371,7 @@ export default function ProductDetail() {
       {/* Back Button */}
       <Button
         startIcon={<ArrowLeft size={18} />}
-        onClick={() => navigate('/inventario')}
+        onClick={() => navigate('/inventory')}
         sx={{
           mb: 3,
           color: theme.palette.text.secondary,
