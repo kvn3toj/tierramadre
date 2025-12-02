@@ -3,76 +3,35 @@ import { InventoryItem, MediaType } from '../types';
 import { inventoryData as defaultInventoryData } from '../data/inventory';
 import { MediaItem } from '../components/media/types';
 
-// Upload to Google Drive - uses direct upload for large files (>4MB)
-const uploadToGoogleDrive = async (file: File, itemNumber: number): Promise<string> => {
-  const MAX_VERCEL_SIZE = 4 * 1024 * 1024;
+// Cloudinary configuration
+const CLOUDINARY_CLOUD_NAME = 'dyam6g2os';
+const CLOUDINARY_UPLOAD_PRESET = 'tierramadre';
 
-  // For small files, use the simple API
-  if (file.size <= MAX_VERCEL_SIZE) {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('itemNumber', itemNumber.toString());
+// Upload to Cloudinary - direct browser upload, no size limits
+const uploadToCloudinary = async (file: File, itemNumber: number): Promise<string> => {
+  const isVideo = file.type.startsWith('video/');
+  const resourceType = isVideo ? 'video' : 'image';
 
-    const response = await fetch('/api/upload-to-drive', {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', `tierramadre/product-${itemNumber}`);
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
+    {
       method: 'POST',
       body: formData,
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Error al subir' }));
-      throw new Error(error.message);
     }
+  );
 
-    const data = await response.json();
-    return data.url;
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: 'Error al subir' } }));
+    throw new Error(error.error?.message || 'Error al subir a Cloudinary');
   }
 
-  // For large files, use resumable upload
-  const initResponse = await fetch('/api/init-drive-upload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      fileName: file.name,
-      mimeType: file.type,
-      itemNumber,
-      fileSize: file.size,
-    }),
-  });
-
-  if (!initResponse.ok) {
-    const error = await initResponse.json().catch(() => ({ message: 'Error al inicializar' }));
-    throw new Error(error.message);
-  }
-
-  const { uploadUrl, accessToken } = await initResponse.json();
-
-  const uploadResponse = await fetch(uploadUrl, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': file.type,
-    },
-    body: file,
-  });
-
-  if (!uploadResponse.ok) {
-    throw new Error('Error al subir a Google Drive');
-  }
-
-  const { id: fileId } = await uploadResponse.json();
-
-  const finalizeResponse = await fetch('/api/finalize-drive-upload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fileId }),
-  });
-
-  if (!finalizeResponse.ok) {
-    throw new Error('Error al finalizar la subida');
-  }
-
-  const { url } = await finalizeResponse.json();
-  return url;
+  const data = await response.json();
+  return data.secure_url;
 };
 
 const STORAGE_KEY = 'tierramadre-inventory-media';
@@ -270,8 +229,8 @@ export function useInventory() {
       const isVideo = file.type.startsWith('video/');
 
       try {
-        // Upload directly to Google Drive (supports 50MB+)
-        const mediaUrl = await uploadToGoogleDrive(file, itemNumber);
+        // Upload directly to Cloudinary (no size limits)
+        const mediaUrl = await uploadToCloudinary(file, itemNumber);
 
         // Extract thumbnail for videos
         let thumbnailUrl: string | undefined;
