@@ -3,9 +3,31 @@ import { InventoryItem, MediaType } from '../types';
 import { inventoryData as defaultInventoryData } from '../data/inventory';
 import { MediaItem } from '../components/media/types';
 
-// Upload file directly to Google Drive (bypasses Vercel 4.5MB limit)
+// Upload to Google Drive - uses direct upload for large files (>4MB)
 const uploadToGoogleDrive = async (file: File, itemNumber: number): Promise<string> => {
-  // Step 1: Initialize resumable upload
+  const MAX_VERCEL_SIZE = 4 * 1024 * 1024;
+
+  // For small files, use the simple API
+  if (file.size <= MAX_VERCEL_SIZE) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('itemNumber', itemNumber.toString());
+
+    const response = await fetch('/api/upload-to-drive', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Error al subir' }));
+      throw new Error(error.message);
+    }
+
+    const data = await response.json();
+    return data.url;
+  }
+
+  // For large files, use resumable upload
   const initResponse = await fetch('/api/init-drive-upload', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -24,7 +46,6 @@ const uploadToGoogleDrive = async (file: File, itemNumber: number): Promise<stri
 
   const { uploadUrl, accessToken } = await initResponse.json();
 
-  // Step 2: Upload directly to Google Drive
   const uploadResponse = await fetch(uploadUrl, {
     method: 'PUT',
     headers: {
@@ -40,7 +61,6 @@ const uploadToGoogleDrive = async (file: File, itemNumber: number): Promise<stri
 
   const { id: fileId } = await uploadResponse.json();
 
-  // Step 3: Finalize and get URL
   const finalizeResponse = await fetch('/api/finalize-drive-upload', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
