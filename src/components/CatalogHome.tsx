@@ -1,6 +1,6 @@
 /**
- * ShowRoom - Minimalist Premium Experience
- * "Less is more" - Elegant simplicity
+ * ShowRoom - Smart Responsive Design
+ * Adapts elegantly to any screen size
  */
 
 import React, { useState } from 'react';
@@ -9,23 +9,18 @@ import {
   Typography,
   alpha,
   Fade,
+  useMediaQuery,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MINIMAL COLOR PALETTE
+// COLORS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const COLORS = {
-  // Emerald essence
   emerald: '#10b981',
-  emeraldDeep: '#047857',
   emeraldLight: '#34d399',
-
-  // Accent
   gold: '#C5A572',
-
-  // Neutral
   white: '#ffffff',
   cream: '#f8f7f4',
   dark: '#0a0a0a',
@@ -33,292 +28,192 @@ const COLORS = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CATALOG DATA
+// DATA
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface CatalogHotspot {
-  id: string;
-  name: string;
-  subtitle: string;
-  pdfFile: string;
-  position: { top: string; left: string };
-}
-
-const CATALOG_HOTSPOTS: CatalogHotspot[] = [
-  {
-    id: 'vision',
-    name: 'Visión Compartida',
-    subtitle: 'CEO',
-    pdfFile: '/catalogs/CÓMO LO HACEMOS REAL.pdf',
-    position: { top: '-5%', left: '50%' },
-  },
-  {
-    id: 'exportadores',
-    name: 'Exportadores',
-    subtitle: 'Negocio Conjunto',
-    pdfFile: '/catalogs/LOTE ORIGEN ARE TRÜST.pdf',
-    position: { top: '25%', left: '108%' },
-  },
-  {
-    id: 'acceso',
-    name: 'Acceso Total',
-    subtitle: 'Joyeros',
-    pdfFile: '/catalogs/ACCESO TOTAL ESMERLADAS EN BRUTO-2.pdf',
-    position: { top: '72%', left: '108%' },
-  },
-  {
-    id: 'tierra',
-    name: 'Tierra Madre',
-    subtitle: 'Adopta una esmeralda',
-    pdfFile: '/catalogs/EL PODER DE LA TIERRA MADRE -2.pdf',
-    position: { top: '105%', left: '50%' },
-  },
-  {
-    id: 'embajadores',
-    name: 'Embajadores',
-    subtitle: 'Comunidad',
-    pdfFile: '/catalogs/EL PODER DE LA TIERRA MADRE -2.pdf',
-    position: { top: '72%', left: '-8%' },
-  },
-  {
-    id: 'gifts',
-    name: 'Gifts',
-    subtitle: 'Colección Exclusiva',
-    pdfFile: '/catalogs/Copia de EMERALD GIFTs .pdf',
-    position: { top: '25%', left: '-8%' },
-  },
+const CATALOGS = [
+  { id: 'vision', name: 'Visión Compartida', subtitle: 'CEO', pdfFile: '/catalogs/CÓMO LO HACEMOS REAL.pdf' },
+  { id: 'tierra', name: 'Tierra Madre', subtitle: 'Adopta una esmeralda', pdfFile: '/catalogs/EL PODER DE LA TIERRA MADRE -2.pdf' },
+  { id: 'exportadores', name: 'Exportadores', subtitle: 'Negocio Conjunto', pdfFile: '/catalogs/LOTE ORIGEN ARE TRÜST.pdf' },
+  { id: 'acceso', name: 'Acceso Total', subtitle: 'Joyeros', pdfFile: '/catalogs/ACCESO TOTAL ESMERLADAS EN BRUTO-2.pdf' },
+  { id: 'embajadores', name: 'Embajadores', subtitle: 'Comunidad', pdfFile: '/catalogs/EL PODER DE LA TIERRA MADRE -2.pdf' },
+  { id: 'gifts', name: 'Gifts', subtitle: 'Colección Exclusiva', pdfFile: '/catalogs/Copia de EMERALD GIFTs .pdf' },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLED COMPONENTS - Minimal & Elegant
+// STYLED COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const ShowRoomContainer = styled(Box)(() => ({
-  position: 'relative',
+const Container = styled(Box)(() => ({
   width: '100%',
   minHeight: '100vh',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  justifyContent: 'center',
-  // Simple elegant gradient
-  background: `linear-gradient(180deg,
-    ${COLORS.dark} 0%,
-    #0f0f0f 50%,
-    ${COLORS.dark} 100%
-  )`,
-  overflow: 'visible',
-  padding: '40px 80px',
+  background: `linear-gradient(180deg, ${COLORS.dark} 0%, #111 50%, ${COLORS.dark} 100%)`,
+  padding: 'clamp(16px, 4vw, 40px)',
+  paddingBottom: 'calc(80px + env(safe-area-inset-bottom))',
+  boxSizing: 'border-box',
 }));
 
-// Minimal elegant title
-const ShowRoomTitle = styled(Typography)(() => ({
+const Title = styled(Typography)(() => ({
   fontFamily: '"Cormorant Garamond", Georgia, serif',
-  fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
+  fontSize: 'clamp(1.2rem, 3.5vw, 2rem)',
   fontWeight: 300,
-  letterSpacing: '0.5em',
+  letterSpacing: 'clamp(0.2em, 2vw, 0.5em)',
   textTransform: 'uppercase',
   color: COLORS.gold,
-  marginBottom: 32,
-  position: 'relative',
-  zIndex: 10,
+  marginBottom: 'clamp(16px, 3vw, 32px)',
+  textAlign: 'center',
 }));
 
-const ContentWrapper = styled(Box)(() => ({
-  position: 'relative',
-  width: '100%',
-  maxWidth: '640px',
+const MainContent = styled(Box)(() => ({
   display: 'flex',
+  flexDirection: 'column',
   alignItems: 'center',
-  justifyContent: 'center',
-  margin: '0 auto',
-  padding: '0 80px',
+  width: '100%',
+  maxWidth: '100%',
+  gap: 'clamp(20px, 4vw, 40px)',
 }));
 
-// Clean minimal frame
-const ImageFrame = styled(Box)(() => ({
+const ImageContainer = styled(Box)(() => ({
   position: 'relative',
-  zIndex: 1,
-  borderRadius: 20,
+  width: 'clamp(200px, 70vw, 400px)',
+  borderRadius: 'clamp(12px, 2vw, 20px)',
   overflow: 'hidden',
   background: COLORS.cream,
-  boxShadow: `0 30px 60px ${alpha('#000', 0.4)}`,
+  boxShadow: `0 clamp(10px, 3vw, 30px) clamp(20px, 5vw, 60px) ${alpha('#000', 0.4)}`,
+  flexShrink: 0,
 }));
 
-const EmeraldImage = styled('img')(() => ({
+const EmeraldImage = styled('img')({
   width: '100%',
   height: 'auto',
-  objectFit: 'contain',
   display: 'block',
-}));
+});
 
-const CenterLogo = styled(Box)(() => ({
+const Logo = styled(Box)(() => ({
   position: 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: '14%',
-  zIndex: 10,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  filter: `drop-shadow(0 0 20px ${alpha(COLORS.emerald, 0.4)})`,
-  '& img': {
-    maxWidth: '100%',
-    maxHeight: '100%',
-    objectFit: 'contain',
-  },
+  width: '16%',
+  filter: `drop-shadow(0 0 clamp(8px, 2vw, 20px) ${alpha(COLORS.emerald, 0.5)})`,
+  '& img': { width: '100%', height: 'auto' },
 }));
 
-const HotspotOverlay = styled(Box)(() => ({
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  pointerEvents: 'none',
-  zIndex: 5,
+const Grid = styled(Box)(() => ({
+  display: 'grid',
+  gap: 'clamp(8px, 2vw, 16px)',
+  width: '100%',
+  maxWidth: 'clamp(300px, 90vw, 600px)',
+  // Smart grid: 2 columns on small, 3 on medium+
+  gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(130px, 25vw, 180px), 1fr))',
 }));
 
-// Minimal elegant hotspot
-const Hotspot = styled(Box, {
-  shouldForwardProp: (prop) => prop !== 'isHovered',
-})<{ isHovered?: boolean }>(({ isHovered }) => ({
-  position: 'absolute',
-  transform: 'translate(-50%, -50%)',
+const Card = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'active',
+})<{ active?: boolean }>(({ active }) => ({
   cursor: 'pointer',
-  pointerEvents: 'auto',
   textAlign: 'center',
-  padding: '14px 24px',
-  borderRadius: 12,
-  transition: 'all 0.3s ease',
-  backgroundColor: isHovered
-    ? alpha(COLORS.dark, 0.95)
-    : alpha(COLORS.dark, 0.85),
-  border: `1px solid ${isHovered ? COLORS.emerald : alpha(COLORS.white, 0.08)}`,
-  boxShadow: isHovered
-    ? `0 8px 32px ${alpha(COLORS.emerald, 0.25)}`
-    : `0 4px 16px ${alpha('#000', 0.3)}`,
-  backdropFilter: 'blur(12px)',
-  outline: 'none',
-  '&:focus-visible': {
-    outline: `2px solid ${COLORS.emerald}`,
-    outlineOffset: 2,
-  },
+  padding: 'clamp(12px, 2vw, 20px) clamp(8px, 1.5vw, 16px)',
+  borderRadius: 'clamp(8px, 1.5vw, 14px)',
+  transition: 'all 0.25s ease',
+  backgroundColor: active ? alpha(COLORS.emerald, 0.12) : alpha('#1a1a1a', 0.9),
+  border: `1px solid ${active ? COLORS.emerald : alpha(COLORS.white, 0.06)}`,
+  boxShadow: active
+    ? `0 6px 24px ${alpha(COLORS.emerald, 0.2)}`
+    : `0 2px 12px ${alpha('#000', 0.25)}`,
+  '&:active': { transform: 'scale(0.97)' },
+  WebkitTapHighlightColor: 'transparent',
 }));
 
-const HotspotName = styled(Typography, {
-  shouldForwardProp: (prop) => prop !== 'isHovered',
-})<{ isHovered?: boolean }>(({ isHovered }) => ({
-  fontFamily: '"Inter", -apple-system, sans-serif',
+const CardTitle = styled(Typography, {
+  shouldForwardProp: (prop) => prop !== 'active',
+})<{ active?: boolean }>(({ active }) => ({
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", sans-serif',
   fontWeight: 500,
-  fontSize: '0.9rem',
-  color: isHovered ? COLORS.emeraldLight : COLORS.white,
-  marginBottom: 2,
-  transition: 'color 0.3s ease',
-  whiteSpace: 'nowrap',
-  letterSpacing: '0.02em',
+  fontSize: 'clamp(0.75rem, 2vw, 0.95rem)',
+  color: active ? COLORS.emeraldLight : COLORS.white,
+  marginBottom: 'clamp(2px, 0.5vw, 6px)',
+  transition: 'color 0.25s ease',
 }));
 
-const HotspotSubtitle = styled(Typography, {
-  shouldForwardProp: (prop) => prop !== 'isHovered',
-})<{ isHovered?: boolean }>(({ isHovered }) => ({
-  fontFamily: '"Inter", -apple-system, sans-serif',
-  fontSize: '0.7rem',
-  color: isHovered ? alpha(COLORS.emeraldLight, 0.7) : COLORS.muted,
-  fontWeight: 400,
-  whiteSpace: 'nowrap',
-  letterSpacing: '0.08em',
+const CardSub = styled(Typography, {
+  shouldForwardProp: (prop) => prop !== 'active',
+})<{ active?: boolean }>(({ active }) => ({
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", sans-serif',
+  fontSize: 'clamp(0.6rem, 1.5vw, 0.7rem)',
+  color: active ? alpha(COLORS.emeraldLight, 0.7) : COLORS.muted,
+  letterSpacing: '0.04em',
   textTransform: 'uppercase',
-  transition: 'color 0.3s ease',
+  transition: 'color 0.25s ease',
 }));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface CatalogHomeProps {
+interface Props {
   onCatalogSelect: (pdfUrl: string, name: string) => void;
 }
 
-export const CatalogHome: React.FC<CatalogHomeProps> = ({ onCatalogSelect }) => {
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+export const CatalogHome: React.FC<Props> = ({ onCatalogSelect }) => {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const isLandscape = useMediaQuery('(orientation: landscape) and (max-height: 500px)');
 
   return (
-    <ShowRoomContainer>
-      <Fade in timeout={500}>
-        <ShowRoomTitle>Show Room</ShowRoomTitle>
+    <Container>
+      <Fade in timeout={400}>
+        <Title>Show Room</Title>
       </Fade>
 
-      <Fade in timeout={800}>
-        <ContentWrapper>
-          <ImageFrame>
-            <EmeraldImage
-              src="/catalog-media/integration/slide-01.png"
-              alt="Colombian Emerald Collection"
-            />
-          </ImageFrame>
-
-          <CenterLogo>
-            <img src="/logo-symbol-only.png" alt="Tierra Madre" />
-          </CenterLogo>
-
-          <HotspotOverlay>
-            {CATALOG_HOTSPOTS.map((hotspot) => {
-              const isHovered = hoveredId === hotspot.id;
-
-              return (
-                <Hotspot
-                  key={hotspot.id}
-                  isHovered={isHovered}
-                  onMouseEnter={() => setHoveredId(hotspot.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                  onFocus={() => setHoveredId(hotspot.id)}
-                  onBlur={() => setHoveredId(null)}
-                  onClick={() => onCatalogSelect(hotspot.pdfFile, hotspot.name)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onCatalogSelect(hotspot.pdfFile, hotspot.name);
-                    }
-                  }}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`${hotspot.name} - ${hotspot.subtitle}`}
-                  sx={{
-                    top: hotspot.position.top,
-                    left: hotspot.position.left,
-                  }}
-                >
-                  <HotspotName isHovered={isHovered}>
-                    {hotspot.name}
-                  </HotspotName>
-                  <HotspotSubtitle isHovered={isHovered}>
-                    {hotspot.subtitle}
-                  </HotspotSubtitle>
-                </Hotspot>
-              );
-            })}
-          </HotspotOverlay>
-        </ContentWrapper>
-      </Fade>
-
-      <Fade in timeout={1100}>
-        <Typography
+      <Fade in timeout={600}>
+        <MainContent
           sx={{
-            marginTop: 5,
-            color: alpha(COLORS.muted, 0.5),
-            fontStyle: 'italic',
-            letterSpacing: '0.1em',
-            fontSize: '0.8rem',
-            fontWeight: 300,
-            zIndex: 10,
+            // Landscape mode: side-by-side layout
+            flexDirection: isLandscape ? 'row' : 'column',
+            justifyContent: isLandscape ? 'center' : 'flex-start',
+            alignItems: isLandscape ? 'center' : 'center',
           }}
         >
-          Selecciona una colección
-        </Typography>
+          <ImageContainer
+            sx={{
+              width: isLandscape ? 'clamp(150px, 35vh, 280px)' : 'clamp(200px, 70vw, 400px)',
+            }}
+          >
+            <EmeraldImage
+              src="/catalog-media/integration/slide-01.png"
+              alt="Emeralds"
+            />
+            <Logo>
+              <img src="/logo-symbol-only.png" alt="" />
+            </Logo>
+          </ImageContainer>
+
+          <Grid
+            sx={{
+              maxWidth: isLandscape ? 'clamp(250px, 50vw, 450px)' : 'clamp(300px, 90vw, 500px)',
+            }}
+          >
+            {CATALOGS.map((cat) => (
+              <Card
+                key={cat.id}
+                active={activeId === cat.id}
+                onClick={() => onCatalogSelect(cat.pdfFile, cat.name)}
+                onMouseEnter={() => setActiveId(cat.id)}
+                onMouseLeave={() => setActiveId(null)}
+                onTouchStart={() => setActiveId(cat.id)}
+                onTouchEnd={() => setTimeout(() => setActiveId(null), 150)}
+              >
+                <CardTitle active={activeId === cat.id}>{cat.name}</CardTitle>
+                <CardSub active={activeId === cat.id}>{cat.subtitle}</CardSub>
+              </Card>
+            ))}
+          </Grid>
+        </MainContent>
       </Fade>
-    </ShowRoomContainer>
+    </Container>
   );
 };
 
