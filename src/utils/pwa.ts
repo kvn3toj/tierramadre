@@ -122,4 +122,38 @@ export const initPWA = (): void => {
   setVH();
   window.addEventListener('resize', setVH);
   window.addEventListener('orientationchange', setVH);
+
+  // CRITICAL: Prevent links from opening in Safari
+  // This keeps navigation within the PWA
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const anchor = target.closest('a');
+
+    if (anchor && anchor.href) {
+      const url = new URL(anchor.href, window.location.origin);
+
+      // If it's an internal link (same origin)
+      if (url.origin === window.location.origin) {
+        // Check if it has target="_blank" or download attribute
+        if (anchor.target === '_blank' || anchor.hasAttribute('download')) {
+          return; // Let it open normally
+        }
+
+        // Prevent default behavior that might trigger Safari
+        // React Router will handle the navigation
+      }
+    }
+  }, true); // Use capture phase
+
+  // Prevent window.open from breaking out of PWA
+  const originalOpen = window.open;
+  window.open = function(url?: string | URL, target?: string, features?: string) {
+    if (typeof url === 'string' && url.startsWith(window.location.origin)) {
+      // Internal link - use navigation instead
+      window.location.href = url;
+      return null;
+    }
+    // External link - allow normal behavior
+    return originalOpen.call(window, url, target, features);
+  };
 };

@@ -327,4 +327,39 @@ body {
   select {
     font-size: 16px !important;
   }
+
+  /* Additional PWA-specific iOS fixes */
+  @media (display-mode: standalone) {
+    /* Prevent browser chrome from appearing during scroll */
+    * {
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+    }
+
+    /* Lock body scroll position to prevent address bar */
+    body {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Allow scrolling only in main container */
+    #root {
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+    }
+
+    /* Prevent any links from breaking out */
+    a {
+      -webkit-touch-callout: none;
+    }
+
+    /* Ensure transitions don't trigger browser chrome */
+    * {
+      will-change: auto !important;
+    }
+  }
 }
