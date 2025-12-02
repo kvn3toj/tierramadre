@@ -23,6 +23,7 @@ import {
 
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export interface MoreToolConfig {
   id: string;
@@ -33,59 +34,59 @@ export interface MoreToolConfig {
   color: string;
 }
 
-const MORE_TOOLS: MoreToolConfig[] = [
+const getMoreTools = (t: any): MoreToolConfig[] => [
   {
     id: 'catalog',
-    label: 'Catalog',
-    subtitle: 'Create professional PDFs',
+    label: t.tools.catalog.label,
+    subtitle: t.tools.catalog.subtitle,
     icon: MenuBook,
     route: '/catalog',
     color: primitiveColors.emerald[500],
   },
   {
     id: 'calendar',
-    label: 'Calendar',
-    subtitle: 'Plan Instagram posts',
+    label: t.tools.calendar.label,
+    subtitle: t.tools.calendar.subtitle,
     icon: CalendarMonth,
     route: '/calendar',
     color: '#9C27B0',
   },
   {
     id: 'slides',
-    label: 'Slides',
-    subtitle: 'AI presentations',
+    label: t.tools.slides.label,
+    subtitle: t.tools.slides.subtitle,
     icon: Slideshow,
     route: '/slides',
     color: '#FF9800',
   },
   {
     id: 'normalizer',
-    label: 'Normalizer',
-    subtitle: 'Optimize images',
+    label: t.tools.normalizer.label,
+    subtitle: t.tools.normalizer.subtitle,
     icon: AutoFixHigh,
     route: '/normalizer',
     color: '#4CAF50',
   },
   {
     id: 'receipts',
-    label: 'Receipts',
-    subtitle: 'Generate invoices',
+    label: t.tools.receipts.label,
+    subtitle: t.tools.receipts.subtitle,
     icon: Receipt,
     route: '/receipts',
     color: '#00BCD4',
   },
   {
     id: 'biblioteca',
-    label: 'Library',
-    subtitle: 'Emerald catalog',
+    label: t.tools.library.label,
+    subtitle: t.tools.library.subtitle,
     icon: LibraryBooks,
     route: '/biblioteca',
     color: '#3F51B5',
   },
   {
     id: 'simulator',
-    label: 'Price Simulator',
-    subtitle: 'Calculate valuations',
+    label: t.tools.simulator.label,
+    subtitle: t.tools.simulator.subtitle,
     icon: Calculate,
     route: '/simulator',
     color: '#E91E63',
@@ -99,6 +100,9 @@ export interface IOSMoreSheetProps {
 
 const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
+
+  const MORE_TOOLS = getMoreTools(t);
 
   const handleToolClick = (tool: MoreToolConfig) => {
     if ('vibrate' in navigator) {
@@ -176,12 +180,12 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
                 color: 'var(--text-primary)',
               }}
             >
-              Tools
+              {t.nav.tools}
             </Typography>
 
             <IconButton
               onClick={onClose}
-              aria-label="Close tools"
+              aria-label={t.actions.close}
               sx={{
                 color: 'var(--text-secondary)',
                 '&:hover': { backgroundColor: 'var(--surface-tertiary)' },

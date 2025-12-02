@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMemo } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -14,6 +14,7 @@ import {
   useTheme,
   Breadcrumbs,
   Link,
+  IconButton,
 } from '@mui/material';
 import {
   ArrowLeft,
@@ -29,11 +30,15 @@ import {
   FileCheck,
   Crown,
   ShoppingCart,
+  Upload,
+  X,
 } from 'lucide-react';
 import { useThemeMode } from '../context/ThemeContext';
-import { inventoryData } from '../data/inventory';
+import { useInventory } from '../hooks/useInventory';
 import { calculateTrustScore, getTrustBadge } from '../utils/trustScore';
 import { TrustBadgeCompact } from './TrustBadge';
+import { extractVideoThumbnail } from '../utils/videoStorage';
+import MediaPreview from './MediaPreview';
 
 // Format currency in COP
 const formatCurrency = (value: number): string => {
@@ -97,11 +102,15 @@ export default function ProductDetail() {
   const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const { inventory, updateImage, updateVideo, removeImage } = useInventory();
 
   // Find the product
   const product = useMemo(() => {
-    return inventoryData.find(item => item.item.toString() === itemId);
-  }, [itemId]);
+    return inventory.find(item => item.item.toString() === itemId);
+  }, [inventory, itemId]);
 
   // Calculate trust score
   const trustScore = useMemo(() => {
@@ -109,6 +118,56 @@ export default function ProductDetail() {
   }, [product]);
 
   const trustBadge = trustScore ? getTrustBadge(trustScore.overall) : null;
+
+  // Handle media upload (image or video)
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !product) return;
+
+    const isVideo = file.type.startsWith('video/');
+    const isImage = file.type.startsWith('image/');
+
+    if (!isImage && !isVideo) {
+      alert('Por favor selecciona una imagen o video válido');
+      return;
+    }
+
+    setUploadingImage(true);
+
+    try {
+      if (isVideo) {
+        // Handle video upload
+        const thumbnail = await extractVideoThumbnail(file, 1);
+        await updateVideo(product.item, file, thumbnail);
+        setUploadingImage(false);
+      } else {
+        // Handle image upload
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const base64 = event.target?.result as string;
+          updateImage(product.item, base64);
+          setUploadingImage(false);
+        };
+        reader.onerror = () => {
+          alert('Error al cargar la imagen');
+          setUploadingImage(false);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      console.error('Error uploading media:', error);
+      alert('Error al subir el archivo');
+      setUploadingImage(false);
+    }
+  };
+
+  // Handle remove image
+  const handleRemoveImage = () => {
+    if (!product) return;
+    if (confirm('¿Estás seguro de eliminar esta imagen?')) {
+      removeImage(product.item);
+    }
+  };
 
   if (!product) {
     return (
@@ -229,7 +288,14 @@ export default function ProductDetail() {
               />
             </Box>
 
-            {/* Placeholder Image - Replace with actual image when available */}
+            {/* Product Image/Video */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,video/*"
+              style={{ display: 'none' }}
+              onChange={handleImageUpload}
+            />
             <Box
               sx={{
                 width: '100%',
@@ -238,23 +304,89 @@ export default function ProductDetail() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                bgcolor: alpha(colorDot, 0.1),
+                bgcolor: product.imagen ? '#000' : alpha(colorDot, 0.1),
                 position: 'relative',
+                overflow: 'hidden',
               }}
             >
-              <Gem size={120} color={colorDot} style={{ opacity: 0.3 }} />
-              <Typography
-                variant="caption"
+              {product.imagen ? (
+                <>
+                  {product.mediaType === 'video' ? (
+                    <MediaPreview
+                      mediaUrl={product.imagen}
+                      mediaType="video"
+                      thumbnailUrl={product.thumbnailUrl}
+                      alt={displayName}
+                      maxWidth="100%"
+                      maxHeight="100%"
+                      controls={true}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={product.imagen}
+                      alt={displayName}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                      }}
+                    />
+                  )}
+                  {/* Remove Media Button */}
+                  <IconButton
+                    onClick={handleRemoveImage}
+                    sx={{
+                      position: 'absolute',
+                      top: 16,
+                      left: 16,
+                      bgcolor: 'rgba(0, 0, 0, 0.6)',
+                      color: '#fff',
+                      '&:hover': { bgcolor: 'rgba(220, 38, 38, 0.8)' },
+                    }}
+                  >
+                    <X size={20} />
+                  </IconButton>
+                </>
+              ) : (
+                <>
+                  <Gem size={120} color={colorDot} style={{ opacity: 0.3 }} />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      position: 'absolute',
+                      bottom: 16,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      color: theme.palette.text.secondary,
+                    }}
+                  >
+                    Imagen no disponible
+                  </Typography>
+                </>
+              )}
+
+              {/* Upload Media Button */}
+              <Button
+                startIcon={<Upload size={18} />}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingImage}
                 sx={{
                   position: 'absolute',
                   bottom: 16,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  color: theme.palette.text.secondary,
+                  right: 16,
+                  bgcolor: 'rgba(5, 150, 105, 0.9)',
+                  color: '#fff',
+                  '&:hover': { bgcolor: '#059669' },
+                  backdropFilter: 'blur(4px)',
                 }}
               >
-                Imagen no disponible
-              </Typography>
+                {uploadingImage ? 'Subiendo...' : product.imagen ? 'Cambiar' : 'Subir Imagen/Video'}
+              </Button>
             </Box>
           </Paper>
         </Grid>
@@ -274,7 +406,7 @@ export default function ProductDetail() {
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
               <Chip
-                label={product.isJewelry ? 'Joyería' : 'Gema Suelta'}
+                label={product.isJewelry ? 'Joyería' : 'Gema'}
                 size="small"
                 sx={{ bgcolor: isLight ? '#F3F4F6' : '#2C2C2E' }}
               />

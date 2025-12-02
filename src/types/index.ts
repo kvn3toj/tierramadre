@@ -1,9 +1,13 @@
 // Core data types for Tierra Madre Studio
 
+export type MediaType = 'image' | 'video';
+
 export interface Emerald {
   id: string;
   name: string;
-  imageUrl: string;              // Base64 data URI
+  imageUrl: string;              // Base64 data URI for images, indexeddb:// reference for videos
+  mediaType?: MediaType;         // Type of media (defaults to 'image' for backwards compatibility)
+  thumbnailUrl?: string;         // Thumbnail for videos (base64 data URI)
   aiSuggestedNames: string[];
   aiDescription: string;
   weightCarats?: number;
@@ -11,6 +15,10 @@ export interface Emerald {
   lotCode?: string;              // L:A-XXX, L:II-JA format
   category: EmeraldCategory;
   status: EmeraldStatus;
+  // Jewelry-specific fields
+  ringSize?: string;             // For rings: 4, 5, 6, 7, 8...
+  color?: string;                // Verde Muzo, Verde Chivor, etc.
+  quality?: string;              // Premium, Estándar, etc.
   createdAt: string;
   updatedAt: string;
 }
@@ -212,6 +220,8 @@ export interface InventoryItem {
   talla: string;
   medidas: string;
   imagen?: string;
+  mediaType?: MediaType;     // Type of media (image or video)
+  thumbnailUrl?: string;     // Thumbnail for videos
   costoTM?: number;
   precioCOP: number;
   ubicacion: string;

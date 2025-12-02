@@ -9,12 +9,14 @@
 import React, { useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box } from '@mui/material';
-import { Search, Add, FilterList } from '@mui/icons-material';
+import { Search, Add, FilterList, Settings } from '@mui/icons-material';
 
 import IOSTabBar from './IOSTabBar';
 import IOSNavigationBar, { NavigationBarMode, NavigationAction } from './IOSNavigationBar';
 import IOSMoreSheet from './IOSMoreSheet';
+import IOSSettingsSheet from './IOSSettingsSheet';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface PageConfig {
   title: string;
@@ -25,87 +27,92 @@ interface PageConfig {
   trailingActions?: NavigationAction[];
 }
 
-const PAGE_CONFIGS: Record<string, PageConfig> = {
+const getPageConfigs = (t: any, setSettingsSheetOpen: (open: boolean) => void): Record<string, PageConfig> => ({
   '/gallery': {
-    title: 'Gallery',
+    title: t.pages.gallery.title,
     mode: 'large',
-    subtitle: 'Colombian Emeralds',
+    subtitle: t.pages.gallery.subtitle,
     trailingActions: [
       {
+        icon: Settings,
+        label: t.settings.theme,
+        onClick: () => setSettingsSheetOpen(true),
+      },
+      {
         icon: Search,
-        label: 'Search',
+        label: t.actions.search,
         onClick: () => console.log('Search'),
       },
       {
         icon: FilterList,
-        label: 'Filter',
+        label: t.actions.filter,
         onClick: () => console.log('Filter'),
       },
     ],
   },
   '/upload': {
-    title: 'Upload',
+    title: t.pages.upload.title,
     mode: 'large',
-    subtitle: 'Add emeralds',
+    subtitle: t.pages.upload.subtitle,
   },
   '/inventory': {
-    title: 'Inventory',
+    title: t.pages.inventory.title,
     mode: 'large',
-    subtitle: 'Manage collection',
+    subtitle: t.pages.inventory.subtitle,
     trailingActions: [
       {
         icon: Add,
-        label: 'Add',
+        label: t.actions.add,
         onClick: () => console.log('Add'),
       },
     ],
   },
   '/ambassadors': {
-    title: 'Ambassadors',
+    title: t.pages.ambassadors.title,
     mode: 'large',
-    subtitle: 'Community leaders',
+    subtitle: t.pages.ambassadors.subtitle,
   },
   '/catalog': {
-    title: 'Catalog',
+    title: t.pages.catalog.title,
     mode: 'compact',
     showBackButton: true,
   },
   '/calendar': {
-    title: 'Calendar',
+    title: t.pages.calendar.title,
     mode: 'compact',
     showBackButton: true,
   },
   '/slides': {
-    title: 'Slides',
+    title: t.pages.slides.title,
     mode: 'compact',
     showBackButton: true,
   },
   '/normalizer': {
-    title: 'Normalizer',
+    title: t.pages.normalizer.title,
     mode: 'compact',
     showBackButton: true,
   },
   '/receipts': {
-    title: 'Receipts',
+    title: t.pages.receipts.title,
     mode: 'compact',
     showBackButton: true,
   },
   '/biblioteca': {
-    title: 'Library',
+    title: t.pages.library.title,
     mode: 'compact',
     showBackButton: true,
   },
   '/simulator': {
-    title: 'Simulator',
+    title: t.pages.simulator.title,
     mode: 'compact',
     showBackButton: true,
   },
   '/product': {
-    title: 'Product',
+    title: t.pages.gallery.title,
     mode: 'compact',
     showBackButton: true,
   },
-};
+});
 
 export interface IOSLayoutProps {
   children: React.ReactNode;
@@ -113,25 +120,29 @@ export interface IOSLayoutProps {
 
 const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   const location = useLocation();
+  const { t } = useLanguage();
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
+  const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
 
   const pageConfig = useMemo((): PageConfig => {
+    const configs = getPageConfigs(t, setSettingsSheetOpen);
+
     // Check for exact match first
-    const exactMatch = PAGE_CONFIGS[location.pathname];
+    const exactMatch = configs[location.pathname];
     if (exactMatch) return exactMatch;
 
     // Check for partial match (e.g., /product/:id)
-    const partialMatch = Object.keys(PAGE_CONFIGS).find(key =>
+    const partialMatch = Object.keys(configs).find(key =>
       location.pathname.startsWith(key) && key !== '/'
     );
-    if (partialMatch) return PAGE_CONFIGS[partialMatch];
+    if (partialMatch) return configs[partialMatch];
 
     // Default config
     return {
       title: 'Tierra Madre',
       mode: 'compact',
     };
-  }, [location.pathname]);
+  }, [location.pathname, t, setSettingsSheetOpen]);
 
   return (
     <Box
@@ -166,6 +177,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
       <IOSTabBar onMoreClick={() => setMoreSheetOpen(true)} />
 
       <IOSMoreSheet open={moreSheetOpen} onClose={() => setMoreSheetOpen(false)} />
+      <IOSSettingsSheet open={settingsSheetOpen} onClose={() => setSettingsSheetOpen(false)} />
     </Box>
   );
 };

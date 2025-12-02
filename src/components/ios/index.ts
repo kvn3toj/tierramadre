@@ -34,4 +34,6 @@ export type { NavigationBarMode, NavigationAction } from './IOSNavigationBar';
 export { default as IOSMoreSheet } from './IOSMoreSheet';
 export type { MoreToolConfig } from './IOSMoreSheet';
 
+export { default as IOSSettingsSheet } from './IOSSettingsSheet';
+
 export { default as IOSLayout } from './IOSLayout';
