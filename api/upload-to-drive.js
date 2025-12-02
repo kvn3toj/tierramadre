@@ -125,8 +125,9 @@ export default async function handler(req, res) {
       });
     });
 
-    const file = files.file;
-    const itemNumber = fields.itemNumber;
+    // Formidable v3+ returns arrays - get the first item
+    const file = Array.isArray(files.file) ? files.file[0] : files.file;
+    const itemNumber = Array.isArray(fields.itemNumber) ? fields.itemNumber[0] : fields.itemNumber;
 
     if (!file || !itemNumber) {
       return res.status(400).json({
