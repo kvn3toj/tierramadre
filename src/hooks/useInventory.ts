@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { InventoryItem, MediaType } from '../types';
 import { inventoryData as defaultInventoryData } from '../data/inventory';
-import { saveVideo, deleteVideo } from '../utils/videoStorage';
 
 const STORAGE_KEY = 'tierramadre-inventory-media';
 
