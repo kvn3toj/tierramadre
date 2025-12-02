@@ -16,7 +16,7 @@ export const config = {
 /**
  * Initialize Google Drive API with service account credentials
  */
-function getDriveClient() {
+async function getDriveClient() {
   try {
     const credentials = JSON.parse(
       Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
@@ -27,7 +27,14 @@ function getDriveClient() {
       scopes: ['https://www.googleapis.com/auth/drive.file'],
     });
 
-    return { drive: google.drive({ version: 'v3', auth }), auth };
+    // Get the auth client and access token
+    const authClient = await auth.getClient();
+    const accessToken = await authClient.getAccessToken();
+
+    return {
+      drive: google.drive({ version: 'v3', auth }),
+      accessToken: accessToken.token
+    };
   } catch (error) {
     console.error('Error initializing Drive client:', error);
     throw new Error('Failed to initialize Google Drive client');
@@ -104,15 +111,12 @@ export default async function handler(req, res) {
       });
     }
 
-    const { drive, auth } = getDriveClient();
+    const { drive, accessToken } = await getDriveClient();
     const folderId = await getOrCreateFolder(drive);
 
     // Generate unique filename
     const ext = fileName.split('.').pop() || 'bin';
     const uniqueFileName = `product-${itemNumber}-${Date.now()}.${ext}`;
-
-    // Get access token for direct upload
-    const accessToken = await auth.getAccessToken();
 
     // Create file metadata
     const fileMetadata = {
@@ -126,7 +130,7 @@ export default async function handler(req, res) {
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken.token}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
           'X-Upload-Content-Type': mimeType,
           'X-Upload-Content-Length': fileSize?.toString() || '',
