@@ -77,3 +77,49 @@ export const getInstallInstructions = (): string => {
 
   return 'Usa el menú de tu navegador para añadir esta app a tu pantalla de inicio';
 };
+
+/**
+ * Force hide address bar on iOS (especially iPad)
+ * Call this on page load and scroll events
+ */
+export const hideIOSAddressBar = (): void => {
+  if (!isIOS() || isPWA()) return;
+
+  // Scroll trick to hide Safari address bar
+  window.scrollTo(0, 1);
+
+  // Additional trick for iPad
+  setTimeout(() => {
+    window.scrollTo(0, 0);
+  }, 0);
+};
+
+/**
+ * Initialize PWA-specific behaviors
+ */
+export const initPWA = (): void => {
+  if (!isPWA()) return;
+
+  // Prevent zooming on iPad
+  document.addEventListener('gesturestart', (e) => {
+    e.preventDefault();
+  });
+
+  // Prevent text selection on long press (iOS)
+  document.addEventListener('contextmenu', (e) => {
+    if ((e.target as HTMLElement).tagName !== 'INPUT' &&
+        (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+      e.preventDefault();
+    }
+  });
+
+  // Lock viewport height for iPad
+  const setVH = () => {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  };
+
+  setVH();
+  window.addEventListener('resize', setVH);
+  window.addEventListener('orientationchange', setVH);
+};

@@ -17,10 +17,11 @@ export default defineConfig({
         theme_color: '#00AE7A',
         background_color: '#000000',
         display: 'standalone',
-        orientation: 'portrait-primary',
+        orientation: 'any',
         scope: '/',
         start_url: '/?source=pwa',
         categories: ['business', 'productivity', 'photo'],
+        prefer_related_applications: false,
         icons: [
           {
             src: 'pwa-192x192.png',

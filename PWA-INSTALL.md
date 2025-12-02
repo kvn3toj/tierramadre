@@ -5,23 +5,51 @@
 To get the **full-screen PWA experience without browser bars**, follow these steps:
 
 ### 1. Open in Safari
-⚠️ **Important**: You must use **Safari** browser (not Chrome or other browsers on iOS)
+⚠️ **CRITICAL**: You **MUST** use **Safari** browser (not Chrome or other browsers on iOS/iPadOS)
 
 1. Open Safari on your iPhone/iPad
 2. Navigate to: `https://tierra-madre-studio.vercel.app`
 
-### 2. Add to Home Screen
+### 2. Close All Safari Tabs (iPad Only)
+📱 **iPad-specific step**: Before adding to home screen on iPad:
+1. Close all other Safari tabs
+2. Make sure the app URL is the ONLY open tab
+3. Refresh the page once
 
-1. Tap the **Share** button (square with arrow pointing up) at the bottom of Safari
-2. Scroll down and tap **"Add to Home Screen"** (or "Añadir a pantalla de inicio")
+### 3. Add to Home Screen
+
+**iPhone:**
+1. Tap the **Share** button (square with arrow pointing up) at the bottom
+2. Scroll down and tap **"Add to Home Screen"**
+
+**iPad:**
+1. Tap the **Share** button (square with arrow pointing up) in the top toolbar
+2. Scroll down in the menu and tap **"Add to Home Screen"**
 3. Edit the name if desired (default: "TM Studio")
-4. Tap **"Add"** (or "Añadir") in the top right
+4. Tap **"Add"** in the top right
 
-### 3. Launch from Home Screen
+### 4. **IMPORTANT**: Delete and Reinstall if Needed
+
+If you previously added the app and still see browser bars:
+1. **Delete the app** from your home screen (hold icon → Remove)
+2. **Clear Safari cache**:
+   - Settings → Safari → Clear History and Website Data
+3. **Restart your iPad/iPhone**
+4. **Follow steps 1-3 again**
+
+### 5. Launch from Home Screen
 
 1. Find the **TM Studio** icon on your home screen
 2. Tap it to launch the app
 3. ✅ The app will now open **without browser navigation bars**
+
+### iPad-Specific Notes
+
+iPads sometimes require extra steps:
+- **Always launch from the home screen icon**, never from Safari bookmarks or recent tabs
+- If address bar appears, **delete and reinstall** following the steps above
+- Make sure you're running **iPadOS 15.4 or later**
+- Ensure **Safari is up to date**
 
 ## What You Should See
 

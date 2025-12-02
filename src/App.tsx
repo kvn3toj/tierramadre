@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, IconButton, useTheme, useMediaQuery } from '@mui/material';
 import { X } from 'lucide-react';
@@ -19,6 +19,7 @@ import InventoryBrowser from './components/InventoryBrowser';
 import ProductDetail from './components/ProductDetail';
 import { AmbassadorDirectory, AmbassadorProfile } from './components/ambassador';
 import { AmbassadorProfile as AmbassadorProfileType } from './types/ambassador';
+import { initPWA } from './utils/pwa';
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'gallery' | 'upload' | 'catalog' | 'calendar' | 'slides' | 'normalizer' | 'receipts' | 'biblioteca' | 'simulator' | 'inventory' | 'ambassadors';
@@ -142,6 +143,11 @@ function App() {
 
   const handleUnlock = useCallback(() => {
     setIsUnlocked(true);
+  }, []);
+
+  // Initialize PWA behaviors on mount
+  useEffect(() => {
+    initPWA();
   }, []);
 
   // Show PIN lock screen if not authenticated
