@@ -166,7 +166,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         component="main"
         sx={{
           flex: 1,
-          paddingBottom: `calc(49px + env(safe-area-inset-bottom) + ${spacing.md})`,
+          paddingBottom: `calc(65px + env(safe-area-inset-bottom) + ${spacing.md})`,
           overflowY: 'auto',
           WebkitOverflowScrolling: 'touch',
         }}
