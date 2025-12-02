@@ -46,67 +46,95 @@ import { extractVideoThumbnail } from '../utils/videoStorage';
 import { MediaGallery, MediaUploadZone } from './media';
 import type { MediaItem } from './media/types';
 
-// Upload file directly to Google Drive (bypasses Vercel 4.5MB limit)
+// Compress image to reduce file size for upload (max 4MB for Vercel)
+const compressImage = async (file: File, maxSizeMB = 3.5): Promise<File> => {
+  if (!file.type.startsWith('image/') || file.size <= maxSizeMB * 1024 * 1024) {
+    return file;
+  }
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    img.onload = () => {
+      const maxDimension = 2000;
+      let { width, height } = img;
+
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) {
+          height = (height / width) * maxDimension;
+          width = maxDimension;
+        } else {
+          width = (width / height) * maxDimension;
+          height = maxDimension;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx?.drawImage(img, 0, 0, width, height);
+
+      const tryCompress = (quality: number): void => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Failed to compress image'));
+              return;
+            }
+            if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.3) {
+              tryCompress(quality - 0.1);
+            } else {
+              resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
+            }
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+
+      tryCompress(0.85);
+    };
+
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = URL.createObjectURL(file);
+  });
+};
+
+// Upload to Google Drive via API
 const uploadToGoogleDrive = async (file: File, itemNumber: number): Promise<string> => {
-  // Step 1: Initialize resumable upload and get upload URL
-  const initResponse = await fetch('/api/init-drive-upload', {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('itemNumber', itemNumber.toString());
+
+  const response = await fetch('/api/upload-to-drive', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      fileName: file.name,
-      mimeType: file.type,
-      itemNumber,
-      fileSize: file.size,
-    }),
+    body: formData,
   });
 
-  const initText = await initResponse.text();
-  if (!initResponse.ok) {
-    let errorMessage = 'Error al inicializar la subida';
-    try {
-      const errorData = JSON.parse(initText);
-      errorMessage = errorData.message || errorMessage;
-    } catch {
-      if (initText.includes('<!DOCTYPE')) {
-        errorMessage = 'API no disponible. Usa "vercel dev" en lugar de "npm run dev"';
+  const responseText = await response.text();
+
+  if (!response.ok) {
+    let errorMessage = 'Error al subir el archivo a Google Drive';
+    if (responseText) {
+      try {
+        const errorData = JSON.parse(responseText);
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        if (responseText.includes('<!DOCTYPE')) {
+          errorMessage = 'API no disponible. Usa "vercel dev"';
+        }
       }
     }
     throw new Error(errorMessage);
   }
 
-  const { uploadUrl, accessToken } = JSON.parse(initText);
-
-  // Step 2: Upload file directly to Google Drive
-  const uploadResponse = await fetch(uploadUrl, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': file.type,
-      'Content-Length': file.size.toString(),
-    },
-    body: file,
-  });
-
-  if (!uploadResponse.ok) {
-    throw new Error('Error al subir el archivo a Google Drive');
+  if (!responseText) {
+    throw new Error('Respuesta vacía del servidor');
   }
 
-  const uploadResult = await uploadResponse.json();
-  const fileId = uploadResult.id;
-
-  // Step 3: Finalize upload and get shareable URL
-  const finalizeResponse = await fetch('/api/finalize-drive-upload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fileId }),
-  });
-
-  if (!finalizeResponse.ok) {
-    throw new Error('Error al finalizar la subida');
-  }
-
-  const finalizeResult = await finalizeResponse.json();
-  return finalizeResult.url;
+  const data = JSON.parse(responseText);
+  return data.url;
 };
 
 // Format currency in COP

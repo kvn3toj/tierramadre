@@ -219,31 +219,49 @@ const ShowRoomContainer = styled(Box)(() => ({
   },
 }));
 
-// Show Room Title
+// Show Room Title - Elegant serif with shimmer
 const ShowRoomTitle = styled(Typography)(() => ({
-  fontFamily: '"Playfair Display", "Georgia", serif',
-  fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
+  fontFamily: '"Playfair Display", "Cormorant Garamond", "Georgia", serif',
+  fontSize: 'clamp(1.8rem, 5vw, 3rem)',
   fontWeight: 300,
-  letterSpacing: '0.3em',
+  letterSpacing: '0.4em',
   textTransform: 'uppercase',
-  marginBottom: 8,
-  // Emerald gradient text
+  marginBottom: 24,
+  // Elegant emerald-gold gradient text
   background: `linear-gradient(
-    135deg,
-    ${EMERALD.ethereal} 0%,
-    ${EMERALD.glow} 25%,
+    90deg,
+    ${alpha(EMERALD.ethereal, 0.7)} 0%,
+    ${EMERALD.glow} 20%,
     ${ACCENT.gold} 50%,
-    ${EMERALD.glow} 75%,
-    ${EMERALD.ethereal} 100%
+    ${EMERALD.glow} 80%,
+    ${alpha(EMERALD.ethereal, 0.7)} 100%
   )`,
   backgroundSize: '200% auto',
   backgroundClip: 'text',
   WebkitBackgroundClip: 'text',
   WebkitTextFillColor: 'transparent',
-  animation: `${crystallineShimmer} 8s linear infinite`,
+  animation: `${crystallineShimmer} 6s ease-in-out infinite`,
   textShadow: 'none',
   position: 'relative',
   zIndex: 10,
+  // Subtle underline accent
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    bottom: -8,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '60%',
+    height: 1,
+    background: `linear-gradient(
+      90deg,
+      transparent 0%,
+      ${alpha(ACCENT.gold, 0.5)} 30%,
+      ${alpha(EMERALD.glow, 0.6)} 50%,
+      ${alpha(ACCENT.gold, 0.5)} 70%,
+      transparent 100%
+    )`,
+  },
 }));
 
 const ContentWrapper = styled(Box)(() => ({
@@ -287,19 +305,83 @@ const ContentWrapper = styled(Box)(() => ({
   },
 }));
 
+// Elegant frame container for the emerald image
+const ImageFrame = styled(Box)(() => ({
+  position: 'relative',
+  zIndex: 1,
+  borderRadius: 24,
+  overflow: 'hidden',
+  // Elegant border with gradient
+  padding: 2,
+  background: `linear-gradient(
+    135deg,
+    ${alpha(EMERALD.glow, 0.4)} 0%,
+    ${alpha(ACCENT.gold, 0.3)} 25%,
+    ${alpha(EMERALD.ethereal, 0.2)} 50%,
+    ${alpha(ACCENT.gold, 0.3)} 75%,
+    ${alpha(EMERALD.glow, 0.4)} 100%
+  )`,
+  // Premium shadow layers
+  boxShadow: `
+    0 0 0 1px ${alpha(EMERALD.glow, 0.1)},
+    0 10px 40px ${alpha('#000', 0.5)},
+    0 20px 80px ${alpha(EMERALD.deep, 0.4)},
+    0 0 120px ${alpha(EMERALD.glow, 0.15)},
+    inset 0 0 60px ${alpha(EMERALD.glow, 0.05)}
+  `,
+  // Inner glow effect
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    inset: 2,
+    borderRadius: 22,
+    background: `linear-gradient(
+      180deg,
+      ${alpha(EMERALD.glow, 0.1)} 0%,
+      transparent 30%,
+      transparent 70%,
+      ${alpha(EMERALD.deep, 0.15)} 100%
+    )`,
+    pointerEvents: 'none',
+    zIndex: 2,
+  },
+}));
+
+// Inner container with soft vignette
+const ImageInner = styled(Box)(() => ({
+  position: 'relative',
+  borderRadius: 22,
+  overflow: 'hidden',
+  background: `linear-gradient(
+    180deg,
+    ${alpha('#fff', 0.98)} 0%,
+    ${alpha('#f8f8f8', 0.95)} 50%,
+    ${alpha('#f0f0f0', 0.9)} 100%
+  )`,
+  // Soft vignette overlay
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    inset: 0,
+    background: `
+      radial-gradient(ellipse at center, transparent 50%, ${alpha(EMERALD.deep, 0.08)} 100%),
+      linear-gradient(180deg, ${alpha(EMERALD.glow, 0.03)} 0%, transparent 20%, transparent 80%, ${alpha(EMERALD.deep, 0.05)} 100%)
+    `,
+    pointerEvents: 'none',
+    borderRadius: 22,
+  },
+}));
+
 const EmeraldImage = styled('img')(() => ({
   width: '100%',
   height: 'auto',
   objectFit: 'contain',
+  display: 'block',
   position: 'relative',
   zIndex: 1,
-  // Premium shadow layers
-  filter: `
-    drop-shadow(0 10px 30px ${alpha(EMERALD.deep, 0.5)})
-    drop-shadow(0 20px 50px ${alpha('#000', 0.4)})
-    drop-shadow(0 0 100px ${alpha(EMERALD.glow, 0.15)})
-  `,
-  transition: 'filter 0.5s ease',
+  // Subtle enhancement
+  filter: 'contrast(1.02) saturate(1.05)',
+  transition: 'filter 0.5s ease, transform 0.5s ease',
 }));
 
 const CenterLogo = styled(Box)(() => ({
@@ -465,11 +547,15 @@ export const CatalogHome: React.FC<CatalogHomeProps> = ({ onCatalogSelect }) => 
 
       <Fade in timeout={1000}>
         <ContentWrapper>
-          {/* Emerald arrangement centerpiece */}
-          <EmeraldImage
-            src="/catalog-media/integration/slide-01.png"
-            alt="Colombian Emerald Collection - Show Room"
-          />
+          {/* Emerald arrangement centerpiece with elegant frame */}
+          <ImageFrame>
+            <ImageInner>
+              <EmeraldImage
+                src="/catalog-media/integration/slide-01.png"
+                alt="Colombian Emerald Collection - Show Room"
+              />
+            </ImageInner>
+          </ImageFrame>
 
           {/* Center Logo with pulse */}
           <CenterLogo>
