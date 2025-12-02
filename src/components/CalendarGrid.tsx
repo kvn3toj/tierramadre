@@ -439,7 +439,7 @@ export default function CalendarGrid() {
                         >
                           {emerald && (
                             <img
-                              src={emerald.imageUrl}
+                              src={emerald.mediaType === 'video' ? (emerald.thumbnailUrl || emerald.imageUrl) : emerald.imageUrl}
                               alt={emerald.name}
                               style={{
                                 width: 40,
@@ -560,7 +560,7 @@ export default function CalendarGrid() {
                   >
                     {emerald ? (
                       <img
-                        src={emerald.imageUrl}
+                        src={emerald.mediaType === 'video' ? (emerald.thumbnailUrl || emerald.imageUrl) : emerald.imageUrl}
                         alt={emerald.name}
                         style={{
                           width: '100%',
@@ -663,7 +663,7 @@ export default function CalendarGrid() {
                     <CardMedia
                       component="img"
                       height="120"
-                      image={emerald.imageUrl}
+                      image={emerald.mediaType === 'video' ? (emerald.thumbnailUrl || emerald.imageUrl) : emerald.imageUrl}
                       alt={emerald.name}
                       sx={{ borderRadius: '10px 10px 0 0' }}
                     />
@@ -709,7 +709,7 @@ export default function CalendarGrid() {
           {selectedEmerald && (
             <Box sx={{ mb: 2 }}>
               <img
-                src={selectedEmerald.imageUrl}
+                src={selectedEmerald.mediaType === 'video' ? (selectedEmerald.thumbnailUrl || selectedEmerald.imageUrl) : selectedEmerald.imageUrl}
                 alt={selectedEmerald.name}
                 style={{
                   width: '100%',

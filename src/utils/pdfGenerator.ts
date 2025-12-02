@@ -489,7 +489,7 @@ async function addHorizontalCarouselLayout(
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
     const categoryLabels: Record<string, string> = {
-      loose: 'Esmeralda Suelta',
+      loose: 'Gema',
       ring: 'Anillo con Esmeralda',
       pendant: 'Dije / Colgante',
       earrings: 'Aretes con Esmeraldas',
@@ -914,7 +914,7 @@ async function addListLayout(
 
     // Category badge
     const categoryLabels: Record<string, string> = {
-      loose: 'Suelta',
+      loose: 'Gema',
       ring: 'Anillo',
       pendant: 'Dije',
       earrings: 'Aretes',

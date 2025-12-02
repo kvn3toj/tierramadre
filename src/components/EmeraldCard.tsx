@@ -13,11 +13,13 @@ import {
 import {
   MoreVert as MoreIcon,
   Delete as DeleteIcon,
+  PlayCircleOutline as VideoIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { Emerald, EmeraldStatus } from '../types';
 import { brandColors } from '../theme';
 import { useThemeMode } from '../context/ThemeContext';
+import MediaPreview from './MediaPreview';
 
 interface EmeraldCardProps {
   emerald: Emerald;
@@ -93,13 +95,39 @@ export default function EmeraldCard({
       }}
     >
       <Box sx={{ position: 'relative' }}>
-        <CardMedia
-          component="img"
-          height="200"
-          image={emerald.imageUrl}
-          alt={emerald.name}
-          sx={{ objectFit: 'cover' }}
-        />
+        {emerald.mediaType === 'video' ? (
+          <Box sx={{ height: 200, overflow: 'hidden', bgcolor: '#000', position: 'relative' }}>
+            <MediaPreview
+              mediaUrl={emerald.imageUrl}
+              mediaType="video"
+              thumbnailUrl={emerald.thumbnailUrl}
+              alt={emerald.name}
+              maxHeight={200}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              controls={false}
+              muted
+            />
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                pointerEvents: 'none',
+              }}
+            >
+              <VideoIcon sx={{ fontSize: 48, color: 'rgba(255,255,255,0.8)' }} />
+            </Box>
+          </Box>
+        ) : (
+          <CardMedia
+            component="img"
+            height="200"
+            image={emerald.imageUrl}
+            alt={emerald.name}
+            sx={{ objectFit: 'cover' }}
+          />
+        )}
         <Chip
           label={statusLabels[emerald.status]}
           size="small"

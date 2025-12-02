@@ -39,7 +39,7 @@ export const SAMPLE_AMBASSADORS: AmbassadorProfile[] = [
     ],
     priceRange: 'all',
     expertise: [
-      { area: 'loose-stones', level: 'expert', description: 'Especialista en piedras sueltas' },
+      { area: 'loose-stones', level: 'expert', description: 'Especialista en gemas' },
       { area: 'jewelry', level: 'expert', description: 'Joyeria fina' }
     ],
     certifications: [
@@ -126,7 +126,7 @@ export const SAMPLE_AMBASSADORS: AmbassadorProfile[] = [
     slug: 'a-molano',
     displayName: 'A. Molano',
     tagline: 'Tu Asesor de Confianza en Esmeraldas',
-    bio: 'Apasionado por las esmeraldas colombianas y comprometido con brindar el mejor servicio. Me especializo en piedras sueltas de diferentes calidades para todos los presupuestos.',
+    bio: 'Apasionado por las esmeraldas colombianas y comprometido con brindar el mejor servicio. Me especializo en gemas de diferentes calidades para todos los presupuestos.',
     photoUrl: '',
     bannerUrl: '',
     contactMethods: [
@@ -139,12 +139,12 @@ export const SAMPLE_AMBASSADORS: AmbassadorProfile[] = [
     languages: ['es'],
     timezone: 'America/Bogota',
     specialties: [
-      { name: 'Esmeraldas Sueltas', description: 'Amplia variedad de piedras sin montar', yearsExperience: 6 },
+      { name: 'Gemas', description: 'Amplia variedad de piedras sin montar', yearsExperience: 6 },
       { name: 'Precios Accesibles', description: 'Opciones para todos los presupuestos', yearsExperience: 6 }
     ],
     priceRange: 'mid-range',
     expertise: [
-      { area: 'loose-stones', level: 'expert', description: 'Especialista en piedras sueltas' },
+      { area: 'loose-stones', level: 'expert', description: 'Especialista en gemas' },
       { area: 'retail', level: 'intermediate', description: 'Venta directa al consumidor' }
     ],
     certifications: [],
@@ -343,7 +343,7 @@ export const SAMPLE_AMBASSADORS: AmbassadorProfile[] = [
     ],
     priceRange: 'mid-range',
     expertise: [
-      { area: 'loose-stones', level: 'intermediate', description: 'Piedras sueltas selectas' },
+      { area: 'loose-stones', level: 'intermediate', description: 'Gemas selectas' },
       { area: 'retail', level: 'intermediate', description: 'Venta directa' }
     ],
     certifications: [],
@@ -526,7 +526,7 @@ export const SAMPLE_AMBASSADORS: AmbassadorProfile[] = [
     priceRange: 'luxury',
     expertise: [
       { area: 'investment', level: 'intermediate', description: 'Esmeraldas de inversion' },
-      { area: 'loose-stones', level: 'expert', description: 'Piedras sueltas premium' }
+      { area: 'loose-stones', level: 'expert', description: 'Gemas premium' }
     ],
     certifications: [],
     template: {

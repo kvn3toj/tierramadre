@@ -567,7 +567,7 @@ export default function Gallery() {
               }}
             >
               <MenuItem value="all">Todas</MenuItem>
-              <MenuItem value="loose">Suelta</MenuItem>
+              <MenuItem value="loose">Gema</MenuItem>
               <MenuItem value="ring">Anillo</MenuItem>
               <MenuItem value="pendant">Dije</MenuItem>
               <MenuItem value="earrings">Aretes</MenuItem>

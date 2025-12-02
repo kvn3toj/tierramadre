@@ -33,7 +33,6 @@ import {
 import { Receipt, Plus, Trash2, Download, Printer, Copy, Moon, Sun, Settings } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { brandColors } from '../theme';
 import { ReceiptData, ReceiptProduct, Emerald } from '../types';
 import { useEmeralds } from '../hooks/useEmeralds';
 
@@ -112,6 +111,7 @@ const receiptThemes = {
 };
 
 type ReceiptTheme = 'dark' | 'light';
+type DocumentType = 'receipt' | 'invoice';
 
 // Business settings interface
 interface BusinessSettings {
@@ -127,6 +127,7 @@ export default function ReceiptGenerator() {
   const { emeralds } = useEmeralds();
   const [selectedEmerald, setSelectedEmerald] = useState<Emerald | null>(null);
   const [receiptTheme, setReceiptTheme] = useState<ReceiptTheme>('dark');
+  const [documentType, setDocumentType] = useState<DocumentType>('receipt');
 
   // Business settings with defaults
   const [businessSettings, setBusinessSettings] = useState<BusinessSettings>({
@@ -298,7 +299,10 @@ export default function ReceiptGenerator() {
     pdf.setLineWidth(0.3);
     pdf.rect(xOffset, yOffset, imgWidth, imgHeight, 'S');
 
-    pdf.save(`Recibo-${receipt.receiptNumber}.pdf`);
+    const filename = documentType === 'invoice'
+      ? `Factura-${receipt.receiptNumber}.pdf`
+      : `Recibo-${receipt.receiptNumber}.pdf`;
+    pdf.save(filename);
   };
 
   // Print receipt
@@ -361,10 +365,10 @@ export default function ReceiptGenerator() {
               </Box>
               <Box>
                 <Typography variant="h4" sx={{ fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
-                  Generador de Recibos
+                  {documentType === 'invoice' ? 'Generador de Facturas' : 'Generador de Recibos'}
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
-                  Crea recibos elegantes para tus ventas
+                  {documentType === 'invoice' ? 'Crea facturas profesionales para tus ventas' : 'Crea recibos elegantes para tus ventas'}
                 </Typography>
               </Box>
             </Box>
@@ -442,7 +446,7 @@ export default function ReceiptGenerator() {
             <Receipt size={18} color="#059669" />
           </Box>
           <Typography sx={{ fontWeight: 700, color: '#1F2937' }}>
-            Información del Recibo
+            {documentType === 'invoice' ? 'Información de la Factura' : 'Información del Recibo'}
           </Typography>
         </Box>
 
@@ -467,16 +471,29 @@ export default function ReceiptGenerator() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Settings size={16} color="#6B7280" />
               <Typography variant="body2" sx={{ color: '#6B7280', fontWeight: 500 }}>
-                Configuración del Recibo
+                {documentType === 'invoice' ? 'Configuración de la Factura' : 'Configuración del Recibo'}
               </Typography>
             </Box>
           </AccordionSummary>
-          <AccordionDetails sx={{ bgcolor: brandColors.darkBg, borderRadius: 1, mt: 0.5, p: 2 }}>
+          <AccordionDetails sx={{ bgcolor: '#F9FAFB', borderRadius: 1, mt: 0.5, p: 2 }}>
             <Grid container spacing={{ xs: 1.5, md: 2 }}>
+              <Grid item xs={12}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Tipo de Documento</InputLabel>
+                  <Select
+                    value={documentType}
+                    label="Tipo de Documento"
+                    onChange={(e) => setDocumentType(e.target.value as DocumentType)}
+                  >
+                    <MenuItem value="receipt">Recibo de Compra</MenuItem>
+                    <MenuItem value="invoice">Factura</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Número de Recibo"
+                  label={documentType === 'invoice' ? 'Número de Factura' : 'Número de Recibo'}
                   value={receipt.receiptNumber || ''}
                   onChange={(e) => setReceipt({ ...receipt, receiptNumber: e.target.value })}
                   size="small"
@@ -885,7 +902,7 @@ export default function ReceiptGenerator() {
               <Printer size={20} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Nuevo Recibo">
+          <Tooltip title={documentType === 'invoice' ? 'Nueva Factura' : 'Nuevo Recibo'}>
             <IconButton
               onClick={() => setReceipt({
                 receiptNumber: generateReceiptNumber(),
@@ -989,7 +1006,7 @@ export default function ReceiptGenerator() {
                     letterSpacing: '0.1em',
                   }}
                 >
-                  Recibo de Compra
+                  {documentType === 'invoice' ? 'Factura de Venta' : 'Recibo de Compra'}
                 </Typography>
                 <Typography sx={{ fontSize: '0.85rem', color: theme.text, fontWeight: 500 }}>
                   {receipt.receiptNumber}

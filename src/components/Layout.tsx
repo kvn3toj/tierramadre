@@ -615,7 +615,7 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
           sx={{
             flex: 1,
             p: { xs: 2, sm: 3, md: 4 },
-            pt: isMobile ? 9 : 4,
+            pt: { xs: 'calc(56px + 16px)', md: 4 },
             maxWidth: 1400,
             width: '100%',
             mx: 'auto',

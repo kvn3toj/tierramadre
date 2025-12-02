@@ -22,7 +22,6 @@ import {
   Tabs,
   Tab,
   Card,
-  CardMedia,
   CardContent,
   CardActions,
   Badge,
@@ -39,10 +38,12 @@ import {
 import { Upload, Settings, Image, Layers } from 'lucide-react';
 import { useEmeralds } from '../hooks/useEmeralds';
 import { useAI, markNameAsUsed } from '../hooks/useAI';
-import { EmeraldCategory } from '../types';
+import { EmeraldCategory, MediaType } from '../types';
 import { brandColors } from '../theme';
 import { storage } from '../utils/storage';
 import { compressImage } from '../utils/imageNormalizer';
+import { saveVideo, extractVideoThumbnail } from '../utils/videoStorage';
+import MediaPreview from './MediaPreview';
 
 interface EmeraldUploaderProps {
   onComplete?: () => void;
@@ -51,6 +52,8 @@ interface EmeraldUploaderProps {
 interface BatchItem {
   id: string;
   imageUrl: string;
+  mediaType: MediaType;
+  thumbnailUrl?: string;
   suggestedNames: string[];
   selectedName: string;
   customName: string;
@@ -59,6 +62,9 @@ interface BatchItem {
   priceCOP: string;
   lotCode: string;
   category: EmeraldCategory;
+  ringSize?: string;
+  color?: string;
+  quality?: string;
 }
 
 export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
@@ -70,6 +76,8 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
 
   // Single upload form state
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<MediaType>('image');
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [suggestedNames, setSuggestedNames] = useState<string[]>([]);
   const [selectedName, setSelectedName] = useState('');
   const [customName, setCustomName] = useState('');
@@ -78,6 +86,9 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
   const [priceCOP, setPriceCOP] = useState('');
   const [lotCode, setLotCode] = useState('');
   const [category, setCategory] = useState<EmeraldCategory>('loose');
+  const [ringSize, setRingSize] = useState('');
+  const [color, setColor] = useState('');
+  const [quality, setQuality] = useState('');
 
   // Batch upload state
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
@@ -92,80 +103,166 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
     e.preventDefault();
     setDragOver(false);
 
+    const filesArray = Array.from(e.dataTransfer.files).filter(f =>
+      f.type.startsWith('image/') || f.type.startsWith('video/')
+    );
+
+    if (filesArray.length === 0) return;
+
     if (uploadMode === 0) {
-      // Single mode
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith('image/')) {
-        processFile(file);
+      // Individual mode: if multiple files dropped, switch to batch mode
+      if (filesArray.length > 1) {
+        setUploadMode(1); // Switch to batch mode
+        processBatchFiles(filesArray);
+      } else {
+        processFile(filesArray[0]);
       }
     } else {
       // Batch mode
-      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-      processBatchFiles(files);
+      processBatchFiles(filesArray);
     }
   }, [uploadMode]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const filesArray = Array.from(e.target.files || []);
+
+    if (filesArray.length === 0) return;
+
     if (uploadMode === 0) {
-      const file = e.target.files?.[0];
-      if (file) {
-        processFile(file);
+      // Individual mode: if multiple files selected, switch to batch mode
+      if (filesArray.length > 1) {
+        setUploadMode(1); // Switch to batch mode
+        processBatchFiles(filesArray);
+      } else {
+        processFile(filesArray[0]);
       }
     } else {
-      const files = Array.from(e.target.files || []);
-      processBatchFiles(files);
+      processBatchFiles(filesArray);
     }
   };
 
   const processFile = async (file: File) => {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64 = e.target?.result as string;
+    const isVideo = file.type.startsWith('video/');
 
-      // Compress image to reduce storage size (max 1200px, 85% quality for good PDF export)
-      const compressed = await compressImage(base64, 1200, 0.85);
-      setImageUrl(compressed);
+    if (isVideo) {
+      // Process video
+      try {
+        // Generate unique ID for this video
+        const videoId = `video-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-      // Trigger AI analysis (use original for better analysis)
-      const result = await analyzeEmerald(base64);
-      if (result) {
-        setSuggestedNames(result.names);
-        setDescription(result.description);
+        // Save video to IndexedDB
+        const videoRef = await saveVideo(videoId, file);
+        setImageUrl(videoRef);
+        setMediaType('video');
+
+        // Extract thumbnail
+        const thumbnail = await extractVideoThumbnail(file, 1);
+        setThumbnailUrl(thumbnail);
+
+        // Trigger AI analysis using thumbnail
+        const result = await analyzeEmerald(thumbnail);
+        if (result) {
+          setSuggestedNames(result.names);
+          setDescription(result.description);
+        }
+      } catch (error) {
+        console.error('Error processing video:', error);
+        alert('Error al procesar el video. Por favor intenta de nuevo.');
       }
-    };
-    reader.readAsDataURL(file);
+    } else {
+      // Process image
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target?.result as string;
+
+        // Compress image to reduce storage size (max 1200px, 85% quality for good PDF export)
+        const compressed = await compressImage(base64, 1200, 0.85);
+        setImageUrl(compressed);
+        setMediaType('image');
+        setThumbnailUrl(null);
+
+        // Trigger AI analysis (use original for better analysis)
+        const result = await analyzeEmerald(base64);
+        if (result) {
+          setSuggestedNames(result.names);
+          setDescription(result.description);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const processBatchFiles = async (files: File[]) => {
     setBatchProcessing(true);
 
     for (const file of files) {
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve) => {
-        reader.onload = (e) => resolve(e.target?.result as string);
-        reader.readAsDataURL(file);
-      });
+      const isVideo = file.type.startsWith('video/');
 
-      // Compress image to reduce storage size (max 1200px, 85% quality for good PDF export)
-      const compressed = await compressImage(base64, 1200, 0.85);
+      if (isVideo) {
+        // Process video file
+        try {
+          const videoId = `video-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const videoRef = await saveVideo(videoId, file);
+          const thumbnail = await extractVideoThumbnail(file, 1);
 
-      // Generate suggestions for each image (use original for better analysis)
-      const result = await analyzeEmerald(base64);
+          // Generate suggestions using thumbnail
+          const result = await analyzeEmerald(thumbnail);
 
-      const newItem: BatchItem = {
-        id: `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        imageUrl: compressed, // Store compressed version
-        suggestedNames: result?.names || getRandomSuggestions(),
-        selectedName: '',
-        customName: '',
-        description: result?.description || '',
-        weightCarats: '',
-        priceCOP: '',
-        lotCode: '',
-        category: 'loose',
-      };
+          const newItem: BatchItem = {
+            id: `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            imageUrl: videoRef,
+            mediaType: 'video',
+            thumbnailUrl: thumbnail,
+            suggestedNames: result?.names || getRandomSuggestions(),
+            selectedName: '',
+            customName: '',
+            description: result?.description || '',
+            weightCarats: '',
+            priceCOP: '',
+            lotCode: '',
+            category: 'loose',
+            ringSize: '',
+            color: '',
+            quality: '',
+          };
 
-      setBatchItems(prev => [...prev, newItem]);
+          setBatchItems(prev => [...prev, newItem]);
+        } catch (error) {
+          console.error('Error processing video in batch:', error);
+        }
+      } else {
+        // Process image file
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(file);
+        });
+
+        // Compress image to reduce storage size (max 1200px, 85% quality for good PDF export)
+        const compressed = await compressImage(base64, 1200, 0.85);
+
+        // Generate suggestions for each image (use original for better analysis)
+        const result = await analyzeEmerald(base64);
+
+        const newItem: BatchItem = {
+          id: `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          imageUrl: compressed,
+          mediaType: 'image',
+          suggestedNames: result?.names || getRandomSuggestions(),
+          selectedName: '',
+          customName: '',
+          description: result?.description || '',
+          weightCarats: '',
+          priceCOP: '',
+          lotCode: '',
+          category: 'loose',
+          ringSize: '',
+          color: '',
+          quality: '',
+        };
+
+        setBatchItems(prev => [...prev, newItem]);
+      }
     }
 
     setBatchProcessing(false);
@@ -194,7 +291,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
 
   const handleSave = () => {
     if (!imageUrl) {
-      alert('Por favor sube una imagen primero');
+      alert('Por favor sube una imagen o video primero');
       return;
     }
 
@@ -208,12 +305,17 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
       const saved = addEmerald({
         name: finalName,
         imageUrl,
+        mediaType,
+        thumbnailUrl: thumbnailUrl || undefined,
         aiSuggestedNames: suggestedNames,
         aiDescription: description,
         weightCarats: weightCarats ? parseFloat(weightCarats) : undefined,
         priceCOP: priceCOP ? parseInt(priceCOP.replace(/\D/g, '')) : undefined,
         lotCode: lotCode || undefined,
         category,
+        ringSize: ringSize || undefined,
+        color: color || undefined,
+        quality: quality || undefined,
         status: 'available',
       });
 
@@ -223,10 +325,13 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
       markNameAsUsed(finalName);
 
       // Show success message
-      alert(`"${finalName}" guardada exitosamente!`);
+      const mediaLabel = mediaType === 'video' ? 'video' : 'esmeralda';
+      alert(`"${finalName}" ${mediaLabel} guardada exitosamente!`);
 
       // Reset form
       setImageUrl(null);
+      setMediaType('image');
+      setThumbnailUrl(null);
       setSuggestedNames([]);
       setSelectedName('');
       setCustomName('');
@@ -235,6 +340,9 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
       setPriceCOP('');
       setLotCode('');
       setCategory('loose');
+      setRingSize('');
+      setColor('');
+      setQuality('');
 
       // Navigate to gallery
       onComplete?.();
@@ -274,13 +382,15 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
   const saveBatchItem = (item: BatchItem) => {
     const finalName = item.customName || item.selectedName;
     if (!finalName) {
-      alert('Por favor selecciona o escribe un nombre para esta esmeralda');
+      alert('Por favor selecciona o escribe un nombre para este item');
       return;
     }
 
     addEmerald({
       name: finalName,
       imageUrl: item.imageUrl,
+      mediaType: item.mediaType,
+      thumbnailUrl: item.thumbnailUrl,
       aiSuggestedNames: item.suggestedNames,
       aiDescription: item.description,
       weightCarats: item.weightCarats ? parseFloat(item.weightCarats) : undefined,
@@ -299,7 +409,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
   const saveAllBatch = () => {
     const itemsToSave = batchItems.filter(item => item.customName || item.selectedName);
     if (itemsToSave.length === 0) {
-      alert('Por favor asigna nombres a al menos una esmeralda');
+      alert('Por favor asigna nombres a al menos un item');
       return;
     }
 
@@ -308,12 +418,17 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
       addEmerald({
         name: finalName,
         imageUrl: item.imageUrl,
+        mediaType: item.mediaType,
+        thumbnailUrl: item.thumbnailUrl,
         aiSuggestedNames: item.suggestedNames,
         aiDescription: item.description,
         weightCarats: item.weightCarats ? parseFloat(item.weightCarats) : undefined,
         priceCOP: item.priceCOP ? parseInt(item.priceCOP.replace(/\D/g, '')) : undefined,
         lotCode: item.lotCode || undefined,
         category: item.category,
+        ringSize: item.ringSize || undefined,
+        color: item.color || undefined,
+        quality: item.quality || undefined,
         status: 'available',
       });
       // Mark name as used so it won't be suggested again
@@ -500,13 +615,17 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                   bgcolor: alpha('#059669', 0.04),
                 },
               }}
-              onClick={() => document.getElementById('file-input')?.click()}
+              onClick={(e) => {
+                e.stopPropagation();
+                document.getElementById('file-input')?.click();
+              }}
             >
               <input
                 id="file-input"
                 type="file"
-                accept="image/*"
-                hidden
+                accept="image/*,video/*"
+                multiple
+                style={{ display: 'none' }}
                 onChange={handleFileSelect}
               />
 
@@ -520,19 +639,17 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                       display: 'inline-block',
                     }}
                   >
-                    <img
-                      src={imageUrl}
+                    <MediaPreview
+                      mediaUrl={imageUrl}
+                      mediaType={mediaType}
+                      thumbnailUrl={thumbnailUrl || undefined}
                       alt="Preview"
-                      style={{
-                        maxWidth: '100%',
-                        maxHeight: 280,
-                        objectFit: 'contain',
-                        display: 'block',
-                      }}
+                      maxWidth="100%"
+                      maxHeight={280}
                     />
                   </Box>
                   <Typography variant="caption" sx={{ color: '#6B7280', mt: 2, display: 'block' }}>
-                    Haz clic para cambiar la imagen
+                    Haz clic para cambiar {mediaType === 'video' ? 'el video' : 'la imagen'}
                   </Typography>
                 </Box>
               ) : (
@@ -691,7 +808,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                       label="Categoría"
                       onChange={(e) => setCategory(e.target.value as EmeraldCategory)}
                     >
-                      <MenuItem value="loose">Suelta</MenuItem>
+                      <MenuItem value="loose">Gema</MenuItem>
                       <MenuItem value="ring">Anillo</MenuItem>
                       <MenuItem value="pendant">Dije</MenuItem>
                       <MenuItem value="earrings">Aretes</MenuItem>
@@ -699,6 +816,62 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                   </FormControl>
                 </Grid>
               </Grid>
+
+              {/* Jewelry-specific fields */}
+              {(category === 'ring' || category === 'earrings' || category === 'pendant') && (
+                <Grid container spacing={2} sx={{ mt: 0 }}>
+                  {category === 'ring' && (
+                    <Grid item xs={12} sm={4}>
+                      <FormControl fullWidth>
+                        <InputLabel>Talla de Anillo</InputLabel>
+                        <Select
+                          value={ringSize}
+                          label="Talla de Anillo"
+                          onChange={(e) => setRingSize(e.target.value)}
+                        >
+                          <MenuItem value="4">4</MenuItem>
+                          <MenuItem value="5">5</MenuItem>
+                          <MenuItem value="6">6</MenuItem>
+                          <MenuItem value="7">7</MenuItem>
+                          <MenuItem value="8">8</MenuItem>
+                          <MenuItem value="9">9</MenuItem>
+                          <MenuItem value="10">10</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  )}
+                  <Grid item xs={12} sm={category === 'ring' ? 4 : 6}>
+                    <FormControl fullWidth>
+                      <InputLabel>Color</InputLabel>
+                      <Select
+                        value={color}
+                        label="Color"
+                        onChange={(e) => setColor(e.target.value)}
+                      >
+                        <MenuItem value="Verde Muzo">Verde Muzo</MenuItem>
+                        <MenuItem value="Verde Chivor">Verde Chivor</MenuItem>
+                        <MenuItem value="Verde Vivido">Verde Vivido</MenuItem>
+                        <MenuItem value="Verde Natural">Verde Natural</MenuItem>
+                        <MenuItem value="Verde Menta">Verde Menta</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={category === 'ring' ? 4 : 6}>
+                    <FormControl fullWidth>
+                      <InputLabel>Calidad</InputLabel>
+                      <Select
+                        value={quality}
+                        label="Calidad"
+                        onChange={(e) => setQuality(e.target.value)}
+                      >
+                        <MenuItem value="Premium">Premium</MenuItem>
+                        <MenuItem value="Estándar">Estándar</MenuItem>
+                        <MenuItem value="Comercial">Comercial</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              )}
 
               <Button
                 fullWidth
@@ -736,22 +909,25 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
               cursor: 'pointer',
               textAlign: 'center',
             }}
-            onClick={() => document.getElementById('batch-file-input')?.click()}
+            onClick={(e) => {
+              e.stopPropagation();
+              document.getElementById('batch-file-input')?.click();
+            }}
           >
             <input
               id="batch-file-input"
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               multiple
-              hidden
+              style={{ display: 'none' }}
               onChange={handleFileSelect}
             />
             <BatchIcon sx={{ fontSize: 40, color: 'grey.500', mb: 1 }} />
             <Typography variant="h6" color="grey.500">
-              Arrastra múltiples imágenes aquí
+              Arrastra múltiples imágenes o videos aquí
             </Typography>
             <Typography variant="body2" color="grey.600">
-              o haz clic para seleccionar varias fotos
+              o haz clic para seleccionar archivos multimedia
             </Typography>
           </Paper>
 
@@ -767,7 +943,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
             <>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="subtitle1">
-                  {batchItems.length} esmeralda{batchItems.length > 1 ? 's' : ''} en lote
+                  {batchItems.length} item{batchItems.length > 1 ? 's' : ''} en lote
                 </Typography>
                 <Button
                   variant="contained"
@@ -787,13 +963,26 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                 {batchItems.map((item) => (
                   <Grid item xs={12} sm={6} md={4} key={item.id}>
                     <Card sx={{ height: '100%' }}>
-                      <CardMedia
-                        component="img"
-                        height="160"
-                        image={item.imageUrl}
-                        alt="Emerald"
-                        sx={{ objectFit: 'cover' }}
-                      />
+                      <Box sx={{ height: 160, overflow: 'hidden', bgcolor: '#000' }}>
+                        {item.mediaType === 'video' ? (
+                          <MediaPreview
+                            mediaUrl={item.imageUrl}
+                            mediaType="video"
+                            thumbnailUrl={item.thumbnailUrl}
+                            alt="Video"
+                            maxHeight={160}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            controls={false}
+                            muted
+                          />
+                        ) : (
+                          <img
+                            src={item.imageUrl}
+                            alt="Emerald"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        )}
+                      </Box>
                       <CardContent sx={{ pb: 1 }}>
                         {/* Name suggestions */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
@@ -843,6 +1032,76 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                               onChange={(e) => updateBatchItem(item.id, { lotCode: e.target.value })}
                             />
                           </Grid>
+                          <Grid item xs={12}>
+                            <FormControl fullWidth size="small">
+                              <InputLabel>Categoría</InputLabel>
+                              <Select
+                                value={item.category}
+                                label="Categoría"
+                                onChange={(e) => updateBatchItem(item.id, { category: e.target.value as EmeraldCategory })}
+                              >
+                                <MenuItem value="loose">Gema</MenuItem>
+                                <MenuItem value="ring">Anillo</MenuItem>
+                                <MenuItem value="pendant">Dije</MenuItem>
+                                <MenuItem value="earrings">Aretes</MenuItem>
+                              </Select>
+                            </FormControl>
+                          </Grid>
+                          {/* Jewelry-specific fields */}
+                          {(item.category === 'ring' || item.category === 'earrings' || item.category === 'pendant') && (
+                            <>
+                              {item.category === 'ring' && (
+                                <Grid item xs={12}>
+                                  <FormControl fullWidth size="small">
+                                    <InputLabel>Talla</InputLabel>
+                                    <Select
+                                      value={item.ringSize || ''}
+                                      label="Talla"
+                                      onChange={(e) => updateBatchItem(item.id, { ringSize: e.target.value })}
+                                    >
+                                      <MenuItem value="4">4</MenuItem>
+                                      <MenuItem value="5">5</MenuItem>
+                                      <MenuItem value="6">6</MenuItem>
+                                      <MenuItem value="7">7</MenuItem>
+                                      <MenuItem value="8">8</MenuItem>
+                                      <MenuItem value="9">9</MenuItem>
+                                      <MenuItem value="10">10</MenuItem>
+                                    </Select>
+                                  </FormControl>
+                                </Grid>
+                              )}
+                              <Grid item xs={6}>
+                                <FormControl fullWidth size="small">
+                                  <InputLabel>Color</InputLabel>
+                                  <Select
+                                    value={item.color || ''}
+                                    label="Color"
+                                    onChange={(e) => updateBatchItem(item.id, { color: e.target.value })}
+                                  >
+                                    <MenuItem value="Verde Muzo">Verde Muzo</MenuItem>
+                                    <MenuItem value="Verde Chivor">Verde Chivor</MenuItem>
+                                    <MenuItem value="Verde Vivido">Verde Vivido</MenuItem>
+                                    <MenuItem value="Verde Natural">Verde Natural</MenuItem>
+                                    <MenuItem value="Verde Menta">Verde Menta</MenuItem>
+                                  </Select>
+                                </FormControl>
+                              </Grid>
+                              <Grid item xs={6}>
+                                <FormControl fullWidth size="small">
+                                  <InputLabel>Calidad</InputLabel>
+                                  <Select
+                                    value={item.quality || ''}
+                                    label="Calidad"
+                                    onChange={(e) => updateBatchItem(item.id, { quality: e.target.value })}
+                                  >
+                                    <MenuItem value="Premium">Premium</MenuItem>
+                                    <MenuItem value="Estándar">Estándar</MenuItem>
+                                    <MenuItem value="Comercial">Comercial</MenuItem>
+                                  </Select>
+                                </FormControl>
+                              </Grid>
+                            </>
+                          )}
                         </Grid>
                       </CardContent>
                       <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
@@ -876,7 +1135,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
 
           {batchItems.length === 0 && !batchProcessing && (
             <Typography color="grey.500" textAlign="center" sx={{ py: 4 }}>
-              Arrastra múltiples fotos o haz clic arriba para subir un lote de esmeraldas
+              Arrastra múltiples fotos/videos o haz clic arriba para subir un lote de contenido
             </Typography>
           )}
         </Box>

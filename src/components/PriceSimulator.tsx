@@ -353,7 +353,7 @@ export default function PriceSimulator() {
   // Get category label in Spanish
   const getCategoryLabel = (category: string): string => {
     const labels: Record<string, string> = {
-      loose: 'Suelta',
+      loose: 'Gema',
       ring: 'Anillo',
       pendant: 'Dije',
       earrings: 'Aretes',

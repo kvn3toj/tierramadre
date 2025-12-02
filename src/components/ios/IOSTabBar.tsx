@@ -22,6 +22,7 @@ import {
 // Design tokens
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export interface TabConfig {
   id: string;
@@ -31,34 +32,34 @@ export interface TabConfig {
   badge?: number;
 }
 
-const PRIMARY_TABS: TabConfig[] = [
+const getPrimaryTabs = (t: any): TabConfig[] => [
   {
     id: 'gallery',
-    label: 'Gallery',
+    label: t.nav.gallery,
     icon: PhotoLibrary,
     route: '/gallery',
   },
   {
     id: 'upload',
-    label: 'Upload',
+    label: t.nav.upload,
     icon: CloudUpload,
     route: '/upload',
   },
   {
     id: 'inventory',
-    label: 'Inventory',
+    label: t.nav.inventory,
     icon: Inventory2,
     route: '/inventory',
   },
   {
     id: 'ambassadors',
-    label: 'Ambassadors',
+    label: t.nav.ambassadors,
     icon: People,
     route: '/ambassadors',
   },
   {
     id: 'more',
-    label: 'More',
+    label: t.nav.more,
     icon: MoreHoriz,
     route: '/more',
   },
@@ -71,6 +72,9 @@ export interface IOSTabBarProps {
 const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
+
+  const PRIMARY_TABS = getPrimaryTabs(t);
 
   const getActiveTab = (): string => {
     const currentPath = location.pathname;
