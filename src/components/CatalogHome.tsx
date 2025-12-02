@@ -1,8 +1,7 @@
 /**
- * CatalogHome - Landing page with real emerald image and clickable navigation
- * Matches the Integración ARE PDF layout with Tierra Madre branding
- * Enhanced UX with emerald glow effects and keyboard navigation
- * Premium dark theme with glassmorphism effects
+ * ShowRoom - Premium emerald presentation space
+ * Sacred geometry design with Colombian emerald identity
+ * Enhanced UX with luxurious glassmorphism and golden ratio proportions
  */
 
 import React, { useState } from 'react';
@@ -14,110 +13,169 @@ import {
   keyframes,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { CATALOG_TRANSITIONS } from '../styles/catalogTokens';
 
-// Emerald brand colors - Premium palette
-const EMERALD_PRIMARY = '#059669';
-const EMERALD_GLOW = '#10b981';
-const EMERALD_LIGHT = '#34d399';
-const EMERALD_DARK = '#047857';
+// ═══════════════════════════════════════════════════════════════════════════════
+// SACRED COLOR SYSTEM - "Esmeralda Colombiana"
+// Golden ratio progression for natural harmony
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// Dark theme colors
-const DARK_BG = '#0a0a0a';
-const DARK_SURFACE = '#141414';
-const DARK_ELEVATED = '#1a1a1a';
+// Primary Emerald Spectrum (Golden Ratio Progression)
+const EMERALD = {
+  deep: '#024535',      // Colombian earth, ratio 1.0
+  primary: '#047857',   // Pure emerald, ratio φ (1.618)
+  vibrant: '#059669',   // Luminous core, ratio φ²
+  glow: '#10b981',      // Radiant aura, ratio φ³
+  ethereal: '#34d399',  // Light refraction, ratio φ⁴
+  crystal: '#6ee7b7',   // Pure brilliance
+};
 
-// Subtle pulse animation for the center logo
-const pulseGlow = keyframes`
+// Sacred Accents - Colombian Heritage
+const ACCENT = {
+  gold: '#D4AF37',      // Colombian gold
+  copper: '#B87333',    // Muzo mine copper
+  pearl: '#F0EAD6',     // Cream highlight
+};
+
+// Atmospheric Layers (Fibonacci-based opacity)
+const ATMOSPHERE = {
+  void: '#050505',      // Deepest black
+  abyss: '#0a0a0a',     // Pure darkness
+  depth: '#0f0f0f',     // Deep shadow
+  surface: '#141414',   // Surface level
+  elevated: '#1a1a1a',  // Elevated surface
+  luminance: '#222222', // Light touch
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SACRED ANIMATIONS - "Danza Cósmica"
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Emerald pulse with golden ratio timing
+const emeraldPulse = keyframes`
   0%, 100% {
-    filter: drop-shadow(0 0 12px ${alpha(EMERALD_GLOW, 0.4)});
+    filter: drop-shadow(0 0 20px ${alpha(EMERALD.glow, 0.4)})
+            drop-shadow(0 0 40px ${alpha(EMERALD.vibrant, 0.2)});
+    transform: translate(-50%, -50%) scale(1);
   }
-  50% {
-    filter: drop-shadow(0 0 24px ${alpha(EMERALD_GLOW, 0.7)});
+  38.2% {
+    filter: drop-shadow(0 0 30px ${alpha(EMERALD.glow, 0.6)})
+            drop-shadow(0 0 60px ${alpha(EMERALD.vibrant, 0.3)});
+    transform: translate(-50%, -50%) scale(1.02);
+  }
+  61.8% {
+    filter: drop-shadow(0 0 35px ${alpha(EMERALD.glow, 0.7)})
+            drop-shadow(0 0 70px ${alpha(EMERALD.vibrant, 0.35)});
+    transform: translate(-50%, -50%) scale(1.03);
   }
 `;
 
-// Floating animation for hotspots
-const floatAnimation = keyframes`
+// Golden float animation
+const goldenFloat = keyframes`
   0%, 100% {
     transform: translate(-50%, -50%) translateY(0);
   }
-  50% {
-    transform: translate(-50%, -50%) translateY(-3px);
+  38.2% {
+    transform: translate(-50%, -50%) translateY(-6px);
+  }
+  61.8% {
+    transform: translate(-50%, -50%) translateY(-4px);
   }
 `;
 
-// Ambient glow animation
-const ambientGlow = keyframes`
+// Ambient cosmic glow
+const cosmicGlow = keyframes`
   0%, 100% {
-    opacity: 0.3;
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(1);
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1.05);
   }
 `;
 
-// Catalog hotspot definitions - positioned to match emerald locations in the image
+// Shimmer effect for premium feel
+const crystallineShimmer = keyframes`
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+`;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CATALOG HOTSPOTS - Sacred Hexagonal Arrangement
+// ═══════════════════════════════════════════════════════════════════════════════
+
 interface CatalogHotspot {
   id: string;
   name: string;
   subtitle: string;
   pdfFile: string;
+  tier: 'hero' | 'primary' | 'secondary';
   position: {
     top: string;
     left: string;
   };
 }
 
-// Positions match the 6 emeralds in slide-01.png (circular arrangement)
-// Labels positioned outside the emeralds for better readability
 const CATALOG_HOTSPOTS: CatalogHotspot[] = [
   {
     id: 'vision',
     name: 'Visión Compartida',
     subtitle: 'CEO',
     pdfFile: '/catalogs/CÓMO LO HACEMOS REAL.pdf',
-    position: { top: '-2%', left: '50%' }, // Top center - above emerald
+    tier: 'hero',
+    position: { top: '-5%', left: '50%' },
   },
   {
     id: 'exportadores',
     name: 'Exportadores',
     subtitle: 'Negocio Conjunto',
     pdfFile: '/catalogs/LOTE ORIGEN ARE TRÜST.pdf',
-    position: { top: '25%', left: '105%' }, // Top right - outside
+    tier: 'primary',
+    position: { top: '25%', left: '108%' },
   },
   {
     id: 'acceso',
     name: 'Acceso Total',
     subtitle: 'Joyeros',
     pdfFile: '/catalogs/ACCESO TOTAL ESMERLADAS EN BRUTO-2.pdf',
-    position: { top: '72%', left: '105%' }, // Bottom right - outside
+    tier: 'primary',
+    position: { top: '72%', left: '108%' },
   },
   {
     id: 'tierra',
     name: 'Tierra Madre',
     subtitle: 'Adopta una esmeralda',
     pdfFile: '/catalogs/EL PODER DE LA TIERRA MADRE -2.pdf',
-    position: { top: '102%', left: '50%' }, // Bottom center - below emerald
+    tier: 'hero',
+    position: { top: '105%', left: '50%' },
   },
   {
     id: 'embajadores',
     name: 'Embajadores',
-    subtitle: 'Tierra Madre',
+    subtitle: 'Comunidad',
     pdfFile: '/catalogs/EL PODER DE LA TIERRA MADRE -2.pdf',
-    position: { top: '72%', left: '-5%' }, // Bottom left - outside
+    tier: 'secondary',
+    position: { top: '72%', left: '-8%' },
   },
   {
     id: 'gifts',
     name: 'Gifts',
-    subtitle: 'Tierra Madre',
+    subtitle: 'Colección Exclusiva',
     pdfFile: '/catalogs/Copia de EMERALD GIFTs .pdf',
-    position: { top: '25%', left: '-5%' }, // Top left - outside
+    tier: 'secondary',
+    position: { top: '25%', left: '-8%' },
   },
 ];
 
-// Styled Components
-const HomeContainer = styled(Box)(() => ({
+// ═══════════════════════════════════════════════════════════════════════════════
+// STYLED COMPONENTS - Premium Show Room Experience
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ShowRoomContainer = styled(Box)(() => ({
   position: 'relative',
   width: '100%',
   minHeight: '100vh',
@@ -125,13 +183,17 @@ const HomeContainer = styled(Box)(() => ({
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
+  // Multi-layered cosmic background
   background: `
-    radial-gradient(ellipse at 30% 20%, ${alpha(EMERALD_DARK, 0.15)} 0%, transparent 50%),
-    radial-gradient(ellipse at 70% 80%, ${alpha(EMERALD_GLOW, 0.08)} 0%, transparent 50%),
-    linear-gradient(180deg, ${DARK_BG} 0%, ${DARK_SURFACE} 50%, ${DARK_BG} 100%)
+    radial-gradient(ellipse at 50% 30%, ${alpha(EMERALD.deep, 0.4)} 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 80%, ${alpha(EMERALD.primary, 0.15)} 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 20%, ${alpha(EMERALD.glow, 0.1)} 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 100%, ${alpha(ACCENT.gold, 0.05)} 0%, transparent 30%),
+    linear-gradient(180deg, ${ATMOSPHERE.void} 0%, ${ATMOSPHERE.abyss} 30%, ${ATMOSPHERE.depth} 70%, ${ATMOSPHERE.void} 100%)
   `,
   overflow: 'visible',
-  padding: '20px 60px',
+  padding: '40px 80px',
+  // Noise texture for premium feel
   '&::before': {
     content: '""',
     position: 'absolute',
@@ -139,32 +201,87 @@ const HomeContainer = styled(Box)(() => ({
     left: 0,
     right: 0,
     bottom: 0,
-    background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-    opacity: 0.03,
+    background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+    opacity: 0.025,
+    pointerEvents: 'none',
+    mixBlendMode: 'overlay',
+  },
+  // Vignette effect
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.4) 100%)',
     pointerEvents: 'none',
   },
+}));
+
+// Show Room Title
+const ShowRoomTitle = styled(Typography)(() => ({
+  fontFamily: '"Playfair Display", "Georgia", serif',
+  fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
+  fontWeight: 300,
+  letterSpacing: '0.3em',
+  textTransform: 'uppercase',
+  marginBottom: 8,
+  // Emerald gradient text
+  background: `linear-gradient(
+    135deg,
+    ${EMERALD.ethereal} 0%,
+    ${EMERALD.glow} 25%,
+    ${ACCENT.gold} 50%,
+    ${EMERALD.glow} 75%,
+    ${EMERALD.ethereal} 100%
+  )`,
+  backgroundSize: '200% auto',
+  backgroundClip: 'text',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  animation: `${crystallineShimmer} 8s linear infinite`,
+  textShadow: 'none',
+  position: 'relative',
+  zIndex: 10,
 }));
 
 const ContentWrapper = styled(Box)(() => ({
   position: 'relative',
   width: '100%',
-  maxWidth: '800px',
+  maxWidth: '700px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  margin: '40px auto',
-  padding: '0 80px',
-  // Subtle glow behind the emeralds
+  margin: '20px auto',
+  padding: '0 100px',
+  // Multiple glow layers for depth
   '&::before': {
     content: '""',
     position: 'absolute',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: '80%',
-    height: '80%',
-    background: `radial-gradient(ellipse, ${alpha(EMERALD_GLOW, 0.15)} 0%, transparent 70%)`,
-    animation: `${ambientGlow} 4s ease-in-out infinite`,
+    width: '100%',
+    height: '100%',
+    background: `
+      radial-gradient(ellipse at center, ${alpha(EMERALD.glow, 0.2)} 0%, transparent 50%),
+      radial-gradient(ellipse at center, ${alpha(EMERALD.vibrant, 0.15)} 0%, transparent 60%)
+    `,
+    animation: `${cosmicGlow} 5s ease-in-out infinite`,
+    zIndex: 0,
+    filter: 'blur(60px)',
+  },
+  // Secondary glow layer
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '70%',
+    height: '70%',
+    background: `radial-gradient(circle, ${alpha(ACCENT.gold, 0.08)} 0%, transparent 70%)`,
     zIndex: 0,
     filter: 'blur(40px)',
   },
@@ -176,7 +293,13 @@ const EmeraldImage = styled('img')(() => ({
   objectFit: 'contain',
   position: 'relative',
   zIndex: 1,
-  filter: 'drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4))',
+  // Premium shadow layers
+  filter: `
+    drop-shadow(0 10px 30px ${alpha(EMERALD.deep, 0.5)})
+    drop-shadow(0 20px 50px ${alpha('#000', 0.4)})
+    drop-shadow(0 0 100px ${alpha(EMERALD.glow, 0.15)})
+  `,
+  transition: 'filter 0.5s ease',
 }));
 
 const CenterLogo = styled(Box)(() => ({
@@ -184,17 +307,17 @@ const CenterLogo = styled(Box)(() => ({
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: '18%',
+  width: '16%',
   zIndex: 10,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  animation: `${pulseGlow} 3s ease-in-out infinite`,
+  animation: `${emeraldPulse} 4s cubic-bezier(0.4, 0, 0.2, 1) infinite`,
   '& img': {
     maxWidth: '100%',
     maxHeight: '100%',
     objectFit: 'contain',
-    filter: 'brightness(1.1)',
+    filter: 'brightness(1.15) contrast(1.05)',
   },
 }));
 
@@ -205,72 +328,126 @@ const HotspotOverlay = styled(Box)(() => ({
   right: 0,
   bottom: 0,
   pointerEvents: 'none',
+  zIndex: 5,
 }));
+
+// Tier-based hotspot styling
+const getTierStyles = (tier: 'hero' | 'primary' | 'secondary', isHovered: boolean) => {
+  const config = {
+    hero: {
+      padding: '16px 28px',
+      borderRadius: 18,
+      glowIntensity: 0.5,
+      scale: isHovered ? 1.12 : 1,
+      borderWidth: 2,
+    },
+    primary: {
+      padding: '14px 24px',
+      borderRadius: 16,
+      glowIntensity: 0.4,
+      scale: isHovered ? 1.1 : 1,
+      borderWidth: 1.5,
+    },
+    secondary: {
+      padding: '12px 20px',
+      borderRadius: 14,
+      glowIntensity: 0.3,
+      scale: isHovered ? 1.08 : 1,
+      borderWidth: 1,
+    },
+  };
+  return config[tier];
+};
 
 const Hotspot = styled(Box, {
-  shouldForwardProp: (prop) => prop !== 'isHovered',
-})<{ isHovered?: boolean }>(({ isHovered }) => ({
-  position: 'absolute',
-  transform: 'translate(-50%, -50%)',
-  cursor: 'pointer',
-  pointerEvents: 'auto',
-  textAlign: 'center',
-  padding: '12px 20px',
-  borderRadius: 14,
-  transition: `all ${CATALOG_TRANSITIONS.duration.normal}ms ${CATALOG_TRANSITIONS.easing.emphasis}`,
-  // Dark glassmorphism effect
-  backgroundColor: isHovered
-    ? alpha(EMERALD_PRIMARY, 0.25)
-    : alpha(DARK_ELEVATED, 0.85),
-  border: `1px solid ${isHovered ? EMERALD_GLOW : alpha('#fff', 0.1)}`,
-  boxShadow: isHovered
-    ? `0 8px 32px ${alpha(EMERALD_GLOW, 0.35)}, 0 0 60px ${alpha(EMERALD_GLOW, 0.15)}, inset 0 1px 0 ${alpha('#fff', 0.1)}`
-    : `0 4px 16px ${alpha('#000', 0.4)}, inset 0 1px 0 ${alpha('#fff', 0.05)}`,
-  backdropFilter: 'blur(16px)',
-  WebkitBackdropFilter: 'blur(16px)',
-  animation: isHovered ? 'none' : `${floatAnimation} 6s ease-in-out infinite`,
-  animationDelay: 'var(--animation-delay, 0s)',
-  // Keyboard focus styles
-  outline: 'none',
-  '&:focus-visible': {
-    outline: `2px solid ${EMERALD_GLOW}`,
-    outlineOffset: 3,
-    boxShadow: `0 0 0 6px ${alpha(EMERALD_GLOW, 0.2)}, 0 8px 32px ${alpha(EMERALD_GLOW, 0.35)}`,
-  },
-  '&:hover': {
-    backgroundColor: alpha(EMERALD_PRIMARY, 0.3),
-    border: `1px solid ${EMERALD_LIGHT}`,
-    transform: 'translate(-50%, -50%) scale(1.08) translateY(-4px)',
-    boxShadow: `0 12px 40px ${alpha(EMERALD_GLOW, 0.4)}, 0 0 80px ${alpha(EMERALD_GLOW, 0.2)}, inset 0 1px 0 ${alpha('#fff', 0.15)}`,
-  },
-  '&:active': {
-    transform: 'translate(-50%, -50%) scale(0.98)',
-    boxShadow: `0 4px 16px ${alpha(EMERALD_GLOW, 0.3)}`,
-  },
-}));
+  shouldForwardProp: (prop) => !['isHovered', 'tier'].includes(prop as string),
+})<{ isHovered?: boolean; tier?: 'hero' | 'primary' | 'secondary' }>(({ isHovered, tier = 'secondary' }) => {
+  const tierStyle = getTierStyles(tier, isHovered || false);
+
+  return {
+    position: 'absolute',
+    transform: `translate(-50%, -50%) scale(${tierStyle.scale})`,
+    cursor: 'pointer',
+    pointerEvents: 'auto',
+    textAlign: 'center',
+    padding: tierStyle.padding,
+    borderRadius: tierStyle.borderRadius,
+    transition: `all 0.4s cubic-bezier(0.4, 0, 0.2, 1)`,
+    // Premium glassmorphism
+    backgroundColor: isHovered
+      ? alpha(EMERALD.vibrant, 0.2)
+      : alpha(ATMOSPHERE.elevated, 0.9),
+    border: `${tierStyle.borderWidth}px solid ${
+      isHovered ? EMERALD.glow : alpha(EMERALD.ethereal, 0.15)
+    }`,
+    // Layered shadow system
+    boxShadow: isHovered
+      ? `
+          0 0 0 1px ${alpha(EMERALD.glow, 0.3)},
+          0 10px 40px ${alpha(EMERALD.glow, tierStyle.glowIntensity)},
+          0 0 80px ${alpha(EMERALD.vibrant, tierStyle.glowIntensity * 0.5)},
+          inset 0 1px 0 ${alpha(ACCENT.pearl, 0.15)},
+          inset 0 -1px 0 ${alpha(EMERALD.deep, 0.2)}
+        `
+      : `
+          0 4px 20px ${alpha('#000', 0.5)},
+          0 0 40px ${alpha(EMERALD.glow, 0.05)},
+          inset 0 1px 0 ${alpha('#fff', 0.05)},
+          inset 0 -1px 0 ${alpha('#000', 0.1)}
+        `,
+    backdropFilter: 'blur(20px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    animation: isHovered ? 'none' : `${goldenFloat} 5s ease-in-out infinite`,
+    animationDelay: 'var(--animation-delay, 0s)',
+    outline: 'none',
+    // Focus visible for accessibility
+    '&:focus-visible': {
+      outline: `3px solid ${EMERALD.glow}`,
+      outlineOffset: 4,
+      boxShadow: `
+        0 0 0 6px ${alpha(EMERALD.glow, 0.3)},
+        0 10px 40px ${alpha(EMERALD.glow, 0.5)}
+      `,
+    },
+    '&:active': {
+      transform: 'translate(-50%, -50%) scale(0.98)',
+      boxShadow: `0 2px 10px ${alpha(EMERALD.glow, 0.3)}`,
+    },
+  };
+});
 
 const HotspotName = styled(Typography, {
-  shouldForwardProp: (prop) => prop !== 'isHovered',
-})<{ isHovered?: boolean }>(({ isHovered }) => ({
-  fontWeight: 700,
-  fontSize: 'clamp(0.8rem, 1.8vw, 1rem)',
-  color: isHovered ? EMERALD_LIGHT : '#ffffff',
-  textDecoration: 'none',
-  marginBottom: 3,
-  transition: 'color 0.2s ease',
+  shouldForwardProp: (prop) => !['isHovered', 'tier'].includes(prop as string),
+})<{ isHovered?: boolean; tier?: 'hero' | 'primary' | 'secondary' }>(({ isHovered, tier }) => ({
+  fontFamily: '"Inter", "SF Pro Display", -apple-system, sans-serif',
+  fontWeight: 600,
+  fontSize: tier === 'hero' ? 'clamp(0.9rem, 2vw, 1.1rem)' : 'clamp(0.8rem, 1.8vw, 1rem)',
+  color: isHovered ? EMERALD.ethereal : ACCENT.pearl,
+  marginBottom: 4,
+  transition: 'all 0.3s ease',
   whiteSpace: 'nowrap',
-  letterSpacing: '0.03em',
-  textShadow: isHovered ? `0 0 20px ${alpha(EMERALD_GLOW, 0.5)}` : 'none',
+  letterSpacing: '0.04em',
+  textShadow: isHovered
+    ? `0 0 30px ${alpha(EMERALD.glow, 0.6)}, 0 0 60px ${alpha(EMERALD.glow, 0.3)}`
+    : 'none',
 }));
 
-const HotspotSubtitle = styled(Typography)(() => ({
+const HotspotSubtitle = styled(Typography, {
+  shouldForwardProp: (prop) => prop !== 'isHovered',
+})<{ isHovered?: boolean }>(({ isHovered }) => ({
+  fontFamily: '"Inter", "SF Pro Text", -apple-system, sans-serif',
   fontSize: 'clamp(0.65rem, 1.2vw, 0.75rem)',
-  color: alpha('#fff', 0.6),
-  fontStyle: 'italic',
+  color: isHovered ? alpha(EMERALD.ethereal, 0.8) : alpha(ACCENT.pearl, 0.5),
+  fontWeight: 400,
   whiteSpace: 'nowrap',
-  fontWeight: 500,
-  letterSpacing: '0.02em',
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  transition: 'color 0.3s ease',
 }));
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
 
 interface CatalogHomeProps {
   onCatalogSelect: (pdfUrl: string, name: string) => void;
@@ -280,29 +457,35 @@ export const CatalogHome: React.FC<CatalogHomeProps> = ({ onCatalogSelect }) => 
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   return (
-    <HomeContainer>
-      <Fade in timeout={800}>
+    <ShowRoomContainer>
+      {/* Show Room Title */}
+      <Fade in timeout={600}>
+        <ShowRoomTitle>Show Room</ShowRoomTitle>
+      </Fade>
+
+      <Fade in timeout={1000}>
         <ContentWrapper>
-          {/* Real emerald arrangement image */}
+          {/* Emerald arrangement centerpiece */}
           <EmeraldImage
             src="/catalog-media/integration/slide-01.png"
-            alt="Emerald Collection"
+            alt="Colombian Emerald Collection - Show Room"
           />
 
-          {/* Center Logo - Tierra Madre Symbol Only */}
+          {/* Center Logo with pulse */}
           <CenterLogo>
             <img src="/logo-symbol-only.png" alt="Tierra Madre" />
           </CenterLogo>
 
-          {/* Clickable Hotspots */}
+          {/* Category Hotspots */}
           <HotspotOverlay>
-            {CATALOG_HOTSPOTS.map((hotspot) => {
+            {CATALOG_HOTSPOTS.map((hotspot, index) => {
               const isHovered = hoveredId === hotspot.id;
 
               return (
                 <Hotspot
                   key={hotspot.id}
                   isHovered={isHovered}
+                  tier={hotspot.tier}
                   onMouseEnter={() => setHoveredId(hotspot.id)}
                   onMouseLeave={() => setHoveredId(null)}
                   onFocus={() => setHoveredId(hotspot.id)}
@@ -316,16 +499,17 @@ export const CatalogHome: React.FC<CatalogHomeProps> = ({ onCatalogSelect }) => 
                   }}
                   tabIndex={0}
                   role="button"
-                  aria-label={`${hotspot.name} - ${hotspot.subtitle}`}
+                  aria-label={`${hotspot.name} - ${hotspot.subtitle}. Presiona Enter para explorar.`}
                   sx={{
                     top: hotspot.position.top,
                     left: hotspot.position.left,
+                    '--animation-delay': `${index * 0.5}s`,
                   }}
                 >
-                  <HotspotName isHovered={isHovered}>
+                  <HotspotName isHovered={isHovered} tier={hotspot.tier}>
                     {hotspot.name}
                   </HotspotName>
-                  <HotspotSubtitle>
+                  <HotspotSubtitle isHovered={isHovered}>
                     {hotspot.subtitle}
                   </HotspotSubtitle>
                 </Hotspot>
@@ -336,38 +520,43 @@ export const CatalogHome: React.FC<CatalogHomeProps> = ({ onCatalogSelect }) => 
       </Fade>
 
       {/* Instructions */}
-      <Fade in timeout={1200}>
+      <Fade in timeout={1400}>
         <Box
           sx={{
-            marginTop: 4,
+            marginTop: 5,
             textAlign: 'center',
+            position: 'relative',
+            zIndex: 10,
           }}
         >
           <Typography
-            variant="body2"
             sx={{
-              color: alpha('#fff', 0.45),
+              fontFamily: '"Inter", sans-serif',
+              color: alpha(ACCENT.pearl, 0.4),
               fontStyle: 'italic',
-              letterSpacing: '0.05em',
-              fontSize: '0.875rem',
+              letterSpacing: '0.1em',
+              fontSize: '0.85rem',
+              fontWeight: 300,
             }}
           >
-            Selecciona una categoría para explorar
+            Selecciona una colección para explorar
           </Typography>
           <Typography
-            variant="caption"
             sx={{
-              color: alpha('#fff', 0.3),
+              fontFamily: '"JetBrains Mono", monospace',
+              color: alpha(EMERALD.ethereal, 0.25),
               display: 'block',
-              marginTop: 0.5,
+              marginTop: 1,
               fontSize: '0.7rem',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
             }}
           >
-            Usa Tab para navegar • Enter para seleccionar
+            Tab para navegar • Enter para seleccionar
           </Typography>
         </Box>
       </Fade>
-    </HomeContainer>
+    </ShowRoomContainer>
   );
 };
 

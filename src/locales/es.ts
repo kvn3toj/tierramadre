@@ -49,7 +49,7 @@ export const es = {
       title: 'Recibos',
     },
     library: {
-      title: 'Biblioteca',
+      title: 'Show Room',
     },
     simulator: {
       title: 'Simulador',
@@ -79,8 +79,8 @@ export const es = {
       subtitle: 'Generar facturas',
     },
     library: {
-      label: 'Biblioteca',
-      subtitle: 'Catálogo de esmeraldas',
+      label: 'Show Room',
+      subtitle: 'Sala de exposición premium',
     },
     simulator: {
       label: 'Simulador de Precios',
