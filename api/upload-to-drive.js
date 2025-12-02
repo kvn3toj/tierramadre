@@ -82,6 +82,7 @@ async function uploadToDrive(drive, folderId, file, itemNumber) {
     resource: fileMetadata,
     media: media,
     fields: 'id, webViewLink, webContentLink',
+    supportsAllDrives: true,
   });
 
   // Make file publicly accessible

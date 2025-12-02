@@ -42,53 +42,15 @@ async function getDriveClient() {
 }
 
 /**
- * Get or create Tierra Madre Inventory folder in Shared Drive
+ * Get the shared folder ID from environment
+ * For personal Gmail: use a folder shared with the service account
  */
-async function getOrCreateFolder(drive) {
-  const folderName = 'Tierra Madre Inventory';
-  const sharedDriveId = process.env.GOOGLE_SHARED_DRIVE_ID;
-
-  // Search in Shared Drive if configured, otherwise in My Drive
-  const query = sharedDriveId
-    ? `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false and '${sharedDriveId}' in parents`
-    : `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-
-  const response = await drive.files.list({
-    q: query,
-    fields: 'files(id, name)',
-    supportsAllDrives: true,
-    includeItemsFromAllDrives: true,
-  });
-
-  if (response.data.files.length > 0) {
-    return { folderId: response.data.files[0].id, sharedDriveId };
+async function getTargetFolderId() {
+  const folderId = process.env.GOOGLE_SHARED_DRIVE_ID;
+  if (!folderId) {
+    throw new Error('GOOGLE_SHARED_DRIVE_ID environment variable not set');
   }
-
-  // Create folder
-  const folderMetadata = {
-    name: folderName,
-    mimeType: 'application/vnd.google-apps.folder',
-    ...(sharedDriveId && { parents: [sharedDriveId] }),
-  };
-
-  const folder = await drive.files.create({
-    resource: folderMetadata,
-    fields: 'id',
-    supportsAllDrives: true,
-  });
-
-  // Only set permissions if not in Shared Drive (Shared Drive has its own permissions)
-  if (!sharedDriveId) {
-    await drive.permissions.create({
-      fileId: folder.data.id,
-      requestBody: {
-        role: 'reader',
-        type: 'anyone',
-      },
-    });
-  }
-
-  return { folderId: folder.data.id, sharedDriveId };
+  return folderId;
 }
 
 /**
@@ -125,27 +87,23 @@ export default async function handler(req, res) {
       });
     }
 
-    const { drive, accessToken } = await getDriveClient();
-    const { folderId, sharedDriveId } = await getOrCreateFolder(drive);
+    const { accessToken } = await getDriveClient();
+    const folderId = await getTargetFolderId();
 
     // Generate unique filename
     const ext = fileName.split('.').pop() || 'bin';
     const uniqueFileName = `product-${itemNumber}-${Date.now()}.${ext}`;
 
-    // Create file metadata
+    // Create file metadata - upload to the shared folder
     const fileMetadata = {
       name: uniqueFileName,
       parents: [folderId],
     };
 
-    // Build upload URL with shared drive support
-    let uploadUrl = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable';
-    if (sharedDriveId) {
-      uploadUrl += '&supportsAllDrives=true';
-    }
-
     // Initialize resumable upload session
-    const initResponse = await fetch(uploadUrl, {
+    const initResponse = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true',
+      {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
