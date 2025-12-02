@@ -43,7 +43,7 @@ import { useInventory } from '../hooks/useInventory';
 import { calculateTrustScore, getTrustBadge } from '../utils/trustScore';
 import { TrustBadgeCompact } from './TrustBadge';
 import { extractVideoThumbnail } from '../utils/videoStorage';
-import { MediaGallery, MediaUploadZone } from './media';
+import { MediaGallery, MediaUploadZone, ImageCropper } from './media';
 import type { MediaItem } from './media/types';
 
 // Cloudinary configuration
@@ -143,6 +143,13 @@ export default function ProductDetail() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isEditing, setIsEditing] = useState(false);
 
+  // Image cropper state
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<{ file: File; isVideo: boolean }[]>([]);
+  const [currentCropIndex, setCurrentCropIndex] = useState(0);
+  const [uploadCategory, setUploadCategory] = useState<MediaItem['category']>('hero');
+
   const { inventory, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems, fetchCloudGallery } = useInventory();
 
   // Scroll to top when navigating to this page
@@ -204,24 +211,67 @@ export default function ProductDetail() {
     }
   }, [product, getMediaItems, fetchCloudGallery, displayName]);
 
-  // Handle multi-media upload (for MediaUploadZone)
+  // Handle multi-media upload (for MediaUploadZone) - now with cropping for images
   const handleMediaUpload = useCallback(async (files: File[], category: MediaItem['category']) => {
     if (!product) return;
 
-    const newItems: MediaItem[] = [];
+    // Separate images and videos
+    const processedFiles: { file: File; isVideo: boolean }[] = [];
 
     for (const file of files) {
       const isVideo = file.type.startsWith('video/');
       const isImage = file.type.startsWith('image/');
 
       if (!isImage && !isVideo) continue;
+      processedFiles.push({ file, isVideo });
+    }
 
+    if (processedFiles.length === 0) return;
+
+    // Check if there are images to crop
+    const hasImages = processedFiles.some(f => !f.isVideo);
+
+    if (hasImages) {
+      // Store files and start cropping flow
+      setPendingFiles(processedFiles);
+      setUploadCategory(category);
+      setCurrentCropIndex(0);
+
+      // Find first image to crop
+      const firstImageIndex = processedFiles.findIndex(f => !f.isVideo);
+      if (firstImageIndex >= 0) {
+        const imageUrl = URL.createObjectURL(processedFiles[firstImageIndex].file);
+        setImageToCrop(imageUrl);
+        setCurrentCropIndex(firstImageIndex);
+        setCropperOpen(true);
+      }
+    } else {
+      // No images, upload videos directly
+      await uploadFiles(processedFiles, category);
+    }
+  }, [product]);
+
+  // Upload files to Cloudinary
+  const uploadFiles = useCallback(async (
+    files: { file: File | Blob; isVideo: boolean }[],
+    category: MediaItem['category']
+  ) => {
+    if (!product) return;
+
+    const newItems: MediaItem[] = [];
+
+    for (const { file, isVideo } of files) {
       try {
+        // Convert Blob to File if needed
+        const fileToUpload = file instanceof File
+          ? file
+          : new File([file], `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
+
         // Upload directly to Cloudinary (no size limits)
-        const mediaUrl = await uploadToCloudinary(file, product.item);
+        const mediaUrl = await uploadToCloudinary(fileToUpload, product.item);
 
         let thumbnailUrl: string | undefined;
-        if (isVideo) {
+        if (isVideo && file instanceof File) {
           thumbnailUrl = await extractVideoThumbnail(file, 1);
         }
 
@@ -261,6 +311,54 @@ export default function ProductDetail() {
 
     setShowUploadZone(false);
   }, [product, mediaItems, updateMediaItems, updateImage, updateVideo, displayName]);
+
+  // Handle crop completion
+  const handleCropComplete = useCallback(async (croppedBlob: Blob) => {
+    // Replace the current image with cropped version
+    const updatedFiles = [...pendingFiles];
+    updatedFiles[currentCropIndex] = {
+      file: croppedBlob as unknown as File,
+      isVideo: false,
+    };
+    setPendingFiles(updatedFiles);
+
+    // Clean up URL
+    if (imageToCrop) {
+      URL.revokeObjectURL(imageToCrop);
+    }
+
+    // Find next image to crop
+    let nextImageIndex = -1;
+    for (let i = currentCropIndex + 1; i < updatedFiles.length; i++) {
+      if (!updatedFiles[i].isVideo && updatedFiles[i].file instanceof File) {
+        nextImageIndex = i;
+        break;
+      }
+    }
+
+    if (nextImageIndex >= 0) {
+      // More images to crop
+      const imageUrl = URL.createObjectURL(updatedFiles[nextImageIndex].file as File);
+      setImageToCrop(imageUrl);
+      setCurrentCropIndex(nextImageIndex);
+    } else {
+      // All images cropped, upload all files
+      setCropperOpen(false);
+      setImageToCrop(null);
+      await uploadFiles(updatedFiles, uploadCategory);
+      setPendingFiles([]);
+    }
+  }, [pendingFiles, currentCropIndex, imageToCrop, uploadCategory, uploadFiles]);
+
+  // Handle cropper close without completing
+  const handleCropperClose = useCallback(() => {
+    if (imageToCrop) {
+      URL.revokeObjectURL(imageToCrop);
+    }
+    setCropperOpen(false);
+    setImageToCrop(null);
+    setPendingFiles([]);
+  }, [imageToCrop]);
 
   // Handle media reorder
   const handleMediaReorder = useCallback((reorderedItems: MediaItem[]) => {
@@ -868,6 +966,16 @@ export default function ProductDetail() {
           </Box>
         </Grid>
       </Grid>
+
+      {/* Image Cropper Dialog */}
+      {imageToCrop && (
+        <ImageCropper
+          open={cropperOpen}
+          imageSrc={imageToCrop}
+          onClose={handleCropperClose}
+          onCropComplete={handleCropComplete}
+        />
+      )}
     </Box>
   );
 }
