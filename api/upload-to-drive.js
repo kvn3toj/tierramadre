@@ -38,48 +38,59 @@ function getDriveClient() {
 }
 
 /**
- * Get or create Tierra Madre Inventory folder
+ * Get or create Tierra Madre Inventory folder in Shared Drive
  */
 async function getOrCreateFolder(drive) {
   const folderName = 'Tierra Madre Inventory';
+  const sharedDriveId = process.env.GOOGLE_SHARED_DRIVE_ID;
 
-  // Check if folder exists
+  // Search in Shared Drive if configured
+  const query = sharedDriveId
+    ? `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false and '${sharedDriveId}' in parents`
+    : `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+
   const response = await drive.files.list({
-    q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    q: query,
     fields: 'files(id, name)',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
   });
 
   if (response.data.files.length > 0) {
-    return response.data.files[0].id;
+    return { folderId: response.data.files[0].id, sharedDriveId };
   }
 
-  // Create folder if it doesn't exist
+  // Create folder
   const folderMetadata = {
     name: folderName,
     mimeType: 'application/vnd.google-apps.folder',
+    ...(sharedDriveId && { parents: [sharedDriveId] }),
   };
 
   const folder = await drive.files.create({
     resource: folderMetadata,
     fields: 'id',
+    supportsAllDrives: true,
   });
 
-  // Make folder publicly accessible
-  await drive.permissions.create({
-    fileId: folder.data.id,
-    requestBody: {
-      role: 'reader',
-      type: 'anyone',
-    },
-  });
+  // Only set permissions if not in Shared Drive
+  if (!sharedDriveId) {
+    await drive.permissions.create({
+      fileId: folder.data.id,
+      requestBody: {
+        role: 'reader',
+        type: 'anyone',
+      },
+    });
+  }
 
-  return folder.data.id;
+  return { folderId: folder.data.id, sharedDriveId };
 }
 
 /**
- * Upload file to Google Drive
+ * Upload file to Google Drive (supports Shared Drive)
  */
-async function uploadToDrive(drive, folderId, file, itemNumber) {
+async function uploadToDrive(drive, folderId, sharedDriveId, file, itemNumber) {
   // Handle missing filename (common on mobile)
   const originalName = file.originalFilename || file.newFilename || 'upload';
   const mimeToExt = {
@@ -110,16 +121,19 @@ async function uploadToDrive(drive, folderId, file, itemNumber) {
     resource: fileMetadata,
     media: media,
     fields: 'id, webViewLink, webContentLink',
+    supportsAllDrives: true,
   });
 
-  // Make file publicly accessible
-  await drive.permissions.create({
-    fileId: uploadedFile.data.id,
-    requestBody: {
-      role: 'reader',
-      type: 'anyone',
-    },
-  });
+  // Make file publicly accessible (only if not in Shared Drive)
+  if (!sharedDriveId) {
+    await drive.permissions.create({
+      fileId: uploadedFile.data.id,
+      requestBody: {
+        role: 'reader',
+        type: 'anyone',
+      },
+    });
+  }
 
   // Return direct download link (works for embedding)
   return `https://drive.google.com/uc?export=view&id=${uploadedFile.data.id}`;
@@ -167,10 +181,10 @@ export default async function handler(req, res) {
     const drive = getDriveClient();
 
     // Get or create folder
-    const folderId = await getOrCreateFolder(drive);
+    const { folderId, sharedDriveId } = await getOrCreateFolder(drive);
 
     // Upload file
-    const url = await uploadToDrive(drive, folderId, file, itemNumber);
+    const url = await uploadToDrive(drive, folderId, sharedDriveId, file, itemNumber);
 
     // Clean up temporary file
     fs.unlinkSync(file.filepath);
