@@ -76,7 +76,7 @@ const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'slides', label: 'Slides', icon: <Presentation size={20} />, group: 'tools' },
   { id: 'normalizer', label: 'Normalizar', icon: <Wand2 size={20} />, group: 'tools' },
   { id: 'receipts', label: 'Recibos', icon: <Receipt size={20} />, group: 'tools' },
-  { id: 'biblioteca', label: 'Biblioteca', icon: <Library size={20} />, group: 'tools' },
+  { id: 'biblioteca', label: 'Show Room', icon: <Library size={20} />, group: 'tools' },
   { id: 'simulator', label: 'Simulador', icon: <Calculator size={20} />, group: 'tools' },
 ];
 
