@@ -137,6 +137,7 @@ export const IOSFilePicker: React.FC<IOSFilePickerProps> = ({
   'data-testid': testId,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -215,10 +216,17 @@ export const IOSFilePicker: React.FC<IOSFilePickerProps> = ({
     }
   };
 
-  // Trigger file input
+  // Trigger file browser (no camera)
   const triggerFileInput = () => {
     if (!disabled && !loading) {
       fileInputRef.current?.click();
+    }
+  };
+
+  // Trigger camera input
+  const triggerCameraInput = () => {
+    if (!disabled && !loading) {
+      cameraInputRef.current?.click();
     }
   };
 
@@ -253,17 +261,29 @@ export const IOSFilePicker: React.FC<IOSFilePickerProps> = ({
 
   return (
     <div className={`ios-file-picker ${className}`} data-testid={testId}>
-      {/* Hidden file input */}
+      {/* Hidden file input for browsing (no capture) */}
       <input
         ref={fileInputRef}
         type="file"
         accept={accept}
         multiple={mode === 'batch'}
-        capture={enableCamera ? cameraMode : undefined}
         onChange={handleFileChange}
         style={{ display: 'none' }}
         disabled={disabled || loading}
       />
+
+      {/* Hidden camera input (with capture) */}
+      {enableCamera && (
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture={cameraMode}
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+          disabled={disabled || loading}
+        />
+      )}
 
       {/* Drop zone */}
       <div
@@ -331,12 +351,15 @@ export const IOSFilePicker: React.FC<IOSFilePickerProps> = ({
           </div>
 
           {/* Buttons */}
-          <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-xs)' }}>
+          <div
+            style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-xs)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             {enableCamera && (
               <IOSButton
                 variant="filled"
                 size="medium"
-                onClick={triggerFileInput}
+                onClick={triggerCameraInput}
                 disabled={disabled || loading}
               >
                 📷 Camera
