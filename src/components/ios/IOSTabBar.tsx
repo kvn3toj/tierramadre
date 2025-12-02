@@ -113,16 +113,16 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         bottom: 0,
         left: 0,
         right: 0,
-        height: `calc(49px + env(safe-area-inset-bottom))`,
+        minHeight: `calc(65px + env(safe-area-inset-bottom))`,
         backgroundColor: 'var(--surface-secondary)',
         borderTop: '0.5px solid var(--border-default)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         boxShadow: 'var(--shadow-sm)',
         display: 'flex',
-        alignItems: 'flex-start',
-        paddingTop: spacing.xs,
-        paddingBottom: 'env(safe-area-inset-bottom)',
+        alignItems: 'stretch',
+        paddingTop: spacing.sm,
+        paddingBottom: `calc(${spacing.xs} + env(safe-area-inset-bottom))`,
         zIndex: 1000,
         WebkitTransform: 'translateZ(0)',
         transform: 'translateZ(0)',
@@ -203,12 +203,17 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
               <Typography
                 variant="caption"
                 sx={{
-                  fontSize: '10px',
+                  fontSize: { xs: '9px', sm: '10px' },
                   fontWeight: isActive ? 600 : 400,
                   color: isActive ? 'var(--brand-primary)' : 'var(--text-tertiary)',
                   transition: 'all 0.2s ease',
                   textAlign: 'center',
                   whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '100%',
+                  lineHeight: 1.2,
+                  marginTop: spacing.xxs,
                 }}
               >
                 {tab.label}
