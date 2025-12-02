@@ -23,6 +23,8 @@
     "@mui/icons-material": "^6.1.0",
     "@mui/material": "^6.1.0",
     "date-fns": "^4.1.0",
+    "formidable": "^3.5.4",
+    "googleapis": "^166.0.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.2",
     "lucide-react": "^0.555.0",
