@@ -33,7 +33,7 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { useThemeMode } from '../context/ThemeContext';
+import { useThemeMode } from '../contexts/ThemeContext';
 import { useInventory } from '../hooks/useInventory';
 import { calculateTrustScore, getTrustBadge } from '../utils/trustScore';
 import { TrustBadgeCompact } from './TrustBadge';

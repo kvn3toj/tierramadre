@@ -29,7 +29,7 @@ import {
   Image as ImageIcon,
   Check,
 } from 'lucide-react';
-import { useThemeMode } from '../context/ThemeContext';
+import { useThemeMode } from '../contexts/ThemeContext';
 import {
   InventoryItem,
   GemologicalCertification,

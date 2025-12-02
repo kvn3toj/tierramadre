@@ -24,6 +24,9 @@ export const useTheme = () => {
   return context;
 };
 
+// Alias for compatibility
+export const useThemeMode = useTheme;
+
 interface ThemeProviderProps {
   children: ReactNode;
 }

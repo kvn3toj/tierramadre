@@ -35,7 +35,7 @@ import {
   User,
   FileCheck,
 } from 'lucide-react';
-import { useThemeMode } from '../context/ThemeContext';
+import { useThemeMode } from '../contexts/ThemeContext';
 import {
   inventoryData,
   getInventoryStats,

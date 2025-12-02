@@ -18,7 +18,7 @@ import {
 import { useState } from 'react';
 import { Emerald, EmeraldStatus } from '../types';
 import { brandColors } from '../theme';
-import { useThemeMode } from '../context/ThemeContext';
+import { useThemeMode } from '../contexts/ThemeContext';
 import MediaPreview from './MediaPreview';
 
 interface EmeraldCardProps {
