@@ -44,7 +44,7 @@ import {
   Users,
 } from 'lucide-react';
 import { TabValue } from '../App';
-import { useThemeMode } from '../context/ThemeContext';
+import { useThemeMode } from '../contexts/ThemeContext';
 
 // Professional sidebar dimensions
 const DRAWER_WIDTH = 260;
