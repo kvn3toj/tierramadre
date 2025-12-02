@@ -148,10 +148,37 @@ export function useInventory() {
 
   // === NEW GALLERY FUNCTIONS ===
 
-  // Get gallery for a specific product
+  // Get gallery for a specific product (from local cache)
   const getGallery = useCallback((itemNumber: number): MediaItem[] => {
     return galleries[itemNumber] || [];
   }, [galleries]);
+
+  // Fetch gallery from Cloudinary (cloud sync)
+  const fetchCloudGallery = useCallback(async (itemNumber: number): Promise<MediaItem[]> => {
+    try {
+      const response = await fetch(`/api/get-product-media?itemNumber=${itemNumber}`);
+      if (!response.ok) {
+        console.warn('Could not fetch cloud gallery');
+        return galleries[itemNumber] || [];
+      }
+      const data = await response.json();
+
+      // Update local cache with cloud data
+      if (data.media && data.media.length > 0) {
+        const newGalleries = {
+          ...galleries,
+          [itemNumber]: data.media,
+        };
+        saveGalleries(newGalleries);
+        return data.media;
+      }
+
+      return galleries[itemNumber] || [];
+    } catch (error) {
+      console.error('Error fetching cloud gallery:', error);
+      return galleries[itemNumber] || [];
+    }
+  }, [galleries, saveGalleries]);
 
   // Add media to gallery
   const addToGallery = useCallback(async (
@@ -291,6 +318,7 @@ export function useInventory() {
 
     // New gallery functions
     getGallery,
+    fetchCloudGallery,
     addToGallery,
     removeFromGallery,
     reorderGallery,
