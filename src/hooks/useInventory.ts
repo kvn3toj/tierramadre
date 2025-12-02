@@ -3,59 +3,56 @@ import { InventoryItem, MediaType } from '../types';
 import { inventoryData as defaultInventoryData } from '../data/inventory';
 import { MediaItem } from '../components/media/types';
 
-// Compress image to reduce file size for upload (max 4MB for Vercel)
-const compressImage = async (file: File, maxSizeMB = 3.5): Promise<File> => {
-  if (!file.type.startsWith('image/') || file.size <= maxSizeMB * 1024 * 1024) {
-    return file;
+// Upload file directly to Google Drive (bypasses Vercel 4.5MB limit)
+const uploadToGoogleDrive = async (file: File, itemNumber: number): Promise<string> => {
+  // Step 1: Initialize resumable upload
+  const initResponse = await fetch('/api/init-drive-upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      fileName: file.name,
+      mimeType: file.type,
+      itemNumber,
+      fileSize: file.size,
+    }),
+  });
+
+  if (!initResponse.ok) {
+    const error = await initResponse.json().catch(() => ({ message: 'Error al inicializar' }));
+    throw new Error(error.message);
   }
 
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+  const { uploadUrl, accessToken } = await initResponse.json();
 
-    img.onload = () => {
-      const maxDimension = 2000;
-      let { width, height } = img;
-
-      if (width > maxDimension || height > maxDimension) {
-        if (width > height) {
-          height = (height / width) * maxDimension;
-          width = maxDimension;
-        } else {
-          width = (width / height) * maxDimension;
-          height = maxDimension;
-        }
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-      ctx?.drawImage(img, 0, 0, width, height);
-
-      const tryCompress = (quality: number): void => {
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error('Failed to compress image'));
-              return;
-            }
-            if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.3) {
-              tryCompress(quality - 0.1);
-            } else {
-              resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
-            }
-          },
-          'image/jpeg',
-          quality
-        );
-      };
-
-      tryCompress(0.85);
-    };
-
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = URL.createObjectURL(file);
+  // Step 2: Upload directly to Google Drive
+  const uploadResponse = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': file.type,
+    },
+    body: file,
   });
+
+  if (!uploadResponse.ok) {
+    throw new Error('Error al subir a Google Drive');
+  }
+
+  const { id: fileId } = await uploadResponse.json();
+
+  // Step 3: Finalize and get URL
+  const finalizeResponse = await fetch('/api/finalize-drive-upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fileId }),
+  });
+
+  if (!finalizeResponse.ok) {
+    throw new Error('Error al finalizar la subida');
+  }
+
+  const { url } = await finalizeResponse.json();
+  return url;
 };
 
 const STORAGE_KEY = 'tierramadre-inventory-media';
@@ -251,49 +248,10 @@ export function useInventory() {
 
     for (const file of files) {
       const isVideo = file.type.startsWith('video/');
-      const isImage = file.type.startsWith('image/');
 
       try {
-        // Compress image if needed (Vercel has 4.5MB limit)
-        const fileToUpload = isImage ? await compressImage(file) : file;
-
-        // Upload to Google Drive via API
-        const formData = new FormData();
-        formData.append('file', fileToUpload);
-        formData.append('itemNumber', itemNumber.toString());
-
-        const response = await fetch('/api/upload-to-drive', {
-          method: 'POST',
-          body: formData,
-        });
-
-        // Get response text first to handle empty responses
-        const responseText = await response.text();
-
-        if (!response.ok) {
-          let errorMessage = 'Error al subir el archivo a Google Drive';
-          if (responseText) {
-            try {
-              const errorData = JSON.parse(responseText);
-              errorMessage = errorData.message || errorMessage;
-            } catch {
-              // If response is HTML (Vite dev server), show helpful message
-              if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
-                errorMessage = 'API no disponible. Usa "vercel dev" en lugar de "npm run dev"';
-              } else {
-                errorMessage = responseText;
-              }
-            }
-          }
-          throw new Error(errorMessage);
-        }
-
-        if (!responseText) {
-          throw new Error('Respuesta vacía del servidor');
-        }
-
-        const data = JSON.parse(responseText);
-        const mediaUrl = data.url;
+        // Upload directly to Google Drive (supports 50MB+)
+        const mediaUrl = await uploadToGoogleDrive(file, itemNumber);
 
         // Extract thumbnail for videos
         let thumbnailUrl: string | undefined;
