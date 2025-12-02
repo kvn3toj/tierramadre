@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMemo, useState, useRef } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -14,7 +14,9 @@ import {
   useTheme,
   Breadcrumbs,
   Link,
+  Collapse,
   IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   ArrowLeft,
@@ -31,14 +33,18 @@ import {
   Crown,
   ShoppingCart,
   Upload,
-  X,
+  ChevronUp,
+  Images,
+  Edit2,
+  Check,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useInventory } from '../hooks/useInventory';
 import { calculateTrustScore, getTrustBadge } from '../utils/trustScore';
 import { TrustBadgeCompact } from './TrustBadge';
 import { extractVideoThumbnail } from '../utils/videoStorage';
-import MediaPreview from './MediaPreview';
+import { MediaGallery, MediaUploadZone } from './media';
+import type { MediaItem } from './media/types';
 
 // Format currency in COP
 const formatCurrency = (value: number): string => {
@@ -102,10 +108,11 @@ export default function ProductDetail() {
   const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [showUploadZone, setShowUploadZone] = useState(false);
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
 
-  const { inventory, updateImage, updateVideo, removeImage } = useInventory();
+  const { inventory, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems } = useInventory();
 
   // Find the product
   const product = useMemo(() => {
@@ -119,65 +126,163 @@ export default function ProductDetail() {
 
   const trustBadge = trustScore ? getTrustBadge(trustScore.overall) : null;
 
-  // Handle media upload (image or video) - Upload to Google Drive
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !product) return;
+  // Get display name early for use in effects
+  const displayName = useMemo(() => {
+    if (!product) return '';
+    return product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
+  }, [product]);
 
-    const isVideo = file.type.startsWith('video/');
-    const isImage = file.type.startsWith('image/');
-
-    if (!isImage && !isVideo) {
-      alert('Por favor selecciona una imagen o video válido');
-      return;
-    }
-
-    setUploadingImage(true);
-
-    try {
-      // Create FormData for API upload
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('itemNumber', product.item.toString());
-
-      // Upload to Google Drive via API
-      const response = await fetch('/api/upload-to-drive', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Error al subir el archivo');
-      }
-
-      const data = await response.json();
-      const driveUrl = data.url;
-
-      if (isVideo) {
-        // Extract thumbnail for video
-        const thumbnail = await extractVideoThumbnail(file, 1);
-        await updateVideo(product.item, driveUrl, thumbnail);
+  // Load media items for the product
+  useEffect(() => {
+    if (product) {
+      const items = getMediaItems ? getMediaItems(product.item) : [];
+      // If no media items but has legacy image, convert it
+      if (items.length === 0 && product.imagen) {
+        const legacyItem: MediaItem = {
+          id: `legacy-${product.item}`,
+          url: product.imagen,
+          type: product.mediaType === 'video' ? 'video' : 'image',
+          thumbnailUrl: product.thumbnailUrl,
+          category: 'hero',
+          alt: displayName || `Producto ${product.item}`,
+          order: 0,
+        };
+        setMediaItems([legacyItem]);
       } else {
-        // Save image URL
-        updateImage(product.item, driveUrl);
+        setMediaItems(items);
       }
-
-      setUploadingImage(false);
-    } catch (error) {
-      console.error('Error uploading media:', error);
-      alert(error instanceof Error ? error.message : 'Error al subir el archivo');
-      setUploadingImage(false);
     }
-  };
+  }, [product, getMediaItems, displayName]);
 
-  // Handle remove image
-  const handleRemoveImage = () => {
+  // Handle multi-media upload (for MediaUploadZone)
+  const handleMediaUpload = useCallback(async (files: File[], category: MediaItem['category']) => {
     if (!product) return;
-    if (confirm('¿Estás seguro de eliminar esta imagen?')) {
-      removeImage(product.item);
+
+    const newItems: MediaItem[] = [];
+
+    for (const file of files) {
+      const isVideo = file.type.startsWith('video/');
+      const isImage = file.type.startsWith('image/');
+
+      if (!isImage && !isVideo) continue;
+
+      try {
+        // Upload to Google Drive via API
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('itemNumber', product.item.toString());
+
+        const response = await fetch('/api/upload-to-drive', {
+          method: 'POST',
+          body: formData,
+        });
+
+        // Get response text first to handle empty responses
+        const responseText = await response.text();
+
+        if (!response.ok) {
+          let errorMessage = 'Error al subir el archivo a Google Drive';
+          if (responseText) {
+            try {
+              const errorData = JSON.parse(responseText);
+              errorMessage = errorData.message || errorMessage;
+            } catch {
+              // If response is HTML (Vite dev server), show helpful message
+              if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
+                errorMessage = 'API no disponible. Usa "vercel dev" en lugar de "npm run dev"';
+              } else {
+                errorMessage = responseText;
+              }
+            }
+          }
+          throw new Error(errorMessage);
+        }
+
+        if (!responseText) {
+          throw new Error('Respuesta vacía del servidor');
+        }
+
+        const data = JSON.parse(responseText);
+        const mediaUrl = data.url;
+
+        let thumbnailUrl: string | undefined;
+        if (isVideo) {
+          thumbnailUrl = await extractVideoThumbnail(file, 1);
+        }
+
+        const newItem: MediaItem = {
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          url: mediaUrl,
+          type: isVideo ? 'video' : 'image',
+          thumbnailUrl,
+          category,
+          alt: `${displayName} - ${category}`,
+          order: mediaItems.length + newItems.length,
+        };
+
+        newItems.push(newItem);
+      } catch (error) {
+        console.error('Error uploading media:', error);
+        alert(error instanceof Error ? error.message : 'Error al subir el archivo');
+      }
     }
-  };
+
+    if (newItems.length > 0) {
+      const updatedItems = [...mediaItems, ...newItems];
+      setMediaItems(updatedItems);
+      if (updateMediaItems) {
+        updateMediaItems(product.item, updatedItems);
+      }
+      // Also update legacy image field with first item
+      if (updatedItems.length > 0) {
+        const firstItem = updatedItems[0];
+        if (firstItem.type === 'video') {
+          updateVideo(product.item, firstItem.url, firstItem.thumbnailUrl || '');
+        } else {
+          updateImage(product.item, firstItem.url);
+        }
+      }
+    }
+
+    setShowUploadZone(false);
+  }, [product, mediaItems, updateMediaItems, updateImage, updateVideo, displayName]);
+
+  // Handle media reorder
+  const handleMediaReorder = useCallback((reorderedItems: MediaItem[]) => {
+    setMediaItems(reorderedItems);
+    if (product && updateMediaItems) {
+      updateMediaItems(product.item, reorderedItems);
+      // Update legacy image with first item
+      if (reorderedItems.length > 0) {
+        const firstItem = reorderedItems[0];
+        if (firstItem.type === 'video') {
+          updateVideo(product.item, firstItem.url, firstItem.thumbnailUrl || '');
+        } else {
+          updateImage(product.item, firstItem.url);
+        }
+      }
+    }
+  }, [product, updateMediaItems, updateImage, updateVideo]);
+
+  // Handle media delete
+  const handleMediaDelete = useCallback(async (itemId: string) => {
+    const updatedItems = mediaItems.filter(item => item.id !== itemId);
+    setMediaItems(updatedItems);
+    if (product && updateMediaItems) {
+      updateMediaItems(product.item, updatedItems);
+      // Update legacy image
+      if (updatedItems.length > 0) {
+        const firstItem = updatedItems[0];
+        if (firstItem.type === 'video') {
+          updateVideo(product.item, firstItem.url, firstItem.thumbnailUrl || '');
+        } else {
+          updateImage(product.item, firstItem.url);
+        }
+      } else {
+        removeImage(product.item);
+      }
+    }
+  }, [product, mediaItems, updateMediaItems, updateImage, updateVideo, removeImage]);
 
   if (!product) {
     return (
@@ -204,7 +309,6 @@ export default function ProductDetail() {
     );
   }
 
-  const displayName = product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const quality = getQualityBadge(product.calidad);
   const colorDot = getColorDot(product.color);
   const weight = typeof product.peso === 'number' ? `${product.peso} ct` : product.metalType;
@@ -279,15 +383,35 @@ export default function ProductDetail() {
               position: 'relative',
             }}
           >
-            {/* Status Badge */}
+            {/* Status Badge and Edit Toggle */}
             <Box
               sx={{
                 position: 'absolute',
                 top: 16,
                 right: 16,
-                zIndex: 1,
+                zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
               }}
             >
+              {/* Edit Toggle */}
+              <Tooltip title={isEditing ? 'Terminar edición' : 'Editar galería'}>
+                <IconButton
+                  size="small"
+                  onClick={() => setIsEditing(!isEditing)}
+                  sx={{
+                    bgcolor: isEditing ? '#059669' : 'rgba(0,0,0,0.5)',
+                    color: '#fff',
+                    '&:hover': {
+                      bgcolor: isEditing ? '#047857' : 'rgba(0,0,0,0.7)',
+                    },
+                    backdropFilter: 'blur(4px)',
+                  }}
+                >
+                  {isEditing ? <Check size={18} /> : <Edit2 size={18} />}
+                </IconButton>
+              </Tooltip>
               <Chip
                 label={isAvailable ? 'Disponible' : 'Vendido'}
                 color={isAvailable ? 'success' : 'default'}
@@ -298,107 +422,87 @@ export default function ProductDetail() {
               />
             </Box>
 
-            {/* Product Image/Video */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,video/*"
-              style={{ display: 'none' }}
-              onChange={handleImageUpload}
-            />
-            <Box
-              sx={{
-                width: '100%',
-                height: { xs: 300, sm: 400, md: 500 },
-                minHeight: { xs: 300, md: 500 },
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor: product.imagen ? '#000' : alpha(colorDot, 0.1),
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              {product.imagen ? (
-                <>
-                  {product.mediaType === 'video' ? (
-                    <MediaPreview
-                      mediaUrl={product.imagen}
-                      mediaType="video"
-                      thumbnailUrl={product.thumbnailUrl}
-                      alt={displayName}
-                      maxWidth="100%"
-                      maxHeight="100%"
-                      controls={true}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                      }}
-                    />
-                  ) : (
-                    <img
-                      src={product.imagen}
-                      alt={displayName}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                      }}
-                    />
-                  )}
-                  {/* Remove Media Button */}
-                  <IconButton
-                    onClick={handleRemoveImage}
-                    sx={{
-                      position: 'absolute',
-                      top: 16,
-                      left: 16,
-                      bgcolor: 'rgba(0, 0, 0, 0.6)',
-                      color: '#fff',
-                      '&:hover': { bgcolor: 'rgba(220, 38, 38, 0.8)' },
-                    }}
-                  >
-                    <X size={20} />
-                  </IconButton>
-                </>
-              ) : (
-                <>
-                  <Gem size={120} color={colorDot} style={{ opacity: 0.3 }} />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      position: 'absolute',
-                      bottom: 16,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      color: theme.palette.text.secondary,
-                    }}
-                  >
-                    Imagen no disponible
-                  </Typography>
-                </>
-              )}
-
-              {/* Upload Media Button */}
-              <Button
-                startIcon={<Upload size={18} />}
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingImage}
+            {/* Media Gallery Carousel */}
+            {mediaItems.length > 0 ? (
+              <MediaGallery
+                media={mediaItems}
+                productName={displayName}
+                onAddMedia={() => setShowUploadZone(true)}
+                isEditing={isEditing}
+              />
+            ) : (
+              <Box
                 sx={{
-                  position: 'absolute',
-                  bottom: 16,
-                  right: 16,
-                  bgcolor: 'rgba(5, 150, 105, 0.9)',
-                  color: '#fff',
-                  '&:hover': { bgcolor: '#059669' },
-                  backdropFilter: 'blur(4px)',
+                  width: '100%',
+                  height: { xs: 300, sm: 400, md: 500 },
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: alpha(colorDot, 0.1),
+                  position: 'relative',
                 }}
               >
-                {uploadingImage ? 'Subiendo...' : product.imagen ? 'Cambiar' : 'Subir Imagen/Video'}
-              </Button>
-            </Box>
+                <Gem size={120} color={colorDot} style={{ opacity: 0.3 }} />
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mt: 2,
+                    color: theme.palette.text.secondary,
+                  }}
+                >
+                  Sin imágenes
+                </Typography>
+                <Button
+                  startIcon={<Upload size={18} />}
+                  variant="contained"
+                  onClick={() => setShowUploadZone(true)}
+                  sx={{
+                    mt: 2,
+                    bgcolor: '#059669',
+                    '&:hover': { bgcolor: '#047857' },
+                  }}
+                >
+                  Subir Imágenes
+                </Button>
+              </Box>
+            )}
           </Paper>
+
+          {/* Upload Zone Toggle */}
+          {mediaItems.length > 0 && (
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={showUploadZone ? <ChevronUp size={18} /> : <Images size={18} />}
+              onClick={() => setShowUploadZone(!showUploadZone)}
+              sx={{
+                mt: 2,
+                borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                color: theme.palette.text.secondary,
+                '&:hover': {
+                  borderColor: '#059669',
+                  color: '#059669',
+                  bgcolor: alpha('#059669', 0.08),
+                },
+              }}
+            >
+              {showUploadZone ? 'Ocultar zona de subida' : 'Agregar más imágenes'}
+            </Button>
+          )}
+
+          {/* Collapsible Upload Zone */}
+          <Collapse in={showUploadZone}>
+            <Box sx={{ mt: 2 }}>
+              <MediaUploadZone
+                media={mediaItems}
+                onUpload={handleMediaUpload}
+                onDelete={handleMediaDelete}
+                onReorder={handleMediaReorder}
+                maxFiles={10}
+              />
+            </Box>
+          </Collapse>
         </Grid>
 
         {/* Right Column - Product Details */}
