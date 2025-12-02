@@ -41,7 +41,7 @@ function getDriveClient() {
  * Get the shared folder ID from environment
  */
 function getTargetFolderId() {
-  const folderId = process.env.GOOGLE_SHARED_DRIVE_ID;
+  const folderId = process.env.GOOGLE_SHARED_DRIVE_ID?.trim();
   if (!folderId) {
     throw new Error('GOOGLE_SHARED_DRIVE_ID environment variable not set');
   }
