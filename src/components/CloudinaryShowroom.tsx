@@ -31,14 +31,14 @@ import { styled } from '@mui/material/styles';
 const CLOUDINARY_CLOUD = 'dyam6g2os';
 const CLOUDINARY_FOLDER = 'tierramadre/catalogs';
 
-// Catalog configurations with page counts
+// Catalog configurations with page counts (from Cloudinary upload)
 export const CLOUDINARY_CATALOGS: Record<string, { publicId: string; pages: number; name: string }> = {
-  'acceso-total': { publicId: 'acceso-total', pages: 9, name: 'Acceso Total' },
+  'acceso-total': { publicId: 'acceso-total', pages: 8, name: 'Acceso Total' },
   'vision-compartida': { publicId: 'vision-compartida', pages: 9, name: 'Visión Compartida' },
-  'tierra-madre': { publicId: 'tierra-madre', pages: 11, name: 'Tierra Madre' },
-  'exportadores': { publicId: 'exportadores', pages: 12, name: 'Exportadores' },
-  'gifts': { publicId: 'gifts', pages: 8, name: 'Gifts' },
-  'embajadores': { publicId: 'embajadores', pages: 11, name: 'Embajadores' },
+  'tierra-madre': { publicId: 'tierra-madre', pages: 12, name: 'Tierra Madre' },
+  'exportadores': { publicId: 'exportadores', pages: 23, name: 'Exportadores' },
+  'gifts': { publicId: 'gifts', pages: 13, name: 'Gifts' },
+  'embajadores': { publicId: 'tierra-madre', pages: 12, name: 'Embajadores' }, // Uses same PDF as Tierra Madre
 };
 
 // Generate Cloudinary URL for a specific page
