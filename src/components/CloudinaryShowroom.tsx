@@ -16,6 +16,7 @@ import {
   keyframes,
   Tooltip,
   Slider,
+  LinearProgress,
 } from '@mui/material';
 import {
   Close,
@@ -32,6 +33,7 @@ import {
   ViewColumn,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
+import { useShowroomPreloader } from '../services/showroomPreloader';
 
 // Cloudinary config
 const CLOUDINARY_CLOUD = 'dyam6g2os';
@@ -238,6 +240,9 @@ export const CloudinaryShowroom: React.FC<CloudinaryShowroomProps> = ({
   const controlsTimer = useRef<NodeJS.Timeout>();
   const autoPlayTimer = useRef<NodeJS.Timeout>();
 
+  // Preloader state - images load instantly if preloaded
+  const { isComplete: isPreloaded, isPreloading, progress: preloadProgress, currentCatalog } = useShowroomPreloader();
+
   // Get catalog config
   const catalog = CLOUDINARY_CATALOGS[catalogId];
   const numPages = catalog?.pages || 10;
@@ -285,9 +290,10 @@ export const CloudinaryShowroom: React.FC<CloudinaryShowroomProps> = ({
       setCurrentPage(1);
       setViewMode('carousel');
       setShowControls(true);
-      setIsLoading(true);
+      // Skip loading state if images are preloaded
+      setIsLoading(!isPreloaded);
     }
-  }, [open, catalogId]);
+  }, [open, catalogId, isPreloaded]);
 
   // Scroll thumbnail into view
   useEffect(() => {
@@ -437,6 +443,45 @@ export const CloudinaryShowroom: React.FC<CloudinaryShowroomProps> = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Preloading Progress Banner */}
+      {isPreloading && !isPreloaded && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 20,
+            background: 'linear-gradient(180deg, rgba(16, 185, 129, 0.9) 0%, rgba(16, 185, 129, 0.7) 100%)',
+            backdropFilter: 'blur(10px)',
+            py: 1,
+            px: 2,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, justifyContent: 'center' }}>
+            <CircularProgress size={16} sx={{ color: '#fff' }} />
+            <Typography sx={{ color: '#fff', fontSize: '0.85rem', fontWeight: 500 }}>
+              Precargando presentaciones... {preloadProgress}%
+              {currentCatalog && ` (${currentCatalog})`}
+            </Typography>
+          </Box>
+          <LinearProgress
+            variant="determinate"
+            value={preloadProgress}
+            sx={{
+              mt: 0.5,
+              height: 3,
+              borderRadius: 2,
+              bgcolor: alpha('#fff', 0.2),
+              '& .MuiLinearProgress-bar': {
+                bgcolor: '#fff',
+                borderRadius: 2,
+              },
+            }}
+          />
+        </Box>
+      )}
+
       {/* Header */}
       <Fade in={showControls}>
         <Header>
