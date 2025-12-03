@@ -12,10 +12,9 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import {
-  PhotoLibrary,
-  CloudUpload,
+  Home,
   Inventory2,
-  People,
+  Storefront,
   MoreHoriz,
 } from '@mui/icons-material';
 
@@ -34,16 +33,10 @@ export interface TabConfig {
 
 const getPrimaryTabs = (t: any): TabConfig[] => [
   {
-    id: 'gallery',
-    label: t.nav.gallery,
-    icon: PhotoLibrary,
-    route: '/gallery',
-  },
-  {
-    id: 'upload',
-    label: t.nav.upload,
-    icon: CloudUpload,
-    route: '/upload',
+    id: 'home',
+    label: t.nav.home,
+    icon: Home,
+    route: '/home',
   },
   {
     id: 'inventory',
@@ -52,10 +45,10 @@ const getPrimaryTabs = (t: any): TabConfig[] => [
     route: '/inventory',
   },
   {
-    id: 'ambassadors',
-    label: t.nav.ambassadors,
-    icon: People,
-    route: '/ambassadors',
+    id: 'biblioteca',
+    label: 'Show Room',
+    icon: Storefront,
+    route: '/biblioteca',
   },
   {
     id: 'more',
@@ -84,7 +77,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
 
     if (matchingTab) return matchingTab.id;
 
-    const secondaryRoutes = ['/catalog', '/calendar', '/slides', '/normalizer', '/receipts', '/biblioteca', '/simulator'];
+    const secondaryRoutes = ['/gallery', '/catalog', '/calendar', '/slides', '/normalizer', '/receipts', '/simulator', '/ambassadors', '/upload'];
     const isSecondaryRoute = secondaryRoutes.some(route => currentPath.startsWith(route));
 
     return isSecondaryRoute ? 'more' : '';

@@ -5,10 +5,11 @@
 export const en = {
   // Navigation
   nav: {
+    home: 'Home',
     gallery: 'Gallery',
     upload: 'Upload',
     inventory: 'Inventory',
-    ambassadors: 'Ambassadors',
+    ambassadors: 'Advisors',
     catalog: 'Catalog',
     calendar: 'Calendar',
     more: 'More',
@@ -17,6 +18,16 @@ export const en = {
 
   // Pages
   pages: {
+    home: {
+      title: 'Home',
+      subtitle: 'Tierra Madre',
+      welcome: 'Welcome',
+      dailyFact: 'Daily fact',
+      newProducts: 'New products',
+      spirituality: 'Spirituality',
+      investment: 'Investment',
+      meditation: 'Meditation',
+    },
     gallery: {
       title: 'Gallery',
       subtitle: 'Colombian Emeralds',
@@ -54,20 +65,35 @@ export const en = {
     simulator: {
       title: 'Simulator',
     },
+    certificate: {
+      title: 'Certificates',
+    },
   },
 
   // More Tools
   tools: {
+    gallery: {
+      label: 'Gallery',
+      subtitle: 'Your emerald collection',
+    },
+    upload: {
+      label: 'Upload',
+      subtitle: 'Add new emeralds',
+    },
+    ambassadors: {
+      label: 'Advisors',
+      subtitle: 'Expert network',
+    },
     catalog: {
-      label: 'Catalog',
+      label: 'Create Catalog',
       subtitle: 'Create professional PDFs',
     },
     calendar: {
-      label: 'Calendar',
-      subtitle: 'Plan Instagram posts',
+      label: 'Instagram',
+      subtitle: 'Plan posts',
     },
     slides: {
-      label: 'Slides',
+      label: 'Create Presentations',
       subtitle: 'AI presentations',
     },
     normalizer: {
@@ -78,13 +104,13 @@ export const en = {
       label: 'Receipts',
       subtitle: 'Generate invoices',
     },
-    library: {
-      label: 'Library',
-      subtitle: 'Emerald catalog',
-    },
     simulator: {
       label: 'Price Simulator',
       subtitle: 'Calculate valuations',
+    },
+    certificate: {
+      label: 'Certificates',
+      subtitle: 'Create GIA certificates',
     },
   },
 

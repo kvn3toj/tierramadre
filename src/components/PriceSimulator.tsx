@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -32,7 +33,6 @@ import {
   Target,
   RotateCcw,
   Info,
-  Download,
   FileText,
   Image,
   Percent,
@@ -41,8 +41,8 @@ import {
   ShoppingBag,
   Layers,
   X,
+  Eye,
 } from 'lucide-react';
-import { jsPDF } from 'jspdf';
 import { useEmeralds } from '../hooks/useEmeralds';
 import { Emerald, InventoryItem } from '../types';
 import { inventoryData } from '../data/inventory';
@@ -91,6 +91,8 @@ const formatPercent = (value: number): string => {
 type ProductSource = 'gallery' | 'inventory';
 
 export default function PriceSimulator() {
+  const navigate = useNavigate();
+
   // Get emeralds from gallery
   const { emeralds } = useEmeralds();
 
@@ -160,9 +162,6 @@ export default function PriceSimulator() {
 
   // Product name for quotation
   const [productName, setProductName] = useState('');
-
-  // Export loading state
-  const [isExporting, setIsExporting] = useState(false);
 
   // Carat weight for price per carat calculation
   const [caratWeight, setCaratWeight] = useState<number>(0);
@@ -361,371 +360,27 @@ export default function PriceSimulator() {
     return labels[category] || category;
   };
 
-  // Export quotation as PDF with Tierra Madre branding (Catalog Style)
-  const exportQuotation = async () => {
-    setIsExporting(true);
-
-    try {
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 20;
-      const contentWidth = pageWidth - (margin * 2);
-
-      // Brand colors (RGB)
-      const emeraldGreen = [0, 174, 122];
-      const darkSlate = [30, 41, 59];
-      const lightGray = [241, 245, 249];
-      const mediumGray = [148, 163, 184];
-
-      let y = margin;
-
-      // ==================== PREMIUM HEADER ====================
-      pdf.setFillColor(emeraldGreen[0], emeraldGreen[1], emeraldGreen[2]);
-      pdf.rect(0, 0, pageWidth, 45, 'F');
-
-      // Company name
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(28);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('TIERRA MADRE', margin, 20);
-
-      // Tagline
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Esmeraldas Colombianas | Colombian Emeralds', margin, 28);
-
-      // Quotation info box (top right)
-      const quotationBoxX = pageWidth - margin - 60;
-      pdf.setFillColor(255, 255, 255);
-      pdf.roundedRect(quotationBoxX, 12, 60, 23, 2, 2, 'F');
-
-      pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'bold');
-      const docTitle = multiSelectMode && selectedProducts.length > 0 ? 'CATÁLOGO' : 'COTIZACIÓN';
-      pdf.text(docTitle, quotationBoxX + 30, 18, { align: 'center' });
-
-      pdf.setFontSize(8);
-      pdf.setFont('helvetica', 'normal');
-      const quotationNumber = `TM-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${String(Date.now()).slice(-3)}`;
-      pdf.text(`No. ${quotationNumber}`, quotationBoxX + 30, 23, { align: 'center' });
-
-      const today = new Date().toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-      pdf.text(today, quotationBoxX + 30, 32, { align: 'center' });
-
-      y = 55;
-
-      // ==================== PRODUCT CATALOG SECTION ====================
-      if (multiSelectMode && selectedProducts.length > 0) {
-        // Catalog header
-        pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
-        pdf.roundedRect(margin, y, contentWidth, 12, 3, 3, 'F');
-
-        pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
-        pdf.setFontSize(14);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(`Catálogo de Productos (${selectedProducts.length} items)`, margin + 5, y + 8);
-
-        y += 20;
-
-        // List each product in catalog
-        selectedProducts.forEach((product, index) => {
-          const isInventory = 'item' in product;
-          const name = isInventory ? product.nombre : product.name;
-          const price = isInventory ? product.precioCOP : product.priceCOP || 0;
-          const weight = isInventory
-            ? (typeof product.peso === 'number' ? `${product.peso} ct` : '')
-            : (product.weightCarats ? `${product.weightCarats} ct` : '');
-          const category = !isInventory && product.category ? getCategoryLabel(product.category) : '';
-
-          // Product card
-          pdf.setFillColor(255, 255, 255);
-          pdf.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
-          pdf.setLineWidth(0.5);
-          pdf.roundedRect(margin, y, contentWidth, 22, 2, 2, 'FD');
-
-          // Product number badge
-          pdf.setFillColor(emeraldGreen[0], emeraldGreen[1], emeraldGreen[2]);
-          pdf.circle(margin + 8, y + 8, 4, 'F');
-          pdf.setTextColor(255, 255, 255);
-          pdf.setFontSize(8);
-          pdf.setFont('helvetica', 'bold');
-          pdf.text(`${index + 1}`, margin + 8, y + 9.5, { align: 'center' });
-
-          // Product name
-          pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
-          pdf.setFontSize(11);
-          pdf.setFont('helvetica', 'bold');
-          pdf.text(name, margin + 15, y + 8);
-
-          // Product details
-          pdf.setFontSize(9);
-          pdf.setFont('helvetica', 'normal');
-          pdf.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-          let details = [];
-          if (weight) details.push(weight);
-          if (category) details.push(category);
-          if (isInventory) details.push(`#${product.item}`);
-          if (details.length > 0) {
-            pdf.text(details.join(' • '), margin + 15, y + 14);
-          }
-
-          // Price
-          pdf.setTextColor(emeraldGreen[0], emeraldGreen[1], emeraldGreen[2]);
-          pdf.setFontSize(12);
-          pdf.setFont('helvetica', 'bold');
-          pdf.text(formatCurrency(price), pageWidth - margin - 5, y + 11, { align: 'right' });
-
-          y += 25;
-        });
-
-        y += 5;
-      } else {
-        // Single product section
-        if (productName) {
-          pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
-          pdf.roundedRect(margin, y, contentWidth, 25, 3, 3, 'F');
-
-          pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
-          pdf.setFontSize(16);
-          pdf.setFont('helvetica', 'bold');
-          pdf.text(productName, margin + 5, y + 10);
-
-          if (caratWeight > 0) {
-            pdf.setFontSize(10);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-            pdf.text(`Peso: ${caratWeight} quilates`, margin + 5, y + 18);
-          }
-
-          y += 35;
-        }
-      }
-
-      // ==================== INVESTMENT BREAKDOWN ====================
-      pdf.setDrawColor(emeraldGreen[0], emeraldGreen[1], emeraldGreen[2]);
-      pdf.setLineWidth(0.5);
-      pdf.line(margin, y, pageWidth - margin, y);
-      y += 12;
-
-      pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Detalle de Inversión', margin, y);
-      y += 10;
-
-      // Investment items
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-
-      investments.forEach((item, index) => {
-        if (item.value > 0) {
-          if (index % 2 === 0) {
-            pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
-            pdf.rect(margin, y - 5, contentWidth, 8, 'F');
-          }
-          pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
-          pdf.text(item.label, margin + 5, y);
-          pdf.setFont('helvetica', 'bold');
-          pdf.text(formatCurrency(item.value), pageWidth - margin - 5, y, { align: 'right' });
-          pdf.setFont('helvetica', 'normal');
-          y += 8;
-        }
-      });
-
-      customItems.forEach((item, index) => {
-        if (item.value > 0) {
-          const adjustedIndex = investments.filter(i => i.value > 0).length + index;
-          if (adjustedIndex % 2 === 0) {
-            pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
-            pdf.rect(margin, y - 5, contentWidth, 8, 'F');
-          }
-          pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
-          pdf.text(item.label, margin + 5, y);
-          pdf.setFont('helvetica', 'bold');
-          pdf.text(formatCurrency(item.value), pageWidth - margin - 5, y, { align: 'right' });
-          pdf.setFont('helvetica', 'normal');
-          y += 8;
-        }
-      });
-
-      y += 5;
-      pdf.setDrawColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-      pdf.setLineWidth(0.3);
-      pdf.line(margin, y, pageWidth - margin, y);
-      y += 8;
-
-      // Subtotal
-      pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
-      pdf.setFontSize(11);
-      pdf.text('Subtotal:', margin + 5, y);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(formatCurrency(totalInvestment), pageWidth - margin - 5, y, { align: 'right' });
-
-      y += 15;
-
-      // ==================== MAIN PRICE SECTION ====================
-      pdf.setFillColor(emeraldGreen[0], emeraldGreen[1], emeraldGreen[2]);
-      pdf.roundedRect(margin, y, contentWidth, 35, 3, 3, 'F');
-
-      y += 12;
-
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('PRECIO TOTAL CON FACTOR DE CAMBIO', margin + 10, y);
-
-      y += 10;
-
-      pdf.setFontSize(24);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(`${formatCurrency(pricingMetrics.salePrice)} COP`, margin + 10, y);
-
-      y += 8;
-
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Factor aplicado: ${priceFactor.toFixed(1)}x (${currentTier.label})`, margin + 10, y);
-
-      y += 20;
-
-      // ==================== METRICS CARDS ====================
-      const cardWidth = (contentWidth - 10) / 3;
-      const cardHeight = 25;
-      const cardSpacing = 5;
-
-      const metrics = [
-        {
-          label: 'Precio por Quilate',
-          value: caratWeight > 0 ? formatCurrency(pricingMetrics.pricePerCarat) : 'N/A',
-          icon: '💎'
-        },
-        {
-          label: 'Margen s/Venta',
-          value: formatPercent(pricingMetrics.margin),
-          icon: '📊'
-        },
-        {
-          label: 'Ganancia Neta',
-          value: formatCurrency(pricingMetrics.profit),
-          icon: '💰'
-        }
-      ];
-
-      metrics.forEach((metric, index) => {
-        const cardX = margin + (index * (cardWidth + cardSpacing));
-
-        pdf.setFillColor(255, 255, 255);
-        pdf.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
-        pdf.setLineWidth(0.5);
-        pdf.roundedRect(cardX, y, cardWidth, cardHeight, 2, 2, 'FD');
-
-        pdf.setFontSize(16);
-        pdf.text(metric.icon, cardX + 5, y + 10);
-
-        pdf.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-        pdf.setFontSize(8);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text(metric.label, cardX + 5, y + 16, { maxWidth: cardWidth - 10 });
-
-        pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
-        pdf.setFontSize(11);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(metric.value, cardX + 5, y + 22);
-      });
-
-      y += cardHeight + 15;
-
-      // ==================== TRUST ELEMENTS ====================
-      pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
-      pdf.roundedRect(margin, y, contentWidth, 20, 2, 2, 'F');
-
-      y += 8;
-
-      pdf.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('✓', margin + 5, y);
-      pdf.text('Certificado de Autenticidad Incluido', margin + 12, y);
-
-      y += 6;
-
-      pdf.text('✓', margin + 5, y);
-      pdf.text('Garantía de Origen Colombiano', margin + 12, y);
-
-      y += 6;
-
-      pdf.text('✓', margin + 5, y);
-      pdf.text('Evaluación Gemológica Profesional', margin + 12, y);
-
-      // ==================== FOOTER ====================
-      const footerY = pageHeight - 40;
-
-      pdf.setDrawColor(emeraldGreen[0], emeraldGreen[1], emeraldGreen[2]);
-      pdf.setLineWidth(1);
-      pdf.line(margin, footerY, pageWidth - margin, footerY);
-
-      y = footerY + 8;
-
-      // Company info
-      pdf.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Tierra Madre - Esmeraldas Colombianas', margin, y);
-
-      y += 5;
-      pdf.text('Bogotá, Colombia | contacto@tierramadre.co', margin, y);
-
-      y += 5;
-      pdf.text('+57 (1) 234 5678 | www.tierramadre.co', margin, y);
-
-      // Validity notice
-      y = footerY + 8;
-      pdf.setFontSize(8);
-      pdf.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-
-      const expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + 15);
-      const expiryStr = expiryDate.toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-
-      pdf.text('Esta cotización es válida hasta:', pageWidth - margin, y, { align: 'right' });
-      y += 4;
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(emeraldGreen[0], emeraldGreen[1], emeraldGreen[2]);
-      pdf.text(expiryStr, pageWidth - margin, y, { align: 'right' });
-
-      y += 4;
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-      pdf.text('Los precios pueden variar según disponibilidad', pageWidth - margin, y, { align: 'right' });
-
-      const dateStr = new Date().toISOString().split('T')[0];
-      const fileName = multiSelectMode && selectedProducts.length > 0
-        ? `Catalogo_TierraMadre_${selectedProducts.length}_Items_${dateStr}.pdf`
-        : productName
-          ? `Cotizacion_${productName.replace(/\s+/g, '_')}_${dateStr}.pdf`
-          : `Cotizacion_TierraMadre_${dateStr}.pdf`;
-
-      pdf.save(fileName);
-    } catch (error) {
-      console.error('Error exporting PDF:', error);
-    } finally {
-      setIsExporting(false);
-    }
+  // Navigate to preview page with quotation data
+  const handlePreview = () => {
+    const quotationData = {
+      productName: productName || 'Esmeralda Natural Colombiana',
+      caratWeight,
+      investments: investments.map(inv => ({
+        id: inv.id,
+        label: inv.label,
+        value: inv.value,
+      })),
+      customItems,
+      totalInvestment,
+      priceFactor,
+      salePrice: pricingMetrics.salePrice,
+      margin: pricingMetrics.margin,
+      roi: pricingMetrics.roi,
+      profit: pricingMetrics.profit,
+      pricePerCarat: pricingMetrics.pricePerCarat,
+    };
+
+    navigate('/simulator/preview', { state: { quotationData } });
   };
 
   const marginProgress = Math.min((pricingMetrics.margin / 75) * 100, 100);
@@ -846,9 +501,9 @@ export default function PriceSimulator() {
             </Box>
             <Button
               variant="contained"
-              startIcon={<Download size={18} />}
-              onClick={exportQuotation}
-              disabled={isExporting || totalInvestment === 0}
+              startIcon={<Eye size={18} />}
+              onClick={handlePreview}
+              disabled={totalInvestment === 0}
               sx={{
                 background: studioGradients.emerald,
                 color: '#FFFFFF',
@@ -872,7 +527,7 @@ export default function PriceSimulator() {
                 transition: 'all 0.2s ease',
               }}
             >
-              {isExporting ? 'Exportando...' : 'Exportar Cotización'}
+              Vista Previa
             </Button>
           </Box>
         </Paper>
@@ -2190,6 +1845,7 @@ export default function PriceSimulator() {
           </Paper>
         </Box>
       </Box>
+
     </Box>
   );
 }
