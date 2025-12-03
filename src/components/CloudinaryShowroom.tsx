@@ -14,6 +14,8 @@ import {
   alpha,
   CircularProgress,
   keyframes,
+  Tooltip,
+  Slider,
 } from '@mui/material';
 import {
   Close,
@@ -24,6 +26,10 @@ import {
   GridView,
   ViewCarousel,
   Download,
+  Slideshow,
+  PauseCircle,
+  PlayCircle,
+  ViewColumn,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
@@ -219,13 +225,18 @@ export const CloudinaryShowroom: React.FC<CloudinaryShowroomProps> = ({
   catalogName,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<'carousel' | 'grid'>('carousel');
+  const [viewMode, setViewMode] = useState<'carousel' | 'grid' | 'spread'>('carousel');
   const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPresentationMode, setIsPresentationMode] = useState(false);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [autoPlaySpeed, setAutoPlaySpeed] = useState(5); // seconds per slide
+  const [isLandscape, setIsLandscape] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const thumbnailRef = useRef<HTMLDivElement>(null);
   const controlsTimer = useRef<NodeJS.Timeout>();
+  const autoPlayTimer = useRef<NodeJS.Timeout>();
 
   // Get catalog config
   const catalog = CLOUDINARY_CATALOGS[catalogId];
@@ -235,6 +246,39 @@ export const CloudinaryShowroom: React.FC<CloudinaryShowroomProps> = ({
   // Touch handling for swipe
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Detect landscape orientation
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsLandscape(window.innerWidth > window.innerHeight);
+    };
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, []);
+
+  // Auto-play functionality
+  useEffect(() => {
+    if (isAutoPlaying && !isLoading) {
+      autoPlayTimer.current = setTimeout(() => {
+        if (currentPage < numPages) {
+          setCurrentPage(p => p + 1);
+          setIsLoading(true);
+        } else {
+          // Loop back to start
+          setCurrentPage(1);
+          setIsLoading(true);
+        }
+      }, autoPlaySpeed * 1000);
+    }
+    return () => {
+      if (autoPlayTimer.current) clearTimeout(autoPlayTimer.current);
+    };
+  }, [isAutoPlaying, currentPage, numPages, autoPlaySpeed, isLoading]);
 
   useEffect(() => {
     if (open) {
@@ -315,10 +359,71 @@ export const CloudinaryShowroom: React.FC<CloudinaryShowroomProps> = ({
     }
   };
 
+  // Presentation mode (fullscreen + landscape + auto-hide controls)
+  const enterPresentationMode = async () => {
+    try {
+      // Request fullscreen
+      if (!document.fullscreenElement) {
+        await containerRef.current?.requestFullscreen();
+        setIsFullscreen(true);
+      }
+      // Try to lock to landscape on mobile
+      if (screen.orientation && 'lock' in screen.orientation) {
+        try {
+          await (screen.orientation as any).lock('landscape');
+        } catch (e) {
+          // Orientation lock may not be supported
+          console.log('Orientation lock not available');
+        }
+      }
+      setIsPresentationMode(true);
+      setShowControls(false);
+      // Auto-hide controls after 2s in presentation mode
+      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+    } catch (e) {
+      console.error('Presentation mode error:', e);
+    }
+  };
+
+  const exitPresentationMode = async () => {
+    setIsPresentationMode(false);
+    setIsAutoPlaying(false);
+    setShowControls(true);
+    // Unlock orientation
+    if (screen.orientation && 'unlock' in screen.orientation) {
+      try {
+        (screen.orientation as any).unlock();
+      } catch (e) {
+        // Ignore
+      }
+    }
+    // Exit fullscreen if still in it
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  // Toggle auto-play
+  const toggleAutoPlay = () => {
+    setIsAutoPlaying(!isAutoPlaying);
+  };
+
   // Download original PDF
   const handleDownload = () => {
     // For now, link to local PDF - can be updated to Cloudinary raw URL
     window.open(`/catalogs/${catalogName}.pdf`, '_blank');
+  };
+
+  // Cycle through view modes
+  const cycleViewMode = () => {
+    if (viewMode === 'carousel') {
+      setViewMode(isLandscape ? 'spread' : 'grid');
+    } else if (viewMode === 'spread') {
+      setViewMode('grid');
+    } else {
+      setViewMode('carousel');
+    }
   };
 
   if (!open) return null;
@@ -360,21 +465,154 @@ export const CloudinaryShowroom: React.FC<CloudinaryShowroomProps> = ({
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <ControlButton onClick={() => setViewMode(v => v === 'carousel' ? 'grid' : 'carousel')}>
-              {viewMode === 'carousel' ? <GridView /> : <ViewCarousel />}
-            </ControlButton>
-            <ControlButton onClick={handleDownload}>
-              <Download />
-            </ControlButton>
-            <ControlButton onClick={toggleFullscreen}>
-              {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
-            </ControlButton>
+          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+            {/* View mode toggle */}
+            <Tooltip title={viewMode === 'carousel' ? 'Vista cuadrícula' : viewMode === 'spread' ? 'Vista cuadrícula' : 'Vista carrusel'}>
+              <ControlButton onClick={cycleViewMode}>
+                {viewMode === 'carousel' ? <GridView /> : viewMode === 'spread' ? <GridView /> : <ViewCarousel />}
+              </ControlButton>
+            </Tooltip>
+
+            {/* Spread view (landscape only) */}
+            {isLandscape && viewMode === 'carousel' && (
+              <Tooltip title="Vista doble página">
+                <ControlButton onClick={() => setViewMode('spread')}>
+                  <ViewColumn />
+                </ControlButton>
+              </Tooltip>
+            )}
+
+            {/* Auto-play controls (only in presentation mode) */}
+            {isPresentationMode && (
+              <>
+                <Tooltip title={isAutoPlaying ? 'Pausar' : 'Reproducir automático'}>
+                  <ControlButton onClick={toggleAutoPlay}>
+                    {isAutoPlaying ? <PauseCircle /> : <PlayCircle />}
+                  </ControlButton>
+                </Tooltip>
+                {isAutoPlaying && (
+                  <Box sx={{ width: 80, mx: 1 }}>
+                    <Slider
+                      value={autoPlaySpeed}
+                      onChange={(_, v) => setAutoPlaySpeed(v as number)}
+                      min={2}
+                      max={15}
+                      step={1}
+                      size="small"
+                      sx={{ color: '#fff' }}
+                    />
+                  </Box>
+                )}
+              </>
+            )}
+
+            <Tooltip title="Descargar PDF">
+              <ControlButton onClick={handleDownload}>
+                <Download />
+              </ControlButton>
+            </Tooltip>
+
+            {/* Presentation mode toggle */}
+            {!isPresentationMode ? (
+              <Tooltip title="Modo presentación (pantalla completa horizontal)">
+                <ControlButton onClick={enterPresentationMode}>
+                  <Slideshow />
+                </ControlButton>
+              </Tooltip>
+            ) : (
+              <Tooltip title="Salir de presentación">
+                <ControlButton onClick={exitPresentationMode}>
+                  <Close />
+                </ControlButton>
+              </Tooltip>
+            )}
+
+            {/* Fullscreen toggle (only when not in presentation mode) */}
+            {!isPresentationMode && (
+              <Tooltip title={isFullscreen ? 'Salir pantalla completa' : 'Pantalla completa'}>
+                <ControlButton onClick={toggleFullscreen}>
+                  {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
+                </ControlButton>
+              </Tooltip>
+            )}
           </Box>
         </Header>
       </Fade>
 
-      {viewMode === 'carousel' ? (
+      {viewMode === 'spread' ? (
+        /* Spread View - Two pages side by side for landscape */
+        <ImageContainer sx={{ flexDirection: 'row', gap: 2, px: 4 }}>
+          {isLoading && (
+            <Box sx={{ position: 'absolute', zIndex: 5 }}>
+              <CircularProgress color="primary" size={40} />
+            </Box>
+          )}
+
+          {/* Left page */}
+          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+            <PageImage
+              key={`${publicId}-${currentPage}-left`}
+              src={getPageUrl(publicId, currentPage, 1000)}
+              alt={`${catalogName} - Página ${currentPage}`}
+              onLoad={() => setIsLoading(false)}
+              style={{
+                opacity: isLoading ? 0.3 : 1,
+                maxHeight: '85vh',
+                maxWidth: '48vw',
+              }}
+            />
+          </Box>
+
+          {/* Right page (if exists) */}
+          {currentPage < numPages && (
+            <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+              <PageImage
+                key={`${publicId}-${currentPage + 1}-right`}
+                src={getPageUrl(publicId, currentPage + 1, 1000)}
+                alt={`${catalogName} - Página ${currentPage + 1}`}
+                style={{
+                  maxHeight: '85vh',
+                  maxWidth: '48vw',
+                }}
+              />
+            </Box>
+          )}
+
+          {/* Navigation for spread view - skip 2 pages at a time */}
+          <Fade in={showControls && currentPage > 1}>
+            <NavButton
+              onClick={() => {
+                setCurrentPage(p => Math.max(1, p - 2));
+                setIsLoading(true);
+              }}
+              disabled={currentPage === 1}
+              sx={{ left: 16 }}
+            >
+              <ChevronLeft sx={{ fontSize: 32 }} />
+            </NavButton>
+          </Fade>
+
+          <Fade in={showControls && currentPage < numPages - 1}>
+            <NavButton
+              onClick={() => {
+                setCurrentPage(p => Math.min(numPages, p + 2));
+                setIsLoading(true);
+              }}
+              disabled={currentPage >= numPages - 1}
+              sx={{ right: 16 }}
+            >
+              <ChevronRight sx={{ fontSize: 32 }} />
+            </NavButton>
+          </Fade>
+
+          {/* Progress bar */}
+          <Fade in={showControls}>
+            <ProgressBar>
+              <ProgressFill sx={{ width: `${(currentPage / numPages) * 100}%` }} />
+            </ProgressBar>
+          </Fade>
+        </ImageContainer>
+      ) : viewMode === 'carousel' ? (
         <ImageContainer>
           {/* Loading indicator */}
           {isLoading && (

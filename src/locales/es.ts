@@ -5,10 +5,11 @@
 export const es = {
   // Navigation
   nav: {
+    home: 'Inicio',
     gallery: 'Galería',
     upload: 'Subir',
     inventory: 'Inventario',
-    ambassadors: 'Embajadores',
+    ambassadors: 'Asesores',
     catalog: 'Catálogo',
     calendar: 'Calendario',
     more: 'Más',
@@ -17,6 +18,16 @@ export const es = {
 
   // Pages
   pages: {
+    home: {
+      title: 'Inicio',
+      subtitle: 'Tierra Madre',
+      welcome: 'Bienvenido',
+      dailyFact: 'Dato del día',
+      newProducts: 'Nuevos productos',
+      spirituality: 'Espiritualidad',
+      investment: 'Inversión',
+      meditation: 'Meditación',
+    },
     gallery: {
       title: 'Galería',
       subtitle: 'Esmeraldas Colombianas',
@@ -54,20 +65,35 @@ export const es = {
     simulator: {
       title: 'Simulador',
     },
+    certificate: {
+      title: 'Certificados',
+    },
   },
 
   // More Tools
   tools: {
+    gallery: {
+      label: 'Galería',
+      subtitle: 'Tu colección de esmeraldas',
+    },
+    upload: {
+      label: 'Subir',
+      subtitle: 'Agregar nuevas esmeraldas',
+    },
+    ambassadors: {
+      label: 'Asesores',
+      subtitle: 'Red de expertos',
+    },
     catalog: {
-      label: 'Catálogo',
+      label: 'Crear Catálogo',
       subtitle: 'Crear PDFs profesionales',
     },
     calendar: {
-      label: 'Calendario',
-      subtitle: 'Planear publicaciones de Instagram',
+      label: 'Instagram',
+      subtitle: 'Planear publicaciones',
     },
     slides: {
-      label: 'Presentaciones',
+      label: 'Crear Presentaciones',
       subtitle: 'Presentaciones con IA',
     },
     normalizer: {
@@ -78,13 +104,13 @@ export const es = {
       label: 'Recibos',
       subtitle: 'Generar facturas',
     },
-    library: {
-      label: 'Show Room',
-      subtitle: 'Sala de exposición premium',
-    },
     simulator: {
       label: 'Simulador de Precios',
       subtitle: 'Calcular valuaciones',
+    },
+    certificate: {
+      label: 'Certificados',
+      subtitle: 'Crear certificados GIA',
     },
   },
 

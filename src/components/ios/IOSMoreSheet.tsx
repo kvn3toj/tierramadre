@@ -12,13 +12,16 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton, Backdrop } from '@mui/material';
 import {
   Close,
+  PhotoLibrary,
+  CloudUpload,
+  People,
   MenuBook,
   CalendarMonth,
   Slideshow,
   AutoFixHigh,
   Receipt,
-  LibraryBooks,
   Calculate,
+  Verified,
 } from '@mui/icons-material';
 
 import { spacing } from '../../design-system/tokens/primitives/spacing';
@@ -36,12 +39,36 @@ export interface MoreToolConfig {
 
 const getMoreTools = (t: any): MoreToolConfig[] => [
   {
+    id: 'gallery',
+    label: t.tools.gallery.label,
+    subtitle: t.tools.gallery.subtitle,
+    icon: PhotoLibrary,
+    route: '/gallery',
+    color: primitiveColors.emerald[500],
+  },
+  {
+    id: 'upload',
+    label: t.tools.upload.label,
+    subtitle: t.tools.upload.subtitle,
+    icon: CloudUpload,
+    route: '/upload',
+    color: '#2196F3',
+  },
+  {
+    id: 'ambassadors',
+    label: t.tools.ambassadors.label,
+    subtitle: t.tools.ambassadors.subtitle,
+    icon: People,
+    route: '/ambassadors',
+    color: '#9C27B0',
+  },
+  {
     id: 'catalog',
     label: t.tools.catalog.label,
     subtitle: t.tools.catalog.subtitle,
     icon: MenuBook,
     route: '/catalog',
-    color: primitiveColors.emerald[500],
+    color: '#FF5722',
   },
   {
     id: 'calendar',
@@ -49,7 +76,7 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     subtitle: t.tools.calendar.subtitle,
     icon: CalendarMonth,
     route: '/calendar',
-    color: '#9C27B0',
+    color: '#E91E63',
   },
   {
     id: 'slides',
@@ -76,20 +103,20 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     color: '#00BCD4',
   },
   {
-    id: 'biblioteca',
-    label: t.tools.library.label,
-    subtitle: t.tools.library.subtitle,
-    icon: LibraryBooks,
-    route: '/biblioteca',
-    color: '#3F51B5',
-  },
-  {
     id: 'simulator',
     label: t.tools.simulator.label,
     subtitle: t.tools.simulator.subtitle,
     icon: Calculate,
     route: '/simulator',
-    color: '#E91E63',
+    color: '#3F51B5',
+  },
+  {
+    id: 'certificate',
+    label: t.tools.certificate.label,
+    subtitle: t.tools.certificate.subtitle,
+    icon: Verified,
+    route: '/certificate',
+    color: '#B48E49',
   },
 ];
 
