@@ -362,15 +362,43 @@ export default function PriceSimulator() {
 
   // Navigate to preview page with quotation data
   const handlePreview = () => {
+    // Validate before navigating
+    if (totalInvestment === 0) {
+      alert('Por favor ingresa al menos un valor de inversión antes de generar la cotización.');
+      return;
+    }
+
+    // Build selected products data for quotation
+    const selectedProductsData = selectedProducts.map(p => {
+      const isInventory = 'item' in p;
+      return {
+        id: isInventory ? p.item : p.id,
+        name: isInventory ? p.nombre : p.name,
+        price: ('priceCOP' in p ? p.priceCOP : 0) || 0,
+        source: isInventory ? 'inventory' : 'gallery',
+      };
+    });
+
     const quotationData = {
+      // Basic info
       productName: productName || 'Esmeralda Natural Colombiana',
       caratWeight,
+
+      // Full investment data with icon IDs for reconstruction
       investments: investments.map(inv => ({
         id: inv.id,
         label: inv.label,
         value: inv.value,
+        icon: inv.id, // Pass icon ID for reconstruction in preview
       })),
       customItems,
+
+      // Multi-select products (if any)
+      selectedProducts: selectedProductsData,
+      multiSelectMode,
+      totalProductsValue,
+
+      // Calculated metrics (frozen at navigation time)
       totalInvestment,
       priceFactor,
       salePrice: pricingMetrics.salePrice,
@@ -378,6 +406,9 @@ export default function PriceSimulator() {
       roi: pricingMetrics.roi,
       profit: pricingMetrics.profit,
       pricePerCarat: pricingMetrics.pricePerCarat,
+
+      // Timestamp for reference
+      createdAt: new Date().toISOString(),
     };
 
     navigate('/simulator/preview', { state: { quotationData } });

@@ -18,6 +18,7 @@ import { brand, brandColors, brandGradients, statusColors, inventoryStatus } fro
 import { surface, surfaceBackgrounds, elevatedSurfaces, glassSurfaces, borderColors, overlayBackgrounds, backdropFilters } from './semantic/surface';
 import { text, textColors, brandText, statusText, linkColors, placeholderText, inverseText } from './semantic/text';
 import { interactive, interactionStates, buttonStates, inputStates, cardStates, toggleStates, selectionStates, listItemStates } from './semantic/interactive';
+import { document, documentColors, goldColors, documentShadows, documentTypography, logoConfig } from './semantic/document';
 
 // Re-export everything
 export { primitiveColors, typography, fontFamilies, fontWeights, iosTextStyles, customTextStyles };
@@ -28,6 +29,7 @@ export { brand, brandColors, brandGradients, statusColors, inventoryStatus };
 export { surface, surfaceBackgrounds, elevatedSurfaces, glassSurfaces, borderColors, overlayBackgrounds, backdropFilters };
 export { text, textColors, brandText, statusText, linkColors, placeholderText, inverseText };
 export { interactive, interactionStates, buttonStates, inputStates, cardStates, toggleStates, selectionStates, listItemStates };
+export { document, documentColors, goldColors, documentShadows, documentTypography, logoConfig };
 
 // Types
 export type { PrimitiveColors } from './primitives/colors';
@@ -39,6 +41,7 @@ export type { Brand } from './semantic/brand';
 export type { Surface } from './semantic/surface';
 export type { Text } from './semantic/text';
 export type { Interactive } from './semantic/interactive';
+export type { Document } from './semantic/document';
 
 /**
  * Complete Token System
@@ -57,6 +60,7 @@ export const tokens = {
   surface,
   text,
   interactive,
+  document,
 } as const;
 
 export type Tokens = typeof tokens;

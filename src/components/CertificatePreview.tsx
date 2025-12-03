@@ -20,6 +20,8 @@ import {
   InputAdornment,
   Slider,
   Chip,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   Award,
@@ -34,18 +36,21 @@ import {
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { documentColors, documentShadows } from '../design-system/tokens';
 
-// Brand colors
+// Brand colors from design system
 const brandColors = {
-  emerald: '#10B981',
-  emeraldDark: '#064E3B',
-  emeraldLight: '#34D399',
-  gold: '#B48E49',
-  goldLight: '#D4AF37',
-  slate: '#0F172A',
-  cream: '#FAF9F6',
-  gray: '#64748B',
+  emerald: documentColors.emerald.primary,      // #00AE7A
+  emeraldDark: documentColors.emerald.deep,     // #006B4B
+  emeraldLight: documentColors.emerald.light,   // #66FFCF
+  gold: documentColors.gold.primary,            // #D4AF37
+  goldLight: documentColors.gold.light,         // #F5D76E
+  background: documentColors.background.container, // #F2F2F7 - Light background
+  cream: documentColors.background.paper,       // #FAF9F6
+  gray: documentColors.text.secondary,          // #6B7A8A
   lightGray: '#F1F5F9',
+  textPrimary: documentColors.text.primary,     // #1C1C1E
+  border: documentColors.border.default,        // #D1D9E0
 };
 
 // Format currency
@@ -118,6 +123,13 @@ interface CertificateData {
 export default function CertificatePreview() {
   const certificateRef = useRef<HTMLDivElement>(null);
 
+  // Snackbar state for export feedback
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({ open: false, message: '', severity: 'success' });
+
   const [certData, setCertData] = useState<CertificateData>({
     certNumber: generateCertNumber(),
     gemName: 'Esmeralda Natural',
@@ -142,29 +154,51 @@ export default function CertificatePreview() {
   const handleExportPDF = async () => {
     if (!certificateRef.current) return;
 
-    const canvas = await html2canvas(certificateRef.current, {
-      scale: 2,
-      backgroundColor: brandColors.slate,
-      useCORS: true,
-    });
+    try {
+      const canvas = await html2canvas(certificateRef.current, {
+        scale: 2,
+        backgroundColor: brandColors.background,
+        useCORS: true,
+      });
 
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pageWidth - 20;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    const xOffset = 10;
-    const yOffset = (pageHeight - imgHeight) / 2;
+      const xOffset = 10;
+      const yOffset = (pageHeight - imgHeight) / 2;
 
-    pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight);
-    pdf.save(`Certificado_${certData.certNumber}.pdf`);
+      pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight);
+      pdf.save(`Certificado_${certData.certNumber}.pdf`);
+
+      // Show success toast
+      setSnackbar({
+        open: true,
+        message: `✅ Certificado ${certData.certNumber} exportado exitosamente`,
+        severity: 'success',
+      });
+    } catch (error) {
+      // Show error toast
+      setSnackbar({
+        open: true,
+        message: '❌ Error al exportar el certificado. Intenta de nuevo.',
+        severity: 'error',
+      });
+      console.error('PDF export error:', error);
+    }
+  };
+
+  // Close snackbar
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
   };
 
   // Print
@@ -195,7 +229,7 @@ export default function CertificatePreview() {
           mb: 4,
           p: 3,
           borderRadius: 4,
-          background: `linear-gradient(135deg, ${brandColors.emeraldDark} 0%, ${brandColors.slate} 100%)`,
+          background: `linear-gradient(135deg, ${brandColors.emeraldDark} 0%, ${brandColors.textPrimary} 100%)`,
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -272,7 +306,7 @@ export default function CertificatePreview() {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
             <Settings size={20} color={brandColors.emerald} />
-            <Typography sx={{ fontWeight: 700, color: brandColors.slate }}>
+            <Typography sx={{ fontWeight: 700, color: brandColors.textPrimary }}>
               Configuración del Certificado
             </Typography>
           </Box>
@@ -451,7 +485,9 @@ export default function CertificatePreview() {
             sx={{
               p: 2,
               borderRadius: 3,
-              bgcolor: brandColors.slate,
+              bgcolor: brandColors.background,
+              border: `1px solid ${brandColors.border}`,
+              boxShadow: documentShadows.paper,
               minHeight: 700,
             }}
           >
@@ -459,17 +495,18 @@ export default function CertificatePreview() {
             <Box
               ref={certificateRef}
               sx={{
-                bgcolor: brandColors.slate,
+                bgcolor: brandColors.background,
                 p: 1.5,
                 borderRadius: 2,
               }}
             >
-              {/* Gold outer border */}
+              {/* Gold outer border with glow */}
               <Box
                 sx={{
                   border: `2px solid ${brandColors.gold}`,
                   borderRadius: 1,
                   p: 0.5,
+                  boxShadow: `0 0 0 1px ${brandColors.goldLight}, ${documentShadows.paper}`,
                 }}
               >
                 {/* Emerald inner border */}
@@ -479,12 +516,13 @@ export default function CertificatePreview() {
                     borderRadius: 0.5,
                   }}
                 >
-                  {/* White certificate area */}
+                  {/* White certificate area with paper effect */}
                   <Box
                     sx={{
                       bgcolor: brandColors.cream,
                       p: 3,
                       minHeight: 650,
+                      boxShadow: 'inset 0 0 30px rgba(0,0,0,0.02)',
                     }}
                   >
                     {/* Certificate Number (top right) */}
@@ -493,7 +531,7 @@ export default function CertificatePreview() {
                         <Typography sx={{ fontSize: '0.6rem', color: brandColors.gray, letterSpacing: 1 }}>
                           CERTIFICADO No.
                         </Typography>
-                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: brandColors.slate }}>
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: brandColors.textPrimary }}>
                           {certData.certNumber}
                         </Typography>
                       </Box>
@@ -609,7 +647,7 @@ export default function CertificatePreview() {
                         </Box>
 
                         <Box>
-                          <Typography sx={{ fontSize: '1.1rem', fontWeight: 800, color: brandColors.slate }}>
+                          <Typography sx={{ fontSize: '1.1rem', fontWeight: 800, color: brandColors.textPrimary }}>
                             {certData.gemName.toUpperCase()}
                           </Typography>
                           <Typography sx={{ fontSize: '0.7rem', color: brandColors.gray }}>
@@ -650,7 +688,7 @@ export default function CertificatePreview() {
                             <Typography sx={{ fontSize: '0.5rem', color: brandColors.gray, fontWeight: 600, letterSpacing: 1 }}>
                               {item.label}
                             </Typography>
-                            <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: brandColors.slate }}>
+                            <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: brandColors.textPrimary }}>
                               {item.value}
                             </Typography>
                             <Typography sx={{ fontSize: '0.5rem', color: brandColors.gray }}>
@@ -667,7 +705,7 @@ export default function CertificatePreview() {
                         <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, color: brandColors.emeraldDark, mb: 0.5 }}>
                           TRATAMIENTO
                         </Typography>
-                        <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: brandColors.slate }}>
+                        <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: brandColors.textPrimary }}>
                           {getTreatmentLabel()?.label}
                         </Typography>
                         <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray }}>
@@ -678,7 +716,7 @@ export default function CertificatePreview() {
                         <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, color: brandColors.emeraldDark, mb: 0.5 }}>
                           CARACTERÍSTICAS
                         </Typography>
-                        <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: brandColors.slate }}>
+                        <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: brandColors.textPrimary }}>
                           Inclusiones "Jardín"
                         </Typography>
                         <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray }}>
@@ -719,7 +757,7 @@ export default function CertificatePreview() {
                         ].map((item) => (
                           <Box key={item} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             <Shield size={10} color={brandColors.emerald} />
-                            <Typography sx={{ fontSize: '0.55rem', color: brandColors.slate }}>
+                            <Typography sx={{ fontSize: '0.55rem', color: brandColors.textPrimary }}>
                               {item}
                             </Typography>
                           </Box>
@@ -764,7 +802,7 @@ export default function CertificatePreview() {
                           <Box
                             key={i}
                             sx={{
-                              bgcolor: (i + Math.floor(i / 5)) % 2 === 0 ? brandColors.slate : 'transparent',
+                              bgcolor: (i + Math.floor(i / 5)) % 2 === 0 ? brandColors.textPrimary : 'transparent',
                               borderRadius: '1px',
                             }}
                           />
@@ -816,6 +854,28 @@ export default function CertificatePreview() {
           </Paper>
         </Box>
       </Box>
+
+      {/* Success/Error Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{
+            width: '100%',
+            fontWeight: 600,
+            borderRadius: 2,
+            boxShadow: documentShadows.elevated,
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

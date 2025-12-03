@@ -116,7 +116,7 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     subtitle: t.tools.certificate.subtitle,
     icon: Verified,
     route: '/certificate',
-    color: '#B48E49',
+    color: '#D4AF37', // Gold from design system
   },
 ];
 
