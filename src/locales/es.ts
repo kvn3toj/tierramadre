@@ -68,6 +68,9 @@ export const es = {
     certificate: {
       title: 'Certificados',
     },
+    cotizacion: {
+      title: 'Cotización',
+    },
   },
 
   // More Tools
@@ -111,6 +114,10 @@ export const es = {
     certificate: {
       label: 'Certificados',
       subtitle: 'Crear certificados GIA',
+    },
+    cotizacion: {
+      label: 'Cotización',
+      subtitle: 'Cotizar desde inventario',
     },
   },
 

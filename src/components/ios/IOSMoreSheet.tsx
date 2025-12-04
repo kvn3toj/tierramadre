@@ -22,6 +22,7 @@ import {
   Receipt,
   Calculate,
   Verified,
+  RequestQuote,
 } from '@mui/icons-material';
 
 import { spacing } from '../../design-system/tokens/primitives/spacing';
@@ -117,6 +118,14 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     icon: Verified,
     route: '/certificate',
     color: '#D4AF37', // Gold from design system
+  },
+  {
+    id: 'cotizacion',
+    label: t.tools.cotizacion.label,
+    subtitle: t.tools.cotizacion.subtitle,
+    icon: RequestQuote,
+    route: '/cotizacion',
+    color: '#7C3AED', // Purple - distinct from other tools
   },
 ];
 
