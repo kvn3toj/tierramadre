@@ -98,16 +98,20 @@ export function useInventory() {
   const getInventoryWithMedia = (): InventoryItem[] => {
     return defaultInventoryData.map(item => {
       const itemMedia = legacyMedia[item.item];
-      const gallery = galleries[item.item];
+      const gallery = galleries[item.item] || [];
 
       // If we have a gallery, use the first item as the main image
-      const mainMedia = gallery?.[0];
+      const mainMedia = gallery[0];
+
+      // Count gallery items (includes legacy media if no gallery)
+      const galleryCount = gallery.length || (itemMedia ? 1 : 0);
 
       return {
         ...item,
         imagen: mainMedia?.url || itemMedia?.url || item.imagen,
         mediaType: mainMedia?.type || itemMedia?.mediaType || item.mediaType || 'image',
         thumbnailUrl: mainMedia?.thumbnailUrl || itemMedia?.thumbnailUrl || item.thumbnailUrl,
+        galleryCount,
       };
     });
   };

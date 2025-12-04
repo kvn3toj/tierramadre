@@ -27,6 +27,22 @@ const getThumbnailUrl = (publicId: string, page: number) => {
   return `https://res.cloudinary.com/${CLOUDINARY_CLOUD}/image/upload/pg_${page},w_120,h_68,c_fill,q_auto,f_auto/${CLOUDINARY_FOLDER}/${publicId}.pdf`;
 };
 
+// LocalStorage key for inventory galleries
+const GALLERY_STORAGE_KEY = 'tierramadre-inventory-gallery';
+
+// Media item interface (matches useInventory)
+interface MediaItem {
+  id: string;
+  url: string;
+  thumbnailUrl?: string;
+  type: 'image' | 'video';
+}
+
+// Product gallery storage structure
+interface ProductGallery {
+  [itemNumber: number]: MediaItem[];
+}
+
 // Preloader state
 interface PreloadState {
   isPreloading: boolean;
@@ -36,6 +52,10 @@ interface PreloadState {
   loadedImages: number;
   currentCatalog: string;
   errors: string[];
+  // Inventory-specific state
+  inventoryPreloading: boolean;
+  inventoryComplete: boolean;
+  inventoryProgress: number;
 }
 
 type PreloadListener = (state: PreloadState) => void;
@@ -49,6 +69,9 @@ class ShowroomPreloader {
     loadedImages: 0,
     currentCatalog: '',
     errors: [],
+    inventoryPreloading: false,
+    inventoryComplete: false,
+    inventoryProgress: 0,
   };
 
   private listeners: Set<PreloadListener> = new Set();
@@ -229,6 +252,104 @@ class ShowroomPreloader {
   }
 
   /**
+   * Preload all inventory media (product images/videos)
+   */
+  async preloadInventoryMedia(): Promise<void> {
+    if (this.state.inventoryPreloading) {
+      console.log('[Preloader] Inventory already preloading...');
+      return;
+    }
+
+    if (this.state.inventoryComplete) {
+      console.log('[Preloader] Inventory already preloaded');
+      return;
+    }
+
+    this.updateState({
+      inventoryPreloading: true,
+      inventoryComplete: false,
+      inventoryProgress: 0,
+    });
+
+    try {
+      // Get galleries from localStorage
+      const galleriesJson = localStorage.getItem(GALLERY_STORAGE_KEY);
+      if (!galleriesJson) {
+        console.log('[Preloader] No inventory galleries found');
+        this.updateState({
+          inventoryPreloading: false,
+          inventoryComplete: true,
+          inventoryProgress: 100,
+        });
+        return;
+      }
+
+      const galleries: ProductGallery = JSON.parse(galleriesJson);
+
+      // Extract all image URLs (skip video URLs, only preload thumbnails for videos)
+      const imageUrls: string[] = [];
+
+      Object.values(galleries).forEach((items: MediaItem[]) => {
+        items.forEach(item => {
+          // For images, preload the main URL
+          if (item.type === 'image' && item.url) {
+            imageUrls.push(item.url);
+          }
+          // For videos, only preload the thumbnail (videos load on demand)
+          if (item.thumbnailUrl) {
+            imageUrls.push(item.thumbnailUrl);
+          }
+        });
+      });
+
+      if (imageUrls.length === 0) {
+        console.log('[Preloader] No inventory images to preload');
+        this.updateState({
+          inventoryPreloading: false,
+          inventoryComplete: true,
+          inventoryProgress: 100,
+        });
+        return;
+      }
+
+      console.log(`[Preloader] Preloading ${imageUrls.length} inventory images...`);
+
+      let loadedCount = 0;
+
+      // Preload in batches of 4
+      const batchSize = 4;
+      for (let i = 0; i < imageUrls.length; i += batchSize) {
+        const batch = imageUrls.slice(i, i + batchSize);
+
+        await Promise.allSettled(
+          batch.map(url => this.preloadImage(url))
+        );
+
+        loadedCount += batch.length;
+
+        this.updateState({
+          inventoryProgress: Math.round((loadedCount / imageUrls.length) * 100),
+        });
+      }
+
+      this.updateState({
+        inventoryPreloading: false,
+        inventoryComplete: true,
+        inventoryProgress: 100,
+      });
+
+      console.log(`[Preloader] Inventory preload complete! ${loadedCount} images`);
+    } catch (error) {
+      console.error('[Preloader] Error preloading inventory:', error);
+      this.updateState({
+        inventoryPreloading: false,
+        inventoryComplete: false,
+        inventoryProgress: 0,
+      });
+    }
+  }
+
+  /**
    * Reset preloader state (for testing)
    */
   reset() {
@@ -244,6 +365,9 @@ class ShowroomPreloader {
       loadedImages: 0,
       currentCatalog: '',
       errors: [],
+      inventoryPreloading: false,
+      inventoryComplete: false,
+      inventoryProgress: 0,
     });
   }
 }
@@ -265,6 +389,7 @@ export function useShowroomPreloader() {
     ...state,
     preloadAll: () => showroomPreloader.preloadAll(),
     preloadCatalog: (id: string) => showroomPreloader.preloadCatalog(id),
+    preloadInventoryMedia: () => showroomPreloader.preloadInventoryMedia(),
     isPreloaded: (url: string) => showroomPreloader.isPreloaded(url),
     reset: () => showroomPreloader.reset(),
   };

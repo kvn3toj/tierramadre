@@ -22,7 +22,9 @@ export default function PinLock({ onUnlock }: PinLockProps) {
     const isAuthenticated = sessionStorage.getItem(STORAGE_KEY);
     if (isAuthenticated === 'true') {
       // Start preloading in background on session restore
-      showroomPreloader.preloadAll().catch(console.error);
+      showroomPreloader.preloadAll()
+        .then(() => showroomPreloader.preloadInventoryMedia())
+        .catch(console.error);
       onUnlock();
     }
   }, [onUnlock]);
@@ -42,8 +44,10 @@ export default function PinLock({ onUnlock }: PinLockProps) {
     if (newPin.length === 4) {
       if (newPin === CORRECT_PIN) {
         sessionStorage.setItem(STORAGE_KEY, 'true');
-        // Start preloading showroom in background immediately
-        showroomPreloader.preloadAll().catch(console.error);
+        // Start preloading in background immediately (showroom then inventory)
+        showroomPreloader.preloadAll()
+          .then(() => showroomPreloader.preloadInventoryMedia())
+          .catch(console.error);
         setTimeout(() => onUnlock(), 300);
       } else {
         setError(true);

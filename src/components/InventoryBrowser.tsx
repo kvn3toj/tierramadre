@@ -34,13 +34,15 @@ import {
   MapPin,
   User,
   FileCheck,
+  Play,
+  Images,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import {
-  inventoryData,
   getInventoryStats,
   getUniqueColors,
 } from '../data/inventory';
+import { useInventory } from '../hooks/useInventory';
 import { InventoryItem, TrustScoreBreakdown } from '../types';
 import { TrustBadgeCompact } from './TrustBadge';
 import CertificationUpload from './CertificationUpload';
@@ -251,6 +253,96 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
         },
       }}
     >
+      {/* Product Image/Video Section */}
+      {item.imagen ? (
+        <Box
+          sx={{
+            height: 140,
+            position: 'relative',
+            overflow: 'hidden',
+            bgcolor: isLight ? '#F9FAFB' : '#292524',
+          }}
+        >
+          {item.mediaType === 'video' ? (
+            // Video with thumbnail and play icon
+            <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
+              <img
+                src={item.thumbnailUrl || item.imagen}
+                alt={item.nombre}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: 48,
+                  height: 48,
+                  borderRadius: '50%',
+                  bgcolor: 'rgba(0, 0, 0, 0.6)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Play size={24} color="white" fill="white" />
+              </Box>
+            </Box>
+          ) : (
+            // Image
+            <img
+              src={item.imagen}
+              alt={item.nombre}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
+            />
+          )}
+
+          {/* Gallery count badge if multiple media items */}
+          {(item.galleryCount ?? 0) > 1 && (
+            <Chip
+              icon={<Images size={14} />}
+              label={item.galleryCount}
+              size="small"
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                bgcolor: 'rgba(0, 0, 0, 0.7)',
+                color: 'white',
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                height: 24,
+                '& .MuiChip-icon': {
+                  color: 'white',
+                },
+              }}
+            />
+          )}
+        </Box>
+      ) : (
+        // Placeholder for items without media
+        <Box
+          sx={{
+            height: 80,
+            bgcolor: isLight ? '#F9FAFB' : '#292524',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Gem size={32} color={isLight ? '#D1D5DB' : '#52525B'} />
+        </Box>
+      )}
+
       {/* Minimal header - Small accent bar + icon (no green blocks - Moksart) */}
       <Box
         sx={{
@@ -608,6 +700,9 @@ export default function InventoryBrowser() {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const navigate = useNavigate();
+
+  // Get inventory with media from hook
+  const { inventory: inventoryData } = useInventory();
 
   // Filters
   const [search, setSearch] = useState('');

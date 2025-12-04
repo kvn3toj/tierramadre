@@ -113,6 +113,12 @@ const receiptThemes = {
 type ReceiptTheme = 'dark' | 'light';
 type DocumentType = 'receipt' | 'invoice';
 
+// Document type labels interface
+interface DocumentTypeLabels {
+  receipt: string;
+  invoice: string;
+}
+
 // Business settings interface
 interface BusinessSettings {
   contactPhone: string;
@@ -120,6 +126,7 @@ interface BusinessSettings {
   nit: string;
   footerMessage: string;
   footerNote: string;
+  documentTypeLabels: DocumentTypeLabels;
 }
 
 export default function ReceiptGenerator() {
@@ -136,6 +143,10 @@ export default function ReceiptGenerator() {
     nit: 'NIT: 900.XXX.XXX-X',
     footerMessage: 'Gracias por su preferencia',
     footerNote: 'Este documento es un comprobante de pago válido. Las esmeraldas Tierra Madre cuentan con certificado de origen y autenticidad.',
+    documentTypeLabels: {
+      receipt: 'Recibo de Compra',
+      invoice: 'Factura',
+    },
   });
 
   const [receipt, setReceipt] = useState<Partial<ReceiptData>>({
@@ -299,9 +310,11 @@ export default function ReceiptGenerator() {
     pdf.setLineWidth(0.3);
     pdf.rect(xOffset, yOffset, imgWidth, imgHeight, 'S');
 
-    const filename = documentType === 'invoice'
-      ? `Factura-${receipt.receiptNumber}.pdf`
-      : `Recibo-${receipt.receiptNumber}.pdf`;
+    // Use custom label for filename, sanitize for filesystem
+    const sanitizedLabel = businessSettings.documentTypeLabels[documentType]
+      .replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s-]/g, '')
+      .replace(/\s+/g, '-');
+    const filename = `${sanitizedLabel}-${receipt.receiptNumber}.pdf`;
     pdf.save(filename);
   };
 
@@ -477,7 +490,7 @@ export default function ReceiptGenerator() {
           </AccordionSummary>
           <AccordionDetails sx={{ bgcolor: '#F9FAFB', borderRadius: 1, mt: 0.5, p: 2 }}>
             <Grid container spacing={{ xs: 1.5, md: 2 }}>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Tipo de Documento</InputLabel>
                   <Select
@@ -485,10 +498,26 @@ export default function ReceiptGenerator() {
                     label="Tipo de Documento"
                     onChange={(e) => setDocumentType(e.target.value as DocumentType)}
                   >
-                    <MenuItem value="receipt">Recibo de Compra</MenuItem>
-                    <MenuItem value="invoice">Factura</MenuItem>
+                    <MenuItem value="receipt">{businessSettings.documentTypeLabels.receipt}</MenuItem>
+                    <MenuItem value="invoice">{businessSettings.documentTypeLabels.invoice}</MenuItem>
                   </Select>
                 </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Nombre del Documento"
+                  value={businessSettings.documentTypeLabels[documentType]}
+                  onChange={(e) => setBusinessSettings({
+                    ...businessSettings,
+                    documentTypeLabels: {
+                      ...businessSettings.documentTypeLabels,
+                      [documentType]: e.target.value,
+                    },
+                  })}
+                  size="small"
+                  placeholder={documentType === 'receipt' ? 'Ej: Recibo de Compra' : 'Ej: Factura'}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -1006,7 +1035,7 @@ export default function ReceiptGenerator() {
                     letterSpacing: '0.1em',
                   }}
                 >
-                  {documentType === 'invoice' ? 'Factura de Venta' : 'Recibo de Compra'}
+                  {businessSettings.documentTypeLabels[documentType]}
                 </Typography>
                 <Typography sx={{ fontSize: '0.85rem', color: theme.text, fontWeight: 500 }}>
                   {receipt.receiptNumber}
