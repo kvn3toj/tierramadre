@@ -111,6 +111,7 @@ const generateQuotationNumber = (): string => {
 // Generate product URL slug from name
 const generateProductSlug = (name: string): string => {
   return name
+    .replace(/^[A-Z]:[A-Z]\s*/i, '') // Remove prefixes like "L:A ", "L:B ", etc.
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // Remove accents
