@@ -77,7 +77,7 @@ const CLOUDINARY_UPLOAD_PRESET = 'tierramadre';
 
 // Upload to Cloudinary - direct browser upload, no size limits
 const uploadToCloudinary = async (file: File, itemNumber: number): Promise<string> => {
-  const isVideo = file.type.startsWith('video/');
+  const isVideo = isVideoFile(file);
   const resourceType = isVideo ? 'video' : 'image';
 
   const formData = new FormData();
