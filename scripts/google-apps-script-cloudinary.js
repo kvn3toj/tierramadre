@@ -99,18 +99,29 @@ function showSelectedImage() {
 
 /**
  * Inserts the uploaded image as a clickable inline preview
- * Also saves the URL in a new column Q (URL Imagen) for API access
+ * Also saves the URL in column S (URL Imagen) for API access
  * Click on the image to open the full-size URL
  *
  * ACTUAL Sheet structure (verified 2024-12-09):
- * J = Medidas (tipo: "largo Ancho")
- * K = Medidas (valores: "0.0/0.0") - DO NOT OVERWRITE!
+ * A = (vacío)
+ * B = Item
+ * C = FECHA INGRESO
+ * D = Nombre
+ * E = Peso (ct)
+ * F = Color
+ * G = Calidad
+ * H = Cant.
+ * I = Talla
+ * J = Medidas (tipo)
+ * K = Medidas (valores) - DO NOT OVERWRITE!
  * L = Imagen (visual IMAGE formula)
  * M = costo T.madre
  * N = Precio COP
  * O = UBICACION
  * P = ASESOR
- * Q = URL Imagen (NEW - plain text for API)
+ * Q = ESTADO - DO NOT OVERWRITE!
+ * R = QR - DO NOT OVERWRITE!
+ * S = URL Imagen (NEW - plain text for API)
  */
 function insertImageUrl(url) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
@@ -122,9 +133,9 @@ function insertImageUrl(url) {
   // IMAGE mode 1 = fit to cell, maintaining aspect ratio
   cell.setFormula(`=HYPERLINK("${url}", IMAGE("${url}", 1))`);
 
-  // Save URL as plain text in column Q (17) for API access
-  // Column K has Medidas data - DO NOT use it!
-  const URL_COLUMN = 17; // Column Q (NEW column for URLs)
+  // Save URL as plain text in column S (19) for API access
+  // Q = ESTADO, R = QR - DO NOT overwrite these!
+  const URL_COLUMN = 19; // Column S (NEW column for URLs)
   const urlCell = sheet.getRange(row, URL_COLUMN);
   urlCell.setValue(url);
 
