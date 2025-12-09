@@ -45,7 +45,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
         // Exclude large catalog images from precache
         globIgnores: ['**/catalog-media/**', '**/node_modules/**'],
-        maximumFileSizeToCacheInBytes: 2 * 1024 * 1024, // 2MB max
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3MB max (main JS bundle is ~2.5MB)
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
