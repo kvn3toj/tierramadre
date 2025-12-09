@@ -1,7 +1,7 @@
 /**
  * Vercel Serverless Function - Get Asesores from Google Sheets
  *
- * Reads the list of asesores from Hoja 1, column Q
+ * Extracts unique asesores from the inventory data (column P - Asesor)
  * and returns them as JSON for the ambassadors page.
  */
 
@@ -9,8 +9,6 @@ import { google } from 'googleapis';
 
 // Sheet configuration
 const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
-const ASESORES_SHEET = 'Hoja 1';
-const ASESORES_COLUMN = 'Q';
 
 /**
  * Initialize Google Sheets API with service account credentials
@@ -61,23 +59,57 @@ export default async function handler(req, res) {
   try {
     const sheets = getSheetsClient();
 
-    // Read asesores from column Q in Hoja 1
+    // Get sheet metadata to find correct sheet name
+    const metadata = await sheets.spreadsheets.get({
+      spreadsheetId: SPREADSHEET_ID,
+    });
+
+    const sheetNames = metadata.data.sheets.map(s => s.properties.title);
+
+    // Find inventory sheet
+    const inventorySheet = sheetNames.find(name =>
+      name.toLowerCase().includes('inventario') ||
+      name.toLowerCase().includes('inventory')
+    ) || sheetNames[0];
+
+    // Read all data from inventory sheet to extract asesores
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `'${ASESORES_SHEET}'!${ASESORES_COLUMN}:${ASESORES_COLUMN}`,
+      range: `'${inventorySheet}'!A:Z`,
     });
 
     const rows = response.data.values || [];
 
-    // Filter out empty values and header, get unique names
-    const asesores = rows
-      .flat()
-      .filter((name, index) => {
-        // Skip header row and empty values
-        if (index === 0) return false;
-        if (!name || name.trim() === '') return false;
-        return true;
-      })
+    if (!rows || rows.length === 0) {
+      return res.status(200).json({
+        success: true,
+        asesores: [],
+        message: 'No data found in spreadsheet',
+        availableSheets: sheetNames
+      });
+    }
+
+    // Find asesor column index from header row
+    const headers = rows[0].map(h => h ? h.toLowerCase().trim() : '');
+    const asesorColumnIndex = headers.findIndex(h =>
+      h.includes('asesor') || h.includes('advisor') || h.includes('vendedor')
+    );
+
+    if (asesorColumnIndex === -1) {
+      return res.status(200).json({
+        success: true,
+        asesores: [],
+        message: 'No asesor column found in inventory',
+        headers: rows[0],
+        availableSheets: sheetNames
+      });
+    }
+
+    // Extract unique asesores from inventory data
+    const dataRows = rows.slice(1);
+    const asesores = dataRows
+      .map(row => row[asesorColumnIndex])
+      .filter(name => name && name.trim() !== '')
       .map(name => name.trim())
       .filter((name, index, self) => self.indexOf(name) === index) // Unique
       .sort((a, b) => a.localeCompare(b, 'es'));
@@ -93,6 +125,7 @@ export default async function handler(req, res) {
       success: true,
       asesores: asesoresData,
       count: asesoresData.length,
+      sheetName: inventorySheet,
       lastUpdated: new Date().toISOString()
     });
 
