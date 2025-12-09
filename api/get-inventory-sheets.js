@@ -99,7 +99,14 @@ function mapRowToInventoryItem(row, headers) {
       const index = normalizedHeaders.findIndex(header => {
         // Skip empty headers to avoid false matches
         if (!header) return false;
-        return header === search || header.includes(search) || search.includes(header);
+        // Exact match first
+        if (header === search) return true;
+        // For multi-word searches (like 'url imagen'), require exact match or header contains full search
+        if (search.includes(' ')) {
+          return header.includes(search) || header === search;
+        }
+        // Single word: allow partial matches
+        return header.includes(search) || search.includes(header);
       });
       if (index >= 0 && row[index] !== undefined && row[index] !== '') {
         return row[index];
