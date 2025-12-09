@@ -24,6 +24,7 @@ import { AmbassadorDirectory, AmbassadorProfile } from './components/ambassador'
 import { AmbassadorProfile as AmbassadorProfileType } from './types/ambassador';
 import { initPWA } from './utils/pwa';
 import Home from './components/Home';
+import DesignSystemPage from './pages/DesignSystemPage';
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'gallery' | 'upload' | 'catalog' | 'calendar' | 'slides' | 'normalizer' | 'receipts' | 'biblioteca' | 'simulator' | 'inventory' | 'ambassadors' | 'certificate' | 'cotizacion';
@@ -89,6 +90,7 @@ function AppContent() {
           <Route path="/cotizacion" element={<CotizacionGenerator />} />
           <Route path="/inventory" element={<InventoryBrowser />} />
           <Route path="/product/:itemId" element={<ProductDetail />} />
+          <Route path="/design-system" element={<DesignSystemPage />} />
           <Route
             path="/ambassadors"
             element={
