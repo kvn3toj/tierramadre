@@ -215,7 +215,8 @@ export default async function handler(req, res) {
     const newRowNumber = updatedRows.data.values?.length || 2;
 
     // Generate and add QR formula in column R for the new row
-    const qrFormula = `=IF(C${newRowNumber}<>"",IMAGE("https://api.qrserver.com/v1/create-qr-code/?size=100x100&color=1B5E20&data=" & ENCODEURL("https://tierramadre.co/products/" & LOWER(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(C${newRowNumber},"L:","")," ","-"),"--","-")))),"")`;
+    // QR points to Tierra Madre Studio app: /product/{itemId}
+    const qrFormula = `=IF(A${newRowNumber}<>"",IMAGE("https://api.qrserver.com/v1/create-qr-code/?size=100x100&color=1B5E20&data=" & ENCODEURL("https://tierra-madre-studio.vercel.app/product/" & A${newRowNumber})),"")`;
 
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
