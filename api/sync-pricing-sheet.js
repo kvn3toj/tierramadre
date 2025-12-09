@@ -37,9 +37,9 @@ const COLORS = {
 
 // Dropdown options for data validation
 const DROPDOWN_OPTIONS = {
-  // Pricing sheet
-  puntuacionJurado: [0.1, 0.15, 0.2, 0.25, 0.3],
-  factorCalidad: [0.2, 0.3, 0.4, 0.5, 0.6],
+  // Pricing sheet - includes all values actually used in the sheet
+  puntuacionJurado: [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5],
+  factorCalidad: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
   // Inventory sheet
   color: [
     'Verde Natural', 'Verde Limón', 'Verde Oscuro', 'Verde Claro',
