@@ -84,6 +84,9 @@ const CORRECTIONS = {
     // Marquesa
     'marquesa': 'Marquesa',
     'MARQUESA': 'Marquesa',
+
+    // N/A for jewelry without emerald shape
+    '0': 'N/A',
   },
 
   color: {
