@@ -44,6 +44,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { useEmeralds } from '../hooks/useEmeralds';
+import { usePriceCalculation, PRICING_TIERS } from '../hooks/usePriceCalculation';
 import { Emerald, InventoryItem } from '../types';
 import { inventoryData } from '../data/inventory';
 import {
@@ -54,8 +55,8 @@ import {
 } from './PremiumHeader';
 import { formatFullCurrency as formatCurrency, formatPercent } from '../utils/formatting';
 
-// Investment item interface
-interface InvestmentItem {
+// Investment item with icon (component-specific, extends hook's type)
+interface InvestmentItemWithIcon {
   id: string;
   label: string;
   icon: React.ReactNode;
@@ -65,13 +66,15 @@ interface InvestmentItem {
   placeholder?: string;
 }
 
-// Pricing tier presets with brand colors
-const PRICING_TIERS = [
-  { factor: 2.0, margin: 50, roi: 100, label: 'Mínimo', color: '#64748B' },
-  { factor: 2.5, margin: 60, roi: 150, label: 'Base', color: '#3B82F6' },
-  { factor: 3.0, margin: 66.7, roi: 200, label: 'Ideal', color: studioColors.emerald },
-  { factor: 3.5, margin: 71.4, roi: 250, label: 'Premium', color: studioColors.gold },
-];
+// Icon mapping for investment items
+const INVESTMENT_ICONS: Record<string, React.ReactNode> = {
+  emerald: <Gem size={18} />,
+  gold: <Award size={18} />,
+  silver: <CircleDollarSign size={18} />,
+  setting: <Sparkles size={18} />,
+  certification: <FileCheck size={18} />,
+  packaging: <Gift size={18} />,
+};
 
 // Product source type
 type ProductSource = 'gallery' | 'inventory';
@@ -82,14 +85,36 @@ export default function PriceSimulator() {
   // Get emeralds from gallery
   const { emeralds } = useEmeralds();
 
-  // Selected product from gallery or inventory
+  // Pricing calculation hook
+  const {
+    investments,
+    updateInvestment,
+    customItems,
+    updateCustomItem,
+    addCustomItem,
+    selectedProducts,
+    addProduct,
+    removeProduct,
+    clearProducts,
+    totalProductsValue,
+    priceFactor,
+    setPriceFactor,
+    currentTier,
+    caratWeight,
+    setCaratWeight,
+    totalInvestment: hookTotalInvestment,
+    pricingMetrics,
+    marginProgress,
+    resetAll,
+  } = usePriceCalculation({ initialFactor: 1.9 });
+
+  // Selected product from gallery or inventory (UI state)
   const [selectedEmerald, setSelectedEmerald] = useState<Emerald | null>(null);
   const [selectedInventoryItem, setSelectedInventoryItem] = useState<InventoryItem | null>(null);
   const [productSource, setProductSource] = useState<ProductSource>('gallery');
 
   // Multi-select mode for collections (enabled by default)
   const [multiSelectMode, setMultiSelectMode] = useState(true);
-  const [selectedProducts, setSelectedProducts] = useState<(Emerald | InventoryItem)[]>([]);
 
   // Inventory filters
   const [statusFilter, setStatusFilter] = useState<string>('todas');
@@ -125,105 +150,22 @@ export default function PriceSimulator() {
     return typeFilteredInventory.filter(item => item.talla === shapeFilter);
   }, [typeFilteredInventory, shapeFilter]);
 
-  // Investment items state
-  const [investments, setInvestments] = useState<InvestmentItem[]>([
-    { id: 'emerald', label: 'Valor de la Esmeralda', icon: <Gem size={18} />, value: 300000, unit: 'Precio Total', unitLabel: 'precio total', placeholder: '0' },
-    { id: 'gold', label: 'Oro (Estructura)', icon: <Award size={18} />, value: 0, unit: 'Precio Total', unitLabel: 'precio total', placeholder: '0' },
-    { id: 'silver', label: 'Plata (Estructura)', icon: <CircleDollarSign size={18} />, value: 320000, unit: 'Precio Total', unitLabel: 'precio total', placeholder: '0' },
-    { id: 'setting', label: 'Engaste', icon: <Sparkles size={18} />, value: 60000, placeholder: '0' },
-    { id: 'certification', label: 'Certificación', icon: <FileCheck size={18} />, value: 0, placeholder: '0' },
-    { id: 'packaging', label: 'Empaque', icon: <Gift size={18} />, value: 0, placeholder: '0' },
-  ]);
-
-  // Custom items
-  const [customItems, setCustomItems] = useState<{ label: string; value: number }[]>([
-    { label: 'Otro', value: 50000 },
-  ]);
-
-  // Price factor slider
-  const [priceFactor, setPriceFactor] = useState(1.9);
-
-  // Show advanced options
+  // UI-only state
   const [showAdvanced, setShowAdvanced] = useState(false);
-
-  // Product name for quotation
   const [productName, setProductName] = useState('');
 
-  // Carat weight for price per carat calculation
-  const [caratWeight, setCaratWeight] = useState<number>(0);
+  // Investments with icons (add icons to hook's investments)
+  const investmentsWithIcons: InvestmentItemWithIcon[] = investments.map(inv => ({
+    ...inv,
+    icon: INVESTMENT_ICONS[inv.id] || <Plus size={18} />,
+  }));
 
-  // Calculate total investment from multiple products
-  const totalProductsValue = useMemo(() => {
-    if (!multiSelectMode || selectedProducts.length === 0) return 0;
+  // Total investment adjusted for multiSelectMode
+  const totalInvestment = multiSelectMode ? hookTotalInvestment : (hookTotalInvestment - totalProductsValue);
 
-    return selectedProducts.reduce((sum, product) => {
-      if ('priceCOP' in product && product.priceCOP) {
-        return sum + product.priceCOP;
-      }
-      return sum;
-    }, 0);
-  }, [multiSelectMode, selectedProducts]);
-
-  // Calculate total investment
-  const totalInvestment = useMemo(() => {
-    const baseTotal = investments.reduce((sum, item) => sum + item.value, 0);
-    const customTotal = customItems.reduce((sum, item) => sum + item.value, 0);
-    const productsTotal = multiSelectMode ? totalProductsValue : 0;
-    return baseTotal + customTotal + productsTotal;
-  }, [investments, customItems, multiSelectMode, totalProductsValue]);
-
-  // Calculate pricing metrics
-  const pricingMetrics = useMemo(() => {
-    const salePrice = totalInvestment * priceFactor;
-    const margin = ((salePrice - totalInvestment) / salePrice) * 100;
-    const roi = ((salePrice - totalInvestment) / totalInvestment) * 100;
-    const profit = salePrice - totalInvestment;
-    const pricePerCarat = caratWeight > 0 ? salePrice / caratWeight : 0;
-
-    return {
-      salePrice,
-      margin,
-      roi,
-      profit,
-      pricePerCarat,
-    };
-  }, [totalInvestment, priceFactor, caratWeight]);
-
-  // Get tier based on current factor
-  const currentTier = useMemo(() => {
-    return PRICING_TIERS.reduce((closest, tier) => {
-      return Math.abs(tier.factor - priceFactor) < Math.abs(closest.factor - priceFactor)
-        ? tier
-        : closest;
-    }, PRICING_TIERS[0]);
-  }, [priceFactor]);
-
-  // Update investment value
-  const updateInvestment = (id: string, value: number) => {
-    setInvestments(prev =>
-      prev.map(item => (item.id === id ? { ...item, value } : item))
-    );
-  };
-
-  // Update custom item
-  const updateCustomItem = (index: number, field: 'label' | 'value', value: string | number) => {
-    setCustomItems(prev =>
-      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
-    );
-  };
-
-  // Add custom item
-  const addCustomItem = () => {
-    setCustomItems(prev => [...prev, { label: 'Otro', value: 0 }]);
-  };
-
-  // Reset all values
+  // Reset handler that also clears local UI state
   const resetValues = () => {
-    setInvestments(prev =>
-      prev.map(item => ({ ...item, value: 0 }))
-    );
-    setCustomItems([{ label: 'Otro', value: 0 }]);
-    setPriceFactor(2.5);
+    resetAll();
     setProductName('');
     setSelectedEmerald(null);
   };
@@ -231,8 +173,8 @@ export default function PriceSimulator() {
   // Handle emerald selection from gallery
   const handleEmeraldSelect = (emerald: Emerald | null) => {
     if (multiSelectMode && emerald) {
-      // Add to collection
-      handleAddProduct(emerald);
+      // Add to collection (using hook's addProduct)
+      addProduct(emerald);
       // Clear the input and selection to allow adding more products
       setProductName('');
       setSelectedEmerald(null);
@@ -259,8 +201,8 @@ export default function PriceSimulator() {
   // Handle inventory selection
   const handleInventorySelect = (item: InventoryItem | null) => {
     if (multiSelectMode && item) {
-      // Add to collection
-      handleAddProduct(item);
+      // Add to collection (using hook's addProduct)
+      addProduct(item);
       // Clear the input and selection to allow adding more products
       setProductName('');
       setSelectedInventoryItem(null);
@@ -302,36 +244,18 @@ export default function PriceSimulator() {
     }
   };
 
-  // Add product to multi-select collection
-  const handleAddProduct = (product: Emerald | InventoryItem) => {
-    const productId = 'item' in product ? product.item : product.id;
-    const isAlreadyAdded = selectedProducts.some(p =>
-      ('item' in p ? p.item : p.id) === productId
-    );
-
-    if (!isAlreadyAdded) {
-      setSelectedProducts(prev => [...prev, product]);
-    }
-  };
-
-  // Remove product from multi-select collection
-  const handleRemoveProduct = (product: Emerald | InventoryItem) => {
-    const productId = 'item' in product ? product.item : product.id;
-    setSelectedProducts(prev =>
-      prev.filter(p => ('item' in p ? p.item : p.id) !== productId)
-    );
-  };
+  // Note: handleAddProduct and handleRemoveProduct are now provided by hook as addProduct/removeProduct
 
   // Toggle multi-select mode
   const toggleMultiSelectMode = () => {
     setMultiSelectMode(!multiSelectMode);
     if (!multiSelectMode) {
       // Entering multi-select mode
-      setSelectedProducts([]);
+      clearProducts();
       setProductName('Colección de Productos');
     } else {
       // Exiting multi-select mode
-      setSelectedProducts([]);
+      clearProducts();
     }
   };
 
@@ -400,7 +324,7 @@ export default function PriceSimulator() {
     navigate('/simulator/preview', { state: { quotationData } });
   };
 
-  const marginProgress = Math.min((pricingMetrics.margin / 75) * 100, 100);
+  // Note: marginProgress is now provided by usePriceCalculation hook
 
   return (
     <Box sx={{
@@ -1124,7 +1048,7 @@ export default function PriceSimulator() {
                           </Box>
                           <IconButton
                             size="small"
-                            onClick={() => handleRemoveProduct(product)}
+                            onClick={() => removeProduct(product)}
                             sx={{
                               color: studioColors.textMuted,
                               '&:hover': { color: '#EF4444', bgcolor: alpha('#EF4444', 0.1) },
@@ -1199,7 +1123,7 @@ export default function PriceSimulator() {
             </Box>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {investments.map((item) => (
+              {investmentsWithIcons.map((item) => (
                 <Box key={item.id}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.75 }}>
                     <Box sx={{ color: studioColors.textSecondary }}>{item.icon}</Box>

@@ -31,13 +31,10 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
-import {
-  getInventoryStats,
-  getUniqueColors,
-} from '../data/inventory';
+import { getInventoryStats } from '../data/inventory';
 import { useInventory } from '../hooks/useInventory';
+import { useInventoryFiltering, type StatusFilter, type TypeFilter, type SortOption } from '../hooks/useInventoryFiltering';
 import { InventoryItem, TrustScoreBreakdown } from '../types';
-import { fuzzyMatch } from '../utils/fuzzySearch';
 import CertificationUpload from './CertificationUpload';
 import AddToInventoryModal from './AddToInventoryModal';
 import { calculateTrustScore } from '../utils/trustScore';
@@ -57,16 +54,29 @@ export default function InventoryBrowser() {
   // Get inventory with media from hook
   const { inventory: inventoryData } = useInventory();
 
-  // Filters
-  const [search, setSearch] = useState('');
-  const [colorFilter, setColorFilter] = useState<string>('all');
-  const [qualityFilter, setQualityFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'loose' | 'jewelry'>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold'>('all');
-  const [shapeFilter, setShapeFilter] = useState<string>('all');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000000]);
+  // Filtering hook - handles all filter state and computed values
+  const {
+    filters,
+    setSearch,
+    setColorFilter,
+    setQualityFilter,
+    setTypeFilter,
+    setStatusFilter,
+    setShapeFilter,
+    setPriceRange,
+    setSortBy,
+    clearFilters,
+    hasFilters,
+    sortedInventory,
+    filteredStats,
+    filterOptions,
+  } = useInventoryFiltering({ inventory: inventoryData });
+
+  // Destructure filter values for convenience
+  const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy } = filters;
+
+  // UI-only state (not part of filtering)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState<string>('price-desc');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Certification dialog state
@@ -100,29 +110,11 @@ export default function InventoryBrowser() {
     }
   };
 
-  // Get filter options
-  const colors = getUniqueColors();
+  // Stats for header (separate from filtering)
   const stats = getInventoryStats();
 
-  // Get unique shapes and qualities
-  const shapes = useMemo(() => {
-    const uniqueShapes = new Set(inventoryData.map(item => item.talla).filter(Boolean));
-    return Array.from(uniqueShapes).sort();
-  }, []);
-
-  const qualities = useMemo(() => {
-    const uniqueQualities = new Set(inventoryData.map(item => item.calidad).filter(Boolean));
-    return Array.from(uniqueQualities).sort();
-  }, []);
-
-  // Get price range from inventory
-  const priceMinMax = useMemo(() => {
-    const prices = inventoryData.map(item => item.precioCOP).filter(p => p > 0);
-    return {
-      min: Math.min(...prices),
-      max: Math.max(...prices)
-    };
-  }, []);
+  // Filter options from hook for convenience
+  const { colors, shapes, qualities, priceMinMax } = filterOptions;
 
   // Calculate trust scores for all items (memoized)
   const itemTrustScores = useMemo(() => {
@@ -155,96 +147,8 @@ export default function InventoryBrowser() {
     setSelectedItem(null);
   }, [selectedItem]);
 
-  // Filter inventory
-  const filteredInventory = useMemo(() => {
-    return inventoryData.filter(item => {
-      // Status filter
-      const matchesStatus =
-        statusFilter === 'all' ||
-        (statusFilter === 'available' && item.estado === 'DISPONIBLE') ||
-        (statusFilter === 'sold' && item.estado === 'VENDIDA');
-
-      if (!matchesStatus) return false;
-
-      // Smart search: exact/contains for short queries, fuzzy for longer with typos
-      const matchesSearch =
-        !search ||
-        fuzzyMatch(item.nombre, search) ||
-        fuzzyMatch(item.color, search) ||
-        fuzzyMatch(item.calidad, search) ||
-        item.item.toString().includes(search.trim());
-
-      const matchesColor = colorFilter === 'all' || item.color === colorFilter;
-      const matchesQuality = qualityFilter === 'all' || item.calidad === qualityFilter;
-      const matchesType =
-        typeFilter === 'all' ||
-        (typeFilter === 'loose' && !item.isJewelry) ||
-        (typeFilter === 'jewelry' && item.isJewelry);
-      const matchesShape = shapeFilter === 'all' || item.talla === shapeFilter;
-      const matchesPrice = item.precioCOP >= priceRange[0] && item.precioCOP <= priceRange[1];
-
-      return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice;
-    });
-  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange]);
-
-  // Sort inventory based on selected option
-  const sortedInventory = useMemo(() => {
-    const sorted = [...filteredInventory];
-
-    switch (sortBy) {
-      case 'name-asc':
-        return sorted.sort((a, b) => a.nombre.localeCompare(b.nombre));
-      case 'name-desc':
-        return sorted.sort((a, b) => b.nombre.localeCompare(a.nombre));
-      case 'price-asc':
-        return sorted.sort((a, b) => a.precioCOP - b.precioCOP);
-      case 'price-desc':
-        return sorted.sort((a, b) => b.precioCOP - a.precioCOP);
-      case 'quality-premium':
-        return sorted.sort((a, b) => {
-          const qualityOrder: Record<string, number> = {
-            'SuperFina': 4,
-            'Fina': 3,
-            'Superior': 2,
-            'Comercial': 1,
-          };
-          const aScore = qualityOrder[a.calidad.split(' ').pop() || ''] || 0;
-          const bScore = qualityOrder[b.calidad.split(' ').pop() || ''] || 0;
-          return bScore - aScore;
-        });
-      case 'item-number':
-        return sorted.sort((a, b) => a.item - b.item);
-      case 'newest':
-        return sorted.sort((a, b) => {
-          // Parse dates in format "20-nov-2025"
-          const parseDate = (dateStr: string) => {
-            if (!dateStr) return 0;
-            return new Date(dateStr).getTime();
-          };
-          return parseDate(b.fechaIngreso) - parseDate(a.fechaIngreso);
-        });
-      default:
-        return sorted.sort((a, b) => b.precioCOP - a.precioCOP);
-    }
-  }, [filteredInventory, sortBy]);
-
-  // Calculate filtered stats
-  const filteredStats = useMemo(() => {
-    const totalValue = filteredInventory.reduce((sum, i) => sum + i.precioCOP, 0);
-    return { count: filteredInventory.length, totalValue };
-  }, [filteredInventory]);
-
-  const clearFilters = () => {
-    setSearch('');
-    setColorFilter('all');
-    setQualityFilter('all');
-    setTypeFilter('all');
-    setStatusFilter('all');
-    setShapeFilter('all');
-    setPriceRange([priceMinMax.min, priceMinMax.max]);
-  };
-
-  const hasFilters = search || colorFilter !== 'all' || qualityFilter !== 'all' || typeFilter !== 'all' || statusFilter !== 'all' || shapeFilter !== 'all' || priceRange[0] !== priceMinMax.min || priceRange[1] !== priceMinMax.max;
+  // Note: filteredInventory, sortedInventory, filteredStats, clearFilters, hasFilters
+  // are now provided by useInventoryFiltering hook
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
@@ -380,7 +284,7 @@ export default function InventoryBrowser() {
           <FormControl size="small" sx={{ minWidth: 130 }}>
             <Select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'available' | 'sold')}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
               displayEmpty
               sx={{ borderRadius: 2 }}
             >
@@ -409,7 +313,7 @@ export default function InventoryBrowser() {
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <Select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
               displayEmpty
               sx={{ borderRadius: 2 }}
             >
@@ -427,7 +331,7 @@ export default function InventoryBrowser() {
           <FormControl size="small" sx={{ minWidth: 120 }}>
             <Select
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as 'all' | 'loose' | 'jewelry')}
+              onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
               displayEmpty
               sx={{ borderRadius: 2 }}
             >
