@@ -99,12 +99,18 @@ function showSelectedImage() {
 
 /**
  * Inserts the uploaded image as a clickable inline preview
- * Also saves the URL in column K (URL Imagen) for API access
+ * Also saves the URL in a new column Q (URL Imagen) for API access
  * Click on the image to open the full-size URL
  *
- * Sheet structure:
- * K = URL Imagen (plain text for API)
+ * ACTUAL Sheet structure (verified 2024-12-09):
+ * J = Medidas (tipo: "largo Ancho")
+ * K = Medidas (valores: "0.0/0.0") - DO NOT OVERWRITE!
  * L = Imagen (visual IMAGE formula)
+ * M = costo T.madre
+ * N = Precio COP
+ * O = UBICACION
+ * P = ASESOR
+ * Q = URL Imagen (NEW - plain text for API)
  */
 function insertImageUrl(url) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
@@ -116,11 +122,17 @@ function insertImageUrl(url) {
   // IMAGE mode 1 = fit to cell, maintaining aspect ratio
   cell.setFormula(`=HYPERLINK("${url}", IMAGE("${url}", 1))`);
 
-  // Save URL as plain text in column K (index 11) for API access
-  // This avoids overwriting price data in column M
-  const URL_COLUMN = 11; // Column K
+  // Save URL as plain text in column Q (17) for API access
+  // Column K has Medidas data - DO NOT use it!
+  const URL_COLUMN = 17; // Column Q (NEW column for URLs)
   const urlCell = sheet.getRange(row, URL_COLUMN);
   urlCell.setValue(url);
+
+  // Add header if first time using this column
+  const headerCell = sheet.getRange(1, URL_COLUMN);
+  if (!headerCell.getValue()) {
+    headerCell.setValue('URL Imagen');
+  }
 
   // Adjust row height to show preview better (60px)
   sheet.setRowHeight(row, 60);
@@ -140,12 +152,15 @@ function insertImageUrl(url) {
 }
 
 /**
- * Gets the product name from the same row (column C)
+ * Gets the product name from the same row (column D = Nombre)
+ *
+ * Actual structure:
+ * B = Item, C = FECHA INGRESO, D = Nombre
  */
 function getProductName() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const row = sheet.getActiveCell().getRow();
-  const nameCell = sheet.getRange(row, 3); // Column C = Nombre
+  const nameCell = sheet.getRange(row, 4); // Column D = Nombre
   return nameCell.getValue() || `producto_${row}`;
 }
 

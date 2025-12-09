@@ -111,8 +111,9 @@ function mapRowToInventoryItem(row, headers) {
   const peso = getValue('peso', 'peso (ct)', 'weight', 'quilates', 'ct');
   const pesoData = parsePeso(peso);
 
-  // Get image URL (may be in different columns like K, L, or labeled)
-  const imageUrl = getValue('imagen', 'image', 'foto', 'photo', 'url imagen', 'image url', 'imagen url') || '';
+  // Get image URL from column Q (URL Imagen) - plain text URL for API
+  // Column L contains IMAGE() formulas which don't return URLs when read via API
+  const imageUrl = getValue('url imagen', 'image url', 'imagen url', 'imagen', 'image', 'foto', 'photo') || '';
 
   return {
     item: parseInt(getValue('item', '#', 'numero', 'no.') || 0),
