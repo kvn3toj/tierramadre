@@ -33,6 +33,7 @@ import {
   CTATemplate,
 } from '../templates/MasterclassTemplates';
 import { ThankYouTemplate } from '../templates';
+import SmartSlideImage from './SmartSlideImage';
 
 // Template mapping for generated slides
 const SLIDE_TEMPLATES = [
@@ -432,15 +433,10 @@ Cada número será un slide separado.`}
                     }}
                   >
                     {slide.imageUrl && (
-                      <Box
-                        component="img"
+                      <SmartSlideImage
                         src={slide.imageUrl}
                         alt={slide.title}
-                        sx={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                        }}
+                        slideIndex={idx}
                       />
                     )}
                     <Box
