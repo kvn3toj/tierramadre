@@ -45,6 +45,24 @@ import { compressImage } from '../utils/imageNormalizer';
 import { saveVideo, extractVideoThumbnail } from '../utils/videoStorage';
 import MediaPreview from './MediaPreview';
 
+// Helper to check if file is an image (including HEIC which some browsers don't recognize)
+const isImageFile = (file: File): boolean => {
+  if (file.type.startsWith('image/')) return true;
+  // Check by extension for HEIC/HEIF (some browsers don't set correct MIME type)
+  const ext = file.name.toLowerCase().split('.').pop();
+  return ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '');
+};
+
+// Helper to check if file is a video
+const isVideoFile = (file: File): boolean => {
+  if (file.type.startsWith('video/')) return true;
+  const ext = file.name.toLowerCase().split('.').pop();
+  return ['mp4', 'mov', 'webm', 'avi'].includes(ext || '');
+};
+
+// Helper to check if file is media (image or video)
+const isMediaFile = (file: File): boolean => isImageFile(file) || isVideoFile(file);
+
 interface EmeraldUploaderProps {
   onComplete?: () => void;
 }
@@ -103,9 +121,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
     e.preventDefault();
     setDragOver(false);
 
-    const filesArray = Array.from(e.dataTransfer.files).filter(f =>
-      f.type.startsWith('image/') || f.type.startsWith('video/')
-    );
+    const filesArray = Array.from(e.dataTransfer.files).filter(isMediaFile);
 
     if (filesArray.length === 0) return;
 
@@ -142,7 +158,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
   };
 
   const processFile = async (file: File) => {
-    const isVideo = file.type.startsWith('video/');
+    const isVideo = isVideoFile(file);
 
     if (isVideo) {
       // Process video
@@ -196,7 +212,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
     setBatchProcessing(true);
 
     for (const file of files) {
-      const isVideo = file.type.startsWith('video/');
+      const isVideo = isVideoFile(file);
 
       if (isVideo) {
         // Process video file
@@ -623,7 +639,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
               <input
                 id="file-input"
                 type="file"
-                accept="image/*,video/*"
+                accept="image/*,video/*,.heic,.heif"
                 multiple
                 style={{ display: 'none' }}
                 onChange={handleFileSelect}
@@ -917,7 +933,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
             <input
               id="batch-file-input"
               type="file"
-              accept="image/*,video/*"
+              accept="image/*,video/*,.heic,.heif"
               multiple
               style={{ display: 'none' }}
               onChange={handleFileSelect}

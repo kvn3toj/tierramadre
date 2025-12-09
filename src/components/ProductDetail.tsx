@@ -56,6 +56,21 @@ const fileToDataURL = (file: File): Promise<string> => {
   });
 };
 
+// Helper to check if file is an image (including HEIC which some browsers don't recognize)
+const isImageFile = (file: File): boolean => {
+  if (file.type.startsWith('image/')) return true;
+  // Check by extension for HEIC/HEIF (some browsers don't set correct MIME type)
+  const ext = file.name.toLowerCase().split('.').pop();
+  return ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '');
+};
+
+// Helper to check if file is a video
+const isVideoFile = (file: File): boolean => {
+  if (file.type.startsWith('video/')) return true;
+  const ext = file.name.toLowerCase().split('.').pop();
+  return ['mp4', 'mov', 'webm', 'avi'].includes(ext || '');
+};
+
 // Cloudinary configuration
 const CLOUDINARY_CLOUD_NAME = 'dyam6g2os';
 const CLOUDINARY_UPLOAD_PRESET = 'tierramadre';
@@ -229,8 +244,8 @@ export default function ProductDetail() {
     const processedFiles: { file: File; isVideo: boolean }[] = [];
 
     for (const file of files) {
-      const isVideo = file.type.startsWith('video/');
-      const isImage = file.type.startsWith('image/');
+      const isVideo = isVideoFile(file);
+      const isImage = isImageFile(file);
 
       if (!isImage && !isVideo) continue;
       processedFiles.push({ file, isVideo });

@@ -78,16 +78,35 @@ function validateFileSize(file: File, maxSizeMB: number): boolean {
 }
 
 /**
+ * Check if file is an image (including HEIC which some browsers don't recognize)
+ */
+function isImageFile(file: File): boolean {
+  if (file.type.startsWith('image/')) return true;
+  // Check by extension for HEIC/HEIF (some browsers don't set correct MIME type)
+  const ext = file.name.toLowerCase().split('.').pop();
+  return ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '');
+}
+
+/**
+ * Check if file is a video
+ */
+function isVideoFile(file: File): boolean {
+  if (file.type.startsWith('video/')) return true;
+  const ext = file.name.toLowerCase().split('.').pop();
+  return ['mp4', 'mov', 'webm', 'avi'].includes(ext || '');
+}
+
+/**
  * Create file preview URL
  */
 function createPreviewURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
-    if (file.type.startsWith('image/')) {
+    if (isImageFile(file)) {
       const reader = new FileReader();
       reader.onload = (e) => resolve(e.target?.result as string);
       reader.onerror = reject;
       reader.readAsDataURL(file);
-    } else if (file.type.startsWith('video/')) {
+    } else if (isVideoFile(file)) {
       const url = URL.createObjectURL(file);
       resolve(url);
     } else {
@@ -120,7 +139,7 @@ function createPreviewURL(file: File): Promise<string> {
  */
 export const IOSFilePicker: React.FC<IOSFilePickerProps> = ({
   mode = 'single',
-  accept = 'image/*,video/*',
+  accept = 'image/*,video/*,.heic,.heif',
   maxSizeMB = 50,
   maxFiles = 10,
   enableCamera = true,
@@ -400,7 +419,7 @@ export const IOSFilePicker: React.FC<IOSFilePickerProps> = ({
               }}
             >
               {/* Preview image/video */}
-              {fileWithPreview.file.type.startsWith('image/') ? (
+              {isImageFile(fileWithPreview.file) ? (
                 <img
                   src={fileWithPreview.preview}
                   alt={fileWithPreview.file.name}
