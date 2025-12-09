@@ -108,12 +108,12 @@ export default async function handler(req, res) {
     // Extract unique asesores from inventory data
     const dataRows = rows.slice(1);
 
-    // Normalize name for comparison (uppercase, remove extra spaces/newlines)
+    // Normalize name for comparison (uppercase, remove dots, spaces, newlines, dashes)
     const normalizeName = (name) => {
       return name
         .toUpperCase()
-        .replace(/\n/g, ' ')
-        .replace(/\s+/g, ' ')
+        .replace(/\n/g, '')
+        .replace(/[.\s-]/g, '')
         .trim();
     };
 
