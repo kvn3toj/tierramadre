@@ -61,12 +61,12 @@ const DROPDOWN_OPTIONS = {
     'Bluish Green', 'Yellowish Green', 'Natural', 'Plata'
   ],
   calidad: [
-    'Comercial', 'Comercial Superior', 'Comercial Final', 'Comercial Fina',
-    'Comercial_SuperFina', 'superior', 'Fina', 'Extra Fina',
-    'Plata - comercial', 'Estandar'
+    'Comercial Estándar', 'Comercial Superior', 'Comercial Final', 'Comercial Fina',
+    'Comercial SuperFina', 'Fina', 'Esencial', 'Sublime',
+    'Plata - comercial'
   ],
-  talla: ['Diámetro', 'Cuadrada', 'Redonda', 'Ovalada', 'Esmeralda', 'Pera', 'Corazón', 'Marquesa', 'Cushion', 'Lágrima', 'Otro'],
-  medidaS: ['largo', 'Ancho'],
+  talla: ['Diámetro', 'Cuadrada', 'Redonda', 'Ovalada', 'Esmeralda', 'Pera', 'Corazón', 'Marquesa', 'Cushion', 'Lágrima', 'Baguette', 'Otro'],
+  medidaS: ['Largo x Ancho', 'Diámetro'],
   estado: ['DISPONIBLE', 'VENDIDA', 'Legalizada', 'Pte Legalizar', 'Pte legalizar 50%', 'RESERVADA'],
   ubicacion: ['ASESOR', 'BOVEDA OFI', 'BOVEDA', 'EN PROCESO', 'CLIENTE'],
 };
