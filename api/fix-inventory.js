@@ -1,5 +1,5 @@
 /**
- * Script de Corrección de Inconsistencias en Inventario de Esmeraldas
+ * Vercel Serverless Function - Fix Inventory Inconsistencies
  *
  * Corrige automáticamente errores de escritura en las columnas:
  * - F: Color
@@ -7,47 +7,12 @@
  * - I: Talla
  * - J: Medidas
  *
- * Uso:
- *   node scripts/fix-inventory-inconsistencies.mjs          # Preview sin aplicar
- *   node scripts/fix-inventory-inconsistencies.mjs --apply  # Aplicar correcciones
+ * Endpoints:
+ *   GET  /api/fix-inventory         - Preview de cambios
+ *   POST /api/fix-inventory         - Aplicar correcciones
  */
 
 import { google } from 'googleapis';
-import { writeFile, mkdir, readFile } from 'fs/promises';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-
-// Load environment variables from .env.local
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const projectRoot = join(__dirname, '..');
-
-async function loadEnv() {
-  try {
-    const envPath = join(projectRoot, '.env.local');
-    const envContent = await readFile(envPath, 'utf-8');
-    for (const line of envContent.split('\n')) {
-      const trimmed = line.trim();
-      if (trimmed && !trimmed.startsWith('#')) {
-        const eqIndex = trimmed.indexOf('=');
-        if (eqIndex > 0) {
-          const key = trimmed.slice(0, eqIndex);
-          let value = trimmed.slice(eqIndex + 1);
-          // Remove surrounding quotes if present
-          if ((value.startsWith('"') && value.endsWith('"')) ||
-              (value.startsWith("'") && value.endsWith("'"))) {
-            value = value.slice(1, -1);
-          }
-          process.env[key] = value;
-        }
-      }
-    }
-  } catch (e) {
-    // .env.local not found, continue with existing env vars
-  }
-}
-
-await loadEnv();
 
 // Configuration
 const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
@@ -278,10 +243,6 @@ function applyCorrection(value, type) {
  * Analyze and correct inventory data
  */
 async function analyzeAndCorrect(sheets, sheetName, apply = false) {
-  console.log('\n' + '='.repeat(60));
-  console.log(' ANÁLISIS DE INCONSISTENCIAS - INVENTARIO TIERRA MADRE');
-  console.log('='.repeat(60));
-
   // Read all data
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -290,15 +251,10 @@ async function analyzeAndCorrect(sheets, sheetName, apply = false) {
 
   const rows = response.data.values || [];
   if (rows.length < 2) {
-    console.log('No hay datos para analizar.');
-    return { changes: [], stats: {} };
+    return { changes: [], stats: {}, message: 'No data to analyze' };
   }
 
-  const headers = rows[0];
   const dataRows = rows.slice(1);
-
-  console.log(`\nFilas de datos: ${dataRows.length}`);
-  console.log(`Columnas: ${headers.length}`);
 
   // Track changes
   const changes = [];
@@ -312,7 +268,7 @@ async function analyzeAndCorrect(sheets, sheetName, apply = false) {
   // Analyze each row
   for (let rowIndex = 0; rowIndex < dataRows.length; rowIndex++) {
     const row = dataRows[rowIndex];
-    const actualRow = rowIndex + 2; // Excel row (1-indexed + header)
+    const actualRow = rowIndex + 2;
 
     // Analyze Color (Column F)
     if (row[COLUMNS.COLOR]) {
@@ -387,51 +343,8 @@ async function analyzeAndCorrect(sheets, sheetName, apply = false) {
     }
   }
 
-  // Print statistics
-  console.log('\n' + '-'.repeat(60));
-  console.log(' ESTADÍSTICAS');
-  console.log('-'.repeat(60));
-
-  for (const [field, data] of Object.entries(stats)) {
-    console.log(`\n${field.toUpperCase()}:`);
-    console.log(`  Total: ${data.total}`);
-    console.log(`  Valores únicos: ${data.unique.size}`);
-    console.log(`  Correcciones necesarias: ${data.corrected}`);
-    if (data.unique.size > 0 && data.unique.size <= 20) {
-      console.log(`  Valores encontrados: ${[...data.unique].join(', ')}`);
-    }
-  }
-
-  // Print changes
-  if (changes.length > 0) {
-    console.log('\n' + '-'.repeat(60));
-    console.log(' CAMBIOS A APLICAR');
-    console.log('-'.repeat(60));
-
-    const groupedChanges = {};
-    for (const change of changes) {
-      const key = `${change.field}: "${change.original}" → "${change.corrected}"`;
-      if (!groupedChanges[key]) groupedChanges[key] = [];
-      groupedChanges[key].push(change.row);
-    }
-
-    for (const [change, rows] of Object.entries(groupedChanges)) {
-      console.log(`\n  ${change}`);
-      console.log(`    Filas afectadas: ${rows.length} (${rows.slice(0, 5).join(', ')}${rows.length > 5 ? '...' : ''})`);
-    }
-
-    console.log(`\nTotal de celdas a corregir: ${changes.length}`);
-  } else {
-    console.log('\n✅ No se encontraron inconsistencias que corregir.');
-  }
-
   // Apply changes if requested
   if (apply && changes.length > 0) {
-    console.log('\n' + '-'.repeat(60));
-    console.log(' APLICANDO CORRECCIONES...');
-    console.log('-'.repeat(60));
-
-    // Prepare batch update data
     const data = changes.map(change => ({
       range: `${sheetName}!${change.column}${change.row}`,
       values: [[change.corrected]],
@@ -448,37 +361,10 @@ async function analyzeAndCorrect(sheets, sheetName, apply = false) {
           data: batch,
         },
       });
-      console.log(`  Aplicadas ${Math.min(i + BATCH_SIZE, data.length)} de ${data.length} correcciones...`);
     }
-
-    console.log('\n✅ Correcciones aplicadas exitosamente!');
-  } else if (changes.length > 0) {
-    console.log('\n' + '='.repeat(60));
-    console.log(' MODO PREVIEW - No se aplicaron cambios');
-    console.log(' Ejecuta con --apply para aplicar las correcciones');
-    console.log('='.repeat(60));
   }
 
-  return { changes, stats };
-}
-
-/**
- * Save report to file
- */
-async function saveReport(changes, stats, applied) {
-  const reportsDir = join(__dirname, '..', 'reports');
-  await mkdir(reportsDir, { recursive: true });
-
-  const report = {
-    timestamp: new Date().toISOString(),
-    applied,
-    totalChanges: changes.length,
-    statistics: {
-      talla: { total: stats.talla.total, corrected: stats.talla.corrected, uniqueValues: [...stats.talla.unique] },
-      color: { total: stats.color.total, corrected: stats.color.corrected, uniqueValues: [...stats.color.unique] },
-      calidad: { total: stats.calidad.total, corrected: stats.calidad.corrected, uniqueValues: [...stats.calidad.unique] },
-      medidas: { total: stats.medidas.total, corrected: stats.medidas.corrected, uniqueValues: [...stats.medidas.unique] },
-    },
+  return {
     changes: changes.map(c => ({
       row: c.row,
       column: c.column,
@@ -486,31 +372,43 @@ async function saveReport(changes, stats, applied) {
       original: c.original,
       corrected: c.corrected,
     })),
+    stats: {
+      talla: { total: stats.talla.total, corrected: stats.talla.corrected, uniqueValues: [...stats.talla.unique] },
+      color: { total: stats.color.total, corrected: stats.color.corrected, uniqueValues: [...stats.color.unique] },
+      calidad: { total: stats.calidad.total, corrected: stats.calidad.corrected, uniqueValues: [...stats.calidad.unique] },
+      medidas: { total: stats.medidas.total, corrected: stats.medidas.corrected, uniqueValues: [...stats.medidas.unique] },
+    },
+    applied: apply,
+    totalRows: dataRows.length,
   };
-
-  const reportPath = join(reportsDir, `inventory-corrections-${Date.now()}.json`);
-  await writeFile(reportPath, JSON.stringify(report, null, 2));
-  console.log(`\nReporte guardado en: ${reportPath}`);
-
-  return reportPath;
 }
 
 /**
- * Main function
+ * Main handler
  */
-async function main() {
-  const args = process.argv.slice(2);
-  const apply = args.includes('--apply') || args.includes('-a');
+export default async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  console.log('\n🌿 Corrector de Inconsistencias - Tierra Madre Inventario');
-  console.log(`Modo: ${apply ? 'APLICAR CORRECCIONES' : 'PREVIEW (solo lectura)'}`);
-
-  // Check for credentials
-  if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-    console.error('\n❌ Error: GOOGLE_SERVICE_ACCOUNT_KEY no está configurada');
-    console.error('Asegúrate de tener la variable de entorno configurada.');
-    process.exit(1);
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
+
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Check if service account key is configured
+  if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+    return res.status(500).json({
+      error: 'Google Service Account not configured',
+      message: 'Please set up GOOGLE_SERVICE_ACCOUNT_KEY environment variable'
+    });
+  }
+
+  const apply = req.method === 'POST';
 
   try {
     const sheets = getSheetsClient();
@@ -518,31 +416,42 @@ async function main() {
     // Find inventory sheet
     const inventorySheet = await findSheet(sheets, 'inventario');
     if (!inventorySheet) {
-      console.error('\n❌ Error: No se encontró la hoja de inventario');
-      process.exit(1);
+      return res.status(404).json({
+        error: 'Inventory sheet not found',
+        message: 'Could not find a sheet containing "inventario" in its name'
+      });
     }
-
-    console.log(`\nHoja encontrada: "${inventorySheet.name}"`);
 
     // Analyze and optionally correct
-    const { changes, stats } = await analyzeAndCorrect(sheets, inventorySheet.name, apply);
+    const result = await analyzeAndCorrect(sheets, inventorySheet.name, apply);
 
-    // Save report
-    if (changes.length > 0) {
-      await saveReport(changes, stats, apply);
+    // Group changes by correction type for summary
+    const changesSummary = {};
+    for (const change of result.changes) {
+      const key = `${change.field}: "${change.original}" → "${change.corrected}"`;
+      if (!changesSummary[key]) changesSummary[key] = 0;
+      changesSummary[key]++;
     }
 
-    console.log('\n' + '='.repeat(60));
-    console.log(' PROCESO COMPLETADO');
-    console.log('='.repeat(60) + '\n');
+    return res.status(200).json({
+      success: true,
+      mode: apply ? 'APPLIED' : 'PREVIEW',
+      sheetName: inventorySheet.name,
+      totalRows: result.totalRows,
+      totalChanges: result.changes.length,
+      statistics: result.stats,
+      changesSummary,
+      changes: result.changes.slice(0, 100), // Limit to first 100 for response size
+      message: apply
+        ? `Successfully applied ${result.changes.length} corrections`
+        : `Found ${result.changes.length} corrections to apply. Use POST to apply.`,
+    });
 
   } catch (error) {
-    console.error('\n❌ Error:', error.message);
-    if (error.code === 403) {
-      console.error('Verifica que la cuenta de servicio tenga acceso al documento.');
-    }
-    process.exit(1);
+    console.error('Error fixing inventory:', error);
+    return res.status(500).json({
+      error: 'Failed to process inventory',
+      message: error.message
+    });
   }
 }
-
-main();
