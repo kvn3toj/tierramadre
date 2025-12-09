@@ -19,6 +19,7 @@ import { CatalogBrowser } from './components/CatalogBrowser';
 import InventoryBrowser from './components/InventoryBrowser';
 import ProductDetail from './components/ProductDetail';
 import { AmbassadorDirectory } from './components/ambassador';
+import AsesorProfilePage from './components/ambassador/AsesorProfile';
 import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
 import Home from './components/Home';
@@ -35,10 +36,9 @@ export const SECONDARY_TABS: TabValue[] = ['gallery', 'catalog', 'calendar', 'am
 function AppContent() {
   const navigate = useNavigate();
 
-  // Navigate to inventory filtered by asesor name
+  // Navigate to asesor profile page
   const handleViewAsesorProducts = useCallback((asesor: Asesor) => {
-    // Navigate to inventory with asesor filter as URL param
-    navigate(`/inventory?asesor=${encodeURIComponent(asesor.name)}`);
+    navigate(`/ambassadors/${asesor.slug}`);
   }, [navigate]);
 
   // Contact asesor (placeholder - can be enhanced later)
@@ -85,6 +85,7 @@ function AppContent() {
               />
             }
           />
+          <Route path="/ambassadors/:slug" element={<AsesorProfilePage />} />
         </Routes>
       </IOSLayout>
     </>
