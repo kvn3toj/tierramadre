@@ -99,8 +99,12 @@ function showSelectedImage() {
 
 /**
  * Inserts the uploaded image as a clickable inline preview
- * Also saves the URL in a separate column for API access
+ * Also saves the URL in column K (URL Imagen) for API access
  * Click on the image to open the full-size URL
+ *
+ * Sheet structure:
+ * K = URL Imagen (plain text for API)
+ * L = Imagen (visual IMAGE formula)
  */
 function insertImageUrl(url) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
@@ -112,8 +116,10 @@ function insertImageUrl(url) {
   // IMAGE mode 1 = fit to cell, maintaining aspect ratio
   cell.setFormula(`=HYPERLINK("${url}", IMAGE("${url}", 1))`);
 
-  // Also save the URL as plain text in the next column for API access
-  const urlCell = sheet.getRange(row, col + 1);
+  // Save URL as plain text in column K (index 11) for API access
+  // This avoids overwriting price data in column M
+  const URL_COLUMN = 11; // Column K
+  const urlCell = sheet.getRange(row, URL_COLUMN);
   urlCell.setValue(url);
 
   // Adjust row height to show preview better (60px)
