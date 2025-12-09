@@ -31,14 +31,10 @@ import {
   Collections as BatchIcon,
 } from '@mui/icons-material';
 import { Upload, Settings, Image, Layers } from 'lucide-react';
-import { useEmeralds } from '../hooks/useEmeralds';
-import { useAI, markNameAsUsed } from '../hooks/useAI';
-import { EmeraldCategory, MediaType } from '../types';
+import { useEmeraldUpload } from '../hooks/useEmeraldUpload';
+import { EmeraldCategory } from '../types';
 import { brandColors } from '../theme';
 import { storage } from '../utils/storage';
-import { compressImage } from '../utils/imageNormalizer';
-import { saveVideo, extractVideoThumbnail } from '../utils/videoStorage';
-import { isVideoFile, isMediaFile } from '../utils/fileTypeDetection';
 import MediaPreview from './MediaPreview';
 import { BatchItemCard } from './upload';
 
@@ -46,52 +42,35 @@ interface EmeraldUploaderProps {
   onComplete?: () => void;
 }
 
-interface BatchItem {
-  id: string;
-  imageUrl: string;
-  mediaType: MediaType;
-  thumbnailUrl?: string;
-  suggestedNames: string[];
-  selectedName: string;
-  customName: string;
-  description: string;
-  weightCarats: string;
-  priceCOP: string;
-  lotCode: string;
-  category: EmeraldCategory;
-  ringSize?: string;
-  color?: string;
-  quality?: string;
-}
-
 export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
-  const { addEmerald } = useEmeralds();
-  const { analyzing, analyzeEmerald, getRandomSuggestions, error: aiError } = useAI();
+  // Upload hook - handles all upload logic and state
+  const {
+    singleState,
+    setSingleState,
+    batchItems,
+    batchProcessing,
+    analyzing,
+    aiError,
+    processFile,
+    processBatchFiles,
+    handleNameSelect,
+    handleRefreshSuggestions,
+    handleSave,
+    updateBatchItem,
+    removeBatchItem,
+    refreshBatchItemNames,
+    saveBatchItem,
+    saveAllBatch,
+    formatPrice,
+    isMediaFile,
+  } = useEmeraldUpload();
 
-  // Upload mode: 0 = single, 1 = batch
+  // Destructure single state for convenience
+  const { imageUrl, mediaType, thumbnailUrl, suggestedNames, selectedName, customName,
+          description, weightCarats, priceCOP, lotCode, category, ringSize, color, quality } = singleState;
+
+  // UI-only state
   const [uploadMode, setUploadMode] = useState(0);
-
-  // Single upload form state
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<MediaType>('image');
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
-  const [suggestedNames, setSuggestedNames] = useState<string[]>([]);
-  const [selectedName, setSelectedName] = useState('');
-  const [customName, setCustomName] = useState('');
-  const [description, setDescription] = useState('');
-  const [weightCarats, setWeightCarats] = useState('');
-  const [priceCOP, setPriceCOP] = useState('');
-  const [lotCode, setLotCode] = useState('');
-  const [category, setCategory] = useState<EmeraldCategory>('loose');
-  const [ringSize, setRingSize] = useState('');
-  const [color, setColor] = useState('');
-  const [quality, setQuality] = useState('');
-
-  // Batch upload state
-  const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
-  const [batchProcessing, setBatchProcessing] = useState(false);
-
-  // UI state
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [apiKey, setApiKey] = useState(storage.getApiKey() || '');
   const [dragOver, setDragOver] = useState(false);
@@ -136,308 +115,20 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
     }
   };
 
-  const processFile = async (file: File) => {
-    const isVideo = isVideoFile(file);
-
-    if (isVideo) {
-      // Process video
-      try {
-        // Generate unique ID for this video
-        const videoId = `video-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-        // Save video to IndexedDB
-        const videoRef = await saveVideo(videoId, file);
-        setImageUrl(videoRef);
-        setMediaType('video');
-
-        // Extract thumbnail
-        const thumbnail = await extractVideoThumbnail(file, 1);
-        setThumbnailUrl(thumbnail);
-
-        // Trigger AI analysis using thumbnail
-        const result = await analyzeEmerald(thumbnail);
-        if (result) {
-          setSuggestedNames(result.names);
-          setDescription(result.description);
-        }
-      } catch (error) {
-        console.error('Error processing video:', error);
-        alert('Error al procesar el video. Por favor intenta de nuevo.');
-      }
-    } else {
-      // Process image
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64 = e.target?.result as string;
-
-        // Compress image to reduce storage size (max 1200px, 85% quality for good PDF export)
-        const compressed = await compressImage(base64, 1200, 0.85);
-        setImageUrl(compressed);
-        setMediaType('image');
-        setThumbnailUrl(null);
-
-        // Trigger AI analysis (use original for better analysis)
-        const result = await analyzeEmerald(base64);
-        if (result) {
-          setSuggestedNames(result.names);
-          setDescription(result.description);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const processBatchFiles = async (files: File[]) => {
-    setBatchProcessing(true);
-
-    for (const file of files) {
-      const isVideo = isVideoFile(file);
-
-      if (isVideo) {
-        // Process video file
-        try {
-          const videoId = `video-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-          const videoRef = await saveVideo(videoId, file);
-          const thumbnail = await extractVideoThumbnail(file, 1);
-
-          // Generate suggestions using thumbnail
-          const result = await analyzeEmerald(thumbnail);
-
-          const newItem: BatchItem = {
-            id: `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            imageUrl: videoRef,
-            mediaType: 'video',
-            thumbnailUrl: thumbnail,
-            suggestedNames: result?.names || getRandomSuggestions(),
-            selectedName: '',
-            customName: '',
-            description: result?.description || '',
-            weightCarats: '',
-            priceCOP: '',
-            lotCode: '',
-            category: 'loose',
-            ringSize: '',
-            color: '',
-            quality: '',
-          };
-
-          setBatchItems(prev => [...prev, newItem]);
-        } catch (error) {
-          console.error('Error processing video in batch:', error);
-        }
-      } else {
-        // Process image file
-        const reader = new FileReader();
-        const base64 = await new Promise<string>((resolve) => {
-          reader.onload = (e) => resolve(e.target?.result as string);
-          reader.readAsDataURL(file);
-        });
-
-        // Compress image to reduce storage size (max 1200px, 85% quality for good PDF export)
-        const compressed = await compressImage(base64, 1200, 0.85);
-
-        // Generate suggestions for each image (use original for better analysis)
-        const result = await analyzeEmerald(base64);
-
-        const newItem: BatchItem = {
-          id: `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          imageUrl: compressed,
-          mediaType: 'image',
-          suggestedNames: result?.names || getRandomSuggestions(),
-          selectedName: '',
-          customName: '',
-          description: result?.description || '',
-          weightCarats: '',
-          priceCOP: '',
-          lotCode: '',
-          category: 'loose',
-          ringSize: '',
-          color: '',
-          quality: '',
-        };
-
-        setBatchItems(prev => [...prev, newItem]);
-      }
-    }
-
-    setBatchProcessing(false);
-  };
-
-  const handleNameSelect = (name: string) => {
-    setSelectedName(name);
-    setCustomName('');
-  };
-
-  const handleRefreshSuggestions = async () => {
-    if (imageUrl) {
-      const result = await analyzeEmerald(imageUrl);
-      if (result) {
-        setSuggestedNames(result.names);
-      }
-    } else {
-      setSuggestedNames(getRandomSuggestions());
-    }
-  };
+  // Note: processFile, processBatchFiles, handleNameSelect, handleRefreshSuggestions,
+  // handleSave, updateBatchItem, removeBatchItem, refreshBatchItemNames, saveBatchItem,
+  // saveAllBatch, and formatPrice are now provided by useEmeraldUpload hook
 
   const handleSaveApiKey = () => {
     storage.setApiKey(apiKey);
     setSettingsOpen(false);
   };
 
-  const handleSave = () => {
-    if (!imageUrl) {
-      alert('Por favor sube una imagen o video primero');
-      return;
-    }
+  // Local wrapper for handleSave to pass onComplete
+  const onSave = () => handleSave(onComplete);
 
-    const finalName = customName || selectedName;
-    if (!finalName) {
-      alert('Por favor selecciona o escribe un nombre');
-      return;
-    }
-
-    try {
-      const saved = addEmerald({
-        name: finalName,
-        imageUrl,
-        mediaType,
-        thumbnailUrl: thumbnailUrl || undefined,
-        aiSuggestedNames: suggestedNames,
-        aiDescription: description,
-        weightCarats: weightCarats ? parseFloat(weightCarats) : undefined,
-        priceCOP: priceCOP ? parseInt(priceCOP.replace(/\D/g, '')) : undefined,
-        lotCode: lotCode || undefined,
-        category,
-        ringSize: ringSize || undefined,
-        color: color || undefined,
-        quality: quality || undefined,
-        status: 'available',
-      });
-
-      console.log('Emerald saved:', saved);
-
-      // Mark name as used so it won't be suggested again
-      markNameAsUsed(finalName);
-
-      // Show success message
-      const mediaLabel = mediaType === 'video' ? 'video' : 'esmeralda';
-      alert(`"${finalName}" ${mediaLabel} guardada exitosamente!`);
-
-      // Reset form
-      setImageUrl(null);
-      setMediaType('image');
-      setThumbnailUrl(null);
-      setSuggestedNames([]);
-      setSelectedName('');
-      setCustomName('');
-      setDescription('');
-      setWeightCarats('');
-      setPriceCOP('');
-      setLotCode('');
-      setCategory('loose');
-      setRingSize('');
-      setColor('');
-      setQuality('');
-
-      // Navigate to gallery
-      onComplete?.();
-    } catch (error) {
-      console.error('Error saving emerald:', error);
-      const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
-
-      if (errorMsg.includes('STORAGE_FULL')) {
-        alert('El almacenamiento está lleno. Por favor ve a la Galería y elimina algunas esmeraldas antiguas para liberar espacio.');
-      } else {
-        alert(`Error al guardar: ${errorMsg}`);
-      }
-    }
-  };
-
-  // Batch item handlers
-  const updateBatchItem = (id: string, updates: Partial<BatchItem>) => {
-    setBatchItems(prev => prev.map(item =>
-      item.id === id ? { ...item, ...updates } : item
-    ));
-  };
-
-  const removeBatchItem = (id: string) => {
-    setBatchItems(prev => prev.filter(item => item.id !== id));
-  };
-
-  const refreshBatchItemNames = async (id: string) => {
-    const item = batchItems.find(i => i.id === id);
-    if (!item) return;
-
-    const result = await analyzeEmerald(item.imageUrl);
-    if (result) {
-      updateBatchItem(id, { suggestedNames: result.names });
-    }
-  };
-
-  const saveBatchItem = (item: BatchItem) => {
-    const finalName = item.customName || item.selectedName;
-    if (!finalName) {
-      alert('Por favor selecciona o escribe un nombre para este item');
-      return;
-    }
-
-    addEmerald({
-      name: finalName,
-      imageUrl: item.imageUrl,
-      mediaType: item.mediaType,
-      thumbnailUrl: item.thumbnailUrl,
-      aiSuggestedNames: item.suggestedNames,
-      aiDescription: item.description,
-      weightCarats: item.weightCarats ? parseFloat(item.weightCarats) : undefined,
-      priceCOP: item.priceCOP ? parseInt(item.priceCOP.replace(/\D/g, '')) : undefined,
-      lotCode: item.lotCode || undefined,
-      category: item.category,
-      status: 'available',
-    });
-
-    // Mark name as used so it won't be suggested again
-    markNameAsUsed(finalName);
-
-    removeBatchItem(item.id);
-  };
-
-  const saveAllBatch = () => {
-    const itemsToSave = batchItems.filter(item => item.customName || item.selectedName);
-    if (itemsToSave.length === 0) {
-      alert('Por favor asigna nombres a al menos un item');
-      return;
-    }
-
-    itemsToSave.forEach(item => {
-      const finalName = item.customName || item.selectedName;
-      addEmerald({
-        name: finalName,
-        imageUrl: item.imageUrl,
-        mediaType: item.mediaType,
-        thumbnailUrl: item.thumbnailUrl,
-        aiSuggestedNames: item.suggestedNames,
-        aiDescription: item.description,
-        weightCarats: item.weightCarats ? parseFloat(item.weightCarats) : undefined,
-        priceCOP: item.priceCOP ? parseInt(item.priceCOP.replace(/\D/g, '')) : undefined,
-        lotCode: item.lotCode || undefined,
-        category: item.category,
-        ringSize: item.ringSize || undefined,
-        color: item.color || undefined,
-        quality: item.quality || undefined,
-        status: 'available',
-      });
-      // Mark name as used so it won't be suggested again
-      markNameAsUsed(finalName);
-    });
-
-    setBatchItems(prev => prev.filter(item => !itemsToSave.includes(item)));
-    onComplete?.();
-  };
-
-  const formatPrice = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
-    return numbers ? parseInt(numbers).toLocaleString('es-CO') : '';
-  };
+  // Local wrapper for saveAllBatch to pass onComplete
+  const onSaveAllBatch = () => saveAllBatch(onComplete);
 
   return (
     <Box sx={{ maxWidth: 1100, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
@@ -739,10 +430,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                 fullWidth
                 label="Nombre personalizado"
                 value={customName}
-                onChange={(e) => {
-                  setCustomName(e.target.value);
-                  setSelectedName('');
-                }}
+                onChange={(e) => setSingleState(prev => ({ ...prev, customName: e.target.value, selectedName: '' }))}
                 placeholder="O escribe tu propio nombre"
                 sx={{ mb: 2 }}
               />
@@ -752,7 +440,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                 fullWidth
                 label="Descripción"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => setSingleState(prev => ({ ...prev, description: e.target.value }))}
                 multiline
                 rows={2}
                 sx={{ mb: 2 }}
@@ -765,7 +453,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                     fullWidth
                     label="Peso (quilates)"
                     value={weightCarats}
-                    onChange={(e) => setWeightCarats(e.target.value)}
+                    onChange={(e) => setSingleState(prev => ({ ...prev, weightCarats: e.target.value }))}
                     type="number"
                     InputProps={{
                       endAdornment: <InputAdornment position="end">ct</InputAdornment>,
@@ -777,7 +465,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                     fullWidth
                     label="Código de lote"
                     value={lotCode}
-                    onChange={(e) => setLotCode(e.target.value)}
+                    onChange={(e) => setSingleState(prev => ({ ...prev, lotCode: e.target.value }))}
                     placeholder="L:A-105"
                   />
                 </Grid>
@@ -789,7 +477,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                     fullWidth
                     label="Precio (COP)"
                     value={priceCOP}
-                    onChange={(e) => setPriceCOP(formatPrice(e.target.value))}
+                    onChange={(e) => setSingleState(prev => ({ ...prev, priceCOP: formatPrice(e.target.value) }))}
                     InputProps={{
                       startAdornment: <InputAdornment position="start">$</InputAdornment>,
                     }}
@@ -801,7 +489,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                     <Select
                       value={category}
                       label="Categoría"
-                      onChange={(e) => setCategory(e.target.value as EmeraldCategory)}
+                      onChange={(e) => setSingleState(prev => ({ ...prev, category: e.target.value as EmeraldCategory }))}
                     >
                       <MenuItem value="loose">Gema</MenuItem>
                       <MenuItem value="ring">Anillo</MenuItem>
@@ -822,7 +510,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                         <Select
                           value={ringSize}
                           label="Talla de Anillo"
-                          onChange={(e) => setRingSize(e.target.value)}
+                          onChange={(e) => setSingleState(prev => ({ ...prev, ringSize: e.target.value }))}
                         >
                           <MenuItem value="4">4</MenuItem>
                           <MenuItem value="5">5</MenuItem>
@@ -841,7 +529,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                       <Select
                         value={color}
                         label="Color"
-                        onChange={(e) => setColor(e.target.value)}
+                        onChange={(e) => setSingleState(prev => ({ ...prev, color: e.target.value }))}
                       >
                         <MenuItem value="Verde Muzo">Verde Muzo</MenuItem>
                         <MenuItem value="Verde Chivor">Verde Chivor</MenuItem>
@@ -857,7 +545,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                       <Select
                         value={quality}
                         label="Calidad"
-                        onChange={(e) => setQuality(e.target.value)}
+                        onChange={(e) => setSingleState(prev => ({ ...prev, quality: e.target.value }))}
                       >
                         <MenuItem value="Premium">Premium</MenuItem>
                         <MenuItem value="Estándar">Estándar</MenuItem>
@@ -872,7 +560,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                 fullWidth
                 variant="contained"
                 size="large"
-                onClick={handleSave}
+                onClick={onSave}
                 disabled={!imageUrl || (!selectedName && !customName)}
                 sx={{
                   bgcolor: brandColors.emeraldGreen,
@@ -943,7 +631,7 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                 <Button
                   variant="contained"
                   startIcon={<CheckIcon />}
-                  onClick={saveAllBatch}
+                  onClick={onSaveAllBatch}
                   sx={{
                     bgcolor: brandColors.emeraldGreen,
                     '&:hover': { bgcolor: brandColors.emeraldDark },
