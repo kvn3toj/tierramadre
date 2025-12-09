@@ -30,6 +30,8 @@ import {
   Check,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
+// Design System Tokens
+import { emeraldCore, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 import {
   InventoryItem,
   GemologicalCertification,
@@ -183,7 +185,7 @@ export default function CertificationUpload({
           alignItems: 'center',
           justifyContent: 'space-between',
           borderBottom: '1px solid',
-          borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
           pb: 2,
         }}
       >
@@ -244,20 +246,20 @@ export default function CertificationUpload({
                   borderRadius: 2.5,
                   border: '2px dashed',
                   borderColor: certificateImage
-                    ? '#059669'
+                    ? emeraldCore.dark
                     : isLight
-                    ? '#E5E7EB'
-                    : '#3C3C3E',
+                    ? surfacesLight.border.light
+                    : surfacesDark.border.default,
                   bgcolor: certificateImage
-                    ? alpha('#059669', 0.05)
+                    ? alpha(emeraldCore.dark, 0.05)
                     : isLight
-                    ? '#F9FAFB'
-                    : '#2C2C2E',
+                    ? surfacesLight.background.secondary
+                    : surfacesDark.background.secondary,
                   textAlign: 'center',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   '&:hover': {
-                    borderColor: '#059669',
+                    borderColor: emeraldCore.dark,
                   },
                 }}
                 component="label"
@@ -280,7 +282,7 @@ export default function CertificationUpload({
                         mb: 1,
                       }}
                     />
-                    <Typography variant="caption" sx={{ color: '#059669' }}>
+                    <Typography variant="caption" sx={{ color: emeraldCore.dark }}>
                       <Check size={14} style={{ verticalAlign: 'middle' }} /> Certificado cargado
                     </Typography>
                   </Box>
@@ -725,7 +727,7 @@ export default function CertificationUpload({
           px: 3,
           py: 2,
           borderTop: '1px solid',
-          borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
         }}
       >
         <Button onClick={onClose} color="inherit">
@@ -736,8 +738,8 @@ export default function CertificationUpload({
           onClick={handleSave}
           startIcon={<FileCheck size={18} />}
           sx={{
-            bgcolor: '#059669',
-            '&:hover': { bgcolor: '#047857' },
+            bgcolor: emeraldCore.dark,
+            '&:hover': { bgcolor: emeraldCore.darker },
           }}
         >
           Guardar Certificaciones

@@ -863,20 +863,6 @@ export default function ProductDetail() {
               </Box>
             </Box>
 
-            {product.costoTM && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <DollarSign size={18} color={surfacesLight.text.secondary} />
-                <Box>
-                  <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block' }}>
-                    Costo TM
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {formatCurrency(product.costoTM)}
-                  </Typography>
-                </Box>
-              </Box>
-            )}
-
             {/* QR Code Section */}
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mt: 1 }}>
               <QrCode size={18} color={surfacesLight.text.secondary} style={{ marginTop: 4 }} />
