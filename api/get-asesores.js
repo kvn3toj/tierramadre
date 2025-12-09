@@ -110,46 +110,46 @@ export default async function handler(req, res) {
 
     // Normalize name for comparison (uppercase, keep only letters and numbers)
     const normalizeName = (name) => {
-      return name
+      // First clean the string
+      let clean = String(name || '')
+        .replace(/\r?\n/g, ' ')  // Replace newlines with space
+        .replace(/\s+/g, ' ')    // Collapse multiple spaces
+        .trim();
+
+      // Then normalize for comparison
+      return clean
         .toUpperCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '') // Remove accents
-        .replace(/[^A-Z0-9]/g, ''); // Keep only alphanumeric
+        .replace(/[^A-Z0-9]/g, '');      // Keep only alphanumeric
     };
 
-    // Get unique names, keeping the best formatted version
-    const nameMap = new Map();
-    const debugInfo = [];
+    // Format display name (clean but preserve original style)
+    const formatDisplayName = (name) => {
+      return String(name || '')
+        .replace(/\r?\n/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+
+    // Get unique asesores using normalized comparison
+    const seenNormalized = new Set();
+    const uniqueAsesores = [];
 
     dataRows.forEach(row => {
       const name = row[asesorColumnIndex];
-      if (!name || name.trim() === '') return;
+      if (!name || String(name).trim() === '') return;
 
-      const cleanName = name.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-      const normalized = normalizeName(cleanName);
+      const displayName = formatDisplayName(name);
+      const normalized = normalizeName(name);
 
-      // Debug: log ALL names (first 30)
-      if (debugInfo.length < 30) {
-        debugInfo.push({
-          cleanName,
-          normalized,
-        });
-      }
-
-      // Keep the version with proper casing (not all caps if possible)
-      if (!nameMap.has(normalized)) {
-        nameMap.set(normalized, cleanName);
-      } else {
-        const existing = nameMap.get(normalized);
-        // Prefer mixed case over all caps
-        if (existing === existing.toUpperCase() && cleanName !== cleanName.toUpperCase()) {
-          nameMap.set(normalized, cleanName);
-        }
+      if (!seenNormalized.has(normalized)) {
+        seenNormalized.add(normalized);
+        uniqueAsesores.push(displayName);
       }
     });
 
-    const asesores = Array.from(nameMap.values())
-      .sort((a, b) => a.localeCompare(b, 'es'));
+    const asesores = uniqueAsesores.sort((a, b) => a.localeCompare(b, 'es'));
 
     // Create asesor objects with basic info
     const asesoresData = asesores.map((name, index) => ({
@@ -163,8 +163,7 @@ export default async function handler(req, res) {
       asesores: asesoresData,
       count: asesoresData.length,
       sheetName: inventorySheet,
-      lastUpdated: new Date().toISOString(),
-      debug: debugInfo.length > 0 ? debugInfo : undefined
+      lastUpdated: new Date().toISOString()
     });
 
   } catch (error) {
