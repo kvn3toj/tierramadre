@@ -819,12 +819,12 @@ export default function InventoryBrowser() {
 
       if (!matchesStatus) return false;
 
-      // Fuzzy search: allows typos and similar matches
+      // Smart search: exact/contains for short queries, fuzzy for longer with typos
       const matchesSearch =
         !search ||
-        fuzzyMatch(item.nombre, search, 0.5) ||
-        fuzzyMatch(item.color, search, 0.5) ||
-        fuzzyMatch(item.calidad, search, 0.5) ||
+        fuzzyMatch(item.nombre, search) ||
+        fuzzyMatch(item.color, search) ||
+        fuzzyMatch(item.calidad, search) ||
         item.item.toString().includes(search.trim());
 
       const matchesColor = colorFilter === 'all' || item.color === colorFilter;
