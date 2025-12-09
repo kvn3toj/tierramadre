@@ -46,6 +46,16 @@ import { extractVideoThumbnail } from '../utils/videoStorage';
 import { MediaGallery, MediaUploadZone, ImageCropper } from './media';
 import type { MediaItem } from './media/types';
 
+// Convert File to data URL (base64) - more reliable than blob URLs in production
+const fileToDataURL = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+};
+
 // Cloudinary configuration
 const CLOUDINARY_CLOUD_NAME = 'dyam6g2os';
 const CLOUDINARY_UPLOAD_PRESET = 'tierramadre';
@@ -240,10 +250,16 @@ export default function ProductDetail() {
       // Find first image to crop
       const firstImageIndex = processedFiles.findIndex(f => !f.isVideo);
       if (firstImageIndex >= 0) {
-        const imageUrl = URL.createObjectURL(processedFiles[firstImageIndex].file);
-        setImageToCrop(imageUrl);
-        setCurrentCropIndex(firstImageIndex);
-        setCropperOpen(true);
+        try {
+          // Use data URL instead of blob URL for reliability in production
+          const dataUrl = await fileToDataURL(processedFiles[firstImageIndex].file);
+          setImageToCrop(dataUrl);
+          setCurrentCropIndex(firstImageIndex);
+          setCropperOpen(true);
+        } catch (error) {
+          console.error('Error reading file:', error);
+          alert('Error al cargar la imagen. Intente con otro archivo.');
+        }
       }
     } else {
       // No images, upload videos directly
@@ -322,11 +338,6 @@ export default function ProductDetail() {
     };
     setPendingFiles(updatedFiles);
 
-    // Clean up URL
-    if (imageToCrop) {
-      URL.revokeObjectURL(imageToCrop);
-    }
-
     // Find next image to crop
     let nextImageIndex = -1;
     for (let i = currentCropIndex + 1; i < updatedFiles.length; i++) {
@@ -337,10 +348,19 @@ export default function ProductDetail() {
     }
 
     if (nextImageIndex >= 0) {
-      // More images to crop
-      const imageUrl = URL.createObjectURL(updatedFiles[nextImageIndex].file as File);
-      setImageToCrop(imageUrl);
-      setCurrentCropIndex(nextImageIndex);
+      // More images to crop - use data URL for reliability
+      try {
+        const dataUrl = await fileToDataURL(updatedFiles[nextImageIndex].file as File);
+        setImageToCrop(dataUrl);
+        setCurrentCropIndex(nextImageIndex);
+      } catch (error) {
+        console.error('Error reading next file:', error);
+        // Continue with upload even if one image fails
+        setCropperOpen(false);
+        setImageToCrop(null);
+        await uploadFiles(updatedFiles, uploadCategory);
+        setPendingFiles([]);
+      }
     } else {
       // All images cropped, upload all files
       setCropperOpen(false);
@@ -348,17 +368,14 @@ export default function ProductDetail() {
       await uploadFiles(updatedFiles, uploadCategory);
       setPendingFiles([]);
     }
-  }, [pendingFiles, currentCropIndex, imageToCrop, uploadCategory, uploadFiles]);
+  }, [pendingFiles, currentCropIndex, uploadCategory, uploadFiles]);
 
   // Handle cropper close without completing
   const handleCropperClose = useCallback(() => {
-    if (imageToCrop) {
-      URL.revokeObjectURL(imageToCrop);
-    }
     setCropperOpen(false);
     setImageToCrop(null);
     setPendingFiles([]);
-  }, [imageToCrop]);
+  }, []);
 
   // Handle media reorder
   const handleMediaReorder = useCallback((reorderedItems: MediaItem[]) => {
