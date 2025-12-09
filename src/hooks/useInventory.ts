@@ -157,7 +157,8 @@ export function useInventory() {
 
       return {
         ...item,
-        imagen: mainMedia?.url || itemMedia?.url || item.imagen,
+        // Check imageUrl from Sheets API, then legacy imagen field
+        imagen: mainMedia?.url || itemMedia?.url || item.imageUrl || item.imagen,
         mediaType: mainMedia?.type || itemMedia?.mediaType || item.mediaType || 'image',
         thumbnailUrl: mainMedia?.thumbnailUrl || itemMedia?.thumbnailUrl || item.thumbnailUrl,
         galleryCount,

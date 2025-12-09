@@ -99,18 +99,35 @@ function showSelectedImage() {
 
 /**
  * Inserts the uploaded image URL into the selected cell
+ * and adds an inline preview in the adjacent column
  */
 function insertImageUrl(url) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const cell = sheet.getActiveCell();
+  const row = cell.getRow();
+  const col = cell.getColumn();
+
+  // Set the URL in the selected cell
   cell.setValue(url);
 
-  // Also try to show a thumbnail using IMAGE formula in adjacent cell (optional)
-  // cell.setFormula(`=IMAGE("${url}", 1)`);
+  // Add IMAGE formula in the next column for inline preview
+  const previewCell = sheet.getRange(row, col + 1);
+  // IMAGE mode 1 = fit to cell, maintaining aspect ratio
+  previewCell.setFormula(`=IMAGE("${url}", 1)`);
+
+  // Adjust row height to show preview better (50px)
+  sheet.setRowHeight(row, 50);
+
+  // Set preview column width if it's narrow
+  const colWidth = sheet.getColumnWidth(col + 1);
+  if (colWidth < 80) {
+    sheet.setColumnWidth(col + 1, 80);
+  }
 
   return {
     success: true,
     cell: cell.getA1Notation(),
+    previewCell: previewCell.getA1Notation(),
     url: url
   };
 }
