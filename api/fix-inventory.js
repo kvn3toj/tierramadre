@@ -247,15 +247,17 @@ function normalizeValue(value) {
 function applyCorrection(value, type) {
   if (!value || typeof value !== 'string') return { value, corrected: false };
 
-  const original = value.trim();
+  const original = value; // Keep original WITH spaces/newlines for comparison
   const normalized = normalizeValue(value);
   const corrections = CORRECTIONS[type] || {};
 
   // Check for exact match first (on normalized value)
   if (corrections[normalized]) {
+    const correctedValue = corrections[normalized];
     return {
-      value: corrections[normalized],
-      corrected: corrections[normalized] !== original,
+      value: correctedValue,
+      // Corrected if the corrected value differs from original (including whitespace)
+      corrected: correctedValue !== original,
       original: original,
     };
   }
@@ -270,6 +272,15 @@ function applyCorrection(value, type) {
         original: original,
       };
     }
+  }
+
+  // If no correction found but value has issues (spaces/newlines), normalize it
+  if (normalized !== original) {
+    return {
+      value: normalized,
+      corrected: true,
+      original: original,
+    };
   }
 
   return { value: normalized, corrected: false };
