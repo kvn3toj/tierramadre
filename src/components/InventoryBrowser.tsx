@@ -220,7 +220,7 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
 
         {/* Price - Dual display */}
         <Box sx={{ minWidth: 100, textAlign: 'right' }}>
-          <PriceDisplay price={item.precioCOP} compact showNational />
+          <PriceDisplay price={item.precioCOP} compact />
         </Box>
       </Paper>
     );
@@ -518,7 +518,7 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
           }}
         >
           <Box className="price-text" sx={{ flex: 1 }}>
-            <PriceDisplay price={item.precioCOP} compact showNational />
+            <PriceDisplay price={item.precioCOP} compact />
           </Box>
 
           <IconButton
