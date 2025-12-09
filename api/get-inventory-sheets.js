@@ -189,6 +189,7 @@ export default async function handler(req, res) {
       inventory,
       count: inventory.length,
       sheetName: targetSheet,
+      headers: headers,
       lastUpdated: new Date().toISOString()
     });
 
