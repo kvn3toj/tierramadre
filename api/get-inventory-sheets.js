@@ -196,16 +196,11 @@ export default async function handler(req, res) {
       .map(row => mapRowToInventoryItem(row, headers))
       .filter(item => item.item > 0); // Only items with valid item number
 
-    // Debug: include sample raw row
-    const sampleRaw = dataRows.length > 0 ? dataRows[0] : null;
-
     return res.status(200).json({
       success: true,
       inventory,
       count: inventory.length,
       sheetName: targetSheet,
-      headers: headers,
-      sampleRawRow: sampleRaw,
       lastUpdated: new Date().toISOString()
     });
 
