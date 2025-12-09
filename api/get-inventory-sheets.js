@@ -78,15 +78,25 @@ function parsePeso(peso) {
 }
 
 /**
+ * Normalize header - remove newlines, extra spaces, trim
+ */
+function normalizeHeader(h) {
+  if (!h) return '';
+  return String(h).toLowerCase().replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/**
  * Map row data to inventory item
  */
 function mapRowToInventoryItem(row, headers) {
+  // Normalize all headers once
+  const normalizedHeaders = headers.map(normalizeHeader);
+
   // Flexible column matching - finds column by partial match
   const getValue = (...columnNames) => {
     for (const columnName of columnNames) {
-      const index = headers.findIndex(h => {
-        const header = h.toLowerCase().trim().replace(/\s+/g, ' ');
-        const search = columnName.toLowerCase().trim();
+      const search = columnName.toLowerCase().trim();
+      const index = normalizedHeaders.findIndex(header => {
         return header === search || header.includes(search) || search.includes(header);
       });
       if (index >= 0 && row[index] !== undefined && row[index] !== '') {
