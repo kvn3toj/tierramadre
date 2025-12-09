@@ -52,11 +52,13 @@ const DROPDOWN_OPTIONS = {
       '0.6 = Esencial\n' +
       '0.8 = Sublime',
   },
-  // Inventory sheet
+  // Inventory sheet - includes all colors used in the sheet
   color: [
     'Verde Natural', 'Verde Limón', 'Verde Oscuro', 'Verde Claro',
     'Verde Azulado', 'Verde Amarillento', 'Verde Intenso', 'Verde Medio',
-    'Verde Bosque', 'Verde Esmeralda', 'Bluish Green', 'Yellowish Green'
+    'Verde Bosque', 'Verde Esmeralda', 'Verde Menta', 'Verde Vivido',
+    'Verde Brillante', 'Verde Profundo', 'Verde Selva', 'Verde Oliva',
+    'Bluish Green', 'Yellowish Green', 'Natural', 'Plata'
   ],
   calidad: [
     'Comercial', 'Comercial Superior', 'Comercial Final', 'Comercial Fina',
