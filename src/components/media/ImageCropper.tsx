@@ -57,8 +57,11 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
     image.addEventListener('load', () => resolve(image));
-    image.addEventListener('error', (error) => reject(error));
-    image.setAttribute('crossOrigin', 'anonymous');
+    image.addEventListener('error', () => reject(new Error('Failed to load image')));
+    // Only set crossOrigin for external URLs (not blob: or data: URLs)
+    if (!url.startsWith('blob:') && !url.startsWith('data:')) {
+      image.setAttribute('crossOrigin', 'anonymous');
+    }
     image.src = url;
   });
 
