@@ -8,7 +8,7 @@
 import { google } from 'googleapis';
 
 // Sheet configuration
-const SPREADSHEET_ID = '1Rc8Kah3XTR3W3YsjEMwvYO0v6wAeWjVDTrSLrYLX0as';
+const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
 const SHEET_NAME = 'Inventario'; // Adjust if different
 
 /**

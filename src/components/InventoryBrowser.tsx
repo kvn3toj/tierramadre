@@ -21,6 +21,8 @@ import {
   Button,
   LinearProgress,
   Slider,
+  Fab,
+  Tooltip,
 } from '@mui/material';
 import {
   Search,
@@ -36,6 +38,7 @@ import {
   FileCheck,
   Play,
   Images,
+  Plus,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import {
@@ -46,6 +49,7 @@ import { useInventory } from '../hooks/useInventory';
 import { InventoryItem, TrustScoreBreakdown } from '../types';
 import { TrustBadgeCompact } from './TrustBadge';
 import CertificationUpload from './CertificationUpload';
+import AddToInventoryModal from './AddToInventoryModal';
 import { calculateTrustScore, getTrustBadge } from '../utils/trustScore';
 
 // Format currency in COP
@@ -720,6 +724,9 @@ export default function InventoryBrowser() {
   const [certDialogOpen, setCertDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
+  // Add to inventory modal state
+  const [addInventoryOpen, setAddInventoryOpen] = useState(false);
+
   // Get filter options
   const colors = getUniqueColors();
   const stats = getInventoryStats();
@@ -1282,6 +1289,34 @@ export default function InventoryBrowser() {
           onSave={handleSaveCertifications}
         />
       )}
+
+      {/* Floating Action Button - Add to Inventory */}
+      <Tooltip title="Agregar producto al inventario" placement="left">
+        <Fab
+          color="primary"
+          onClick={() => setAddInventoryOpen(true)}
+          sx={{
+            position: 'fixed',
+            bottom: 100,
+            right: 24,
+            bgcolor: '#059669',
+            '&:hover': { bgcolor: '#047857' },
+            boxShadow: '0 4px 20px rgba(5, 150, 105, 0.4)',
+          }}
+        >
+          <Plus size={24} />
+        </Fab>
+      </Tooltip>
+
+      {/* Add to Inventory Modal */}
+      <AddToInventoryModal
+        open={addInventoryOpen}
+        onClose={() => setAddInventoryOpen(false)}
+        onSuccess={(itemNumber) => {
+          console.log('New product added:', itemNumber);
+          // Optionally refresh the inventory
+        }}
+      />
     </Box>
   );
 }
