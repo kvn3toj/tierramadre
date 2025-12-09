@@ -110,9 +110,9 @@ export default async function handler(req, res) {
 
     // Normalize name for comparison (uppercase, keep only letters and numbers)
     const normalizeName = (name) => {
-      // First clean the string
+      // Convert to string and handle all whitespace variants
       let clean = String(name || '')
-        .replace(/\r?\n/g, ' ')  // Replace newlines with space
+        .replace(/[\r\n\t\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, ' ')  // All whitespace to regular space
         .replace(/\s+/g, ' ')    // Collapse multiple spaces
         .trim();
 
