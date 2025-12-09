@@ -781,30 +781,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 3. DATA VALIDATION - Color dropdown (Column E = index 4)
-    // ==========================================
-    {
-      setDataValidation: {
-        range: {
-          sheetId,
-          startRowIndex: 1,
-          endRowIndex: rowCount + 200,
-          startColumnIndex: 4,
-          endColumnIndex: 5,
-        },
-        rule: {
-          condition: {
-            type: 'ONE_OF_LIST',
-            values: DROPDOWN_OPTIONS.color.map(v => ({ userEnteredValue: v })),
-          },
-          showCustomUi: true,
-          strict: false,
-        },
-      },
-    },
-
-    // ==========================================
-    // 4. DATA VALIDATION - Calidad dropdown (Column F = index 5)
+    // 3. DATA VALIDATION - Color dropdown (Column F = index 5)
     // ==========================================
     {
       setDataValidation: {
@@ -818,6 +795,29 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
         rule: {
           condition: {
             type: 'ONE_OF_LIST',
+            values: DROPDOWN_OPTIONS.color.map(v => ({ userEnteredValue: v })),
+          },
+          showCustomUi: true,
+          strict: false,
+        },
+      },
+    },
+
+    // ==========================================
+    // 4. DATA VALIDATION - Calidad dropdown (Column G = index 6)
+    // ==========================================
+    {
+      setDataValidation: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 200,
+          startColumnIndex: 6,
+          endColumnIndex: 7,
+        },
+        rule: {
+          condition: {
+            type: 'ONE_OF_LIST',
             values: DROPDOWN_OPTIONS.calidad.map(v => ({ userEnteredValue: v })),
           },
           showCustomUi: true,
@@ -827,30 +827,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 5. DATA VALIDATION - Talla dropdown (Column H = index 7)
-    // ==========================================
-    {
-      setDataValidation: {
-        range: {
-          sheetId,
-          startRowIndex: 1,
-          endRowIndex: rowCount + 200,
-          startColumnIndex: 7,
-          endColumnIndex: 8,
-        },
-        rule: {
-          condition: {
-            type: 'ONE_OF_LIST',
-            values: DROPDOWN_OPTIONS.talla.map(v => ({ userEnteredValue: v })),
-          },
-          showCustomUi: true,
-          strict: false,
-        },
-      },
-    },
-
-    // ==========================================
-    // 6. DATA VALIDATION - Medida s dropdown (Column I = index 8)
+    // 5. DATA VALIDATION - Talla dropdown (Column I = index 8)
     // ==========================================
     {
       setDataValidation: {
@@ -864,6 +841,29 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
         rule: {
           condition: {
             type: 'ONE_OF_LIST',
+            values: DROPDOWN_OPTIONS.talla.map(v => ({ userEnteredValue: v })),
+          },
+          showCustomUi: true,
+          strict: false,
+        },
+      },
+    },
+
+    // ==========================================
+    // 6. DATA VALIDATION - Medida s dropdown (Column J = index 9)
+    // ==========================================
+    {
+      setDataValidation: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 200,
+          startColumnIndex: 9,
+          endColumnIndex: 10,
+        },
+        rule: {
+          condition: {
+            type: 'ONE_OF_LIST',
             values: DROPDOWN_OPTIONS.medidaS.map(v => ({ userEnteredValue: v })),
           },
           showCustomUi: true,
@@ -873,7 +873,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 7. DATA VALIDATION - Ubicacion dropdown (Column N = index 13)
+    // 7. DATA VALIDATION - Ubicacion dropdown (Column O = index 14)
     // ==========================================
     {
       setDataValidation: {
@@ -881,8 +881,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 1,
           endRowIndex: rowCount + 200,
-          startColumnIndex: 13,
-          endColumnIndex: 14,
+          startColumnIndex: 14,
+          endColumnIndex: 15,
         },
         rule: {
           condition: {
@@ -896,7 +896,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 8. DATA VALIDATION - Estado dropdown (Column P = index 15)
+    // 8. DATA VALIDATION - Estado dropdown (Column Q = index 16)
     // ==========================================
     {
       setDataValidation: {
@@ -904,8 +904,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 1,
           endRowIndex: rowCount + 200,
-          startColumnIndex: 15,
-          endColumnIndex: 16,
+          startColumnIndex: 16,
+          endColumnIndex: 17,
         },
         rule: {
           condition: {
@@ -919,7 +919,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 9. CURRENCY FORMATTING - costo T.madre (Column L)
+    // 9. CURRENCY FORMATTING - costo T.madre (Column M = index 12)
     // ==========================================
     {
       repeatCell: {
@@ -927,8 +927,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 1,
           endRowIndex: rowCount + 200,
-          startColumnIndex: 11,
-          endColumnIndex: 12,
+          startColumnIndex: 12,
+          endColumnIndex: 13,
         },
         cell: {
           userEnteredFormat: {
@@ -944,7 +944,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 10. CURRENCY FORMATTING - Precio COP (Column M)
+    // 10. CURRENCY FORMATTING - Precio COP (Column N = index 13)
     // ==========================================
     {
       repeatCell: {
@@ -952,8 +952,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 1,
           endRowIndex: rowCount + 200,
-          startColumnIndex: 12,
-          endColumnIndex: 13,
+          startColumnIndex: 13,
+          endColumnIndex: 14,
         },
         cell: {
           userEnteredFormat: {
@@ -972,7 +972,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 11. SPECIAL HEADER - Golden accent for Precio COP
+    // 11. SPECIAL HEADER - Golden accent for Precio COP (Column N)
     // ==========================================
     {
       repeatCell: {
@@ -980,8 +980,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 0,
           endRowIndex: 1,
-          startColumnIndex: 12,
-          endColumnIndex: 13,
+          startColumnIndex: 13,
+          endColumnIndex: 14,
         },
         cell: {
           userEnteredFormat: {
@@ -1113,7 +1113,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 17. CONDITIONAL FORMAT - VENDIDA (Red background)
+    // 17. CONDITIONAL FORMAT - VENDIDA (Red background) - Column Q = index 16
     // ==========================================
     {
       addConditionalFormatRule: {
@@ -1122,8 +1122,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
             sheetId,
             startRowIndex: 1,
             endRowIndex: rowCount + 200,
-            startColumnIndex: 15,
-            endColumnIndex: 16,
+            startColumnIndex: 16,
+            endColumnIndex: 17,
           }],
           booleanRule: {
             condition: {
@@ -1153,8 +1153,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
             sheetId,
             startRowIndex: 1,
             endRowIndex: rowCount + 200,
-            startColumnIndex: 15,
-            endColumnIndex: 16,
+            startColumnIndex: 16,
+            endColumnIndex: 17,
           }],
           booleanRule: {
             condition: {
@@ -1184,8 +1184,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
             sheetId,
             startRowIndex: 1,
             endRowIndex: rowCount + 200,
-            startColumnIndex: 15,
-            endColumnIndex: 16,
+            startColumnIndex: 16,
+            endColumnIndex: 17,
           }],
           booleanRule: {
             condition: {
@@ -1214,8 +1214,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
             sheetId,
             startRowIndex: 1,
             endRowIndex: rowCount + 200,
-            startColumnIndex: 15,
-            endColumnIndex: 16,
+            startColumnIndex: 16,
+            endColumnIndex: 17,
           }],
           booleanRule: {
             condition: {
@@ -1245,7 +1245,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
             startRowIndex: 1,
             endRowIndex: rowCount + 200,
             startColumnIndex: 0,
-            endColumnIndex: 15, // Exclude ESTADO column
+            endColumnIndex: 16, // Exclude ESTADO column (Q)
           }],
           booleanRule: {
             condition: {
@@ -1262,7 +1262,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 22. PRICE GRADIENT - Precio COP column
+    // 22. PRICE GRADIENT - Precio COP column (N = index 13)
     // ==========================================
     {
       addConditionalFormatRule: {
@@ -1271,8 +1271,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
             sheetId,
             startRowIndex: 1,
             endRowIndex: rowCount + 200,
-            startColumnIndex: 12,
-            endColumnIndex: 13,
+            startColumnIndex: 13,
+            endColumnIndex: 14,
           }],
           gradientRule: {
             minpoint: {
