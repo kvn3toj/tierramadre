@@ -134,7 +134,7 @@ export const PriceDisplay = ({
                 textTransform: 'uppercase',
               }}
             >
-              Precio Internacional
+              Precio
             </Typography>
           </Stack>
           <Typography
