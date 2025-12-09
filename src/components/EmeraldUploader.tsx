@@ -21,9 +21,6 @@ import {
   DialogActions,
   Tabs,
   Tab,
-  Card,
-  CardContent,
-  CardActions,
   Badge,
   alpha,
 } from '@mui/material';
@@ -32,8 +29,6 @@ import {
   Check as CheckIcon,
   Refresh as RefreshIcon,
   Collections as BatchIcon,
-  Delete as DeleteIcon,
-  Add as AddIcon,
 } from '@mui/icons-material';
 import { Upload, Settings, Image, Layers } from 'lucide-react';
 import { useEmeralds } from '../hooks/useEmeralds';
@@ -45,6 +40,7 @@ import { compressImage } from '../utils/imageNormalizer';
 import { saveVideo, extractVideoThumbnail } from '../utils/videoStorage';
 import { isVideoFile, isMediaFile } from '../utils/fileTypeDetection';
 import MediaPreview from './MediaPreview';
+import { BatchItemCard } from './upload';
 
 interface EmeraldUploaderProps {
   onComplete?: () => void;
@@ -958,174 +954,17 @@ export default function EmeraldUploader({ onComplete }: EmeraldUploaderProps) {
                 </Button>
               </Box>
 
+              {/* Batch items grid - using extracted BatchItemCard component */}
               <Grid container spacing={{ xs: 1.5, md: 2 }}>
                 {batchItems.map((item) => (
                   <Grid item xs={12} sm={6} md={4} key={item.id}>
-                    <Card sx={{ height: '100%' }}>
-                      <Box sx={{ height: 160, overflow: 'hidden', bgcolor: '#000' }}>
-                        {item.mediaType === 'video' ? (
-                          <MediaPreview
-                            mediaUrl={item.imageUrl}
-                            mediaType="video"
-                            thumbnailUrl={item.thumbnailUrl}
-                            alt="Video"
-                            maxHeight={160}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            controls={false}
-                            muted
-                          />
-                        ) : (
-                          <img
-                            src={item.imageUrl}
-                            alt="Emerald"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          />
-                        )}
-                      </Box>
-                      <CardContent sx={{ pb: 1 }}>
-                        {/* Name suggestions */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-                          <AIIcon sx={{ fontSize: 16, color: brandColors.gold }} />
-                          <Typography variant="caption">Sugerencias:</Typography>
-                          <IconButton size="small" onClick={() => refreshBatchItemNames(item.id)}>
-                            <RefreshIcon sx={{ fontSize: 14 }} />
-                          </IconButton>
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1 }}>
-                          {item.suggestedNames.map((name) => (
-                            <Chip
-                              key={name}
-                              label={name}
-                              size="small"
-                              onClick={() => updateBatchItem(item.id, { selectedName: name, customName: '' })}
-                              color={item.selectedName === name ? 'primary' : 'default'}
-                              sx={{ cursor: 'pointer', fontSize: '0.7rem' }}
-                            />
-                          ))}
-                        </Box>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Nombre"
-                          value={item.customName || item.selectedName}
-                          onChange={(e) => updateBatchItem(item.id, { customName: e.target.value, selectedName: '' })}
-                          sx={{ mb: 1 }}
-                        />
-                        <Grid container spacing={1}>
-                          <Grid item xs={6}>
-                            <TextField
-                              fullWidth
-                              size="small"
-                              label="Peso (ct)"
-                              value={item.weightCarats}
-                              onChange={(e) => updateBatchItem(item.id, { weightCarats: e.target.value })}
-                              type="number"
-                            />
-                          </Grid>
-                          <Grid item xs={6}>
-                            <TextField
-                              fullWidth
-                              size="small"
-                              label="Lote"
-                              value={item.lotCode}
-                              onChange={(e) => updateBatchItem(item.id, { lotCode: e.target.value })}
-                            />
-                          </Grid>
-                          <Grid item xs={12}>
-                            <FormControl fullWidth size="small">
-                              <InputLabel>Categoría</InputLabel>
-                              <Select
-                                value={item.category}
-                                label="Categoría"
-                                onChange={(e) => updateBatchItem(item.id, { category: e.target.value as EmeraldCategory })}
-                              >
-                                <MenuItem value="loose">Gema</MenuItem>
-                                <MenuItem value="ring">Anillo</MenuItem>
-                                <MenuItem value="pendant">Dije</MenuItem>
-                                <MenuItem value="earrings">Aretes</MenuItem>
-                              </Select>
-                            </FormControl>
-                          </Grid>
-                          {/* Jewelry-specific fields */}
-                          {(item.category === 'ring' || item.category === 'earrings' || item.category === 'pendant') && (
-                            <>
-                              {item.category === 'ring' && (
-                                <Grid item xs={12}>
-                                  <FormControl fullWidth size="small">
-                                    <InputLabel>Talla</InputLabel>
-                                    <Select
-                                      value={item.ringSize || ''}
-                                      label="Talla"
-                                      onChange={(e) => updateBatchItem(item.id, { ringSize: e.target.value })}
-                                    >
-                                      <MenuItem value="4">4</MenuItem>
-                                      <MenuItem value="5">5</MenuItem>
-                                      <MenuItem value="6">6</MenuItem>
-                                      <MenuItem value="7">7</MenuItem>
-                                      <MenuItem value="8">8</MenuItem>
-                                      <MenuItem value="9">9</MenuItem>
-                                      <MenuItem value="10">10</MenuItem>
-                                    </Select>
-                                  </FormControl>
-                                </Grid>
-                              )}
-                              <Grid item xs={6}>
-                                <FormControl fullWidth size="small">
-                                  <InputLabel>Color</InputLabel>
-                                  <Select
-                                    value={item.color || ''}
-                                    label="Color"
-                                    onChange={(e) => updateBatchItem(item.id, { color: e.target.value })}
-                                  >
-                                    <MenuItem value="Verde Muzo">Verde Muzo</MenuItem>
-                                    <MenuItem value="Verde Chivor">Verde Chivor</MenuItem>
-                                    <MenuItem value="Verde Vivido">Verde Vivido</MenuItem>
-                                    <MenuItem value="Verde Natural">Verde Natural</MenuItem>
-                                    <MenuItem value="Verde Menta">Verde Menta</MenuItem>
-                                  </Select>
-                                </FormControl>
-                              </Grid>
-                              <Grid item xs={6}>
-                                <FormControl fullWidth size="small">
-                                  <InputLabel>Calidad</InputLabel>
-                                  <Select
-                                    value={item.quality || ''}
-                                    label="Calidad"
-                                    onChange={(e) => updateBatchItem(item.id, { quality: e.target.value })}
-                                  >
-                                    <MenuItem value="Premium">Premium</MenuItem>
-                                    <MenuItem value="Estándar">Estándar</MenuItem>
-                                    <MenuItem value="Comercial">Comercial</MenuItem>
-                                  </Select>
-                                </FormControl>
-                              </Grid>
-                            </>
-                          )}
-                        </Grid>
-                      </CardContent>
-                      <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => removeBatchItem(item.id)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                        <Button
-                          size="small"
-                          variant="contained"
-                          startIcon={<AddIcon />}
-                          onClick={() => saveBatchItem(item)}
-                          disabled={!item.customName && !item.selectedName}
-                          sx={{
-                            bgcolor: brandColors.emeraldGreen,
-                            '&:hover': { bgcolor: brandColors.emeraldDark },
-                          }}
-                        >
-                          Guardar
-                        </Button>
-                      </CardActions>
-                    </Card>
+                    <BatchItemCard
+                      item={item}
+                      onUpdate={updateBatchItem}
+                      onRemove={removeBatchItem}
+                      onRefreshNames={refreshBatchItemNames}
+                      onSave={saveBatchItem}
+                    />
                   </Grid>
                 ))}
               </Grid>
