@@ -47,6 +47,7 @@ import { TrustBadgeCompact } from './TrustBadge';
 import { extractVideoThumbnail } from '../utils/videoStorage';
 import { MediaGallery, MediaUploadZone, ImageCropper } from './media';
 import type { MediaItem } from './media/types';
+import { PriceDisplay } from './PriceDisplay';
 
 // Convert File to data URL (base64) - more reliable than blob URLs in production
 const fileToDataURL = (file: File): Promise<string> => {
@@ -697,22 +698,12 @@ export default function ProductDetail() {
               )}
             </Box>
 
-            {/* Price */}
-            <Typography
-              variant="h2"
-              sx={{
-                fontWeight: 700,
-                color: '#059669',
-                mb: 0.5,
-                fontFamily: 'system-ui',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              {formatCurrency(product.precioCOP)}
-            </Typography>
-            <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-              Precio en pesos colombianos
-            </Typography>
+            {/* Price - Dual display (International + National) */}
+            <PriceDisplay
+              price={product.precioCOP}
+              showNational
+              nationalDiscount={0.20}
+            />
           </Box>
 
           <Divider sx={{ my: 3 }} />

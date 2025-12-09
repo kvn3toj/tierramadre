@@ -53,6 +53,7 @@ import { TrustBadgeCompact } from './TrustBadge';
 import CertificationUpload from './CertificationUpload';
 import AddToInventoryModal from './AddToInventoryModal';
 import { calculateTrustScore, getTrustBadge } from '../utils/trustScore';
+import { PriceDisplay } from './PriceDisplay';
 
 // Format currency in COP
 const formatCurrency = (value: number): string => {
@@ -217,19 +218,10 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
           }}
         />
 
-        {/* Price */}
-        <Typography
-          sx={{
-            fontWeight: 700,
-            color: '#059669',
-            fontSize: '1rem',
-            fontFamily: 'monospace',
-            minWidth: 80,
-            textAlign: 'right',
-          }}
-        >
-          {formatCurrency(item.precioCOP)}
-        </Typography>
+        {/* Price - Dual display */}
+        <Box sx={{ minWidth: 100, textAlign: 'right' }}>
+          <PriceDisplay price={item.precioCOP} compact showNational />
+        </Box>
       </Paper>
     );
   }
@@ -525,30 +517,9 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
             justifyContent: 'space-between',
           }}
         >
-          <Typography
-            className="price-text"
-            sx={{
-              fontWeight: 700,
-              color: theme.palette.text.primary,
-              fontSize: '1.5rem',
-              fontFamily: 'system-ui',
-              letterSpacing: '-0.02em',
-              transition: 'color 0.2s ease',
-            }}
-          >
-            <Box
-              component="span"
-              sx={{
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                color: theme.palette.text.secondary,
-                mr: 0.5,
-              }}
-            >
-              $
-            </Box>
-            {formatCurrency(item.precioCOP).replace('$', '')}
-          </Typography>
+          <Box className="price-text" sx={{ flex: 1 }}>
+            <PriceDisplay price={item.precioCOP} compact showNational />
+          </Box>
 
           <IconButton
             size="small"
@@ -573,15 +544,6 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
             }}
           >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                  Precio completo
-                </Typography>
-                <Typography variant="caption" sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-                  {formatFullCurrency(item.precioCOP)}
-                </Typography>
-              </Box>
-
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
                   Calidad
