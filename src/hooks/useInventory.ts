@@ -3,6 +3,10 @@ import { InventoryItem, MediaType } from '../types';
 import { inventoryData as defaultInventoryData } from '../data/inventory';
 import { MediaItem } from '../components/media/types';
 
+// Cache key for sheets data
+const SHEETS_CACHE_KEY = 'tierramadre-inventory-sheets-cache';
+const SHEETS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+
 // Cloudinary configuration
 const CLOUDINARY_CLOUD_NAME = 'dyam6g2os';
 const CLOUDINARY_UPLOAD_PRESET = 'tierramadre';
@@ -54,6 +58,48 @@ interface ProductGallery {
 export function useInventory() {
   const [legacyMedia, setLegacyMedia] = useState<LegacyInventoryMedia>({});
   const [galleries, setGalleries] = useState<ProductGallery>({});
+  const [sheetsInventory, setSheetsInventory] = useState<InventoryItem[] | null>(null);
+  const [isLoadingSheets, setIsLoadingSheets] = useState(true);
+  const [sheetsError, setSheetsError] = useState<string | null>(null);
+
+  // Load inventory from Google Sheets API
+  useEffect(() => {
+    const loadFromSheets = async () => {
+      try {
+        // Check cache first
+        const cached = localStorage.getItem(SHEETS_CACHE_KEY);
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached);
+          if (Date.now() - timestamp < SHEETS_CACHE_TTL) {
+            setSheetsInventory(data);
+            setIsLoadingSheets(false);
+            return;
+          }
+        }
+
+        // Fetch from API
+        const response = await fetch('/api/get-inventory-sheets');
+        if (!response.ok) throw new Error('Failed to fetch inventory');
+
+        const result = await response.json();
+        if (result.success && result.inventory) {
+          setSheetsInventory(result.inventory);
+          // Cache the result
+          localStorage.setItem(SHEETS_CACHE_KEY, JSON.stringify({
+            data: result.inventory,
+            timestamp: Date.now()
+          }));
+        }
+      } catch (error) {
+        console.warn('Could not load from Google Sheets, using local data:', error);
+        setSheetsError(error instanceof Error ? error.message : 'Unknown error');
+      } finally {
+        setIsLoadingSheets(false);
+      }
+    };
+
+    loadFromSheets();
+  }, []);
 
   // Load saved media from LocalStorage on mount
   useEffect(() => {
@@ -96,7 +142,10 @@ export function useInventory() {
 
   // Get inventory data with media merged in
   const getInventoryWithMedia = (): InventoryItem[] => {
-    return defaultInventoryData.map(item => {
+    // Use Google Sheets data if available, otherwise fall back to local data
+    const baseInventory = sheetsInventory || defaultInventoryData;
+
+    return baseInventory.map(item => {
       const itemMedia = legacyMedia[item.item];
       const gallery = galleries[item.item] || [];
 
@@ -115,6 +164,29 @@ export function useInventory() {
       };
     });
   };
+
+  // Force refresh from Google Sheets
+  const refreshFromSheets = useCallback(async () => {
+    setIsLoadingSheets(true);
+    setSheetsError(null);
+    try {
+      const response = await fetch('/api/get-inventory-sheets');
+      if (!response.ok) throw new Error('Failed to fetch inventory');
+
+      const result = await response.json();
+      if (result.success && result.inventory) {
+        setSheetsInventory(result.inventory);
+        localStorage.setItem(SHEETS_CACHE_KEY, JSON.stringify({
+          data: result.inventory,
+          timestamp: Date.now()
+        }));
+      }
+    } catch (error) {
+      setSheetsError(error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setIsLoadingSheets(false);
+    }
+  }, []);
 
   // Legacy: Update single image for a specific item
   const updateImage = (itemNumber: number, imageUrl: string) => {
@@ -329,6 +401,12 @@ export function useInventory() {
     uploadToGallery,
     updateMediaItems,
     getMediaItems,
+
+    // Google Sheets integration
+    isLoadingSheets,
+    sheetsError,
+    refreshFromSheets,
+    isUsingSheets: sheetsInventory !== null,
   };
 }
 
