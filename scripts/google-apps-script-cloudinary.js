@@ -99,6 +99,7 @@ function showSelectedImage() {
 
 /**
  * Inserts the uploaded image as a clickable inline preview
+ * Also saves the URL in a separate column for API access
  * Click on the image to open the full-size URL
  */
 function insertImageUrl(url) {
@@ -110,6 +111,10 @@ function insertImageUrl(url) {
   // Use HYPERLINK + IMAGE so clicking the image opens the URL
   // IMAGE mode 1 = fit to cell, maintaining aspect ratio
   cell.setFormula(`=HYPERLINK("${url}", IMAGE("${url}", 1))`);
+
+  // Also save the URL as plain text in the next column for API access
+  const urlCell = sheet.getRange(row, col + 1);
+  urlCell.setValue(url);
 
   // Adjust row height to show preview better (60px)
   sheet.setRowHeight(row, 60);
@@ -123,6 +128,7 @@ function insertImageUrl(url) {
   return {
     success: true,
     cell: cell.getA1Notation(),
+    urlCell: urlCell.getA1Notation(),
     url: url
   };
 }
