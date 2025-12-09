@@ -8,6 +8,10 @@
       "maxDuration": 30,
       "memory": 512
     },
+    "api/get-asesores.js": {
+      "maxDuration": 30,
+      "memory": 512
+    },
     "api/add-inventory-item.js": {
       "maxDuration": 30,
       "memory": 512
