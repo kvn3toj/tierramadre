@@ -220,6 +220,7 @@ export interface InventoryItem {
   talla: string;
   medidas: string;
   imagen?: string;
+  imageUrl?: string;         // Image URL from Google Sheets API
   mediaType?: MediaType;     // Type of media (image or video)
   thumbnailUrl?: string;     // Thumbnail for videos
   galleryCount?: number;     // Number of media items in gallery
