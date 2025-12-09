@@ -10,6 +10,66 @@ import { google } from 'googleapis';
 const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
 
 /**
+ * Add product to pricing sheet with formulas
+ */
+async function addToPricingSheet(sheets, nombre, costoTM) {
+  try {
+    // Find pricing sheet
+    const metadata = await sheets.spreadsheets.get({
+      spreadsheetId: SPREADSHEET_ID,
+    });
+
+    const pricingSheet = metadata.data.sheets.find(s =>
+      s.properties.title.toLowerCase().includes('cualificacion')
+    );
+
+    if (!pricingSheet) {
+      console.log('Pricing sheet not found, skipping sync');
+      return;
+    }
+
+    const sheetName = pricingSheet.properties.title;
+
+    // Get current row count to determine row number for formulas
+    const countResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${sheetName}!A:A`,
+    });
+
+    const rowNum = (countResponse.data.values?.length || 1) + 1;
+
+    // Prepare row with formulas
+    const newRow = [
+      nombre,                              // A: nombre
+      costoTM || '',                       // B: Costo Inicial
+      3,                                   // C: Multiplicador de Calidad (default)
+      '',                                  // D: Puntuación del Jurado (empty for dropdown)
+      '',                                  // E: Factor de Calidad (empty for dropdown)
+      `=C${rowNum}+D${rowNum}+E${rowNum}`, // F: Multiplicador Final
+      `=B${rowNum}*F${rowNum}`,            // G: Precio Unificado
+      `=G${rowNum}*0.2`,                   // H: Descuento Nacional (20%)
+      `=G${rowNum}-H${rowNum}`,            // I: Precio Nacional Final
+    ];
+
+    // Append to pricing sheet
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${sheetName}!A:I`,
+      valueInputOption: 'USER_ENTERED',
+      insertDataOption: 'INSERT_ROWS',
+      resource: {
+        values: [newRow],
+      },
+    });
+
+    console.log(`Added "${nombre}" to pricing sheet at row ${rowNum}`);
+  } catch (error) {
+    console.error('Error adding to pricing sheet:', error);
+    // Don't throw - this is a secondary operation
+  }
+}
+
+/**
  * Initialize Google Sheets API with service account credentials
  */
 function getSheetsClient() {
@@ -146,6 +206,9 @@ export default async function handler(req, res) {
         values: [rowData],
       },
     });
+
+    // Also add to pricing sheet for qualification
+    await addToPricingSheet(sheets, nombre, costoTM);
 
     return res.status(200).json({
       success: true,

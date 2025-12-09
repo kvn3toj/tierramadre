@@ -11,6 +11,10 @@
     "api/add-inventory-item.js": {
       "maxDuration": 30,
       "memory": 512
+    },
+    "api/sync-pricing-sheet.js": {
+      "maxDuration": 60,
+      "memory": 512
     }
   },
   "rewrites": [
