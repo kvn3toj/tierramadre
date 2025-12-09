@@ -98,8 +98,8 @@ function showSelectedImage() {
 }
 
 /**
- * Inserts the uploaded image URL into the selected cell
- * and adds an inline preview in the adjacent column
+ * Inserts the uploaded image as a clickable inline preview
+ * Click on the image to open the full-size URL
  */
 function insertImageUrl(url) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
@@ -107,27 +107,22 @@ function insertImageUrl(url) {
   const row = cell.getRow();
   const col = cell.getColumn();
 
-  // Set the URL in the selected cell
-  cell.setValue(url);
-
-  // Add IMAGE formula in the next column for inline preview
-  const previewCell = sheet.getRange(row, col + 1);
+  // Use HYPERLINK + IMAGE so clicking the image opens the URL
   // IMAGE mode 1 = fit to cell, maintaining aspect ratio
-  previewCell.setFormula(`=IMAGE("${url}", 1)`);
+  cell.setFormula(`=HYPERLINK("${url}", IMAGE("${url}", 1))`);
 
-  // Adjust row height to show preview better (50px)
-  sheet.setRowHeight(row, 50);
+  // Adjust row height to show preview better (60px)
+  sheet.setRowHeight(row, 60);
 
-  // Set preview column width if it's narrow
-  const colWidth = sheet.getColumnWidth(col + 1);
-  if (colWidth < 80) {
-    sheet.setColumnWidth(col + 1, 80);
+  // Set column width if it's narrow
+  const colWidth = sheet.getColumnWidth(col);
+  if (colWidth < 100) {
+    sheet.setColumnWidth(col, 100);
   }
 
   return {
     success: true,
     cell: cell.getA1Notation(),
-    previewCell: previewCell.getA1Notation(),
     url: url
   };
 }
