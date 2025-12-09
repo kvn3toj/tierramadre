@@ -34,6 +34,13 @@ import {
 import { motion, Reorder } from 'framer-motion';
 import { MediaItem, CATEGORY_LABELS, CATEGORY_ORDER } from './types';
 
+// Helper to check if file is an image (including HEIC which some browsers don't recognize)
+const isImageFile = (file: File): boolean => {
+  if (file.type.startsWith('image/')) return true;
+  const ext = file.name.toLowerCase().split('.').pop();
+  return ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '');
+};
+
 interface UploadingFile {
   id: string;
   file: File;
@@ -78,7 +85,7 @@ export default function MediaUploadZone({
         id: `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         file,
         progress: 0,
-        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
+        preview: isImageFile(file) ? URL.createObjectURL(file) : undefined,
       }));
 
       setUploadingFiles((prev) => [...prev, ...newUploading]);
@@ -118,7 +125,9 @@ export default function MediaUploadZone({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.webp'],
+      'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.heic', '.heif'],
+      'image/heic': ['.heic'],
+      'image/heif': ['.heif'],
       'video/*': ['.mp4', '.mov', '.webm'],
     },
     maxFiles: remainingSlots,
@@ -203,7 +212,7 @@ export default function MediaUploadZone({
               o haz clic para seleccionar
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.disabled', mt: 1, display: 'block' }}>
-              {remainingSlots} espacios disponibles • JPG, PNG, MP4 (máx. 50MB)
+              {remainingSlots} espacios disponibles • JPG, PNG, HEIC, MP4 (máx. 50MB)
             </Typography>
           </>
         ) : (

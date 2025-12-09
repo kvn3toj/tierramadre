@@ -61,7 +61,7 @@ function showHelp() {
     '4. Espera a que se suba\n' +
     '5. La URL se insertará automáticamente\n\n' +
     'FORMATOS SOPORTADOS:\n' +
-    'JPG, PNG, GIF, WebP\n\n' +
+    'JPG, PNG, GIF, WebP, HEIC\n\n' +
     'TAMAÑO MÁXIMO:\n' +
     '10MB por imagen',
     ui.ButtonSet.OK
@@ -312,7 +312,7 @@ function getUploadDialogHtml() {
     <div class="drop-zone-hint">o haz clic para seleccionar</div>
   </div>
 
-  <input type="file" id="fileInput" accept="image/*">
+  <input type="file" id="fileInput" accept="image/*,.heic,.heif">
 
   <div class="preview" id="preview">
     <img id="previewImg" src="" alt="Preview">
@@ -383,7 +383,12 @@ function getUploadDialogHtml() {
     });
 
     function handleFile(file) {
-      if (!file || !file.type.startsWith('image/')) {
+      // Check by MIME type or extension (for HEIC which some browsers don't recognize)
+      const isImage = file && (
+        file.type.startsWith('image/') ||
+        /\.(heic|heif|jpg|jpeg|png|webp|gif)$/i.test(file.name)
+      );
+      if (!isImage) {
         showStatus('Por favor selecciona una imagen válida', 'error');
         return;
       }
