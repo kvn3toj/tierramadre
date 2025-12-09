@@ -107,11 +107,38 @@ export default async function handler(req, res) {
 
     // Extract unique asesores from inventory data
     const dataRows = rows.slice(1);
-    const asesores = dataRows
-      .map(row => row[asesorColumnIndex])
-      .filter(name => name && name.trim() !== '')
-      .map(name => name.trim())
-      .filter((name, index, self) => self.indexOf(name) === index) // Unique
+
+    // Normalize name for comparison (uppercase, remove extra spaces/newlines)
+    const normalizeName = (name) => {
+      return name
+        .toUpperCase()
+        .replace(/\n/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+
+    // Get unique names, keeping the best formatted version
+    const nameMap = new Map();
+    dataRows.forEach(row => {
+      const name = row[asesorColumnIndex];
+      if (!name || name.trim() === '') return;
+
+      const cleanName = name.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+      const normalized = normalizeName(cleanName);
+
+      // Keep the version with proper casing (not all caps if possible)
+      if (!nameMap.has(normalized)) {
+        nameMap.set(normalized, cleanName);
+      } else {
+        const existing = nameMap.get(normalized);
+        // Prefer mixed case over all caps
+        if (existing === existing.toUpperCase() && cleanName !== cleanName.toUpperCase()) {
+          nameMap.set(normalized, cleanName);
+        }
+      }
+    });
+
+    const asesores = Array.from(nameMap.values())
       .sort((a, b) => a.localeCompare(b, 'es'));
 
     // Create asesor objects with basic info
