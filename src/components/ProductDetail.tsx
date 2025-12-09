@@ -661,12 +661,9 @@ export default function ProductDetail() {
                       Color
                     </Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: colorDot }} />
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {product.color}
-                    </Typography>
-                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {product.color}
+                  </Typography>
                 </CardContent>
               </Card>
             </Grid>

@@ -136,7 +136,7 @@ function mapRowToInventoryItem(row, headers) {
     precioCOP: parsePrice(getValue('precio cop', 'preciocop', 'precio', 'price', 'valor')),
     ubicacion: getValue('ubicacion', 'location', 'lugar') || '',
     asesor: getValue('asesor', 'advisor', 'vendedor', 'seller') || '',
-    estado: getValue('estado', 'status', 'disponibilidad') || 'DISPONIBLE',
+    estado: (getValue('estado', 'status', 'disponibilidad') || 'DISPONIBLE').toUpperCase(),
     imageUrl: imageUrl,
     isJewelry: pesoData.isJewelry,
     metalType: pesoData.metalType,

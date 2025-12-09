@@ -100,8 +100,8 @@ export interface ReceiptData {
 // Inventory types for official stock
 export type InventoryStatus = 'DISPONIBLE' | 'VENDIDA' | 'ASESOR';
 export type EmeraldColor = 'Verde Vivido' | 'Verde Muzo' | 'Verde Limón' | 'Verde Menta' | 'Verde Natural' | string;
-export type EmeraldQuality = 'Fina' | 'Comercial Fina' | 'Comercial SuperFina' | 'Comercial Superior' | 'Comercial Estandar' | 'Estandar' | string;
-export type EmeraldCut = 'Cushion' | 'Corazon' | 'Esmeralda' | 'Ovalo' | 'Redonda' | 'Cuadrada' | 'lagrima' | string;
+export type EmeraldQuality = 'Fina' | 'Comercial Fina' | 'Comercial SuperFina' | 'Comercial Superior' | 'Comercial Estándar' | 'Estándar' | string;
+export type EmeraldCut = 'Cushion' | 'Corazón' | 'Esmeralda' | 'Óvalo' | 'Redonda' | 'Cuadrada' | 'Lágrima' | string;
 
 // Colombian emerald regions
 export type ColombianRegion = 'Muzo' | 'Chivor' | 'Coscuez' | 'Peñas Blancas' | 'La Pita' | 'Other';

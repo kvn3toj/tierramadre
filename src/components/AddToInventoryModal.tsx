@@ -44,18 +44,18 @@ const CALIDADES = [
   'Comercial SuperFina',
   'Comercial Fina',
   'Comercial Superior',
-  'Comercial Estandar',
-  'Estandar',
+  'Comercial Estándar',
+  'Estándar',
 ];
 
 const TALLAS = [
   'Esmeralda',
   'Redonda',
-  'Ovalo',
+  'Óvalo',
   'Cuadrada',
   'Cushion',
-  'Corazon',
-  'Lagrima',
+  'Corazón',
+  'Lágrima',
   'Marquesa',
 ];
 
