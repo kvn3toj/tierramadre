@@ -69,21 +69,28 @@ export function useAsesores(inventory?: InventoryItem[]): UseAsesoresReturn {
     loadAsesores();
   }, []);
 
+  // Normalize name for comparison
+  const normalizeName = (name: string): string => {
+    return name
+      .toUpperCase()
+      .replace(/\n/g, ' ')
+      .replace(/\s+/g, ' ')
+      .replace(/[.\s-]/g, '')
+      .trim();
+  };
+
   // Enrich asesores with inventory data
   const enrichedAsesores = useMemo(() => {
     if (!inventory || inventory.length === 0) return asesores;
 
     return asesores.map(asesor => {
-      // Match asesor name with inventory items (case-insensitive, partial match)
-      const asesorNameLower = asesor.name.toLowerCase();
+      const normalizedAsesorName = normalizeName(asesor.name);
+
+      // Match asesor name with inventory items using normalized comparison
       const matchingProducts = inventory.filter(item => {
         if (!item.asesor) return false;
-        const itemAsesor = item.asesor.toLowerCase();
-        // Match if names contain each other (handles "M.CAMPUZANO" vs "M. Campuzano")
-        return itemAsesor.includes(asesorNameLower) ||
-               asesorNameLower.includes(itemAsesor) ||
-               // Also match by removing dots and spaces
-               itemAsesor.replace(/[.\s]/g, '') === asesorNameLower.replace(/[.\s]/g, '');
+        const normalizedItemAsesor = normalizeName(item.asesor);
+        return normalizedItemAsesor === normalizedAsesorName;
       });
 
       return {
