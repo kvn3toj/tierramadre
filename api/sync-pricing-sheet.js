@@ -38,8 +38,20 @@ const COLORS = {
 // Dropdown options for data validation
 const DROPDOWN_OPTIONS = {
   // Pricing sheet - includes all values actually used in the sheet
-  puntuacionJurado: [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5],
-  factorCalidad: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
+  puntuacionJurado: {
+    values: [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5],
+    message: '📊 Puntuación del Jurado\nBasado en evaluación experta',
+  },
+  factorCalidad: {
+    values: [0.1, 0.2, 0.3, 0.4, 0.6, 0.8],
+    message: '💎 Factor de Calidad:\n\n' +
+      '0.1 = Comercial Estándar\n' +
+      '0.2 = Comercial Superior\n' +
+      '0.3 = Comercial Fina\n' +
+      '0.4 = Comercial SuperFina\n' +
+      '0.6 = Esencial\n' +
+      '0.8 = Sublime',
+  },
   // Inventory sheet
   color: [
     'Verde Natural', 'Verde Limón', 'Verde Oscuro', 'Verde Claro',
@@ -188,8 +200,9 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
         rule: {
           condition: {
             type: 'ONE_OF_LIST',
-            values: DROPDOWN_OPTIONS.puntuacionJurado.map(v => ({ userEnteredValue: String(v) })),
+            values: DROPDOWN_OPTIONS.puntuacionJurado.values.map(v => ({ userEnteredValue: String(v) })),
           },
+          inputMessage: DROPDOWN_OPTIONS.puntuacionJurado.message,
           showCustomUi: true,
           strict: false,
         },
@@ -211,8 +224,9 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
         rule: {
           condition: {
             type: 'ONE_OF_LIST',
-            values: DROPDOWN_OPTIONS.factorCalidad.map(v => ({ userEnteredValue: String(v) })),
+            values: DROPDOWN_OPTIONS.factorCalidad.values.map(v => ({ userEnteredValue: String(v) })),
           },
+          inputMessage: DROPDOWN_OPTIONS.factorCalidad.message,
           showCustomUi: true,
           strict: false,
         },
