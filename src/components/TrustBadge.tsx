@@ -37,7 +37,7 @@ export default function TrustBadge({
   const tooltipContent = (
     <Box sx={{ p: 1.5, minWidth: 220 }}>
       <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
-        Certificacion del Producto
+        Certificación del Producto
       </Typography>
       <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1.5 }}>
         Nivel de autenticidad de la esmeralda
@@ -46,7 +46,7 @@ export default function TrustBadge({
       <Box sx={{ mb: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Puntuacion
+            Puntuación
           </Typography>
           <Typography variant="caption" sx={{ fontWeight: 700, color: badge.color }}>
             {score.overall}/100

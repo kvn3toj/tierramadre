@@ -219,7 +219,7 @@ export default function CertificationUpload({
             <Tab
               icon={<Award size={18} />}
               iconPosition="start"
-              label="Gemologica"
+              label="Gemológica"
             />
             <Tab
               icon={<MapPin size={18} />}
@@ -229,7 +229,7 @@ export default function CertificationUpload({
             <Tab
               icon={<Heart size={18} />}
               iconPosition="start"
-              label="Etica"
+              label="Ética"
             />
           </Tabs>
         </Box>
@@ -368,7 +368,7 @@ export default function CertificationUpload({
                 variant="subtitle2"
                 sx={{ fontWeight: 600, mt: 1, color: 'text.secondary' }}
               >
-                Caracteristicas Gemologicas
+                Características Gemológicas
               </Typography>
 
               <Box sx={{ display: 'flex', gap: 2 }}>
@@ -567,7 +567,7 @@ export default function CertificationUpload({
           <TabPanel value={activeTab} index={2}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                Certificaciones eticas y de sostenibilidad para la esmeralda.
+                Certificaciones éticas y de sostenibilidad para la esmeralda.
               </Typography>
 
               <Paper
@@ -707,7 +707,7 @@ export default function CertificationUpload({
 
                 <TextField
                   size="small"
-                  label="Fecha Certificacion"
+                  label="Fecha Certificación"
                   type="date"
                   value={ethical.certificateDate || ''}
                   onChange={(e) =>

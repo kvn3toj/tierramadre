@@ -506,7 +506,7 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
                   <Typography variant="caption" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
-                    Certificacion del Producto
+                    Certificación del Producto
                   </Typography>
                   <Typography
                     variant="caption"
