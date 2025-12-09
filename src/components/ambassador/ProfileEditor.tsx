@@ -308,7 +308,7 @@ export default function ProfileEditor({
           '& .MuiTabs-indicator': { bgcolor: '#059669' },
         }}
       >
-        <Tab icon={<User size={18} />} iconPosition="start" label="Informacion Basica" value="basic" />
+        <Tab icon={<User size={18} />} iconPosition="start" label="Información Básica" value="basic" />
         <Tab icon={<Phone size={18} />} iconPosition="start" label="Contacto" value="contact" />
         <Tab icon={<Palette size={18} />} iconPosition="start" label="Plantilla" value="template" />
         <Tab icon={<Award size={18} />} iconPosition="start" label="Especialidades" value="specialties" />
@@ -411,7 +411,7 @@ function BasicInfoTab({
         <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
           <CardContent>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-              Informacion Personal
+              Información Personal
             </Typography>
 
             <Grid container spacing={2}>
