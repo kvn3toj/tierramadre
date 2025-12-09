@@ -207,6 +207,25 @@ export default async function handler(req, res) {
       },
     });
 
+    // Get the row number where the item was inserted to add QR formula
+    const updatedRows = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${targetSheet}!A:A`,
+    });
+    const newRowNumber = updatedRows.data.values?.length || 2;
+
+    // Generate and add QR formula in column R for the new row
+    const qrFormula = `=IF(C${newRowNumber}<>"",IMAGE("https://api.qrserver.com/v1/create-qr-code/?size=100x100&color=1B5E20&data=" & ENCODEURL("https://tierramadre.co/products/" & LOWER(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(C${newRowNumber},"L:","")," ","-"),"--","-")))),"")`;
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${targetSheet}!R${newRowNumber}`,
+      valueInputOption: 'USER_ENTERED',
+      resource: {
+        values: [[qrFormula]],
+      },
+    });
+
     // Also add to pricing sheet for qualification
     await addToPricingSheet(sheets, nombre, costoTM);
 
@@ -215,7 +234,8 @@ export default async function handler(req, res) {
       item: nextItemNumber,
       nombre,
       fechaIngreso,
-      message: `Producto "${nombre}" agregado al inventario con el número ${nextItemNumber}`
+      qrGenerated: true,
+      message: `Producto "${nombre}" agregado al inventario con el número ${nextItemNumber} (QR generado automáticamente)`
     });
 
   } catch (error) {

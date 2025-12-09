@@ -583,6 +583,7 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
  * O: ASESOR (14)
  * P: ESTADO (15) - dropdown with conditional formatting
  * Q: CAJA (16)
+ * R: QR (17) - QR code image formula
  */
 async function applyInventoryStyling(sheets, sheetId, rowCount) {
   // Clear existing conditional format rules first
@@ -619,7 +620,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           startRowIndex: 0,
           endRowIndex: 1,
           startColumnIndex: 0,
-          endColumnIndex: 17,
+          endColumnIndex: 18, // Include QR column (R)
         },
         cell: {
           userEnteredFormat: {
@@ -776,6 +777,14 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
       updateDimensionProperties: {
         range: { sheetId, dimension: 'COLUMNS', startIndex: 16, endIndex: 17 },
         properties: { pixelSize: 90 },
+        fields: 'pixelSize',
+      },
+    },
+    // R: QR - QR code column (needs to be wide enough for image)
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 17, endIndex: 18 },
+        properties: { pixelSize: 120 },
         fields: 'pixelSize',
       },
     },
@@ -1101,7 +1110,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           startRowIndex: 0,
           endRowIndex: rowCount + 1,
           startColumnIndex: 0,
-          endColumnIndex: 17,
+          endColumnIndex: 18, // Include QR column
         },
         top: { style: 'SOLID_MEDIUM', color: COLORS.verdeOscuro },
         bottom: { style: 'SOLID_MEDIUM', color: COLORS.verdeOscuro },
@@ -1109,6 +1118,22 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
         right: { style: 'SOLID_MEDIUM', color: COLORS.verdeOscuro },
         innerHorizontal: { style: 'SOLID', color: COLORS.grisClaro },
         innerVertical: { style: 'SOLID', color: COLORS.grisClaro },
+      },
+    },
+
+    // ==========================================
+    // 16b. ROW HEIGHT for data rows - taller for QR codes
+    // ==========================================
+    {
+      updateDimensionProperties: {
+        range: {
+          sheetId,
+          dimension: 'ROWS',
+          startIndex: 1,
+          endIndex: rowCount + 200,
+        },
+        properties: { pixelSize: 110 }, // Tall enough for QR images
+        fields: 'pixelSize',
       },
     },
 
@@ -1309,6 +1334,52 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
 }
 
 /**
+ * Add QR code formulas to inventory sheet column R
+ * Uses Google Sheets IMAGE() function with QR Server API
+ */
+async function addQRFormulas(sheets, sheetName, rowCount) {
+  // Generate QR formula for each row
+  // Formula: =IMAGE("https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" & ENCODEURL("https://tierramadre.co/products/" & LOWER(SUBSTITUTE(SUBSTITUTE(C{row},"L:","")," ","-"))))
+  const qrFormulas = [];
+
+  for (let row = 2; row <= rowCount + 1; row++) {
+    // Build the formula that generates a QR code from the product name in column C
+    // The formula:
+    // 1. Takes the name from column C
+    // 2. Removes "L:" prefix if present
+    // 3. Converts to lowercase
+    // 4. Replaces spaces with hyphens
+    // 5. Generates QR code image via API
+    const formula = `=IF(C${row}<>"",IMAGE("https://api.qrserver.com/v1/create-qr-code/?size=100x100&color=1B5E20&data=" & ENCODEURL("https://tierramadre.co/products/" & LOWER(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(C${row},"L:","")," ","-"),"--","-")))),"")`;
+    qrFormulas.push([formula]);
+  }
+
+  if (qrFormulas.length > 0) {
+    // Write QR formulas to column R
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${sheetName}!R2:R${rowCount + 1}`,
+      valueInputOption: 'USER_ENTERED',
+      resource: {
+        values: qrFormulas,
+      },
+    });
+
+    // Add header for QR column
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${sheetName}!R1`,
+      valueInputOption: 'USER_ENTERED',
+      resource: {
+        values: [['QR']],
+      },
+    });
+  }
+
+  return qrFormulas.length;
+}
+
+/**
  * Main handler
  */
 export default async function handler(req, res) {
@@ -1436,15 +1507,19 @@ export default async function handler(req, res) {
     // Apply comprehensive styling to inventory sheet
     const inventoryStyling = await applyInventoryStyling(sheets, inventorySheet.sheetId, inventoryRows.length);
 
+    // Add QR code formulas to inventory sheet
+    const qrCount = await addQRFormulas(sheets, inventorySheet.name, inventoryRows.length - 1);
+
     return res.status(200).json({
       success: true,
       message: productsToAdd.length > 0
-        ? `Synced ${productsToAdd.length} products and applied professional styling`
-        : 'Applied professional styling (no new products to sync)',
+        ? `Synced ${productsToAdd.length} products, added ${qrCount} QR codes, and applied professional styling`
+        : `Applied professional styling and added ${qrCount} QR codes`,
       synced: productsToAdd.length,
       products: productsToAdd.map(p => p.nombre),
       totalInInventory: inventoryData.length,
       totalInPricing: totalRows - 1,
+      qrCodesAdded: qrCount,
       styling: {
         pricing: {
           dropdowns: ['Puntuación del Jurado', 'Factor de Calidad'],
@@ -1453,7 +1528,10 @@ export default async function handler(req, res) {
           professionalBorders: true,
           optimizedWidths: true,
         },
-        inventory: inventoryStyling,
+        inventory: {
+          ...inventoryStyling,
+          qrColumn: 'R - QR codes via IMAGE() formula',
+        },
       },
     });
 
