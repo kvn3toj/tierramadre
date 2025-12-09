@@ -96,16 +96,16 @@ export function useInventoryFiltering({
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialFilters.statusFilter || 'all');
   const [shapeFilter, setShapeFilter] = useState(initialFilters.shapeFilter || 'all');
   const [priceRange, setPriceRange] = useState<[number, number]>(
-    initialFilters.priceRange || [priceMinMax.min, priceMinMax.max]
+    initialFilters.priceRange || [0, Number.MAX_SAFE_INTEGER]
   );
   const [sortBy, setSortBy] = useState<SortOption>(initialFilters.sortBy || 'price-desc');
 
-  // Sync priceRange when inventory loads/changes (ensures full range by default)
+  // Sync priceRange to full range when inventory loads (ensures all products shown by default)
   useEffect(() => {
-    if (!initialFilters.priceRange) {
+    if (!initialFilters.priceRange && inventory.length > 0) {
       setPriceRange([priceMinMax.min, priceMinMax.max]);
     }
-  }, [priceMinMax.min, priceMinMax.max, initialFilters.priceRange]);
+  }, [priceMinMax.min, priceMinMax.max, initialFilters.priceRange, inventory.length]);
 
   // Get unique filter options from inventory
   const filterOptions = useMemo(() => {
