@@ -108,13 +108,13 @@ export default async function handler(req, res) {
     // Extract unique asesores from inventory data
     const dataRows = rows.slice(1);
 
-    // Normalize name for comparison (uppercase, remove dots, spaces, newlines, dashes)
+    // Normalize name for comparison (uppercase, keep only letters and numbers)
     const normalizeName = (name) => {
       return name
         .toUpperCase()
-        .replace(/\n/g, '')
-        .replace(/[.\s-]/g, '')
-        .trim();
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove accents
+        .replace(/[^A-Z0-9]/g, ''); // Keep only alphanumeric
     };
 
     // Get unique names, keeping the best formatted version
