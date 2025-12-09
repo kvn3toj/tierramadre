@@ -52,6 +52,7 @@ import {
   studioShadows,
   studioCardStyles,
 } from './PremiumHeader';
+import { formatFullCurrency as formatCurrency, formatPercent } from '../utils/formatting';
 
 // Investment item interface
 interface InvestmentItem {
@@ -71,21 +72,6 @@ const PRICING_TIERS = [
   { factor: 3.0, margin: 66.7, roi: 200, label: 'Ideal', color: studioColors.emerald },
   { factor: 3.5, margin: 71.4, roi: 250, label: 'Premium', color: studioColors.gold },
 ];
-
-// Format currency in COP
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-};
-
-// Format percentage
-const formatPercent = (value: number): string => {
-  return `${value.toFixed(1)}%`;
-};
 
 // Product source type
 type ProductSource = 'gallery' | 'inventory';

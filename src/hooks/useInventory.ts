@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { InventoryItem, MediaType } from '../types';
 import { inventoryData as defaultInventoryData } from '../data/inventory';
 import { MediaItem } from '../components/media/types';
@@ -140,8 +140,8 @@ export function useInventory() {
     }
   }, []);
 
-  // Get inventory data with media merged in
-  const getInventoryWithMedia = (): InventoryItem[] => {
+  // Get inventory data with media merged in (memoized for performance)
+  const inventory = useMemo((): InventoryItem[] => {
     // Use Google Sheets data if available, otherwise fall back to local data
     const baseInventory = sheetsInventory || defaultInventoryData;
 
@@ -164,7 +164,10 @@ export function useInventory() {
         galleryCount,
       };
     });
-  };
+  }, [sheetsInventory, legacyMedia, galleries]);
+
+  // Legacy getter for backwards compatibility
+  const getInventoryWithMedia = (): InventoryItem[] => inventory;
 
   // Force refresh from Google Sheets
   const refreshFromSheets = useCallback(async () => {
