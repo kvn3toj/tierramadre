@@ -24,27 +24,24 @@ import {
 import { colors } from '../brand';
 import { generateMultiSlidePDF } from '../../utils/slidePdfGenerator';
 import {
-  BrandCoverTemplate,
-  MissionTemplate,
-  GlobalValidationTemplate,
-  OpportunityTemplate,
-  ExpertTemplate,
-  ReasonsTemplate,
-  CTATemplate,
-} from '../templates/MasterclassTemplates';
-import { ThankYouTemplate } from '../templates';
+  LuxuryCoverTemplate,
+  LuxuryMissionTemplate,
+  LuxuryOpportunityTemplate,
+  LuxuryDifferentiatorsTemplate,
+  LuxuryThankYouTemplate,
+} from '../templates/LuxuryMasterclassTemplates';
 import SmartSlideImage from './SmartSlideImage';
 
-// Template mapping for generated slides
+// Template mapping for generated slides - Using Luxury templates for ShowRoom quality
 const SLIDE_TEMPLATES = [
-  { id: 'cover', name: 'Portada', component: BrandCoverTemplate },
-  { id: 'mission', name: 'Misión', component: MissionTemplate },
-  { id: 'global', name: 'Global', component: GlobalValidationTemplate },
-  { id: 'opportunity', name: 'Oportunidad', component: OpportunityTemplate },
-  { id: 'expert', name: 'Experto', component: ExpertTemplate },
-  { id: 'reasons', name: 'Razones', component: ReasonsTemplate },
-  { id: 'cta', name: 'CTA', component: CTATemplate },
-  { id: 'thanks', name: 'Gracias', component: ThankYouTemplate },
+  { id: 'cover', name: 'Portada', component: LuxuryCoverTemplate },
+  { id: 'mission', name: 'Misión', component: LuxuryMissionTemplate },
+  { id: 'differentiators', name: 'Diferenciadores', component: LuxuryDifferentiatorsTemplate },
+  { id: 'opportunity', name: 'Oportunidad', component: LuxuryOpportunityTemplate },
+  { id: 'content', name: 'Contenido', component: LuxuryMissionTemplate },
+  { id: 'reasons', name: 'Razones', component: LuxuryDifferentiatorsTemplate },
+  { id: 'cta', name: 'CTA', component: LuxuryOpportunityTemplate },
+  { id: 'thanks', name: 'Gracias', component: LuxuryThankYouTemplate },
 ] as const;
 
 interface GeneratedSlide {
@@ -63,6 +60,21 @@ interface GenerationProgress {
 }
 
 const EXAMPLE_PROMPTS = [
+  {
+    label: '10 Razones Esmeraldas',
+    prompt: `1. Portada: ¿POR QUÉ ES BUEN NEGOCIO COMERCIALIZAR Y EXPORTAR ESMERALDAS? - Presentación ejecutiva para inversionistas
+2. Alto valor por unidad: Las esmeraldas son uno de los minerales más caros del mundo. Un quilate puede valer más que el oro. Bajos costos logísticos, perfecto para exportación premium.
+3. Demanda internacional estable: Mercados en Estados Unidos, Hong Kong, China, Europa, Dubái e India. Alta rotación con buena calidad. Sin límites geográficos.
+4. Colombia es líder mundial: Prestigio internacional por color y transparencia únicos. Mayor valor por marca de origen. Segmento más alto del mercado.
+5. Altos márgenes de ganancia: Utilidades del 20% al 300% dependiendo de calidad, certificación y tallado. Gran rentabilidad vs otros productos de exportación.
+6. Mercado diversificado: Esmeralda en bruto, tallada y joyas terminadas. Puedes ganar en varios escalones del mismo negocio.
+7. Producto compacto: No se dañan, no requieren refrigeración, no pierden valor. Cero desperdicio, cero deterioro, cero pérdida de inventario.
+8. Mercado de lujo creciente: Alta joyería, inversión en gemas, coleccionistas y fondos privados. Mercado potente y global.
+9. Aumento del valor en el tiempo: Las esmeraldas se valorizan con los años. Es también una inversión patrimonial.
+10. Flexibilidad en el negocio: Comprar, intermediar, tallar, certificar, exportar, vender. Oportunidades en todos los niveles con diferentes capitales.
+11. Barrera de entrada alta: Conocimiento especializado en clasificación, certificación y rutas de exportación protege al experto. Menos competencia = más margen.
+12. Conclusión: Alto valor + Alta demanda + Márgenes amplios + Poca competencia + Fácil almacenamiento + Mercado de lujo = NEGOCIO PERFECTO`,
+  },
   {
     label: 'Masterclass Diciembre',
     prompt: `1. Portada: TIERRA MADRE con esmeralda impactante, @tierramadre.co y www.tierramadre.co
@@ -118,26 +130,39 @@ export default function PresentationGenerator() {
     return slideDescriptions;
   };
 
-  const generateImageUrl = (description: string, slideIndex: number): string => {
-    // Create unique visual themes for different slide types
+  const generateImageUrl = (_description: string, slideIndex: number): string => {
+    // ShowRoom-quality visual themes matching LuxuryMasterclass style
     const visualThemes = [
-      'single large emerald crystal on dark velvet, dramatic spotlight, luxury display',
-      'emerald in natural cave setting with mystical golden light rays',
-      'world map with emerald markers, luxury travel concept, golden compass',
-      'christmas gift boxes with emerald jewelry, festive luxury atmosphere',
-      'professional gemologist examining emerald with loupe, warm lighting',
-      'comparison of emerald cuts and colors, educational display',
-      'elegant hands wearing emerald ring, red carpet glamour',
-      'emerald collection on black silk, museum quality display',
-      'colombian landscape with emerald mine entrance, sunrise',
-      'emerald phoenix rising from flames, mythical luxury art',
-      'thank you card with emerald and tropical flowers, gratitude',
+      // Cover - Impactante
+      'single stunning colombian emerald gemstone floating with sparkles and light rays on pure black background, luxury jewelry photography, dramatic spotlight, ultra detailed 8K',
+      // Value/Business - Profesional
+      'multiple emerald gemstones arranged on black velvet with golden price tags, museum quality display, dramatic spotlight lighting, investment concept',
+      // International Market - Global
+      'elegant dark world map with golden connection lines between continents, emerald green accents on sophisticated dark background, luxury travel concept',
+      // Colombian Pride - Origen
+      'macro photography of colombian emerald crystal showing beautiful internal gardens and inclusions, scientific documentation style, dramatic lighting on dark background',
+      // Profit Margins - Success
+      'luxurious emerald jewelry pieces on display pedestals in high-end boutique setting, golden accents, dramatic cinematic lighting',
+      // Diversified Market - Variety
+      'comparison display of raw emerald rough stone, precision cut emerald, and finished emerald jewelry piece, educational luxury display, dark elegant background',
+      // Compact Product - Storage
+      'elegant emerald collection in velvet-lined wooden box, safe deposit aesthetic, dramatic spotlight on black background, security and value concept',
+      // Luxury Market - High End
+      'red carpet glamour setting with emerald necklace on display stand, paparazzi lights effect, luxury fashion photography, dramatic spotlight',
+      // Value Over Time - Investment
+      'vintage antique emerald jewelry next to modern emerald piece showing timeless value, museum display aesthetic, dramatic lighting',
+      // Flexibility - Opportunity
+      'colombian emerald mine landscape at golden hour sunrise, workers silhouettes, misty mountains, documentary photography style, inspiring',
+      // Barrier to Entry - Expertise
+      'professional gemologist examining emerald with loupe in sophisticated laboratory, warm accent lighting on dark background, expertise concept',
+      // Conclusion - Thank You
+      'single large emerald with tropical colombian flowers arrangement, gratitude concept, elegant dark background with soft emerald green glow',
     ];
 
     const theme = visualThemes[slideIndex % visualThemes.length];
-    const seed = Date.now() + slideIndex * 1000; // Unique seed per slide
+    const seed = 2024 + slideIndex * 1000; // Consistent seed per slide for reproducibility
 
-    const basePrompt = `${theme}, ${description}, professional luxury photography, dramatic cinematic lighting, dark elegant background, ultra detailed, 8K quality, rich emerald greens, golden accents`;
+    const basePrompt = `${theme}, professional luxury photography, dramatic cinematic lighting, dark elegant background, ultra detailed, 8K quality, sharp focus`;
     const encodedPrompt = encodeURIComponent(basePrompt);
     return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1920&height=1080&nologo=true&seed=${seed}`;
   };
@@ -423,11 +448,22 @@ Cada número será un slide separado.`}
           <Grid container spacing={2}>
             {slides.map((slide, idx) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={slide.id}>
-                <Card sx={{ height: '100%' }}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    bgcolor: '#0A0A0A',
+                    border: '1px solid rgba(10,77,60,0.3)',
+                    '&:hover': {
+                      border: '1px solid #0A4D3C',
+                      boxShadow: '0 0 20px rgba(10,77,60,0.3)',
+                    },
+                    transition: 'all 0.3s ease',
+                  }}
+                >
                   <Box
                     sx={{
                       aspectRatio: '16/9',
-                      bgcolor: 'grey.800',
+                      bgcolor: '#0D1B1E',
                       position: 'relative',
                       overflow: 'hidden',
                     }}
@@ -439,35 +475,76 @@ Cada número será un slide separado.`}
                         slideIndex={idx}
                       />
                     )}
+                    {/* ShowRoom-style vignette overlay */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    {/* Emerald accent bar */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        width: 3,
+                        height: '100%',
+                        bgcolor: '#0A4D3C',
+                        boxShadow: '0 0 10px rgba(10,77,60,0.5)',
+                      }}
+                    />
+                    {/* Slide number badge */}
                     <Box
                       sx={{
                         position: 'absolute',
                         top: 8,
-                        left: 8,
-                        bgcolor: 'rgba(0,0,0,0.8)',
-                        color: 'white',
+                        left: 12,
+                        bgcolor: 'rgba(10,77,60,0.9)',
+                        color: '#2E9B7D',
                         px: 1.5,
                         py: 0.5,
                         borderRadius: 1,
-                        fontSize: '0.75rem',
-                        fontWeight: 'bold',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.1em',
+                        border: '1px solid rgba(46,155,125,0.3)',
                       }}
                     >
                       {idx + 1}
                     </Box>
+                    {/* Corner decorations */}
+                    <Box sx={{ position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderTop: '1px solid rgba(255,255,255,0.15)', borderRight: '1px solid rgba(255,255,255,0.15)' }} />
+                    <Box sx={{ position: 'absolute', bottom: 6, left: 6, width: 20, height: 20, borderBottom: '1px solid rgba(255,255,255,0.15)', borderLeft: '1px solid rgba(255,255,255,0.15)' }} />
                   </Box>
-                  <CardContent sx={{ p: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }} noWrap>
+                  <CardContent sx={{ p: 2, bgcolor: '#0A0A0A' }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        fontWeight: 600,
+                        color: '#2E9B7D',
+                        fontFamily: '"Cormorant Garamond", serif',
+                        letterSpacing: '0.05em',
+                        fontSize: '0.9rem',
+                      }}
+                      noWrap
+                    >
                       {slide.title}
                     </Typography>
                     <Typography
                       variant="caption"
-                      color="text.secondary"
                       sx={{
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden',
+                        color: 'rgba(255,255,255,0.6)',
+                        fontFamily: '"Montserrat", sans-serif',
+                        fontSize: '0.7rem',
+                        lineHeight: 1.4,
+                        mt: 0.5,
                       }}
                     >
                       {slide.content}
@@ -493,13 +570,44 @@ Cada número será un slide separado.`}
           {slides.map((slide, idx) => {
             const templateIndex = idx % SLIDE_TEMPLATES.length;
             const Template = SLIDE_TEMPLATES[templateIndex].component;
+            const templateId = SLIDE_TEMPLATES[templateIndex].id;
+
+            // Map props based on template type
+            const templateProps: Record<string, unknown> = {
+              id: `pres-slide-${idx}`,
+            };
+
+            // Cover template
+            if (templateId === 'cover') {
+              templateProps.title = slide.title;
+              templateProps.subtitle = slide.content;
+            }
+            // Mission template (uses mission prop for quote)
+            else if (templateId === 'mission' || templateId === 'content') {
+              templateProps.mission = slide.content;
+            }
+            // Opportunity template
+            else if (templateId === 'opportunity' || templateId === 'cta') {
+              templateProps.title = slide.title;
+              templateProps.content = slide.content;
+            }
+            // Differentiators template
+            else if (templateId === 'differentiators' || templateId === 'reasons') {
+              templateProps.title = slide.title;
+            }
+            // Thank you template
+            else if (templateId === 'thanks') {
+              templateProps.message = slide.title;
+              templateProps.contact = '@tierramadre.co | www.tierramadre.co';
+            }
+            // Default fallback
+            else {
+              templateProps.title = slide.title;
+            }
+
             return (
               <Box key={slide.id}>
-                <Template
-                  id={`pres-slide-${idx}`}
-                  title={slide.title}
-                  backgroundImage={slide.imageUrl}
-                />
+                <Template {...templateProps} />
               </Box>
             );
           })}
