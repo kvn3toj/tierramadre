@@ -48,6 +48,7 @@ import {
 } from '../data/inventory';
 import { useInventory } from '../hooks/useInventory';
 import { InventoryItem, TrustScoreBreakdown } from '../types';
+import { fuzzyMatch } from '../utils/fuzzySearch';
 import { TrustBadgeCompact } from './TrustBadge';
 import CertificationUpload from './CertificationUpload';
 import AddToInventoryModal from './AddToInventoryModal';
@@ -818,12 +819,13 @@ export default function InventoryBrowser() {
 
       if (!matchesStatus) return false;
 
-      const searchLower = search.toLowerCase();
+      // Fuzzy search: allows typos and similar matches
       const matchesSearch =
         !search ||
-        item.nombre.toLowerCase().includes(searchLower) ||
-        item.color.toLowerCase().includes(searchLower) ||
-        item.item.toString().includes(searchLower);
+        fuzzyMatch(item.nombre, search, 0.5) ||
+        fuzzyMatch(item.color, search, 0.5) ||
+        fuzzyMatch(item.calidad, search, 0.5) ||
+        item.item.toString().includes(search.trim());
 
       const matchesColor = colorFilter === 'all' || item.color === colorFilter;
       const matchesQuality = qualityFilter === 'all' || item.calidad === qualityFilter;
