@@ -29,6 +29,7 @@ const COLUMNS = {
 };
 
 // Correction mappings
+// Note: Values are normalized (newlines → spaces) before matching
 const CORRECTIONS = {
   talla: {
     // Esmeralda variations
@@ -38,6 +39,7 @@ const CORRECTIONS = {
     'esmeralda': 'Esmeralda',
     'Emerald': 'Esmeralda',
     'emerald': 'Esmeralda',
+    'Esmeralda': 'Esmeralda', // Fix trailing space
 
     // Cuadrada variations
     'Cuadrac': 'Cuadrada',
@@ -71,9 +73,17 @@ const CORRECTIONS = {
     'Redond': 'Redonda',
     'redond': 'Redonda',
 
-    // Cushion - keep as is but fix case
+    // Cushion
     'cushion': 'Cushion',
     'CUSHION': 'Cushion',
+
+    // Baguette
+    'baguette': 'Baguette',
+    'BAGUETTE': 'Baguette',
+
+    // Marquesa
+    'marquesa': 'Marquesa',
+    'MARQUESA': 'Marquesa',
   },
 
   color: {
@@ -82,10 +92,11 @@ const CORRECTIONS = {
     'Verde menta': 'Verde Menta',
     'VERDE MENTA': 'Verde Menta',
 
-    // Verde Natural
+    // Verde Natural (handles newlines after normalization)
     'verde natural': 'Verde Natural',
     'Verde natural': 'Verde Natural',
     'VERDE NATURAL': 'Verde Natural',
+    'Verde Natural': 'Verde Natural', // Fix trailing space
 
     // Verde Vivido/Vívido
     'verde vivido': 'Verde Vivido',
@@ -99,6 +110,7 @@ const CORRECTIONS = {
     'Verde limon': 'Verde Limón',
     'verde limón': 'Verde Limón',
     'VERDE LIMON': 'Verde Limón',
+    'Verde Limón': 'Verde Limón', // Fix trailing space
 
     // Verde Muzo
     'verde muzo': 'Verde Muzo',
@@ -115,35 +127,45 @@ const CORRECTIONS = {
   },
 
   calidad: {
-    // Comercial SuperFina
+    // Comercial SuperFina (all variations including with newlines after normalization)
     'Comercial SuperFina': 'Comercial SuperFina',
     'comercial superfina': 'Comercial SuperFina',
     'Comercial Superfina': 'Comercial SuperFina',
     'Comercial super fina': 'Comercial SuperFina',
+    'Comercial_SuperFina': 'Comercial SuperFina',
 
     // Comercial Fina
     'comercial fina': 'Comercial Fina',
     'Comercial fina': 'Comercial Fina',
+    'Comercial Fina': 'Comercial Fina', // Fix spacing
 
     // Comercial Superior
     'comercial superior': 'Comercial Superior',
     'Comercial superior': 'Comercial Superior',
+    'Comercial Superior': 'Comercial Superior', // Fix spacing
 
     // Comercial Final
     'comercial final': 'Comercial Final',
     'Comercial final': 'Comercial Final',
+    'Comercial Final': 'Comercial Final', // Fix spacing
 
-    // Comercial Estandar
+    // Comercial Estándar
     'Comercial Estandar': 'Comercial Estándar',
     'comercial estandar': 'Comercial Estándar',
+    'Comercial Estándar': 'Comercial Estándar',
     'Estandar': 'Comercial Estándar',
     'estandar': 'Comercial Estándar',
 
-    // Plata comercial
+    // Plata comercial (various formats)
     'Plata - comercial': 'Plata - comercial',
     'plata - comercial': 'Plata - comercial',
+    'Plata -comercial': 'Plata - comercial',
+    'Plata- comercial': 'Plata - comercial',
     'Plata-comercial': 'Plata - comercial',
     'plata comercial': 'Plata - comercial',
+
+    // comercial alone
+    'comercial': 'Comercial Estándar',
 
     // Fina
     'fina': 'Fina',
@@ -159,7 +181,7 @@ const CORRECTIONS = {
   },
 
   medidas: {
-    // Largo Ancho format
+    // Largo Ancho format (handles newlines after normalization)
     'largo Ancho': 'Largo x Ancho',
     'Largo Ancho': 'Largo x Ancho',
     'largo ancho': 'Largo x Ancho',
@@ -209,36 +231,48 @@ async function findSheet(sheets, pattern) {
 }
 
 /**
+ * Normalize value - remove newlines, extra spaces
+ */
+function normalizeValue(value) {
+  if (!value || typeof value !== 'string') return '';
+  return value
+    .replace(/\n/g, ' ')      // Replace newlines with spaces
+    .replace(/\s+/g, ' ')     // Collapse multiple spaces
+    .trim();                   // Trim edges
+}
+
+/**
  * Apply correction if value matches a correction rule
  */
 function applyCorrection(value, type) {
   if (!value || typeof value !== 'string') return { value, corrected: false };
 
-  const trimmed = value.trim();
+  const original = value.trim();
+  const normalized = normalizeValue(value);
   const corrections = CORRECTIONS[type] || {};
 
-  // Check for exact match first
-  if (corrections[trimmed]) {
+  // Check for exact match first (on normalized value)
+  if (corrections[normalized]) {
     return {
-      value: corrections[trimmed],
-      corrected: corrections[trimmed] !== trimmed,
-      original: trimmed,
+      value: corrections[normalized],
+      corrected: corrections[normalized] !== original,
+      original: original,
     };
   }
 
   // Check for case-insensitive match
-  const lowerValue = trimmed.toLowerCase();
+  const lowerValue = normalized.toLowerCase();
   for (const [key, correctedValue] of Object.entries(corrections)) {
     if (key.toLowerCase() === lowerValue) {
       return {
         value: correctedValue,
-        corrected: correctedValue !== trimmed,
-        original: trimmed,
+        corrected: correctedValue !== original,
+        original: original,
       };
     }
   }
 
-  return { value: trimmed, corrected: false };
+  return { value: normalized, corrected: false };
 }
 
 /**
