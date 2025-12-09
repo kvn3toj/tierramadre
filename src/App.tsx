@@ -1,7 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { Dialog, DialogContent, IconButton, useTheme, useMediaQuery } from '@mui/material';
-import { X } from 'lucide-react';
 import { IOSLayout } from './components/ios';
 import Gallery from './components/Gallery';
 import EmeraldUploader from './components/EmeraldUploader';
@@ -20,8 +18,8 @@ import { SlidePreview } from './components/slides';
 import { CatalogBrowser } from './components/CatalogBrowser';
 import InventoryBrowser from './components/InventoryBrowser';
 import ProductDetail from './components/ProductDetail';
-import { AmbassadorDirectory, AmbassadorProfile } from './components/ambassador';
-import { AmbassadorProfile as AmbassadorProfileType } from './types/ambassador';
+import { AmbassadorDirectory } from './components/ambassador';
+import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
 import Home from './components/Home';
 import DesignSystemPage from './pages/DesignSystemPage';
@@ -35,32 +33,19 @@ export const SECONDARY_TABS: TabValue[] = ['gallery', 'catalog', 'calendar', 'am
 
 // Inner component that uses routing hooks
 function AppContent() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
-  const [selectedAmbassador, setSelectedAmbassador] = useState<AmbassadorProfileType | null>(null);
 
-  const handleViewAmbassadorProfile = useCallback((ambassador: AmbassadorProfileType) => {
-    setSelectedAmbassador(ambassador);
-  }, []);
+  // Navigate to inventory filtered by asesor name
+  const handleViewAsesorProducts = useCallback((asesor: Asesor) => {
+    // Navigate to inventory with asesor filter as URL param
+    navigate(`/inventory?asesor=${encodeURIComponent(asesor.name)}`);
+  }, [navigate]);
 
-  const handleCloseAmbassadorProfile = useCallback(() => {
-    setSelectedAmbassador(null);
-  }, []);
-
-  const handleContactAmbassador = useCallback((ambassador: AmbassadorProfileType) => {
-    // Find WhatsApp contact
-    const whatsapp = ambassador.contactMethods.find(c => c.type === 'whatsapp');
-    if (whatsapp) {
-      const message = encodeURIComponent(`Hola ${ambassador.displayName}, me gustaría conocer más sobre tus esmeraldas en Tierra Madre.`);
-      window.open(`https://wa.me/${whatsapp.value.replace(/\D/g, '')}?text=${message}`, '_blank');
-    } else {
-      // Fallback to email
-      const email = ambassador.contactMethods.find(c => c.type === 'email');
-      if (email) {
-        window.open(`mailto:${email.value}?subject=Consulta desde Tierra Madre`, '_blank');
-      }
-    }
+  // Contact asesor (placeholder - can be enhanced later)
+  const handleContactAsesor = useCallback((asesor: Asesor) => {
+    // For now, show an alert with asesor name
+    // Later can be enhanced with phone/whatsapp from sheets
+    alert(`Contactar a ${asesor.name}\n\nEsta funcionalidad se habilitara proximamente con datos de contacto del Google Sheet.`);
   }, []);
 
   return (
@@ -95,52 +80,13 @@ function AppContent() {
             path="/ambassadors"
             element={
               <AmbassadorDirectory
-                onViewProfile={handleViewAmbassadorProfile}
-                onContact={handleContactAmbassador}
+                onViewProducts={handleViewAsesorProducts}
+                onContact={handleContactAsesor}
               />
             }
           />
         </Routes>
       </IOSLayout>
-
-      {/* Ambassador Profile Dialog */}
-      <Dialog
-        open={!!selectedAmbassador}
-        onClose={handleCloseAmbassadorProfile}
-        maxWidth="lg"
-        fullWidth
-        fullScreen={isMobile}
-        PaperProps={{
-          sx: {
-            borderRadius: isMobile ? 0 : 4,
-            maxHeight: isMobile ? '100%' : '90vh',
-          },
-        }}
-      >
-        <IconButton
-          onClick={handleCloseAmbassadorProfile}
-          sx={{
-            position: 'absolute',
-            right: 16,
-            top: 16,
-            zIndex: 10,
-            bgcolor: 'background.paper',
-            boxShadow: 2,
-            '&:hover': { bgcolor: 'background.paper' },
-          }}
-        >
-          <X size={20} />
-        </IconButton>
-        <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
-          {selectedAmbassador && (
-            <AmbassadorProfile
-              ambassador={selectedAmbassador}
-              onBack={handleCloseAmbassadorProfile}
-              onContact={handleContactAmbassador}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

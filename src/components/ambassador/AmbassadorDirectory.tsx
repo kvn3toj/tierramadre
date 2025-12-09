@@ -1,5 +1,5 @@
 // Ambassador Directory Component
-// Browse and filter ambassadors by trust score, specialty, and location
+// Browse and filter asesores from Google Sheets
 
 import { useState, useMemo } from 'react';
 import {
@@ -9,51 +9,37 @@ import {
   InputAdornment,
   ToggleButtonGroup,
   ToggleButton,
-  Chip,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Grid,
   useTheme,
   Skeleton,
   Button,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   Search,
   Grid3X3,
   List,
-  SlidersHorizontal,
-  Star,
-  MapPin,
+  RefreshCw,
   Filter,
-  X,
 } from 'lucide-react';
-import { AmbassadorProfile, PriceRange } from '../../types/ambassador';
-import { loadAmbassadors } from '../../data/ambassadors';
-import AmbassadorCard from './AmbassadorCard';
+import { useAsesores, Asesor } from '../../hooks/useAsesores';
+import { useInventory } from '../../hooks/useInventory';
+import AsesorCard from './AsesorCard';
 
 interface AmbassadorDirectoryProps {
-  onViewProfile?: (ambassador: AmbassadorProfile) => void;
-  onContact?: (ambassador: AmbassadorProfile) => void;
+  onViewProducts?: (asesor: Asesor) => void;
+  onContact?: (asesor: Asesor) => void;
   maxVisible?: number;
   showFilters?: boolean;
   title?: string;
 }
 
 type ViewMode = 'grid' | 'list';
-type SortOption = 'trust' | 'rating' | 'sales' | 'response';
-
-const PRICE_RANGE_LABELS: Record<PriceRange, string> = {
-  'budget': 'Accesible',
-  'mid-range': 'Intermedio',
-  'luxury': 'Lujo',
-  'investment': 'Inversion',
-  'all': 'Todos',
-};
+type SortOption = 'products' | 'name';
 
 export default function AmbassadorDirectory({
-  onViewProfile,
+  onViewProducts,
   onContact,
   maxVisible,
   showFilters = true,
@@ -64,55 +50,31 @@ export default function AmbassadorDirectory({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [sortBy, setSortBy] = useState<SortOption>('trust');
-  const [priceRangeFilter, setPriceRangeFilter] = useState<PriceRange | 'all'>('all');
-  const [locationFilter, setLocationFilter] = useState<string>('all');
-  const [showFiltersPanel, setShowFiltersPanel] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>('products');
 
-  // Load ambassadors
-  const allAmbassadors = useMemo(() => loadAmbassadors(), []);
+  // Load inventory and asesores from Google Sheets
+  const { inventory } = useInventory();
+  const { asesores, isLoading, error, refreshAsesores } = useAsesores(inventory);
 
-  // Get unique locations for filter
-  const locations = useMemo(() => {
-    const cities = new Set(allAmbassadors.map(a => a.location.city));
-    return Array.from(cities).sort();
-  }, [allAmbassadors]);
-
-  // Filter and sort ambassadors
-  const filteredAmbassadors = useMemo(() => {
-    let result = allAmbassadors.filter(a => a.status === 'active');
+  // Filter and sort asesores
+  const filteredAsesores = useMemo(() => {
+    let result = [...asesores];
 
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(a =>
-        a.displayName.toLowerCase().includes(query) ||
-        a.tagline.toLowerCase().includes(query) ||
-        a.specialties.some(s => s.name.toLowerCase().includes(query))
+        a.name.toLowerCase().includes(query)
       );
-    }
-
-    // Price range filter
-    if (priceRangeFilter !== 'all') {
-      result = result.filter(a => a.priceRange === priceRangeFilter || a.priceRange === 'all');
-    }
-
-    // Location filter
-    if (locationFilter !== 'all') {
-      result = result.filter(a => a.location.city === locationFilter);
     }
 
     // Sort
     result.sort((a, b) => {
       switch (sortBy) {
-        case 'trust':
-          return (b.trustScore?.overall || 0) - (a.trustScore?.overall || 0);
-        case 'rating':
-          return (b.reputation?.averageRating || 0) - (a.reputation?.averageRating || 0);
-        case 'sales':
-          return (b.reputation?.totalSales || 0) - (a.reputation?.totalSales || 0);
-        case 'response':
-          return (a.reputation?.avgResponseTime || 99) - (b.reputation?.avgResponseTime || 99);
+        case 'products':
+          return (b.productCount || 0) - (a.productCount || 0);
+        case 'name':
+          return a.name.localeCompare(b.name, 'es');
         default:
           return 0;
       }
@@ -124,45 +86,86 @@ export default function AmbassadorDirectory({
     }
 
     return result;
-  }, [allAmbassadors, searchQuery, priceRangeFilter, locationFilter, sortBy, maxVisible]);
+  }, [asesores, searchQuery, sortBy, maxVisible]);
 
-  const hasActiveFilters = searchQuery || priceRangeFilter !== 'all' || locationFilter !== 'all';
+  const hasActiveFilters = !!searchQuery;
 
   const clearFilters = () => {
     setSearchQuery('');
-    setPriceRangeFilter('all');
-    setLocationFilter('all');
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <Box>
+        <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <CircularProgress size={24} sx={{ color: '#059669' }} />
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Cargando asesores desde Google Sheets...
+          </Typography>
+        </Box>
+        <AmbassadorDirectorySkeleton />
+      </Box>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Box>
+        <Alert
+          severity="warning"
+          sx={{ mb: 2 }}
+          action={
+            <Button color="inherit" size="small" onClick={refreshAsesores}>
+              Reintentar
+            </Button>
+          }
+        >
+          No se pudieron cargar los asesores: {error}
+        </Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box>
       {/* Header */}
       <Box sx={{ mb: 3 }}>
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 800,
-            mb: 1,
-            background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-        >
-          {title}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 800,
+              mb: 1,
+              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            {title}
+          </Typography>
+          <Button
+            size="small"
+            startIcon={<RefreshCw size={14} />}
+            onClick={refreshAsesores}
+            sx={{ textTransform: 'none' }}
+          >
+            Actualizar
+          </Button>
+        </Box>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Conecta con asesores de confianza verificados por Tierra Madre
+          Asesores cargados desde Google Sheets - {asesores.length} registrados
         </Typography>
       </Box>
 
-      {/* Search and Filters */}
+      {/* Search and View Toggle */}
       {showFilters && (
         <Box sx={{ mb: 3 }}>
-          {/* Search Bar */}
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <TextField
               fullWidth
-              placeholder="Buscar por nombre o especialidad..."
+              placeholder="Buscar asesor por nombre..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               size="small"
@@ -194,176 +197,32 @@ export default function AmbassadorDirectory({
               </ToggleButton>
             </ToggleButtonGroup>
 
-            <Button
-              variant={showFiltersPanel ? 'contained' : 'outlined'}
-              startIcon={<SlidersHorizontal size={18} />}
-              onClick={() => setShowFiltersPanel(!showFiltersPanel)}
-              sx={{
-                borderRadius: 2,
-                textTransform: 'none',
-                ...(showFiltersPanel && {
-                  bgcolor: '#059669',
-                  '&:hover': { bgcolor: '#047857' },
-                }),
-              }}
+            <ToggleButtonGroup
+              value={sortBy}
+              exclusive
+              onChange={(_, value) => value && setSortBy(value)}
+              size="small"
             >
-              Filtros
-              {hasActiveFilters && (
-                <Chip
-                  size="small"
-                  label="!"
-                  sx={{
-                    ml: 1,
-                    height: 18,
-                    fontSize: '0.65rem',
-                    bgcolor: '#EF4444',
-                    color: 'white',
-                  }}
-                />
-              )}
-            </Button>
+              <ToggleButton value="products" sx={{ textTransform: 'none', px: 2 }}>
+                Por Productos
+              </ToggleButton>
+              <ToggleButton value="name" sx={{ textTransform: 'none', px: 2 }}>
+                Por Nombre
+              </ToggleButton>
+            </ToggleButtonGroup>
           </Box>
-
-          {/* Filters Panel */}
-          {showFiltersPanel && (
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 2,
-                p: 2,
-                bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
-                borderRadius: 2,
-                mb: 2,
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
-            >
-              <FormControl size="small" sx={{ minWidth: 150 }}>
-                <InputLabel>Ordenar por</InputLabel>
-                <Select
-                  value={sortBy}
-                  label="Ordenar por"
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                >
-                  <MenuItem value="trust">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Star size={14} />
-                      Confianza
-                    </Box>
-                  </MenuItem>
-                  <MenuItem value="rating">Calificacion</MenuItem>
-                  <MenuItem value="sales">Ventas</MenuItem>
-                  <MenuItem value="response">Tiempo Respuesta</MenuItem>
-                </Select>
-              </FormControl>
-
-              <FormControl size="small" sx={{ minWidth: 150 }}>
-                <InputLabel>Rango Precio</InputLabel>
-                <Select
-                  value={priceRangeFilter}
-                  label="Rango Precio"
-                  onChange={(e) => setPriceRangeFilter(e.target.value as PriceRange | 'all')}
-                >
-                  <MenuItem value="all">Todos</MenuItem>
-                  <MenuItem value="budget">Accesible</MenuItem>
-                  <MenuItem value="mid-range">Intermedio</MenuItem>
-                  <MenuItem value="luxury">Lujo</MenuItem>
-                  <MenuItem value="investment">Inversion</MenuItem>
-                </Select>
-              </FormControl>
-
-              <FormControl size="small" sx={{ minWidth: 150 }}>
-                <InputLabel>Ciudad</InputLabel>
-                <Select
-                  value={locationFilter}
-                  label="Ciudad"
-                  onChange={(e) => setLocationFilter(e.target.value)}
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <MapPin size={14} />
-                    </InputAdornment>
-                  }
-                >
-                  <MenuItem value="all">Todas</MenuItem>
-                  {locations.map(city => (
-                    <MenuItem key={city} value={city}>{city}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              {hasActiveFilters && (
-                <Button
-                  size="small"
-                  startIcon={<X size={14} />}
-                  onClick={clearFilters}
-                  sx={{ textTransform: 'none' }}
-                >
-                  Limpiar filtros
-                </Button>
-              )}
-            </Box>
-          )}
-
-          {/* Active Filters Tags */}
-          {hasActiveFilters && !showFiltersPanel && (
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-              {searchQuery && (
-                <Chip
-                  size="small"
-                  label={`Busqueda: "${searchQuery}"`}
-                  onDelete={() => setSearchQuery('')}
-                />
-              )}
-              {priceRangeFilter !== 'all' && (
-                <Chip
-                  size="small"
-                  label={`Precio: ${PRICE_RANGE_LABELS[priceRangeFilter]}`}
-                  onDelete={() => setPriceRangeFilter('all')}
-                />
-              )}
-              {locationFilter !== 'all' && (
-                <Chip
-                  size="small"
-                  label={`Ciudad: ${locationFilter}`}
-                  onDelete={() => setLocationFilter('all')}
-                />
-              )}
-            </Box>
-          )}
         </Box>
       )}
 
       {/* Results Count */}
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          {filteredAmbassadors.length} asesores encontrados
+          {filteredAsesores.length} asesores encontrados
         </Typography>
-
-        {/* Trust Level Legend */}
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          {['Elite', 'Confiable', 'Establecido', 'Nuevo'].map((level, idx) => {
-            const colors = ['#FFD700', '#059669', '#3B82F6', '#9CA3AF'];
-            return (
-              <Box key={level} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    bgcolor: colors[idx],
-                  }}
-                />
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {level}
-                </Typography>
-              </Box>
-            );
-          })}
-        </Box>
       </Box>
 
-      {/* Ambassador Grid/List */}
-      {filteredAmbassadors.length === 0 ? (
+      {/* Asesor Grid/List */}
+      {filteredAsesores.length === 0 ? (
         <Box
           sx={{
             textAlign: 'center',
@@ -378,7 +237,7 @@ export default function AmbassadorDirectory({
             No se encontraron asesores
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-            Intenta con otros filtros o criterios de busqueda
+            {hasActiveFilters ? 'Intenta con otros criterios de busqueda' : 'No hay asesores registrados en Google Sheets'}
           </Typography>
           {hasActiveFilters && (
             <Button
@@ -392,11 +251,11 @@ export default function AmbassadorDirectory({
         </Box>
       ) : viewMode === 'grid' ? (
         <Grid container spacing={{ xs: 1.5, md: 2 }}>
-          {filteredAmbassadors.map((ambassador) => (
-            <Grid item xs={12} sm={6} md={4} key={ambassador.id}>
-              <AmbassadorCard
-                ambassador={ambassador}
-                onViewProfile={onViewProfile}
+          {filteredAsesores.map((asesor) => (
+            <Grid item xs={12} sm={6} md={4} key={asesor.id}>
+              <AsesorCard
+                asesor={asesor}
+                onViewProducts={onViewProducts}
                 onContact={onContact}
               />
             </Grid>
@@ -404,12 +263,11 @@ export default function AmbassadorDirectory({
         </Grid>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {filteredAmbassadors.map((ambassador) => (
-            <AmbassadorCard
-              key={ambassador.id}
-              ambassador={ambassador}
-              variant="compact"
-              onViewProfile={onViewProfile}
+          {filteredAsesores.map((asesor) => (
+            <AsesorCard
+              key={asesor.id}
+              asesor={asesor}
+              onViewProducts={onViewProducts}
               onContact={onContact}
             />
           ))}
