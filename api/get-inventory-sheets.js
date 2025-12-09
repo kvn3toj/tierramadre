@@ -34,11 +34,29 @@ function getSheetsClient() {
 
 /**
  * Parse price string to number
+ * Handles formats like: $909,518 or $2,434,000 or 5000000
  */
 function parsePrice(price) {
   if (!price || price === '') return 0;
-  const cleaned = String(price).replace(/[$,\s]/g, '').replace(/\./g, '');
+  // Remove $ symbol, spaces, and handle both comma and dot as thousand separators
+  let cleaned = String(price).replace(/[$\s]/g, '');
+  // If has comma followed by 3 digits, comma is thousand separator
+  if (/,\d{3}/.test(cleaned)) {
+    cleaned = cleaned.replace(/,/g, '');
+  } else {
+    // Otherwise comma might be decimal separator (European format)
+    cleaned = cleaned.replace(/\./g, '').replace(/,/g, '.');
+  }
   return parseInt(cleaned, 10) || 0;
+}
+
+/**
+ * Parse decimal number (handles both . and , as decimal separator)
+ */
+function parseDecimal(value) {
+  if (!value || value === '') return 0;
+  const cleaned = String(value).replace(/,/g, '.');
+  return parseFloat(cleaned) || 0;
 }
 
 /**
@@ -63,31 +81,39 @@ function parsePeso(peso) {
  * Map row data to inventory item
  */
 function mapRowToInventoryItem(row, headers) {
-  const getValue = (columnName) => {
-    const index = headers.findIndex(h =>
-      h.toLowerCase().trim() === columnName.toLowerCase()
-    );
-    return index >= 0 ? row[index] : null;
+  // Flexible column matching - finds column by partial match
+  const getValue = (...columnNames) => {
+    for (const columnName of columnNames) {
+      const index = headers.findIndex(h => {
+        const header = h.toLowerCase().trim().replace(/\s+/g, ' ');
+        const search = columnName.toLowerCase().trim();
+        return header === search || header.includes(search) || search.includes(header);
+      });
+      if (index >= 0 && row[index] !== undefined && row[index] !== '') {
+        return row[index];
+      }
+    }
+    return null;
   };
 
-  const peso = getValue('peso') || getValue('weight') || getValue('quilates');
+  const peso = getValue('peso', 'peso (ct)', 'weight', 'quilates', 'ct');
   const pesoData = parsePeso(peso);
 
   return {
-    item: parseInt(getValue('item') || getValue('#') || getValue('numero') || 0),
-    fechaIngreso: getValue('fechaIngreso') || getValue('fecha') || getValue('fecha ingreso') || '',
-    nombre: getValue('nombre') || getValue('name') || getValue('descripcion') || '',
-    peso: pesoData.value,
+    item: parseInt(getValue('item', '#', 'numero', 'no.') || 0),
+    fechaIngreso: getValue('fecha ingreso', 'fechaingreso', 'fecha', 'date') || '',
+    nombre: getValue('nombre', 'name', 'descripcion', 'producto') || '',
+    peso: typeof pesoData.value === 'number' ? pesoData.value : parseDecimal(peso),
     color: getValue('color') || '',
-    calidad: getValue('calidad') || getValue('quality') || '',
-    cantidad: parseInt(getValue('cantidad') || getValue('qty') || 1),
-    talla: getValue('talla') || getValue('cut') || getValue('corte') || '',
-    medidas: getValue('medidas') || getValue('dimensions') || getValue('dimensiones') || '',
-    costoTM: parsePrice(getValue('costoTM') || getValue('costo') || getValue('cost') || 0),
-    precioCOP: parsePrice(getValue('precioCOP') || getValue('precio') || getValue('price') || 0),
-    ubicacion: getValue('ubicacion') || getValue('location') || '',
-    asesor: getValue('asesor') || getValue('advisor') || getValue('vendedor') || '',
-    estado: getValue('estado') || getValue('status') || 'DISPONIBLE',
+    calidad: getValue('calidad', 'quality') || '',
+    cantidad: parseInt(getValue('cant', 'cant.', 'cantidad', 'qty') || 1),
+    talla: getValue('talla', 'cut', 'corte', 'shape') || '',
+    medidas: getValue('medidas', 'dimensions', 'dimensiones', 'size') || '',
+    costoTM: parsePrice(getValue('costo t.madre', 'costo t madre', 'costotm', 'costo tm', 'costo', 'cost')),
+    precioCOP: parsePrice(getValue('precio cop', 'preciocop', 'precio', 'price', 'valor')),
+    ubicacion: getValue('ubicacion', 'location', 'lugar') || '',
+    asesor: getValue('asesor', 'advisor', 'vendedor', 'seller') || '',
+    estado: getValue('estado', 'status', 'disponibilidad') || 'DISPONIBLE',
     isJewelry: pesoData.isJewelry,
     metalType: pesoData.metalType,
   };
