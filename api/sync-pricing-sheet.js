@@ -37,8 +37,24 @@ const COLORS = {
 
 // Dropdown options for data validation
 const DROPDOWN_OPTIONS = {
+  // Pricing sheet
   puntuacionJurado: [0.1, 0.15, 0.2, 0.25, 0.3],
   factorCalidad: [0.2, 0.3, 0.4, 0.5, 0.6],
+  // Inventory sheet
+  color: [
+    'Verde Natural', 'Verde Limón', 'Verde Oscuro', 'Verde Claro',
+    'Verde Azulado', 'Verde Amarillento', 'Verde Intenso', 'Verde Medio',
+    'Verde Bosque', 'Verde Esmeralda', 'Bluish Green', 'Yellowish Green'
+  ],
+  calidad: [
+    'Comercial', 'Comercial Superior', 'Comercial Final', 'Comercial Fina',
+    'Comercial_SuperFina', 'superior', 'Fina', 'Extra Fina',
+    'Plata - comercial', 'Estandar'
+  ],
+  talla: ['Diametro', 'Cuadrada', 'Redonda', 'Ovalada', 'Esmeralda', 'Pera', 'Corazón', 'Marquesa', 'Otro'],
+  medidaS: ['largo', 'Ancho'],
+  estado: ['DISPONIBLE', 'VENDIDA', 'Legalizada', 'Pte Legalizar', 'Pte legalizar 50%', 'RESERVADA'],
+  ubicacion: ['ASESOR', 'BOVEDA OFI', 'BOVEDA', 'EN PROCESO', 'CLIENTE'],
 };
 
 /**
@@ -531,17 +547,63 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
 }
 
 /**
- * Apply basic brand styling to inventory sheet
+ * Apply comprehensive professional styling to inventory sheet
+ *
+ * Inventory Columns (based on actual sheet):
+ * A: Item (0)
+ * B: FECHA INGRESO INVENTARIO (1)
+ * C: Nombre (2)
+ * D: Peso ct (3)
+ * E: Color (4) - dropdown
+ * F: Calidad (5) - dropdown
+ * G: Cant. (6)
+ * H: Talla (7) - dropdown
+ * I: Medida s (8) - dropdown
+ * J: Medidas (9)
+ * K: Imagen (10)
+ * L: costo T.madre (11) - currency
+ * M: Precio COP (12) - currency
+ * N: UBICACION (13) - dropdown
+ * O: ASESOR (14)
+ * P: ESTADO (15) - dropdown with conditional formatting
+ * Q: CAJA (16)
  */
 async function applyInventoryStyling(sheets, sheetId, rowCount) {
+  // Clear existing conditional format rules first
+  try {
+    for (let i = 5; i >= 0; i--) {
+      try {
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: SPREADSHEET_ID,
+          resource: {
+            requests: [{
+              deleteConditionalFormatRule: {
+                sheetId,
+                index: i,
+              },
+            }],
+          },
+        });
+      } catch (e) {
+        // Ignore if rule doesn't exist
+      }
+    }
+  } catch (e) {
+    // Continue if no rules exist
+  }
+
   const requests = [
-    // Header styling
+    // ==========================================
+    // 1. HEADER STYLING - Verde Esmeralda
+    // ==========================================
     {
       repeatCell: {
         range: {
           sheetId,
           startRowIndex: 0,
           endRowIndex: 1,
+          startColumnIndex: 0,
+          endColumnIndex: 17,
         },
         cell: {
           userEnteredFormat: {
@@ -550,16 +612,378 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
               foregroundColor: COLORS.blanco,
               bold: true,
               fontSize: 10,
+              fontFamily: 'Roboto',
             },
             horizontalAlignment: 'CENTER',
             verticalAlignment: 'MIDDLE',
             wrapStrategy: 'WRAP',
+            padding: { top: 6, bottom: 6, left: 4, right: 4 },
           },
         },
         fields: 'userEnteredFormat',
       },
     },
-    // Freeze header
+
+    // ==========================================
+    // 2. COLUMN WIDTHS - Optimized for each column
+    // ==========================================
+    // A: Item - narrow
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 0, endIndex: 1 },
+        properties: { pixelSize: 45 },
+        fields: 'pixelSize',
+      },
+    },
+    // B: Fecha - date width
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 1, endIndex: 2 },
+        properties: { pixelSize: 100 },
+        fields: 'pixelSize',
+      },
+    },
+    // C: Nombre - wider for names
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 2, endIndex: 3 },
+        properties: { pixelSize: 140 },
+        fields: 'pixelSize',
+      },
+    },
+    // D: Peso - compact
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 3, endIndex: 4 },
+        properties: { pixelSize: 60 },
+        fields: 'pixelSize',
+      },
+    },
+    // E: Color - dropdown width
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 4, endIndex: 5 },
+        properties: { pixelSize: 100 },
+        fields: 'pixelSize',
+      },
+    },
+    // F: Calidad - dropdown width
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 5, endIndex: 6 },
+        properties: { pixelSize: 105 },
+        fields: 'pixelSize',
+      },
+    },
+    // G: Cant - very narrow
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 6, endIndex: 7 },
+        properties: { pixelSize: 45 },
+        fields: 'pixelSize',
+      },
+    },
+    // H: Talla - dropdown
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 7, endIndex: 8 },
+        properties: { pixelSize: 75 },
+        fields: 'pixelSize',
+      },
+    },
+    // I: Medida s - small dropdown
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 8, endIndex: 9 },
+        properties: { pixelSize: 70 },
+        fields: 'pixelSize',
+      },
+    },
+    // J: Medidas - measurements
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 9, endIndex: 10 },
+        properties: { pixelSize: 70 },
+        fields: 'pixelSize',
+      },
+    },
+    // K: Imagen - narrow
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 10, endIndex: 11 },
+        properties: { pixelSize: 60 },
+        fields: 'pixelSize',
+      },
+    },
+    // L: costo T.madre - currency
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 11, endIndex: 12 },
+        properties: { pixelSize: 100 },
+        fields: 'pixelSize',
+      },
+    },
+    // M: Precio COP - currency (important, golden)
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 12, endIndex: 13 },
+        properties: { pixelSize: 110 },
+        fields: 'pixelSize',
+      },
+    },
+    // N: UBICACION - dropdown
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 13, endIndex: 14 },
+        properties: { pixelSize: 90 },
+        fields: 'pixelSize',
+      },
+    },
+    // O: ASESOR
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 14, endIndex: 15 },
+        properties: { pixelSize: 110 },
+        fields: 'pixelSize',
+      },
+    },
+    // P: ESTADO - important dropdown
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 15, endIndex: 16 },
+        properties: { pixelSize: 95 },
+        fields: 'pixelSize',
+      },
+    },
+    // Q: CAJA
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 16, endIndex: 17 },
+        properties: { pixelSize: 90 },
+        fields: 'pixelSize',
+      },
+    },
+
+    // ==========================================
+    // 3. DATA VALIDATION - Color dropdown (Column E = index 4)
+    // ==========================================
+    {
+      setDataValidation: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 200,
+          startColumnIndex: 4,
+          endColumnIndex: 5,
+        },
+        rule: {
+          condition: {
+            type: 'ONE_OF_LIST',
+            values: DROPDOWN_OPTIONS.color.map(v => ({ userEnteredValue: v })),
+          },
+          showCustomUi: true,
+          strict: false,
+        },
+      },
+    },
+
+    // ==========================================
+    // 4. DATA VALIDATION - Calidad dropdown (Column F = index 5)
+    // ==========================================
+    {
+      setDataValidation: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 200,
+          startColumnIndex: 5,
+          endColumnIndex: 6,
+        },
+        rule: {
+          condition: {
+            type: 'ONE_OF_LIST',
+            values: DROPDOWN_OPTIONS.calidad.map(v => ({ userEnteredValue: v })),
+          },
+          showCustomUi: true,
+          strict: false,
+        },
+      },
+    },
+
+    // ==========================================
+    // 5. DATA VALIDATION - Talla dropdown (Column H = index 7)
+    // ==========================================
+    {
+      setDataValidation: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 200,
+          startColumnIndex: 7,
+          endColumnIndex: 8,
+        },
+        rule: {
+          condition: {
+            type: 'ONE_OF_LIST',
+            values: DROPDOWN_OPTIONS.talla.map(v => ({ userEnteredValue: v })),
+          },
+          showCustomUi: true,
+          strict: false,
+        },
+      },
+    },
+
+    // ==========================================
+    // 6. DATA VALIDATION - Medida s dropdown (Column I = index 8)
+    // ==========================================
+    {
+      setDataValidation: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 200,
+          startColumnIndex: 8,
+          endColumnIndex: 9,
+        },
+        rule: {
+          condition: {
+            type: 'ONE_OF_LIST',
+            values: DROPDOWN_OPTIONS.medidaS.map(v => ({ userEnteredValue: v })),
+          },
+          showCustomUi: true,
+          strict: false,
+        },
+      },
+    },
+
+    // ==========================================
+    // 7. DATA VALIDATION - Ubicacion dropdown (Column N = index 13)
+    // ==========================================
+    {
+      setDataValidation: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 200,
+          startColumnIndex: 13,
+          endColumnIndex: 14,
+        },
+        rule: {
+          condition: {
+            type: 'ONE_OF_LIST',
+            values: DROPDOWN_OPTIONS.ubicacion.map(v => ({ userEnteredValue: v })),
+          },
+          showCustomUi: true,
+          strict: false,
+        },
+      },
+    },
+
+    // ==========================================
+    // 8. DATA VALIDATION - Estado dropdown (Column P = index 15)
+    // ==========================================
+    {
+      setDataValidation: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 200,
+          startColumnIndex: 15,
+          endColumnIndex: 16,
+        },
+        rule: {
+          condition: {
+            type: 'ONE_OF_LIST',
+            values: DROPDOWN_OPTIONS.estado.map(v => ({ userEnteredValue: v })),
+          },
+          showCustomUi: true,
+          strict: false,
+        },
+      },
+    },
+
+    // ==========================================
+    // 9. CURRENCY FORMATTING - costo T.madre (Column L)
+    // ==========================================
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 200,
+          startColumnIndex: 11,
+          endColumnIndex: 12,
+        },
+        cell: {
+          userEnteredFormat: {
+            numberFormat: {
+              type: 'CURRENCY',
+              pattern: '"$"#,##0',
+            },
+            horizontalAlignment: 'RIGHT',
+          },
+        },
+        fields: 'userEnteredFormat(numberFormat,horizontalAlignment)',
+      },
+    },
+
+    // ==========================================
+    // 10. CURRENCY FORMATTING - Precio COP (Column M)
+    // ==========================================
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 200,
+          startColumnIndex: 12,
+          endColumnIndex: 13,
+        },
+        cell: {
+          userEnteredFormat: {
+            numberFormat: {
+              type: 'CURRENCY',
+              pattern: '"$"#,##0',
+            },
+            horizontalAlignment: 'RIGHT',
+            textFormat: {
+              bold: true,
+            },
+          },
+        },
+        fields: 'userEnteredFormat(numberFormat,horizontalAlignment,textFormat)',
+      },
+    },
+
+    // ==========================================
+    // 11. SPECIAL HEADER - Golden accent for Precio COP
+    // ==========================================
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: 0,
+          endRowIndex: 1,
+          startColumnIndex: 12,
+          endColumnIndex: 13,
+        },
+        cell: {
+          userEnteredFormat: {
+            backgroundColor: COLORS.dorado,
+            textFormat: {
+              foregroundColor: COLORS.negro,
+              bold: true,
+              fontSize: 10,
+            },
+          },
+        },
+        fields: 'userEnteredFormat(backgroundColor,textFormat)',
+      },
+    },
+
+    // ==========================================
+    // 12. FREEZE HEADER ROW
+    // ==========================================
     {
       updateSheetProperties: {
         properties: {
@@ -571,14 +995,241 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
         fields: 'gridProperties.frozenRowCount',
       },
     },
-    // Alternating colors
+
+    // ==========================================
+    // 13. ROW HEIGHT - Header
+    // ==========================================
+    {
+      updateDimensionProperties: {
+        range: {
+          sheetId,
+          dimension: 'ROWS',
+          startIndex: 0,
+          endIndex: 1,
+        },
+        properties: { pixelSize: 40 },
+        fields: 'pixelSize',
+      },
+    },
+
+    // ==========================================
+    // 14. NUMBER FORMATTING - Peso ct (Column D)
+    // ==========================================
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 200,
+          startColumnIndex: 3,
+          endColumnIndex: 4,
+        },
+        cell: {
+          userEnteredFormat: {
+            numberFormat: {
+              type: 'NUMBER',
+              pattern: '0.00',
+            },
+            horizontalAlignment: 'CENTER',
+          },
+        },
+        fields: 'userEnteredFormat(numberFormat,horizontalAlignment)',
+      },
+    },
+
+    // ==========================================
+    // 15. CENTER ALIGN - Item, Cant columns
+    // ==========================================
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 200,
+          startColumnIndex: 0,
+          endColumnIndex: 1,
+        },
+        cell: {
+          userEnteredFormat: {
+            horizontalAlignment: 'CENTER',
+          },
+        },
+        fields: 'userEnteredFormat(horizontalAlignment)',
+      },
+    },
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 200,
+          startColumnIndex: 6,
+          endColumnIndex: 7,
+        },
+        cell: {
+          userEnteredFormat: {
+            horizontalAlignment: 'CENTER',
+          },
+        },
+        fields: 'userEnteredFormat(horizontalAlignment)',
+      },
+    },
+
+    // ==========================================
+    // 16. BORDERS - Professional outline
+    // ==========================================
+    {
+      updateBorders: {
+        range: {
+          sheetId,
+          startRowIndex: 0,
+          endRowIndex: rowCount + 1,
+          startColumnIndex: 0,
+          endColumnIndex: 17,
+        },
+        top: { style: 'SOLID_MEDIUM', color: COLORS.verdeOscuro },
+        bottom: { style: 'SOLID_MEDIUM', color: COLORS.verdeOscuro },
+        left: { style: 'SOLID_MEDIUM', color: COLORS.verdeOscuro },
+        right: { style: 'SOLID_MEDIUM', color: COLORS.verdeOscuro },
+        innerHorizontal: { style: 'SOLID', color: COLORS.grisClaro },
+        innerVertical: { style: 'SOLID', color: COLORS.grisClaro },
+      },
+    },
+
+    // ==========================================
+    // 17. CONDITIONAL FORMAT - VENDIDA (Red background)
+    // ==========================================
     {
       addConditionalFormatRule: {
         rule: {
           ranges: [{
             sheetId,
             startRowIndex: 1,
-            endRowIndex: rowCount + 100,
+            endRowIndex: rowCount + 200,
+            startColumnIndex: 15,
+            endColumnIndex: 16,
+          }],
+          booleanRule: {
+            condition: {
+              type: 'TEXT_EQ',
+              values: [{ userEnteredValue: 'VENDIDA' }],
+            },
+            format: {
+              backgroundColor: { red: 0.86, green: 0.21, blue: 0.27 },
+              textFormat: {
+                foregroundColor: COLORS.blanco,
+                bold: true,
+              },
+            },
+          },
+        },
+        index: 0,
+      },
+    },
+
+    // ==========================================
+    // 18. CONDITIONAL FORMAT - DISPONIBLE (Green background)
+    // ==========================================
+    {
+      addConditionalFormatRule: {
+        rule: {
+          ranges: [{
+            sheetId,
+            startRowIndex: 1,
+            endRowIndex: rowCount + 200,
+            startColumnIndex: 15,
+            endColumnIndex: 16,
+          }],
+          booleanRule: {
+            condition: {
+              type: 'TEXT_EQ',
+              values: [{ userEnteredValue: 'DISPONIBLE' }],
+            },
+            format: {
+              backgroundColor: COLORS.verdeEsmeralda,
+              textFormat: {
+                foregroundColor: COLORS.blanco,
+                bold: true,
+              },
+            },
+          },
+        },
+        index: 1,
+      },
+    },
+
+    // ==========================================
+    // 19. CONDITIONAL FORMAT - Legalizada (Light green)
+    // ==========================================
+    {
+      addConditionalFormatRule: {
+        rule: {
+          ranges: [{
+            sheetId,
+            startRowIndex: 1,
+            endRowIndex: rowCount + 200,
+            startColumnIndex: 15,
+            endColumnIndex: 16,
+          }],
+          booleanRule: {
+            condition: {
+              type: 'TEXT_CONTAINS',
+              values: [{ userEnteredValue: 'Legalizada' }],
+            },
+            format: {
+              backgroundColor: COLORS.fondoClaro,
+              textFormat: {
+                foregroundColor: COLORS.verdeOscuro,
+              },
+            },
+          },
+        },
+        index: 2,
+      },
+    },
+
+    // ==========================================
+    // 20. CONDITIONAL FORMAT - Pte Legalizar (Yellow/Gold)
+    // ==========================================
+    {
+      addConditionalFormatRule: {
+        rule: {
+          ranges: [{
+            sheetId,
+            startRowIndex: 1,
+            endRowIndex: rowCount + 200,
+            startColumnIndex: 15,
+            endColumnIndex: 16,
+          }],
+          booleanRule: {
+            condition: {
+              type: 'TEXT_CONTAINS',
+              values: [{ userEnteredValue: 'Pte' }],
+            },
+            format: {
+              backgroundColor: COLORS.doradoClaro,
+              textFormat: {
+                foregroundColor: COLORS.negro,
+              },
+            },
+          },
+        },
+        index: 3,
+      },
+    },
+
+    // ==========================================
+    // 21. ALTERNATING ROW COLORS
+    // ==========================================
+    {
+      addConditionalFormatRule: {
+        rule: {
+          ranges: [{
+            sheetId,
+            startRowIndex: 1,
+            endRowIndex: rowCount + 200,
+            startColumnIndex: 0,
+            endColumnIndex: 15, // Exclude ESTADO column
           }],
           booleanRule: {
             condition: {
@@ -590,18 +1241,40 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
             },
           },
         },
-        index: 0,
+        index: 4,
       },
     },
-    // Auto-resize
+
+    // ==========================================
+    // 22. PRICE GRADIENT - Precio COP column
+    // ==========================================
     {
-      autoResizeDimensions: {
-        dimensions: {
-          sheetId,
-          dimension: 'COLUMNS',
-          startIndex: 0,
-          endIndex: 18,
+      addConditionalFormatRule: {
+        rule: {
+          ranges: [{
+            sheetId,
+            startRowIndex: 1,
+            endRowIndex: rowCount + 200,
+            startColumnIndex: 12,
+            endColumnIndex: 13,
+          }],
+          gradientRule: {
+            minpoint: {
+              color: COLORS.blanco,
+              type: 'MIN',
+            },
+            midpoint: {
+              color: COLORS.doradoClaro,
+              type: 'PERCENTILE',
+              value: '50',
+            },
+            maxpoint: {
+              color: COLORS.dorado,
+              type: 'MAX',
+            },
+          },
         },
+        index: 5,
       },
     },
   ];
@@ -610,6 +1283,13 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     spreadsheetId: SPREADSHEET_ID,
     resource: { requests },
   });
+
+  return {
+    dropdowns: ['Color', 'Calidad', 'Talla', 'Medida s', 'Ubicación', 'Estado'],
+    conditionalFormatting: ['VENDIDA (rojo)', 'DISPONIBLE (verde)', 'Legalizada', 'Pte Legalizar', 'Alternating rows', 'Price gradient'],
+    currencyFormatting: ['costo T.madre', 'Precio COP'],
+    columnWidths: 'optimized',
+  };
 }
 
 /**
@@ -737,8 +1417,8 @@ export default async function handler(req, res) {
     const totalRows = pricingRows.length + productsToAdd.length;
     await applyProfessionalStyling(sheets, pricingSheet.sheetId, totalRows);
 
-    // Apply basic styling to inventory sheet
-    await applyInventoryStyling(sheets, inventorySheet.sheetId, inventoryRows.length);
+    // Apply comprehensive styling to inventory sheet
+    const inventoryStyling = await applyInventoryStyling(sheets, inventorySheet.sheetId, inventoryRows.length);
 
     return res.status(200).json({
       success: true,
@@ -750,11 +1430,14 @@ export default async function handler(req, res) {
       totalInInventory: inventoryData.length,
       totalInPricing: totalRows - 1,
       styling: {
-        dropdowns: ['Puntuación del Jurado', 'Factor de Calidad'],
-        currencyFormatting: ['Costo Inicial', 'Precio Unificado', 'Descuento', 'Precio Final'],
-        conditionalFormatting: ['Alternating rows', 'Price gradient'],
-        professionalBorders: true,
-        optimizedWidths: true,
+        pricing: {
+          dropdowns: ['Puntuación del Jurado', 'Factor de Calidad'],
+          currencyFormatting: ['Costo Inicial', 'Precio Unificado', 'Descuento', 'Precio Final'],
+          conditionalFormatting: ['Alternating rows', 'Price gradient'],
+          professionalBorders: true,
+          optimizedWidths: true,
+        },
+        inventory: inventoryStyling,
       },
     });
 
