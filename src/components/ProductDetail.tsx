@@ -25,7 +25,6 @@ import {
   Ruler,
   Palette,
   Award,
-  DollarSign,
   MapPin,
   User,
   Calendar,
@@ -48,7 +47,7 @@ import { extractVideoThumbnail } from '../utils/videoStorage';
 import { MediaGallery, MediaUploadZone, ImageCropper } from './media';
 import type { MediaItem } from './media/types';
 import { PriceDisplay } from './PriceDisplay';
-import { formatFullCurrency as formatCurrency, getColorDot, getQualityBadge } from '../utils/formatting';
+import { getColorDot, getQualityBadge } from '../utils/formatting';
 import { isImageFile, isVideoFile } from '../utils/fileTypeDetection';
 // Design System Tokens
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
