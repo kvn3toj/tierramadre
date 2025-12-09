@@ -43,25 +43,8 @@ import { brandColors } from '../theme';
 import { storage } from '../utils/storage';
 import { compressImage } from '../utils/imageNormalizer';
 import { saveVideo, extractVideoThumbnail } from '../utils/videoStorage';
+import { isVideoFile, isMediaFile } from '../utils/fileTypeDetection';
 import MediaPreview from './MediaPreview';
-
-// Helper to check if file is an image (including HEIC which some browsers don't recognize)
-const isImageFile = (file: File): boolean => {
-  if (file.type.startsWith('image/')) return true;
-  // Check by extension for HEIC/HEIF (some browsers don't set correct MIME type)
-  const ext = file.name.toLowerCase().split('.').pop();
-  return ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '');
-};
-
-// Helper to check if file is a video
-const isVideoFile = (file: File): boolean => {
-  if (file.type.startsWith('video/')) return true;
-  const ext = file.name.toLowerCase().split('.').pop();
-  return ['mp4', 'mov', 'webm', 'avi'].includes(ext || '');
-};
-
-// Helper to check if file is media (image or video)
-const isMediaFile = (file: File): boolean => isImageFile(file) || isVideoFile(file);
 
 interface EmeraldUploaderProps {
   onComplete?: () => void;

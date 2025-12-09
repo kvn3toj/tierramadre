@@ -48,6 +48,8 @@ import { extractVideoThumbnail } from '../utils/videoStorage';
 import { MediaGallery, MediaUploadZone, ImageCropper } from './media';
 import type { MediaItem } from './media/types';
 import { PriceDisplay } from './PriceDisplay';
+import { formatFullCurrency as formatCurrency, getColorDot, getQualityBadge } from '../utils/formatting';
+import { isImageFile, isVideoFile } from '../utils/fileTypeDetection';
 
 // Convert File to data URL (base64) - more reliable than blob URLs in production
 const fileToDataURL = (file: File): Promise<string> => {
@@ -57,21 +59,6 @@ const fileToDataURL = (file: File): Promise<string> => {
     reader.onerror = () => reject(new Error('Failed to read file'));
     reader.readAsDataURL(file);
   });
-};
-
-// Helper to check if file is an image (including HEIC which some browsers don't recognize)
-const isImageFile = (file: File): boolean => {
-  if (file.type.startsWith('image/')) return true;
-  // Check by extension for HEIC/HEIF (some browsers don't set correct MIME type)
-  const ext = file.name.toLowerCase().split('.').pop();
-  return ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '');
-};
-
-// Helper to check if file is a video
-const isVideoFile = (file: File): boolean => {
-  if (file.type.startsWith('video/')) return true;
-  const ext = file.name.toLowerCase().split('.').pop();
-  return ['mp4', 'mov', 'webm', 'avi'].includes(ext || '');
 };
 
 // Cloudinary configuration
@@ -103,62 +90,6 @@ const uploadToCloudinary = async (file: File, itemNumber: number): Promise<strin
 
   const data = await response.json();
   return data.secure_url;
-};
-
-// Format currency in COP
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-};
-
-// Get color dot style
-const getColorDot = (color: string): string => {
-  const colorMap: Record<string, string> = {
-    'Verde Vivido': '#059669',
-    'Verde Muzo': '#065F46',
-    'Verde Limón': '#84CC16',
-    'Verde Menta': '#34D399',
-    'Verde Natural': '#22C55E',
-  };
-  return colorMap[color] || '#6B7280';
-};
-
-// Get quality badge style
-const getQualityBadge = (calidad: string): { label: string; bg: string; color: string; border: string } => {
-  if (calidad.includes('SuperFina') || calidad === 'Fina') {
-    return {
-      label: 'Premium',
-      bg: '#FEF3C7',
-      color: '#92400E',
-      border: '#F59E0B',
-    };
-  }
-  if (calidad.includes('Superior')) {
-    return {
-      label: 'Superior',
-      bg: '#DBEAFE',
-      color: '#1E3A8A',
-      border: '#3B82F6',
-    };
-  }
-  if (calidad.includes('Fina')) {
-    return {
-      label: 'Fina',
-      bg: '#F3E8FF',
-      color: '#6B21A8',
-      border: '#A855F7',
-    };
-  }
-  return {
-    label: 'Comercial',
-    bg: '#F3F4F6',
-    color: '#374151',
-    border: '#9CA3AF',
-  };
 };
 
 // Base URL for the Tierra Madre Studio app

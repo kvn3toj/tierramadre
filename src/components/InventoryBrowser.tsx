@@ -53,78 +53,8 @@ import { TrustBadgeCompact } from './TrustBadge';
 import CertificationUpload from './CertificationUpload';
 import AddToInventoryModal from './AddToInventoryModal';
 import { calculateTrustScore, getTrustBadge } from '../utils/trustScore';
+import { formatCurrency, formatFullCurrency, getColorDot, getQualityBadge } from '../utils/formatting';
 import { PriceDisplay } from './PriceDisplay';
-
-// Format currency in COP
-const formatCurrency = (value: number): string => {
-  if (value >= 1000000) {
-    return `$${(value / 1000000).toFixed(1)}M`;
-  }
-  if (value >= 1000) {
-    return `$${(value / 1000).toFixed(0)}K`;
-  }
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-};
-
-const formatFullCurrency = (value: number): string => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-};
-
-// Get color dot style
-const getColorDot = (color: string): string => {
-  const colorMap: Record<string, string> = {
-    'Verde Vivido': '#059669',
-    'Verde Muzo': '#065F46',
-    'Verde Limón': '#84CC16',
-    'Verde Menta': '#34D399',
-    'Verde Natural': '#22C55E',
-  };
-  return colorMap[color] || '#6B7280';
-};
-
-// Get quality badge style - Warm tones, not green
-const getQualityBadge = (calidad: string): { label: string; bg: string; color: string; border: string } => {
-  if (calidad.includes('SuperFina') || calidad === 'Fina') {
-    return {
-      label: 'Premium',
-      bg: '#FEF3C7',      // Amber 100
-      color: '#92400E',   // Amber 900
-      border: '#F59E0B',  // Amber 500
-    };
-  }
-  if (calidad.includes('Superior')) {
-    return {
-      label: 'Superior',
-      bg: '#DBEAFE',      // Blue 100
-      color: '#1E3A8A',   // Blue 900
-      border: '#3B82F6',  // Blue 500
-    };
-  }
-  if (calidad.includes('Fina')) {
-    return {
-      label: 'Fina',
-      bg: '#F3E8FF',      // Purple 100
-      color: '#6B21A8',   // Purple 800
-      border: '#A855F7',  // Purple 500
-    };
-  }
-  return {
-    label: 'Comercial',
-    bg: '#F3F4F6',        // Gray 100
-    color: '#374151',     // Gray 700
-    border: '#9CA3AF',    // Gray 400
-  };
-};
 
 // Simplified Inventory Card - Clean design with hover details
 interface InventoryCardProps {
