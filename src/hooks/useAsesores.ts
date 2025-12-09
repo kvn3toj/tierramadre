@@ -94,15 +94,6 @@ export function useAsesores(inventory?: InventoryItem[]): UseAsesoresReturn {
     loadAsesores();
   }, []);
 
-  // Normalize name for comparison (uppercase, keep only letters and numbers)
-  const normalizeName = (name: string): string => {
-    return name
-      .toUpperCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // Remove accents
-      .replace(/[^A-Z0-9]/g, ''); // Keep only alphanumeric
-  };
-
   // Enrich asesores with inventory data
   const enrichedAsesores = useMemo(() => {
     if (!inventory || inventory.length === 0) return asesores;
