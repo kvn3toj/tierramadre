@@ -65,7 +65,14 @@ const DROPDOWN_OPTIONS = {
     'Comercial SuperFina', 'Fina', 'Esencial', 'Sublime',
     'Plata - comercial'
   ],
-  talla: ['Diámetro', 'Cuadrada', 'Redonda', 'Ovalada', 'Esmeralda', 'Pera', 'Corazón', 'Marquesa', 'Cushion', 'Lágrima', 'Baguette', 'Otro'],
+  talla: [
+    // Formas de esmeralda
+    'Esmeralda', 'Cuadrada', 'Redonda', 'Ovalada', 'Pera', 'Corazón', 'Marquesa', 'Cushion', 'Lágrima', 'Baguette',
+    // Tallas de anillo (joyería)
+    '5', '6', '7', '8', '9', '10', '11', '12', '13',
+    // Otros
+    'N/A', 'Otro'
+  ],
   medidaS: ['Largo x Ancho', 'Diámetro'],
   estado: ['DISPONIBLE', 'VENDIDA', 'Legalizada', 'Pte Legalizar', 'Pte legalizar 50%', 'RESERVADA'],
   ubicacion: ['ASESOR', 'BOVEDA OFI', 'BOVEDA', 'EN PROCESO', 'CLIENTE'],
