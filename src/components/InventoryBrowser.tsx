@@ -31,7 +31,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
-import { getInventoryStats } from '../data/inventory';
 import { useInventory } from '../hooks/useInventory';
 import { useInventoryFiltering, type StatusFilter, type TypeFilter, type SortOption } from '../hooks/useInventoryFiltering';
 import { InventoryItem, TrustScoreBreakdown } from '../types';
@@ -110,8 +109,15 @@ export default function InventoryBrowser() {
     }
   };
 
-  // Stats for header (separate from filtering)
-  const stats = getInventoryStats();
+  // Stats for header - calculated from actual inventory data (not static)
+  const stats = useMemo(() => {
+    const available = inventoryData.filter(i => i.estado?.toUpperCase() === 'DISPONIBLE');
+    return {
+      totalItems: available.length,
+      looseStones: available.filter(i => !i.isJewelry).length,
+      jewelry: available.filter(i => i.isJewelry).length,
+    };
+  }, [inventoryData]);
 
   // Filter options from hook for convenience
   const { colors, shapes, qualities, priceMinMax } = filterOptions;

@@ -23,10 +23,34 @@ interface UseAsesoresReturn {
 /**
  * Hook to fetch asesores from Google Sheets and link them with inventory
  */
+// Normalize name for comparison (uppercase, keep only letters)
+const normalizeName = (name: string): string => {
+  let result = '';
+  for (let i = 0; i < name.length; i++) {
+    const char = name.charCodeAt(i);
+    // Keep only A-Z (65-90) and a-z (97-122)
+    if ((char >= 65 && char <= 90) || (char >= 97 && char <= 122)) {
+      result += name[i].toUpperCase();
+    }
+  }
+  return result;
+};
+
 export function useAsesores(inventory?: InventoryItem[]): UseAsesoresReturn {
   const [asesores, setAsesores] = useState<Asesor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Deduplicate asesores on frontend (backup in case API doesn't dedupe properly)
+  const dedupeAsesores = (asesoresList: Asesor[]): Asesor[] => {
+    const seen = new Set<string>();
+    return asesoresList.filter(asesor => {
+      const normalized = normalizeName(asesor.name);
+      if (seen.has(normalized)) return false;
+      seen.add(normalized);
+      return true;
+    });
+  };
 
   const loadAsesores = async () => {
     try {
@@ -38,7 +62,7 @@ export function useAsesores(inventory?: InventoryItem[]): UseAsesoresReturn {
       if (cached) {
         const { data, timestamp } = JSON.parse(cached);
         if (Date.now() - timestamp < ASESORES_CACHE_TTL) {
-          setAsesores(data);
+          setAsesores(dedupeAsesores(data));
           setIsLoading(false);
           return;
         }
@@ -50,10 +74,11 @@ export function useAsesores(inventory?: InventoryItem[]): UseAsesoresReturn {
 
       const result = await response.json();
       if (result.success && result.asesores) {
-        setAsesores(result.asesores);
-        // Cache the result
+        const deduped = dedupeAsesores(result.asesores);
+        setAsesores(deduped);
+        // Cache the deduplicated result
         localStorage.setItem(ASESORES_CACHE_KEY, JSON.stringify({
-          data: result.asesores,
+          data: deduped,
           timestamp: Date.now()
         }));
       }

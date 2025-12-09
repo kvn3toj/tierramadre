@@ -3,7 +3,7 @@
  * Manages inventory filtering, sorting, and search state.
  * Extracted from InventoryBrowser.tsx for reusability.
  */
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { InventoryItem } from '../types';
 import { fuzzyMatch } from '../utils/fuzzySearch';
 
@@ -100,6 +100,13 @@ export function useInventoryFiltering({
   );
   const [sortBy, setSortBy] = useState<SortOption>(initialFilters.sortBy || 'price-desc');
 
+  // Sync priceRange when inventory loads/changes (ensures full range by default)
+  useEffect(() => {
+    if (!initialFilters.priceRange) {
+      setPriceRange([priceMinMax.min, priceMinMax.max]);
+    }
+  }, [priceMinMax.min, priceMinMax.max, initialFilters.priceRange]);
+
   // Get unique filter options from inventory
   const filterOptions = useMemo(() => {
     const colors = new Set<string>();
@@ -123,11 +130,12 @@ export function useInventoryFiltering({
   // Filter inventory
   const filteredInventory = useMemo(() => {
     return inventory.filter(item => {
-      // Status filter
+      // Status filter (case-insensitive for robustness)
+      const itemEstado = item.estado?.toUpperCase() || '';
       const matchesStatus =
         statusFilter === 'all' ||
-        (statusFilter === 'available' && item.estado === 'DISPONIBLE') ||
-        (statusFilter === 'sold' && item.estado === 'VENDIDA');
+        (statusFilter === 'available' && itemEstado === 'DISPONIBLE') ||
+        (statusFilter === 'sold' && itemEstado === 'VENDIDA');
 
       if (!matchesStatus) return false;
 

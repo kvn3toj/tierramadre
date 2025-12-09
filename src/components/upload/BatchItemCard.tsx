@@ -179,7 +179,7 @@ export function BatchItemCard({
                     onChange={(e) => onUpdate(item.id, { quality: e.target.value })}
                   >
                     <MenuItem value="Premium">Premium</MenuItem>
-                    <MenuItem value="Estandar">Estandar</MenuItem>
+                    <MenuItem value="Estándar">Estándar</MenuItem>
                     <MenuItem value="Comercial">Comercial</MenuItem>
                   </Select>
                 </FormControl>
