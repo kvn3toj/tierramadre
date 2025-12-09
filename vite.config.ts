@@ -42,7 +42,10 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
+        // Exclude large catalog images from precache
+        globIgnores: ['**/catalog-media/**', '**/node_modules/**'],
+        maximumFileSizeToCacheInBytes: 2 * 1024 * 1024, // 2MB max
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
