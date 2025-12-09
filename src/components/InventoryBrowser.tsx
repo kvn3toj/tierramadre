@@ -55,6 +55,10 @@ import AddToInventoryModal from './AddToInventoryModal';
 import { calculateTrustScore, getTrustBadge } from '../utils/trustScore';
 import { formatCurrency, formatFullCurrency, getColorDot, getQualityBadge } from '../utils/formatting';
 import { PriceDisplay } from './PriceDisplay';
+// Design System Tokens
+import { emeraldCore, goldAccent, surfacesLight, surfacesDark, semanticColors } from '../design-system/tokens/colors';
+import { emeraldGradients } from '../design-system/tokens/gradients';
+// Shadows available if needed: cardShadows, emeraldShadows
 
 // Simplified Inventory Card - Clean design with hover details
 interface InventoryCardProps {
@@ -86,17 +90,17 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
         sx={{
           p: 2,
           borderRadius: 2.5,
-          bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+          bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
           border: '1px solid',
-          borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
           display: 'flex',
           alignItems: 'center',
           gap: 2,
           cursor: 'pointer',
           transition: 'all 0.2s ease',
           '&:hover': {
-            borderColor: '#059669',
-            bgcolor: isLight ? '#F0FDF4' : alpha('#059669', 0.08),
+            borderColor: emeraldCore.dark,
+            bgcolor: isLight ? emeraldCore.lightest : alpha(emeraldCore.dark, 0.08),
           },
         }}
         onClick={onClick}
@@ -164,19 +168,19 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
       sx={{
         borderRadius: 3,
         border: '1px solid',
-        borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
-        bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+        borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+        bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
         overflow: 'hidden',
         transition: 'all 0.25s ease',
         cursor: 'pointer',
         '&:hover': {
-          borderColor: '#10B981',
+          borderColor: emeraldCore.primary,
           transform: 'translateY(-4px)',
           boxShadow: isLight
             ? '0 20px 40px rgba(0, 0, 0, 0.08)'
             : '0 20px 40px rgba(0, 0, 0, 0.3)',
           '& .price-text': {
-            color: '#10B981',
+            color: emeraldCore.primary,
           },
         },
       }}
@@ -188,7 +192,7 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
             height: 140,
             position: 'relative',
             overflow: 'hidden',
-            bgcolor: isLight ? '#F9FAFB' : '#292524',
+            bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
           }}
         >
           {item.mediaType === 'video' ? (
@@ -261,13 +265,13 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
         <Box
           sx={{
             height: 80,
-            bgcolor: isLight ? '#F9FAFB' : '#292524',
+            bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Gem size={32} color={isLight ? '#D1D5DB' : '#52525B'} />
+          <Gem size={32} color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled} />
         </Box>
       )}
 
@@ -275,13 +279,13 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
       <Box
         sx={{
           height: 56,
-          bgcolor: isLight ? '#FAFAF9' : '#292524',
+          bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.secondary,
           position: 'relative',
           display: 'flex',
           alignItems: 'center',
           px: 2.5,
           borderBottom: '1px solid',
-          borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         }}
       >
         {/* Colored accent bar on left */}
@@ -302,9 +306,9 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
             width: 36,
             height: 36,
             borderRadius: 2,
-            bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+            bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
             border: '1px solid',
-            borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -312,7 +316,7 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
           }}
         >
           {item.isJewelry ? (
-            <Crown size={18} color={isLight ? '#78716C' : '#A8A29E'} />
+            <Crown size={18} color={isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary} />
           ) : (
             <Gem size={18} color={colorDot} />
           )}
@@ -327,9 +331,9 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
             px: 1.5,
             py: 0.5,
             borderRadius: 1.5,
-            bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+            bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
             border: '1px solid',
-            borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
           }}
         >
           <Box
@@ -363,8 +367,8 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
               height: 22,
               fontSize: '0.7rem',
               fontWeight: 600,
-              bgcolor: isLight ? '#1C1917' : '#FAFAF9',
-              color: isLight ? '#FAFAF9' : '#1C1917',
+              bgcolor: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
+              color: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
               mr: 1,
             }}
           />
@@ -427,13 +431,13 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
           {item.color}
           {isLoose && typeof item.peso === 'number' && (
             <>
-              <Box sx={{ color: '#D1D5DB' }}>•</Box>
+              <Box sx={{ color: surfacesLight.text.disabled }}>•</Box>
               {item.peso} ct
             </>
           )}
           {item.isJewelry && item.metalType && (
             <>
-              <Box sx={{ color: '#D1D5DB' }}>•</Box>
+              <Box sx={{ color: surfacesLight.text.disabled }}>•</Box>
               {item.metalType}
             </>
           )}
@@ -470,7 +474,7 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
               mt: 2,
               pt: 2,
               borderTop: '1px solid',
-              borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
             }}
           >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -506,12 +510,12 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
               )}
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-                <MapPin size={12} color="#9CA3AF" />
+                <MapPin size={12} color={surfacesLight.text.tertiary} />
                 <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
                   {item.ubicacion}
                 </Typography>
                 <Box sx={{ flex: 1 }} />
-                <User size={12} color="#9CA3AF" />
+                <User size={12} color={surfacesLight.text.tertiary} />
                 <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
                   {item.asesor}
                 </Typography>
@@ -523,7 +527,7 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
                   mt: 2,
                   pt: 2,
                   borderTop: '1px solid',
-                  borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
@@ -572,13 +576,13 @@ const InventoryCard = ({ item, isCompact, trustScore, onCertClick, onClick }: In
                   }}
                   sx={{
                     width: '100%',
-                    borderColor: '#059669',
-                    color: '#059669',
+                    borderColor: emeraldCore.dark,
+                    color: emeraldCore.dark,
                     fontSize: '0.75rem',
                     py: 0.5,
                     '&:hover': {
-                      bgcolor: alpha('#059669', 0.08),
-                      borderColor: '#047857',
+                      bgcolor: alpha(emeraldCore.dark, 0.08),
+                      borderColor: emeraldCore.darker,
                     },
                   }}
                 >
@@ -800,9 +804,9 @@ export default function InventoryBrowser() {
           mb: 3,
           p: 3,
           borderRadius: 4,
-          bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+          bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
           border: '1px solid',
-          borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
           position: 'relative',
           overflow: 'hidden',
           '&::after': {
@@ -812,7 +816,7 @@ export default function InventoryBrowser() {
             left: 0,
             right: 0,
             height: '3px',
-            background: 'linear-gradient(90deg, #10B981 0%, #6EE7B7 100%)',
+            background: emeraldGradients.horizontal,
           },
         }}
       >
@@ -824,13 +828,13 @@ export default function InventoryBrowser() {
                   width: 48,
                   height: 48,
                   borderRadius: 2.5,
-                  bgcolor: isLight ? '#F0FDF4' : alpha('#10B981', 0.15),
+                  bgcolor: isLight ? emeraldCore.lightest : alpha(emeraldCore.primary, 0.15),
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Package size={24} color="#10B981" />
+                <Package size={24} color={emeraldCore.primary} />
               </Box>
               <Box>
                 <Typography variant="h5" sx={{ fontWeight: 700, color: theme.palette.text.primary, letterSpacing: '-0.02em' }}>
@@ -849,9 +853,9 @@ export default function InventoryBrowser() {
                   px: 2,
                   py: 1,
                   borderRadius: 2,
-                  bgcolor: isLight ? '#F9FAFB' : '#292524',
+                  bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
                   border: '1px solid',
-                  borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                   textAlign: 'center',
                 }}
               >
@@ -867,9 +871,9 @@ export default function InventoryBrowser() {
                   px: 2,
                   py: 1,
                   borderRadius: 2,
-                  bgcolor: isLight ? '#F9FAFB' : '#292524',
+                  bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
                   border: '1px solid',
-                  borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                   textAlign: 'center',
                 }}
               >
@@ -892,9 +896,9 @@ export default function InventoryBrowser() {
           p: 2,
           mb: 3,
           borderRadius: 3,
-          bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+          bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
           border: '1px solid',
-          borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         }}
       >
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mb: showAdvancedFilters ? 2 : 0 }}>
@@ -909,13 +913,13 @@ export default function InventoryBrowser() {
               flex: 1,
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
-                bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
+                bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
               },
             }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Search size={18} color="#9CA3AF" />
+                  <Search size={18} color={surfacesLight.text.tertiary} />
                 </InputAdornment>
               ),
             }}
@@ -931,19 +935,19 @@ export default function InventoryBrowser() {
             >
               <MenuItem value="available">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#10B981' }} />
+                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: emeraldCore.primary }} />
                   Disponibles
                 </Box>
               </MenuItem>
               <MenuItem value="sold">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#EF4444' }} />
+                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: semanticColors.error.main }} />
                   Vendidas
                 </Box>
               </MenuItem>
               <MenuItem value="all">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#6B7280' }} />
+                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: surfacesLight.text.secondary }} />
                   Todas
                 </Box>
               </MenuItem>
@@ -1003,8 +1007,8 @@ export default function InventoryBrowser() {
               size="small"
               onClick={clearFilters}
               sx={{
-                bgcolor: alpha('#EF4444', 0.1),
-                color: '#EF4444',
+                bgcolor: alpha(semanticColors.error.main, 0.1),
+                color: semanticColors.error.main,
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
@@ -1031,7 +1035,7 @@ export default function InventoryBrowser() {
 
         {/* Collapsible Advanced Filters */}
         <Collapse in={showAdvancedFilters}>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mt: 2, pt: 2, borderTop: '1px solid', borderColor: isLight ? '#E5E7EB' : '#3C3C3E' }}>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mt: 2, pt: 2, borderTop: '1px solid', borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default }}>
             {/* Color filter */}
             <FormControl size="small" sx={{ minWidth: 140 }}>
               <Select
@@ -1093,7 +1097,7 @@ export default function InventoryBrowser() {
             <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
               Rango de Precio
             </Typography>
-            <Typography variant="caption" sx={{ color: '#059669', fontWeight: 600 }}>
+            <Typography variant="caption" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
               {formatCurrency(priceRange[0])} - {formatCurrency(priceRange[1])}
             </Typography>
           </Box>
@@ -1106,7 +1110,7 @@ export default function InventoryBrowser() {
             valueLabelDisplay="auto"
             valueLabelFormat={(value) => formatCurrency(value)}
             sx={{
-              color: '#059669',
+              color: emeraldCore.dark,
               '& .MuiSlider-thumb': {
                 width: 20,
                 height: 20,
@@ -1116,7 +1120,7 @@ export default function InventoryBrowser() {
               },
               '& .MuiSlider-rail': {
                 height: 4,
-                bgcolor: isLight ? '#E5E7EB' : '#3C3C3E',
+                bgcolor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
               },
             }}
           />
@@ -1129,7 +1133,7 @@ export default function InventoryBrowser() {
         <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
           <strong style={{ color: theme.palette.text.primary }}>{sortedInventory.length}</strong> resultados
         </Typography>
-        <Typography variant="body2" sx={{ color: '#059669', fontWeight: 600 }}>
+        <Typography variant="body2" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
           {formatFullCurrency(filteredStats.totalValue)} total
         </Typography>
       </Box>
@@ -1182,11 +1186,11 @@ export default function InventoryBrowser() {
             p: 6,
             borderRadius: 4,
             border: '2px dashed',
-            borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
             textAlign: 'center',
           }}
         >
-          <Package size={48} color="#9CA3AF" style={{ marginBottom: 16, opacity: 0.5 }} />
+          <Package size={48} color={surfacesLight.text.tertiary} style={{ marginBottom: 16, opacity: 0.5 }} />
           <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary, mb: 1 }}>
             Sin resultados
           </Typography>
@@ -1219,9 +1223,9 @@ export default function InventoryBrowser() {
             position: 'fixed',
             bottom: 170,
             right: 24,
-            bgcolor: '#D4AF37',
-            '&:hover': { bgcolor: '#B8960C' },
-            '&:disabled': { bgcolor: '#E5E7EB' },
+            bgcolor: goldAccent.primary,
+            '&:hover': { bgcolor: goldAccent.dark },
+            '&:disabled': { bgcolor: surfacesLight.border.light },
             boxShadow: '0 4px 20px rgba(212, 175, 55, 0.4)',
           }}
         >
@@ -1238,8 +1242,8 @@ export default function InventoryBrowser() {
             position: 'fixed',
             bottom: 100,
             right: 24,
-            bgcolor: '#059669',
-            '&:hover': { bgcolor: '#047857' },
+            bgcolor: emeraldCore.dark,
+            '&:hover': { bgcolor: emeraldCore.darker },
             boxShadow: '0 4px 20px rgba(5, 150, 105, 0.4)',
           }}
         >

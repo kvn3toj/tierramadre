@@ -44,6 +44,8 @@ import {
 } from 'lucide-react';
 import { TabValue } from '../App';
 import { useThemeMode } from '../contexts/ThemeContext';
+// Design System Tokens
+import { emeraldCore, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 
 // Professional sidebar dimensions
 const DRAWER_WIDTH = 260;
@@ -90,20 +92,20 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
   // All navigation items for search
   const allNavItems = useMemo(() => NAVIGATION_ITEMS, []);
 
-  // Theme-aware colors
+  // Theme-aware colors using design system tokens
   const isLight = mode === 'light';
   const colors = {
-    sidebar: isLight ? '#FAFAFA' : '#1C1C1E',
-    background: isLight ? '#FFFFFF' : '#000000',
-    text: isLight ? '#374151' : '#E5E7EB',
-    textActive: '#059669',
-    textMuted: isLight ? '#6B7280' : '#9CA3AF',
-    border: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)',
-    hover: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)',
-    activeHover: isLight ? 'rgba(5,150,105,0.18)' : 'rgba(5,150,105,0.25)',
-    activeBg: isLight ? 'rgba(5,150,105,0.12)' : 'rgba(5,150,105,0.2)',
-    searchBg: isLight ? '#F9FAFB' : '#2C2C2E',
-    searchBorder: isLight ? '#E5E7EB' : '#3A3A3C',
+    sidebar: isLight ? surfacesLight.background.secondary : surfacesDark.background.primary,
+    background: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
+    text: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
+    textActive: emeraldCore.dark,
+    textMuted: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
+    border: isLight ? surfacesLight.surface.overlay : surfacesDark.surface.overlay,
+    hover: isLight ? surfacesLight.surface.overlay : surfacesDark.surface.overlay,
+    activeHover: isLight ? alpha(emeraldCore.dark, 0.18) : alpha(emeraldCore.dark, 0.25),
+    activeBg: isLight ? alpha(emeraldCore.dark, 0.12) : alpha(emeraldCore.dark, 0.2),
+    searchBg: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
+    searchBorder: isLight ? surfacesLight.border.light : surfacesDark.border.light,
   };
 
   const handleDrawerToggle = () => {
@@ -553,7 +555,7 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
                               color: colors.textMuted,
                               fontSize: '0.6875rem',
                               fontWeight: 500,
-                              bgcolor: isLight ? '#F3F4F6' : '#3A3A3C',
+                              bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.border.light,
                               px: 0.75,
                               py: 0.25,
                               borderRadius: 0.75,
@@ -570,8 +572,8 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
                       fontSize: '0.8125rem',
                       bgcolor: colors.searchBg,
                       '& fieldset': { borderColor: colors.searchBorder },
-                      '&:hover fieldset': { borderColor: isLight ? '#D1D5DB' : '#48484A' },
-                      '&.Mui-focused fieldset': { borderColor: '#059669' },
+                      '&:hover fieldset': { borderColor: isLight ? surfacesLight.border.default : surfacesDark.border.default },
+                      '&.Mui-focused fieldset': { borderColor: emeraldCore.dark },
                     },
                   }}
                 />
@@ -596,7 +598,7 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
               sx={{
                 width: 32,
                 height: 32,
-                bgcolor: '#059669',
+                bgcolor: emeraldCore.dark,
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 cursor: 'pointer',

@@ -21,6 +21,8 @@ import {
   alpha,
 } from '@mui/material';
 import { Package, Check, X } from 'lucide-react';
+// Design System Tokens
+import { emeraldCore } from '../design-system/tokens/colors';
 
 interface AddToInventoryModalProps {
   open: boolean;
@@ -173,13 +175,13 @@ export default function AddToInventoryModal({
             width: 40,
             height: 40,
             borderRadius: 2,
-            bgcolor: alpha('#059669', 0.1),
+            bgcolor: alpha(emeraldCore.dark, 0.1),
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Package size={20} color="#059669" />
+          <Package size={20} color={emeraldCore.dark} />
         </Box>
         <Box>
           <Typography variant="h6" fontWeight={600}>
@@ -199,7 +201,7 @@ export default function AddToInventoryModal({
                 width: 64,
                 height: 64,
                 borderRadius: '50%',
-                bgcolor: alpha('#059669', 0.1),
+                bgcolor: alpha(emeraldCore.dark, 0.1),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -207,7 +209,7 @@ export default function AddToInventoryModal({
                 mb: 2,
               }}
             >
-              <Check size={32} color="#059669" />
+              <Check size={32} color={emeraldCore.dark} />
             </Box>
             <Typography variant="h6" gutterBottom>
               Producto Agregado
@@ -372,8 +374,8 @@ export default function AddToInventoryModal({
             disabled={loading || !nombre.trim()}
             startIcon={loading ? <CircularProgress size={18} /> : <Check size={18} />}
             sx={{
-              bgcolor: '#059669',
-              '&:hover': { bgcolor: '#047857' },
+              bgcolor: emeraldCore.dark,
+              '&:hover': { bgcolor: emeraldCore.darker },
             }}
           >
             {loading ? 'Guardando...' : 'Agregar al Inventario'}
