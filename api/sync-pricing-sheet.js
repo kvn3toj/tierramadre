@@ -65,7 +65,7 @@ const DROPDOWN_OPTIONS = {
     'Comercial_SuperFina', 'superior', 'Fina', 'Extra Fina',
     'Plata - comercial', 'Estandar'
   ],
-  talla: ['Diametro', 'Cuadrada', 'Redonda', 'Ovalada', 'Esmeralda', 'Pera', 'Corazón', 'Marquesa', 'Otro'],
+  talla: ['Diámetro', 'Cuadrada', 'Redonda', 'Ovalada', 'Esmeralda', 'Pera', 'Corazón', 'Marquesa', 'Cushion', 'Lágrima', 'Otro'],
   medidaS: ['largo', 'Ancho'],
   estado: ['DISPONIBLE', 'VENDIDA', 'Legalizada', 'Pte Legalizar', 'Pte legalizar 50%', 'RESERVADA'],
   ubicacion: ['ASESOR', 'BOVEDA OFI', 'BOVEDA', 'EN PROCESO', 'CLIENTE'],
@@ -1336,21 +1336,20 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
 /**
  * Add QR code formulas to inventory sheet column R
  * Uses Google Sheets IMAGE() function with QR Server API
+ * QR points to Tierra Madre Studio app: /product/{itemId}
  */
 async function addQRFormulas(sheets, sheetName, rowCount) {
   // Generate QR formula for each row
-  // Formula: =IMAGE("https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" & ENCODEURL("https://tierramadre.co/products/" & LOWER(SUBSTITUTE(SUBSTITUTE(C{row},"L:","")," ","-"))))
+  // Formula uses column A (item number) to create URL: tierra-madre-studio.vercel.app/product/{itemId}
   const qrFormulas = [];
 
   for (let row = 2; row <= rowCount + 1; row++) {
-    // Build the formula that generates a QR code from the product name in column C
+    // Build the formula that generates a QR code from the item ID in column A
     // The formula:
-    // 1. Takes the name from column C
-    // 2. Removes "L:" prefix if present
-    // 3. Converts to lowercase
-    // 4. Replaces spaces with hyphens
-    // 5. Generates QR code image via API
-    const formula = `=IF(C${row}<>"",IMAGE("https://api.qrserver.com/v1/create-qr-code/?size=100x100&color=1B5E20&data=" & ENCODEURL("https://tierramadre.co/products/" & LOWER(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(C${row},"L:","")," ","-"),"--","-")))),"")`;
+    // 1. Takes the item number from column A
+    // 2. Creates URL: https://tierra-madre-studio.vercel.app/product/{itemId}
+    // 3. Generates QR code image via API with emerald green color
+    const formula = `=IF(A${row}<>"",IMAGE("https://api.qrserver.com/v1/create-qr-code/?size=100x100&color=1B5E20&data=" & ENCODEURL("https://tierra-madre-studio.vercel.app/product/" & A${row})),"")`;
     qrFormulas.push([formula]);
   }
 

@@ -45,3 +45,5 @@ docs/*.mp4
 
 # Large files - Electron builds
 release/
+.env*.local
+.env.vercel

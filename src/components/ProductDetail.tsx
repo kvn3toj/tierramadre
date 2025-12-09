@@ -160,18 +160,8 @@ const getQualityBadge = (calidad: string): { label: string; bg: string; color: s
   };
 };
 
-// Generate URL-friendly slug from product name
-const generateProductSlug = (name: string): string => {
-  return name
-    .replace(/^[A-Z]:[A-Z]\s*/i, '') // Remove prefixes like "L:A ", "L:B "
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove accents
-    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-    .trim()
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/-+/g, '-'); // Remove multiple hyphens
-};
+// Base URL for the Tierra Madre Studio app
+const STUDIO_BASE_URL = 'https://tierra-madre-studio.vercel.app';
 
 export default function ProductDetail() {
   const { itemId } = useParams<{ itemId: string }>();
@@ -984,7 +974,7 @@ export default function ProductDetail() {
                   }}
                 >
                   <QRCodeSVG
-                    value={`https://tierramadre.co/products/${generateProductSlug(displayName)}`}
+                    value={`${STUDIO_BASE_URL}/product/${itemId}`}
                     size={80}
                     level="H"
                     fgColor="#1B5E20"
@@ -999,11 +989,11 @@ export default function ProductDetail() {
                     display: 'block',
                     mt: 0.5,
                     fontSize: '0.65rem',
-                    maxWidth: 100,
+                    maxWidth: 120,
                     wordBreak: 'break-all',
                   }}
                 >
-                  tierramadre.co/products/{generateProductSlug(displayName)}
+                  /product/{itemId}
                 </Typography>
               </Box>
             </Box>
