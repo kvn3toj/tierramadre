@@ -8,6 +8,8 @@ import { Box, Stack, Typography, Chip, useTheme } from '@mui/material';
 import PublicIcon from '@mui/icons-material/Public';
 import FlagIcon from '@mui/icons-material/Flag';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+// Design System Tokens
+import { emeraldCore, semanticColors } from '../design-system/tokens/colors';
 
 export interface PriceDisplayProps {
   /** Precio nacional (ya con descuento aplicado) - el valor guardado en BD */
@@ -84,7 +86,7 @@ export const PriceDisplay = ({
             variant="body2"
             sx={{
               fontWeight: 700,
-              color: '#059669',
+              color: emeraldCore.dark,
               fontFamily: 'monospace',
             }}
           >
@@ -94,7 +96,7 @@ export const PriceDisplay = ({
             <Typography
               variant="caption"
               sx={{
-                color: '#f57c00',
+                color: semanticColors.warning.dark,
                 fontWeight: 600,
                 fontSize: '0.65rem',
               }}
@@ -152,10 +154,10 @@ export const PriceDisplay = ({
       <Box
           sx={{
             p: 2,
-            bgcolor: '#ecfdf5', // Emerald 50
+            bgcolor: emeraldCore.lightest,
             borderRadius: 2,
             border: '2px solid',
-            borderColor: '#10b981', // Emerald 500
+            borderColor: emeraldCore.primary,
             position: 'relative',
             overflow: 'hidden',
           }}
@@ -168,7 +170,7 @@ export const PriceDisplay = ({
               right: -20,
               width: 100,
               height: 100,
-              bgcolor: '#10b981',
+              bgcolor: emeraldCore.primary,
               opacity: 0.1,
               borderRadius: '50%',
             }}
@@ -181,11 +183,11 @@ export const PriceDisplay = ({
             sx={{ mb: 0.5 }}
           >
             <Stack direction="row" alignItems="center" spacing={1}>
-              <FlagIcon fontSize="small" sx={{ color: '#059669' }} />
+              <FlagIcon fontSize="small" sx={{ color: emeraldCore.dark }} />
               <Typography
                 variant="caption"
                 sx={{
-                  color: '#047857',
+                  color: emeraldCore.darker,
                   fontWeight: 600,
                   letterSpacing: '0.05em',
                   textTransform: 'uppercase',
@@ -199,7 +201,7 @@ export const PriceDisplay = ({
               size="small"
               icon={<LocalOfferIcon sx={{ fontSize: '0.9rem !important' }} />}
               sx={{
-                bgcolor: '#f57c00',
+                bgcolor: semanticColors.warning.dark,
                 color: 'white',
                 fontWeight: 600,
                 fontSize: '0.7rem',
@@ -213,7 +215,7 @@ export const PriceDisplay = ({
             variant="h4"
             sx={{
               fontWeight: 700,
-              color: '#047857',
+              color: emeraldCore.darker,
               fontFamily: 'monospace',
               position: 'relative',
               zIndex: 1,
@@ -224,7 +226,7 @@ export const PriceDisplay = ({
           <Typography
             variant="caption"
             sx={{
-              color: '#059669',
+              color: emeraldCore.dark,
               display: 'block',
               mt: 0.5,
             }}

@@ -13,6 +13,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+// Design System Tokens
+import { emeraldCore } from '../design-system/tokens/colors';
+import { emeraldGradients } from '../design-system/tokens/gradients';
 import {
   Box,
   Typography,
@@ -171,7 +174,7 @@ const Home: React.FC = () => {
       <Card
         sx={{
           m: 2,
-          background: 'linear-gradient(135deg, #10B981 0%, #047857 100%)',
+          background: emeraldGradients.deep,
           color: 'white',
           borderRadius: 4,
           overflow: 'hidden',
@@ -222,7 +225,7 @@ const Home: React.FC = () => {
         </Typography>
         <Card
           sx={{
-            borderLeft: '4px solid #10B981',
+            borderLeft: `4px solid ${emeraldCore.primary}`,
             bgcolor: 'var(--surface-secondary)',
             cursor: 'pointer',
           }}
@@ -232,10 +235,10 @@ const Home: React.FC = () => {
             <Chip
               label="Descubrimiento del Día"
               size="small"
-              sx={{ bgcolor: '#10B98120', color: '#10B981', mb: 1.5, fontWeight: 600 }}
+              sx={{ bgcolor: `${emeraldCore.primary}20`, color: emeraldCore.primary, mb: 1.5, fontWeight: 600 }}
             />
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Avatar sx={{ bgcolor: '#10B98120', width: 56, height: 56, fontSize: '1.8rem' }}>
+              <Avatar sx={{ bgcolor: `${emeraldCore.primary}20`, width: 56, height: 56, fontSize: '1.8rem' }}>
                 {dailyOracle.icon}
               </Avatar>
               <Box sx={{ flex: 1 }}>
@@ -297,11 +300,11 @@ const Home: React.FC = () => {
               <IconButton
                 onClick={() => setMeditationPlaying(!meditationPlaying)}
                 sx={{
-                  bgcolor: '#10B981',
+                  bgcolor: emeraldCore.primary,
                   color: 'white',
                   width: 56,
                   height: 56,
-                  '&:hover': { bgcolor: '#047857' },
+                  '&:hover': { bgcolor: emeraldCore.darker },
                 }}
               >
                 {meditationPlaying ? <Pause /> : <PlayArrow />}
@@ -310,7 +313,7 @@ const Home: React.FC = () => {
             <LinearProgress
               variant="determinate"
               value={(meditationTime / dailyMeditation.duration) * 100}
-              sx={{ mt: 2, borderRadius: 1, bgcolor: 'rgba(16,185,129,0.2)', '& .MuiLinearProgress-bar': { bgcolor: '#10B981' } }}
+              sx={{ mt: 2, borderRadius: 1, bgcolor: `${emeraldCore.primary}33`, '& .MuiLinearProgress-bar': { bgcolor: emeraldCore.primary } }}
             />
             <Typography variant="caption" sx={{ color: 'var(--text-tertiary)', display: 'block', mt: 1 }}>
               {completedMeditations} meditaciones completadas este mes
@@ -330,7 +333,7 @@ const Home: React.FC = () => {
               size="small"
               endIcon={<ArrowForward />}
               onClick={() => navigate('/inventory')}
-              sx={{ color: '#10B981' }}
+              sx={{ color: emeraldCore.primary }}
             >
               Ver Todo
             </Button>
@@ -449,7 +452,7 @@ const Home: React.FC = () => {
           <>
             <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Avatar sx={{ bgcolor: '#10B98120', fontSize: '1.5rem' }}>{selectedFact.icon}</Avatar>
+                <Avatar sx={{ bgcolor: `${emeraldCore.primary}20`, fontSize: '1.5rem' }}>{selectedFact.icon}</Avatar>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>{selectedFact.title}</Typography>
               </Box>
               <IconButton onClick={() => setSelectedFact(null)}>

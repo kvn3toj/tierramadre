@@ -17,9 +17,11 @@ import {
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { Emerald, EmeraldStatus } from '../types';
-import { brandColors } from '../theme';
 import { useThemeMode } from '../contexts/ThemeContext';
 import MediaPreview from './MediaPreview';
+// Design System Tokens
+import { emeraldCore, goldAccent, semanticColors, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
+import { cardShadows } from '../design-system/tokens/shadows';
 
 interface EmeraldCardProps {
   emerald: Emerald;
@@ -30,9 +32,9 @@ interface EmeraldCardProps {
 }
 
 const statusColors: Record<EmeraldStatus, string> = {
-  available: brandColors.emeraldGreen,
-  sold: '#f44336',
-  reserved: brandColors.gold,
+  available: emeraldCore.primary,
+  sold: semanticColors.error.main,
+  reserved: goldAccent.primary,
 };
 
 const statusLabels: Record<EmeraldStatus, string> = {
@@ -86,11 +88,12 @@ export default function EmeraldCard({
       onClick={() => onSelect?.(emerald)}
       sx={{
         cursor: onSelect ? 'pointer' : 'default',
-        border: selected ? `2px solid ${brandColors.emeraldGreen}` : 'none',
+        border: selected ? `2px solid ${emeraldCore.primary}` : 'none',
+        boxShadow: cardShadows.resting,
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
           transform: 'translateY(-4px)',
-          boxShadow: `0 8px 24px ${brandColors.emeraldGreen}20`,
+          boxShadow: cardShadows.emeraldHover,
         },
       }}
     >
@@ -162,7 +165,7 @@ export default function EmeraldCard({
           sx={{
             fontFamily: '"Libre Baskerville", serif',
             fontWeight: 700,
-            color: brandColors.emeraldGreen,
+            color: emeraldCore.primary,
             fontSize: '1rem',
           }}
         >
@@ -175,7 +178,7 @@ export default function EmeraldCard({
               size="small"
               variant="outlined"
               sx={{
-                borderColor: isLight ? '#E5E7EB' : '#3A3A3C',
+                borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
                 color: theme.palette.text.primary
               }}
             />
@@ -186,7 +189,7 @@ export default function EmeraldCard({
               size="small"
               variant="outlined"
               sx={{
-                borderColor: isLight ? '#E5E7EB' : '#3A3A3C',
+                borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
                 color: theme.palette.text.primary
               }}
             />
