@@ -19,7 +19,8 @@ const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
 
 // Column indices (0-based) - Verified 2024-12-09
 // A=vacío, B=Item, C=FECHA INGRESO, D=Nombre, E=Peso, F=Color, G=Calidad, H=Cant, I=Talla
-// J=Medidas(tipo), K=Medidas(valores), L=Imagen, M=costo, N=Precio, O=UBICACION, P=ASESOR, Q=URL Imagen
+// J=Medidas(tipo), K=Medidas(valores), L=Imagen, M=costo, N=Precio, O=UBICACION, P=ASESOR
+// Q=ESTADO, R=QR, S=URL Imagen
 const COLUMNS = {
   COLOR: 5,      // F (index 5) - Color
   CALIDAD: 6,    // G (index 6) - Calidad
