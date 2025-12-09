@@ -128,13 +128,11 @@ export default async function handler(req, res) {
       const cleanName = name.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
       const normalized = normalizeName(cleanName);
 
-      // Debug: log names that look like K. Pineda variants
-      if (cleanName.toLowerCase().includes('pineda')) {
+      // Debug: log ALL names (first 30)
+      if (debugInfo.length < 30) {
         debugInfo.push({
-          original: name,
           cleanName,
           normalized,
-          charCodes: [...cleanName].map(c => c.charCodeAt(0))
         });
       }
 
