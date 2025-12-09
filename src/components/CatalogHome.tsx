@@ -12,19 +12,21 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+// Design System Tokens
+import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// COLORS
+// COLORS (migrated to design system tokens)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const COLORS = {
-  emerald: '#10b981',
-  emeraldLight: '#34d399',
-  gold: '#C5A572',
-  white: '#ffffff',
-  cream: '#f8f7f4',
-  dark: '#0a0a0a',
-  muted: '#6b7280',
+  emerald: emeraldCore.primary,
+  emeraldLight: emeraldCore.light,
+  gold: goldAccent.primary,
+  white: surfacesLight.background.primary,
+  cream: surfacesLight.background.tertiary,
+  dark: surfacesDark.background.primary,
+  muted: surfacesLight.text.secondary,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

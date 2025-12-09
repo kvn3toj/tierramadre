@@ -50,6 +50,10 @@ import type { MediaItem } from './media/types';
 import { PriceDisplay } from './PriceDisplay';
 import { formatFullCurrency as formatCurrency, getColorDot, getQualityBadge } from '../utils/formatting';
 import { isImageFile, isVideoFile } from '../utils/fileTypeDetection';
+// Design System Tokens
+import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
+import { emeraldGradients, buttonGradients } from '../design-system/tokens/gradients';
+import { emeraldShadows } from '../design-system/tokens/shadows';
 
 // Convert File to data URL (base64) - more reliable than blob URLs in production
 const fileToDataURL = (file: File): Promise<string> => {
@@ -369,7 +373,7 @@ export default function ProductDetail() {
   if (!product) {
     return (
       <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3 }, py: 8, textAlign: 'center' }}>
-        <Package size={64} color="#9CA3AF" style={{ marginBottom: 16, opacity: 0.5 }} />
+        <Package size={64} color={surfacesLight.text.secondary} style={{ marginBottom: 16, opacity: 0.5 }} />
         <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
           Producto no encontrado
         </Typography>
@@ -381,7 +385,7 @@ export default function ProductDetail() {
           startIcon={<ArrowLeft size={18} />}
           onClick={() => navigate('/inventory')}
           sx={{
-            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+            background: buttonGradients.primary,
             color: '#FFFFFF',
           }}
         >
@@ -413,7 +417,7 @@ export default function ProductDetail() {
           sx={{
             color: theme.palette.text.secondary,
             textDecoration: 'none',
-            '&:hover': { color: '#059669' },
+            '&:hover': { color: emeraldCore.dark },
           }}
         >
           Inicio
@@ -425,7 +429,7 @@ export default function ProductDetail() {
           sx={{
             color: theme.palette.text.secondary,
             textDecoration: 'none',
-            '&:hover': { color: '#059669' },
+            '&:hover': { color: emeraldCore.dark },
           }}
         >
           Inventario
@@ -443,8 +447,8 @@ export default function ProductDetail() {
           mb: 3,
           color: theme.palette.text.secondary,
           '&:hover': {
-            bgcolor: isLight ? alpha('#059669', 0.08) : alpha('#059669', 0.15),
-            color: '#059669',
+            bgcolor: isLight ? alpha(emeraldCore.dark, 0.08) : alpha(emeraldCore.dark, 0.15),
+            color: emeraldCore.dark,
           },
         }}
       >
@@ -460,8 +464,8 @@ export default function ProductDetail() {
               borderRadius: 3,
               overflow: 'hidden',
               border: '1px solid',
-              borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
-              bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+              bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
               position: 'relative',
             }}
           >
@@ -483,10 +487,10 @@ export default function ProductDetail() {
                   size="small"
                   onClick={() => setIsEditing(!isEditing)}
                   sx={{
-                    bgcolor: isEditing ? '#059669' : 'rgba(0,0,0,0.5)',
+                    bgcolor: isEditing ? emeraldCore.dark : 'rgba(0,0,0,0.5)',
                     color: '#fff',
                     '&:hover': {
-                      bgcolor: isEditing ? '#047857' : 'rgba(0,0,0,0.7)',
+                      bgcolor: isEditing ? emeraldCore.darker : 'rgba(0,0,0,0.7)',
                     },
                     backdropFilter: 'blur(4px)',
                   }}
@@ -541,8 +545,8 @@ export default function ProductDetail() {
                   onClick={() => setShowUploadZone(true)}
                   sx={{
                     mt: 2,
-                    bgcolor: '#059669',
-                    '&:hover': { bgcolor: '#047857' },
+                    bgcolor: emeraldCore.dark,
+                    '&:hover': { bgcolor: emeraldCore.darker },
                   }}
                 >
                   Subir Imágenes
@@ -560,12 +564,12 @@ export default function ProductDetail() {
               onClick={() => setShowUploadZone(!showUploadZone)}
               sx={{
                 mt: 2,
-                borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                 color: theme.palette.text.secondary,
                 '&:hover': {
-                  borderColor: '#059669',
-                  color: '#059669',
-                  bgcolor: alpha('#059669', 0.08),
+                  borderColor: emeraldCore.dark,
+                  color: emeraldCore.dark,
+                  bgcolor: alpha(emeraldCore.dark, 0.08),
                 },
               }}
             >
@@ -592,7 +596,7 @@ export default function ProductDetail() {
           {/* Header */}
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-              {product.isJewelry && <Crown size={20} color="#D4AF37" />}
+              {product.isJewelry && <Crown size={20} color={goldAccent.primary} />}
               <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 600 }}>
                 #{product.item}
               </Typography>
@@ -604,7 +608,7 @@ export default function ProductDetail() {
               <Chip
                 label={product.isJewelry ? 'Joyería' : 'Gema'}
                 size="small"
-                sx={{ bgcolor: isLight ? '#F3F4F6' : '#2C2C2E' }}
+                sx={{ bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary }}
               />
               <Chip
                 label={quality.label}
@@ -622,7 +626,7 @@ export default function ProductDetail() {
                   size="small"
                   sx={{
                     bgcolor: alpha('#8B5CF6', 0.1),
-                    color: '#8B5CF6',
+                    color: '#8B5CF6',  // Purple for lot indicator - unique accent
                     fontWeight: 600,
                   }}
                 />
@@ -646,9 +650,9 @@ export default function ProductDetail() {
               <Card
                 elevation={0}
                 sx={{
-                  bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
+                  bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.secondary,
                   border: '1px solid',
-                  borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                 }}
               >
                 <CardContent>
@@ -673,9 +677,9 @@ export default function ProductDetail() {
               <Card
                 elevation={0}
                 sx={{
-                  bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
+                  bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.secondary,
                   border: '1px solid',
-                  borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                 }}
               >
                 <CardContent>
@@ -700,7 +704,7 @@ export default function ProductDetail() {
                   sx={{
                     bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
                     border: '1px solid',
-                    borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                    borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                   }}
                 >
                   <CardContent>
@@ -726,7 +730,7 @@ export default function ProductDetail() {
                   sx={{
                     bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
                     border: '1px solid',
-                    borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                    borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                   }}
                 >
                   <CardContent>
@@ -749,9 +753,9 @@ export default function ProductDetail() {
               <Card
                 elevation={0}
                 sx={{
-                  bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
+                  bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.secondary,
                   border: '1px solid',
-                  borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                 }}
               >
                 <CardContent>
@@ -824,7 +828,7 @@ export default function ProductDetail() {
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <MapPin size={18} color="#9CA3AF" />
+              <MapPin size={18} color={surfacesLight.text.secondary} />
               <Box>
                 <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block' }}>
                   Ubicación
@@ -836,7 +840,7 @@ export default function ProductDetail() {
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <User size={18} color="#9CA3AF" />
+              <User size={18} color={surfacesLight.text.secondary} />
               <Box>
                 <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block' }}>
                   Asesor
@@ -848,7 +852,7 @@ export default function ProductDetail() {
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Calendar size={18} color="#9CA3AF" />
+              <Calendar size={18} color={surfacesLight.text.secondary} />
               <Box>
                 <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block' }}>
                   Fecha de Ingreso
@@ -861,7 +865,7 @@ export default function ProductDetail() {
 
             {product.costoTM && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <DollarSign size={18} color="#9CA3AF" />
+                <DollarSign size={18} color={surfacesLight.text.secondary} />
                 <Box>
                   <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block' }}>
                     Costo TM
@@ -875,7 +879,7 @@ export default function ProductDetail() {
 
             {/* QR Code Section */}
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mt: 1 }}>
-              <QrCode size={18} color="#9CA3AF" style={{ marginTop: 4 }} />
+              <QrCode size={18} color={surfacesLight.text.secondary} style={{ marginTop: 4 }} />
               <Box>
                 <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block', mb: 1 }}>
                   Código QR del Producto
@@ -887,7 +891,7 @@ export default function ProductDetail() {
                     borderRadius: 2,
                     bgcolor: '#FFFFFF',
                     border: '1px solid',
-                    borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                    borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                     display: 'inline-block',
                   }}
                 >
@@ -895,7 +899,7 @@ export default function ProductDetail() {
                     value={`${STUDIO_BASE_URL}/product/${itemId}`}
                     size={80}
                     level="H"
-                    fgColor="#1B5E20"
+                    fgColor={emeraldCore.darkest}
                     bgColor="#FFFFFF"
                     style={{ display: 'block' }}
                   />
@@ -926,19 +930,15 @@ export default function ProductDetail() {
               disabled={!isAvailable}
               startIcon={<ShoppingCart size={20} />}
               sx={{
-                background: isAvailable
-                  ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-                  : undefined,
+                background: isAvailable ? buttonGradients.primary : undefined,
                 color: '#FFFFFF',
                 py: 1.5,
                 minHeight: 48,
                 fontWeight: 600,
-                boxShadow: isAvailable ? '0 4px 12px rgba(16, 185, 129, 0.3)' : undefined,
+                boxShadow: isAvailable ? emeraldShadows.primary : undefined,
                 '&:hover': {
-                  background: isAvailable
-                    ? 'linear-gradient(135deg, #059669 0%, #047857 100%)'
-                    : undefined,
-                  boxShadow: isAvailable ? '0 6px 16px rgba(16, 185, 129, 0.4)' : undefined,
+                  background: isAvailable ? emeraldGradients.deep : undefined,
+                  boxShadow: isAvailable ? emeraldShadows.lg : undefined,
                 },
               }}
             >
@@ -948,14 +948,14 @@ export default function ProductDetail() {
               variant="outlined"
               size="large"
               sx={{
-                borderColor: '#059669',
-                color: '#059669',
+                borderColor: emeraldCore.dark,
+                color: emeraldCore.dark,
                 py: 1.5,
                 minHeight: 48,
                 fontWeight: 600,
                 '&:hover': {
-                  borderColor: '#047857',
-                  bgcolor: alpha('#059669', 0.08),
+                  borderColor: emeraldCore.darker,
+                  bgcolor: alpha(emeraldCore.dark, 0.08),
                 },
               }}
             >

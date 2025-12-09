@@ -43,6 +43,9 @@ import {
   getShadows,
   getHeaderStyles,
 } from '../design-system';
+// Design System Tokens for gradients
+import { buttonGradients } from '../design-system/tokens/gradients';
+import { emeraldShadows } from '../design-system/tokens/shadows';
 
 export default function Gallery() {
   const theme = useTheme();
@@ -644,10 +647,10 @@ export default function Gallery() {
           position: 'fixed',
           bottom: { xs: 'calc(80px + env(safe-area-inset-bottom))', md: 32 },
           right: { xs: 16, md: 32 },
-          background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-          boxShadow: '0 4px 20px rgba(5, 150, 105, 0.4)',
+          background: buttonGradients.primary,
+          boxShadow: emeraldShadows.primary,
           '&:hover': {
-            background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+            background: buttonGradients.primaryActive,
             transform: 'scale(1.05)',
           },
           transition: 'all 0.2s ease',
