@@ -119,12 +119,24 @@ export default async function handler(req, res) {
 
     // Get unique names, keeping the best formatted version
     const nameMap = new Map();
+    const debugInfo = [];
+
     dataRows.forEach(row => {
       const name = row[asesorColumnIndex];
       if (!name || name.trim() === '') return;
 
       const cleanName = name.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
       const normalized = normalizeName(cleanName);
+
+      // Debug: log names that look like K. Pineda variants
+      if (cleanName.toLowerCase().includes('pineda')) {
+        debugInfo.push({
+          original: name,
+          cleanName,
+          normalized,
+          charCodes: [...cleanName].map(c => c.charCodeAt(0))
+        });
+      }
 
       // Keep the version with proper casing (not all caps if possible)
       if (!nameMap.has(normalized)) {
@@ -153,7 +165,8 @@ export default async function handler(req, res) {
       asesores: asesoresData,
       count: asesoresData.length,
       sheetName: inventorySheet,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      debug: debugInfo.length > 0 ? debugInfo : undefined
     });
 
   } catch (error) {
