@@ -62,6 +62,7 @@ import jsPDF from 'jspdf';
 import { QRCodeSVG } from 'qrcode.react';
 import { documentColors, documentShadows } from '../design-system/tokens';
 import { useInventory } from '../hooks/useInventory';
+import { useCotizacion, formatCotizacionCurrency, generateProductSlug, getPesoDisplay } from '../hooks/useCotizacion';
 import { InventoryItem } from '../types';
 import { SAMPLE_AMBASSADORS } from '../data/ambassadors';
 
@@ -80,287 +81,110 @@ const brandColors = {
   border: documentColors.border.default,
 };
 
-// Format currency
-const formatCurrency = (amount: number, currency: 'COP' | 'USD' = 'COP'): string => {
-  if (currency === 'USD') {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  }
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
-
-// Generate quotation number
-const generateQuotationNumber = (): string => {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const random = String(Date.now()).slice(-5);
-  return `COT-${year}${month}${day}-${random}`;
-};
-
-// Generate product URL slug from name
-const generateProductSlug = (name: string): string => {
-  return name
-    .replace(/^[A-Z]:[A-Z]\s*/i, '') // Remove prefixes like "L:A ", "L:B ", etc.
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove accents
-    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-    .trim()
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/-+/g, '-'); // Remove multiple hyphens
-};
-
-// Cotización product interface
-interface CotizacionProduct {
-  id: string;
-  itemNumber: number;
-  name: string;
-  peso: string | number;
-  color: string;
-  calidad: string;
-  talla: string;
-  precioCOP: number;
-  imagen?: string;
-  isJewelry: boolean;
-  metalType?: string;
-}
-
-// Business settings interface
-interface BusinessSettings {
-  contactPhone: string;
-  contactEmail: string;
-  nit: string;
-  footerMessage: string;
-  footerNote: string;
-}
-
-// Investment item interface
-interface InvestmentItem {
-  id: string;
-  label: string;
-  value: number;
-  icon: string;
-}
-
-// Custom cost interface
-interface CustomCost {
-  id: string;
-  label: string;
-  value: number;
-}
-
-// Default investments
-const defaultInvestments: InvestmentItem[] = [
-  { id: 'emerald', label: 'Valor de la Esmeralda', value: 0, icon: 'emerald' },
-  { id: 'gold', label: 'Oro (Estructura)', value: 0, icon: 'gold' },
-  { id: 'silver', label: 'Plata (Estructura)', value: 0, icon: 'silver' },
-  { id: 'setting', label: 'Engaste', value: 0, icon: 'setting' },
-  { id: 'certification', label: 'Certificación', value: 0, icon: 'certification' },
-  { id: 'packaging', label: 'Empaque', value: 0, icon: 'packaging' },
-];
+// Use formatCotizacionCurrency from hook, aliased for backward compatibility
+const formatCurrency = formatCotizacionCurrency;
 
 export default function CotizacionGenerator() {
   const quotationRef = useRef<HTMLDivElement>(null);
   const { inventory } = useInventory();
 
+  // Use the cotizacion hook for state management
+  const cotizacion = useCotizacion();
+  const {
+    quotationNumber, setQuotationNumber, regenerateQuotationNumber,
+    clientName, setClientName,
+    clientPhone, setClientPhone,
+    clientEmail, setClientEmail,
+    clientDocument, setClientDocument,
+    asesorName, setAsesorName,
+    date, setDate,
+    validDays, setValidDays,
+    expiryStr,
+    notes, setNotes,
+    discountPercent, setDiscountPercent,
+    products,
+    addProductFromInventory,
+    addManualProduct,
+    removeProduct,
+    manualProduct, setManualProduct,
+    investments, updateInvestment, resetInvestments,
+    customCosts, addCustomCost, removeCustomCost,
+    businessSettings, setBusinessSettings,
+    totalInvestment,
+    productSubtotal,
+    subtotal,
+    discount,
+    total,
+    resetAll,
+  } = cotizacion;
+
   // Filter available inventory
   const availableInventory = inventory.filter(item => item.estado === 'DISPONIBLE');
 
-  // Snackbar state
+  // Snackbar state (UI-only)
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
     severity: 'success' | 'error';
   }>({ open: false, message: '', severity: 'success' });
 
-  // Quotation state
-  const [quotationNumber, setQuotationNumber] = useState(generateQuotationNumber);
-  const [clientName, setClientName] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
-  const [clientEmail, setClientEmail] = useState('');
-  const [clientDocument, setClientDocument] = useState('');
-  const [asesorName, setAsesorName] = useState('');
-
   // Get asesor names from ambassadors
   const asesorOptions = SAMPLE_AMBASSADORS.map(amb => amb.displayName);
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [validDays, setValidDays] = useState(15);
-  const [notes, setNotes] = useState('');
-  const [discountPercent, setDiscountPercent] = useState(0);
 
-  // Products state
-  const [products, setProducts] = useState<CotizacionProduct[]>([]);
+  // Selected item for inventory picker (UI-only)
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
-  // Product entry mode: 'inventory' | 'manual'
+  // Product entry mode (UI-only)
   const [productEntryMode, setProductEntryMode] = useState<'inventory' | 'manual'>('inventory');
 
-  // Manual product entry state
-  const [manualProduct, setManualProduct] = useState({
-    name: '',
-    peso: '',
-    color: '',
-    calidad: '',
-    talla: '',
-    precioCOP: 0,
-    isJewelry: false,
-    metalType: '',
-  });
-
-  // Investment state
-  const [investments, setInvestments] = useState<InvestmentItem[]>(defaultInvestments);
-  const [customCosts, setCustomCosts] = useState<CustomCost[]>([]);
+  // Custom cost input state (UI-only)
   const [newCustomLabel, setNewCustomLabel] = useState('');
   const [newCustomValue, setNewCustomValue] = useState<number>(0);
-
-  // Business settings
-  const [businessSettings, setBusinessSettings] = useState<BusinessSettings>({
-    contactPhone: '+57 310 XXX XXXX',
-    contactEmail: 'info@tierramadre.co',
-    nit: 'NIT: 900.XXX.XXX-X',
-    footerMessage: 'Gracias por su preferencia',
-    footerNote: 'Esta cotización es válida por el tiempo indicado. Los precios están sujetos a disponibilidad. Las esmeraldas Tierra Madre cuentan con certificado de origen y autenticidad.',
-  });
-
-  // Calculate investment total
-  const investmentTotal = investments.reduce((sum, inv) => sum + inv.value, 0);
-  const customCostsTotal = customCosts.reduce((sum, cost) => sum + cost.value, 0);
-  const totalInvestment = investmentTotal + customCostsTotal;
-
-  // Calculate totals
-  const productSubtotal = products.reduce((sum, p) => sum + p.precioCOP, 0);
-  const subtotal = productSubtotal + totalInvestment;
-  const discount = subtotal * (discountPercent / 100);
-  const total = subtotal - discount;
-
-  // Calculate expiry date
-  const expiryDate = new Date(date);
-  expiryDate.setDate(expiryDate.getDate() + validDays);
-  const expiryStr = expiryDate.toLocaleDateString('es-CO', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
 
   // Add product from inventory
   const handleAddProduct = () => {
     if (!selectedItem) return;
-
-    const product: CotizacionProduct = {
-      id: crypto.randomUUID(),
-      itemNumber: selectedItem.item,
-      name: selectedItem.nombre,
-      peso: selectedItem.peso,
-      color: selectedItem.color,
-      calidad: selectedItem.calidad,
-      talla: selectedItem.talla,
-      precioCOP: selectedItem.precioCOP,
-      imagen: selectedItem.imagen,
-      isJewelry: selectedItem.isJewelry,
-      metalType: selectedItem.metalType,
-    };
-
-    setProducts([...products, product]);
+    addProductFromInventory(selectedItem);
     setSelectedItem(null);
   };
 
   // Add manual product
   const handleAddManualProduct = () => {
-    if (!manualProduct.name || manualProduct.precioCOP <= 0) return;
-
-    const product: CotizacionProduct = {
-      id: crypto.randomUUID(),
-      itemNumber: Date.now() % 10000, // Generate a temp item number
-      name: manualProduct.name,
-      peso: manualProduct.peso || '-',
-      color: manualProduct.color || '-',
-      calidad: manualProduct.calidad || '-',
-      talla: manualProduct.talla || '-',
-      precioCOP: manualProduct.precioCOP,
-      isJewelry: manualProduct.isJewelry,
-      metalType: manualProduct.metalType,
-    };
-
-    setProducts([...products, product]);
-    // Reset manual form
-    setManualProduct({
-      name: '',
-      peso: '',
-      color: '',
-      calidad: '',
-      talla: '',
-      precioCOP: 0,
-      isJewelry: false,
-      metalType: '',
-    });
+    addManualProduct(manualProduct);
   };
 
   // Remove product
   const handleRemoveProduct = (productId: string) => {
-    setProducts(products.filter(p => p.id !== productId));
-  };
-
-  // Regenerate quotation number
-  const regenerateQuotationNumber = () => {
-    setQuotationNumber(generateQuotationNumber());
+    removeProduct(productId);
   };
 
   // Update investment value
   const handleInvestmentChange = (id: string, value: number) => {
-    setInvestments(investments.map(inv =>
-      inv.id === id ? { ...inv, value } : inv
-    ));
+    updateInvestment(id, value);
   };
 
   // Reset investments
   const handleResetInvestments = () => {
-    setInvestments(defaultInvestments);
-    setCustomCosts([]);
+    resetInvestments();
   };
 
   // Add custom cost
   const handleAddCustomCost = () => {
     if (!newCustomLabel || newCustomValue <= 0) return;
-    setCustomCosts([
-      ...customCosts,
-      { id: crypto.randomUUID(), label: newCustomLabel, value: newCustomValue }
-    ]);
+    addCustomCost(newCustomLabel, newCustomValue);
     setNewCustomLabel('');
     setNewCustomValue(0);
   };
 
   // Remove custom cost
   const handleRemoveCustomCost = (id: string) => {
-    setCustomCosts(customCosts.filter(c => c.id !== id));
+    removeCustomCost(id);
   };
 
   // Reset form
   const handleNewQuotation = () => {
-    setQuotationNumber(generateQuotationNumber());
-    setClientName('');
-    setClientPhone('');
-    setClientEmail('');
-    setClientDocument('');
-    setAsesorName('');
-    setDate(new Date().toISOString().split('T')[0]);
-    setValidDays(15);
-    setNotes('');
-    setDiscountPercent(0);
-    setProducts([]);
+    resetAll();
     setSelectedItem(null);
-    setInvestments(defaultInvestments);
-    setCustomCosts([]);
   };
 
   // Get investment icon
@@ -430,13 +254,7 @@ export default function CotizacionGenerator() {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  // Get peso display string
-  const getPesoDisplay = (item: CotizacionProduct | InventoryItem): string => {
-    if (item.isJewelry) {
-      return item.metalType || 'Joya';
-    }
-    return typeof item.peso === 'number' ? `${item.peso} ct` : item.peso;
-  };
+  // getPesoDisplay is imported from useCotizacion hook
 
   return (
     <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
