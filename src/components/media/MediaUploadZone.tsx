@@ -126,8 +126,6 @@ export default function MediaUploadZone({
     onDrop,
     accept: {
       'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.heic', '.heif'],
-      'image/heic': ['.heic'],
-      'image/heif': ['.heif'],
       'video/*': ['.mp4', '.mov', '.webm'],
     },
     maxFiles: remainingSlots,
