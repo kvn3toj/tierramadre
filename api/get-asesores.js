@@ -108,20 +108,18 @@ export default async function handler(req, res) {
     // Extract unique asesores from inventory data
     const dataRows = rows.slice(1);
 
-    // Normalize name for comparison (uppercase, keep only letters and numbers)
+    // Normalize name: uppercase, remove ALL non-letter characters
     const normalizeName = (name) => {
-      // Convert to string and handle all whitespace variants
-      let clean = String(name || '')
-        .replace(/[\r\n\t\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, ' ')  // All whitespace to regular space
-        .replace(/\s+/g, ' ')    // Collapse multiple spaces
-        .trim();
-
-      // Then normalize for comparison
-      return clean
-        .toUpperCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Remove accents
-        .replace(/[^A-Z0-9]/g, '');      // Keep only alphanumeric
+      const str = String(name || '');
+      let result = '';
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        // Keep only A-Z (65-90) and a-z (97-122) after converting to uppercase
+        if ((char >= 65 && char <= 90) || (char >= 97 && char <= 122)) {
+          result += str[i].toUpperCase();
+        }
+      }
+      return result;
     };
 
     // Format display name (clean but preserve original style)
