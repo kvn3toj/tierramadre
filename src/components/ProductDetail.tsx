@@ -37,7 +37,9 @@ import {
   Images,
   Edit2,
   Check,
+  QrCode,
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useInventory } from '../hooks/useInventory';
 import { calculateTrustScore, getTrustBadge } from '../utils/trustScore';
@@ -156,6 +158,19 @@ const getQualityBadge = (calidad: string): { label: string; bg: string; color: s
     color: '#374151',
     border: '#9CA3AF',
   };
+};
+
+// Generate URL-friendly slug from product name
+const generateProductSlug = (name: string): string => {
+  return name
+    .replace(/^[A-Z]:[A-Z]\s*/i, '') // Remove prefixes like "L:A ", "L:B "
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .trim()
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-'); // Remove multiple hyphens
 };
 
 export default function ProductDetail() {
@@ -949,6 +964,49 @@ export default function ProductDetail() {
                 </Box>
               </Box>
             )}
+
+            {/* QR Code Section */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mt: 1 }}>
+              <QrCode size={18} color="#9CA3AF" style={{ marginTop: 4 }} />
+              <Box>
+                <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block', mb: 1 }}>
+                  Código QR del Producto
+                </Typography>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 2,
+                    bgcolor: '#FFFFFF',
+                    border: '1px solid',
+                    borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                    display: 'inline-block',
+                  }}
+                >
+                  <QRCodeSVG
+                    value={`https://tierramadre.co/products/${generateProductSlug(displayName)}`}
+                    size={80}
+                    level="H"
+                    fgColor="#1B5E20"
+                    bgColor="#FFFFFF"
+                    style={{ display: 'block' }}
+                  />
+                </Paper>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: theme.palette.text.secondary,
+                    display: 'block',
+                    mt: 0.5,
+                    fontSize: '0.65rem',
+                    maxWidth: 100,
+                    wordBreak: 'break-all',
+                  }}
+                >
+                  tierramadre.co/products/{generateProductSlug(displayName)}
+                </Typography>
+              </Box>
+            </Box>
           </Box>
 
           {/* CTA Buttons */}

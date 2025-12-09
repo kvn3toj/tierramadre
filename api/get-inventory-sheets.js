@@ -111,6 +111,9 @@ function mapRowToInventoryItem(row, headers) {
   const peso = getValue('peso', 'peso (ct)', 'weight', 'quilates', 'ct');
   const pesoData = parsePeso(peso);
 
+  // Get image URL (may be in different columns like K, L, or labeled)
+  const imageUrl = getValue('imagen', 'image', 'foto', 'photo', 'url imagen', 'image url', 'imagen url') || '';
+
   return {
     item: parseInt(getValue('item', '#', 'numero', 'no.') || 0),
     fechaIngreso: getValue('fecha ingreso', 'fechaingreso', 'fecha', 'date') || '',
@@ -126,6 +129,7 @@ function mapRowToInventoryItem(row, headers) {
     ubicacion: getValue('ubicacion', 'location', 'lugar') || '',
     asesor: getValue('asesor', 'advisor', 'vendedor', 'seller') || '',
     estado: getValue('estado', 'status', 'disponibilidad') || 'DISPONIBLE',
+    imageUrl: imageUrl,
     isJewelry: pesoData.isJewelry,
     metalType: pesoData.metalType,
   };
