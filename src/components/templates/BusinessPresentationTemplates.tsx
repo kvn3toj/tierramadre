@@ -576,6 +576,276 @@ export const BulletListTemplate: React.FC<BulletListProps> = ({
 );
 
 // ============================================================================
+// SLIDE 7: PIE CHART - Gráfico Circular
+// ============================================================================
+
+interface PieChartProps {
+  id?: string;
+  title?: string;
+  subtitle?: string;
+  segments?: Array<{ label: string; value: number; color?: string }>;
+  benefit?: string;
+}
+
+const DEFAULT_PIE_SEGMENTS = [
+  { label: 'Colombia', value: 70, color: COLORS.accentEmerald },
+  { label: 'Zambia', value: 15, color: '#2E7D32' },
+  { label: 'Brasil', value: 10, color: '#66BB6A' },
+  { label: 'Otros', value: 5, color: '#A5D6A7' },
+];
+
+export const PieChartTemplate: React.FC<PieChartProps> = ({
+  id = 'pie-chart',
+  title = 'Participación en el Mercado Mundial',
+  subtitle = 'Colombia domina el mercado global de esmeraldas',
+  segments = DEFAULT_PIE_SEGMENTS,
+  benefit = 'Colombia produce el 70% de las esmeraldas del mundo, garantizando posicionamiento privilegiado.',
+}) => {
+  // Calculate pie chart segments
+  const total = segments.reduce((sum, s) => sum + s.value, 0);
+  let currentAngle = -90; // Start from top
+
+  return (
+    <SlideContainer id={id}>
+      {/* Title */}
+      <Box sx={{ position: 'absolute', top: 80, left: GRID.fullWidth.left, width: GRID.fullWidth.width }}>
+        <Typography sx={{ ...TYPOGRAPHY.h2, color: COLORS.textPrimary, marginBottom: 16 }}>
+          {title}
+        </Typography>
+        <Typography sx={{ ...TYPOGRAPHY.body, color: COLORS.textSecondary }}>
+          {subtitle}
+        </Typography>
+      </Box>
+
+      {/* Pie Chart (SVG) */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 280,
+          left: GRID.leftThird.left,
+          width: 400,
+          height: 400,
+        }}
+      >
+        <svg viewBox="0 0 200 200" width="100%" height="100%">
+          {segments.map((segment, idx) => {
+            const angle = (segment.value / total) * 360;
+            const startAngle = currentAngle;
+            const endAngle = currentAngle + angle;
+            currentAngle = endAngle;
+
+            const startRad = (startAngle * Math.PI) / 180;
+            const endRad = (endAngle * Math.PI) / 180;
+
+            const x1 = 100 + 80 * Math.cos(startRad);
+            const y1 = 100 + 80 * Math.sin(startRad);
+            const x2 = 100 + 80 * Math.cos(endRad);
+            const y2 = 100 + 80 * Math.sin(endRad);
+
+            const largeArc = angle > 180 ? 1 : 0;
+
+            return (
+              <path
+                key={idx}
+                d={`M 100 100 L ${x1} ${y1} A 80 80 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                fill={segment.color || COLORS.accentEmerald}
+              />
+            );
+          })}
+          {/* Center circle for donut effect */}
+          <circle cx="100" cy="100" r="40" fill={COLORS.background} />
+        </svg>
+      </Box>
+
+      {/* Legend */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 320,
+          left: GRID.centerThird.left + 100,
+          width: 600,
+        }}
+      >
+        {segments.map((segment, idx) => (
+          <Box key={idx} sx={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
+            <Box
+              sx={{
+                width: 24,
+                height: 24,
+                borderRadius: 1,
+                backgroundColor: segment.color || COLORS.accentEmerald,
+                marginRight: 16,
+              }}
+            />
+            <Typography sx={{ ...TYPOGRAPHY.body, color: COLORS.textPrimary, flex: 1 }}>
+              {segment.label}
+            </Typography>
+            <Typography sx={{ ...TYPOGRAPHY.h4, color: COLORS.accentEmerald }}>
+              {segment.value}%
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+
+      {/* Benefits Container */}
+      <BenefitsContainer top={780} left={80} width={1760}>
+        {benefit}
+      </BenefitsContainer>
+    </SlideContainer>
+  );
+};
+
+// ============================================================================
+// SLIDE 8: COMPARISON - Comparación Dos Columnas
+// ============================================================================
+
+interface ComparisonProps {
+  id?: string;
+  title?: string;
+  leftTitle?: string;
+  rightTitle?: string;
+  leftItems?: string[];
+  rightItems?: string[];
+  benefit?: string;
+}
+
+export const ComparisonTemplate: React.FC<ComparisonProps> = ({
+  id = 'comparison',
+  title = 'Esmeraldas vs Otras Inversiones',
+  leftTitle = 'Esmeraldas',
+  rightTitle = 'Inversiones Tradicionales',
+  leftItems = [
+    'Alto valor por unidad',
+    'Sin costos de mantenimiento',
+    'Portabilidad extrema',
+    'Apreciación histórica',
+  ],
+  rightItems = [
+    'Requieren infraestructura',
+    'Costos operativos recurrentes',
+    'Baja portabilidad',
+    'Volatilidad de mercado',
+  ],
+  benefit = 'Las esmeraldas ofrecen ventajas únicas como activo de inversión.',
+}) => (
+  <SlideContainer id={id}>
+    {/* Title */}
+    <Box sx={{ position: 'absolute', top: 80, left: 0, width: SLIDE_WIDTH, textAlign: 'center' }}>
+      <Typography sx={{ ...TYPOGRAPHY.h2, color: COLORS.textPrimary }}>
+        {title}
+      </Typography>
+    </Box>
+
+    {/* Two Column Comparison */}
+    <Box
+      sx={{
+        position: 'absolute',
+        top: 220,
+        left: 120,
+        width: SLIDE_WIDTH - 240,
+        display: 'flex',
+        gap: 60,
+      }}
+    >
+      {/* Left Column - Positive */}
+      <Box
+        sx={{
+          flex: 1,
+          backgroundColor: 'rgba(4, 99, 7, 0.05)',
+          borderRadius: 3,
+          border: `2px solid ${COLORS.accentEmerald}`,
+          padding: 40,
+        }}
+      >
+        <Typography
+          sx={{
+            ...TYPOGRAPHY.h3,
+            color: COLORS.accentEmerald,
+            marginBottom: 32,
+            textAlign: 'center',
+          }}
+        >
+          {leftTitle}
+        </Typography>
+        {leftItems.map((item, idx) => (
+          <Box key={idx} sx={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
+            <Box
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                backgroundColor: COLORS.accentEmerald,
+                color: COLORS.background,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 16,
+                fontSize: 16,
+              }}
+            >
+              ✓
+            </Box>
+            <Typography sx={{ ...TYPOGRAPHY.body, color: COLORS.textPrimary }}>
+              {item}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+
+      {/* Right Column - Neutral */}
+      <Box
+        sx={{
+          flex: 1,
+          backgroundColor: '#FAFAFA',
+          borderRadius: 3,
+          border: `2px solid ${COLORS.borderLight}`,
+          padding: 40,
+        }}
+      >
+        <Typography
+          sx={{
+            ...TYPOGRAPHY.h3,
+            color: COLORS.textSecondary,
+            marginBottom: 32,
+            textAlign: 'center',
+          }}
+        >
+          {rightTitle}
+        </Typography>
+        {rightItems.map((item, idx) => (
+          <Box key={idx} sx={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
+            <Box
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                backgroundColor: COLORS.borderLight,
+                color: COLORS.textSecondary,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 16,
+                fontSize: 16,
+              }}
+            >
+              •
+            </Box>
+            <Typography sx={{ ...TYPOGRAPHY.body, color: COLORS.textSecondary }}>
+              {item}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+
+    {/* Benefits Container */}
+    <BenefitsContainer top={780} left={120} width={1680}>
+      {benefit}
+    </BenefitsContainer>
+  </SlideContainer>
+);
+
+// ============================================================================
 // SLIDE 9: TWO COLUMNS WITH ICONS - Dos Columnas
 // ============================================================================
 
@@ -655,6 +925,111 @@ export const TwoColumnsTemplate: React.FC<TwoColumnsProps> = ({
 
     {/* Benefits Container */}
     <BenefitsContainer top={780} left={200} width={1520}>
+      {benefit}
+    </BenefitsContainer>
+  </SlideContainer>
+);
+
+// ============================================================================
+// SLIDE 10: TIMELINE - Línea de Tiempo
+// ============================================================================
+
+interface TimelineProps {
+  id?: string;
+  title?: string;
+  items?: Array<{ year: string; title: string; description: string }>;
+  benefit?: string;
+}
+
+export const TimelineTemplate: React.FC<TimelineProps> = ({
+  id = 'timeline',
+  title = 'Historia de la Esmeralda Colombiana',
+  items = [
+    { year: '1537', title: 'Descubrimiento', description: 'Los españoles descubren las minas de Muzo' },
+    { year: '1900', title: 'Explotación moderna', description: 'Inicio de la minería industrial' },
+    { year: '1990', title: 'Certificación', description: 'Colombia establece certificación de origen' },
+    { year: 'HOY', title: 'Liderazgo mundial', description: '70% del mercado global' },
+  ],
+  benefit = 'Siglos de tradición respaldan la calidad de la esmeralda colombiana.',
+}) => (
+  <SlideContainer id={id}>
+    {/* Title */}
+    <Box sx={{ position: 'absolute', top: 80, left: GRID.fullWidth.left, width: GRID.fullWidth.width }}>
+      <Typography sx={{ ...TYPOGRAPHY.h2, color: COLORS.textPrimary }}>
+        {title}
+      </Typography>
+    </Box>
+
+    {/* Timeline */}
+    <Box
+      sx={{
+        position: 'absolute',
+        top: 240,
+        left: 120,
+        width: SLIDE_WIDTH - 240,
+      }}
+    >
+      {/* Timeline line */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 40,
+          left: 0,
+          right: 0,
+          height: 4,
+          backgroundColor: COLORS.accentEmerald,
+        }}
+      />
+
+      {/* Timeline items */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
+        {items.map((item, idx) => (
+          <Box key={idx} sx={{ textAlign: 'center', width: 380 }}>
+            {/* Node */}
+            <Box
+              sx={{
+                width: 24,
+                height: 24,
+                borderRadius: '50%',
+                backgroundColor: COLORS.accentEmerald,
+                margin: '0 auto 20px',
+                position: 'relative',
+                zIndex: 1,
+                border: `4px solid ${COLORS.background}`,
+                boxSizing: 'content-box',
+              }}
+            />
+            {/* Year */}
+            <Typography
+              sx={{
+                ...TYPOGRAPHY.h3,
+                color: COLORS.accentEmerald,
+                marginBottom: 12,
+              }}
+            >
+              {item.year}
+            </Typography>
+            {/* Title */}
+            <Typography
+              sx={{
+                ...TYPOGRAPHY.h4,
+                color: COLORS.textPrimary,
+                marginBottom: 8,
+              }}
+            >
+              {item.title}
+            </Typography>
+            {/* Description */}
+            <Typography sx={{ ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary }}>
+              {item.description}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+
+    {/* Benefits Container */}
+    <BenefitsContainer top={780} left={120} width={1680}>
       {benefit}
     </BenefitsContainer>
   </SlideContainer>
@@ -844,7 +1219,10 @@ export const BusinessPresentationTemplates = {
   Gallery5Template,
   NumberedListTemplate,
   BulletListTemplate,
+  PieChartTemplate,
+  ComparisonTemplate,
   TwoColumnsTemplate,
+  TimelineTemplate,
   ConclusionChecklistTemplate,
   ClosingTemplate,
 };
