@@ -24,36 +24,23 @@ import {
 import { colors } from '../brand';
 import { generateMultiSlidePDF } from '../../utils/slidePdfGenerator';
 import {
-  BusinessCoverTemplate,
-  KeyPointRightTemplate,
-  KeyPointLeftTemplate,
-  Gallery5Template,
-  NumberedListTemplate,
-  BulletListTemplate,
-  PieChartTemplate,
-  ComparisonTemplate,
-  TwoColumnsTemplate,
-  TimelineTemplate,
-  ConclusionChecklistTemplate,
-  ClosingTemplate,
-} from '../templates/BusinessPresentationTemplates';
+  DynamicCoverSlide,
+  DynamicKeyPointSlide,
+  DynamicListSlide,
+  DynamicFlowSlide,
+  DynamicConclusionSlide,
+} from '../templates/DynamicBusinessTemplates';
 import SmartSlideImage from './SmartSlideImage';
 
-// Template mapping for generated slides - Business Style (White, Minimalist)
-// Full 12-layout system matching the official Style Guide
+// Template mapping for generated slides - Dynamic Luxury Style
+// Full-bleed images with cinematic overlays (NOT rigid card boxes)
 const SLIDE_TEMPLATES = [
-  { id: 'cover', name: 'Portada', component: BusinessCoverTemplate },
-  { id: 'key-right', name: 'Punto Clave (Img Der)', component: KeyPointRightTemplate },
-  { id: 'key-left', name: 'Punto Clave (Img Izq)', component: KeyPointLeftTemplate },
-  { id: 'gallery', name: 'Galería 5', component: Gallery5Template },
-  { id: 'numbered', name: 'Lista Numerada', component: NumberedListTemplate },
-  { id: 'bullets', name: 'Lista Viñetas', component: BulletListTemplate },
-  { id: 'pie-chart', name: 'Gráfico Circular', component: PieChartTemplate },
-  { id: 'comparison', name: 'Comparación', component: ComparisonTemplate },
-  { id: 'two-columns', name: 'Dos Columnas', component: TwoColumnsTemplate },
-  { id: 'timeline', name: 'Timeline', component: TimelineTemplate },
-  { id: 'conclusion', name: 'Conclusión', component: ConclusionChecklistTemplate },
-  { id: 'closing', name: 'Cierre', component: ClosingTemplate },
+  { id: 'cover', name: 'Portada', component: DynamicCoverSlide },
+  { id: 'key-right', name: 'Punto Clave (Der)', component: DynamicKeyPointSlide },
+  { id: 'key-left', name: 'Punto Clave (Izq)', component: DynamicKeyPointSlide },
+  { id: 'list', name: 'Lista', component: DynamicListSlide },
+  { id: 'flow', name: 'Flujo/Timeline', component: DynamicFlowSlide },
+  { id: 'conclusion', name: 'Conclusión', component: DynamicConclusionSlide },
 ] as const;
 
 interface GeneratedSlide {
@@ -619,52 +606,26 @@ Cada número será un slide separado.`}
               templateProps.content = slide.content;
               templateProps.benefit = slide.content;
             }
-            // Numbered list template
-            else if (templateId === 'numbered') {
+            // List template (multiple items)
+            else if (templateId === 'list') {
               templateProps.title = slide.title;
-              templateProps.subtitle = slide.content.split('.')[0] + '.';
-              templateProps.benefit = slide.content;
+              // Parse content into items array
+              const items = slide.content.split(/[•\-\n]/).map(s => s.trim()).filter(Boolean);
+              templateProps.items = items.length > 0 ? items : [slide.content];
             }
-            // Bullet list template
-            else if (templateId === 'bullets') {
+            // Flow/Timeline template
+            else if (templateId === 'flow') {
               templateProps.title = slide.title;
-              templateProps.benefit = slide.content;
+              // Parse content into steps array
+              const steps = slide.content.split(/[→\n]/).map(s => s.trim()).filter(Boolean);
+              templateProps.steps = steps.length > 0 ? steps : [slide.content];
             }
-            // Pie chart template
-            else if (templateId === 'pie-chart') {
-              templateProps.title = slide.title;
-              templateProps.subtitle = slide.content.split('.')[0] + '.';
-              templateProps.benefit = slide.content;
-            }
-            // Comparison template
-            else if (templateId === 'comparison') {
-              templateProps.title = slide.title;
-              templateProps.benefit = slide.content;
-            }
-            // Two columns template
-            else if (templateId === 'two-columns') {
-              templateProps.title = slide.title;
-              templateProps.subtitle = slide.content.split('.')[0] + '.';
-              templateProps.benefit = slide.content;
-            }
-            // Timeline template
-            else if (templateId === 'timeline') {
-              templateProps.title = slide.title;
-              templateProps.benefit = slide.content;
-            }
-            // Gallery template
-            else if (templateId === 'gallery') {
-              templateProps.title = slide.title;
-              templateProps.subtitle = slide.content.split('.')[0] + '.';
-              templateProps.benefit = slide.content;
-            }
-            // Conclusion checklist template
+            // Conclusion template
             else if (templateId === 'conclusion') {
               templateProps.title = slide.title;
-            }
-            // Closing template
-            else if (templateId === 'closing') {
-              templateProps.title = slide.title;
+              // Parse content into checklist items
+              const items = slide.content.split(/[•✓\-\n]/).map(s => s.trim()).filter(Boolean);
+              templateProps.items = items.length > 0 ? items : [slide.content];
             }
             // Default fallback
             else {

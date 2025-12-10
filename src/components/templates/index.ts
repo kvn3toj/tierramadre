@@ -25,6 +25,16 @@ export {
   MasterclassTemplates,
 } from './MasterclassTemplates';
 
+// Dynamic Business Templates - Flexible layouts with cinematic overlays
+export {
+  DynamicCoverSlide,
+  DynamicKeyPointSlide,
+  DynamicListSlide,
+  DynamicFlowSlide,
+  DynamicConclusionSlide,
+  DynamicBusinessTemplates,
+} from './DynamicBusinessTemplates';
+
 // Slide dimensions (16:9 presentation format)
 export const SLIDE_WIDTH = 1920;
 export const SLIDE_HEIGHT = 1080;
