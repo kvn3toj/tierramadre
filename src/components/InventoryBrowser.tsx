@@ -19,6 +19,7 @@ import {
   Slider,
   Fab,
   Tooltip,
+  Badge,
 } from '@mui/material';
 import {
   Search,
@@ -29,6 +30,8 @@ import {
   ChevronUp,
   Plus,
   RefreshCw,
+  SlidersHorizontal,
+  SearchX,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useInventory } from '../hooks/useInventory';
@@ -129,7 +132,21 @@ export default function InventoryBrowser() {
       scores.set(item.item, calculateTrustScore(item));
     });
     return scores;
-  }, []);
+  }, [inventoryData]);
+
+  // Active filter count for badge visibility (MOKSART UX improvement)
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (search !== '') count++;
+    if (colorFilter !== 'all') count++;
+    if (qualityFilter !== 'all') count++;
+    if (typeFilter !== 'all') count++;
+    if (statusFilter !== 'all' && statusFilter !== 'available') count++; // available is default
+    if (shapeFilter !== 'all') count++;
+    // Price range check
+    if (priceRange[0] !== priceMinMax.min || priceRange[1] !== priceMinMax.max) count++;
+    return count;
+  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, priceMinMax]);
 
   // Handle opening certification dialog
   const handleCertClick = useCallback((item: InventoryItem) => {
@@ -347,19 +364,38 @@ export default function InventoryBrowser() {
             </Select>
           </FormControl>
 
-          {/* Advanced Filters Toggle */}
-          <Button
-            size="small"
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            startIcon={showAdvancedFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {/* Advanced Filters Toggle with Badge */}
+          <Badge
+            badgeContent={activeFilterCount}
+            color="primary"
+            invisible={activeFilterCount === 0}
             sx={{
-              color: theme.palette.text.secondary,
-              textTransform: 'none',
-              fontWeight: 500,
+              '& .MuiBadge-badge': {
+                bgcolor: emeraldCore.primary,
+                color: 'white',
+                fontWeight: 700,
+                fontSize: '0.65rem',
+              },
             }}
           >
-            Filtros Avanzados
-          </Button>
+            <Button
+              size="small"
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              startIcon={<SlidersHorizontal size={16} />}
+              endIcon={showAdvancedFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              sx={{
+                color: activeFilterCount > 0 ? emeraldCore.primary : theme.palette.text.secondary,
+                textTransform: 'none',
+                fontWeight: activeFilterCount > 0 ? 600 : 500,
+                bgcolor: activeFilterCount > 0 ? alpha(emeraldCore.primary, 0.08) : 'transparent',
+                '&:hover': {
+                  bgcolor: alpha(emeraldCore.primary, 0.12),
+                },
+              }}
+            >
+              Filtros
+            </Button>
+          </Badge>
 
           {/* Clear filters */}
           {hasFilters && (
@@ -489,10 +525,18 @@ export default function InventoryBrowser() {
         </Collapse>
       </Paper>
 
-      {/* Results info */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+      {/* Results info - Enhanced display */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-          <strong style={{ color: theme.palette.text.primary }}>{sortedInventory.length}</strong> resultados
+          {sortedInventory.length === inventoryData.length ? (
+            <>
+              <strong style={{ color: theme.palette.text.primary }}>{inventoryData.length}</strong> esmeraldas en total
+            </>
+          ) : (
+            <>
+              Mostrando <strong style={{ color: theme.palette.text.primary }}>{sortedInventory.length}</strong> de {inventoryData.length} esmeraldas
+            </>
+          )}
         </Typography>
         <Typography variant="body2" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
           {formatFullCurrency(filteredStats.totalValue)} total
@@ -539,7 +583,7 @@ export default function InventoryBrowser() {
         </Box>
       )}
 
-      {/* Empty State */}
+      {/* Empty State - Enhanced with guidance */}
       {sortedInventory.length === 0 && (
         <Paper
           elevation={0}
@@ -549,15 +593,49 @@ export default function InventoryBrowser() {
             border: '2px dashed',
             borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
             textAlign: 'center',
+            bgcolor: isLight ? alpha(surfacesLight.background.secondary, 0.5) : alpha(surfacesDark.background.secondary, 0.5),
           }}
         >
-          <Package size={48} color={surfacesLight.text.tertiary} style={{ marginBottom: 16, opacity: 0.5 }} />
-          <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary, mb: 1 }}>
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              borderRadius: '50%',
+              bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.tertiary,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 2,
+            }}
+          >
+            <SearchX size={32} color={isLight ? surfacesLight.text.tertiary : surfacesDark.text.tertiary} />
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary, mb: 0.5 }}>
             Sin resultados
           </Typography>
-          <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-            Ajusta los filtros para ver más items
+          <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 2, maxWidth: 300, mx: 'auto' }}>
+            No encontramos esmeraldas con los filtros seleccionados. Prueba ajustando los criterios de búsqueda.
           </Typography>
+          {hasFilters && (
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={clearFilters}
+              sx={{
+                borderColor: emeraldCore.primary,
+                color: emeraldCore.primary,
+                textTransform: 'none',
+                fontWeight: 600,
+                '&:hover': {
+                  bgcolor: alpha(emeraldCore.primary, 0.08),
+                  borderColor: emeraldCore.dark,
+                },
+              }}
+            >
+              Limpiar {activeFilterCount} filtro{activeFilterCount !== 1 ? 's' : ''}
+            </Button>
+          )}
         </Paper>
       )}
 
