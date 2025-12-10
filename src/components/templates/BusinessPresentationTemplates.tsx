@@ -1,79 +1,82 @@
 /**
- * 🎨 TIERRA MADRE - Sacred Geometry Design System
- * Premium Business Presentation Templates
+ * 💎 TIERRA MADRE - Luxury Jewelry Presentation System
+ * Dark Boutique Experience Design (Cartier/Harry Winston Inspired)
  *
  * DESIGN PHILOSOPHY:
- * Based on sacred geometry principles and golden ratio proportions
- * for presentations that resonate with high-level investors.
+ * Dark luxury backgrounds like high-end jewelry display cases.
+ * Gold accents signal premium positioning.
+ * Emeralds "pop" against obsidian/charcoal backgrounds.
  *
- * GEOMETRY BASE:
- * - Format: 1920x1080px (16:9 perfect ratio)
- * - Layout: Rule of Thirds (640px | 640px | 640px)
- * - Spacing: Fibonacci sequence (8, 13, 21, 34, 55, 89px)
- * - Proportions: Golden Ratio (φ = 1.618) for visual hierarchy
+ * VISUAL INSPIRATION:
+ * - Cartier: Timeless elegance, gold typography
+ * - Harry Winston: Dramatic lighting, gemstone worship
+ * - Tiffany: Iconic color pairing, refined simplicity
  *
  * TYPOGRAPHY:
- * - Playfair Display (titles) - elegant serif
- * - Montserrat (body) - clean sans-serif
- * - Scale based on golden ratio: 13, 21, 34, 55, 89px
+ * - Cormorant Garamond (titles) - elegant heritage serif
+ * - Montserrat (body) - clean modern sans-serif
+ * - Cinzel (numbers/carats) - gravitas for figures
  */
 
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 
 // ============================================================================
-// CONSTANTS & SACRED GEOMETRY
+// LUXURY DESIGN CONSTANTS
 // ============================================================================
 
 const SLIDE_WIDTH = 1920;
 const SLIDE_HEIGHT = 1080;
 const LOGO_PATH = '/logo-tierra-madre.png';
 
-/*
- * SACRED GEOMETRY REFERENCE (for design consistency):
- * Golden Ratio: φ = 1.618
- * Fibonacci Spacing: 8, 13, 21, 34, 55, 89px
- */
-
-// Premium Color Palette - Warm Luxury (matching reference image)
+// Dark Luxury Color Palette (like jewelry boutique display cases)
 const COLORS = {
-  // Backgrounds - Warm Earth Tones
-  background: '#F5EDE4',        // Warm beige/cream (like reference)
-  backgroundAlt: '#FBF8F3',     // Lighter cream
-  backgroundCard: '#FFFFFF',    // Pure white for cards
+  // Dark Backgrounds (jewelry display case aesthetic)
+  background: '#0A0A0A',        // Obsidian - primary background
+  backgroundAlt: '#1A1A1A',     // Charcoal - card backgrounds
+  backgroundCard: '#0D1117',    // Midnight - elevated surfaces
 
-  // Text Hierarchy
-  textPrimary: '#1A1A1A',       // Near black - maximum contrast
-  textSecondary: '#4A4A4A',     // Dark gray
-  textTertiary: '#757575',      // Medium gray
+  // Text on Dark (pearl/ivory tones)
+  textPrimary: '#F8F9FA',       // Pearl white - maximum readability
+  textSecondary: '#E5E4E2',     // Platinum - secondary text
+  textTertiary: '#9CA3AF',      // Cool gray - tertiary
 
-  // Brand Emerald Spectrum
+  // Colombian Emerald Spectrum
   emeraldDeep: '#0F4C3A',       // Deep Muzo green
-  emeraldPrimary: '#1B5E20',    // Primary emerald
-  accentEmerald: '#2D6A4F',     // Accent green
-  emeraldLight: '#52B788',      // Light green
-  emeraldPale: '#B7E4C7',       // Pale green
+  emeraldPrimary: '#0C5C3F',    // Colombian emerald
+  accentEmerald: '#1B4D3E',     // Imperial green
+  emeraldLight: '#10B981',      // Vivid highlights
+  emeraldPale: '#52B788',       // Light accent
 
-  // Accent Gold
-  accentGold: '#8B7355',        // Subtle golden brown
-  goldLight: '#D4AF37',         // Bright gold
+  // Precious Metal Accents (essential for luxury!)
+  accentGold: '#D4AF37',        // Champagne gold - primary accent
+  goldDark: '#8B7355',          // Antique gold
+  roseGold: '#B76E79',          // Rose gold touch
+  platinum: '#E5E4E2',          // Cool metallic
 
   // Borders & Utilities
-  borderLight: '#E8DCC9',       // Warm light border
-  borderAccent: '#1B5E20',      // Emerald border
-  overlay: 'rgba(15, 76, 58, 0.85)', // Emerald overlay
+  borderLight: '#374151',       // Subtle dark border
+  borderAccent: '#D4AF37',      // Gold border accent
+  borderEmerald: '#0C5C3F',     // Emerald border
+  overlay: 'rgba(10, 10, 10, 0.85)', // Dark overlay
+  overlayGold: 'rgba(212, 175, 55, 0.1)', // Gold shimmer
 };
 
-// Typography - Elegant Business
+// Typography - Luxury Jewelry (Cormorant Garamond + Montserrat)
 const TYPOGRAPHY = {
-  h1: { fontSize: 72, fontWeight: 700, lineHeight: 1.1, fontFamily: '"Playfair Display", serif' },
-  h2: { fontSize: 56, fontWeight: 600, lineHeight: 1.2, fontFamily: '"Playfair Display", serif' },
-  h3: { fontSize: 42, fontWeight: 500, lineHeight: 1.3, fontFamily: '"Playfair Display", serif' },
-  h4: { fontSize: 32, fontWeight: 500, lineHeight: 1.4, fontFamily: '"Playfair Display", serif' },
-  body: { fontSize: 24, fontWeight: 400, lineHeight: 1.6, fontFamily: '"Montserrat", sans-serif' },
-  bodySmall: { fontSize: 20, fontWeight: 400, lineHeight: 1.5, fontFamily: '"Montserrat", sans-serif' },
-  caption: { fontSize: 16, fontWeight: 400, lineHeight: 1.5, fontFamily: '"Montserrat", sans-serif' },
-  benefit: { fontSize: 22, fontWeight: 500, lineHeight: 1.5, fontFamily: '"Montserrat", sans-serif' },
+  // Headlines - Cormorant Garamond (elegant heritage serif)
+  h1: { fontSize: 72, fontWeight: 600, lineHeight: 1.1, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: '0.02em' },
+  h2: { fontSize: 56, fontWeight: 600, lineHeight: 1.2, fontFamily: '"Cormorant Garamond", "Playfair Display", serif', letterSpacing: '0.01em' },
+  h3: { fontSize: 42, fontWeight: 500, lineHeight: 1.3, fontFamily: '"Cormorant Garamond", "Playfair Display", serif' },
+  h4: { fontSize: 32, fontWeight: 500, lineHeight: 1.4, fontFamily: '"Cormorant Garamond", "Playfair Display", serif' },
+  // Body - Montserrat (clean modern)
+  body: { fontSize: 24, fontWeight: 300, lineHeight: 1.7, fontFamily: '"Montserrat", sans-serif' },
+  bodySmall: { fontSize: 20, fontWeight: 300, lineHeight: 1.6, fontFamily: '"Montserrat", sans-serif' },
+  caption: { fontSize: 14, fontWeight: 500, lineHeight: 1.5, fontFamily: '"Montserrat", sans-serif', letterSpacing: '0.1em', textTransform: 'uppercase' as const },
+  // Benefits - slightly bolder
+  benefit: { fontSize: 22, fontWeight: 400, lineHeight: 1.6, fontFamily: '"Montserrat", sans-serif' },
+  // Numbers/Carats - Cinzel for gravitas
+  number: { fontSize: 48, fontWeight: 600, lineHeight: 1.2, fontFamily: '"Cinzel", "Cormorant Garamond", serif' },
 };
 
 // Grid positions based on Rule of Thirds
