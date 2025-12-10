@@ -27,22 +27,31 @@ import {
   BusinessCoverTemplate,
   KeyPointRightTemplate,
   KeyPointLeftTemplate,
+  Gallery5Template,
   NumberedListTemplate,
   BulletListTemplate,
+  PieChartTemplate,
+  ComparisonTemplate,
   TwoColumnsTemplate,
+  TimelineTemplate,
   ConclusionChecklistTemplate,
   ClosingTemplate,
 } from '../templates/BusinessPresentationTemplates';
 import SmartSlideImage from './SmartSlideImage';
 
 // Template mapping for generated slides - Business Style (White, Minimalist)
+// Full 12-layout system matching the official Style Guide
 const SLIDE_TEMPLATES = [
   { id: 'cover', name: 'Portada', component: BusinessCoverTemplate },
-  { id: 'key-right', name: 'Punto Clave', component: KeyPointRightTemplate },
-  { id: 'key-left', name: 'Punto Clave Inv.', component: KeyPointLeftTemplate },
+  { id: 'key-right', name: 'Punto Clave (Img Der)', component: KeyPointRightTemplate },
+  { id: 'key-left', name: 'Punto Clave (Img Izq)', component: KeyPointLeftTemplate },
+  { id: 'gallery', name: 'Galería 5', component: Gallery5Template },
   { id: 'numbered', name: 'Lista Numerada', component: NumberedListTemplate },
   { id: 'bullets', name: 'Lista Viñetas', component: BulletListTemplate },
+  { id: 'pie-chart', name: 'Gráfico Circular', component: PieChartTemplate },
+  { id: 'comparison', name: 'Comparación', component: ComparisonTemplate },
   { id: 'two-columns', name: 'Dos Columnas', component: TwoColumnsTemplate },
+  { id: 'timeline', name: 'Timeline', component: TimelineTemplate },
   { id: 'conclusion', name: 'Conclusión', component: ConclusionChecklistTemplate },
   { id: 'closing', name: 'Cierre', component: ClosingTemplate },
 ] as const;
@@ -606,8 +615,30 @@ Cada número será un slide separado.`}
               templateProps.title = slide.title;
               templateProps.benefit = slide.content;
             }
+            // Pie chart template
+            else if (templateId === 'pie-chart') {
+              templateProps.title = slide.title;
+              templateProps.subtitle = slide.content.split('.')[0] + '.';
+              templateProps.benefit = slide.content;
+            }
+            // Comparison template
+            else if (templateId === 'comparison') {
+              templateProps.title = slide.title;
+              templateProps.benefit = slide.content;
+            }
             // Two columns template
             else if (templateId === 'two-columns') {
+              templateProps.title = slide.title;
+              templateProps.subtitle = slide.content.split('.')[0] + '.';
+              templateProps.benefit = slide.content;
+            }
+            // Timeline template
+            else if (templateId === 'timeline') {
+              templateProps.title = slide.title;
+              templateProps.benefit = slide.content;
+            }
+            // Gallery template
+            else if (templateId === 'gallery') {
               templateProps.title = slide.title;
               templateProps.subtitle = slide.content.split('.')[0] + '.';
               templateProps.benefit = slide.content;
