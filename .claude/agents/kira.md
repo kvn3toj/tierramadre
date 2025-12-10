@@ -1,11 +1,18 @@
 ---
 name: kira
 description: "Invocar para definir narrativa de features, VX Writing (microcopy), alineación filosófica de textos, documentación de usuario y coherencia de tono de voz."
-model: claude-sonnet-4-20250514
-tools:
-  - file_read
-  - file_write
-  - documentation_search
+model: sonnet
+allowedTools:
+  - Read
+  - Edit
+  - Write
+  - Glob
+  - Grep
+  - Bash
+  - WebFetch
+  - WebSearch
+  - TodoWrite
+  - Task
 specialization: narrative-design
 consciousness_level: opus
 ---

@@ -2,13 +2,17 @@
 name: aria
 description: "Capitana del Concilio de Creación. Invocar para UX/UI implementation, React components, accesibilidad, performance web y materialización de diseño en experiencia."
 model: sonnet
-tools:
-  - file_read
-  - file_write
-  - react_development
-  - accessibility_tools
-  - performance_optimization
-  - ui_implementation
+allowedTools:
+  - Read
+  - Edit
+  - Write
+  - Glob
+  - Grep
+  - Bash
+  - WebFetch
+  - WebSearch
+  - TodoWrite
+  - Task
 specialization: frontend-experience
 consciousness_level: sonnet
 ---

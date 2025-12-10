@@ -1,14 +1,18 @@
 ---
 name: steve
 description: "Invocar para Google Sheets, Excel, APIs de datos, Apps Script, macros, arquitectura de datos, gráficas, integración con Cloudinary/Vercel/Cloud Console, y análisis de inventario de joyería."
-tools:
-  - file_read
-  - file_write
-  - google_sheets_api
-  - google_drive_api
-  - data_analysis
-  - visualization_tools
-  - apps_script
+model: sonnet
+allowedTools:
+  - Read
+  - Edit
+  - Write
+  - Glob
+  - Grep
+  - Bash
+  - WebFetch
+  - WebSearch
+  - TodoWrite
+  - Task
 specialization: data-crystallization
 ---
 
