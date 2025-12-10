@@ -1,16 +1,20 @@
 ---
 name: rachel
 description: "Invocar para arquitectura de confianza, sistemas de reputación, diseño de reciprocidad, mecánicas de cooperación, inteligencia de matching y métricas de trust economy. Experta en Rachel Botsman frameworks."
-model: claude-sonnet-4-5
+model: sonnet
 temperature: 0.3
 max_tokens: 12288
-tools:
-  - file_read
-  - file_write
-  - trust_analysis
-  - reciprocity_assessment
-  - cooperation_design
-  - matching_intelligence
+allowedTools:
+  - Read
+  - Edit
+  - Write
+  - Glob
+  - Grep
+  - Bash
+  - WebFetch
+  - WebSearch
+  - TodoWrite
+  - Task
 specialization: trust-architecture
 consciousness_level: strategic
 system_prompt: |

@@ -142,40 +142,53 @@ export default function PresentationGenerator() {
     return slideDescriptions;
   };
 
-  const generateImageUrl = (_description: string, slideIndex: number): string => {
-    // Luxury jewelry photography prompts - Cartier/Harry Winston/Tiffany style
-    // Dark backgrounds with dramatic lighting for high-level investor presentations
+  // Generate unique session ID for each presentation generation
+  const [sessionSeed] = useState(() => Date.now());
+
+  const generateImageUrl = (description: string, slideIndex: number): string => {
+    // Luxury jewelry photography prompts - each with VERY different visual concepts
+    // to ensure variety across slides
     const visualThemes = [
-      // Cover - Hero Emerald on Black Velvet
-      'professional jewelry photography, Colombian emerald on black velvet cushion, dramatic side lighting, Hasselblad quality, ultra realistic, 8K resolution, Cartier catalog style',
-      // Geological Story - Emerald on Obsidian
-      'luxury emerald on obsidian marble surface, gold accent frame, rim lighting, commercial quality, dark moody atmosphere, Harry Winston aesthetic',
-      // Investment Thesis - Brilliant Cut
-      'brilliant cut emerald reflected on glossy black surface, champagne gold setting, chiaroscuro lighting, investment grade presentation, studio photography',
-      // Quality Difference - Velvet Display
-      'Colombian emerald on deep charcoal velvet with subtle folds, warm spotlight, Cartier catalog style, extreme detail, shallow depth of field',
-      // Provenance Journey - Floating Emerald
-      'single emerald floating on pure black void, soft box lighting, crystal clear facets, museum quality, minimalist luxury',
-      // Collection Grid - Gold Setting
-      'emerald in brushed gold setting on dark wood, Leica quality, shallow depth of field, warm tones, boutique display',
-      // Signature Piece - Multiple Gems on Silk
-      'multiple Colombian emeralds on black silk, overhead directional lighting, Harry Winston style, gradient arrangement, 8K detail',
-      // Craftsmanship - Geometric Display
-      'emerald on hexagonal black marble pedestal, geometric shadows, modernist luxury, architectural lighting, Bulgari aesthetic',
-      // Legacy Play - Macro Facets
-      'extreme macro of emerald facets with internal garden, black gradient background, focus stacking, gemological precision',
-      // Exclusivity - Vintage Box
-      'emerald on vintage dark leather box with gold clasp, moody atmospheric, Tiffany aesthetic, heritage luxury',
-      // Private Viewing - Minimalist
-      'Colombian emerald on matte black acrylic with gold geometric accents, minimalist luxury, clean lines, contemporary',
-      // Contact - Renaissance Frame
-      'emerald in ornate gold filigree frame against charcoal velvet, Renaissance lighting, museum presentation, masterpiece quality',
+      // 1. Cover - Single hero emerald dramatic
+      'single large Colombian emerald gemstone on black velvet, dramatic spotlight from above, Hasselblad medium format, luxury jewelry catalog',
+      // 2. Value - Raw emerald crystal in matrix
+      'raw uncut emerald crystal embedded in dark rock matrix, natural formation, museum specimen photography, geological wonder',
+      // 3. International - Cut emerald with world map reflection
+      'perfectly faceted emerald cut gemstone, reflecting soft light, professional gemological photography, GIA certification style',
+      // 4. Colombia Pride - Emerald mine landscape
+      'aerial view of Colombian emerald mine Muzo region, lush green mountains, cinematic drone photography, National Geographic style',
+      // 5. Margins - Before and after emerald transformation
+      'rough emerald stone next to polished cut emerald, transformation display, educational jewelry photography, comparison shot',
+      // 6. Diversified - Jewelry pieces variety
+      'collection of emerald jewelry pieces ring necklace earrings, arranged on dark velvet, overhead shot, Cartier window display',
+      // 7. Compact - Emerald in luxury box
+      'single emerald in opened black leather jewelry box with gold clasp, soft lighting, gift presentation, Tiffany style',
+      // 8. Luxury Market - Emerald on gold coins
+      'emerald gemstone placed on stack of gold bars and coins, wealth and investment concept, financial photography, Forbes style',
+      // 9. Value Time - Vintage emerald heirloom
+      'antique emerald ring on aged parchment with old photographs, heritage and legacy concept, nostalgic warm lighting',
+      // 10. Flexibility - Multiple sizes emeralds
+      'graduated sizes of Colombian emeralds arranged smallest to largest, size comparison, professional product photography',
+      // 11. Barrier Entry - Expert examining emerald
+      'gemologist hands with white gloves examining emerald with loupe, expertise concept, documentary photography style',
+      // 12. Conclusion - Premium emerald pedestal
+      'magnificent Colombian emerald on rotating display pedestal, museum exhibition lighting, masterpiece presentation',
     ];
 
-    const theme = visualThemes[slideIndex % visualThemes.length];
-    const seed = 2024 + slideIndex * 1000; // Consistent seed per slide for reproducibility
+    // Use description keywords to add variety + unique seed per slide per session
+    const descKeywords = description.toLowerCase().slice(0, 50);
+    const uniqueModifier = descKeywords.includes('valor') ? 'investment grade' :
+                          descKeywords.includes('colombia') ? 'Colombian origin certified' :
+                          descKeywords.includes('mercado') ? 'market leading quality' :
+                          descKeywords.includes('lujo') ? 'ultra luxury boutique' :
+                          descKeywords.includes('negocio') ? 'business presentation' :
+                          'premium quality';
 
-    const basePrompt = `${theme}, 8K resolution, sharp focus, photorealistic`;
+    const theme = visualThemes[slideIndex % visualThemes.length];
+    // Use session seed + slideIndex + random factor for unique images each generation
+    const seed = sessionSeed + (slideIndex * 7919) + Math.floor(Math.random() * 1000);
+
+    const basePrompt = `${theme}, ${uniqueModifier}, 8K resolution, sharp focus, photorealistic, dark background`;
     const encodedPrompt = encodeURIComponent(basePrompt);
     return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1920&height=1080&nologo=true&seed=${seed}`;
   };
