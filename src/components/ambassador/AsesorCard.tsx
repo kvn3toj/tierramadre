@@ -1,6 +1,6 @@
 /**
  * AsesorCard Component
- * Simple card for asesores loaded from Google Sheets
+ * Card for asesores with product image thumbnails
  */
 
 import {
@@ -9,12 +9,11 @@ import {
   CardContent,
   Typography,
   Avatar,
-  Chip,
   Button,
   alpha,
   useTheme,
 } from '@mui/material';
-import { Package, ChevronRight, Phone } from 'lucide-react';
+import { Package, ChevronRight, Phone, Image } from 'lucide-react';
 import { Asesor } from '../../hooks/useAsesores';
 
 interface AsesorCardProps {
@@ -23,6 +22,12 @@ interface AsesorCardProps {
   onContact?: (asesor: Asesor) => void;
 }
 
+// Get products with images for thumbnail display
+const getProductsWithImages = (asesor: Asesor, limit: number = 4) => {
+  if (!asesor.products) return [];
+  return asesor.products.filter(p => p.imagen).slice(0, limit);
+};
+
 export default function AsesorCard({
   asesor,
   onViewProducts,
@@ -30,6 +35,8 @@ export default function AsesorCard({
 }: AsesorCardProps) {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const productsWithImages = getProductsWithImages(asesor, 4);
+  const remainingCount = (asesor.productCount || 0) - productsWithImages.length;
 
   return (
     <Card
@@ -123,34 +130,77 @@ export default function AsesorCard({
           </Box>
         </Box>
 
-        {/* Product Preview Chips */}
-        {asesor.products && asesor.products.length > 0 && (
+        {/* Product Image Thumbnails */}
+        {productsWithImages.length > 0 ? (
           <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-              {asesor.products.slice(0, 3).map((product) => (
-                <Chip
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              {productsWithImages.map((product) => (
+                <Box
                   key={product.item}
-                  label={`#${product.item}`}
-                  size="small"
                   sx={{
-                    bgcolor: alpha('#059669', 0.1),
-                    color: '#059669',
-                    fontSize: '0.7rem',
-                    height: 22,
+                    width: 48,
+                    height: 48,
+                    borderRadius: 1.5,
+                    overflow: 'hidden',
+                    border: '2px solid',
+                    borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                    flexShrink: 0,
                   }}
-                />
+                >
+                  <img
+                    src={product.thumbnailUrl || product.imagen}
+                    alt={product.nombre}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                </Box>
               ))}
-              {asesor.products.length > 3 && (
-                <Chip
-                  label={`+${asesor.products.length - 3} mas`}
-                  size="small"
-                  variant="outlined"
-                  sx={{ fontSize: '0.7rem', height: 22 }}
-                />
+              {remainingCount > 0 && (
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 1.5,
+                    border: '2px dashed',
+                    borderColor: isLight ? '#D1D5DB' : '#4B4B4D',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 600, color: 'text.secondary' }}
+                  >
+                    +{remainingCount}
+                  </Typography>
+                </Box>
               )}
             </Box>
           </Box>
-        )}
+        ) : asesor.productCount && asesor.productCount > 0 ? (
+          <Box
+            sx={{
+              mb: 2,
+              display: 'flex',
+              gap: 0.5,
+              alignItems: 'center',
+              justifyContent: 'center',
+              py: 1.5,
+              bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
+              borderRadius: 2,
+            }}
+          >
+            <Image size={16} color="#9CA3AF" />
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              {asesor.productCount} productos sin fotos
+            </Typography>
+          </Box>
+        ) : null}
 
         {/* Actions */}
         <Box sx={{ display: 'flex', gap: 1 }}>
