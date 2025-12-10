@@ -10,11 +10,13 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   Grid,
+  Paper,
   useTheme,
   Skeleton,
   Button,
   CircularProgress,
   Alert,
+  alpha,
 } from '@mui/material';
 import {
   Search,
@@ -22,6 +24,10 @@ import {
   List,
   RefreshCw,
   Filter,
+  Users,
+  Package,
+  Gem,
+  DollarSign,
 } from 'lucide-react';
 import { useAsesores, Asesor } from '../../hooks/useAsesores';
 import { useInventory } from '../../hooks/useInventory';
@@ -55,6 +61,24 @@ export default function AmbassadorDirectory({
   // Load inventory and asesores from Google Sheets
   const { inventory } = useInventory();
   const { asesores, isLoading, error, refreshAsesores } = useAsesores(inventory);
+
+  // Calculate aggregate stats
+  const stats = useMemo(() => {
+    const totalProducts = asesores.reduce((sum, a) => sum + (a.productCount || 0), 0);
+    const totalValue = asesores.reduce((sum, a) => {
+      if (!a.products) return sum;
+      return sum + a.products
+        .filter(p => p.estado === 'DISPONIBLE')
+        .reduce((pSum, p) => pSum + (p.precioCOP || 0), 0);
+    }, 0);
+    const activeAsesores = asesores.filter(a => (a.productCount || 0) > 0).length;
+    const looseCount = asesores.reduce((sum, a) => {
+      if (!a.products) return sum;
+      return sum + a.products.filter(p => !p.isJewelry).length;
+    }, 0);
+
+    return { totalProducts, totalValue, activeAsesores, looseCount };
+  }, [asesores]);
 
   // Filter and sort asesores
   const filteredAsesores = useMemo(() => {
@@ -132,12 +156,11 @@ export default function AmbassadorDirectory({
     <Box>
       {/* Header */}
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Typography
             variant="h5"
             sx={{
               fontWeight: 800,
-              mb: 1,
               background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -154,9 +177,47 @@ export default function AmbassadorDirectory({
             Actualizar
           </Button>
         </Box>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Asesores cargados desde Google Sheets - {asesores.length} registrados
-        </Typography>
+
+        {/* Stats Bar */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            borderRadius: 2,
+            bgcolor: isLight ? '#F0FDF4' : alpha('#059669', 0.08),
+            border: '1px solid',
+            borderColor: isLight ? '#D1FAE5' : alpha('#059669', 0.2),
+            display: 'flex',
+            gap: { xs: 2, md: 4 },
+            flexWrap: 'wrap',
+            justifyContent: 'space-around',
+          }}
+        >
+          <StatItem
+            icon={<Users size={18} />}
+            value={stats.activeAsesores.toString()}
+            label="Asesores activos"
+            color="#059669"
+          />
+          <StatItem
+            icon={<Package size={18} />}
+            value={stats.totalProducts.toString()}
+            label="Productos totales"
+            color="#3B82F6"
+          />
+          <StatItem
+            icon={<Gem size={18} />}
+            value={stats.looseCount.toString()}
+            label="Gemas sueltas"
+            color="#8B5CF6"
+          />
+          <StatItem
+            icon={<DollarSign size={18} />}
+            value={formatValue(stats.totalValue)}
+            label="Valor disponible"
+            color="#F59E0B"
+          />
+        </Paper>
       </Box>
 
       {/* Search and View Toggle */}
@@ -306,4 +367,48 @@ export function AmbassadorDirectorySkeleton() {
       ))}
     </Grid>
   );
+}
+
+// Stat Item Component
+function StatItem({
+  icon,
+  value,
+  label,
+  color,
+}: {
+  icon: React.ReactNode;
+  value: string;
+  label: string;
+  color: string;
+}) {
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+      <Box sx={{ color }}>{icon}</Box>
+      <Box>
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 700, fontSize: '1rem', lineHeight: 1, color }}
+        >
+          {value}
+        </Typography>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+          {label}
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
+
+// Format currency value
+function formatValue(value: number): string {
+  if (value >= 1000000000) {
+    return `$${(value / 1000000000).toFixed(1)}B`;
+  }
+  if (value >= 1000000) {
+    return `$${(value / 1000000).toFixed(1)}M`;
+  }
+  if (value >= 1000) {
+    return `$${Math.round(value / 1000)}K`;
+  }
+  return `$${value.toLocaleString('es-CO')}`;
 }

@@ -1,9 +1,9 @@
 /**
  * AsesorProfile Component
- * Shows asesor details and their inventory products
+ * Shows asesor details and their inventory products with filtering
  */
 
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -15,6 +15,17 @@ import {
   CircularProgress,
   alpha,
   useTheme,
+  TextField,
+  InputAdornment,
+  ToggleButtonGroup,
+  ToggleButton,
+  Chip,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   ArrowLeft,
@@ -22,6 +33,15 @@ import {
   Phone,
   Gem,
   DollarSign,
+  Search,
+  Grid3X3,
+  List,
+  Share2,
+  Filter,
+  SortAsc,
+  CheckCircle,
+  XCircle,
+  Crown,
 } from 'lucide-react';
 import { useAsesores } from '../../hooks/useAsesores';
 import { useInventory } from '../../hooks/useInventory';
@@ -41,11 +61,24 @@ const normalizeName = (name: string): string => {
   return result;
 };
 
+type ViewMode = 'grid' | 'list';
+type SortOption = 'newest' | 'price-high' | 'price-low' | 'name';
+type StatusFilter = 'all' | 'disponible' | 'vendida';
+type TypeFilter = 'all' | 'loose' | 'jewelry';
+
 export default function AsesorProfilePage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+
+  // State for filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   const { inventory } = useInventory();
   const { asesores, isLoading } = useAsesores(inventory);
@@ -57,7 +90,7 @@ export default function AsesorProfilePage() {
   }, [slug, asesores]);
 
   // Get products for this asesor
-  const products = useMemo(() => {
+  const allProducts = useMemo(() => {
     if (!asesor || !inventory) return [];
     const normalizedAsesorName = normalizeName(asesor.name);
     return inventory.filter(item => {
@@ -66,17 +99,80 @@ export default function AsesorProfilePage() {
     });
   }, [asesor, inventory]);
 
+  // Filter and sort products
+  const filteredProducts = useMemo(() => {
+    let result = [...allProducts];
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(item =>
+        item.nombre.toLowerCase().includes(query) ||
+        item.color?.toLowerCase().includes(query) ||
+        item.calidad?.toLowerCase().includes(query) ||
+        String(item.item).includes(query)
+      );
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(item =>
+        statusFilter === 'disponible'
+          ? item.estado === 'DISPONIBLE'
+          : item.estado === 'VENDIDA'
+      );
+    }
+
+    // Type filter
+    if (typeFilter !== 'all') {
+      result = result.filter(item =>
+        typeFilter === 'loose' ? !item.isJewelry : item.isJewelry
+      );
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'price-high':
+          return (b.precioCOP || 0) - (a.precioCOP || 0);
+        case 'price-low':
+          return (a.precioCOP || 0) - (b.precioCOP || 0);
+        case 'name':
+          return a.nombre.localeCompare(b.nombre, 'es');
+        case 'newest':
+        default:
+          return b.item - a.item;
+      }
+    });
+
+    return result;
+  }, [allProducts, searchQuery, statusFilter, typeFilter, sortBy]);
+
   // Calculate stats
   const stats = useMemo(() => {
-    if (!products.length) return { totalValue: 0, avgPrice: 0, looseCount: 0, jewelryCount: 0 };
+    if (!allProducts.length) return {
+      totalValue: 0,
+      avgPrice: 0,
+      looseCount: 0,
+      jewelryCount: 0,
+      disponibleCount: 0,
+      vendidaCount: 0,
+    };
 
-    const totalValue = products.reduce((sum, p) => sum + (p.precioCOP || 0), 0);
-    const avgPrice = totalValue / products.length;
-    const looseCount = products.filter(p => !p.isJewelry).length;
-    const jewelryCount = products.filter(p => p.isJewelry).length;
+    const disponible = allProducts.filter(p => p.estado === 'DISPONIBLE');
+    const totalValue = disponible.reduce((sum, p) => sum + (p.precioCOP || 0), 0);
+    const looseCount = allProducts.filter(p => !p.isJewelry).length;
+    const jewelryCount = allProducts.filter(p => p.isJewelry).length;
 
-    return { totalValue, avgPrice, looseCount, jewelryCount };
-  }, [products]);
+    return {
+      totalValue,
+      avgPrice: disponible.length ? totalValue / disponible.length : 0,
+      looseCount,
+      jewelryCount,
+      disponibleCount: disponible.length,
+      vendidaCount: allProducts.length - disponible.length,
+    };
+  }, [allProducts]);
 
   const handleBack = () => {
     navigate('/ambassadors');
@@ -88,9 +184,39 @@ export default function AsesorProfilePage() {
 
   const handleContact = () => {
     if (asesor) {
-      alert(`Contactar a ${asesor.name}\n\nEsta funcionalidad se habilitará próximamente.`);
+      // For now, just show the message since we don't have phone numbers yet
+      // Later can use WhatsApp API with phone number from sheets
+      alert(`Contactar a ${asesor.name}\n\nEsta funcionalidad se habilitará próximamente con WhatsApp.`);
     }
   };
+
+  const handleShare = async () => {
+    if (asesor) {
+      const url = window.location.href;
+      const text = `Mira el catálogo de ${asesor.name} en Tierra Madre - ${stats.disponibleCount} esmeraldas disponibles`;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: `${asesor.name} - Tierra Madre`, text, url });
+        } catch (err) {
+          // User cancelled or error
+        }
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(url);
+        alert('Enlace copiado al portapapeles');
+      }
+    }
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setTypeFilter('all');
+    setSortBy('newest');
+  };
+
+  const hasActiveFilters = searchQuery || statusFilter !== 'all' || typeFilter !== 'all';
 
   if (isLoading) {
     return (
@@ -145,9 +271,9 @@ export default function AsesorProfilePage() {
           borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
         }}
       >
-        <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'flex-start' }}>
           {/* Avatar and Name */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 250 }}>
             <Avatar
               sx={{
                 width: 80,
@@ -163,14 +289,42 @@ export default function AsesorProfilePage() {
               <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
                 {asesor.name}
               </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
                 Asesor de Esmeraldas - Tierra Madre
               </Typography>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Chip
+                  size="small"
+                  icon={<CheckCircle size={12} />}
+                  label={`${stats.disponibleCount} disponibles`}
+                  sx={{
+                    bgcolor: alpha('#059669', 0.1),
+                    color: '#059669',
+                    fontSize: '0.7rem',
+                  }}
+                />
+                {stats.vendidaCount > 0 && (
+                  <Chip
+                    size="small"
+                    label={`${stats.vendidaCount} vendidas`}
+                    sx={{
+                      bgcolor: alpha('#9CA3AF', 0.1),
+                      color: '#6B7280',
+                      fontSize: '0.7rem',
+                    }}
+                  />
+                )}
+              </Box>
             </Box>
           </Box>
 
-          {/* Contact Button */}
-          <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
+          {/* Action Buttons */}
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <Tooltip title="Compartir perfil">
+              <IconButton onClick={handleShare} sx={{ color: 'text.secondary' }}>
+                <Share2 size={20} />
+              </IconButton>
+            </Tooltip>
             <Button
               variant="contained"
               startIcon={<Phone size={18} />}
@@ -191,7 +345,7 @@ export default function AsesorProfilePage() {
         <Box
           sx={{
             display: 'flex',
-            gap: 3,
+            gap: 2,
             mt: 3,
             pt: 3,
             borderTop: '1px solid',
@@ -201,18 +355,18 @@ export default function AsesorProfilePage() {
         >
           <StatBox
             icon={<Package size={20} />}
-            value={products.length.toString()}
-            label="Productos"
+            value={allProducts.length.toString()}
+            label="Total Productos"
             color="#059669"
           />
           <StatBox
             icon={<Gem size={20} />}
             value={stats.looseCount.toString()}
-            label="Gemas"
+            label="Gemas Sueltas"
             color="#3B82F6"
           />
           <StatBox
-            icon={<Gem size={20} />}
+            icon={<Crown size={20} />}
             value={stats.jewelryCount.toString()}
             label="Joyería"
             color="#8B5CF6"
@@ -220,23 +374,180 @@ export default function AsesorProfilePage() {
           <StatBox
             icon={<DollarSign size={20} />}
             value={formatCurrency(stats.totalValue)}
-            label="Valor Total"
+            label="Valor Disponible"
             color="#F59E0B"
           />
         </Box>
       </Paper>
 
-      {/* Products Section */}
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-          Catálogo de {asesor.name}
-        </Typography>
+      {/* Search and Filters */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 3,
+          borderRadius: 2,
+          bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+          border: '1px solid',
+          borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+        }}
+      >
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Search */}
+          <TextField
+            placeholder="Buscar en catálogo..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            size="small"
+            sx={{ flex: 1, minWidth: 200 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search size={18} />
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          {/* View Toggle */}
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(_, v) => v && setViewMode(v)}
+            size="small"
+          >
+            <ToggleButton value="grid">
+              <Grid3X3 size={18} />
+            </ToggleButton>
+            <ToggleButton value="list">
+              <List size={18} />
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          {/* Filter Toggle */}
+          <Button
+            variant={showFilters ? 'contained' : 'outlined'}
+            startIcon={<Filter size={16} />}
+            onClick={() => setShowFilters(!showFilters)}
+            size="small"
+            sx={{
+              textTransform: 'none',
+              ...(showFilters && {
+                bgcolor: '#059669',
+                '&:hover': { bgcolor: '#047857' },
+              }),
+            }}
+          >
+            Filtros
+            {hasActiveFilters && (
+              <Chip
+                size="small"
+                label="!"
+                sx={{
+                  ml: 0.5,
+                  height: 16,
+                  fontSize: '0.6rem',
+                  bgcolor: '#EF4444',
+                  color: 'white',
+                }}
+              />
+            )}
+          </Button>
+        </Box>
+
+        {/* Expanded Filters */}
+        {showFilters && (
+          <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Status Filter */}
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Estado</InputLabel>
+              <Select
+                value={statusFilter}
+                label="Estado"
+                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              >
+                <MenuItem value="all">Todos</MenuItem>
+                <MenuItem value="disponible">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CheckCircle size={14} color="#059669" />
+                    Disponible
+                  </Box>
+                </MenuItem>
+                <MenuItem value="vendida">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <XCircle size={14} color="#9CA3AF" />
+                    Vendida
+                  </Box>
+                </MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Type Filter */}
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Tipo</InputLabel>
+              <Select
+                value={typeFilter}
+                label="Tipo"
+                onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
+              >
+                <MenuItem value="all">Todos</MenuItem>
+                <MenuItem value="loose">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Gem size={14} />
+                    Gemas
+                  </Box>
+                </MenuItem>
+                <MenuItem value="jewelry">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Crown size={14} />
+                    Joyería
+                  </Box>
+                </MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Sort */}
+            <FormControl size="small" sx={{ minWidth: 160 }}>
+              <InputLabel>Ordenar</InputLabel>
+              <Select
+                value={sortBy}
+                label="Ordenar"
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <SortAsc size={14} />
+                  </InputAdornment>
+                }
+              >
+                <MenuItem value="newest">Más recientes</MenuItem>
+                <MenuItem value="price-high">Mayor precio</MenuItem>
+                <MenuItem value="price-low">Menor precio</MenuItem>
+                <MenuItem value="name">Nombre A-Z</MenuItem>
+              </Select>
+            </FormControl>
+
+            {hasActiveFilters && (
+              <Button
+                size="small"
+                onClick={clearFilters}
+                sx={{ textTransform: 'none', color: 'text.secondary' }}
+              >
+                Limpiar filtros
+              </Button>
+            )}
+          </Box>
+        )}
+      </Paper>
+
+      {/* Results Count */}
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          {products.length} productos disponibles
+          {filteredProducts.length} de {allProducts.length} productos
         </Typography>
       </Box>
 
-      {products.length === 0 ? (
+      {/* Products Grid/List */}
+      {filteredProducts.length === 0 ? (
         <Paper
           elevation={0}
           sx={{
@@ -247,17 +558,34 @@ export default function AsesorProfilePage() {
           }}
         >
           <Package size={48} style={{ color: '#9CA3AF', marginBottom: 16 }} />
-          <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-            Este asesor no tiene productos asignados actualmente
+          <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2 }}>
+            {hasActiveFilters
+              ? 'No se encontraron productos con los filtros seleccionados'
+              : 'Este asesor no tiene productos asignados actualmente'}
           </Typography>
+          {hasActiveFilters && (
+            <Button
+              variant="outlined"
+              onClick={clearFilters}
+              sx={{ textTransform: 'none' }}
+            >
+              Limpiar filtros
+            </Button>
+          )}
         </Paper>
       ) : (
         <Grid container spacing={2}>
-          {products.map((item) => (
-            <Grid item xs={12} sm={6} md={4} key={item.item}>
+          {filteredProducts.map((item) => (
+            <Grid
+              item
+              xs={12}
+              sm={viewMode === 'list' ? 12 : 6}
+              md={viewMode === 'list' ? 12 : 4}
+              key={item.item}
+            >
               <InventoryCard
                 item={item}
-                isCompact={false}
+                isCompact={viewMode === 'list'}
                 trustScore={calculateTrustScore(item)}
                 onCertClick={() => {}}
                 onClick={() => handleProductClick(item)}
@@ -295,7 +623,8 @@ function StatBox({
         py: 1.5,
         borderRadius: 2,
         bgcolor: alpha(color, isLight ? 0.1 : 0.15),
-        minWidth: 120,
+        minWidth: 130,
+        flex: '1 1 auto',
       }}
     >
       <Box sx={{ color }}>{icon}</Box>
