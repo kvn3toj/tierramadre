@@ -143,38 +143,39 @@ export default function PresentationGenerator() {
   };
 
   const generateImageUrl = (_description: string, slideIndex: number): string => {
-    // ShowRoom-quality visual themes matching LuxuryMasterclass style
+    // Professional macro photography prompts for Colombian emeralds
+    // Realistic, catalog-quality images for high-level investors
     const visualThemes = [
-      // Cover - Impactante
-      'single stunning colombian emerald gemstone floating with sparkles and light rays on pure black background, luxury jewelry photography, dramatic spotlight, ultra detailed 8K',
-      // Value/Business - Profesional
-      'multiple emerald gemstones arranged on black velvet with golden price tags, museum quality display, dramatic spotlight lighting, investment concept',
-      // International Market - Global
-      'elegant dark world map with golden connection lines between continents, emerald green accents on sophisticated dark background, luxury travel concept',
-      // Colombian Pride - Origen
-      'macro photography of colombian emerald crystal showing beautiful internal gardens and inclusions, scientific documentation style, dramatic lighting on dark background',
-      // Profit Margins - Success
-      'luxurious emerald jewelry pieces on display pedestals in high-end boutique setting, golden accents, dramatic cinematic lighting',
-      // Diversified Market - Variety
-      'comparison display of raw emerald rough stone, precision cut emerald, and finished emerald jewelry piece, educational luxury display, dark elegant background',
-      // Compact Product - Storage
-      'elegant emerald collection in velvet-lined wooden box, safe deposit aesthetic, dramatic spotlight on black background, security and value concept',
-      // Luxury Market - High End
-      'red carpet glamour setting with emerald necklace on display stand, paparazzi lights effect, luxury fashion photography, dramatic spotlight',
-      // Value Over Time - Investment
-      'vintage antique emerald jewelry next to modern emerald piece showing timeless value, museum display aesthetic, dramatic lighting',
-      // Flexibility - Opportunity
-      'colombian emerald mine landscape at golden hour sunrise, workers silhouettes, misty mountains, documentary photography style, inspiring',
-      // Barrier to Entry - Expertise
-      'professional gemologist examining emerald with loupe in sophisticated laboratory, warm accent lighting on dark background, expertise concept',
-      // Conclusion - Thank You
-      'single large emerald with tropical colombian flowers arrangement, gratitude concept, elegant dark background with soft emerald green glow',
+      // Cover - Hero Emerald
+      'professional macro photography of a Colombian Muzo emerald gemstone, deep green color with natural jardin inclusions, dramatic side lighting, black velvet background, Canon EOS R5 100mm macro lens f2.8, ultra high resolution, luxury jewelry catalog style',
+      // Value - Multiple Gems
+      'collection of Colombian emeralds in various sizes arranged on black velvet, gradient from light to dark green, overhead professional photography, even studio lighting, Hasselblad medium format, investment grade presentation',
+      // International Market - Cut Emerald
+      'perfectly cut emerald gemstone in traditional emerald cut, Colombian origin, intense green with slight blue undertones, professional jewelry photography, white reflector card setup, Phase One camera, maximum clarity',
+      // Colombian Pride - Raw Crystal
+      'raw uncut Colombian emerald crystal in matrix, vibrant green Muzo color, natural hexagonal formation, professional product photography, dark marble surface, soft diffused lighting, Nikon D850, museum quality',
+      // Profit Margins - Emerald Pair
+      'two matching Colombian emeralds side by side, one rough and one faceted, showcasing the transformation, professional gem photography, dark wood background, subtle rim lighting, extreme detail',
+      // Diversified Market - Variety Display
+      'comparison display of raw emerald rough stone next to precision cut emerald next to finished emerald ring, educational luxury display, neutral background, professional product photography',
+      // Compact Product - Collection Box
+      'elegant emerald collection in velvet-lined Colombian wood box, various sizes and cuts, professional jewelry photography, soft box lighting, luxury catalog style, warm color temperature',
+      // Luxury Market - Backlit Beauty
+      'Colombian emerald gemstone backlit to show transparency and internal garden, deep Muzo green, professional gemological photography, fiber optic illumination, macro lens, scientific precision',
+      // Value Over Time - Detail Shot
+      'extreme close-up of Colombian emerald showing natural jardin inclusions, internal landscape visible, professional gemological macro photography, fiber optic lighting, focus stacking technique',
+      // Flexibility - Hand Scale
+      'large Colombian emerald held between fingers wearing white gloves, showing size and depth of color, professional luxury product photography, soft box lighting, neutral grey background',
+      // Barrier to Entry - Gemologist
+      'professional gemologist examining emerald with loupe and tweezers, sophisticated laboratory setting, warm accent lighting, expertise and precision concept, documentary style',
+      // Conclusion - Premium Display
+      'single large Colombian emerald on marble pedestal with soft spotlight, museum quality presentation, luxury brand aesthetic, minimalist background, investment grade gemstone',
     ];
 
     const theme = visualThemes[slideIndex % visualThemes.length];
     const seed = 2024 + slideIndex * 1000; // Consistent seed per slide for reproducibility
 
-    const basePrompt = `${theme}, professional luxury photography, dramatic cinematic lighting, dark elegant background, ultra detailed, 8K quality, sharp focus`;
+    const basePrompt = `${theme}, 8K resolution, sharp focus, photorealistic`;
     const encodedPrompt = encodeURIComponent(basePrompt);
     return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1920&height=1080&nologo=true&seed=${seed}`;
   };
