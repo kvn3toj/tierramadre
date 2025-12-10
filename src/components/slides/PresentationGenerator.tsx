@@ -143,33 +143,33 @@ export default function PresentationGenerator() {
   };
 
   const generateImageUrl = (_description: string, slideIndex: number): string => {
-    // Professional macro photography prompts for Colombian emeralds
-    // Realistic, catalog-quality images for high-level investors
+    // Luxury jewelry photography prompts - Cartier/Harry Winston/Tiffany style
+    // Dark backgrounds with dramatic lighting for high-level investor presentations
     const visualThemes = [
-      // Cover - Hero Emerald
-      'professional macro photography of a Colombian Muzo emerald gemstone, deep green color with natural jardin inclusions, dramatic side lighting, black velvet background, Canon EOS R5 100mm macro lens f2.8, ultra high resolution, luxury jewelry catalog style',
-      // Value - Multiple Gems
-      'collection of Colombian emeralds in various sizes arranged on black velvet, gradient from light to dark green, overhead professional photography, even studio lighting, Hasselblad medium format, investment grade presentation',
-      // International Market - Cut Emerald
-      'perfectly cut emerald gemstone in traditional emerald cut, Colombian origin, intense green with slight blue undertones, professional jewelry photography, white reflector card setup, Phase One camera, maximum clarity',
-      // Colombian Pride - Raw Crystal
-      'raw uncut Colombian emerald crystal in matrix, vibrant green Muzo color, natural hexagonal formation, professional product photography, dark marble surface, soft diffused lighting, Nikon D850, museum quality',
-      // Profit Margins - Emerald Pair
-      'two matching Colombian emeralds side by side, one rough and one faceted, showcasing the transformation, professional gem photography, dark wood background, subtle rim lighting, extreme detail',
-      // Diversified Market - Variety Display
-      'comparison display of raw emerald rough stone next to precision cut emerald next to finished emerald ring, educational luxury display, neutral background, professional product photography',
-      // Compact Product - Collection Box
-      'elegant emerald collection in velvet-lined Colombian wood box, various sizes and cuts, professional jewelry photography, soft box lighting, luxury catalog style, warm color temperature',
-      // Luxury Market - Backlit Beauty
-      'Colombian emerald gemstone backlit to show transparency and internal garden, deep Muzo green, professional gemological photography, fiber optic illumination, macro lens, scientific precision',
-      // Value Over Time - Detail Shot
-      'extreme close-up of Colombian emerald showing natural jardin inclusions, internal landscape visible, professional gemological macro photography, fiber optic lighting, focus stacking technique',
-      // Flexibility - Hand Scale
-      'large Colombian emerald held between fingers wearing white gloves, showing size and depth of color, professional luxury product photography, soft box lighting, neutral grey background',
-      // Barrier to Entry - Gemologist
-      'professional gemologist examining emerald with loupe and tweezers, sophisticated laboratory setting, warm accent lighting, expertise and precision concept, documentary style',
-      // Conclusion - Premium Display
-      'single large Colombian emerald on marble pedestal with soft spotlight, museum quality presentation, luxury brand aesthetic, minimalist background, investment grade gemstone',
+      // Cover - Hero Emerald on Black Velvet
+      'professional jewelry photography, Colombian emerald on black velvet cushion, dramatic side lighting, Hasselblad quality, ultra realistic, 8K resolution, Cartier catalog style',
+      // Geological Story - Emerald on Obsidian
+      'luxury emerald on obsidian marble surface, gold accent frame, rim lighting, commercial quality, dark moody atmosphere, Harry Winston aesthetic',
+      // Investment Thesis - Brilliant Cut
+      'brilliant cut emerald reflected on glossy black surface, champagne gold setting, chiaroscuro lighting, investment grade presentation, studio photography',
+      // Quality Difference - Velvet Display
+      'Colombian emerald on deep charcoal velvet with subtle folds, warm spotlight, Cartier catalog style, extreme detail, shallow depth of field',
+      // Provenance Journey - Floating Emerald
+      'single emerald floating on pure black void, soft box lighting, crystal clear facets, museum quality, minimalist luxury',
+      // Collection Grid - Gold Setting
+      'emerald in brushed gold setting on dark wood, Leica quality, shallow depth of field, warm tones, boutique display',
+      // Signature Piece - Multiple Gems on Silk
+      'multiple Colombian emeralds on black silk, overhead directional lighting, Harry Winston style, gradient arrangement, 8K detail',
+      // Craftsmanship - Geometric Display
+      'emerald on hexagonal black marble pedestal, geometric shadows, modernist luxury, architectural lighting, Bulgari aesthetic',
+      // Legacy Play - Macro Facets
+      'extreme macro of emerald facets with internal garden, black gradient background, focus stacking, gemological precision',
+      // Exclusivity - Vintage Box
+      'emerald on vintage dark leather box with gold clasp, moody atmospheric, Tiffany aesthetic, heritage luxury',
+      // Private Viewing - Minimalist
+      'Colombian emerald on matte black acrylic with gold geometric accents, minimalist luxury, clean lines, contemporary',
+      // Contact - Renaissance Frame
+      'emerald in ornate gold filigree frame against charcoal velvet, Renaissance lighting, museum presentation, masterpiece quality',
     ];
 
     const theme = visualThemes[slideIndex % visualThemes.length];
@@ -464,11 +464,11 @@ Cada número será un slide separado.`}
                 <Card
                   sx={{
                     height: '100%',
-                    bgcolor: '#FFFFFF',
-                    border: '1px solid #E0E0E0',
+                    bgcolor: '#1A1A1A',
+                    border: '1px solid #374151',
                     '&:hover': {
-                      border: '1px solid #046307',
-                      boxShadow: '0 4px 20px rgba(4,99,7,0.15)',
+                      border: '1px solid #D4AF37',
+                      boxShadow: '0 4px 20px rgba(212,175,55,0.2), 0 0 30px rgba(12,92,63,0.15)',
                     },
                     transition: 'all 0.3s ease',
                   }}
@@ -476,20 +476,20 @@ Cada número será un slide separado.`}
                   <Box
                     sx={{
                       aspectRatio: '16/9',
-                      bgcolor: '#FAFAFA',
+                      bgcolor: '#0A0A0A',
                       position: 'relative',
                       overflow: 'hidden',
                       display: 'flex',
                     }}
                   >
                     {/* Image section (right third simulation) */}
-                    <Box sx={{ flex: 2, bgcolor: '#FFFFFF', display: 'flex', alignItems: 'center', px: 2 }}>
+                    <Box sx={{ flex: 2, bgcolor: '#0D1117', display: 'flex', alignItems: 'center', px: 2 }}>
                       <Typography
                         sx={{
-                          fontFamily: '"Playfair Display", serif',
+                          fontFamily: '"Cormorant Garamond", "Playfair Display", serif',
                           fontSize: '0.85rem',
                           fontWeight: 600,
-                          color: '#212121',
+                          color: '#F8F9FA',
                           lineHeight: 1.3,
                         }}
                       >
@@ -505,14 +505,14 @@ Cada número será un slide separado.`}
                         />
                       )}
                     </Box>
-                    {/* Slide number badge - Business style */}
+                    {/* Slide number badge - Luxury gold style */}
                     <Box
                       sx={{
                         position: 'absolute',
                         top: 8,
                         left: 8,
-                        bgcolor: '#046307',
-                        color: '#FFFFFF',
+                        bgcolor: '#D4AF37',
+                        color: '#0A0A0A',
                         width: 24,
                         height: 24,
                         borderRadius: '50%',
@@ -521,25 +521,26 @@ Cada número será un slide separado.`}
                         justifyContent: 'center',
                         fontSize: '0.7rem',
                         fontWeight: 700,
-                        fontFamily: '"Montserrat", sans-serif',
+                        fontFamily: '"Cinzel", serif',
                       }}
                     >
                       {idx + 1}
                     </Box>
                   </Box>
-                  <CardContent sx={{ p: 2, bgcolor: '#FFFFFF', borderTop: '1px solid #E0E0E0' }}>
+                  <CardContent sx={{ p: 2, bgcolor: '#1A1A1A', borderTop: '1px solid #374151' }}>
                     {/* Benefits preview box */}
                     <Box
                       sx={{
-                        border: '1px solid #046307',
+                        border: '1px solid #D4AF37',
                         borderRadius: 1,
                         p: 1,
+                        background: 'linear-gradient(135deg, rgba(212,175,55,0.05) 0%, rgba(12,92,63,0.08) 100%)',
                       }}
                     >
                       <Typography
                         variant="caption"
                         sx={{
-                          color: '#046307',
+                          color: '#D4AF37',
                           fontWeight: 600,
                           fontSize: '0.6rem',
                           letterSpacing: '0.1em',
@@ -557,7 +558,7 @@ Cada número será un slide separado.`}
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: 'vertical',
                           overflow: 'hidden',
-                          color: '#212121',
+                          color: '#E5E4E2',
                           fontFamily: '"Montserrat", sans-serif',
                           fontSize: '0.65rem',
                           lineHeight: 1.4,
