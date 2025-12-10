@@ -24,24 +24,27 @@ import {
 import { colors } from '../brand';
 import { generateMultiSlidePDF } from '../../utils/slidePdfGenerator';
 import {
-  LuxuryCoverTemplate,
-  LuxuryMissionTemplate,
-  LuxuryOpportunityTemplate,
-  LuxuryDifferentiatorsTemplate,
-  LuxuryThankYouTemplate,
-} from '../templates/LuxuryMasterclassTemplates';
+  BusinessCoverTemplate,
+  KeyPointRightTemplate,
+  KeyPointLeftTemplate,
+  NumberedListTemplate,
+  BulletListTemplate,
+  TwoColumnsTemplate,
+  ConclusionChecklistTemplate,
+  ClosingTemplate,
+} from '../templates/BusinessPresentationTemplates';
 import SmartSlideImage from './SmartSlideImage';
 
-// Template mapping for generated slides - Using Luxury templates for ShowRoom quality
+// Template mapping for generated slides - Business Style (White, Minimalist)
 const SLIDE_TEMPLATES = [
-  { id: 'cover', name: 'Portada', component: LuxuryCoverTemplate },
-  { id: 'mission', name: 'Misión', component: LuxuryMissionTemplate },
-  { id: 'differentiators', name: 'Diferenciadores', component: LuxuryDifferentiatorsTemplate },
-  { id: 'opportunity', name: 'Oportunidad', component: LuxuryOpportunityTemplate },
-  { id: 'content', name: 'Contenido', component: LuxuryMissionTemplate },
-  { id: 'reasons', name: 'Razones', component: LuxuryDifferentiatorsTemplate },
-  { id: 'cta', name: 'CTA', component: LuxuryOpportunityTemplate },
-  { id: 'thanks', name: 'Gracias', component: LuxuryThankYouTemplate },
+  { id: 'cover', name: 'Portada', component: BusinessCoverTemplate },
+  { id: 'key-right', name: 'Punto Clave', component: KeyPointRightTemplate },
+  { id: 'key-left', name: 'Punto Clave Inv.', component: KeyPointLeftTemplate },
+  { id: 'numbered', name: 'Lista Numerada', component: NumberedListTemplate },
+  { id: 'bullets', name: 'Lista Viñetas', component: BulletListTemplate },
+  { id: 'two-columns', name: 'Dos Columnas', component: TwoColumnsTemplate },
+  { id: 'conclusion', name: 'Conclusión', component: ConclusionChecklistTemplate },
+  { id: 'closing', name: 'Cierre', component: ClosingTemplate },
 ] as const;
 
 interface GeneratedSlide {
@@ -451,11 +454,11 @@ Cada número será un slide separado.`}
                 <Card
                   sx={{
                     height: '100%',
-                    bgcolor: '#0A0A0A',
-                    border: '1px solid rgba(10,77,60,0.3)',
+                    bgcolor: '#FFFFFF',
+                    border: '1px solid #E0E0E0',
                     '&:hover': {
-                      border: '1px solid #0A4D3C',
-                      boxShadow: '0 0 20px rgba(10,77,60,0.3)',
+                      border: '1px solid #046307',
+                      boxShadow: '0 4px 20px rgba(4,99,7,0.15)',
                     },
                     transition: 'all 0.3s ease',
                   }}
@@ -463,92 +466,96 @@ Cada número será un slide separado.`}
                   <Box
                     sx={{
                       aspectRatio: '16/9',
-                      bgcolor: '#0D1B1E',
+                      bgcolor: '#FAFAFA',
                       position: 'relative',
                       overflow: 'hidden',
+                      display: 'flex',
                     }}
                   >
-                    {slide.imageUrl && (
-                      <SmartSlideImage
-                        src={slide.imageUrl}
-                        alt={slide.title}
-                        slideIndex={idx}
-                      />
-                    )}
-                    {/* ShowRoom-style vignette overlay */}
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)',
-                        pointerEvents: 'none',
-                      }}
-                    />
-                    {/* Emerald accent bar */}
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        left: 0,
-                        top: 0,
-                        width: 3,
-                        height: '100%',
-                        bgcolor: '#0A4D3C',
-                        boxShadow: '0 0 10px rgba(10,77,60,0.5)',
-                      }}
-                    />
-                    {/* Slide number badge */}
+                    {/* Image section (right third simulation) */}
+                    <Box sx={{ flex: 2, bgcolor: '#FFFFFF', display: 'flex', alignItems: 'center', px: 2 }}>
+                      <Typography
+                        sx={{
+                          fontFamily: '"Playfair Display", serif',
+                          fontSize: '0.85rem',
+                          fontWeight: 600,
+                          color: '#212121',
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {slide.title}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+                      {slide.imageUrl && (
+                        <SmartSlideImage
+                          src={slide.imageUrl}
+                          alt={slide.title}
+                          slideIndex={idx}
+                        />
+                      )}
+                    </Box>
+                    {/* Slide number badge - Business style */}
                     <Box
                       sx={{
                         position: 'absolute',
                         top: 8,
-                        left: 12,
-                        bgcolor: 'rgba(10,77,60,0.9)',
-                        color: '#2E9B7D',
-                        px: 1.5,
-                        py: 0.5,
-                        borderRadius: 1,
+                        left: 8,
+                        bgcolor: '#046307',
+                        color: '#FFFFFF',
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         fontSize: '0.7rem',
                         fontWeight: 700,
-                        letterSpacing: '0.1em',
-                        border: '1px solid rgba(46,155,125,0.3)',
+                        fontFamily: '"Montserrat", sans-serif',
                       }}
                     >
                       {idx + 1}
                     </Box>
-                    {/* Corner decorations */}
-                    <Box sx={{ position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderTop: '1px solid rgba(255,255,255,0.15)', borderRight: '1px solid rgba(255,255,255,0.15)' }} />
-                    <Box sx={{ position: 'absolute', bottom: 6, left: 6, width: 20, height: 20, borderBottom: '1px solid rgba(255,255,255,0.15)', borderLeft: '1px solid rgba(255,255,255,0.15)' }} />
                   </Box>
-                  <CardContent sx={{ p: 2, bgcolor: '#0A0A0A' }}>
-                    <Typography
-                      variant="subtitle2"
+                  <CardContent sx={{ p: 2, bgcolor: '#FFFFFF', borderTop: '1px solid #E0E0E0' }}>
+                    {/* Benefits preview box */}
+                    <Box
                       sx={{
-                        fontWeight: 600,
-                        color: '#2E9B7D',
-                        fontFamily: '"Cormorant Garamond", serif',
-                        letterSpacing: '0.05em',
-                        fontSize: '0.9rem',
-                      }}
-                      noWrap
-                    >
-                      {slide.title}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        color: 'rgba(255,255,255,0.6)',
-                        fontFamily: '"Montserrat", sans-serif',
-                        fontSize: '0.7rem',
-                        lineHeight: 1.4,
-                        mt: 0.5,
+                        border: '1px solid #046307',
+                        borderRadius: 1,
+                        p: 1,
                       }}
                     >
-                      {slide.content}
-                    </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: '#046307',
+                          fontWeight: 600,
+                          fontSize: '0.6rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          display: 'block',
+                          mb: 0.5,
+                        }}
+                      >
+                        Beneficio
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          color: '#212121',
+                          fontFamily: '"Montserrat", sans-serif',
+                          fontSize: '0.65rem',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {slide.content}
+                      </Typography>
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>
@@ -572,7 +579,7 @@ Cada número será un slide separado.`}
             const Template = SLIDE_TEMPLATES[templateIndex].component;
             const templateId = SLIDE_TEMPLATES[templateIndex].id;
 
-            // Map props based on template type
+            // Map props based on Business template type
             const templateProps: Record<string, unknown> = {
               id: `pres-slide-${idx}`,
             };
@@ -582,27 +589,41 @@ Cada número será un slide separado.`}
               templateProps.title = slide.title;
               templateProps.subtitle = slide.content;
             }
-            // Mission template (uses mission prop for quote)
-            else if (templateId === 'mission' || templateId === 'content') {
-              templateProps.mission = slide.content;
-            }
-            // Opportunity template
-            else if (templateId === 'opportunity' || templateId === 'cta') {
+            // Key Point templates (right/left)
+            else if (templateId === 'key-right' || templateId === 'key-left') {
               templateProps.title = slide.title;
               templateProps.content = slide.content;
+              templateProps.benefit = slide.content;
             }
-            // Differentiators template
-            else if (templateId === 'differentiators' || templateId === 'reasons') {
+            // Numbered list template
+            else if (templateId === 'numbered') {
+              templateProps.title = slide.title;
+              templateProps.subtitle = slide.content.split('.')[0] + '.';
+              templateProps.benefit = slide.content;
+            }
+            // Bullet list template
+            else if (templateId === 'bullets') {
+              templateProps.title = slide.title;
+              templateProps.benefit = slide.content;
+            }
+            // Two columns template
+            else if (templateId === 'two-columns') {
+              templateProps.title = slide.title;
+              templateProps.subtitle = slide.content.split('.')[0] + '.';
+              templateProps.benefit = slide.content;
+            }
+            // Conclusion checklist template
+            else if (templateId === 'conclusion') {
               templateProps.title = slide.title;
             }
-            // Thank you template
-            else if (templateId === 'thanks') {
-              templateProps.message = slide.title;
-              templateProps.contact = '@tierramadre.co | www.tierramadre.co';
+            // Closing template
+            else if (templateId === 'closing') {
+              templateProps.title = slide.title;
             }
             // Default fallback
             else {
               templateProps.title = slide.title;
+              templateProps.content = slide.content;
             }
 
             return (
