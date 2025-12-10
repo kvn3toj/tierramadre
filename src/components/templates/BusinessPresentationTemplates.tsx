@@ -1,35 +1,67 @@
 /**
- * TIERRA MADRE - Business Presentation Templates
- * Following the official Style Guide
+ * 🎨 TIERRA MADRE - Sacred Geometry Design System
+ * Premium Business Presentation Templates
  *
- * Design Principles:
- * - Rule of Thirds composition
- * - White backgrounds, minimalist aesthetic
- * - Emerald green (#046307) and Gold (#D4AF37) accents
- * - Playfair Display (titles) + Montserrat (body)
- * - Benefits in bordered containers
+ * DESIGN PHILOSOPHY:
+ * Based on sacred geometry principles and golden ratio proportions
+ * for presentations that resonate with high-level investors.
+ *
+ * GEOMETRY BASE:
+ * - Format: 1920x1080px (16:9 perfect ratio)
+ * - Layout: Rule of Thirds (640px | 640px | 640px)
+ * - Spacing: Fibonacci sequence (8, 13, 21, 34, 55, 89px)
+ * - Proportions: Golden Ratio (φ = 1.618) for visual hierarchy
+ *
+ * TYPOGRAPHY:
+ * - Playfair Display (titles) - elegant serif
+ * - Montserrat (body) - clean sans-serif
+ * - Scale based on golden ratio: 13, 21, 34, 55, 89px
  */
 
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 
 // ============================================================================
-// CONSTANTS
+// CONSTANTS & SACRED GEOMETRY
 // ============================================================================
 
 const SLIDE_WIDTH = 1920;
 const SLIDE_HEIGHT = 1080;
 const LOGO_PATH = '/logo-tierra-madre.png';
 
-// Brand Guide Color Palette - Minimalist Business
+/*
+ * SACRED GEOMETRY REFERENCE (for design consistency):
+ * Golden Ratio: φ = 1.618
+ * Fibonacci Spacing: 8, 13, 21, 34, 55, 89px
+ */
+
+// Premium Color Palette - Warm Luxury (matching reference image)
 const COLORS = {
-  background: '#FFFFFF',
-  textPrimary: '#212121',
-  textSecondary: '#666666',
-  accentEmerald: '#046307',
-  accentGold: '#D4AF37',
-  borderLight: '#E0E0E0',
-  borderAccent: '#046307',
+  // Backgrounds - Warm Earth Tones
+  background: '#F5EDE4',        // Warm beige/cream (like reference)
+  backgroundAlt: '#FBF8F3',     // Lighter cream
+  backgroundCard: '#FFFFFF',    // Pure white for cards
+
+  // Text Hierarchy
+  textPrimary: '#1A1A1A',       // Near black - maximum contrast
+  textSecondary: '#4A4A4A',     // Dark gray
+  textTertiary: '#757575',      // Medium gray
+
+  // Brand Emerald Spectrum
+  emeraldDeep: '#0F4C3A',       // Deep Muzo green
+  emeraldPrimary: '#1B5E20',    // Primary emerald
+  accentEmerald: '#2D6A4F',     // Accent green
+  emeraldLight: '#52B788',      // Light green
+  emeraldPale: '#B7E4C7',       // Pale green
+
+  // Accent Gold
+  accentGold: '#8B7355',        // Subtle golden brown
+  goldLight: '#D4AF37',         // Bright gold
+
+  // Borders & Utilities
+  borderLight: '#E8DCC9',       // Warm light border
+  borderAccent: '#1B5E20',      // Emerald border
+  overlay: 'rgba(15, 76, 58, 0.85)', // Emerald overlay
 };
 
 // Typography - Elegant Business
