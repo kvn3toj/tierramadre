@@ -2,8 +2,11 @@
  * InventoryCard Component
  * Displays an inventory item in either grid or compact list view.
  * Extracted from InventoryBrowser.tsx for better modularity.
+ *
+ * Performance optimized with React.memo and lazy loading.
+ * Design system compliant with tokens from design-system/tokens.
  */
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import {
   Box,
   Typography,
@@ -34,6 +37,8 @@ import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { getTrustBadge } from '../../utils/trustScore';
 import { TrustBadgeCompact } from '../TrustBadge';
 import { PriceDisplay } from '../PriceDisplay';
+// Design System Tokens
+import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 
 export interface InventoryCardProps {
   item: InventoryItem;
@@ -64,20 +69,22 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
         sx={{
           p: 2,
           borderRadius: 2.5,
-          bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+          bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
           border: '1px solid',
-          borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
           display: 'flex',
           alignItems: 'center',
           gap: 2,
           cursor: 'pointer',
           transition: 'all 0.2s ease',
           '&:hover': {
-            borderColor: '#059669',
-            bgcolor: isLight ? '#F0FDF4' : alpha('#059669', 0.08),
+            borderColor: emeraldCore.dark,
+            bgcolor: isLight ? emeraldCore.lightest : alpha(emeraldCore.dark, 0.08),
           },
         }}
         onClick={onClick}
+        role="article"
+        aria-label={`${item.nombre} - ${item.color}, ${weight}`}
       >
         {/* Color indicator */}
         <Box
@@ -139,22 +146,24 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
     <Card
       elevation={0}
       onClick={onClick}
+      role="article"
+      aria-label={`${item.nombre} - ${item.color}, ${weight}`}
       sx={{
         borderRadius: 3,
         border: '1px solid',
-        borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
-        bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+        borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+        bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
         overflow: 'hidden',
         transition: 'all 0.25s ease',
         cursor: 'pointer',
         '&:hover': {
-          borderColor: '#10B981',
+          borderColor: emeraldCore.primary,
           transform: 'translateY(-4px)',
           boxShadow: isLight
             ? '0 20px 40px rgba(0, 0, 0, 0.08)'
             : '0 20px 40px rgba(0, 0, 0, 0.3)',
           '& .price-text': {
-            color: '#10B981',
+            color: emeraldCore.primary,
           },
         },
       }}
@@ -166,7 +175,7 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
             height: 140,
             position: 'relative',
             overflow: 'hidden',
-            bgcolor: isLight ? '#F9FAFB' : '#292524',
+            bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.tertiary,
           }}
         >
           {item.mediaType === 'video' ? (
@@ -174,7 +183,8 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
             <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
               <img
                 src={item.thumbnailUrl || item.imagen}
-                alt={item.nombre}
+                alt={`${item.nombre} - ${item.color}`}
+                loading="lazy"
                 style={{
                   width: '100%',
                   height: '100%',
@@ -195,15 +205,17 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
+                aria-label="Video disponible"
               >
                 <Play size={24} color="white" fill="white" />
               </Box>
             </Box>
           ) : (
-            // Image
+            // Image with lazy loading
             <img
               src={item.imagen}
-              alt={item.nombre}
+              alt={`${item.nombre} - ${item.color}`}
+              loading="lazy"
               style={{
                 width: '100%',
                 height: '100%',
@@ -239,13 +251,13 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
         <Box
           sx={{
             height: 80,
-            bgcolor: isLight ? '#F9FAFB' : '#292524',
+            bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.tertiary,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Gem size={32} color={isLight ? '#D1D5DB' : '#52525B'} />
+          <Gem size={32} color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled} />
         </Box>
       )}
 
@@ -253,13 +265,13 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
       <Box
         sx={{
           height: 56,
-          bgcolor: isLight ? '#FAFAF9' : '#292524',
+          bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.tertiary,
           position: 'relative',
           display: 'flex',
           alignItems: 'center',
           px: 2.5,
           borderBottom: '1px solid',
-          borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         }}
       >
         {/* Colored accent bar on left */}
@@ -280,9 +292,9 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
             width: 36,
             height: 36,
             borderRadius: 2,
-            bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+            bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
             border: '1px solid',
-            borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -290,7 +302,7 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
           }}
         >
           {item.isJewelry ? (
-            <Crown size={18} color={isLight ? '#78716C' : '#A8A29E'} />
+            <Crown size={18} color={isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary} />
           ) : (
             <Gem size={18} color={colorDot} />
           )}
@@ -305,9 +317,9 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
             px: 1.5,
             py: 0.5,
             borderRadius: 1.5,
-            bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+            bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
             border: '1px solid',
-            borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
           }}
         >
           <Box
@@ -341,8 +353,8 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
               height: 22,
               fontSize: '0.7rem',
               fontWeight: 600,
-              bgcolor: isLight ? '#1C1917' : '#FAFAF9',
-              color: isLight ? '#FAFAF9' : '#1C1917',
+              bgcolor: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
+              color: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
               mr: 1,
             }}
           />
@@ -405,13 +417,13 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
           {item.color}
           {isLoose && typeof item.peso === 'number' && (
             <>
-              <Box sx={{ color: '#D1D5DB' }}>•</Box>
+              <Box sx={{ color: surfacesLight.text.disabled }}>•</Box>
               {item.peso} ct
             </>
           )}
           {item.isJewelry && item.metalType && (
             <>
-              <Box sx={{ color: '#D1D5DB' }}>•</Box>
+              <Box sx={{ color: surfacesLight.text.disabled }}>•</Box>
               {item.metalType}
             </>
           )}
@@ -448,7 +460,7 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
               mt: 2,
               pt: 2,
               borderTop: '1px solid',
-              borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
             }}
           >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -484,12 +496,12 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
               )}
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-                <MapPin size={12} color="#9CA3AF" />
+                <MapPin size={12} color={surfacesLight.text.tertiary} />
                 <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
                   {item.ubicacion}
                 </Typography>
                 <Box sx={{ flex: 1 }} />
-                <User size={12} color="#9CA3AF" />
+                <User size={12} color={surfacesLight.text.tertiary} />
                 <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
                   {item.asesor}
                 </Typography>
@@ -501,7 +513,7 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
                   mt: 2,
                   pt: 2,
                   borderTop: '1px solid',
-                  borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
@@ -548,15 +560,16 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
                     e.stopPropagation();
                     onCertClick();
                   }}
+                  aria-label={`Ver certificaciones de ${item.nombre}`}
                   sx={{
                     width: '100%',
-                    borderColor: '#059669',
-                    color: '#059669',
+                    borderColor: emeraldCore.dark,
+                    color: emeraldCore.dark,
                     fontSize: '0.75rem',
                     py: 0.5,
                     '&:hover': {
-                      bgcolor: alpha('#059669', 0.08),
-                      borderColor: '#047857',
+                      bgcolor: alpha(emeraldCore.dark, 0.08),
+                      borderColor: emeraldCore.darker,
                     },
                   }}
                 >
@@ -570,5 +583,18 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
     </Card>
   );
 }
+
+// Memoized version for performance - only re-renders when item data changes
+export const MemoizedInventoryCard = memo(InventoryCard, (prevProps, nextProps) => {
+  // Only re-render if these key properties change
+  return (
+    prevProps.item.item === nextProps.item.item &&
+    prevProps.item.imagen === nextProps.item.imagen &&
+    prevProps.item.precioCOP === nextProps.item.precioCOP &&
+    prevProps.item.estado === nextProps.item.estado &&
+    prevProps.isCompact === nextProps.isCompact &&
+    prevProps.trustScore.overall === nextProps.trustScore.overall
+  );
+});
 
 export default InventoryCard;
