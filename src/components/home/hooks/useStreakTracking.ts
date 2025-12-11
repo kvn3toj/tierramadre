@@ -64,19 +64,22 @@ const getInitialStreak = (): StreakData => {
       const lastVisit = new Date(data.lastVisit).toDateString();
       const yesterday = getYesterday();
 
+      // Ensure milestones array exists (migration for old data)
+      const milestones = Array.isArray(data.milestones) ? data.milestones : [];
+
       // Already visited today
       if (lastVisit === today) {
-        return data;
+        return { ...data, milestones };
       }
 
       // Visited yesterday - increment streak
       if (lastVisit === yesterday) {
-        const newCurrent = data.current + 1;
+        const newCurrent = (data.current || 0) + 1;
         return {
           current: newCurrent,
           lastVisit: today,
-          longest: Math.max(data.longest, newCurrent),
-          milestones: data.milestones,
+          longest: Math.max(data.longest || 0, newCurrent),
+          milestones,
         };
       }
 
@@ -84,8 +87,8 @@ const getInitialStreak = (): StreakData => {
       return {
         current: 1,
         lastVisit: today,
-        longest: data.longest,
-        milestones: data.milestones,
+        longest: data.longest || 0,
+        milestones,
       };
     } catch {
       // Invalid data, reset
@@ -116,8 +119,9 @@ export const useStreakTracking = () => {
 
   // Check for new milestones
   useEffect(() => {
+    const currentMilestones = Array.isArray(streak.milestones) ? streak.milestones : [];
     const unachievedMilestones = MILESTONES.filter(
-      m => streak.current >= m && !streak.milestones.includes(m)
+      m => streak.current >= m && !currentMilestones.includes(m)
     );
 
     if (unachievedMilestones.length > 0) {
@@ -127,7 +131,7 @@ export const useStreakTracking = () => {
       // Update milestones in streak data
       setStreak(prev => ({
         ...prev,
-        milestones: [...prev.milestones, ...unachievedMilestones],
+        milestones: [...(Array.isArray(prev.milestones) ? prev.milestones : []), ...unachievedMilestones],
       }));
     }
   }, [streak.current, streak.milestones]);
@@ -138,14 +142,14 @@ export const useStreakTracking = () => {
   }, []);
 
   // Get milestone status
-  const milestones = useMemo<StreakMilestone[]>(() =>
-    MILESTONES.map(days => ({
+  const milestones = useMemo<StreakMilestone[]>(() => {
+    const currentMilestones = Array.isArray(streak.milestones) ? streak.milestones : [];
+    return MILESTONES.map(days => ({
       days,
       label: MILESTONE_LABELS[days],
-      achieved: streak.milestones.includes(days) || streak.current >= days,
-    })),
-    [streak.milestones, streak.current]
-  );
+      achieved: currentMilestones.includes(days) || streak.current >= days,
+    }));
+  }, [streak.milestones, streak.current]);
 
   // Next milestone to achieve
   const nextMilestone = useMemo(() => {

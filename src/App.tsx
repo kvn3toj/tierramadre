@@ -2,7 +2,7 @@ import { useCallback, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { IOSLayout } from './components/ios';
 import { getFeatureFlag } from './utils/featureFlags';
-import { WelcomeScreen, GuestModeBanner } from './components/auth';
+import { WelcomeScreen } from './components/auth';
 import { useAuth } from './hooks/useAuth';
 import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
@@ -57,7 +57,6 @@ function AppContent() {
   return (
     <>
       <IOSLayout>
-        <GuestModeBanner />
         <Routes>
           {/* Primary routes - no Suspense needed (in main bundle) */}
           <Route path="/" element={<Navigate to="/home" replace />} />
