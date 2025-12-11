@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -44,6 +44,8 @@ import { useBrowsingProgress } from '../hooks/useBrowsingProgress';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { useComparison } from '../hooks/useComparison';
 import { useSavedFilters } from '../hooks/useSavedFilters';
+import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
+import { useInventoryAnalytics } from '../hooks/useInventoryAnalytics';
 import { InventoryItem, TrustScoreBreakdown } from '../types';
 import CertificationUpload from './CertificationUpload';
 import AddToInventoryModal from './AddToInventoryModal';
@@ -59,6 +61,7 @@ import ComparisonBar from './ComparisonBar';
 import ComparisonModal from './ComparisonModal';
 import RecentlyViewedCarousel from './RecentlyViewedCarousel';
 import SavedFiltersDropdown from './SavedFiltersDropdown';
+import KeyboardShortcutsHelp, { KeyboardShortcutsButton } from './KeyboardShortcutsHelp';
 
 export default function InventoryBrowser() {
   const theme = useTheme();
@@ -112,6 +115,12 @@ export default function InventoryBrowser() {
   // Saved filters hook
   const savedFilters = useSavedFilters();
 
+  // Analytics hook
+  const analyticsHook = useInventoryAnalytics();
+
+  // Search input ref for keyboard navigation
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   // Get visible items based on pagination
   const visibleInventory = useMemo(
     () => pagination.getVisibleItems(sortedInventory),
@@ -125,6 +134,7 @@ export default function InventoryBrowser() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   // Filter by favorites if enabled
   const displayInventory = useMemo(() => {
@@ -149,6 +159,30 @@ export default function InventoryBrowser() {
       .map(id => itemMap.get(id))
       .filter((item): item is InventoryItem => item !== undefined);
   }, [inventoryData, recentItems]);
+
+  // Determine grid columns based on view mode
+  const gridColumns = viewMode === 'grid' ? 4 : 1; // 4 columns in grid mode
+
+  // Keyboard navigation hook
+  const keyboardNav = useKeyboardNavigation({
+    items: displayInventory,
+    columns: gridColumns,
+    onSelect: (item) => handleProductClick(item),
+    onToggleFavorite: (itemId) => {
+      toggleFavorite(itemId);
+      analyticsHook.trackFavorite(itemId, !isFavorite(itemId));
+    },
+    onToggleComparison: (item) => {
+      comparison.toggleComparison(item);
+      if (comparison.isSelected(item.item)) {
+        analyticsHook.trackCompareRemove(item.item);
+      } else {
+        analyticsHook.trackCompareAdd(item.item);
+      }
+    },
+    onFocusSearch: () => searchInputRef.current?.focus(),
+    enabled: viewMode === 'grid', // Only enable in grid view
+  });
 
   // Certification dialog state
   const [certDialogOpen, setCertDialogOpen] = useState(false);
@@ -228,9 +262,11 @@ export default function InventoryBrowser() {
     browsingProgress.markViewed(item.item);
     // Add to recently viewed
     addToRecent(item.item);
+    // Track analytics
+    analyticsHook.trackItemView(item.item, item.nombre);
     // Navigate to product detail
     navigate(`/product/${item.item}`);
-  }, [navigate, browsingProgress, addToRecent]);
+  }, [navigate, browsingProgress, addToRecent, analyticsHook]);
 
   // Handle saving certifications
   const handleSaveCertifications = useCallback((certifications: InventoryItem['certifications']) => {
@@ -366,10 +402,20 @@ export default function InventoryBrowser() {
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mb: showAdvancedFilters ? 2 : 0 }}>
           {/* Search */}
           <TextField
-            placeholder="Buscar..."
+            placeholder="Buscar... (presiona /)"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              // Track search after debounce would be better, but for now track on change
+            }}
+            onBlur={() => {
+              // Track search when user finishes typing
+              if (search.trim()) {
+                analyticsHook.trackSearch(search, sortedInventory.length);
+              }
+            }}
             size="small"
+            inputRef={searchInputRef}
             sx={{
               minWidth: 200,
               flex: 1,
@@ -530,7 +576,12 @@ export default function InventoryBrowser() {
           <ToggleButtonGroup
             value={viewMode}
             exclusive
-            onChange={(_, value) => value && setViewMode(value)}
+            onChange={(_, value) => {
+              if (value) {
+                setViewMode(value);
+                analyticsHook.trackViewModeChange(value);
+              }
+            }}
             size="small"
           >
             <ToggleButton value="grid" sx={{ px: 1.5 }}>
@@ -540,6 +591,9 @@ export default function InventoryBrowser() {
               <List size={18} />
             </ToggleButton>
           </ToggleButtonGroup>
+
+          {/* Keyboard shortcuts help button */}
+          <KeyboardShortcutsButton onClick={() => setShowKeyboardHelp(true)} />
         </Box>
 
         {/* Collapsible Advanced Filters */}
@@ -785,6 +839,9 @@ export default function InventoryBrowser() {
       {/* Inventory Grid/List */}
       {viewMode === 'grid' ? (
         <Box
+          ref={keyboardNav.gridRef as React.RefObject<HTMLDivElement>}
+          role="grid"
+          aria-label="Inventario de esmeraldas"
           sx={{
             display: 'grid',
             gridTemplateColumns: {
@@ -796,19 +853,30 @@ export default function InventoryBrowser() {
             gap: 2.5,
           }}
         >
-          {displayInventory.map((item) => (
-            <GridCard
+          {displayInventory.map((item, index) => (
+            <Box
               key={item.item}
-              item={item}
-              trustScore={itemTrustScores.get(item.item) || calculateTrustScore(item)}
-              isFavorite={isFavorite(item.item)}
-              onCertClick={() => handleCertClick(item)}
-              onItemClick={() => handleProductClick(item)}
-              onToggleFavorite={() => toggleFavorite(item.item)}
-              isSelectedForComparison={comparison.isSelected(item.item)}
-              onToggleComparison={() => comparison.toggleComparison(item)}
-              canAddToComparison={comparison.canAddMore}
-            />
+              {...keyboardNav.getItemProps(index)}
+              data-item-index={index}
+              sx={{
+                outline: keyboardNav.focusedIndex === index ? '2px solid' : 'none',
+                outlineColor: 'primary.main',
+                outlineOffset: 2,
+                borderRadius: 3,
+              }}
+            >
+              <GridCard
+                item={item}
+                trustScore={itemTrustScores.get(item.item) || calculateTrustScore(item)}
+                isFavorite={isFavorite(item.item)}
+                onCertClick={() => handleCertClick(item)}
+                onItemClick={() => handleProductClick(item)}
+                onToggleFavorite={() => toggleFavorite(item.item)}
+                isSelectedForComparison={comparison.isSelected(item.item)}
+                onToggleComparison={() => comparison.toggleComparison(item)}
+                canAddToComparison={comparison.canAddMore}
+              />
+            </Box>
           ))}
         </Box>
       ) : (
@@ -835,7 +903,10 @@ export default function InventoryBrowser() {
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 2 }}>
           <Button
             variant="outlined"
-            onClick={pagination.loadMore}
+            onClick={() => {
+              pagination.loadMore();
+              analyticsHook.trackLoadMore(pagination.visibleCount, sortedInventory.length);
+            }}
             sx={{
               borderColor: emeraldCore.primary,
               color: emeraldCore.primary,
@@ -983,9 +1054,18 @@ export default function InventoryBrowser() {
       {/* Comparison Modal - Side-by-side comparison */}
       <ComparisonModal
         open={comparison.showComparisonModal}
-        onClose={comparison.closeComparisonModal}
+        onClose={() => {
+          comparison.closeComparisonModal();
+          analyticsHook.trackComparisonOpen(comparison.selectedItems.map(i => i.item));
+        }}
         items={comparison.selectedItems}
         trustScores={trustScoresMap}
+      />
+
+      {/* Keyboard Shortcuts Help Dialog */}
+      <KeyboardShortcutsHelp
+        open={showKeyboardHelp}
+        onClose={() => setShowKeyboardHelp(false)}
       />
     </Box>
   );
