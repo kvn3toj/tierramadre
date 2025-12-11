@@ -44,7 +44,8 @@ import { useBrowsingProgress } from '../hooks/useBrowsingProgress';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { useComparison } from '../hooks/useComparison';
 import { useSavedFilters } from '../hooks/useSavedFilters';
-import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
+// TODO: Re-enable keyboard nav when adapted for virtualized grid (react-window)
+// import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 import { useInventoryAnalytics } from '../hooks/useInventoryAnalytics';
 import { InventoryItem, TrustScoreBreakdown } from '../types';
 import CertificationUpload from './CertificationUpload';
@@ -55,7 +56,7 @@ import { formatCurrency, formatFullCurrency, getColorDot } from '../utils/format
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark, semanticColors } from '../design-system/tokens/colors';
 import { emeraldGradients } from '../design-system/tokens/gradients';
 // Inventory components
-import { GridCard, ListRow } from './inventory';
+import { GridCard, ListRow, VirtualGrid } from './inventory';
 import ProgressBadge from './ProgressBadge';
 import ComparisonBar from './ComparisonBar';
 import ComparisonModal from './ComparisonModal';
@@ -160,29 +161,27 @@ export default function InventoryBrowser() {
       .filter((item): item is InventoryItem => item !== undefined);
   }, [inventoryData, recentItems]);
 
-  // Determine grid columns based on view mode
-  const gridColumns = viewMode === 'grid' ? 4 : 1; // 4 columns in grid mode
-
-  // Keyboard navigation hook
-  const keyboardNav = useKeyboardNavigation({
-    items: displayInventory,
-    columns: gridColumns,
-    onSelect: (item) => handleProductClick(item),
-    onToggleFavorite: (itemId) => {
-      toggleFavorite(itemId);
-      analyticsHook.trackFavorite(itemId, !isFavorite(itemId));
-    },
-    onToggleComparison: (item) => {
-      comparison.toggleComparison(item);
-      if (comparison.isSelected(item.item)) {
-        analyticsHook.trackCompareRemove(item.item);
-      } else {
-        analyticsHook.trackCompareAdd(item.item);
-      }
-    },
-    onFocusSearch: () => searchInputRef.current?.focus(),
-    enabled: viewMode === 'grid', // Only enable in grid view
-  });
+  // TODO: Re-enable keyboard navigation when adapted for virtualized grid
+  // Currently disabled because react-window only renders visible DOM items
+  // const keyboardNav = useKeyboardNavigation({
+  //   items: displayInventory,
+  //   columns: gridColumns,
+  //   onSelect: (item) => handleProductClick(item),
+  //   onToggleFavorite: (itemId) => {
+  //     toggleFavorite(itemId);
+  //     analyticsHook.trackFavorite(itemId, !isFavorite(itemId));
+  //   },
+  //   onToggleComparison: (item) => {
+  //     comparison.toggleComparison(item);
+  //     if (comparison.isSelected(item.item)) {
+  //       analyticsHook.trackCompareRemove(item.item);
+  //     } else {
+  //       analyticsHook.trackCompareAdd(item.item);
+  //     }
+  //   },
+  //   onFocusSearch: () => searchInputRef.current?.focus(),
+  //   enabled: viewMode === 'grid',
+  // });
 
   // Certification dialog state
   const [certDialogOpen, setCertDialogOpen] = useState(false);
@@ -838,47 +837,27 @@ export default function InventoryBrowser() {
 
       {/* Inventory Grid/List */}
       {viewMode === 'grid' ? (
-        <Box
-          ref={keyboardNav.gridRef as React.RefObject<HTMLDivElement>}
-          role="grid"
-          aria-label="Inventario de esmeraldas"
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, 1fr)',
-              md: 'repeat(3, 1fr)',
-              lg: 'repeat(4, 1fr)',
-            },
-            gap: 2.5,
-          }}
-        >
-          {displayInventory.map((item, index) => (
-            <Box
-              key={item.item}
-              {...keyboardNav.getItemProps(index)}
-              data-item-index={index}
-              sx={{
-                outline: keyboardNav.focusedIndex === index ? '2px solid' : 'none',
-                outlineColor: 'primary.main',
-                outlineOffset: 2,
-                borderRadius: 3,
-              }}
-            >
-              <GridCard
-                item={item}
-                trustScore={itemTrustScores.get(item.item) || calculateTrustScore(item)}
-                isFavorite={isFavorite(item.item)}
-                onCertClick={() => handleCertClick(item)}
-                onItemClick={() => handleProductClick(item)}
-                onToggleFavorite={() => toggleFavorite(item.item)}
-                isSelectedForComparison={comparison.isSelected(item.item)}
-                onToggleComparison={() => comparison.toggleComparison(item)}
-                canAddToComparison={comparison.canAddMore}
-              />
-            </Box>
-          ))}
-        </Box>
+        <VirtualGrid
+          items={showFavoritesOnly ? displayInventory : sortedInventory}
+          trustScores={itemTrustScores}
+          favorites={Array.from(itemTrustScores.keys()).filter(id => isFavorite(id))}
+          onItemClick={handleProductClick}
+          onCertClick={handleCertClick}
+          onToggleFavorite={toggleFavorite}
+          renderCard={(props) => (
+            <GridCard
+              item={props.item}
+              trustScore={props.trustScore}
+              isFavorite={props.isFavorite}
+              onCertClick={props.onCertClick}
+              onItemClick={props.onItemClick}
+              onToggleFavorite={props.onToggleFavorite}
+              isSelectedForComparison={comparison.isSelected(props.item.item)}
+              onToggleComparison={() => comparison.toggleComparison(props.item)}
+              canAddToComparison={comparison.canAddMore}
+            />
+          )}
+        />
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           {displayInventory.map((item) => (
@@ -898,8 +877,8 @@ export default function InventoryBrowser() {
         </Box>
       )}
 
-      {/* Load More Button */}
-      {pagination.hasMore && !showFavoritesOnly && (
+      {/* Load More Button - Only for list view (grid uses virtualization) */}
+      {viewMode === 'list' && pagination.hasMore && !showFavoritesOnly && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 2 }}>
           <Button
             variant="outlined"
