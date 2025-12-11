@@ -209,6 +209,49 @@ export interface CertificationStatus {
   totalPossible: number;
 }
 
+// Image verification and quality types
+export type ImageVerificationStatus = 'pending' | 'verified' | 'rejected' | 'needs_review';
+export type ImageQualityLevel = 1 | 2 | 3 | 4 | 5;
+
+export interface ImageQualityCheck {
+  resolution: {
+    width: number;
+    height: number;
+    isAcceptable: boolean;  // min 1200px for product photos
+  };
+  fileSize: {
+    bytes: number;
+    isOptimal: boolean;     // 100KB-5MB range
+  };
+  brightness: number;       // 0-255, ideal 120-180
+  contrast: number;         // 0-100, ideal 40-70
+  sharpness: number;        // 0-100, detected blur level
+  colorAccuracy: number;    // 0-100, emerald green detection
+  overallScore: ImageQualityLevel;
+  recommendations: string[];
+}
+
+export interface ImageMetadata {
+  sourceUrl: string;               // Original source (Drive, Cloudinary, local)
+  cloudinaryUrl?: string;          // Optimized CDN URL
+  driveUrl?: string;               // Google Drive backup URL
+  driveFileId?: string;            // Google Drive file ID
+  uploadedAt: string;
+  verifiedAt?: string;
+  verificationStatus: ImageVerificationStatus;
+  qualityCheck?: ImageQualityCheck;
+  verifiedBy?: string;             // User who verified
+  notes?: string;
+}
+
+export interface EmeraldImageGallery {
+  primary: ImageMetadata;          // Main product photo
+  gallery: ImageMetadata[];        // Additional photos
+  hasAllAngles: boolean;           // Has front, back, side views
+  hasMacro: boolean;               // Has close-up detail shot
+  hasLifestyle: boolean;           // Has in-context/hand shot
+}
+
 export interface InventoryItem {
   item: number;
   fechaIngreso: string;
@@ -240,4 +283,9 @@ export interface InventoryItem {
   demandIndicator?: DemandIndicator;
   trustScore?: TrustScoreBreakdown;  // Cached trust score
   lastTrustUpdate?: string;          // ISO date of last trust calculation
+
+  // Image verification fields
+  imageGallery?: EmeraldImageGallery;
+  imageVerificationStatus?: ImageVerificationStatus;
+  lastImageVerification?: string;    // ISO date of last verification
 }
