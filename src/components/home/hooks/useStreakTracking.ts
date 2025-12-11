@@ -1,0 +1,186 @@
+/**
+ * useStreakTracking Hook
+ *
+ * Manages user streak data for daily engagement tracking.
+ * Persists to localStorage with automatic streak calculation.
+ *
+ * Designed by Steve - Data Architecture Specialist
+ */
+
+import { useState, useEffect, useMemo, useCallback } from 'react';
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+export interface StreakData {
+  /** Current consecutive days */
+  current: number;
+  /** Longest streak ever achieved */
+  longest: number;
+  /** Last visit date (ISO string) */
+  lastVisit: string;
+  /** Milestones achieved */
+  milestones: number[];
+}
+
+export interface StreakMilestone {
+  days: number;
+  label: string;
+  achieved: boolean;
+}
+
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+const STORAGE_KEY = 'tierra-madre-streak';
+
+const MILESTONES = [7, 14, 30, 60, 100, 365];
+
+const MILESTONE_LABELS: Record<number, string> = {
+  7: 'Primera Semana',
+  14: 'Dos Semanas',
+  30: 'Un Mes',
+  60: 'Dos Meses',
+  100: 'Centenario',
+  365: 'Un Año',
+};
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+const getToday = (): string => new Date().toDateString();
+const getYesterday = (): string => new Date(Date.now() - 86400000).toDateString();
+
+const getInitialStreak = (): StreakData => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+
+  if (saved) {
+    try {
+      const data: StreakData = JSON.parse(saved);
+      const today = getToday();
+      const lastVisit = new Date(data.lastVisit).toDateString();
+      const yesterday = getYesterday();
+
+      // Already visited today
+      if (lastVisit === today) {
+        return data;
+      }
+
+      // Visited yesterday - increment streak
+      if (lastVisit === yesterday) {
+        const newCurrent = data.current + 1;
+        return {
+          current: newCurrent,
+          lastVisit: today,
+          longest: Math.max(data.longest, newCurrent),
+          milestones: data.milestones,
+        };
+      }
+
+      // Streak broken - reset to 1
+      return {
+        current: 1,
+        lastVisit: today,
+        longest: data.longest,
+        milestones: data.milestones,
+      };
+    } catch {
+      // Invalid data, reset
+    }
+  }
+
+  // First visit ever
+  return {
+    current: 1,
+    lastVisit: getToday(),
+    longest: 1,
+    milestones: [],
+  };
+};
+
+// =============================================================================
+// HOOK
+// =============================================================================
+
+export const useStreakTracking = () => {
+  const [streak, setStreak] = useState<StreakData>(getInitialStreak);
+  const [newMilestone, setNewMilestone] = useState<number | null>(null);
+
+  // Persist streak data
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(streak));
+  }, [streak]);
+
+  // Check for new milestones
+  useEffect(() => {
+    const unachievedMilestones = MILESTONES.filter(
+      m => streak.current >= m && !streak.milestones.includes(m)
+    );
+
+    if (unachievedMilestones.length > 0) {
+      const latestMilestone = Math.max(...unachievedMilestones);
+      setNewMilestone(latestMilestone);
+
+      // Update milestones in streak data
+      setStreak(prev => ({
+        ...prev,
+        milestones: [...prev.milestones, ...unachievedMilestones],
+      }));
+    }
+  }, [streak.current, streak.milestones]);
+
+  // Clear milestone notification
+  const dismissMilestone = useCallback(() => {
+    setNewMilestone(null);
+  }, []);
+
+  // Get milestone status
+  const milestones = useMemo<StreakMilestone[]>(() =>
+    MILESTONES.map(days => ({
+      days,
+      label: MILESTONE_LABELS[days],
+      achieved: streak.milestones.includes(days) || streak.current >= days,
+    })),
+    [streak.milestones, streak.current]
+  );
+
+  // Next milestone to achieve
+  const nextMilestone = useMemo(() => {
+    const next = MILESTONES.find(m => streak.current < m);
+    return next ? {
+      days: next,
+      label: MILESTONE_LABELS[next],
+      daysRemaining: next - streak.current,
+    } : null;
+  }, [streak.current]);
+
+  // Is streak at risk (last visit was yesterday)?
+  const isStreakAtRisk = useMemo(() => {
+    const lastVisitDate = new Date(streak.lastVisit).toDateString();
+    return lastVisitDate !== getToday();
+  }, [streak.lastVisit]);
+
+  return {
+    /** Current streak count */
+    current: streak.current,
+    /** Longest streak ever */
+    longest: streak.longest,
+    /** Last visit date */
+    lastVisit: streak.lastVisit,
+    /** All milestones with status */
+    milestones,
+    /** Next milestone to achieve */
+    nextMilestone,
+    /** Newly achieved milestone (for celebration) */
+    newMilestone,
+    /** Dismiss milestone notification */
+    dismissMilestone,
+    /** Is the streak at risk of breaking? */
+    isStreakAtRisk,
+  };
+};
+
+export default useStreakTracking;
