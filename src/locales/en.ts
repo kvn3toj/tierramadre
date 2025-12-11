@@ -152,4 +152,25 @@ export const en = {
     confirm: 'Confirm',
     noResults: 'No results',
   },
+
+  // Auth
+  auth: {
+    welcomeTitle: 'Tierra Madre',
+    welcomeSubtitle: 'Essence and Power of the Colombian Emerald',
+    guestAccess: 'Guest Mode',
+    guestDescription: 'Explore inventory and ambassadors without editing',
+    fullAccess: 'Full Access',
+    fullDescription: 'Create catalogs and content',
+    enterPin: 'Enter PIN',
+    pinLabel: 'Access PIN',
+    incorrectPin: 'Incorrect PIN',
+    unlockRequired: 'Full Access Required',
+    unlockFeature: 'To access this feature, enter the PIN',
+    guestModeBanner: 'Guest Mode: read-only',
+    unlock: 'Unlock',
+    back: 'Back',
+    studio: 'Studio',
+    privateAccess: 'PRIVATE ACCESS',
+    colombianEmeralds: 'Colombian Emeralds',
+  },
 };

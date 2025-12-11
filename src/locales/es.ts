@@ -152,4 +152,25 @@ export const es = {
     confirm: 'Confirmar',
     noResults: 'No hay resultados',
   },
+
+  // Auth
+  auth: {
+    welcomeTitle: 'Tierra Madre',
+    welcomeSubtitle: 'Esencia y Poder de la Esmeralda Colombiana',
+    guestAccess: 'Modo Invitado',
+    guestDescription: 'Explora inventario y embajadores sin editar',
+    fullAccess: 'Acceso Completo',
+    fullDescription: 'Crear catálogos y contenido',
+    enterPin: 'Ingresar PIN',
+    pinLabel: 'PIN de Acceso',
+    incorrectPin: 'PIN incorrecto',
+    unlockRequired: 'Acceso Completo Requerido',
+    unlockFeature: 'Para acceder a esta función, ingrese el PIN',
+    guestModeBanner: 'Modo Invitado: solo lectura',
+    unlock: 'Desbloquear',
+    back: 'Volver',
+    studio: 'Studio',
+    privateAccess: 'ACCESO PRIVADO',
+    colombianEmeralds: 'Colombian Emeralds',
+  },
 };

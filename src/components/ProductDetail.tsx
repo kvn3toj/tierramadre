@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useThemeMode } from '../contexts/ThemeContext';
+import { useCanEdit, useCanUpload } from '../hooks/usePermissions';
 import { useInventory } from '../hooks/useInventory';
 import { calculateTrustScore, getTrustBadge } from '../utils/trustScore';
 import { TrustBadgeCompact } from './TrustBadge';
@@ -104,6 +105,8 @@ export default function ProductDetail() {
   const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const canEdit = useCanEdit();
+  const canUpload = useCanUpload();
   const [showUploadZone, setShowUploadZone] = useState(false);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -480,23 +483,25 @@ export default function ProductDetail() {
                 gap: 1,
               }}
             >
-              {/* Edit Toggle */}
-              <Tooltip title={isEditing ? 'Terminar edición' : 'Editar galería'}>
-                <IconButton
-                  size="small"
-                  onClick={() => setIsEditing(!isEditing)}
-                  sx={{
-                    bgcolor: isEditing ? emeraldCore.dark : 'rgba(0,0,0,0.5)',
-                    color: '#fff',
-                    '&:hover': {
-                      bgcolor: isEditing ? emeraldCore.darker : 'rgba(0,0,0,0.7)',
-                    },
-                    backdropFilter: 'blur(4px)',
-                  }}
-                >
-                  {isEditing ? <Check size={18} /> : <Edit2 size={18} />}
-                </IconButton>
-              </Tooltip>
+              {/* Edit Toggle - Only show for users with edit permission */}
+              {canEdit && (
+                <Tooltip title={isEditing ? 'Terminar edición' : 'Editar galería'}>
+                  <IconButton
+                    size="small"
+                    onClick={() => setIsEditing(!isEditing)}
+                    sx={{
+                      bgcolor: isEditing ? emeraldCore.dark : 'rgba(0,0,0,0.5)',
+                      color: '#fff',
+                      '&:hover': {
+                        bgcolor: isEditing ? emeraldCore.darker : 'rgba(0,0,0,0.7)',
+                      },
+                      backdropFilter: 'blur(4px)',
+                    }}
+                  >
+                    {isEditing ? <Check size={18} /> : <Edit2 size={18} />}
+                  </IconButton>
+                </Tooltip>
+              )}
               <Chip
                 label={isAvailable ? 'Disponible' : 'Vendido'}
                 color={isAvailable ? 'success' : 'default'}
@@ -512,8 +517,8 @@ export default function ProductDetail() {
               <MediaGallery
                 media={mediaItems}
                 productName={displayName}
-                onAddMedia={() => setShowUploadZone(true)}
-                isEditing={isEditing}
+                onAddMedia={canUpload ? () => setShowUploadZone(true) : undefined}
+                isEditing={isEditing && canEdit}
               />
             ) : (
               <Box
@@ -538,24 +543,26 @@ export default function ProductDetail() {
                 >
                   Sin imágenes
                 </Typography>
-                <Button
-                  startIcon={<Upload size={18} />}
-                  variant="contained"
-                  onClick={() => setShowUploadZone(true)}
-                  sx={{
-                    mt: 2,
-                    bgcolor: emeraldCore.dark,
-                    '&:hover': { bgcolor: emeraldCore.darker },
-                  }}
-                >
-                  Subir Imágenes
-                </Button>
+                {canUpload && (
+                  <Button
+                    startIcon={<Upload size={18} />}
+                    variant="contained"
+                    onClick={() => setShowUploadZone(true)}
+                    sx={{
+                      mt: 2,
+                      bgcolor: emeraldCore.dark,
+                      '&:hover': { bgcolor: emeraldCore.darker },
+                    }}
+                  >
+                    Subir Imágenes
+                  </Button>
+                )}
               </Box>
             )}
           </Paper>
 
-          {/* Upload Zone Toggle */}
-          {mediaItems.length > 0 && (
+          {/* Upload Zone Toggle - Only show for users with upload permission */}
+          {mediaItems.length > 0 && canUpload && (
             <Button
               fullWidth
               variant="outlined"
@@ -576,18 +583,20 @@ export default function ProductDetail() {
             </Button>
           )}
 
-          {/* Collapsible Upload Zone */}
-          <Collapse in={showUploadZone}>
-            <Box sx={{ mt: 2 }}>
-              <MediaUploadZone
-                media={mediaItems}
-                onUpload={handleMediaUpload}
-                onDelete={handleMediaDelete}
-                onReorder={handleMediaReorder}
-                maxFiles={10}
-              />
-            </Box>
-          </Collapse>
+          {/* Collapsible Upload Zone - Only for users with upload permission */}
+          {canUpload && (
+            <Collapse in={showUploadZone}>
+              <Box sx={{ mt: 2 }}>
+                <MediaUploadZone
+                  media={mediaItems}
+                  onUpload={handleMediaUpload}
+                  onDelete={handleMediaDelete}
+                  onReorder={handleMediaReorder}
+                  maxFiles={10}
+                />
+              </Box>
+            </Collapse>
+          )}
         </Grid>
 
         {/* Right Column - Product Details */}
