@@ -32,10 +32,17 @@ import {
   RefreshCw,
   SlidersHorizontal,
   SearchX,
+  Heart,
+  X,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useInventory } from '../hooks/useInventory';
 import { useInventoryFiltering, type StatusFilter, type TypeFilter, type SortOption } from '../hooks/useInventoryFiltering';
+import { useFavorites } from '../hooks/useFavorites';
+import { usePagination } from '../hooks/usePagination';
+import { useBrowsingProgress } from '../hooks/useBrowsingProgress';
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
+import { useComparison } from '../hooks/useComparison';
 import { InventoryItem, TrustScoreBreakdown } from '../types';
 import CertificationUpload from './CertificationUpload';
 import AddToInventoryModal from './AddToInventoryModal';
@@ -44,8 +51,11 @@ import { formatCurrency, formatFullCurrency, getColorDot } from '../utils/format
 // Design System Tokens
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark, semanticColors } from '../design-system/tokens/colors';
 import { emeraldGradients } from '../design-system/tokens/gradients';
-// Extracted InventoryCard component (saves ~526 lines)
-import { InventoryCard } from './inventory';
+// Inventory components
+import { GridCard, ListRow } from './inventory';
+import ProgressBadge from './ProgressBadge';
+import ComparisonBar from './ComparisonBar';
+import ComparisonModal from './ComparisonModal';
 
 export default function InventoryBrowser() {
   const theme = useTheme();
@@ -74,12 +84,57 @@ export default function InventoryBrowser() {
     filterOptions,
   } = useInventoryFiltering({ inventory: inventoryData });
 
+  // Favorites hook
+  const { isFavorite, toggleFavorite, favoritesCount } = useFavorites();
+
+  // Pagination hook (24 items per page)
+  const pagination = usePagination({
+    totalItems: sortedInventory.length,
+    itemsPerPage: 24,
+  });
+
+  // Browsing progress hook (gamification)
+  const totalAvailable = useMemo(() =>
+    inventoryData.filter(i => i.estado?.toUpperCase() === 'DISPONIBLE').length,
+    [inventoryData]
+  );
+  const browsingProgress = useBrowsingProgress(totalAvailable);
+
+  // Recently viewed hook
+  const { addToRecent } = useRecentlyViewed();
+
+  // Comparison hook
+  const comparison = useComparison();
+
+  // Get visible items based on pagination
+  const visibleInventory = useMemo(
+    () => pagination.getVisibleItems(sortedInventory),
+    [pagination, sortedInventory]
+  );
+
   // Destructure filter values for convenience
   const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy } = filters;
 
   // UI-only state (not part of filtering)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+
+  // Filter by favorites if enabled
+  const displayInventory = useMemo(() => {
+    if (!showFavoritesOnly) return visibleInventory;
+    return visibleInventory.filter(item => isFavorite(item.item));
+  }, [visibleInventory, showFavoritesOnly, isFavorite]);
+
+  // Compute trust scores for comparison (only for selected items)
+  const trustScoresMap = useMemo(() => {
+    const map = new Map<number, TrustScoreBreakdown>();
+    comparison.selectedItems.forEach(item => {
+      const score = calculateTrustScore(item);
+      map.set(item.item, score);
+    });
+    return map;
+  }, [comparison.selectedItems]);
 
   // Certification dialog state
   const [certDialogOpen, setCertDialogOpen] = useState(false);
@@ -155,8 +210,13 @@ export default function InventoryBrowser() {
   }, []);
 
   const handleProductClick = useCallback((item: InventoryItem) => {
+    // Track browsing progress
+    browsingProgress.markViewed(item.item);
+    // Add to recently viewed
+    addToRecent(item.item);
+    // Navigate to product detail
     navigate(`/product/${item.item}`);
-  }, [navigate]);
+  }, [navigate, browsingProgress, addToRecent]);
 
   // Handle saving certifications
   const handleSaveCertifications = useCallback((certifications: InventoryItem['certifications']) => {
@@ -225,7 +285,17 @@ export default function InventoryBrowser() {
             </Box>
 
             {/* Quick stats - Subtle badges */}
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              {/* Progress Badge - Gamification */}
+              <ProgressBadge
+                level={browsingProgress.level}
+                percentageExplored={browsingProgress.percentageExplored}
+                viewedCount={browsingProgress.viewedCount}
+                totalItems={totalAvailable}
+                levelProgress={browsingProgress.levelProgress}
+                nextLevel={browsingProgress.nextLevel}
+              />
+
               <Box
                 sx={{
                   px: 2,
@@ -525,19 +595,137 @@ export default function InventoryBrowser() {
         </Collapse>
       </Paper>
 
+      {/* Active Filter Chips - Individual removal */}
+      {hasFilters && (
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+          {search && (
+            <Chip
+              label={`Búsqueda: "${search}"`}
+              size="small"
+              onDelete={() => setSearch('')}
+              deleteIcon={<X size={14} />}
+              sx={{
+                bgcolor: alpha(emeraldCore.primary, 0.1),
+                color: emeraldCore.dark,
+                '& .MuiChip-deleteIcon': { color: emeraldCore.dark },
+              }}
+            />
+          )}
+          {colorFilter !== 'all' && (
+            <Chip
+              icon={<Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: getColorDot(colorFilter), ml: 1 }} />}
+              label={colorFilter.replace('Verde ', '')}
+              size="small"
+              onDelete={() => setColorFilter('all')}
+              deleteIcon={<X size={14} />}
+              sx={{
+                bgcolor: alpha(emeraldCore.primary, 0.1),
+                color: emeraldCore.dark,
+                '& .MuiChip-deleteIcon': { color: emeraldCore.dark },
+              }}
+            />
+          )}
+          {qualityFilter !== 'all' && (
+            <Chip
+              label={`Calidad: ${qualityFilter}`}
+              size="small"
+              onDelete={() => setQualityFilter('all')}
+              deleteIcon={<X size={14} />}
+              sx={{
+                bgcolor: alpha(goldAccent.primary, 0.15),
+                color: goldAccent.dark,
+                '& .MuiChip-deleteIcon': { color: goldAccent.dark },
+              }}
+            />
+          )}
+          {typeFilter !== 'all' && (
+            <Chip
+              label={typeFilter === 'loose' ? 'Gemas' : 'Joyería'}
+              size="small"
+              onDelete={() => setTypeFilter('all')}
+              deleteIcon={<X size={14} />}
+              sx={{
+                bgcolor: alpha(emeraldCore.primary, 0.1),
+                color: emeraldCore.dark,
+                '& .MuiChip-deleteIcon': { color: emeraldCore.dark },
+              }}
+            />
+          )}
+          {statusFilter !== 'available' && statusFilter !== 'all' && (
+            <Chip
+              label={statusFilter === 'sold' ? 'Vendidas' : 'Todas'}
+              size="small"
+              onDelete={() => setStatusFilter('available')}
+              deleteIcon={<X size={14} />}
+              sx={{
+                bgcolor: alpha(semanticColors.error.main, 0.1),
+                color: semanticColors.error.main,
+                '& .MuiChip-deleteIcon': { color: semanticColors.error.main },
+              }}
+            />
+          )}
+          {shapeFilter !== 'all' && (
+            <Chip
+              label={`Talla: ${shapeFilter}`}
+              size="small"
+              onDelete={() => setShapeFilter('all')}
+              deleteIcon={<X size={14} />}
+              sx={{
+                bgcolor: alpha(emeraldCore.primary, 0.1),
+                color: emeraldCore.dark,
+                '& .MuiChip-deleteIcon': { color: emeraldCore.dark },
+              }}
+            />
+          )}
+          {(priceRange[0] !== priceMinMax.min || priceRange[1] !== priceMinMax.max) && (
+            <Chip
+              label={`${formatCurrency(priceRange[0])} - ${formatCurrency(priceRange[1])}`}
+              size="small"
+              onDelete={() => setPriceRange([priceMinMax.min, priceMinMax.max])}
+              deleteIcon={<X size={14} />}
+              sx={{
+                bgcolor: alpha(emeraldCore.primary, 0.1),
+                color: emeraldCore.dark,
+                '& .MuiChip-deleteIcon': { color: emeraldCore.dark },
+              }}
+            />
+          )}
+        </Box>
+      )}
+
       {/* Results info - Enhanced display */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
-        <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-          {sortedInventory.length === inventoryData.length ? (
-            <>
-              <strong style={{ color: theme.palette.text.primary }}>{inventoryData.length}</strong> esmeraldas en total
-            </>
-          ) : (
-            <>
-              Mostrando <strong style={{ color: theme.palette.text.primary }}>{sortedInventory.length}</strong> de {inventoryData.length} esmeraldas
-            </>
-          )}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+            {sortedInventory.length === inventoryData.length ? (
+              <>
+                <strong style={{ color: theme.palette.text.primary }}>{inventoryData.length}</strong> esmeraldas en total
+              </>
+            ) : (
+              <>
+                Mostrando <strong style={{ color: theme.palette.text.primary }}>{displayInventory.length}</strong> de {sortedInventory.length} esmeraldas
+              </>
+            )}
+          </Typography>
+          {/* Favorites toggle */}
+          <Chip
+            icon={<Heart size={14} fill={showFavoritesOnly ? '#ef4444' : 'none'} color={showFavoritesOnly ? '#ef4444' : '#6b7280'} />}
+            label={`Favoritos (${favoritesCount})`}
+            size="small"
+            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            sx={{
+              cursor: 'pointer',
+              bgcolor: showFavoritesOnly ? alpha('#ef4444', 0.1) : 'transparent',
+              color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
+              border: '1px solid',
+              borderColor: showFavoritesOnly ? '#ef4444' : isLight ? surfacesLight.border.light : surfacesDark.border.default,
+              fontWeight: showFavoritesOnly ? 600 : 400,
+              '&:hover': {
+                bgcolor: alpha('#ef4444', 0.1),
+              },
+            }}
+          />
+        </Box>
         <Typography variant="body2" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
           {formatFullCurrency(filteredStats.totalValue)} total
         </Typography>
@@ -557,34 +745,67 @@ export default function InventoryBrowser() {
             gap: 2.5,
           }}
         >
-          {sortedInventory.map((item) => (
-            <InventoryCard
+          {displayInventory.map((item) => (
+            <GridCard
               key={item.item}
               item={item}
-              isCompact={false}
               trustScore={itemTrustScores.get(item.item) || calculateTrustScore(item)}
+              isFavorite={isFavorite(item.item)}
               onCertClick={() => handleCertClick(item)}
-              onClick={() => handleProductClick(item)}
+              onItemClick={() => handleProductClick(item)}
+              onToggleFavorite={() => toggleFavorite(item.item)}
+              isSelectedForComparison={comparison.isSelected(item.item)}
+              onToggleComparison={() => comparison.toggleComparison(item)}
+              canAddToComparison={comparison.canAddMore}
             />
           ))}
         </Box>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          {sortedInventory.map((item) => (
-            <InventoryCard
+          {displayInventory.map((item) => (
+            <ListRow
               key={item.item}
               item={item}
-              isCompact={true}
               trustScore={itemTrustScores.get(item.item) || calculateTrustScore(item)}
+              isFavorite={isFavorite(item.item)}
               onCertClick={() => handleCertClick(item)}
-              onClick={() => handleProductClick(item)}
+              onItemClick={() => handleProductClick(item)}
+              onToggleFavorite={() => toggleFavorite(item.item)}
+              isSelectedForComparison={comparison.isSelected(item.item)}
+              onToggleComparison={() => comparison.toggleComparison(item)}
+              canAddToComparison={comparison.canAddMore}
             />
           ))}
         </Box>
       )}
 
+      {/* Load More Button */}
+      {pagination.hasMore && !showFavoritesOnly && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={pagination.loadMore}
+            sx={{
+              borderColor: emeraldCore.primary,
+              color: emeraldCore.primary,
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 4,
+              py: 1.5,
+              borderRadius: 2,
+              '&:hover': {
+                bgcolor: alpha(emeraldCore.primary, 0.08),
+                borderColor: emeraldCore.dark,
+              },
+            }}
+          >
+            Cargar más ({sortedInventory.length - pagination.visibleCount} restantes)
+          </Button>
+        </Box>
+      )}
+
       {/* Empty State - Enhanced with guidance */}
-      {sortedInventory.length === 0 && (
+      {(displayInventory.length === 0 || (showFavoritesOnly && favoritesCount === 0)) && (
         <Paper
           elevation={0}
           sx={{
@@ -698,6 +919,22 @@ export default function InventoryBrowser() {
           console.log('New product added:', itemNumber);
           // Optionally refresh the inventory
         }}
+      />
+
+      {/* Comparison Bar - Sticky bottom bar */}
+      <ComparisonBar
+        selectedItems={comparison.selectedItems}
+        onRemove={comparison.removeFromComparison}
+        onClear={comparison.clearComparison}
+        onCompare={comparison.openComparisonModal}
+      />
+
+      {/* Comparison Modal - Side-by-side comparison */}
+      <ComparisonModal
+        open={comparison.showComparisonModal}
+        onClose={comparison.closeComparisonModal}
+        items={comparison.selectedItems}
+        trustScores={trustScoresMap}
       />
     </Box>
   );
