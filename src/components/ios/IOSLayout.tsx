@@ -9,7 +9,7 @@
 import React, { useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box } from '@mui/material';
-import { Search, Add, FilterList, Settings } from '@mui/icons-material';
+import { Search, Add, FilterList, DarkMode, LightMode } from '@mui/icons-material';
 
 import IOSTabBar from './IOSTabBar';
 import IOSNavigationBar, { NavigationBarMode, NavigationAction } from './IOSNavigationBar';
@@ -17,6 +17,7 @@ import IOSMoreSheet from './IOSMoreSheet';
 import IOSSettingsSheet from './IOSSettingsSheet';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface PageConfig {
   title: string;
@@ -27,17 +28,13 @@ interface PageConfig {
   trailingActions?: NavigationAction[];
 }
 
-const getPageConfigs = (t: any, setSettingsSheetOpen: (open: boolean) => void): Record<string, PageConfig> => ({
+const getPageConfigs = (t: any, themeAction: NavigationAction): Record<string, PageConfig> => ({
   '/gallery': {
     title: t.pages.gallery.title,
     mode: 'large',
     subtitle: t.pages.gallery.subtitle,
     trailingActions: [
-      {
-        icon: Settings,
-        label: t.settings.theme,
-        onClick: () => setSettingsSheetOpen(true),
-      },
+      themeAction,
       {
         icon: Search,
         label: t.actions.search,
@@ -54,12 +51,14 @@ const getPageConfigs = (t: any, setSettingsSheetOpen: (open: boolean) => void): 
     title: t.pages.upload.title,
     mode: 'large',
     subtitle: t.pages.upload.subtitle,
+    trailingActions: [themeAction],
   },
   '/inventory': {
     title: t.pages.inventory.title,
     mode: 'large',
     subtitle: t.pages.inventory.subtitle,
     trailingActions: [
+      themeAction,
       {
         icon: Add,
         label: t.actions.add,
@@ -71,6 +70,13 @@ const getPageConfigs = (t: any, setSettingsSheetOpen: (open: boolean) => void): 
     title: t.pages.ambassadors.title,
     mode: 'large',
     subtitle: t.pages.ambassadors.subtitle,
+    trailingActions: [themeAction],
+  },
+  '/home': {
+    title: 'Tierra Madre',
+    mode: 'large',
+    subtitle: 'Esmeraldas Colombianas',
+    trailingActions: [themeAction],
   },
   '/catalog': {
     title: t.pages.catalog.title,
@@ -121,11 +127,19 @@ export interface IOSLayoutProps {
 const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   const location = useLocation();
   const { t } = useLanguage();
+  const { mode, toggleTheme } = useTheme();
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
   const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
 
+  // Theme toggle action for navigation bar
+  const themeAction: NavigationAction = useMemo(() => ({
+    icon: mode === 'dark' ? LightMode : DarkMode,
+    label: mode === 'dark' ? 'Modo claro' : 'Modo oscuro',
+    onClick: toggleTheme,
+  }), [mode, toggleTheme]);
+
   const pageConfig = useMemo((): PageConfig => {
-    const configs = getPageConfigs(t, setSettingsSheetOpen);
+    const configs = getPageConfigs(t, themeAction);
 
     // Check for exact match first
     const exactMatch = configs[location.pathname];
@@ -141,8 +155,9 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
     return {
       title: 'Tierra Madre',
       mode: 'compact',
+      trailingActions: [themeAction],
     };
-  }, [location.pathname, t, setSettingsSheetOpen]);
+  }, [location.pathname, t, themeAction]);
 
   return (
     <Box

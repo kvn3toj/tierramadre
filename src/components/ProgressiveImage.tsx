@@ -59,10 +59,11 @@ export default function ProgressiveImage({
   const { ref, inView } = useInView({
     triggerOnce: true,
     rootMargin: '200px', // Start loading 200px before entering viewport
-    skip: priority, // Load immediately if priority
+    skip: priority || quality === 'eco', // Skip observer for priority or eco mode
   });
 
-  const shouldLoad = priority || inView;
+  // For eco mode, always load immediately (rely on native lazy loading)
+  const shouldLoad = priority || quality === 'eco' || inView;
 
   // Map quality preset to Cloudinary quality setting
   const cloudinaryQuality = quality === 'eco' ? 'auto:eco' : quality === 'best' ? 'auto:best' : 'auto:good';

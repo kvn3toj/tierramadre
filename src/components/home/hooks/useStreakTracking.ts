@@ -109,7 +109,14 @@ const getInitialStreak = (): StreakData => {
 // =============================================================================
 
 export const useStreakTracking = () => {
-  const [streak, setStreak] = useState<StreakData>(getInitialStreak);
+  const [streak, setStreak] = useState<StreakData>(() => {
+    const initial = getInitialStreak();
+    // Ensure milestones is always an array (migration safety)
+    return {
+      ...initial,
+      milestones: Array.isArray(initial.milestones) ? initial.milestones : [],
+    };
+  });
   const [newMilestone, setNewMilestone] = useState<number | null>(null);
 
   // Persist streak data
@@ -117,11 +124,13 @@ export const useStreakTracking = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(streak));
   }, [streak]);
 
+  // Safe milestones array (always defined)
+  const safeMilestones = Array.isArray(streak.milestones) ? streak.milestones : [];
+
   // Check for new milestones
   useEffect(() => {
-    const currentMilestones = Array.isArray(streak.milestones) ? streak.milestones : [];
     const unachievedMilestones = MILESTONES.filter(
-      m => streak.current >= m && !currentMilestones.includes(m)
+      m => streak.current >= m && !safeMilestones.includes(m)
     );
 
     if (unachievedMilestones.length > 0) {
@@ -134,7 +143,7 @@ export const useStreakTracking = () => {
         milestones: [...(Array.isArray(prev.milestones) ? prev.milestones : []), ...unachievedMilestones],
       }));
     }
-  }, [streak.current, streak.milestones]);
+  }, [streak.current, safeMilestones]);
 
   // Clear milestone notification
   const dismissMilestone = useCallback(() => {
