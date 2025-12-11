@@ -88,14 +88,17 @@ function CellRenderer({
   };
   const isFavorite = favorites.includes(item.item);
 
+  // For single column (mobile), no side padding needed
+  const isSingleColumn = columnCount === 1;
+
   return (
     <div
       style={{
         ...style,
-        // Add gap padding inside each cell
-        paddingRight: GAP / 2,
+        // Add gap padding inside each cell (no side gaps on mobile single column)
+        paddingRight: isSingleColumn ? 0 : GAP / 2,
         paddingBottom: GAP,
-        paddingLeft: columnIndex === 0 ? 0 : GAP / 2,
+        paddingLeft: isSingleColumn || columnIndex === 0 ? 0 : GAP / 2,
       }}
     >
       {renderCard({
@@ -176,7 +179,7 @@ export default function VirtualGrid({
         cellComponent={CellRenderer}
         cellProps={cellProps}
         columnCount={columnCount}
-        columnWidth="25%" // Responsive: percentage of container width
+        columnWidth={`${100 / columnCount}%`} // Responsive: 100% xs, 50% sm, 33% md, 25% lg
         rowCount={rowCount}
         rowHeight={CARD_HEIGHT + GAP}
         overscanCount={2}
