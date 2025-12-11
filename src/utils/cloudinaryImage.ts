@@ -104,7 +104,8 @@ export function getCloudinaryUrl(url: string, options: CloudinaryOptions = {}): 
  */
 export function getResponsiveSrcSet(
   url: string,
-  widths: number[] = [280, 400, 560, 800, 1200]
+  widths: number[] = [280, 400, 560, 800],
+  quality: 'auto:eco' | 'auto:good' | 'auto:best' = 'auto:good'
 ): string {
   if (!url || !isCloudinaryUrl(url)) return '';
 
@@ -112,7 +113,7 @@ export function getResponsiveSrcSet(
     .map(width => {
       const optimizedUrl = getCloudinaryUrl(url, {
         width,
-        quality: 'auto:good',
+        quality,
         format: 'auto',
         crop: 'fill',
       });
