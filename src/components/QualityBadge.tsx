@@ -5,7 +5,7 @@
  */
 import { Box, Tooltip, Typography, alpha } from '@mui/material';
 import { useThemeMode } from '../contexts/ThemeContext';
-import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
+import { emeraldCore, goldAccent } from '../design-system/tokens/colors';
 
 type QualityTier = 'Estándar' | 'Fina' | 'SuperFina' | 'Sublime' | string;
 

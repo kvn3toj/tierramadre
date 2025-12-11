@@ -43,6 +43,7 @@ import { usePagination } from '../hooks/usePagination';
 import { useBrowsingProgress } from '../hooks/useBrowsingProgress';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { useComparison } from '../hooks/useComparison';
+import { useSavedFilters } from '../hooks/useSavedFilters';
 import { InventoryItem, TrustScoreBreakdown } from '../types';
 import CertificationUpload from './CertificationUpload';
 import AddToInventoryModal from './AddToInventoryModal';
@@ -56,6 +57,8 @@ import { GridCard, ListRow } from './inventory';
 import ProgressBadge from './ProgressBadge';
 import ComparisonBar from './ComparisonBar';
 import ComparisonModal from './ComparisonModal';
+import RecentlyViewedCarousel from './RecentlyViewedCarousel';
+import SavedFiltersDropdown from './SavedFiltersDropdown';
 
 export default function InventoryBrowser() {
   const theme = useTheme();
@@ -101,10 +104,13 @@ export default function InventoryBrowser() {
   const browsingProgress = useBrowsingProgress(totalAvailable);
 
   // Recently viewed hook
-  const { addToRecent } = useRecentlyViewed();
+  const { addToRecent, recentItems, clearRecent } = useRecentlyViewed();
 
   // Comparison hook
   const comparison = useComparison();
+
+  // Saved filters hook
+  const savedFilters = useSavedFilters();
 
   // Get visible items based on pagination
   const visibleInventory = useMemo(
@@ -135,6 +141,14 @@ export default function InventoryBrowser() {
     });
     return map;
   }, [comparison.selectedItems]);
+
+  // Map recent item IDs to actual inventory items
+  const recentlyViewedItems = useMemo(() => {
+    const itemMap = new Map(inventoryData.map(item => [item.item, item]));
+    return recentItems
+      .map(id => itemMap.get(id))
+      .filter((item): item is InventoryItem => item !== undefined);
+  }, [inventoryData, recentItems]);
 
   // Certification dialog state
   const [certDialogOpen, setCertDialogOpen] = useState(false);
@@ -482,6 +496,34 @@ export default function InventoryBrowser() {
             />
           )}
 
+          {/* Saved Filters Dropdown */}
+          <SavedFiltersDropdown
+            presets={savedFilters.presets}
+            onSavePreset={(name) => savedFilters.savePreset(name, {
+              search,
+              colorFilter,
+              qualityFilter,
+              typeFilter,
+              statusFilter,
+              shapeFilter,
+              priceRange,
+              sortBy,
+            })}
+            onApplyPreset={(preset) => {
+              // Apply saved filters
+              setSearch(preset.filters.search);
+              setColorFilter(preset.filters.colorFilter);
+              setQualityFilter(preset.filters.qualityFilter);
+              setTypeFilter(preset.filters.typeFilter as TypeFilter);
+              setStatusFilter(preset.filters.statusFilter as StatusFilter);
+              setShapeFilter(preset.filters.shapeFilter);
+              setPriceRange(preset.filters.priceRange);
+              setSortBy(preset.filters.sortBy as SortOption);
+            }}
+            onDeletePreset={savedFilters.deletePreset}
+            hasActiveFilters={hasFilters}
+          />
+
           <Box sx={{ flex: 1 }} />
 
           {/* View toggle */}
@@ -730,6 +772,15 @@ export default function InventoryBrowser() {
           {formatFullCurrency(filteredStats.totalValue)} total
         </Typography>
       </Box>
+
+      {/* Recently Viewed Carousel */}
+      {recentlyViewedItems.length > 0 && (
+        <RecentlyViewedCarousel
+          items={recentlyViewedItems}
+          onItemClick={handleProductClick}
+          onClear={clearRecent}
+        />
+      )}
 
       {/* Inventory Grid/List */}
       {viewMode === 'grid' ? (
