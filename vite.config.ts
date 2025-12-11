@@ -71,5 +71,24 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true
+  },
+  build: {
+    // Optimize chunk splitting for better caching
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core vendor libraries
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // UI framework
+          'vendor-mui': ['@mui/material', '@emotion/react', '@emotion/styled'],
+          // PDF generation libraries (lazy loaded)
+          'pdf-libs': ['jspdf', 'html2canvas'],
+          // Virtualization (for inventory grid)
+          'virtualization': ['react-window', 'react-virtualized-auto-sizer'],
+        },
+      },
+    },
+    // Warn at 1MB chunks (reasonable for lazy-loaded features)
+    chunkSizeWarningLimit: 1000,
   }
 })
