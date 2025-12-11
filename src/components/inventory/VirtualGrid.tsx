@@ -163,12 +163,19 @@ export default function VirtualGrid({
   // Calculate row count based on items and columns
   const rowCount = Math.ceil(items.length / columnCount);
 
+  // Mobile: 85% width for breathing room, desktop: full width divided by columns
+  const isMobile = columnCount === 1;
+  const mobileColumnWidth = '85%';
+
   return (
     <Box
       sx={{
         height: `calc(100vh - 350px)`,
         minHeight,
         width: '100%',
+        // Center grid on mobile for balanced margins
+        display: 'flex',
+        justifyContent: 'center',
         // Grid container styles for react-window 2.x
         '& > div': {
           overflowX: 'hidden !important',
@@ -179,7 +186,7 @@ export default function VirtualGrid({
         cellComponent={CellRenderer}
         cellProps={cellProps}
         columnCount={columnCount}
-        columnWidth={`${100 / columnCount}%`} // Responsive: 100% xs, 50% sm, 33% md, 25% lg
+        columnWidth={isMobile ? mobileColumnWidth : `${100 / columnCount}%`} // 85% xs (centered), 50% sm, 33% md, 25% lg
         rowCount={rowCount}
         rowHeight={CARD_HEIGHT + GAP}
         overscanCount={2}
