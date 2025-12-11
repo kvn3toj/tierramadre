@@ -111,6 +111,8 @@ function GridCard({
               src={item.mediaType === 'video' ? item.thumbnailUrl || item.imagen : item.imagen}
               alt={`${item.nombre} - ${item.color}`}
               height={180}
+              width={280}
+              layout="grid"
             />
 
             {/* Video play indicator */}
