@@ -1,29 +1,34 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { IOSLayout } from './components/ios';
-import Gallery from './components/Gallery';
-import EmeraldUploader from './components/EmeraldUploader';
-import EmeraldUploaderIOS from './components/EmeraldUploader.ios';
 import { getFeatureFlag } from './utils/featureFlags';
-import CalendarGrid from './components/CalendarGrid';
-import PDFExport from './components/PDFExport';
-import ImageNormalizer from './components/ImageNormalizer';
-import ReceiptGenerator from './components/ReceiptGenerator';
-import PriceSimulator from './components/PriceSimulator';
-import CertificatePreview from './components/CertificatePreview';
-import QuotationPreview from './components/QuotationPreview';
-import CotizacionGenerator from './components/CotizacionGenerator';
 import PinLock from './components/PinLock';
-import { SlidePreview } from './components/slides';
-import { CatalogBrowser } from './components/CatalogBrowser';
-import InventoryBrowser from './components/InventoryBrowser';
-import ProductDetail from './components/ProductDetail';
-import { AmbassadorDirectory } from './components/ambassador';
-import AsesorProfilePage from './components/ambassador/AsesorProfile';
 import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
+import LoadingFallback from './components/LoadingFallback';
+
+// Primary routes - keep in main bundle (frequently used)
 import Home from './components/Home';
-import DesignSystemPage from './pages/DesignSystemPage';
+import InventoryBrowser from './components/InventoryBrowser';
+import Gallery from './components/Gallery';
+import { CatalogBrowser } from './components/CatalogBrowser';
+
+// Secondary routes - lazy load (less frequent, heavy dependencies)
+const EmeraldUploader = lazy(() => import('./components/EmeraldUploader'));
+const EmeraldUploaderIOS = lazy(() => import('./components/EmeraldUploader.ios'));
+const CalendarGrid = lazy(() => import('./components/CalendarGrid'));
+const PDFExport = lazy(() => import('./components/PDFExport'));
+const ImageNormalizer = lazy(() => import('./components/ImageNormalizer'));
+const ReceiptGenerator = lazy(() => import('./components/ReceiptGenerator'));
+const PriceSimulator = lazy(() => import('./components/PriceSimulator'));
+const CertificatePreview = lazy(() => import('./components/CertificatePreview'));
+const QuotationPreview = lazy(() => import('./components/QuotationPreview'));
+const CotizacionGenerator = lazy(() => import('./components/CotizacionGenerator'));
+const SlidePreview = lazy(() => import('./components/slides').then(m => ({ default: m.SlidePreview })));
+const ProductDetail = lazy(() => import('./components/ProductDetail'));
+const AmbassadorDirectory = lazy(() => import('./components/ambassador').then(m => ({ default: m.AmbassadorDirectory })));
+const AsesorProfilePage = lazy(() => import('./components/ambassador/AsesorProfile'));
+const DesignSystemPage = lazy(() => import('./pages/DesignSystemPage'));
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'gallery' | 'upload' | 'catalog' | 'calendar' | 'slides' | 'normalizer' | 'receipts' | 'biblioteca' | 'simulator' | 'inventory' | 'ambassadors' | 'certificate' | 'cotizacion';
@@ -52,40 +57,96 @@ function AppContent() {
     <>
       <IOSLayout>
         <Routes>
+          {/* Primary routes - no Suspense needed (in main bundle) */}
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={<Home />} />
           <Route path="/gallery" element={<Gallery />} />
+          <Route path="/biblioteca" element={<CatalogBrowser />} />
+          <Route path="/inventory" element={<InventoryBrowser />} />
+
+          {/* Secondary routes - wrapped with Suspense (lazy loaded) */}
           <Route
             path="/upload"
             element={
-              getFeatureFlag('IOS_UPLOAD')
-                ? <EmeraldUploaderIOS onComplete={() => navigate('/gallery')} />
-                : <EmeraldUploader onComplete={() => navigate('/gallery')} />
+              <Suspense fallback={<LoadingFallback message="Cargando uploader..." />}>
+                {getFeatureFlag('IOS_UPLOAD')
+                  ? <EmeraldUploaderIOS onComplete={() => navigate('/gallery')} />
+                  : <EmeraldUploader onComplete={() => navigate('/gallery')} />
+                }
+              </Suspense>
             }
           />
-          <Route path="/calendar" element={<CalendarGrid />} />
-          <Route path="/catalog" element={<PDFExport />} />
-          <Route path="/normalizer" element={<ImageNormalizer />} />
-          <Route path="/slides" element={<SlidePreview />} />
-          <Route path="/receipts" element={<ReceiptGenerator />} />
-          <Route path="/biblioteca" element={<CatalogBrowser />} />
-          <Route path="/simulator" element={<PriceSimulator />} />
-          <Route path="/simulator/preview" element={<QuotationPreview />} />
-          <Route path="/certificate" element={<CertificatePreview />} />
-          <Route path="/cotizacion" element={<CotizacionGenerator />} />
-          <Route path="/inventory" element={<InventoryBrowser />} />
-          <Route path="/product/:itemId" element={<ProductDetail />} />
-          <Route path="/design-system" element={<DesignSystemPage />} />
+          <Route path="/calendar" element={
+            <Suspense fallback={<LoadingFallback message="Cargando calendario..." />}>
+              <CalendarGrid />
+            </Suspense>
+          } />
+          <Route path="/catalog" element={
+            <Suspense fallback={<LoadingFallback message="Cargando catálogo..." />}>
+              <PDFExport />
+            </Suspense>
+          } />
+          <Route path="/normalizer" element={
+            <Suspense fallback={<LoadingFallback message="Cargando normalizador..." />}>
+              <ImageNormalizer />
+            </Suspense>
+          } />
+          <Route path="/slides" element={
+            <Suspense fallback={<LoadingFallback message="Cargando slides..." />}>
+              <SlidePreview />
+            </Suspense>
+          } />
+          <Route path="/receipts" element={
+            <Suspense fallback={<LoadingFallback message="Cargando recibos..." />}>
+              <ReceiptGenerator />
+            </Suspense>
+          } />
+          <Route path="/simulator" element={
+            <Suspense fallback={<LoadingFallback message="Cargando simulador..." />}>
+              <PriceSimulator />
+            </Suspense>
+          } />
+          <Route path="/simulator/preview" element={
+            <Suspense fallback={<LoadingFallback message="Cargando cotización..." />}>
+              <QuotationPreview />
+            </Suspense>
+          } />
+          <Route path="/certificate" element={
+            <Suspense fallback={<LoadingFallback message="Cargando certificado..." />}>
+              <CertificatePreview />
+            </Suspense>
+          } />
+          <Route path="/cotizacion" element={
+            <Suspense fallback={<LoadingFallback message="Cargando cotización..." />}>
+              <CotizacionGenerator />
+            </Suspense>
+          } />
+          <Route path="/product/:itemId" element={
+            <Suspense fallback={<LoadingFallback message="Cargando producto..." />}>
+              <ProductDetail />
+            </Suspense>
+          } />
+          <Route path="/design-system" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <DesignSystemPage />
+            </Suspense>
+          } />
           <Route
             path="/ambassadors"
             element={
-              <AmbassadorDirectory
-                onViewProducts={handleViewAsesorProducts}
-                onContact={handleContactAsesor}
-              />
+              <Suspense fallback={<LoadingFallback message="Cargando embajadores..." />}>
+                <AmbassadorDirectory
+                  onViewProducts={handleViewAsesorProducts}
+                  onContact={handleContactAsesor}
+                />
+              </Suspense>
             }
           />
-          <Route path="/ambassadors/:slug" element={<AsesorProfilePage />} />
+          <Route path="/ambassadors/:slug" element={
+            <Suspense fallback={<LoadingFallback message="Cargando perfil..." />}>
+              <AsesorProfilePage />
+            </Suspense>
+          } />
         </Routes>
       </IOSLayout>
     </>
