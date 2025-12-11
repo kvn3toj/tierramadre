@@ -72,6 +72,14 @@ export default defineConfig({
     port: 3000,
     open: true
   },
+  optimizeDeps: {
+    include: [
+      '@emotion/react',
+      '@emotion/styled',
+      '@mui/material',
+      '@mui/material/styles',
+    ],
+  },
   build: {
     // Optimize chunk splitting for better caching
     rollupOptions: {
