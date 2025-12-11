@@ -108,7 +108,7 @@ function GridCard({
         {item.imagen ? (
           <Box sx={{ position: 'relative' }}>
             <ProgressiveImage
-              src={item.mediaType === 'video' ? item.thumbnailUrl || item.imagen : item.imagen}
+              src={item.imagen}
               alt={`${item.nombre} - ${item.color}`}
               height={180}
               width={280}

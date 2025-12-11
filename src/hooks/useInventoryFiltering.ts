@@ -27,6 +27,7 @@ export interface InventoryFilters {
   shapeFilter: string;
   priceRange: [number, number];
   sortBy: SortOption;
+  cantidadFilter: string; // 'all' | '1' | '2+'
 }
 
 export interface UseInventoryFilteringOptions {
@@ -45,6 +46,7 @@ export interface UseInventoryFilteringReturn {
   setShapeFilter: (shape: string) => void;
   setPriceRange: (range: [number, number]) => void;
   setSortBy: (sort: SortOption) => void;
+  setCantidadFilter: (cantidad: string) => void;
   clearFilters: () => void;
   hasFilters: boolean;
 
@@ -63,6 +65,7 @@ export interface UseInventoryFilteringReturn {
     colors: string[];
     shapes: string[];
     qualities: string[];
+    cantidades: number[];
     priceMinMax: { min: number; max: number };
   };
 }
@@ -99,6 +102,7 @@ export function useInventoryFiltering({
     initialFilters.priceRange || [0, Number.MAX_SAFE_INTEGER]
   );
   const [sortBy, setSortBy] = useState<SortOption>(initialFilters.sortBy || 'price-desc');
+  const [cantidadFilter, setCantidadFilter] = useState(initialFilters.cantidadFilter || 'all');
 
   // Sync priceRange to full range when inventory loads (ensures all products shown by default)
   useEffect(() => {
@@ -112,17 +116,20 @@ export function useInventoryFiltering({
     const colors = new Set<string>();
     const shapes = new Set<string>();
     const qualities = new Set<string>();
+    const cantidades = new Set<number>();
 
     inventory.forEach(item => {
       if (item.color) colors.add(item.color);
       if (item.talla) shapes.add(item.talla);
       if (item.calidad) qualities.add(item.calidad);
+      if (item.cantidad) cantidades.add(item.cantidad);
     });
 
     return {
       colors: Array.from(colors).sort(),
       shapes: Array.from(shapes).sort(),
       qualities: Array.from(qualities).sort(),
+      cantidades: Array.from(cantidades).sort((a, b) => a - b),
       priceMinMax,
     };
   }, [inventory, priceMinMax]);
@@ -155,44 +162,62 @@ export function useInventoryFiltering({
         (typeFilter === 'jewelry' && item.isJewelry);
       const matchesShape = shapeFilter === 'all' || item.talla === shapeFilter;
       const matchesPrice = item.precioCOP >= priceRange[0] && item.precioCOP <= priceRange[1];
+      const matchesCantidad =
+        cantidadFilter === 'all' ||
+        (cantidadFilter === '1' && item.cantidad === 1) ||
+        (cantidadFilter === '2+' && item.cantidad > 1);
 
-      return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice;
+      return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice && matchesCantidad;
     });
-  }, [inventory, search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange]);
+  }, [inventory, search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, cantidadFilter]);
 
-  // Sort inventory based on selected option
+  // Sort inventory based on selected option, with image priority
   const sortedInventory = useMemo(() => {
     const sorted = [...filteredInventory];
 
-    switch (sortBy) {
-      case 'name-asc':
-        return sorted.sort((a, b) => a.nombre.localeCompare(b.nombre));
-      case 'name-desc':
-        return sorted.sort((a, b) => b.nombre.localeCompare(a.nombre));
-      case 'price-asc':
-        return sorted.sort((a, b) => a.precioCOP - b.precioCOP);
-      case 'price-desc':
-        return sorted.sort((a, b) => b.precioCOP - a.precioCOP);
-      case 'quality-premium':
-        return sorted.sort((a, b) => {
+    // Define sort function based on user selection
+    const sortFn = (a: InventoryItem, b: InventoryItem): number => {
+      switch (sortBy) {
+        case 'name-asc':
+          return a.nombre.localeCompare(b.nombre);
+        case 'name-desc':
+          return b.nombre.localeCompare(a.nombre);
+        case 'price-asc':
+          return a.precioCOP - b.precioCOP;
+        case 'price-desc':
+          return b.precioCOP - a.precioCOP;
+        case 'quality-premium': {
           const aScore = QUALITY_ORDER[a.calidad.split(' ').pop() || ''] || 0;
           const bScore = QUALITY_ORDER[b.calidad.split(' ').pop() || ''] || 0;
           return bScore - aScore;
-        });
-      case 'item-number':
-        return sorted.sort((a, b) => a.item - b.item);
-      case 'newest':
-        return sorted.sort((a, b) => {
+        }
+        case 'item-number':
+          return a.item - b.item;
+        case 'newest': {
           // Parse dates in format "20-nov-2025"
           const parseDate = (dateStr: string) => {
             if (!dateStr) return 0;
             return new Date(dateStr).getTime();
           };
           return parseDate(b.fechaIngreso) - parseDate(a.fechaIngreso);
-        });
-      default:
-        return sorted.sort((a, b) => b.precioCOP - a.precioCOP);
-    }
+        }
+        default:
+          return b.precioCOP - a.precioCOP;
+      }
+    };
+
+    // Sort with image priority: items WITH images come first
+    return sorted.sort((a, b) => {
+      const aHasImage = Boolean(a.imagen || a.imageUrl);
+      const bHasImage = Boolean(b.imagen || b.imageUrl);
+
+      // If one has image and other doesn't, prioritize the one with image
+      if (aHasImage && !bHasImage) return -1;
+      if (!aHasImage && bHasImage) return 1;
+
+      // Both have images or both don't - apply user's sort
+      return sortFn(a, b);
+    });
   }, [filteredInventory, sortBy]);
 
   // Calculate filtered stats
@@ -209,6 +234,7 @@ export function useInventoryFiltering({
     setTypeFilter('all');
     setStatusFilter('all');
     setShapeFilter('all');
+    setCantidadFilter('all');
     setPriceRange([priceMinMax.min, priceMinMax.max]);
   }, [priceMinMax]);
 
@@ -221,10 +247,11 @@ export function useInventoryFiltering({
       typeFilter !== 'all' ||
       statusFilter !== 'all' ||
       shapeFilter !== 'all' ||
+      cantidadFilter !== 'all' ||
       priceRange[0] !== priceMinMax.min ||
       priceRange[1] !== priceMinMax.max
     );
-  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, priceMinMax]);
+  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, priceRange, priceMinMax]);
 
   return {
     filters: {
@@ -236,6 +263,7 @@ export function useInventoryFiltering({
       shapeFilter,
       priceRange,
       sortBy,
+      cantidadFilter,
     },
     setSearch,
     setColorFilter,
@@ -245,6 +273,7 @@ export function useInventoryFiltering({
     setShapeFilter,
     setPriceRange,
     setSortBy,
+    setCantidadFilter,
     clearFilters,
     hasFilters,
     filteredInventory,

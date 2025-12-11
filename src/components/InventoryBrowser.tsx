@@ -34,6 +34,8 @@ import {
   SearchX,
   Heart,
   X,
+  ArrowUpDown,
+  Layers,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useInventory } from '../hooks/useInventory';
@@ -84,6 +86,7 @@ export default function InventoryBrowser() {
     setShapeFilter,
     setPriceRange,
     setSortBy,
+    setCantidadFilter,
     clearFilters,
     hasFilters,
     sortedInventory,
@@ -129,7 +132,7 @@ export default function InventoryBrowser() {
   );
 
   // Destructure filter values for convenience
-  const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy } = filters;
+  const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter } = filters;
 
   // UI-only state (not part of filtering)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -245,10 +248,11 @@ export default function InventoryBrowser() {
     if (typeFilter !== 'all') count++;
     if (statusFilter !== 'all' && statusFilter !== 'available') count++; // available is default
     if (shapeFilter !== 'all') count++;
+    if (cantidadFilter !== 'all') count++;
     // Price range check
     if (priceRange[0] !== priceMinMax.min || priceRange[1] !== priceMinMax.max) count++;
     return count;
-  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, priceMinMax]);
+  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, priceRange, priceMinMax]);
 
   // Handle opening certification dialog
   const handleCertClick = useCallback((item: InventoryItem) => {
@@ -461,23 +465,45 @@ export default function InventoryBrowser() {
             </Select>
           </FormControl>
 
-          {/* Sort dropdown */}
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <Select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              displayEmpty
-              sx={{ borderRadius: 2 }}
+          {/* Sort dropdown - Prominent */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                color: theme.palette.text.secondary,
+                display: { xs: 'none', sm: 'block' },
+              }}
             >
-              <MenuItem value="price-desc">💰 Precio: Mayor a Menor</MenuItem>
-              <MenuItem value="price-asc">💸 Precio: Menor a Mayor</MenuItem>
-              <MenuItem value="name-asc">🔤 Nombre A-Z</MenuItem>
-              <MenuItem value="name-desc">🔤 Nombre Z-A</MenuItem>
-              <MenuItem value="quality-premium">⭐ Mejor Calidad Primero</MenuItem>
-              <MenuItem value="item-number">🔢 Número de Item</MenuItem>
-              <MenuItem value="newest">✨ Más Recientes</MenuItem>
-            </Select>
-          </FormControl>
+              Ordenar:
+            </Typography>
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <Select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                displayEmpty
+                startAdornment={
+                  <InputAdornment position="start">
+                    <ArrowUpDown size={16} color={emeraldCore.primary} />
+                  </InputAdornment>
+                }
+                sx={{
+                  borderRadius: 2,
+                  bgcolor: alpha(emeraldCore.primary, 0.05),
+                  '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.1) },
+                  '& .MuiSelect-select': { fontWeight: 500 },
+                }}
+              >
+                <MenuItem value="price-desc">Precio: Mayor a Menor</MenuItem>
+                <MenuItem value="price-asc">Precio: Menor a Mayor</MenuItem>
+                <MenuItem value="name-asc">Nombre A-Z</MenuItem>
+                <MenuItem value="name-desc">Nombre Z-A</MenuItem>
+                <MenuItem value="quality-premium">Mejor Calidad</MenuItem>
+                <MenuItem value="item-number">Numero de Item</MenuItem>
+                <MenuItem value="newest">Mas Recientes</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
 
           {/* Type filter */}
           <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -490,6 +516,25 @@ export default function InventoryBrowser() {
               <MenuItem value="all">Tipo</MenuItem>
               <MenuItem value="loose">Gemas</MenuItem>
               <MenuItem value="jewelry">Joyería</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Cantidad filter */}
+          <FormControl size="small" sx={{ minWidth: 130 }}>
+            <Select
+              value={cantidadFilter}
+              onChange={(e) => setCantidadFilter(e.target.value)}
+              displayEmpty
+              startAdornment={
+                <InputAdornment position="start">
+                  <Layers size={14} color={theme.palette.text.secondary} />
+                </InputAdornment>
+              }
+              sx={{ borderRadius: 2 }}
+            >
+              <MenuItem value="all">Cantidad</MenuItem>
+              <MenuItem value="1">1 unidad</MenuItem>
+              <MenuItem value="2+">2+ (Lotes)</MenuItem>
             </Select>
           </FormControl>
 
@@ -553,6 +598,7 @@ export default function InventoryBrowser() {
               shapeFilter,
               priceRange,
               sortBy,
+              cantidadFilter,
             })}
             onApplyPreset={(preset) => {
               // Apply saved filters
@@ -564,6 +610,9 @@ export default function InventoryBrowser() {
               setShapeFilter(preset.filters.shapeFilter);
               setPriceRange(preset.filters.priceRange);
               setSortBy(preset.filters.sortBy as SortOption);
+              if (preset.filters.cantidadFilter) {
+                setCantidadFilter(preset.filters.cantidadFilter);
+              }
             }}
             onDeletePreset={savedFilters.deletePreset}
             hasActiveFilters={hasFilters}
@@ -764,6 +813,19 @@ export default function InventoryBrowser() {
               label={`Talla: ${shapeFilter}`}
               size="small"
               onDelete={() => setShapeFilter('all')}
+              deleteIcon={<X size={14} />}
+              sx={{
+                bgcolor: alpha(emeraldCore.primary, 0.1),
+                color: emeraldCore.dark,
+                '& .MuiChip-deleteIcon': { color: emeraldCore.dark },
+              }}
+            />
+          )}
+          {cantidadFilter !== 'all' && (
+            <Chip
+              label={`Cantidad: ${cantidadFilter === '2+' ? 'Lotes' : cantidadFilter}`}
+              size="small"
+              onDelete={() => setCantidadFilter('all')}
               deleteIcon={<X size={14} />}
               sx={{
                 bgcolor: alpha(emeraldCore.primary, 0.1),

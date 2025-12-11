@@ -12,6 +12,26 @@ import { typography, fontFamilies, fontWeights, iosTextStyles, customTextStyles 
 import { spacingSystem, spacing, iosDimensions, safeAreaInsets, containerWidths, gridSystems } from './primitives/spacing';
 import { motion, easingCurves, durations, springPresets, transitions, keyframes, staggerDelays } from './primitives/motion';
 import { shadows, lightShadows, darkShadows, coloredShadows, innerShadows, componentShadows, textShadows } from './primitives/shadows';
+import {
+  geometry,
+  PHI,
+  PHI_INVERSE,
+  fibonacci,
+  goldenScale,
+  harmonicRatios,
+  aspectRatios,
+  sacredAngles,
+  emeraldCut,
+  emeraldRadius,
+  goldenSpacing,
+  goldenTypeScale,
+  goldenContainers,
+  goldenKeyframes,
+  goldenGrid,
+  goldenMultiple,
+  getFibonacci,
+  goldenSplit,
+} from './primitives/geometry';
 
 // Semantics
 import { brand, brandColors, brandGradients, statusColors, inventoryStatus } from './semantic/brand';
@@ -25,6 +45,26 @@ export { primitiveColors, typography, fontFamilies, fontWeights, iosTextStyles, 
 export { spacingSystem, spacing, iosDimensions, safeAreaInsets, containerWidths, gridSystems };
 export { motion, easingCurves, durations, springPresets, transitions, keyframes, staggerDelays };
 export { shadows, lightShadows, darkShadows, coloredShadows, innerShadows, componentShadows, textShadows };
+export {
+  geometry,
+  PHI,
+  PHI_INVERSE,
+  fibonacci,
+  goldenScale,
+  harmonicRatios,
+  aspectRatios,
+  sacredAngles,
+  emeraldCut,
+  emeraldRadius,
+  goldenSpacing,
+  goldenTypeScale,
+  goldenContainers,
+  goldenKeyframes,
+  goldenGrid,
+  goldenMultiple,
+  getFibonacci,
+  goldenSplit,
+};
 export { brand, brandColors, brandGradients, statusColors, inventoryStatus };
 export { surface, surfaceBackgrounds, elevatedSurfaces, glassSurfaces, borderColors, overlayBackgrounds, backdropFilters };
 export { text, textColors, brandText, statusText, linkColors, placeholderText, inverseText };
@@ -37,6 +77,7 @@ export type { Typography } from './primitives/typography';
 export type { SpacingSystem } from './primitives/spacing';
 export type { Motion } from './primitives/motion';
 export type { Shadows } from './primitives/shadows';
+export type { Geometry } from './primitives/geometry';
 export type { Brand } from './semantic/brand';
 export type { Surface } from './semantic/surface';
 export type { Text } from './semantic/text';
@@ -54,6 +95,7 @@ export const tokens = {
   spacing: spacingSystem,
   motion,
   shadows,
+  geometry,
 
   // Semantics
   brand,
