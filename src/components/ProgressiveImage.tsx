@@ -185,8 +185,8 @@ export default function ProgressiveImage({
         />
       )}
 
-      {/* Skeleton loading state (fallback when no LQIP) */}
-      {!loaded && !error && !lqipLoaded && (
+      {/* Skeleton loading state (fallback when no LQIP, skip for eco mode) */}
+      {!loaded && !error && !lqipLoaded && quality !== 'eco' && (
         <Skeleton
           variant="rectangular"
           width="100%"
