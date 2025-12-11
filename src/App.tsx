@@ -1,14 +1,15 @@
-import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
+import { useCallback, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { IOSLayout } from './components/ios';
 import { getFeatureFlag } from './utils/featureFlags';
-import PinLock from './components/PinLock';
+import { WelcomeScreen, GuestModeBanner } from './components/auth';
+import { useAuth } from './hooks/useAuth';
 import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
 import LoadingFallback from './components/LoadingFallback';
 
 // Primary routes - keep in main bundle (frequently used)
-import Home from './components/Home';
+import Home from './components/home';
 import InventoryBrowser from './components/InventoryBrowser';
 import Gallery from './components/Gallery';
 import { CatalogBrowser } from './components/CatalogBrowser';
@@ -56,6 +57,7 @@ function AppContent() {
   return (
     <>
       <IOSLayout>
+        <GuestModeBanner />
         <Routes>
           {/* Primary routes - no Suspense needed (in main bundle) */}
           <Route path="/" element={<Navigate to="/home" replace />} />
@@ -154,23 +156,16 @@ function AppContent() {
 }
 
 function App() {
-  const [isUnlocked, setIsUnlocked] = useState(() => {
-    // Check if already authenticated in this session
-    return sessionStorage.getItem('tierra-madre-auth') === 'true';
-  });
-
-  const handleUnlock = useCallback(() => {
-    setIsUnlocked(true);
-  }, []);
+  const { isAuthenticated } = useAuth();
 
   // Initialize PWA behaviors on mount
   useEffect(() => {
     initPWA();
   }, []);
 
-  // Show PIN lock screen if not authenticated
-  if (!isUnlocked) {
-    return <PinLock onUnlock={handleUnlock} />;
+  // Show welcome screen if not authenticated
+  if (!isAuthenticated) {
+    return <WelcomeScreen />;
   }
 
   return (
