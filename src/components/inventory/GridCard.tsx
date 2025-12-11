@@ -111,8 +111,9 @@ function GridCard({
               src={item.imagen}
               alt={`${item.nombre} - ${item.color}`}
               height={180}
-              width={280}
+              width={200}
               layout="grid"
+              quality="eco"
             />
 
             {/* Video play indicator */}

@@ -32,6 +32,8 @@ interface ProgressiveImageProps {
   layout?: 'grid' | 'full' | 'thumbnail';
   /** Enable LQIP blur-up effect */
   enableLQIP?: boolean;
+  /** Quality preset: 'eco' for fast loading, 'good' for balance, 'best' for quality */
+  quality?: 'eco' | 'good' | 'best';
 }
 
 export default function ProgressiveImage({
@@ -46,6 +48,7 @@ export default function ProgressiveImage({
   borderRadius = 0,
   layout = 'grid',
   enableLQIP = true,
+  quality = 'good',
 }: ProgressiveImageProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -55,11 +58,14 @@ export default function ProgressiveImage({
 
   const { ref, inView } = useInView({
     triggerOnce: true,
-    rootMargin: '100px', // Start loading 100px before entering viewport
+    rootMargin: '200px', // Start loading 200px before entering viewport
     skip: priority, // Load immediately if priority
   });
 
   const shouldLoad = priority || inView;
+
+  // Map quality preset to Cloudinary quality setting
+  const cloudinaryQuality = quality === 'eco' ? 'auto:eco' : quality === 'best' ? 'auto:best' : 'auto:good';
 
   // Generate optimized URLs
   const { optimizedSrc, srcSet, sizes, lqipSrc } = useMemo(() => {
@@ -67,20 +73,24 @@ export default function ProgressiveImage({
 
     const isCloudinary = isCloudinaryUrl(src);
 
+    // For eco quality, use smaller srcset widths for faster loading
+    const srcSetWidths = quality === 'eco' ? [200, 300, 400] : [280, 400, 560, 800];
+
     return {
       optimizedSrc: isCloudinary
         ? getCloudinaryUrl(src, {
             width: width || 400,
-            quality: 'auto:good',
+            quality: cloudinaryQuality,
             format: 'auto',
             crop: 'fill',
           })
         : src,
-      srcSet: isCloudinary ? getResponsiveSrcSet(src) : '',
+      srcSet: isCloudinary ? getResponsiveSrcSet(src, srcSetWidths, cloudinaryQuality) : '',
       sizes: isCloudinary ? getImageSizes(layout) : '',
-      lqipSrc: isCloudinary && enableLQIP ? getLQIPUrl(src) : '',
+      // Disable LQIP for eco mode to reduce requests
+      lqipSrc: isCloudinary && enableLQIP && quality !== 'eco' ? getLQIPUrl(src) : '',
     };
-  }, [src, width, layout, enableLQIP]);
+  }, [src, width, layout, enableLQIP, quality, cloudinaryQuality]);
 
   // Reset states when src changes
   useEffect(() => {
@@ -102,9 +112,9 @@ export default function ProgressiveImage({
     };
   }, [lqipSrc, enableLQIP]);
 
-  // Preload main image
+  // Preload main image (skip for eco mode - use native lazy loading)
   useEffect(() => {
-    if (!shouldLoad || !optimizedSrc) return;
+    if (!shouldLoad || !optimizedSrc || quality === 'eco') return;
 
     const img = new Image();
     img.src = optimizedSrc;
@@ -116,7 +126,7 @@ export default function ProgressiveImage({
       img.onload = null;
       img.onerror = null;
     };
-  }, [optimizedSrc, srcSet, shouldLoad]);
+  }, [optimizedSrc, srcSet, shouldLoad, quality]);
 
   const containerStyles = {
     position: 'relative' as const,
@@ -200,14 +210,16 @@ export default function ProgressiveImage({
           alt={alt}
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
+          fetchPriority={priority ? 'high' : 'auto'}
           onLoad={() => setLoaded(true)}
           onError={() => setError(true)}
           sx={{
             width: '100%',
             height: '100%',
             objectFit,
-            opacity: loaded ? 1 : 0,
-            transition: 'opacity 0.3s ease-in-out',
+            // For eco mode, show immediately; for others, fade in after JS preload
+            opacity: quality === 'eco' || loaded ? 1 : 0,
+            transition: quality === 'eco' ? 'none' : 'opacity 0.3s ease-in-out',
           }}
         />
       )}
