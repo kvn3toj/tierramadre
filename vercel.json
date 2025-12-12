@@ -24,14 +24,6 @@
       "maxDuration": 30,
       "memory": 512
     },
-    "api/sync-cloudinary-to-drive.js": {
-      "maxDuration": 300,
-      "memory": 1024
-    },
-    "api/export-cloudinary-images.js": {
-      "maxDuration": 60,
-      "memory": 512
-    },
     "api/sync-inventory-images.js": {
       "maxDuration": 60,
       "memory": 512
