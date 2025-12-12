@@ -47,3 +47,4 @@ docs/*.mp4
 release/
 .env*.local
 .env.vercel
+exports/
