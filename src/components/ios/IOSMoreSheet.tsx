@@ -7,9 +7,10 @@
  * - Backdrop dismiss
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, IconButton, Backdrop } from '@mui/material';
+import { Box, Typography, IconButton, Backdrop, Button } from '@mui/material';
+import { Lock } from '@mui/icons-material';
 import {
   Close,
   PhotoLibrary,
@@ -28,6 +29,8 @@ import {
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useIsGuest } from '../../hooks/useAuth';
+import UnlockPrompt from '../auth/UnlockPrompt';
 
 export interface MoreToolConfig {
   id: string;
@@ -137,6 +140,8 @@ export interface IOSMoreSheetProps {
 const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const isGuest = useIsGuest();
+  const [unlockOpen, setUnlockOpen] = useState(false);
 
   const MORE_TOOLS = getMoreTools(t);
 
@@ -147,6 +152,15 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
 
     navigate(tool.route);
     onClose();
+  };
+
+  const handleUnlockClose = () => {
+    setUnlockOpen(false);
+    // Check if user is still guest - if not, they upgraded successfully
+    // Close the sheet on next tick to allow state to update
+    setTimeout(() => {
+      onClose();
+    }, 100);
   };
 
   return (
@@ -233,7 +247,75 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
         </Box>
 
         {/* Tools Grid */}
-        <Box sx={{ padding: spacing.md, display: 'grid', gap: spacing.xs }}>
+        <Box sx={{ position: 'relative', padding: spacing.md }}>
+          {/* Blur Overlay for Guest Mode */}
+          {isGuest && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 2,
+                backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                borderRadius: spacing.md,
+              }}
+            >
+              <Lock
+                sx={{
+                  fontSize: 48,
+                  color: primitiveColors.emerald[500],
+                  mb: 2,
+                }}
+              />
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'var(--text-secondary)',
+                  mb: 2,
+                  textAlign: 'center',
+                  px: 3,
+                }}
+              >
+                {t.auth.unlockFeature}
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => setUnlockOpen(true)}
+                startIcon={<Lock />}
+                sx={{
+                  backgroundColor: primitiveColors.emerald[500],
+                  color: 'white',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  px: 4,
+                  py: 1.5,
+                  borderRadius: spacing.md,
+                  '&:hover': {
+                    backgroundColor: primitiveColors.emerald[600],
+                  },
+                }}
+              >
+                {t.auth.accessRequired}
+              </Button>
+            </Box>
+          )}
+
+          {/* Tools List */}
+          <Box
+            sx={{
+              display: 'grid',
+              gap: spacing.xs,
+              filter: isGuest ? 'blur(6px)' : 'none',
+              pointerEvents: isGuest ? 'none' : 'auto',
+              transition: 'filter 0.3s ease',
+            }}
+          >
           {MORE_TOOLS.map((tool) => {
             const Icon = tool.icon;
 
@@ -308,8 +390,15 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
               </Box>
             );
           })}
+          </Box>
         </Box>
       </Box>
+
+      {/* Unlock Prompt */}
+      <UnlockPrompt
+        open={unlockOpen}
+        onClose={handleUnlockClose}
+      />
     </>
   );
 };

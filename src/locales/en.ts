@@ -168,6 +168,7 @@ export const en = {
     unlockFeature: 'To access this feature, enter the PIN',
     guestModeBanner: 'Guest Mode: read-only',
     unlock: 'Unlock',
+    accessRequired: 'Request Access',
     back: 'Back',
     studio: 'Studio',
     privateAccess: 'PRIVATE ACCESS',

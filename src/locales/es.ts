@@ -168,6 +168,7 @@ export const es = {
     unlockFeature: 'Para acceder a esta función, ingrese el PIN',
     guestModeBanner: 'Modo Invitado: solo lectura',
     unlock: 'Desbloquear',
+    accessRequired: 'Solicitar Acceso',
     back: 'Volver',
     studio: 'Studio',
     privateAccess: 'ACCESO PRIVADO',
