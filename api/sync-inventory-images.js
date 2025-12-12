@@ -80,16 +80,36 @@ async function getCloudinaryImages() {
 }
 
 /**
+ * Find the inventory sheet name dynamically
+ */
+async function findInventorySheet(sheets, spreadsheetId) {
+  const metadata = await sheets.spreadsheets.get({
+    spreadsheetId,
+    fields: 'sheets.properties.title',
+  });
+
+  const sheetNames = metadata.data.sheets.map(s => s.properties.title);
+  const targetSheet = sheetNames.find(name =>
+    name.toLowerCase().includes('inventario') ||
+    name.toLowerCase().includes('inventory')
+  );
+
+  return targetSheet || sheetNames[0];
+}
+
+/**
  * Get current inventory from sheet
  */
 async function getInventory(sheets, spreadsheetId) {
+  const sheetName = await findInventorySheet(sheets, spreadsheetId);
+
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${SHEET_NAME}!A:Z`,
+    range: `${sheetName}!A:Z`,
   });
 
   const rows = response.data.values || [];
-  if (rows.length < 2) return { headers: [], items: [] };
+  if (rows.length < 2) return { headers: [], items: [], sheetName };
 
   const headers = rows[0];
   const items = rows.slice(1).map((row, index) => {
@@ -100,7 +120,7 @@ async function getInventory(sheets, spreadsheetId) {
     return item;
   });
 
-  return { headers, items };
+  return { headers, items, sheetName };
 }
 
 /**
@@ -133,7 +153,7 @@ export default async function handler(req, res) {
 
     // Get current inventory
     const sheets = getSheetsClient();
-    const { headers, items } = await getInventory(sheets, spreadsheetId);
+    const { headers, items, sheetName } = await getInventory(sheets, spreadsheetId);
 
     // Find imageUrl column
     const imageCol = findImageUrlColumn(headers);
@@ -194,7 +214,7 @@ export default async function handler(req, res) {
       // Prepare batch update
       const columnLetter = String.fromCharCode(65 + imageCol.index); // A=0, B=1, etc.
       const data = updates.map(update => ({
-        range: `${SHEET_NAME}!${columnLetter}${update.rowIndex}`,
+        range: `${sheetName}!${columnLetter}${update.rowIndex}`,
         values: [[update.newUrl]],
       }));
 
