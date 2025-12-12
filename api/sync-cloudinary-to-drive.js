@@ -100,6 +100,8 @@ async function fileExistsInDrive(drive, folderId, fileName) {
       q: `name='${fileName}' and '${folderId}' in parents and trashed=false`,
       fields: 'files(id, name)',
       spaces: 'drive',
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
     });
     return response.data.files.length > 0;
   } catch (error) {
@@ -139,9 +141,10 @@ async function uploadToDrive(drive, folderId, buffer, fileName, mimeType) {
   };
 
   const response = await drive.files.create({
-    requestBody: fileMetadata,
+    resource: fileMetadata,
     media,
     fields: 'id, name, webViewLink',
+    supportsAllDrives: true,
   });
 
   // Make file publicly viewable
@@ -151,6 +154,7 @@ async function uploadToDrive(drive, folderId, buffer, fileName, mimeType) {
       role: 'reader',
       type: 'anyone',
     },
+    supportsAllDrives: true,
   });
 
   return {
