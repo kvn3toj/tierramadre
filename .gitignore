@@ -48,3 +48,4 @@ release/
 .env*.local
 .env.vercel
 exports/
+downloads/

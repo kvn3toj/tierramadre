@@ -11,6 +11,10 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { google } from 'googleapis';
 
+// Sheet configuration (same as get-inventory-sheets.js)
+const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
+const SHEET_NAME = 'Inventario';
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dyam6g2os',
@@ -81,7 +85,7 @@ async function getCloudinaryImages() {
 async function getInventory(sheets, spreadsheetId) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: 'Inventory!A:Z',
+    range: `${SHEET_NAME}!A:Z`,
   });
 
   const rows = response.data.values || [];
@@ -121,10 +125,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const spreadsheetId = process.env.GOOGLE_SHEETS_ID;
-    if (!spreadsheetId) {
-      return res.status(500).json({ error: 'GOOGLE_SHEETS_ID not configured' });
-    }
+    const spreadsheetId = SPREADSHEET_ID;
 
     // Get Cloudinary images
     const cloudinaryImages = await getCloudinaryImages();
@@ -193,7 +194,7 @@ export default async function handler(req, res) {
       // Prepare batch update
       const columnLetter = String.fromCharCode(65 + imageCol.index); // A=0, B=1, etc.
       const data = updates.map(update => ({
-        range: `Inventory!${columnLetter}${update.rowIndex}`,
+        range: `${SHEET_NAME}!${columnLetter}${update.rowIndex}`,
         values: [[update.newUrl]],
       }));
 
