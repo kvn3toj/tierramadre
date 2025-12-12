@@ -31,6 +31,10 @@
     "api/export-cloudinary-images.js": {
       "maxDuration": 60,
       "memory": 512
+    },
+    "api/sync-inventory-images.js": {
+      "maxDuration": 60,
+      "memory": 512
     }
   },
   "rewrites": [
