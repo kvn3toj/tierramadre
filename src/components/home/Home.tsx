@@ -34,6 +34,7 @@ import OracleSection from './sections/OracleSection';
 const MeditationSection = lazy(() => import('./sections/MeditationSection'));
 const ProductsSection = lazy(() => import('./sections/ProductsSection'));
 const KnowledgeSection = lazy(() => import('./sections/KnowledgeSection'));
+const GallerySection = lazy(() => import('./sections/GallerySection'));
 
 // =============================================================================
 // LOADING FALLBACK
@@ -206,6 +207,15 @@ const Home: React.FC = () => {
           </Suspense>
         </ErrorBoundary>
       )}
+
+      {/* ================================================================== */}
+      {/* GALLERY SECTION - Gems and Rings showcase */}
+      {/* ================================================================== */}
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <Suspense fallback={<SectionSkeleton height={250} />}>
+          <GallerySection />
+        </Suspense>
+      </ErrorBoundary>
 
       {/* ================================================================== */}
       {/* ORACLE SECTION - Daily wisdom */}
