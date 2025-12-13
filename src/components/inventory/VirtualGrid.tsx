@@ -170,7 +170,7 @@ export default function VirtualGrid({
   return (
     <Box
       sx={{
-        height: `calc(100vh - 350px)`,
+        height: `calc(100vh - 280px)`,
         minHeight,
         width: '100%',
         // Center grid on mobile for balanced margins
