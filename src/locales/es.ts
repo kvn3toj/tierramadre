@@ -8,12 +8,14 @@ export const es = {
     home: 'Inicio',
     gallery: 'Galería',
     upload: 'Subir',
-    inventory: 'Inventario',
-    ambassadors: 'Asesores',
+    inventory: 'Tesoros',
+    ambassadors: 'Embajadores',
     catalog: 'Catálogo',
     calendar: 'Calendario',
     more: 'Más',
     tools: 'Herramientas',
+    vault: 'Bóveda Secreta',
+    accounts: 'Cuentas',
   },
 
   // Pages
@@ -37,12 +39,20 @@ export const es = {
       subtitle: 'Agregar esmeraldas',
     },
     inventory: {
-      title: 'Inventario',
-      subtitle: 'Gestionar colección',
+      title: 'Tesoros',
+      subtitle: 'Colección de esmeraldas',
     },
     ambassadors: {
       title: 'Embajadores',
       subtitle: 'Líderes comunitarios',
+    },
+    vault: {
+      title: 'Bóveda Secreta',
+      subtitle: 'Tesoros únicos y exóticos',
+    },
+    accounts: {
+      title: 'Cuentas',
+      subtitle: 'Gestiona operaciones financieras',
     },
     catalog: {
       title: 'Catálogo',
@@ -84,8 +94,16 @@ export const es = {
       subtitle: 'Agregar nuevas esmeraldas',
     },
     ambassadors: {
-      label: 'Asesores',
+      label: 'Embajadores',
       subtitle: 'Red de expertos',
+    },
+    vault: {
+      label: 'Bóveda Secreta',
+      subtitle: 'Tesoros únicos y exóticos',
+    },
+    accounts: {
+      label: 'Cuentas',
+      subtitle: 'Simulador, recibos y cotizaciones',
     },
     catalog: {
       label: 'Crear Catálogo',

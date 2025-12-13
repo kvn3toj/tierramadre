@@ -288,4 +288,8 @@ export interface InventoryItem {
   imageGallery?: EmeraldImageGallery;
   imageVerificationStatus?: ImageVerificationStatus;
   lastImageVerification?: string;    // ISO date of last verification
+
+  // Location and exclusivity fields
+  city?: 'Cali' | 'Bogotá';         // City location for filtering
+  isVaultExclusive?: boolean;        // True if item is part of Secret Vault collection
 }

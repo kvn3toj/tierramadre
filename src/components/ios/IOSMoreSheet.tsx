@@ -20,11 +20,10 @@ import {
   CalendarMonth,
   Slideshow,
   AutoFixHigh,
-  Receipt,
-  Calculate,
   Verified,
-  RequestQuote,
+  AccountBalance,
 } from '@mui/icons-material';
+import { Vault } from 'lucide-react';
 
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
@@ -42,6 +41,7 @@ export interface MoreToolConfig {
 }
 
 const getMoreTools = (t: any): MoreToolConfig[] => [
+  // Contenido
   {
     id: 'gallery',
     label: t.tools.gallery.label,
@@ -59,22 +59,6 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     color: '#2196F3',
   },
   {
-    id: 'ambassadors',
-    label: t.tools.ambassadors.label,
-    subtitle: t.tools.ambassadors.subtitle,
-    icon: People,
-    route: '/ambassadors',
-    color: '#9C27B0',
-  },
-  {
-    id: 'catalog',
-    label: t.tools.catalog.label,
-    subtitle: t.tools.catalog.subtitle,
-    icon: MenuBook,
-    route: '/catalog',
-    color: '#FF5722',
-  },
-  {
     id: 'calendar',
     label: t.tools.calendar.label,
     subtitle: t.tools.calendar.subtitle,
@@ -90,29 +74,39 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     route: '/slides',
     color: '#FF9800',
   },
+  // Comunidad
   {
-    id: 'normalizer',
-    label: t.tools.normalizer.label,
-    subtitle: t.tools.normalizer.subtitle,
-    icon: AutoFixHigh,
-    route: '/normalizer',
-    color: '#4CAF50',
+    id: 'ambassadors',
+    label: t.tools.ambassadors.label,
+    subtitle: t.tools.ambassadors.subtitle,
+    icon: People,
+    route: '/ambassadors',
+    color: '#9C27B0',
+  },
+  // Negocios
+  {
+    id: 'vault',
+    label: t.tools.vault.label,
+    subtitle: t.tools.vault.subtitle,
+    icon: Vault as any,
+    route: '/boveda-secreta',
+    color: '#D4AF37', // Gold
   },
   {
-    id: 'receipts',
-    label: t.tools.receipts.label,
-    subtitle: t.tools.receipts.subtitle,
-    icon: Receipt,
-    route: '/receipts',
-    color: '#00BCD4',
+    id: 'accounts',
+    label: t.tools.accounts.label,
+    subtitle: t.tools.accounts.subtitle,
+    icon: AccountBalance,
+    route: '/cuentas',
+    color: '#3F51B5', // Blue
   },
   {
-    id: 'simulator',
-    label: t.tools.simulator.label,
-    subtitle: t.tools.simulator.subtitle,
-    icon: Calculate,
-    route: '/simulator',
-    color: '#3F51B5',
+    id: 'catalog',
+    label: t.tools.catalog.label,
+    subtitle: t.tools.catalog.subtitle,
+    icon: MenuBook,
+    route: '/catalog',
+    color: '#FF5722',
   },
   {
     id: 'certificate',
@@ -120,15 +114,16 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     subtitle: t.tools.certificate.subtitle,
     icon: Verified,
     route: '/certificate',
-    color: '#D4AF37', // Gold from design system
+    color: '#00BCD4',
   },
+  // Herramientas
   {
-    id: 'cotizacion',
-    label: t.tools.cotizacion.label,
-    subtitle: t.tools.cotizacion.subtitle,
-    icon: RequestQuote,
-    route: '/cotizacion',
-    color: '#7C3AED', // Purple - distinct from other tools
+    id: 'normalizer',
+    label: t.tools.normalizer.label,
+    subtitle: t.tools.normalizer.subtitle,
+    icon: AutoFixHigh,
+    route: '/normalizer',
+    color: '#4CAF50',
   },
 ];
 

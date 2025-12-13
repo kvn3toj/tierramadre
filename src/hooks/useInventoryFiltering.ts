@@ -18,6 +18,8 @@ export type SortOption =
   | 'item-number'
   | 'newest';
 
+export type CityFilter = 'all' | 'Cali' | 'Bogotá';
+
 export interface InventoryFilters {
   search: string;
   colorFilter: string;
@@ -28,6 +30,7 @@ export interface InventoryFilters {
   priceRange: [number, number];
   sortBy: SortOption;
   cantidadFilter: string; // 'all' | '1' | '2+'
+  cityFilter: CityFilter;
 }
 
 export interface UseInventoryFilteringOptions {
@@ -47,6 +50,7 @@ export interface UseInventoryFilteringReturn {
   setPriceRange: (range: [number, number]) => void;
   setSortBy: (sort: SortOption) => void;
   setCantidadFilter: (cantidad: string) => void;
+  setCityFilter: (city: CityFilter) => void;
   clearFilters: () => void;
   hasFilters: boolean;
 
@@ -103,6 +107,7 @@ export function useInventoryFiltering({
   );
   const [sortBy, setSortBy] = useState<SortOption>(initialFilters.sortBy || 'price-desc');
   const [cantidadFilter, setCantidadFilter] = useState(initialFilters.cantidadFilter || 'all');
+  const [cityFilter, setCityFilter] = useState<CityFilter>(initialFilters.cityFilter || 'all');
 
   // Sync priceRange to full range when inventory loads (ensures all products shown by default)
   useEffect(() => {
@@ -166,10 +171,11 @@ export function useInventoryFiltering({
         cantidadFilter === 'all' ||
         (cantidadFilter === '1' && item.cantidad === 1) ||
         (cantidadFilter === '2+' && item.cantidad > 1);
+      const matchesCity = cityFilter === 'all' || item.city === cityFilter;
 
-      return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice && matchesCantidad;
+      return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice && matchesCantidad && matchesCity;
     });
-  }, [inventory, search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, cantidadFilter]);
+  }, [inventory, search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, cantidadFilter, cityFilter]);
 
   // Sort inventory based on selected option, with image priority
   const sortedInventory = useMemo(() => {
@@ -235,6 +241,7 @@ export function useInventoryFiltering({
     setStatusFilter('all');
     setShapeFilter('all');
     setCantidadFilter('all');
+    setCityFilter('all');
     setPriceRange([priceMinMax.min, priceMinMax.max]);
   }, [priceMinMax]);
 
@@ -248,10 +255,11 @@ export function useInventoryFiltering({
       statusFilter !== 'all' ||
       shapeFilter !== 'all' ||
       cantidadFilter !== 'all' ||
+      cityFilter !== 'all' ||
       priceRange[0] !== priceMinMax.min ||
       priceRange[1] !== priceMinMax.max
     );
-  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, priceRange, priceMinMax]);
+  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, cityFilter, priceRange, priceMinMax]);
 
   return {
     filters: {
@@ -264,6 +272,7 @@ export function useInventoryFiltering({
       priceRange,
       sortBy,
       cantidadFilter,
+      cityFilter,
     },
     setSearch,
     setColorFilter,
@@ -274,6 +283,7 @@ export function useInventoryFiltering({
     setPriceRange,
     setSortBy,
     setCantidadFilter,
+    setCityFilter,
     clearFilters,
     hasFilters,
     filteredInventory,
