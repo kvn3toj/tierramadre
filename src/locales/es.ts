@@ -20,7 +20,7 @@ export const es = {
   pages: {
     home: {
       title: 'Inicio',
-      subtitle: 'Tierra Madre',
+      subtitle: 'Tierra Mädre',
       welcome: 'Bienvenido',
       dailyFact: 'Dato del día',
       newProducts: 'Nuevos productos',
