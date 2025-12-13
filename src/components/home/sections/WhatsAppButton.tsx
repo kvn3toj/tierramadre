@@ -4,9 +4,8 @@
  * Floating WhatsApp contact button.
  */
 
-import React from 'react';
 import { motion } from 'framer-motion';
-import { Fab, Tooltip } from '@mui/material';
+import { Box, Fab, Tooltip } from '@mui/material';
 import { WhatsApp } from '@mui/icons-material';
 
 // =============================================================================
@@ -22,15 +21,22 @@ const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER.replace('+', '')}?text=Ho
 
 export const WhatsAppButton: React.FC = () => {
   return (
-    <motion.div
+    <Box
+      component={motion.div}
       initial={{ opacity: 0, scale: 0 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 1, type: 'spring', stiffness: 200 }}
-      style={{
+      sx={{
         position: 'fixed',
-        bottom: 100,
+        // Position above tab bar: 65px (tab bar) + safe area + 16px margin
+        bottom: 'calc(81px + env(safe-area-inset-bottom))',
         left: 16,
-        zIndex: 1000,
+        zIndex: 999, // Below tab bar (1000) but above content
+        // Landscape phone: adjust for smaller tab bar
+        '@media (orientation: landscape) and (max-height: 500px)': {
+          bottom: 'calc(65px + env(safe-area-inset-bottom))',
+          left: 8,
+        },
       }}
     >
       <Tooltip title="Contáctanos por WhatsApp" placement="right">
@@ -49,12 +55,18 @@ export const WhatsAppButton: React.FC = () => {
               transform: 'scale(1.1)',
             },
             transition: 'all 0.2s ease',
+            // Smaller button in landscape
+            '@media (orientation: landscape) and (max-height: 500px)': {
+              width: 48,
+              height: 48,
+              minHeight: 48,
+            },
           }}
         >
           <WhatsApp sx={{ fontSize: 28 }} />
         </Fab>
       </Tooltip>
-    </motion.div>
+    </Box>
   );
 };
 
