@@ -73,9 +73,8 @@ const getPageConfigs = (t: any, themeAction: NavigationAction): Record<string, P
     trailingActions: [themeAction],
   },
   '/home': {
-    title: 'Tierra Madre',
-    mode: 'large',
-    subtitle: 'Esmeraldas Colombianas',
+    title: 'Tierra Mädre',
+    mode: 'compact',
     trailingActions: [themeAction],
   },
   '/catalog': {
@@ -153,7 +152,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
 
     // Default config
     return {
-      title: 'Tierra Madre',
+      title: 'Tierra Mädre',
       mode: 'compact',
       trailingActions: [themeAction],
     };

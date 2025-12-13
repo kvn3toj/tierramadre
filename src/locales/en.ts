@@ -20,7 +20,7 @@ export const en = {
   pages: {
     home: {
       title: 'Home',
-      subtitle: 'Tierra Madre',
+      subtitle: 'Tierra Mädre',
       welcome: 'Welcome',
       dailyFact: 'Daily fact',
       newProducts: 'New products',
@@ -155,7 +155,7 @@ export const en = {
 
   // Auth
   auth: {
-    welcomeTitle: 'Tierra Madre',
+    welcomeTitle: 'Tierra Mädre',
     welcomeSubtitle: 'Essence and Power of the Colombian Emerald',
     guestAccess: 'Guest Mode',
     guestDescription: 'Explore inventory and ambassadors without editing',
