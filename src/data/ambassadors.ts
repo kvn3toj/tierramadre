@@ -121,101 +121,6 @@ export const SAMPLE_AMBASSADORS: AmbassadorProfile[] = [
     lastActive: new Date().toISOString()
   },
   {
-    id: 'amb_002',
-    userId: 'user_molano',
-    slug: 'a-molano',
-    displayName: 'A. Molano',
-    tagline: 'Tu Asesor de Confianza en Esmeraldas',
-    bio: 'Apasionado por las esmeraldas colombianas y comprometido con brindar el mejor servicio. Me especializo en gemas de diferentes calidades para todos los presupuestos.',
-    photoUrl: '',
-    bannerUrl: '',
-    contactMethods: [
-      { type: 'whatsapp', value: '+57 315 777 8899', primary: true, verified: true }
-    ],
-    socialLinks: [
-      { platform: 'instagram', url: 'https://instagram.com/molano_esmeraldas', username: '@molano_esmeraldas' }
-    ],
-    location: { city: 'Bogota', region: 'Cundinamarca', country: 'Colombia' },
-    languages: ['es'],
-    timezone: 'America/Bogota',
-    specialties: [
-      { name: 'Gemas', description: 'Amplia variedad de piedras sin montar', yearsExperience: 6 },
-      { name: 'Precios Accesibles', description: 'Opciones para todos los presupuestos', yearsExperience: 6 }
-    ],
-    priceRange: 'mid-range',
-    expertise: [
-      { area: 'loose-stones', level: 'expert', description: 'Especialista en gemas' },
-      { area: 'retail', level: 'intermediate', description: 'Venta directa al consumidor' }
-    ],
-    certifications: [],
-    template: {
-      type: 'tm-official',
-      colorScheme: {
-        primary: '#059669',
-        secondary: '#064e3b',
-        accent: '#fbbf24',
-        background: '#ffffff',
-        text: '#1f2937'
-      },
-      layout: 'professional',
-      modules: {
-        portfolio: true,
-        testimonials: true,
-        certifications: false,
-        aboutMe: true,
-        featuredProducts: true,
-        recentSales: false,
-        trustBadges: true,
-        contactForm: true
-      },
-      featuredProducts: [],
-      highlightedTestimonials: []
-    },
-    trustScore: {
-      overall: 78,
-      components: {
-        transactionHistory: 75,
-        customerSatisfaction: 88,
-        responseTime: 92,
-        expertise: 55,
-        authenticity: 70,
-        reliability: 85
-      },
-      confidence: 0.82,
-      lastCalculated: new Date().toISOString()
-    },
-    reputation: {
-      totalSales: 89,
-      totalRevenue: 75000000,
-      averageOrderValue: 842697,
-      repeatCustomerRate: 0.35,
-      stats30d: { sales: 8, revenue: 7500000, avgRating: 4.7, responseTime: 0.8 },
-      stats90d: { sales: 22, revenue: 19000000, avgRating: 4.6, responseTime: 0.9 },
-      statsAllTime: { sales: 89, revenue: 75000000, avgRating: 4.5, responseTime: 1.0 },
-      averageRating: 4.5,
-      totalReviews: 52,
-      ratingDistribution: { 5: 35, 4: 12, 3: 4, 2: 1, 1: 0 },
-      avgResponseTime: 0.8,
-      responseRate: 0.95,
-      verifiedPurchases: 89,
-      certifiedProductsSold: 62,
-      disputeRate: 0.02,
-      resolutionRate: 0.95
-    },
-    status: 'active',
-    verificationStatus: {
-      level: 'verified',
-      badges: [
-        { type: 'identity-verified', earnedAt: '2022-06-10', criteria: 'Documentos verificados' },
-        { type: 'fast-responder', earnedAt: '2024-11-01', expiresAt: '2024-12-01', criteria: 'Respuesta < 1 hora' }
-      ],
-      verifiedAt: '2022-06-10',
-      verifiedBy: 'Tierra Madre Admin'
-    },
-    joinedDate: '2022-06-01',
-    lastActive: new Date().toISOString()
-  },
-  {
     id: 'amb_003',
     userId: 'user_escobar',
     slug: 'jm-escobar',
@@ -636,22 +541,6 @@ export const SAMPLE_TESTIMONIALS: Testimonial[] = [
     status: 'approved',
     createdAt: '2024-10-05',
     updatedAt: '2024-10-05'
-  },
-  {
-    id: 'test_003',
-    ambassadorId: 'amb_002',
-    customerId: 'cust_003',
-    customerName: 'Lucia Fernandez',
-    rating: 5,
-    title: 'Respuesta super rapida!',
-    comment: 'Molano contesto mi mensaje en minutos y me envio videos de varias opciones. Muy profesional y amable.',
-    purchaseDate: '2024-11-10',
-    purchaseValue: 750000,
-    verified: true,
-    verificationMethod: 'purchase',
-    status: 'approved',
-    createdAt: '2024-11-12',
-    updatedAt: '2024-11-12'
   },
   {
     id: 'test_004',
