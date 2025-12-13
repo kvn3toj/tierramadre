@@ -11,6 +11,10 @@ import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { alpha } from '@mui/material/styles';
 
+// Check if Google Client ID is configured
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const isGoogleConfigured = Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length > 10);
+
 export default function UserProfileCard() {
   const { user, isSignedIn, signIn, signOut, preferences } = useGoogleAuth();
 
@@ -106,7 +110,12 @@ export default function UserProfileCard() {
     );
   }
 
-  // Not signed in - show login prompt
+  // Not signed in - show login prompt or coming soon
+  // Don't render if Google is not configured
+  if (!isGoogleConfigured) {
+    return null;
+  }
+
   return (
     <Card
       sx={{
