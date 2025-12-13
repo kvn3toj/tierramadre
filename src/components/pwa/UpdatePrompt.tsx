@@ -1,58 +1,71 @@
-import { useEffect, useState, useCallback } from 'react';
+/**
+ * UpdatePrompt Component
+ *
+ * Shows a snackbar notification when a new PWA version is available.
+ * Works with vite-plugin-pwa's generated service worker.
+ */
+
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Snackbar, Button, Box, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 
-// In development, the PWA virtual module is not available
-// We'll use a simple fallback that does nothing
-const isDev = import.meta.env.DEV;
-
 export default function UpdatePrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
-  const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
 
-  // Register service worker and listen for updates
   useEffect(() => {
-    // Skip in development mode
-    if (isDev || !('serviceWorker' in navigator)) {
+    // Skip if service workers aren't supported
+    if (!('serviceWorker' in navigator)) {
       return;
     }
 
     let intervalId: ReturnType<typeof setInterval>;
 
-    const registerSW = async () => {
+    const checkForUpdates = async () => {
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js', {
-          scope: '/',
-        });
-        setSwRegistration(registration);
+        // Get existing registration or register new one
+        const registration = await navigator.serviceWorker.ready;
+        registrationRef.current = registration;
 
-        // Check for updates immediately
-        registration.update();
+        // Check for waiting worker
+        if (registration.waiting) {
+          setWaitingWorker(registration.waiting);
+          setShowPrompt(true);
+        }
 
-        // Check for updates every 30 minutes
-        intervalId = setInterval(() => {
-          registration.update();
-        }, 30 * 60 * 1000);
-
-        // Listen for new service worker waiting
+        // Listen for new service worker
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New content is available
+                setWaitingWorker(newWorker);
                 setShowPrompt(true);
               }
             });
           }
         });
+
+        // Check for updates periodically (every 30 minutes)
+        intervalId = setInterval(() => {
+          registration.update();
+        }, 30 * 60 * 1000);
+
+        // Initial update check
+        registration.update();
       } catch (error) {
-        console.error('SW registration error:', error);
+        console.error('Service worker registration error:', error);
       }
     };
 
-    registerSW();
+    checkForUpdates();
+
+    // Listen for controller change (happens when skipWaiting is called)
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
 
     return () => {
       if (intervalId) {
@@ -62,22 +75,15 @@ export default function UpdatePrompt() {
   }, []);
 
   const handleUpdate = useCallback(() => {
-    if (swRegistration?.waiting) {
-      // Tell the waiting service worker to take control
-      swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    if (waitingWorker) {
+      // Tell the waiting service worker to become active
+      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
     }
-    // Reload the page to load the new version
-    window.location.reload();
-  }, [swRegistration]);
+  }, [waitingWorker]);
 
   const handleClose = useCallback(() => {
     setShowPrompt(false);
   }, []);
-
-  // Don't render anything in dev mode
-  if (isDev) {
-    return null;
-  }
 
   return (
     <Snackbar

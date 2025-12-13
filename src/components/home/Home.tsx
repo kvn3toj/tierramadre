@@ -20,8 +20,9 @@ import { DailyOracle } from '../../data/homeContent';
 import { useGamification, AchievementToast } from './gamification';
 import { QuickActions } from './navigation';
 import { useAnalytics } from './hooks';
-import { InstallButton } from '../pwa';
+import { InstallButton, NotificationPermission } from '../pwa';
 import { isPWA } from '../../utils/pwa';
+import { useNewProductNotification } from '../../hooks/useNewProductNotification';
 
 // =============================================================================
 // LAZY LOADED SECTIONS
@@ -119,6 +120,9 @@ const Home: React.FC = () => {
   useEffect(() => {
     analytics.trackPageView('home');
   }, [analytics]);
+
+  // Check for new products and notify
+  useNewProductNotification({ productCount: inventory.length });
 
   // Log gamification state for debugging (remove in production)
   if (process.env.NODE_ENV === 'development') {
@@ -273,6 +277,13 @@ const Home: React.FC = () => {
           <InstallButton variant="card" />
         </Box>
       )}
+
+      {/* ================================================================== */}
+      {/* NOTIFICATION PERMISSION - Gentle prompt for notifications */}
+      {/* ================================================================== */}
+      <Box sx={{ px: 2, mb: 2 }}>
+        <NotificationPermission variant="card" />
+      </Box>
 
       {/* ================================================================== */}
       {/* MEDITATION SECTION - Lazy loaded */}
