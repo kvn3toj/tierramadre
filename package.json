@@ -24,6 +24,7 @@
     "@emotion/styled": "^11.13.0",
     "@mui/icons-material": "^6.1.0",
     "@mui/material": "^6.1.0",
+    "@react-oauth/google": "^0.12.2",
     "cloudinary": "^2.8.0",
     "date-fns": "^4.1.0",
     "formidable": "^3.5.4",
