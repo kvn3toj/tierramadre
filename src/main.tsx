@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App';
@@ -10,19 +10,30 @@ import './design-system/tokens/css-variables.css';
 
 // Google OAuth Client ID - set in Vercel environment variables
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const isGoogleConfigured = Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length > 10);
+
+// Conditional wrapper for Google OAuth
+function GoogleWrapper({ children }: { children: ReactNode }) {
+  if (isGoogleConfigured) {
+    return (
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        <GoogleAuthProvider>{children}</GoogleAuthProvider>
+      </GoogleOAuthProvider>
+    );
+  }
+  return <>{children}</>;
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <LanguageProvider>
-        <ThemeProvider>
-          <AuthProvider>
-            <GoogleAuthProvider>
-              <App />
-            </GoogleAuthProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </LanguageProvider>
-    </GoogleOAuthProvider>
+    <LanguageProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <GoogleWrapper>
+            <App />
+          </GoogleWrapper>
+        </AuthProvider>
+      </ThemeProvider>
+    </LanguageProvider>
   </React.StrictMode>
 );

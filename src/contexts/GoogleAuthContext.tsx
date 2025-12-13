@@ -227,10 +227,23 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
 // HOOK
 // =============================================================================
 
+// Default stub when Google OAuth is not configured
+const defaultContext: GoogleAuthContextType = {
+  user: null,
+  preferences: {},
+  isSignedIn: false,
+  isLoading: false,
+  signIn: async () => {},
+  signOut: () => {},
+  updatePreferences: async () => {},
+  syncWithSheets: async () => {},
+};
+
 export function useGoogleAuth() {
   const context = useContext(GoogleAuthContext);
+  // Return stub if provider not available (Google OAuth not configured)
   if (context === undefined) {
-    throw new Error('useGoogleAuth must be used within a GoogleAuthProvider');
+    return defaultContext;
   }
   return context;
 }
