@@ -12,6 +12,7 @@ import { Close, DarkMode, LightMode, Language } from '@mui/icons-material';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import MeditationReminderSetting from '../settings/MeditationReminderSetting';
 
 export interface IOSSettingsSheetProps {
   open: boolean;
@@ -244,6 +245,9 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
               }}
             />
           </Box>
+
+          {/* Meditation Reminder */}
+          <MeditationReminderSetting />
         </Box>
       </Box>
     </>
