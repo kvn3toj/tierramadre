@@ -8,6 +8,7 @@ import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
 import LoadingFallback from './components/LoadingFallback';
 import UpdatePrompt from './components/pwa/UpdatePrompt';
+import { LiquidGlassProvider } from './contexts/LiquidGlassContext';
 
 // Primary routes - keep in main bundle (frequently used)
 import Home from './components/home';
@@ -196,10 +197,12 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <AppContent />
-      <UpdatePrompt />
-    </BrowserRouter>
+    <LiquidGlassProvider>
+      <BrowserRouter>
+        <AppContent />
+        <UpdatePrompt />
+      </BrowserRouter>
+    </LiquidGlassProvider>
   );
 }
 
