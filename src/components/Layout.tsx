@@ -387,25 +387,37 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
             borderColor: colors.border,
           }}
         >
-          <Toolbar sx={{ minHeight: 56 }}>
+          <Toolbar sx={{ minHeight: 56, gap: 1 }}>
             <IconButton
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ mr: 2, color: 'text.primary' }}
+              sx={{ color: 'text.primary' }}
             >
               <Menu size={22} />
             </IconButton>
-            <Box
-              component="img"
-              src="/logo-tierra-madre.png"
-              alt="Tierra Madre"
-              sx={{ height: 28, mr: 1.5 }}
-            />
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.primary', flex: 1 }}>
-              {currentPage?.label}
-            </Typography>
-            <IconButton onClick={toggleTheme} sx={{ color: 'text.primary' }}>
-              {isLight ? <Moon size={20} /> : <Sun size={20} />}
+            {/* Brand Logo + Name */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+              <Box
+                component="img"
+                src="/logo-tierra-madre.png"
+                alt="Tierra Mädre"
+                sx={{ height: 26 }}
+              />
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontWeight: 700,
+                  color: emeraldCore.primary,
+                  letterSpacing: '-0.02em',
+                  fontSize: '0.9rem',
+                }}
+              >
+                Tierra Mädre
+              </Typography>
+            </Box>
+            {/* Theme Toggle */}
+            <IconButton onClick={toggleTheme} size="small" sx={{ color: emeraldCore.primary }}>
+              {isLight ? <Moon size={18} /> : <Sun size={18} />}
             </IconButton>
           </Toolbar>
         </AppBar>

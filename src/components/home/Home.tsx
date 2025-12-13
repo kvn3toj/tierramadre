@@ -197,7 +197,18 @@ const Home: React.FC = () => {
       </ErrorBoundary>
 
       {/* ================================================================== */}
-      {/* ORACLE SECTION - High priority */}
+      {/* PRODUCTS SECTION - High visibility, right after hero */}
+      {/* ================================================================== */}
+      {newProducts.length > 0 && (
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
+          <Suspense fallback={<SectionSkeleton height={200} />}>
+            <ProductsSection products={newProducts} />
+          </Suspense>
+        </ErrorBoundary>
+      )}
+
+      {/* ================================================================== */}
+      {/* ORACLE SECTION - Daily wisdom */}
       {/* ================================================================== */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <OracleSection
@@ -224,17 +235,6 @@ const Home: React.FC = () => {
           <MeditationSection />
         </Suspense>
       </ErrorBoundary>
-
-      {/* ================================================================== */}
-      {/* PRODUCTS SECTION - Lazy loaded */}
-      {/* ================================================================== */}
-      {newProducts.length > 0 && (
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
-          <Suspense fallback={<SectionSkeleton height={200} />}>
-            <ProductsSection products={newProducts} />
-          </Suspense>
-        </ErrorBoundary>
-      )}
 
       {/* ================================================================== */}
       {/* KNOWLEDGE SECTION - Lazy loaded (lowest priority) */}
