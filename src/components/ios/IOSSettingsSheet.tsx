@@ -13,6 +13,7 @@ import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import MeditationReminderSetting from '../settings/MeditationReminderSetting';
+import { UserProfileCard } from '../auth';
 
 export interface IOSSettingsSheetProps {
   open: boolean;
@@ -105,7 +106,10 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
         </Box>
 
         {/* Settings List */}
-        <Box sx={{ padding: spacing.md, display: 'grid', gap: spacing.xs }}>
+        <Box sx={{ padding: spacing.md, display: 'grid', gap: spacing.md }}>
+          {/* User Profile / Google Sign In */}
+          <UserProfileCard />
+
           {/* Theme Toggle */}
           <Box
             sx={{
