@@ -49,3 +49,6 @@ release/
 .env.vercel
 exports/
 downloads/
+
+# Gallery images (served from Cloudinary)
+public/gallery/

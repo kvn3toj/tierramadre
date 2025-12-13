@@ -71,28 +71,38 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
   }
 
   return (
-    <Box sx={{ px: 2, mb: 2 }} component="section" aria-labelledby="products-title">
+    <Box sx={{ px: 2, mb: 3 }} component="section" aria-labelledby="products-title">
       <motion.div variants={fadeInUp} initial="initial" animate="animate">
-        {/* Section Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-          <Typography
-            id="products-title"
-            variant="h6"
-            component="h2"
-            sx={{ fontWeight: 600, color: 'var(--text-primary)' }}
-          >
-            {t.pages.home.newProducts}
-          </Typography>
-          <Button
-            size="small"
-            endIcon={<ArrowForward />}
-            onClick={() => navigate('/inventory')}
-            aria-label="Ver todo el inventario"
-            sx={{ color: emeraldCore.primary }}
-          >
-            Ver Todo
-          </Button>
-        </Box>
+        {/* Section Container - differentiated from gallery carousels */}
+        <Box
+          sx={{
+            bgcolor: 'rgba(255,255,255,0.08)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: 3,
+            p: 2,
+            border: '1px solid rgba(255,255,255,0.1)',
+          }}
+        >
+          {/* Section Header */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+            <Typography
+              id="products-title"
+              variant="h6"
+              component="h2"
+              sx={{ fontWeight: 600, color: 'white' }}
+            >
+              {t.pages.home.newProducts}
+            </Typography>
+            <Button
+              size="small"
+              endIcon={<ArrowForward />}
+              onClick={() => navigate('/inventory')}
+              aria-label="Ver todo el inventario"
+              sx={{ color: emeraldCore.light || emeraldCore.primary }}
+            >
+              Ver Todo
+            </Button>
+          </Box>
 
         {/* Carousel Container */}
         <Box
@@ -143,16 +153,19 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                     sx={{
                       minWidth: 160,
                       maxWidth: 160,
-                      bgcolor: 'var(--surface-secondary)',
+                      bgcolor: 'rgba(0,0,0,0.4)',
+                      backdropFilter: 'blur(10px)',
                       cursor: 'pointer',
                       flexShrink: 0,
                       transition: 'all 0.2s ease-out',
+                      border: '1px solid rgba(255,255,255,0.1)',
                       '&:focus-visible': {
                         outline: `3px solid ${emeraldCore.primary}`,
                         outlineOffset: 2,
                       },
                       '&:hover': {
-                        boxShadow: '0 8px 24px rgba(0, 174, 122, 0.15)',
+                        boxShadow: '0 8px 24px rgba(0, 174, 122, 0.2)',
+                        bgcolor: 'rgba(0,0,0,0.5)',
                       },
                     }}
                   >
@@ -164,16 +177,16 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                       loading="lazy"
                       sx={{ objectFit: 'cover' }}
                     />
-                    <CardContent sx={{ p: 1.5 }}>
+                    <CardContent sx={{ p: 1.5, bgcolor: 'transparent' }}>
                       <Typography
                         variant="body2"
                         component="h3"
-                        sx={{ fontWeight: 600, color: 'var(--text-primary)' }}
+                        sx={{ fontWeight: 600, color: 'white' }}
                         noWrap
                       >
                         {product.nombre || `Esmeralda #${product.item}`}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
+                      <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
                         {typeof product.peso === 'number' ? `${product.peso} ct` : product.peso}
                       </Typography>
                     </CardContent>
@@ -184,9 +197,10 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
           </motion.div>
         </Box>
 
-        {/* Keyboard Navigation Hint (screen reader only) */}
-        <Box sx={{ position: 'absolute', left: -10000, width: 1, height: 1, overflow: 'hidden' }}>
-          <p>Usa las flechas izquierda y derecha para navegar entre productos</p>
+          {/* Keyboard Navigation Hint (screen reader only) */}
+          <Box sx={{ position: 'absolute', left: -10000, width: 1, height: 1, overflow: 'hidden' }}>
+            <p>Usa las flechas izquierda y derecha para navegar entre productos</p>
+          </Box>
         </Box>
       </motion.div>
     </Box>
