@@ -41,6 +41,40 @@ export const easingCurves = {
    * iOS Ease In Out - iOS native curve
    */
   iosEaseInOut: 'cubic-bezier(0.42, 0, 0.58, 1)',
+
+  // =========================================================================
+  // LIQUID GLASS CURVES (iOS 26 / WWDC 2025)
+  // =========================================================================
+
+  /**
+   * Liquid In - Softened entrance
+   * Elements appear with fluid, organic motion
+   */
+  liquidIn: 'cubic-bezier(0.2, 0.0, 0.0, 1.0)',
+
+  /**
+   * Liquid Out - Softened exit
+   * Elements disappear with grace
+   */
+  liquidOut: 'cubic-bezier(0.0, 0.0, 0.2, 1.0)',
+
+  /**
+   * Liquid In Out - Full fluid motion
+   * Standard Liquid Glass transition
+   */
+  liquidInOut: 'cubic-bezier(0.4, 0.0, 0.0, 1.0)',
+
+  /**
+   * Liquid Spring - Organic bounce
+   * Subtle overshoot for interactive elements
+   */
+  liquidSpring: 'cubic-bezier(0.2, 1.4, 0.4, 1.0)',
+
+  /**
+   * Liquid Soft - Extra smooth
+   * For background/ambient animations
+   */
+  liquidSoft: 'cubic-bezier(0.25, 0.1, 0.25, 1.0)',
 } as const;
 
 /**
@@ -83,6 +117,34 @@ export const durations = {
    * iOS standard push/pop navigation
    */
   pageTransition: '350ms',
+
+  // =========================================================================
+  // LIQUID GLASS DURATIONS (iOS 26)
+  // =========================================================================
+
+  /**
+   * 250ms - Liquid Fast
+   * Quick but smooth transitions
+   */
+  liquidFast: '250ms',
+
+  /**
+   * 400ms - Liquid Normal
+   * Standard Liquid Glass timing
+   */
+  liquidNormal: '400ms',
+
+  /**
+   * 600ms - Liquid Slow
+   * Deliberate, luxurious motion
+   */
+  liquidSlow: '600ms',
+
+  /**
+   * 800ms - Liquid Ambient
+   * Background/ambient animations
+   */
+  liquidAmbient: '800ms',
 } as const;
 
 /**
@@ -173,6 +235,35 @@ export const transitions = {
    * Snappy Spring - Quick bounce
    */
   springSnappy: `all ${durations.fast} ${springPresets.snappy.cubicBezier}`,
+
+  // =========================================================================
+  // LIQUID GLASS TRANSITIONS (iOS 26)
+  // =========================================================================
+
+  /**
+   * Liquid Standard - Default Liquid Glass motion
+   */
+  liquid: `all ${durations.liquidNormal} ${easingCurves.liquidInOut}`,
+
+  /**
+   * Liquid Fast - Quick interactions
+   */
+  liquidFast: `all ${durations.liquidFast} ${easingCurves.liquidInOut}`,
+
+  /**
+   * Liquid Spring - With subtle overshoot
+   */
+  liquidSpring: `all ${durations.liquidNormal} ${easingCurves.liquidSpring}`,
+
+  /**
+   * Liquid Blur - Optimized for backdrop-filter
+   */
+  liquidBlur: `backdrop-filter ${durations.liquidNormal} ${easingCurves.liquidSoft}, -webkit-backdrop-filter ${durations.liquidNormal} ${easingCurves.liquidSoft}`,
+
+  /**
+   * Liquid Transform - GPU-optimized
+   */
+  liquidTransform: `transform ${durations.liquidNormal} ${easingCurves.liquidSpring}, opacity ${durations.liquidFast} ${easingCurves.liquidIn}`,
 } as const;
 
 /**

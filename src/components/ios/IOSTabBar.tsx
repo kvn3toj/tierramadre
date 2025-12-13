@@ -1,14 +1,16 @@
 /**
  * IOSTabBar Component
  *
- * iOS HIG-compliant bottom tab bar navigation
- * - 5 primary tabs: Gallery, Upload, Inventory, Ambassadors, More
+ * iOS HIG-compliant bottom tab bar navigation with Liquid Glass effects (iOS 26)
+ * - 4 primary tabs: Home, Treasures, Library, More
+ * - Dynamic shrink/expand on scroll
+ * - Specular highlights on active tab
  * - Badge support for notifications
  * - Haptic feedback on tab change
  * - Safe area insets for modern iOS devices
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import {
@@ -21,7 +23,11 @@ import { Gem } from 'lucide-react';
 // Design tokens
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
+import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
+import { dynamicBlur, liquidSaturation, specularHighlights, tabBarConfig } from '../../design-system/tokens/liquid-glass';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
+import useScrollShrink from '../../hooks/useScrollShrink';
 
 export interface TabConfig {
   id: string;
@@ -31,6 +37,7 @@ export interface TabConfig {
   badge?: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getPrimaryTabs = (t: any): TabConfig[] => [
   {
     id: 'home',
@@ -41,7 +48,7 @@ const getPrimaryTabs = (t: any): TabConfig[] => [
   {
     id: 'inventory',
     label: t.nav.inventory,
-    icon: Gem as any, // Using lucide-react Gem icon for treasures
+    icon: Gem as React.ElementType,
     route: '/inventory',
   },
   {
@@ -66,8 +73,22 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
+  const { effectiveConfig, isEffectEnabled } = useLiquidGlassSafe();
 
-  const PRIMARY_TABS = getPrimaryTabs(t);
+  // Dynamic shrink/expand behavior
+  const {
+    isCollapsed,
+    height,
+    iconSize,
+    labelOpacity,
+  } = useScrollShrink({
+    disabled: !isEffectEnabled('dynamicTabBar'),
+    threshold: tabBarConfig.scrollThreshold,
+    expandedHeight: tabBarConfig.height.expanded,
+    collapsedHeight: tabBarConfig.height.collapsed,
+  });
+
+  const PRIMARY_TABS = useMemo(() => getPrimaryTabs(t), [t]);
 
   const getActiveTab = (): string => {
     const currentPath = location.pathname;
@@ -77,7 +98,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
 
     if (matchingTab) return matchingTab.id;
 
-    const secondaryRoutes = ['/gallery', '/catalog', '/calendar', '/slides', '/normalizer', '/receipts', '/simulator', '/ambassadors', '/upload'];
+    const secondaryRoutes = ['/gallery', '/catalog', '/calendar', '/slides', '/normalizer', '/receipts', '/simulator', '/ambassadors', '/upload', '/cuentas', '/boveda-secreta'];
     const isSecondaryRoute = secondaryRoutes.some(route => currentPath.startsWith(route));
 
     return isSecondaryRoute ? 'more' : '';
@@ -97,6 +118,46 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
     }
   };
 
+  // Liquid Glass styles based on effects config
+  const liquidGlassStyles = useMemo(() => {
+    if (!effectiveConfig.blur) {
+      // Fallback for low-tier devices
+      return {
+        backgroundColor: 'var(--surface-secondary)',
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
+      };
+    }
+
+    const blurValue = isCollapsed ? dynamicBlur.hover : dynamicBlur.resting;
+
+    return {
+      backgroundColor: 'rgba(var(--surface-secondary-rgb), 0.7)',
+      backdropFilter: `blur(${blurValue}) saturate(${liquidSaturation.vibrant})`,
+      WebkitBackdropFilter: `blur(${blurValue}) saturate(${liquidSaturation.vibrant})`,
+    };
+  }, [effectiveConfig.blur, isCollapsed]);
+
+  // Specular highlight for active tab
+  const getTabSpecularStyles = (isActive: boolean) => {
+    if (!effectiveConfig.specular || !isActive) return {};
+
+    return {
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: '15%',
+        right: '15%',
+        height: '2px',
+        background: specularHighlights.gradients.subtle,
+        borderRadius: '2px',
+        opacity: 1,
+        transition: `opacity ${durations.liquidFast} ${easingCurves.liquidIn}`,
+      },
+    };
+  };
+
   return (
     <Box
       component="nav"
@@ -106,19 +167,31 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         bottom: 0,
         left: 0,
         right: 0,
-        minHeight: `calc(65px + env(safe-area-inset-bottom))`,
-        backgroundColor: 'var(--surface-secondary)',
+        minHeight: `calc(${height}px + env(safe-area-inset-bottom))`,
+        ...liquidGlassStyles,
         borderTop: '0.5px solid var(--border-default)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
         boxShadow: 'var(--shadow-sm)',
         display: 'flex',
         alignItems: 'stretch',
-        paddingTop: spacing.sm,
+        paddingTop: isCollapsed ? spacing.xs : spacing.sm,
         paddingBottom: `calc(${spacing.xs} + env(safe-area-inset-bottom))`,
         zIndex: 1000,
         WebkitTransform: 'translateZ(0)',
         transform: 'translateZ(0)',
+        willChange: effectiveConfig.animations ? 'height, padding, backdrop-filter' : 'auto',
+        transition: effectiveConfig.animations
+          ? `all ${tabBarConfig.transitionDuration} ${easingCurves.liquidInOut}`
+          : 'none',
+
+        // Fallback for browsers without backdrop-filter
+        '@supports not (backdrop-filter: blur(10px))': {
+          backgroundColor: 'var(--surface-secondary)',
+        },
+
+        // Reduced motion support
+        '@media (prefers-reduced-motion: reduce)': {
+          transition: 'none',
+        },
       }}
     >
       <Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-around' }}>
@@ -146,25 +219,45 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                 flex: 1,
                 padding: `${spacing.xxs} ${spacing.xs}`,
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
                 minHeight: '44px',
                 position: 'relative',
 
-                '&:hover': { opacity: 0.7 },
-                '&:active': { transform: 'scale(0.95)' },
+                // Liquid Glass transitions
+                transition: effectiveConfig.animations
+                  ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
+                  : 'none',
+
+                '&:hover': {
+                  opacity: 0.8,
+                  transform: effectiveConfig.animations ? 'scale(1.02)' : 'none',
+                },
+                '&:active': {
+                  transform: effectiveConfig.animations ? 'scale(0.95)' : 'none',
+                },
                 '&:focus-visible': {
                   outline: `2px solid ${primitiveColors.emerald[500]}`,
                   outlineOffset: '2px',
                   borderRadius: spacing.sm,
                 },
+
+                // Specular highlight for active tab
+                ...getTabSpecularStyles(isActive),
               }}
             >
-              <Box sx={{ position: 'relative', marginBottom: spacing.xxs }}>
+              <Box sx={{
+                position: 'relative',
+                marginBottom: spacing.xxs,
+                transition: effectiveConfig.animations
+                  ? `transform ${durations.liquidFast} ${easingCurves.liquidSpring}`
+                  : 'none',
+              }}>
                 <Icon
                   sx={{
-                    fontSize: '24px',
+                    fontSize: `${iconSize}px`,
                     color: isActive ? 'var(--brand-primary)' : 'var(--text-tertiary)',
-                    transition: 'color 0.2s ease',
+                    transition: effectiveConfig.animations
+                      ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
+                      : 'none',
                   }}
                 />
                 {tab.badge && tab.badge > 0 && (
@@ -199,7 +292,6 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                   fontSize: { xs: '9px', sm: '10px' },
                   fontWeight: isActive ? 600 : 400,
                   color: isActive ? 'var(--brand-primary)' : 'var(--text-tertiary)',
-                  transition: 'all 0.2s ease',
                   textAlign: 'center',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
@@ -207,6 +299,10 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                   maxWidth: '100%',
                   lineHeight: 1.2,
                   marginTop: spacing.xxs,
+                  opacity: labelOpacity,
+                  transition: effectiveConfig.animations
+                    ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
+                    : 'none',
                 }}
               >
                 {tab.label}

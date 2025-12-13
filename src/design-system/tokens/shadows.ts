@@ -111,6 +111,40 @@ export const focusShadows = {
 } as const;
 
 // =============================================================================
+// LIQUID GLASS FLOATING LAYERS (iOS 26)
+// =============================================================================
+
+export const floatingLayerShadows = {
+  /** Ground level - no shadow */
+  ground: 'none',
+  /** Raised - subtle depth */
+  raised: `0 2px 8px rgba(${BLACK}, 0.08)`,
+  /** Floating - clear separation */
+  floating: `0 8px 24px rgba(${BLACK}, 0.12)`,
+  /** Overlay - strong depth */
+  overlay: `0 16px 48px rgba(${BLACK}, 0.16)`,
+  /** Modal - maximum depth */
+  modal: `0 24px 64px rgba(${BLACK}, 0.20)`,
+} as const;
+
+// =============================================================================
+// LIQUID GLASS SPECULAR SHADOWS
+// =============================================================================
+
+export const specularShadows = {
+  /** Light inner glow for polished glass effect */
+  innerGlow: `inset 0 1px 1px rgba(255, 255, 255, 0.15)`,
+  /** Top edge highlight */
+  topEdge: `inset 0 1px 0 rgba(255, 255, 255, 0.2)`,
+  /** Combined specular effect */
+  combined: `inset 0 1px 1px rgba(255, 255, 255, 0.15), inset 0 -1px 1px rgba(0, 0, 0, 0.05)`,
+  /** Emerald specular */
+  emerald: `inset 0 1px 1px rgba(0, 174, 122, 0.15), 0 0 20px rgba(0, 174, 122, 0.1)`,
+  /** Gold specular */
+  gold: `inset 0 1px 1px rgba(212, 175, 55, 0.2), 0 0 20px rgba(212, 175, 55, 0.1)`,
+} as const;
+
+// =============================================================================
 // COMPOSITE EXPORT
 // =============================================================================
 
@@ -121,6 +155,9 @@ export const shadows = {
   semantic: semanticShadows,
   card: cardShadows,
   focus: focusShadows,
+  // Liquid Glass (iOS 26)
+  floatingLayers: floatingLayerShadows,
+  specular: specularShadows,
 } as const;
 
 export default shadows;
