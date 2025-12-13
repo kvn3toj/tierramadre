@@ -8,12 +8,14 @@ export const en = {
     home: 'Home',
     gallery: 'Gallery',
     upload: 'Upload',
-    inventory: 'Inventory',
-    ambassadors: 'Advisors',
+    inventory: 'Treasures',
+    ambassadors: 'Ambassadors',
     catalog: 'Catalog',
     calendar: 'Calendar',
     more: 'More',
     tools: 'Tools',
+    vault: 'Secret Vault',
+    accounts: 'Accounts',
   },
 
   // Pages
@@ -37,12 +39,20 @@ export const en = {
       subtitle: 'Add emeralds',
     },
     inventory: {
-      title: 'Inventory',
-      subtitle: 'Manage collection',
+      title: 'Treasures',
+      subtitle: 'Emerald collection',
     },
     ambassadors: {
       title: 'Ambassadors',
       subtitle: 'Community leaders',
+    },
+    vault: {
+      title: 'Secret Vault',
+      subtitle: 'Unique and exotic treasures',
+    },
+    accounts: {
+      title: 'Accounts',
+      subtitle: 'Manage financial operations',
     },
     catalog: {
       title: 'Catalog',
@@ -84,8 +94,16 @@ export const en = {
       subtitle: 'Add new emeralds',
     },
     ambassadors: {
-      label: 'Advisors',
+      label: 'Ambassadors',
       subtitle: 'Expert network',
+    },
+    vault: {
+      label: 'Secret Vault',
+      subtitle: 'Unique and exotic treasures',
+    },
+    accounts: {
+      label: 'Accounts',
+      subtitle: 'Simulator, receipts and quotations',
     },
     catalog: {
       label: 'Create Catalog',

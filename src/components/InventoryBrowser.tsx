@@ -92,6 +92,7 @@ export default function InventoryBrowser() {
     setPriceRange,
     setSortBy,
     setCantidadFilter,
+    setCityFilter,
     clearFilters,
     hasFilters,
     sortedInventory,
@@ -137,7 +138,7 @@ export default function InventoryBrowser() {
   );
 
   // Destructure filter values for convenience
-  const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter } = filters;
+  const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, cityFilter } = filters;
 
   // Mobile detection
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -675,6 +676,33 @@ export default function InventoryBrowser() {
                   fontWeight: 500,
                   flexShrink: 0,
                   '& .MuiChip-icon': { color: qualityFilter === 'PREMIUM' ? 'white' : goldAccent.dark },
+                }}
+              />
+              {/* City filters */}
+              <Chip
+                size="small"
+                label="Cali"
+                onClick={() => setCityFilter(cityFilter === 'Cali' ? 'all' : 'Cali')}
+                sx={{
+                  bgcolor: cityFilter === 'Cali' ? emeraldCore.primary : 'transparent',
+                  color: cityFilter === 'Cali' ? 'white' : theme.palette.text.secondary,
+                  border: '1px solid',
+                  borderColor: cityFilter === 'Cali' ? emeraldCore.primary : isLight ? surfacesLight.border.default : surfacesDark.border.default,
+                  fontWeight: 500,
+                  flexShrink: 0,
+                }}
+              />
+              <Chip
+                size="small"
+                label="Bogotá"
+                onClick={() => setCityFilter(cityFilter === 'Bogotá' ? 'all' : 'Bogotá')}
+                sx={{
+                  bgcolor: cityFilter === 'Bogotá' ? '#2563eb' : 'transparent',
+                  color: cityFilter === 'Bogotá' ? 'white' : theme.palette.text.secondary,
+                  border: '1px solid',
+                  borderColor: cityFilter === 'Bogotá' ? '#2563eb' : isLight ? surfacesLight.border.default : surfacesDark.border.default,
+                  fontWeight: 500,
+                  flexShrink: 0,
                 }}
               />
               {/* Favorites chip */}

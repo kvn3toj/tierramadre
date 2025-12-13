@@ -112,6 +112,28 @@ const getPageConfigs = (t: any, themeAction: NavigationAction): Record<string, P
     mode: 'compact',
     showBackButton: true,
   },
+  '/cuentas': {
+    title: t.pages.accounts.title,
+    mode: 'large',
+    subtitle: t.pages.accounts.subtitle,
+    showBackButton: true,
+  },
+  '/boveda-secreta': {
+    title: t.pages.vault.title,
+    mode: 'large',
+    subtitle: t.pages.vault.subtitle,
+    trailingActions: [themeAction],
+  },
+  '/cotizacion': {
+    title: t.pages.cotizacion.title,
+    mode: 'compact',
+    showBackButton: true,
+  },
+  '/certificate': {
+    title: t.pages.certificate.title,
+    mode: 'compact',
+    showBackButton: true,
+  },
 });
 
 export interface IOSLayoutProps {

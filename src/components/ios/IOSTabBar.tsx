@@ -13,10 +13,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import {
   Home,
-  Inventory2,
   Storefront,
   MoreHoriz,
 } from '@mui/icons-material';
+import { Gem } from 'lucide-react';
 
 // Design tokens
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
@@ -41,12 +41,12 @@ const getPrimaryTabs = (t: any): TabConfig[] => [
   {
     id: 'inventory',
     label: t.nav.inventory,
-    icon: Inventory2,
+    icon: Gem as any, // Using lucide-react Gem icon for treasures
     route: '/inventory',
   },
   {
     id: 'biblioteca',
-    label: 'Show Room',
+    label: 'Biblioteca',
     icon: Storefront,
     route: '/biblioteca',
   },

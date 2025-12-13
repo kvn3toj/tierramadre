@@ -31,6 +31,8 @@ const ProductDetail = lazy(() => import('./components/ProductDetail'));
 const AmbassadorDirectory = lazy(() => import('./components/ambassador').then(m => ({ default: m.AmbassadorDirectory })));
 const AsesorProfilePage = lazy(() => import('./components/ambassador/AsesorProfile'));
 const DesignSystemPage = lazy(() => import('./pages/DesignSystemPage'));
+const AccountsHub = lazy(() => import('./components/AccountsHub'));
+const VaultPage = lazy(() => import('./pages/VaultPage'));
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'gallery' | 'upload' | 'catalog' | 'calendar' | 'slides' | 'normalizer' | 'receipts' | 'biblioteca' | 'simulator' | 'inventory' | 'ambassadors' | 'certificate' | 'cotizacion';
@@ -147,6 +149,31 @@ function AppContent() {
           <Route path="/ambassadors/:slug" element={
             <Suspense fallback={<LoadingFallback message="Cargando perfil..." />}>
               <AsesorProfilePage />
+            </Suspense>
+          } />
+          <Route path="/cuentas" element={
+            <Suspense fallback={<LoadingFallback message="Cargando cuentas..." />}>
+              <AccountsHub />
+            </Suspense>
+          } />
+          <Route path="/cuentas/simulador" element={
+            <Suspense fallback={<LoadingFallback message="Cargando simulador..." />}>
+              <PriceSimulator />
+            </Suspense>
+          } />
+          <Route path="/cuentas/recibos" element={
+            <Suspense fallback={<LoadingFallback message="Cargando recibos..." />}>
+              <ReceiptGenerator />
+            </Suspense>
+          } />
+          <Route path="/cuentas/cotizaciones" element={
+            <Suspense fallback={<LoadingFallback message="Cargando cotizaciones..." />}>
+              <CotizacionGenerator />
+            </Suspense>
+          } />
+          <Route path="/boveda-secreta" element={
+            <Suspense fallback={<LoadingFallback message="Cargando bóveda..." />}>
+              <VaultPage />
             </Suspense>
           } />
         </Routes>
