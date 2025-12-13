@@ -19,6 +19,8 @@ import { DailyOracle } from '../../data/homeContent';
 import { useGamification, AchievementToast } from './gamification';
 import { QuickActions } from './navigation';
 import { useAnalytics } from './hooks';
+import { InstallButton } from '../pwa';
+import { isPWA } from '../../utils/pwa';
 
 // =============================================================================
 // LAZY LOADED SECTIONS
@@ -120,11 +122,12 @@ const Home: React.FC = () => {
   // DERIVED DATA
   // ==========================================================================
 
-  // Get newest products (last 3)
+  // Get newest products WITH IMAGES (last 6, show up to 6)
   const newProducts = useMemo(() => {
     return [...inventory]
+      .filter((item: InventoryItem) => item.imagen && item.imagen.trim() !== '') // Only products with images
       .sort((a: InventoryItem, b: InventoryItem) => (b.item || 0) - (a.item || 0))
-      .slice(0, 3);
+      .slice(0, 6);
   }, [inventory]);
 
   // ==========================================================================
@@ -203,6 +206,15 @@ const Home: React.FC = () => {
           onShare={handleShare}
         />
       </ErrorBoundary>
+
+      {/* ================================================================== */}
+      {/* INSTALL APP PROMPT - Only shown when not installed */}
+      {/* ================================================================== */}
+      {!isPWA() && (
+        <Box sx={{ px: 2, mb: 2 }}>
+          <InstallButton variant="card" />
+        </Box>
+      )}
 
       {/* ================================================================== */}
       {/* MEDITATION SECTION - Lazy loaded */}
