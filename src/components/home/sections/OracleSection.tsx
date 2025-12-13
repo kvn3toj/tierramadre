@@ -88,7 +88,7 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
           id="oracle-title"
           variant="h6"
           component="h2"
-          sx={{ mb: 1.5, fontWeight: 600, color: 'var(--text-primary)' }}
+          sx={{ mb: 1.5, fontWeight: 600, color: 'white' }}
         >
           {t.pages.home.dailyFact}
         </Typography>
@@ -106,7 +106,9 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
             onKeyDown={handleKeyDown}
             sx={{
               borderLeft: `4px solid ${emeraldCore.primary}`,
-              bgcolor: 'var(--surface-secondary)',
+              bgcolor: 'rgba(0,0,0,0.4)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.1)',
               cursor: 'pointer',
               transition: 'all 0.2s ease-out',
               '&:focus-visible': {
@@ -114,7 +116,8 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
                 outlineOffset: 4,
               },
               '&:hover': {
-                boxShadow: `0 8px 24px rgba(0, 174, 122, 0.15)`,
+                boxShadow: `0 8px 24px rgba(0, 174, 122, 0.2)`,
+                bgcolor: 'rgba(0,0,0,0.5)',
               },
             }}
           >
@@ -158,13 +161,13 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
                   <Typography
                     variant="subtitle1"
                     component="h3"
-                    sx={{ fontWeight: 600, color: 'var(--text-primary)' }}
+                    sx={{ fontWeight: 600, color: 'white' }}
                   >
                     {dailyOracle.title}
                   </Typography>
                   <Typography
                     variant="body2"
-                    sx={{ color: 'var(--text-secondary)', mt: 0.5, lineHeight: 1.5 }}
+                    sx={{ color: 'rgba(255,255,255,0.7)', mt: 0.5, lineHeight: 1.5 }}
                   >
                     {dailyOracle.content.substring(0, 100)}...
                   </Typography>
@@ -176,7 +179,7 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
                       onClick={handleSave}
                       aria-label={isSaved ? 'Quitar de guardados' : 'Guardar este dato'}
                       sx={{
-                        color: isSaved ? emeraldCore.primary : 'var(--text-secondary)',
+                        color: isSaved ? emeraldCore.light || emeraldCore.primary : 'rgba(255,255,255,0.7)',
                       }}
                     >
                       {isSaved ? 'Guardado' : 'Guardar'}
@@ -185,6 +188,7 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
                       size="small"
                       onClick={handleShare}
                       aria-label="Compartir este dato"
+                      sx={{ color: 'rgba(255,255,255,0.7)' }}
                     >
                       <Share fontSize="small" />
                     </IconButton>

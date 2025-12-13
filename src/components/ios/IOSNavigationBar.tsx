@@ -25,6 +25,7 @@ export interface IOSNavigationBarProps {
   mode?: NavigationBarMode;
   title: string;
   subtitle?: string;
+  logoUrl?: string;
   showBackButton?: boolean;
   onBackClick?: () => void;
   leadingActions?: NavigationAction[];
@@ -35,6 +36,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
   mode = 'compact',
   title,
   subtitle,
+  logoUrl,
   showBackButton = false,
   onBackClick,
   leadingActions = [],
@@ -71,12 +73,13 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
       {/* Top Bar */}
       <Box
         sx={{
-          height: '44px',
+          height: '52px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           paddingX: spacing.sm,
-          paddingTop: 'env(safe-area-inset-top)',
+          paddingTop: `calc(env(safe-area-inset-top) + 8px)`,
+          paddingBottom: '4px',
         }}
       >
         {/* Leading Section */}
@@ -114,20 +117,33 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
           })}
         </Box>
 
-        {/* Title (Compact Mode) */}
+        {/* Title or Logo (Compact Mode) */}
         {!isLargeMode && (
-          <Typography
-            variant="h6"
-            sx={{
-              fontSize: '17px',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              textAlign: 'center',
-              flex: 2,
-            }}
-          >
-            {title}
-          </Typography>
+          <Box sx={{ flex: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            {logoUrl ? (
+              <Box
+                component="img"
+                src={logoUrl}
+                alt={title}
+                sx={{
+                  height: 55,
+                  objectFit: 'contain',
+                }}
+              />
+            ) : (
+              <Typography
+                variant="h6"
+                sx={{
+                  fontSize: '17px',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  textAlign: 'center',
+                }}
+              >
+                {title}
+              </Typography>
+            )}
+          </Box>
         )}
 
         {/* Trailing Section */}

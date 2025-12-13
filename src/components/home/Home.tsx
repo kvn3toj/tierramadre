@@ -2,6 +2,7 @@
  * Home Page Component (Orchestrator)
  *
  * Composes all home page sections with:
+ * - Beautiful background image
  * - Lazy loading for below-the-fold content
  * - Error boundaries for resilience
  * - Shared state management
@@ -28,13 +29,18 @@ import { isPWA } from '../../utils/pwa';
 
 // Critical sections - load immediately
 import HeroSection from './sections/HeroSection';
+import CategoryCarousels from './sections/CategoryCarousels';
 import OracleSection from './sections/OracleSection';
 
 // Below-the-fold sections - lazy load
 const MeditationSection = lazy(() => import('./sections/MeditationSection'));
 const ProductsSection = lazy(() => import('./sections/ProductsSection'));
 const KnowledgeSection = lazy(() => import('./sections/KnowledgeSection'));
-const GallerySection = lazy(() => import('./sections/GallerySection'));
+const WelcomeCard = lazy(() => import('./sections/WelcomeCard'));
+const Footer = lazy(() => import('./sections/Footer'));
+
+// Always visible components
+import WhatsAppButton from './sections/WhatsAppButton';
 
 // =============================================================================
 // LOADING FALLBACK
@@ -47,7 +53,7 @@ const SectionSkeleton: React.FC<{ height?: number }> = ({ height = 200 }) => (
       height={height}
       animation="wave"
       sx={{
-        bgcolor: 'var(--surface-secondary)',
+        bgcolor: 'rgba(255,255,255,0.1)',
         borderRadius: 3,
       }}
     />
@@ -65,18 +71,18 @@ const ErrorFallback: React.FC<FallbackProps> = ({ error, resetErrorBoundary }) =
       p: 3,
       m: 2,
       textAlign: 'center',
-      bgcolor: 'var(--surface-secondary)',
+      bgcolor: 'rgba(255,255,255,0.1)',
       borderRadius: 3,
-      border: '1px solid var(--border-default)',
+      backdropFilter: 'blur(10px)',
     }}
   >
-    <Typography variant="body1" color="error" sx={{ mb: 2 }}>
+    <Typography variant="body1" sx={{ color: 'rgba(255,200,200,0.9)', mb: 2 }}>
       Algo salió mal al cargar esta sección
     </Typography>
-    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', display: 'block', mb: 2 }}>
       {error.message}
     </Typography>
-    <Button variant="outlined" size="small" onClick={resetErrorBoundary}>
+    <Button variant="outlined" size="small" onClick={resetErrorBoundary} sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}>
       Reintentar
     </Button>
   </Box>
@@ -123,12 +129,24 @@ const Home: React.FC = () => {
   // DERIVED DATA
   // ==========================================================================
 
-  // Get newest products WITH IMAGES (last 6, show up to 6)
+  // Get newest products WITH VALID IMAGES
   const newProducts = useMemo(() => {
-    return [...inventory]
-      .filter((item: InventoryItem) => item.imagen && item.imagen.trim() !== '') // Only products with images
+    const productsWithImages = [...inventory]
+      .filter((item: InventoryItem) => {
+        const img = item.imagen?.trim();
+        if (!img) return false;
+        // Valid URL: starts with http, https, / or contains cloudinary
+        return img.startsWith('http') || img.startsWith('/') || img.includes('cloudinary');
+      })
       .sort((a: InventoryItem, b: InventoryItem) => (b.item || 0) - (a.item || 0))
       .slice(0, 6);
+
+    // Debug log
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Home] Products with images:', productsWithImages.length, 'of', inventory.length);
+    }
+
+    return productsWithImages;
   }, [inventory]);
 
   // ==========================================================================
@@ -187,18 +205,46 @@ const Home: React.FC = () => {
       sx={{
         pb: 'calc(env(safe-area-inset-bottom, 0px) + 96px)', // TabBar + safe area
         minHeight: '100vh',
-        bgcolor: 'var(--surface-primary)',
+        position: 'relative',
       }}
     >
       {/* ================================================================== */}
-      {/* HERO SECTION - Critical, loads immediately */}
+      {/* BACKGROUND IMAGE */}
+      {/* ================================================================== */}
+      <Box
+        sx={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: -1,
+          backgroundImage: 'url(/images/home-bg.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.77,
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.7) 100%)',
+          },
+        }}
+      />
+
+      {/* ================================================================== */}
+      {/* HERO SECTION - Logo + Brand */}
       {/* ================================================================== */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <HeroSection />
       </ErrorBoundary>
 
       {/* ================================================================== */}
-      {/* PRODUCTS SECTION - High visibility, right after hero */}
+      {/* CATEGORY CAROUSELS - Rings & Gems */}
+      {/* ================================================================== */}
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <CategoryCarousels />
+      </ErrorBoundary>
+
+      {/* ================================================================== */}
+      {/* PRODUCTS SECTION - High visibility, right after carousels */}
       {/* ================================================================== */}
       {newProducts.length > 0 && (
         <ErrorBoundary FallbackComponent={ErrorFallback}>
@@ -207,15 +253,6 @@ const Home: React.FC = () => {
           </Suspense>
         </ErrorBoundary>
       )}
-
-      {/* ================================================================== */}
-      {/* GALLERY SECTION - Gems and Rings showcase */}
-      {/* ================================================================== */}
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <Suspense fallback={<SectionSkeleton height={250} />}>
-          <GallerySection />
-        </Suspense>
-      </ErrorBoundary>
 
       {/* ================================================================== */}
       {/* ORACLE SECTION - Daily wisdom */}
@@ -247,7 +284,7 @@ const Home: React.FC = () => {
       </ErrorBoundary>
 
       {/* ================================================================== */}
-      {/* KNOWLEDGE SECTION - Lazy loaded (lowest priority) */}
+      {/* KNOWLEDGE SECTION - Lazy loaded */}
       {/* ================================================================== */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <Suspense fallback={<SectionSkeleton height={300} />}>
@@ -257,6 +294,29 @@ const Home: React.FC = () => {
           />
         </Suspense>
       </ErrorBoundary>
+
+      {/* ================================================================== */}
+      {/* WELCOME CARD - Gamification stats at bottom */}
+      {/* ================================================================== */}
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <Suspense fallback={<SectionSkeleton height={250} />}>
+          <WelcomeCard />
+        </Suspense>
+      </ErrorBoundary>
+
+      {/* ================================================================== */}
+      {/* FOOTER - Social links and contact */}
+      {/* ================================================================== */}
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <Suspense fallback={<SectionSkeleton height={150} />}>
+          <Footer />
+        </Suspense>
+      </ErrorBoundary>
+
+      {/* ================================================================== */}
+      {/* WHATSAPP BUTTON - Floating contact button */}
+      {/* ================================================================== */}
+      <WhatsAppButton />
 
       {/* ================================================================== */}
       {/* ACHIEVEMENT TOAST - Global notification for achievements */}

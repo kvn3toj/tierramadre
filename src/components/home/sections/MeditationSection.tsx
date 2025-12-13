@@ -37,13 +37,26 @@ const meditationTypeLabels: Record<MeditationType, string> = {
   guided: 'Guiada',
 };
 
-const meditationTypeIcons: Record<MeditationType, string> = {
-  breathing: '🌬️',
-  visual: '💎',
-  chakra: '💚',
-  ambient: '🎵',
-  'energy-shield': '🛡️',
-  guided: '🧘',
+// Use Tierra Madre symbol for breathing, emojis for others
+const getMeditationIcon = (type: MeditationType): React.ReactNode => {
+  if (type === 'breathing') {
+    return (
+      <img
+        src="/images/tierra-madre-symbol.png"
+        alt="Tierra Madre"
+        style={{ width: 18, height: 18, objectFit: 'contain' }}
+      />
+    );
+  }
+  const icons: Record<MeditationType, string> = {
+    breathing: '🌬️',
+    visual: '💎',
+    chakra: '💚',
+    ambient: '🎵',
+    'energy-shield': '🛡️',
+    guided: '🧘',
+  };
+  return <span style={{ fontSize: 14 }}>{icons[type]}</span>;
 };
 
 // =============================================================================
@@ -112,7 +125,7 @@ export const MeditationSection: React.FC = () => {
                     {/* Meditation type badge */}
                     <Chip
                       size="small"
-                      icon={<span style={{ fontSize: 14 }}>{meditationTypeIcons[dailyMeditation.type]}</span>}
+                      icon={<>{getMeditationIcon(dailyMeditation.type)}</>}
                       label={meditationTypeLabels[dailyMeditation.type]}
                       sx={{
                         mb: 1,

@@ -9,7 +9,7 @@
 import React, { useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box } from '@mui/material';
-import { Search, Add, FilterList, DarkMode, LightMode } from '@mui/icons-material';
+import { Search, FilterList, DarkMode, LightMode } from '@mui/icons-material';
 
 import IOSTabBar from './IOSTabBar';
 import IOSNavigationBar, { NavigationBarMode, NavigationAction } from './IOSNavigationBar';
@@ -23,6 +23,7 @@ interface PageConfig {
   title: string;
   mode: NavigationBarMode;
   subtitle?: string;
+  logoUrl?: string;
   showBackButton?: boolean;
   leadingActions?: NavigationAction[];
   trailingActions?: NavigationAction[];
@@ -55,16 +56,9 @@ const getPageConfigs = (t: any, themeAction: NavigationAction): Record<string, P
   },
   '/inventory': {
     title: t.pages.inventory.title,
-    mode: 'large',
-    subtitle: t.pages.inventory.subtitle,
-    trailingActions: [
-      themeAction,
-      {
-        icon: Add,
-        label: t.actions.add,
-        onClick: () => console.log('Add'),
-      },
-    ],
+    mode: 'compact',
+    logoUrl: '/logo-horizontal-white.png',
+    trailingActions: [themeAction],
   },
   '/ambassadors': {
     title: t.pages.ambassadors.title,
@@ -75,6 +69,7 @@ const getPageConfigs = (t: any, themeAction: NavigationAction): Record<string, P
   '/home': {
     title: 'Tierra Mädre',
     mode: 'compact',
+    logoUrl: '/logo-horizontal-white.png',
     trailingActions: [themeAction],
   },
   '/catalog': {
@@ -171,6 +166,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         mode={pageConfig.mode}
         title={pageConfig.title}
         subtitle={pageConfig.subtitle}
+        logoUrl={pageConfig.logoUrl}
         showBackButton={pageConfig.showBackButton}
         leadingActions={pageConfig.leadingActions}
         trailingActions={pageConfig.trailingActions}
