@@ -12,6 +12,7 @@ import {
   MenuItem,
   alpha,
   useTheme,
+  useMediaQuery,
   ToggleButton,
   ToggleButtonGroup,
   Collapse,
@@ -20,10 +21,11 @@ import {
   Fab,
   Tooltip,
   Badge,
+  IconButton,
+  SwipeableDrawer,
 } from '@mui/material';
 import {
   Search,
-  Package,
   LayoutGrid,
   List,
   ChevronDown,
@@ -36,6 +38,10 @@ import {
   X,
   ArrowUpDown,
   Layers,
+  Filter,
+  Gem,
+  Crown,
+  Sparkles,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useInventory } from '../hooks/useInventory';
@@ -56,7 +62,6 @@ import { calculateTrustScore } from '../utils/trustScore';
 import { formatCurrency, formatFullCurrency, getColorDot } from '../utils/formatting';
 // Design System Tokens
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark, semanticColors } from '../design-system/tokens/colors';
-import { emeraldGradients } from '../design-system/tokens/gradients';
 // Inventory components
 import { GridCard, ListRow, VirtualGrid } from './inventory';
 import ProgressBadge from './ProgressBadge';
@@ -134,11 +139,15 @@ export default function InventoryBrowser() {
   // Destructure filter values for convenience
   const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter } = filters;
 
+  // Mobile detection
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   // UI-only state (not part of filtering)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Filter by favorites if enabled
   const displayInventory = useMemo(() => {
@@ -239,21 +248,6 @@ export default function InventoryBrowser() {
     return scores;
   }, [inventoryData]);
 
-  // Active filter count for badge visibility (MOKSART UX improvement)
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (search !== '') count++;
-    if (colorFilter !== 'all') count++;
-    if (qualityFilter !== 'all') count++;
-    if (typeFilter !== 'all') count++;
-    if (statusFilter !== 'all' && statusFilter !== 'available') count++; // available is default
-    if (shapeFilter !== 'all') count++;
-    if (cantidadFilter !== 'all') count++;
-    // Price range check
-    if (priceRange[0] !== priceMinMax.min || priceRange[1] !== priceMinMax.max) count++;
-    return count;
-  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, priceRange, priceMinMax]);
-
   // Handle opening certification dialog
   const handleCertClick = useCallback((item: InventoryItem) => {
     setSelectedItem(item);
@@ -286,424 +280,234 @@ export default function InventoryBrowser() {
   // Note: filteredInventory, sortedInventory, filteredStats, clearFilters, hasFilters
   // are now provided by useInventoryFiltering hook
 
-  return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
-      {/* Premium Header - Simplified */}
-      <Paper
-        elevation={0}
-        sx={{
-          mb: 3,
-          p: 3,
-          borderRadius: 4,
-          bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
-          border: '1px solid',
-          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-          position: 'relative',
-          overflow: 'hidden',
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: '3px',
-            background: emeraldGradients.horizontal,
-          },
-        }}
-      >
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 2.5,
-                  bgcolor: isLight ? emeraldCore.lightest : alpha(emeraldCore.primary, 0.15),
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Package size={24} color={emeraldCore.primary} />
-              </Box>
-              <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: theme.palette.text.primary, letterSpacing: '-0.02em' }}>
-                  Inventario de Esmeraldas
-                </Typography>
-                <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-                  Colección Premium · {stats.totalItems} piezas disponibles
-                </Typography>
-              </Box>
-            </Box>
+  // Count active filters for badge
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (search) count++;
+    if (colorFilter !== 'all') count++;
+    if (qualityFilter !== 'all') count++;
+    if (typeFilter !== 'all') count++;
+    if (statusFilter !== 'available') count++;
+    if (shapeFilter !== 'all') count++;
+    if (cantidadFilter !== 'all') count++;
+    if (priceRange[0] !== priceMinMax.min || priceRange[1] !== priceMinMax.max) count++;
+    return count;
+  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, priceRange, priceMinMax]);
 
-            {/* Quick stats - Subtle badges */}
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-              {/* Progress Badge - Gamification */}
-              <ProgressBadge
-                level={browsingProgress.level}
-                percentageExplored={browsingProgress.percentageExplored}
-                viewedCount={browsingProgress.viewedCount}
-                totalItems={totalAvailable}
-                levelProgress={browsingProgress.levelProgress}
-                nextLevel={browsingProgress.nextLevel}
-              />
+  // Filter content component (shared between mobile drawer and desktop)
+  const FilterContent = () => (
+    <>
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mb: showAdvancedFilters ? 2 : 0 }}>
+        {/* Search */}
+        <TextField
+          placeholder="Buscar... (presiona /)"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onBlur={() => {
+            if (search.trim()) {
+              analyticsHook.trackSearch(search, sortedInventory.length);
+            }
+          }}
+          size="small"
+          inputRef={searchInputRef}
+          sx={{
+            minWidth: 200,
+            flex: 1,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
+            },
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search size={18} color={surfacesLight.text.tertiary} />
+              </InputAdornment>
+            ),
+          }}
+        />
 
-              <Box
-                sx={{
-                  px: 2,
-                  py: 1,
-                  borderRadius: 2,
-                  bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
-                  border: '1px solid',
-                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-                  textAlign: 'center',
-                }}
-              >
-                <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: theme.palette.text.primary }}>
-                  {stats.looseStones}
-                </Typography>
-                <Typography sx={{ fontSize: '0.7rem', color: theme.palette.text.secondary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Gemas
-                </Typography>
+        {/* Status filter */}
+        <FormControl size="small" sx={{ minWidth: 130 }}>
+          <Select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+            displayEmpty
+            sx={{ borderRadius: 2 }}
+          >
+            <MenuItem value="available">
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: emeraldCore.primary }} />
+                Disponibles
               </Box>
-              <Box
-                sx={{
-                  px: 2,
-                  py: 1,
-                  borderRadius: 2,
-                  bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
-                  border: '1px solid',
-                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-                  textAlign: 'center',
-                }}
-              >
-                <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: theme.palette.text.primary }}>
-                  {stats.jewelry}
-                </Typography>
-                <Typography sx={{ fontSize: '0.7rem', color: theme.palette.text.secondary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Joyería
-                </Typography>
+            </MenuItem>
+            <MenuItem value="sold">
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: semanticColors.error.main }} />
+                Vendidas
               </Box>
-            </Box>
-          </Box>
-        </Box>
-      </Paper>
+            </MenuItem>
+            <MenuItem value="all">
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: surfacesLight.text.secondary }} />
+                Todas
+              </Box>
+            </MenuItem>
+          </Select>
+        </FormControl>
 
-      {/* Filters - Compact */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: 2,
-          mb: 3,
-          borderRadius: 3,
-          bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
-          border: '1px solid',
-          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-        }}
-      >
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mb: showAdvancedFilters ? 2 : 0 }}>
-          {/* Search */}
-          <TextField
-            placeholder="Buscar... (presiona /)"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              // Track search after debounce would be better, but for now track on change
-            }}
-            onBlur={() => {
-              // Track search when user finishes typing
-              if (search.trim()) {
-                analyticsHook.trackSearch(search, sortedInventory.length);
-              }
-            }}
-            size="small"
-            inputRef={searchInputRef}
+        {/* Sort dropdown */}
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <Select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            displayEmpty
+            startAdornment={
+              <InputAdornment position="start">
+                <ArrowUpDown size={16} color={emeraldCore.primary} />
+              </InputAdornment>
+            }
             sx={{
-              minWidth: 200,
-              flex: 1,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
-              },
+              borderRadius: 2,
+              bgcolor: alpha(emeraldCore.primary, 0.05),
+              '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.1) },
+              '& .MuiSelect-select': { fontWeight: 500 },
             }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search size={18} color={surfacesLight.text.tertiary} />
-                </InputAdornment>
-              ),
+          >
+            <MenuItem value="price-desc">Precio: Mayor a Menor</MenuItem>
+            <MenuItem value="price-asc">Precio: Menor a Mayor</MenuItem>
+            <MenuItem value="name-asc">Nombre A-Z</MenuItem>
+            <MenuItem value="name-desc">Nombre Z-A</MenuItem>
+            <MenuItem value="quality-premium">Mejor Calidad</MenuItem>
+            <MenuItem value="item-number">Numero de Item</MenuItem>
+            <MenuItem value="newest">Mas Recientes</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Type filter */}
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <Select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
+            displayEmpty
+            sx={{ borderRadius: 2 }}
+          >
+            <MenuItem value="all">Tipo</MenuItem>
+            <MenuItem value="loose">Gemas</MenuItem>
+            <MenuItem value="jewelry">Joyería</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Cantidad filter */}
+        <FormControl size="small" sx={{ minWidth: 130 }}>
+          <Select
+            value={cantidadFilter}
+            onChange={(e) => setCantidadFilter(e.target.value)}
+            displayEmpty
+            startAdornment={
+              <InputAdornment position="start">
+                <Layers size={14} color={theme.palette.text.secondary} />
+              </InputAdornment>
+            }
+            sx={{ borderRadius: 2 }}
+          >
+            <MenuItem value="all">Cantidad</MenuItem>
+            <MenuItem value="1">1 unidad</MenuItem>
+            <MenuItem value="2+">2+ (Lotes)</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Advanced Filters Toggle */}
+        <Button
+          size="small"
+          onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+          startIcon={<SlidersHorizontal size={16} />}
+          endIcon={showAdvancedFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          sx={{
+            color: theme.palette.text.secondary,
+            textTransform: 'none',
+            fontWeight: 500,
+          }}
+        >
+          Más filtros
+        </Button>
+
+        {/* Clear filters */}
+        {hasFilters && (
+          <Chip
+            label="Limpiar"
+            size="small"
+            onClick={clearFilters}
+            sx={{
+              bgcolor: alpha(semanticColors.error.main, 0.1),
+              color: semanticColors.error.main,
+              fontWeight: 600,
+              cursor: 'pointer',
             }}
           />
+        )}
+      </Box>
 
-          {/* Status filter */}
-          <FormControl size="small" sx={{ minWidth: 130 }}>
+      {/* Advanced Filters */}
+      <Collapse in={showAdvancedFilters}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mt: 2, pt: 2, borderTop: '1px solid', borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default }}>
+          {/* Color filter */}
+          <FormControl size="small" sx={{ minWidth: 140 }}>
             <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              value={colorFilter}
+              onChange={(e) => setColorFilter(e.target.value)}
               displayEmpty
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value="available">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: emeraldCore.primary }} />
-                  Disponibles
-                </Box>
-              </MenuItem>
-              <MenuItem value="sold">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: semanticColors.error.main }} />
-                  Vendidas
-                </Box>
-              </MenuItem>
-              <MenuItem value="all">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: surfacesLight.text.secondary }} />
-                  Todas
-                </Box>
-              </MenuItem>
+              <MenuItem value="all">Todos colores</MenuItem>
+              {colors.map((color) => (
+                <MenuItem key={color} value={color}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: getColorDot(color) }} />
+                    {color.replace('Verde ', '')}
+                  </Box>
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
 
-          {/* Sort dropdown - Prominent */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 600,
-                color: theme.palette.text.secondary,
-                display: { xs: 'none', sm: 'block' },
-              }}
-            >
-              Ordenar:
-            </Typography>
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-              <Select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                displayEmpty
-                startAdornment={
-                  <InputAdornment position="start">
-                    <ArrowUpDown size={16} color={emeraldCore.primary} />
-                  </InputAdornment>
-                }
-                sx={{
-                  borderRadius: 2,
-                  bgcolor: alpha(emeraldCore.primary, 0.05),
-                  '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.1) },
-                  '& .MuiSelect-select': { fontWeight: 500 },
-                }}
-              >
-                <MenuItem value="price-desc">Precio: Mayor a Menor</MenuItem>
-                <MenuItem value="price-asc">Precio: Menor a Mayor</MenuItem>
-                <MenuItem value="name-asc">Nombre A-Z</MenuItem>
-                <MenuItem value="name-desc">Nombre Z-A</MenuItem>
-                <MenuItem value="quality-premium">Mejor Calidad</MenuItem>
-                <MenuItem value="item-number">Numero de Item</MenuItem>
-                <MenuItem value="newest">Mas Recientes</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          {/* Type filter */}
+          {/* Shape filter */}
           <FormControl size="small" sx={{ minWidth: 120 }}>
             <Select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
+              value={shapeFilter}
+              onChange={(e) => setShapeFilter(e.target.value)}
               displayEmpty
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value="all">Tipo</MenuItem>
-              <MenuItem value="loose">Gemas</MenuItem>
-              <MenuItem value="jewelry">Joyería</MenuItem>
+              <MenuItem value="all">Talla</MenuItem>
+              {shapes.map((shape) => (
+                <MenuItem key={shape} value={shape}>
+                  {shape}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
 
-          {/* Cantidad filter */}
-          <FormControl size="small" sx={{ minWidth: 130 }}>
+          {/* Quality filter */}
+          <FormControl size="small" sx={{ minWidth: 140 }}>
             <Select
-              value={cantidadFilter}
-              onChange={(e) => setCantidadFilter(e.target.value)}
+              value={qualityFilter}
+              onChange={(e) => setQualityFilter(e.target.value)}
               displayEmpty
-              startAdornment={
-                <InputAdornment position="start">
-                  <Layers size={14} color={theme.palette.text.secondary} />
-                </InputAdornment>
-              }
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value="all">Cantidad</MenuItem>
-              <MenuItem value="1">1 unidad</MenuItem>
-              <MenuItem value="2+">2+ (Lotes)</MenuItem>
+              <MenuItem value="all">Calidad</MenuItem>
+              {qualities.map((quality) => (
+                <MenuItem key={quality} value={quality}>
+                  {quality}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
-
-          {/* Advanced Filters Toggle with Badge */}
-          <Badge
-            badgeContent={activeFilterCount}
-            color="primary"
-            invisible={activeFilterCount === 0}
-            sx={{
-              '& .MuiBadge-badge': {
-                bgcolor: emeraldCore.primary,
-                color: 'white',
-                fontWeight: 700,
-                fontSize: '0.65rem',
-              },
-            }}
-          >
-            <Button
-              size="small"
-              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              startIcon={<SlidersHorizontal size={16} />}
-              endIcon={showAdvancedFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              sx={{
-                color: activeFilterCount > 0 ? emeraldCore.primary : theme.palette.text.secondary,
-                textTransform: 'none',
-                fontWeight: activeFilterCount > 0 ? 600 : 500,
-                bgcolor: activeFilterCount > 0 ? alpha(emeraldCore.primary, 0.08) : 'transparent',
-                '&:hover': {
-                  bgcolor: alpha(emeraldCore.primary, 0.12),
-                },
-              }}
-            >
-              Filtros
-            </Button>
-          </Badge>
-
-          {/* Clear filters */}
-          {hasFilters && (
-            <Chip
-              label="Limpiar"
-              size="small"
-              onClick={clearFilters}
-              sx={{
-                bgcolor: alpha(semanticColors.error.main, 0.1),
-                color: semanticColors.error.main,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            />
-          )}
-
-          {/* Saved Filters Dropdown */}
-          <SavedFiltersDropdown
-            presets={savedFilters.presets}
-            onSavePreset={(name) => savedFilters.savePreset(name, {
-              search,
-              colorFilter,
-              qualityFilter,
-              typeFilter,
-              statusFilter,
-              shapeFilter,
-              priceRange,
-              sortBy,
-              cantidadFilter,
-            })}
-            onApplyPreset={(preset) => {
-              // Apply saved filters
-              setSearch(preset.filters.search);
-              setColorFilter(preset.filters.colorFilter);
-              setQualityFilter(preset.filters.qualityFilter);
-              setTypeFilter(preset.filters.typeFilter as TypeFilter);
-              setStatusFilter(preset.filters.statusFilter as StatusFilter);
-              setShapeFilter(preset.filters.shapeFilter);
-              setPriceRange(preset.filters.priceRange);
-              setSortBy(preset.filters.sortBy as SortOption);
-              if (preset.filters.cantidadFilter) {
-                setCantidadFilter(preset.filters.cantidadFilter);
-              }
-            }}
-            onDeletePreset={savedFilters.deletePreset}
-            hasActiveFilters={hasFilters}
-          />
-
-          <Box sx={{ flex: 1 }} />
-
-          {/* View toggle */}
-          <ToggleButtonGroup
-            value={viewMode}
-            exclusive
-            onChange={(_, value) => {
-              if (value) {
-                setViewMode(value);
-                analyticsHook.trackViewModeChange(value);
-              }
-            }}
-            size="small"
-          >
-            <ToggleButton value="grid" sx={{ px: 1.5 }}>
-              <LayoutGrid size={18} />
-            </ToggleButton>
-            <ToggleButton value="list" sx={{ px: 1.5 }}>
-              <List size={18} />
-            </ToggleButton>
-          </ToggleButtonGroup>
-
-          {/* Keyboard shortcuts help button */}
-          <KeyboardShortcutsButton onClick={() => setShowKeyboardHelp(true)} />
         </Box>
 
-        {/* Collapsible Advanced Filters */}
-        <Collapse in={showAdvancedFilters}>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mt: 2, pt: 2, borderTop: '1px solid', borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default }}>
-            {/* Color filter */}
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <Select
-                value={colorFilter}
-                onChange={(e) => setColorFilter(e.target.value)}
-                displayEmpty
-                sx={{ borderRadius: 2 }}
-              >
-                <MenuItem value="all">Todos colores</MenuItem>
-                {colors.map((color) => (
-                  <MenuItem key={color} value={color}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: getColorDot(color) }} />
-                      {color.replace('Verde ', '')}
-                    </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {/* Shape filter */}
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <Select
-                value={shapeFilter}
-                onChange={(e) => setShapeFilter(e.target.value)}
-                displayEmpty
-                sx={{ borderRadius: 2 }}
-              >
-                <MenuItem value="all">Talla</MenuItem>
-                {shapes.map((shape) => (
-                  <MenuItem key={shape} value={shape}>
-                    {shape}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {/* Quality filter */}
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <Select
-                value={qualityFilter}
-                onChange={(e) => setQualityFilter(e.target.value)}
-                displayEmpty
-                sx={{ borderRadius: 2 }}
-              >
-                <MenuItem value="all">Calidad</MenuItem>
-                {qualities.map((quality) => (
-                  <MenuItem key={quality} value={quality}>
-                    {quality}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-
-          {/* Price Range Slider */}
-          <Box sx={{ mt: 2, px: 1 }}>
+        {/* Price Range Slider */}
+        <Box sx={{ mt: 2, px: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
             <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
               Rango de Precio
@@ -722,22 +526,364 @@ export default function InventoryBrowser() {
             valueLabelFormat={(value) => formatCurrency(value)}
             sx={{
               color: emeraldCore.dark,
-              '& .MuiSlider-thumb': {
-                width: 20,
-                height: 20,
-              },
-              '& .MuiSlider-track': {
-                height: 4,
-              },
+              '& .MuiSlider-thumb': { width: 20, height: 20 },
+              '& .MuiSlider-track': { height: 4 },
               '& .MuiSlider-rail': {
                 height: 4,
                 bgcolor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
               },
             }}
           />
+        </Box>
+      </Collapse>
+    </>
+  );
+
+  return (
+    <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
+      {/* Mobile: Compact header with quick filters */}
+      {isMobile ? (
+        <>
+          {/* Quick Stats + Filter Button Row */}
+          <Box
+            sx={{
+              mb: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1,
+            }}
+          >
+            {/* Stats chips */}
+            <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+              <Chip
+                size="small"
+                icon={<Gem size={12} />}
+                label={stats.looseStones}
+                sx={{
+                  bgcolor: alpha(emeraldCore.primary, 0.1),
+                  color: emeraldCore.primary,
+                  fontWeight: 600,
+                  fontSize: '0.7rem',
+                  height: 24,
+                  '& .MuiChip-icon': { color: emeraldCore.primary },
+                }}
+              />
+              <Chip
+                size="small"
+                icon={<Crown size={12} />}
+                label={stats.jewelry}
+                sx={{
+                  bgcolor: alpha(goldAccent.primary, 0.15),
+                  color: goldAccent.dark,
+                  fontWeight: 600,
+                  fontSize: '0.7rem',
+                  height: 24,
+                  '& .MuiChip-icon': { color: goldAccent.dark },
+                }}
+              />
+            </Box>
+
+            {/* Filter button with badge */}
+            <Badge
+              badgeContent={activeFilterCount}
+              color="primary"
+              invisible={activeFilterCount === 0}
+              sx={{
+                '& .MuiBadge-badge': {
+                  bgcolor: emeraldCore.primary,
+                  color: 'white',
+                  fontWeight: 700,
+                  fontSize: '0.6rem',
+                  minWidth: 16,
+                  height: 16,
+                },
+              }}
+            >
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setMobileFiltersOpen(true)}
+                startIcon={<Filter size={16} />}
+                sx={{
+                  borderColor: activeFilterCount > 0 ? emeraldCore.primary : isLight ? surfacesLight.border.default : surfacesDark.border.default,
+                  color: activeFilterCount > 0 ? emeraldCore.primary : theme.palette.text.secondary,
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  borderRadius: 2,
+                  px: 1.5,
+                }}
+              >
+                Filtros
+              </Button>
+            </Badge>
           </Box>
-        </Collapse>
-      </Paper>
+
+          {/* Horizontal Quick Filter Chips */}
+          <Box
+            sx={{
+              mb: 1.5,
+              mx: -2,
+              px: 2,
+              overflowX: 'auto',
+              '&::-webkit-scrollbar': { display: 'none' },
+              scrollbarWidth: 'none',
+            }}
+          >
+            <Box sx={{ display: 'flex', gap: 1, pb: 0.5 }}>
+              {/* Type quick filters */}
+              <Chip
+                size="small"
+                icon={<Gem size={14} />}
+                label="Gemas"
+                onClick={() => setTypeFilter(typeFilter === 'loose' ? 'all' : 'loose')}
+                sx={{
+                  bgcolor: typeFilter === 'loose' ? emeraldCore.primary : 'transparent',
+                  color: typeFilter === 'loose' ? 'white' : theme.palette.text.secondary,
+                  border: '1px solid',
+                  borderColor: typeFilter === 'loose' ? emeraldCore.primary : isLight ? surfacesLight.border.default : surfacesDark.border.default,
+                  fontWeight: 500,
+                  flexShrink: 0,
+                  '& .MuiChip-icon': { color: typeFilter === 'loose' ? 'white' : emeraldCore.primary },
+                }}
+              />
+              <Chip
+                size="small"
+                icon={<Crown size={14} />}
+                label="Joyería"
+                onClick={() => setTypeFilter(typeFilter === 'jewelry' ? 'all' : 'jewelry')}
+                sx={{
+                  bgcolor: typeFilter === 'jewelry' ? goldAccent.primary : 'transparent',
+                  color: typeFilter === 'jewelry' ? 'white' : theme.palette.text.secondary,
+                  border: '1px solid',
+                  borderColor: typeFilter === 'jewelry' ? goldAccent.primary : isLight ? surfacesLight.border.default : surfacesDark.border.default,
+                  fontWeight: 500,
+                  flexShrink: 0,
+                  '& .MuiChip-icon': { color: typeFilter === 'jewelry' ? 'white' : goldAccent.dark },
+                }}
+              />
+              <Chip
+                size="small"
+                icon={<Sparkles size={14} />}
+                label="Premium"
+                onClick={() => setQualityFilter(qualityFilter === 'PREMIUM' ? 'all' : 'PREMIUM')}
+                sx={{
+                  bgcolor: qualityFilter === 'PREMIUM' ? goldAccent.primary : 'transparent',
+                  color: qualityFilter === 'PREMIUM' ? 'white' : theme.palette.text.secondary,
+                  border: '1px solid',
+                  borderColor: qualityFilter === 'PREMIUM' ? goldAccent.primary : isLight ? surfacesLight.border.default : surfacesDark.border.default,
+                  fontWeight: 500,
+                  flexShrink: 0,
+                  '& .MuiChip-icon': { color: qualityFilter === 'PREMIUM' ? 'white' : goldAccent.dark },
+                }}
+              />
+              {/* Favorites chip */}
+              <Chip
+                size="small"
+                icon={<Heart size={14} fill={showFavoritesOnly ? '#ef4444' : 'none'} />}
+                label={`(${favoritesCount})`}
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                sx={{
+                  bgcolor: showFavoritesOnly ? alpha('#ef4444', 0.1) : 'transparent',
+                  color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
+                  border: '1px solid',
+                  borderColor: showFavoritesOnly ? '#ef4444' : isLight ? surfacesLight.border.default : surfacesDark.border.default,
+                  fontWeight: 500,
+                  flexShrink: 0,
+                  '& .MuiChip-icon': { color: showFavoritesOnly ? '#ef4444' : '#6b7280' },
+                }}
+              />
+              {/* Clear all if filters active */}
+              {hasFilters && (
+                <Chip
+                  size="small"
+                  icon={<X size={14} />}
+                  label="Limpiar"
+                  onClick={clearFilters}
+                  sx={{
+                    bgcolor: alpha(semanticColors.error.main, 0.1),
+                    color: semanticColors.error.main,
+                    fontWeight: 600,
+                    flexShrink: 0,
+                    '& .MuiChip-icon': { color: semanticColors.error.main },
+                  }}
+                />
+              )}
+            </Box>
+          </Box>
+
+          {/* Mobile Filter Drawer */}
+          <SwipeableDrawer
+            anchor="bottom"
+            open={mobileFiltersOpen}
+            onClose={() => setMobileFiltersOpen(false)}
+            onOpen={() => setMobileFiltersOpen(true)}
+            disableSwipeToOpen
+            PaperProps={{
+              sx: {
+                borderTopLeftRadius: 16,
+                borderTopRightRadius: 16,
+                maxHeight: '85vh',
+                bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
+              },
+            }}
+          >
+            <Box sx={{ p: 2 }}>
+              {/* Drawer handle */}
+              <Box
+                sx={{
+                  width: 40,
+                  height: 4,
+                  bgcolor: isLight ? surfacesLight.border.default : surfacesDark.border.default,
+                  borderRadius: 2,
+                  mx: 'auto',
+                  mb: 2,
+                }}
+              />
+              {/* Header */}
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Filtros
+                </Typography>
+                <IconButton size="small" onClick={() => setMobileFiltersOpen(false)}>
+                  <X size={20} />
+                </IconButton>
+              </Box>
+              {/* Filter content */}
+              <FilterContent />
+              {/* Apply button */}
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={() => setMobileFiltersOpen(false)}
+                sx={{
+                  mt: 3,
+                  bgcolor: emeraldCore.primary,
+                  '&:hover': { bgcolor: emeraldCore.dark },
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  py: 1.5,
+                  borderRadius: 2,
+                }}
+              >
+                Ver {sortedInventory.length} resultados
+              </Button>
+            </Box>
+          </SwipeableDrawer>
+        </>
+      ) : (
+        <>
+          {/* Desktop: Full stats bar */}
+          <Box
+            sx={{
+              mb: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 1,
+            }}
+          >
+            <ProgressBadge
+              level={browsingProgress.level}
+              percentageExplored={browsingProgress.percentageExplored}
+              viewedCount={browsingProgress.viewedCount}
+              totalItems={totalAvailable}
+              levelProgress={browsingProgress.levelProgress}
+              nextLevel={browsingProgress.nextLevel}
+            />
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <Chip
+                size="small"
+                label={`${stats.looseStones} Gemas`}
+                sx={{
+                  bgcolor: isLight ? alpha(emeraldCore.primary, 0.1) : alpha(emeraldCore.primary, 0.2),
+                  color: emeraldCore.primary,
+                  fontWeight: 600,
+                  fontSize: '0.75rem',
+                }}
+              />
+              <Chip
+                size="small"
+                label={`${stats.jewelry} Joyería`}
+                sx={{
+                  bgcolor: isLight ? alpha(emeraldCore.primary, 0.1) : alpha(emeraldCore.primary, 0.2),
+                  color: emeraldCore.primary,
+                  fontWeight: 600,
+                  fontSize: '0.75rem',
+                }}
+              />
+            </Box>
+          </Box>
+
+          {/* Desktop: Full filters */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 1.5,
+              mb: 1.5,
+              borderRadius: 2,
+              bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
+              border: '1px solid',
+              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+            }}
+          >
+            <FilterContent />
+            {/* View toggle and keyboard shortcuts - Desktop only */}
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 2, pt: 2, borderTop: '1px solid', borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default }}>
+              <SavedFiltersDropdown
+                presets={savedFilters.presets}
+                onSavePreset={(name) => savedFilters.savePreset(name, {
+                  search,
+                  colorFilter,
+                  qualityFilter,
+                  typeFilter,
+                  statusFilter,
+                  shapeFilter,
+                  priceRange,
+                  sortBy,
+                  cantidadFilter,
+                })}
+                onApplyPreset={(preset) => {
+                  setSearch(preset.filters.search);
+                  setColorFilter(preset.filters.colorFilter);
+                  setQualityFilter(preset.filters.qualityFilter);
+                  setTypeFilter(preset.filters.typeFilter as TypeFilter);
+                  setStatusFilter(preset.filters.statusFilter as StatusFilter);
+                  setShapeFilter(preset.filters.shapeFilter);
+                  setPriceRange(preset.filters.priceRange);
+                  setSortBy(preset.filters.sortBy as SortOption);
+                  if (preset.filters.cantidadFilter) {
+                    setCantidadFilter(preset.filters.cantidadFilter);
+                  }
+                }}
+                onDeletePreset={savedFilters.deletePreset}
+                hasActiveFilters={hasFilters}
+              />
+              <Box sx={{ flex: 1 }} />
+              <ToggleButtonGroup
+                value={viewMode}
+                exclusive
+                onChange={(_, value) => {
+                  if (value) {
+                    setViewMode(value);
+                    analyticsHook.trackViewModeChange(value);
+                  }
+                }}
+                size="small"
+              >
+                <ToggleButton value="grid" sx={{ px: 1.5 }}>
+                  <LayoutGrid size={18} />
+                </ToggleButton>
+                <ToggleButton value="list" sx={{ px: 1.5 }}>
+                  <List size={18} />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <KeyboardShortcutsButton onClick={() => setShowKeyboardHelp(true)} />
+            </Box>
+          </Paper>
+        </>
+      )}
 
       {/* Active Filter Chips - Individual removal */}
       {hasFilters && (
@@ -850,8 +996,8 @@ export default function InventoryBrowser() {
         </Box>
       )}
 
-      {/* Results info - Enhanced display */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+      {/* Results info - Compact */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
             {sortedInventory.length === inventoryData.length ? (
