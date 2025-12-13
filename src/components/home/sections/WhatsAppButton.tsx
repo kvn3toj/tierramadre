@@ -2,10 +2,11 @@
  * WhatsAppButton Component
  *
  * Floating WhatsApp contact button.
+ * Positioned above the bottom navigation bar.
  */
 
 import { motion } from 'framer-motion';
-import { Box, Fab, Tooltip } from '@mui/material';
+import { Fab, Tooltip, useMediaQuery } from '@mui/material';
 import { WhatsApp } from '@mui/icons-material';
 
 // =============================================================================
@@ -19,24 +20,23 @@ const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER.replace('+', '')}?text=Ho
 // COMPONENT
 // =============================================================================
 
-export const WhatsAppButton: React.FC = () => {
+export const WhatsAppButton = () => {
+  // Check for landscape phone
+  const isLandscapePhone = useMediaQuery('(orientation: landscape) and (max-height: 500px)');
+
   return (
-    <Box
-      component={motion.div}
+    <motion.div
       initial={{ opacity: 0, scale: 0 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 1, type: 'spring', stiffness: 200 }}
-      sx={{
+      style={{
         position: 'fixed',
         // Position above tab bar: 65px (tab bar) + safe area + 16px margin
-        bottom: 'calc(81px + env(safe-area-inset-bottom))',
-        left: 16,
+        bottom: isLandscapePhone
+          ? 'calc(65px + env(safe-area-inset-bottom))'
+          : 'calc(81px + env(safe-area-inset-bottom))',
+        left: isLandscapePhone ? 8 : 16,
         zIndex: 999, // Below tab bar (1000) but above content
-        // Landscape phone: adjust for smaller tab bar
-        '@media (orientation: landscape) and (max-height: 500px)': {
-          bottom: 'calc(65px + env(safe-area-inset-bottom))',
-          left: 8,
-        },
       }}
     >
       <Tooltip title="Contáctanos por WhatsApp" placement="right">
@@ -46,6 +46,7 @@ export const WhatsAppButton: React.FC = () => {
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Contactar por WhatsApp"
+          size={isLandscapePhone ? 'small' : 'medium'}
           sx={{
             bgcolor: '#25D366',
             color: 'white',
@@ -55,18 +56,12 @@ export const WhatsAppButton: React.FC = () => {
               transform: 'scale(1.1)',
             },
             transition: 'all 0.2s ease',
-            // Smaller button in landscape
-            '@media (orientation: landscape) and (max-height: 500px)': {
-              width: 48,
-              height: 48,
-              minHeight: 48,
-            },
           }}
         >
-          <WhatsApp sx={{ fontSize: 28 }} />
+          <WhatsApp sx={{ fontSize: isLandscapePhone ? 24 : 28 }} />
         </Fab>
       </Tooltip>
-    </Box>
+    </motion.div>
   );
 };
 
