@@ -7,6 +7,7 @@ import { useAuth } from './hooks/useAuth';
 import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
 import LoadingFallback from './components/LoadingFallback';
+import UpdatePrompt from './components/pwa/UpdatePrompt';
 
 // Primary routes - keep in main bundle (frequently used)
 import Home from './components/home';
@@ -170,6 +171,7 @@ function App() {
   return (
     <BrowserRouter>
       <AppContent />
+      <UpdatePrompt />
     </BrowserRouter>
   );
 }
