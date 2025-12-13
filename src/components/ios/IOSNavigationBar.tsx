@@ -7,11 +7,15 @@
  * - Context-aware titles and actions
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
+import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
+import { dynamicBlur, liquidSaturation, specularHighlights } from '../../design-system/tokens/liquid-glass';
+import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
+import { useIsScrolled } from '../../hooks/useScrollShrink';
 
 export type NavigationBarMode = 'compact' | 'large';
 
@@ -43,6 +47,8 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
   trailingActions = [],
 }) => {
   const navigate = useNavigate();
+  const { effectiveConfig } = useLiquidGlassSafe();
+  const isScrolled = useIsScrolled(20);
 
   const handleBackClick = () => {
     if (onBackClick) {
@@ -54,6 +60,44 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
 
   const isLargeMode = mode === 'large';
 
+  // Liquid Glass styles based on scroll state
+  const liquidGlassStyles = useMemo(() => {
+    if (!effectiveConfig.blur) {
+      return {
+        backgroundColor: 'var(--surface-primary)',
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
+      };
+    }
+
+    const blurValue = isScrolled ? dynamicBlur.hover : dynamicBlur.resting;
+
+    return {
+      backgroundColor: 'rgba(var(--surface-primary-rgb), 0.7)',
+      backdropFilter: `blur(${blurValue}) saturate(${liquidSaturation.vibrant})`,
+      WebkitBackdropFilter: `blur(${blurValue}) saturate(${liquidSaturation.vibrant})`,
+    };
+  }, [effectiveConfig.blur, isScrolled]);
+
+  // Specular highlight on bottom edge
+  const specularStyles = useMemo(() => {
+    if (!effectiveConfig.specular) return {};
+
+    return {
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        bottom: 0,
+        left: '10%',
+        right: '10%',
+        height: '1px',
+        background: specularHighlights.gradients.subtle,
+        opacity: isScrolled ? 0.8 : 0.4,
+        transition: `opacity ${durations.liquidFast} ${easingCurves.liquidIn}`,
+      },
+    };
+  }, [effectiveConfig.specular, isScrolled]);
+
   return (
     <Box
       component="header"
@@ -63,11 +107,22 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
         left: 0,
         right: 0,
         zIndex: 999,
-        backgroundColor: 'var(--surface-primary)',
+        ...liquidGlassStyles,
         borderBottom: '0.5px solid var(--border-default)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        boxShadow: 'var(--shadow-sm)',
+        boxShadow: isScrolled ? 'var(--shadow-md)' : 'var(--shadow-sm)',
+        transition: effectiveConfig.animations
+          ? `all ${durations.liquidNormal} ${easingCurves.liquidInOut}`
+          : 'none',
+        transform: 'translateZ(0)',
+        willChange: effectiveConfig.animations ? 'backdrop-filter, box-shadow' : 'auto',
+        ...specularStyles,
+
+        '@supports not (backdrop-filter: blur(10px))': {
+          backgroundColor: 'var(--surface-primary)',
+        },
+        '@media (prefers-reduced-motion: reduce)': {
+          transition: 'none',
+        },
       }}
     >
       {/* Top Bar */}
