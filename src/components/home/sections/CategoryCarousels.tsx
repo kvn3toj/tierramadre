@@ -82,9 +82,26 @@ const SingleCarousel: React.FC<SingleCarouselProps> = ({
   };
 
   return (
-    <Box sx={{ flex: 1, minWidth: 0, maxWidth: { md: 500, lg: 600 }, mx: 'auto' }}>
+    <Box sx={{
+      flex: 1,
+      minWidth: 0,
+      maxWidth: { md: 500, lg: 600 },
+      mx: 'auto',
+      // Landscape phone: smaller max-width
+      '@media (orientation: landscape) and (max-height: 500px)': {
+        maxWidth: '50%',
+      },
+    }}>
       {/* Elegant Header */}
-      <Box sx={{ textAlign: 'center', mb: 2, px: 2 }}>
+      <Box sx={{
+        textAlign: 'center',
+        mb: 2,
+        px: 2,
+        // Landscape phone: compact header
+        '@media (orientation: landscape) and (max-height: 500px)': {
+          mb: 1,
+        },
+      }}>
         <Typography
           variant="overline"
           sx={{
@@ -232,6 +249,11 @@ const SingleCarousel: React.FC<SingleCarouselProps> = ({
                   sx={{
                     width: { xs: 130, sm: 150, md: 180, lg: 200 },
                     height: { xs: 160, sm: 190, md: 230, lg: 260 },
+                    // Landscape phone: smaller images
+                    '@media (orientation: landscape) and (max-height: 500px)': {
+                      width: 100,
+                      height: 120,
+                    },
                     borderRadius: 1,
                     overflow: 'hidden',
                     cursor: 'pointer',
@@ -302,12 +324,17 @@ export const CategoryCarousels: React.FC = () => {
     <>
       <Box component="section" aria-label="Galería de esmeraldas" sx={{ py: 2 }}>
         <motion.div variants={fadeInUp} initial="initial" animate="animate">
-          {/* Two carousels side by side */}
+          {/* Two carousels - responsive for landscape */}
           <Box
             sx={{
               display: 'flex',
               flexDirection: { xs: 'column', md: 'row' },
               gap: { xs: 4, md: 0 },
+              // Landscape phone: show in row
+              '@media (orientation: landscape) and (max-height: 500px)': {
+                flexDirection: 'row',
+                gap: 0,
+              },
             }}
           >
             {/* Rings Carousel */}
@@ -319,13 +346,18 @@ export const CategoryCarousels: React.FC = () => {
               onImageClick={setSelectedImage}
             />
 
-            {/* Vertical Divider (desktop only) */}
+            {/* Vertical Divider (desktop + landscape) */}
             <Box
               sx={{
                 display: { xs: 'none', md: 'block' },
                 width: 1,
                 bgcolor: 'rgba(255,255,255,0.1)',
                 my: 4,
+                // Show in landscape on phones too
+                '@media (orientation: landscape) and (max-height: 500px)': {
+                  display: 'block',
+                  my: 2,
+                },
               }}
             />
 
