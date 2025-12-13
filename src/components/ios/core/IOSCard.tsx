@@ -2,8 +2,12 @@ import React, { CSSProperties, ReactNode } from 'react';
 
 /**
  * IOSCard Variants
+ * - elevated: Standard card with shadow
+ * - glass: Classic glassmorphic card with backdrop blur
+ * - flat: Flat card with border only
+ * - liquidGlass: iOS 26 Liquid Glass with dynamic blur and specular highlights
  */
-export type IOSCardVariant = 'elevated' | 'glass' | 'flat';
+export type IOSCardVariant = 'elevated' | 'glass' | 'flat' | 'liquidGlass';
 
 /**
  * IOSCard Padding Sizes
@@ -138,6 +142,18 @@ export const IOSCard: React.FC<IOSCardProps> = ({
           WebkitBackdropFilter: 'var(--backdrop-blur-ios)', // Safari support
         };
 
+      case 'liquidGlass':
+        // iOS 26 Liquid Glass with dynamic effects
+        return {
+          backgroundColor: 'rgba(255, 255, 255, 0.6)',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          backdropFilter: 'blur(16px) saturate(200%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(200%)',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
+          // Specular highlight gradient overlay
+          backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%)',
+        };
+
       case 'flat':
         return {
           backgroundColor: 'var(--card-bg)',
@@ -158,12 +174,30 @@ export const IOSCard: React.FC<IOSCardProps> = ({
     ? {
         ...(isHovered && {
           transform: 'scale(1.02)',
-          boxShadow: variant === 'elevated' ? 'var(--shadow-md)' : variantStyles.boxShadow,
+          boxShadow: variant === 'elevated'
+            ? 'var(--shadow-md)'
+            : variant === 'liquidGlass'
+              ? '0 12px 32px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.2)'
+              : variantStyles.boxShadow,
           borderColor: 'var(--card-hover-border)',
+          // Liquid Glass: reduce blur on hover for more clarity
+          ...(variant === 'liquidGlass' && {
+            backdropFilter: 'blur(12px) saturate(200%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(200%)',
+          }),
         }),
         ...(isPressed && {
           transform: 'scale(0.98)',
-          boxShadow: variant === 'elevated' ? 'var(--shadow-xs)' : variantStyles.boxShadow,
+          boxShadow: variant === 'elevated'
+            ? 'var(--shadow-xs)'
+            : variant === 'liquidGlass'
+              ? '0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.1)'
+              : variantStyles.boxShadow,
+          // Liquid Glass: minimum blur on active for maximum clarity
+          ...(variant === 'liquidGlass' && {
+            backdropFilter: 'blur(8px) saturate(200%)',
+            WebkitBackdropFilter: 'blur(8px) saturate(200%)',
+          }),
         }),
       }
     : {};

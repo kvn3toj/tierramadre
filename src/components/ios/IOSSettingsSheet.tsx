@@ -8,10 +8,12 @@
 
 import React from 'react';
 import { Box, Typography, IconButton, Backdrop, Switch } from '@mui/material';
-import { Close, DarkMode, LightMode, Language } from '@mui/icons-material';
+import { Close, DarkMode, LightMode, Language, AutoAwesome, Tune } from '@mui/icons-material';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
+import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import MeditationReminderSetting from '../settings/MeditationReminderSetting';
 import { UserProfileCard } from '../auth';
 
@@ -23,6 +25,13 @@ export interface IOSSettingsSheetProps {
 const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) => {
   const { mode, toggleTheme } = useTheme();
   const { language, t, toggleLanguage } = useLanguage();
+  const {
+    enabled: liquidGlassEnabled,
+    effectiveTier,
+    effects,
+    updateSettings,
+    toggleEffect,
+  } = useLiquidGlassSafe();
 
   return (
     <>
@@ -252,6 +261,159 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
 
           {/* Meditation Reminder */}
           <MeditationReminderSetting />
+
+          {/* Liquid Glass Section */}
+          <Box sx={{ marginTop: spacing.sm }}>
+            <Typography
+              variant="overline"
+              sx={{
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--text-tertiary)',
+                letterSpacing: '0.5px',
+                marginBottom: spacing.xs,
+                display: 'block',
+              }}
+            >
+              LIQUID GLASS (iOS 26)
+            </Typography>
+
+            {/* Master Toggle */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: spacing.sm,
+                backgroundColor: 'var(--surface-primary)',
+                borderRadius: spacing.md,
+                marginBottom: spacing.xs,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+                <Box
+                  sx={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: spacing.md,
+                    backgroundColor: `${primitiveColors.emerald[500]}15`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <AutoAwesome sx={{ fontSize: '24px', color: primitiveColors.emerald[500] }} />
+                </Box>
+                <Box>
+                  <Typography
+                    variant="body1"
+                    sx={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)' }}
+                  >
+                    Liquid Glass
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontSize: '13px', color: 'var(--text-secondary)' }}
+                  >
+                    {effectiveTier === 'high' ? 'Alto rendimiento' : effectiveTier === 'medium' ? 'Rendimiento medio' : 'Modo ahorro'}
+                  </Typography>
+                </Box>
+              </Box>
+              <Switch
+                checked={liquidGlassEnabled}
+                onChange={() => updateSettings({ enabled: !liquidGlassEnabled })}
+                sx={{
+                  '& .MuiSwitch-switchBase.Mui-checked': {
+                    color: primitiveColors.emerald[500],
+                  },
+                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                    backgroundColor: primitiveColors.emerald[500],
+                  },
+                }}
+              />
+            </Box>
+
+            {/* Effect Toggles (only show when enabled) */}
+            {liquidGlassEnabled && (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: spacing.xxs,
+                  padding: spacing.sm,
+                  backgroundColor: 'var(--surface-primary)',
+                  borderRadius: spacing.md,
+                }}
+              >
+                {/* Dynamic Tab Bar */}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: spacing.xxs }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
+                    <Tune sx={{ fontSize: '20px', color: 'var(--text-secondary)' }} />
+                    <Typography sx={{ fontSize: '15px', color: 'var(--text-primary)' }}>
+                      Tab Bar din\u00e1mica
+                    </Typography>
+                  </Box>
+                  <Switch
+                    size="small"
+                    checked={effects.dynamicTabBar}
+                    onChange={() => toggleEffect('dynamicTabBar')}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': { color: primitiveColors.emerald[500] },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: primitiveColors.emerald[500] },
+                    }}
+                  />
+                </Box>
+
+                {/* Blur Effect */}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: spacing.xxs }}>
+                  <Typography sx={{ fontSize: '15px', color: 'var(--text-primary)', ml: '28px' }}>
+                    Blur din\u00e1mico
+                  </Typography>
+                  <Switch
+                    size="small"
+                    checked={effects.blur}
+                    onChange={() => toggleEffect('blur')}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': { color: primitiveColors.emerald[500] },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: primitiveColors.emerald[500] },
+                    }}
+                  />
+                </Box>
+
+                {/* Specular Highlights */}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: spacing.xxs }}>
+                  <Typography sx={{ fontSize: '15px', color: 'var(--text-primary)', ml: '28px' }}>
+                    Brillos especulares
+                  </Typography>
+                  <Switch
+                    size="small"
+                    checked={effects.specular}
+                    onChange={() => toggleEffect('specular')}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': { color: primitiveColors.emerald[500] },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: primitiveColors.emerald[500] },
+                    }}
+                  />
+                </Box>
+
+                {/* Animations */}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: spacing.xxs }}>
+                  <Typography sx={{ fontSize: '15px', color: 'var(--text-primary)', ml: '28px' }}>
+                    Animaciones fluidas
+                  </Typography>
+                  <Switch
+                    size="small"
+                    checked={effects.animations}
+                    onChange={() => toggleEffect('animations')}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': { color: primitiveColors.emerald[500] },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: primitiveColors.emerald[500] },
+                    }}
+                  />
+                </Box>
+              </Box>
+            )}
+          </Box>
         </Box>
       </Box>
     </>

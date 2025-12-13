@@ -7,7 +7,7 @@
  * - Backdrop dismiss
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton, Backdrop, Button } from '@mui/material';
 import { Lock } from '@mui/icons-material';
@@ -27,7 +27,12 @@ import { Vault } from 'lucide-react';
 
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
+import { floatingLayers, liquidSaturation, specularHighlights
+} from '../../design-system/tokens/liquid-glass';
+import { floatingLayerShadows } from '../../design-system/tokens/shadows';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsGuest } from '../../hooks/useAuth';
 import UnlockPrompt from '../auth/UnlockPrompt';
 
@@ -136,9 +141,48 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const isGuest = useIsGuest();
+  const { effectiveConfig } = useLiquidGlassSafe();
   const [unlockOpen, setUnlockOpen] = useState(false);
 
   const MORE_TOOLS = getMoreTools(t);
+
+  // Liquid Glass styles for the sheet
+  const sheetStyles = useMemo(() => {
+    if (!effectiveConfig.blur) {
+      return {
+        backgroundColor: 'var(--surface-secondary)',
+        backdropFilter: 'none',
+        boxShadow: 'var(--shadow-lg)',
+      };
+    }
+
+    const layer = floatingLayers.overlay;
+
+    return {
+      backgroundColor: 'rgba(var(--surface-secondary-rgb), 0.85)',
+      backdropFilter: `blur(${layer.blur}) saturate(${liquidSaturation.intense})`,
+      WebkitBackdropFilter: `blur(${layer.blur}) saturate(${liquidSaturation.intense})`,
+      boxShadow: floatingLayerShadows.overlay,
+    };
+  }, [effectiveConfig.blur]);
+
+  // Specular highlight for sheet header
+  const headerSpecularStyles = useMemo(() => {
+    if (!effectiveConfig.specular) return {};
+
+    return {
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: '5%',
+        right: '5%',
+        height: '1px',
+        background: specularHighlights.gradients.subtle,
+        borderRadius: '1px',
+      },
+    };
+  }, [effectiveConfig.specular]);
 
   const handleToolClick = (tool: MoreToolConfig) => {
     if ('vibrate' in navigator) {
@@ -165,8 +209,12 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
         onClick={onClose}
         sx={{
           zIndex: 1100,
-          backgroundColor: 'rgba(0, 0, 0, 0.4)',
-          backdropFilter: 'blur(10px)',
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          backdropFilter: effectiveConfig.blur ? 'blur(16px)' : 'none',
+          WebkitBackdropFilter: effectiveConfig.blur ? 'blur(16px)' : 'none',
+          transition: effectiveConfig.animations
+            ? `opacity ${durations.liquidNormal} ${easingCurves.liquidInOut}`
+            : 'none',
         }}
       />
 
@@ -179,15 +227,25 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
           left: 0,
           right: 0,
           zIndex: 1101,
-          backgroundColor: 'var(--surface-secondary)',
+          ...sheetStyles,
           borderTopLeftRadius: spacing.lg,
           borderTopRightRadius: spacing.lg,
-          boxShadow: 'var(--shadow-lg)',
           maxHeight: '85vh',
           overflowY: 'auto',
           transform: open ? 'translateY(0)' : 'translateY(100%)',
-          transition: 'transform 0.4s cubic-bezier(0.5, 1.25, 0.75, 1.25)',
+          transition: effectiveConfig.animations
+            ? `transform ${durations.liquidNormal} ${easingCurves.liquidSpring}`
+            : 'transform 0.3s ease-out',
           paddingBottom: 'env(safe-area-inset-bottom)',
+          willChange: 'transform',
+          ...headerSpecularStyles,
+
+          '@supports not (backdrop-filter: blur(10px))': {
+            backgroundColor: 'var(--surface-secondary)',
+          },
+          '@media (prefers-reduced-motion: reduce)': {
+            transition: 'transform 0.2s ease-out',
+          },
         }}
       >
         {/* Header */}
@@ -334,10 +392,17 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
                   backgroundColor: 'var(--surface-primary)',
                   borderRadius: spacing.md,
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
+                  transition: effectiveConfig.animations
+                    ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
+                    : 'none',
 
-                  '&:hover': { backgroundColor: 'var(--surface-tertiary)' },
-                  '&:active': { transform: 'scale(0.98)' },
+                  '&:hover': {
+                    backgroundColor: 'var(--surface-tertiary)',
+                    transform: effectiveConfig.animations ? 'scale(1.01)' : 'none',
+                  },
+                  '&:active': {
+                    transform: effectiveConfig.animations ? 'scale(0.98)' : 'none',
+                  },
                 }}
               >
                 {/* Icon Container */}
