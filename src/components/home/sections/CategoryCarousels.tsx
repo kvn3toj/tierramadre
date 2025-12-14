@@ -71,9 +71,20 @@ const SingleCarousel: React.FC<SingleCarouselProps> = ({
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Center the carousel on first image on mount
+  React.useEffect(() => {
+    if (scrollRef.current) {
+      // Small delay to ensure images are loaded
+      const timer = setTimeout(() => {
+        scrollRef.current?.scrollTo({ left: 0, behavior: 'instant' });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const cardWidth = scrollRef.current.offsetWidth / 3;
+      const cardWidth = 180; // Fixed scroll amount for consistency
       scrollRef.current.scrollBy({
         left: direction === 'left' ? -cardWidth : cardWidth,
         behavior: 'smooth',
@@ -85,8 +96,9 @@ const SingleCarousel: React.FC<SingleCarouselProps> = ({
     <Box sx={{
       flex: 1,
       minWidth: 0,
-      maxWidth: { md: 500, lg: 600 },
-      mx: 'auto',
+      width: '100%',
+      // iPad/desktop: allow natural width distribution
+      maxWidth: { xs: '100%', md: '50%', lg: '50%' },
       // Landscape phone: smaller max-width
       '@media (orientation: landscape) and (max-height: 500px)': {
         maxWidth: '50%',
@@ -223,12 +235,14 @@ const SingleCarousel: React.FC<SingleCarouselProps> = ({
             gap: { xs: 1.5, md: 2 },
             overflowX: 'auto',
             overflowY: 'hidden',
-            px: { xs: 3, md: 4 },
+            px: { xs: 4, md: 5 },
             py: { xs: 1, md: 2 },
             scrollSnapType: 'x mandatory',
             scrollBehavior: 'smooth',
             '&::-webkit-scrollbar': { display: 'none' },
             scrollbarWidth: 'none',
+            // Ensure content is visible from start
+            justifyContent: { md: 'flex-start' },
           }}
         >
           {images.map((image, index) => (
@@ -322,18 +336,20 @@ export const CategoryCarousels: React.FC = () => {
 
   return (
     <>
-      <Box component="section" aria-label="Galería de esmeraldas" sx={{ py: 2 }}>
+      <Box component="section" aria-label="Galería de esmeraldas" sx={{ py: 2, px: { xs: 0, md: 2, lg: 4 } }}>
         <motion.div variants={fadeInUp} initial="initial" animate="animate">
           {/* Two carousels - responsive for landscape */}
           <Box
             sx={{
               display: 'flex',
               flexDirection: { xs: 'column', md: 'row' },
-              gap: { xs: 4, md: 0 },
+              gap: { xs: 4, md: 2, lg: 4 },
+              alignItems: 'stretch',
+              justifyContent: 'center',
               // Landscape phone: show in row
               '@media (orientation: landscape) and (max-height: 500px)': {
                 flexDirection: 'row',
-                gap: 0,
+                gap: 2,
               },
             }}
           >
@@ -349,17 +365,27 @@ export const CategoryCarousels: React.FC = () => {
             {/* Vertical Divider (desktop + landscape) */}
             <Box
               sx={{
-                display: { xs: 'none', md: 'block' },
-                width: 1,
-                bgcolor: 'rgba(255,255,255,0.1)',
-                my: 4,
+                display: { xs: 'none', md: 'flex' },
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                px: 1,
                 // Show in landscape on phones too
                 '@media (orientation: landscape) and (max-height: 500px)': {
-                  display: 'block',
-                  my: 2,
+                  display: 'flex',
+                  px: 0.5,
                 },
               }}
-            />
+            >
+              <Box
+                sx={{
+                  width: 1,
+                  height: '60%',
+                  bgcolor: 'rgba(255,255,255,0.15)',
+                  borderRadius: 1,
+                }}
+              />
+            </Box>
 
             {/* Gems Carousel */}
             <SingleCarousel
