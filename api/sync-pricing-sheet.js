@@ -572,7 +572,7 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
 /**
  * Apply comprehensive professional styling to inventory sheet
  *
- * Inventory Columns (based on actual sheet):
+ * UPDATED 2024-12-14 - Corrected column structure:
  * A: Item (0)
  * B: FECHA INGRESO INVENTARIO (1)
  * C: Nombre (2)
@@ -581,16 +581,14 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
  * F: Calidad (5) - dropdown
  * G: Cant. (6)
  * H: Talla (7) - dropdown
- * I: Medida s (8) - dropdown
- * J: Medidas (9)
+ * I: Medidas tipo (8) - dropdown
+ * J: Medidas valores (9)
  * K: Imagen (10)
- * L: costo T.madre (11) - currency
- * M: Precio COP (12) - currency
- * N: UBICACION (13) - dropdown
- * O: ASESOR (14)
- * P: ESTADO (15) - dropdown with conditional formatting
- * Q: CAJA (16)
- * R: QR (17) - QR code image formula
+ * L: Precio COP (11) - currency
+ * M: UBICACIÓN (12) - dropdown
+ * N: ASESOR (13)
+ * O: ESTADO (14) - dropdown with conditional formatting
+ * P: QR (15) - QR code image formula
  */
 async function applyInventoryStyling(sheets, sheetId, rowCount) {
   // Clear existing conditional format rules first
@@ -627,7 +625,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           startRowIndex: 0,
           endRowIndex: 1,
           startColumnIndex: 0,
-          endColumnIndex: 18, // Include QR column (R)
+          endColumnIndex: 16, // Columns A-P (16 columns)
         },
         cell: {
           userEnteredFormat: {
@@ -739,65 +737,49 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
         fields: 'pixelSize',
       },
     },
-    // L: costo T.madre - currency
+    // L: Precio COP - currency (important, golden)
     {
       updateDimensionProperties: {
         range: { sheetId, dimension: 'COLUMNS', startIndex: 11, endIndex: 12 },
-        properties: { pixelSize: 100 },
-        fields: 'pixelSize',
-      },
-    },
-    // M: Precio COP - currency (important, golden)
-    {
-      updateDimensionProperties: {
-        range: { sheetId, dimension: 'COLUMNS', startIndex: 12, endIndex: 13 },
         properties: { pixelSize: 110 },
         fields: 'pixelSize',
       },
     },
-    // N: UBICACION - dropdown
+    // M: UBICACIÓN - dropdown
     {
       updateDimensionProperties: {
-        range: { sheetId, dimension: 'COLUMNS', startIndex: 13, endIndex: 14 },
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 12, endIndex: 13 },
         properties: { pixelSize: 90 },
         fields: 'pixelSize',
       },
     },
-    // O: ASESOR
+    // N: ASESOR
     {
       updateDimensionProperties: {
-        range: { sheetId, dimension: 'COLUMNS', startIndex: 14, endIndex: 15 },
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 13, endIndex: 14 },
         properties: { pixelSize: 110 },
         fields: 'pixelSize',
       },
     },
-    // P: ESTADO - important dropdown
+    // O: ESTADO - important dropdown
     {
       updateDimensionProperties: {
-        range: { sheetId, dimension: 'COLUMNS', startIndex: 15, endIndex: 16 },
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 14, endIndex: 15 },
         properties: { pixelSize: 95 },
         fields: 'pixelSize',
       },
     },
-    // Q: CAJA
+    // P: QR - QR code column (needs to be wide enough for image)
     {
       updateDimensionProperties: {
-        range: { sheetId, dimension: 'COLUMNS', startIndex: 16, endIndex: 17 },
-        properties: { pixelSize: 90 },
-        fields: 'pixelSize',
-      },
-    },
-    // R: QR - QR code column (needs to be wide enough for image)
-    {
-      updateDimensionProperties: {
-        range: { sheetId, dimension: 'COLUMNS', startIndex: 17, endIndex: 18 },
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 15, endIndex: 16 },
         properties: { pixelSize: 120 },
         fields: 'pixelSize',
       },
     },
 
     // ==========================================
-    // 3. DATA VALIDATION - Color dropdown (Column F = index 5)
+    // 3. DATA VALIDATION - Color dropdown (Column E = index 4)
     // ==========================================
     {
       setDataValidation: {
@@ -805,8 +787,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 1,
           endRowIndex: rowCount + 200,
-          startColumnIndex: 5,
-          endColumnIndex: 6,
+          startColumnIndex: 4,
+          endColumnIndex: 5,
         },
         rule: {
           condition: {
@@ -820,7 +802,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 4. DATA VALIDATION - Calidad dropdown (Column G = index 6)
+    // 4. DATA VALIDATION - Calidad dropdown (Column F = index 5)
     // ==========================================
     {
       setDataValidation: {
@@ -828,8 +810,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 1,
           endRowIndex: rowCount + 200,
-          startColumnIndex: 6,
-          endColumnIndex: 7,
+          startColumnIndex: 5,
+          endColumnIndex: 6,
         },
         rule: {
           condition: {
@@ -843,7 +825,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 5. DATA VALIDATION - Talla dropdown (Column I = index 8)
+    // 5. DATA VALIDATION - Talla dropdown (Column H = index 7)
     // ==========================================
     {
       setDataValidation: {
@@ -851,8 +833,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 1,
           endRowIndex: rowCount + 200,
-          startColumnIndex: 8,
-          endColumnIndex: 9,
+          startColumnIndex: 7,
+          endColumnIndex: 8,
         },
         rule: {
           condition: {
@@ -866,7 +848,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 6. DATA VALIDATION - Medida s dropdown (Column J = index 9)
+    // 6. DATA VALIDATION - Medidas tipo dropdown (Column I = index 8)
     // ==========================================
     {
       setDataValidation: {
@@ -874,8 +856,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 1,
           endRowIndex: rowCount + 200,
-          startColumnIndex: 9,
-          endColumnIndex: 10,
+          startColumnIndex: 8,
+          endColumnIndex: 9,
         },
         rule: {
           condition: {
@@ -889,7 +871,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 7. DATA VALIDATION - Ubicacion dropdown (Column O = index 14)
+    // 7. DATA VALIDATION - Ubicación dropdown (Column M = index 12)
     // ==========================================
     {
       setDataValidation: {
@@ -897,8 +879,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 1,
           endRowIndex: rowCount + 200,
-          startColumnIndex: 14,
-          endColumnIndex: 15,
+          startColumnIndex: 12,
+          endColumnIndex: 13,
         },
         rule: {
           condition: {
@@ -912,7 +894,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 8. DATA VALIDATION - Estado dropdown (Column Q = index 16)
+    // 8. DATA VALIDATION - Estado dropdown (Column O = index 14)
     // ==========================================
     {
       setDataValidation: {
@@ -920,8 +902,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 1,
           endRowIndex: rowCount + 200,
-          startColumnIndex: 16,
-          endColumnIndex: 17,
+          startColumnIndex: 14,
+          endColumnIndex: 15,
         },
         rule: {
           condition: {
@@ -935,7 +917,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 9. CURRENCY FORMATTING - costo T.madre (Column M = index 12)
+    // 9. CURRENCY FORMATTING - Precio COP (Column L = index 11)
     // ==========================================
     {
       repeatCell: {
@@ -943,33 +925,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 1,
           endRowIndex: rowCount + 200,
-          startColumnIndex: 12,
-          endColumnIndex: 13,
-        },
-        cell: {
-          userEnteredFormat: {
-            numberFormat: {
-              type: 'CURRENCY',
-              pattern: '"$"#,##0',
-            },
-            horizontalAlignment: 'RIGHT',
-          },
-        },
-        fields: 'userEnteredFormat(numberFormat,horizontalAlignment)',
-      },
-    },
-
-    // ==========================================
-    // 10. CURRENCY FORMATTING - Precio COP (Column N = index 13)
-    // ==========================================
-    {
-      repeatCell: {
-        range: {
-          sheetId,
-          startRowIndex: 1,
-          endRowIndex: rowCount + 200,
-          startColumnIndex: 13,
-          endColumnIndex: 14,
+          startColumnIndex: 11,
+          endColumnIndex: 12,
         },
         cell: {
           userEnteredFormat: {
@@ -988,7 +945,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 11. SPECIAL HEADER - Golden accent for Precio COP (Column N)
+    // 10. SPECIAL HEADER - Golden accent for Precio COP (Column L = index 11)
     // ==========================================
     {
       repeatCell: {
@@ -996,8 +953,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 0,
           endRowIndex: 1,
-          startColumnIndex: 13,
-          endColumnIndex: 14,
+          startColumnIndex: 11,
+          endColumnIndex: 12,
         },
         cell: {
           userEnteredFormat: {
@@ -1108,7 +1065,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 16. BORDERS - Professional outline
+    // 14. BORDERS - Professional outline
     // ==========================================
     {
       updateBorders: {
@@ -1117,7 +1074,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
           startRowIndex: 0,
           endRowIndex: rowCount + 1,
           startColumnIndex: 0,
-          endColumnIndex: 18, // Include QR column
+          endColumnIndex: 16, // Columns A-P
         },
         top: { style: 'SOLID_MEDIUM', color: COLORS.verdeOscuro },
         bottom: { style: 'SOLID_MEDIUM', color: COLORS.verdeOscuro },
@@ -1145,7 +1102,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 17. CONDITIONAL FORMAT - VENDIDA (Red background) - Column Q = index 16
+    // 16. CONDITIONAL FORMAT - VENDIDA (Red background) - Column O = index 14
     // ==========================================
     {
       addConditionalFormatRule: {
@@ -1154,8 +1111,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
             sheetId,
             startRowIndex: 1,
             endRowIndex: rowCount + 200,
-            startColumnIndex: 16,
-            endColumnIndex: 17,
+            startColumnIndex: 14,
+            endColumnIndex: 15,
           }],
           booleanRule: {
             condition: {
@@ -1176,7 +1133,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 18. CONDITIONAL FORMAT - DISPONIBLE (Green background)
+    // 17. CONDITIONAL FORMAT - DISPONIBLE (Green background)
     // ==========================================
     {
       addConditionalFormatRule: {
@@ -1185,8 +1142,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
             sheetId,
             startRowIndex: 1,
             endRowIndex: rowCount + 200,
-            startColumnIndex: 16,
-            endColumnIndex: 17,
+            startColumnIndex: 14,
+            endColumnIndex: 15,
           }],
           booleanRule: {
             condition: {
@@ -1207,7 +1164,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 19. CONDITIONAL FORMAT - Legalizada (Light green)
+    // 18. CONDITIONAL FORMAT - Legalizada (Light green)
     // ==========================================
     {
       addConditionalFormatRule: {
@@ -1216,8 +1173,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
             sheetId,
             startRowIndex: 1,
             endRowIndex: rowCount + 200,
-            startColumnIndex: 16,
-            endColumnIndex: 17,
+            startColumnIndex: 14,
+            endColumnIndex: 15,
           }],
           booleanRule: {
             condition: {
@@ -1237,7 +1194,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 20. CONDITIONAL FORMAT - Pte Legalizar (Yellow/Gold)
+    // 19. CONDITIONAL FORMAT - Pte Legalizar (Yellow/Gold)
     // ==========================================
     {
       addConditionalFormatRule: {
@@ -1246,8 +1203,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
             sheetId,
             startRowIndex: 1,
             endRowIndex: rowCount + 200,
-            startColumnIndex: 16,
-            endColumnIndex: 17,
+            startColumnIndex: 14,
+            endColumnIndex: 15,
           }],
           booleanRule: {
             condition: {
@@ -1267,7 +1224,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 21. ALTERNATING ROW COLORS
+    // 20. ALTERNATING ROW COLORS
     // ==========================================
     {
       addConditionalFormatRule: {
@@ -1277,7 +1234,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
             startRowIndex: 1,
             endRowIndex: rowCount + 200,
             startColumnIndex: 0,
-            endColumnIndex: 16, // Exclude ESTADO column (Q)
+            endColumnIndex: 14, // Exclude ESTADO column (O)
           }],
           booleanRule: {
             condition: {
@@ -1294,7 +1251,7 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 22. PRICE GRADIENT - Precio COP column (N = index 13)
+    // 21. PRICE GRADIENT - Precio COP column (L = index 11)
     // ==========================================
     {
       addConditionalFormatRule: {
@@ -1303,8 +1260,8 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
             sheetId,
             startRowIndex: 1,
             endRowIndex: rowCount + 200,
-            startColumnIndex: 13,
-            endColumnIndex: 14,
+            startColumnIndex: 11,
+            endColumnIndex: 12,
           }],
           gradientRule: {
             minpoint: {
@@ -1333,17 +1290,18 @@ async function applyInventoryStyling(sheets, sheetId, rowCount) {
   });
 
   return {
-    dropdowns: ['Color', 'Calidad', 'Talla', 'Medida s', 'Ubicación', 'Estado'],
+    dropdowns: ['Color (E)', 'Calidad (F)', 'Talla (H)', 'Medidas tipo (I)', 'Ubicación (M)', 'Estado (O)'],
     conditionalFormatting: ['VENDIDA (rojo)', 'DISPONIBLE (verde)', 'Legalizada', 'Pte Legalizar', 'Alternating rows', 'Price gradient'],
-    currencyFormatting: ['costo T.madre', 'Precio COP'],
-    columnWidths: 'optimized',
+    currencyFormatting: ['Precio COP (L)'],
+    columnWidths: 'optimized (A-P)',
   };
 }
 
 /**
- * Add QR code formulas to inventory sheet column R
+ * Add QR code formulas to inventory sheet column P
  * Uses Google Sheets IMAGE() function with QR Server API
  * QR points to Tierra Madre Studio app: /product/{itemId}
+ * UPDATED 2024-12-14: Changed from column R to column P
  */
 async function addQRFormulas(sheets, sheetName, rowCount) {
   // Generate QR formula for each row
@@ -1361,10 +1319,10 @@ async function addQRFormulas(sheets, sheetName, rowCount) {
   }
 
   if (qrFormulas.length > 0) {
-    // Write QR formulas to column R
+    // Write QR formulas to column P
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${sheetName}!R2:R${rowCount + 1}`,
+      range: `${sheetName}!P2:P${rowCount + 1}`,
       valueInputOption: 'USER_ENTERED',
       resource: {
         values: qrFormulas,
@@ -1374,7 +1332,7 @@ async function addQRFormulas(sheets, sheetName, rowCount) {
     // Add header for QR column
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${sheetName}!R1`,
+      range: `${sheetName}!P1`,
       valueInputOption: 'USER_ENTERED',
       resource: {
         values: [['QR']],
@@ -1536,7 +1494,7 @@ export default async function handler(req, res) {
         },
         inventory: {
           ...inventoryStyling,
-          qrColumn: 'R - QR codes via IMAGE() formula',
+          qrColumn: 'P - QR codes via IMAGE() formula',
         },
       },
     });

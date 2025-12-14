@@ -31,7 +31,6 @@ import {
   ChevronDown,
   ChevronUp,
   Plus,
-  RefreshCw,
   SlidersHorizontal,
   SearchX,
   Heart,
@@ -255,30 +254,6 @@ export default function InventoryBrowser() {
 
   // Add to inventory modal state
   const [addInventoryOpen, setAddInventoryOpen] = useState(false);
-
-  // Sync pricing sheet state
-  const [isSyncing, setIsSyncing] = useState(false);
-
-  // Handle sync pricing sheet
-  const handleSyncPricing = async () => {
-    setIsSyncing(true);
-    try {
-      const response = await fetch('/api/sync-pricing-sheet', {
-        method: 'POST',
-      });
-      const result = await response.json();
-      if (result.success) {
-        alert(`Sincronizado: ${result.synced} productos agregados a la hoja de precios`);
-      } else {
-        alert(`Error: ${result.message || 'Error al sincronizar'}`);
-      }
-    } catch (error) {
-      console.error('Sync error:', error);
-      alert('Error al conectar con el servidor');
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   // Stats for header - calculated from actual inventory data (not static)
   const stats = useMemo(() => {
@@ -1262,26 +1237,6 @@ export default function InventoryBrowser() {
           onSave={handleSaveCertifications}
         />
       )}
-
-      {/* Floating Action Button - Sync Pricing Sheet */}
-      <Tooltip title="Sincronizar hoja de precios" placement="left">
-        <Fab
-          color="secondary"
-          onClick={handleSyncPricing}
-          disabled={isSyncing}
-          sx={{
-            position: 'fixed',
-            bottom: 170,
-            right: 24,
-            bgcolor: goldAccent.primary,
-            '&:hover': { bgcolor: goldAccent.dark },
-            '&:disabled': { bgcolor: surfacesLight.border.light },
-            boxShadow: '0 4px 20px rgba(212, 175, 55, 0.4)',
-          }}
-        >
-          <RefreshCw size={24} className={isSyncing ? 'animate-spin' : ''} />
-        </Fab>
-      </Tooltip>
 
       {/* Floating Action Button - Add to Inventory */}
       <Tooltip title="Agregar producto al inventario" placement="left">
