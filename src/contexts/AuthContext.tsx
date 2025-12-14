@@ -4,9 +4,8 @@
  * Full Mode: Complete access (PIN 5555 required)
  */
 
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import type { AuthState, AuthContextType, AccessLevel } from '../types/auth';
-import { showroomPreloader } from '../services/showroomPreloader';
 
 const CORRECT_PIN = '5555';
 const STORAGE_KEY = 'tierra-madre-auth';
@@ -63,15 +62,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return { isAuthenticated: false, accessLevel: 'guest' };
   });
 
-  // Preload content for full access users on mount
-  useEffect(() => {
-    if (authState.isAuthenticated && authState.accessLevel === 'full') {
-      showroomPreloader.preloadAll()
-        .then(() => showroomPreloader.preloadInventoryMedia())
-        .catch(console.error);
-    }
-  }, []);
-
   const loginAsGuest = useCallback(() => {
     const newState: AuthState = { isAuthenticated: true, accessLevel: 'guest' };
     setAuthState(newState);
@@ -83,10 +73,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const newState: AuthState = { isAuthenticated: true, accessLevel: 'full' };
       setAuthState(newState);
       setStoredAuth(newState);
-      // Preload content after full access login
-      showroomPreloader.preloadAll()
-        .then(() => showroomPreloader.preloadInventoryMedia())
-        .catch(console.error);
       return true;
     }
     return false;
@@ -97,10 +83,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const newState: AuthState = { isAuthenticated: true, accessLevel: 'full' };
       setAuthState(newState);
       setStoredAuth(newState);
-      // Preload content after upgrade
-      showroomPreloader.preloadAll()
-        .then(() => showroomPreloader.preloadInventoryMedia())
-        .catch(console.error);
       return true;
     }
     return false;

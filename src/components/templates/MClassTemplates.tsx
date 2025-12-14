@@ -10,7 +10,10 @@
  */
 
 import { Box, Typography } from '@mui/material';
-import { SLIDE_WIDTH, SLIDE_HEIGHT } from '../slides/Slide2Purpose';
+
+// Slide dimensions (standard HD presentation)
+const SLIDE_WIDTH = 1920;
+const SLIDE_HEIGHT = 1080;
 
 // MClass Color Palette
 const MCLASS_COLORS = {
