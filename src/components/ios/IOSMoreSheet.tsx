@@ -11,7 +11,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton, Backdrop, Button } from '@mui/material';
-import { Lock, Close, AccountBalance } from '@mui/icons-material';
+import { Lock, Close, AccountBalance, Settings } from '@mui/icons-material';
 import { Vault } from 'lucide-react';
 import MoreSheetSearch from './MoreSheetSearch';
 
@@ -56,9 +56,10 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
 export interface IOSMoreSheetProps {
   open: boolean;
   onClose: () => void;
+  onOpenSettings?: () => void;
 }
 
-const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
+const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettings }) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const isGuest = useIsGuest();
@@ -121,6 +122,14 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
     setTimeout(() => {
       onClose();
     }, 100);
+  };
+
+  const handleSettingsClick = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+    onOpenSettings?.();
+    onClose();
   };
 
   return (
@@ -377,6 +386,84 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
               </Box>
             );
           })}
+          </Box>
+        </Box>
+
+        {/* Settings Section - Always accessible */}
+        <Box sx={{ padding: spacing.md, paddingTop: 0 }}>
+          <Box
+            role="button"
+            aria-label={`${t.tools.settings.label}: ${t.tools.settings.subtitle}`}
+            tabIndex={0}
+            onClick={handleSettingsClick}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleSettingsClick();
+              }
+            }}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: spacing.sm,
+              padding: spacing.sm,
+              backgroundColor: 'var(--surface-primary)',
+              borderRadius: spacing.md,
+              cursor: 'pointer',
+              transition: effectiveConfig.animations
+                ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
+                : 'none',
+
+              '&:hover': {
+                backgroundColor: 'var(--surface-tertiary)',
+                transform: effectiveConfig.animations ? 'scale(1.01)' : 'none',
+              },
+              '&:active': {
+                transform: effectiveConfig.animations ? 'scale(0.98)' : 'none',
+              },
+            }}
+          >
+            {/* Icon Container */}
+            <Box
+              sx={{
+                width: '44px',
+                height: '44px',
+                borderRadius: spacing.md,
+                backgroundColor: `${primitiveColors.metallic.silver[500]}15`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Settings sx={{ fontSize: '24px', color: primitiveColors.metallic.silver[500] }} />
+            </Box>
+
+            {/* Text Content */}
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                variant="body1"
+                sx={{
+                  fontSize: '17px',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  marginBottom: spacing.xxs,
+                }}
+              >
+                {t.tools.settings.label}
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: '13px',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                {t.tools.settings.subtitle}
+              </Typography>
+            </Box>
+
+            {/* Chevron */}
+            <Box sx={{ color: 'var(--text-quaternary)', fontSize: '20px' }}>›</Box>
           </Box>
         </Box>
       </Box>

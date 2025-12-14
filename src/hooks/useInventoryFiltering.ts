@@ -6,6 +6,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { InventoryItem } from '../types';
 import { fuzzyMatch } from '../utils/fuzzySearch';
+import { getSearchHits } from '../lib/analytics/inventoryAnalytics';
 
 export type TypeFilter = 'all' | 'loose' | 'jewelry';
 export type StatusFilter = 'all' | 'available' | 'sold';
@@ -16,7 +17,8 @@ export type SortOption =
   | 'name-desc'
   | 'quality-premium'
   | 'item-number'
-  | 'newest';
+  | 'newest'
+  | 'most-searched';
 
 export type CityFilter = 'all' | 'Cali' | 'Bogotá';
 
@@ -180,6 +182,7 @@ export function useInventoryFiltering({
   // Sort inventory based on selected option, with image priority
   const sortedInventory = useMemo(() => {
     const sorted = [...filteredInventory];
+    const searchHits = getSearchHits();
 
     // Define sort function based on user selection
     const sortFn = (a: InventoryItem, b: InventoryItem): number => {
@@ -206,6 +209,16 @@ export function useInventoryFiltering({
             return new Date(dateStr).getTime();
           };
           return parseDate(b.fechaIngreso) - parseDate(a.fechaIngreso);
+        }
+        case 'most-searched': {
+          // Sort by search hit count (most searched first)
+          const aHits = searchHits[a.item] || 0;
+          const bHits = searchHits[b.item] || 0;
+          // If equal hits, fallback to price desc
+          if (bHits === aHits) {
+            return b.precioCOP - a.precioCOP;
+          }
+          return bHits - aHits;
         }
         default:
           return b.precioCOP - a.precioCOP;

@@ -360,6 +360,9 @@ export default function InventoryBrowser() {
           onBlur={() => {
             if (search.trim()) {
               analyticsHook.trackSearch(search, sortedInventory.length);
+              // Track search hits for items that appear in results
+              const itemIds = sortedInventory.map(item => item.item);
+              analyticsHook.trackSearchHits(itemIds);
             }
           }}
           size="small"
@@ -435,6 +438,7 @@ export default function InventoryBrowser() {
             <MenuItem value="quality-premium">Mejor Calidad</MenuItem>
             <MenuItem value="item-number">Numero de Item</MenuItem>
             <MenuItem value="newest">Mas Recientes</MenuItem>
+            <MenuItem value="most-searched">Más Buscados</MenuItem>
           </Select>
         </FormControl>
 
@@ -854,49 +858,6 @@ export default function InventoryBrowser() {
         </>
       ) : (
         <>
-          {/* Desktop: Full stats bar */}
-          <Box
-            sx={{
-              mb: 1.5,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 1,
-            }}
-          >
-            <ProgressBadge
-              level={browsingProgress.level}
-              percentageExplored={browsingProgress.percentageExplored}
-              viewedCount={browsingProgress.viewedCount}
-              totalItems={totalAvailable}
-              levelProgress={browsingProgress.levelProgress}
-              nextLevel={browsingProgress.nextLevel}
-            />
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <Chip
-                size="small"
-                label={`${stats.looseStones} Gemas`}
-                sx={{
-                  bgcolor: isLight ? alpha(emeraldCore.primary, 0.1) : alpha(emeraldCore.primary, 0.2),
-                  color: emeraldCore.primary,
-                  fontWeight: 600,
-                  fontSize: '0.75rem',
-                }}
-              />
-              <Chip
-                size="small"
-                label={`${stats.jewelry} Joyería`}
-                sx={{
-                  bgcolor: isLight ? alpha(emeraldCore.primary, 0.1) : alpha(emeraldCore.primary, 0.2),
-                  color: emeraldCore.primary,
-                  fontWeight: 600,
-                  fontSize: '0.75rem',
-                }}
-              />
-            </Box>
-          </Box>
-
           {/* Desktop: Full filters */}
           <Paper
             elevation={0}
@@ -910,8 +871,47 @@ export default function InventoryBrowser() {
             }}
           >
             <FilterContent />
-            {/* View toggle and keyboard shortcuts - Desktop only */}
+            {/* View toggle, stats and keyboard shortcuts - Desktop only */}
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 2, pt: 2, borderTop: '1px solid', borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default }}>
+              {/* Compact Progress Badge */}
+              <ProgressBadge
+                level={browsingProgress.level}
+                percentageExplored={browsingProgress.percentageExplored}
+                viewedCount={browsingProgress.viewedCount}
+                totalItems={totalAvailable}
+                levelProgress={browsingProgress.levelProgress}
+                nextLevel={browsingProgress.nextLevel}
+                compact
+              />
+              {/* Compact Stats */}
+              <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                <Chip
+                  size="small"
+                  icon={<Gem size={12} />}
+                  label={stats.looseStones}
+                  sx={{
+                    bgcolor: alpha(emeraldCore.primary, 0.1),
+                    color: emeraldCore.primary,
+                    fontWeight: 600,
+                    fontSize: '0.7rem',
+                    height: 24,
+                    '& .MuiChip-icon': { color: emeraldCore.primary },
+                  }}
+                />
+                <Chip
+                  size="small"
+                  icon={<Crown size={12} />}
+                  label={stats.jewelry}
+                  sx={{
+                    bgcolor: alpha(goldAccent.primary, 0.15),
+                    color: goldAccent.dark,
+                    fontWeight: 600,
+                    fontSize: '0.7rem',
+                    height: 24,
+                    '& .MuiChip-icon': { color: goldAccent.dark },
+                  }}
+                />
+              </Box>
               <SavedFiltersDropdown
                 presets={savedFilters.presets}
                 onSavePreset={(name) => savedFilters.savePreset(name, {

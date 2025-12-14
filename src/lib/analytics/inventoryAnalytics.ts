@@ -6,6 +6,7 @@
 
 const STORAGE_KEY = 'tierramadre-inventory-analytics';
 const SESSION_KEY = 'tierramadre-session-id';
+const SEARCH_HITS_KEY = 'tierramadre-search-hits';
 const MAX_EVENTS = 1000;
 
 // Event types
@@ -302,4 +303,58 @@ export function clearAnalytics(): void {
 // Export analytics data for debugging/reporting
 export function exportAnalytics(): AnalyticsStorage {
   return loadAnalytics();
+}
+
+// Search hits tracking - tracks which products appear in search results
+interface SearchHitsStorage {
+  hits: Record<number, number>; // itemId -> count of times appeared in search results
+  lastUpdated: string;
+}
+
+function loadSearchHits(): SearchHitsStorage {
+  try {
+    const stored = localStorage.getItem(SEARCH_HITS_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.error('Error loading search hits:', error);
+  }
+  return {
+    hits: {},
+    lastUpdated: new Date().toISOString(),
+  };
+}
+
+function saveSearchHits(data: SearchHitsStorage): void {
+  try {
+    data.lastUpdated = new Date().toISOString();
+    localStorage.setItem(SEARCH_HITS_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.error('Error saving search hits:', error);
+  }
+}
+
+// Track products that appear in a search result
+export function trackSearchHits(itemIds: number[]): void {
+  const data = loadSearchHits();
+  itemIds.forEach(itemId => {
+    data.hits[itemId] = (data.hits[itemId] || 0) + 1;
+  });
+  saveSearchHits(data);
+}
+
+// Get search hit counts for all products
+export function getSearchHits(): Record<number, number> {
+  return loadSearchHits().hits;
+}
+
+// Get search hit count for a specific product
+export function getSearchHitCount(itemId: number): number {
+  return loadSearchHits().hits[itemId] || 0;
+}
+
+// Clear search hits data
+export function clearSearchHits(): void {
+  localStorage.removeItem(SEARCH_HITS_KEY);
 }

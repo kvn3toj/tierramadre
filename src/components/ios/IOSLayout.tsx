@@ -208,7 +208,11 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
 
       <IOSTabBar onMoreClick={() => setMoreSheetOpen(true)} />
 
-      <IOSMoreSheet open={moreSheetOpen} onClose={() => setMoreSheetOpen(false)} />
+      <IOSMoreSheet
+        open={moreSheetOpen}
+        onClose={() => setMoreSheetOpen(false)}
+        onOpenSettings={() => setSettingsSheetOpen(true)}
+      />
       <IOSSettingsSheet open={settingsSheetOpen} onClose={() => setSettingsSheetOpen(false)} />
     </Box>
   );

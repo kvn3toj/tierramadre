@@ -4,7 +4,7 @@
  * Provides convenient tracking methods for components.
  */
 import { useCallback, useEffect, useRef } from 'react';
-import { analytics, getAggregates, type AnalyticsAggregates } from '../lib/analytics/inventoryAnalytics';
+import { analytics, getAggregates, trackSearchHits, getSearchHits, type AnalyticsAggregates } from '../lib/analytics/inventoryAnalytics';
 
 interface UseInventoryAnalyticsReturn {
   // Item tracking
@@ -22,6 +22,7 @@ interface UseInventoryAnalyticsReturn {
 
   // Search tracking
   trackSearch: (query: string, resultsCount: number) => void;
+  trackSearchHits: (itemIds: number[]) => void;
 
   // UI tracking
   trackViewModeChange: (mode: 'grid' | 'list') => void;
@@ -29,6 +30,7 @@ interface UseInventoryAnalyticsReturn {
 
   // Aggregates
   getAggregates: () => AnalyticsAggregates;
+  getSearchHits: () => Record<number, number>;
 }
 
 export function useInventoryAnalytics(): UseInventoryAnalyticsReturn {
@@ -87,6 +89,10 @@ export function useInventoryAnalytics(): UseInventoryAnalyticsReturn {
     analytics.trackSearch(query, resultsCount);
   }, []);
 
+  const trackSearchHitsCallback = useCallback((itemIds: number[]) => {
+    trackSearchHits(itemIds);
+  }, []);
+
   const trackViewModeChange = useCallback((mode: 'grid' | 'list') => {
     analytics.trackViewModeChange(mode);
   }, []);
@@ -106,9 +112,11 @@ export function useInventoryAnalytics(): UseInventoryAnalyticsReturn {
     trackPresetSave,
     trackPresetApply,
     trackSearch,
+    trackSearchHits: trackSearchHitsCallback,
     trackViewModeChange,
     trackLoadMore,
     getAggregates,
+    getSearchHits,
   };
 }
 

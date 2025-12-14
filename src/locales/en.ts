@@ -137,6 +137,10 @@ export const en = {
       label: 'Quotation',
       subtitle: 'Quote from inventory',
     },
+    settings: {
+      label: 'Settings',
+      subtitle: 'Theme, language and preferences',
+    },
   },
 
   // Actions
