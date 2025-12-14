@@ -1,3 +1,8 @@
+/**
+ * PriceSimulator Component
+ * Main price calculation tool for emerald products.
+ */
+
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -6,78 +11,48 @@ import {
   TextField,
   InputAdornment,
   Paper,
-  Slider,
   Chip,
   Divider,
   IconButton,
   Tooltip,
   Collapse,
-  Button,
   Autocomplete,
   Avatar,
   alpha,
-  LinearProgress,
 } from '@mui/material';
 import {
-  Calculator,
-  TrendingUp,
   Gem,
-  CircleDollarSign,
-  Award,
-  FileCheck,
-  Gift,
   Plus,
   ChevronDown,
   ChevronUp,
-  Sparkles,
-  Target,
   RotateCcw,
   Info,
   FileText,
   Image,
-  Percent,
-  DollarSign,
-  ArrowUpRight,
   ShoppingBag,
   Layers,
   X,
-  Eye,
 } from 'lucide-react';
+
 import { useEmeralds } from '../hooks/useEmeralds';
-import { usePriceCalculation, PRICING_TIERS } from '../hooks/usePriceCalculation';
+import { usePriceCalculation } from '../hooks/usePriceCalculation';
 import { Emerald, InventoryItem } from '../types';
 import { inventoryData } from '../data/inventory';
+import { studioColors, studioShadows, studioCardStyles } from './PremiumHeader';
+import { formatFullCurrency as formatCurrency } from '../utils/formatting';
+
+// Extracted components
 import {
-  studioColors,
-  studioGradients,
-  studioShadows,
-  studioCardStyles,
-} from './PremiumHeader';
-import { formatFullCurrency as formatCurrency, formatPercent } from '../utils/formatting';
-
-// Investment item with icon (component-specific, extends hook's type)
-interface InvestmentItemWithIcon {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  value: number;
-  unit?: string;
-  unitLabel?: string;
-  placeholder?: string;
-}
-
-// Icon mapping for investment items
-const INVESTMENT_ICONS: Record<string, React.ReactNode> = {
-  emerald: <Gem size={18} />,
-  gold: <Award size={18} />,
-  silver: <CircleDollarSign size={18} />,
-  setting: <Sparkles size={18} />,
-  certification: <FileCheck size={18} />,
-  packaging: <Gift size={18} />,
-};
-
-// Product source type
-type ProductSource = 'gallery' | 'inventory';
+  PriceSimulatorHeader,
+  FactorSlider,
+  PricingResults,
+  FormulaInfo,
+  getInvestmentIcon,
+  getCategoryLabel,
+  ProductSource,
+  STATUS_FILTERS,
+  PRODUCT_TYPE_FILTERS,
+} from './price-simulator';
 
 export default function PriceSimulator() {
   const navigate = useNavigate();
@@ -121,6 +96,10 @@ export default function PriceSimulator() {
   const [productTypeFilter, setProductTypeFilter] = useState<string>('todas');
   const [shapeFilter, setShapeFilter] = useState<string>('all');
 
+  // UI-only state
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [productName, setProductName] = useState('');
+
   // Filter inventory by status
   const statusFilteredInventory = useMemo(() => {
     if (statusFilter === 'todas') return inventoryData;
@@ -150,16 +129,6 @@ export default function PriceSimulator() {
     return typeFilteredInventory.filter(item => item.talla === shapeFilter);
   }, [typeFilteredInventory, shapeFilter]);
 
-  // UI-only state
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [productName, setProductName] = useState('');
-
-  // Investments with icons (add icons to hook's investments)
-  const investmentsWithIcons: InvestmentItemWithIcon[] = investments.map(inv => ({
-    ...inv,
-    icon: INVESTMENT_ICONS[inv.id] || <Plus size={18} />,
-  }));
-
   // Total investment adjusted for multiSelectMode
   const totalInvestment = multiSelectMode ? hookTotalInvestment : (hookTotalInvestment - totalProductsValue);
 
@@ -173,9 +142,7 @@ export default function PriceSimulator() {
   // Handle emerald selection from gallery
   const handleEmeraldSelect = (emerald: Emerald | null) => {
     if (multiSelectMode && emerald) {
-      // Add to collection (using hook's addProduct)
       addProduct(emerald);
-      // Clear the input and selection to allow adding more products
       setProductName('');
       setSelectedEmerald(null);
     } else {
@@ -184,13 +151,9 @@ export default function PriceSimulator() {
       setProductSource('gallery');
       if (emerald) {
         setProductName(emerald.name);
-
-        // Load price
         if (emerald.priceCOP && emerald.priceCOP > 0) {
           updateInvestment('emerald', emerald.priceCOP);
         }
-
-        // Set carat weight if available
         if (emerald.weightCarats) {
           setCaratWeight(emerald.weightCarats);
         }
@@ -201,9 +164,7 @@ export default function PriceSimulator() {
   // Handle inventory selection
   const handleInventorySelect = (item: InventoryItem | null) => {
     if (multiSelectMode && item) {
-      // Add to collection (using hook's addProduct)
       addProduct(item);
-      // Clear the input and selection to allow adding more products
       setProductName('');
       setSelectedInventoryItem(null);
     } else {
@@ -212,27 +173,19 @@ export default function PriceSimulator() {
       setProductSource('inventory');
       if (item) {
         setProductName(item.nombre);
-
-        // Load price - handle both number and potential string formats
         const price = typeof item.precioCOP === 'number' ? item.precioCOP :
                      (item.precioCOP ? Number(item.precioCOP) : 0);
-
         if (price > 0) {
           updateInvestment('emerald', price);
         }
-
-        // Set carat weight if available
         if (typeof item.peso === 'number') {
           setCaratWeight(item.peso);
         } else if (typeof item.peso === 'string' && !item.isJewelry) {
-          // Try to parse string weight for non-jewelry items
           const parsedWeight = parseFloat(item.peso.replace(',', '.'));
           if (!isNaN(parsedWeight)) {
             setCaratWeight(parsedWeight);
           }
         }
-
-        // Pre-fill metal cost if it's jewelry
         if (item.isJewelry && item.metalType) {
           if (item.metalType === 'Plata') {
             updateInvestment('silver', item.costoTM || 0);
@@ -244,41 +197,24 @@ export default function PriceSimulator() {
     }
   };
 
-  // Note: handleAddProduct and handleRemoveProduct are now provided by hook as addProduct/removeProduct
-
   // Toggle multi-select mode
   const toggleMultiSelectMode = () => {
     setMultiSelectMode(!multiSelectMode);
     if (!multiSelectMode) {
-      // Entering multi-select mode
       clearProducts();
       setProductName('Colección de Productos');
     } else {
-      // Exiting multi-select mode
       clearProducts();
     }
   };
 
-  // Get category label in Spanish
-  const getCategoryLabel = (category: string): string => {
-    const labels: Record<string, string> = {
-      loose: 'Gema',
-      ring: 'Anillo',
-      pendant: 'Dije',
-      earrings: 'Aretes',
-    };
-    return labels[category] || category;
-  };
-
   // Navigate to preview page with quotation data
   const handlePreview = () => {
-    // Validate before navigating
     if (totalInvestment === 0) {
       alert('Por favor ingresa al menos un valor de inversión antes de generar la cotización.');
       return;
     }
 
-    // Build selected products data for quotation
     const selectedProductsData = selectedProducts.map(p => {
       const isInventory = 'item' in p;
       return {
@@ -290,25 +226,18 @@ export default function PriceSimulator() {
     });
 
     const quotationData = {
-      // Basic info
       productName: productName || 'Esmeralda Natural Colombiana',
       caratWeight,
-
-      // Full investment data with icon IDs for reconstruction
       investments: investments.map(inv => ({
         id: inv.id,
         label: inv.label,
         value: inv.value,
-        icon: inv.id, // Pass icon ID for reconstruction in preview
+        icon: inv.id,
       })),
       customItems,
-
-      // Multi-select products (if any)
       selectedProducts: selectedProductsData,
       multiSelectMode,
       totalProductsValue,
-
-      // Calculated metrics (frozen at navigation time)
       totalInvestment,
       priceFactor,
       salePrice: pricingMetrics.salePrice,
@@ -316,163 +245,23 @@ export default function PriceSimulator() {
       roi: pricingMetrics.roi,
       profit: pricingMetrics.profit,
       pricePerCarat: pricingMetrics.pricePerCarat,
-
-      // Timestamp for reference
       createdAt: new Date().toISOString(),
     };
 
     navigate('/simulator/preview', { state: { quotationData } });
   };
 
-  // Note: marginProgress is now provided by usePriceCalculation hook
-
   return (
     <Box sx={{
       maxWidth: 960,
       mx: 'auto',
-      px: { xs: 2, sm: 3, md: 0 }, // Add horizontal padding on mobile
+      px: { xs: 2, sm: 3, md: 0 },
     }}>
-      {/* Jewelry Studio Header */}
-      <Box
-        sx={{
-          mb: { xs: 3, md: 4 },
-          borderRadius: { xs: 2, md: 3 },
-          overflow: 'hidden',
-          boxShadow: studioShadows.lg,
-        }}
-      >
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2, sm: 2.5, md: 3 },
-            borderRadius: 0,
-            background: studioGradients.header,
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Emerald accent line */}
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 3,
-              background: studioGradients.emerald,
-            }}
-          />
-
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              width: 300,
-              height: '100%',
-              background: `radial-gradient(circle at 100% 0%, ${alpha(studioColors.emerald, 0.08)} 0%, transparent 60%)`,
-              pointerEvents: 'none',
-            }}
-          />
-
-          <Box sx={{
-            display: 'flex',
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            justifyContent: 'space-between',
-            gap: 2,
-            flexWrap: 'wrap',
-            position: 'relative',
-            zIndex: 1,
-            flexDirection: { xs: 'column', sm: 'row' },
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, md: 2.5 } }}>
-              <Box
-                sx={{
-                  width: { xs: 44, md: 52 },
-                  height: { xs: 44, md: 52 },
-                  borderRadius: 2.5,
-                  background: alpha(studioColors.emerald, 0.15),
-                  border: `1px solid ${alpha(studioColors.emerald, 0.3)}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Calculator size={26} color={studioColors.emerald} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="overline"
-                  sx={{
-                    color: studioColors.emerald,
-                    fontWeight: 600,
-                    letterSpacing: '0.12em',
-                    fontSize: { xs: '0.5625rem', md: '0.625rem' },
-                    display: 'block',
-                    mb: 0.25,
-                  }}
-                >
-                  TM STUDIO
-                </Typography>
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontWeight: 600,
-                    color: '#FFFFFF',
-                    fontFamily: '"Libre Baskerville", Georgia, serif',
-                    letterSpacing: '-0.02em',
-                    fontSize: { xs: '1.25rem', sm: '1.375rem', md: '1.5rem' },
-                  }}
-                >
-                  Simulador de Precios
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: alpha('#FFFFFF', 0.7),
-                    fontWeight: 400,
-                    fontSize: { xs: '0.8125rem', md: '0.875rem' },
-                    display: { xs: 'none', sm: 'block' },
-                  }}
-                >
-                  Calcula el precio de venta ideal para tus esmeraldas
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<Eye size={18} />}
-              onClick={handlePreview}
-              disabled={totalInvestment === 0}
-              sx={{
-                background: studioGradients.emerald,
-                color: '#FFFFFF',
-                fontWeight: 600,
-                px: { xs: 2.5, md: 3 },
-                py: { xs: 1, md: 1.25 },
-                borderRadius: 2,
-                textTransform: 'none',
-                fontSize: { xs: '0.8125rem', md: '0.875rem' },
-                boxShadow: studioShadows.emerald,
-                width: { xs: '100%', sm: 'auto' },
-                '&:hover': {
-                  background: `linear-gradient(135deg, ${studioColors.emeraldLight} 0%, ${studioColors.emerald} 100%)`,
-                  boxShadow: `0 6px 20px ${alpha(studioColors.emerald, 0.35)}`,
-                  transform: 'translateY(-1px)',
-                },
-                '&:disabled': {
-                  background: alpha('#FFFFFF', 0.1),
-                  color: alpha('#FFFFFF', 0.4),
-                },
-                transition: 'all 0.2s ease',
-              }}
-            >
-              Vista Previa
-            </Button>
-          </Box>
-        </Paper>
-      </Box>
+      {/* Header */}
+      <PriceSimulatorHeader
+        totalInvestment={totalInvestment}
+        onPreview={handlePreview}
+      />
 
       <Box sx={{
         display: 'grid',
@@ -483,1310 +272,1020 @@ export default function PriceSimulator() {
         <Box>
           <Paper elevation={0} sx={{ ...studioCardStyles.card }}>
             {/* Product Name Field */}
-            <Box sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <FileText size={18} color={studioColors.emerald} />
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: studioColors.emerald }}>
-                    Nombre del Producto
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                  <Chip
-                    icon={<Image size={12} />}
-                    label={`Galería (${emeralds.length})`}
-                    size="small"
-                    onClick={() => setProductSource('gallery')}
-                    sx={{
-                      height: 22,
-                      fontSize: '0.625rem',
-                      fontWeight: 500,
-                      bgcolor: productSource === 'gallery' ? studioColors.emerald : alpha(studioColors.emerald, 0.1),
-                      color: productSource === 'gallery' ? '#FFFFFF' : studioColors.emerald,
-                      cursor: 'pointer',
-                      '& .MuiChip-icon': { color: productSource === 'gallery' ? '#FFFFFF' : studioColors.emerald },
-                      '&:hover': {
-                        bgcolor: productSource === 'gallery' ? studioColors.emerald : alpha(studioColors.emerald, 0.2),
-                      },
-                    }}
-                  />
-                  <Chip
-                    icon={<ShoppingBag size={12} />}
-                    label={`Inventario (${filteredInventory.length})`}
-                    size="small"
-                    onClick={() => setProductSource('inventory')}
-                    sx={{
-                      height: 22,
-                      fontSize: '0.625rem',
-                      fontWeight: 500,
-                      bgcolor: productSource === 'inventory' ? studioColors.emerald : alpha(studioColors.emerald, 0.1),
-                      color: productSource === 'inventory' ? '#FFFFFF' : studioColors.emerald,
-                      cursor: 'pointer',
-                      '& .MuiChip-icon': { color: productSource === 'inventory' ? '#FFFFFF' : studioColors.emerald },
-                      '&:hover': {
-                        bgcolor: productSource === 'inventory' ? studioColors.emerald : alpha(studioColors.emerald, 0.2),
-                      },
-                    }}
-                  />
-                  <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: studioColors.border }} />
-                  <Chip
-                    icon={<Layers size={12} />}
-                    label="Multi-selección"
-                    size="small"
-                    onClick={toggleMultiSelectMode}
-                    sx={{
-                      height: 22,
-                      fontSize: '0.625rem',
-                      fontWeight: 500,
-                      bgcolor: multiSelectMode ? '#8B5CF6' : alpha('#8B5CF6', 0.1),
-                      color: multiSelectMode ? '#FFFFFF' : '#8B5CF6',
-                      cursor: 'pointer',
-                      border: '1px solid',
-                      borderColor: multiSelectMode ? '#8B5CF6' : alpha('#8B5CF6', 0.3),
-                      '& .MuiChip-icon': { color: multiSelectMode ? '#FFFFFF' : '#8B5CF6' },
-                      '&:hover': {
-                        bgcolor: multiSelectMode ? '#8B5CF6' : alpha('#8B5CF6', 0.2),
-                        borderColor: '#8B5CF6',
-                      },
-                    }}
-                  />
-                </Box>
-              </Box>
-
-              {/* Gallery Autocomplete */}
-              {productSource === 'gallery' && (
-              <Autocomplete
-                freeSolo
-                options={emeralds}
-                value={selectedEmerald}
-                inputValue={productName}
-                onInputChange={(_, newValue) => setProductName(newValue)}
-                onChange={(_, newValue) => {
-                  if (typeof newValue === 'string') {
-                    setProductName(newValue);
-                    setSelectedEmerald(null);
-                  } else {
-                    handleEmeraldSelect(newValue);
-                  }
-                }}
-                getOptionLabel={(option) => {
-                  if (typeof option === 'string') return option;
-                  return option.name;
-                }}
-                renderOption={(props, option) => (
-                  <Box
-                    component="li"
-                    {...props}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1.5,
-                      py: 1,
-                      '&:hover': { bgcolor: alpha(studioColors.emerald, 0.06) },
-                    }}
-                  >
-                    <Avatar
-                      src={option.imageUrl}
-                      variant="rounded"
-                      sx={{ width: 40, height: 40, borderRadius: 1.5 }}
-                    >
-                      <Gem size={20} />
-                    </Avatar>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: 600,
-                          color: studioColors.textPrimary,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {option.name}
-                      </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="caption" sx={{ color: studioColors.textSecondary }}>
-                          {getCategoryLabel(option.category)}
-                        </Typography>
-                        {option.weightCarats && (
-                          <Typography variant="caption" sx={{ color: studioColors.emerald, fontWeight: 500 }}>
-                            {option.weightCarats} ct
-                          </Typography>
-                        )}
-                        {option.priceCOP && option.priceCOP > 0 && (
-                          <Typography variant="caption" sx={{ color: '#3B82F6', fontWeight: 500 }}>
-                            {formatCurrency(option.priceCOP)}
-                          </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  </Box>
-                )}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    size="small"
-                    placeholder={emeralds.length > 0 ? "Escribe o selecciona de la galería..." : "Ej: Anillo Esmeralda Colombiana 2.5ct"}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        bgcolor: studioColors.surface,
-                        fontSize: '0.875rem',
-                        '& fieldset': { borderColor: studioColors.border },
-                        '&:hover fieldset': { borderColor: alpha(studioColors.emerald, 0.5) },
-                        '&.Mui-focused fieldset': { borderColor: studioColors.emerald, borderWidth: 2 },
-                      },
-                    }}
-                  />
-                )}
-                PaperComponent={(props) => (
-                  <Paper
-                    {...props}
-                    sx={{
-                      mt: 0.5,
-                      boxShadow: studioShadows.lg,
-                      border: `1px solid ${studioColors.border}`,
-                      borderRadius: 2,
-                    }}
-                  />
-                )}
-                noOptionsText={
-                  <Box sx={{ py: 2, textAlign: 'center' }}>
-                    <Typography variant="body2" sx={{ color: studioColors.textSecondary }}>
-                      No hay esmeraldas en la galería
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: studioColors.textMuted }}>
-                      Agrega esmeraldas en la sección "Subir"
-                    </Typography>
-                  </Box>
-                }
-              />
-              )}
-
-              {/* Inventory Autocomplete */}
-              {productSource === 'inventory' && (
-                <>
-                {/* Status Filter */}
-                <Box sx={{ mb: 1.5 }}>
-                  <Typography variant="caption" sx={{ color: studioColors.textSecondary, fontWeight: 600, mb: 0.75, display: 'block' }}>
-                    Estado
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    {['todas', 'disponibles', 'vendidas'].map(status => (
-                      <Chip
-                        key={status}
-                        label={status.charAt(0).toUpperCase() + status.slice(1)}
-                        size="small"
-                        onClick={() => setStatusFilter(status)}
-                        sx={{
-                          height: 26,
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          bgcolor: statusFilter === status ? studioColors.emerald : alpha(studioColors.emerald, 0.08),
-                          color: statusFilter === status ? '#FFFFFF' : studioColors.textSecondary,
-                          border: '1px solid',
-                          borderColor: statusFilter === status ? studioColors.emerald : 'transparent',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            bgcolor: statusFilter === status ? studioColors.emerald : alpha(studioColors.emerald, 0.15),
-                            borderColor: studioColors.emerald,
-                          },
-                        }}
-                      />
-                    ))}
-                  </Box>
-                </Box>
-
-                {/* Product Type Filter */}
-                <Box sx={{ mb: 1.5 }}>
-                  <Typography variant="caption" sx={{ color: studioColors.textSecondary, fontWeight: 600, mb: 0.75, display: 'block' }}>
-                    Tipo
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {[
-                      { value: 'todas', label: 'Todas' },
-                      { value: 'gemas', label: 'Gemas' },
-                      { value: 'joyas', label: 'Joyas' },
-                      { value: 'lotes', label: 'Lotes' },
-                    ].map(type => (
-                      <Chip
-                        key={type.value}
-                        label={type.label}
-                        size="small"
-                        onClick={() => setProductTypeFilter(type.value)}
-                        sx={{
-                          height: 26,
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          bgcolor: productTypeFilter === type.value ? alpha(studioColors.emerald, 0.15) : alpha(studioColors.emerald, 0.05),
-                          color: productTypeFilter === type.value ? studioColors.emerald : studioColors.textSecondary,
-                          border: '1px solid',
-                          borderColor: productTypeFilter === type.value ? studioColors.emerald : 'transparent',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            bgcolor: alpha(studioColors.emerald, 0.15),
-                            borderColor: studioColors.emerald,
-                          },
-                        }}
-                      />
-                    ))}
-                  </Box>
-                </Box>
-
-                {/* Shape Filter */}
-                <Box sx={{ mb: 1 }}>
-                  <Typography variant="caption" sx={{ color: studioColors.textSecondary, fontWeight: 600, mb: 0.75, display: 'block' }}>
-                    Talla
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {uniqueShapes.map(shape => (
-                    <Chip
-                      key={shape}
-                      label={shape === 'all' ? 'Todas' : shape}
-                      size="small"
-                      onClick={() => setShapeFilter(shape)}
-                      sx={{
-                        height: 24,
-                        fontSize: '0.6875rem',
-                        fontWeight: 500,
-                        bgcolor: shapeFilter === shape ? alpha(studioColors.emerald, 0.15) : alpha(studioColors.emerald, 0.05),
-                        color: shapeFilter === shape ? studioColors.emerald : studioColors.textSecondary,
-                        border: '1px solid',
-                        borderColor: shapeFilter === shape ? studioColors.emerald : 'transparent',
-                        cursor: 'pointer',
-                        '&:hover': {
-                          bgcolor: alpha(studioColors.emerald, 0.15),
-                          borderColor: studioColors.emerald,
-                        },
-                      }}
-                    />
-                  ))}
-                  </Box>
-                </Box>
-                <Autocomplete
-                  freeSolo
-                  options={filteredInventory}
-                  value={selectedInventoryItem}
-                  inputValue={productName}
-                  onInputChange={(_, newValue) => setProductName(newValue)}
-                  onChange={(_, newValue) => {
-                    if (typeof newValue === 'string') {
-                      setProductName(newValue);
-                      setSelectedInventoryItem(null);
-                    } else {
-                      handleInventorySelect(newValue);
-                    }
-                  }}
-                  getOptionLabel={(option) => {
-                    if (typeof option === 'string') return option;
-                    return `${option.nombre} - ${option.item}`;
-                  }}
-                  renderOption={(props, option) => (
-                    <Box
-                      component="li"
-                      {...props}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1.5,
-                        py: 1,
-                        '&:hover': { bgcolor: alpha(studioColors.emerald, 0.06) },
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 1.5,
-                          bgcolor: alpha(studioColors.emerald, 0.1),
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: studioColors.emerald,
-                        }}
-                      >
-                        <Gem size={20} />
-                      </Box>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontWeight: 600,
-                            color: studioColors.textPrimary,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {option.nombre}
-                        </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                          <Typography variant="caption" sx={{ color: studioColors.textSecondary }}>
-                            #{option.item}
-                          </Typography>
-                          {option.isJewelry && option.metalType && (
-                            <Chip
-                              label={option.metalType}
-                              size="small"
-                              sx={{
-                                height: 16,
-                                fontSize: '0.6rem',
-                                bgcolor: alpha(studioColors.gold, 0.1),
-                                color: studioColors.gold,
-                              }}
-                            />
-                          )}
-                          {!option.isJewelry && option.cantidad > 1 && (
-                            <Chip
-                              label={`Lote x${option.cantidad}`}
-                              size="small"
-                              sx={{
-                                height: 16,
-                                fontSize: '0.6rem',
-                                bgcolor: alpha('#8B5CF6', 0.1),
-                                color: '#8B5CF6',
-                                fontWeight: 600,
-                              }}
-                            />
-                          )}
-                          {!option.isJewelry && typeof option.peso === 'number' && (
-                            <Typography variant="caption" sx={{ color: studioColors.emerald, fontWeight: 500 }}>
-                              {option.peso} ct
-                            </Typography>
-                          )}
-                          {option.precioCOP && option.precioCOP > 0 && (
-                            <Typography variant="caption" sx={{ color: '#3B82F6', fontWeight: 500 }}>
-                              {formatCurrency(option.precioCOP)}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Box>
-                    </Box>
-                  )}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      size="small"
-                      placeholder="Busca en inventario por nombre o número..."
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          bgcolor: studioColors.surface,
-                          fontSize: '0.875rem',
-                          '& fieldset': { borderColor: studioColors.border },
-                          '&:hover fieldset': { borderColor: alpha(studioColors.emerald, 0.5) },
-                          '&.Mui-focused fieldset': { borderColor: studioColors.emerald, borderWidth: 2 },
-                        },
-                      }}
-                    />
-                  )}
-                  PaperComponent={(props) => (
-                    <Paper
-                      {...props}
-                      sx={{
-                        mt: 0.5,
-                        boxShadow: studioShadows.lg,
-                        border: `1px solid ${studioColors.border}`,
-                        borderRadius: 2,
-                      }}
-                    />
-                  )}
-                  noOptionsText={
-                    <Box sx={{ py: 2, textAlign: 'center' }}>
-                      <Typography variant="body2" sx={{ color: studioColors.textSecondary }}>
-                        No hay productos disponibles en inventario
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: studioColors.textMuted }}>
-                        Verifica el estado de los items
-                      </Typography>
-                    </Box>
-                  }
-                />
-                </>
-              )}
-
-              {/* Selected Product Badge */}
-              {selectedEmerald && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    mt: 1,
-                    p: 1,
-                    bgcolor: alpha(studioColors.emerald, 0.06),
-                    borderRadius: 1.5,
-                    border: `1px solid ${alpha(studioColors.emerald, 0.2)}`,
-                  }}
-                >
-                  <Avatar
-                    src={selectedEmerald.imageUrl}
-                    variant="rounded"
-                    sx={{ width: 32, height: 32, borderRadius: 1 }}
-                  />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" sx={{ color: studioColors.emerald, fontWeight: 600 }}>
-                      Seleccionado de galería
-                    </Typography>
-                  </Box>
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      setSelectedEmerald(null);
-                      setProductName('');
-                    }}
-                    sx={{ color: studioColors.textMuted, '&:hover': { color: '#EF4444' } }}
-                  >
-                    <RotateCcw size={14} />
-                  </IconButton>
-                </Box>
-              )}
-
-              {selectedInventoryItem && !multiSelectMode && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    mt: 1,
-                    p: 1,
-                    bgcolor: alpha('#3B82F6', 0.06),
-                    borderRadius: 1.5,
-                    border: `1px solid ${alpha('#3B82F6', 0.2)}`,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 1,
-                      bgcolor: alpha('#3B82F6', 0.1),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#3B82F6',
-                    }}
-                  >
-                    <ShoppingBag size={16} />
-                  </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" sx={{ color: '#3B82F6', fontWeight: 600 }}>
-                      Seleccionado de inventario #{selectedInventoryItem.item}
-                    </Typography>
-                  </Box>
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      setSelectedInventoryItem(null);
-                      setProductName('');
-                    }}
-                    sx={{ color: studioColors.textMuted, '&:hover': { color: '#EF4444' } }}
-                  >
-                    <RotateCcw size={14} />
-                  </IconButton>
-                </Box>
-              )}
-
-              {/* Multi-Select Collection Display */}
-              {multiSelectMode && selectedProducts.length > 0 && (
-                <Box
-                  sx={{
-                    mt: 2,
-                    p: 2,
-                    bgcolor: alpha('#8B5CF6', 0.04),
-                    borderRadius: 2,
-                    border: `1px solid ${alpha('#8B5CF6', 0.2)}`,
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Layers size={16} color="#8B5CF6" />
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#8B5CF6' }}>
-                        Colección ({selectedProducts.length} productos)
-                      </Typography>
-                    </Box>
-                    <Typography variant="caption" sx={{ color: '#8B5CF6', fontWeight: 600 }}>
-                      {formatCurrency(totalProductsValue)}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {selectedProducts.map((product) => {
-                      const isInventory = 'item' in product;
-                      const productId = isInventory ? product.item : product.id;
-                      const productName = isInventory ? product.nombre : product.name;
-                      const productPrice = ('priceCOP' in product ? product.priceCOP : 0) || 0;
-
-                      return (
-                        <Box
-                          key={productId}
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            p: 1,
-                            bgcolor: alpha('#FFFFFF', 0.8),
-                            borderRadius: 1,
-                            border: `1px solid ${alpha('#8B5CF6', 0.1)}`,
-                          }}
-                        >
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                fontWeight: 600,
-                                color: studioColors.textPrimary,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                display: 'block',
-                              }}
-                            >
-                              {productName}
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: '#8B5CF6', fontWeight: 500 }}>
-                              {formatCurrency(productPrice)}
-                            </Typography>
-                          </Box>
-                          <IconButton
-                            size="small"
-                            onClick={() => removeProduct(product)}
-                            sx={{
-                              color: studioColors.textMuted,
-                              '&:hover': { color: '#EF4444', bgcolor: alpha('#EF4444', 0.1) },
-                            }}
-                          >
-                            <X size={14} />
-                          </IconButton>
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                </Box>
-              )}
-            </Box>
+            <ProductNameSection
+              productSource={productSource}
+              setProductSource={setProductSource}
+              multiSelectMode={multiSelectMode}
+              toggleMultiSelectMode={toggleMultiSelectMode}
+              emeralds={emeralds}
+              filteredInventory={filteredInventory}
+              productName={productName}
+              setProductName={setProductName}
+              selectedEmerald={selectedEmerald}
+              selectedInventoryItem={selectedInventoryItem}
+              handleEmeraldSelect={handleEmeraldSelect}
+              handleInventorySelect={handleInventorySelect}
+              selectedProducts={selectedProducts}
+              totalProductsValue={totalProductsValue}
+              removeProduct={removeProduct}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              productTypeFilter={productTypeFilter}
+              setProductTypeFilter={setProductTypeFilter}
+              shapeFilter={shapeFilter}
+              setShapeFilter={setShapeFilter}
+              uniqueShapes={uniqueShapes}
+            />
 
             <Divider sx={{ borderColor: studioColors.border, mb: 2.5 }} />
 
             {/* Carat Weight Input */}
-            <Box sx={{ mb: 2.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.75 }}>
-                <Gem size={16} color={studioColors.emerald} />
-                <Typography variant="body2" sx={{ fontWeight: 600, color: studioColors.textPrimary }}>
-                  Peso en Quilates (opcional)
-                </Typography>
-                <Tooltip title="Ingresa el peso total en quilates para calcular el precio por quilate">
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Info size={14} color={studioColors.textMuted} />
-                  </Box>
-                </Tooltip>
-              </Box>
-              <TextField
-                fullWidth
-                size="small"
-                type="number"
-                value={caratWeight || ''}
-                onChange={(e) => setCaratWeight(Number(e.target.value) || 0)}
-                placeholder="Ej: 2.5"
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Typography sx={{ fontSize: '0.75rem', color: studioColors.emerald, fontWeight: 600 }}>
-                          ct
-                        </Typography>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    bgcolor: studioColors.surface,
-                    fontSize: '0.875rem',
-                    '& fieldset': { borderColor: studioColors.border },
-                    '&:hover fieldset': { borderColor: alpha(studioColors.emerald, 0.4) },
-                    '&.Mui-focused fieldset': { borderColor: studioColors.emerald },
-                  },
-                }}
-              />
-            </Box>
+            <CaratWeightInput
+              caratWeight={caratWeight}
+              setCaratWeight={setCaratWeight}
+            />
 
             <Divider sx={{ borderColor: studioColors.border, mb: 2.5 }} />
 
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
-              <Typography variant="subtitle1" sx={{ ...studioCardStyles.sectionTitle }}>
-                Inversión
-              </Typography>
-              <Tooltip title="Reiniciar valores">
-                <IconButton size="small" onClick={resetValues} sx={{ color: studioColors.textMuted }}>
-                  <RotateCcw size={16} />
-                </IconButton>
-              </Tooltip>
-            </Box>
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {investmentsWithIcons.map((item) => (
-                <Box key={item.id}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.75 }}>
-                    <Box sx={{ color: studioColors.textSecondary }}>{item.icon}</Box>
-                    <Typography variant="body2" sx={{ fontWeight: 500, color: studioColors.textPrimary, flex: 1 }}>
-                      {item.label}
-                    </Typography>
-                    {item.unit && (
-                      <Chip
-                        label={item.unit}
-                        size="small"
-                        sx={{
-                          height: 20,
-                          fontSize: '0.625rem',
-                          fontWeight: 600,
-                          bgcolor: alpha(studioColors.emerald, 0.1),
-                          color: studioColors.emerald,
-                        }}
-                      />
-                    )}
-                  </Box>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="number"
-                    value={item.value || ''}
-                    onChange={(e) => updateInvestment(item.id, Number(e.target.value) || 0)}
-                    placeholder={item.placeholder}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Typography sx={{ fontSize: '0.875rem', color: studioColors.textMuted }}>$</Typography>
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        bgcolor: studioColors.surface,
-                        fontSize: '0.875rem',
-                        '& fieldset': { borderColor: studioColors.border },
-                        '&:hover fieldset': { borderColor: alpha(studioColors.emerald, 0.4) },
-                        '&.Mui-focused fieldset': { borderColor: studioColors.emerald },
-                      },
-                    }}
-                  />
-                </Box>
-              ))}
-            </Box>
-
-            {/* Custom Items */}
-            <Box sx={{ mt: 3 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                  py: 1,
-                }}
-                onClick={() => setShowAdvanced(!showAdvanced)}
-              >
-                <Typography variant="body2" sx={{ fontWeight: 600, color: studioColors.textSecondary }}>
-                  Costos adicionales
-                </Typography>
-                {showAdvanced ? <ChevronUp size={18} color={studioColors.textSecondary} /> : <ChevronDown size={18} color={studioColors.textSecondary} />}
-              </Box>
-
-              <Collapse in={showAdvanced}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-                  {customItems.map((item, index) => (
-                    <Box key={index} sx={{ display: 'flex', gap: 1.5 }}>
-                      <TextField
-                        size="small"
-                        value={item.label}
-                        onChange={(e) => updateCustomItem(index, 'label', e.target.value)}
-                        placeholder="Concepto"
-                        sx={{
-                          flex: 1,
-                          '& .MuiOutlinedInput-root': {
-                            bgcolor: studioColors.surface,
-                            fontSize: '0.875rem',
-                            '& fieldset': { borderColor: studioColors.border },
-                          },
-                        }}
-                      />
-                      <TextField
-                        size="small"
-                        type="number"
-                        value={item.value || ''}
-                        onChange={(e) => updateCustomItem(index, 'value', Number(e.target.value) || 0)}
-                        placeholder="0"
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Typography sx={{ fontSize: '0.875rem', color: studioColors.textMuted }}>$</Typography>
-                            </InputAdornment>
-                          ),
-                        }}
-                        sx={{
-                          width: 150,
-                          '& .MuiOutlinedInput-root': {
-                            bgcolor: studioColors.surface,
-                            fontSize: '0.875rem',
-                            '& fieldset': { borderColor: studioColors.border },
-                          },
-                        }}
-                      />
-                    </Box>
-                  ))}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      cursor: 'pointer',
-                      color: studioColors.emerald,
-                      '&:hover': { color: studioColors.emeraldLight },
-                    }}
-                    onClick={addCustomItem}
-                  >
-                    <Plus size={16} />
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      Agregar costo
-                    </Typography>
-                  </Box>
-                </Box>
-              </Collapse>
-            </Box>
-
-            <Divider sx={{ borderColor: studioColors.border, my: 2.5 }} />
-
-            {/* Total Investment */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: studioColors.textPrimary }}>
-                Total Inversión
-              </Typography>
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: 700,
-                  color: studioColors.textPrimary,
-                  fontFamily: 'monospace',
-                }}
-              >
-                {formatCurrency(totalInvestment)}
-              </Typography>
-            </Box>
+            {/* Investment Section */}
+            <InvestmentSection
+              investments={investments}
+              updateInvestment={updateInvestment}
+              customItems={customItems}
+              updateCustomItem={updateCustomItem}
+              addCustomItem={addCustomItem}
+              showAdvanced={showAdvanced}
+              setShowAdvanced={setShowAdvanced}
+              resetValues={resetValues}
+              totalInvestment={totalInvestment}
+            />
           </Paper>
         </Box>
 
         {/* Right Column - Pricing */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {/* Factor Slider */}
-          <Paper elevation={0} sx={{ ...studioCardStyles.card, position: 'relative', overflow: 'hidden' }}>
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                width: 150,
-                height: 150,
-                background: `radial-gradient(circle, ${alpha(currentTier.color, 0.06)} 0%, transparent 70%)`,
-                pointerEvents: 'none',
-              }}
-            />
+          <FactorSlider
+            priceFactor={priceFactor}
+            onFactorChange={setPriceFactor}
+            currentTier={currentTier}
+          />
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3, position: 'relative' }}>
-              <Box
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 2,
-                  bgcolor: alpha(currentTier.color, 0.1),
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Target size={18} color={currentTier.color} />
-              </Box>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: studioColors.textPrimary }}>
-                  Factor sobre Inversión
-                </Typography>
-                <Typography variant="caption" sx={{ color: studioColors.textSecondary }}>
-                  Multiplicador de precio
-                </Typography>
-              </Box>
-              <Tooltip title="Multiplicador que se aplica al total de inversión para calcular el precio de venta">
-                <IconButton size="small" sx={{ color: studioColors.textMuted }}>
-                  <Info size={16} />
-                </IconButton>
-              </Tooltip>
-            </Box>
+          <PricingResults
+            pricingMetrics={pricingMetrics}
+            priceFactor={priceFactor}
+            caratWeight={caratWeight}
+            marginProgress={marginProgress}
+          />
 
-            {/* Large Factor Display */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 3, mb: 2 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  gap: 0.5,
-                  px: 4,
-                  py: 2,
-                  borderRadius: 3,
-                  bgcolor: alpha(currentTier.color, 0.08),
-                  border: `2px solid ${alpha(currentTier.color, 0.2)}`,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: '3rem',
-                    fontWeight: 800,
-                    color: currentTier.color,
-                    lineHeight: 1,
-                    fontFamily: 'monospace',
-                  }}
-                >
-                  {priceFactor.toFixed(1)}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: '1.5rem',
-                    fontWeight: 700,
-                    color: currentTier.color,
-                    opacity: 0.7,
-                  }}
-                >
-                  x
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ px: 2, mb: 3 }}>
-              <Slider
-                value={priceFactor}
-                onChange={(_, value) => setPriceFactor(value as number)}
-                min={1.5}
-                max={4.0}
-                step={0.1}
-                marks={PRICING_TIERS.map(tier => ({
-                  value: tier.factor,
-                  label: tier.label,
-                }))}
-                sx={{
-                  color: currentTier.color,
-                  '& .MuiSlider-markLabel': {
-                    fontSize: '0.6875rem',
-                    fontWeight: 600,
-                    color: studioColors.textMuted,
-                    top: 30,
-                  },
-                  '& .MuiSlider-mark': {
-                    bgcolor: studioColors.border,
-                    height: 12,
-                    width: 2,
-                    borderRadius: 1,
-                  },
-                  '& .MuiSlider-thumb': {
-                    width: 24,
-                    height: 24,
-                    boxShadow: `0 2px 8px ${alpha(currentTier.color, 0.4)}`,
-                    '&:hover, &.Mui-focusVisible': {
-                      boxShadow: `0 0 0 6px ${alpha(currentTier.color, 0.16)}, 0 2px 8px ${alpha(currentTier.color, 0.4)}`,
-                    },
-                  },
-                  '& .MuiSlider-track': {
-                    height: 6,
-                    borderRadius: 3,
-                    border: 'none',
-                  },
-                  '& .MuiSlider-rail': {
-                    height: 6,
-                    borderRadius: 3,
-                    bgcolor: studioColors.border,
-                    opacity: 1,
-                  },
-                }}
-              />
-            </Box>
-
-            {/* Quick Select Tiers */}
-            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-              {PRICING_TIERS.map((tier) => (
-                <Chip
-                  key={tier.label}
-                  label={tier.label}
-                  onClick={() => setPriceFactor(tier.factor)}
-                  sx={{
-                    cursor: 'pointer',
-                    bgcolor: Math.abs(priceFactor - tier.factor) < 0.05 ? tier.color : alpha(tier.color, 0.1),
-                    color: Math.abs(priceFactor - tier.factor) < 0.05 ? '#FFFFFF' : tier.color,
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
-                    height: 28,
-                    border: '1px solid',
-                    borderColor: Math.abs(priceFactor - tier.factor) < 0.05 ? tier.color : alpha(tier.color, 0.3),
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      bgcolor: Math.abs(priceFactor - tier.factor) < 0.05 ? tier.color : alpha(tier.color, 0.15),
-                      transform: 'translateY(-1px)',
-                    },
-                  }}
-                />
-              ))}
-            </Box>
-          </Paper>
-
-          {/* Results Card */}
-          <Paper
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              overflow: 'hidden',
-              border: `1px solid ${studioColors.border}`,
-              boxShadow: studioShadows.emerald,
-            }}
-          >
-            {/* Main Price Section */}
-            <Box
-              sx={{
-                p: 3,
-                background: studioGradients.header,
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 3,
-                  background: studioGradients.emerald,
-                }}
-              />
-
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: -100,
-                  right: -100,
-                  width: 250,
-                  height: 250,
-                  borderRadius: '50%',
-                  background: alpha(studioColors.emerald, 0.08),
-                  pointerEvents: 'none',
-                }}
-              />
-
-              <Box sx={{ position: 'relative', zIndex: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 1.5,
-                      bgcolor: alpha(studioColors.emerald, 0.2),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <TrendingUp size={18} color={studioColors.emerald} />
-                  </Box>
-                  <Typography variant="body1" sx={{ fontWeight: 600, color: alpha('#FFFFFF', 0.9) }}>
-                    Precio de Venta Sugerido
-                  </Typography>
-                </Box>
-
-                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                  <Typography
-                    sx={{
-                      fontSize: '2.5rem',
-                      fontWeight: 700,
-                      color: studioColors.emerald,
-                      fontFamily: 'monospace',
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1,
-                    }}
-                  >
-                    {formatCurrency(pricingMetrics.salePrice)}
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                      bgcolor: alpha(studioColors.emerald, 0.15),
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 2,
-                    }}
-                  >
-                    <ArrowUpRight size={14} color={studioColors.emerald} />
-                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, color: studioColors.emerald }}>
-                      {priceFactor.toFixed(1)}x
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {/* Price per Carat Display */}
-                {caratWeight > 0 && (
-                  <Box sx={{ mt: 2 }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 1.5,
-                        borderRadius: 2,
-                        bgcolor: alpha(studioColors.gold, 0.08),
-                        border: `1px solid ${alpha(studioColors.gold, 0.2)}`,
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Gem size={16} color={studioColors.gold} />
-                        <Typography variant="body2" sx={{ color: alpha('#FFFFFF', 0.85), fontWeight: 500 }}>
-                          Precio por Quilate
-                        </Typography>
-                      </Box>
-                      <Typography
-                        sx={{
-                          fontSize: '1.125rem',
-                          fontWeight: 700,
-                          color: studioColors.gold,
-                          fontFamily: 'monospace',
-                        }}
-                      >
-                        {formatCurrency(pricingMetrics.pricePerCarat)}/ct
-                      </Typography>
-                    </Box>
-                  </Box>
-                )}
-
-                {/* Margin Progress Bar */}
-                <Box sx={{ mt: 3 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
-                    <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.7), fontWeight: 500 }}>
-                      Margen de ganancia
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: studioColors.emerald, fontWeight: 600 }}>
-                      {formatPercent(pricingMetrics.margin)}
-                    </Typography>
-                  </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={marginProgress}
-                    sx={{
-                      height: 6,
-                      borderRadius: 3,
-                      bgcolor: alpha('#FFFFFF', 0.15),
-                      '& .MuiLinearProgress-bar': {
-                        borderRadius: 3,
-                        background: studioGradients.emerald,
-                      },
-                    }}
-                  />
-                </Box>
-              </Box>
-            </Box>
-
-            {/* Metrics Grid */}
-            <Box sx={{ p: 2.5, bgcolor: studioColors.surface }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
-                {/* Margin */}
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: alpha('#3B82F6', 0.06),
-                    textAlign: 'center',
-                    border: `1px solid ${alpha('#3B82F6', 0.1)}`,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 1.5,
-                      bgcolor: alpha('#3B82F6', 0.1),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 1,
-                    }}
-                  >
-                    <Percent size={16} color="#3B82F6" />
-                  </Box>
-                  <Typography
-                    sx={{
-                      fontSize: '1.25rem',
-                      fontWeight: 700,
-                      color: '#3B82F6',
-                      fontFamily: 'monospace',
-                      lineHeight: 1,
-                      mb: 0.5,
-                    }}
-                  >
-                    {formatPercent(pricingMetrics.margin)}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: studioColors.textSecondary, fontWeight: 500 }}>
-                    Margen s/Venta
-                  </Typography>
-                </Box>
-
-                {/* ROI */}
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: alpha('#8B5CF6', 0.06),
-                    textAlign: 'center',
-                    border: `1px solid ${alpha('#8B5CF6', 0.1)}`,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 1.5,
-                      bgcolor: alpha('#8B5CF6', 0.1),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 1,
-                    }}
-                  >
-                    <TrendingUp size={16} color="#8B5CF6" />
-                  </Box>
-                  <Typography
-                    sx={{
-                      fontSize: '1.25rem',
-                      fontWeight: 700,
-                      color: '#8B5CF6',
-                      fontFamily: 'monospace',
-                      lineHeight: 1,
-                      mb: 0.5,
-                    }}
-                  >
-                    {formatPercent(pricingMetrics.roi)}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: studioColors.textSecondary, fontWeight: 500 }}>
-                    ROI (Retorno)
-                  </Typography>
-                </Box>
-
-                {/* Profit */}
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: alpha(studioColors.emerald, 0.06),
-                    textAlign: 'center',
-                    border: `1px solid ${alpha(studioColors.emerald, 0.1)}`,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 1.5,
-                      bgcolor: alpha(studioColors.emerald, 0.1),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 1,
-                    }}
-                  >
-                    <DollarSign size={16} color={studioColors.emerald} />
-                  </Box>
-                  <Typography
-                    sx={{
-                      fontSize: '0.9375rem',
-                      fontWeight: 700,
-                      color: studioColors.emerald,
-                      fontFamily: 'monospace',
-                      lineHeight: 1.2,
-                      mb: 0.5,
-                    }}
-                  >
-                    {formatCurrency(pricingMetrics.profit)}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: studioColors.textSecondary, fontWeight: 500 }}>
-                    Ganancia Neta
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          </Paper>
-
-          {/* Formula Info */}
-          <Paper
-            elevation={0}
-            sx={{
-              borderRadius: 2,
-              bgcolor: studioColors.surfaceMuted,
-              border: `1px solid ${studioColors.border}`,
-              overflow: 'hidden',
-            }}
-          >
-            <Box
-              sx={{
-                p: 2,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.5,
-              }}
-            >
-              <Box
-                sx={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 1.5,
-                  bgcolor: alpha('#3B82F6', 0.1),
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Info size={14} color="#3B82F6" />
-              </Box>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: '#3B82F6' }}>
-                Fórmulas Aplicadas
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                px: 2,
-                pb: 2,
-                pt: 0,
-                borderTop: `1px solid ${studioColors.border}`,
-                bgcolor: studioColors.surface,
-              }}
-            >
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, pt: 1.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: '#3B82F6' }} />
-                  <Typography variant="caption" sx={{ color: studioColors.textSecondary, fontFamily: 'monospace', fontSize: '0.7rem' }}>
-                    Precio = Inversión × Factor
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: '#8B5CF6' }} />
-                  <Typography variant="caption" sx={{ color: studioColors.textSecondary, fontFamily: 'monospace', fontSize: '0.7rem' }}>
-                    Margen = (Precio - Inversión) / Precio × 100
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: studioColors.emerald }} />
-                  <Typography variant="caption" sx={{ color: studioColors.textSecondary, fontFamily: 'monospace', fontSize: '0.7rem' }}>
-                    ROI = (Precio - Inversión) / Inversión × 100
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          </Paper>
+          <FormulaInfo />
         </Box>
       </Box>
-
     </Box>
   );
 }
+
+// =============================================================================
+// SUB-COMPONENTS (inline for now, can be extracted later)
+// =============================================================================
+
+interface ProductNameSectionProps {
+  productSource: ProductSource;
+  setProductSource: (source: ProductSource) => void;
+  multiSelectMode: boolean;
+  toggleMultiSelectMode: () => void;
+  emeralds: Emerald[];
+  filteredInventory: InventoryItem[];
+  productName: string;
+  setProductName: (name: string) => void;
+  selectedEmerald: Emerald | null;
+  selectedInventoryItem: InventoryItem | null;
+  handleEmeraldSelect: (emerald: Emerald | null) => void;
+  handleInventorySelect: (item: InventoryItem | null) => void;
+  selectedProducts: (Emerald | InventoryItem)[];
+  totalProductsValue: number;
+  removeProduct: (product: Emerald | InventoryItem) => void;
+  statusFilter: string;
+  setStatusFilter: (filter: string) => void;
+  productTypeFilter: string;
+  setProductTypeFilter: (filter: string) => void;
+  shapeFilter: string;
+  setShapeFilter: (filter: string) => void;
+  uniqueShapes: string[];
+}
+
+const ProductNameSection: React.FC<ProductNameSectionProps> = ({
+  productSource,
+  setProductSource,
+  multiSelectMode,
+  toggleMultiSelectMode,
+  emeralds,
+  filteredInventory,
+  productName,
+  setProductName,
+  selectedEmerald,
+  selectedInventoryItem,
+  handleEmeraldSelect,
+  handleInventorySelect,
+  selectedProducts,
+  totalProductsValue,
+  removeProduct,
+  statusFilter,
+  setStatusFilter,
+  productTypeFilter,
+  setProductTypeFilter,
+  shapeFilter,
+  setShapeFilter,
+  uniqueShapes,
+}) => (
+  <Box sx={{ mb: 3 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <FileText size={18} color={studioColors.emerald} />
+        <Typography variant="body2" sx={{ fontWeight: 600, color: studioColors.emerald }}>
+          Nombre del Producto
+        </Typography>
+      </Box>
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+        <SourceChip
+          icon={<Image size={12} />}
+          label={`Galería (${emeralds.length})`}
+          active={productSource === 'gallery'}
+          onClick={() => setProductSource('gallery')}
+        />
+        <SourceChip
+          icon={<ShoppingBag size={12} />}
+          label={`Inventario (${filteredInventory.length})`}
+          active={productSource === 'inventory'}
+          onClick={() => setProductSource('inventory')}
+        />
+        <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: studioColors.border }} />
+        <Chip
+          icon={<Layers size={12} />}
+          label="Multi-selección"
+          size="small"
+          onClick={toggleMultiSelectMode}
+          sx={{
+            height: 22,
+            fontSize: '0.625rem',
+            fontWeight: 500,
+            bgcolor: multiSelectMode ? '#8B5CF6' : alpha('#8B5CF6', 0.1),
+            color: multiSelectMode ? '#FFFFFF' : '#8B5CF6',
+            cursor: 'pointer',
+            border: '1px solid',
+            borderColor: multiSelectMode ? '#8B5CF6' : alpha('#8B5CF6', 0.3),
+            '& .MuiChip-icon': { color: multiSelectMode ? '#FFFFFF' : '#8B5CF6' },
+            '&:hover': {
+              bgcolor: multiSelectMode ? '#8B5CF6' : alpha('#8B5CF6', 0.2),
+              borderColor: '#8B5CF6',
+            },
+          }}
+        />
+      </Box>
+    </Box>
+
+    {/* Gallery Autocomplete */}
+    {productSource === 'gallery' && (
+      <GalleryAutocomplete
+        emeralds={emeralds}
+        selectedEmerald={selectedEmerald}
+        productName={productName}
+        setProductName={setProductName}
+        handleEmeraldSelect={handleEmeraldSelect}
+      />
+    )}
+
+    {/* Inventory Autocomplete */}
+    {productSource === 'inventory' && (
+      <InventoryAutocomplete
+        filteredInventory={filteredInventory}
+        selectedInventoryItem={selectedInventoryItem}
+        productName={productName}
+        setProductName={setProductName}
+        handleInventorySelect={handleInventorySelect}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        productTypeFilter={productTypeFilter}
+        setProductTypeFilter={setProductTypeFilter}
+        shapeFilter={shapeFilter}
+        setShapeFilter={setShapeFilter}
+        uniqueShapes={uniqueShapes}
+      />
+    )}
+
+    {/* Selected Product Badges */}
+    {selectedEmerald && !multiSelectMode && (
+      <SelectedBadge
+        type="gallery"
+        label="Seleccionado de galería"
+        imageUrl={selectedEmerald.imageUrl}
+        onClear={() => {
+          handleEmeraldSelect(null);
+          setProductName('');
+        }}
+      />
+    )}
+
+    {selectedInventoryItem && !multiSelectMode && (
+      <SelectedBadge
+        type="inventory"
+        label={`Seleccionado de inventario #${selectedInventoryItem.item}`}
+        onClear={() => {
+          handleInventorySelect(null);
+          setProductName('');
+        }}
+      />
+    )}
+
+    {/* Multi-Select Collection Display */}
+    {multiSelectMode && selectedProducts.length > 0 && (
+      <CollectionDisplay
+        selectedProducts={selectedProducts}
+        totalProductsValue={totalProductsValue}
+        removeProduct={removeProduct}
+      />
+    )}
+  </Box>
+);
+
+// Source chip component
+interface SourceChipProps {
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+const SourceChip: React.FC<SourceChipProps> = ({ icon, label, active, onClick }) => (
+  <Chip
+    icon={icon as React.ReactElement}
+    label={label}
+    size="small"
+    onClick={onClick}
+    sx={{
+      height: 22,
+      fontSize: '0.625rem',
+      fontWeight: 500,
+      bgcolor: active ? studioColors.emerald : alpha(studioColors.emerald, 0.1),
+      color: active ? '#FFFFFF' : studioColors.emerald,
+      cursor: 'pointer',
+      '& .MuiChip-icon': { color: active ? '#FFFFFF' : studioColors.emerald },
+      '&:hover': {
+        bgcolor: active ? studioColors.emerald : alpha(studioColors.emerald, 0.2),
+      },
+    }}
+  />
+);
+
+// Gallery autocomplete
+interface GalleryAutocompleteProps {
+  emeralds: Emerald[];
+  selectedEmerald: Emerald | null;
+  productName: string;
+  setProductName: (name: string) => void;
+  handleEmeraldSelect: (emerald: Emerald | null) => void;
+}
+
+const GalleryAutocomplete: React.FC<GalleryAutocompleteProps> = ({
+  emeralds,
+  selectedEmerald,
+  productName,
+  setProductName,
+  handleEmeraldSelect,
+}) => (
+  <Autocomplete
+    freeSolo
+    options={emeralds}
+    value={selectedEmerald}
+    inputValue={productName}
+    onInputChange={(_, newValue) => setProductName(newValue)}
+    onChange={(_, newValue) => {
+      if (typeof newValue === 'string') {
+        setProductName(newValue);
+      } else {
+        handleEmeraldSelect(newValue);
+      }
+    }}
+    getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
+    renderOption={(props, option) => (
+      <Box
+        component="li"
+        {...props}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          py: 1,
+          '&:hover': { bgcolor: alpha(studioColors.emerald, 0.06) },
+        }}
+      >
+        <Avatar
+          src={option.imageUrl}
+          variant="rounded"
+          sx={{ width: 40, height: 40, borderRadius: 1.5 }}
+        >
+          <Gem size={20} />
+        </Avatar>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 600,
+              color: studioColors.textPrimary,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {option.name}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="caption" sx={{ color: studioColors.textSecondary }}>
+              {getCategoryLabel(option.category)}
+            </Typography>
+            {option.weightCarats && (
+              <Typography variant="caption" sx={{ color: studioColors.emerald, fontWeight: 500 }}>
+                {option.weightCarats} ct
+              </Typography>
+            )}
+            {option.priceCOP && option.priceCOP > 0 && (
+              <Typography variant="caption" sx={{ color: '#3B82F6', fontWeight: 500 }}>
+                {formatCurrency(option.priceCOP)}
+              </Typography>
+            )}
+          </Box>
+        </Box>
+      </Box>
+    )}
+    renderInput={(params) => (
+      <TextField
+        {...params}
+        size="small"
+        placeholder={emeralds.length > 0 ? "Escribe o selecciona de la galería..." : "Ej: Anillo Esmeralda Colombiana 2.5ct"}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            bgcolor: studioColors.surface,
+            fontSize: '0.875rem',
+            '& fieldset': { borderColor: studioColors.border },
+            '&:hover fieldset': { borderColor: alpha(studioColors.emerald, 0.5) },
+            '&.Mui-focused fieldset': { borderColor: studioColors.emerald, borderWidth: 2 },
+          },
+        }}
+      />
+    )}
+    PaperComponent={(props) => (
+      <Paper
+        {...props}
+        sx={{
+          mt: 0.5,
+          boxShadow: studioShadows.lg,
+          border: `1px solid ${studioColors.border}`,
+          borderRadius: 2,
+        }}
+      />
+    )}
+    noOptionsText={
+      <Box sx={{ py: 2, textAlign: 'center' }}>
+        <Typography variant="body2" sx={{ color: studioColors.textSecondary }}>
+          No hay esmeraldas en la galería
+        </Typography>
+        <Typography variant="caption" sx={{ color: studioColors.textMuted }}>
+          Agrega esmeraldas en la sección "Subir"
+        </Typography>
+      </Box>
+    }
+  />
+);
+
+// Inventory autocomplete (simplified - filters + autocomplete)
+interface InventoryAutocompleteProps {
+  filteredInventory: InventoryItem[];
+  selectedInventoryItem: InventoryItem | null;
+  productName: string;
+  setProductName: (name: string) => void;
+  handleInventorySelect: (item: InventoryItem | null) => void;
+  statusFilter: string;
+  setStatusFilter: (filter: string) => void;
+  productTypeFilter: string;
+  setProductTypeFilter: (filter: string) => void;
+  shapeFilter: string;
+  setShapeFilter: (filter: string) => void;
+  uniqueShapes: string[];
+}
+
+const InventoryAutocomplete: React.FC<InventoryAutocompleteProps> = ({
+  filteredInventory,
+  selectedInventoryItem,
+  productName,
+  setProductName,
+  handleInventorySelect,
+  statusFilter,
+  setStatusFilter,
+  productTypeFilter,
+  setProductTypeFilter,
+  shapeFilter,
+  setShapeFilter,
+  uniqueShapes,
+}) => (
+  <>
+    {/* Status Filter */}
+    <FilterSection label="Estado">
+      {STATUS_FILTERS.map((status: string) => (
+        <FilterChip
+          key={status}
+          label={status.charAt(0).toUpperCase() + status.slice(1)}
+          active={statusFilter === status}
+          onClick={() => setStatusFilter(status)}
+        />
+      ))}
+    </FilterSection>
+
+    {/* Product Type Filter */}
+    <FilterSection label="Tipo">
+      {PRODUCT_TYPE_FILTERS.map((type: { value: string; label: string }) => (
+        <FilterChip
+          key={type.value}
+          label={type.label}
+          active={productTypeFilter === type.value}
+          onClick={() => setProductTypeFilter(type.value)}
+          variant="secondary"
+        />
+      ))}
+    </FilterSection>
+
+    {/* Shape Filter */}
+    <FilterSection label="Talla">
+      {uniqueShapes.map(shape => (
+        <FilterChip
+          key={shape}
+          label={shape === 'all' ? 'Todas' : shape}
+          active={shapeFilter === shape}
+          onClick={() => setShapeFilter(shape)}
+          variant="secondary"
+          small
+        />
+      ))}
+    </FilterSection>
+
+    <Autocomplete
+      freeSolo
+      options={filteredInventory}
+      value={selectedInventoryItem}
+      inputValue={productName}
+      onInputChange={(_, newValue) => setProductName(newValue)}
+      onChange={(_, newValue) => {
+        if (typeof newValue === 'string') {
+          setProductName(newValue);
+        } else {
+          handleInventorySelect(newValue);
+        }
+      }}
+      getOptionLabel={(option) => typeof option === 'string' ? option : `${option.nombre} - ${option.item}`}
+      renderOption={(props, option) => (
+        <Box
+          component="li"
+          {...props}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            py: 1,
+            '&:hover': { bgcolor: alpha(studioColors.emerald, 0.06) },
+          }}
+        >
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: 1.5,
+              bgcolor: alpha(studioColors.emerald, 0.1),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: studioColors.emerald,
+            }}
+          >
+            <Gem size={20} />
+          </Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                color: studioColors.textPrimary,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {option.nombre}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <Typography variant="caption" sx={{ color: studioColors.textSecondary }}>
+                #{option.item}
+              </Typography>
+              {option.isJewelry && option.metalType && (
+                <Chip
+                  label={option.metalType}
+                  size="small"
+                  sx={{
+                    height: 16,
+                    fontSize: '0.6rem',
+                    bgcolor: alpha(studioColors.gold, 0.1),
+                    color: studioColors.gold,
+                  }}
+                />
+              )}
+              {!option.isJewelry && option.cantidad > 1 && (
+                <Chip
+                  label={`Lote x${option.cantidad}`}
+                  size="small"
+                  sx={{
+                    height: 16,
+                    fontSize: '0.6rem',
+                    bgcolor: alpha('#8B5CF6', 0.1),
+                    color: '#8B5CF6',
+                    fontWeight: 600,
+                  }}
+                />
+              )}
+              {!option.isJewelry && typeof option.peso === 'number' && (
+                <Typography variant="caption" sx={{ color: studioColors.emerald, fontWeight: 500 }}>
+                  {option.peso} ct
+                </Typography>
+              )}
+              {option.precioCOP && option.precioCOP > 0 && (
+                <Typography variant="caption" sx={{ color: '#3B82F6', fontWeight: 500 }}>
+                  {formatCurrency(option.precioCOP)}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        </Box>
+      )}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          size="small"
+          placeholder="Busca en inventario por nombre o número..."
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              bgcolor: studioColors.surface,
+              fontSize: '0.875rem',
+              '& fieldset': { borderColor: studioColors.border },
+              '&:hover fieldset': { borderColor: alpha(studioColors.emerald, 0.5) },
+              '&.Mui-focused fieldset': { borderColor: studioColors.emerald, borderWidth: 2 },
+            },
+          }}
+        />
+      )}
+      PaperComponent={(props) => (
+        <Paper
+          {...props}
+          sx={{
+            mt: 0.5,
+            boxShadow: studioShadows.lg,
+            border: `1px solid ${studioColors.border}`,
+            borderRadius: 2,
+          }}
+        />
+      )}
+      noOptionsText={
+        <Box sx={{ py: 2, textAlign: 'center' }}>
+          <Typography variant="body2" sx={{ color: studioColors.textSecondary }}>
+            No hay productos disponibles en inventario
+          </Typography>
+        </Box>
+      }
+    />
+  </>
+);
+
+// Filter section wrapper
+const FilterSection: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <Box sx={{ mb: 1.5 }}>
+    <Typography variant="caption" sx={{ color: studioColors.textSecondary, fontWeight: 600, mb: 0.75, display: 'block' }}>
+      {label}
+    </Typography>
+    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+      {children}
+    </Box>
+  </Box>
+);
+
+// Filter chip
+interface FilterChipProps {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  variant?: 'primary' | 'secondary';
+  small?: boolean;
+}
+
+const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick, variant = 'primary', small }) => (
+  <Chip
+    label={label}
+    size="small"
+    onClick={onClick}
+    sx={{
+      height: small ? 24 : 26,
+      fontSize: small ? '0.6875rem' : '0.75rem',
+      fontWeight: variant === 'primary' ? 600 : 500,
+      bgcolor: active
+        ? (variant === 'primary' ? studioColors.emerald : alpha(studioColors.emerald, 0.15))
+        : alpha(studioColors.emerald, variant === 'primary' ? 0.08 : 0.05),
+      color: active
+        ? (variant === 'primary' ? '#FFFFFF' : studioColors.emerald)
+        : studioColors.textSecondary,
+      border: '1px solid',
+      borderColor: active ? studioColors.emerald : 'transparent',
+      cursor: 'pointer',
+      '&:hover': {
+        bgcolor: active
+          ? studioColors.emerald
+          : alpha(studioColors.emerald, 0.15),
+        borderColor: studioColors.emerald,
+      },
+    }}
+  />
+);
+
+// Selected badge
+interface SelectedBadgeProps {
+  type: 'gallery' | 'inventory';
+  label: string;
+  imageUrl?: string;
+  onClear: () => void;
+}
+
+const SelectedBadge: React.FC<SelectedBadgeProps> = ({ type, label, imageUrl, onClear }) => {
+  const color = type === 'gallery' ? studioColors.emerald : '#3B82F6';
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        mt: 1,
+        p: 1,
+        bgcolor: alpha(color, 0.06),
+        borderRadius: 1.5,
+        border: `1px solid ${alpha(color, 0.2)}`,
+      }}
+    >
+      {imageUrl ? (
+        <Avatar src={imageUrl} variant="rounded" sx={{ width: 32, height: 32, borderRadius: 1 }} />
+      ) : (
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: 1,
+            bgcolor: alpha(color, 0.1),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color,
+          }}
+        >
+          <ShoppingBag size={16} />
+        </Box>
+      )}
+      <Box sx={{ flex: 1 }}>
+        <Typography variant="caption" sx={{ color, fontWeight: 600 }}>
+          {label}
+        </Typography>
+      </Box>
+      <IconButton
+        size="small"
+        onClick={onClear}
+        sx={{ color: studioColors.textMuted, '&:hover': { color: '#EF4444' } }}
+      >
+        <RotateCcw size={14} />
+      </IconButton>
+    </Box>
+  );
+};
+
+// Collection display
+interface CollectionDisplayProps {
+  selectedProducts: (Emerald | InventoryItem)[];
+  totalProductsValue: number;
+  removeProduct: (product: Emerald | InventoryItem) => void;
+}
+
+const CollectionDisplay: React.FC<CollectionDisplayProps> = ({
+  selectedProducts,
+  totalProductsValue,
+  removeProduct,
+}) => (
+  <Box
+    sx={{
+      mt: 2,
+      p: 2,
+      bgcolor: alpha('#8B5CF6', 0.04),
+      borderRadius: 2,
+      border: `1px solid ${alpha('#8B5CF6', 0.2)}`,
+    }}
+  >
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Layers size={16} color="#8B5CF6" />
+        <Typography variant="body2" sx={{ fontWeight: 600, color: '#8B5CF6' }}>
+          Colección ({selectedProducts.length} productos)
+        </Typography>
+      </Box>
+      <Typography variant="caption" sx={{ color: '#8B5CF6', fontWeight: 600 }}>
+        {formatCurrency(totalProductsValue)}
+      </Typography>
+    </Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      {selectedProducts.map((product) => {
+        const isInventory = 'item' in product;
+        const productId = isInventory ? product.item : product.id;
+        const productName = isInventory ? product.nombre : product.name;
+        const productPrice = ('priceCOP' in product ? product.priceCOP : 0) || 0;
+
+        return (
+          <Box
+            key={productId}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              p: 1,
+              bgcolor: alpha('#FFFFFF', 0.8),
+              borderRadius: 1,
+              border: `1px solid ${alpha('#8B5CF6', 0.1)}`,
+            }}
+          >
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 600,
+                  color: studioColors.textPrimary,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  display: 'block',
+                }}
+              >
+                {productName}
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#8B5CF6', fontWeight: 500 }}>
+                {formatCurrency(productPrice)}
+              </Typography>
+            </Box>
+            <IconButton
+              size="small"
+              onClick={() => removeProduct(product)}
+              sx={{
+                color: studioColors.textMuted,
+                '&:hover': { color: '#EF4444', bgcolor: alpha('#EF4444', 0.1) },
+              }}
+            >
+              <X size={14} />
+            </IconButton>
+          </Box>
+        );
+      })}
+    </Box>
+  </Box>
+);
+
+// Carat weight input
+interface CaratWeightInputProps {
+  caratWeight: number;
+  setCaratWeight: (weight: number) => void;
+}
+
+const CaratWeightInput: React.FC<CaratWeightInputProps> = ({ caratWeight, setCaratWeight }) => (
+  <Box sx={{ mb: 2.5 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.75 }}>
+      <Gem size={16} color={studioColors.emerald} />
+      <Typography variant="body2" sx={{ fontWeight: 600, color: studioColors.textPrimary }}>
+        Peso en Quilates (opcional)
+      </Typography>
+      <Tooltip title="Ingresa el peso total en quilates para calcular el precio por quilate">
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Info size={14} color={studioColors.textMuted} />
+        </Box>
+      </Tooltip>
+    </Box>
+    <TextField
+      fullWidth
+      size="small"
+      type="number"
+      value={caratWeight || ''}
+      onChange={(e) => setCaratWeight(Number(e.target.value) || 0)}
+      placeholder="Ej: 2.5"
+      slotProps={{
+        input: {
+          endAdornment: (
+            <InputAdornment position="end">
+              <Typography sx={{ fontSize: '0.75rem', color: studioColors.emerald, fontWeight: 600 }}>
+                ct
+              </Typography>
+            </InputAdornment>
+          ),
+        },
+      }}
+      sx={{
+        '& .MuiOutlinedInput-root': {
+          bgcolor: studioColors.surface,
+          fontSize: '0.875rem',
+          '& fieldset': { borderColor: studioColors.border },
+          '&:hover fieldset': { borderColor: alpha(studioColors.emerald, 0.4) },
+          '&.Mui-focused fieldset': { borderColor: studioColors.emerald },
+        },
+      }}
+    />
+  </Box>
+);
+
+// Investment section
+interface InvestmentSectionProps {
+  investments: { id: string; label: string; value: number; unit?: string; placeholder?: string }[];
+  updateInvestment: (id: string, value: number) => void;
+  customItems: { label: string; value: number }[];
+  updateCustomItem: (index: number, field: 'label' | 'value', value: string | number) => void;
+  addCustomItem: () => void;
+  showAdvanced: boolean;
+  setShowAdvanced: (show: boolean) => void;
+  resetValues: () => void;
+  totalInvestment: number;
+}
+
+const InvestmentSection: React.FC<InvestmentSectionProps> = ({
+  investments,
+  updateInvestment,
+  customItems,
+  updateCustomItem,
+  addCustomItem,
+  showAdvanced,
+  setShowAdvanced,
+  resetValues,
+  totalInvestment,
+}) => (
+  <>
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
+      <Typography variant="subtitle1" sx={{ ...studioCardStyles.sectionTitle }}>
+        Inversión
+      </Typography>
+      <Tooltip title="Reiniciar valores">
+        <IconButton size="small" onClick={resetValues} sx={{ color: studioColors.textMuted }}>
+          <RotateCcw size={16} />
+        </IconButton>
+      </Tooltip>
+    </Box>
+
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {investments.map((item) => (
+        <Box key={item.id}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.75 }}>
+            <Box sx={{ color: studioColors.textSecondary }}>{getInvestmentIcon(item.id)}</Box>
+            <Typography variant="body2" sx={{ fontWeight: 500, color: studioColors.textPrimary, flex: 1 }}>
+              {item.label}
+            </Typography>
+            {item.unit && (
+              <Chip
+                label={item.unit}
+                size="small"
+                sx={{
+                  height: 20,
+                  fontSize: '0.625rem',
+                  fontWeight: 600,
+                  bgcolor: alpha(studioColors.emerald, 0.1),
+                  color: studioColors.emerald,
+                }}
+              />
+            )}
+          </Box>
+          <TextField
+            fullWidth
+            size="small"
+            type="number"
+            value={item.value || ''}
+            onChange={(e) => updateInvestment(item.id, Number(e.target.value) || 0)}
+            placeholder={item.placeholder}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Typography sx={{ fontSize: '0.875rem', color: studioColors.textMuted }}>$</Typography>
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                bgcolor: studioColors.surface,
+                fontSize: '0.875rem',
+                '& fieldset': { borderColor: studioColors.border },
+                '&:hover fieldset': { borderColor: alpha(studioColors.emerald, 0.4) },
+                '&.Mui-focused fieldset': { borderColor: studioColors.emerald },
+              },
+            }}
+          />
+        </Box>
+      ))}
+    </Box>
+
+    {/* Custom Items */}
+    <Box sx={{ mt: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          cursor: 'pointer',
+          py: 1,
+        }}
+        onClick={() => setShowAdvanced(!showAdvanced)}
+      >
+        <Typography variant="body2" sx={{ fontWeight: 600, color: studioColors.textSecondary }}>
+          Costos adicionales
+        </Typography>
+        {showAdvanced ? <ChevronUp size={18} color={studioColors.textSecondary} /> : <ChevronDown size={18} color={studioColors.textSecondary} />}
+      </Box>
+
+      <Collapse in={showAdvanced}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          {customItems.map((item, index) => (
+            <Box key={index} sx={{ display: 'flex', gap: 1.5 }}>
+              <TextField
+                size="small"
+                value={item.label}
+                onChange={(e) => updateCustomItem(index, 'label', e.target.value)}
+                placeholder="Concepto"
+                sx={{
+                  flex: 1,
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: studioColors.surface,
+                    fontSize: '0.875rem',
+                    '& fieldset': { borderColor: studioColors.border },
+                  },
+                }}
+              />
+              <TextField
+                size="small"
+                type="number"
+                value={item.value || ''}
+                onChange={(e) => updateCustomItem(index, 'value', Number(e.target.value) || 0)}
+                placeholder="0"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Typography sx={{ fontSize: '0.875rem', color: studioColors.textMuted }}>$</Typography>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  width: 150,
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: studioColors.surface,
+                    fontSize: '0.875rem',
+                    '& fieldset': { borderColor: studioColors.border },
+                  },
+                }}
+              />
+            </Box>
+          ))}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              cursor: 'pointer',
+              color: studioColors.emerald,
+              '&:hover': { color: studioColors.emeraldLight },
+            }}
+            onClick={addCustomItem}
+          >
+            <Plus size={16} />
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              Agregar costo
+            </Typography>
+          </Box>
+        </Box>
+      </Collapse>
+    </Box>
+
+    <Divider sx={{ borderColor: studioColors.border, my: 2.5 }} />
+
+    {/* Total Investment */}
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: studioColors.textPrimary }}>
+        Total Inversión
+      </Typography>
+      <Typography
+        variant="h5"
+        sx={{
+          fontWeight: 700,
+          color: studioColors.textPrimary,
+          fontFamily: 'monospace',
+        }}
+      >
+        {formatCurrency(totalInvestment)}
+      </Typography>
+    </Box>
+  </>
+);
