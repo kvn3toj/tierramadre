@@ -16,6 +16,7 @@ import { Box, Typography } from '@mui/material';
 import {
   Home,
   MoreHoriz,
+  People,
 } from '@mui/icons-material';
 import { Gem } from 'lucide-react';
 
@@ -49,6 +50,12 @@ const getPrimaryTabs = (t: any): TabConfig[] => [
     label: t.nav.inventory,
     icon: Gem as React.ElementType,
     route: '/inventory',
+  },
+  {
+    id: 'ambassadors',
+    label: t.nav.ambassadors,
+    icon: People,
+    route: '/ambassadors',
   },
   {
     id: 'more',
@@ -91,7 +98,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
 
     if (matchingTab) return matchingTab.id;
 
-    const secondaryRoutes = ['/calendar', '/receipts', '/simulator', '/ambassadors', '/upload', '/cuentas', '/boveda-secreta', '/certificate'];
+    const secondaryRoutes = ['/cuentas', '/boveda-secreta'];
     const isSecondaryRoute = secondaryRoutes.some(route => currentPath.startsWith(route));
 
     return isSecondaryRoute ? 'more' : '';

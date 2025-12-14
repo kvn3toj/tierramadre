@@ -24,9 +24,6 @@ import {
   Paper,
 } from '@mui/material';
 import {
-  Instagram,
-  Receipt,
-  Calculator,
   Settings,
   ChevronLeft,
   Search,
@@ -62,12 +59,9 @@ interface NavItem {
 
 const NAVIGATION_ITEMS: NavItem[] = [
   // Primary workflow
-  { id: 'inventory', label: 'Inventario', icon: <Package size={20} />, group: 'primary' },
-  { id: 'calendar', label: 'Instagram', icon: <Instagram size={20} />, group: 'primary' },
-  // Tools
-  { id: 'ambassadors', label: 'Embajadores', icon: <Users size={20} />, group: 'tools' },
-  { id: 'receipts', label: 'Recibos', icon: <Receipt size={20} />, group: 'tools' },
-  { id: 'simulator', label: 'Simulador', icon: <Calculator size={20} />, group: 'tools' },
+  { id: 'home', label: 'Inicio', icon: <Package size={20} />, group: 'primary' },
+  { id: 'inventory', label: 'Tesoros', icon: <Package size={20} />, group: 'primary' },
+  { id: 'ambassadors', label: 'Embajadores', icon: <Users size={20} />, group: 'primary' },
 ];
 
 export default function Layout({ children, currentTab, onTabChange }: LayoutProps) {
