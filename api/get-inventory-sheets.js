@@ -87,6 +87,24 @@ function normalizeHeader(h) {
 
 /**
  * Map row data to inventory item
+ *
+ * UPDATED 2024-12-14 - Actual column structure:
+ * A = Item (0)
+ * B = FECHA INGRESO (1)
+ * C = Nombre (2)
+ * D = Peso ct (3)
+ * E = Color (4)
+ * F = Calidad (5)
+ * G = Cant. (6)
+ * H = Talla (7)
+ * I = Medidas tipo (8)
+ * J = Medidas valores (9)
+ * K = Imagen (10)
+ * L = Precio COP (11)
+ * M = UBICACIÓN (12)
+ * N = ASESOR (13)
+ * O = ESTADO (14)
+ * P = QR (15)
  */
 function mapRowToInventoryItem(row, headers) {
   // Normalize all headers once
@@ -115,28 +133,35 @@ function mapRowToInventoryItem(row, headers) {
     return null;
   };
 
-  const peso = getValue('peso', 'peso (ct)', 'weight', 'quilates', 'ct');
+  // Also provide direct index access for known columns (fallback)
+  const getByIndex = (index) => {
+    return row[index] !== undefined && row[index] !== '' ? row[index] : null;
+  };
+
+  const peso = getValue('peso', 'peso ct', 'peso (ct)', 'weight', 'quilates', 'ct') || getByIndex(3);
   const pesoData = parsePeso(peso);
 
-  // Get image URL from column Q (URL Imagen) - plain text URL for API
-  // Column L contains IMAGE() formulas which don't return URLs when read via API
-  const imageUrl = getValue('url imagen', 'image url', 'imagen url', 'imagen', 'image', 'foto', 'photo') || '';
+  // Get image URL from column K (Imagen) or column with URL
+  const imageUrl = getValue('imagen', 'image', 'foto', 'photo', 'url imagen') || getByIndex(10) || '';
+
+  // Precio COP is in column L (index 11) - synced from CUALIFICACION sheet
+  const precioCOPValue = getValue('precio cop', 'preciocop', 'precio', 'price') || getByIndex(11);
 
   return {
-    item: parseInt(getValue('item', '#', 'numero', 'no.') || 0),
-    fechaIngreso: getValue('fecha ingreso', 'fechaingreso', 'fecha', 'date') || '',
-    nombre: getValue('nombre', 'name', 'descripcion', 'producto') || '',
+    item: parseInt(getValue('item', '#', 'numero', 'no.') || getByIndex(0) || 0),
+    fechaIngreso: getValue('fecha ingreso', 'fechaingreso', 'fecha', 'date') || getByIndex(1) || '',
+    nombre: getValue('nombre', 'name', 'descripcion', 'producto') || getByIndex(2) || '',
     peso: typeof pesoData.value === 'number' ? pesoData.value : parseDecimal(peso),
-    color: getValue('color') || '',
-    calidad: getValue('calidad', 'quality') || '',
-    cantidad: parseInt(getValue('cant', 'cant.', 'cantidad', 'qty') || 1),
-    talla: getValue('talla', 'cut', 'corte', 'shape') || '',
-    medidas: getValue('medidas', 'dimensions', 'dimensiones', 'size') || '',
-    costoTM: parsePrice(getValue('costo t.madre', 'costo t madre', 'costotm', 'costo tm', 'costo', 'cost')),
-    precioCOP: parsePrice(getValue('precio cop', 'preciocop', 'precio', 'price', 'valor')),
-    ubicacion: getValue('ubicacion', 'location', 'lugar') || '',
-    asesor: getValue('asesor', 'advisor', 'vendedor', 'seller') || '',
-    estado: (getValue('estado', 'status', 'disponibilidad') || 'DISPONIBLE').toUpperCase(),
+    color: getValue('color') || getByIndex(4) || '',
+    calidad: getValue('calidad', 'quality') || getByIndex(5) || '',
+    cantidad: parseInt(getValue('cant', 'cant.', 'cantidad', 'qty') || getByIndex(6) || 1),
+    talla: getValue('talla', 'cut', 'corte', 'shape') || getByIndex(7) || '',
+    medidas: getValue('medidas', 'medida', 'dimensions', 'dimensiones', 'size') || getByIndex(8) || '',
+    medidasValores: getByIndex(9) || '',
+    precioCOP: parsePrice(precioCOPValue),
+    ubicacion: getValue('ubicacion', 'ubicación', 'location', 'lugar') || getByIndex(12) || '',
+    asesor: getValue('asesor', 'advisor', 'vendedor', 'seller') || getByIndex(13) || '',
+    estado: (getValue('estado', 'status', 'disponibilidad') || getByIndex(14) || 'DISPONIBLE').toUpperCase(),
     imageUrl: imageUrl,
     isJewelry: pesoData.isJewelry,
     metalType: pesoData.metalType,
@@ -208,12 +233,20 @@ export default async function handler(req, res) {
       .map(row => mapRowToInventoryItem(row, headers))
       .filter(item => item.item > 0); // Only items with valid item number
 
+    // Debug: include first row sample to verify data
+    const sampleRow = dataRows[0] || [];
+
     return res.status(200).json({
       success: true,
       inventory,
       count: inventory.length,
       sheetName: targetSheet,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      // Debug info for troubleshooting column mapping
+      _debug: {
+        headers: headers.map((h, i) => `${String.fromCharCode(65 + i)}: ${h}`),
+        sampleValues: sampleRow.slice(0, 16).map((v, i) => `${String.fromCharCode(65 + i)}: ${v}`),
+      }
     });
 
   } catch (error) {
