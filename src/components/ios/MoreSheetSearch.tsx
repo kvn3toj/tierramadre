@@ -59,7 +59,6 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
     sortedInventory,
     filteredStats,
     filterOptions,
-    hasFilters,
   } = useInventoryFiltering({
     inventory,
     initialFilters: {
@@ -71,6 +70,20 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
       priceRange: localPriceRange,
     },
   });
+
+  // Custom hasFilters check - exclude statusFilter since 'available' is our default
+  const hasActiveFilters = useMemo(() => {
+    return (
+      localSearch !== '' ||
+      localTypeFilter !== 'all' ||
+      localQualityFilter !== 'all' ||
+      localCityFilter !== 'all' ||
+      (filterOptions.priceMinMax.max > 0 && (
+        localPriceRange[0] !== filterOptions.priceMinMax.min ||
+        localPriceRange[1] !== filterOptions.priceMinMax.max
+      ))
+    );
+  }, [localSearch, localTypeFilter, localQualityFilter, localCityFilter, localPriceRange, filterOptions.priceMinMax]);
 
   // Sync price range when filter options load
   useEffect(() => {
@@ -125,18 +138,6 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
     setLocalCityFilter('all');
     setLocalPriceRange([filterOptions.priceMinMax.min, filterOptions.priceMinMax.max]);
   };
-
-  // Count active filters
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (localSearch) count++;
-    if (localTypeFilter !== 'all') count++;
-    if (localQualityFilter !== 'all') count++;
-    if (localCityFilter !== 'all') count++;
-    if (localPriceRange[0] !== filterOptions.priceMinMax.min ||
-        localPriceRange[1] !== filterOptions.priceMinMax.max) count++;
-    return count;
-  }, [localSearch, localTypeFilter, localQualityFilter, localCityFilter, localPriceRange, filterOptions.priceMinMax]);
 
   return (
     <Box>
@@ -335,7 +336,7 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
           />
 
           {/* Clear filters */}
-          {activeFilterCount > 0 && (
+          {hasActiveFilters && (
             <Chip
               size="small"
               icon={<X size={14} />}
@@ -444,7 +445,7 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
       <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid var(--border-default)' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
-            {hasFilters ? (
+            {hasActiveFilters ? (
               <>
                 <strong style={{ color: 'var(--text-primary)' }}>{sortedInventory.length}</strong> resultados encontrados
               </>
@@ -454,7 +455,7 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
               </>
             )}
           </Typography>
-          {hasFilters && (
+          {hasActiveFilters && (
             <Typography variant="caption" sx={{ color: primitiveColors.emerald[600], fontWeight: 600 }}>
               {formatCurrency(filteredStats.totalValue)}
             </Typography>
@@ -478,7 +479,7 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             },
           }}
         >
-          {hasFilters ? `Ver ${sortedInventory.length} resultados` : 'Explorar Tesoros'}
+          {hasActiveFilters ? `Ver ${sortedInventory.length} resultados` : 'Explorar Tesoros'}
         </Button>
       </Box>
     </Box>
