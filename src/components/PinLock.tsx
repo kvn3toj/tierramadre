@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Box, Typography, IconButton, Fade } from '@mui/material';
 import { Backspace as BackspaceIcon } from '@mui/icons-material';
 import { brandColors } from '../theme';
-import { showroomPreloader } from '../services/showroomPreloader';
 
 interface PinLockProps {
   onUnlock: () => void;
@@ -21,10 +20,6 @@ export default function PinLock({ onUnlock }: PinLockProps) {
   useEffect(() => {
     const isAuthenticated = sessionStorage.getItem(STORAGE_KEY);
     if (isAuthenticated === 'true') {
-      // Start preloading in background on session restore
-      showroomPreloader.preloadAll()
-        .then(() => showroomPreloader.preloadInventoryMedia())
-        .catch(console.error);
       onUnlock();
     }
   }, [onUnlock]);
@@ -44,10 +39,6 @@ export default function PinLock({ onUnlock }: PinLockProps) {
     if (newPin.length === 4) {
       if (newPin === CORRECT_PIN) {
         sessionStorage.setItem(STORAGE_KEY, 'true');
-        // Start preloading in background immediately (showroom then inventory)
-        showroomPreloader.preloadAll()
-          .then(() => showroomPreloader.preloadInventoryMedia())
-          .catch(console.error);
         setTimeout(() => onUnlock(), 300);
       } else {
         setError(true);
