@@ -160,11 +160,24 @@ function parsePrice(price) {
 /**
  * Apply comprehensive professional styling to pricing sheet
  * Based on Google Sheets API best practices
+ *
+ * UPDATED 2024-12-14 - CUALIFICACION-PRECIO structure:
+ * A (0): Item
+ * B (1): Nombre
+ * C (2): Costo Inicial (C) - currency
+ * D (3): Multiplicador de Calidad - number
+ * E (4): Puntuación del Jurado - dropdown
+ * F (5): Factor de Calidad - dropdown
+ * G (6): Multiplicador Final - number
+ * H (7): Precio Final Unificado (PFU) - currency
+ * I (8): Descuento Nacional (20%) - currency
+ * J (9): Descuento Nacional - currency
+ * K (10): descuentos Embajador - currency
  */
 async function applyProfessionalStyling(sheets, sheetId, rowCount) {
   const requests = [
     // ==========================================
-    // 1. HEADER STYLING
+    // 1. HEADER STYLING (A-K = 11 columns)
     // ==========================================
     {
       repeatCell: {
@@ -173,7 +186,7 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
           startRowIndex: 0,
           endRowIndex: 1,
           startColumnIndex: 0,
-          endColumnIndex: 9,
+          endColumnIndex: 11, // Columns A-K
         },
         cell: {
           userEnteredFormat: {
@@ -195,7 +208,7 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 2. DATA VALIDATION - Dropdown for Puntuación del Jurado (Column D)
+    // 2. DATA VALIDATION - Dropdown for Puntuación del Jurado (Column E = index 4)
     // ==========================================
     {
       setDataValidation: {
@@ -203,8 +216,8 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 1,
           endRowIndex: rowCount + 100, // Buffer for future rows
-          startColumnIndex: 3, // Column D
-          endColumnIndex: 4,
+          startColumnIndex: 4, // Column E
+          endColumnIndex: 5,
         },
         rule: {
           condition: {
@@ -219,7 +232,7 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 3. DATA VALIDATION - Dropdown for Factor de Calidad (Column E)
+    // 3. DATA VALIDATION - Dropdown for Factor de Calidad (Column F = index 5)
     // ==========================================
     {
       setDataValidation: {
@@ -227,8 +240,8 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 1,
           endRowIndex: rowCount + 100,
-          startColumnIndex: 4, // Column E
-          endColumnIndex: 5,
+          startColumnIndex: 5, // Column F
+          endColumnIndex: 6,
         },
         rule: {
           condition: {
@@ -243,57 +256,7 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 4. CURRENCY FORMATTING - Costo Inicial (Column B)
-    // ==========================================
-    {
-      repeatCell: {
-        range: {
-          sheetId,
-          startRowIndex: 1,
-          endRowIndex: rowCount + 100,
-          startColumnIndex: 1, // Column B
-          endColumnIndex: 2,
-        },
-        cell: {
-          userEnteredFormat: {
-            numberFormat: {
-              type: 'CURRENCY',
-              pattern: '"$"#,##0',
-            },
-            horizontalAlignment: 'RIGHT',
-          },
-        },
-        fields: 'userEnteredFormat(numberFormat,horizontalAlignment)',
-      },
-    },
-
-    // ==========================================
-    // 5. CURRENCY FORMATTING - Price columns (G, H, I)
-    // ==========================================
-    {
-      repeatCell: {
-        range: {
-          sheetId,
-          startRowIndex: 1,
-          endRowIndex: rowCount + 100,
-          startColumnIndex: 6, // Column G
-          endColumnIndex: 9,   // Through Column I
-        },
-        cell: {
-          userEnteredFormat: {
-            numberFormat: {
-              type: 'CURRENCY',
-              pattern: '"$"#,##0',
-            },
-            horizontalAlignment: 'RIGHT',
-          },
-        },
-        fields: 'userEnteredFormat(numberFormat,horizontalAlignment)',
-      },
-    },
-
-    // ==========================================
-    // 6. NUMBER FORMATTING - Multiplier columns (C, D, E, F)
+    // 4. CURRENCY FORMATTING - Costo Inicial (Column C = index 2)
     // ==========================================
     {
       repeatCell: {
@@ -302,7 +265,58 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
           startRowIndex: 1,
           endRowIndex: rowCount + 100,
           startColumnIndex: 2, // Column C
-          endColumnIndex: 6,   // Through Column F
+          endColumnIndex: 3,
+        },
+        cell: {
+          userEnteredFormat: {
+            numberFormat: {
+              type: 'CURRENCY',
+              pattern: '"$"#,##0',
+            },
+            horizontalAlignment: 'RIGHT',
+          },
+        },
+        fields: 'userEnteredFormat(numberFormat,horizontalAlignment)',
+      },
+    },
+
+    // ==========================================
+    // 5. CURRENCY FORMATTING - Price columns (H, I, J, K = indexes 7-10)
+    // H: Precio Final Unificado, I: Descuento Nacional 20%, J: Descuento Nacional, K: descuentos Embajador
+    // ==========================================
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 100,
+          startColumnIndex: 7, // Column H
+          endColumnIndex: 11,  // Through Column K
+        },
+        cell: {
+          userEnteredFormat: {
+            numberFormat: {
+              type: 'CURRENCY',
+              pattern: '"$"#,##0',
+            },
+            horizontalAlignment: 'RIGHT',
+          },
+        },
+        fields: 'userEnteredFormat(numberFormat,horizontalAlignment)',
+      },
+    },
+
+    // ==========================================
+    // 6. NUMBER FORMATTING - Multiplicador de Calidad (Column D = index 3)
+    // ==========================================
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 100,
+          startColumnIndex: 3, // Column D
+          endColumnIndex: 4,
         },
         cell: {
           userEnteredFormat: {
@@ -318,7 +332,32 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 7. ALTERNATING ROW COLORS
+    // 6b. NUMBER FORMATTING - Multiplicador Final (Column G = index 6)
+    // ==========================================
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: 1,
+          endRowIndex: rowCount + 100,
+          startColumnIndex: 6, // Column G
+          endColumnIndex: 7,
+        },
+        cell: {
+          userEnteredFormat: {
+            numberFormat: {
+              type: 'NUMBER',
+              pattern: '0.00',
+            },
+            horizontalAlignment: 'CENTER',
+          },
+        },
+        fields: 'userEnteredFormat(numberFormat,horizontalAlignment)',
+      },
+    },
+
+    // ==========================================
+    // 7. ALTERNATING ROW COLORS (A-K = 11 columns)
     // ==========================================
     {
       addConditionalFormatRule: {
@@ -328,7 +367,7 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
             startRowIndex: 1,
             endRowIndex: rowCount + 100,
             startColumnIndex: 0,
-            endColumnIndex: 9,
+            endColumnIndex: 11, // Columns A-K
           }],
           booleanRule: {
             condition: {
@@ -345,7 +384,7 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 8. CONDITIONAL FORMATTING - High prices (green gradient)
+    // 8. CONDITIONAL FORMATTING - High prices (golden gradient on Column H - Precio Final Unificado)
     // ==========================================
     {
       addConditionalFormatRule: {
@@ -354,8 +393,8 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
             sheetId,
             startRowIndex: 1,
             endRowIndex: rowCount + 100,
-            startColumnIndex: 8, // Column I (Precio Final)
-            endColumnIndex: 9,
+            startColumnIndex: 7, // Column H (Precio Final Unificado)
+            endColumnIndex: 8,
           }],
           gradientRule: {
             minpoint: {
@@ -378,65 +417,70 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 9. COLUMN WIDTHS - Optimized
+    // 9. COLUMN WIDTHS - Optimized for CUALIFICACION-PRECIO
     // ==========================================
+    // A: Item - narrow
     {
       updateDimensionProperties: {
         range: {
           sheetId,
           dimension: 'COLUMNS',
-          startIndex: 0, // Column A - Nombre
+          startIndex: 0, // Column A - Item
           endIndex: 1,
         },
-        properties: { pixelSize: 200 },
+        properties: { pixelSize: 60 },
         fields: 'pixelSize',
       },
     },
+    // B: Nombre - wide
     {
       updateDimensionProperties: {
         range: {
           sheetId,
           dimension: 'COLUMNS',
-          startIndex: 1, // Column B - Costo
+          startIndex: 1, // Column B - Nombre
           endIndex: 2,
+        },
+        properties: { pixelSize: 180 },
+        fields: 'pixelSize',
+      },
+    },
+    // C: Costo Inicial - currency
+    {
+      updateDimensionProperties: {
+        range: {
+          sheetId,
+          dimension: 'COLUMNS',
+          startIndex: 2, // Column C - Costo Inicial
+          endIndex: 3,
         },
         properties: { pixelSize: 120 },
         fields: 'pixelSize',
       },
     },
+    // D, E, F, G: Multipliers and factors
     {
       updateDimensionProperties: {
         range: {
           sheetId,
           dimension: 'COLUMNS',
-          startIndex: 2, // Columns C, D, E - Multipliers
-          endIndex: 5,
+          startIndex: 3, // Columns D, E, F, G
+          endIndex: 7,
         },
         properties: { pixelSize: 100 },
         fields: 'pixelSize',
       },
     },
+    // H, I, J, K: Price columns - wider
     {
       updateDimensionProperties: {
         range: {
           sheetId,
           dimension: 'COLUMNS',
-          startIndex: 5, // Column F - Mult Final
-          endIndex: 6,
+          startIndex: 7, // Columns H, I, J, K
+          endIndex: 11,
         },
-        properties: { pixelSize: 100 },
-        fields: 'pixelSize',
-      },
-    },
-    {
-      updateDimensionProperties: {
-        range: {
-          sheetId,
-          dimension: 'COLUMNS',
-          startIndex: 6, // Columns G, H, I - Prices
-          endIndex: 9,
-        },
-        properties: { pixelSize: 140 },
+        properties: { pixelSize: 130 },
         fields: 'pixelSize',
       },
     },
@@ -473,7 +517,7 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 12. BORDERS - Professional outline
+    // 12. BORDERS - Professional outline (A-K = 11 columns)
     // ==========================================
     {
       updateBorders: {
@@ -482,7 +526,7 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
           startRowIndex: 0,
           endRowIndex: rowCount + 1,
           startColumnIndex: 0,
-          endColumnIndex: 9,
+          endColumnIndex: 11, // Columns A-K
         },
         top: { style: 'SOLID_MEDIUM', color: COLORS.verdeOscuro },
         bottom: { style: 'SOLID_MEDIUM', color: COLORS.verdeOscuro },
@@ -494,7 +538,7 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
     },
 
     // ==========================================
-    // 13. SPECIAL STYLING - Golden accent for price column header
+    // 13. SPECIAL STYLING - Golden accent for Precio Final Unificado header (Column H)
     // ==========================================
     {
       repeatCell: {
@@ -502,8 +546,8 @@ async function applyProfessionalStyling(sheets, sheetId, rowCount) {
           sheetId,
           startRowIndex: 0,
           endRowIndex: 1,
-          startColumnIndex: 8, // Column I header
-          endColumnIndex: 9,
+          startColumnIndex: 7, // Column H header
+          endColumnIndex: 8,
         },
         cell: {
           userEnteredFormat: {
