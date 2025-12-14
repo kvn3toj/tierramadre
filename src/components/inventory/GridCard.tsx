@@ -110,7 +110,7 @@ function GridCard({
             <ProgressiveImage
               src={item.imagen}
               alt={`${item.nombre} - ${item.color}`}
-              height={180}
+              height={140}
               width={200}
               layout="grid"
               quality="eco"
@@ -157,6 +157,47 @@ function GridCard({
                 }}
               />
             )}
+
+            {/* Quality and quantity badges - overlay on image bottom-left */}
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: 8,
+                left: 8,
+                display: 'flex',
+                gap: 0.5,
+              }}
+            >
+              {/* Quality badge */}
+              <Chip
+                label={quality.label}
+                size="small"
+                sx={{
+                  height: 20,
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.03em',
+                  bgcolor: quality.bg,
+                  color: quality.color,
+                  border: `1px solid ${quality.border}`,
+                }}
+              />
+              {/* Quantity badge */}
+              {item.cantidad > 1 && (
+                <Chip
+                  label={`×${item.cantidad}`}
+                  size="small"
+                  sx={{
+                    height: 20,
+                    fontSize: '0.65rem',
+                    fontWeight: 600,
+                    bgcolor: 'rgba(0, 0, 0, 0.7)',
+                    color: 'white',
+                  }}
+                />
+              )}
+            </Box>
           </Box>
         ) : (
           <ProgressiveImage
@@ -232,133 +273,68 @@ function GridCard({
         </Box>
       </Box>
 
-      {/* Header bar with color accent */}
-      <Box
-        sx={{
-          height: 48,
-          bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.tertiary,
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          px: 2,
-          borderBottom: '1px solid',
-          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-          flexShrink: 0,
-        }}
-      >
-        {/* Color accent bar */}
-        <Box
-          sx={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: 4,
-            bgcolor: colorDot,
-          }}
-        />
-
-        {/* Type icon */}
-        <Box
-          sx={{
-            width: 32,
-            height: 32,
-            borderRadius: 1.5,
-            bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
-            border: '1px solid',
-            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mr: 1.5,
-          }}
-        >
-          {item.isJewelry ? (
-            <Crown size={16} color={isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary} />
-          ) : (
-            <Gem size={16} color={colorDot} />
-          )}
-        </Box>
-
-        {/* Color tag */}
+      {/* Compact Content Section */}
+      <CardContent sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Mini header - type icon and color */}
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 0.5,
-            px: 1.5,
-            py: 0.5,
-            borderRadius: 1.5,
-            bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
-            border: '1px solid',
-            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+            gap: 1,
+            mb: 1,
+            pb: 1,
+            borderBottom: '1px solid',
+            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
           }}
         >
+          {/* Color accent bar */}
           <Box
             sx={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
+              width: 4,
+              height: 24,
+              borderRadius: 2,
               bgcolor: colorDot,
             }}
           />
+          {/* Type icon */}
+          <Box
+            sx={{
+              width: 24,
+              height: 24,
+              borderRadius: 1,
+              bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.tertiary,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {item.isJewelry ? (
+              <Crown size={14} color={isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary} />
+            ) : (
+              <Gem size={14} color={colorDot} />
+            )}
+          </Box>
+          {/* Color name */}
           <Typography
             variant="caption"
             sx={{
               fontWeight: 500,
               color: theme.palette.text.secondary,
-              fontSize: '0.65rem',
+              fontSize: '0.7rem',
             }}
           >
             {item.color.replace('Verde ', '')}
           </Typography>
         </Box>
 
-        <Box sx={{ flex: 1 }} />
-
-        {/* Quantity badge */}
-        {item.cantidad > 1 && (
-          <Chip
-            label={`×${item.cantidad}`}
-            size="small"
-            sx={{
-              height: 20,
-              fontSize: '0.65rem',
-              fontWeight: 600,
-              bgcolor: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
-              color: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
-              mr: 1,
-            }}
-          />
-        )}
-
-        {/* Quality badge */}
-        <Chip
-          label={quality.label}
-          size="small"
-          sx={{
-            height: 20,
-            fontSize: '0.6rem',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            bgcolor: quality.bg,
-            color: quality.color,
-            border: `1px solid ${quality.border}`,
-          }}
-        />
-      </Box>
-
-      {/* Content Section - Golden Ratio: ~38.2% */}
-      <CardContent sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Name */}
         <Typography
-          variant="body1"
+          variant="body2"
           sx={{
             fontWeight: 700,
             color: theme.palette.text.primary,
-            mb: 0.5,
-            lineHeight: 1.3,
+            mb: 0.25,
+            lineHeight: 1.2,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -369,30 +345,16 @@ function GridCard({
 
         {/* Specs */}
         <Typography
-          variant="body2"
-          component="div"
+          variant="caption"
           sx={{
             color: theme.palette.text.secondary,
-            mb: 1.5,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.75,
-            fontSize: '0.8rem',
+            mb: 1,
+            fontSize: '0.7rem',
           }}
         >
           {item.color}
-          {isLoose && typeof item.peso === 'number' && (
-            <>
-              <Box sx={{ color: surfacesLight.text.disabled }}>•</Box>
-              {item.peso} ct
-            </>
-          )}
-          {item.isJewelry && item.metalType && (
-            <>
-              <Box sx={{ color: surfacesLight.text.disabled }}>•</Box>
-              {item.metalType}
-            </>
-          )}
+          {isLoose && typeof item.peso === 'number' && ` • ${item.peso} ct`}
+          {item.isJewelry && item.metalType && ` • ${item.metalType}`}
         </Typography>
 
         <Box sx={{ flex: 1 }} />
@@ -403,7 +365,6 @@ function GridCard({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 1,
           }}
         >
           <TrustBadgeCompact score={trustScore} />

@@ -3,7 +3,7 @@
  * Virtualized grid rendering using react-window 2.x for smooth scrolling with 500+ items.
  * Only renders items visible in the viewport + overscan for performance.
  */
-import React, { useCallback, useMemo, ReactElement, CSSProperties } from 'react';
+import React, { useCallback, useMemo, ReactElement, CSSProperties, useState, useEffect } from 'react';
 import { Grid } from 'react-window';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import { InventoryItem, TrustScoreBreakdown } from '../../types';
@@ -27,9 +27,9 @@ interface VirtualGridProps {
   minHeight?: number;
 }
 
-// Card dimensions (matching GridCard design)
-const CARD_HEIGHT = 420; // Image (180px) + content area
-const GAP = 20;
+// Card dimensions (compact design)
+const CARD_HEIGHT = 320; // Reduced: Image (140px) + content area
+const GAP = 16;
 
 // Cell props passed via cellProps in react-window 2.x
 interface GridCellProps {
@@ -129,18 +129,30 @@ export default function VirtualGrid({
 }: VirtualGridProps) {
   const theme = useTheme();
 
+  // Track viewport width for mobile 2-column logic
+  const [viewportWidth, setViewportWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
+
+  useEffect(() => {
+    const handleResize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Responsive breakpoint detection
   const isXs = useMediaQuery(theme.breakpoints.down('sm'));
   const isSm = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg'));
 
   // Calculate column count based on breakpoints
+  // Mobile: 2 columns if screen >= 400px, else 1 column
   const getColumnCount = useCallback(() => {
-    if (isXs) return 1;
+    if (isXs) {
+      return viewportWidth >= 400 ? 2 : 1;
+    }
     if (isSm) return 2;
     if (isMd) return 3;
     return 4; // lg and up
-  }, [isXs, isSm, isMd]);
+  }, [isXs, isSm, isMd, viewportWidth]);
 
   const columnCount = getColumnCount();
 
@@ -163,9 +175,10 @@ export default function VirtualGrid({
   // Calculate row count based on items and columns
   const rowCount = Math.ceil(items.length / columnCount);
 
-  // Mobile: 85% width for breathing room, desktop: full width divided by columns
+  // Mobile: adaptive width based on column count
   const isMobile = columnCount === 1;
-  const mobileColumnWidth = '85%';
+  const isMobileTwoColumn = isXs && columnCount === 2;
+  const mobileColumnWidth = isMobile ? '92%' : (isMobileTwoColumn ? '50%' : `${100 / columnCount}%`);
 
   return (
     <Box
@@ -186,7 +199,7 @@ export default function VirtualGrid({
         cellComponent={CellRenderer}
         cellProps={cellProps}
         columnCount={columnCount}
-        columnWidth={isMobile ? mobileColumnWidth : `${100 / columnCount}%`} // 85% xs (centered), 50% sm, 33% md, 25% lg
+        columnWidth={mobileColumnWidth} // 92% (1 col mobile), 50% (2 col mobile/tablet), 33% md, 25% lg
         rowCount={rowCount}
         rowHeight={CARD_HEIGHT + GAP}
         overscanCount={2}

@@ -1,0 +1,488 @@
+/**
+ * MoreSheetSearch - Enhanced search panel for IOSMoreSheet
+ * Features:
+ * - Text search with instant feedback
+ * - Quick filter chips (Type, Quality, City)
+ * - Results preview count
+ * - Navigates to inventory with query params
+ */
+
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Typography,
+  TextField,
+  InputAdornment,
+  Chip,
+  Button,
+  Collapse,
+  Slider,
+  alpha,
+} from '@mui/material';
+import {
+  Search,
+  Gem,
+  Crown,
+  Sparkles,
+  MapPin,
+  SlidersHorizontal,
+  X,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
+import { useInventory } from '../../hooks/useInventory';
+import { useInventoryFiltering, TypeFilter } from '../../hooks/useInventoryFiltering';
+import { spacing } from '../../design-system/tokens/primitives/spacing';
+import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { formatCurrency } from '../../utils/formatting';
+
+interface MoreSheetSearchProps {
+  onClose: () => void;
+}
+
+const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
+  const navigate = useNavigate();
+  const { inventory } = useInventory();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Local filter state for preview
+  const [localSearch, setLocalSearch] = useState('');
+  const [localTypeFilter, setLocalTypeFilter] = useState<TypeFilter>('all');
+  const [localQualityFilter, setLocalQualityFilter] = useState('all');
+  const [localCityFilter, setLocalCityFilter] = useState('all');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [localPriceRange, setLocalPriceRange] = useState<[number, number]>([0, Number.MAX_SAFE_INTEGER]);
+
+  // Use the filtering hook for preview results
+  const {
+    sortedInventory,
+    filteredStats,
+    filterOptions,
+    hasFilters,
+  } = useInventoryFiltering({
+    inventory,
+    initialFilters: {
+      search: localSearch,
+      typeFilter: localTypeFilter,
+      qualityFilter: localQualityFilter,
+      cityFilter: localCityFilter as any,
+      statusFilter: 'available',
+      priceRange: localPriceRange,
+    },
+  });
+
+  // Sync price range when filter options load
+  useEffect(() => {
+    if (filterOptions.priceMinMax.max > 0) {
+      setLocalPriceRange([filterOptions.priceMinMax.min, filterOptions.priceMinMax.max]);
+    }
+  }, [filterOptions.priceMinMax.min, filterOptions.priceMinMax.max]);
+
+  // Focus search input on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Build query params and navigate
+  const handleSearch = (e?: React.FormEvent) => {
+    e?.preventDefault();
+
+    const params = new URLSearchParams();
+
+    if (localSearch.trim()) {
+      params.set('search', localSearch.trim());
+    }
+    if (localTypeFilter !== 'all') {
+      params.set('type', localTypeFilter);
+    }
+    if (localQualityFilter !== 'all') {
+      params.set('quality', localQualityFilter);
+    }
+    if (localCityFilter !== 'all') {
+      params.set('city', localCityFilter);
+    }
+    if (localPriceRange[0] !== filterOptions.priceMinMax.min) {
+      params.set('priceMin', localPriceRange[0].toString());
+    }
+    if (localPriceRange[1] !== filterOptions.priceMinMax.max) {
+      params.set('priceMax', localPriceRange[1].toString());
+    }
+
+    const queryString = params.toString();
+    navigate(`/inventory${queryString ? `?${queryString}` : ''}`);
+    onClose();
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setLocalSearch('');
+    setLocalTypeFilter('all');
+    setLocalQualityFilter('all');
+    setLocalCityFilter('all');
+    setLocalPriceRange([filterOptions.priceMinMax.min, filterOptions.priceMinMax.max]);
+  };
+
+  // Count active filters
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (localSearch) count++;
+    if (localTypeFilter !== 'all') count++;
+    if (localQualityFilter !== 'all') count++;
+    if (localCityFilter !== 'all') count++;
+    if (localPriceRange[0] !== filterOptions.priceMinMax.min ||
+        localPriceRange[1] !== filterOptions.priceMinMax.max) count++;
+    return count;
+  }, [localSearch, localTypeFilter, localQualityFilter, localCityFilter, localPriceRange, filterOptions.priceMinMax]);
+
+  return (
+    <Box>
+      {/* Search Input */}
+      <Box component="form" onSubmit={handleSearch}>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Buscar por nombre, color, calidad..."
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.target.value)}
+          inputRef={searchInputRef}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search size={20} color="var(--text-tertiary)" />
+              </InputAdornment>
+            ),
+            endAdornment: localSearch && (
+              <InputAdornment position="end">
+                <Box
+                  component="button"
+                  type="button"
+                  onClick={() => setLocalSearch('')}
+                  sx={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0.5,
+                    display: 'flex',
+                    color: 'var(--text-tertiary)',
+                  }}
+                >
+                  <X size={16} />
+                </Box>
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              backgroundColor: 'var(--surface-primary)',
+              borderRadius: spacing.md,
+              fontSize: '16px',
+              '& fieldset': {
+                borderColor: 'var(--border-default)',
+              },
+              '&:hover fieldset': {
+                borderColor: primitiveColors.emerald[500],
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: primitiveColors.emerald[500],
+                borderWidth: 2,
+              },
+            },
+            '& .MuiInputBase-input': {
+              padding: '12px 0',
+            },
+          }}
+        />
+      </Box>
+
+      {/* Quick Filter Chips */}
+      <Box sx={{ mt: 2 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: 'var(--text-secondary)',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            display: 'block',
+            mb: 1,
+          }}
+        >
+          Filtros rápidos
+        </Typography>
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 1,
+          }}
+        >
+          {/* Type chips */}
+          <Chip
+            size="small"
+            icon={<Gem size={14} />}
+            label="Gemas"
+            onClick={() => setLocalTypeFilter(localTypeFilter === 'loose' ? 'all' : 'loose')}
+            sx={{
+              bgcolor: localTypeFilter === 'loose' ? primitiveColors.emerald[500] : 'transparent',
+              color: localTypeFilter === 'loose' ? 'white' : 'var(--text-secondary)',
+              border: '1px solid',
+              borderColor: localTypeFilter === 'loose' ? primitiveColors.emerald[500] : 'var(--border-default)',
+              fontWeight: 500,
+              '& .MuiChip-icon': {
+                color: localTypeFilter === 'loose' ? 'white' : primitiveColors.emerald[500]
+              },
+              '&:hover': {
+                bgcolor: localTypeFilter === 'loose'
+                  ? primitiveColors.emerald[600]
+                  : alpha(primitiveColors.emerald[500], 0.1),
+              },
+            }}
+          />
+
+          <Chip
+            size="small"
+            icon={<Crown size={14} />}
+            label="Joyería"
+            onClick={() => setLocalTypeFilter(localTypeFilter === 'jewelry' ? 'all' : 'jewelry')}
+            sx={{
+              bgcolor: localTypeFilter === 'jewelry' ? '#D4AF37' : 'transparent',
+              color: localTypeFilter === 'jewelry' ? 'white' : 'var(--text-secondary)',
+              border: '1px solid',
+              borderColor: localTypeFilter === 'jewelry' ? '#D4AF37' : 'var(--border-default)',
+              fontWeight: 500,
+              '& .MuiChip-icon': {
+                color: localTypeFilter === 'jewelry' ? 'white' : '#D4AF37'
+              },
+              '&:hover': {
+                bgcolor: localTypeFilter === 'jewelry'
+                  ? '#B8962F'
+                  : alpha('#D4AF37', 0.1),
+              },
+            }}
+          />
+
+          {/* Quality chip */}
+          <Chip
+            size="small"
+            icon={<Sparkles size={14} />}
+            label="Premium"
+            onClick={() => setLocalQualityFilter(localQualityFilter === 'PREMIUM' ? 'all' : 'PREMIUM')}
+            sx={{
+              bgcolor: localQualityFilter === 'PREMIUM' ? '#D4AF37' : 'transparent',
+              color: localQualityFilter === 'PREMIUM' ? 'white' : 'var(--text-secondary)',
+              border: '1px solid',
+              borderColor: localQualityFilter === 'PREMIUM' ? '#D4AF37' : 'var(--border-default)',
+              fontWeight: 500,
+              '& .MuiChip-icon': {
+                color: localQualityFilter === 'PREMIUM' ? 'white' : '#D4AF37'
+              },
+              '&:hover': {
+                bgcolor: localQualityFilter === 'PREMIUM'
+                  ? '#B8962F'
+                  : alpha('#D4AF37', 0.1),
+              },
+            }}
+          />
+
+          {/* City chips */}
+          <Chip
+            size="small"
+            icon={<MapPin size={14} />}
+            label="Cali"
+            onClick={() => setLocalCityFilter(localCityFilter === 'Cali' ? 'all' : 'Cali')}
+            sx={{
+              bgcolor: localCityFilter === 'Cali' ? primitiveColors.emerald[500] : 'transparent',
+              color: localCityFilter === 'Cali' ? 'white' : 'var(--text-secondary)',
+              border: '1px solid',
+              borderColor: localCityFilter === 'Cali' ? primitiveColors.emerald[500] : 'var(--border-default)',
+              fontWeight: 500,
+              '& .MuiChip-icon': {
+                color: localCityFilter === 'Cali' ? 'white' : primitiveColors.emerald[500]
+              },
+              '&:hover': {
+                bgcolor: localCityFilter === 'Cali'
+                  ? primitiveColors.emerald[600]
+                  : alpha(primitiveColors.emerald[500], 0.1),
+              },
+            }}
+          />
+
+          <Chip
+            size="small"
+            icon={<MapPin size={14} />}
+            label="Bogotá"
+            onClick={() => setLocalCityFilter(localCityFilter === 'Bogotá' ? 'all' : 'Bogotá')}
+            sx={{
+              bgcolor: localCityFilter === 'Bogotá' ? '#2563eb' : 'transparent',
+              color: localCityFilter === 'Bogotá' ? 'white' : 'var(--text-secondary)',
+              border: '1px solid',
+              borderColor: localCityFilter === 'Bogotá' ? '#2563eb' : 'var(--border-default)',
+              fontWeight: 500,
+              '& .MuiChip-icon': {
+                color: localCityFilter === 'Bogotá' ? 'white' : '#2563eb'
+              },
+              '&:hover': {
+                bgcolor: localCityFilter === 'Bogotá'
+                  ? '#1d4ed8'
+                  : alpha('#2563eb', 0.1),
+              },
+            }}
+          />
+
+          {/* Clear filters */}
+          {activeFilterCount > 0 && (
+            <Chip
+              size="small"
+              icon={<X size={14} />}
+              label="Limpiar"
+              onClick={clearFilters}
+              sx={{
+                bgcolor: alpha('#ef4444', 0.1),
+                color: '#ef4444',
+                fontWeight: 600,
+                '& .MuiChip-icon': { color: '#ef4444' },
+                '&:hover': {
+                  bgcolor: alpha('#ef4444', 0.2),
+                },
+              }}
+            />
+          )}
+        </Box>
+      </Box>
+
+      {/* Advanced Filters Toggle */}
+      <Button
+        size="small"
+        onClick={() => setShowAdvanced(!showAdvanced)}
+        startIcon={<SlidersHorizontal size={16} />}
+        endIcon={showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        sx={{
+          mt: 2,
+          color: 'var(--text-secondary)',
+          textTransform: 'none',
+          fontWeight: 500,
+          px: 0,
+          '&:hover': {
+            bgcolor: 'transparent',
+            color: primitiveColors.emerald[500],
+          },
+        }}
+      >
+        Más filtros
+      </Button>
+
+      {/* Advanced Filters */}
+      <Collapse in={showAdvanced}>
+        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid var(--border-default)' }}>
+          {/* Price Range Slider */}
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                Rango de Precio
+              </Typography>
+              <Typography variant="caption" sx={{ color: primitiveColors.emerald[600], fontWeight: 600 }}>
+                {formatCurrency(localPriceRange[0])} - {formatCurrency(localPriceRange[1])}
+              </Typography>
+            </Box>
+            <Slider
+              value={localPriceRange}
+              onChange={(_, value) => setLocalPriceRange(value as [number, number])}
+              min={filterOptions.priceMinMax.min}
+              max={filterOptions.priceMinMax.max}
+              step={100000}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(value) => formatCurrency(value)}
+              sx={{
+                color: primitiveColors.emerald[500],
+                '& .MuiSlider-thumb': { width: 20, height: 20 },
+                '& .MuiSlider-track': { height: 4 },
+                '& .MuiSlider-rail': {
+                  height: 4,
+                  bgcolor: 'var(--border-default)',
+                },
+              }}
+            />
+          </Box>
+
+          {/* Quality options */}
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: 'var(--text-primary)', mb: 1 }}>
+              Calidad
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {filterOptions.qualities.map((quality) => (
+                <Chip
+                  key={quality}
+                  size="small"
+                  label={quality}
+                  onClick={() => setLocalQualityFilter(localQualityFilter === quality ? 'all' : quality)}
+                  sx={{
+                    bgcolor: localQualityFilter === quality ? primitiveColors.emerald[500] : 'transparent',
+                    color: localQualityFilter === quality ? 'white' : 'var(--text-secondary)',
+                    border: '1px solid',
+                    borderColor: localQualityFilter === quality ? primitiveColors.emerald[500] : 'var(--border-default)',
+                    fontWeight: 500,
+                    '&:hover': {
+                      bgcolor: localQualityFilter === quality
+                        ? primitiveColors.emerald[600]
+                        : alpha(primitiveColors.emerald[500], 0.1),
+                    },
+                  }}
+                />
+              ))}
+            </Box>
+          </Box>
+        </Box>
+      </Collapse>
+
+      {/* Results Preview & Search Button */}
+      <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid var(--border-default)' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
+            {hasFilters ? (
+              <>
+                <strong style={{ color: 'var(--text-primary)' }}>{sortedInventory.length}</strong> resultados encontrados
+              </>
+            ) : (
+              <>
+                <strong style={{ color: 'var(--text-primary)' }}>{inventory.filter(i => i.estado?.toUpperCase() === 'DISPONIBLE').length}</strong> tesoros disponibles
+              </>
+            )}
+          </Typography>
+          {hasFilters && (
+            <Typography variant="caption" sx={{ color: primitiveColors.emerald[600], fontWeight: 600 }}>
+              {formatCurrency(filteredStats.totalValue)}
+            </Typography>
+          )}
+        </Box>
+
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={() => handleSearch()}
+          startIcon={<Search size={18} />}
+          sx={{
+            backgroundColor: primitiveColors.emerald[500],
+            color: 'white',
+            textTransform: 'none',
+            fontWeight: 600,
+            py: 1.5,
+            borderRadius: spacing.md,
+            '&:hover': {
+              backgroundColor: primitiveColors.emerald[600],
+            },
+          }}
+        >
+          {hasFilters ? `Ver ${sortedInventory.length} resultados` : 'Explorar Tesoros'}
+        </Button>
+      </Box>
+    </Box>
+  );
+};
+
+export default MoreSheetSearch;

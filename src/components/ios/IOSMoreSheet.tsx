@@ -10,9 +10,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, IconButton, Backdrop, Button, TextField, InputAdornment } from '@mui/material';
-import { Lock, Close, AccountBalance, Search } from '@mui/icons-material';
+import { Box, Typography, IconButton, Backdrop, Button } from '@mui/material';
+import { Lock, Close, AccountBalance } from '@mui/icons-material';
 import { Vault } from 'lucide-react';
+import MoreSheetSearch from './MoreSheetSearch';
 
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
@@ -63,18 +64,8 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
   const isGuest = useIsGuest();
   const { effectiveConfig } = useLiquidGlassSafe();
   const [unlockOpen, setUnlockOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const MORE_TOOLS = getMoreTools(t);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/inventory?search=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
-      onClose();
-    }
-  };
 
   // Liquid Glass styles for the sheet
   const sheetStyles = useMemo(() => {
@@ -228,43 +219,11 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
             </IconButton>
           </Box>
 
-          {/* Search Bar */}
-          <Box component="form" onSubmit={handleSearch}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Buscar en inventario..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search sx={{ color: 'var(--text-tertiary)', fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  backgroundColor: 'var(--surface-primary)',
-                  borderRadius: spacing.md,
-                  fontSize: '16px',
-                  '& fieldset': {
-                    borderColor: 'var(--border-default)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: primitiveColors.emerald[500],
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: primitiveColors.emerald[500],
-                    borderWidth: 2,
-                  },
-                },
-                '& .MuiInputBase-input': {
-                  padding: '12px 0',
-                },
-              }}
-            />
-          </Box>
+        </Box>
+
+        {/* Enhanced Search Section */}
+        <Box sx={{ padding: spacing.md, pt: 0 }}>
+          <MoreSheetSearch onClose={onClose} />
         </Box>
 
         {/* Tools Grid */}
