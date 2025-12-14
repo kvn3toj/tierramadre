@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -76,6 +76,49 @@ export default function InventoryBrowser() {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Parse URL query params for initial filters
+  const initialFiltersFromUrl = useMemo(() => {
+    const filters: Record<string, any> = {};
+
+    const search = searchParams.get('search');
+    if (search) filters.search = search;
+
+    const type = searchParams.get('type');
+    if (type === 'loose' || type === 'jewelry') filters.typeFilter = type;
+
+    const quality = searchParams.get('quality');
+    if (quality) filters.qualityFilter = quality;
+
+    const city = searchParams.get('city');
+    if (city === 'Cali' || city === 'Bogotá') filters.cityFilter = city;
+
+    const priceMin = searchParams.get('priceMin');
+    const priceMax = searchParams.get('priceMax');
+    if (priceMin || priceMax) {
+      filters.priceRange = [
+        priceMin ? parseInt(priceMin, 10) : 0,
+        priceMax ? parseInt(priceMax, 10) : Number.MAX_SAFE_INTEGER
+      ];
+    }
+
+    const status = searchParams.get('status');
+    if (status === 'all' || status === 'available' || status === 'sold') {
+      filters.statusFilter = status;
+    }
+
+    const sort = searchParams.get('sort');
+    if (sort) filters.sortBy = sort;
+
+    const shape = searchParams.get('shape');
+    if (shape) filters.shapeFilter = shape;
+
+    const color = searchParams.get('color');
+    if (color) filters.colorFilter = color;
+
+    return filters;
+  }, [searchParams]);
 
   // Get inventory with media from hook
   const { inventory: inventoryData } = useInventory();
@@ -98,7 +141,17 @@ export default function InventoryBrowser() {
     sortedInventory,
     filteredStats,
     filterOptions,
-  } = useInventoryFiltering({ inventory: inventoryData });
+  } = useInventoryFiltering({
+    inventory: inventoryData,
+    initialFilters: initialFiltersFromUrl,
+  });
+
+  // Clear URL params when filters are cleared
+  const handleClearFilters = useCallback(() => {
+    clearFilters();
+    // Clear URL params
+    setSearchParams(new URLSearchParams());
+  }, [clearFilters, setSearchParams]);
 
   // Favorites hook
   const { isFavorite, toggleFavorite, favoritesCount } = useFavorites();
@@ -438,7 +491,7 @@ export default function InventoryBrowser() {
           <Chip
             label="Limpiar"
             size="small"
-            onClick={clearFilters}
+            onClick={handleClearFilters}
             sx={{
               bgcolor: alpha(semanticColors.error.main, 0.1),
               color: semanticColors.error.main,
@@ -727,7 +780,7 @@ export default function InventoryBrowser() {
                   size="small"
                   icon={<X size={14} />}
                   label="Limpiar"
-                  onClick={clearFilters}
+                  onClick={handleClearFilters}
                   sx={{
                     bgcolor: alpha(semanticColors.error.main, 0.1),
                     color: semanticColors.error.main,
@@ -1179,7 +1232,7 @@ export default function InventoryBrowser() {
             <Button
               variant="outlined"
               size="small"
-              onClick={clearFilters}
+              onClick={handleClearFilters}
               sx={{
                 borderColor: emeraldCore.primary,
                 color: emeraldCore.primary,
