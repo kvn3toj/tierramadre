@@ -2,30 +2,22 @@
  * IOSMoreSheet Component
  *
  * Bottom sheet modal for secondary tools
- * - 7 tools with color-coded icons
+ * - Search bar for inventory
+ * - Bóveda Secreta and Cuentas options
  * - Spring animation
  * - Backdrop dismiss
  */
 
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, IconButton, Backdrop, Button } from '@mui/material';
-import { Lock } from '@mui/icons-material';
-import {
-  Close,
-  CloudUpload,
-  People,
-  CalendarMonth,
-  Verified,
-  AccountBalance,
-} from '@mui/icons-material';
+import { Box, Typography, IconButton, Backdrop, Button, TextField, InputAdornment } from '@mui/material';
+import { Lock, Close, AccountBalance, Search } from '@mui/icons-material';
 import { Vault } from 'lucide-react';
 
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
-import { floatingLayers, liquidSaturation, specularHighlights
-} from '../../design-system/tokens/liquid-glass';
+import { floatingLayers, liquidSaturation, specularHighlights } from '../../design-system/tokens/liquid-glass';
 import { floatingLayerShadows } from '../../design-system/tokens/shadows';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
@@ -42,33 +34,6 @@ export interface MoreToolConfig {
 }
 
 const getMoreTools = (t: any): MoreToolConfig[] => [
-  // Contenido
-  {
-    id: 'upload',
-    label: t.tools.upload.label,
-    subtitle: t.tools.upload.subtitle,
-    icon: CloudUpload,
-    route: '/upload',
-    color: '#2196F3',
-  },
-  {
-    id: 'calendar',
-    label: t.tools.calendar.label,
-    subtitle: t.tools.calendar.subtitle,
-    icon: CalendarMonth,
-    route: '/calendar',
-    color: '#E91E63',
-  },
-  // Comunidad
-  {
-    id: 'ambassadors',
-    label: t.tools.ambassadors.label,
-    subtitle: t.tools.ambassadors.subtitle,
-    icon: People,
-    route: '/ambassadors',
-    color: '#9C27B0',
-  },
-  // Negocios
   {
     id: 'vault',
     label: t.tools.vault.label,
@@ -85,14 +50,6 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     route: '/cuentas',
     color: '#3F51B5', // Blue
   },
-  {
-    id: 'certificate',
-    label: t.tools.certificate.label,
-    subtitle: t.tools.certificate.subtitle,
-    icon: Verified,
-    route: '/certificate',
-    color: '#00BCD4',
-  },
 ];
 
 export interface IOSMoreSheetProps {
@@ -106,8 +63,18 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
   const isGuest = useIsGuest();
   const { effectiveConfig } = useLiquidGlassSafe();
   const [unlockOpen, setUnlockOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const MORE_TOOLS = getMoreTools(t);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/inventory?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+      onClose();
+    }
+  };
 
   // Liquid Glass styles for the sheet
   const sheetStyles = useMemo(() => {
@@ -220,7 +187,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
             zIndex: 1,
             paddingTop: spacing.sm,
             paddingX: spacing.md,
-            paddingBottom: spacing.xs,
+            paddingBottom: spacing.sm,
             borderBottom: '0.5px solid var(--border-default)',
           }}
         >
@@ -237,7 +204,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
           />
 
           {/* Title and Close */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
             <Typography
               variant="h2"
               sx={{
@@ -246,7 +213,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
                 color: 'var(--text-primary)',
               }}
             >
-              {t.nav.tools}
+              {t.nav.more}
             </Typography>
 
             <IconButton
@@ -259,6 +226,44 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose }) => {
             >
               <Close />
             </IconButton>
+          </Box>
+
+          {/* Search Bar */}
+          <Box component="form" onSubmit={handleSearch}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Buscar en inventario..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search sx={{ color: 'var(--text-tertiary)', fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'var(--surface-primary)',
+                  borderRadius: spacing.md,
+                  fontSize: '16px',
+                  '& fieldset': {
+                    borderColor: 'var(--border-default)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: primitiveColors.emerald[500],
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: primitiveColors.emerald[500],
+                    borderWidth: 2,
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  padding: '12px 0',
+                },
+              }}
+            />
           </Box>
         </Box>
 
