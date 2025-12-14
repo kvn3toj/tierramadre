@@ -137,6 +137,10 @@ export const es = {
       label: 'Cotización',
       subtitle: 'Cotizar desde inventario',
     },
+    settings: {
+      label: 'Configuración',
+      subtitle: 'Tema, idioma y preferencias',
+    },
   },
 
   // Actions
