@@ -13,21 +13,16 @@ import { LiquidGlassProvider } from './contexts/LiquidGlassContext';
 // Primary routes - keep in main bundle (frequently used)
 import Home from './components/home';
 import InventoryBrowser from './components/InventoryBrowser';
-import Gallery from './components/Gallery';
-import { CatalogBrowser } from './components/CatalogBrowser';
 
 // Secondary routes - lazy load (less frequent, heavy dependencies)
 const EmeraldUploader = lazy(() => import('./components/EmeraldUploader'));
 const EmeraldUploaderIOS = lazy(() => import('./components/EmeraldUploader.ios'));
 const CalendarGrid = lazy(() => import('./components/CalendarGrid'));
-const PDFExport = lazy(() => import('./components/PDFExport'));
-const ImageNormalizer = lazy(() => import('./components/ImageNormalizer'));
 const ReceiptGenerator = lazy(() => import('./components/ReceiptGenerator'));
 const PriceSimulator = lazy(() => import('./components/PriceSimulator'));
 const CertificatePreview = lazy(() => import('./components/CertificatePreview'));
 const QuotationPreview = lazy(() => import('./components/QuotationPreview'));
 const CotizacionGenerator = lazy(() => import('./components/CotizacionGenerator'));
-const SlidePreview = lazy(() => import('./components/slides').then(m => ({ default: m.SlidePreview })));
 const ProductDetail = lazy(() => import('./components/ProductDetail'));
 const AmbassadorDirectory = lazy(() => import('./components/ambassador').then(m => ({ default: m.AmbassadorDirectory })));
 const AsesorProfilePage = lazy(() => import('./components/ambassador/AsesorProfile'));
@@ -36,11 +31,11 @@ const AccountsHub = lazy(() => import('./components/AccountsHub'));
 const VaultPage = lazy(() => import('./pages/VaultPage'));
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
-export type TabValue = 'home' | 'gallery' | 'upload' | 'catalog' | 'calendar' | 'slides' | 'normalizer' | 'receipts' | 'biblioteca' | 'simulator' | 'inventory' | 'ambassadors' | 'certificate' | 'cotizacion';
+export type TabValue = 'home' | 'upload' | 'calendar' | 'receipts' | 'simulator' | 'inventory' | 'ambassadors' | 'certificate' | 'cotizacion';
 
 // Tab categories for navigation logic
-export const PRIMARY_TABS: TabValue[] = ['home', 'inventory', 'biblioteca'];
-export const SECONDARY_TABS: TabValue[] = ['gallery', 'catalog', 'calendar', 'ambassadors', 'slides', 'normalizer', 'receipts', 'simulator', 'cotizacion', 'certificate', 'upload'];
+export const PRIMARY_TABS: TabValue[] = ['home', 'inventory'];
+export const SECONDARY_TABS: TabValue[] = ['calendar', 'ambassadors', 'receipts', 'simulator', 'cotizacion', 'certificate', 'upload'];
 
 // Inner component that uses routing hooks
 function AppContent() {
@@ -65,8 +60,6 @@ function AppContent() {
           {/* Primary routes - no Suspense needed (in main bundle) */}
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={<Home />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/biblioteca" element={<CatalogBrowser />} />
           <Route path="/inventory" element={<InventoryBrowser />} />
 
           {/* Secondary routes - wrapped with Suspense (lazy loaded) */}
@@ -75,8 +68,8 @@ function AppContent() {
             element={
               <Suspense fallback={<LoadingFallback message="Cargando uploader..." />}>
                 {getFeatureFlag('IOS_UPLOAD')
-                  ? <EmeraldUploaderIOS onComplete={() => navigate('/gallery')} />
-                  : <EmeraldUploader onComplete={() => navigate('/gallery')} />
+                  ? <EmeraldUploaderIOS onComplete={() => navigate('/home')} />
+                  : <EmeraldUploader onComplete={() => navigate('/home')} />
                 }
               </Suspense>
             }
@@ -84,21 +77,6 @@ function AppContent() {
           <Route path="/calendar" element={
             <Suspense fallback={<LoadingFallback message="Cargando calendario..." />}>
               <CalendarGrid />
-            </Suspense>
-          } />
-          <Route path="/catalog" element={
-            <Suspense fallback={<LoadingFallback message="Cargando catálogo..." />}>
-              <PDFExport />
-            </Suspense>
-          } />
-          <Route path="/normalizer" element={
-            <Suspense fallback={<LoadingFallback message="Cargando normalizador..." />}>
-              <ImageNormalizer />
-            </Suspense>
-          } />
-          <Route path="/slides" element={
-            <Suspense fallback={<LoadingFallback message="Cargando slides..." />}>
-              <SlidePreview />
             </Suspense>
           } />
           <Route path="/receipts" element={
