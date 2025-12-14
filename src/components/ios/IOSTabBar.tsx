@@ -15,7 +15,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import {
   Home,
-  Storefront,
   MoreHoriz,
 } from '@mui/icons-material';
 import { Gem } from 'lucide-react';
@@ -50,12 +49,6 @@ const getPrimaryTabs = (t: any): TabConfig[] => [
     label: t.nav.inventory,
     icon: Gem as React.ElementType,
     route: '/inventory',
-  },
-  {
-    id: 'biblioteca',
-    label: 'Biblioteca',
-    icon: Storefront,
-    route: '/biblioteca',
   },
   {
     id: 'more',
@@ -98,7 +91,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
 
     if (matchingTab) return matchingTab.id;
 
-    const secondaryRoutes = ['/gallery', '/catalog', '/calendar', '/slides', '/normalizer', '/receipts', '/simulator', '/ambassadors', '/upload', '/cuentas', '/boveda-secreta'];
+    const secondaryRoutes = ['/calendar', '/receipts', '/simulator', '/ambassadors', '/upload', '/cuentas', '/boveda-secreta', '/certificate'];
     const isSecondaryRoute = secondaryRoutes.some(route => currentPath.startsWith(route));
 
     return isSecondaryRoute ? 'more' : '';

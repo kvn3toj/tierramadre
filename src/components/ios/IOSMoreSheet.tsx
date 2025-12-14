@@ -13,13 +13,9 @@ import { Box, Typography, IconButton, Backdrop, Button } from '@mui/material';
 import { Lock } from '@mui/icons-material';
 import {
   Close,
-  PhotoLibrary,
   CloudUpload,
   People,
-  MenuBook,
   CalendarMonth,
-  Slideshow,
-  AutoFixHigh,
   Verified,
   AccountBalance,
 } from '@mui/icons-material';
@@ -48,14 +44,6 @@ export interface MoreToolConfig {
 const getMoreTools = (t: any): MoreToolConfig[] => [
   // Contenido
   {
-    id: 'gallery',
-    label: t.tools.gallery.label,
-    subtitle: t.tools.gallery.subtitle,
-    icon: PhotoLibrary,
-    route: '/gallery',
-    color: primitiveColors.emerald[500],
-  },
-  {
     id: 'upload',
     label: t.tools.upload.label,
     subtitle: t.tools.upload.subtitle,
@@ -70,14 +58,6 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     icon: CalendarMonth,
     route: '/calendar',
     color: '#E91E63',
-  },
-  {
-    id: 'slides',
-    label: t.tools.slides.label,
-    subtitle: t.tools.slides.subtitle,
-    icon: Slideshow,
-    route: '/slides',
-    color: '#FF9800',
   },
   // Comunidad
   {
@@ -106,29 +86,12 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     color: '#3F51B5', // Blue
   },
   {
-    id: 'catalog',
-    label: t.tools.catalog.label,
-    subtitle: t.tools.catalog.subtitle,
-    icon: MenuBook,
-    route: '/catalog',
-    color: '#FF5722',
-  },
-  {
     id: 'certificate',
     label: t.tools.certificate.label,
     subtitle: t.tools.certificate.subtitle,
     icon: Verified,
     route: '/certificate',
     color: '#00BCD4',
-  },
-  // Herramientas
-  {
-    id: 'normalizer',
-    label: t.tools.normalizer.label,
-    subtitle: t.tools.normalizer.subtitle,
-    icon: AutoFixHigh,
-    route: '/normalizer',
-    color: '#4CAF50',
   },
 ];
 

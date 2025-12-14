@@ -24,13 +24,8 @@ import {
   Paper,
 } from '@mui/material';
 import {
-  Images,
-  FileText,
   Instagram,
-  Presentation,
-  Wand2,
   Receipt,
-  Library,
   Calculator,
   Settings,
   ChevronLeft,
@@ -67,15 +62,10 @@ interface NavItem {
 
 const NAVIGATION_ITEMS: NavItem[] = [
   // Primary workflow
-  { id: 'gallery', label: 'Galería', icon: <Images size={20} />, group: 'primary' },
   { id: 'inventory', label: 'Inventario', icon: <Package size={20} />, group: 'primary' },
-  { id: 'biblioteca', label: 'Show Room', icon: <Library size={20} />, group: 'primary' },
-  { id: 'catalog', label: 'Crear Catálogo', icon: <FileText size={20} />, group: 'primary' },
   { id: 'calendar', label: 'Instagram', icon: <Instagram size={20} />, group: 'primary' },
   // Tools
-  { id: 'ambassadors', label: 'Asesores', icon: <Users size={20} />, group: 'tools' },
-  { id: 'slides', label: 'Crear Presentaciones', icon: <Presentation size={20} />, group: 'tools' },
-  { id: 'normalizer', label: 'Normalizar', icon: <Wand2 size={20} />, group: 'tools' },
+  { id: 'ambassadors', label: 'Embajadores', icon: <Users size={20} />, group: 'tools' },
   { id: 'receipts', label: 'Recibos', icon: <Receipt size={20} />, group: 'tools' },
   { id: 'simulator', label: 'Simulador', icon: <Calculator size={20} />, group: 'tools' },
 ];
