@@ -4,34 +4,236 @@
  * Bottom sheet for app settings
  * - Theme toggle (dark/light)
  * - Language switcher (Spanish/English)
+ * - Liquid Glass effects configuration
+ *
+ * Refactored: Extracted reusable SettingToggleItem component
  */
 
 import React from 'react';
-import { Box, Typography, IconButton, Backdrop, Switch } from '@mui/material';
+import { Box, Typography, IconButton, Backdrop, Switch, SxProps, Theme } from '@mui/material';
 import { Close, DarkMode, LightMode, Language, AutoAwesome, Tune } from '@mui/icons-material';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
+import { useLiquidGlassSafe, type LiquidGlassEffects } from '../../contexts/LiquidGlassContext';
 import MeditationReminderSetting from '../settings/MeditationReminderSetting';
 import { UserProfileCard } from '../auth';
+
+// =============================================================================
+// TYPES
+// =============================================================================
 
 export interface IOSSettingsSheetProps {
   open: boolean;
   onClose: () => void;
 }
 
-const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) => {
-  const { mode, toggleTheme } = useTheme();
-  const { language, t, toggleLanguage } = useLanguage();
+interface SettingToggleItemProps {
+  icon?: React.ReactNode;
+  iconBgColor: string;
+  title: string;
+  subtitle?: string;
+  checked: boolean;
+  onChange: () => void;
+  accentColor: string;
+  size?: 'normal' | 'small';
+  indented?: boolean;
+}
+
+interface LiquidGlassEffectConfig {
+  key: keyof LiquidGlassEffects;
+  label: string;
+  hasIcon?: boolean;
+}
+
+// =============================================================================
+// REUSABLE COMPONENTS
+// =============================================================================
+
+/**
+ * Get switch styles for a given accent color
+ */
+const getSwitchStyles = (accentColor: string): SxProps<Theme> => ({
+  '& .MuiSwitch-switchBase.Mui-checked': {
+    color: accentColor,
+    '&:hover': { backgroundColor: `${accentColor}14` },
+  },
+  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+    backgroundColor: accentColor,
+  },
+});
+
+/**
+ * Reusable setting toggle item
+ */
+const SettingToggleItem: React.FC<SettingToggleItemProps> = ({
+  icon,
+  iconBgColor,
+  title,
+  subtitle,
+  checked,
+  onChange,
+  accentColor,
+  size = 'normal',
+  indented = false,
+}) => (
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: size === 'small' ? spacing.xxs : spacing.sm,
+      paddingY: size === 'small' ? spacing.xxs : spacing.sm,
+      backgroundColor: size === 'small' ? 'transparent' : 'var(--surface-primary)',
+      borderRadius: size === 'small' ? 0 : spacing.md,
+    }}
+  >
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+      {icon && (
+        <Box
+          sx={{
+            width: '44px',
+            height: '44px',
+            borderRadius: spacing.md,
+            backgroundColor: iconBgColor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          {icon}
+        </Box>
+      )}
+      <Box sx={{ ml: indented && !icon ? '28px' : 0 }}>
+        <Typography
+          variant="body1"
+          sx={{
+            fontSize: size === 'small' ? '15px' : '17px',
+            fontWeight: size === 'small' ? 400 : 600,
+            color: 'var(--text-primary)',
+          }}
+        >
+          {title}
+        </Typography>
+        {subtitle && (
+          <Typography
+            variant="body2"
+            sx={{ fontSize: '13px', color: 'var(--text-secondary)' }}
+          >
+            {subtitle}
+          </Typography>
+        )}
+      </Box>
+    </Box>
+    <Switch
+      size={size === 'small' ? 'small' : 'medium'}
+      checked={checked}
+      onChange={onChange}
+      sx={getSwitchStyles(accentColor)}
+    />
+  </Box>
+);
+
+// =============================================================================
+// LIQUID GLASS SETTINGS SECTION
+// =============================================================================
+
+const LIQUID_GLASS_EFFECTS: LiquidGlassEffectConfig[] = [
+  { key: 'dynamicTabBar', label: 'Tab Bar dinámica', hasIcon: true },
+  { key: 'blur', label: 'Blur dinámico' },
+  { key: 'specular', label: 'Brillos especulares' },
+  { key: 'animations', label: 'Animaciones fluidas' },
+];
+
+const TIER_LABELS: Record<string, string> = {
+  high: 'Alto rendimiento',
+  medium: 'Rendimiento medio',
+  low: 'Modo ahorro',
+};
+
+const LiquidGlassSettings: React.FC = () => {
   const {
-    enabled: liquidGlassEnabled,
+    enabled,
     effectiveTier,
     effects,
     updateSettings,
     toggleEffect,
   } = useLiquidGlassSafe();
+
+  const accentColor = primitiveColors.emerald[500];
+
+  return (
+    <Box sx={{ marginTop: spacing.sm }}>
+      {/* Section Header */}
+      <Typography
+        variant="overline"
+        sx={{
+          fontSize: '12px',
+          fontWeight: 600,
+          color: 'var(--text-tertiary)',
+          letterSpacing: '0.5px',
+          marginBottom: spacing.xs,
+          display: 'block',
+        }}
+      >
+        LIQUID GLASS (iOS 26)
+      </Typography>
+
+      {/* Master Toggle */}
+      <Box sx={{ marginBottom: spacing.xs }}>
+        <SettingToggleItem
+          icon={<AutoAwesome sx={{ fontSize: '24px', color: accentColor }} />}
+          iconBgColor={`${accentColor}15`}
+          title="Liquid Glass"
+          subtitle={TIER_LABELS[effectiveTier] || TIER_LABELS.medium}
+          checked={enabled}
+          onChange={() => updateSettings({ enabled: !enabled })}
+          accentColor={accentColor}
+        />
+      </Box>
+
+      {/* Effect Toggles (only show when enabled) */}
+      {enabled && (
+        <Box
+          sx={{
+            display: 'grid',
+            gap: spacing.xxs,
+            padding: spacing.sm,
+            backgroundColor: 'var(--surface-primary)',
+            borderRadius: spacing.md,
+          }}
+        >
+          {LIQUID_GLASS_EFFECTS.map((effect) => (
+            <SettingToggleItem
+              key={effect.key}
+              icon={effect.hasIcon ? <Tune sx={{ fontSize: '20px', color: 'var(--text-secondary)' }} /> : undefined}
+              iconBgColor="transparent"
+              title={effect.label}
+              checked={effects[effect.key]}
+              onChange={() => toggleEffect(effect.key)}
+              accentColor={accentColor}
+              size="small"
+              indented={!effect.hasIcon}
+            />
+          ))}
+        </Box>
+      )}
+    </Box>
+  );
+};
+
+// =============================================================================
+// MAIN COMPONENT
+// =============================================================================
+
+const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) => {
+  const { mode, toggleTheme } = useTheme();
+  const { language, t, toggleLanguage } = useLanguage();
+
+  const isDarkMode = mode === 'dark';
+  const isEnglish = language === 'en';
 
   return (
     <>
@@ -92,11 +294,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography
               variant="h2"
-              sx={{
-                fontSize: '22px',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-              }}
+              sx={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)' }}
             >
               {t.settings.theme}
             </Typography>
@@ -120,300 +318,36 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
           <UserProfileCard />
 
           {/* Theme Toggle */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: spacing.sm,
-              backgroundColor: 'var(--surface-primary)',
-              borderRadius: spacing.md,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
-              {/* Icon */}
-              <Box
-                sx={{
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: spacing.md,
-                  backgroundColor: mode === 'dark' ? '#FFD60A15' : '#00000015',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                {mode === 'dark' ? (
-                  <DarkMode sx={{ fontSize: '24px', color: '#FFD60A' }} />
-                ) : (
-                  <LightMode sx={{ fontSize: '24px', color: '#FF9500' }} />
-                )}
-              </Box>
-
-              {/* Text */}
-              <Box>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    fontSize: '17px',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  {mode === 'dark' ? t.settings.darkMode : t.settings.lightMode}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontSize: '13px',
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  {mode === 'dark' ? t.settings.lightMode : t.settings.darkMode}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Switch */}
-            <Switch
-              checked={mode === 'dark'}
-              onChange={toggleTheme}
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': {
-                  color: '#FFD60A',
-                  '&:hover': { backgroundColor: 'rgba(255, 214, 10, 0.08)' },
-                },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                  backgroundColor: '#FFD60A',
-                },
-              }}
-            />
-          </Box>
+          <SettingToggleItem
+            icon={
+              isDarkMode
+                ? <DarkMode sx={{ fontSize: '24px', color: '#FFD60A' }} />
+                : <LightMode sx={{ fontSize: '24px', color: '#FF9500' }} />
+            }
+            iconBgColor={isDarkMode ? '#FFD60A15' : '#00000015'}
+            title={isDarkMode ? t.settings.darkMode : t.settings.lightMode}
+            subtitle={isDarkMode ? t.settings.lightMode : t.settings.darkMode}
+            checked={isDarkMode}
+            onChange={toggleTheme}
+            accentColor="#FFD60A"
+          />
 
           {/* Language Toggle */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: spacing.sm,
-              backgroundColor: 'var(--surface-primary)',
-              borderRadius: spacing.md,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
-              {/* Icon */}
-              <Box
-                sx={{
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: spacing.md,
-                  backgroundColor: '#007AFF15',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Language sx={{ fontSize: '24px', color: '#007AFF' }} />
-              </Box>
-
-              {/* Text */}
-              <Box>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    fontSize: '17px',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  {t.settings.language}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontSize: '13px',
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  {language === 'es' ? t.settings.spanish : t.settings.english}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Switch */}
-            <Switch
-              checked={language === 'en'}
-              onChange={toggleLanguage}
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': {
-                  color: '#007AFF',
-                  '&:hover': { backgroundColor: 'rgba(0, 122, 255, 0.08)' },
-                },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                  backgroundColor: '#007AFF',
-                },
-              }}
-            />
-          </Box>
+          <SettingToggleItem
+            icon={<Language sx={{ fontSize: '24px', color: '#007AFF' }} />}
+            iconBgColor="#007AFF15"
+            title={t.settings.language}
+            subtitle={isEnglish ? t.settings.english : t.settings.spanish}
+            checked={isEnglish}
+            onChange={toggleLanguage}
+            accentColor="#007AFF"
+          />
 
           {/* Meditation Reminder */}
           <MeditationReminderSetting />
 
-          {/* Liquid Glass Section */}
-          <Box sx={{ marginTop: spacing.sm }}>
-            <Typography
-              variant="overline"
-              sx={{
-                fontSize: '12px',
-                fontWeight: 600,
-                color: 'var(--text-tertiary)',
-                letterSpacing: '0.5px',
-                marginBottom: spacing.xs,
-                display: 'block',
-              }}
-            >
-              LIQUID GLASS (iOS 26)
-            </Typography>
-
-            {/* Master Toggle */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: spacing.sm,
-                backgroundColor: 'var(--surface-primary)',
-                borderRadius: spacing.md,
-                marginBottom: spacing.xs,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
-                <Box
-                  sx={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: spacing.md,
-                    backgroundColor: `${primitiveColors.emerald[500]}15`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  <AutoAwesome sx={{ fontSize: '24px', color: primitiveColors.emerald[500] }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body1"
-                    sx={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)' }}
-                  >
-                    Liquid Glass
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{ fontSize: '13px', color: 'var(--text-secondary)' }}
-                  >
-                    {effectiveTier === 'high' ? 'Alto rendimiento' : effectiveTier === 'medium' ? 'Rendimiento medio' : 'Modo ahorro'}
-                  </Typography>
-                </Box>
-              </Box>
-              <Switch
-                checked={liquidGlassEnabled}
-                onChange={() => updateSettings({ enabled: !liquidGlassEnabled })}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: primitiveColors.emerald[500],
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: primitiveColors.emerald[500],
-                  },
-                }}
-              />
-            </Box>
-
-            {/* Effect Toggles (only show when enabled) */}
-            {liquidGlassEnabled && (
-              <Box
-                sx={{
-                  display: 'grid',
-                  gap: spacing.xxs,
-                  padding: spacing.sm,
-                  backgroundColor: 'var(--surface-primary)',
-                  borderRadius: spacing.md,
-                }}
-              >
-                {/* Dynamic Tab Bar */}
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: spacing.xxs }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
-                    <Tune sx={{ fontSize: '20px', color: 'var(--text-secondary)' }} />
-                    <Typography sx={{ fontSize: '15px', color: 'var(--text-primary)' }}>
-                      Tab Bar din\u00e1mica
-                    </Typography>
-                  </Box>
-                  <Switch
-                    size="small"
-                    checked={effects.dynamicTabBar}
-                    onChange={() => toggleEffect('dynamicTabBar')}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': { color: primitiveColors.emerald[500] },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: primitiveColors.emerald[500] },
-                    }}
-                  />
-                </Box>
-
-                {/* Blur Effect */}
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: spacing.xxs }}>
-                  <Typography sx={{ fontSize: '15px', color: 'var(--text-primary)', ml: '28px' }}>
-                    Blur din\u00e1mico
-                  </Typography>
-                  <Switch
-                    size="small"
-                    checked={effects.blur}
-                    onChange={() => toggleEffect('blur')}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': { color: primitiveColors.emerald[500] },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: primitiveColors.emerald[500] },
-                    }}
-                  />
-                </Box>
-
-                {/* Specular Highlights */}
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: spacing.xxs }}>
-                  <Typography sx={{ fontSize: '15px', color: 'var(--text-primary)', ml: '28px' }}>
-                    Brillos especulares
-                  </Typography>
-                  <Switch
-                    size="small"
-                    checked={effects.specular}
-                    onChange={() => toggleEffect('specular')}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': { color: primitiveColors.emerald[500] },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: primitiveColors.emerald[500] },
-                    }}
-                  />
-                </Box>
-
-                {/* Animations */}
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: spacing.xxs }}>
-                  <Typography sx={{ fontSize: '15px', color: 'var(--text-primary)', ml: '28px' }}>
-                    Animaciones fluidas
-                  </Typography>
-                  <Switch
-                    size="small"
-                    checked={effects.animations}
-                    onChange={() => toggleEffect('animations')}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': { color: primitiveColors.emerald[500] },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: primitiveColors.emerald[500] },
-                    }}
-                  />
-                </Box>
-              </Box>
-            )}
-          </Box>
+          {/* Liquid Glass Settings */}
+          <LiquidGlassSettings />
         </Box>
       </Box>
     </>
