@@ -73,16 +73,16 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const { effectiveConfig, isEffectEnabled } = useLiquidGlassSafe();
+  const { effectiveConfig } = useLiquidGlassSafe();
 
-  // Dynamic shrink/expand behavior
+  // Dynamic shrink/expand behavior - DISABLED for always-visible navigation
   const {
     isCollapsed,
     height,
     iconSize,
     labelOpacity,
   } = useScrollShrink({
-    disabled: !isEffectEnabled('dynamicTabBar'),
+    disabled: true, // Always show full tab bar
     threshold: tabBarConfig.scrollThreshold,
     expandedHeight: tabBarConfig.height.expanded,
     collapsedHeight: tabBarConfig.height.collapsed,
@@ -118,7 +118,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
     }
   };
 
-  // Liquid Glass styles based on effects config
+  // Liquid Glass styles based on effects config - more prominent background
   const liquidGlassStyles = useMemo(() => {
     if (!effectiveConfig.blur) {
       // Fallback for low-tier devices
@@ -129,14 +129,14 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
       };
     }
 
-    const blurValue = isCollapsed ? dynamicBlur.hover : dynamicBlur.resting;
+    const blurValue = dynamicBlur.resting;
 
     return {
-      backgroundColor: 'rgba(var(--surface-secondary-rgb), 0.7)',
+      backgroundColor: 'rgba(var(--surface-secondary-rgb), 0.92)',
       backdropFilter: `blur(${blurValue}) saturate(${liquidSaturation.vibrant})`,
       WebkitBackdropFilter: `blur(${blurValue}) saturate(${liquidSaturation.vibrant})`,
     };
-  }, [effectiveConfig.blur, isCollapsed]);
+  }, [effectiveConfig.blur]);
 
   // Specular highlight for active tab
   const getTabSpecularStyles = (isActive: boolean) => {
@@ -169,8 +169,8 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         right: 0,
         minHeight: `calc(${height}px + env(safe-area-inset-bottom))`,
         ...liquidGlassStyles,
-        borderTop: '0.5px solid var(--border-default)',
-        boxShadow: 'var(--shadow-sm)',
+        borderTop: '1px solid var(--border-default)',
+        boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)',
         display: 'flex',
         alignItems: 'stretch',
         paddingTop: isCollapsed ? spacing.xs : spacing.sm,

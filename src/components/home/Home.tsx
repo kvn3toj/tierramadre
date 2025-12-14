@@ -18,7 +18,6 @@ import { useInventory } from '../../hooks/useInventory';
 import { InventoryItem } from '../../types';
 import { DailyOracle } from '../../data/homeContent';
 import { useGamification, AchievementToast } from './gamification';
-import { QuickActions } from './navigation';
 import { useAnalytics } from './hooks';
 import { InstallButton, NotificationPermission } from '../pwa';
 import { isPWA } from '../../utils/pwa';
@@ -338,13 +337,6 @@ const Home: React.FC = () => {
         autoDismiss={5000}
       />
 
-      {/* ================================================================== */}
-      {/* QUICK ACTIONS - Floating navigation menu */}
-      {/* ================================================================== */}
-      <QuickActions
-        position="bottom-right"
-        showShortcuts={true}
-      />
     </Box>
   );
 };
