@@ -38,7 +38,7 @@ import { useEmeralds } from '../hooks/useEmeralds';
 import { usePriceCalculation } from '../hooks/usePriceCalculation';
 import { Emerald, InventoryItem } from '../types';
 import { inventoryData } from '../data/inventory';
-import { studioColors, studioShadows, studioCardStyles } from './PremiumHeader';
+import { studioColors, studioShadows, studioCardStyles } from '../design-system';
 import { formatFullCurrency as formatCurrency } from '../utils/formatting';
 
 // Extracted components

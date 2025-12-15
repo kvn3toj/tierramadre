@@ -5,11 +5,7 @@
 
 import { Box, Typography, Paper, Button, alpha } from '@mui/material';
 import { Calculator, Eye } from 'lucide-react';
-import {
-  studioColors,
-  studioGradients,
-  studioShadows,
-} from '../PremiumHeader';
+import { studioColors, studioGradients, studioShadows } from '../../design-system';
 
 export interface PriceSimulatorHeaderProps {
   totalInvestment: number;
