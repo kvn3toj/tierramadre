@@ -50,6 +50,7 @@ import type { MediaItem } from './media/types';
 import { PriceDisplay } from './PriceDisplay';
 import { getColorDot, getQualityBadge } from '../utils/formatting';
 import { isImageFile, isVideoFile } from '../utils/fileTypeDetection';
+import { uploadToCloudinary } from '../utils/cloudinaryUpload';
 // Design System Tokens
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 import { emeraldGradients, buttonGradients } from '../design-system/tokens/gradients';
@@ -63,37 +64,6 @@ const fileToDataURL = (file: File): Promise<string> => {
     reader.onerror = () => reject(new Error('Failed to read file'));
     reader.readAsDataURL(file);
   });
-};
-
-// Cloudinary configuration
-const CLOUDINARY_CLOUD_NAME = 'dyam6g2os';
-const CLOUDINARY_UPLOAD_PRESET = 'tierramadre';
-
-// Upload to Cloudinary - direct browser upload, no size limits
-const uploadToCloudinary = async (file: File, itemNumber: number): Promise<string> => {
-  const isVideo = isVideoFile(file);
-  const resourceType = isVideo ? 'video' : 'image';
-
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-  formData.append('folder', `tierramadre/product-${itemNumber}`);
-
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
-    {
-      method: 'POST',
-      body: formData,
-    }
-  );
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: { message: 'Error al subir' } }));
-    throw new Error(error.error?.message || 'Error al subir a Cloudinary');
-  }
-
-  const data = await response.json();
-  return data.secure_url;
 };
 
 // Base URL for the Tierra Madre Studio app
@@ -242,7 +212,9 @@ export default function ProductDetail() {
           : new File([file], `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
 
         // Upload directly to Cloudinary (no size limits)
-        const mediaUrl = await uploadToCloudinary(fileToUpload, product.item);
+        const mediaUrl = await uploadToCloudinary(fileToUpload, {
+          folder: `tierramadre/product-${product.item}`,
+        });
 
         let thumbnailUrl: string | undefined;
         if (isVideo && file instanceof File) {
