@@ -133,7 +133,7 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
                 }}
               />
 
-              <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ display: 'flex', gap: { xs: 1.5, sm: 2 } }}>
                 <motion.div
                   animate={{
                     rotate: [0, 5, -5, 0],
@@ -147,9 +147,9 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
                   <Avatar
                     sx={{
                       bgcolor: `${emeraldCore.primary}20`,
-                      width: 56,
-                      height: 56,
-                      fontSize: '1.8rem',
+                      width: { xs: 44, sm: 56 },
+                      height: { xs: 44, sm: 56 },
+                      fontSize: { xs: '1.4rem', sm: '1.8rem' },
                     }}
                     aria-hidden="true"
                   >
@@ -157,22 +157,31 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
                   </Avatar>
                 </motion.div>
 
-                <Box sx={{ flex: 1 }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography
                     variant="subtitle1"
                     component="h3"
-                    sx={{ fontWeight: 600, color: 'white' }}
+                    sx={{
+                      fontWeight: 600,
+                      color: 'white',
+                      fontSize: { xs: '0.95rem', sm: '1rem' },
+                    }}
                   >
                     {dailyOracle.title}
                   </Typography>
                   <Typography
                     variant="body2"
-                    sx={{ color: 'rgba(255,255,255,0.7)', mt: 0.5, lineHeight: 1.5 }}
+                    sx={{
+                      color: 'rgba(255,255,255,0.7)',
+                      mt: 0.5,
+                      lineHeight: 1.5,
+                      fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                    }}
                   >
                     {dailyOracle.content.substring(0, 100)}...
                   </Typography>
 
-                  <Box sx={{ display: 'flex', gap: 1, mt: 1.5 }}>
+                  <Box sx={{ display: 'flex', gap: { xs: 0.5, sm: 1 }, mt: 1.5, flexWrap: 'wrap' }}>
                     <Button
                       size="small"
                       startIcon={isSaved ? <Bookmark /> : <BookmarkBorder />}
@@ -180,6 +189,9 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
                       aria-label={isSaved ? 'Quitar de guardados' : 'Guardar este dato'}
                       sx={{
                         color: isSaved ? emeraldCore.light || emeraldCore.primary : 'rgba(255,255,255,0.7)',
+                        fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                        minWidth: 'auto',
+                        px: { xs: 1, sm: 1.5 },
                       }}
                     >
                       {isSaved ? 'Guardado' : 'Guardar'}

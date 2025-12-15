@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -55,7 +55,8 @@ import ComparisonBar from './ComparisonBar';
 import ComparisonModal from './ComparisonModal';
 import RecentlyViewedCarousel from './RecentlyViewedCarousel';
 import SavedFiltersDropdown from './SavedFiltersDropdown';
-import KeyboardShortcutsHelp, { KeyboardShortcutsButton } from './KeyboardShortcutsHelp';
+// Keyboard shortcuts disabled - target devices are mobile (iPhone 12+, iPad)
+// import KeyboardShortcutsHelp, { KeyboardShortcutsButton } from './KeyboardShortcutsHelp';
 
 export default function InventoryBrowser() {
   const theme = useTheme();
@@ -139,6 +140,34 @@ export default function InventoryBrowser() {
     setSearchParams(new URLSearchParams());
   }, [clearFilters, setSearchParams]);
 
+  // Sync filters to URL whenever they change (for persistence across navigation)
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    // Only add non-default values to URL
+    if (filters.search) params.set('search', filters.search);
+    if (filters.typeFilter !== 'all') params.set('type', filters.typeFilter);
+    if (filters.statusFilter !== 'all') params.set('status', filters.statusFilter);
+    if (filters.qualityFilter) params.set('quality', filters.qualityFilter);
+    if (filters.colorFilter) params.set('color', filters.colorFilter);
+    if (filters.shapeFilter) params.set('shape', filters.shapeFilter);
+    if (filters.cityFilter !== 'all') params.set('city', filters.cityFilter);
+    if (filters.sortBy !== 'newest') params.set('sort', filters.sortBy);
+
+    // Price range - only if not default
+    const defaultMin = filterOptions.priceMinMax.min || 0;
+    const defaultMax = filterOptions.priceMinMax.max || Number.MAX_SAFE_INTEGER;
+    if (filters.priceRange[0] > defaultMin) {
+      params.set('priceMin', String(filters.priceRange[0]));
+    }
+    if (filters.priceRange[1] < defaultMax) {
+      params.set('priceMax', String(filters.priceRange[1]));
+    }
+
+    // Update URL without adding to history (use replace)
+    setSearchParams(params, { replace: true });
+  }, [filters, filterOptions.priceMinMax, setSearchParams]);
+
   // Favorites hook
   const { isFavorite, toggleFavorite, favoritesCount } = useFavorites();
 
@@ -186,7 +215,8 @@ export default function InventoryBrowser() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  // Keyboard shortcuts disabled - target devices are mobile
+  // const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Filter by favorites if enabled
@@ -708,7 +738,7 @@ export default function InventoryBrowser() {
                   <List size={18} />
                 </ToggleButton>
               </ToggleButtonGroup>
-              <KeyboardShortcutsButton onClick={() => setShowKeyboardHelp(true)} />
+              {/* Keyboard shortcuts hidden - target devices are mobile (iPhone 12+, iPad) */}
             </Box>
           </Paper>
         </>
@@ -1058,11 +1088,7 @@ export default function InventoryBrowser() {
         trustScores={trustScoresMap}
       />
 
-      {/* Keyboard Shortcuts Help Dialog */}
-      <KeyboardShortcutsHelp
-        open={showKeyboardHelp}
-        onClose={() => setShowKeyboardHelp(false)}
-      />
+      {/* Keyboard Shortcuts Help Dialog - Disabled for mobile-first (iPhone 12+, iPad) */}
     </Box>
   );
 }
