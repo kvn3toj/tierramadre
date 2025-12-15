@@ -5,7 +5,7 @@
 
 import { Box, Typography, Paper, alpha } from '@mui/material';
 import { Info } from 'lucide-react';
-import { studioColors } from '../PremiumHeader';
+import { studioColors } from '../../design-system';
 
 const FORMULAS = [
   { color: '#3B82F6', formula: 'Precio = Inversión × Factor' },

@@ -7,7 +7,7 @@ import { Box, Typography, Paper, LinearProgress, alpha } from '@mui/material';
 import { TrendingUp, Gem, Percent, DollarSign, ArrowUpRight } from 'lucide-react';
 import { PricingMetrics } from '../../hooks/usePriceCalculation';
 import { formatFullCurrency as formatCurrency, formatPercent } from '../../utils/formatting';
-import { studioColors, studioGradients, studioShadows } from '../PremiumHeader';
+import { studioColors, studioGradients, studioShadows } from '../../design-system';
 
 export interface PricingResultsProps {
   pricingMetrics: PricingMetrics;

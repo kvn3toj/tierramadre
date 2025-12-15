@@ -6,7 +6,7 @@
 import { Box, Typography, Paper, Slider, Chip, IconButton, Tooltip, alpha } from '@mui/material';
 import { Target, Info } from 'lucide-react';
 import { PRICING_TIERS, PricingTier } from '../../hooks/usePriceCalculation';
-import { studioColors, studioCardStyles } from '../PremiumHeader';
+import { studioColors, studioCardStyles } from '../../design-system';
 
 export interface FactorSliderProps {
   priceFactor: number;
