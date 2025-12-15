@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Box, styled } from '@mui/material';
-import { colors, spacing, geometry, motion, brandVoice, typography } from '../../styles/brandTokens';
+import { colors, spacing, geometry, motion, brandVoice, typography } from '../../design-system/tokens/brand';
 
 // ═══════════════════════════════════════════════════════════════
 // CORNER DECORATION - Geometric Presence
@@ -353,4 +353,4 @@ export {
   typography,
   motion,
   brandVoice,
-} from '../../styles/brandTokens';
+} from '../../design-system/tokens/brand';

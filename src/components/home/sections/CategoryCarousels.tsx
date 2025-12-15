@@ -17,7 +17,7 @@ import {
   DialogContent,
 } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight, Close } from '@mui/icons-material';
-import { fadeInUp } from '../../../theme/motionTokens';
+import { fadeInUp } from '../../../design-system/tokens/motion';
 
 // =============================================================================
 // GALLERY DATA

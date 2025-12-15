@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { ChevronLeft, ChevronRight, Close } from '@mui/icons-material';
 import { emeraldCore } from '../../../design-system/tokens/colors';
-import { fadeInUp, cardVariants } from '../../../theme/motionTokens';
+import { fadeInUp, cardVariants } from '../../../design-system/tokens/motion';
 
 // =============================================================================
 // GALLERY DATA

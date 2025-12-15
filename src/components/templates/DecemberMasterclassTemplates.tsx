@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { colors, typography } from '../../styles/brandTokens';
+import { colors, typography } from '../../design-system/tokens/brand';
 
 const SLIDE_WIDTH = 1920;
 const SLIDE_HEIGHT = 1080;

@@ -7,4 +7,4 @@ export {
   GeometricFrame,
 } from './BrandElements';
 
-export * from '../../styles/brandTokens';
+export * from '../../design-system/tokens/brand';

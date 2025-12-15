@@ -26,7 +26,7 @@ import { Share, Bookmark, BookmarkBorder, Close } from '@mui/icons-material';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { DAILY_ORACLES, DailyOracle } from '../../../data/homeContent';
-import { fadeInUp, cardVariants } from '../../../theme/motionTokens';
+import { fadeInUp, cardVariants } from '../../../design-system/tokens/motion';
 
 // =============================================================================
 // TYPES

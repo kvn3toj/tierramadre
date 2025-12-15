@@ -21,7 +21,7 @@ import { PlayArrow, SelfImprovement } from '@mui/icons-material';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { DAILY_MEDITATIONS, MeditationType } from '../../../data/homeContent';
-import { fadeInUp, cardVariants } from '../../../theme/motionTokens';
+import { fadeInUp, cardVariants } from '../../../design-system/tokens/motion';
 import { MeditationModal } from '../../meditation';
 
 // =============================================================================

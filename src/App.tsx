@@ -15,7 +15,7 @@ import InventoryBrowser from './components/InventoryBrowser';
 
 // Secondary routes - lazy load (less frequent, heavy dependencies)
 const ProductDetail = lazy(() => import('./components/ProductDetail'));
-const AmbassadorDirectory = lazy(() => import('./components/ambassador').then(m => ({ default: m.AmbassadorDirectory })));
+const AmbassadorsPage = lazy(() => import('./pages/AmbassadorsPage'));
 const AsesorProfilePage = lazy(() => import('./components/ambassador/AsesorProfile'));
 const AccountsHub = lazy(() => import('./components/AccountsHub'));
 const VaultPage = lazy(() => import('./pages/VaultPage'));
@@ -68,7 +68,7 @@ function AppContent() {
             path="/ambassadors"
             element={
               <Suspense fallback={<LoadingFallback message="Cargando embajadores..." />}>
-                <AmbassadorDirectory
+                <AmbassadorsPage
                   onViewProducts={handleViewAsesorProducts}
                   onContact={handleContactAsesor}
                 />

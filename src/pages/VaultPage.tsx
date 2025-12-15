@@ -14,15 +14,15 @@ import { Box } from '@mui/material';
 
 const VaultPage: React.FC = () => {
   const { isUnlocked } = useVaultAccess();
+  const [forceUnlocked, setForceUnlocked] = React.useState(false);
 
   // For now, we'll reuse InventoryBrowser but filter for vault-exclusive items
   // In the future, this can be a separate VaultBrowser component with enhanced UI
   return (
     <Box>
-      {!isUnlocked ? (
+      {!isUnlocked && !forceUnlocked ? (
         <VaultGate onUnlock={() => {
-          // The vault unlocks automatically when PIN is correct
-          // Component will re-render due to state change
+          setForceUnlocked(true);
         }} />
       ) : (
         // For MVP: Show same inventory but with "Bóveda Secreta" context
