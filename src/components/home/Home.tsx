@@ -9,19 +9,29 @@
  * - Accessibility structure
  *
  * Refactored by: CoomÜnity Council (Aria, Moksart, Eunoia, Zeno, Steve)
+ * Evolutionary Refactor: Modular architecture with sacred geometry
  */
 
-import React, { Suspense, lazy, useState, useMemo, useCallback, useEffect } from 'react';
-import { Box, Skeleton, Typography, Button } from '@mui/material';
-import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
+import React, { Suspense, lazy, useMemo, useCallback, useEffect } from 'react';
+import { Box } from '@mui/material';
+import { ErrorBoundary } from 'react-error-boundary';
 import { useInventory } from '../../hooks/useInventory';
 import { InventoryItem } from '../../types';
 import { DailyOracle } from '../../data/homeContent';
 import { useGamification, AchievementToast } from './gamification';
-import { useAnalytics } from './hooks';
+import { useAnalytics, useSavedFacts } from './hooks';
+import { SectionSkeleton, ErrorFallback } from './common';
 import { InstallButton, NotificationPermission } from '../pwa';
 import { isPWA } from '../../utils/pwa';
 import { useNewProductNotification } from '../../hooks/useNewProductNotification';
+import {
+  MAX_PRODUCTS_DISPLAY,
+  BACKGROUND_OPACITY,
+  TAB_BAR_HEIGHT,
+  SKELETON_HEIGHTS,
+  SHARE_CONFIG,
+  ANIMATION_DELAYS,
+} from './constants';
 
 // =============================================================================
 // LAZY LOADED SECTIONS
@@ -43,52 +53,6 @@ const Footer = lazy(() => import('./sections/Footer'));
 import WhatsAppButton from './sections/WhatsAppButton';
 
 // =============================================================================
-// LOADING FALLBACK
-// =============================================================================
-
-const SectionSkeleton: React.FC<{ height?: number }> = ({ height = 200 }) => (
-  <Box sx={{ px: 2, mb: 2 }}>
-    <Skeleton
-      variant="rounded"
-      height={height}
-      animation="wave"
-      sx={{
-        bgcolor: 'rgba(255,255,255,0.1)',
-        borderRadius: 3,
-      }}
-    />
-  </Box>
-);
-
-// =============================================================================
-// ERROR FALLBACK
-// =============================================================================
-
-const ErrorFallback: React.FC<FallbackProps> = ({ error, resetErrorBoundary }) => (
-  <Box
-    role="alert"
-    sx={{
-      p: 3,
-      m: 2,
-      textAlign: 'center',
-      bgcolor: 'rgba(255,255,255,0.1)',
-      borderRadius: 3,
-      backdropFilter: 'blur(10px)',
-    }}
-  >
-    <Typography variant="body1" sx={{ color: 'rgba(255,200,200,0.9)', mb: 2 }}>
-      Algo salió mal al cargar esta sección
-    </Typography>
-    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', display: 'block', mb: 2 }}>
-      {error.message}
-    </Typography>
-    <Button variant="outlined" size="small" onClick={resetErrorBoundary} sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}>
-      Reintentar
-    </Button>
-  </Box>
-);
-
-// =============================================================================
 // MAIN COMPONENT
 // =============================================================================
 
@@ -96,26 +60,12 @@ const Home: React.FC = () => {
   const { inventory } = useInventory();
   const [gamificationState, gamificationActions, pendingAchievement] = useGamification();
   const analytics = useAnalytics();
-
-  // ==========================================================================
-  // SHARED STATE
-  // ==========================================================================
-
-  // Saved facts state (persisted in localStorage)
-  const [savedFacts, setSavedFacts] = useState<number[]>(() => {
-    const saved = localStorage.getItem('tierra-madre-saved-facts');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // Selected fact for detail modal (shared between Oracle and Knowledge sections)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_selectedFact, setSelectedFact] = useState<DailyOracle | null>(null);
+  const [{ savedFacts }, savedFactsActions] = useSavedFacts();
 
   // ==========================================================================
   // ANALYTICS TRACKING
   // ==========================================================================
 
-  // Track page view on mount
   useEffect(() => {
     analytics.trackPageView('home');
   }, [analytics]);
@@ -138,13 +88,11 @@ const Home: React.FC = () => {
       .filter((item: InventoryItem) => {
         const img = item.imagen?.trim();
         if (!img) return false;
-        // Valid URL: starts with http, https, / or contains cloudinary
         return img.startsWith('http') || img.startsWith('/') || img.includes('cloudinary');
       })
       .sort((a: InventoryItem, b: InventoryItem) => (b.item || 0) - (a.item || 0))
-      .slice(0, 6);
+      .slice(0, MAX_PRODUCTS_DISPLAY);
 
-    // Debug log
     if (process.env.NODE_ENV === 'development') {
       console.log('[Home] Products with images:', productsWithImages.length, 'of', inventory.length);
     }
@@ -156,44 +104,33 @@ const Home: React.FC = () => {
   // HANDLERS
   // ==========================================================================
 
-  // Handle save/unsave fact
   const handleSaveFact = useCallback((factId: number) => {
-    setSavedFacts(prev => {
-      const newSaved = prev.includes(factId)
-        ? prev.filter(id => id !== factId)
-        : [...prev, factId];
-      localStorage.setItem('tierra-madre-saved-facts', JSON.stringify(newSaved));
-      return newSaved;
-    });
-  }, []);
+    savedFactsActions.toggleSave(factId);
+  }, [savedFactsActions]);
 
-  // Handle share
   const handleShare = useCallback(async (text: string) => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Tierra Madre - Sabiduría Esmeralda',
+          title: SHARE_CONFIG.title,
           text: text,
           url: window.location.origin,
         });
       } catch (err) {
-        // User cancelled or share failed
         console.log('Share cancelled or failed:', err);
       }
     } else {
-      // Fallback: copy to clipboard
       try {
         await navigator.clipboard.writeText(text);
-        // Could show a toast notification here
       } catch (err) {
         console.log('Clipboard write failed:', err);
       }
     }
   }, []);
 
-  // Handle fact selection (for modal)
-  const handleSelectFact = useCallback((fact: DailyOracle) => {
-    setSelectedFact(fact);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleSelectFact = useCallback((_fact: DailyOracle) => {
+    // Reserved for fact detail modal integration
   }, []);
 
   // ==========================================================================
@@ -206,14 +143,12 @@ const Home: React.FC = () => {
       role="main"
       aria-label="Página principal de Tierra Madre"
       sx={{
-        pb: 'calc(env(safe-area-inset-bottom, 0px) + 96px)', // TabBar + safe area
+        pb: `calc(env(safe-area-inset-bottom, 0px) + ${TAB_BAR_HEIGHT}px)`,
         minHeight: '100vh',
         position: 'relative',
       }}
     >
-      {/* ================================================================== */}
-      {/* BACKGROUND IMAGE */}
-      {/* ================================================================== */}
+      {/* Background Image */}
       <Box
         sx={{
           position: 'fixed',
@@ -222,7 +157,7 @@ const Home: React.FC = () => {
           backgroundImage: 'url(/images/home-bg.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          opacity: 0.77,
+          opacity: BACKGROUND_OPACITY,
           '&::after': {
             content: '""',
             position: 'absolute',
@@ -232,34 +167,26 @@ const Home: React.FC = () => {
         }}
       />
 
-      {/* ================================================================== */}
-      {/* HERO SECTION - Logo + Brand */}
-      {/* ================================================================== */}
+      {/* Hero Section - Logo + Brand */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <HeroSection />
       </ErrorBoundary>
 
-      {/* ================================================================== */}
-      {/* CATEGORY CAROUSELS - Rings & Gems */}
-      {/* ================================================================== */}
+      {/* Category Carousels - Rings & Gems */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <CategoryCarousels />
       </ErrorBoundary>
 
-      {/* ================================================================== */}
-      {/* PRODUCTS SECTION - High visibility, right after carousels */}
-      {/* ================================================================== */}
+      {/* Products Section - High visibility */}
       {newProducts.length > 0 && (
         <ErrorBoundary FallbackComponent={ErrorFallback}>
-          <Suspense fallback={<SectionSkeleton height={200} />}>
+          <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.products} />}>
             <ProductsSection products={newProducts} />
           </Suspense>
         </ErrorBoundary>
       )}
 
-      {/* ================================================================== */}
-      {/* ORACLE SECTION - Daily wisdom */}
-      {/* ================================================================== */}
+      {/* Oracle Section - Daily wisdom */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <OracleSection
           savedFacts={savedFacts}
@@ -268,36 +195,28 @@ const Home: React.FC = () => {
         />
       </ErrorBoundary>
 
-      {/* ================================================================== */}
-      {/* INSTALL APP PROMPT - Only shown when not installed */}
-      {/* ================================================================== */}
+      {/* Install App Prompt - Only shown when not installed */}
       {!isPWA() && (
         <Box sx={{ px: 2, mb: 2 }}>
           <InstallButton variant="card" />
         </Box>
       )}
 
-      {/* ================================================================== */}
-      {/* NOTIFICATION PERMISSION - Gentle prompt for notifications */}
-      {/* ================================================================== */}
+      {/* Notification Permission - Gentle prompt */}
       <Box sx={{ px: 2, mb: 2 }}>
         <NotificationPermission variant="card" />
       </Box>
 
-      {/* ================================================================== */}
-      {/* MEDITATION SECTION - Lazy loaded */}
-      {/* ================================================================== */}
+      {/* Meditation Section - Lazy loaded */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <Suspense fallback={<SectionSkeleton height={180} />}>
+        <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.meditation} />}>
           <MeditationSection />
         </Suspense>
       </ErrorBoundary>
 
-      {/* ================================================================== */}
-      {/* KNOWLEDGE SECTION - Lazy loaded */}
-      {/* ================================================================== */}
+      {/* Knowledge Section - Lazy loaded */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <Suspense fallback={<SectionSkeleton height={300} />}>
+        <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.knowledge} />}>
           <KnowledgeSection
             savedFacts={savedFacts}
             onSelectFact={handleSelectFact}
@@ -305,38 +224,29 @@ const Home: React.FC = () => {
         </Suspense>
       </ErrorBoundary>
 
-      {/* ================================================================== */}
-      {/* WELCOME CARD - Gamification stats at bottom */}
-      {/* ================================================================== */}
+      {/* Welcome Card - Gamification stats */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <Suspense fallback={<SectionSkeleton height={250} />}>
+        <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.welcome} />}>
           <WelcomeCard />
         </Suspense>
       </ErrorBoundary>
 
-      {/* ================================================================== */}
-      {/* FOOTER - Social links and contact */}
-      {/* ================================================================== */}
+      {/* Footer - Social links and contact */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <Suspense fallback={<SectionSkeleton height={150} />}>
+        <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.footer} />}>
           <Footer />
         </Suspense>
       </ErrorBoundary>
 
-      {/* ================================================================== */}
-      {/* WHATSAPP BUTTON - Floating contact button */}
-      {/* ================================================================== */}
+      {/* WhatsApp Button - Floating contact */}
       <WhatsAppButton />
 
-      {/* ================================================================== */}
-      {/* ACHIEVEMENT TOAST - Global notification for achievements */}
-      {/* ================================================================== */}
+      {/* Achievement Toast - Global notification */}
       <AchievementToast
         achievement={pendingAchievement}
         onDismiss={gamificationActions.dismissAchievement}
-        autoDismiss={5000}
+        autoDismiss={ANIMATION_DELAYS.achievementDismiss}
       />
-
     </Box>
   );
 };

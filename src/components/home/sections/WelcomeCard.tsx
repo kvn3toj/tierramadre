@@ -85,13 +85,15 @@ export const WelcomeCard: React.FC = () => {
               },
             }}
           >
-            <CardContent sx={{ p: 3, position: 'relative', zIndex: 1 }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 }, position: 'relative', zIndex: 1 }}>
               {/* Top Row: Streak + Level Progress */}
               <Box
                 sx={{
                   display: 'flex',
+                  flexDirection: { xs: 'column-reverse', sm: 'row' },
                   justifyContent: 'space-between',
-                  alignItems: 'flex-start',
+                  alignItems: { xs: 'stretch', sm: 'flex-start' },
+                  gap: { xs: 2, sm: 0 },
                   mb: 2,
                 }}
               >
@@ -101,13 +103,21 @@ export const WelcomeCard: React.FC = () => {
                     id="welcome-title"
                     variant="h5"
                     component="h2"
-                    sx={{ fontWeight: 700, mb: 0.5 }}
+                    sx={{
+                      fontWeight: 700,
+                      mb: 0.5,
+                      fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                    }}
                   >
                     {t.pages.home.welcome}
                   </Typography>
                   <Typography
                     variant="body2"
-                    sx={{ opacity: 0.9, mb: 1.5 }}
+                    sx={{
+                      opacity: 0.9,
+                      mb: 1.5,
+                      fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                    }}
                   >
                     Tu viaje esmeralda continúa
                   </Typography>
@@ -131,9 +141,11 @@ export const WelcomeCard: React.FC = () => {
                   <Box
                     sx={{
                       display: 'flex',
-                      flexDirection: 'column',
+                      flexDirection: { xs: 'row', sm: 'column' },
                       alignItems: 'center',
-                      ml: 2,
+                      justifyContent: { xs: 'flex-start', sm: 'center' },
+                      ml: { xs: 0, sm: 2 },
+                      gap: { xs: 1.5, sm: 0 },
                     }}
                   >
                     <ProgressRing
@@ -155,17 +167,29 @@ export const WelcomeCard: React.FC = () => {
                         {gamification.level}
                       </Typography>
                     </ProgressRing>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: goldAccent.light,
-                        fontWeight: 600,
-                        mt: 0.5,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {gamification.levelTitle}
-                    </Typography>
+                    <Box sx={{ display: { xs: 'flex', sm: 'block' }, flexDirection: 'column', alignItems: { xs: 'flex-start', sm: 'center' } }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: goldAccent.light,
+                          fontWeight: 600,
+                          mt: { xs: 0, sm: 0.5 },
+                          textAlign: { xs: 'left', sm: 'center' },
+                        }}
+                      >
+                        {gamification.levelTitle}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: { xs: 'block', sm: 'none' },
+                          color: 'rgba(255,255,255,0.6)',
+                          fontSize: '0.7rem',
+                        }}
+                      >
+                        Nivel {gamification.level}
+                      </Typography>
+                    </Box>
                   </Box>
                 </motion.div>
               </Box>

@@ -89,16 +89,24 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
               id="products-title"
               variant="h6"
               component="h2"
-              sx={{ fontWeight: 600, color: 'white' }}
+              sx={{
+                fontWeight: 600,
+                color: 'white',
+                fontSize: { xs: '1rem', sm: '1.25rem' },
+              }}
             >
               {t.pages.home.newProducts}
             </Typography>
             <Button
               size="small"
-              endIcon={<ArrowForward />}
+              endIcon={<ArrowForward sx={{ fontSize: { xs: 16, sm: 20 } }} />}
               onClick={() => navigate('/inventory')}
               aria-label="Ver todo el inventario"
-              sx={{ color: emeraldCore.light || emeraldCore.primary }}
+              sx={{
+                color: emeraldCore.light || emeraldCore.primary,
+                fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                minWidth: 'auto',
+              }}
             >
               Ver Todo
             </Button>
@@ -151,8 +159,8 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                     onClick={() => handleProductClick(product.item)}
                     onKeyDown={(e) => handleProductKeyDown(e, product.item)}
                     sx={{
-                      minWidth: 160,
-                      maxWidth: 160,
+                      minWidth: { xs: 140, sm: 160 },
+                      maxWidth: { xs: 140, sm: 160 },
                       bgcolor: 'rgba(0,0,0,0.4)',
                       backdropFilter: 'blur(10px)',
                       cursor: 'pointer',
@@ -171,22 +179,34 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                   >
                     <CardMedia
                       component="img"
-                      height="120"
+                      sx={{
+                        height: { xs: 100, sm: 120 },
+                        objectFit: 'cover',
+                      }}
                       image={product.imagen || '/placeholder-emerald.jpg'}
                       alt={product.nombre || 'Esmeralda colombiana'}
                       loading="lazy"
-                      sx={{ objectFit: 'cover' }}
                     />
-                    <CardContent sx={{ p: 1.5, bgcolor: 'transparent' }}>
+                    <CardContent sx={{ p: { xs: 1, sm: 1.5 }, bgcolor: 'transparent' }}>
                       <Typography
                         variant="body2"
                         component="h3"
-                        sx={{ fontWeight: 600, color: 'white' }}
+                        sx={{
+                          fontWeight: 600,
+                          color: 'white',
+                          fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                        }}
                         noWrap
                       >
                         {product.nombre || `Esmeralda #${product.item}`}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'rgba(255,255,255,0.7)',
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        }}
+                      >
                         {typeof product.peso === 'number' ? `${product.peso} ct` : product.peso}
                       </Typography>
                     </CardContent>
