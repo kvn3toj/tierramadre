@@ -24,6 +24,7 @@ import {
   IconButton,
   SwipeableDrawer,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import {
   Search,
   LayoutGrid,
@@ -103,7 +104,7 @@ interface FilterContentProps {
   qualities: string[];
   priceMinMax: { min: number; max: number };
   isLight: boolean;
-  theme: ReturnType<typeof useTheme>;
+  theme: Theme;
 }
 
 const FilterContent = memo(function FilterContent({
