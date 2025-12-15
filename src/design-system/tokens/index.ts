@@ -33,6 +33,10 @@ import {
   goldenSplit,
 } from './primitives/geometry';
 
+// Migrated tokens (sacred brand & motion)
+import { brandTokens, colors as sacredColors, typography as sacredTypography, geometry as sacredGeometry } from './brand';
+import { motionTokens, duration as animDuration, easing as animEasing, spring as animSpring, cardVariants, fadeInUp, staggerContainer, staggerItem, scaleIn } from './motion';
+
 // Semantics
 import { brand, brandColors, brandGradients, statusColors, inventoryStatus } from './semantic/brand';
 import { surface, surfaceBackgrounds, elevatedSurfaces, glassSurfaces, borderColors, overlayBackgrounds, backdropFilters } from './semantic/surface';
@@ -70,6 +74,10 @@ export { surface, surfaceBackgrounds, elevatedSurfaces, glassSurfaces, borderCol
 export { text, textColors, brandText, statusText, linkColors, placeholderText, inverseText };
 export { interactive, interactionStates, buttonStates, inputStates, cardStates, toggleStates, selectionStates, listItemStates };
 export { document, documentColors, goldColors, documentShadows, documentTypography, logoConfig };
+
+// Migrated tokens exports
+export { brandTokens, sacredColors, sacredTypography, sacredGeometry };
+export { motionTokens, animDuration, animEasing, animSpring, cardVariants, fadeInUp, staggerContainer, staggerItem, scaleIn };
 
 // Types
 export type { PrimitiveColors } from './primitives/colors';

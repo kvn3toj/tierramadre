@@ -25,7 +25,7 @@ import {
 } from '@mui/material';
 import { ExpandMore, CheckCircle, CircleOutlined } from '@mui/icons-material';
 import { KNOWLEDGE_CATEGORIES, DAILY_ORACLES, DailyOracle } from '../../../data/homeContent';
-import { fadeInUp } from '../../../theme/motionTokens';
+import { fadeInUp } from '../../../design-system/tokens/motion';
 
 // =============================================================================
 // TYPES

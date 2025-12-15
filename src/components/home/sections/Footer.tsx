@@ -8,7 +8,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography, IconButton, Link } from '@mui/material';
 import { Instagram, Language, WhatsApp } from '@mui/icons-material';
-import { fadeInUp } from '../../../theme/motionTokens';
+import { fadeInUp } from '../../../design-system/tokens/motion';
 
 // =============================================================================
 // CONSTANTS

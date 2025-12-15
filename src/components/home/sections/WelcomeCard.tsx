@@ -13,7 +13,7 @@ import { Box, Typography, Card, CardContent } from '@mui/material';
 import { goldAccent } from '../../../design-system/tokens/colors';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useStreakTracking } from '../hooks/useStreakTracking';
-import { cardVariants, fadeInUp, spring } from '../../../theme/motionTokens';
+import { cardVariants, fadeInUp, spring } from '../../../design-system/tokens/motion';
 import { StreakBadge, ProgressRing, useGamification } from '../gamification';
 
 // =============================================================================

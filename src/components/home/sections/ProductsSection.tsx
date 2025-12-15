@@ -22,7 +22,7 @@ import { ArrowForward } from '@mui/icons-material';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { InventoryItem } from '../../../types';
-import { fadeInUp, staggerContainer, staggerItem, cardVariants } from '../../../theme/motionTokens';
+import { fadeInUp, staggerContainer, staggerItem, cardVariants } from '../../../design-system/tokens/motion';
 
 // =============================================================================
 // TYPES
