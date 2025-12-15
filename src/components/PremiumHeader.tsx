@@ -7,15 +7,7 @@ import {
   getTokens,
   getShadows,
   getHeaderStyles,
-  // Legacy exports for backwards compatibility
-  studioColors,
-  studioGradients,
-  studioShadows,
-  studioCardStyles,
 } from '../design-system';
-
-// Re-export design system tokens for backwards compatibility
-export { studioColors, studioGradients, studioShadows, studioCardStyles };
 
 interface PremiumHeaderProps {
   title: string;
