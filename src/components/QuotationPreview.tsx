@@ -44,32 +44,9 @@ import {
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { documentColors, documentShadows } from '../design-system/tokens';
-
-// Brand colors from design system
-const brandColors = {
-  emerald: documentColors.emerald.primary,      // #00AE7A
-  emeraldDark: documentColors.emerald.deep,     // #006B4B
-  emeraldLight: documentColors.emerald.light,   // #66FFCF
-  gold: documentColors.gold.primary,            // #D4AF37
-  goldLight: documentColors.gold.light,         // #F5D76E
-  background: documentColors.background.container, // #F2F2F7 - Light background
-  cream: documentColors.background.paper,       // #FAF9F6
-  gray: documentColors.text.secondary,          // #6B7A8A
-  lightGray: '#F1F5F9',
-  textPrimary: documentColors.text.primary,     // #1C1C1E
-  border: documentColors.border.default,        // #D1D9E0
-};
-
-// Format currency
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
+import { documentShadows } from '../design-system/tokens';
+import { brandColors } from './cotizacion/constants';
+import { formatFullCurrency as formatCurrency } from '../utils/formatting';
 
 // Generate quotation number
 const generateQuotationNumber = (): string => {
