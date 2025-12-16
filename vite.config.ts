@@ -1,92 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
+// PWA disabled - vite-plugin-pwa not generating files correctly
+// import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   // Use relative paths for Electron compatibility
   base: '/',
   plugins: [
     react(),
-    VitePWA({
-      registerType: 'autoUpdate', // Auto-update for faster deployments
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
-      manifest: {
-        name: 'Tierra Madre Studio',
-        short_name: 'TM Studio',
-        description: 'Internal Advertising Agency - Emerald Collection Management',
-        theme_color: '#00AE7A',
-        background_color: '#000000',
-        display: 'standalone',
-        orientation: 'any',
-        scope: '/',
-        start_url: '/?source=pwa',
-        categories: ['business', 'productivity', 'photo'],
-        prefer_related_applications: false,
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
-        // Exclude large catalog images from precache
-        globIgnores: ['**/catalog-media/**', '**/node_modules/**'],
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3MB max (main JS bundle is ~2.5MB)
-        // Skip waiting to activate new SW immediately
-        skipWaiting: true,
-        clientsClaim: true,
-        // Clean old caches on update
-        cleanupOutdatedCaches: true,
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            // Cache Cloudinary images with stale-while-revalidate
-            urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/i,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'cloudinary-images',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
-      },
-      devOptions: {
-        enabled: false
-      }
-    })
+    // PWA temporarily disabled due to SW generation issues
+    // Re-enable when vite-plugin-pwa is working correctly
   ],
   server: {
     port: 3000,
@@ -104,19 +27,62 @@ export default defineConfig({
     // Optimize chunk splitting for better caching
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Core vendor libraries
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          // UI framework
-          'vendor-mui': ['@mui/material', '@emotion/react', '@emotion/styled'],
-          // PDF generation libraries (lazy loaded)
-          'pdf-libs': ['jspdf', 'html2canvas'],
-          // Virtualization (for inventory grid)
-          'virtualization': ['react-window', 'react-virtualized-auto-sizer'],
+        manualChunks(id) {
+          // React core
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'vendor-react';
+          }
+          // React Router
+          if (id.includes('node_modules/react-router') || id.includes('node_modules/@remix-run')) {
+            return 'vendor-router';
+          }
+          // MUI Base utilities
+          if (id.includes('node_modules/@mui/base') || id.includes('node_modules/@mui/utils')) {
+            return 'vendor-mui-base';
+          }
+          // MUI System (styling engine)
+          if (id.includes('node_modules/@mui/system') || id.includes('node_modules/@mui/styled-engine')) {
+            return 'vendor-mui-system';
+          }
+          // MUI icons - separate chunk (heavy)
+          if (id.includes('node_modules/@mui/icons-material')) {
+            return 'vendor-mui-icons';
+          }
+          // MUI Material components
+          if (id.includes('node_modules/@mui/material')) {
+            return 'vendor-mui-components';
+          }
+          // Emotion (CSS-in-JS)
+          if (id.includes('node_modules/@emotion')) {
+            return 'vendor-emotion';
+          }
+          // Framer Motion (animations)
+          if (id.includes('node_modules/framer-motion') || id.includes('node_modules/motion')) {
+            return 'vendor-framer';
+          }
+          // PDF generation
+          if (id.includes('node_modules/jspdf')) {
+            return 'vendor-jspdf';
+          }
+          if (id.includes('node_modules/html2canvas')) {
+            return 'vendor-html2canvas';
+          }
+          // Virtualization
+          if (id.includes('node_modules/react-window') || id.includes('node_modules/react-virtualized')) {
+            return 'vendor-virtual';
+          }
+          // DOMPurify
+          if (id.includes('node_modules/dompurify')) {
+            return 'vendor-purify';
+          }
+          // Floating UI (popovers)
+          if (id.includes('node_modules/@floating-ui')) {
+            return 'vendor-floating';
+          }
         },
       },
     },
-    // Warn at 1MB chunks (reasonable for lazy-loaded features)
-    chunkSizeWarningLimit: 1000,
+    // Warn at 650KB chunks (jspdf is 560KB, main app shell is ~616KB)
+    chunkSizeWarningLimit: 650,
   }
 })

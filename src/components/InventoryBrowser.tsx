@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -59,26 +59,33 @@ export default function InventoryBrowser() {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  // Note: We read URL params directly from window.location.search for reliable initial values
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_searchParams] = useSearchParams(); // Keep hook for React Router integration
 
   // Parse URL query params for initial filters
+  // Read directly from window.location.search for reliable initial values
+  const urlSearchString = typeof window !== 'undefined' ? window.location.search : '';
   const initialFiltersFromUrl = useMemo(() => {
     const filters: Record<string, any> = {};
 
-    const search = searchParams.get('search');
+    // Use window.location.search directly for reliable parsing
+    const urlParams = new URLSearchParams(urlSearchString);
+
+    const search = urlParams.get('search');
     if (search) filters.search = search;
 
-    const type = searchParams.get('type');
+    const type = urlParams.get('type');
     if (type === 'loose' || type === 'jewelry') filters.typeFilter = type;
 
-    const quality = searchParams.get('quality');
+    const quality = urlParams.get('quality');
     if (quality) filters.qualityFilter = quality;
 
-    const city = searchParams.get('city');
+    const city = urlParams.get('city');
     if (city === 'Cali' || city === 'Bogotá') filters.cityFilter = city;
 
-    const priceMin = searchParams.get('priceMin');
-    const priceMax = searchParams.get('priceMax');
+    const priceMin = urlParams.get('priceMin');
+    const priceMax = urlParams.get('priceMax');
     if (priceMin || priceMax) {
       filters.priceRange = [
         priceMin ? parseInt(priceMin, 10) : 0,
@@ -86,25 +93,25 @@ export default function InventoryBrowser() {
       ];
     }
 
-    const status = searchParams.get('status');
+    const status = urlParams.get('status');
     if (status === 'all' || status === 'available' || status === 'sold') {
       filters.statusFilter = status;
     }
 
-    const sort = searchParams.get('sort');
+    const sort = urlParams.get('sort');
     if (sort) filters.sortBy = sort;
 
-    const shape = searchParams.get('shape');
+    const shape = urlParams.get('shape');
     if (shape) filters.shapeFilter = shape;
 
-    const color = searchParams.get('color');
+    const color = urlParams.get('color');
     if (color) filters.colorFilter = color;
 
-    const coleccion = searchParams.get('coleccion');
+    const coleccion = urlParams.get('coleccion');
     if (coleccion) filters.coleccionFilter = coleccion;
 
     return filters;
-  }, [searchParams]);
+  }, [urlSearchString]);
 
   // Get inventory with media from hook
   const { inventory: inventoryData } = useInventory();
@@ -136,7 +143,57 @@ export default function InventoryBrowser() {
   // Clear filters handler
   const handleClearFilters = useCallback(() => {
     clearFilters();
+    // Clear URL params using history API directly
+    window.history.replaceState(null, '', window.location.pathname);
   }, [clearFilters]);
+
+  // Ref to track if this is initial mount (skip first sync)
+  const isInitialMount = useRef(true);
+  // Ref to track previous URL params string to avoid unnecessary updates
+  const prevUrlParams = useRef('');
+
+  // Sync filters to URL for persistence (using history API to avoid React Router loops)
+  useEffect(() => {
+    // Skip initial mount - URL already has params from navigation
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      // Initialize ref with current URL params
+      prevUrlParams.current = window.location.search.slice(1);
+      return;
+    }
+
+    const params = new URLSearchParams();
+
+    // Only add non-default values to URL
+    if (filters.search) params.set('search', filters.search);
+    if (filters.typeFilter !== 'all') params.set('type', filters.typeFilter);
+    if (filters.statusFilter !== 'all') params.set('status', filters.statusFilter);
+    if (filters.qualityFilter && filters.qualityFilter !== 'all') params.set('quality', filters.qualityFilter);
+    if (filters.colorFilter && filters.colorFilter !== 'all') params.set('color', filters.colorFilter);
+    if (filters.shapeFilter && filters.shapeFilter !== 'all') params.set('shape', filters.shapeFilter);
+    if (filters.cityFilter !== 'all') params.set('city', filters.cityFilter);
+    if (filters.coleccionFilter && filters.coleccionFilter !== 'all') params.set('coleccion', filters.coleccionFilter);
+    if (filters.sortBy !== 'price-desc') params.set('sort', filters.sortBy);
+
+    // Price range - only if modified from defaults
+    if (filters.priceRange[0] > 0) {
+      params.set('priceMin', String(filters.priceRange[0]));
+    }
+    if (filters.priceRange[1] < Number.MAX_SAFE_INTEGER) {
+      params.set('priceMax', String(filters.priceRange[1]));
+    }
+
+    const newParamsString = params.toString();
+
+    // Only update if params actually changed
+    if (newParamsString !== prevUrlParams.current) {
+      prevUrlParams.current = newParamsString;
+      const newUrl = newParamsString
+        ? `${window.location.pathname}?${newParamsString}`
+        : window.location.pathname;
+      window.history.replaceState(null, '', newUrl);
+    }
+  }, [filters]); // Only depend on filters - no React Router deps
 
   // Favorites hook
   const { isFavorite, toggleFavorite, favoritesCount } = useFavorites();

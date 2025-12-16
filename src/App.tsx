@@ -6,14 +6,13 @@ import { useAuth } from './hooks/useAuth';
 import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
 import LoadingFallback from './components/LoadingFallback';
-import UpdatePrompt from './components/pwa/UpdatePrompt';
+// PWA disabled - service worker not generating correctly
+// import UpdatePrompt from './components/pwa/UpdatePrompt';
 import { LiquidGlassProvider } from './contexts/LiquidGlassContext';
 
-// Primary routes - keep in main bundle (frequently used)
-import Home from './components/home';
-import InventoryBrowser from './components/InventoryBrowser';
-
-// Secondary routes - lazy load (less frequent, heavy dependencies)
+// All routes lazy loaded for optimal bundle splitting
+const Home = lazy(() => import('./components/home'));
+const InventoryBrowser = lazy(() => import('./components/InventoryBrowser'));
 const ProductDetail = lazy(() => import('./components/ProductDetail'));
 const AmbassadorsPage = lazy(() => import('./pages/AmbassadorsPage'));
 const AsesorProfilePage = lazy(() => import('./components/ambassador/AsesorProfile'));
@@ -51,10 +50,18 @@ function AppContent() {
     <>
       <IOSLayout>
         <Routes>
-          {/* Primary routes - no Suspense needed (in main bundle) */}
+          {/* Primary routes */}
           <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/inventory" element={<InventoryBrowser />} />
+          <Route path="/home" element={
+            <Suspense fallback={<LoadingFallback message="Cargando..." />}>
+              <Home />
+            </Suspense>
+          } />
+          <Route path="/inventory" element={
+            <Suspense fallback={<LoadingFallback message="Cargando inventario..." />}>
+              <InventoryBrowser />
+            </Suspense>
+          } />
 
           {/* Product detail */}
           <Route path="/product/:itemId" element={
@@ -137,7 +144,8 @@ function App() {
     <LiquidGlassProvider>
       <BrowserRouter>
         <AppContent />
-        <UpdatePrompt />
+        {/* PWA disabled - service worker not generating correctly */}
+        {/* <UpdatePrompt /> */}
       </BrowserRouter>
     </LiquidGlassProvider>
   );
