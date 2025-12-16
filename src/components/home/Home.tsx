@@ -41,6 +41,7 @@ import {
 import HeroSection from './sections/HeroSection';
 import CategoryCarousels from './sections/CategoryCarousels';
 import OracleSection from './sections/OracleSection';
+import InstagramSection from './sections/InstagramSection';
 
 // Below-the-fold sections - lazy load
 const MeditationSection = lazy(() => import('./sections/MeditationSection'));
@@ -206,6 +207,11 @@ const Home: React.FC = () => {
       <Box sx={{ px: 2, mb: 2 }}>
         <NotificationPermission variant="card" />
       </Box>
+
+      {/* Instagram Section - Profile preview */}
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <InstagramSection />
+      </ErrorBoundary>
 
       {/* Meditation Section - Lazy loaded */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>

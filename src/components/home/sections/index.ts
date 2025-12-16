@@ -7,6 +7,7 @@
 export { default as HeroSection } from './HeroSection';
 export { default as CategoryCarousels } from './CategoryCarousels';
 export { default as OracleSection } from './OracleSection';
+export { default as InstagramSection } from './InstagramSection';
 export { default as MeditationSection } from './MeditationSection';
 export { default as ProductsSection } from './ProductsSection';
 export { default as KnowledgeSection } from './KnowledgeSection';

@@ -46,13 +46,37 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
   const { inventory } = useInventory();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Local filter state for preview
-  const [localSearch, setLocalSearch] = useState('');
-  const [localTypeFilter, setLocalTypeFilter] = useState<TypeFilter>('all');
-  const [localQualityFilter, setLocalQualityFilter] = useState('all');
-  const [localCityFilter, setLocalCityFilter] = useState('all');
+  // Read initial values from URL params for persistence
+  const urlParams = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search)
+    : new URLSearchParams();
+
+  // Local filter state for preview - initialized from URL params
+  const [localSearch, setLocalSearch] = useState(urlParams.get('search') || '');
+  const [localTypeFilter, setLocalTypeFilter] = useState<TypeFilter>(
+    (urlParams.get('type') as TypeFilter) || 'all'
+  );
+  const [localQualityFilter, setLocalQualityFilter] = useState(urlParams.get('quality') || 'all');
+  const [localCityFilter, setLocalCityFilter] = useState(urlParams.get('city') || 'all');
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [localPriceRange, setLocalPriceRange] = useState<[number, number]>([0, Number.MAX_SAFE_INTEGER]);
+  const [localPriceRange, setLocalPriceRange] = useState<[number, number]>([
+    urlParams.get('priceMin') ? parseInt(urlParams.get('priceMin')!, 10) : 0,
+    urlParams.get('priceMax') ? parseInt(urlParams.get('priceMax')!, 10) : Number.MAX_SAFE_INTEGER
+  ]);
+
+  // Sync from URL when location changes (for back navigation)
+  const urlSearchString = typeof window !== 'undefined' ? window.location.search : '';
+  useEffect(() => {
+    const params = new URLSearchParams(urlSearchString);
+    const search = params.get('search');
+    if (search !== null) setLocalSearch(search);
+    const type = params.get('type') as TypeFilter;
+    if (type) setLocalTypeFilter(type);
+    const quality = params.get('quality');
+    if (quality) setLocalQualityFilter(quality);
+    const city = params.get('city');
+    if (city) setLocalCityFilter(city);
+  }, [urlSearchString]);
 
   // Use the filtering hook for preview results
   const {

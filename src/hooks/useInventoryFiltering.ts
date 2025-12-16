@@ -122,6 +122,23 @@ export function useInventoryFiltering({
     }
   }, [priceMinMax.min, priceMinMax.max, initialFilters.priceRange, inventory.length]);
 
+  // Sync filters from URL when navigating back (initialFilters changes)
+  // Use JSON.stringify to detect deep changes in the object
+  const initialFiltersKey = JSON.stringify(initialFilters);
+  useEffect(() => {
+    // Always sync search - even if it's empty string (to clear when URL param removed)
+    setSearch(initialFilters.search || '');
+    if (initialFilters.colorFilter) setColorFilter(initialFilters.colorFilter);
+    if (initialFilters.qualityFilter) setQualityFilter(initialFilters.qualityFilter);
+    if (initialFilters.typeFilter) setTypeFilter(initialFilters.typeFilter);
+    if (initialFilters.statusFilter) setStatusFilter(initialFilters.statusFilter);
+    if (initialFilters.shapeFilter) setShapeFilter(initialFilters.shapeFilter);
+    if (initialFilters.cityFilter) setCityFilter(initialFilters.cityFilter);
+    if (initialFilters.coleccionFilter) setColeccionFilter(initialFilters.coleccionFilter);
+    if (initialFilters.sortBy) setSortBy(initialFilters.sortBy);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFiltersKey]);
+
   // Get unique filter options from inventory
   const filterOptions = useMemo(() => {
     const colors = new Set<string>();
