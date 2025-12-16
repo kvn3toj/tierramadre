@@ -36,4 +36,6 @@ export type { MoreToolConfig } from './IOSMoreSheet';
 
 export { default as IOSSettingsSheet } from './IOSSettingsSheet';
 
+export { default as GlobalSearchFAB } from './GlobalSearchFAB';
+
 export { default as IOSLayout } from './IOSLayout';

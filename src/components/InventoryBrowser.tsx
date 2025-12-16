@@ -11,8 +11,6 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Button,
-  Fab,
-  Tooltip,
   Badge,
   IconButton,
   SwipeableDrawer,
@@ -20,7 +18,6 @@ import {
 import {
   LayoutGrid,
   List,
-  Plus,
   SearchX,
   Heart,
   X,
@@ -43,7 +40,6 @@ import { useSavedFilters } from '../hooks/useSavedFilters';
 import { useInventoryAnalytics } from '../hooks/useInventoryAnalytics';
 import { InventoryItem, TrustScoreBreakdown } from '../types';
 import CertificationUpload from './CertificationUpload';
-import AddToInventoryModal from './AddToInventoryModal';
 import { calculateTrustScore } from '../utils/trustScore';
 import { formatCurrency, formatFullCurrency, getColorDot } from '../utils/formatting';
 // Design System Tokens
@@ -64,6 +60,7 @@ export default function InventoryBrowser() {
   const isLight = mode === 'light';
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const isInitialMount = useRef(true);
 
   // Parse URL query params for initial filters
   const initialFiltersFromUrl = useMemo(() => {
@@ -148,11 +145,11 @@ export default function InventoryBrowser() {
     if (filters.search) params.set('search', filters.search);
     if (filters.typeFilter !== 'all') params.set('type', filters.typeFilter);
     if (filters.statusFilter !== 'all') params.set('status', filters.statusFilter);
-    if (filters.qualityFilter) params.set('quality', filters.qualityFilter);
-    if (filters.colorFilter) params.set('color', filters.colorFilter);
-    if (filters.shapeFilter) params.set('shape', filters.shapeFilter);
+    if (filters.qualityFilter && filters.qualityFilter !== 'all') params.set('quality', filters.qualityFilter);
+    if (filters.colorFilter && filters.colorFilter !== 'all') params.set('color', filters.colorFilter);
+    if (filters.shapeFilter && filters.shapeFilter !== 'all') params.set('shape', filters.shapeFilter);
     if (filters.cityFilter !== 'all') params.set('city', filters.cityFilter);
-    if (filters.sortBy !== 'newest') params.set('sort', filters.sortBy);
+    if (filters.sortBy !== 'price-desc') params.set('sort', filters.sortBy);
 
     // Price range - only if not default
     const defaultMin = filterOptions.priceMinMax.min || 0;
@@ -164,9 +161,11 @@ export default function InventoryBrowser() {
       params.set('priceMax', String(filters.priceRange[1]));
     }
 
-    // Update URL without adding to history (use replace)
-    setSearchParams(params, { replace: true });
-  }, [filters, filterOptions.priceMinMax, setSearchParams]);
+    // Only update URL if params actually changed (prevents infinite loop)
+    if (params.toString() !== searchParams.toString()) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [filters, filterOptions.priceMinMax, searchParams]);
 
   // Favorites hook
   const { isFavorite, toggleFavorite, favoritesCount } = useFavorites();
@@ -268,9 +267,6 @@ export default function InventoryBrowser() {
   // Certification dialog state
   const [certDialogOpen, setCertDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
-
-  // Add to inventory modal state
-  const [addInventoryOpen, setAddInventoryOpen] = useState(false);
 
   // Stats for header - calculated from actual inventory data (not static)
   const stats = useMemo(() => {
@@ -1040,34 +1036,6 @@ export default function InventoryBrowser() {
           onSave={handleSaveCertifications}
         />
       )}
-
-      {/* Floating Action Button - Add to Inventory */}
-      <Tooltip title="Agregar producto al inventario" placement="left">
-        <Fab
-          color="primary"
-          onClick={() => setAddInventoryOpen(true)}
-          sx={{
-            position: 'fixed',
-            bottom: 100,
-            right: 24,
-            bgcolor: emeraldCore.dark,
-            '&:hover': { bgcolor: emeraldCore.darker },
-            boxShadow: '0 4px 20px rgba(5, 150, 105, 0.4)',
-          }}
-        >
-          <Plus size={24} />
-        </Fab>
-      </Tooltip>
-
-      {/* Add to Inventory Modal */}
-      <AddToInventoryModal
-        open={addInventoryOpen}
-        onClose={() => setAddInventoryOpen(false)}
-        onSuccess={(itemNumber) => {
-          console.log('New product added:', itemNumber);
-          // Optionally refresh the inventory
-        }}
-      />
 
       {/* Comparison Bar - Sticky bottom bar */}
       <ComparisonBar
