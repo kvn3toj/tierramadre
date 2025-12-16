@@ -25,9 +25,12 @@ const AmbassadorsPage: React.FC<AmbassadorsPageProps> = ({ onViewProducts, onCon
   return (
     <Box>
       {!isUnlocked && !forceUnlocked ? (
-        <VaultGate onUnlock={() => {
-          setForceUnlocked(true);
-        }} />
+        <VaultGate
+          variant="ambassadors"
+          onUnlock={() => {
+            setForceUnlocked(true);
+          }}
+        />
       ) : (
         <AmbassadorDirectory
           onViewProducts={onViewProducts}

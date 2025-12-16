@@ -1,8 +1,9 @@
 /**
  * VaultGate Component
  *
- * PIN lock screen for Secret Vault access
- * - Luxury design with vault aesthetics
+ * PIN lock screen for protected sections
+ * - Customizable for different contexts (Vault, Ambassadors, etc.)
+ * - Luxury design with configurable aesthetics
  * - 4-digit PIN input
  * - Attempt limiting with cooldown
  * - Animated unlock transition
@@ -10,7 +11,7 @@
 
 import React, { useState } from 'react';
 import { Box, Typography, TextField, Button, Alert, alpha } from '@mui/material';
-import { Vault, Lock, Sparkles, ChevronRight } from 'lucide-react';
+import { Vault, Lock, Sparkles, ChevronRight, Users, LucideIcon } from 'lucide-react';
 import { useVaultAccess } from '../hooks/useVaultAccess';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useThemeMode } from '../contexts/ThemeContext';
@@ -19,9 +20,32 @@ import { spacing } from '../design-system/tokens/primitives/spacing';
 
 interface VaultGateProps {
   onUnlock: () => void;
+  /** Custom title - defaults to vault title from translations */
+  title?: string;
+  /** Custom subtitle - defaults to vault subtitle from translations */
+  subtitle?: string;
+  /** Custom info badge text */
+  infoBadge?: string;
+  /** Custom icon component - defaults to Vault */
+  icon?: LucideIcon;
+  /** Custom button text - defaults to "Desbloquear Bóveda" */
+  buttonText?: string;
+  /** Custom accent color - defaults to goldAccent */
+  accentColor?: string;
+  /** Variant for different contexts */
+  variant?: 'vault' | 'ambassadors' | 'custom';
 }
 
-const VaultGate: React.FC<VaultGateProps> = ({ onUnlock }) => {
+const VaultGate: React.FC<VaultGateProps> = ({
+  onUnlock,
+  title,
+  subtitle,
+  infoBadge,
+  icon: CustomIcon,
+  buttonText,
+  accentColor,
+  variant = 'vault',
+}) => {
   const { t } = useLanguage();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -30,6 +54,33 @@ const VaultGate: React.FC<VaultGateProps> = ({ onUnlock }) => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [isUnlocking, setIsUnlocking] = useState(false);
+
+  // Determine content based on variant
+  const getVariantContent = () => {
+    switch (variant) {
+      case 'ambassadors':
+        return {
+          title: title || 'Directorio de Embajadores',
+          subtitle: subtitle || 'Acceso exclusivo para el equipo',
+          infoBadge: infoBadge || 'Información de asesores y embajadores',
+          Icon: CustomIcon || Users,
+          buttonText: buttonText || 'Acceder al Directorio',
+          accentColor: accentColor || emeraldCore.primary,
+        };
+      case 'vault':
+      default:
+        return {
+          title: title || t.pages.vault.title,
+          subtitle: subtitle || t.pages.vault.subtitle,
+          infoBadge: infoBadge || 'Acceso a tesoros únicos y exóticos',
+          Icon: CustomIcon || Vault,
+          buttonText: buttonText || 'Desbloquear Bóveda',
+          accentColor: accentColor || goldAccent.primary,
+        };
+    }
+  };
+
+  const content = getVariantContent();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,8 +131,8 @@ const VaultGate: React.FC<VaultGateProps> = ({ onUnlock }) => {
           borderRadius: spacing.xl,
           bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
           border: '2px solid',
-          borderColor: alpha(goldAccent.primary, 0.3),
-          boxShadow: `0 20px 60px ${alpha(goldAccent.primary, 0.2)}`,
+          borderColor: alpha(content.accentColor, 0.3),
+          boxShadow: `0 20px 60px ${alpha(content.accentColor, 0.2)}`,
         }}
       >
         {/* Icon */}
@@ -90,7 +141,7 @@ const VaultGate: React.FC<VaultGateProps> = ({ onUnlock }) => {
             width: 80,
             height: 80,
             borderRadius: '50%',
-            bgcolor: alpha(goldAccent.primary, 0.1),
+            bgcolor: alpha(content.accentColor, 0.1),
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -102,13 +153,13 @@ const VaultGate: React.FC<VaultGateProps> = ({ onUnlock }) => {
               position: 'absolute',
               inset: -2,
               borderRadius: '50%',
-              background: `linear-gradient(135deg, ${goldAccent.primary}, ${emeraldCore.primary})`,
+              background: `linear-gradient(135deg, ${content.accentColor}, ${emeraldCore.primary})`,
               opacity: 0.3,
               filter: 'blur(8px)',
             },
           }}
         >
-          <Vault size={40} color={goldAccent.primary} />
+          <content.Icon size={40} color={content.accentColor} />
         </Box>
 
         {/* Title */}
@@ -122,7 +173,7 @@ const VaultGate: React.FC<VaultGateProps> = ({ onUnlock }) => {
             mb: 1,
           }}
         >
-          {t.pages.vault.title}
+          {content.title}
         </Typography>
 
         <Typography
@@ -133,7 +184,7 @@ const VaultGate: React.FC<VaultGateProps> = ({ onUnlock }) => {
             mb: 4,
           }}
         >
-          {t.pages.vault.subtitle}
+          {content.subtitle}
         </Typography>
 
         {/* Info Badge */}
@@ -146,21 +197,21 @@ const VaultGate: React.FC<VaultGateProps> = ({ onUnlock }) => {
             mb: 3,
             p: 2,
             borderRadius: spacing.md,
-            bgcolor: alpha(emeraldCore.primary, 0.05),
+            bgcolor: alpha(content.accentColor, 0.05),
             border: '1px solid',
-            borderColor: alpha(emeraldCore.primary, 0.2),
+            borderColor: alpha(content.accentColor, 0.2),
           }}
         >
-          <Sparkles size={16} color={emeraldCore.primary} />
+          <Sparkles size={16} color={content.accentColor} />
           <Typography
             variant="body2"
             sx={{
-              color: emeraldCore.dark,
+              color: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
               fontWeight: 500,
               fontSize: '14px',
             }}
           >
-            Acceso a tesoros únicos y exóticos
+            {content.infoBadge}
           </Typography>
         </Box>
 
@@ -196,7 +247,7 @@ const VaultGate: React.FC<VaultGateProps> = ({ onUnlock }) => {
             InputProps={{
               startAdornment: (
                 <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
-                  <Lock size={20} color={goldAccent.primary} />
+                  <Lock size={20} color={content.accentColor} />
                 </Box>
               ),
             }}
@@ -234,15 +285,15 @@ const VaultGate: React.FC<VaultGateProps> = ({ onUnlock }) => {
             sx={{
               py: 1.5,
               borderRadius: spacing.md,
-              background: `linear-gradient(135deg, ${goldAccent.primary} 0%, ${goldAccent.dark} 100%)`,
+              background: `linear-gradient(135deg, ${content.accentColor} 0%, ${alpha(content.accentColor, 0.8)} 100%)`,
               color: 'white',
               fontWeight: 600,
               fontSize: '16px',
               textTransform: 'none',
-              boxShadow: `0 4px 16px ${alpha(goldAccent.primary, 0.4)}`,
+              boxShadow: `0 4px 16px ${alpha(content.accentColor, 0.4)}`,
               '&:hover': {
-                background: `linear-gradient(135deg, ${goldAccent.dark} 0%, ${goldAccent.primary} 100%)`,
-                boxShadow: `0 6px 20px ${alpha(goldAccent.primary, 0.5)}`,
+                background: `linear-gradient(135deg, ${alpha(content.accentColor, 0.9)} 0%, ${content.accentColor} 100%)`,
+                boxShadow: `0 6px 20px ${alpha(content.accentColor, 0.5)}`,
               },
               '&:disabled': {
                 bgcolor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
@@ -250,7 +301,7 @@ const VaultGate: React.FC<VaultGateProps> = ({ onUnlock }) => {
               },
             }}
           >
-            {isUnlocking ? 'Desbloqueando...' : 'Desbloquear Bóveda'}
+            {isUnlocking ? 'Desbloqueando...' : content.buttonText}
           </Button>
         </form>
 

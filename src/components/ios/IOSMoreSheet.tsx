@@ -41,7 +41,7 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     subtitle: t.tools.vault.subtitle,
     icon: Vault as any,
     route: '/boveda-secreta',
-    color: '#D4AF37', // Gold
+    color: '#D4AF37', // Gold accent
   },
   {
     id: 'accounts',
@@ -49,7 +49,7 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     subtitle: t.tools.accounts.subtitle,
     icon: AccountBalance,
     route: '/cuentas',
-    color: '#3F51B5', // Blue
+    color: primitiveColors.emerald[500], // Emerald from design system
   },
 ];
 
@@ -324,17 +324,35 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                   display: 'flex',
                   alignItems: 'center',
                   gap: spacing.sm,
-                  padding: spacing.sm,
-                  backgroundColor: 'var(--surface-primary)',
-                  borderRadius: spacing.md,
+                  padding: spacing.md,
+                  background: effectiveConfig.blur
+                    ? `linear-gradient(135deg, ${tool.color}08 0%, ${tool.color}03 100%)`
+                    : 'var(--surface-primary)',
+                  borderRadius: spacing.lg,
                   cursor: 'pointer',
+                  border: '1px solid',
+                  borderColor: `${tool.color}20`,
                   transition: effectiveConfig.animations
                     ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
                     : 'none',
+                  position: 'relative',
+                  overflow: 'hidden',
+
+                  '&::before': effectiveConfig.specular ? {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: '10%',
+                    right: '10%',
+                    height: '1px',
+                    background: `linear-gradient(90deg, transparent, ${tool.color}30, transparent)`,
+                  } : {},
 
                   '&:hover': {
-                    backgroundColor: 'var(--surface-tertiary)',
-                    transform: effectiveConfig.animations ? 'scale(1.01)' : 'none',
+                    backgroundColor: `${tool.color}10`,
+                    borderColor: `${tool.color}40`,
+                    transform: effectiveConfig.animations ? 'scale(1.02)' : 'none',
+                    boxShadow: `0 4px 16px ${tool.color}20`,
                   },
                   '&:active': {
                     transform: effectiveConfig.animations ? 'scale(0.98)' : 'none',
@@ -344,17 +362,18 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                 {/* Icon Container */}
                 <Box
                   sx={{
-                    width: '44px',
-                    height: '44px',
+                    width: '48px',
+                    height: '48px',
                     borderRadius: spacing.md,
-                    backgroundColor: `${tool.color}15`,
+                    background: `linear-gradient(135deg, ${tool.color}20 0%, ${tool.color}10 100%)`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
+                    boxShadow: `0 2px 8px ${tool.color}15`,
                   }}
                 >
-                  <Icon sx={{ fontSize: '24px', color: tool.color }} />
+                  <Icon sx={{ fontSize: '26px', color: tool.color }} />
                 </Box>
 
                 {/* Text Content */}
@@ -382,7 +401,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                 </Box>
 
                 {/* Chevron */}
-                <Box sx={{ color: 'var(--text-quaternary)', fontSize: '20px' }}>›</Box>
+                <Box sx={{ color: tool.color, fontSize: '20px', opacity: 0.6 }}>›</Box>
               </Box>
             );
           })}
