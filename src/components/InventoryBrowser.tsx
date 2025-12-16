@@ -139,6 +139,12 @@ export default function InventoryBrowser() {
 
   // Sync filters to URL whenever they change (for persistence across navigation)
   useEffect(() => {
+    // Skip initial mount to prevent race conditions with inventory loading
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     const params = new URLSearchParams();
 
     // Only add non-default values to URL
