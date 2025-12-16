@@ -88,11 +88,11 @@ function normalizeHeader(h) {
 /**
  * Map row data to inventory item
  *
- * UPDATED 2024-12-14 - Actual column structure:
+ * UPDATED 2024-12-15 - Actual column structure:
  * A = Item (0)
- * B = FECHA INGRESO (1)
+ * B = FECHA INGRESO INVENTARIO (1)
  * C = Nombre (2)
- * D = Peso ct (3)
+ * D = Peso (ct) (3)
  * E = Color (4)
  * F = Calidad (5)
  * G = Cant. (6)
@@ -105,6 +105,8 @@ function normalizeHeader(h) {
  * N = ASESOR (13)
  * O = ESTADO (14)
  * P = QR (15)
+ * Q = Colección (16)
+ * R = CAJA (17)
  */
 function mapRowToInventoryItem(row, headers) {
   // Normalize all headers once
@@ -162,6 +164,9 @@ function mapRowToInventoryItem(row, headers) {
     ubicacion: getValue('ubicacion', 'ubicación', 'location', 'lugar') || getByIndex(12) || '',
     asesor: getValue('asesor', 'advisor', 'vendedor', 'seller') || getByIndex(13) || '',
     estado: (getValue('estado', 'status', 'disponibilidad') || getByIndex(14) || 'DISPONIBLE').toUpperCase(),
+    qr: getValue('qr') || getByIndex(15) || '',
+    coleccion: getValue('coleccion', 'colección', 'collection', 'catalogo', 'catálogo') || getByIndex(16) || '',
+    caja: getValue('caja', 'box') || getByIndex(17) || '',
     imageUrl: imageUrl,
     isJewelry: pesoData.isJewelry,
     metalType: pesoData.metalType,
