@@ -33,6 +33,7 @@ export interface InventoryFilters {
   sortBy: SortOption;
   cantidadFilter: string; // 'all' | '1' | '2+'
   cityFilter: CityFilter;
+  coleccionFilter: string; // 'all' | specific collection name
 }
 
 export interface UseInventoryFilteringOptions {
@@ -53,6 +54,7 @@ export interface UseInventoryFilteringReturn {
   setSortBy: (sort: SortOption) => void;
   setCantidadFilter: (cantidad: string) => void;
   setCityFilter: (city: CityFilter) => void;
+  setColeccionFilter: (coleccion: string) => void;
   clearFilters: () => void;
   hasFilters: boolean;
 
@@ -72,6 +74,7 @@ export interface UseInventoryFilteringReturn {
     shapes: string[];
     qualities: string[];
     cantidades: number[];
+    colecciones: string[];
     priceMinMax: { min: number; max: number };
   };
 }
@@ -110,6 +113,7 @@ export function useInventoryFiltering({
   const [sortBy, setSortBy] = useState<SortOption>(initialFilters.sortBy || 'price-desc');
   const [cantidadFilter, setCantidadFilter] = useState(initialFilters.cantidadFilter || 'all');
   const [cityFilter, setCityFilter] = useState<CityFilter>(initialFilters.cityFilter || 'all');
+  const [coleccionFilter, setColeccionFilter] = useState(initialFilters.coleccionFilter || 'all');
 
   // Sync priceRange to full range when inventory loads (ensures all products shown by default)
   useEffect(() => {
@@ -124,12 +128,14 @@ export function useInventoryFiltering({
     const shapes = new Set<string>();
     const qualities = new Set<string>();
     const cantidades = new Set<number>();
+    const colecciones = new Set<string>();
 
     inventory.forEach(item => {
       if (item.color) colors.add(item.color);
       if (item.talla) shapes.add(item.talla);
       if (item.calidad) qualities.add(item.calidad);
       if (item.cantidad) cantidades.add(item.cantidad);
+      if (item.coleccion) colecciones.add(item.coleccion);
     });
 
     return {
@@ -137,6 +143,7 @@ export function useInventoryFiltering({
       shapes: Array.from(shapes).sort(),
       qualities: Array.from(qualities).sort(),
       cantidades: Array.from(cantidades).sort((a, b) => a - b),
+      colecciones: Array.from(colecciones).sort(),
       priceMinMax,
     };
   }, [inventory, priceMinMax]);
@@ -174,10 +181,11 @@ export function useInventoryFiltering({
         (cantidadFilter === '1' && item.cantidad === 1) ||
         (cantidadFilter === '2+' && item.cantidad > 1);
       const matchesCity = cityFilter === 'all' || item.city === cityFilter;
+      const matchesColeccion = coleccionFilter === 'all' || item.coleccion === coleccionFilter;
 
-      return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice && matchesCantidad && matchesCity;
+      return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice && matchesCantidad && matchesCity && matchesColeccion;
     });
-  }, [inventory, search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, cantidadFilter, cityFilter]);
+  }, [inventory, search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, cantidadFilter, cityFilter, coleccionFilter]);
 
   // Sort inventory based on selected option, with image priority
   const sortedInventory = useMemo(() => {
@@ -255,6 +263,7 @@ export function useInventoryFiltering({
     setShapeFilter('all');
     setCantidadFilter('all');
     setCityFilter('all');
+    setColeccionFilter('all');
     setPriceRange([priceMinMax.min, priceMinMax.max]);
   }, [priceMinMax]);
 
@@ -269,10 +278,11 @@ export function useInventoryFiltering({
       shapeFilter !== 'all' ||
       cantidadFilter !== 'all' ||
       cityFilter !== 'all' ||
+      coleccionFilter !== 'all' ||
       priceRange[0] !== priceMinMax.min ||
       priceRange[1] !== priceMinMax.max
     );
-  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, cityFilter, priceRange, priceMinMax]);
+  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, cityFilter, coleccionFilter, priceRange, priceMinMax]);
 
   // Memoize filters object to prevent infinite re-render loops in URL sync
   const filters = useMemo(() => ({
@@ -286,7 +296,8 @@ export function useInventoryFiltering({
     sortBy,
     cantidadFilter,
     cityFilter,
-  }), [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, cityFilter]);
+    coleccionFilter,
+  }), [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, cityFilter, coleccionFilter]);
 
   return {
     filters,
@@ -300,6 +311,7 @@ export function useInventoryFiltering({
     setSortBy,
     setCantidadFilter,
     setCityFilter,
+    setColeccionFilter,
     clearFilters,
     hasFilters,
     filteredInventory,

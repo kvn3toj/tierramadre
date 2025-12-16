@@ -120,6 +120,7 @@ export default function InventoryBrowser() {
     setSortBy,
     setCantidadFilter,
     setCityFilter,
+    setColeccionFilter,
     clearFilters,
     hasFilters,
     sortedInventory,
@@ -211,7 +212,7 @@ export default function InventoryBrowser() {
   );
 
   // Destructure filter values for convenience
-  const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, cityFilter } = filters;
+  const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, cityFilter, coleccionFilter } = filters;
 
   // Mobile detection
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -285,7 +286,7 @@ export default function InventoryBrowser() {
   }, [inventoryData]);
 
   // Filter options from hook for convenience
-  const { colors, shapes, qualities, priceMinMax } = filterOptions;
+  const { colors, shapes, qualities, colecciones, priceMinMax } = filterOptions;
 
   // Calculate trust scores for all items (memoized)
   const itemTrustScores = useMemo(() => {
@@ -338,9 +339,10 @@ export default function InventoryBrowser() {
     if (statusFilter !== 'available') count++;
     if (shapeFilter !== 'all') count++;
     if (cantidadFilter !== 'all') count++;
+    if (coleccionFilter !== 'all') count++;
     if (priceRange[0] !== priceMinMax.min || priceRange[1] !== priceMinMax.max) count++;
     return count;
-  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, priceRange, priceMinMax]);
+  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, coleccionFilter, priceRange, priceMinMax]);
 
   // Props for the memoized FilterContent component
   const filterContentProps: FilterContentProps = {
@@ -360,6 +362,8 @@ export default function InventoryBrowser() {
     setShapeFilter,
     qualityFilter,
     setQualityFilter,
+    coleccionFilter,
+    setColeccionFilter,
     priceRange,
     setPriceRange,
     showAdvancedFilters,
@@ -372,6 +376,7 @@ export default function InventoryBrowser() {
     colors,
     shapes,
     qualities,
+    colecciones,
     priceMinMax,
     isLight,
     theme,

@@ -53,6 +53,8 @@ export interface FilterContentProps {
   setShapeFilter: (value: string) => void;
   qualityFilter: string;
   setQualityFilter: (value: string) => void;
+  coleccionFilter: string;
+  setColeccionFilter: (value: string) => void;
   priceRange: [number, number];
   setPriceRange: (value: [number, number]) => void;
   showAdvancedFilters: boolean;
@@ -65,6 +67,7 @@ export interface FilterContentProps {
   colors: string[];
   shapes: string[];
   qualities: string[];
+  colecciones: string[];
   priceMinMax: { min: number; max: number };
   isLight: boolean;
   theme: Theme;
@@ -87,6 +90,8 @@ export const FilterContent = memo(function FilterContent({
   setShapeFilter,
   qualityFilter,
   setQualityFilter,
+  coleccionFilter,
+  setColeccionFilter,
   priceRange,
   setPriceRange,
   showAdvancedFilters,
@@ -99,6 +104,7 @@ export const FilterContent = memo(function FilterContent({
   colors,
   shapes,
   qualities,
+  colecciones,
   priceMinMax,
   isLight,
   theme,
@@ -315,6 +321,28 @@ export const FilterContent = memo(function FilterContent({
               ))}
             </Select>
           </FormControl>
+
+          {/* Colección filter */}
+          {colecciones.length > 0 && (
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <Select
+                value={coleccionFilter}
+                onChange={(e) => setColeccionFilter(e.target.value)}
+                displayEmpty
+                sx={{
+                  borderRadius: 2,
+                  bgcolor: coleccionFilter !== 'all' ? alpha(emeraldCore.primary, 0.1) : 'transparent',
+                }}
+              >
+                <MenuItem value="all">Colección</MenuItem>
+                {colecciones.map((coleccion) => (
+                  <MenuItem key={coleccion} value={coleccion}>
+                    {coleccion}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
         </Box>
 
         {/* Price Range Slider */}

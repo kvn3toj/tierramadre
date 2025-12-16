@@ -273,6 +273,8 @@ export interface InventoryItem {
   asesor: string;
   estado: InventoryStatus;
   caja?: string;
+  qr?: string;                      // QR code data (Column P)
+  coleccion?: string;               // Collection/Catalog label for grouping (Column Q)
   isJewelry: boolean;  // Computed: true if peso is "Plata" or "Oro 18k"
   metalType?: 'Plata' | 'Oro 18k';
 
