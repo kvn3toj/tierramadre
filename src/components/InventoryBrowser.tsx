@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -59,8 +59,7 @@ export default function InventoryBrowser() {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const isInitialMount = useRef(true);
+  const [searchParams] = useSearchParams();
 
   // Parse URL query params for initial filters
   const initialFiltersFromUrl = useMemo(() => {
@@ -101,6 +100,9 @@ export default function InventoryBrowser() {
     const color = searchParams.get('color');
     if (color) filters.colorFilter = color;
 
+    const coleccion = searchParams.get('coleccion');
+    if (coleccion) filters.coleccionFilter = coleccion;
+
     return filters;
   }, [searchParams]);
 
@@ -131,48 +133,10 @@ export default function InventoryBrowser() {
     initialFilters: initialFiltersFromUrl,
   });
 
-  // Clear URL params when filters are cleared
+  // Clear filters handler
   const handleClearFilters = useCallback(() => {
     clearFilters();
-    // Clear URL params
-    setSearchParams(new URLSearchParams());
-  }, [clearFilters, setSearchParams]);
-
-  // Sync filters to URL whenever they change (for persistence across navigation)
-  useEffect(() => {
-    // Skip initial mount to prevent race conditions with inventory loading
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-
-    const params = new URLSearchParams();
-
-    // Only add non-default values to URL
-    if (filters.search) params.set('search', filters.search);
-    if (filters.typeFilter !== 'all') params.set('type', filters.typeFilter);
-    if (filters.statusFilter !== 'all') params.set('status', filters.statusFilter);
-    if (filters.qualityFilter && filters.qualityFilter !== 'all') params.set('quality', filters.qualityFilter);
-    if (filters.colorFilter && filters.colorFilter !== 'all') params.set('color', filters.colorFilter);
-    if (filters.shapeFilter && filters.shapeFilter !== 'all') params.set('shape', filters.shapeFilter);
-    if (filters.cityFilter !== 'all') params.set('city', filters.cityFilter);
-    if (filters.sortBy !== 'price-desc') params.set('sort', filters.sortBy);
-
-    // Price range - only if not default
-    const defaultMin = filterOptions.priceMinMax.min || 0;
-    const defaultMax = filterOptions.priceMinMax.max || Number.MAX_SAFE_INTEGER;
-    if (filters.priceRange[0] > defaultMin) {
-      params.set('priceMin', String(filters.priceRange[0]));
-    }
-    if (filters.priceRange[1] < defaultMax) {
-      params.set('priceMax', String(filters.priceRange[1]));
-    }
-
-    // Only update URL if params actually changed (prevents infinite loop)
-    if (params.toString() !== searchParams.toString()) {
-      setSearchParams(params, { replace: true });
-    }
-  }, [filters, filterOptions.priceMinMax, searchParams]);
+  }, [clearFilters]);
 
   // Favorites hook
   const { isFavorite, toggleFavorite, favoritesCount } = useFavorites();
