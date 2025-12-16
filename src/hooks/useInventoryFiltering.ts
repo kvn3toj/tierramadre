@@ -274,19 +274,22 @@ export function useInventoryFiltering({
     );
   }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, cityFilter, priceRange, priceMinMax]);
 
+  // Memoize filters object to prevent infinite re-render loops in URL sync
+  const filters = useMemo(() => ({
+    search,
+    colorFilter,
+    qualityFilter,
+    typeFilter,
+    statusFilter,
+    shapeFilter,
+    priceRange,
+    sortBy,
+    cantidadFilter,
+    cityFilter,
+  }), [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, cityFilter]);
+
   return {
-    filters: {
-      search,
-      colorFilter,
-      qualityFilter,
-      typeFilter,
-      statusFilter,
-      shapeFilter,
-      priceRange,
-      sortBy,
-      cantidadFilter,
-      cityFilter,
-    },
+    filters,
     setSearch,
     setColorFilter,
     setQualityFilter,

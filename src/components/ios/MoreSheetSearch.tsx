@@ -141,7 +141,7 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
 
   return (
     <Box>
-      {/* Search Input */}
+      {/* Search Input - Enhanced for mobile */}
       <Box component="form" onSubmit={handleSearch}>
         <TextField
           fullWidth
@@ -150,6 +150,10 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
           inputRef={searchInputRef}
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -162,16 +166,23 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
                   component="button"
                   type="button"
                   onClick={() => setLocalSearch('')}
+                  aria-label="Limpiar búsqueda"
                   sx={{
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
                     padding: 0.5,
                     display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     color: 'var(--text-tertiary)',
+                    transition: 'color 0.2s ease',
+                    '&:hover': {
+                      color: primitiveColors.emerald[500],
+                    },
                   }}
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </Box>
               </InputAdornment>
             ),
@@ -180,9 +191,10 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             '& .MuiOutlinedInput-root': {
               backgroundColor: 'var(--surface-primary)',
               borderRadius: spacing.md,
-              fontSize: '16px',
+              fontSize: '16px', // Prevents iOS zoom on focus
               '& fieldset': {
                 borderColor: 'var(--border-default)',
+                borderWidth: 1.5,
               },
               '&:hover fieldset': {
                 borderColor: primitiveColors.emerald[500],
@@ -193,7 +205,8 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
               },
             },
             '& .MuiInputBase-input': {
-              padding: '12px 0',
+              padding: '14px 0',
+              fontSize: '16px',
             },
           }}
         />

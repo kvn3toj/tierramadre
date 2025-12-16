@@ -15,6 +15,7 @@ import IOSTabBar from './IOSTabBar';
 import IOSNavigationBar, { NavigationBarMode, NavigationAction } from './IOSNavigationBar';
 import IOSMoreSheet from './IOSMoreSheet';
 import IOSSettingsSheet from './IOSSettingsSheet';
+import GlobalSearchFAB from './GlobalSearchFAB';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -207,6 +208,9 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
       </Box>
 
       <IOSTabBar onMoreClick={() => setMoreSheetOpen(true)} />
+
+      {/* Global Search FAB - accessible from all pages */}
+      <GlobalSearchFAB />
 
       <IOSMoreSheet
         open={moreSheetOpen}
