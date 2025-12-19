@@ -37,9 +37,10 @@ import { floatingLayers, liquidSaturation } from '../../design-system/tokens/liq
 import { floatingLayerShadows } from '../../design-system/tokens/shadows';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 
-// Pages where FAB should be hidden (already have prominent search)
+// Pages where FAB should be hidden (already have prominent search or not relevant)
 const HIDDEN_PAGES = [
-  '/inventory', // Already has search in filters
+  '/inventory',    // Already has search in filters
+  '/ambassadors',  // Ambassadors page searches asesores, not inventory
 ];
 
 interface GlobalSearchFABProps {
