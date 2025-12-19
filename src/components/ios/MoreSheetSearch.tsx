@@ -64,10 +64,13 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
     urlParams.get('priceMax') ? parseInt(urlParams.get('priceMax')!, 10) : Number.MAX_SAFE_INTEGER
   ]);
 
-  // Sync from URL when location changes (for back navigation)
-  const urlSearchString = typeof window !== 'undefined' ? window.location.search : '';
+  // Sync from URL on mount only (not on every render to prevent loops)
+  const urlSyncDone = useRef(false);
   useEffect(() => {
-    const params = new URLSearchParams(urlSearchString);
+    if (urlSyncDone.current) return;
+    urlSyncDone.current = true;
+
+    const params = new URLSearchParams(window.location.search);
     const search = params.get('search');
     if (search !== null) setLocalSearch(search);
     const type = params.get('type') as TypeFilter;
@@ -76,7 +79,7 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
     if (quality) setLocalQualityFilter(quality);
     const city = params.get('city');
     if (city) setLocalCityFilter(city);
-  }, [urlSearchString]);
+  }, []);
 
   // Use the filtering hook for preview results
   const {
@@ -109,9 +112,11 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
     );
   }, [localSearch, localTypeFilter, localQualityFilter, localCityFilter, localPriceRange, filterOptions.priceMinMax]);
 
-  // Sync price range when filter options load
+  // Sync price range when filter options load - only once to prevent loops
+  const priceRangeInitRef = useRef(false);
   useEffect(() => {
-    if (filterOptions.priceMinMax.max > 0) {
+    if (!priceRangeInitRef.current && filterOptions.priceMinMax.max > 0) {
+      priceRangeInitRef.current = true;
       setLocalPriceRange([filterOptions.priceMinMax.min, filterOptions.priceMinMax.max]);
     }
   }, [filterOptions.priceMinMax.min, filterOptions.priceMinMax.max]);
