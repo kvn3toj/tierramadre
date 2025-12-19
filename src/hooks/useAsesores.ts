@@ -1,11 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { InventoryItem } from '../types';
 
-// Cache configuration - version bump invalidates old cache
-const CACHE_VERSION = 'v3'; // Increment to invalidate old cache (now reading from sheet 3)
-const ASESORES_CACHE_KEY = `tierramadre-asesores-cache-${CACHE_VERSION}`;
-const ASESORES_CACHE_TTL = 2 * 60 * 1000; // 2 minutes (reduced for fresher data)
-
 export interface Asesor {
   id: string;
   name: string;
@@ -58,18 +53,7 @@ export function useAsesores(inventory?: InventoryItem[]): UseAsesoresReturn {
       setIsLoading(true);
       setError(null);
 
-      // Check cache first
-      const cached = localStorage.getItem(ASESORES_CACHE_KEY);
-      if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < ASESORES_CACHE_TTL) {
-          setAsesores(dedupeAsesores(data));
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      // Fetch from API
+      // Always fetch fresh from API - no cache
       const response = await fetch('/api/get-asesores');
       if (!response.ok) throw new Error('Failed to fetch asesores');
 
@@ -77,11 +61,6 @@ export function useAsesores(inventory?: InventoryItem[]): UseAsesoresReturn {
       if (result.success && result.asesores) {
         const deduped = dedupeAsesores(result.asesores);
         setAsesores(deduped);
-        // Cache the deduplicated result
-        localStorage.setItem(ASESORES_CACHE_KEY, JSON.stringify({
-          data: deduped,
-          timestamp: Date.now()
-        }));
       }
     } catch (err) {
       console.warn('Could not load asesores from Google Sheets:', err);
