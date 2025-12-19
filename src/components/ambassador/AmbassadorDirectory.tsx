@@ -59,7 +59,7 @@ export default function AmbassadorDirectory({
 
   // Load inventory and asesores from Google Sheets
   const { inventory } = useInventory();
-  const { asesores, isLoading, error, refreshAsesores } = useAsesores(inventory);
+  const { asesores, isLoading, error } = useAsesores(inventory);
 
   // Calculate aggregate stats
   const stats = useMemo(() => {
@@ -136,16 +136,8 @@ export default function AmbassadorDirectory({
   if (error) {
     return (
       <Box>
-        <Alert
-          severity="warning"
-          sx={{ mb: 2 }}
-          action={
-            <Button color="inherit" size="small" onClick={refreshAsesores}>
-              Reintentar
-            </Button>
-          }
-        >
-          No se pudieron cargar los asesores: {error}
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          No se pudieron cargar los asesores. Recarga la página para intentar de nuevo.
         </Alert>
       </Box>
     );
