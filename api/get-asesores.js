@@ -102,38 +102,32 @@ export default async function handler(req, res) {
       });
     }
 
-    // Find asesor column index from header row
+    // Find relevant column indices from header row
     const headers = rows[0].map(h => h ? h.toLowerCase().trim() : '');
-    const asesorColumnIndex = headers.findIndex(h =>
-      h.includes('asesor') || h.includes('advisor') || h.includes('vendedor')
+
+    // Look for name column (Nombre, Name, Asesor)
+    const nameColumnIndex = headers.findIndex(h =>
+      h === 'nombre' || h === 'name' || h.includes('asesor') || h.includes('vendedor')
     );
 
-    if (asesorColumnIndex === -1) {
+    if (nameColumnIndex === -1) {
       return res.status(200).json({
         success: true,
         asesores: [],
-        message: 'No asesor column found in sheet',
+        message: 'No name column found in sheet',
         headers: rows[0],
         availableSheets: sheetNames
       });
     }
 
-    // Extract unique asesores from inventory data
-    const dataRows = rows.slice(1);
+    // Find optional columns for additional data
+    const whatsappIndex = headers.findIndex(h => h.includes('whatsapp') || h.includes('telefono') || h.includes('phone'));
+    const especialidadIndex = headers.findIndex(h => h.includes('especialidad') || h.includes('specialty'));
+    const instagramIndex = headers.findIndex(h => h.includes('instagram') || h.includes('ig'));
+    const estadoIndex = headers.findIndex(h => h === 'estado' || h === 'status');
 
-    // Normalize name: uppercase, remove ALL non-letter characters
-    const normalizeName = (name) => {
-      const str = String(name || '');
-      let result = '';
-      for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        // Keep only A-Z (65-90) and a-z (97-122) after converting to uppercase
-        if ((char >= 65 && char <= 90) || (char >= 97 && char <= 122)) {
-          result += str[i].toUpperCase();
-        }
-      }
-      return result;
-    };
+    // Extract asesores from dedicated sheet
+    const dataRows = rows.slice(1);
 
     // Format display name (clean but preserve original style)
     const formatDisplayName = (name) => {
@@ -143,31 +137,33 @@ export default async function handler(req, res) {
         .trim();
     };
 
-    // Get unique asesores using normalized comparison
-    const seenNormalized = new Set();
-    const uniqueAsesores = [];
+    // Build asesor objects with all available data
+    const asesoresData = [];
 
-    dataRows.forEach(row => {
-      const name = row[asesorColumnIndex];
+    dataRows.forEach((row, index) => {
+      const name = row[nameColumnIndex];
       if (!name || String(name).trim() === '') return;
 
-      const displayName = formatDisplayName(name);
-      const normalized = normalizeName(name);
-
-      if (!seenNormalized.has(normalized)) {
-        seenNormalized.add(normalized);
-        uniqueAsesores.push(displayName);
+      // Check if asesor is active (if estado column exists)
+      if (estadoIndex !== -1) {
+        const estado = String(row[estadoIndex] || '').toLowerCase();
+        if (estado === 'inactivo' || estado === 'inactive') return;
       }
+
+      const displayName = formatDisplayName(name);
+
+      asesoresData.push({
+        id: `asesor_${index + 1}`,
+        name: displayName,
+        slug: displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+        whatsapp: whatsappIndex !== -1 ? row[whatsappIndex] || null : null,
+        especialidad: especialidadIndex !== -1 ? row[especialidadIndex] || null : null,
+        instagram: instagramIndex !== -1 ? row[instagramIndex] || null : null,
+      });
     });
 
-    const asesores = uniqueAsesores.sort((a, b) => a.localeCompare(b, 'es'));
-
-    // Create asesor objects with basic info
-    const asesoresData = asesores.map((name, index) => ({
-      id: `asesor_${index + 1}`,
-      name: name,
-      slug: name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-    }));
+    // Sort by name
+    asesoresData.sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
     return res.status(200).json({
       success: true,
