@@ -174,6 +174,47 @@ function mapRowToInventoryItem(row, headers) {
 }
 
 /**
+ * Fetch pricing data from CUALIFICACION-PRECIO sheet
+ * Returns a map of item number -> { precioCOP, precioInternacional }
+ */
+async function fetchPricingData(sheets) {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'CUALIFICACION-PRECIO!A:J', // Column A=Item, H=Internacional, J=Nacional
+    });
+
+    const rows = response.data.values;
+    if (!rows || rows.length < 2) return {};
+
+    const pricingMap = {};
+    // Skip header row
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const itemNum = parseInt(row[0]);
+      if (isNaN(itemNum) || itemNum <= 0) continue;
+
+      // Column H (index 7) = Precio Internacional (PFU)
+      // Column J (index 9) = Precio Nacional (Descuento Nacional)
+      const precioInternacional = parsePrice(row[7]);
+      const precioNacional = parsePrice(row[9]);
+
+      if (precioInternacional > 0 || precioNacional > 0) {
+        pricingMap[itemNum] = {
+          precioCOP: precioNacional > 0 ? precioNacional : precioInternacional,
+          precioInternacional: precioInternacional,
+        };
+      }
+    }
+
+    return pricingMap;
+  } catch (error) {
+    console.warn('Could not fetch pricing data:', error.message);
+    return {};
+  }
+}
+
+/**
  * Main handler
  */
 export default async function handler(req, res) {
@@ -212,13 +253,16 @@ export default async function handler(req, res) {
       name.toLowerCase().includes('inventory')
     ) || sheetNames[0];
 
-    // Read all data from the sheet
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${targetSheet}!A:Z`,
-    });
+    // Fetch inventory and pricing data in parallel
+    const [inventoryResponse, pricingMap] = await Promise.all([
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${targetSheet}!A:Z`,
+      }),
+      fetchPricingData(sheets),
+    ]);
 
-    const rows = response.data.values;
+    const rows = inventoryResponse.data.values;
 
     if (!rows || rows.length === 0) {
       return res.status(200).json({
@@ -232,14 +276,24 @@ export default async function handler(req, res) {
     const headers = rows[0];
     const dataRows = rows.slice(1);
 
-    // Map rows to inventory items
+    // Map rows to inventory items and merge with pricing data
     const inventory = dataRows
       .filter(row => row.length > 0 && row.some(cell => cell)) // Skip empty rows
-      .map(row => mapRowToInventoryItem(row, headers))
+      .map(row => {
+        const item = mapRowToInventoryItem(row, headers);
+        // Merge pricing from CUALIFICACION-PRECIO sheet
+        const pricing = pricingMap[item.item];
+        if (pricing) {
+          item.precioCOP = pricing.precioCOP;
+          item.precioInternacional = pricing.precioInternacional;
+        }
+        return item;
+      })
       .filter(item => item.item > 0); // Only items with valid item number
 
     // Debug: include first row sample to verify data
     const sampleRow = dataRows[0] || [];
+    const pricingCount = Object.keys(pricingMap).length;
 
     return res.status(200).json({
       success: true,
@@ -251,6 +305,7 @@ export default async function handler(req, res) {
       _debug: {
         headers: headers.map((h, i) => `${String.fromCharCode(65 + i)}: ${h}`),
         sampleValues: sampleRow.slice(0, 16).map((v, i) => `${String.fromCharCode(65 + i)}: ${v}`),
+        pricingItemsFound: pricingCount,
       }
     });
 
