@@ -146,8 +146,8 @@ function mapRowToInventoryItem(row, headers) {
   // Get image URL from column K (Imagen) or column with URL
   const imageUrl = getValue('imagen', 'image', 'foto', 'photo', 'url imagen') || getByIndex(10) || '';
 
-  // Precio COP is in column L (index 11) - synced from CUALIFICACION sheet
-  const precioCOPValue = getValue('precio cop', 'preciocop', 'precio', 'price') || getByIndex(11);
+  // NOTE: precioCOP comes ONLY from CUALIFICACION-PRECIO sheet, not from Inventario
+  // Set to 0 here, will be populated by fetchPricingData merge
 
   return {
     item: parseInt(getValue('item', '#', 'numero', 'no.') || getByIndex(0) || 0),
@@ -160,7 +160,8 @@ function mapRowToInventoryItem(row, headers) {
     talla: getValue('talla', 'cut', 'corte', 'shape') || getByIndex(7) || '',
     medidas: getValue('medidas', 'medida', 'dimensions', 'dimensiones', 'size') || getByIndex(8) || '',
     medidasValores: getByIndex(9) || '',
-    precioCOP: parsePrice(precioCOPValue),
+    precioCOP: 0, // Populated from CUALIFICACION-PRECIO sheet only
+    precioInternacional: 0, // Populated from CUALIFICACION-PRECIO sheet only
     ubicacion: getValue('ubicacion', 'ubicación', 'location', 'lugar') || getByIndex(12) || '',
     asesor: getValue('asesor', 'advisor', 'vendedor', 'seller') || getByIndex(13) || '',
     estado: (getValue('estado', 'status', 'disponibilidad') || getByIndex(14) || 'DISPONIBLE').toUpperCase(),
