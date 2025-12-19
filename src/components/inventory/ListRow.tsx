@@ -140,7 +140,7 @@ function ListRow({
 
       {/* Price */}
       <Box sx={{ minWidth: 100, textAlign: 'right' }}>
-        <PriceDisplay price={item.precioCOP} compact />
+        <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
       </Box>
 
       {/* Action buttons */}

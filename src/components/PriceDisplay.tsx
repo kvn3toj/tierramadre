@@ -14,12 +14,12 @@ import { emeraldCore, semanticColors } from '../design-system/tokens/colors';
 export interface PriceDisplayProps {
   /** Precio nacional (ya con descuento aplicado) - el valor guardado en BD */
   price: number;
+  /** Precio internacional desde Google Sheets (Column H) */
+  precioInternacional?: number;
   /** Moneda (default: COP) */
   currency?: 'COP' | 'USD';
-  /** Mostrar precio internacional sin descuento */
+  /** Mostrar precio internacional (solo si precioInternacional está disponible) */
   showInternational?: boolean;
-  /** Porcentaje de descuento que ya fue aplicado (default: 0.20 = 20%) */
-  discountApplied?: number;
   /** Modo compacto para listas */
   compact?: boolean;
 }
@@ -51,24 +51,31 @@ const formatCompact = (value: number): string => {
 
 export const PriceDisplay = ({
   price, // Este es el precio NACIONAL (ya con descuento aplicado)
+  precioInternacional,
   currency = 'COP',
   showInternational = true,
-  discountApplied = 0.20,
   compact = false,
 }: PriceDisplayProps) => {
   const theme = useTheme();
   // price = nacional (ya descontado)
-  // internacional = nacional / (1 - descuento) = nacional / 0.8
+  // precioInternacional viene directamente de Google Sheets (Column H)
   const nationalPrice = price;
-  const internationalPrice = Math.round(price / (1 - discountApplied));
-  const discountPercent = Math.round(discountApplied * 100);
+  const internationalPrice = precioInternacional;
+
+  // Solo mostrar internacional si tenemos el precio desde Sheets Y showInternational es true
+  const shouldShowInternational = showInternational && internationalPrice !== undefined && internationalPrice > 0;
+
+  // Calcular descuento solo si tenemos ambos precios
+  const discountPercent = shouldShowInternational
+    ? Math.round(((internationalPrice - nationalPrice) / internationalPrice) * 100)
+    : 0;
 
   // Modo compacto para tarjetas en lista
   if (compact) {
     return (
       <Stack spacing={0.25}>
-        {/* Precio Internacional (calculado) - tachado, pequeño */}
-        {showInternational && (
+        {/* Precio Internacional (desde Sheets) - tachado, pequeño */}
+        {shouldShowInternational && internationalPrice && (
           <Typography
             variant="caption"
             sx={{
@@ -92,7 +99,7 @@ export const PriceDisplay = ({
           >
             🇨🇴 {formatCompact(nationalPrice)}
           </Typography>
-          {showInternational && (
+          {shouldShowInternational && discountPercent > 0 && (
             <Typography
               variant="caption"
               sx={{
@@ -112,8 +119,8 @@ export const PriceDisplay = ({
   // Modo completo para vista de detalle
   return (
     <Stack spacing={1.5} sx={{ width: '100%' }}>
-      {/* Precio Internacional (calculado) - mostrar solo si showInternational */}
-      {showInternational && (
+      {/* Precio Internacional (desde Sheets) - mostrar solo si disponible */}
+      {shouldShowInternational && internationalPrice && (
         <Box
           sx={{
             p: 2,
@@ -196,20 +203,22 @@ export const PriceDisplay = ({
                 Precio Colombia
               </Typography>
             </Stack>
-            <Chip
-              label={`Ahorra ${discountPercent}%`}
-              size="small"
-              icon={<LocalOfferIcon sx={{ fontSize: '0.9rem !important' }} />}
-              sx={{
-                bgcolor: semanticColors.warning.dark,
-                color: 'white',
-                fontWeight: 600,
-                fontSize: '0.7rem',
-                '& .MuiChip-icon': {
+            {shouldShowInternational && discountPercent > 0 && (
+              <Chip
+                label={`Ahorra ${discountPercent}%`}
+                size="small"
+                icon={<LocalOfferIcon sx={{ fontSize: '0.9rem !important' }} />}
+                sx={{
+                  bgcolor: semanticColors.warning.dark,
                   color: 'white',
-                },
-              }}
-            />
+                  fontWeight: 600,
+                  fontSize: '0.7rem',
+                  '& .MuiChip-icon': {
+                    color: 'white',
+                  },
+                }}
+              />
+            )}
           </Stack>
           <Typography
             variant="h4"
@@ -223,16 +232,18 @@ export const PriceDisplay = ({
           >
             {formatCurrency(nationalPrice, currency)}
           </Typography>
-          <Typography
-            variant="caption"
-            sx={{
-              color: emeraldCore.dark,
-              display: 'block',
-              mt: 0.5,
-            }}
-          >
-            Beneficio exclusivo para compradores en Colombia
-          </Typography>
+          {shouldShowInternational && (
+            <Typography
+              variant="caption"
+              sx={{
+                color: emeraldCore.dark,
+                display: 'block',
+                mt: 0.5,
+              }}
+            >
+              Beneficio exclusivo para compradores en Colombia
+            </Typography>
+          )}
         </Box>
     </Stack>
   );

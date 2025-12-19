@@ -369,7 +369,7 @@ function GridCard({
         >
           <TrustBadgeCompact score={trustScore} />
           <Box sx={{ textAlign: 'right' }}>
-            <PriceDisplay price={item.precioCOP} compact />
+            <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
           </Box>
         </Box>
       </CardContent>

@@ -614,7 +614,7 @@ export default function ProductDetail() {
             </Box>
 
             {/* Price - Dual display (International + National) */}
-            <PriceDisplay price={product.precioCOP} />
+            <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />
           </Box>
 
           <Divider sx={{ my: 3 }} />
