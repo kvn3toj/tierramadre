@@ -269,6 +269,7 @@ export interface InventoryItem {
   galleryCount?: number;     // Number of media items in gallery
   costoTM?: number;
   precioCOP: number;
+  precioInternacional?: number;  // International price from Google Sheets (Column H)
   ubicacion: string;
   asesor: string;
   estado: InventoryStatus;
