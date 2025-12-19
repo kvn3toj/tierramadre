@@ -36,25 +36,13 @@ export default defineConfig({
           if (id.includes('node_modules/react-router') || id.includes('node_modules/@remix-run')) {
             return 'vendor-router';
           }
-          // MUI Base utilities
-          if (id.includes('node_modules/@mui/base') || id.includes('node_modules/@mui/utils')) {
-            return 'vendor-mui-base';
-          }
-          // MUI System (styling engine)
-          if (id.includes('node_modules/@mui/system') || id.includes('node_modules/@mui/styled-engine')) {
-            return 'vendor-mui-system';
-          }
-          // MUI icons - separate chunk (heavy)
-          if (id.includes('node_modules/@mui/icons-material')) {
-            return 'vendor-mui-icons';
-          }
-          // MUI Material components
-          if (id.includes('node_modules/@mui/material')) {
-            return 'vendor-mui-components';
-          }
-          // Emotion (CSS-in-JS)
-          if (id.includes('node_modules/@emotion')) {
-            return 'vendor-emotion';
+          // MUI + Emotion combined (prevents initialization order issues)
+          // Emotion must load before MUI, so we bundle them together
+          if (
+            id.includes('node_modules/@mui/') ||
+            id.includes('node_modules/@emotion')
+          ) {
+            return 'vendor-mui';
           }
           // Framer Motion (animations)
           if (id.includes('node_modules/framer-motion') || id.includes('node_modules/motion')) {
@@ -82,7 +70,7 @@ export default defineConfig({
         },
       },
     },
-    // Warn at 650KB chunks (jspdf is 560KB, main app shell is ~616KB)
-    chunkSizeWarningLimit: 650,
+    // Warn at 750KB chunks (jspdf is 560KB, MUI+Emotion combined is larger)
+    chunkSizeWarningLimit: 750,
   }
 })
