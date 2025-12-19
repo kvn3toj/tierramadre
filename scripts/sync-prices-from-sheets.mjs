@@ -41,7 +41,6 @@ async function syncPricesFromSheets() {
   const sheets = google.sheets({ version: 'v4', auth });
 
   // 1. Read pricing data from CUALIFICACION-PRECIO
-  // Columns: A=Item, B=Nombre, H=Precio Internacional (PFU), J=Precio Nacional
   console.log('=== Leyendo CUALIFICACION -PRECIO ===');
   const pricingResponse = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -56,19 +55,13 @@ async function syncPricesFromSheets() {
   console.log(`  ${pricingData.length} filas de datos`);
 
   // Create price map by Item number
-  // Column A = Item, Column H = Precio Internacional (PFU), Column J = Precio Nacional
   const priceMap = new Map();
   for (const row of pricingData) {
     const item = parseInt(String(row[0]).replace(/\D/g, ''), 10);
     const precioInternacional = parsePrice(row[7]); // Column H (0-indexed = 7)
-    const precioNacional = parsePrice(row[9]); // Column J (0-indexed = 9)
 
     if (item && precioInternacional > 0) {
-      priceMap.set(item, {
-        precioInternacional,
-        precioNacional,
-      });
-      console.log(`  Item ${item}: Internacional=$${precioInternacional.toLocaleString()}, Nacional=$${precioNacional.toLocaleString()}`);
+      priceMap.set(item, precioInternacional);
     }
   }
 
@@ -79,41 +72,54 @@ async function syncPricesFromSheets() {
   let inventoryContent = fs.readFileSync(inventoryPath, 'utf-8');
 
   // 3. Update inventory items with precioInternacional
+  // Strategy: Find each item block and insert/update precioInternacional after precioCOP
   let updatedCount = 0;
   let skippedCount = 0;
 
-  for (const [itemNum, prices] of priceMap.entries()) {
-    // Find the item in inventory.ts and add precioInternacional after precioCOP
-    const itemPattern = new RegExp(
-      `(item:\\s*${itemNum},\\s*[\\s\\S]*?precioCOP:\\s*\\d+,)`,
-      'g'
-    );
+  for (const [itemNum, precioIntl] of priceMap.entries()) {
+    // More specific pattern: find "item: X," followed by content until "precioCOP: Y,"
+    // and ensure we stay within the same object (don't cross to next item)
 
-    const match = inventoryContent.match(itemPattern);
-    if (match) {
-      // Check if already has precioInternacional
-      if (inventoryContent.includes(`item: ${itemNum},`) &&
-          inventoryContent.match(new RegExp(`item:\\s*${itemNum},[\\s\\S]*?precioInternacional:`))) {
-        console.log(`  Item ${itemNum}: ya tiene precioInternacional, actualizando...`);
-        // Update existing value
-        const updatePattern = new RegExp(
-          `(item:\\s*${itemNum},[\\s\\S]*?)precioInternacional:\\s*\\d+`,
-          'g'
-        );
-        inventoryContent = inventoryContent.replace(updatePattern, `$1precioInternacional: ${prices.precioInternacional}`);
-        updatedCount++;
-      } else {
-        // Add new precioInternacional field
-        inventoryContent = inventoryContent.replace(
-          itemPattern,
-          `$1\n    precioInternacional: ${prices.precioInternacional},`
-        );
-        updatedCount++;
-        console.log(`  Item ${itemNum}: agregado precioInternacional=$${prices.precioInternacional.toLocaleString()}`);
-      }
-    } else {
+    // First, check if this item exists in the file
+    const itemExistsRegex = new RegExp(`item:\\s*${itemNum},`);
+    if (!itemExistsRegex.test(inventoryContent)) {
       console.log(`  Item ${itemNum}: no encontrado en inventory.ts`);
       skippedCount++;
+      continue;
+    }
+
+    // Check if already has precioInternacional for this item
+    // Find the item block and check within it
+    const hasIntlPriceRegex = new RegExp(
+      `item:\\s*${itemNum},[^}]*precioInternacional:`
+    );
+
+    if (hasIntlPriceRegex.test(inventoryContent)) {
+      // Update existing precioInternacional
+      const updateRegex = new RegExp(
+        `(item:\\s*${itemNum},[^}]*precioInternacional:\\s*)\\d+`,
+      );
+      inventoryContent = inventoryContent.replace(updateRegex, `$1${precioIntl}`);
+      console.log(`  Item ${itemNum}: actualizado precioInternacional=$${precioIntl.toLocaleString()}`);
+      updatedCount++;
+    } else {
+      // Add precioInternacional after precioCOP
+      // Pattern: find "item: X," ... "precioCOP: Y," and add precioInternacional after it
+      const addRegex = new RegExp(
+        `(item:\\s*${itemNum},[^}]*precioCOP:\\s*\\d+,)`,
+      );
+
+      if (addRegex.test(inventoryContent)) {
+        inventoryContent = inventoryContent.replace(
+          addRegex,
+          `$1\n    precioInternacional: ${precioIntl},`
+        );
+        console.log(`  Item ${itemNum}: agregado precioInternacional=$${precioIntl.toLocaleString()}`);
+        updatedCount++;
+      } else {
+        console.log(`  Item ${itemNum}: no se pudo encontrar precioCOP`);
+        skippedCount++;
+      }
     }
   }
 
