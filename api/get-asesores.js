@@ -72,16 +72,22 @@ export default async function handler(req, res) {
 
     const sheetNames = metadata.data.sheets.map(s => s.properties.title);
 
-    // Find inventory sheet
-    const inventorySheet = sheetNames.find(name =>
-      name.toLowerCase().includes('inventario') ||
-      name.toLowerCase().includes('inventory')
-    ) || sheetNames[0];
+    // Use sheet 3 (index 2) for asesores data, or find sheet with "asesor" in name
+    let asesoresSheet = sheetNames[2]; // Sheet 3 (0-indexed)
 
-    // Read all data from inventory sheet to extract asesores
+    // Fallback: look for sheet with "asesor" or "embajador" in name
+    if (!asesoresSheet) {
+      asesoresSheet = sheetNames.find(name =>
+        name.toLowerCase().includes('asesor') ||
+        name.toLowerCase().includes('embajador') ||
+        name.toLowerCase().includes('ambassador')
+      ) || sheetNames[0];
+    }
+
+    // Read all data from asesores sheet
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `'${inventorySheet}'!A:Z`,
+      range: `'${asesoresSheet}'!A:Z`,
     });
 
     const rows = response.data.values || [];
@@ -90,7 +96,8 @@ export default async function handler(req, res) {
       return res.status(200).json({
         success: true,
         asesores: [],
-        message: 'No data found in spreadsheet',
+        message: 'No data found in asesores sheet',
+        sheetName: asesoresSheet,
         availableSheets: sheetNames
       });
     }
@@ -105,7 +112,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         success: true,
         asesores: [],
-        message: 'No asesor column found in inventory',
+        message: 'No asesor column found in sheet',
         headers: rows[0],
         availableSheets: sheetNames
       });
@@ -166,7 +173,7 @@ export default async function handler(req, res) {
       success: true,
       asesores: asesoresData,
       count: asesoresData.length,
-      sheetName: inventorySheet,
+      sheetName: asesoresSheet,
       lastUpdated: new Date().toISOString()
     });
 
