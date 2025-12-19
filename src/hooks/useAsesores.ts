@@ -5,6 +5,10 @@ export interface Asesor {
   id: string;
   name: string;
   slug: string;
+  role?: string;
+  whatsapp?: string | null;
+  especialidad?: string | null;
+  email?: string | null;
   productCount?: number;
   products?: InventoryItem[];
 }
