@@ -24,53 +24,9 @@ export default defineConfig({
     ],
   },
   build: {
-    // Optimize chunk splitting for better caching
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          // React core
-          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
-            return 'vendor-react';
-          }
-          // React Router
-          if (id.includes('node_modules/react-router') || id.includes('node_modules/@remix-run')) {
-            return 'vendor-router';
-          }
-          // MUI + Emotion combined (prevents initialization order issues)
-          // Emotion must load before MUI, so we bundle them together
-          if (
-            id.includes('node_modules/@mui/') ||
-            id.includes('node_modules/@emotion')
-          ) {
-            return 'vendor-mui';
-          }
-          // Framer Motion (animations)
-          if (id.includes('node_modules/framer-motion') || id.includes('node_modules/motion')) {
-            return 'vendor-framer';
-          }
-          // PDF generation
-          if (id.includes('node_modules/jspdf')) {
-            return 'vendor-jspdf';
-          }
-          if (id.includes('node_modules/html2canvas')) {
-            return 'vendor-html2canvas';
-          }
-          // Virtualization
-          if (id.includes('node_modules/react-window') || id.includes('node_modules/react-virtualized')) {
-            return 'vendor-virtual';
-          }
-          // DOMPurify
-          if (id.includes('node_modules/dompurify')) {
-            return 'vendor-purify';
-          }
-          // Floating UI (popovers)
-          if (id.includes('node_modules/@floating-ui')) {
-            return 'vendor-floating';
-          }
-        },
-      },
-    },
-    // Warn at 750KB chunks (jspdf is 560KB, MUI+Emotion combined is larger)
-    chunkSizeWarningLimit: 750,
+    // Let Vite handle chunk splitting automatically
+    // Custom manualChunks was causing "Cannot access uninitialized variable" errors
+    // due to incorrect module ordering in the bundled output
+    chunkSizeWarningLimit: 800,
   }
 })
