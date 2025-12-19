@@ -181,7 +181,7 @@ async function fetchPricingData(sheets) {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: 'CUALIFICACION-PRECIO!A:J', // Column A=Item, H=Internacional, J=Nacional
+      range: "'CUALIFICACION -PRECIO'!A:J", // Column A=Item, H=Internacional, J=Nacional
     });
 
     const rows = response.data.values;
