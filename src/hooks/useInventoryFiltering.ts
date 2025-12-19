@@ -3,7 +3,7 @@
  * Manages inventory filtering, sorting, and search state.
  * Extracted from InventoryBrowser.tsx for reusability.
  */
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { InventoryItem } from '../types';
 import { fuzzyMatch } from '../utils/fuzzySearch';
 import { getSearchHits } from '../lib/analytics/inventoryAnalytics';
@@ -115,19 +115,42 @@ export function useInventoryFiltering({
   const [cityFilter, setCityFilter] = useState<CityFilter>(initialFilters.cityFilter || 'all');
   const [coleccionFilter, setColeccionFilter] = useState(initialFilters.coleccionFilter || 'all');
 
+  // Track if priceRange has been initialized to prevent re-syncing
+  const priceRangeInitialized = useRef(!!initialFilters.priceRange);
+
   // Sync priceRange to full range when inventory loads (ensures all products shown by default)
+  // Only run once to prevent infinite loops
   useEffect(() => {
-    if (!initialFilters.priceRange && inventory.length > 0) {
+    if (!priceRangeInitialized.current && inventory.length > 0 && priceMinMax.max > 0) {
+      priceRangeInitialized.current = true;
       setPriceRange([priceMinMax.min, priceMinMax.max]);
     }
-  }, [priceMinMax.min, priceMinMax.max, initialFilters.priceRange, inventory.length]);
+  }, [priceMinMax.min, priceMinMax.max, inventory.length]);
+
+  // Track previous search value to avoid unnecessary updates
+  const prevSearchRef = useRef(initialFilters.search || '');
 
   // Sync filters from URL when navigating back (initialFilters changes)
-  // Use JSON.stringify to detect deep changes in the object
-  const initialFiltersKey = JSON.stringify(initialFilters);
+  // Exclude priceRange from the key to prevent infinite loops
+  const initialFiltersKeyWithoutPrice = JSON.stringify({
+    search: initialFilters.search,
+    colorFilter: initialFilters.colorFilter,
+    qualityFilter: initialFilters.qualityFilter,
+    typeFilter: initialFilters.typeFilter,
+    statusFilter: initialFilters.statusFilter,
+    shapeFilter: initialFilters.shapeFilter,
+    cityFilter: initialFilters.cityFilter,
+    coleccionFilter: initialFilters.coleccionFilter,
+    sortBy: initialFilters.sortBy,
+  });
+
   useEffect(() => {
-    // Always sync search - even if it's empty string (to clear when URL param removed)
-    setSearch(initialFilters.search || '');
+    // Only sync search if it actually changed from URL navigation (not from user typing)
+    const newSearch = initialFilters.search || '';
+    if (newSearch !== prevSearchRef.current) {
+      prevSearchRef.current = newSearch;
+      setSearch(newSearch);
+    }
     if (initialFilters.colorFilter) setColorFilter(initialFilters.colorFilter);
     if (initialFilters.qualityFilter) setQualityFilter(initialFilters.qualityFilter);
     if (initialFilters.typeFilter) setTypeFilter(initialFilters.typeFilter);
@@ -137,7 +160,7 @@ export function useInventoryFiltering({
     if (initialFilters.coleccionFilter) setColeccionFilter(initialFilters.coleccionFilter);
     if (initialFilters.sortBy) setSortBy(initialFilters.sortBy);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialFiltersKey]);
+  }, [initialFiltersKeyWithoutPrice]);
 
   // Get unique filter options from inventory
   const filterOptions = useMemo(() => {
