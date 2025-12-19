@@ -55,13 +55,15 @@ async function syncPricesFromSheets() {
   console.log(`  ${pricingData.length} filas de datos`);
 
   // Create price map by Item number
+  // Column H = International price, Column J = National price (after 20% discount)
   const priceMap = new Map();
   for (const row of pricingData) {
     const item = parseInt(String(row[0]).replace(/\D/g, ''), 10);
     const precioInternacional = parsePrice(row[7]); // Column H (0-indexed = 7)
+    const precioNacional = parsePrice(row[9]); // Column J (0-indexed = 9)
 
     if (item && precioInternacional > 0) {
-      priceMap.set(item, precioInternacional);
+      priceMap.set(item, { internacional: precioInternacional, nacional: precioNacional });
     }
   }
 
@@ -76,9 +78,8 @@ async function syncPricesFromSheets() {
   let updatedCount = 0;
   let skippedCount = 0;
 
-  for (const [itemNum, precioIntl] of priceMap.entries()) {
-    // More specific pattern: find "item: X," followed by content until "precioCOP: Y,"
-    // and ensure we stay within the same object (don't cross to next item)
+  for (const [itemNum, prices] of priceMap.entries()) {
+    const { internacional, nacional } = prices;
 
     // First, check if this item exists in the file
     const itemExistsRegex = new RegExp(`item:\\s*${itemNum},`);
@@ -88,8 +89,15 @@ async function syncPricesFromSheets() {
       continue;
     }
 
-    // Check if already has precioInternacional for this item
-    // Find the item block and check within it
+    // 1. Update precioCOP (national price)
+    const updateCOPRegex = new RegExp(
+      `(item:\\s*${itemNum},[^}]*precioCOP:\\s*)\\d+`,
+    );
+    if (nacional > 0 && updateCOPRegex.test(inventoryContent)) {
+      inventoryContent = inventoryContent.replace(updateCOPRegex, `$1${nacional}`);
+    }
+
+    // 2. Update or add precioInternacional
     const hasIntlPriceRegex = new RegExp(
       `item:\\s*${itemNum},[^}]*precioInternacional:`
     );
@@ -99,12 +107,9 @@ async function syncPricesFromSheets() {
       const updateRegex = new RegExp(
         `(item:\\s*${itemNum},[^}]*precioInternacional:\\s*)\\d+`,
       );
-      inventoryContent = inventoryContent.replace(updateRegex, `$1${precioIntl}`);
-      console.log(`  Item ${itemNum}: actualizado precioInternacional=$${precioIntl.toLocaleString()}`);
-      updatedCount++;
+      inventoryContent = inventoryContent.replace(updateRegex, `$1${internacional}`);
     } else {
       // Add precioInternacional after precioCOP
-      // Pattern: find "item: X," ... "precioCOP: Y," and add precioInternacional after it
       const addRegex = new RegExp(
         `(item:\\s*${itemNum},[^}]*precioCOP:\\s*\\d+,)`,
       );
@@ -112,15 +117,13 @@ async function syncPricesFromSheets() {
       if (addRegex.test(inventoryContent)) {
         inventoryContent = inventoryContent.replace(
           addRegex,
-          `$1\n    precioInternacional: ${precioIntl},`
+          `$1\n    precioInternacional: ${internacional},`
         );
-        console.log(`  Item ${itemNum}: agregado precioInternacional=$${precioIntl.toLocaleString()}`);
-        updatedCount++;
-      } else {
-        console.log(`  Item ${itemNum}: no se pudo encontrar precioCOP`);
-        skippedCount++;
       }
     }
+
+    console.log(`  Item ${itemNum}: Nacional=$${nacional.toLocaleString()}, Internacional=$${internacional.toLocaleString()}`);
+    updatedCount++;
   }
 
   // 4. Write updated inventory.ts
