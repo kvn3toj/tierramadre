@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { InventoryItem } from '../types';
 
 // Cache configuration - version bump invalidates old cache
-const CACHE_VERSION = 'v2'; // Increment to invalidate old cache
+const CACHE_VERSION = 'v3'; // Increment to invalidate old cache (now reading from sheet 3)
 const ASESORES_CACHE_KEY = `tierramadre-asesores-cache-${CACHE_VERSION}`;
 const ASESORES_CACHE_TTL = 2 * 60 * 1000; // 2 minutes (reduced for fresher data)
 
