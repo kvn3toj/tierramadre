@@ -63,14 +63,13 @@ export default function InventoryBrowser() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_searchParams] = useSearchParams(); // Keep hook for React Router integration
 
-  // Parse URL query params for initial filters
-  // Read directly from window.location.search for reliable initial values
-  const urlSearchString = typeof window !== 'undefined' ? window.location.search : '';
+  // Parse URL query params for initial filters - ONLY ON MOUNT
+  // This prevents infinite loops where URL sync triggers re-parsing
   const initialFiltersFromUrl = useMemo(() => {
-    const filters: Record<string, any> = {};
+    if (typeof window === 'undefined') return {};
 
-    // Use window.location.search directly for reliable parsing
-    const urlParams = new URLSearchParams(urlSearchString);
+    const filters: Record<string, any> = {};
+    const urlParams = new URLSearchParams(window.location.search);
 
     const search = urlParams.get('search');
     if (search) filters.search = search;
@@ -111,7 +110,8 @@ export default function InventoryBrowser() {
     if (coleccion) filters.coleccionFilter = coleccion;
 
     return filters;
-  }, [urlSearchString]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps = only parse URL on mount, prevents infinite loop
 
   // Get inventory with media from hook
   const { inventory: inventoryData } = useInventory();
