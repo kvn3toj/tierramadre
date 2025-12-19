@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { InventoryItem } from '../types';
 
-// Cache configuration
-const ASESORES_CACHE_KEY = 'tierramadre-asesores-cache';
-const ASESORES_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+// Cache configuration - version bump invalidates old cache
+const CACHE_VERSION = 'v2'; // Increment to invalidate old cache
+const ASESORES_CACHE_KEY = `tierramadre-asesores-cache-${CACHE_VERSION}`;
+const ASESORES_CACHE_TTL = 2 * 60 * 1000; // 2 minutes (reduced for fresher data)
 
 export interface Asesor {
   id: string;
