@@ -22,7 +22,6 @@ import {
   Search,
   Grid3X3,
   List,
-  RefreshCw,
   Filter,
   Users,
   Package,
@@ -156,27 +155,18 @@ export default function AmbassadorDirectory({
     <Box>
       {/* Header */}
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 800,
-              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            {title}
-          </Typography>
-          <Button
-            size="small"
-            startIcon={<RefreshCw size={14} />}
-            onClick={refreshAsesores}
-            sx={{ textTransform: 'none' }}
-          >
-            Actualizar
-          </Button>
-        </Box>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 800,
+            background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            mb: 2,
+          }}
+        >
+          {title}
+        </Typography>
 
         {/* Stats Bar */}
         <Paper
