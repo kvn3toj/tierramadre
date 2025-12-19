@@ -127,40 +127,10 @@ export function useInventoryFiltering({
     }
   }, [priceMinMax.min, priceMinMax.max, inventory.length]);
 
-  // Track previous search value to avoid unnecessary updates
-  const prevSearchRef = useRef(initialFilters.search || '');
-
-  // Sync filters from URL when navigating back (initialFilters changes)
-  // Exclude priceRange from the key to prevent infinite loops
-  const initialFiltersKeyWithoutPrice = JSON.stringify({
-    search: initialFilters.search,
-    colorFilter: initialFilters.colorFilter,
-    qualityFilter: initialFilters.qualityFilter,
-    typeFilter: initialFilters.typeFilter,
-    statusFilter: initialFilters.statusFilter,
-    shapeFilter: initialFilters.shapeFilter,
-    cityFilter: initialFilters.cityFilter,
-    coleccionFilter: initialFilters.coleccionFilter,
-    sortBy: initialFilters.sortBy,
-  });
-
-  useEffect(() => {
-    // Only sync search if it actually changed from URL navigation (not from user typing)
-    const newSearch = initialFilters.search || '';
-    if (newSearch !== prevSearchRef.current) {
-      prevSearchRef.current = newSearch;
-      setSearch(newSearch);
-    }
-    if (initialFilters.colorFilter) setColorFilter(initialFilters.colorFilter);
-    if (initialFilters.qualityFilter) setQualityFilter(initialFilters.qualityFilter);
-    if (initialFilters.typeFilter) setTypeFilter(initialFilters.typeFilter);
-    if (initialFilters.statusFilter) setStatusFilter(initialFilters.statusFilter);
-    if (initialFilters.shapeFilter) setShapeFilter(initialFilters.shapeFilter);
-    if (initialFilters.cityFilter) setCityFilter(initialFilters.cityFilter);
-    if (initialFilters.coleccionFilter) setColeccionFilter(initialFilters.coleccionFilter);
-    if (initialFilters.sortBy) setSortBy(initialFilters.sortBy);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialFiltersKeyWithoutPrice]);
+  // NOTE: We no longer sync from initialFilters after mount.
+  // The parent component (InventoryBrowser) now only reads URL on mount,
+  // and the hook receives initialFilters only once via useState defaults.
+  // This prevents infinite loops where URL sync triggers re-syncing.
 
   // Get unique filter options from inventory
   const filterOptions = useMemo(() => {
