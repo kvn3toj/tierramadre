@@ -121,9 +121,11 @@ export default async function handler(req, res) {
     }
 
     // Find optional columns for additional data
+    // Hoja Asesores: A=ID, B=Nombre, C=Datos(rol), D=WhatsApp, E=Especialidad, F=Instagram, G=Estado, H=Fecha
+    const roleIndex = headers.findIndex(h => h === 'datos' || h === 'rol' || h === 'role' || h === 'tipo');
     const whatsappIndex = headers.findIndex(h => h.includes('whatsapp') || h.includes('telefono') || h.includes('phone'));
     const especialidadIndex = headers.findIndex(h => h.includes('especialidad') || h.includes('specialty'));
-    const instagramIndex = headers.findIndex(h => h.includes('instagram') || h.includes('ig'));
+    const instagramIndex = headers.findIndex(h => h.includes('instagram') || h.includes('ig') || h.includes('email'));
     const estadoIndex = headers.findIndex(h => h === 'estado' || h === 'status');
 
     // Extract asesores from dedicated sheet
@@ -156,9 +158,10 @@ export default async function handler(req, res) {
         id: `asesor_${index + 1}`,
         name: displayName,
         slug: displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+        role: roleIndex !== -1 ? (row[roleIndex] || 'Asesor').trim() : 'Asesor',
         whatsapp: whatsappIndex !== -1 ? row[whatsappIndex] || null : null,
         especialidad: especialidadIndex !== -1 ? row[especialidadIndex] || null : null,
-        instagram: instagramIndex !== -1 ? row[instagramIndex] || null : null,
+        email: instagramIndex !== -1 ? row[instagramIndex] || null : null,
       });
     });
 

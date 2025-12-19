@@ -10,11 +10,19 @@ import {
   Typography,
   Avatar,
   Button,
+  Chip,
   alpha,
   useTheme,
 } from '@mui/material';
-import { Package, ChevronRight, Phone, Image } from 'lucide-react';
+import { Package, ChevronRight, Image, MessageCircle } from 'lucide-react';
 import { Asesor } from '../../hooks/useAsesores';
+
+// Format phone for WhatsApp link
+const formatWhatsAppLink = (phone: string): string => {
+  const digits = phone.replace(/\D/g, '');
+  const fullNumber = digits.startsWith('57') ? digits : `57${digits}`;
+  return `https://wa.me/${fullNumber}`;
+};
 
 interface AsesorCardProps {
   asesor: Asesor;
@@ -83,15 +91,25 @@ export default function AsesorCard({
               {asesor.name}
             </Typography>
 
-            <Typography
-              variant="body2"
+            <Chip
+              label={asesor.role || 'Asesor'}
+              size="small"
               sx={{
-                color: 'text.secondary',
-                fontSize: '0.85rem',
+                height: 20,
+                fontSize: '0.65rem',
+                fontWeight: 600,
+                bgcolor: asesor.role === 'Administrador'
+                  ? alpha('#7C3AED', 0.15)
+                  : asesor.role === 'Embajador'
+                  ? alpha('#F59E0B', 0.15)
+                  : alpha('#059669', 0.15),
+                color: asesor.role === 'Administrador'
+                  ? '#7C3AED'
+                  : asesor.role === 'Embajador'
+                  ? '#D97706'
+                  : '#059669',
               }}
-            >
-              Asesor de Esmeraldas
-            </Typography>
+            />
           </Box>
         </Box>
 
@@ -233,24 +251,43 @@ export default function AsesorCard({
               Sin productos
             </Button>
           )}
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<Phone size={14} />}
-            onClick={() => onContact?.(asesor)}
-            sx={{
-              borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
-              color: 'text.primary',
-              textTransform: 'none',
-              fontWeight: 600,
-              '&:hover': {
-                borderColor: '#059669',
-                bgcolor: alpha('#059669', 0.05),
-              },
-            }}
-          >
-            Contactar
-          </Button>
+          {asesor.whatsapp ? (
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<MessageCircle size={14} />}
+              onClick={() => {
+                window.open(formatWhatsAppLink(asesor.whatsapp!), '_blank');
+                onContact?.(asesor);
+              }}
+              sx={{
+                borderColor: '#25D366',
+                color: '#25D366',
+                textTransform: 'none',
+                fontWeight: 600,
+                '&:hover': {
+                  borderColor: '#128C7E',
+                  bgcolor: alpha('#25D366', 0.1),
+                },
+              }}
+            >
+              WhatsApp
+            </Button>
+          ) : (
+            <Button
+              variant="outlined"
+              size="small"
+              disabled
+              sx={{
+                borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                color: 'text.secondary',
+                textTransform: 'none',
+                fontWeight: 600,
+              }}
+            >
+              Sin contacto
+            </Button>
+          )}
         </Box>
       </CardContent>
     </Card>
