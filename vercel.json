@@ -29,6 +29,9 @@
     },
     "api/serve-drive-image.js": {
       "maxDuration": 30
+    },
+    "api/organize-drive-folders.js": {
+      "maxDuration": 60
     }
   },
   "headers": [

@@ -200,7 +200,7 @@ export const PriceDisplay = ({
                   textTransform: 'uppercase',
                 }}
               >
-                Precio Colombia
+                Comunidad TM
               </Typography>
             </Stack>
             {shouldShowInternational && discountPercent > 0 && (
@@ -241,7 +241,7 @@ export const PriceDisplay = ({
                 mt: 0.5,
               }}
             >
-              Beneficio exclusivo para compradores en Colombia
+              Precio exclusivo para miembros de la Comunidad TM
             </Typography>
           )}
         </Box>
