@@ -45,11 +45,11 @@ import { useInventory } from '../hooks/useInventory';
 import { calculateTrustScore, getTrustBadge } from '../utils/trustScore';
 import { TrustBadgeCompact } from './TrustBadge';
 import { extractVideoThumbnail } from '../utils/videoStorage';
-import { MediaGallery, MediaUploadZone, ImageCropper } from './media';
+import { MediaGallery, ImageCropper } from './media';
+import DriveFolderInfo from './media/DriveFolderInfo';
 import type { MediaItem } from './media/types';
 import { PriceDisplay } from './PriceDisplay';
 import { getColorDot, getQualityBadge } from '../utils/formatting';
-import { isImageFile, isVideoFile } from '../utils/fileTypeDetection';
 import { uploadToCloudinary } from '../utils/cloudinaryUpload';
 // Design System Tokens
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
@@ -81,14 +81,15 @@ export default function ProductDetail() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Image cropper state
+  // Image cropper state (kept for potential future use)
   const [cropperOpen, setCropperOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [pendingFiles, setPendingFiles] = useState<{ file: File; isVideo: boolean }[]>([]);
   const [currentCropIndex, setCurrentCropIndex] = useState(0);
-  const [uploadCategory, setUploadCategory] = useState<MediaItem['category']>('hero');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [uploadCategory, _setUploadCategory] = useState<MediaItem['category']>('hero');
 
-  const { inventory, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems, fetchCloudGallery } = useInventory();
+  const { inventory, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems } = useInventory();
 
   // Scroll to top when navigating to this page
   useEffect(() => {
@@ -113,7 +114,7 @@ export default function ProductDetail() {
     return product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   }, [product]);
 
-  // Load media items for the product (local first, then cloud sync)
+  // Load media items for the product from Google Drive folder
   useEffect(() => {
     if (product) {
       const loadMedia = async () => {
@@ -136,66 +137,46 @@ export default function ProductDetail() {
           setMediaItems([legacyItem]);
         }
 
-        // Then fetch from cloud to sync
-        if (fetchCloudGallery) {
-          const cloudItems = await fetchCloudGallery(product.item);
-          if (cloudItems.length > 0) {
-            setMediaItems(cloudItems);
+        // Fetch images from Google Drive folder
+        try {
+          const response = await fetch(`/api/get-drive-images?itemNumber=${product.item}`);
+          const data = await response.json();
+
+          if (data.success && data.images && data.images.length > 0) {
+            const driveItems: MediaItem[] = data.images.map((img: {
+              id: string;
+              name: string;
+              proxyUrl: string;
+              thumbnailUrl: string;
+              type: 'image' | 'video';
+              order: number;
+            }) => ({
+              id: img.id,
+              url: img.proxyUrl, // Use proxy URL for reliable access
+              type: img.type,
+              thumbnailUrl: img.thumbnailUrl,
+              category: 'hero' as const,
+              alt: img.name || `${displayName} - ${img.order + 1}`,
+              order: img.order,
+            }));
+            setMediaItems(driveItems);
+
+            // Update local cache
+            if (updateMediaItems) {
+              updateMediaItems(product.item, driveItems);
+            }
           }
+        } catch (error) {
+          console.error('Error fetching Drive images:', error);
+          // Keep showing local/legacy items if Drive fetch fails
         }
       };
 
       loadMedia();
     }
-  }, [product, getMediaItems, fetchCloudGallery, displayName]);
+  }, [product, getMediaItems, updateMediaItems, displayName]);
 
-  // Handle multi-media upload (for MediaUploadZone) - now with cropping for images
-  const handleMediaUpload = useCallback(async (files: File[], category: MediaItem['category']) => {
-    if (!product) return;
-
-    // Separate images and videos
-    const processedFiles: { file: File; isVideo: boolean }[] = [];
-
-    for (const file of files) {
-      const isVideo = isVideoFile(file);
-      const isImage = isImageFile(file);
-
-      if (!isImage && !isVideo) continue;
-      processedFiles.push({ file, isVideo });
-    }
-
-    if (processedFiles.length === 0) return;
-
-    // Check if there are images to crop
-    const hasImages = processedFiles.some(f => !f.isVideo);
-
-    if (hasImages) {
-      // Store files and start cropping flow
-      setPendingFiles(processedFiles);
-      setUploadCategory(category);
-      setCurrentCropIndex(0);
-
-      // Find first image to crop
-      const firstImageIndex = processedFiles.findIndex(f => !f.isVideo);
-      if (firstImageIndex >= 0) {
-        try {
-          // Use data URL instead of blob URL for reliability in production
-          const dataUrl = await fileToDataURL(processedFiles[firstImageIndex].file);
-          setImageToCrop(dataUrl);
-          setCurrentCropIndex(firstImageIndex);
-          setCropperOpen(true);
-        } catch (error) {
-          console.error('Error reading file:', error);
-          alert('Error al cargar la imagen. Intente con otro archivo.');
-        }
-      }
-    } else {
-      // No images, upload videos directly
-      await uploadFiles(processedFiles, category);
-    }
-  }, [product]);
-
-  // Upload files to Cloudinary
+  // Upload files to Cloudinary (kept for potential cropper use)
   const uploadFiles = useCallback(async (
     files: { file: File | Blob; isVideo: boolean }[],
     category: MediaItem['category']
@@ -307,23 +288,6 @@ export default function ProductDetail() {
     setPendingFiles([]);
   }, []);
 
-  // Handle media reorder
-  const handleMediaReorder = useCallback((reorderedItems: MediaItem[]) => {
-    setMediaItems(reorderedItems);
-    if (product && updateMediaItems) {
-      updateMediaItems(product.item, reorderedItems);
-      // Update legacy image with first item
-      if (reorderedItems.length > 0) {
-        const firstItem = reorderedItems[0];
-        if (firstItem.type === 'video') {
-          updateVideo(product.item, firstItem.url, firstItem.thumbnailUrl || '');
-        } else {
-          updateImage(product.item, firstItem.url);
-        }
-      }
-    }
-  }, [product, updateMediaItems, updateImage, updateVideo]);
-
   // Handle media delete
   const handleMediaDelete = useCallback(async (itemId: string) => {
     const updatedItems = mediaItems.filter(item => item.id !== itemId);
@@ -343,6 +307,52 @@ export default function ProductDetail() {
       }
     }
   }, [product, mediaItems, updateMediaItems, updateImage, updateVideo, removeImage]);
+
+  // Refresh images from Google Drive folder
+  const handleRefreshDriveImages = useCallback(async () => {
+    if (!product) return;
+
+    try {
+      const response = await fetch(`/api/get-drive-images?itemNumber=${product.item}`);
+      const data = await response.json();
+
+      if (data.success && data.images) {
+        const driveItems: MediaItem[] = data.images.map((img: {
+          id: string;
+          name: string;
+          proxyUrl: string;
+          thumbnailUrl: string;
+          type: 'image' | 'video';
+          order: number;
+        }) => ({
+          id: img.id,
+          url: img.proxyUrl,
+          type: img.type,
+          thumbnailUrl: img.thumbnailUrl,
+          category: 'hero' as const,
+          alt: img.name || `${displayName} - ${img.order + 1}`,
+          order: img.order,
+        }));
+        setMediaItems(driveItems);
+
+        if (updateMediaItems) {
+          updateMediaItems(product.item, driveItems);
+        }
+
+        // Update legacy image field with first item
+        if (driveItems.length > 0) {
+          const firstItem = driveItems[0];
+          if (firstItem.type === 'video') {
+            updateVideo(product.item, firstItem.url, firstItem.thumbnailUrl || '');
+          } else {
+            updateImage(product.item, firstItem.url);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing Drive images:', error);
+    }
+  }, [product, displayName, updateMediaItems, updateImage, updateVideo]);
 
   if (!product) {
     return (
@@ -555,16 +565,15 @@ export default function ProductDetail() {
             </Button>
           )}
 
-          {/* Collapsible Upload Zone - Only for users with upload permission */}
+          {/* Collapsible Drive Folder Info - Only for users with upload permission */}
           {canUpload && (
             <Collapse in={showUploadZone}>
               <Box sx={{ mt: 2 }}>
-                <MediaUploadZone
+                <DriveFolderInfo
+                  itemNumber={product.item}
                   media={mediaItems}
-                  onUpload={handleMediaUpload}
+                  onRefresh={handleRefreshDriveImages}
                   onDelete={handleMediaDelete}
-                  onReorder={handleMediaReorder}
-                  maxFiles={10}
                 />
               </Box>
             </Collapse>
