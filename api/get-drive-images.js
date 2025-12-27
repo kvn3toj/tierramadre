@@ -49,11 +49,12 @@ async function getProductsFolderId(drive, sharedDriveId) {
 }
 
 /**
- * Find product folder by item number
+ * Find product folder by item number (folder name format: "32 - Venus")
  */
 async function getProductFolderId(drive, parentFolderId, itemNumber) {
+  // Search for folder starting with the item number
   const response = await drive.files.list({
-    q: `name='${itemNumber}' and mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`,
+    q: `name contains '${itemNumber} -' and mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`,
     fields: 'files(id, name)',
     supportsAllDrives: true,
     includeItemsFromAllDrives: true,
