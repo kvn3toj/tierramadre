@@ -168,11 +168,11 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
         },
       }}
     >
-      {/* Product Image/Video Section */}
+      {/* Product Image/Video Section - Compact for narrow screens */}
       {item.imagen ? (
         <Box
           sx={{
-            height: 140,
+            height: 120,
             position: 'relative',
             overflow: 'hidden',
             bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.tertiary,
@@ -261,15 +261,15 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
         </Box>
       )}
 
-      {/* Minimal header - Small accent bar + icon */}
+      {/* Minimal header - Compact for narrow screens */}
       <Box
         sx={{
-          height: 56,
+          height: 44,
           bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.tertiary,
           position: 'relative',
           display: 'flex',
           alignItems: 'center',
-          px: 2.5,
+          px: 1.5,
           borderBottom: '1px solid',
           borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         }}
@@ -286,37 +286,37 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
           }}
         />
 
-        {/* Icon based on type */}
+        {/* Icon based on type - Compact */}
         <Box
           sx={{
-            width: 36,
-            height: 36,
-            borderRadius: 2,
+            width: 28,
+            height: 28,
+            borderRadius: 1.5,
             bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
             border: '1px solid',
             borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            mr: 2,
+            mr: 1,
           }}
         >
           {item.isJewelry ? (
-            <Crown size={18} color={isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary} />
+            <Crown size={14} color={isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary} />
           ) : (
-            <Gem size={18} color={colorDot} />
+            <Gem size={14} color={colorDot} />
           )}
         </Box>
 
-        {/* Color tag with dot */}
+        {/* Color tag with dot - Compact */}
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 0.75,
-            px: 1.5,
-            py: 0.5,
-            borderRadius: 1.5,
+            gap: 0.5,
+            px: 1,
+            py: 0.25,
+            borderRadius: 1,
             bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
             border: '1px solid',
             borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
@@ -324,8 +324,8 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
         >
           <Box
             sx={{
-              width: 8,
-              height: 8,
+              width: 6,
+              height: 6,
               borderRadius: '50%',
               bgcolor: colorDot,
             }}
@@ -335,7 +335,7 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
             sx={{
               fontWeight: 500,
               color: theme.palette.text.secondary,
-              fontSize: '0.7rem',
+              fontSize: '0.625rem',
             }}
           >
             {item.color.replace('Verde ', '')}
@@ -344,72 +344,76 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
 
         <Box sx={{ flex: 1 }} />
 
-        {/* Item count if multiple */}
+        {/* Item count if multiple - Compact */}
         {item.cantidad > 1 && (
           <Chip
             label={`×${item.cantidad}`}
             size="small"
             sx={{
-              height: 22,
-              fontSize: '0.7rem',
+              height: 16,
+              fontSize: '0.55rem',
               fontWeight: 600,
               bgcolor: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
               color: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
-              mr: 1,
+              mr: 0.5,
+              '& .MuiChip-label': { px: 0.5 },
             }}
           />
         )}
 
-        {/* Quality badge - warm tones */}
+        {/* Quality badge - compact */}
         <Chip
           label={quality.label}
           size="small"
           sx={{
-            height: 22,
-            fontSize: '0.65rem',
+            height: 18,
+            fontSize: '0.55rem',
             fontWeight: 700,
             textTransform: 'uppercase',
-            letterSpacing: '0.05em',
+            letterSpacing: '0.03em',
             bgcolor: quality.bg,
             color: quality.color,
             border: `1px solid ${quality.border}`,
+            '& .MuiChip-label': { px: 0.75 },
           }}
         />
       </Box>
 
-      <CardContent sx={{ p: 2.5 }}>
-        {/* Name */}
+      <CardContent sx={{ p: 1.5 }}>
+        {/* Name - Compact */}
         <Typography
-          variant="body1"
+          variant="body2"
           sx={{
-            fontWeight: 700,
+            fontWeight: 600,
             color: theme.palette.text.primary,
-            mb: 0.5,
-            lineHeight: 1.3,
+            mb: 0.25,
+            lineHeight: 1.2,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            fontSize: '0.8rem',
           }}
         >
           {displayName}
         </Typography>
 
-        {/* Key specs - single line */}
+        {/* Key specs - compact single line */}
         <Typography
-          variant="body2"
+          variant="caption"
           component="div"
           sx={{
             color: theme.palette.text.secondary,
-            mb: 2,
+            mb: 1,
             display: 'flex',
             alignItems: 'center',
-            gap: 0.75,
+            gap: 0.5,
+            fontSize: '0.65rem',
           }}
         >
           <Box
             sx={{
-              width: 8,
-              height: 8,
+              width: 6,
+              height: 6,
               borderRadius: '50%',
               bgcolor: colorDot,
             }}
