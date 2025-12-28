@@ -92,11 +92,11 @@
   ],
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
     },
     {
-      "source": "/((?!@vite|@react-refresh|src/|node_modules/).)*",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ]
