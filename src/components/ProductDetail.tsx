@@ -89,7 +89,7 @@ export default function ProductDetail() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [uploadCategory, _setUploadCategory] = useState<MediaItem['category']>('hero');
 
-  const { inventory, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems } = useInventory();
+  const { inventory, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems, isLoadingSheets } = useInventory();
 
   // Scroll to top when navigating to this page
   useEffect(() => {
@@ -353,6 +353,18 @@ export default function ProductDetail() {
       console.error('Error refreshing Drive images:', error);
     }
   }, [product, displayName, updateMediaItems, updateImage, updateVideo]);
+
+  // Show loading state while inventory is loading
+  if (isLoadingSheets && !product) {
+    return (
+      <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3 }, py: 8, textAlign: 'center' }}>
+        <Gem size={64} color={emeraldCore.primary} style={{ marginBottom: 16, opacity: 0.7 }} />
+        <Typography variant="h5" sx={{ fontWeight: 600, mb: 2, color: theme.palette.text.secondary }}>
+          Cargando producto...
+        </Typography>
+      </Box>
+    );
+  }
 
   if (!product) {
     return (
