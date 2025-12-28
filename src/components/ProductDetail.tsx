@@ -735,11 +735,13 @@ export default function ProductDetail() {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                       <Ruler size={16} color={theme.palette.text.secondary} />
                       <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                        Medidas
+                        Medidas ({product.medidas})
                       </Typography>
                     </Box>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {product.medidas} mm
+                      {product.medidasValores
+                        ? product.medidasValores.replace(/\n/g, ' x ') + ' mm'
+                        : product.medidas + ' mm'}
                     </Typography>
                   </CardContent>
                 </Card>
