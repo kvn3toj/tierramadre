@@ -72,13 +72,27 @@ async function getProductFolderId(drive, parentFolderId, itemNumber) {
  */
 async function listMediaFiles(drive, folderId) {
   const mediaTypes = [
+    // Images
     'image/jpeg',
     'image/png',
     'image/webp',
     'image/gif',
+    'image/bmp',
+    'image/tiff',
+    'image/svg+xml',
+    'image/heic',
+    'image/heif',
+    'image/avif',
+    'image/x-icon',
+    // Videos
     'video/mp4',
     'video/quicktime',
     'video/webm',
+    'video/x-msvideo',
+    'video/x-matroska',
+    'video/mpeg',
+    'video/3gpp',
+    'video/x-m4v',
   ];
 
   const mimeTypeQuery = mediaTypes.map(t => `mimeType='${t}'`).join(' or ');
