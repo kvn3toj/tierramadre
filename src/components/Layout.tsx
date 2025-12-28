@@ -606,12 +606,12 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
           </Box>
         )}
 
-        {/* Page Content */}
+        {/* Page Content - Optimized padding for narrow screens */}
         <Box
           sx={{
             flex: 1,
-            p: { xs: 2, sm: 3, md: 4 },
-            pt: { xs: 'calc(56px + 16px)', md: 4 },
+            p: { xs: 1.5, sm: 2.5, md: 4 },
+            pt: { xs: 'calc(56px + 12px)', md: 4 },
             maxWidth: 1400,
             width: '100%',
             mx: 'auto',

@@ -400,12 +400,12 @@ export default function ProductDetail() {
     <Box sx={{
       maxWidth: 1400,
       mx: 'auto',
-      px: { xs: 2, sm: 3, md: 4 },
-      py: { xs: 2, sm: 3 },
-      pb: { xs: 'calc(16px + env(safe-area-inset-bottom))', sm: 3 }
+      px: { xs: 1.5, sm: 3, md: 4 },
+      py: { xs: 1.5, sm: 3 },
+      pb: { xs: 'calc(12px + env(safe-area-inset-bottom))', sm: 3 }
     }}>
-      {/* Breadcrumbs */}
-      <Breadcrumbs sx={{ mb: 3 }}>
+      {/* Breadcrumbs - Compact */}
+      <Breadcrumbs sx={{ mb: 2, '& .MuiBreadcrumbs-li': { fontSize: '0.75rem' } }}>
         <Link
           component="button"
           variant="body2"
@@ -435,13 +435,16 @@ export default function ProductDetail() {
         </Typography>
       </Breadcrumbs>
 
-      {/* Back Button */}
+      {/* Back Button - Compact */}
       <Button
-        startIcon={<ArrowLeft size={18} />}
+        size="small"
+        startIcon={<ArrowLeft size={16} />}
         onClick={() => navigate('/inventory')}
         sx={{
-          mb: 3,
+          mb: 2,
+          py: 0.5,
           color: theme.palette.text.secondary,
+          fontSize: '0.8rem',
           '&:hover': {
             bgcolor: isLight ? alpha(emeraldCore.dark, 0.08) : alpha(emeraldCore.dark, 0.15),
             color: emeraldCore.dark,
@@ -451,7 +454,7 @@ export default function ProductDetail() {
         Volver al Inventario
       </Button>
 
-      <Grid container spacing={{ xs: 3, md: 4 }}>
+      <Grid container spacing={{ xs: 2, md: 4 }}>
         {/* Left Column - Image & Gallery */}
         <Grid item xs={12} md={6}>
           <Paper
@@ -638,14 +641,14 @@ export default function ProductDetail() {
             <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />
           </Box>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: { xs: 2, sm: 3 } }} />
 
-          {/* Specifications */}
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+          {/* Specifications - Compact */}
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
             Especificaciones
           </Typography>
 
-          <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid container spacing={1.5} sx={{ mb: 2 }}>
             {/* Color */}
             <Grid item xs={6}>
               <Card
@@ -656,14 +659,14 @@ export default function ProductDetail() {
                   borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                 }}
               >
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Palette size={16} color={theme.palette.text.secondary} />
-                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+                <CardContent sx={{ p: { xs: 1.25, sm: 2 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+                    <Palette size={14} color={theme.palette.text.secondary} />
+                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontSize: '0.65rem' }}>
                       Color
                     </Typography>
                   </Box>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
                     {product.color}
                   </Typography>
                 </CardContent>
@@ -680,14 +683,14 @@ export default function ProductDetail() {
                   borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                 }}
               >
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Gem size={16} color={theme.palette.text.secondary} />
-                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+                <CardContent sx={{ p: { xs: 1.25, sm: 2 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+                    <Gem size={14} color={theme.palette.text.secondary} />
+                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontSize: '0.65rem' }}>
                       {product.isJewelry ? 'Metal' : 'Peso'}
                     </Typography>
                   </Box>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
                     {weight}
                   </Typography>
                 </CardContent>
@@ -705,14 +708,14 @@ export default function ProductDetail() {
                     borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                   }}
                 >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <Ruler size={16} color={theme.palette.text.secondary} />
-                      <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+                  <CardContent sx={{ p: { xs: 1.25, sm: 2 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+                      <Ruler size={14} color={theme.palette.text.secondary} />
+                      <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontSize: '0.65rem' }}>
                         {product.isJewelry ? 'Talla' : 'Corte'}
                       </Typography>
                     </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
                       {product.talla}
                     </Typography>
                   </CardContent>
@@ -731,14 +734,14 @@ export default function ProductDetail() {
                     borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                   }}
                 >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <Ruler size={16} color={theme.palette.text.secondary} />
-                      <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+                  <CardContent sx={{ p: { xs: 1.25, sm: 2 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+                      <Ruler size={14} color={theme.palette.text.secondary} />
+                      <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontSize: '0.65rem' }}>
                         Medidas ({product.medidas})
                       </Typography>
                     </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
                       {product.medidasValores
                         ? product.medidasValores.replace(/\n/g, ' x ') + ' mm'
                         : product.medidas + ' mm'}
@@ -758,14 +761,14 @@ export default function ProductDetail() {
                   borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                 }}
               >
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Award size={16} color={theme.palette.text.secondary} />
-                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+                <CardContent sx={{ p: { xs: 1.25, sm: 2 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+                    <Award size={14} color={theme.palette.text.secondary} />
+                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontSize: '0.65rem' }}>
                       Calidad
                     </Typography>
                   </Box>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
                     {product.calidad}
                   </Typography>
                 </CardContent>
@@ -773,12 +776,12 @@ export default function ProductDetail() {
             </Grid>
           </Grid>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: { xs: 2, sm: 3 } }} />
 
-          {/* Trust Score */}
+          {/* Trust Score - Compact */}
           {trustScore && trustBadge && (
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
                 Certificación del Producto
               </Typography>
               <Paper
@@ -819,14 +822,14 @@ export default function ProductDetail() {
             </Box>
           )}
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: { xs: 2, sm: 3 } }} />
 
-          {/* Additional Info */}
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+          {/* Additional Info - Compact */}
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
             Información Adicional
           </Typography>
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <MapPin size={18} color={surfacesLight.text.secondary} />
               <Box>
@@ -907,20 +910,21 @@ export default function ProductDetail() {
             </Box>
           </Box>
 
-          {/* CTA Buttons */}
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mt: 4 }}>
+          {/* CTA Buttons - Compact */}
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, mt: 3 }}>
             <Button
               variant="contained"
-              size="large"
+              size="medium"
               fullWidth
               disabled={!isAvailable}
-              startIcon={<ShoppingCart size={20} />}
+              startIcon={<ShoppingCart size={18} />}
               sx={{
                 background: isAvailable ? buttonGradients.primary : undefined,
                 color: '#FFFFFF',
-                py: 1.5,
-                minHeight: 48,
+                py: { xs: 1, sm: 1.5 },
+                minHeight: { xs: 44, sm: 48 },
                 fontWeight: 600,
+                fontSize: { xs: '0.85rem', sm: '1rem' },
                 boxShadow: isAvailable ? emeraldShadows.primary : undefined,
                 '&:hover': {
                   background: isAvailable ? emeraldGradients.deep : undefined,
@@ -932,13 +936,14 @@ export default function ProductDetail() {
             </Button>
             <Button
               variant="outlined"
-              size="large"
+              size="medium"
               sx={{
                 borderColor: emeraldCore.dark,
                 color: emeraldCore.dark,
-                py: 1.5,
-                minHeight: 48,
+                py: { xs: 1, sm: 1.5 },
+                minHeight: { xs: 44, sm: 48 },
                 fontWeight: 600,
+                fontSize: { xs: '0.85rem', sm: '1rem' },
                 '&:hover': {
                   borderColor: emeraldCore.darker,
                   bgcolor: alpha(emeraldCore.dark, 0.08),

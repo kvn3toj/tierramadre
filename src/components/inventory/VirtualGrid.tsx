@@ -27,9 +27,9 @@ interface VirtualGridProps {
   minHeight?: number;
 }
 
-// Card dimensions (compact design)
-const CARD_HEIGHT = 320; // Reduced: Image (140px) + content area
-const GAP = 16;
+// Card dimensions (compact design for narrow screens)
+const CARD_HEIGHT = 280; // Compact: Image (120px) + header (44px) + content
+const GAP = 12; // Tighter gap for 2-column mobile layout
 
 // Cell props passed via cellProps in react-window 2.x
 interface GridCellProps {
@@ -144,10 +144,10 @@ export default function VirtualGrid({
   const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg'));
 
   // Calculate column count based on breakpoints
-  // Mobile: 2 columns if screen >= 400px, else 1 column
+  // Mobile: 2 columns if screen >= 340px (optimized for 720x1440 devices)
   const getColumnCount = useCallback(() => {
     if (isXs) {
-      return viewportWidth >= 400 ? 2 : 1;
+      return viewportWidth >= 340 ? 2 : 1;
     }
     if (isSm) return 2;
     if (isMd) return 3;
