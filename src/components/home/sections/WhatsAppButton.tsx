@@ -2,12 +2,13 @@
  * WhatsAppButton Component
  *
  * Floating WhatsApp contact button.
- * Positioned above the bottom navigation bar.
+ * Positioned above the bottom navigation bar using brand emerald green.
  */
 
 import { motion } from 'framer-motion';
 import { Fab, Tooltip, useMediaQuery } from '@mui/material';
 import { WhatsApp } from '@mui/icons-material';
+import { emeraldCore } from '../../../design-system/tokens/colors';
 
 // =============================================================================
 // CONSTANTS
@@ -15,6 +16,9 @@ import { WhatsApp } from '@mui/icons-material';
 
 const WHATSAPP_NUMBER = '+573113052755';
 const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER.replace('+', '')}?text=Hola, estoy interesado en las esmeraldas de Tierra Madre`;
+
+// Tab bar height + safe margin
+const TAB_BAR_CLEARANCE = 72; // 56px tab + 16px margin
 
 // =============================================================================
 // COMPONENT
@@ -31,10 +35,8 @@ export const WhatsAppButton = () => {
       transition={{ delay: 1, type: 'spring', stiffness: 200 }}
       style={{
         position: 'fixed',
-        // Position above tab bar: 65px (tab bar) + safe area + 16px margin
-        bottom: isLandscapePhone
-          ? 'calc(65px + env(safe-area-inset-bottom))'
-          : 'calc(81px + env(safe-area-inset-bottom))',
+        // Position well above tab bar
+        bottom: `calc(${TAB_BAR_CLEARANCE}px + env(safe-area-inset-bottom))`,
         left: isLandscapePhone ? 8 : 16,
         zIndex: 999, // Below tab bar (1000) but above content
       }}
@@ -48,11 +50,11 @@ export const WhatsAppButton = () => {
           aria-label="Contactar por WhatsApp"
           size={isLandscapePhone ? 'small' : 'medium'}
           sx={{
-            bgcolor: '#25D366',
+            bgcolor: emeraldCore.primary,
             color: 'white',
-            boxShadow: '0 4px 20px rgba(37, 211, 102, 0.4)',
+            boxShadow: `0 4px 20px ${emeraldCore.primary}66`,
             '&:hover': {
-              bgcolor: '#128C7E',
+              bgcolor: emeraldCore.dark,
               transform: 'scale(1.1)',
             },
             transition: 'all 0.2s ease',

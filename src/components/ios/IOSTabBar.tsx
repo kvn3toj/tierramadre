@@ -192,9 +192,12 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         '@media (prefers-reduced-motion: reduce)': {
           transition: 'none',
         },
+
+        // Flex layout for tabs
+        justifyContent: 'space-evenly',
+        px: 1,
       }}
     >
-      <Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-evenly', px: 1 }}>
         {PRIMARY_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -331,7 +334,6 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
             </Box>
           );
         })}
-      </Box>
     </Box>
   );
 };

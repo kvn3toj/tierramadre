@@ -98,7 +98,7 @@ function GridCard({
       {/* Image Section - Golden Ratio: ~61.8% */}
       <Box sx={{ position: 'relative', flexShrink: 0 }}>
         {item.imagen ? (
-          <Box sx={{ position: 'relative' }}>
+          <>
             <ProgressiveImage
               src={item.imagen}
               alt={`${item.nombre} - ${item.color}`}
@@ -190,7 +190,7 @@ function GridCard({
                 />
               )}
             </Box>
-          </Box>
+          </>
         ) : (
           <ProgressiveImage
             src={undefined}

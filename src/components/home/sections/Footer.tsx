@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { Box, Typography, IconButton, Link } from '@mui/material';
 import { Instagram, Language, WhatsApp } from '@mui/icons-material';
 import { fadeInUp } from '../../../design-system/tokens/motion';
+import { emeraldCore } from '../../../design-system/tokens/colors';
 
 // =============================================================================
 // CONSTANTS
@@ -18,6 +19,13 @@ const WHATSAPP_NUMBER = '+573113052755';
 const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER.replace('+', '')}`;
 const INSTAGRAM_LINK = 'https://www.instagram.com/tierramadre.co?igsh=dnJ3djRkOGIwdHhy';
 const WEBSITE_LINK = 'https://www.tierramadre.co';
+
+// Social links configuration
+const SOCIAL_LINKS = [
+  { icon: WhatsApp, href: WHATSAPP_LINK, label: 'WhatsApp', color: emeraldCore.primary },
+  { icon: Instagram, href: INSTAGRAM_LINK, label: 'Instagram', color: '#E1306C' },
+  { icon: Language, href: WEBSITE_LINK, label: 'Sitio web', color: emeraldCore.primary },
+];
 
 // =============================================================================
 // COMPONENT
@@ -46,62 +54,27 @@ export const Footer: React.FC = () => {
         >
           {/* Social Icons */}
           <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 2 }}>
-            <IconButton
-              component="a"
-              href={WHATSAPP_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="WhatsApp"
-              sx={{
-                bgcolor: 'rgba(37, 211, 102, 0.2)',
-                color: '#25D366',
-                '&:hover': {
-                  bgcolor: 'rgba(37, 211, 102, 0.3)',
-                  transform: 'scale(1.1)',
-                },
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <WhatsApp />
-            </IconButton>
-
-            <IconButton
-              component="a"
-              href={INSTAGRAM_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Instagram"
-              sx={{
-                bgcolor: 'rgba(225, 48, 108, 0.2)',
-                color: '#E1306C',
-                '&:hover': {
-                  bgcolor: 'rgba(225, 48, 108, 0.3)',
-                  transform: 'scale(1.1)',
-                },
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <Instagram />
-            </IconButton>
-
-            <IconButton
-              component="a"
-              href={WEBSITE_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Sitio web"
-              sx={{
-                bgcolor: 'rgba(0, 174, 122, 0.2)',
-                color: '#00AE7A',
-                '&:hover': {
-                  bgcolor: 'rgba(0, 174, 122, 0.3)',
-                  transform: 'scale(1.1)',
-                },
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <Language />
-            </IconButton>
+            {SOCIAL_LINKS.map(({ icon: Icon, href, label, color }) => (
+              <IconButton
+                key={label}
+                component="a"
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                sx={{
+                  bgcolor: `${color}33`,
+                  color: color,
+                  '&:hover': {
+                    bgcolor: `${color}4D`,
+                    transform: 'scale(1.1)',
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <Icon />
+              </IconButton>
+            ))}
           </Box>
 
           {/* Contact Info */}

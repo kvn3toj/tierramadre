@@ -331,9 +331,11 @@ export function InventoryCard({ item, isCompact, onCertClick: _onCertClick, onCl
               pt: 2,
               borderTop: '1px solid',
               borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
             }}
           >
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
                   Calidad
@@ -376,7 +378,6 @@ export function InventoryCard({ item, isCompact, onCertClick: _onCertClick, onCl
                   {item.asesor}
                 </Typography>
               </Box>
-            </Box>
           </Box>
         </Collapse>
       </CardContent>

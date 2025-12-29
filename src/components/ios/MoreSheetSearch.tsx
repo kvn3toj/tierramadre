@@ -37,6 +37,19 @@ import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { formatCurrency } from '../../utils/formatting';
 
+// Helper to generate filter chip styles
+const getFilterChipSx = (isActive: boolean, color: string, hoverColor: string) => ({
+  bgcolor: isActive ? color : 'transparent',
+  color: isActive ? 'white' : 'var(--text-secondary)',
+  border: '1px solid',
+  borderColor: isActive ? color : 'var(--border-default)',
+  fontWeight: 500,
+  '& .MuiChip-icon': { color: isActive ? 'white' : color },
+  '&:hover': {
+    bgcolor: isActive ? hoverColor : alpha(color, 0.1),
+  },
+});
+
 interface MoreSheetSearchProps {
   onClose: () => void;
 }
@@ -270,43 +283,14 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             icon={<Gem size={14} />}
             label="Gemas"
             onClick={() => setLocalTypeFilter(localTypeFilter === 'loose' ? 'all' : 'loose')}
-            sx={{
-              bgcolor: localTypeFilter === 'loose' ? primitiveColors.emerald[500] : 'transparent',
-              color: localTypeFilter === 'loose' ? 'white' : 'var(--text-secondary)',
-              border: '1px solid',
-              borderColor: localTypeFilter === 'loose' ? primitiveColors.emerald[500] : 'var(--border-default)',
-              fontWeight: 500,
-              '& .MuiChip-icon': {
-                color: localTypeFilter === 'loose' ? 'white' : primitiveColors.emerald[500]
-              },
-              '&:hover': {
-                bgcolor: localTypeFilter === 'loose'
-                  ? primitiveColors.emerald[600]
-                  : alpha(primitiveColors.emerald[500], 0.1),
-              },
-            }}
+            sx={getFilterChipSx(localTypeFilter === 'loose', primitiveColors.emerald[500], primitiveColors.emerald[600])}
           />
-
           <Chip
             size="small"
             icon={<Crown size={14} />}
             label="Joyería"
             onClick={() => setLocalTypeFilter(localTypeFilter === 'jewelry' ? 'all' : 'jewelry')}
-            sx={{
-              bgcolor: localTypeFilter === 'jewelry' ? '#D4AF37' : 'transparent',
-              color: localTypeFilter === 'jewelry' ? 'white' : 'var(--text-secondary)',
-              border: '1px solid',
-              borderColor: localTypeFilter === 'jewelry' ? '#D4AF37' : 'var(--border-default)',
-              fontWeight: 500,
-              '& .MuiChip-icon': {
-                color: localTypeFilter === 'jewelry' ? 'white' : '#D4AF37'
-              },
-              '&:hover': {
-                bgcolor: localTypeFilter === 'jewelry'
-                  ? '#B8962F'
-                  : alpha('#D4AF37', 0.1),
-              },
-            }}
+            sx={getFilterChipSx(localTypeFilter === 'jewelry', '#D4AF37', '#B8962F')}
           />
 
           {/* Quality chip */}
@@ -315,21 +299,7 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             icon={<Sparkles size={14} />}
             label="Premium"
             onClick={() => setLocalQualityFilter(localQualityFilter === 'PREMIUM' ? 'all' : 'PREMIUM')}
-            sx={{
-              bgcolor: localQualityFilter === 'PREMIUM' ? '#D4AF37' : 'transparent',
-              color: localQualityFilter === 'PREMIUM' ? 'white' : 'var(--text-secondary)',
-              border: '1px solid',
-              borderColor: localQualityFilter === 'PREMIUM' ? '#D4AF37' : 'var(--border-default)',
-              fontWeight: 500,
-              '& .MuiChip-icon': {
-                color: localQualityFilter === 'PREMIUM' ? 'white' : '#D4AF37'
-              },
-              '&:hover': {
-                bgcolor: localQualityFilter === 'PREMIUM'
-                  ? '#B8962F'
-                  : alpha('#D4AF37', 0.1),
-              },
-            }}
+            sx={getFilterChipSx(localQualityFilter === 'PREMIUM', '#D4AF37', '#B8962F')}
           />
 
           {/* City chips */}
@@ -338,43 +308,14 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             icon={<MapPin size={14} />}
             label="Cali"
             onClick={() => setLocalCityFilter(localCityFilter === 'Cali' ? 'all' : 'Cali')}
-            sx={{
-              bgcolor: localCityFilter === 'Cali' ? primitiveColors.emerald[500] : 'transparent',
-              color: localCityFilter === 'Cali' ? 'white' : 'var(--text-secondary)',
-              border: '1px solid',
-              borderColor: localCityFilter === 'Cali' ? primitiveColors.emerald[500] : 'var(--border-default)',
-              fontWeight: 500,
-              '& .MuiChip-icon': {
-                color: localCityFilter === 'Cali' ? 'white' : primitiveColors.emerald[500]
-              },
-              '&:hover': {
-                bgcolor: localCityFilter === 'Cali'
-                  ? primitiveColors.emerald[600]
-                  : alpha(primitiveColors.emerald[500], 0.1),
-              },
-            }}
+            sx={getFilterChipSx(localCityFilter === 'Cali', primitiveColors.emerald[500], primitiveColors.emerald[600])}
           />
-
           <Chip
             size="small"
             icon={<MapPin size={14} />}
             label="Bogotá"
             onClick={() => setLocalCityFilter(localCityFilter === 'Bogotá' ? 'all' : 'Bogotá')}
-            sx={{
-              bgcolor: localCityFilter === 'Bogotá' ? '#2563eb' : 'transparent',
-              color: localCityFilter === 'Bogotá' ? 'white' : 'var(--text-secondary)',
-              border: '1px solid',
-              borderColor: localCityFilter === 'Bogotá' ? '#2563eb' : 'var(--border-default)',
-              fontWeight: 500,
-              '& .MuiChip-icon': {
-                color: localCityFilter === 'Bogotá' ? 'white' : '#2563eb'
-              },
-              '&:hover': {
-                bgcolor: localCityFilter === 'Bogotá'
-                  ? '#1d4ed8'
-                  : alpha('#2563eb', 0.1),
-              },
-            }}
+            sx={getFilterChipSx(localCityFilter === 'Bogotá', '#2563eb', '#1d4ed8')}
           />
 
           {/* Clear filters */}

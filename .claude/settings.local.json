@@ -16,7 +16,10 @@
       "Bash(vercel env pull:*)",
       "Bash(cat:*)",
       "Bash(npm run build:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git push)",
+      "Bash(git fetch:*)",
+      "Skill(evolutionary-refactor)"
     ],
     "deny": [],
     "ask": []

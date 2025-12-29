@@ -56,10 +56,10 @@ export const dynamicBlur = {
  * Background opacity follows same pattern
  */
 export const dynamicOpacity = {
-  inactive: 0.6,
-  resting: 0.75,
-  hover: 0.82,
-  active: 0.9,
+  inactive: 0.8,
+  resting: 0.88,
+  hover: 0.92,
+  active: 0.95,
 } as const;
 
 // =============================================================================
