@@ -15,7 +15,8 @@
       "Bash(curl:*)",
       "Bash(vercel env pull:*)",
       "Bash(cat:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

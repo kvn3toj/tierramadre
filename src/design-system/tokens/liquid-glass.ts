@@ -43,13 +43,13 @@ export interface FloatingLayer {
  */
 export const dynamicBlur = {
   /** Secondary elements, not in focus */
-  inactive: '20px',
+  inactive: '14px',
   /** Default resting state */
-  resting: '12px',
+  resting: '8px',
   /** Hover - more clarity as user shows interest */
-  hover: '8px',
+  hover: '5px',
   /** Active/pressed - maximum clarity */
-  active: '4px',
+  active: '2px',
 } as const;
 
 /**

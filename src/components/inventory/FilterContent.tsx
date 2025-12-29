@@ -112,203 +112,289 @@ export const FilterContent = memo(function FilterContent({
   theme,
   compact = false,
 }: FilterContentProps) {
-  // Compact mode: Show all filters in a clean 2-column grid (mobile)
+  // Compact mode: Beautiful modern pill-based filters (mobile)
   if (compact) {
+    // Common pill styles
+    const pillBase = {
+      borderRadius: '20px',
+      fontSize: '0.75rem',
+      fontWeight: 500,
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      border: '1px solid',
+      px: 1.5,
+      py: 0.5,
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 0.5,
+      whiteSpace: 'nowrap' as const,
+    };
+
+    const pillActive = {
+      bgcolor: alpha(emeraldCore.primary, 0.15),
+      borderColor: emeraldCore.primary,
+      color: emeraldCore.dark,
+      boxShadow: `0 2px 8px ${alpha(emeraldCore.primary, 0.2)}`,
+    };
+
+    const pillInactive = {
+      bgcolor: isLight ? 'white' : surfacesDark.background.secondary,
+      borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+      color: theme.palette.text.secondary,
+      '&:hover': {
+        borderColor: alpha(emeraldCore.primary, 0.5),
+        bgcolor: alpha(emeraldCore.primary, 0.05),
+      },
+    };
+
+    // Price tier options
+    const priceTiers = [
+      { label: 'Todos', min: priceMinMax.min, max: priceMinMax.max },
+      { label: '< $1M', min: priceMinMax.min, max: 1000000 },
+      { label: '$1M - $5M', min: 1000000, max: 5000000 },
+      { label: '$5M - $20M', min: 5000000, max: 20000000 },
+      { label: '> $20M', min: 20000000, max: priceMinMax.max },
+    ];
+
+    const getCurrentPriceTier = () => {
+      const [min, max] = priceRange;
+      if (min === priceMinMax.min && max === priceMinMax.max) return 'Todos';
+      if (min === priceMinMax.min && max <= 1000000) return '< $1M';
+      if (min >= 1000000 && max <= 5000000) return '$1M - $5M';
+      if (min >= 5000000 && max <= 20000000) return '$5M - $20M';
+      if (min >= 20000000) return '> $20M';
+      return null; // Custom range
+    };
+
+    const currentPriceTier = getCurrentPriceTier();
+
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        {/* 2-column grid of filters */}
+        {/* Row 1: Status segmented control (iOS-style) */}
         <Box
           sx={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 1,
+            display: 'flex',
+            bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.tertiary,
+            borderRadius: '24px',
+            p: 0.4,
+            gap: 0.25,
           }}
         >
-          {/* Status filter */}
-          <FormControl size="small" fullWidth>
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              displayEmpty
-              sx={{ borderRadius: 2, fontSize: '0.8rem' }}
+          {[
+            { value: 'available' as StatusFilter, label: 'Disponibles', dot: emeraldCore.primary },
+            { value: 'sold' as StatusFilter, label: 'Vendidas', dot: semanticColors.error.main },
+            { value: 'all' as StatusFilter, label: 'Todas', dot: null },
+          ].map((option) => (
+            <Box
+              key={option.value}
+              onClick={() => setStatusFilter(option.value)}
+              sx={{
+                flex: 1,
+                textAlign: 'center',
+                py: 0.75,
+                px: 1,
+                borderRadius: '20px',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 0.5,
+                ...(statusFilter === option.value
+                  ? {
+                      bgcolor: isLight ? 'white' : surfacesDark.background.secondary,
+                      color: emeraldCore.dark,
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                    }
+                  : {
+                      color: theme.palette.text.secondary,
+                      '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.05) },
+                    }),
+              }}
             >
-              <MenuItem value="available">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                  <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: emeraldCore.primary }} />
-                  Disponibles
-                </Box>
-              </MenuItem>
-              <MenuItem value="sold">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                  <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: semanticColors.error.main }} />
-                  Vendidas
-                </Box>
-              </MenuItem>
-              <MenuItem value="all">Todas</MenuItem>
-            </Select>
-          </FormControl>
+              {option.dot && (
+                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: option.dot }} />
+              )}
+              {option.label}
+            </Box>
+          ))}
+        </Box>
 
-          {/* Sort dropdown */}
-          <FormControl size="small" fullWidth>
+        {/* Row 2: Type + Sort in pill format */}
+        <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+          {/* Type pills */}
+          {[
+            { value: 'all' as TypeFilter, label: 'Todo' },
+            { value: 'loose' as TypeFilter, label: '💎 Gemas' },
+            { value: 'jewelry' as TypeFilter, label: '💍 Joyería' },
+          ].map((option) => (
+            <Box
+              key={option.value}
+              onClick={() => setTypeFilter(option.value)}
+              sx={{
+                ...pillBase,
+                ...(typeFilter === option.value ? pillActive : pillInactive),
+              }}
+            >
+              {option.label}
+            </Box>
+          ))}
+
+          {/* Sort pill */}
+          <FormControl size="small" sx={{ minWidth: 100 }}>
             <Select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              displayEmpty
-              sx={{ borderRadius: 2, fontSize: '0.8rem' }}
+              sx={{
+                borderRadius: '20px',
+                fontSize: '0.75rem',
+                '& .MuiSelect-select': { py: 0.6, px: 1.5 },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+                },
+              }}
             >
               <MenuItem value="price-desc">Precio ↓</MenuItem>
               <MenuItem value="price-asc">Precio ↑</MenuItem>
-              <MenuItem value="name-asc">Nombre A-Z</MenuItem>
+              <MenuItem value="name-asc">A-Z</MenuItem>
               <MenuItem value="quality-premium">Calidad</MenuItem>
               <MenuItem value="newest">Recientes</MenuItem>
             </Select>
           </FormControl>
-
-          {/* Type filter */}
-          <FormControl size="small" fullWidth>
-            <Select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
-              displayEmpty
-              sx={{ borderRadius: 2, fontSize: '0.8rem' }}
-            >
-              <MenuItem value="all">Tipo: Todos</MenuItem>
-              <MenuItem value="loose">Gemas</MenuItem>
-              <MenuItem value="jewelry">Joyería</MenuItem>
-            </Select>
-          </FormControl>
-
-          {/* Cantidad filter */}
-          <FormControl size="small" fullWidth>
-            <Select
-              value={cantidadFilter}
-              onChange={(e) => setCantidadFilter(e.target.value)}
-              displayEmpty
-              sx={{ borderRadius: 2, fontSize: '0.8rem' }}
-            >
-              <MenuItem value="all">Cantidad: Todos</MenuItem>
-              <MenuItem value="1">1 pieza</MenuItem>
-              <MenuItem value="2+">2+ (Lotes)</MenuItem>
-            </Select>
-          </FormControl>
-
-          {/* Color filter */}
-          <FormControl size="small" fullWidth>
-            <Select
-              value={colorFilter}
-              onChange={(e) => setColorFilter(e.target.value)}
-              displayEmpty
-              sx={{ borderRadius: 2, fontSize: '0.8rem' }}
-            >
-              <MenuItem value="all">Color: Todos</MenuItem>
-              {colors.map((color) => (
-                <MenuItem key={color} value={color}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: getColorDot(color) }} />
-                    {color.replace('Verde ', '')}
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Shape filter */}
-          <FormControl size="small" fullWidth>
-            <Select
-              value={shapeFilter}
-              onChange={(e) => setShapeFilter(e.target.value)}
-              displayEmpty
-              sx={{ borderRadius: 2, fontSize: '0.8rem' }}
-            >
-              <MenuItem value="all">Talla: Todas</MenuItem>
-              {shapes.map((shape) => (
-                <MenuItem key={shape} value={shape}>
-                  {shape}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Quality filter */}
-          <FormControl size="small" fullWidth>
-            <Select
-              value={qualityFilter}
-              onChange={(e) => setQualityFilter(e.target.value)}
-              displayEmpty
-              sx={{ borderRadius: 2, fontSize: '0.8rem' }}
-            >
-              <MenuItem value="all">Calidad: Todas</MenuItem>
-              {qualities.map((quality) => (
-                <MenuItem key={quality} value={quality}>
-                  {quality}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Colección filter */}
-          {colecciones.length > 0 && (
-            <FormControl size="small" fullWidth>
-              <Select
-                value={coleccionFilter}
-                onChange={(e) => setColeccionFilter(e.target.value)}
-                displayEmpty
-                sx={{ borderRadius: 2, fontSize: '0.8rem' }}
-              >
-                <MenuItem value="all">Colección: Todas</MenuItem>
-                {colecciones.map((coleccion) => (
-                  <MenuItem key={coleccion} value={coleccion}>
-                    {coleccion}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          )}
         </Box>
 
-        {/* Price Range Slider - Full width */}
-        <Box sx={{ px: 0.5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
-            <Typography variant="caption" sx={{ fontWeight: 500, color: theme.palette.text.secondary }}>
-              Precio
-            </Typography>
-            <Typography variant="caption" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
-              {formatCurrency(priceRange[0])} - {formatCurrency(priceRange[1])}
-            </Typography>
+        {/* Row 3: Color swatches (visual) */}
+        <Box>
+          <Typography variant="caption" sx={{ color: theme.palette.text.secondary, mb: 0.5, display: 'block' }}>
+            Color
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+            <Box
+              onClick={() => setColorFilter('all')}
+              sx={{
+                ...pillBase,
+                ...(colorFilter === 'all' ? pillActive : pillInactive),
+              }}
+            >
+              Todos
+            </Box>
+            {colors.slice(0, 6).map((color) => (
+              <Box
+                key={color}
+                onClick={() => setColorFilter(color)}
+                sx={{
+                  ...pillBase,
+                  ...(colorFilter === color ? pillActive : pillInactive),
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    bgcolor: getColorDot(color),
+                    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)',
+                  }}
+                />
+                {color.replace('Verde ', '')}
+              </Box>
+            ))}
           </Box>
-          <Slider
-            value={priceRange}
-            onChange={(_, value) => setPriceRange(value as [number, number])}
-            min={priceMinMax.min}
-            max={priceMinMax.max}
-            step={100000}
-            valueLabelDisplay="auto"
-            valueLabelFormat={(value) => formatCurrency(value)}
+        </Box>
+
+        {/* Row 4: Price tiers (smart chips) */}
+        <Box>
+          <Typography variant="caption" sx={{ color: theme.palette.text.secondary, mb: 0.5, display: 'block' }}>
+            Precio
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+            {priceTiers.map((tier) => (
+              <Box
+                key={tier.label}
+                onClick={() => setPriceRange([tier.min, tier.max])}
+                sx={{
+                  ...pillBase,
+                  ...(currentPriceTier === tier.label ? pillActive : pillInactive),
+                }}
+              >
+                {tier.label}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+
+        {/* Row 5: Additional filters (horizontal scroll) */}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 0.75,
+            overflowX: 'auto',
+            pb: 0.5,
+            mx: -1,
+            px: 1,
+            '&::-webkit-scrollbar': { display: 'none' },
+            scrollbarWidth: 'none',
+          }}
+        >
+          {/* Shape pills */}
+          {shapes.slice(0, 4).map((shape) => (
+            <Box
+              key={shape}
+              onClick={() => setShapeFilter(shapeFilter === shape ? 'all' : shape)}
+              sx={{
+                ...pillBase,
+                ...(shapeFilter === shape ? pillActive : pillInactive),
+              }}
+            >
+              {shape}
+            </Box>
+          ))}
+
+          {/* Quality pills */}
+          {qualities.slice(0, 3).map((quality) => (
+            <Box
+              key={quality}
+              onClick={() => setQualityFilter(qualityFilter === quality ? 'all' : quality)}
+              sx={{
+                ...pillBase,
+                ...(qualityFilter === quality ? pillActive : pillInactive),
+              }}
+            >
+              {quality}
+            </Box>
+          ))}
+
+          {/* Cantidad */}
+          <Box
+            onClick={() => setCantidadFilter(cantidadFilter === '2+' ? 'all' : '2+')}
             sx={{
-              color: emeraldCore.dark,
-              '& .MuiSlider-thumb': { width: 16, height: 16 },
-              '& .MuiSlider-track': { height: 3 },
-              '& .MuiSlider-rail': {
-                height: 3,
-                bgcolor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-              },
+              ...pillBase,
+              ...(cantidadFilter === '2+' ? pillActive : pillInactive),
             }}
-          />
+          >
+            Lotes
+          </Box>
         </Box>
 
         {/* Clear filters button */}
         {hasFilters && (
           <Chip
-            label="Limpiar filtros"
+            label="✕ Limpiar filtros"
             size="small"
             onClick={handleClearFilters}
             sx={{
               alignSelf: 'flex-start',
-              bgcolor: alpha(semanticColors.error.main, 0.1),
+              borderRadius: '16px',
+              bgcolor: alpha(semanticColors.error.main, 0.08),
               color: semanticColors.error.main,
               fontWeight: 600,
               cursor: 'pointer',
-              fontSize: '0.75rem',
+              fontSize: '0.7rem',
+              '&:hover': {
+                bgcolor: alpha(semanticColors.error.main, 0.15),
+              },
             }}
           />
         )}
