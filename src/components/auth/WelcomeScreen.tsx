@@ -3,7 +3,7 @@
  * Offers Guest Mode (no PIN) or Full Access (PIN required)
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Box, Typography, Button, IconButton, Fade, Stack } from '@mui/material';
 import { Backspace as BackspaceIcon, VisibilityOutlined, LockOpenOutlined } from '@mui/icons-material';
 import { brandColors } from '../../theme';
@@ -19,14 +19,6 @@ export default function WelcomeScreen() {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Focus hidden input for keyboard support when in PIN mode
-  useEffect(() => {
-    if (viewMode === 'pin') {
-      inputRef.current?.focus();
-    }
-  }, [viewMode]);
 
   const handleDigit = (digit: string) => {
     if (pin.length >= 4) return;
@@ -99,21 +91,6 @@ export default function WelcomeScreen() {
       onKeyDown={viewMode === 'pin' ? handleKeyDown : undefined}
       tabIndex={0}
     >
-      {/* Hidden input for keyboard support */}
-      {viewMode === 'pin' && (
-        <input
-          ref={inputRef}
-          type="tel"
-          style={{
-            position: 'absolute',
-            opacity: 0,
-            width: 0,
-            height: 0,
-          }}
-          onKeyDown={handleKeyDown}
-        />
-      )}
-
       {/* Decorative emerald glow */}
       <Box
         sx={{

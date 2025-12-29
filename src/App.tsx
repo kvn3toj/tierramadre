@@ -1,11 +1,13 @@
-import { useCallback, useEffect, lazy, Suspense } from 'react';
+import { useCallback, useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { IOSLayout } from './components/ios';
 import { WelcomeScreen } from './components/auth';
 import { useAuth } from './hooks/useAuth';
 import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
 import LoadingFallback from './components/LoadingFallback';
+import SplashScreen from './components/SplashScreen';
 // PWA disabled - service worker not generating correctly
 // import UpdatePrompt from './components/pwa/UpdatePrompt';
 import { LiquidGlassProvider } from './contexts/LiquidGlassContext';
@@ -134,11 +136,21 @@ function AppContent() {
 
 function App() {
   const { isAuthenticated } = useAuth();
+  const [showSplash, setShowSplash] = useState(true);
 
   // Initialize PWA behaviors on mount
   useEffect(() => {
     initPWA();
   }, []);
+
+  // Show splash screen on app open
+  if (showSplash) {
+    return (
+      <AnimatePresence mode="wait">
+        <SplashScreen onComplete={() => setShowSplash(false)} />
+      </AnimatePresence>
+    );
+  }
 
   // Show welcome screen if not authenticated
   if (!isAuthenticated) {
