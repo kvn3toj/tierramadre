@@ -58,6 +58,26 @@ VITE_GROQ_API_KEY=your_groq_api_key
 ### Port Management
 Always clean ports before running dev server if conflicts occur.
 
+## Vercel Deployment
+
+**IMPORTANT**: This project deploys ONLY to `tierra-madre-studio` on Vercel.
+
+### Rules
+- **NEVER** create new Vercel projects
+- **NEVER** run `vercel` without specifying the project
+- Deployments are automatic on push to `main` branch
+- The project is linked via `.vercel/project.json`
+
+### Project Details
+- **Project Name**: `tierra-madre-studio`
+- **Production URL**: https://tierra-madre-studio.vercel.app
+- **Organization**: kvn3tojgames
+
+### Manual Deploy (if needed)
+```bash
+vercel --prod  # Uses existing project link
+```
+
 ## Part of CoomUnity Universe
 Built with the CoomUnity agent ecosystem:
 - **ARIA**: Frontend experience
