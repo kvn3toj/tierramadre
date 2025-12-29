@@ -33,8 +33,8 @@ interface RecentlyViewedCarouselProps {
   maxItems?: number;
 }
 
-const CARD_WIDTH = 140;
-const CARD_GAP = 12;
+const CARD_WIDTH = 100;
+const CARD_GAP = 8;
 
 export default function RecentlyViewedCarousel({
   items,
@@ -69,10 +69,10 @@ export default function RecentlyViewedCarousel({
   return (
     <Box
       sx={{
-        mb: 3,
-        py: 2,
-        px: 2,
-        borderRadius: 3,
+        mb: 2,
+        py: 1.5,
+        px: 1.5,
+        borderRadius: 2,
         bgcolor: isLight
           ? alpha(emeraldCore.lightest, 0.3)
           : alpha(surfacesDark.background.tertiary, 0.5),
@@ -86,15 +86,16 @@ export default function RecentlyViewedCarousel({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          mb: 2,
+          mb: 1,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Clock size={18} color={emeraldCore.primary} />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+          <Clock size={14} color={emeraldCore.primary} />
           <Typography
-            variant="subtitle2"
+            variant="caption"
             sx={{
               fontWeight: 600,
+              fontSize: '0.75rem',
               color: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
             }}
           >
@@ -103,8 +104,8 @@ export default function RecentlyViewedCarousel({
           <Typography
             variant="caption"
             sx={{
+              fontSize: '0.65rem',
               color: isLight ? surfacesLight.text.tertiary : surfacesDark.text.tertiary,
-              ml: 0.5,
             }}
           >
             ({displayItems.length})
@@ -242,30 +243,31 @@ function RecentItemCard({
             image={item.thumbnailUrl || item.imagen}
             alt={displayName}
             sx={{
-              height: 100,
+              height: 70,
               objectFit: 'cover',
             }}
           />
         ) : (
           <Box
             sx={{
-              height: 100,
+              height: 70,
               bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.tertiary,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Gem size={32} color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled} />
+            <Gem size={24} color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled} />
           </Box>
         )}
 
         {/* Info */}
-        <Box sx={{ p: 1 }}>
+        <Box sx={{ p: 0.75 }}>
           <Typography
             variant="caption"
             sx={{
               fontWeight: 600,
+              fontSize: '0.65rem',
               display: 'block',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -278,7 +280,7 @@ function RecentItemCard({
           <Typography
             variant="caption"
             sx={{
-              fontSize: '0.65rem',
+              fontSize: '0.6rem',
               color: emeraldCore.primary,
               fontWeight: 600,
             }}
@@ -305,10 +307,10 @@ export function RecentlyViewedSkeleton({ count = 5 }: { count?: number }) {
             overflow: 'hidden',
           }}
         >
-          <Skeleton variant="rectangular" height={100} />
-          <Box sx={{ p: 1 }}>
-            <Skeleton variant="text" width="80%" />
-            <Skeleton variant="text" width="50%" />
+          <Skeleton variant="rectangular" height={70} />
+          <Box sx={{ p: 0.75 }}>
+            <Skeleton variant="text" width="80%" height={12} />
+            <Skeleton variant="text" width="50%" height={10} />
           </Box>
         </Box>
       ))}

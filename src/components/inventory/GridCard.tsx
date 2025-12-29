@@ -14,8 +14,6 @@ import {
   useTheme,
 } from '@mui/material';
 import {
-  Gem,
-  Crown,
   Play,
   Images,
   Heart,
@@ -24,7 +22,6 @@ import {
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { InventoryItem, TrustScoreBreakdown } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
-import { TrustBadgeCompact } from '../TrustBadge';
 import { PriceDisplay } from '../PriceDisplay';
 import ProgressiveImage from '../ProgressiveImage';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
@@ -44,7 +41,6 @@ interface GridCardProps {
 
 function GridCard({
   item,
-  trustScore,
   isFavorite,
   onItemClick,
   onToggleFavorite,
@@ -80,14 +76,11 @@ function GridCard({
       aria-label={`${item.nombre} - ${item.color}, ${weight}`}
       tabIndex={0}
       sx={{
-        height: '100%',
         borderRadius: 3,
         border: '1px solid',
         borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
         overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
         transition: 'all 0.25s ease',
         cursor: 'pointer',
         '&:hover': {
@@ -110,7 +103,7 @@ function GridCard({
             <ProgressiveImage
               src={item.imagen}
               alt={`${item.nombre} - ${item.color}`}
-              height={140}
+              height={180}
               width={200}
               layout="grid"
               quality="eco"
@@ -274,59 +267,7 @@ function GridCard({
       </Box>
 
       {/* Compact Content Section */}
-      <CardContent sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Mini header - type icon and color */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            mb: 1,
-            pb: 1,
-            borderBottom: '1px solid',
-            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-          }}
-        >
-          {/* Color accent bar */}
-          <Box
-            sx={{
-              width: 4,
-              height: 24,
-              borderRadius: 2,
-              bgcolor: colorDot,
-            }}
-          />
-          {/* Type icon */}
-          <Box
-            sx={{
-              width: 24,
-              height: 24,
-              borderRadius: 1,
-              bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.tertiary,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {item.isJewelry ? (
-              <Crown size={14} color={isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary} />
-            ) : (
-              <Gem size={14} color={colorDot} />
-            )}
-          </Box>
-          {/* Color name */}
-          <Typography
-            variant="caption"
-            sx={{
-              fontWeight: 500,
-              color: theme.palette.text.secondary,
-              fontSize: '0.7rem',
-            }}
-          >
-            {item.color.replace('Verde ', '')}
-          </Typography>
-        </Box>
-
+      <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
         {/* Name */}
         <Typography
           variant="body2"
@@ -338,40 +279,38 @@ function GridCard({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            fontSize: '0.85rem',
           }}
         >
           {displayName}
         </Typography>
 
-        {/* Specs */}
-        <Typography
-          variant="caption"
-          sx={{
-            color: theme.palette.text.secondary,
-            mb: 1,
-            fontSize: '0.7rem',
-          }}
-        >
-          {item.color}
-          {isLoose && typeof item.peso === 'number' && ` • ${item.peso} ct`}
-          {item.isJewelry && item.metalType && ` • ${item.metalType}`}
-        </Typography>
-
-        <Box sx={{ flex: 1 }} />
-
-        {/* Trust badge and Price */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <TrustBadgeCompact score={trustScore} />
-          <Box sx={{ textAlign: 'right' }}>
-            <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
-          </Box>
+        {/* Specs with color dot */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+          <Box
+            sx={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              bgcolor: colorDot,
+              flexShrink: 0,
+            }}
+          />
+          <Typography
+            variant="caption"
+            sx={{
+              color: theme.palette.text.secondary,
+              fontSize: '0.7rem',
+            }}
+          >
+            {item.color}
+            {isLoose && typeof item.peso === 'number' && ` • ${item.peso} ct`}
+            {item.isJewelry && item.metalType && ` • ${item.metalType}`}
+          </Typography>
         </Box>
+
+        {/* Price */}
+        <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
       </CardContent>
     </Card>
   );

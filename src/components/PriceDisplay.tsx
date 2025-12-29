@@ -1,25 +1,22 @@
 /**
  * PriceDisplay Component
- * Muestra precios duales: Internacional y Nacional (con 20% de descuento)
+ * Muestra precios: Price y Comunidad TM
  *
  * Diseñado por Aria - Capitana del Concilio de Creación
  */
-import { Box, Stack, Typography, Chip, useTheme } from '@mui/material';
-import PublicIcon from '@mui/icons-material/Public';
+import { Box, Stack, Typography, useTheme } from '@mui/material';
 import FlagIcon from '@mui/icons-material/Flag';
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import PublicIcon from '@mui/icons-material/Public';
 // Design System Tokens
-import { emeraldCore, semanticColors } from '../design-system/tokens/colors';
+import { emeraldCore } from '../design-system/tokens/colors';
 
 export interface PriceDisplayProps {
-  /** Precio nacional (ya con descuento aplicado) - el valor guardado en BD */
+  /** Precio Comunidad TM (con descuento) */
   price: number;
-  /** Precio internacional desde Google Sheets (Column H) */
+  /** Precio regular (Price) */
   precioInternacional?: number;
   /** Moneda (default: COP) */
   currency?: 'COP' | 'USD';
-  /** Mostrar precio internacional (solo si precioInternacional está disponible) */
-  showInternational?: boolean;
   /** Modo compacto para listas */
   compact?: boolean;
 }
@@ -50,201 +47,125 @@ const formatCompact = (value: number): string => {
 };
 
 export const PriceDisplay = ({
-  price, // Este es el precio NACIONAL (ya con descuento aplicado)
-  precioInternacional,
+  price, // Precio Comunidad TM
+  precioInternacional, // Precio regular (Price)
   currency = 'COP',
-  showInternational = true,
   compact = false,
 }: PriceDisplayProps) => {
   const theme = useTheme();
-  // price = nacional (ya descontado)
-  // precioInternacional viene directamente de Google Sheets (Column H)
-  const nationalPrice = price;
-  const internationalPrice = precioInternacional;
+  const comunidadPrice = price;
+  const regularPrice = precioInternacional;
 
-  // Solo mostrar internacional si tenemos el precio desde Sheets Y showInternational es true
-  const shouldShowInternational = showInternational && internationalPrice !== undefined && internationalPrice > 0;
-
-  // Calcular descuento solo si tenemos ambos precios
-  const discountPercent = shouldShowInternational
-    ? Math.round(((internationalPrice - nationalPrice) / internationalPrice) * 100)
-    : 0;
-
-  // Modo compacto para tarjetas en lista
+  // Modo compacto para tarjetas - solo precio (Comunidad TM sin label)
   if (compact) {
     return (
-      <Stack spacing={0.25}>
-        {/* Precio Internacional (desde Sheets) - tachado, pequeño */}
-        {shouldShowInternational && internationalPrice && (
-          <Typography
-            variant="caption"
-            sx={{
-              color: 'text.secondary',
-              textDecoration: 'line-through',
-              fontSize: '0.7rem',
-            }}
-          >
-            {formatCompact(internationalPrice)}
-          </Typography>
-        )}
-        {/* Precio Nacional (el guardado) - destacado */}
-        <Stack direction="row" alignItems="center" spacing={0.5}>
-          <Typography
-            variant="body2"
-            sx={{
-              fontWeight: 700,
-              color: emeraldCore.dark,
-              fontFamily: 'monospace',
-            }}
-          >
-            🇨🇴 {formatCompact(nationalPrice)}
-          </Typography>
-          {shouldShowInternational && discountPercent > 0 && (
-            <Typography
-              variant="caption"
-              sx={{
-                color: semanticColors.warning.dark,
-                fontWeight: 600,
-                fontSize: '0.65rem',
-              }}
-            >
-              -{discountPercent}%
-            </Typography>
-          )}
-        </Stack>
-      </Stack>
+      <Typography
+        variant="body2"
+        sx={{
+          fontWeight: 700,
+          color: emeraldCore.dark,
+          fontFamily: 'monospace',
+        }}
+      >
+        {formatCompact(comunidadPrice)}
+      </Typography>
     );
   }
 
-  // Modo completo para vista de detalle
+  // Modo completo para vista de detalle - ambos precios
   return (
     <Stack spacing={1.5} sx={{ width: '100%' }}>
-      {/* Precio Internacional (desde Sheets) - mostrar solo si disponible */}
-      {shouldShowInternational && internationalPrice && (
+      {/* Precio regular (Price) - mostrar si disponible */}
+      {regularPrice && regularPrice > 0 && (
         <Box
           sx={{
             p: 2,
-            bgcolor: theme.palette.grey[50],
+            bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : theme.palette.grey[50],
             borderRadius: 2,
             border: '1px solid',
-            borderColor: theme.palette.grey[200],
+            borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : theme.palette.grey[200],
           }}
         >
           <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
-            <PublicIcon fontSize="small" sx={{ color: theme.palette.grey[500] }} />
+            <PublicIcon fontSize="small" sx={{ color: theme.palette.text.secondary }} />
             <Typography
               variant="caption"
               sx={{
-                color: theme.palette.grey[600],
+                color: theme.palette.text.secondary,
                 fontWeight: 600,
                 letterSpacing: '0.05em',
                 textTransform: 'uppercase',
               }}
             >
-              Precio
+              Price
             </Typography>
           </Stack>
           <Typography
             variant="h5"
             sx={{
               fontWeight: 700,
-              color: theme.palette.grey[800],
+              color: theme.palette.text.primary,
               fontFamily: 'monospace',
             }}
           >
-            {formatCurrency(internationalPrice, currency)}
+            {formatCurrency(regularPrice, currency)}
           </Typography>
         </Box>
       )}
 
-      {/* Precio Nacional (el guardado) - siempre visible, destacado */}
+      {/* Precio Comunidad TM - siempre visible */}
       <Box
+        sx={{
+          p: 2,
+          bgcolor: emeraldCore.lightest,
+          borderRadius: 2,
+          border: '2px solid',
+          borderColor: emeraldCore.primary,
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Background decorativo */}
+        <Box
           sx={{
-            p: 2,
-            bgcolor: emeraldCore.lightest,
-            borderRadius: 2,
-            border: '2px solid',
-            borderColor: emeraldCore.primary,
+            position: 'absolute',
+            top: -20,
+            right: -20,
+            width: 100,
+            height: 100,
+            bgcolor: emeraldCore.primary,
+            opacity: 0.1,
+            borderRadius: '50%',
+          }}
+        />
+
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+          <FlagIcon fontSize="small" sx={{ color: emeraldCore.dark }} />
+          <Typography
+            variant="caption"
+            sx={{
+              color: emeraldCore.darker,
+              fontWeight: 600,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Comunidad TM
+          </Typography>
+        </Stack>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            color: emeraldCore.darker,
+            fontFamily: 'monospace',
             position: 'relative',
-            overflow: 'hidden',
+            zIndex: 1,
           }}
         >
-          {/* Background decorativo */}
-          <Box
-            sx={{
-              position: 'absolute',
-              top: -20,
-              right: -20,
-              width: 100,
-              height: 100,
-              bgcolor: emeraldCore.primary,
-              opacity: 0.1,
-              borderRadius: '50%',
-            }}
-          />
-
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            sx={{ mb: 0.5 }}
-          >
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <FlagIcon fontSize="small" sx={{ color: emeraldCore.dark }} />
-              <Typography
-                variant="caption"
-                sx={{
-                  color: emeraldCore.darker,
-                  fontWeight: 600,
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Comunidad TM
-              </Typography>
-            </Stack>
-            {shouldShowInternational && discountPercent > 0 && (
-              <Chip
-                label={`Ahorra ${discountPercent}%`}
-                size="small"
-                icon={<LocalOfferIcon sx={{ fontSize: '0.9rem !important' }} />}
-                sx={{
-                  bgcolor: semanticColors.warning.dark,
-                  color: 'white',
-                  fontWeight: 600,
-                  fontSize: '0.7rem',
-                  '& .MuiChip-icon': {
-                    color: 'white',
-                  },
-                }}
-              />
-            )}
-          </Stack>
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 700,
-              color: emeraldCore.darker,
-              fontFamily: 'monospace',
-              position: 'relative',
-              zIndex: 1,
-            }}
-          >
-            {formatCurrency(nationalPrice, currency)}
-          </Typography>
-          {shouldShowInternational && (
-            <Typography
-              variant="caption"
-              sx={{
-                color: emeraldCore.dark,
-                display: 'block',
-                mt: 0.5,
-              }}
-            >
-              Precio exclusivo para miembros de la Comunidad TM
-            </Typography>
-          )}
-        </Box>
+          {formatCurrency(comunidadPrice, currency)}
+        </Typography>
+      </Box>
     </Stack>
   );
 };

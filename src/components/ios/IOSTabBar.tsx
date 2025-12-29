@@ -194,10 +194,11 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         },
       }}
     >
-      <Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-around' }}>
+      <Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-evenly', px: 1 }}>
         {PRIMARY_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
+          const isLucideIcon = tab.id === 'inventory'; // Gem is from lucide-react
 
           return (
             <Box
@@ -216,7 +217,9 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
+                justifyContent: 'center',
                 flex: 1,
+                maxWidth: 90,
                 padding: `${spacing.xxs} ${spacing.xs}`,
                 cursor: 'pointer',
                 minHeight: '44px',
@@ -247,19 +250,37 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
               <Box sx={{
                 position: 'relative',
                 marginBottom: spacing.xxs,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: `${iconSize}px`,
+                width: `${iconSize}px`,
                 transition: effectiveConfig.animations
                   ? `transform ${durations.liquidFast} ${easingCurves.liquidSpring}`
                   : 'none',
               }}>
-                <Icon
-                  sx={{
-                    fontSize: `${iconSize}px`,
-                    color: isActive ? 'var(--brand-primary)' : 'var(--text-tertiary)',
-                    transition: effectiveConfig.animations
-                      ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
-                      : 'none',
-                  }}
-                />
+                {isLucideIcon ? (
+                  <Icon
+                    size={iconSize - 2}
+                    color={isActive ? 'var(--brand-primary)' : 'var(--text-tertiary)'}
+                    strokeWidth={isActive ? 2.5 : 2}
+                    style={{
+                      transition: effectiveConfig.animations
+                        ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
+                        : 'none',
+                    }}
+                  />
+                ) : (
+                  <Icon
+                    sx={{
+                      fontSize: `${iconSize}px`,
+                      color: isActive ? 'var(--brand-primary)' : 'var(--text-tertiary)',
+                      transition: effectiveConfig.animations
+                        ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
+                        : 'none',
+                    }}
+                  />
+                )}
                 {tab.badge && tab.badge > 0 && (
                   <Box
                     aria-label={`${tab.badge} notifications`}

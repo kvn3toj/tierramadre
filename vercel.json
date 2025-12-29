@@ -96,7 +96,7 @@
       "destination": "/api/:path*"
     },
     {
-      "source": "/:path*",
+      "source": "/((?!api|assets|images|@|src|node_modules|\\.).*)",
       "destination": "/index.html"
     }
   ]

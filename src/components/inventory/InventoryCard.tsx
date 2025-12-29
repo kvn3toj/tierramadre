@@ -16,15 +16,12 @@ import {
   CardContent,
   alpha,
   useTheme,
-  IconButton,
   Button,
   Collapse,
   LinearProgress,
 } from '@mui/material';
 import {
   Gem,
-  Crown,
-  ChevronDown,
   MapPin,
   User,
   FileCheck,
@@ -168,11 +165,11 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
         },
       }}
     >
-      {/* Product Image/Video Section - Compact for narrow screens */}
+      {/* Product Image/Video Section */}
       {item.imagen ? (
         <Box
           sx={{
-            height: 120,
+            height: 160,
             position: 'relative',
             overflow: 'hidden',
             bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.tertiary,
@@ -250,137 +247,57 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
         // Placeholder for items without media
         <Box
           sx={{
-            height: 80,
+            height: 160,
             bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.tertiary,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Gem size={32} color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled} />
+          <Gem size={48} color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled} />
         </Box>
       )}
 
-      {/* Minimal header - Compact for narrow screens */}
-      <Box
-        sx={{
-          height: 44,
-          bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.tertiary,
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          px: 1.5,
-          borderBottom: '1px solid',
-          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-        }}
-      >
-        {/* Colored accent bar on left */}
-        <Box
-          sx={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: 4,
-            bgcolor: colorDot,
-          }}
-        />
-
-        {/* Icon based on type - Compact */}
-        <Box
-          sx={{
-            width: 28,
-            height: 28,
-            borderRadius: 1.5,
-            bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
-            border: '1px solid',
-            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mr: 1,
-          }}
-        >
-          {item.isJewelry ? (
-            <Crown size={14} color={isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary} />
-          ) : (
-            <Gem size={14} color={colorDot} />
-          )}
-        </Box>
-
-        {/* Color tag with dot - Compact */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.5,
-            px: 1,
-            py: 0.25,
-            borderRadius: 1,
-            bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
-            border: '1px solid',
-            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-          }}
-        >
+      {/* Compact content */}
+      <CardContent sx={{ p: 1.5, pb: 1.5, '&:last-child': { pb: 1.5 } }}>
+        {/* Header row with color and quality */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75 }}>
           <Box
             sx={{
-              width: 6,
-              height: 6,
+              width: 8,
+              height: 8,
               borderRadius: '50%',
               bgcolor: colorDot,
+              flexShrink: 0,
             }}
           />
           <Typography
             variant="caption"
             sx={{
-              fontWeight: 500,
               color: theme.palette.text.secondary,
-              fontSize: '0.625rem',
+              fontSize: '0.65rem',
+              flex: 1,
             }}
           >
-            {item.color.replace('Verde ', '')}
+            {item.color}
           </Typography>
-        </Box>
-
-        <Box sx={{ flex: 1 }} />
-
-        {/* Item count if multiple - Compact */}
-        {item.cantidad > 1 && (
           <Chip
-            label={`×${item.cantidad}`}
+            label={quality.label}
             size="small"
             sx={{
               height: 16,
-              fontSize: '0.55rem',
-              fontWeight: 600,
-              bgcolor: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
-              color: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
-              mr: 0.5,
+              fontSize: '0.5rem',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              bgcolor: quality.bg,
+              color: quality.color,
+              border: `1px solid ${quality.border}`,
               '& .MuiChip-label': { px: 0.5 },
             }}
           />
-        )}
+        </Box>
 
-        {/* Quality badge - compact */}
-        <Chip
-          label={quality.label}
-          size="small"
-          sx={{
-            height: 18,
-            fontSize: '0.55rem',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.03em',
-            bgcolor: quality.bg,
-            color: quality.color,
-            border: `1px solid ${quality.border}`,
-            '& .MuiChip-label': { px: 0.75 },
-          }}
-        />
-      </Box>
-
-      <CardContent sx={{ p: 1.5 }}>
-        {/* Name - Compact */}
+        {/* Name */}
         <Typography
           variant="body2"
           sx={{
@@ -391,70 +308,29 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            fontSize: '0.8rem',
+            fontSize: '0.85rem',
           }}
         >
           {displayName}
         </Typography>
 
-        {/* Key specs - compact single line */}
+        {/* Specs */}
         <Typography
           variant="caption"
-          component="div"
           sx={{
             color: theme.palette.text.secondary,
-            mb: 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.5,
-            fontSize: '0.65rem',
+            fontSize: '0.7rem',
+            display: 'block',
+            mb: 0.75,
           }}
         >
-          <Box
-            sx={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              bgcolor: colorDot,
-            }}
-          />
-          {item.color}
-          {isLoose && typeof item.peso === 'number' && (
-            <>
-              <Box sx={{ color: surfacesLight.text.disabled }}>•</Box>
-              {item.peso} ct
-            </>
-          )}
-          {item.isJewelry && item.metalType && (
-            <>
-              <Box sx={{ color: surfacesLight.text.disabled }}>•</Box>
-              {item.metalType}
-            </>
-          )}
+          {isLoose && typeof item.peso === 'number' && `${item.peso} ct`}
+          {item.isJewelry && item.metalType && item.metalType}
         </Typography>
 
-        {/* Price - Black with green on hover */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'baseline',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Box className="price-text" sx={{ flex: 1 }}>
-            <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
-          </Box>
-
-          <IconButton
-            size="small"
-            sx={{
-              color: theme.palette.text.secondary,
-              transform: showDetails ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.2s',
-            }}
-          >
-            <ChevronDown size={18} />
-          </IconButton>
+        {/* Price */}
+        <Box className="price-text">
+          <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
         </Box>
 
         {/* Expandable details - Progressive disclosure */}

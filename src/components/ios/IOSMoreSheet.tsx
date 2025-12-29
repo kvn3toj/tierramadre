@@ -11,9 +11,9 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton, Backdrop, Button } from '@mui/material';
-import { Lock, Close, AccountBalance, Settings } from '@mui/icons-material';
+import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode } from '@mui/icons-material';
 import { Vault } from 'lucide-react';
-import MoreSheetSearch from './MoreSheetSearch';
+import { useTheme } from '../../contexts/ThemeContext';
 
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
@@ -62,6 +62,7 @@ export interface IOSMoreSheetProps {
 const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettings }) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { mode, toggleTheme } = useTheme();
   const isGuest = useIsGuest();
   const { effectiveConfig } = useLiquidGlassSafe();
   const [unlockOpen, setUnlockOpen] = useState(false);
@@ -130,6 +131,13 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
     }
     onOpenSettings?.();
     onClose();
+  };
+
+  const handleThemeToggle = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+    toggleTheme();
   };
 
   return (
@@ -203,7 +211,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
             }}
           />
 
-          {/* Title and Close */}
+          {/* Title and Actions */}
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
             <Typography
               variant="h2"
@@ -216,23 +224,33 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
               {t.nav.more}
             </Typography>
 
-            <IconButton
-              onClick={onClose}
-              aria-label={t.actions.close}
-              sx={{
-                color: 'var(--text-secondary)',
-                '&:hover': { backgroundColor: 'var(--surface-tertiary)' },
-              }}
-            >
-              <Close />
-            </IconButton>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {/* Theme Toggle */}
+              <IconButton
+                onClick={handleThemeToggle}
+                aria-label={mode === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+                sx={{
+                  color: primitiveColors.emerald[500],
+                  backgroundColor: `${primitiveColors.emerald[500]}15`,
+                  '&:hover': { backgroundColor: `${primitiveColors.emerald[500]}25` },
+                }}
+              >
+                {mode === 'dark' ? <LightMode /> : <DarkMode />}
+              </IconButton>
+
+              <IconButton
+                onClick={onClose}
+                aria-label={t.actions.close}
+                sx={{
+                  color: 'var(--text-secondary)',
+                  '&:hover': { backgroundColor: 'var(--surface-tertiary)' },
+                }}
+              >
+                <Close />
+              </IconButton>
+            </Box>
           </Box>
 
-        </Box>
-
-        {/* Enhanced Search Section */}
-        <Box sx={{ padding: spacing.md, pt: 0 }}>
-          <MoreSheetSearch onClose={onClose} />
         </Box>
 
         {/* Tools Grid */}
