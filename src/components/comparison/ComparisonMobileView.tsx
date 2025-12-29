@@ -174,7 +174,7 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
         {/* Medidas */}
         <AttributeCard
           label="Medidas"
-          values={items.map((item) => item.medidas || '-')}
+          values={items.map((item) => item.medidasValores || item.medidas || '-')}
           indicators={items.map(() => 'neutral')}
           type="text"
         />

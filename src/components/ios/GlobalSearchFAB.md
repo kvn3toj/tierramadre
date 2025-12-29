@@ -8,7 +8,7 @@ Floating Action Button for global search functionality, accessible from all page
 ### Problem Solved
 **Before:**
 - Search was hidden in "More" menu (2 taps to access)
-- Only available on inventory page
+- Only available on treasure page
 - High cognitive load for users looking for specific emeralds
 - No quick way to search from product details or other pages
 
@@ -43,7 +43,7 @@ Floating Action Button for global search functionality, accessible from all page
 
 ### 1. Smart Visibility
 ```typescript
-const HIDDEN_PAGES = ['/inventory'];
+const HIDDEN_PAGES = ['/treasure'];
 ```
 - Automatically hides on pages with prominent search
 - Can be force-shown via prop: `<GlobalSearchFAB forceShow />`
@@ -58,7 +58,7 @@ const HIDDEN_PAGES = ['/inventory'];
 - Reuses `MoreSheetSearch` component
 - All filters available (type, quality, city, price)
 - Real-time results preview
-- Navigates to `/inventory` with query params
+- Navigates to `/treasure` with query params
 
 ### 4. Animations
 ```typescript
@@ -123,10 +123,10 @@ z-index: 1000; /* Below modal (1100) */
 
 ## Testing Checklist
 
-- [ ] FAB appears on all pages except `/inventory`
+- [ ] FAB appears on all pages except `/treasure`
 - [ ] FAB positioned correctly (above tab bar)
 - [ ] Modal opens on click
-- [ ] Search works and navigates to inventory
+- [ ] Search works and navigates to treasure
 - [ ] Filters persist as URL params
 - [ ] Animations smooth on iPhone 12+
 - [ ] Safe area insets respected

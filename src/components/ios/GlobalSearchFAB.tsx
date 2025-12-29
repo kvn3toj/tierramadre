@@ -39,8 +39,8 @@ import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 
 // Pages where FAB should be hidden (already have prominent search or not relevant)
 const HIDDEN_PAGES = [
-  '/inventory',    // Already has search in filters
-  '/ambassadors',  // Ambassadors page searches asesores, not inventory
+  '/treasure',     // Already has search in filters
+  '/ambassadors',  // Ambassadors page searches asesores, not treasures
 ];
 
 interface GlobalSearchFABProps {

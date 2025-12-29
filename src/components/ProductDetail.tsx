@@ -369,13 +369,13 @@ export default function ProductDetail() {
         <Button
           variant="contained"
           startIcon={<ArrowLeft size={18} />}
-          onClick={() => navigate('/inventory')}
+          onClick={() => navigate('/treasure')}
           sx={{
             background: buttonGradients.primary,
             color: '#FFFFFF',
           }}
         >
-          Volver al Inventario
+          Volver a Tesoros
         </Button>
       </Box>
     );
@@ -411,14 +411,14 @@ export default function ProductDetail() {
         <Link
           component="button"
           variant="body2"
-          onClick={() => navigate('/inventory')}
+          onClick={() => navigate('/treasure')}
           sx={{
             color: theme.palette.text.secondary,
             textDecoration: 'none',
             '&:hover': { color: emeraldCore.dark },
           }}
         >
-          Inventario
+          Tesoros
         </Link>
         <Typography variant="body2" color="text.primary">
           {displayName}
@@ -429,7 +429,7 @@ export default function ProductDetail() {
       <Button
         size="small"
         startIcon={<ArrowLeft size={16} />}
-        onClick={() => navigate('/inventory')}
+        onClick={() => navigate('/treasure')}
         sx={{
           mb: 2,
           py: 0.5,

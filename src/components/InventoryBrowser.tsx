@@ -127,7 +127,7 @@ export default function InventoryBrowser() {
     setPriceRange,
     setSortBy,
     setCantidadFilter,
-    setCityFilter,
+    // setCityFilter, // Reserved for future city filter feature
     setColeccionFilter,
     clearFilters,
     hasFilters,
@@ -232,7 +232,7 @@ export default function InventoryBrowser() {
   );
 
   // Destructure filter values for convenience
-  const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, cityFilter, coleccionFilter } = filters;
+  const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, coleccionFilter } = filters;
 
   // Mobile detection
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -393,7 +393,7 @@ export default function InventoryBrowser() {
             <TextField
               fullWidth
               size="small"
-              placeholder="Buscar por nombre, color, forma..."
+              placeholder="Descubrir tesoros por nombre, color, calidad..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onFocus={() => setSearchFocused(true)}

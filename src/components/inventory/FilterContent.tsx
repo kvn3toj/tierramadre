@@ -71,6 +71,8 @@ export interface FilterContentProps {
   priceMinMax: { min: number; max: number };
   isLight: boolean;
   theme: Theme;
+  /** Hide search field (when parent already has one) */
+  compact?: boolean;
 }
 
 export const FilterContent = memo(function FilterContent({
@@ -108,40 +110,43 @@ export const FilterContent = memo(function FilterContent({
   priceMinMax,
   isLight,
   theme,
+  compact = false,
 }: FilterContentProps) {
   return (
     <>
-      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mb: showAdvancedFilters ? 2 : 0 }}>
-        {/* Search */}
-        <TextField
-          placeholder="Buscar... (presiona /)"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onBlur={() => {
-            if (search.trim()) {
-              analyticsHook.trackSearch(search, sortedInventory.length);
-              const itemIds = sortedInventory.map(item => item.item);
-              analyticsHook.trackSearchHits(itemIds);
-            }
-          }}
-          size="small"
-          inputRef={searchInputRef}
-          sx={{
-            minWidth: 200,
-            flex: 1,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-              bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
-            },
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search size={18} color={surfacesLight.text.tertiary} />
-              </InputAdornment>
-            ),
-          }}
-        />
+      <Box sx={{ display: 'flex', gap: compact ? 1 : 2, flexWrap: 'wrap', alignItems: 'center', mb: showAdvancedFilters ? 2 : 0 }}>
+        {/* Search - Hidden in compact mode (parent has search bar) */}
+        {!compact && (
+          <TextField
+            placeholder="Buscar... (presiona /)"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onBlur={() => {
+              if (search.trim()) {
+                analyticsHook.trackSearch(search, sortedInventory.length);
+                const itemIds = sortedInventory.map(item => item.item);
+                analyticsHook.trackSearchHits(itemIds);
+              }
+            }}
+            size="small"
+            inputRef={searchInputRef}
+            sx={{
+              minWidth: 200,
+              flex: 1,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search size={18} color={surfacesLight.text.tertiary} />
+                </InputAdornment>
+              ),
+            }}
+          />
+        )}
 
         {/* Status filter */}
         <FormControl size="small" sx={{ minWidth: 130 }}>

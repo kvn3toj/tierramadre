@@ -8,7 +8,8 @@ export const en = {
     home: 'Home',
     gallery: 'Gallery',
     upload: 'Upload',
-    inventory: 'Treasures',
+    treasure: 'Treasures',
+    inventory: 'Treasures', // @deprecated - use treasure
     ambassadors: 'Ambassadors',
     catalog: 'Catalog',
     calendar: 'Calendar',
@@ -38,7 +39,11 @@ export const en = {
       title: 'Upload',
       subtitle: 'Add emeralds',
     },
-    inventory: {
+    treasure: {
+      title: 'Treasures',
+      subtitle: 'Emerald collection',
+    },
+    inventory: { // @deprecated - use treasure
       title: 'Treasures',
       subtitle: 'Emerald collection',
     },
@@ -135,7 +140,7 @@ export const en = {
     },
     cotizacion: {
       label: 'Quotation',
-      subtitle: 'Quote from inventory',
+      subtitle: 'Quote from treasure collection',
     },
     settings: {
       label: 'Settings',
@@ -180,7 +185,7 @@ export const en = {
     welcomeTitle: 'Tierra Mädre',
     welcomeSubtitle: 'Essence and Power of the Colombian Emerald',
     guestAccess: 'Guest Mode',
-    guestDescription: 'Explore inventory and ambassadors without editing',
+    guestDescription: 'Explore treasures and ambassadors without editing',
     fullAccess: 'Full Access',
     fullDescription: 'Create catalogs and content',
     enterPin: 'Enter PIN',

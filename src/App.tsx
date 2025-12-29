@@ -12,7 +12,7 @@ import { LiquidGlassProvider } from './contexts/LiquidGlassContext';
 
 // All routes lazy loaded for optimal bundle splitting
 const Home = lazy(() => import('./components/home'));
-const InventoryBrowser = lazy(() => import('./components/InventoryBrowser'));
+const TreasureBrowser = lazy(() => import('./components/TreasureBrowser'));
 const ProductDetail = lazy(() => import('./components/ProductDetail'));
 const AmbassadorsPage = lazy(() => import('./pages/AmbassadorsPage'));
 const AsesorProfilePage = lazy(() => import('./components/ambassador/AsesorProfile'));
@@ -26,11 +26,14 @@ const CotizacionGenerator = lazy(() => import('./components/CotizacionGenerator'
 const QuotationPreview = lazy(() => import('./components/QuotationPreview'));
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
-export type TabValue = 'home' | 'inventory' | 'ambassadors';
+export type TabValue = 'home' | 'treasure' | 'ambassadors';
 
 // Tab categories for navigation logic
-export const PRIMARY_TABS: TabValue[] = ['home', 'inventory', 'ambassadors'];
+export const PRIMARY_TABS: TabValue[] = ['home', 'treasure', 'ambassadors'];
 export const SECONDARY_TABS: TabValue[] = [];
+
+/** @deprecated Use 'treasure' instead of 'inventory' */
+export type LegacyTabValue = 'home' | 'inventory' | 'ambassadors';
 
 // Inner component that uses routing hooks
 function AppContent() {
@@ -57,11 +60,13 @@ function AppContent() {
               <Home />
             </Suspense>
           } />
-          <Route path="/inventory" element={
-            <Suspense fallback={<LoadingFallback message="Cargando inventario..." />}>
-              <InventoryBrowser />
+          <Route path="/treasure" element={
+            <Suspense fallback={<LoadingFallback message="Cargando tesoros..." />}>
+              <TreasureBrowser />
             </Suspense>
           } />
+          {/* Redirect from old /inventory route for backward compatibility */}
+          <Route path="/inventory" element={<Navigate to="/treasure" replace />} />
 
           {/* Product detail */}
           <Route path="/product/:itemId" element={

@@ -211,7 +211,7 @@ export default function ProgressiveImage({
           alt={alt}
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
-          fetchpriority={priority ? 'high' : 'auto'}
+          fetchPriority={priority ? 'high' : 'auto'}
           onLoad={() => setLoaded(true)}
           onError={() => setError(true)}
           sx={{

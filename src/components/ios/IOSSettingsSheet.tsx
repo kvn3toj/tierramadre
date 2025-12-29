@@ -13,7 +13,6 @@ import React from 'react';
 import { Box, Typography, IconButton, Backdrop, Switch, SxProps, Theme } from '@mui/material';
 import { Close, DarkMode, LightMode, Language } from '@mui/icons-material';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import MeditationReminderSetting from '../settings/MeditationReminderSetting';

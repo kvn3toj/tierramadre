@@ -46,10 +46,10 @@ const getPrimaryTabs = (t: any): TabConfig[] => [
     route: '/home',
   },
   {
-    id: 'inventory',
-    label: t.nav.inventory,
+    id: 'treasure',
+    label: t.nav.treasure,
     icon: Gem as React.ElementType,
-    route: '/inventory',
+    route: '/treasure',
   },
   {
     id: 'ambassadors',
@@ -198,7 +198,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         {PRIMARY_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
-          const isLucideIcon = tab.id === 'inventory'; // Gem is from lucide-react
+          const isLucideIcon = tab.id === 'treasure'; // Gem is from lucide-react
 
           return (
             <Box

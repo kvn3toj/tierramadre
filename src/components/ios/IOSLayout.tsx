@@ -53,8 +53,8 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
     mode: 'large',
     subtitle: t.pages.upload.subtitle,
   },
-  '/inventory': {
-    title: t.pages.inventory.title,
+  '/treasure': {
+    title: t.pages.treasure.title,
     mode: 'compact',
     logoUrl: '/logo-horizontal-white.png',
   },

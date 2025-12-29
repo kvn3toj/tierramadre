@@ -60,7 +60,7 @@ interface NavItem {
 const NAVIGATION_ITEMS: NavItem[] = [
   // Primary workflow
   { id: 'home', label: 'Inicio', icon: <Package size={20} />, group: 'primary' },
-  { id: 'inventory', label: 'Tesoros', icon: <Package size={20} />, group: 'primary' },
+  { id: 'treasure', label: 'Tesoros', icon: <Package size={20} />, group: 'primary' },
   { id: 'ambassadors', label: 'Embajadores', icon: <Users size={20} />, group: 'primary' },
 ];
 

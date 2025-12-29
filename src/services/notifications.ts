@@ -222,7 +222,7 @@ export function checkNewProducts(currentCount: number): number {
       tag: 'new-products',
       onClick: () => {
         window.focus();
-        window.location.href = '/inventory';
+        window.location.href = '/treasure';
       },
     });
   }

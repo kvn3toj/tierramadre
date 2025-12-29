@@ -1,0 +1,186 @@
+/**
+ * useSheetsTreasure Hook
+ *
+ * Fetches treasure data from Google Sheets API with localStorage caching.
+ * Falls back gracefully if the API is unavailable.
+ */
+
+import { useState, useEffect, useCallback } from 'react';
+import { TreasureItem } from '../types';
+
+// Cache configuration (new treasure namespace)
+const SHEETS_CACHE_KEY = 'tierramadre-treasure-sheets-cache';
+const SHEETS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Old cache key for migration
+const OLD_SHEETS_CACHE_KEY = 'tierramadre-inventory-sheets-cache';
+
+interface SheetsCache {
+  data: TreasureItem[];
+  timestamp: number;
+}
+
+interface UseSheetsTreasureReturn {
+  /** Treasure data from Google Sheets (null if not loaded or unavailable) */
+  sheetsTreasure: TreasureItem[] | null;
+  /** Whether the data is currently being fetched */
+  isLoading: boolean;
+  /** Error message if fetch failed */
+  error: string | null;
+  /** Force refresh from Google Sheets (ignores cache) */
+  refresh: () => Promise<void>;
+  /** Whether we're using Sheets data (vs fallback) */
+  isUsingSheets: boolean;
+}
+
+/** @deprecated Use UseSheetsTreasureReturn instead */
+export type UseSheetsInventoryReturn = UseSheetsTreasureReturn;
+
+/**
+ * Migrate data from old storage key to new one (run once)
+ */
+function migrateStorageKey(oldKey: string, newKey: string): void {
+  try {
+    const oldData = localStorage.getItem(oldKey);
+    if (oldData && !localStorage.getItem(newKey)) {
+      localStorage.setItem(newKey, oldData);
+      localStorage.removeItem(oldKey);
+      console.log(`Migrated storage: ${oldKey} → ${newKey}`);
+    }
+  } catch (error) {
+    console.warn('Storage migration error:', error);
+  }
+}
+
+/**
+ * Check if cached data is still valid
+ */
+function getCachedData(): TreasureItem[] | null {
+  try {
+    const cached = localStorage.getItem(SHEETS_CACHE_KEY);
+    if (!cached) return null;
+
+    const { data, timestamp }: SheetsCache = JSON.parse(cached);
+    if (Date.now() - timestamp < SHEETS_CACHE_TTL) {
+      return data;
+    }
+  } catch (error) {
+    console.warn('Error reading sheets cache:', error);
+  }
+  return null;
+}
+
+/**
+ * Save data to cache
+ */
+function setCachedData(data: TreasureItem[]): void {
+  try {
+    const cache: SheetsCache = {
+      data,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(SHEETS_CACHE_KEY, JSON.stringify(cache));
+  } catch (error) {
+    console.warn('Error writing sheets cache:', error);
+  }
+}
+
+/**
+ * Fetch treasure from Google Sheets API
+ */
+async function fetchFromSheets(): Promise<TreasureItem[]> {
+  // Try new endpoint first, fallback to old for backward compatibility
+  let response = await fetch('/api/get-treasure-sheets');
+  if (!response.ok) {
+    // Fallback to old endpoint during transition
+    response = await fetch('/api/get-inventory-sheets');
+  }
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch treasure from Google Sheets');
+  }
+
+  const result = await response.json();
+  // Accept both new and old response formats
+  const treasure = result.treasure || result.inventory;
+  if (!result.success || !treasure) {
+    throw new Error('Invalid response from Google Sheets API');
+  }
+
+  return treasure;
+}
+
+/**
+ * Hook to fetch and manage treasure data from Google Sheets
+ */
+export function useSheetsTreasure(): UseSheetsTreasureReturn {
+  const [sheetsTreasure, setSheetsTreasure] = useState<TreasureItem[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Initial load with cache check and migration
+  useEffect(() => {
+    // Run storage migration first
+    migrateStorageKey(OLD_SHEETS_CACHE_KEY, SHEETS_CACHE_KEY);
+
+    const loadFromSheets = async () => {
+      try {
+        // Check cache first
+        const cachedData = getCachedData();
+        if (cachedData) {
+          setSheetsTreasure(cachedData);
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch from API
+        const treasure = await fetchFromSheets();
+        setSheetsTreasure(treasure);
+        setCachedData(treasure);
+      } catch (err) {
+        console.warn('Could not load from Google Sheets:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFromSheets();
+  }, []);
+
+  // Force refresh (ignores cache)
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const treasure = await fetchFromSheets();
+      setSheetsTreasure(treasure);
+      setCachedData(treasure);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  return {
+    sheetsTreasure,
+    isLoading,
+    error,
+    refresh,
+    isUsingSheets: sheetsTreasure !== null,
+  };
+}
+
+/** @deprecated Use useSheetsTreasure instead */
+export function useSheetsInventory() {
+  const result = useSheetsTreasure();
+  return {
+    ...result,
+    // Backward-compatible alias
+    sheetsInventory: result.sheetsTreasure,
+  };
+}
+
+export default useSheetsTreasure;

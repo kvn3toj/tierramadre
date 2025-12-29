@@ -8,7 +8,8 @@ export const es = {
     home: 'Inicio',
     gallery: 'Galería',
     upload: 'Subir',
-    inventory: 'Tesoros',
+    treasure: 'Tesoros',
+    inventory: 'Tesoros', // @deprecated - use treasure
     ambassadors: 'Embajadores',
     catalog: 'Catálogo',
     calendar: 'Calendario',
@@ -38,7 +39,11 @@ export const es = {
       title: 'Subir',
       subtitle: 'Agregar esmeraldas',
     },
-    inventory: {
+    treasure: {
+      title: 'Tesoros',
+      subtitle: 'Colección de esmeraldas',
+    },
+    inventory: { // @deprecated - use treasure
       title: 'Tesoros',
       subtitle: 'Colección de esmeraldas',
     },
@@ -135,7 +140,7 @@ export const es = {
     },
     cotizacion: {
       label: 'Cotización',
-      subtitle: 'Cotizar desde inventario',
+      subtitle: 'Cotizar desde tesoros',
     },
     settings: {
       label: 'Configuración',
@@ -180,7 +185,7 @@ export const es = {
     welcomeTitle: 'Tierra Madre',
     welcomeSubtitle: 'Esencia y Poder de la Esmeralda Colombiana',
     guestAccess: 'Modo Invitado',
-    guestDescription: 'Explora inventario y embajadores sin editar',
+    guestDescription: 'Explora tesoros y embajadores sin editar',
     fullAccess: 'Acceso Completo',
     fullDescription: 'Crear catálogos y contenido',
     enterPin: 'Ingresar PIN',

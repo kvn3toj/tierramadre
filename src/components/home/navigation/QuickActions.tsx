@@ -68,11 +68,11 @@ const DEFAULT_ACTIONS: QuickAction[] = [
     color: emeraldCore.primary,
   },
   {
-    id: 'inventory',
+    id: 'treasure',
     icon: <Inventory2 />,
-    label: 'Inventario',
-    shortcut: 'I',
-    path: '/inventory',
+    label: 'Tesoros',
+    shortcut: 'T',
+    path: '/treasure',
     color: emeraldCore.light,
   },
   {

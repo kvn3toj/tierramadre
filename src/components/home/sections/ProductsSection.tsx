@@ -100,8 +100,8 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
             <Button
               size="small"
               endIcon={<ArrowForward sx={{ fontSize: { xs: 16, sm: 20 } }} />}
-              onClick={() => navigate('/inventory')}
-              aria-label="Ver todo el inventario"
+              onClick={() => navigate('/treasure')}
+              aria-label="Ver todos los tesoros"
               sx={{
                 color: emeraldCore.light || emeraldCore.primary,
                 fontSize: { xs: '0.75rem', sm: '0.8125rem' },

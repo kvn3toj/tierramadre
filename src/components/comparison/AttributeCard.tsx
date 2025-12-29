@@ -54,67 +54,66 @@ export default function AttributeCard({
       <Box sx={{ display: 'flex', gap: 1 }}>
         {values.map((value, idx) => {
           const indicator = indicators[idx];
-          const bgColor =
-            indicator === 'best'
-              ? alpha(emeraldCore.primary, 0.15)
-              : indicator === 'worst'
-                ? alpha('#ef4444', 0.1)
-                : isLight
-                  ? alpha('#000', 0.03)
-                  : alpha('#fff', 0.05);
-
-          const borderColor =
-            indicator === 'best'
-              ? alpha(emeraldCore.primary, 0.3)
-              : indicator === 'worst'
-                ? alpha('#ef4444', 0.2)
-                : 'transparent';
 
           return (
             <Box
               key={idx}
               sx={{
                 flex: 1,
-                p: 1.5,
+                py: 1.25,
+                px: 1,
                 borderRadius: 1.5,
-                bgcolor: bgColor,
-                border: '1px solid',
-                borderColor: borderColor,
+                bgcolor: isLight ? alpha('#000', 0.02) : alpha('#fff', 0.03),
                 textAlign: 'center',
-                minHeight: 44,
+                minHeight: 40,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 0.5,
               }}
             >
-              <Box
+              <Typography
+                variant="body2"
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 0.5,
+                  fontWeight: 500,
+                  fontSize: type === 'numeric' ? '0.9rem' : '0.85rem',
+                  color: indicator === 'best'
+                    ? emeraldCore.primary
+                    : indicator === 'worst'
+                      ? alpha('#ef4444', 0.85)
+                      : isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
+                  wordBreak: 'break-word',
                 }}
               >
-                {indicator === 'best' && (
-                  <TrendingUp size={14} color={emeraldCore.primary} />
-                )}
-                {indicator === 'worst' && (
-                  <TrendingDown size={14} color="#ef4444" />
-                )}
-                <Typography
-                  variant="body2"
+                {value}
+              </Typography>
+              {indicator !== 'neutral' && (
+                <Box
                   sx={{
-                    fontWeight: indicator !== 'neutral' ? 600 : 400,
-                    fontSize: type === 'numeric' ? '0.9rem' : '0.85rem',
-                    color: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
-                    wordBreak: 'break-word',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.25,
+                    mt: 0.25,
                   }}
                 >
-                  {value}
-                </Typography>
-              </Box>
+                  {indicator === 'best' ? (
+                    <TrendingUp size={12} color={emeraldCore.primary} />
+                  ) : (
+                    <TrendingDown size={12} color="#ef4444" />
+                  )}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: '0.6rem',
+                      color: indicator === 'best' ? emeraldCore.primary : '#ef4444',
+                      textTransform: 'uppercase',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {indicator === 'best' ? 'mejor' : 'menor'}
+                  </Typography>
+                </Box>
+              )}
             </Box>
           );
         })}
