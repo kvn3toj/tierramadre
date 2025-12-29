@@ -452,54 +452,51 @@ export default function InventoryBrowser() {
             </Box>
           </Collapse>
 
-          {/* Elegant Stats Row */}
-          <Box sx={{ mb: 1.5 }}>
-            {/* Line 1: Stats */}
+          {/* Elegant Stats Row - Single line */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+            {/* Stats + Total */}
             <Typography
               variant="caption"
               sx={{
                 color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
                 fontSize: '0.75rem',
-                display: 'block',
-                mb: 0.5,
               }}
             >
               {stats.looseStones} gemas · {stats.jewelry} joyas
               {sortedInventory.length !== inventoryData.length && ` · ${sortedInventory.length} resultados`}
+              {' · '}
+              <Box component="span" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
+                {formatFullCurrency(filteredStats.totalValue)}
+              </Box>
             </Typography>
 
-            {/* Line 2: Total + Favorites */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {/* Favorites - Heart + number only */}
+            <Box
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: 2,
+                bgcolor: showFavoritesOnly ? alpha('#ef4444', 0.1) : 'transparent',
+                '&:hover': {
+                  bgcolor: alpha('#ef4444', 0.1),
+                },
+              }}
+            >
+              <Heart size={14} fill={showFavoritesOnly ? '#ef4444' : 'none'} color={showFavoritesOnly ? '#ef4444' : '#6b7280'} />
               <Typography
-                variant="body2"
+                variant="caption"
                 sx={{
-                  color: emeraldCore.dark,
-                  fontWeight: 600,
-                  fontSize: '0.8rem',
+                  color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
+                  fontWeight: showFavoritesOnly ? 600 : 400,
+                  fontSize: '0.75rem',
                 }}
               >
-                {formatFullCurrency(filteredStats.totalValue)} total
+                {favoritesCount}
               </Typography>
-
-              <Chip
-                icon={<Heart size={14} fill={showFavoritesOnly ? '#ef4444' : 'none'} color={showFavoritesOnly ? '#ef4444' : '#6b7280'} />}
-                label={`Favoritos (${favoritesCount})`}
-                size="small"
-                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                sx={{
-                  cursor: 'pointer',
-                  bgcolor: showFavoritesOnly ? alpha('#ef4444', 0.1) : 'transparent',
-                  color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
-                  border: '1px solid',
-                  borderColor: showFavoritesOnly ? '#ef4444' : isLight ? surfacesLight.border.light : surfacesDark.border.default,
-                  fontWeight: showFavoritesOnly ? 600 : 400,
-                  fontSize: '0.7rem',
-                  height: 26,
-                  '&:hover': {
-                    bgcolor: alpha('#ef4444', 0.1),
-                  },
-                }}
-              />
             </Box>
           </Box>
         </>

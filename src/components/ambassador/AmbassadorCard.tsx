@@ -21,8 +21,6 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { AmbassadorProfile } from '../../types/ambassador';
-import AmbassadorTrustBadge, { AmbassadorBadgeDisplay, AmbassadorTrustCompact } from './AmbassadorTrustBadge';
-import { getAmbassadorTrustLevel } from '../../utils/ambassadorTrust';
 
 interface AmbassadorCardProps {
   ambassador: AmbassadorProfile;
@@ -106,9 +104,6 @@ export default function AmbassadorCard({
               >
                 {ambassador.displayName}
               </Typography>
-              {ambassador.trustScore && (
-                <AmbassadorTrustBadge trustScore={ambassador.trustScore} size="small" />
-              )}
             </Box>
 
             <Typography
@@ -191,16 +186,6 @@ export default function AmbassadorCard({
             )}
           </Box>
         </Box>
-
-        {/* Badges */}
-        {ambassador.verificationStatus.badges.length > 0 && (
-          <Box sx={{ mb: 2 }}>
-            <AmbassadorBadgeDisplay
-              badges={ambassador.verificationStatus.badges}
-              maxVisible={3}
-            />
-          </Box>
-        )}
 
         {/* Actions */}
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -318,10 +303,6 @@ function CompactCard({
             </Typography>
           </Box>
 
-          {ambassador.trustScore && (
-            <AmbassadorTrustCompact score={ambassador.trustScore.overall} />
-          )}
-
           {ambassador.reputation && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Star size={12} fill="#F59E0B" color="#F59E0B" />
@@ -343,7 +324,6 @@ function FeaturedCard({
 }: Omit<AmbassadorCardProps, 'variant'>) {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
-  const trustLevel = ambassador.trustScore ? getAmbassadorTrustLevel(ambassador.trustScore.overall) : null;
 
   return (
     <Card
@@ -351,7 +331,7 @@ function FeaturedCard({
         bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
         borderRadius: 4,
         border: '2px solid',
-        borderColor: trustLevel?.color || '#059669',
+        borderColor: '#059669',
         overflow: 'hidden',
         position: 'relative',
       }}
@@ -362,7 +342,7 @@ function FeaturedCard({
           height: 100,
           background: ambassador.bannerUrl
             ? `url(${ambassador.bannerUrl}) center/cover`
-            : `linear-gradient(135deg, ${trustLevel?.color || '#059669'} 0%, ${alpha(trustLevel?.color || '#059669', 0.6)} 100%)`,
+            : `linear-gradient(135deg, #059669 0%, ${alpha('#059669', 0.6)} 100%)`,
         }}
       />
 
@@ -395,9 +375,6 @@ function FeaturedCard({
               {ambassador.tagline}
             </Typography>
           </Box>
-          {ambassador.trustScore && (
-            <AmbassadorTrustBadge trustScore={ambassador.trustScore} size="large" showLabel />
-          )}
         </Box>
 
         {/* Bio excerpt */}
@@ -458,13 +435,6 @@ function FeaturedCard({
           </Box>
         )}
 
-        {/* Badges */}
-        {ambassador.verificationStatus.badges.length > 0 && (
-          <Box sx={{ mb: 2 }}>
-            <AmbassadorBadgeDisplay badges={ambassador.verificationStatus.badges} maxVisible={4} />
-          </Box>
-        )}
-
         {/* Actions */}
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
@@ -473,8 +443,8 @@ function FeaturedCard({
             startIcon={<MessageCircle size={18} />}
             onClick={() => onContact?.(ambassador)}
             sx={{
-              bgcolor: trustLevel?.color || '#059669',
-              '&:hover': { bgcolor: alpha(trustLevel?.color || '#059669', 0.9) },
+              bgcolor: '#059669',
+              '&:hover': { bgcolor: alpha('#059669', 0.9) },
               textTransform: 'none',
               fontWeight: 600,
               py: 1.25,

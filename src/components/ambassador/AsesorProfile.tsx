@@ -47,7 +47,6 @@ import { useAsesores } from '../../hooks/useAsesores';
 import { useInventory } from '../../hooks/useInventory';
 import { InventoryItem } from '../../types';
 import { InventoryCard } from '../inventory/InventoryCard';
-import { calculateTrustScore } from '../../utils/trustScore';
 
 // Normalize name for comparison
 const normalizeName = (name: string): string => {
@@ -586,7 +585,6 @@ export default function AsesorProfilePage() {
               <InventoryCard
                 item={item}
                 isCompact={viewMode === 'list'}
-                trustScore={calculateTrustScore(item)}
                 onCertClick={() => {}}
                 onClick={() => handleProductClick(item)}
               />

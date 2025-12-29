@@ -37,10 +37,8 @@ import {
   Calendar,
   Award,
 } from 'lucide-react';
-import { AmbassadorProfile as AmbassadorProfileType, Testimonial } from '../../types/ambassador';
+import { AmbassadorProfile as AmbassadorProfileType, Testimonial, AmbassadorBadge } from '../../types/ambassador';
 import { loadTestimonials } from '../../data/ambassadors';
-import AmbassadorTrustBadge, { AmbassadorBadgeDisplay } from './AmbassadorTrustBadge';
-import { getAmbassadorTrustLevel, getAmbassadorTrustColor } from '../../utils/ambassadorTrust';
 import PriceSimulator from '../PriceSimulator';
 
 interface AmbassadorProfileProps {
@@ -60,10 +58,6 @@ export default function AmbassadorProfile({
   const isLight = theme.palette.mode === 'light';
   const [activeTab, setActiveTab] = useState<TabValue>('about');
   const [isFavorite, setIsFavorite] = useState(false);
-
-  const trustLevel = ambassador.trustScore
-    ? getAmbassadorTrustLevel(ambassador.trustScore.overall)
-    : null;
 
   const testimonials = loadTestimonials(ambassador.id);
 
@@ -103,7 +97,7 @@ export default function AmbassadorProfile({
             height: 160,
             background: ambassador.bannerUrl
               ? `url(${ambassador.bannerUrl}) center/cover`
-              : `linear-gradient(135deg, ${trustLevel?.color || '#059669'} 0%, ${alpha(trustLevel?.color || '#059669', 0.6)} 100%)`,
+              : `linear-gradient(135deg, #059669 0%, ${alpha('#059669', 0.6)} 100%)`,
           }}
         />
 
@@ -133,9 +127,6 @@ export default function AmbassadorProfile({
                 <Typography variant="h5" sx={{ fontWeight: 800 }}>
                   {ambassador.displayName}
                 </Typography>
-                {ambassador.trustScore && (
-                  <AmbassadorTrustBadge trustScore={ambassador.trustScore} size="medium" showLabel />
-                )}
                 {ambassador.verificationStatus.level !== 'unverified' && (
                   <Chip
                     icon={<CheckCircle size={14} />}
@@ -233,7 +224,7 @@ export default function AmbassadorProfile({
           {/* Badges */}
           {ambassador.verificationStatus.badges.length > 0 && (
             <Box sx={{ mt: 2 }}>
-              <AmbassadorBadgeDisplay badges={ambassador.verificationStatus.badges} maxVisible={6} size="medium" />
+              <BadgeDisplay badges={ambassador.verificationStatus.badges} maxVisible={6} />
             </Box>
           )}
         </CardContent>
@@ -298,6 +289,49 @@ function StatBox({ icon, value, label }: { icon: React.ReactNode; value: string;
       <Typography variant="caption" sx={{ color: 'text.secondary' }}>
         {label}
       </Typography>
+    </Box>
+  );
+}
+
+// Badge Display Component
+function BadgeDisplay({ badges, maxVisible = 4 }: { badges: AmbassadorBadge[]; maxVisible?: number }) {
+  const visibleBadges = badges.slice(0, maxVisible);
+  const remainingCount = badges.length - maxVisible;
+
+  const getBadgeLabel = (type: string): string => {
+    const labels: Record<string, string> = {
+      'identity-verified': 'Verificado',
+      'top-seller': 'Top Vendedor',
+      'customer-favorite': 'Favorito',
+      'fast-responder': 'Responde Rapido',
+    };
+    return labels[type] || type;
+  };
+
+  return (
+    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+      {visibleBadges.map((badge, idx) => (
+        <Chip
+          key={idx}
+          icon={<Award size={12} />}
+          label={getBadgeLabel(badge.type)}
+          size="small"
+          sx={{
+            bgcolor: alpha('#059669', 0.1),
+            color: '#059669',
+            fontSize: '0.7rem',
+            height: 24,
+          }}
+        />
+      ))}
+      {remainingCount > 0 && (
+        <Chip
+          label={`+${remainingCount}`}
+          size="small"
+          variant="outlined"
+          sx={{ fontSize: '0.7rem', height: 24 }}
+        />
+      )}
     </Box>
   );
 }
@@ -446,68 +480,8 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
           </CardContent>
         </Card>
 
-        {/* Trust Score Breakdown */}
-        {ambassador.trustScore && (
-          <Card sx={{ mt: 2, borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                Indice de Confianza
-              </Typography>
-              <Box sx={{ textAlign: 'center', mb: 3 }}>
-                <Typography
-                  variant="h2"
-                  sx={{
-                    fontWeight: 800,
-                    color: getAmbassadorTrustColor(ambassador.trustScore.overall),
-                  }}
-                >
-                  {ambassador.trustScore.overall}
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  de 100 puntos
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <TrustScoreRow label="Historial" value={ambassador.trustScore.components.transactionHistory} />
-                <TrustScoreRow label="Satisfaccion" value={ambassador.trustScore.components.customerSatisfaction} />
-                <TrustScoreRow label="Respuesta" value={ambassador.trustScore.components.responseTime} />
-                <TrustScoreRow label="Experiencia" value={ambassador.trustScore.components.expertise} />
-                <TrustScoreRow label="Autenticidad" value={ambassador.trustScore.components.authenticity} />
-              </Box>
-            </CardContent>
-          </Card>
-        )}
       </Grid>
     </Grid>
-  );
-}
-
-function TrustScoreRow({ label, value }: { label: string; value: number }) {
-  const color = getAmbassadorTrustColor(value);
-  return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          {label}
-        </Typography>
-        <Typography variant="caption" sx={{ fontWeight: 600 }}>
-          {value}
-        </Typography>
-      </Box>
-      <LinearProgress
-        variant="determinate"
-        value={value}
-        sx={{
-          height: 4,
-          borderRadius: 2,
-          bgcolor: alpha(color, 0.15),
-          '& .MuiLinearProgress-bar': {
-            bgcolor: color,
-            borderRadius: 2,
-          },
-        }}
-      />
-    </Box>
   );
 }
 

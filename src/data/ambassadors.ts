@@ -74,19 +74,6 @@ export const SAMPLE_AMBASSADORS: AmbassadorProfile[] = [
       featuredProducts: [],
       highlightedTestimonials: []
     },
-    trustScore: {
-      overall: 92,
-      components: {
-        transactionHistory: 95,
-        customerSatisfaction: 98,
-        responseTime: 85,
-        expertise: 90,
-        authenticity: 88,
-        reliability: 95
-      },
-      confidence: 0.95,
-      lastCalculated: new Date().toISOString()
-    },
     reputation: {
       totalSales: 245,
       totalRevenue: 680000000,
@@ -180,19 +167,6 @@ export const SAMPLE_AMBASSADORS: AmbassadorProfile[] = [
       featuredProducts: [],
       highlightedTestimonials: []
     },
-    trustScore: {
-      overall: 85,
-      components: {
-        transactionHistory: 70,
-        customerSatisfaction: 95,
-        responseTime: 80,
-        expertise: 95,
-        authenticity: 82,
-        reliability: 90
-      },
-      confidence: 0.78,
-      lastCalculated: new Date().toISOString()
-    },
     reputation: {
       totalSales: 67,
       totalRevenue: 280000000,
@@ -275,19 +249,6 @@ export const SAMPLE_AMBASSADORS: AmbassadorProfile[] = [
       featuredProducts: [],
       highlightedTestimonials: []
     },
-    trustScore: {
-      overall: 72,
-      components: {
-        transactionHistory: 65,
-        customerSatisfaction: 82,
-        responseTime: 75,
-        expertise: 60,
-        authenticity: 70,
-        reliability: 80
-      },
-      confidence: 0.68,
-      lastCalculated: new Date().toISOString()
-    },
     reputation: {
       totalSales: 45,
       totalRevenue: 38000000,
@@ -364,19 +325,6 @@ export const SAMPLE_AMBASSADORS: AmbassadorProfile[] = [
       },
       featuredProducts: [],
       highlightedTestimonials: []
-    },
-    trustScore: {
-      overall: 58,
-      components: {
-        transactionHistory: 50,
-        customerSatisfaction: 72,
-        responseTime: 65,
-        expertise: 35,
-        authenticity: 55,
-        reliability: 70
-      },
-      confidence: 0.55,
-      lastCalculated: new Date().toISOString()
     },
     reputation: {
       totalSales: 32,
@@ -456,19 +404,6 @@ export const SAMPLE_AMBASSADORS: AmbassadorProfile[] = [
       },
       featuredProducts: [],
       highlightedTestimonials: []
-    },
-    trustScore: {
-      overall: 75,
-      components: {
-        transactionHistory: 68,
-        customerSatisfaction: 85,
-        responseTime: 78,
-        expertise: 70,
-        authenticity: 75,
-        reliability: 82
-      },
-      confidence: 0.72,
-      lastCalculated: new Date().toISOString()
     },
     reputation: {
       totalSales: 56,
@@ -652,12 +587,12 @@ export function loadTestimonials(ambassadorId?: string): Testimonial[] {
 }
 
 /**
- * Get ambassadors sorted by trust score
+ * Get ambassadors sorted by rating
  */
-export function getAmbassadorsByTrustScore(): AmbassadorProfile[] {
+export function getAmbassadorsByRating(): AmbassadorProfile[] {
   return loadAmbassadors()
     .filter(a => a.status === 'active')
-    .sort((a, b) => (b.trustScore?.overall || 0) - (a.trustScore?.overall || 0));
+    .sort((a, b) => (b.reputation?.averageRating || 0) - (a.reputation?.averageRating || 0));
 }
 
 /**

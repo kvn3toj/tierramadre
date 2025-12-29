@@ -2,7 +2,6 @@
  * ProductHeader Component
  * Sticky header showing product images and names for mobile comparison.
  */
-import React from 'react';
 import { Box, Avatar, Typography, alpha } from '@mui/material';
 import { InventoryItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';

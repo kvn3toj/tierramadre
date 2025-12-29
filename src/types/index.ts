@@ -97,8 +97,10 @@ export interface ReceiptData {
   createdAt: string;
 }
 
-// Inventory types for official stock
-export type InventoryStatus = 'DISPONIBLE' | 'VENDIDA' | 'ASESOR';
+// Treasure types for official stock (renamed from "inventory" for consistency with UI)
+export type TreasureStatus = 'DISPONIBLE' | 'VENDIDA' | 'ASESOR';
+/** @deprecated Use TreasureStatus instead */
+export type InventoryStatus = TreasureStatus;
 export type EmeraldColor = 'Verde Vivido' | 'Verde Muzo' | 'Verde Limón' | 'Verde Menta' | 'Verde Natural' | string;
 export type EmeraldQuality = 'Fina' | 'Comercial Fina' | 'Comercial SuperFina' | 'Comercial Superior' | 'Comercial Estándar' | 'Estándar' | string;
 export type EmeraldCut = 'Cushion' | 'Corazón' | 'Esmeralda' | 'Óvalo' | 'Redonda' | 'Cuadrada' | 'Lágrima' | string;
@@ -160,7 +162,7 @@ export interface EthicalCertification {
   certificateDate?: string;
 }
 
-// All certifications for an inventory item
+// All certifications for a treasure item
 export interface ItemCertifications {
   gemological?: GemologicalCertification;
   colombianOrigin?: ColombianOriginCertification;
@@ -230,7 +232,7 @@ export interface EmeraldImageGallery {
   hasLifestyle: boolean;           // Has in-context/hand shot
 }
 
-export interface InventoryItem {
+export interface TreasureItem {
   item: number;
   fechaIngreso: string;
   nombre: string;
@@ -251,7 +253,7 @@ export interface InventoryItem {
   precioInternacional?: number;  // International price from Google Sheets (Column H)
   ubicacion: string;
   asesor: string;
-  estado: InventoryStatus;
+  estado: TreasureStatus;
   caja?: string;
   qr?: string;                      // QR code data (Column P)
   coleccion?: string;               // Collection/Catalog label for grouping (Column Q)
@@ -273,3 +275,6 @@ export interface InventoryItem {
   city?: 'Cali' | 'Bogotá';         // City location for filtering
   isVaultExclusive?: boolean;        // True if item is part of Secret Vault collection
 }
+
+/** @deprecated Use TreasureItem instead */
+export type InventoryItem = TreasureItem;

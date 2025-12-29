@@ -28,7 +28,6 @@ import {
   MapPin,
   User,
   Calendar,
-  FileCheck,
   Crown,
   ShoppingCart,
   Upload,
@@ -766,52 +765,6 @@ export default function ProductDetail() {
               </Card>
             </Grid>
           </Grid>
-
-          <Divider sx={{ my: { xs: 2, sm: 3 } }} />
-
-          {/* Trust Score - Compact */}
-          {trustScore && trustBadge && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
-                Certificación del Producto
-              </Typography>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor: alpha(trustBadge.color, 0.08),
-                  border: '1px solid',
-                  borderColor: alpha(trustBadge.color, 0.2),
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    Autenticidad de la Esmeralda
-                  </Typography>
-                  <TrustBadgeCompact score={trustScore} />
-                </Box>
-                <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block', mb: 1 }}>
-                  Evaluación basada en origen, calidad y certificaciones
-                </Typography>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<FileCheck size={14} />}
-                  sx={{
-                    borderColor: trustBadge.color,
-                    color: trustBadge.color,
-                    '&:hover': {
-                      bgcolor: alpha(trustBadge.color, 0.08),
-                      borderColor: trustBadge.color,
-                    },
-                  }}
-                >
-                  Ver Certificaciones
-                </Button>
-              </Paper>
-            </Box>
-          )}
 
           <Divider sx={{ my: { xs: 2, sm: 3 } }} />
 

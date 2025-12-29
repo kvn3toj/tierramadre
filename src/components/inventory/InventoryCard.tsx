@@ -16,23 +16,18 @@ import {
   CardContent,
   alpha,
   useTheme,
-  Button,
   Collapse,
-  LinearProgress,
 } from '@mui/material';
 import {
   Gem,
   MapPin,
   User,
-  FileCheck,
   Play,
   Images,
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { InventoryItem, TrustScoreBreakdown } from '../../types';
+import { InventoryItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
-import { getTrustBadge } from '../../utils/trustScore';
-import { TrustBadgeCompact } from '../TrustBadge';
 import { PriceDisplay } from '../PriceDisplay';
 // Design System Tokens
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
@@ -40,12 +35,11 @@ import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/to
 export interface InventoryCardProps {
   item: InventoryItem;
   isCompact: boolean;
-  trustScore: TrustScoreBreakdown;
   onCertClick: () => void;
   onClick: () => void;
 }
 
-export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClick }: InventoryCardProps) {
+export function InventoryCard({ item, isCompact, onCertClick: _onCertClick, onClick }: InventoryCardProps) {
   const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -56,7 +50,6 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
   const colorDot = getColorDot(item.color);
   const isLoose = !item.isJewelry;
   const weight = typeof item.peso === 'number' ? `${item.peso} ct` : item.metalType;
-  const trustBadge = getTrustBadge(trustScore.overall);
 
   // Compact list view
   if (isCompact) {
@@ -112,9 +105,6 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
             {item.color} • {weight}
           </Typography>
         </Box>
-
-        {/* Trust Badge - Compact */}
-        <TrustBadgeCompact score={trustScore} />
 
         {/* Quality badge */}
         <Chip
@@ -386,76 +376,6 @@ export function InventoryCard({ item, isCompact, trustScore, onCertClick, onClic
                   {item.asesor}
                 </Typography>
               </Box>
-
-              {/* Product Certification Section */}
-              <Box
-                sx={{
-                  mt: 2,
-                  pt: 2,
-                  borderTop: '1px solid',
-                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
-                    Certificación del Producto
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ fontWeight: 700, color: trustBadge.color }}
-                  >
-                    {trustScore.overall}/100
-                  </Typography>
-                </Box>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: theme.palette.text.secondary,
-                    fontSize: '0.65rem',
-                    display: 'block',
-                    mb: 1,
-                  }}
-                >
-                  Autenticidad de la esmeralda (no del vendedor)
-                </Typography>
-                <LinearProgress
-                  variant="determinate"
-                  value={trustScore.overall}
-                  sx={{
-                    height: 6,
-                    borderRadius: 3,
-                    bgcolor: alpha(trustBadge.color, 0.15),
-                    mb: 1.5,
-                    '& .MuiLinearProgress-bar': {
-                      bgcolor: trustBadge.color,
-                      borderRadius: 3,
-                    },
-                  }}
-                />
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<FileCheck size={14} />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCertClick();
-                  }}
-                  aria-label={`Ver certificaciones de ${item.nombre}`}
-                  sx={{
-                    width: '100%',
-                    borderColor: emeraldCore.dark,
-                    color: emeraldCore.dark,
-                    fontSize: '0.75rem',
-                    py: 0.5,
-                    '&:hover': {
-                      bgcolor: alpha(emeraldCore.dark, 0.08),
-                      borderColor: emeraldCore.darker,
-                    },
-                  }}
-                >
-                  Ver Certificaciones
-                </Button>
-              </Box>
             </Box>
           </Box>
         </Collapse>
@@ -472,8 +392,7 @@ export const MemoizedInventoryCard = memo(InventoryCard, (prevProps, nextProps) 
     prevProps.item.imagen === nextProps.item.imagen &&
     prevProps.item.precioCOP === nextProps.item.precioCOP &&
     prevProps.item.estado === nextProps.item.estado &&
-    prevProps.isCompact === nextProps.isCompact &&
-    prevProps.trustScore.overall === nextProps.trustScore.overall
+    prevProps.isCompact === nextProps.isCompact
   );
 });
 

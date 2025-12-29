@@ -3,8 +3,7 @@
  * Single attribute comparison card for mobile view.
  * Shows all product values horizontally with best/worst indicators.
  */
-import React from 'react';
-import { Box, Paper, Typography, Chip, alpha } from '@mui/material';
+import { Box, Paper, Typography, alpha } from '@mui/material';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';

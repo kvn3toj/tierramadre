@@ -3,15 +3,14 @@
  * Mobile-optimized comparison view using attribute-focused cards.
  * Each attribute is displayed as a horizontal card showing all products.
  */
-import React from 'react';
-import { Box, Typography, Chip, alpha } from '@mui/material';
+import { Box, Typography, Chip } from '@mui/material';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { InventoryItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { formatCurrency, getColorDot, getQualityBadge } from '../../utils/formatting';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 import ProductHeader from './ProductHeader';
-import AttributeCard, { getValueIndicator, ValueIndicator } from './AttributeCard';
+import AttributeCard, { getValueIndicator } from './AttributeCard';
 
 interface ComparisonMobileViewProps {
   items: InventoryItem[];
