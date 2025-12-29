@@ -43,23 +43,23 @@ export interface FloatingLayer {
  */
 export const dynamicBlur = {
   /** Secondary elements, not in focus */
-  inactive: '24px',
+  inactive: '20px',
   /** Default resting state */
-  resting: '16px',
+  resting: '12px',
   /** Hover - more clarity as user shows interest */
-  hover: '12px',
+  hover: '8px',
   /** Active/pressed - maximum clarity */
-  active: '8px',
+  active: '4px',
 } as const;
 
 /**
  * Background opacity follows same pattern
  */
 export const dynamicOpacity = {
-  inactive: 0.5,
-  resting: 0.6,
-  hover: 0.7,
-  active: 0.8,
+  inactive: 0.6,
+  resting: 0.75,
+  hover: 0.82,
+  active: 0.9,
 } as const;
 
 // =============================================================================
@@ -196,17 +196,17 @@ export const floatingLayers: Record<ElevationLevel, FloatingLayer> = {
 
 export const liquidSaturation = {
   /** Low - muted, subtle */
-  low: '120%',
+  low: '110%',
   /** Normal - balanced */
-  normal: '150%',
+  normal: '130%',
   /** High - vibrant */
-  high: '180%',
+  high: '150%',
   /** Vibrant - iOS standard */
-  vibrant: '200%',
+  vibrant: '170%',
   /** Intense - Liquid Glass enhanced */
-  intense: '220%',
+  intense: '190%',
   /** Maximum - for special effects */
-  maximum: '250%',
+  maximum: '220%',
 } as const;
 
 // =============================================================================
@@ -284,15 +284,15 @@ export const borderHighlights = {
 export const tabBarConfig = {
   /** Heights */
   height: {
-    expanded: 65,
-    collapsed: 50,
+    expanded: 56,
+    collapsed: 48,
     mini: 40,
   },
 
   /** Icon sizes */
   iconSize: {
-    expanded: 28,
-    collapsed: 24,
+    expanded: 26,
+    collapsed: 22,
     mini: 20,
   },
 

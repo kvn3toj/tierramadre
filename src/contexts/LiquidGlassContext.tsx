@@ -63,11 +63,11 @@ const DEFAULT_SETTINGS: LiquidGlassSettings = {
   tier: 'auto',
   effects: {
     blur: true,
-    specular: true,
-    refraction: true,
-    floatingLayers: true,
-    dynamicTabBar: true,
-    animations: true,
+    specular: false,       // Disabled for better performance
+    refraction: false,     // Disabled (rarely noticeable)
+    floatingLayers: false, // Disabled for simplicity
+    dynamicTabBar: false,  // Tab bar always visible
+    animations: true,      // Keep for UI feedback
   },
 };
 

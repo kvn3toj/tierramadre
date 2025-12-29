@@ -12,7 +12,9 @@
       "Bash(git commit:*)",
       "Bash(cp:*)",
       "Bash(npx tsc:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(vercel env pull:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

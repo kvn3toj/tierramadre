@@ -14,10 +14,13 @@ import {
   Badge,
   IconButton,
   SwipeableDrawer,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import {
   LayoutGrid,
   List,
+  Search,
   SearchX,
   Heart,
   X,
@@ -405,50 +408,75 @@ export default function InventoryBrowser() {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
-      {/* Mobile: Compact header with quick filters */}
+      {/* Mobile: Search-first compact header */}
       {isMobile ? (
         <>
-          {/* Quick Stats + Filter Button Row */}
+          {/* Search Bar - Primary Element */}
+          <Box sx={{ mb: 1.5 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Buscar por nombre, color, forma..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search size={18} color={theme.palette.text.secondary} />
+                  </InputAdornment>
+                ),
+                endAdornment: search && (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setSearch('')}>
+                      <X size={16} />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 3,
+                  bgcolor: isLight
+                    ? surfacesLight.background.primary
+                    : surfacesDark.background.secondary,
+                  '& fieldset': {
+                    borderColor: isLight
+                      ? surfacesLight.border.light
+                      : surfacesDark.border.light,
+                  },
+                  '&:hover fieldset': {
+                    borderColor: emeraldCore.primary,
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: emeraldCore.primary,
+                  },
+                },
+              }}
+            />
+          </Box>
+
+          {/* Subtle Stats Row + Filter Button */}
           <Box
             sx={{
-              mb: 1,
+              mb: 1.5,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: 1,
             }}
           >
-            {/* Stats chips */}
-            <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-              <Chip
-                size="small"
-                icon={<Gem size={12} />}
-                label={stats.looseStones}
-                sx={{
-                  bgcolor: alpha(emeraldCore.primary, 0.1),
-                  color: emeraldCore.primary,
-                  fontWeight: 600,
-                  fontSize: '0.7rem',
-                  height: 24,
-                  '& .MuiChip-icon': { color: emeraldCore.primary },
-                }}
-              />
-              <Chip
-                size="small"
-                icon={<Crown size={12} />}
-                label={stats.jewelry}
-                sx={{
-                  bgcolor: alpha(goldAccent.primary, 0.15),
-                  color: goldAccent.dark,
-                  fontWeight: 600,
-                  fontSize: '0.7rem',
-                  height: 24,
-                  '& .MuiChip-icon': { color: goldAccent.dark },
-                }}
-              />
-            </Box>
+            {/* Subtle text stats */}
+            <Typography
+              variant="caption"
+              sx={{
+                color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
+                fontSize: '0.75rem',
+              }}
+            >
+              {stats.looseStones} gemas · {stats.jewelry} joyas
+              {hasFilters && ` · ${sortedInventory.length} resultados`}
+            </Typography>
 
-            {/* Filter button with badge */}
+            {/* Filter button opens drawer */}
             <Badge
               badgeContent={activeFilterCount}
               color="primary"
@@ -466,141 +494,27 @@ export default function InventoryBrowser() {
             >
               <Button
                 size="small"
-                variant="outlined"
+                variant={activeFilterCount > 0 ? 'contained' : 'outlined'}
                 onClick={() => setMobileFiltersOpen(true)}
                 startIcon={<Filter size={16} />}
                 sx={{
-                  borderColor: activeFilterCount > 0 ? emeraldCore.primary : isLight ? surfacesLight.border.default : surfacesDark.border.default,
-                  color: activeFilterCount > 0 ? emeraldCore.primary : theme.palette.text.secondary,
+                  borderColor: activeFilterCount > 0
+                    ? emeraldCore.primary
+                    : isLight ? surfacesLight.border.default : surfacesDark.border.default,
+                  bgcolor: activeFilterCount > 0 ? emeraldCore.primary : 'transparent',
+                  color: activeFilterCount > 0 ? 'white' : theme.palette.text.secondary,
                   textTransform: 'none',
                   fontWeight: 500,
                   borderRadius: 2,
                   px: 1.5,
+                  '&:hover': {
+                    bgcolor: activeFilterCount > 0 ? emeraldCore.dark : alpha(emeraldCore.primary, 0.08),
+                  },
                 }}
               >
                 Filtros
               </Button>
             </Badge>
-          </Box>
-
-          {/* Horizontal Quick Filter Chips */}
-          <Box
-            sx={{
-              mb: 1.5,
-              mx: -2,
-              px: 2,
-              overflowX: 'auto',
-              '&::-webkit-scrollbar': { display: 'none' },
-              scrollbarWidth: 'none',
-            }}
-          >
-            <Box sx={{ display: 'flex', gap: 1, pb: 0.5 }}>
-              {/* Type quick filters */}
-              <Chip
-                size="small"
-                icon={<Gem size={14} />}
-                label="Gemas"
-                onClick={() => setTypeFilter(typeFilter === 'loose' ? 'all' : 'loose')}
-                sx={{
-                  bgcolor: typeFilter === 'loose' ? emeraldCore.primary : 'transparent',
-                  color: typeFilter === 'loose' ? 'white' : theme.palette.text.secondary,
-                  border: '1px solid',
-                  borderColor: typeFilter === 'loose' ? emeraldCore.primary : isLight ? surfacesLight.border.default : surfacesDark.border.default,
-                  fontWeight: 500,
-                  flexShrink: 0,
-                  '& .MuiChip-icon': { color: typeFilter === 'loose' ? 'white' : emeraldCore.primary },
-                }}
-              />
-              <Chip
-                size="small"
-                icon={<Crown size={14} />}
-                label="Joyería"
-                onClick={() => setTypeFilter(typeFilter === 'jewelry' ? 'all' : 'jewelry')}
-                sx={{
-                  bgcolor: typeFilter === 'jewelry' ? goldAccent.primary : 'transparent',
-                  color: typeFilter === 'jewelry' ? 'white' : theme.palette.text.secondary,
-                  border: '1px solid',
-                  borderColor: typeFilter === 'jewelry' ? goldAccent.primary : isLight ? surfacesLight.border.default : surfacesDark.border.default,
-                  fontWeight: 500,
-                  flexShrink: 0,
-                  '& .MuiChip-icon': { color: typeFilter === 'jewelry' ? 'white' : goldAccent.dark },
-                }}
-              />
-              <Chip
-                size="small"
-                icon={<Sparkles size={14} />}
-                label="Premium"
-                onClick={() => setQualityFilter(qualityFilter === 'PREMIUM' ? 'all' : 'PREMIUM')}
-                sx={{
-                  bgcolor: qualityFilter === 'PREMIUM' ? goldAccent.primary : 'transparent',
-                  color: qualityFilter === 'PREMIUM' ? 'white' : theme.palette.text.secondary,
-                  border: '1px solid',
-                  borderColor: qualityFilter === 'PREMIUM' ? goldAccent.primary : isLight ? surfacesLight.border.default : surfacesDark.border.default,
-                  fontWeight: 500,
-                  flexShrink: 0,
-                  '& .MuiChip-icon': { color: qualityFilter === 'PREMIUM' ? 'white' : goldAccent.dark },
-                }}
-              />
-              {/* City filters */}
-              <Chip
-                size="small"
-                label="Cali"
-                onClick={() => setCityFilter(cityFilter === 'Cali' ? 'all' : 'Cali')}
-                sx={{
-                  bgcolor: cityFilter === 'Cali' ? emeraldCore.primary : 'transparent',
-                  color: cityFilter === 'Cali' ? 'white' : theme.palette.text.secondary,
-                  border: '1px solid',
-                  borderColor: cityFilter === 'Cali' ? emeraldCore.primary : isLight ? surfacesLight.border.default : surfacesDark.border.default,
-                  fontWeight: 500,
-                  flexShrink: 0,
-                }}
-              />
-              <Chip
-                size="small"
-                label="Bogotá"
-                onClick={() => setCityFilter(cityFilter === 'Bogotá' ? 'all' : 'Bogotá')}
-                sx={{
-                  bgcolor: cityFilter === 'Bogotá' ? '#2563eb' : 'transparent',
-                  color: cityFilter === 'Bogotá' ? 'white' : theme.palette.text.secondary,
-                  border: '1px solid',
-                  borderColor: cityFilter === 'Bogotá' ? '#2563eb' : isLight ? surfacesLight.border.default : surfacesDark.border.default,
-                  fontWeight: 500,
-                  flexShrink: 0,
-                }}
-              />
-              {/* Favorites chip */}
-              <Chip
-                size="small"
-                icon={<Heart size={14} fill={showFavoritesOnly ? '#ef4444' : 'none'} />}
-                label={`(${favoritesCount})`}
-                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                sx={{
-                  bgcolor: showFavoritesOnly ? alpha('#ef4444', 0.1) : 'transparent',
-                  color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
-                  border: '1px solid',
-                  borderColor: showFavoritesOnly ? '#ef4444' : isLight ? surfacesLight.border.default : surfacesDark.border.default,
-                  fontWeight: 500,
-                  flexShrink: 0,
-                  '& .MuiChip-icon': { color: showFavoritesOnly ? '#ef4444' : '#6b7280' },
-                }}
-              />
-              {/* Clear all if filters active */}
-              {hasFilters && (
-                <Chip
-                  size="small"
-                  icon={<X size={14} />}
-                  label="Limpiar"
-                  onClick={handleClearFilters}
-                  sx={{
-                    bgcolor: alpha(semanticColors.error.main, 0.1),
-                    color: semanticColors.error.main,
-                    fontWeight: 600,
-                    flexShrink: 0,
-                    '& .MuiChip-icon': { color: semanticColors.error.main },
-                  }}
-                />
-              )}
-            </Box>
           </Box>
 
           {/* Mobile Filter Drawer */}

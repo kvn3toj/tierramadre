@@ -33,8 +33,8 @@ interface RecentlyViewedCarouselProps {
   maxItems?: number;
 }
 
-const CARD_WIDTH = 100;
-const CARD_GAP = 8;
+const CARD_WIDTH = 80;
+const CARD_GAP = 6;
 
 export default function RecentlyViewedCarousel({
   items,
@@ -69,9 +69,9 @@ export default function RecentlyViewedCarousel({
   return (
     <Box
       sx={{
-        mb: 2,
-        py: 1.5,
-        px: 1.5,
+        mb: 1.5,
+        py: 1,
+        px: 1,
         borderRadius: 2,
         bgcolor: isLight
           ? alpha(emeraldCore.lightest, 0.3)
@@ -243,31 +243,31 @@ function RecentItemCard({
             image={item.thumbnailUrl || item.imagen}
             alt={displayName}
             sx={{
-              height: 70,
+              height: 50,
               objectFit: 'cover',
             }}
           />
         ) : (
           <Box
             sx={{
-              height: 70,
+              height: 50,
               bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.tertiary,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Gem size={24} color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled} />
+            <Gem size={18} color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled} />
           </Box>
         )}
 
         {/* Info */}
-        <Box sx={{ p: 0.75 }}>
+        <Box sx={{ p: 0.5 }}>
           <Typography
             variant="caption"
             sx={{
               fontWeight: 600,
-              fontSize: '0.65rem',
+              fontSize: '0.6rem',
               display: 'block',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -280,7 +280,7 @@ function RecentItemCard({
           <Typography
             variant="caption"
             sx={{
-              fontSize: '0.6rem',
+              fontSize: '0.55rem',
               color: emeraldCore.primary,
               fontWeight: 600,
             }}
@@ -307,10 +307,10 @@ export function RecentlyViewedSkeleton({ count = 5 }: { count?: number }) {
             overflow: 'hidden',
           }}
         >
-          <Skeleton variant="rectangular" height={70} />
-          <Box sx={{ p: 0.75 }}>
-            <Skeleton variant="text" width="80%" height={12} />
-            <Skeleton variant="text" width="50%" height={10} />
+          <Skeleton variant="rectangular" height={50} />
+          <Box sx={{ p: 0.5 }}>
+            <Skeleton variant="text" width="80%" height={10} />
+            <Skeleton variant="text" width="50%" height={8} />
           </Box>
         </Box>
       ))}

@@ -45,17 +45,17 @@ export const tierConfigs: Record<DeviceTier, TierConfig> = {
   high: {
     blur: true,
     specular: true,
-    refraction: true,
+    refraction: false,     // Disabled even on high tier
     floatingLayers: true,
-    dynamicTabBar: true,
+    dynamicTabBar: false,  // Tab bar always visible
     animations: true,
   },
   medium: {
     blur: true,
-    specular: true,
+    specular: false,       // Disabled for medium tier
     refraction: false,
-    floatingLayers: true,
-    dynamicTabBar: true,
+    floatingLayers: false, // Disabled for medium tier
+    dynamicTabBar: false,
     animations: true,
   },
   low: {

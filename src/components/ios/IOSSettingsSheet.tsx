@@ -4,19 +4,18 @@
  * Bottom sheet for app settings
  * - Theme toggle (dark/light)
  * - Language switcher (Spanish/English)
- * - Liquid Glass effects configuration
+ * - Meditation reminder
  *
  * Refactored: Extracted reusable SettingToggleItem component
  */
 
 import React from 'react';
 import { Box, Typography, IconButton, Backdrop, Switch, SxProps, Theme } from '@mui/material';
-import { Close, DarkMode, LightMode, Language, AutoAwesome, Tune } from '@mui/icons-material';
+import { Close, DarkMode, LightMode, Language } from '@mui/icons-material';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { useLiquidGlassSafe, type LiquidGlassEffects } from '../../contexts/LiquidGlassContext';
 import MeditationReminderSetting from '../settings/MeditationReminderSetting';
 import { UserProfileCard } from '../auth';
 
@@ -41,11 +40,6 @@ interface SettingToggleItemProps {
   indented?: boolean;
 }
 
-interface LiquidGlassEffectConfig {
-  key: keyof LiquidGlassEffects;
-  label: string;
-  hasIcon?: boolean;
-}
 
 // =============================================================================
 // REUSABLE COMPONENTS
@@ -136,93 +130,6 @@ const SettingToggleItem: React.FC<SettingToggleItemProps> = ({
   </Box>
 );
 
-// =============================================================================
-// LIQUID GLASS SETTINGS SECTION
-// =============================================================================
-
-const LIQUID_GLASS_EFFECTS: LiquidGlassEffectConfig[] = [
-  { key: 'dynamicTabBar', label: 'Tab Bar dinámica', hasIcon: true },
-  { key: 'blur', label: 'Blur dinámico' },
-  { key: 'specular', label: 'Brillos especulares' },
-  { key: 'animations', label: 'Animaciones fluidas' },
-];
-
-const TIER_LABELS: Record<string, string> = {
-  high: 'Alto rendimiento',
-  medium: 'Rendimiento medio',
-  low: 'Modo ahorro',
-};
-
-const LiquidGlassSettings: React.FC = () => {
-  const {
-    enabled,
-    effectiveTier,
-    effects,
-    updateSettings,
-    toggleEffect,
-  } = useLiquidGlassSafe();
-
-  const accentColor = primitiveColors.emerald[500];
-
-  return (
-    <Box sx={{ marginTop: spacing.sm }}>
-      {/* Section Header */}
-      <Typography
-        variant="overline"
-        sx={{
-          fontSize: '12px',
-          fontWeight: 600,
-          color: 'var(--text-tertiary)',
-          letterSpacing: '0.5px',
-          marginBottom: spacing.xs,
-          display: 'block',
-        }}
-      >
-        LIQUID GLASS (iOS 26)
-      </Typography>
-
-      {/* Master Toggle */}
-      <Box sx={{ marginBottom: spacing.xs }}>
-        <SettingToggleItem
-          icon={<AutoAwesome sx={{ fontSize: '24px', color: accentColor }} />}
-          iconBgColor={`${accentColor}15`}
-          title="Liquid Glass"
-          subtitle={TIER_LABELS[effectiveTier] || TIER_LABELS.medium}
-          checked={enabled}
-          onChange={() => updateSettings({ enabled: !enabled })}
-          accentColor={accentColor}
-        />
-      </Box>
-
-      {/* Effect Toggles (only show when enabled) */}
-      {enabled && (
-        <Box
-          sx={{
-            display: 'grid',
-            gap: spacing.xxs,
-            padding: spacing.sm,
-            backgroundColor: 'var(--surface-primary)',
-            borderRadius: spacing.md,
-          }}
-        >
-          {LIQUID_GLASS_EFFECTS.map((effect) => (
-            <SettingToggleItem
-              key={effect.key}
-              icon={effect.hasIcon ? <Tune sx={{ fontSize: '20px', color: 'var(--text-secondary)' }} /> : undefined}
-              iconBgColor="transparent"
-              title={effect.label}
-              checked={effects[effect.key]}
-              onChange={() => toggleEffect(effect.key)}
-              accentColor={accentColor}
-              size="small"
-              indented={!effect.hasIcon}
-            />
-          ))}
-        </Box>
-      )}
-    </Box>
-  );
-};
 
 // =============================================================================
 // MAIN COMPONENT
@@ -345,9 +252,6 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
 
           {/* Meditation Reminder */}
           <MeditationReminderSetting />
-
-          {/* Liquid Glass Settings */}
-          <LiquidGlassSettings />
         </Box>
       </Box>
     </>

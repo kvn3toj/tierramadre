@@ -18,6 +18,7 @@ import IOSSettingsSheet from './IOSSettingsSheet';
 import GlobalSearchFAB from './GlobalSearchFAB';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useThemeMode } from '../../contexts/ThemeContext';
 
 interface PageConfig {
   title: string;
@@ -137,6 +138,8 @@ export interface IOSLayoutProps {
 const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   const location = useLocation();
   const { t } = useLanguage();
+  const { mode } = useThemeMode();
+  const isLight = mode === 'light';
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
   const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
 
@@ -173,7 +176,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         mode={pageConfig.mode}
         title={pageConfig.title}
         subtitle={pageConfig.subtitle}
-        logoUrl={pageConfig.logoUrl}
+        logoUrl={pageConfig.logoUrl ? (isLight ? '/logo-horizontal-dark.png' : '/logo-horizontal-white.png') : undefined}
         showBackButton={pageConfig.showBackButton}
         leadingActions={pageConfig.leadingActions}
         trailingActions={pageConfig.trailingActions}

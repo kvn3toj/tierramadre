@@ -28,8 +28,8 @@ interface VirtualGridProps {
 }
 
 // Card dimensions (compact design)
-const CARD_HEIGHT = 240; // Image (180px) + content (~60px)
-const GAP = 8; // Tight gap for grid
+const CARD_HEIGHT = 260; // Image (180px) + content (~80px)
+const GAP = 12; // Comfortable gap for grid
 
 // Cell props passed via cellProps in react-window 2.x
 interface GridCellProps {

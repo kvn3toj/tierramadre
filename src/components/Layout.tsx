@@ -134,7 +134,7 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               component="img"
-              src="/logo-horizontal-white.png"
+              src={isLight ? "/logo-horizontal-dark.png" : "/logo-horizontal-white.png"}
               alt="Tierra Madre"
               sx={{
                 height: 32,
@@ -383,7 +383,7 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
               <Box
                 component="img"
-                src="/logo-horizontal-white.png"
+                src={isLight ? "/logo-horizontal-dark.png" : "/logo-horizontal-white.png"}
                 alt="Tierra Mädre"
                 sx={{ height: 26 }}
               />
