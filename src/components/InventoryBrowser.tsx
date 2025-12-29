@@ -15,6 +15,7 @@ import {
   InputAdornment,
   Collapse,
   Button,
+  ClickAwayListener,
 } from '@mui/material';
 import {
   LayoutGrid,
@@ -388,69 +389,72 @@ export default function InventoryBrowser() {
       {/* Mobile: Search-first compact header */}
       {isMobile ? (
         <>
-          {/* Search Bar - Primary Element */}
-          <Box sx={{ mb: 1 }}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Descubrir tesoros por nombre, color, calidad..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search size={18} color={theme.palette.text.secondary} />
-                  </InputAdornment>
-                ),
-                endAdornment: search && (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setSearch('')}>
-                      <X size={16} />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 3,
-                  bgcolor: isLight
-                    ? surfacesLight.background.primary
-                    : surfacesDark.background.secondary,
-                  '& fieldset': {
-                    borderColor: isLight
-                      ? surfacesLight.border.light
-                      : surfacesDark.border.light,
-                  },
-                  '&:hover fieldset': {
-                    borderColor: emeraldCore.primary,
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: emeraldCore.primary,
-                  },
-                },
-              }}
-            />
-          </Box>
+          <ClickAwayListener onClickAway={() => setSearchFocused(false)}>
+            <Box>
+              {/* Search Bar - Primary Element */}
+              <Box sx={{ mb: 1 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Descubre tesoros por nombre, color, calidad..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search size={18} color={theme.palette.text.secondary} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: search && (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => setSearch('')}>
+                          <X size={16} />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 3,
+                      bgcolor: isLight
+                        ? surfacesLight.background.primary
+                        : surfacesDark.background.secondary,
+                      '& fieldset': {
+                        borderColor: isLight
+                          ? surfacesLight.border.light
+                          : surfacesDark.border.light,
+                      },
+                      '&:hover fieldset': {
+                        borderColor: emeraldCore.primary,
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: emeraldCore.primary,
+                      },
+                    },
+                  }}
+                />
+              </Box>
 
-          {/* Inline Filters - Expand on focus or when filters active */}
-          <Collapse in={searchFocused || hasFilters}>
-            <Box
-              sx={{
-                mb: 1.5,
-                p: 1.5,
-                borderRadius: 2,
-                bgcolor: isLight
-                  ? alpha(surfacesLight.background.secondary, 0.5)
-                  : alpha(surfacesDark.background.tertiary, 0.5),
-                border: '1px solid',
-                borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-              }}
-            >
-              <FilterContent {...filterContentProps} compact />
+              {/* Inline Filters - Expand on focus or when filters active */}
+              <Collapse in={searchFocused || hasFilters}>
+                <Box
+                  sx={{
+                    mb: 1.5,
+                    p: 1.5,
+                    borderRadius: 2,
+                    bgcolor: isLight
+                      ? alpha(surfacesLight.background.secondary, 0.5)
+                      : alpha(surfacesDark.background.tertiary, 0.5),
+                    border: '1px solid',
+                    borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+                  }}
+                >
+                  <FilterContent {...filterContentProps} compact />
+                </Box>
+              </Collapse>
             </Box>
-          </Collapse>
+          </ClickAwayListener>
 
           {/* Elegant Stats Row - Single line */}
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>

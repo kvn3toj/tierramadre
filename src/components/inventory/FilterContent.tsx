@@ -112,41 +112,244 @@ export const FilterContent = memo(function FilterContent({
   theme,
   compact = false,
 }: FilterContentProps) {
-  return (
-    <>
-      <Box sx={{ display: 'flex', gap: compact ? 1 : 2, flexWrap: 'wrap', alignItems: 'center', mb: showAdvancedFilters ? 2 : 0 }}>
-        {/* Search - Hidden in compact mode (parent has search bar) */}
-        {!compact && (
-          <TextField
-            placeholder="Buscar... (presiona /)"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onBlur={() => {
-              if (search.trim()) {
-                analyticsHook.trackSearch(search, sortedInventory.length);
-                const itemIds = sortedInventory.map(item => item.item);
-                analyticsHook.trackSearchHits(itemIds);
-              }
-            }}
-            size="small"
-            inputRef={searchInputRef}
+  // Compact mode: Show all filters in a clean 2-column grid (mobile)
+  if (compact) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        {/* 2-column grid of filters */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 1,
+          }}
+        >
+          {/* Status filter */}
+          <FormControl size="small" fullWidth>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              displayEmpty
+              sx={{ borderRadius: 2, fontSize: '0.8rem' }}
+            >
+              <MenuItem value="available">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: emeraldCore.primary }} />
+                  Disponibles
+                </Box>
+              </MenuItem>
+              <MenuItem value="sold">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: semanticColors.error.main }} />
+                  Vendidas
+                </Box>
+              </MenuItem>
+              <MenuItem value="all">Todas</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Sort dropdown */}
+          <FormControl size="small" fullWidth>
+            <Select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              displayEmpty
+              sx={{ borderRadius: 2, fontSize: '0.8rem' }}
+            >
+              <MenuItem value="price-desc">Precio ↓</MenuItem>
+              <MenuItem value="price-asc">Precio ↑</MenuItem>
+              <MenuItem value="name-asc">Nombre A-Z</MenuItem>
+              <MenuItem value="quality-premium">Calidad</MenuItem>
+              <MenuItem value="newest">Recientes</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Type filter */}
+          <FormControl size="small" fullWidth>
+            <Select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
+              displayEmpty
+              sx={{ borderRadius: 2, fontSize: '0.8rem' }}
+            >
+              <MenuItem value="all">Tipo: Todos</MenuItem>
+              <MenuItem value="loose">Gemas</MenuItem>
+              <MenuItem value="jewelry">Joyería</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Cantidad filter */}
+          <FormControl size="small" fullWidth>
+            <Select
+              value={cantidadFilter}
+              onChange={(e) => setCantidadFilter(e.target.value)}
+              displayEmpty
+              sx={{ borderRadius: 2, fontSize: '0.8rem' }}
+            >
+              <MenuItem value="all">Cantidad: Todos</MenuItem>
+              <MenuItem value="1">1 pieza</MenuItem>
+              <MenuItem value="2+">2+ (Lotes)</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Color filter */}
+          <FormControl size="small" fullWidth>
+            <Select
+              value={colorFilter}
+              onChange={(e) => setColorFilter(e.target.value)}
+              displayEmpty
+              sx={{ borderRadius: 2, fontSize: '0.8rem' }}
+            >
+              <MenuItem value="all">Color: Todos</MenuItem>
+              {colors.map((color) => (
+                <MenuItem key={color} value={color}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: getColorDot(color) }} />
+                    {color.replace('Verde ', '')}
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Shape filter */}
+          <FormControl size="small" fullWidth>
+            <Select
+              value={shapeFilter}
+              onChange={(e) => setShapeFilter(e.target.value)}
+              displayEmpty
+              sx={{ borderRadius: 2, fontSize: '0.8rem' }}
+            >
+              <MenuItem value="all">Talla: Todas</MenuItem>
+              {shapes.map((shape) => (
+                <MenuItem key={shape} value={shape}>
+                  {shape}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Quality filter */}
+          <FormControl size="small" fullWidth>
+            <Select
+              value={qualityFilter}
+              onChange={(e) => setQualityFilter(e.target.value)}
+              displayEmpty
+              sx={{ borderRadius: 2, fontSize: '0.8rem' }}
+            >
+              <MenuItem value="all">Calidad: Todas</MenuItem>
+              {qualities.map((quality) => (
+                <MenuItem key={quality} value={quality}>
+                  {quality}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Colección filter */}
+          {colecciones.length > 0 && (
+            <FormControl size="small" fullWidth>
+              <Select
+                value={coleccionFilter}
+                onChange={(e) => setColeccionFilter(e.target.value)}
+                displayEmpty
+                sx={{ borderRadius: 2, fontSize: '0.8rem' }}
+              >
+                <MenuItem value="all">Colección: Todas</MenuItem>
+                {colecciones.map((coleccion) => (
+                  <MenuItem key={coleccion} value={coleccion}>
+                    {coleccion}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+        </Box>
+
+        {/* Price Range Slider - Full width */}
+        <Box sx={{ px: 0.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+            <Typography variant="caption" sx={{ fontWeight: 500, color: theme.palette.text.secondary }}>
+              Precio
+            </Typography>
+            <Typography variant="caption" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
+              {formatCurrency(priceRange[0])} - {formatCurrency(priceRange[1])}
+            </Typography>
+          </Box>
+          <Slider
+            value={priceRange}
+            onChange={(_, value) => setPriceRange(value as [number, number])}
+            min={priceMinMax.min}
+            max={priceMinMax.max}
+            step={100000}
+            valueLabelDisplay="auto"
+            valueLabelFormat={(value) => formatCurrency(value)}
             sx={{
-              minWidth: 200,
-              flex: 1,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
+              color: emeraldCore.dark,
+              '& .MuiSlider-thumb': { width: 16, height: 16 },
+              '& .MuiSlider-track': { height: 3 },
+              '& .MuiSlider-rail': {
+                height: 3,
+                bgcolor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
               },
             }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search size={18} color={surfacesLight.text.tertiary} />
-                </InputAdornment>
-              ),
+          />
+        </Box>
+
+        {/* Clear filters button */}
+        {hasFilters && (
+          <Chip
+            label="Limpiar filtros"
+            size="small"
+            onClick={handleClearFilters}
+            sx={{
+              alignSelf: 'flex-start',
+              bgcolor: alpha(semanticColors.error.main, 0.1),
+              color: semanticColors.error.main,
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontSize: '0.75rem',
             }}
           />
         )}
+      </Box>
+    );
+  }
+
+  // Desktop mode: Original layout with "Más filtros" toggle
+  return (
+    <>
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mb: showAdvancedFilters ? 2 : 0 }}>
+        {/* Search */}
+        <TextField
+          placeholder="Buscar... (presiona /)"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onBlur={() => {
+            if (search.trim()) {
+              analyticsHook.trackSearch(search, sortedInventory.length);
+              const itemIds = sortedInventory.map(item => item.item);
+              analyticsHook.trackSearchHits(itemIds);
+            }
+          }}
+          size="small"
+          inputRef={searchInputRef}
+          sx={{
+            minWidth: 200,
+            flex: 1,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
+            },
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search size={18} color={surfacesLight.text.tertiary} />
+              </InputAdornment>
+            ),
+          }}
+        />
 
         {/* Status filter */}
         <FormControl size="small" sx={{ minWidth: 130 }}>

@@ -175,7 +175,7 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
         <TextField
           fullWidth
           size="small"
-          placeholder="Descubrir tesoros por nombre, color, calidad..."
+          placeholder="Descubre tesoros por nombre, color, calidad..."
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
           inputRef={searchInputRef}

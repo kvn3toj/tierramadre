@@ -14,7 +14,8 @@
       "Bash(npx tsc:*)",
       "Bash(curl:*)",
       "Bash(vercel env pull:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
