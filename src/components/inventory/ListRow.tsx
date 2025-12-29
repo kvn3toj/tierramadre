@@ -15,15 +15,13 @@ import {
 } from '@mui/material';
 import { Heart, Scale } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { InventoryItem, TrustScoreBreakdown } from '../../types';
+import { InventoryItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
-import { TrustBadgeCompact } from '../TrustBadge';
 import { PriceDisplay } from '../PriceDisplay';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 
 interface ListRowProps {
   item: InventoryItem;
-  trustScore: TrustScoreBreakdown;
   isFavorite: boolean;
   onItemClick: () => void;
   onCertClick: () => void;
@@ -36,7 +34,6 @@ interface ListRowProps {
 
 function ListRow({
   item,
-  trustScore,
   isFavorite,
   onItemClick,
   onToggleFavorite,
@@ -121,9 +118,6 @@ function ListRow({
         </Typography>
       </Box>
 
-      {/* Trust Badge */}
-      <TrustBadgeCompact score={trustScore} />
-
       {/* Quality badge */}
       <Chip
         label={quality.label}
@@ -198,7 +192,6 @@ export default React.memo(ListRow, (prevProps, nextProps) => {
     prevProps.item.precioCOP === nextProps.item.precioCOP &&
     prevProps.item.estado === nextProps.item.estado &&
     prevProps.isFavorite === nextProps.isFavorite &&
-    prevProps.trustScore.overall === nextProps.trustScore.overall &&
     prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
     prevProps.canAddToComparison === nextProps.canAddToComparison
   );

@@ -20,7 +20,7 @@ import {
   Scale,
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { InventoryItem, TrustScoreBreakdown } from '../../types';
+import { InventoryItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { PriceDisplay } from '../PriceDisplay';
 import ProgressiveImage from '../ProgressiveImage';
@@ -28,7 +28,6 @@ import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/to
 
 interface GridCardProps {
   item: InventoryItem;
-  trustScore: TrustScoreBreakdown;
   isFavorite: boolean;
   onItemClick: () => void;
   onCertClick: () => void;
@@ -323,7 +322,6 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.item.precioCOP === nextProps.item.precioCOP &&
     prevProps.item.estado === nextProps.item.estado &&
     prevProps.isFavorite === nextProps.isFavorite &&
-    prevProps.trustScore.overall === nextProps.trustScore.overall &&
     prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
     prevProps.canAddToComparison === nextProps.canAddToComparison
   );

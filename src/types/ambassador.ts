@@ -35,8 +35,7 @@ export interface AmbassadorProfile {
   // Template Configuration
   template: TemplateConfig;
 
-  // Trust Metrics (READ-ONLY, calculated)
-  trustScore?: AmbassadorTrustScore;
+  // Reputation Metrics (READ-ONLY, calculated)
   reputation?: ReputationMetrics;
 
   // Status
@@ -71,28 +70,6 @@ export interface TemplateConfig {
   // Featured Content
   featuredProducts: string[]; // Product IDs
   highlightedTestimonials: string[]; // Review IDs
-}
-
-/**
- * Trust Score - Multi-dimensional reputation for SELLERS
- * Different from product certification - this measures the PERSON
- */
-export interface AmbassadorTrustScore {
-  overall: number; // 0-100 composite score
-
-  // Trust Dimensions
-  components: {
-    transactionHistory: number; // Completion rate, volume
-    customerSatisfaction: number; // Review ratings
-    responseTime: number; // Communication speed
-    expertise: number; // Certifications, experience
-    authenticity: number; // Product certifications sold
-    reliability: number; // Consistency over time
-  };
-
-  // Confidence Interval
-  confidence: number; // 0-1, based on data volume
-  lastCalculated: string;
 }
 
 /**
@@ -378,16 +355,6 @@ export const AMBASSADOR_BADGE_INFO: Record<AmbassadorBadgeType, { name: string; 
     icon: '🏆',
     description: 'Miembro fundador de la comunidad'
   }
-};
-
-/**
- * Trust Level Labels
- */
-export const AMBASSADOR_TRUST_LEVELS = {
-  ELITE: { min: 90, label: 'Elite', color: '#FFD700', bgColor: 'rgba(255, 215, 0, 0.15)' },
-  TRUSTED: { min: 75, label: 'Confiable', color: '#059669', bgColor: 'rgba(5, 150, 105, 0.15)' },
-  ESTABLISHED: { min: 50, label: 'Establecido', color: '#3B82F6', bgColor: 'rgba(59, 130, 246, 0.15)' },
-  NEWCOMER: { min: 0, label: 'Nuevo', color: '#9CA3AF', bgColor: 'rgba(156, 163, 175, 0.15)' }
 };
 
 /**

@@ -176,28 +176,6 @@ export interface AestheticRating {
   average?: number;       // Computed average
 }
 
-// Trust score breakdown
-export interface TrustScoreBreakdown {
-  provenance: number;     // 0-100, weighted 25%
-  quality: number;        // 0-100, weighted 30%
-  aesthetic: number;      // 0-100, weighted 20%
-  market: number;         // 0-100, weighted 25%
-  overall: number;        // Weighted average
-}
-
-// Trust badge levels
-export type TrustLevel = 'GOLD' | 'SILVER' | 'BRONZE' | 'NONE';
-
-// Trust badge display info
-export interface TrustBadge {
-  level: TrustLevel;
-  color: string;
-  bgColor: string;
-  label: string;
-  labelShort: string;
-  icon: string;
-}
-
 // Certification status summary
 export interface CertificationStatus {
   gemological: 'verified' | 'pending' | 'expired';
@@ -280,13 +258,11 @@ export interface InventoryItem {
   isJewelry: boolean;  // Computed: true if peso is "Plata" or "Oro 18k"
   metalType?: 'Plata' | 'Oro 18k';
 
-  // Trust & Provenance fields (Rachel's Trust Architecture)
+  // Provenance fields
   certifications?: ItemCertifications;
   chainOfCustody?: CustodyRecord[];
   aestheticRating?: AestheticRating;
   demandIndicator?: DemandIndicator;
-  trustScore?: TrustScoreBreakdown;  // Cached trust score
-  lastTrustUpdate?: string;          // ISO date of last trust calculation
 
   // Image verification fields
   imageGallery?: EmeraldImageGallery;

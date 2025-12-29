@@ -2,6 +2,7 @@
  * ComparisonModal Component
  * Side-by-side comparison view for selected emeralds.
  * Highlights differences in key attributes.
+ * Responsive: uses mobile card view on small screens, table on desktop.
  */
 import React from 'react';
 import {
@@ -21,18 +22,20 @@ import {
   Chip,
   Avatar,
   alpha,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import { X, Scale, Award, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { InventoryItem, TrustScoreBreakdown } from '../types';
+import { X, Scale, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { InventoryItem } from '../types';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { formatFullCurrency, getColorDot, getQualityBadge } from '../utils/formatting';
-import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
+import { emeraldCore, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
+import { ComparisonMobileView } from './comparison';
 
 interface ComparisonModalProps {
   open: boolean;
   onClose: () => void;
   items: InventoryItem[];
-  trustScores: Map<number, TrustScoreBreakdown>;
 }
 
 // Helper to determine best/worst values
@@ -108,17 +111,17 @@ export default function ComparisonModal({
   open,
   onClose,
   items,
-  trustScores,
 }: ComparisonModalProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   if (items.length < 2) return null;
 
   // Extract numeric values for comparison
   const prices = items.map(i => i.precioCOP);
   const weights = items.map(i => (typeof i.peso === 'number' ? i.peso : 0));
-  const trusts = items.map(i => trustScores.get(i.item)?.overall || 0);
 
   // Price per carat for loose stones
   const pricePerCarats = items.map(i => {
@@ -134,10 +137,15 @@ export default function ComparisonModal({
       onClose={onClose}
       maxWidth="lg"
       fullWidth
+      fullScreen={isMobile}
       PaperProps={{
         sx: {
-          borderRadius: 3,
+          borderRadius: isMobile ? 0 : 3,
           bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
+          ...(isMobile && {
+            m: 0,
+            maxHeight: '100%',
+          }),
         },
       }}
     >
@@ -149,12 +157,13 @@ export default function ComparisonModal({
           borderBottom: '1px solid',
           borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
           pb: 2,
+          px: isMobile ? 2 : 3,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Scale size={24} color={emeraldCore.primary} />
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            Comparación de Esmeraldas
+          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: isMobile ? '1rem' : '1.25rem' }}>
+            Comparar
           </Typography>
           <Chip
             label={`${items.length} items`}
@@ -171,218 +180,183 @@ export default function ComparisonModal({
         </IconButton>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 0 }}>
-        <TableContainer component={Paper} elevation={0}>
-          <Table sx={{ minWidth: 600 }} aria-label="tabla de comparación">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: 150 }}>Atributo</TableCell>
-                {items.map((item) => {
-                  const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
-                  return (
-                    <TableCell key={item.item} align="center" sx={{ minWidth: 180 }}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                        {item.imagen && (
-                          <Avatar
-                            src={item.thumbnailUrl || item.imagen}
-                            alt={displayName}
-                            sx={{ width: 60, height: 60, border: '2px solid', borderColor: emeraldCore.primary }}
-                          />
-                        )}
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, textAlign: 'center' }}>
-                          {displayName}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {/* Price */}
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Precio</TableCell>
-                {items.map((item, idx) => (
-                  <ComparisonCell
-                    key={item.item}
-                    value={formatFullCurrency(item.precioCOP)}
-                    indicator={getValueIndicator(prices[idx], prices, false)} // Lower price is better
-                    isNumeric
-                  />
-                ))}
-              </TableRow>
-
-              {/* Weight */}
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Peso</TableCell>
-                {items.map((item, idx) => {
-                  const weight = typeof item.peso === 'number' ? `${item.peso} ct` : item.metalType || '-';
-                  return (
+      {isMobile ? (
+        <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <ComparisonMobileView items={items} />
+        </DialogContent>
+      ) : (
+        <DialogContent sx={{ p: 0 }}>
+          <TableContainer component={Paper} elevation={0}>
+            <Table sx={{ minWidth: 600 }} aria-label="tabla de comparación">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700, width: 150 }}>Atributo</TableCell>
+                  {items.map((item) => {
+                    const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
+                    return (
+                      <TableCell key={item.item} align="center" sx={{ minWidth: 180 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                          {item.imagen && (
+                            <Avatar
+                              src={item.thumbnailUrl || item.imagen}
+                              alt={displayName}
+                              sx={{ width: 60, height: 60, border: '2px solid', borderColor: emeraldCore.primary }}
+                            />
+                          )}
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, textAlign: 'center' }}>
+                            {displayName}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {/* Price */}
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Precio</TableCell>
+                  {items.map((item, idx) => (
                     <ComparisonCell
                       key={item.item}
-                      value={weight}
-                      indicator={typeof item.peso === 'number' ? getValueIndicator(weights[idx], weights, true) : 'neutral'}
+                      value={formatFullCurrency(item.precioCOP)}
+                      indicator={getValueIndicator(prices[idx], prices, false)}
                       isNumeric
                     />
-                  );
-                })}
-              </TableRow>
+                  ))}
+                </TableRow>
 
-              {/* Price per Carat (only for loose stones) */}
-              {items.some(i => !i.isJewelry && typeof i.peso === 'number') && (
+                {/* Weight */}
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Precio/Quilate</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Peso</TableCell>
                   {items.map((item, idx) => {
-                    if (item.isJewelry || typeof item.peso !== 'number' || item.peso === 0) {
-                      return (
-                        <TableCell key={item.item} align="right" sx={{ color: 'text.secondary' }}>
-                          N/A
-                        </TableCell>
-                      );
-                    }
+                    const weight = typeof item.peso === 'number' ? `${item.peso} ct` : item.metalType || '-';
                     return (
                       <ComparisonCell
                         key={item.item}
-                        value={formatFullCurrency(pricePerCarats[idx])}
-                        indicator={getValueIndicator(pricePerCarats[idx], pricePerCarats.filter(p => p > 0), false)}
+                        value={weight}
+                        indicator={typeof item.peso === 'number' ? getValueIndicator(weights[idx], weights, true) : 'neutral'}
                         isNumeric
                       />
                     );
                   })}
                 </TableRow>
-              )}
 
-              {/* Color */}
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Color</TableCell>
-                {items.map((item) => (
-                  <TableCell key={item.item} align="center">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
-                      <Box
-                        sx={{
-                          width: 12,
-                          height: 12,
-                          borderRadius: '50%',
-                          bgcolor: getColorDot(item.color),
-                        }}
-                      />
-                      {item.color}
-                    </Box>
-                  </TableCell>
-                ))}
-              </TableRow>
+                {/* Price per Carat (only for loose stones) */}
+                {items.some(i => !i.isJewelry && typeof i.peso === 'number') && (
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>Precio/Quilate</TableCell>
+                    {items.map((item, idx) => {
+                      if (item.isJewelry || typeof item.peso !== 'number' || item.peso === 0) {
+                        return (
+                          <TableCell key={item.item} align="right" sx={{ color: 'text.secondary' }}>
+                            N/A
+                          </TableCell>
+                        );
+                      }
+                      return (
+                        <ComparisonCell
+                          key={item.item}
+                          value={formatFullCurrency(pricePerCarats[idx])}
+                          indicator={getValueIndicator(pricePerCarats[idx], pricePerCarats.filter(p => p > 0), false)}
+                          isNumeric
+                        />
+                      );
+                    })}
+                  </TableRow>
+                )}
 
-              {/* Quality */}
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Calidad</TableCell>
-                {items.map((item) => {
-                  const quality = getQualityBadge(item.calidad);
-                  return (
+                {/* Color */}
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Color</TableCell>
+                  {items.map((item) => (
                     <TableCell key={item.item} align="center">
-                      <Chip
-                        label={quality.label}
-                        size="small"
-                        sx={{
-                          bgcolor: quality.bg,
-                          color: quality.color,
-                          border: `1px solid ${quality.border}`,
-                          fontWeight: 600,
-                        }}
-                      />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
+                        <Box
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: '50%',
+                            bgcolor: getColorDot(item.color),
+                          }}
+                        />
+                        {item.color}
+                      </Box>
                     </TableCell>
-                  );
-                })}
-              </TableRow>
+                  ))}
+                </TableRow>
 
-              {/* Cut/Shape */}
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Talla/Corte</TableCell>
-                {items.map((item) => (
-                  <TableCell key={item.item} align="center">
-                    {item.talla || '-'}
-                  </TableCell>
-                ))}
-              </TableRow>
+                {/* Quality */}
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Calidad</TableCell>
+                  {items.map((item) => {
+                    const quality = getQualityBadge(item.calidad);
+                    return (
+                      <TableCell key={item.item} align="center">
+                        <Chip
+                          label={quality.label}
+                          size="small"
+                          sx={{
+                            bgcolor: quality.bg,
+                            color: quality.color,
+                            border: `1px solid ${quality.border}`,
+                            fontWeight: 600,
+                          }}
+                        />
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
 
-              {/* Dimensions */}
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Medidas</TableCell>
-                {items.map((item) => (
-                  <TableCell key={item.item} align="center">
-                    {item.medidas || '-'}
-                  </TableCell>
-                ))}
-              </TableRow>
+                {/* Cut/Shape */}
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Talla/Corte</TableCell>
+                  {items.map((item) => (
+                    <TableCell key={item.item} align="center">
+                      {item.talla || '-'}
+                    </TableCell>
+                  ))}
+                </TableRow>
 
-              {/* Trust Score */}
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Award size={16} color={goldAccent.primary} />
-                    Confianza
-                  </Box>
-                </TableCell>
-                {items.map((item, idx) => {
-                  const score = trustScores.get(item.item)?.overall || 0;
-                  return (
-                    <ComparisonCell
-                      key={item.item}
-                      value={`${score}/100`}
-                      indicator={getValueIndicator(trusts[idx], trusts, true)}
-                      isNumeric
-                    />
-                  );
-                })}
-              </TableRow>
+                {/* Dimensions */}
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Medidas</TableCell>
+                  {items.map((item) => (
+                    <TableCell key={item.item} align="center">
+                      {item.medidas || '-'}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
 
-              {/* Location */}
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Ubicación</TableCell>
-                {items.map((item) => (
-                  <TableCell key={item.item} align="center">
-                    {item.ubicacion || '-'}
-                  </TableCell>
-                ))}
-              </TableRow>
-
-              {/* Advisor */}
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Asesor</TableCell>
-                {items.map((item) => (
-                  <TableCell key={item.item} align="center">
-                    {item.asesor || '-'}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {/* Legend */}
-        <Box
-          sx={{
-            p: 2,
-            borderTop: '1px solid',
-            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-            display: 'flex',
-            gap: 3,
-            justifyContent: 'center',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <TrendingUp size={14} color={emeraldCore.primary} />
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Mejor valor
-            </Typography>
+          {/* Legend */}
+          <Box
+            sx={{
+              p: 2,
+              borderTop: '1px solid',
+              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+              display: 'flex',
+              gap: 3,
+              justifyContent: 'center',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <TrendingUp size={14} color={emeraldCore.primary} />
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                Mejor valor
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <TrendingDown size={14} color="#ef4444" />
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                Valor más bajo
+              </Typography>
+            </Box>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <TrendingDown size={14} color="#ef4444" />
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Valor más bajo
-            </Typography>
-          </Box>
-        </Box>
-      </DialogContent>
+        </DialogContent>
+      )}
     </Dialog>
   );
 }

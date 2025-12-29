@@ -6,18 +6,16 @@
 import React, { useCallback, useMemo, ReactElement, CSSProperties, useState, useEffect } from 'react';
 import { Grid } from 'react-window';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
-import { InventoryItem, TrustScoreBreakdown } from '../../types';
+import { InventoryItem } from '../../types';
 
 interface VirtualGridProps {
   items: InventoryItem[];
-  trustScores: Map<number, TrustScoreBreakdown>;
   favorites: number[];
   onItemClick: (item: InventoryItem) => void;
   onCertClick: (item: InventoryItem) => void;
   onToggleFavorite: (itemId: number) => void;
   renderCard: (props: {
     item: InventoryItem;
-    trustScore: TrustScoreBreakdown;
     isFavorite: boolean;
     onItemClick: () => void;
     onCertClick: () => void;
@@ -35,7 +33,6 @@ const GAP = 12; // Comfortable gap for grid
 interface GridCellProps {
   items: InventoryItem[];
   columnCount: number;
-  trustScores: Map<number, TrustScoreBreakdown>;
   favorites: number[];
   onItemClick: (item: InventoryItem) => void;
   onCertClick: (item: InventoryItem) => void;
@@ -64,7 +61,6 @@ function CellRenderer({
   style,
   items,
   columnCount,
-  trustScores,
   favorites,
   onItemClick,
   onCertClick,
@@ -79,13 +75,6 @@ function CellRenderer({
   }
 
   const item = items[index];
-  const trustScore = trustScores.get(item.item) || {
-    provenance: 0,
-    quality: 0,
-    aesthetic: 0,
-    market: 0,
-    overall: 0,
-  };
   const isFavorite = favorites.includes(item.item);
 
   // For single column (mobile), no side padding needed
@@ -103,7 +92,6 @@ function CellRenderer({
     >
       {renderCard({
         item,
-        trustScore,
         isFavorite,
         onItemClick: () => onItemClick(item),
         onCertClick: () => onCertClick(item),
@@ -119,7 +107,6 @@ function CellRenderer({
  */
 export default function VirtualGrid({
   items,
-  trustScores,
   favorites,
   onItemClick,
   onCertClick,
@@ -160,13 +147,12 @@ export default function VirtualGrid({
   const cellProps = useMemo<GridCellProps>(() => ({
     items,
     columnCount,
-    trustScores,
     favorites,
     onItemClick,
     onCertClick,
     onToggleFavorite,
     renderCard,
-  }), [items, columnCount, trustScores, favorites, onItemClick, onCertClick, onToggleFavorite, renderCard]);
+  }), [items, columnCount, favorites, onItemClick, onCertClick, onToggleFavorite, renderCard]);
 
   if (items.length === 0) {
     return null;

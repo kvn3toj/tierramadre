@@ -42,8 +42,6 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useCanEdit, useCanUpload } from '../hooks/usePermissions';
 import { useInventory } from '../hooks/useInventory';
-import { calculateTrustScore, getTrustBadge } from '../utils/trustScore';
-import { TrustBadgeCompact } from './TrustBadge';
 import { extractVideoThumbnail } from '../utils/videoStorage';
 import { MediaGallery, ImageCropper } from './media';
 import DriveFolderInfo from './media/DriveFolderInfo';
@@ -100,13 +98,6 @@ export default function ProductDetail() {
   const product = useMemo(() => {
     return inventory.find(item => item.item.toString() === itemId);
   }, [inventory, itemId]);
-
-  // Calculate trust score
-  const trustScore = useMemo(() => {
-    return product ? calculateTrustScore(product) : null;
-  }, [product]);
-
-  const trustBadge = trustScore ? getTrustBadge(trustScore.overall) : null;
 
   // Get display name early for use in effects
   const displayName = useMemo(() => {

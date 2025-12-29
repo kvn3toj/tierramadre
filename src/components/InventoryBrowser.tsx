@@ -10,12 +10,11 @@ import {
   useMediaQuery,
   ToggleButton,
   ToggleButtonGroup,
-  Button,
-  Badge,
   IconButton,
-  SwipeableDrawer,
   TextField,
   InputAdornment,
+  Collapse,
+  Button,
 } from '@mui/material';
 import {
   LayoutGrid,
@@ -24,10 +23,8 @@ import {
   SearchX,
   Heart,
   X,
-  Filter,
   Gem,
   Crown,
-  Sparkles,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useInventory } from '../hooks/useInventory';
@@ -41,9 +38,8 @@ import { useSavedFilters } from '../hooks/useSavedFilters';
 // TODO: Re-enable keyboard nav when adapted for virtualized grid (react-window)
 // import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 import { useInventoryAnalytics } from '../hooks/useInventoryAnalytics';
-import { InventoryItem, TrustScoreBreakdown } from '../types';
+import { InventoryItem } from '../types';
 import CertificationUpload from './CertificationUpload';
-import { calculateTrustScore } from '../utils/trustScore';
 import { formatCurrency, formatFullCurrency, getColorDot } from '../utils/formatting';
 // Design System Tokens
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark, semanticColors } from '../design-system/tokens/colors';
@@ -247,23 +243,13 @@ export default function InventoryBrowser() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   // Keyboard shortcuts disabled - target devices are mobile
   // const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
 
   // Filter by favorites if enabled
   const displayInventory = useMemo(() => {
     if (!showFavoritesOnly) return visibleInventory;
     return visibleInventory.filter(item => isFavorite(item.item));
   }, [visibleInventory, showFavoritesOnly, isFavorite]);
-
-  // Compute trust scores for comparison (only for selected items)
-  const trustScoresMap = useMemo(() => {
-    const map = new Map<number, TrustScoreBreakdown>();
-    comparison.selectedItems.forEach(item => {
-      const score = calculateTrustScore(item);
-      map.set(item.item, score);
-    });
-    return map;
-  }, [comparison.selectedItems]);
 
   // Map recent item IDs to actual inventory items
   const recentlyViewedItems = useMemo(() => {
@@ -311,15 +297,6 @@ export default function InventoryBrowser() {
 
   // Filter options from hook for convenience
   const { colors, shapes, qualities, colecciones, priceMinMax } = filterOptions;
-
-  // Calculate trust scores for all items (memoized)
-  const itemTrustScores = useMemo(() => {
-    const scores = new Map<number, TrustScoreBreakdown>();
-    inventoryData.forEach(item => {
-      scores.set(item.item, calculateTrustScore(item));
-    });
-    return scores;
-  }, [inventoryData]);
 
   // Handle opening certification dialog
   const handleCertClick = useCallback((item: InventoryItem) => {
@@ -412,13 +389,15 @@ export default function InventoryBrowser() {
       {isMobile ? (
         <>
           {/* Search Bar - Primary Element */}
-          <Box sx={{ mb: 1.5 }}>
+          <Box sx={{ mb: 1 }}>
             <TextField
               fullWidth
               size="small"
               placeholder="Buscar por nombre, color, forma..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -455,126 +434,74 @@ export default function InventoryBrowser() {
             />
           </Box>
 
-          {/* Subtle Stats Row + Filter Button */}
-          <Box
-            sx={{
-              mb: 1.5,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            {/* Subtle text stats */}
+          {/* Inline Filters - Expand on focus or when filters active */}
+          <Collapse in={searchFocused || hasFilters}>
+            <Box
+              sx={{
+                mb: 1.5,
+                p: 1.5,
+                borderRadius: 2,
+                bgcolor: isLight
+                  ? alpha(surfacesLight.background.secondary, 0.5)
+                  : alpha(surfacesDark.background.tertiary, 0.5),
+                border: '1px solid',
+                borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+              }}
+            >
+              <FilterContent {...filterContentProps} compact />
+            </Box>
+          </Collapse>
+
+          {/* Elegant Stats Row */}
+          <Box sx={{ mb: 1.5 }}>
+            {/* Line 1: Stats */}
             <Typography
               variant="caption"
               sx={{
                 color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
                 fontSize: '0.75rem',
+                display: 'block',
+                mb: 0.5,
               }}
             >
               {stats.looseStones} gemas · {stats.jewelry} joyas
-              {hasFilters && ` · ${sortedInventory.length} resultados`}
+              {sortedInventory.length !== inventoryData.length && ` · ${sortedInventory.length} resultados`}
             </Typography>
 
-            {/* Filter button opens drawer */}
-            <Badge
-              badgeContent={activeFilterCount}
-              color="primary"
-              invisible={activeFilterCount === 0}
-              sx={{
-                '& .MuiBadge-badge': {
-                  bgcolor: emeraldCore.primary,
-                  color: 'white',
-                  fontWeight: 700,
-                  fontSize: '0.6rem',
-                  minWidth: 16,
-                  height: 16,
-                },
-              }}
-            >
-              <Button
-                size="small"
-                variant={activeFilterCount > 0 ? 'contained' : 'outlined'}
-                onClick={() => setMobileFiltersOpen(true)}
-                startIcon={<Filter size={16} />}
+            {/* Line 2: Total + Favorites */}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography
+                variant="body2"
                 sx={{
-                  borderColor: activeFilterCount > 0
-                    ? emeraldCore.primary
-                    : isLight ? surfacesLight.border.default : surfacesDark.border.default,
-                  bgcolor: activeFilterCount > 0 ? emeraldCore.primary : 'transparent',
-                  color: activeFilterCount > 0 ? 'white' : theme.palette.text.secondary,
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  borderRadius: 2,
-                  px: 1.5,
+                  color: emeraldCore.dark,
+                  fontWeight: 600,
+                  fontSize: '0.8rem',
+                }}
+              >
+                {formatFullCurrency(filteredStats.totalValue)} total
+              </Typography>
+
+              <Chip
+                icon={<Heart size={14} fill={showFavoritesOnly ? '#ef4444' : 'none'} color={showFavoritesOnly ? '#ef4444' : '#6b7280'} />}
+                label={`Favoritos (${favoritesCount})`}
+                size="small"
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                sx={{
+                  cursor: 'pointer',
+                  bgcolor: showFavoritesOnly ? alpha('#ef4444', 0.1) : 'transparent',
+                  color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
+                  border: '1px solid',
+                  borderColor: showFavoritesOnly ? '#ef4444' : isLight ? surfacesLight.border.light : surfacesDark.border.default,
+                  fontWeight: showFavoritesOnly ? 600 : 400,
+                  fontSize: '0.7rem',
+                  height: 26,
                   '&:hover': {
-                    bgcolor: activeFilterCount > 0 ? emeraldCore.dark : alpha(emeraldCore.primary, 0.08),
+                    bgcolor: alpha('#ef4444', 0.1),
                   },
                 }}
-              >
-                Filtros
-              </Button>
-            </Badge>
-          </Box>
-
-          {/* Mobile Filter Drawer */}
-          <SwipeableDrawer
-            anchor="bottom"
-            open={mobileFiltersOpen}
-            onClose={() => setMobileFiltersOpen(false)}
-            onOpen={() => setMobileFiltersOpen(true)}
-            disableSwipeToOpen
-            PaperProps={{
-              sx: {
-                borderTopLeftRadius: 16,
-                borderTopRightRadius: 16,
-                maxHeight: '85vh',
-                bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
-              },
-            }}
-          >
-            <Box sx={{ p: 2 }}>
-              {/* Drawer handle */}
-              <Box
-                sx={{
-                  width: 40,
-                  height: 4,
-                  bgcolor: isLight ? surfacesLight.border.default : surfacesDark.border.default,
-                  borderRadius: 2,
-                  mx: 'auto',
-                  mb: 2,
-                }}
               />
-              {/* Header */}
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Filtros
-                </Typography>
-                <IconButton size="small" onClick={() => setMobileFiltersOpen(false)}>
-                  <X size={20} />
-                </IconButton>
-              </Box>
-              {/* Filter content */}
-              <FilterContent {...filterContentProps} />
-              {/* Apply button */}
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={() => setMobileFiltersOpen(false)}
-                sx={{
-                  mt: 3,
-                  bgcolor: emeraldCore.primary,
-                  '&:hover': { bgcolor: emeraldCore.dark },
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  py: 1.5,
-                  borderRadius: 2,
-                }}
-              >
-                Ver {sortedInventory.length} resultados
-              </Button>
             </Box>
-          </SwipeableDrawer>
+          </Box>
         </>
       ) : (
         <>
@@ -797,43 +724,45 @@ export default function InventoryBrowser() {
         </Box>
       )}
 
-      {/* Results info - Compact */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-            {sortedInventory.length === inventoryData.length ? (
-              <>
-                <strong style={{ color: theme.palette.text.primary }}>{inventoryData.length}</strong> esmeraldas en total
-              </>
-            ) : (
-              <>
-                Mostrando <strong style={{ color: theme.palette.text.primary }}>{displayInventory.length}</strong> de {sortedInventory.length} esmeraldas
-              </>
-            )}
+      {/* Results info - Desktop only (mobile has elegant stats row above) */}
+      {!isMobile && (
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+              {sortedInventory.length === inventoryData.length ? (
+                <>
+                  <strong style={{ color: theme.palette.text.primary }}>{inventoryData.length}</strong> esmeraldas en total
+                </>
+              ) : (
+                <>
+                  Mostrando <strong style={{ color: theme.palette.text.primary }}>{displayInventory.length}</strong> de {sortedInventory.length} esmeraldas
+                </>
+              )}
+            </Typography>
+            {/* Favorites toggle */}
+            <Chip
+              icon={<Heart size={14} fill={showFavoritesOnly ? '#ef4444' : 'none'} color={showFavoritesOnly ? '#ef4444' : '#6b7280'} />}
+              label={`Favoritos (${favoritesCount})`}
+              size="small"
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              sx={{
+                cursor: 'pointer',
+                bgcolor: showFavoritesOnly ? alpha('#ef4444', 0.1) : 'transparent',
+                color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
+                border: '1px solid',
+                borderColor: showFavoritesOnly ? '#ef4444' : isLight ? surfacesLight.border.light : surfacesDark.border.default,
+                fontWeight: showFavoritesOnly ? 600 : 400,
+                '&:hover': {
+                  bgcolor: alpha('#ef4444', 0.1),
+                },
+              }}
+            />
+          </Box>
+          <Typography variant="body2" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
+            {formatFullCurrency(filteredStats.totalValue)} total
           </Typography>
-          {/* Favorites toggle */}
-          <Chip
-            icon={<Heart size={14} fill={showFavoritesOnly ? '#ef4444' : 'none'} color={showFavoritesOnly ? '#ef4444' : '#6b7280'} />}
-            label={`Favoritos (${favoritesCount})`}
-            size="small"
-            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            sx={{
-              cursor: 'pointer',
-              bgcolor: showFavoritesOnly ? alpha('#ef4444', 0.1) : 'transparent',
-              color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
-              border: '1px solid',
-              borderColor: showFavoritesOnly ? '#ef4444' : isLight ? surfacesLight.border.light : surfacesDark.border.default,
-              fontWeight: showFavoritesOnly ? 600 : 400,
-              '&:hover': {
-                bgcolor: alpha('#ef4444', 0.1),
-              },
-            }}
-          />
         </Box>
-        <Typography variant="body2" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
-          {formatFullCurrency(filteredStats.totalValue)} total
-        </Typography>
-      </Box>
+      )}
 
       {/* Recently Viewed Carousel */}
       {recentlyViewedItems.length > 0 && (
@@ -848,15 +777,13 @@ export default function InventoryBrowser() {
       {viewMode === 'grid' ? (
         <VirtualGrid
           items={showFavoritesOnly ? displayInventory : sortedInventory}
-          trustScores={itemTrustScores}
-          favorites={Array.from(itemTrustScores.keys()).filter(id => isFavorite(id))}
+          favorites={inventoryData.map(i => i.item).filter(id => isFavorite(id))}
           onItemClick={handleProductClick}
           onCertClick={handleCertClick}
           onToggleFavorite={toggleFavorite}
           renderCard={(props) => (
             <GridCard
               item={props.item}
-              trustScore={props.trustScore}
               isFavorite={props.isFavorite}
               onCertClick={props.onCertClick}
               onItemClick={props.onItemClick}
@@ -873,7 +800,6 @@ export default function InventoryBrowser() {
             <ListRow
               key={item.item}
               item={item}
-              trustScore={itemTrustScores.get(item.item) || calculateTrustScore(item)}
               isFavorite={isFavorite(item.item)}
               onCertClick={() => handleCertClick(item)}
               onItemClick={() => handleProductClick(item)}
@@ -999,7 +925,6 @@ export default function InventoryBrowser() {
           analyticsHook.trackComparisonOpen(comparison.selectedItems.map(i => i.item));
         }}
         items={comparison.selectedItems}
-        trustScores={trustScoresMap}
       />
 
       {/* Keyboard Shortcuts Help Dialog - Disabled for mobile-first (iPhone 12+, iPad) */}
