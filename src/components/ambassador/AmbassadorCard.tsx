@@ -21,6 +21,8 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { AmbassadorProfile } from '../../types/ambassador';
+import { StatItem } from './StatItem';
+import { getCardSx } from './styles';
 
 interface AmbassadorCardProps {
   ambassador: AmbassadorProfile;
@@ -59,20 +61,7 @@ export default function AmbassadorCard({
   }
 
   return (
-    <Card
-      sx={{
-        bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
-        borderRadius: 3,
-        border: '1px solid',
-        borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
-        transition: 'all 0.2s ease',
-        '&:hover': {
-          borderColor: '#059669',
-          boxShadow: `0 4px 20px ${alpha('#059669', 0.15)}`,
-          transform: 'translateY(-2px)',
-        },
-      }}
-    >
+    <Card sx={getCardSx(isLight)}>
       <CardContent sx={{ p: 2.5 }}>
         {/* Header: Avatar + Basic Info */}
         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
@@ -229,29 +218,6 @@ export default function AmbassadorCard({
   );
 }
 
-// Stat Item Component
-function StatItem({
-  icon,
-  value,
-  label,
-}: {
-  icon: React.ReactNode;
-  value: string;
-  label: string;
-}) {
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-      {icon}
-      <Typography variant="caption" sx={{ fontWeight: 700 }}>
-        {value}
-      </Typography>
-      <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-        {label}
-      </Typography>
-    </Box>
-  );
-}
-
 // Compact Card Variant
 function CompactCard({
   ambassador,
@@ -264,12 +230,8 @@ function CompactCard({
     <Card
       onClick={() => onViewProfile?.(ambassador)}
       sx={{
-        bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
-        borderRadius: 2,
-        border: '1px solid',
-        borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+        ...getCardSx(isLight, { borderRadius: 2, withHover: false }),
         cursor: 'pointer',
-        transition: 'all 0.2s ease',
         '&:hover': {
           borderColor: '#059669',
           bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',

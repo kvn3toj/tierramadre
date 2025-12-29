@@ -31,6 +31,7 @@ import {
 import { useAsesores, Asesor } from '../../hooks/useAsesores';
 import { useInventory } from '../../hooks/useInventory';
 import AsesorCard from './AsesorCard';
+import { StatItem } from './StatItem';
 
 interface AmbassadorDirectoryProps {
   onViewProducts?: (asesor: Asesor) => void;
@@ -180,24 +181,28 @@ export default function AmbassadorDirectory({
             value={stats.activeAsesores.toString()}
             label="Asesores activos"
             color="#059669"
+            variant="stacked"
           />
           <StatItem
             icon={<Package size={18} />}
             value={stats.totalProducts.toString()}
             label="Productos totales"
             color="#3B82F6"
+            variant="stacked"
           />
           <StatItem
             icon={<Gem size={18} />}
             value={stats.looseCount.toString()}
             label="Gemas sueltas"
             color="#8B5CF6"
+            variant="stacked"
           />
           <StatItem
             icon={<DollarSign size={18} />}
             value={formatValue(stats.totalValue)}
             label="Valor disponible"
             color="#F59E0B"
+            variant="stacked"
           />
         </Paper>
       </Box>
@@ -348,36 +353,6 @@ export function AmbassadorDirectorySkeleton() {
         </Grid>
       ))}
     </Grid>
-  );
-}
-
-// Stat Item Component
-function StatItem({
-  icon,
-  value,
-  label,
-  color,
-}: {
-  icon: React.ReactNode;
-  value: string;
-  label: string;
-  color: string;
-}) {
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-      <Box sx={{ color }}>{icon}</Box>
-      <Box>
-        <Typography
-          variant="h6"
-          sx={{ fontWeight: 700, fontSize: '1rem', lineHeight: 1, color }}
-        >
-          {value}
-        </Typography>
-        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
-          {label}
-        </Typography>
-      </Box>
-    </Box>
   );
 }
 
