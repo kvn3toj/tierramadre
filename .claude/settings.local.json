@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(vercel dev)",
+      "Bash(rm:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(npm run dev:*)",
+      "Bash(ls:*)",
+      "Bash(node -e:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
