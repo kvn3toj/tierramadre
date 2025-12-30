@@ -40,12 +40,18 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('tierra-madre-theme', mode);
 
-    // Update CSS variables
+    // Set data-theme attribute for CSS cascade
     const root = document.documentElement;
+    root.setAttribute('data-theme', mode);
+
+    // Update CSS variables with RGB values for liquid glass
     if (mode === 'dark') {
       root.style.setProperty('--surface-primary', brandColors.darkBg);
+      root.style.setProperty('--surface-primary-rgb', '0, 0, 0');
       root.style.setProperty('--surface-secondary', brandColors.darkSurface);
+      root.style.setProperty('--surface-secondary-rgb', '28, 28, 30');
       root.style.setProperty('--surface-tertiary', brandColors.darkElevated);
+      root.style.setProperty('--surface-tertiary-rgb', '10, 14, 19');
       root.style.setProperty('--text-primary', '#FFFFFF');
       root.style.setProperty('--text-secondary', '#A1A1A6');
       root.style.setProperty('--text-tertiary', '#6E6E73');
@@ -53,8 +59,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       root.style.setProperty('--border-default', 'rgba(255, 255, 255, 0.1)');
     } else {
       root.style.setProperty('--surface-primary', '#FAFAFA');
+      root.style.setProperty('--surface-primary-rgb', '250, 250, 250');
       root.style.setProperty('--surface-secondary', '#FFFFFF');
+      root.style.setProperty('--surface-secondary-rgb', '255, 255, 255');
       root.style.setProperty('--surface-tertiary', '#F2F2F7');
+      root.style.setProperty('--surface-tertiary-rgb', '242, 242, 247');
       root.style.setProperty('--text-primary', '#111827');
       root.style.setProperty('--text-secondary', '#6B7280');
       root.style.setProperty('--text-tertiary', '#9CA3AF');

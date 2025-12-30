@@ -18,7 +18,7 @@ const WHATSAPP_NUMBER = '+573113052755';
 const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER.replace('+', '')}?text=Hola, estoy interesado en las esmeraldas de Tierra Madre`;
 
 // Tab bar height + safe margin
-const TAB_BAR_CLEARANCE = 72; // 56px tab + 16px margin
+const TAB_BAR_CLEARANCE = 96; // 56px tab + 40px margin
 
 // =============================================================================
 // COMPONENT
@@ -32,7 +32,7 @@ export const WhatsAppButton = () => {
     <motion.div
       initial={{ opacity: 0, scale: 0 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 1, type: 'spring', stiffness: 200 }}
+      transition={{ delay: 0.3, type: 'spring', stiffness: 260, damping: 20 }}
       style={{
         position: 'fixed',
         // Position well above tab bar

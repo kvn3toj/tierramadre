@@ -60,7 +60,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
 
   const isLargeMode = mode === 'large';
 
-  // Liquid Glass styles based on scroll state
+  // Liquid Glass styles based on scroll state - Apple HIG compliant
   const liquidGlassStyles = useMemo(() => {
     if (!effectiveConfig.blur) {
       return {
@@ -73,7 +73,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
     const blurValue = isScrolled ? dynamicBlur.hover : dynamicBlur.resting;
 
     return {
-      backgroundColor: 'rgba(var(--surface-primary-rgb), 0.7)',
+      backgroundColor: 'rgba(var(--surface-primary-rgb), 0.85)',
       backdropFilter: `blur(${blurValue}) saturate(${liquidSaturation.vibrant})`,
       WebkitBackdropFilter: `blur(${blurValue}) saturate(${liquidSaturation.vibrant})`,
     };

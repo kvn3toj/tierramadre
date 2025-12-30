@@ -24,7 +24,7 @@ import { Gem } from 'lucide-react';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
-import { dynamicBlur, liquidSaturation, specularHighlights, tabBarConfig } from '../../design-system/tokens/liquid-glass';
+import { dynamicBlur, dynamicOpacity, liquidSaturation, specularHighlights, tabBarConfig } from '../../design-system/tokens/liquid-glass';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import useScrollShrink from '../../hooks/useScrollShrink';
@@ -118,10 +118,10 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
     }
   };
 
-  // Liquid Glass styles based on effects config - more prominent background
+  // Tab Bar styles following Apple HIG - solid with subtle translucency
   const liquidGlassStyles = useMemo(() => {
     if (!effectiveConfig.blur) {
-      // Fallback for low-tier devices
+      // Fallback for low-tier devices - fully opaque
       return {
         backgroundColor: 'var(--surface-secondary)',
         backdropFilter: 'none',
@@ -129,12 +129,15 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
       };
     }
 
-    const blurValue = dynamicBlur.resting;
+    // Apple HIG: Tab bars use design system tokens for consistency
+    // "Frosted glass" effect - stronger blur + moderate opacity
+    const blurValue = dynamicBlur.resting; // 20px from design system
+    const saturation = liquidSaturation.intense; // 190% for tab bars
 
     return {
-      backgroundColor: 'rgba(var(--surface-secondary-rgb), 0.92)',
-      backdropFilter: `blur(${blurValue}) saturate(${liquidSaturation.vibrant})`,
-      WebkitBackdropFilter: `blur(${blurValue}) saturate(${liquidSaturation.vibrant})`,
+      backgroundColor: `rgba(var(--surface-secondary-rgb), ${dynamicOpacity.resting})`,
+      backdropFilter: `blur(${blurValue}) saturate(${saturation})`,
+      WebkitBackdropFilter: `blur(${blurValue}) saturate(${saturation})`,
     };
   }, [effectiveConfig.blur]);
 
@@ -170,7 +173,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         minHeight: `calc(${height}px + env(safe-area-inset-bottom))`,
         ...liquidGlassStyles,
         borderTop: '1px solid var(--border-default)',
-        boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)',
+        boxShadow: '0 -4px 24px rgba(0, 0, 0, 0.25), 0 -1px 8px rgba(0, 0, 0, 0.12)',
         display: 'flex',
         alignItems: 'stretch',
         paddingTop: isCollapsed ? spacing.xs : spacing.sm,

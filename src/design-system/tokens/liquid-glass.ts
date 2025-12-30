@@ -38,28 +38,30 @@ export interface FloatingLayer {
 // =============================================================================
 
 /**
- * Blur decreases as user interacts = more clarity when engaged
- * This is the key Liquid Glass behavior
+ * Blur values following Apple HIG
+ * Navigation bars and system UI use STRONGER blur with MODERATE opacity
+ * This creates better visual separation and discoverability
  */
 export const dynamicBlur = {
   /** Secondary elements, not in focus */
-  inactive: '14px',
-  /** Default resting state */
-  resting: '8px',
-  /** Hover - more clarity as user shows interest */
-  hover: '5px',
-  /** Active/pressed - maximum clarity */
-  active: '2px',
+  inactive: '24px',
+  /** Default resting state - Apple HIG standard for system bars */
+  resting: '20px',
+  /** Hover - slightly reduced for interaction feedback */
+  hover: '16px',
+  /** Active/pressed - more clarity when engaged */
+  active: '12px',
 } as const;
 
 /**
- * Background opacity follows same pattern
+ * Background opacity follows Apple HIG
+ * More opaque than before for better contrast and visibility
  */
 export const dynamicOpacity = {
-  inactive: 0.8,
-  resting: 0.88,
-  hover: 0.92,
-  active: 0.95,
+  inactive: 0.75,
+  resting: 0.85,
+  hover: 0.88,
+  active: 0.92,
 } as const;
 
 // =============================================================================
