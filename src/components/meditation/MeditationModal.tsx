@@ -9,6 +9,9 @@ import React, { useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Box, IconButton, Typography, LinearProgress, Portal } from '@mui/material';
 import { Close, Pause, PlayArrow, Replay } from '@mui/icons-material';
+import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+
+const emerald = primitiveColors.emerald;
 import { DailyMeditation } from '../../data/homeContent';
 import { useMeditationTimer } from '../home/hooks/useMeditationTimer';
 import BreathingMeditation from './BreathingMeditation';
@@ -85,7 +88,7 @@ const MeditationModal: React.FC<MeditationModalProps> = ({
         return (
           <ChakraMeditation
             {...commonProps}
-            chakraColor={meditation.chakraColor || '#10B981'}
+            chakraColor={meditation.chakraColor || emerald[500]}
           />
         );
       case 'ambient':
@@ -235,7 +238,7 @@ const MeditationModal: React.FC<MeditationModalProps> = ({
                     borderRadius: 3,
                     bgcolor: 'rgba(255,255,255,0.1)',
                     '& .MuiLinearProgress-bar': {
-                      bgcolor: '#10B981',
+                      bgcolor: emerald[500],
                       borderRadius: 3,
                     },
                   }}
@@ -251,7 +254,7 @@ const MeditationModal: React.FC<MeditationModalProps> = ({
                       sx={{
                         textAlign: 'center',
                         mt: 2,
-                        color: '#10B981',
+                        color: emerald[500],
                         fontWeight: 600,
                       }}
                     >

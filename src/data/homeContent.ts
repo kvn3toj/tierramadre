@@ -163,7 +163,7 @@ export const DAILY_MEDITATIONS: DailyMeditation[] = [
     duration: 240,
     description: 'Activa tu chakra del corazón con energía esmeralda',
     type: 'chakra',
-    chakraColor: '#10B981', // Emerald green for heart chakra
+    chakraColor: '#00AE7A', // Brand emerald green for heart chakra
   },
   {
     // Thursday - Ambient sounds meditation

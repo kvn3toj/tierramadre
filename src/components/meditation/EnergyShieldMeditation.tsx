@@ -8,6 +8,9 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
+import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+
+const emerald = primitiveColors.emerald;
 
 interface EnergyShieldMeditationProps {
   isPlaying: boolean;
@@ -131,8 +134,8 @@ const EnergyShieldMeditation: React.FC<EnergyShieldMeditationProps> = ({
                 height: 8,
                 marginLeft: -4,
                 borderRadius: '50%',
-                background: '#10B981',
-                boxShadow: '0 0 15px #10B981',
+                background: emerald[500],
+                boxShadow: `0 0 15px ${emerald[500]}`,
                 opacity: shieldStrength,
               }}
             />
@@ -152,7 +155,7 @@ const EnergyShieldMeditation: React.FC<EnergyShieldMeditationProps> = ({
           style={{
             width: 80,
             height: 80,
-            background: 'linear-gradient(135deg, #34D399 0%, #10B981 50%, #047857 100%)',
+            background: `linear-gradient(135deg, ${emerald[400]} 0%, ${emerald[500]} 50%, ${emerald[700]} 100%)`,
             clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
             boxShadow: `0 0 ${30 + shieldStrength * 40}px rgba(16,185,129,${0.5 + shieldStrength * 0.3})`,
             zIndex: 10,
@@ -175,7 +178,7 @@ const EnergyShieldMeditation: React.FC<EnergyShieldMeditationProps> = ({
                 width: 20,
                 height: 4,
                 borderRadius: 2,
-                bgcolor: progress >= (i + 1) * 20 ? '#10B981' : 'rgba(255,255,255,0.2)',
+                bgcolor: progress >= (i + 1) * 20 ? emerald[500] : 'rgba(255,255,255,0.2)',
                 transition: 'background-color 0.3s',
               }}
             />
@@ -207,7 +210,7 @@ const EnergyShieldMeditation: React.FC<EnergyShieldMeditationProps> = ({
       <Typography
         variant="body2"
         sx={{
-          color: progress >= 100 ? '#10B981' : 'rgba(255,255,255,0.5)',
+          color: progress >= 100 ? emerald[500] : 'rgba(255,255,255,0.5)',
           fontWeight: progress >= 100 ? 600 : 400,
         }}
       >

@@ -8,6 +8,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
+import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+
+const emerald = primitiveColors.emerald;
 
 interface VisualMeditationProps {
   isPlaying: boolean;
@@ -116,7 +119,7 @@ const VisualMeditation: React.FC<VisualMeditationProps> = ({
             style={{
               width: '100%',
               height: '100%',
-              background: 'linear-gradient(135deg, #34D399 0%, #10B981 30%, #059669 60%, #047857 100%)',
+              background: `linear-gradient(135deg, ${emerald[400]} 0%, ${emerald[500]} 30%, ${emerald[600]} 60%, ${emerald[700]} 100%)`,
               clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
               boxShadow: '0 0 60px rgba(16,185,129,0.6), inset 0 0 30px rgba(255,255,255,0.2)',
             }}
@@ -169,7 +172,7 @@ const VisualMeditation: React.FC<VisualMeditationProps> = ({
               height: 6,
               borderRadius: '50%',
               background: '#6EE7B7',
-              boxShadow: '0 0 10px #10B981',
+              boxShadow: `0 0 10px ${emerald[500]}`,
             }}
           />
         ))}

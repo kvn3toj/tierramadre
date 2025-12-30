@@ -9,6 +9,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography, IconButton } from '@mui/material';
 import { VolumeUp, VolumeOff } from '@mui/icons-material';
+import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+
+const emerald = primitiveColors.emerald;
 
 interface AmbientMeditationProps {
   isPlaying: boolean;
@@ -136,7 +139,7 @@ const AmbientMeditation: React.FC<AmbientMeditationProps> = ({
               style={{
                 width: 4,
                 height: '100%',
-                background: 'linear-gradient(to top, #10B981, #34D399)',
+                background: `linear-gradient(to top, ${emerald[500]}, ${emerald[400]})`,
                 borderRadius: 2,
                 transformOrigin: 'center',
               }}
@@ -163,7 +166,7 @@ const AmbientMeditation: React.FC<AmbientMeditationProps> = ({
             sx={{
               fontFamily: 'monospace',
               fontWeight: 300,
-              color: '#10B981',
+              color: emerald[500],
             }}
           >
             {frequency}
@@ -188,7 +191,7 @@ const AmbientMeditation: React.FC<AmbientMeditationProps> = ({
             onClick={initializeAudio}
             sx={{
               bgcolor: 'rgba(16,185,129,0.2)',
-              color: '#10B981',
+              color: emerald[500],
               px: 3,
               py: 1,
               borderRadius: 2,
@@ -203,7 +206,7 @@ const AmbientMeditation: React.FC<AmbientMeditationProps> = ({
         <IconButton
           onClick={() => setIsMuted(!isMuted)}
           sx={{
-            color: isMuted ? 'rgba(255,255,255,0.4)' : '#10B981',
+            color: isMuted ? 'rgba(255,255,255,0.4)' : emerald[500],
           }}
         >
           {isMuted ? <VolumeOff /> : <VolumeUp />}

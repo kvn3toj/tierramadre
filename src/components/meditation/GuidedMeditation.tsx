@@ -8,6 +8,9 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
+import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+
+const emerald = primitiveColors.emerald;
 
 interface GuidedMeditationProps {
   isPlaying: boolean;
@@ -98,7 +101,7 @@ const GuidedMeditation: React.FC<GuidedMeditationProps> = ({
           style={{
             width: 100,
             height: 100,
-            background: 'linear-gradient(135deg, #34D399 0%, #10B981 50%, #047857 100%)',
+            background: `linear-gradient(135deg, ${emerald[400]} 0%, ${emerald[500]} 50%, ${emerald[700]} 100%)`,
             clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
             boxShadow: '0 0 40px rgba(16,185,129,0.5)',
           }}
@@ -121,7 +124,7 @@ const GuidedMeditation: React.FC<GuidedMeditationProps> = ({
                 height: 8,
                 borderRadius: '50%',
                 bgcolor: i === currentStepIndex
-                  ? '#10B981'
+                  ? emerald[500]
                   : i < currentStepIndex
                     ? 'rgba(16,185,129,0.5)'
                     : 'rgba(255,255,255,0.2)',
@@ -172,7 +175,7 @@ const GuidedMeditation: React.FC<GuidedMeditationProps> = ({
           transition={{ duration: 0.5 }}
           style={{
             height: '100%',
-            background: 'linear-gradient(90deg, #10B981, #34D399)',
+            background: `linear-gradient(90deg, ${emerald[500]}, ${emerald[400]})`,
             borderRadius: 6,
           }}
         />

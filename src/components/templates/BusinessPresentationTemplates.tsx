@@ -45,7 +45,7 @@ const COLORS = {
   emeraldDeep: '#0F4C3A',       // Deep Muzo green
   emeraldPrimary: '#0C5C3F',    // Colombian emerald
   accentEmerald: '#1B4D3E',     // Imperial green
-  emeraldLight: '#10B981',      // Vivid highlights
+  emeraldLight: '#00AE7A',      // Brand emerald for highlights
   emeraldPale: '#52B788',       // Light accent
 
   // Precious Metal Accents (essential for luxury!)

@@ -16,6 +16,9 @@ import {
   CircularProgress,
   Chip,
 } from '@mui/material';
+import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+
+const emerald = primitiveColors.emerald;
 import {
   FolderOpen,
   RefreshCw,
@@ -61,11 +64,11 @@ export default function DriveFolderInfo({
           borderRadius: 2,
           border: '2px dashed',
           borderColor: 'divider',
-          bgcolor: alpha('#10B981', 0.05),
+          bgcolor: alpha(emerald[500], 0.05),
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <FolderOpen size={20} color="#10B981" />
+          <FolderOpen size={20} color={emerald[500]} />
           <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
             Carpeta de Google Drive
           </Typography>
@@ -91,11 +94,11 @@ export default function DriveFolderInfo({
             onClick={handleRefresh}
             disabled={isRefreshing}
             sx={{
-              borderColor: '#10B981',
-              color: '#10B981',
+              borderColor: emerald[500],
+              color: emerald[500],
               '&:hover': {
-                borderColor: '#059669',
-                bgcolor: alpha('#10B981', 0.08),
+                borderColor: emerald[600],
+                bgcolor: alpha(emerald[500], 0.08),
               },
             }}
           >
@@ -118,7 +121,7 @@ export default function DriveFolderInfo({
             <Chip
               label="Desde Google Drive"
               size="small"
-              sx={{ bgcolor: alpha('#10B981', 0.1), color: '#10B981', fontSize: '0.7rem' }}
+              sx={{ bgcolor: alpha(emerald[500], 0.1), color: emerald[500], fontSize: '0.7rem' }}
             />
           </Box>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>

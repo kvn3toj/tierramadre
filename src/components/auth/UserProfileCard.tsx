@@ -11,8 +11,10 @@ import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { alpha } from '@mui/material/styles';
 import { createLogger } from '../../utils/logger';
+import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 
 const log = createLogger('Auth');
+const emerald = primitiveColors.emerald;
 
 // Check if Google Client ID is configured
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -45,7 +47,7 @@ export default function UserProfileCard() {
         <Box
           sx={{
             height: 80,
-            background: 'linear-gradient(135deg, #10B981 0%, #047857 100%)',
+            background: `linear-gradient(135deg, ${emerald[500]} 0%, ${emerald[700]} 100%)`,
             position: 'relative',
           }}
         />

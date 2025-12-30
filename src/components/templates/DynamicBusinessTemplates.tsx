@@ -28,7 +28,7 @@ const COLORS = {
   emerald: '#0A4D3C',
   emeraldRich: '#1B7A5E',
   emeraldLight: '#2E9B7D',
-  emeraldGlow: '#10B981',
+  emeraldGlow: '#00AE7A', // Brand emerald
   // Gold Accents
   gold: '#D4AF37',
   goldDark: '#8B7355',

@@ -20,6 +20,9 @@ import {
   IconButton,
   alpha,
 } from '@mui/material';
+import { primitiveColors } from '../design-system/tokens/primitives/colors';
+
+const emerald = primitiveColors.emerald;
 import {
   X,
   Award,
@@ -658,13 +661,13 @@ export default function CertificationUpload({
                   p: 2,
                   borderRadius: 2,
                   bgcolor: ethical.environmentalCompliance
-                    ? alpha('#10B981', 0.08)
+                    ? alpha(emerald[500], 0.08)
                     : isLight
                     ? '#F9FAFB'
                     : '#2C2C2E',
                   border: '1px solid',
                   borderColor: ethical.environmentalCompliance
-                    ? '#10B981'
+                    ? emerald[500]
                     : isLight
                     ? '#E5E7EB'
                     : '#3C3C3E',

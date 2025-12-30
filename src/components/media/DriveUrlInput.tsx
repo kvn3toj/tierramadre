@@ -21,6 +21,9 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
+import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+
+const emerald = primitiveColors.emerald;
 import {
   Link as LinkIcon,
   Upload,
@@ -181,12 +184,12 @@ export default function DriveUrlInput({
           borderRadius: 2,
           border: '2px dashed',
           borderColor: error ? 'error.main' : status === 'success' ? 'success.main' : 'divider',
-          bgcolor: alpha('#10B981', 0.05),
+          bgcolor: alpha(emerald[500], 0.05),
           transition: 'all 0.2s ease',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <LinkIcon size={20} color="#10B981" />
+          <LinkIcon size={20} color={emerald[500]} />
           <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
             Upload from Google Drive
           </Typography>
@@ -275,8 +278,8 @@ export default function DriveUrlInput({
                       onClick={handleUpload}
                       disabled={disabled || isLoading || !hasValidUrl}
                       sx={{
-                        bgcolor: '#10B981',
-                        '&:hover': { bgcolor: '#059669' },
+                        bgcolor: emerald[500],
+                        '&:hover': { bgcolor: emerald[600] },
                       }}
                     >
                       {isLoading ? 'Uploading...' : 'Upload to Gallery'}
@@ -288,8 +291,8 @@ export default function DriveUrlInput({
                       sx={{
                         mt: 1,
                         borderRadius: 1,
-                        bgcolor: alpha('#10B981', 0.2),
-                        '& .MuiLinearProgress-bar': { bgcolor: '#10B981' },
+                        bgcolor: alpha(emerald[500], 0.2),
+                        '& .MuiLinearProgress-bar': { bgcolor: emerald[500] },
                       }}
                     />
                   )}

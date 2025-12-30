@@ -9,6 +9,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
 import { BreathingPattern } from '../../data/homeContent';
+import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+
+const emerald = primitiveColors.emerald;
 
 interface BreathingMeditationProps {
   isPlaying: boolean;
@@ -152,7 +155,7 @@ const BreathingMeditation: React.FC<BreathingMeditationProps> = ({
           style={{
             width: 120,
             height: 120,
-            background: 'linear-gradient(135deg, #10B981 0%, #059669 50%, #047857 100%)',
+            background: `linear-gradient(135deg, ${emerald[500]} 0%, ${emerald[600]} 50%, ${emerald[700]} 100%)`,
             clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
             boxShadow: `0 0 ${glow}px rgba(16,185,129,0.8)`,
             display: 'flex',
