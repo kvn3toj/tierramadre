@@ -84,75 +84,57 @@ export default function WelcomeScreen() {
         alignItems: 'center',
         justifyContent: 'center',
         bgcolor: brandColors.darkBg,
-        background: `linear-gradient(180deg, ${brandColors.darkBg} 0%, #0a0a0a 100%)`,
+        background: `radial-gradient(ellipse at 50% 30%, #0d1a14 0%, ${brandColors.darkBg} 50%, #050505 100%)`,
         position: 'relative',
         overflow: 'hidden',
       }}
       onKeyDown={viewMode === 'pin' ? handleKeyDown : undefined}
       tabIndex={0}
     >
-      {/* Decorative emerald glow */}
+      {/* Subtle ambient glow - top */}
       <Box
         sx={{
           position: 'absolute',
-          width: 400,
-          height: 400,
+          width: 300,
+          height: 300,
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${brandColors.emeraldGreen}15 0%, transparent 70%)`,
-          top: '10%',
-          filter: 'blur(60px)',
+          background: `radial-gradient(circle, ${brandColors.emeraldGreen}12 0%, transparent 70%)`,
+          top: '5%',
+          filter: 'blur(50px)',
         }}
       />
 
-      {/* Logo */}
-      <Fade in timeout={800}>
+      {/* Subtle ambient glow - bottom */}
+      <Box
+        sx={{
+          position: 'absolute',
+          width: 250,
+          height: 250,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${brandColors.emeraldGreen}08 0%, transparent 70%)`,
+          bottom: '15%',
+          filter: 'blur(40px)',
+        }}
+      />
+
+      {/* Branded Logo - includes "TIERRA MÄDRE" and "Esencia y Poder" */}
+      <Fade in timeout={400}>
         <Box
           component="img"
-          src="/logo-tierra-madre.png"
-          alt="Tierra Madre"
+          src="/logo-brand.png"
+          alt="Tierra Madre - Esencia y Poder"
           sx={{
-            height: 80,
-            mb: 4,
-            opacity: 0.9,
+            width: { xs: '65vw', sm: 340 },
+            maxWidth: 380,
+            height: 'auto',
           }}
         />
       </Fade>
 
-      {/* Title */}
-      <Fade in timeout={1000}>
-        <Typography
-          variant="h5"
-          sx={{
-            color: '#ffffff',
-            fontFamily: '"Libre Baskerville", Georgia, serif',
-            fontWeight: 400,
-            letterSpacing: '0.1em',
-            mb: 1,
-            textTransform: 'uppercase',
-          }}
-        >
-          {t.auth.studio}
-        </Typography>
-      </Fade>
-
-      <Fade in timeout={1200}>
-        <Typography
-          variant="body2"
-          sx={{
-            color: brandColors.emeraldGreen,
-            letterSpacing: '0.2em',
-            mb: 4,
-            fontSize: '0.75rem',
-          }}
-        >
-          {t.auth.welcomeSubtitle}
-        </Typography>
-      </Fade>
-
       {/* Choice View */}
       {viewMode === 'choice' && (
-        <Fade in timeout={1400}>
-          <Stack spacing={2} sx={{ width: 280 }}>
+        <Fade in timeout={800}>
+          <Stack spacing={2} sx={{ width: { xs: '65vw', sm: 300 }, maxWidth: 340, mt: 5 }}>
             {/* Full Access Button */}
             <Button
               variant="contained"
@@ -241,14 +223,17 @@ export default function WelcomeScreen() {
             </Box>
           </Fade>
 
-          {/* Error message */}
+          {/* Error message - with ARIA live region for accessibility */}
           <Fade in={error}>
             <Typography
               variant="caption"
+              role="alert"
+              aria-live="assertive"
+              aria-atomic="true"
               sx={{
                 color: '#ff4444',
                 mb: 2,
-                height: 20,
+                minHeight: 20,
               }}
             >
               {error ? t.auth.incorrectPin : ''}
