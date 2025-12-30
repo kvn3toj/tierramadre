@@ -8,6 +8,9 @@
  */
 
 import { useCallback, useEffect, useRef } from 'react';
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('Analytics');
 
 // =============================================================================
 // TYPES
@@ -135,7 +138,7 @@ const saveEvents = (events: AnalyticsEvent[]) => {
     const trimmed = events.slice(-MAX_EVENTS);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
   } catch (e) {
-    console.error('[Analytics] Failed to save events:', e);
+    log.error('Failed to save events:', e);
   }
 };
 
@@ -220,7 +223,7 @@ export const useAnalytics = (): AnalyticsActions => {
 
     // Log in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Analytics]', { category, action, label, value });
+      log.debug('Event:', { category, action, label, value });
     }
 
     // Batch save (every 10 events)

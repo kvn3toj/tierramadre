@@ -11,18 +11,20 @@ export const primitiveColors = {
   /**
    * Emerald Palette - Colombian Emerald Green (Brand Core)
    * Preserved from original brand identity: #00AE7A
+   *
+   * Scale from 50-900 for consistent UI shading
    */
   emerald: {
-    50: '#E6FFF7',   // Whisper - Lightest touch
-    100: '#CCFFF0',  // Mist - Very light
-    200: '#99FFE0',  // Glow - Light accent
-    300: '#66FFCF',  // Shimmer - Bright accent
-    400: '#33FFBF',  // Radiance - Vibrant
-    500: '#00AE7A',  // Brand Core - Main brand color (preserved)
-    600: '#008C62',  // Deep - Darker brand
-    700: '#006B4B',  // Rich - Deep green
-    800: '#004A33',  // Ancient - Very dark
-    900: '#00281C',  // Earth - Darkest
+    50: '#ECFDF5',   // Lightest tint
+    100: '#D1FAE5',  // Very light
+    200: '#A7F3D0',  // Light
+    300: '#6EE7B7',  // Light accent
+    400: '#34D399',  // Bright accent
+    500: '#00AE7A',  // Brand Core - Main brand color (Tierra Madre logo)
+    600: '#059669',  // Darker for hover states
+    700: '#047857',  // Deep for contrast
+    800: '#065F46',  // Very dark
+    900: '#064E3B',  // Darkest
   },
 
   /**

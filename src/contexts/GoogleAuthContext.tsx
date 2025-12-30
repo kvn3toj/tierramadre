@@ -8,6 +8,9 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { googleLogout } from '@react-oauth/google';
+import { createLogger } from '../utils/logger';
+
+const log = createLogger('Auth');
 
 // =============================================================================
 // TYPES
@@ -84,7 +87,7 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
           setPreferences(JSON.parse(storedPrefs));
         }
       } catch (error) {
-        console.error('Error loading stored user:', error);
+        log.error('Error loading stored user:', error);
       } finally {
         setIsLoading(false);
       }
@@ -116,7 +119,7 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
         locale: payload.locale,
       };
     } catch (error) {
-      console.error('Error decoding JWT:', error);
+      log.error('Error decoding JWT:', error);
       return null;
     }
   };
@@ -146,7 +149,7 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
           }
         }
       } catch {
-        console.log('Using local preferences');
+        log.debug('Using local preferences');
       }
 
       // Update last visit
@@ -154,7 +157,7 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
       setPreferences(newPrefs);
       localStorage.setItem(GOOGLE_PREFS_KEY, JSON.stringify(newPrefs));
     } catch (error) {
-      console.error('Sign in error:', error);
+      log.error('Sign in error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -186,7 +189,7 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
           body: JSON.stringify({ userId: user.id, preferences: newPrefs }),
         });
       } catch {
-        console.log('Could not sync to server, saved locally');
+        log.debug('Could not sync to server, saved locally');
       }
     }
   }, [user, preferences]);
@@ -205,7 +208,7 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
         }
       }
     } catch (error) {
-      console.error('Sync error:', error);
+      log.error('Sync error:', error);
     }
   }, [user]);
 

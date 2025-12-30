@@ -10,6 +10,9 @@ import { Person } from '@mui/icons-material';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { alpha } from '@mui/material/styles';
+import { createLogger } from '../../utils/logger';
+
+const log = createLogger('Auth');
 
 // Check if Google Client ID is configured
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -23,7 +26,7 @@ export default function UserProfileCard() {
       try {
         await signIn(response.credential);
       } catch (error) {
-        console.error('Sign in failed:', error);
+        log.error('Sign in failed:', error);
       }
     }
   };
@@ -151,7 +154,7 @@ export default function UserProfileCard() {
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <GoogleLogin
             onSuccess={handleSuccess}
-            onError={() => console.error('Login failed')}
+            onError={() => log.error('Login failed')}
             theme="filled_black"
             shape="pill"
             text="signin_with"

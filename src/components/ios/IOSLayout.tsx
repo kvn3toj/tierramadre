@@ -38,12 +38,12 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
       {
         icon: Search,
         label: t.actions.search,
-        onClick: () => console.log('Search'),
+        onClick: () => { /* TODO: Implement search */ },
       },
       {
         icon: FilterList,
         label: t.actions.filter,
-        onClick: () => console.log('Filter'),
+        onClick: () => { /* TODO: Implement filter */ },
       },
     ],
   },

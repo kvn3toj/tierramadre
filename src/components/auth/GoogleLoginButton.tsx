@@ -9,6 +9,9 @@ import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { Box, Typography, Avatar, Button, CircularProgress } from '@mui/material';
 import { Logout } from '@mui/icons-material';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
+import { createLogger } from '../../utils/logger';
+
+const log = createLogger('Auth');
 
 interface GoogleLoginButtonProps {
   variant?: 'button' | 'profile';
@@ -29,14 +32,14 @@ export default function GoogleLoginButton({
         await signIn(response.credential);
         onSuccess?.();
       } catch (error) {
-        console.error('Sign in failed:', error);
+        log.error('Sign in failed:', error);
         onError?.();
       }
     }
   };
 
   const handleError = () => {
-    console.error('Google login failed');
+    log.error('Google login failed');
     onError?.();
   };
 

@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import { MediaType } from '../types';
 import { getVideoUrl, isVideoReference } from '../utils/videoStorage';
+import { createLogger } from '../utils/logger';
+
+const log = createLogger('MediaPreview');
 
 interface MediaPreviewProps {
   mediaUrl: string;
@@ -43,7 +46,7 @@ export default function MediaPreview({
           setLoading(false);
         })
         .catch((error) => {
-          console.error('Error loading video:', error);
+          log.error('Error loading video:', error);
           setLoading(false);
         });
 

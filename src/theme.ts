@@ -1,38 +1,43 @@
 import { createTheme, alpha } from '@mui/material/styles';
+import { primitiveColors } from './design-system/tokens/primitives/colors';
 
 // ============================================
 // iOS HIG Design Tokens for Tierra Madre
+// Uses primitiveColors as single source of truth
 // ============================================
 
 // Tierra Madre brand colors - Based on logo green #00AE7A
 export const brandColors = {
-  // Primary emerald palette (from logo)
-  emeraldGreen: '#00AE7A',      // Logo green - primary
-  emeraldDark: '#008A61',       // Darker for hover/pressed states
-  emeraldLight: '#00C98C',      // Lighter variant
-  emeraldDeep: '#006B4D',       // Deep for contrast
+  // Primary emerald palette (from logo) - using primitives
+  emeraldGreen: primitiveColors.emerald[500],      // Logo green - primary
+  emeraldDark: primitiveColors.emerald[600],       // Darker for hover/pressed states
+  emeraldLight: primitiveColors.emerald[400],      // Lighter variant
+  emeraldDeep: primitiveColors.emerald[700],       // Deep for contrast
+
+  // Tailwind-compatible shades (for UI components)
+  emerald: primitiveColors.emerald,
 
   // Accent colors
   gold: '#D4AF37',
   goldLight: '#F5D76E',
 
-  // Dark theme surfaces (iOS-style depth)
-  darkBg: '#000000',            // iOS true black
-  darkSurface: '#1C1C1E',       // iOS secondary background
+  // Dark theme surfaces (iOS-style depth) - using primitives
+  darkBg: primitiveColors.surfaces.dark.primary,   // iOS true black
+  darkSurface: primitiveColors.surfaces.dark.secondary, // iOS secondary background
   darkElevated: '#2C2C2E',      // iOS tertiary background
-  darkGrouped: '#1C1C1E',       // iOS grouped background
+  darkGrouped: primitiveColors.surfaces.dark.secondary, // iOS grouped background
 
-  // Light colors
-  white: '#FFFFFF',
-  offWhite: '#F2F2F7',          // iOS system gray 6
+  // Light colors - using primitives
+  white: primitiveColors.surfaces.light.primary,
+  offWhite: primitiveColors.surfaces.light.secondary, // iOS system gray 6
 
-  // iOS System Colors
-  systemGray: '#8E8E93',
+  // iOS System Colors - using primitives
+  systemGray: primitiveColors.system.gray.light,
   systemGray2: '#636366',
   systemGray3: '#48484A',
   systemGray4: '#3A3A3C',
   systemGray5: '#2C2C2E',
-  systemGray6: '#1C1C1E',
+  systemGray6: primitiveColors.surfaces.dark.secondary,
 };
 
 // iOS HIG Spacing (8pt grid system)

@@ -12,6 +12,9 @@
 
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { createLogger } from '../../utils/logger';
+
+const log = createLogger('MediaUpload');
 import {
   Box,
   Typography,
@@ -109,7 +112,7 @@ export default function MediaUploadZone({
           prev.filter((f) => !newUploading.find((n) => n.id === f.id))
         );
       } catch (error) {
-        console.error('Upload error:', error);
+        log.error('Upload error:', error);
         setUploadingFiles((prev) =>
           prev.map((f) =>
             newUploading.find((n) => n.id === f.id)
@@ -137,7 +140,7 @@ export default function MediaUploadZone({
     try {
       await onDelete(mediaId);
     } catch (error) {
-      console.error('Delete error:', error);
+      log.error('Delete error:', error);
     } finally {
       setDeleting(null);
     }

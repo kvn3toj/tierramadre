@@ -47,6 +47,9 @@ import jsPDF from 'jspdf';
 import { documentShadows } from '../design-system/tokens';
 import { brandColors } from './cotizacion/constants';
 import { formatFullCurrency as formatCurrency } from '../utils/formatting';
+import { createLogger } from '../utils/logger';
+
+const log = createLogger('QuotationPreview');
 
 // Generate quotation number
 const generateQuotationNumber = (): string => {
@@ -207,7 +210,7 @@ export default function QuotationPreview() {
         message: '❌ Error al exportar la cotización. Intenta de nuevo.',
         severity: 'error',
       });
-      console.error('PDF export error:', error);
+      log.error('PDF export error:', error);
     }
   };
 

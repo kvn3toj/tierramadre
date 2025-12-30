@@ -73,7 +73,9 @@ import {
 import { InventoryItem } from '../types';
 import { SAMPLE_AMBASSADORS } from '../data/ambassadors';
 import { CotizacionHeader, QuotationPreview, brandColors } from './cotizacion';
+import { createLogger } from '../utils/logger';
 
+const log = createLogger('Cotizacion');
 const formatCurrency = formatCotizacionCurrency;
 
 // =============================================================================
@@ -227,7 +229,7 @@ export default function CotizacionGenerator() {
         message: '❌ Error al exportar la cotización. Intenta de nuevo.',
         severity: 'error',
       });
-      console.error('PDF export error:', error);
+      log.error('PDF export error:', error);
     }
   };
 

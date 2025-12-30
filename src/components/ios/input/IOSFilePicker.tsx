@@ -1,6 +1,9 @@
 import React, { CSSProperties, useRef, useState, DragEvent, ChangeEvent } from 'react';
 import { IOSButton } from '../core/IOSButton';
 import { IOSProgress } from '../feedback/IOSProgress';
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('IOSFilePicker');
 
 /**
  * IOSFilePicker Mode
@@ -194,7 +197,7 @@ export const IOSFilePicker: React.FC<IOSFilePickerProps> = ({
       onFilesSelected?.(filesWithPreviews);
     } catch (error) {
       onError?.('Failed to process files');
-      console.error('File processing error:', error);
+      log.error('File processing error:', error);
     }
   };
 

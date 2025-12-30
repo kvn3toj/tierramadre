@@ -8,6 +8,9 @@
  */
 
 import { useState, useCallback } from 'react';
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('SavedFacts');
 
 // =============================================================================
 // CONSTANTS
@@ -48,7 +51,7 @@ const persistSavedFacts = (facts: number[]): void => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(facts));
   } catch (error) {
-    console.warn('[useSavedFacts] Failed to persist to localStorage:', error);
+    log.warn('Failed to persist to localStorage:', error);
   }
 };
 

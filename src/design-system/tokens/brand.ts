@@ -5,40 +5,46 @@
  * Philosophy: "Nuestro lujo es la Claridad y la Verdad"
  */
 
+import { primitiveColors } from './primitives/colors';
+
 // Golden Ratio for sacred proportions
 const PHI = 1.618;
 const BASE_UNIT = 8;
 
 // ═══════════════════════════════════════════════════════════════
 // COLOR PALETTE - Minimal & Intentional
+// Uses primitives as single source of truth
 // ═══════════════════════════════════════════════════════════════
 
 export const colors = {
   // Primary - Logo Emerald Green (Luxury + Nature)
   // Based on logo-white.png color: #00AE7A
-  emeraldPrimary: '#00AE7A',    // Logo green - main brand color
-  emeraldDeep: '#006B4D',       // Deep for high contrast
-  emeraldRich: '#008A61',       // Rich for hover states
-  emeraldLight: '#00C98C',      // Light variant
+  emeraldPrimary: primitiveColors.emerald[500],    // Logo green - main brand color
+  emeraldDeep: primitiveColors.emerald[900],       // Deep for high contrast
+  emeraldRich: primitiveColors.emerald[600],       // Rich for hover states
+  emeraldLight: primitiveColors.emerald[400],      // Light variant
+
+  // Tailwind-compatible emerald shades (for UI components)
+  emerald: primitiveColors.emerald,
 
   // Backgrounds - Pure White (Let the stone breathe)
-  pureWhite: '#FFFFFF',
+  pureWhite: primitiveColors.surfaces.light.primary,
   naturalWhite: '#FDFDFB',
-  offWhite: '#FAFAFA',
+  offWhite: primitiveColors.surfaces.light.secondary,
 
   // Text - Black/Charcoal (Serious, Readable)
   charcoal: '#2C2C2C',
-  deepBlack: '#0D0D0D',
+  deepBlack: primitiveColors.surfaces.dark.primary,
   textSecondary: '#4A4A4A',
 
   // Accents - Strategic
-  silverGray: '#C5C5C0',
-  lightGray: '#E8E8E8',
+  silverGray: primitiveColors.metallic.silver[300],
+  lightGray: primitiveColors.metallic.silver[100],
   neonGreen: '#39FF14', // Location points only
 
   // Atmospheric (for mystical backgrounds)
   mysticalDark: '#0D1B1E',
-  mistGray: '#B8C5C9',
+  mistGray: primitiveColors.metallic.silver[400],
 } as const;
 
 // ═══════════════════════════════════════════════════════════════

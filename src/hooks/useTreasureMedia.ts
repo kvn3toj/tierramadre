@@ -12,6 +12,9 @@ import { MediaType } from '../types';
 import { MediaItem } from '../components/media/types';
 import { uploadProductMedia } from '../utils/cloudinaryUpload';
 import { extractVideoThumbnail } from '../utils/videoStorage';
+import { createLogger } from '../utils/logger';
+
+const log = createLogger('TreasureMedia');
 
 // Storage keys (new treasure namespace)
 const LEGACY_STORAGE_KEY = 'tierramadre-treasure-media';
@@ -34,10 +37,10 @@ function migrateStorageKey(oldKey: string, newKey: string): void {
     if (oldData && !localStorage.getItem(newKey)) {
       localStorage.setItem(newKey, oldData);
       localStorage.removeItem(oldKey);
-      console.log(`Migrated storage: ${oldKey} → ${newKey}`);
+      log.debug(`Migrated storage: ${oldKey} → ${newKey}`);
     }
   } catch (error) {
-    console.warn('Storage migration error:', error);
+    log.warn('Storage migration error:', error);
   }
 }
 
@@ -98,7 +101,7 @@ function loadLegacyMedia(): LegacyTreasureMedia {
     const stored = localStorage.getItem(LEGACY_STORAGE_KEY);
     return stored ? JSON.parse(stored) : {};
   } catch (error) {
-    console.error('Error loading legacy media:', error);
+    log.error('Error loading legacy media:', error);
     return {};
   }
 }
@@ -107,7 +110,7 @@ function saveLegacyMediaToStorage(media: LegacyTreasureMedia): void {
   try {
     localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(media));
   } catch (error) {
-    console.error('Error saving legacy media:', error);
+    log.error('Error saving legacy media:', error);
   }
 }
 
@@ -116,7 +119,7 @@ function loadGalleries(): ProductGallery {
     const stored = localStorage.getItem(GALLERY_STORAGE_KEY);
     return stored ? JSON.parse(stored) : {};
   } catch (error) {
-    console.error('Error loading galleries:', error);
+    log.error('Error loading galleries:', error);
     return {};
   }
 }
@@ -125,7 +128,7 @@ function saveGalleriesToStorage(galleries: ProductGallery): void {
   try {
     localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(galleries));
   } catch (error) {
-    console.error('Error saving galleries:', error);
+    log.error('Error saving galleries:', error);
   }
 }
 
@@ -220,7 +223,7 @@ export function useTreasureMedia(): UseTreasureMediaReturn {
     try {
       const response = await fetch(`/api/get-product-media?itemNumber=${itemNumber}`);
       if (!response.ok) {
-        console.warn('Could not fetch cloud gallery');
+        log.warn('Could not fetch cloud gallery');
         return galleries[itemNumber] || [];
       }
 
@@ -236,7 +239,7 @@ export function useTreasureMedia(): UseTreasureMediaReturn {
 
       return galleries[itemNumber] || [];
     } catch (error) {
-      console.error('Error fetching cloud gallery:', error);
+      log.error('Error fetching cloud gallery:', error);
       return galleries[itemNumber] || [];
     }
   }, [galleries, saveGalleries]);
@@ -332,7 +335,7 @@ export function useTreasureMedia(): UseTreasureMediaReturn {
 
         uploadedItems.push(mediaItem);
       } catch (error) {
-        console.error('Error uploading file:', error);
+        log.error('Error uploading file:', error);
         throw error;
       }
     }

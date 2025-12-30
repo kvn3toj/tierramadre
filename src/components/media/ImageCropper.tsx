@@ -7,6 +7,15 @@
 
 import { useState, useCallback } from 'react';
 import Cropper, { Area, Point } from 'react-easy-crop';
+import { createLogger } from '../../utils/logger';
+import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+
+const log = createLogger('ImageCropper');
+
+// Brand emerald color (primary) for consistent styling
+const brandEmerald = primitiveColors.emerald[500]; // #00AE7A - brand color
+const emeraldShades = primitiveColors.emerald;
+
 import {
   Box,
   Dialog,
@@ -198,7 +207,7 @@ export default function ImageCropper({
       onCropComplete(croppedImage);
       onClose();
     } catch (error) {
-      console.error('Error cropping image:', error);
+      log.error('Error cropping image:', error);
     } finally {
       setIsProcessing(false);
     }
@@ -269,7 +278,7 @@ export default function ImageCropper({
                 backgroundColor: '#1a1a1a',
               },
               cropAreaStyle: {
-                border: '2px solid #10B981',
+                border: `2px solid ${brandEmerald}`,
               },
             }}
           />
@@ -296,11 +305,11 @@ export default function ImageCropper({
                   borderColor: 'rgba(255,255,255,0.2)',
                   px: 2,
                   '&.Mui-selected': {
-                    bgcolor: alpha('#10B981', 0.2),
-                    color: '#10B981',
-                    borderColor: '#10B981',
+                    bgcolor: alpha(brandEmerald, 0.2),
+                    color: brandEmerald,
+                    borderColor: brandEmerald,
                     '&:hover': {
-                      bgcolor: alpha('#10B981', 0.3),
+                      bgcolor: alpha(brandEmerald, 0.3),
                     },
                   },
                 },
@@ -334,7 +343,7 @@ export default function ImageCropper({
                 step={0.1}
                 onChange={(_, value) => setZoom(value as number)}
                 sx={{
-                  color: '#10B981',
+                  color: brandEmerald,
                   '& .MuiSlider-thumb': {
                     width: 16,
                     height: 16,
@@ -355,8 +364,8 @@ export default function ImageCropper({
               color: 'rgba(255,255,255,0.7)',
               borderColor: 'rgba(255,255,255,0.2)',
               '&:hover': {
-                borderColor: '#10B981',
-                color: '#10B981',
+                borderColor: brandEmerald,
+                color: brandEmerald,
               },
             }}
           >
@@ -378,9 +387,9 @@ export default function ImageCropper({
           disabled={isProcessing}
           startIcon={<Check size={18} />}
           sx={{
-            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+            background: `linear-gradient(135deg, ${brandEmerald} 0%, ${emeraldShades[600]} 100%)`,
             '&:hover': {
-              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+              background: `linear-gradient(135deg, ${emeraldShades[600]} 0%, ${emeraldShades[700]} 100%)`,
             },
           }}
         >

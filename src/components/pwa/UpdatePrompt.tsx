@@ -9,6 +9,9 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { Snackbar, Button, Box, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
+import { createLogger } from '../../utils/logger';
+
+const log = createLogger('PWA');
 
 export default function UpdatePrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
@@ -56,7 +59,7 @@ export default function UpdatePrompt() {
         // Initial update check
         registration.update();
       } catch (error) {
-        console.error('Service worker registration error:', error);
+        log.error('Service worker registration error:', error);
       }
     };
 

@@ -7,6 +7,10 @@
  * - Meditation reminders scheduling
  */
 
+import { createLogger } from '../utils/logger';
+
+const log = createLogger('Notifications');
+
 // Storage keys
 const NOTIFICATION_PERMISSION_KEY = 'tierramadre-notification-permission';
 const MEDITATION_REMINDER_KEY = 'tierramadre-meditation-reminder';
@@ -42,7 +46,7 @@ export async function requestPermission(): Promise<NotificationPermission | 'uns
     localStorage.setItem(NOTIFICATION_PERMISSION_KEY, permission);
     return permission;
   } catch (error) {
-    console.error('Error requesting notification permission:', error);
+    log.error('Error requesting notification permission:', error);
     return 'denied';
   }
 }
@@ -73,7 +77,7 @@ interface NotificationOptions {
  */
 export function showNotification(options: NotificationOptions): Notification | null {
   if (!isNotificationEnabled()) {
-    console.warn('Notifications not enabled');
+    log.warn('Notifications not enabled');
     return null;
   }
 
