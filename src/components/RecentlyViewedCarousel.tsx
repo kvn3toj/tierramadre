@@ -272,18 +272,17 @@ function RecentItemCard({
             </Box>
           )}
 
-          {/* iOS HIG: Price chip overlay on image */}
+          {/* iOS HIG: Subtle price chip overlay - low visual weight for recently viewed items */}
           <Box
             sx={{
               position: 'absolute',
-              bottom: 4,
-              left: 4,
-              right: 4,
-              bgcolor: 'rgba(0, 0, 0, 0.75)',
-              backdropFilter: 'blur(8px)',
-              borderRadius: 1,
-              px: 0.5,
-              py: 0.25,
+              bottom: 3,
+              right: 3,
+              bgcolor: 'rgba(0, 0, 0, 0.5)', // More transparent (was 0.75)
+              backdropFilter: 'blur(4px)', // Less blur (was 8px)
+              borderRadius: '4px',
+              px: 0.4,
+              py: 0.15,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -292,10 +291,10 @@ function RecentItemCard({
             <Typography
               variant="caption"
               sx={{
-                fontSize: '0.6rem',
-                color: emeraldCore.lightest,
-                fontWeight: 700,
-                letterSpacing: '0.02em',
+                fontSize: '0.55rem', // Smaller (was 0.6rem)
+                color: 'rgba(255, 255, 255, 0.85)', // Softer white (not emerald)
+                fontWeight: 500, // Medium weight (was 700)
+                letterSpacing: '0.01em',
               }}
             >
               {formatCurrency(item.precioCOP)}
