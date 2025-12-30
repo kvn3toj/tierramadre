@@ -167,17 +167,9 @@ export default function VirtualGrid({
   const rowCount = Math.ceil(items.length / columnCount);
 
   // iOS HIG: Column width calculation with proper edge margins
-  // The grid's parent already has padding (px: 2 on mobile)
-  // So we calculate column width as percentage of the padded container
-  const isMobile = columnCount === 1;
-  const isMobileTwoColumn = isXs && columnCount === 2;
-
-  // Calculate column width considering the gap between columns
-  // For 2 columns: each gets 50% minus half the gap
-  // For 3+ columns: equal distribution
-  const columnWidth = isMobileTwoColumn
-    ? `calc((100% - ${GAP}px) / 2)` // 2 columns with gap
-    : `${100 / columnCount}%`; // Equal distribution
+  // react-window only supports percentage or number values (not calc())
+  // We handle gaps via padding in the cell renderer instead
+  const columnWidth = `${100 / columnCount}%`;
 
   return (
     <Box
