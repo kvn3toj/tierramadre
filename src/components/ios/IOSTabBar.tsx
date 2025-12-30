@@ -24,7 +24,7 @@ import { Gem } from 'lucide-react';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
-import { dynamicBlur, dynamicOpacity, liquidSaturation, specularHighlights, tabBarConfig } from '../../design-system/tokens/liquid-glass';
+import { dynamicBlur, dynamicOpacity, liquidSaturation, tabBarConfig } from '../../design-system/tokens/liquid-glass';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import useScrollShrink from '../../hooks/useScrollShrink';
@@ -77,8 +77,6 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
 
   // Dynamic shrink/expand behavior - DISABLED for always-visible navigation
   const {
-    isCollapsed,
-    height,
     iconSize,
     labelOpacity,
   } = useScrollShrink({

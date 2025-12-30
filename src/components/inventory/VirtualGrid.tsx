@@ -77,9 +77,6 @@ function CellRenderer({
   const item = items[index];
   const isFavorite = favorites.includes(item.item);
 
-  // For single column (mobile), no side padding needed
-  const isSingleColumn = columnCount === 1;
-
   return (
     <div
       style={{
