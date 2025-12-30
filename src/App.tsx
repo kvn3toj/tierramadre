@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import { IOSLayout } from './components/ios';
 import { WelcomeScreen } from './components/auth';
 import { useAuth } from './hooks/useAuth';
@@ -145,11 +144,7 @@ function App() {
 
   // Show splash screen on app open
   if (showSplash) {
-    return (
-      <AnimatePresence mode="wait">
-        <SplashScreen onComplete={() => setShowSplash(false)} />
-      </AnimatePresence>
-    );
+    return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
 
   // Show welcome screen if not authenticated
