@@ -173,28 +173,49 @@ export default function QuotationPreview() {
     if (!quotationRef.current) return;
 
     try {
+      // Capture at high quality with optimal scale for A4 dimensions
       const canvas = await html2canvas(quotationRef.current, {
-        scale: 2,
+        scale: 2.5, // Balanced quality without excessive file size
         backgroundColor: brandColors.background,
         useCORS: true,
+        logging: false,
+        windowWidth: quotationRef.current.scrollWidth,
+        windowHeight: quotationRef.current.scrollHeight,
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/png', 0.95); // High quality compression
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
+        compress: true, // Enable PDF compression
       });
 
+      // A4 dimensions: 210mm x 297mm
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth - 20;
+
+      // Use smaller margins for better space utilization
+      const margin = 8; // 8mm margins
+      const imgWidth = pageWidth - (margin * 2);
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      const xOffset = 10;
-      const yOffset = Math.max((pageHeight - imgHeight) / 2, 10);
+      // Center horizontally, align near top
+      const xOffset = margin;
+      const yOffset = margin;
 
-      pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, Math.min(imgHeight, pageHeight - 20));
+      // Add image - if too tall, it will overflow to next page automatically
+      if (imgHeight > pageHeight - (margin * 2)) {
+        // Content is taller than one page - fit to full height
+        const scaledHeight = pageHeight - (margin * 2);
+        const scaledWidth = (canvas.width * scaledHeight) / canvas.height;
+        pdf.addImage(imgData, 'PNG', xOffset, yOffset, scaledWidth, scaledHeight);
+      } else {
+        // Content fits in one page - center vertically
+        const centeredY = (pageHeight - imgHeight) / 2;
+        pdf.addImage(imgData, 'PNG', xOffset, centeredY, imgWidth, imgHeight);
+      }
+
       pdf.save(`Cotizacion_${quotationData.quotationNumber}.pdf`);
 
       // Show success toast

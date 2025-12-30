@@ -194,28 +194,49 @@ export default function CotizacionGenerator() {
     if (!quotationRef.current) return;
 
     try {
+      // Capture at high quality with optimal scale for A4 dimensions
       const canvas = await html2canvas(quotationRef.current, {
-        scale: 3,
+        scale: 2.5, // Balanced quality without excessive file size
         backgroundColor: brandColors.background,
         useCORS: true,
+        logging: false,
+        windowWidth: quotationRef.current.scrollWidth,
+        windowHeight: quotationRef.current.scrollHeight,
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/png', 0.95); // High quality JPEG compression
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
+        compress: true, // Enable PDF compression
       });
 
+      // A4 dimensions: 210mm x 297mm
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth - 20;
+
+      // Use smaller margins for better space utilization
+      const margin = 8; // 8mm margins
+      const imgWidth = pageWidth - (margin * 2);
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      const xOffset = 10;
-      const yOffset = Math.max((pageHeight - imgHeight) / 2, 10);
+      // Center horizontally, align near top
+      const xOffset = margin;
+      const yOffset = margin;
 
-      pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, Math.min(imgHeight, pageHeight - 20));
+      // Add image - if too tall, it will overflow to next page automatically
+      if (imgHeight > pageHeight - (margin * 2)) {
+        // Content is taller than one page - fit to full height
+        const scaledHeight = pageHeight - (margin * 2);
+        const scaledWidth = (canvas.width * scaledHeight) / canvas.height;
+        pdf.addImage(imgData, 'PNG', xOffset, yOffset, scaledWidth, scaledHeight);
+      } else {
+        // Content fits in one page - center vertically
+        const centeredY = (pageHeight - imgHeight) / 2;
+        pdf.addImage(imgData, 'PNG', xOffset, centeredY, imgWidth, imgHeight);
+      }
+
       pdf.save(`Cotizacion_${quotationNumber}.pdf`);
 
       setSnackbar({
@@ -250,20 +271,54 @@ export default function CotizacionGenerator() {
       {/* Header */}
       <CotizacionHeader productCount={products.length} total={total} />
 
-      <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         {/* Form Section */}
         <Paper
           elevation={0}
           sx={{
-            flex: '1 1 400px',
-            p: 3,
+            flex: '1 1 450px',
+            p: { xs: 2, sm: 3 },
             borderRadius: 3,
             border: '1px solid #E5E7EB',
             bgcolor: '#FFFFFF',
-            maxHeight: 'calc(100vh - 250px)',
-            overflowY: 'auto',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           }}
         >
+          {/* Progress Indicator */}
+          <Box sx={{ mb: 3 }}>
+            <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+              {[
+                { label: 'Info', completed: clientName !== '' },
+                { label: 'Productos', completed: products.length > 0 },
+                { label: 'Total', completed: total > 0 },
+              ].map((step, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    flex: 1,
+                    height: 4,
+                    borderRadius: 2,
+                    bgcolor: step.completed ? brandColors.emerald : '#E5E7EB',
+                    transition: 'all 0.3s ease',
+                  }}
+                />
+              ))}
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              {['Información', 'Productos', 'Revisión'].map((label, index) => (
+                <Typography
+                  key={index}
+                  sx={{
+                    fontSize: '0.65rem',
+                    color: '#6B7280',
+                    fontWeight: 500,
+                  }}
+                >
+                  {label}
+                </Typography>
+              ))}
+            </Box>
+          </Box>
           {/* Quotation Settings */}
           <SettingsAccordion
             quotationNumber={quotationNumber}
@@ -423,12 +478,12 @@ const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
 }) => (
   <Accordion defaultExpanded={false} sx={{ bgcolor: 'transparent', boxShadow: 'none', '&:before': { display: 'none' }, mb: 2 }}>
     <AccordionSummary
-      expandIcon={<ExpandMoreIcon sx={{ color: '#6B7280' }} />}
+      expandIcon={<ExpandMoreIcon sx={{ color: brandColors.textPrimary }} />}
       sx={{ bgcolor: '#F9FAFB', borderRadius: 1, minHeight: 40, '& .MuiAccordionSummary-content': { my: 1 } }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Settings size={16} color="#6B7280" />
-        <Typography variant="body2" sx={{ color: '#6B7280', fontWeight: 500 }}>
+        <Settings size={16} color={brandColors.emerald} />
+        <Typography variant="body2" sx={{ color: brandColors.textPrimary, fontWeight: 600 }}>
           Configuración de Cotización
         </Typography>
       </Box>
@@ -472,21 +527,61 @@ const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
   clientDocument, setClientDocument, asesorName, setAsesorName, asesorOptions,
 }) => (
   <>
-    <Typography variant="subtitle2" sx={{ color: 'grey.500', mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+    <Typography variant="subtitle2" sx={{
+      color: brandColors.textPrimary,
+      mb: 2,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      fontWeight: 700,
+      fontSize: '0.875rem',
+    }}>
       Información del Cliente
     </Typography>
     <Grid container spacing={1.5} sx={{ mb: 3 }}>
       <Grid item xs={12}>
-        <TextField fullWidth label="Nombre del Cliente" value={clientName} onChange={(e) => setClientName(e.target.value)} size="small" />
+        <TextField
+          fullWidth
+          label="Nombre del Cliente"
+          value={clientName}
+          onChange={(e) => setClientName(e.target.value)}
+          size="small"
+          placeholder="Ej: Juan Pérez"
+          helperText={clientName && clientName.length < 3 ? "El nombre debe tener al menos 3 caracteres" : ""}
+          error={clientName !== '' && clientName.length < 3}
+        />
       </Grid>
       <Grid item xs={12} sm={6}>
-        <TextField fullWidth label="Teléfono" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} size="small" />
+        <TextField
+          fullWidth
+          label="Teléfono"
+          value={clientPhone}
+          onChange={(e) => setClientPhone(e.target.value)}
+          size="small"
+          placeholder="+57 300 123 4567"
+        />
       </Grid>
       <Grid item xs={12} sm={6}>
-        <TextField fullWidth label="Email" type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} size="small" />
+        <TextField
+          fullWidth
+          label="Email"
+          type="email"
+          value={clientEmail}
+          onChange={(e) => setClientEmail(e.target.value)}
+          size="small"
+          placeholder="cliente@ejemplo.com"
+          error={clientEmail !== '' && !clientEmail.includes('@')}
+          helperText={clientEmail !== '' && !clientEmail.includes('@') ? "Ingresa un email válido" : ""}
+        />
       </Grid>
       <Grid item xs={12}>
-        <TextField fullWidth label="Documento (Cédula/Pasaporte)" value={clientDocument} onChange={(e) => setClientDocument(e.target.value)} size="small" />
+        <TextField
+          fullWidth
+          label="Documento (Cédula/Pasaporte)"
+          value={clientDocument}
+          onChange={(e) => setClientDocument(e.target.value)}
+          size="small"
+          placeholder="Ej: 123456789"
+        />
       </Grid>
       <Grid item xs={12}>
         <Autocomplete
@@ -529,7 +624,14 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
   handleAddProduct, manualProduct, setManualProduct, handleAddManualProduct,
 }) => (
   <Box sx={{ mb: 2 }}>
-    <Typography variant="subtitle2" sx={{ color: 'grey.500', mb: 1.5, textTransform: 'uppercase', letterSpacing: 1 }}>
+    <Typography variant="subtitle2" sx={{
+      color: brandColors.textPrimary,
+      mb: 1.5,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      fontWeight: 700,
+      fontSize: '0.875rem',
+    }}>
       Agregar Producto
     </Typography>
 
@@ -570,8 +672,30 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
           renderInput={(params) => <TextField {...params} label="Buscar en inventario" placeholder="Nombre, número, color..." />}
           noOptionsText="No hay productos disponibles" sx={{ mb: 2 }}
         />
-        <Button fullWidth variant="outlined" startIcon={<Plus size={18} />} onClick={handleAddProduct} disabled={!selectedItem}
-          sx={{ borderColor: brandColors.emerald, color: brandColors.emerald, textTransform: 'none', fontWeight: 600, py: 1.25, borderRadius: 2, mb: 3, '&:hover': { borderColor: brandColors.emeraldDark, bgcolor: alpha(brandColors.emerald, 0.05) } }}
+        <Button
+          fullWidth
+          variant="contained"
+          startIcon={<Plus size={18} />}
+          onClick={handleAddProduct}
+          disabled={!selectedItem}
+          sx={{
+            bgcolor: brandColors.emerald,
+            color: '#FFFFFF',
+            textTransform: 'none',
+            fontWeight: 600,
+            py: 1.5,
+            borderRadius: 2,
+            mb: 3,
+            boxShadow: selectedItem ? `0 4px 12px ${alpha(brandColors.emerald, 0.3)}` : 'none',
+            '&:hover': {
+              bgcolor: brandColors.emeraldDark,
+              boxShadow: `0 6px 16px ${alpha(brandColors.emerald, 0.4)}`,
+            },
+            '&:disabled': {
+              bgcolor: '#E5E7EB',
+              color: '#9CA3AF',
+            },
+          }}
         >
           Agregar del Inventario
         </Button>
@@ -628,7 +752,11 @@ const ProductListSection: React.FC<ProductListSectionProps> = ({ products, handl
     <Box sx={{ mb: 3 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
         <Layers size={16} color={brandColors.emerald} />
-        <Typography variant="subtitle2" sx={{ color: 'grey.500' }}>Productos Seleccionados ({products.length})</Typography>
+        <Typography variant="subtitle2" sx={{
+          color: brandColors.textPrimary,
+          fontWeight: 700,
+          fontSize: '0.875rem',
+        }}>Productos Seleccionados ({products.length})</Typography>
       </Box>
       {products.map((product) => (
         <Box key={product.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, px: 1.5, mb: 1, bgcolor: '#F9FAFB', borderRadius: 1.5, border: '1px solid #E5E7EB' }}>
@@ -674,7 +802,13 @@ const InvestmentFormSection: React.FC<InvestmentFormSectionProps> = ({
 }) => (
   <Box sx={{ mb: 3 }}>
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-      <Typography variant="subtitle2" sx={{ color: 'grey.500', textTransform: 'uppercase', letterSpacing: 1 }}>Inversión</Typography>
+      <Typography variant="subtitle2" sx={{
+        color: brandColors.textPrimary,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        fontWeight: 700,
+        fontSize: '0.875rem',
+      }}>Inversión</Typography>
       <Tooltip title="Reiniciar inversión">
         <IconButton size="small" onClick={handleResetInvestments} sx={{ color: '#9CA3AF', '&:hover': { color: brandColors.emerald } }}>
           <RotateCcw size={16} />
@@ -695,8 +829,8 @@ const InvestmentFormSection: React.FC<InvestmentFormSectionProps> = ({
     </Box>
 
     <Accordion sx={{ bgcolor: 'transparent', boxShadow: 'none', '&:before': { display: 'none' }, mt: 2 }}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#6B7280' }} />} sx={{ bgcolor: '#F9FAFB', borderRadius: 1, minHeight: 40, '& .MuiAccordionSummary-content': { my: 1 } }}>
-        <Typography variant="body2" sx={{ color: '#6B7280', fontWeight: 500 }}>Costos adicionales {customCosts.length > 0 && `(${customCosts.length})`}</Typography>
+      <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: brandColors.textPrimary }} />} sx={{ bgcolor: '#F9FAFB', borderRadius: 1, minHeight: 40, '& .MuiAccordionSummary-content': { my: 1 } }}>
+        <Typography variant="body2" sx={{ color: brandColors.textPrimary, fontWeight: 600 }}>Costos adicionales {customCosts.length > 0 && `(${customCosts.length})`}</Typography>
       </AccordionSummary>
       <AccordionDetails sx={{ bgcolor: '#F9FAFB', borderRadius: 1, mt: 0.5, p: 2 }}>
         {customCosts.map((cost) => (

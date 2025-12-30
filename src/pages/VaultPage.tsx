@@ -10,27 +10,18 @@
  */
 
 import React from 'react';
-import { useVaultAccess } from '../hooks/useVaultAccess';
-import VaultGate from '../components/VaultGate';
 import { Box, Typography, Paper, alpha } from '@mui/material';
 import { Lock, Sparkles, Crown, Shield, Upload } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { emeraldCore, goldAccent } from '../design-system/tokens/colors';
 
 const VaultPage: React.FC = () => {
-  const { isUnlocked } = useVaultAccess();
-  const [forceUnlocked, setForceUnlocked] = React.useState(false);
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
 
   return (
     <Box>
-      {!isUnlocked && !forceUnlocked ? (
-        <VaultGate onUnlock={() => {
-          setForceUnlocked(true);
-        }} />
-      ) : (
-        <Box sx={{ maxWidth: 600, mx: 'auto', px: 2, py: 4 }}>
+      <Box sx={{ maxWidth: 600, mx: 'auto', px: 2, py: 4 }}>
           {/* Header */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Box
@@ -176,7 +167,6 @@ const VaultPage: React.FC = () => {
             </Typography>
           </Paper>
         </Box>
-      )}
     </Box>
   );
 };

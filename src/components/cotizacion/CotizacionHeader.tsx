@@ -56,40 +56,67 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <Box
               sx={{
-                px: 2.5,
-                py: 1.5,
-                borderRadius: 2.5,
-                bgcolor: 'rgba(255,255,255,0.15)',
+                px: 3,
+                py: 2,
+                borderRadius: 3,
+                bgcolor: 'rgba(255,255,255,0.25)',
                 backdropFilter: 'blur(10px)',
                 textAlign: 'center',
-                minWidth: 80,
+                minWidth: 100,
+                border: '2px solid rgba(255,255,255,0.3)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
               }}
             >
-              <Typography sx={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>
+              <Typography sx={{
+                fontSize: '2rem',
+                fontWeight: 800,
+                color: '#FFFFFF',
+                lineHeight: 1,
+                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              }}>
                 {productCount}
               </Typography>
-              <Typography sx={{ fontSize: '0.6875rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+              <Typography sx={{
+                fontSize: '0.75rem',
+                color: 'rgba(255,255,255,0.95)',
+                fontWeight: 600,
+                mt: 0.5,
+                textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+              }}>
                 Productos
               </Typography>
             </Box>
             <Box
               sx={{
-                px: 2.5,
-                py: 1.5,
-                borderRadius: 2.5,
-                bgcolor: 'rgba(255,255,255,0.25)',
+                px: 3,
+                py: 2,
+                borderRadius: 3,
+                bgcolor: 'rgba(255,255,255,0.35)',
                 backdropFilter: 'blur(10px)',
                 textAlign: 'center',
-                minWidth: 120,
+                minWidth: 140,
+                border: '2px solid rgba(255,255,255,0.4)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
               }}
             >
-              <Typography sx={{ fontSize: '1rem', fontWeight: 800, color: '#FFFFFF', lineHeight: 1.2 }}>
+              <Typography sx={{
+                fontSize: '1.1rem',
+                fontWeight: 800,
+                color: '#FFFFFF',
+                lineHeight: 1.2,
+                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              }}>
                 {formatCotizacionCurrency(total)}
               </Typography>
-              <Typography sx={{ fontSize: '0.6875rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+              <Typography sx={{
+                fontSize: '0.75rem',
+                color: 'rgba(255,255,255,0.95)',
+                fontWeight: 600,
+                textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+              }}>
                 Total
               </Typography>
             </Box>
