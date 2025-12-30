@@ -1,6 +1,6 @@
 /**
  * ProductHeader Component
- * Sticky header showing product images and names for mobile comparison.
+ * Neutral header showing product avatars - equal treatment for all items.
  */
 import { Box, Avatar, Typography, alpha } from '@mui/material';
 import { InventoryItem } from '../../types';
@@ -25,14 +25,14 @@ export default function ProductHeader({ items }: ProductHeaderProps) {
         borderBottom: '1px solid',
         borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         px: 2,
-        py: 1.5,
+        py: 1.25,
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
       }}
     >
       <Box
         sx={{
           display: 'flex',
-          gap: 1,
+          gap: 2,
           justifyContent: 'space-around',
         }}
       >
@@ -48,20 +48,22 @@ export default function ProductHeader({ items }: ProductHeaderProps) {
               sx={{
                 textAlign: 'center',
                 flex: 1,
-                maxWidth: 120,
-                minWidth: 80,
+                maxWidth: 100,
+                minWidth: 70,
               }}
             >
               <Avatar
                 src={item.thumbnailUrl || item.imagen}
                 alt={displayName}
                 sx={{
-                  width: 52,
-                  height: 52,
+                  width: 44,
+                  height: 44,
                   mx: 'auto',
                   border: '2px solid',
                   borderColor: emeraldCore.primary,
                   bgcolor: alpha(emeraldCore.primary, 0.1),
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
                 }}
               >
                 {displayName.charAt(0)}
@@ -76,7 +78,7 @@ export default function ProductHeader({ items }: ProductHeaderProps) {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  fontSize: '0.75rem',
+                  fontSize: '0.7rem',
                 }}
               >
                 {displayName}

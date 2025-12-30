@@ -1,10 +1,12 @@
 /**
  * WelcomeScreen - Dual Access Entry Point
  * Offers Guest Mode (no PIN) or Full Access (PIN required)
+ * Smooth fade-in transition from splash screen
  */
 
 import { useState } from 'react';
 import { Box, Typography, Button, IconButton, Fade, Stack } from '@mui/material';
+import { motion } from 'framer-motion';
 import { Backspace as BackspaceIcon, VisibilityOutlined, LockOpenOutlined } from '@mui/icons-material';
 import { brandColors } from '../../theme';
 import { useAuth } from '../../hooks/useAuth';
@@ -77,6 +79,10 @@ export default function WelcomeScreen() {
 
   return (
     <Box
+      component={motion.div}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
       sx={{
         minHeight: '100vh',
         display: 'flex',
@@ -124,8 +130,8 @@ export default function WelcomeScreen() {
           src="/logo-brand.png"
           alt="Tierra Madre - Esencia y Poder"
           sx={{
-            width: { xs: '65vw', sm: 340 },
-            maxWidth: 380,
+            width: { xs: '50vw', sm: 260 },
+            maxWidth: 290,
             height: 'auto',
           }}
         />
@@ -134,7 +140,7 @@ export default function WelcomeScreen() {
       {/* Choice View */}
       {viewMode === 'choice' && (
         <Fade in timeout={800}>
-          <Stack spacing={2} sx={{ width: { xs: '65vw', sm: 300 }, maxWidth: 340, mt: 5 }}>
+          <Stack spacing={2} sx={{ width: { xs: '65vw', sm: 300 }, maxWidth: 340, mt: 2.5 }}>
             {/* Full Access Button */}
             <Button
               variant="contained"

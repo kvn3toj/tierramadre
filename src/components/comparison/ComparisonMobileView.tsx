@@ -1,28 +1,52 @@
 /**
  * ComparisonMobileView Component
- * Mobile-optimized comparison view using attribute-focused cards.
- * Each attribute is displayed as a horizontal card showing all products.
+ * Intelligent comparison view with AI-powered recommendations and visualizations.
  */
-import { Box, Typography, Chip } from '@mui/material';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { useState } from 'react';
+import { Box, Typography, Chip, Tabs, Tab } from '@mui/material';
+import { Radar, Grid3x3, Lightbulb } from 'lucide-react';
 import { InventoryItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { formatCurrency, getColorDot, getQualityBadge } from '../../utils/formatting';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { surfacesLight, surfacesDark, emeraldCore } from '../../design-system/tokens/colors';
 import ProductHeader from './ProductHeader';
-import AttributeCard, { getValueIndicator } from './AttributeCard';
+import AttributeCard from './AttributeCard';
+import PriorityFilter, { ComparisonPriority } from './PriorityFilter';
+import ComparisonBarChart from './ComparisonBarChart';
+import RadarChart from './RadarChart';
+import ValueMatrix from './ValueMatrix';
+import RecommendationCard from './RecommendationCard';
+import {
+  generateRecommendation,
+  RecommendationCriteria,
+} from './RecommendationEngine';
 
 interface ComparisonMobileViewProps {
   items: InventoryItem[];
 }
 
+// Define attribute order based on priority
+const attributesByPriority: Record<ComparisonPriority, string[]> = {
+  todos: ['precio', 'peso', 'precioquilate', 'color', 'calidad', 'talla', 'medidas'],
+  inversion: ['precio', 'precioquilate', 'peso', 'calidad', 'color', 'talla', 'medidas'],
+  tamano: ['peso', 'medidas', 'precio', 'precioquilate', 'calidad', 'color', 'talla'],
+  calidad: ['calidad', 'color', 'talla', 'peso', 'precio', 'precioquilate', 'medidas'],
+};
+
+type ViewMode = 'attributes' | 'visuals' | 'recommendations';
+
 export default function ComparisonMobileView({ items }: ComparisonMobileViewProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const [priority, setPriority] = useState<ComparisonPriority>('todos');
+  const [viewMode, setViewMode] = useState<ViewMode>('recommendations');
 
-  // Extract numeric values for comparison
-  const prices = items.map((i) => i.precioCOP);
-  const weights = items.map((i) => (typeof i.peso === 'number' ? i.peso : 0));
+  // Check if any item has price per carat (loose stones)
+  const hasLooseStones = items.some(
+    (i) => !i.isJewelry && typeof i.peso === 'number' && i.peso > 0
+  );
+
+  // Calculate price per carat for display
   const pricePerCarats = items.map((i) => {
     if (!i.isJewelry && typeof i.peso === 'number' && i.peso > 0) {
       return i.precioCOP / i.peso;
@@ -30,56 +54,36 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
     return 0;
   });
 
-  // Check if any item has price per carat (loose stones)
-  const hasLooseStones = items.some(
-    (i) => !i.isJewelry && typeof i.peso === 'number' && i.peso > 0
-  );
-
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Sticky Product Header */}
-      <ProductHeader items={items} />
-
-      {/* Scrollable Attribute Cards */}
-      <Box
-        sx={{
-          flex: 1,
-          overflowY: 'auto',
-          p: 2,
-          bgcolor: isLight
-            ? surfacesLight.background.secondary
-            : surfacesDark.background.primary,
-        }}
-      >
-        {/* Precio */}
-        <AttributeCard
-          label="Precio"
-          values={items.map((item) => formatCurrency(item.precioCOP))}
-          indicators={items.map((_, idx) =>
-            getValueIndicator(prices[idx], prices, false)
-          )}
-          type="numeric"
-        />
-
-        {/* Peso */}
-        <AttributeCard
-          label="Peso"
-          values={items.map((item) =>
-            typeof item.peso === 'number'
-              ? `${item.peso} ct`
-              : item.metalType || '-'
-          )}
-          indicators={items.map((item, idx) =>
-            typeof item.peso === 'number'
-              ? getValueIndicator(weights[idx], weights, true)
-              : 'neutral'
-          )}
-          type="numeric"
-        />
-
-        {/* Precio/Quilate (only for loose stones) */}
-        {hasLooseStones && (
+  // Render attribute card by key
+  const renderAttribute = (key: string) => {
+    switch (key) {
+      case 'precio':
+        return (
           <AttributeCard
+            key="precio"
+            label="Precio"
+            values={items.map((item) => formatCurrency(item.precioCOP))}
+            type="numeric"
+          />
+        );
+      case 'peso':
+        return (
+          <AttributeCard
+            key="peso"
+            label="Peso"
+            values={items.map((item) =>
+              typeof item.peso === 'number'
+                ? `${item.peso} ct`
+                : item.metalType || '-'
+            )}
+            type="numeric"
+          />
+        );
+      case 'precioquilate':
+        if (!hasLooseStones) return null;
+        return (
+          <AttributeCard
+            key="precioquilate"
             label="Precio/Quilate"
             values={items.map((item, idx) => {
               if (
@@ -91,99 +95,214 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
               }
               return formatCurrency(pricePerCarats[idx]);
             })}
-            indicators={items.map((item, idx) => {
-              if (
-                item.isJewelry ||
-                typeof item.peso !== 'number' ||
-                item.peso === 0
-              ) {
-                return 'neutral';
-              }
-              return getValueIndicator(
-                pricePerCarats[idx],
-                pricePerCarats.filter((p) => p > 0),
-                false
-              );
-            })}
             type="numeric"
           />
-        )}
-
-        {/* Color */}
-        <AttributeCard
-          label="Color"
-          values={items.map((item) => (
-            <Box
-              key={item.item}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                justifyContent: 'center',
-              }}
-            >
+        );
+      case 'color':
+        return (
+          <AttributeCard
+            key="color"
+            label="Color"
+            values={items.map((item) => (
               <Box
-                sx={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  bgcolor: getColorDot(item.color),
-                  flexShrink: 0,
-                }}
-              />
-              <span style={{ fontSize: '0.8rem' }}>{item.color}</span>
-            </Box>
-          ))}
-          indicators={items.map(() => 'neutral')}
-          type="color"
-        />
-
-        {/* Calidad */}
-        <AttributeCard
-          label="Calidad"
-          values={items.map((item) => {
-            const quality = getQualityBadge(item.calidad);
-            return (
-              <Chip
                 key={item.item}
-                label={quality.label}
-                size="small"
                 sx={{
-                  bgcolor: quality.bg,
-                  color: quality.color,
-                  border: `1px solid ${quality.border}`,
-                  fontWeight: 600,
-                  fontSize: '0.7rem',
-                  height: 24,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  justifyContent: 'center',
                 }}
-              />
-            );
-          })}
-          indicators={items.map(() => 'neutral')}
-          type="badge"
-        />
+              >
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: getColorDot(item.color),
+                    flexShrink: 0,
+                  }}
+                />
+                <span style={{ fontSize: '0.7rem' }}>{item.color}</span>
+              </Box>
+            ))}
+            type="color"
+          />
+        );
+      case 'calidad':
+        return (
+          <AttributeCard
+            key="calidad"
+            label="Calidad"
+            values={items.map((item) => {
+              const quality = getQualityBadge(item.calidad);
+              return (
+                <Chip
+                  key={item.item}
+                  label={quality.label}
+                  size="small"
+                  sx={{
+                    bgcolor: quality.bg,
+                    color: quality.color,
+                    border: `1px solid ${quality.border}`,
+                    fontWeight: 600,
+                    fontSize: '0.6rem',
+                    height: 20,
+                  }}
+                />
+              );
+            })}
+            type="badge"
+          />
+        );
+      case 'talla':
+        return (
+          <AttributeCard
+            key="talla"
+            label="Talla/Corte"
+            values={items.map((item) => item.talla || '-')}
+            type="text"
+          />
+        );
+      case 'medidas':
+        return (
+          <AttributeCard
+            key="medidas"
+            label="Medidas"
+            values={items.map((item) => item.medidasValores || item.medidas || '-')}
+            type="text"
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
-        {/* Talla/Corte */}
-        <AttributeCard
-          label="Talla/Corte"
-          values={items.map((item) => item.talla || '-')}
-          indicators={items.map(() => 'neutral')}
-          type="text"
-        />
+  // Get ordered attributes based on priority
+  const orderedAttributes = attributesByPriority[priority];
 
-        {/* Medidas */}
-        <AttributeCard
-          label="Medidas"
-          values={items.map((item) => item.medidasValores || item.medidas || '-')}
-          indicators={items.map(() => 'neutral')}
-          type="text"
-        />
-      </Box>
+  // Map priority to recommendation criteria
+  const priorityToCriteria: Record<ComparisonPriority, RecommendationCriteria> = {
+    todos: 'best_value',
+    inversion: 'best_investment',
+    tamano: 'largest_size',
+    calidad: 'premium_quality',
+  };
 
-      {/* Legend */}
+  // Generate recommendations
+  const recommendations = [
+    generateRecommendation(items, priorityToCriteria[priority]),
+    ...(priority === 'todos'
+      ? [
+          generateRecommendation(items, 'best_investment'),
+          generateRecommendation(items, 'premium_quality'),
+        ]
+      : []),
+  ];
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Sticky Product Header */}
+      <ProductHeader items={items} />
+
+      {/* View Mode Tabs */}
       <Box
         sx={{
-          p: 2,
+          borderBottom: '1px solid',
+          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+          bgcolor: isLight
+            ? surfacesLight.background.primary
+            : surfacesDark.background.primary,
+        }}
+      >
+        <Tabs
+          value={viewMode}
+          onChange={(_, newValue) => setViewMode(newValue)}
+          variant="fullWidth"
+          sx={{
+            minHeight: 42,
+            '& .MuiTab-root': {
+              minHeight: 42,
+              fontSize: '0.65rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
+              '&.Mui-selected': {
+                color: emeraldCore.primary,
+              },
+            },
+            '& .MuiTabs-indicator': {
+              backgroundColor: emeraldCore.primary,
+              height: 3,
+            },
+          }}
+        >
+          <Tab
+            value="recommendations"
+            label="Recomendaciones"
+            icon={<Lightbulb size={14} />}
+            iconPosition="start"
+          />
+          <Tab
+            value="visuals"
+            label="Visuales"
+            icon={<Radar size={14} />}
+            iconPosition="start"
+          />
+          <Tab
+            value="attributes"
+            label="Atributos"
+            icon={<Grid3x3 size={14} />}
+            iconPosition="start"
+          />
+        </Tabs>
+      </Box>
+
+      {/* Priority Filter (only for attributes and recommendations) */}
+      {(viewMode === 'attributes' || viewMode === 'recommendations') && (
+        <PriorityFilter priority={priority} onPriorityChange={setPriority} />
+      )}
+
+      {/* Scrollable Content */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: 'auto',
+          bgcolor: isLight
+            ? surfacesLight.background.secondary
+            : surfacesDark.background.primary,
+        }}
+      >
+        {/* Recommendations View */}
+        {viewMode === 'recommendations' && (
+          <Box>
+            {recommendations.map((rec, idx) => (
+              <RecommendationCard key={idx} recommendation={rec} />
+            ))}
+          </Box>
+        )}
+
+        {/* Visuals View */}
+        {viewMode === 'visuals' && (
+          <Box>
+            <RadarChart items={items} />
+            <ValueMatrix items={items} />
+            <ComparisonBarChart items={items} />
+          </Box>
+        )}
+
+        {/* Attributes View */}
+        {viewMode === 'attributes' && (
+          <Box sx={{ p: 1 }}>
+            {orderedAttributes.map((key) => renderAttribute(key))}
+          </Box>
+        )}
+      </Box>
+
+      {/* Footer */}
+      <Box
+        sx={{
+          py: 0.75,
+          px: 1.5,
           borderTop: '1px solid',
           borderColor: isLight
             ? surfacesLight.border.light
@@ -191,23 +310,19 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
           bgcolor: isLight
             ? surfacesLight.background.primary
             : surfacesDark.background.primary,
-          display: 'flex',
-          gap: 3,
-          justifyContent: 'center',
+          textAlign: 'center',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <TrendingUp size={14} color={emeraldCore.primary} />
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Mejor valor
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <TrendingDown size={14} color="#ef4444" />
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Valor más bajo
-          </Typography>
-        </Box>
+        <Typography
+          variant="caption"
+          sx={{ color: 'text.secondary', fontSize: '0.55rem' }}
+        >
+          {viewMode === 'recommendations'
+            ? 'Recomendaciones basadas en análisis inteligente'
+            : viewMode === 'visuals'
+            ? 'Visualización de datos multidimensional'
+            : 'Comparación de datos • Cada esmeralda es única'}
+        </Typography>
       </Box>
     </Box>
   );

@@ -23,7 +23,8 @@
       "Bash(find:*)",
       "Bash(vercel --version:*)",
       "Bash(vercel ls:*)",
-      "Bash(vercel project:*)"
+      "Bash(vercel project:*)",
+      "Bash(xargs cat:*)"
     ],
     "deny": [],
     "ask": []
