@@ -11,11 +11,11 @@ interface ComparisonBarChartProps {
   items: InventoryItem[];
 }
 
-// Emerald color palette for different items
+// High-contrast color palette for better differentiation
 const itemColors = [
-  emeraldCore.primary,  // #00AE7A
-  emeraldCore.dark,     // #008C61
-  emeraldCore.light,    // #33C194
+  '#00AE7A',  // Emerald green
+  '#FF6B6B',  // Coral red
+  '#4ECDC4',  // Turquoise
 ];
 
 export default function ComparisonBarChart({ items }: ComparisonBarChartProps) {
@@ -111,28 +111,86 @@ export default function ComparisonBarChart({ items }: ComparisonBarChartProps) {
             >
               {label}
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-              {values.map((value, idx) => (
-                <Box
-                  key={idx}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.5,
-                  }}
-                >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              {values.map((value, idx) => {
+                const displayName = items[idx].nombre
+                  .replace(/^L:.*?\s/, '')
+                  .replace(/^L:/, '')
+                  .trim();
+                const initial = displayName.charAt(0).toUpperCase();
+
+                return (
                   <Box
+                    key={idx}
                     sx={{
-                      height: 6,
-                      borderRadius: 3,
-                      bgcolor: itemColors[idx % itemColors.length],
-                      width: `${Math.max(value, 2)}%`,
-                      transition: 'width 0.3s ease',
-                      minWidth: 4,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
                     }}
-                  />
-                </Box>
-              ))}
+                  >
+                    {/* Initial label */}
+                    <Box
+                      sx={{
+                        minWidth: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        bgcolor: itemColors[idx % itemColors.length],
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: '0.5rem',
+                          fontWeight: 700,
+                          color: '#fff',
+                        }}
+                      >
+                        {initial}
+                      </Typography>
+                    </Box>
+                    {/* Bar */}
+                    <Box
+                      sx={{
+                        height: 10,
+                        borderRadius: 5,
+                        bgcolor: alpha(itemColors[idx % itemColors.length], 0.3),
+                        width: `${Math.max(value, 2)}%`,
+                        transition: 'width 0.3s ease',
+                        minWidth: 4,
+                        position: 'relative',
+                        border: `2px solid ${itemColors[idx % itemColors.length]}`,
+                      }}
+                    >
+                      {/* Inner fill */}
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          height: '100%',
+                          width: '70%',
+                          bgcolor: itemColors[idx % itemColors.length],
+                          borderRadius: 5,
+                        }}
+                      />
+                    </Box>
+                    {/* Percentage label */}
+                    <Typography
+                      sx={{
+                        fontSize: '0.55rem',
+                        fontWeight: 600,
+                        color: itemColors[idx % itemColors.length],
+                        minWidth: 32,
+                      }}
+                    >
+                      {Math.round(value)}%
+                    </Typography>
+                  </Box>
+                );
+              })}
             </Box>
           </Box>
         ))}

@@ -37,11 +37,11 @@ export const WhatsAppButton = () => {
         position: 'fixed',
         // Position well above tab bar
         bottom: `calc(${TAB_BAR_CLEARANCE}px + env(safe-area-inset-bottom))`,
-        left: isLandscapePhone ? 8 : 16,
+        right: isLandscapePhone ? 8 : 16,
         zIndex: 999, // Below tab bar (1000) but above content
       }}
     >
-      <Tooltip title="Contáctanos por WhatsApp" placement="right">
+      <Tooltip title="Contáctanos por WhatsApp" placement="left">
         <Fab
           component="a"
           href={WHATSAPP_LINK}

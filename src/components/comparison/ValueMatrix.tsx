@@ -7,17 +7,20 @@ import { Box, Typography, alpha } from '@mui/material';
 import { TrendingUp } from 'lucide-react';
 import { InventoryItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+
+// Emerald green for value leaders
+const emeraldGreen = '#00AE7A';
 
 interface ValueMatrixProps {
   items: InventoryItem[];
 }
 
-// Emerald color palette
+// High-contrast color palette for better differentiation
 const itemColors = [
-  emeraldCore.primary,
-  emeraldCore.dark,
-  emeraldCore.light,
+  '#00AE7A',  // Emerald green
+  '#FF6B6B',  // Coral red
+  '#4ECDC4',  // Turquoise
 ];
 
 /**
@@ -93,8 +96,8 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
         borderBottom: '1px solid',
         borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         bgcolor: isLight
-          ? alpha(emeraldCore.primary, 0.02)
-          : alpha(emeraldCore.primary, 0.04),
+          ? alpha(emeraldGreen, 0.02)
+          : alpha(emeraldGreen, 0.04),
       }}
     >
       <Typography
@@ -123,7 +126,7 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
             y={padding}
             width={plotWidth / 2}
             height={plotHeight / 2}
-            fill={alpha(emeraldCore.primary, 0.08)}
+            fill={alpha(emeraldGreen, 0.08)}
             rx={4}
           />
 
@@ -204,39 +207,52 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
 
             const isLeader = valueLeaders.has(idx);
             const color = itemColors[idx % itemColors.length];
+            const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
+            const initial = displayName.charAt(0).toUpperCase();
 
             return (
               <g key={item.item}>
-                {/* Glow for value leaders */}
+                {/* Outer glow */}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={14}
+                  fill={alpha(color, 0.15)}
+                  stroke="none"
+                />
+                {/* Value leader highlight */}
                 {isLeader && (
                   <circle
                     cx={x}
                     cy={y}
-                    r={12}
-                    fill={alpha(emeraldCore.primary, 0.2)}
-                    stroke="none"
+                    r={18}
+                    fill="none"
+                    stroke={emeraldGreen}
+                    strokeWidth={2}
+                    strokeDasharray="3,2"
                   />
                 )}
-                {/* Data point */}
+                {/* Main data point */}
                 <circle
                   cx={x}
                   cy={y}
-                  r={6}
+                  r={10}
                   fill={color}
                   stroke={isLight ? '#fff' : surfacesDark.background.primary}
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                 />
-                {/* Leader badge */}
-                {isLeader && (
-                  <circle
-                    cx={x + 8}
-                    cy={y - 8}
-                    r={6}
-                    fill={emeraldCore.primary}
-                    stroke={isLight ? '#fff' : surfacesDark.background.primary}
-                    strokeWidth={1.5}
-                  />
-                )}
+                {/* Initial letter label */}
+                <text
+                  x={x}
+                  y={y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill={isLight ? '#fff' : surfacesDark.background.primary}
+                  fontSize={10}
+                  fontWeight={700}
+                >
+                  {initial}
+                </text>
               </g>
             );
           })}
@@ -246,7 +262,7 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
             x={padding + plotWidth / 4}
             y={padding + 15}
             textAnchor="middle"
-            fill={emeraldCore.primary}
+            fill={emeraldGreen}
             fontSize={9}
             fontWeight={700}
           >
@@ -269,7 +285,7 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
                     height: 10,
                     borderRadius: '50%',
                     bgcolor: itemColors[idx % itemColors.length],
-                    border: isLeader ? `2px solid ${emeraldCore.primary}` : 'none',
+                    border: isLeader ? `2px solid ${emeraldGreen}` : 'none',
                   }}
                 />
                 <Typography
@@ -286,7 +302,7 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
                   {displayName}
                 </Typography>
                 {isLeader && (
-                  <TrendingUp size={10} color={emeraldCore.primary} strokeWidth={2.5} />
+                  <TrendingUp size={10} color={emeraldGreen} strokeWidth={2.5} />
                 )}
               </Box>
             );
@@ -300,14 +316,14 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
               mt: 0.5,
               p: 1,
               borderRadius: 1.5,
-              bgcolor: alpha(emeraldCore.primary, 0.08),
-              border: `1px solid ${alpha(emeraldCore.primary, 0.2)}`,
+              bgcolor: alpha(emeraldGreen, 0.08),
+              border: `1px solid ${alpha(emeraldGreen, 0.2)}`,
             }}
           >
             <Typography
               sx={{
                 fontSize: '0.6rem',
-                color: emeraldCore.dark,
+                color: emeraldGreen,
                 textAlign: 'center',
                 lineHeight: 1.4,
               }}

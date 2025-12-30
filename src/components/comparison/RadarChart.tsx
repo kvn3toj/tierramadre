@@ -6,7 +6,7 @@
 import { Box, Typography, alpha } from '@mui/material';
 import { InventoryItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 
 interface RadarChartProps {
   items: InventoryItem[];
@@ -18,11 +18,11 @@ interface DataPoint {
   values: number[]; // 0-100 for each item
 }
 
-// Emerald color palette for different items
+// High-contrast color palette for better differentiation
 const itemColors = [
-  emeraldCore.primary,  // #00AE7A
-  emeraldCore.dark,     // #008C61
-  emeraldCore.light,    // #33C194
+  '#00AE7A',  // Emerald green
+  '#FF6B6B',  // Coral red
+  '#4ECDC4',  // Turquoise
 ];
 
 /**
@@ -245,29 +245,45 @@ export default function RadarChart({ items, maxItems = 3 }: RadarChartProps) {
 
           return (
             <g key={`item-${itemIdx}`}>
-              {/* Fill */}
+              {/* Fill with subtle transparency */}
               <path
                 d={path}
-                fill={alpha(color, 0.15)}
-                stroke={color}
-                strokeWidth={2}
-                strokeLinejoin="round"
+                fill={alpha(color, 0.08)}
+                stroke="none"
               />
-              {/* Data points */}
+              {/* Stroke outline with higher visibility */}
+              <path
+                d={path}
+                fill="none"
+                stroke={color}
+                strokeWidth={2.5}
+                strokeLinejoin="round"
+                strokeDasharray={itemIdx === 0 ? '0' : itemIdx === 1 ? '5,3' : '2,2'}
+              />
+              {/* Data points with stronger presence */}
               {values.map((value, pointIdx) => {
                 const angle = pointIdx * angleStep;
                 const radius = (value / 100) * maxRadius;
                 const point = polarToCartesian(centerX, centerY, radius, angle);
                 return (
-                  <circle
-                    key={`point-${itemIdx}-${pointIdx}`}
-                    cx={point.x}
-                    cy={point.y}
-                    r={3}
-                    fill={color}
-                    stroke={isLight ? '#fff' : surfacesDark.background.primary}
-                    strokeWidth={2}
-                  />
+                  <g key={`point-${itemIdx}-${pointIdx}`}>
+                    {/* Glow effect */}
+                    <circle
+                      cx={point.x}
+                      cy={point.y}
+                      r={6}
+                      fill={alpha(color, 0.2)}
+                    />
+                    {/* Main point */}
+                    <circle
+                      cx={point.x}
+                      cy={point.y}
+                      r={4}
+                      fill={color}
+                      stroke={isLight ? '#fff' : surfacesDark.background.primary}
+                      strokeWidth={2}
+                    />
+                  </g>
                 );
               })}
             </g>
