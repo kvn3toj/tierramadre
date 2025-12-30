@@ -32,35 +32,35 @@ const criteriaConfig: Record<
     gradient: string;
   }
 > = {
-  best_investment: {
-    label: 'Mejor Inversión',
-    icon: TrendingUp,
-    gradient: 'linear-gradient(135deg, #00AE7A 0%, #008C61 100%)',
-  },
   best_value: {
     label: 'Mejor Relación Calidad-Precio',
     icon: DollarSign,
-    gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    gradient: 'linear-gradient(135deg, #00AE7A 0%, #008C61 100%)', // Emerald green
+  },
+  best_investment: {
+    label: 'Mejor Inversión',
+    icon: TrendingUp,
+    gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', // Purple for long-term wealth
   },
   premium_quality: {
     label: 'Calidad Premium',
     icon: Award,
-    gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', // Gold for premium
   },
   largest_size: {
     label: 'Mayor Tamaño',
     icon: Gem,
-    gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+    gradient: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', // Cyan for size
   },
   best_color: {
     label: 'Mejor Color',
     icon: Sparkles,
-    gradient: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
+    gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', // Green for color
   },
   rare_find: {
     label: 'Hallazgo Único',
     icon: Sparkles,
-    gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+    gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)', // Pink for rarity
   },
 };
 

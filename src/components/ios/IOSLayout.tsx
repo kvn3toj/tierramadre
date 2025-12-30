@@ -188,6 +188,14 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
           paddingBottom: `calc(65px + env(safe-area-inset-bottom) + ${spacing.md})`,
           overflowY: 'auto',
           WebkitOverflowScrolling: 'touch',
+          // iOS HIG: Improve scroll performance and touch handling
+          position: 'relative',
+          isolation: 'isolate', // Create stacking context
+          // iOS HIG: Ensure smooth scroll momentum
+          scrollBehavior: 'smooth',
+          '@media (prefers-reduced-motion: reduce)': {
+            scrollBehavior: 'auto',
+          },
         }}
       >
         {children}

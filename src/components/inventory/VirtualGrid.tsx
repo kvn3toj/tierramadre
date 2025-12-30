@@ -84,10 +84,15 @@ function CellRenderer({
     <div
       style={{
         ...style,
-        // Add gap padding inside each cell (no side gaps on mobile single column)
-        paddingRight: isSingleColumn ? 0 : GAP / 2,
+        // iOS HIG: Add gap padding inside each cell with proper edge handling
+        // First column: padding-right only
+        // Middle columns: padding on both sides
+        // Last column: padding-left only (prevents cutoff)
+        paddingRight: columnIndex === columnCount - 1 ? 0 : GAP / 2,
         paddingBottom: GAP,
-        paddingLeft: isSingleColumn || columnIndex === 0 ? 0 : GAP / 2,
+        paddingLeft: columnIndex === 0 ? 0 : GAP / 2,
+        // iOS HIG: Ensure content doesn't touch screen edges
+        boxSizing: 'border-box',
       }}
     >
       {renderCard({
@@ -161,10 +166,18 @@ export default function VirtualGrid({
   // Calculate row count based on items and columns
   const rowCount = Math.ceil(items.length / columnCount);
 
-  // Mobile: adaptive width based on column count
+  // iOS HIG: Column width calculation with proper edge margins
+  // The grid's parent already has padding (px: 2 on mobile)
+  // So we calculate column width as percentage of the padded container
   const isMobile = columnCount === 1;
   const isMobileTwoColumn = isXs && columnCount === 2;
-  const mobileColumnWidth = isMobile ? '92%' : (isMobileTwoColumn ? '50%' : `${100 / columnCount}%`);
+
+  // Calculate column width considering the gap between columns
+  // For 2 columns: each gets 50% minus half the gap
+  // For 3+ columns: equal distribution
+  const columnWidth = isMobileTwoColumn
+    ? `calc((100% - ${GAP}px) / 2)` // 2 columns with gap
+    : `${100 / columnCount}%`; // Equal distribution
 
   return (
     <Box
@@ -172,12 +185,14 @@ export default function VirtualGrid({
         height: `calc(100vh - 280px)`,
         minHeight,
         width: '100%',
-        // Center grid on mobile for balanced margins
-        display: 'flex',
-        justifyContent: 'center',
+        // iOS HIG: Horizontal padding to prevent edge cutoff
+        px: isXs ? 2 : 0, // 16px margins on mobile
+        boxSizing: 'border-box',
         // Grid container styles for react-window 2.x
         '& > div': {
           overflowX: 'hidden !important',
+          // Ensure grid doesn't overflow horizontally
+          width: '100% !important',
         },
       }}
     >
@@ -185,7 +200,7 @@ export default function VirtualGrid({
         cellComponent={CellRenderer}
         cellProps={cellProps}
         columnCount={columnCount}
-        columnWidth={mobileColumnWidth} // 92% (1 col mobile), 50% (2 col mobile/tablet), 33% md, 25% lg
+        columnWidth={columnWidth}
         rowCount={rowCount}
         rowHeight={CARD_HEIGHT + GAP}
         overscanCount={2}

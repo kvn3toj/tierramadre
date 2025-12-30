@@ -71,13 +71,13 @@ export default function RecentlyViewedCarousel({
       sx={{
         mb: 1.5,
         py: 1,
-        px: 1,
         borderRadius: 2,
         bgcolor: isLight
           ? alpha(emeraldCore.lightest, 0.3)
           : alpha(surfacesDark.background.tertiary, 0.5),
         border: '1px solid',
         borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+        // iOS HIG: Remove horizontal padding from container to allow carousel padding control
       }}
     >
       {/* Header */}
@@ -87,6 +87,7 @@ export default function RecentlyViewedCarousel({
           alignItems: 'center',
           justifyContent: 'space-between',
           mb: 1,
+          px: 2, // iOS HIG: 16px horizontal padding for header
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
@@ -167,6 +168,21 @@ export default function RecentlyViewedCarousel({
           scrollbarWidth: 'none',
           '&::-webkit-scrollbar': { display: 'none' },
           pb: 0.5, // Space for hover effects
+          // iOS HIG: Horizontal padding creates safe zones and prevents edge cutoff
+          px: 2, // 16px padding on both sides
+          // iOS HIG: Content insets for peek effect (show part of next/prev items)
+          '&::before': {
+            content: '""',
+            display: 'block',
+            width: 0,
+            flexShrink: 0,
+          },
+          '&::after': {
+            content: '""',
+            display: 'block',
+            width: 0,
+            flexShrink: 0,
+          },
         }}
       >
         {displayItems.map((item) => (
@@ -199,14 +215,8 @@ function RecentItemCard({
     <Tooltip
       title={
         <Box sx={{ p: 0.5 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-            {displayName}
-          </Typography>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {item.color} {weight && `• ${weight}`}
-          </Typography>
-          <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>
-            {formatCurrency(item.precioCOP)}
           </Typography>
         </Box>
       }
@@ -236,32 +246,64 @@ function RecentItemCard({
           },
         }}
       >
-        {/* Image */}
-        {item.imagen ? (
-          <CardMedia
-            component="img"
-            image={item.thumbnailUrl || item.imagen}
-            alt={displayName}
-            sx={{
-              height: 50,
-              objectFit: 'cover',
-            }}
-          />
-        ) : (
+        {/* Image with overlaid price chip */}
+        <Box sx={{ position: 'relative' }}>
+          {item.imagen ? (
+            <CardMedia
+              component="img"
+              image={item.thumbnailUrl || item.imagen}
+              alt={displayName}
+              sx={{
+                height: 64,
+                objectFit: 'cover',
+              }}
+            />
+          ) : (
+            <Box
+              sx={{
+                height: 64,
+                bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.tertiary,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Gem size={20} color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled} />
+            </Box>
+          )}
+
+          {/* iOS HIG: Price chip overlay on image */}
           <Box
             sx={{
-              height: 50,
-              bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.tertiary,
+              position: 'absolute',
+              bottom: 4,
+              left: 4,
+              right: 4,
+              bgcolor: 'rgba(0, 0, 0, 0.75)',
+              backdropFilter: 'blur(8px)',
+              borderRadius: 1,
+              px: 0.5,
+              py: 0.25,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Gem size={18} color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled} />
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: '0.6rem',
+                color: emeraldCore.lightest,
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+              }}
+            >
+              {formatCurrency(item.precioCOP)}
+            </Typography>
           </Box>
-        )}
+        </Box>
 
-        {/* Info */}
+        {/* Name only */}
         <Box sx={{ p: 0.5 }}>
           <Typography
             variant="caption"
@@ -273,19 +315,10 @@ function RecentItemCard({
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               color: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
+              lineHeight: 1.2,
             }}
           >
             {displayName}
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{
-              fontSize: '0.55rem',
-              color: emeraldCore.primary,
-              fontWeight: 600,
-            }}
-          >
-            {formatCurrency(item.precioCOP)}
           </Typography>
         </Box>
       </Card>

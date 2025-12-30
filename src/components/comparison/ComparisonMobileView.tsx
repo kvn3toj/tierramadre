@@ -1,11 +1,10 @@
 /**
  * ComparisonMobileView Component
- * Simplified intelligent comparison with 2-tab structure: Resumen + Detalles
- * Users can select their comparison priority to get personalized recommendations
+ * Unified comparison page with priority selector, recommendation, visuals, and compact attributes
  */
 import { useState } from 'react';
-import { Box, Typography, Chip, Tabs, Tab, alpha } from '@mui/material';
-import { Sparkles, List, BarChart3, Radar as RadarIcon, TrendingUp, DollarSign, Gem, Award } from 'lucide-react';
+import { Box, Typography, Chip, alpha, Collapse } from '@mui/material';
+import { BarChart3, Radar as RadarIcon, TrendingUp, DollarSign, Gem, Award, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { InventoryItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { formatCurrency, getColorDot, getQualityBadge } from '../../utils/formatting';
@@ -24,45 +23,55 @@ interface ComparisonMobileViewProps {
   items: InventoryItem[];
 }
 
-type ViewMode = 'summary' | 'details';
 type VisualMode = 'radar' | 'matrix';
 
-// Priority options for user selection
+// Priority options with educational descriptions
 type ComparisonPriority = 'best_value' | 'best_investment' | 'largest_size' | 'premium_quality';
 
 const priorityConfig: Record<ComparisonPriority, {
   label: string;
   icon: typeof TrendingUp;
   criteria: RecommendationCriteria;
+  description: string;
+  gradient: string;
 }> = {
   best_value: {
     label: 'Mejor Valor',
     icon: Gem,
     criteria: 'best_value',
+    description: 'Alta calidad a precio razonable • Compra inteligente HOY',
+    gradient: 'linear-gradient(135deg, #00AE7A 0%, #008C61 100%)',
   },
   best_investment: {
     label: 'Inversión',
     icon: TrendingUp,
     criteria: 'best_investment',
+    description: 'Apreciación a largo plazo • Calidad + Tamaño + Rareza',
+    gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
   },
   largest_size: {
     label: 'Tamaño',
     icon: DollarSign,
     criteria: 'largest_size',
+    description: 'Mayor quilataje • Presencia y valor por tamaño',
+    gradient: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
   },
   premium_quality: {
     label: 'Calidad',
     icon: Award,
     criteria: 'premium_quality',
+    description: 'Excelencia premium • Los más altos estándares',
+    gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
   },
 };
 
 export default function ComparisonMobileView({ items }: ComparisonMobileViewProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
-  const [viewMode, setViewMode] = useState<ViewMode>('summary');
   const [visualMode, setVisualMode] = useState<VisualMode>('radar');
   const [priority, setPriority] = useState<ComparisonPriority>('best_value');
+  const [attributesExpanded, setAttributesExpanded] = useState(false);
+  const [showPriorityHelp, setShowPriorityHelp] = useState(false);
 
   // Check if any item has price per carat (loose stones)
   const hasLooseStones = items.some(
@@ -211,53 +220,6 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
       {/* Sticky Product Header */}
       <ProductHeader items={items} />
 
-      {/* 2-Tab Structure */}
-      <Box
-        sx={{
-          borderBottom: '1px solid',
-          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-          bgcolor: isLight
-            ? surfacesLight.background.primary
-            : surfacesDark.background.primary,
-        }}
-      >
-        <Tabs
-          value={viewMode}
-          onChange={(_, newValue) => setViewMode(newValue)}
-          variant="fullWidth"
-          sx={{
-            minHeight: 48,
-            '& .MuiTab-root': {
-              minHeight: 48,
-              fontSize: '0.7rem',
-              fontWeight: 600,
-              textTransform: 'none',
-              color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
-              '&.Mui-selected': {
-                color: emeraldCore.primary,
-              },
-            },
-            '& .MuiTabs-indicator': {
-              backgroundColor: emeraldCore.primary,
-              height: 3,
-            },
-          }}
-        >
-          <Tab
-            value="summary"
-            label="Resumen"
-            icon={<Sparkles size={16} />}
-            iconPosition="start"
-          />
-          <Tab
-            value="details"
-            label="Detalles"
-            icon={<List size={16} />}
-            iconPosition="start"
-          />
-        </Tabs>
-      </Box>
-
       {/* Scrollable Content */}
       <Box
         sx={{
@@ -268,18 +230,199 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
             : surfacesDark.background.primary,
         }}
       >
-        {/* SUMMARY TAB */}
-        {viewMode === 'summary' && (
-          <Box>
-            {/* Priority Selector */}
+        {/* UNIFIED COMPARISON PAGE */}
+        <Box>
+          {/* Priority Selector with Help */}
+          <Box
+            sx={{
+              p: 1.5,
+              borderBottom: '1px solid',
+              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+              bgcolor: isLight
+                ? surfacesLight.background.primary
+                : surfacesDark.background.secondary,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography
+                sx={{
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: 'text.secondary',
+                }}
+              >
+                ¿Qué te interesa comparar?
+              </Typography>
+              <Info
+                size={14}
+                color={emeraldCore.primary}
+                style={{ cursor: 'pointer' }}
+                onClick={() => setShowPriorityHelp(!showPriorityHelp)}
+              />
+            </Box>
+
+            {/* Help Tooltip */}
+            <Collapse in={showPriorityHelp}>
+              <Box
+                sx={{
+                  mb: 1,
+                  p: 1,
+                  borderRadius: 1.5,
+                  bgcolor: alpha(emeraldCore.primary, 0.08),
+                  border: `1px solid ${alpha(emeraldCore.primary, 0.2)}`,
+                }}
+              >
+                <Typography sx={{ fontSize: '0.6rem', color: emeraldCore.dark, lineHeight: 1.4, mb: 0.5, fontWeight: 600 }}>
+                  Mejor Valor vs Inversión:
+                </Typography>
+                <Typography sx={{ fontSize: '0.55rem', color: 'text.secondary', lineHeight: 1.4 }}>
+                  <strong>Mejor Valor:</strong> Compra inteligente HOY. Alta calidad a precio razonable (60% calidad + 40% precio bajo).<br/>
+                  <strong>Inversión:</strong> Apreciación FUTURA. Rareza y potencial (40% calidad + 30% color + 20% tamaño + 10% certificación).
+                </Typography>
+              </Box>
+            </Collapse>
+
+            {/* Priority Chips */}
+            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+              {(Object.keys(priorityConfig) as ComparisonPriority[]).map((key) => {
+                const config = priorityConfig[key];
+                const Icon = config.icon;
+                const isActive = priority === key;
+                return (
+                  <Box key={key} sx={{ position: 'relative', flex: key === 'best_value' || key === 'best_investment' ? '1 1 45%' : '0 1 auto' }}>
+                    <Chip
+                      icon={<Icon size={13} />}
+                      label={config.label}
+                      onClick={() => setPriority(key)}
+                      sx={{
+                        width: '100%',
+                        background: isActive ? config.gradient : 'transparent',
+                        color: isActive ? '#fff' : 'text.primary',
+                        border: isActive ? 'none' : `1px solid ${alpha(emeraldCore.primary, 0.3)}`,
+                        fontWeight: 600,
+                        fontSize: '0.65rem',
+                        height: 28,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          transform: 'translateY(-1px)',
+                          boxShadow: `0 2px 8px ${alpha(emeraldCore.primary, 0.2)}`,
+                        },
+                      }}
+                    />
+                    {isActive && (
+                      <Typography
+                        sx={{
+                          fontSize: '0.5rem',
+                          color: 'text.secondary',
+                          textAlign: 'center',
+                          mt: 0.25,
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {config.description}
+                      </Typography>
+                    )}
+                  </Box>
+                );
+              })}
+            </Box>
+          </Box>
+
+          {/* Recommendation Card */}
+          <RecommendationCard recommendation={currentRecommendation} />
+
+          {/* Visual Chart Toggle */}
+          <Box
+            sx={{
+              p: 1.5,
+              borderBottom: '1px solid',
+              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+              bgcolor: isLight
+                ? surfacesLight.background.primary
+                : surfacesDark.background.secondary,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: '0.6rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: 'text.secondary',
+                mb: 1,
+              }}
+            >
+              Visualización
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+              <Chip
+                icon={<RadarIcon size={14} />}
+                label="Radar"
+                onClick={() => setVisualMode('radar')}
+                sx={{
+                  flex: 1,
+                  bgcolor: visualMode === 'radar' ? emeraldCore.primary : 'transparent',
+                  color: visualMode === 'radar' ? '#fff' : emeraldCore.primary,
+                  border: `1px solid ${emeraldCore.primary}`,
+                  fontWeight: 600,
+                  fontSize: '0.65rem',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    bgcolor: visualMode === 'radar' ? emeraldCore.dark : alpha(emeraldCore.primary, 0.08),
+                  },
+                }}
+              />
+              <Chip
+                icon={<BarChart3 size={14} />}
+                label="Matriz"
+                onClick={() => setVisualMode('matrix')}
+                sx={{
+                  flex: 1,
+                  bgcolor: visualMode === 'matrix' ? emeraldCore.primary : 'transparent',
+                  color: visualMode === 'matrix' ? '#fff' : emeraldCore.primary,
+                  border: `1px solid ${emeraldCore.primary}`,
+                  fontWeight: 600,
+                  fontSize: '0.65rem',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    bgcolor: visualMode === 'matrix' ? emeraldCore.dark : alpha(emeraldCore.primary, 0.08),
+                  },
+                }}
+              />
+            </Box>
+          </Box>
+
+          {/* Selected Visual Chart */}
+          {visualMode === 'radar' ? (
+            <RadarChart items={items} />
+          ) : (
+            <ValueMatrix items={items} />
+          )}
+
+          {/* Expandable Compact Attributes */}
+          <Box
+            sx={{
+              borderTop: '1px solid',
+              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+            }}
+          >
             <Box
+              onClick={() => setAttributesExpanded(!attributesExpanded)}
               sx={{
                 p: 1.5,
-                borderBottom: '1px solid',
-                borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
                 bgcolor: isLight
                   ? surfacesLight.background.primary
                   : surfacesDark.background.secondary,
+                '&:hover': {
+                  bgcolor: alpha(emeraldCore.primary, 0.04),
+                },
               }}
             >
               <Typography
@@ -289,113 +432,20 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                   color: 'text.secondary',
-                  mb: 1,
                 }}
               >
-                ¿Qué te interesa comparar?
+                Todos los Atributos ({allAttributes.length})
               </Typography>
-              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-                {(Object.keys(priorityConfig) as ComparisonPriority[]).map((key) => {
-                  const config = priorityConfig[key];
-                  const Icon = config.icon;
-                  const isActive = priority === key;
-                  return (
-                    <Chip
-                      key={key}
-                      icon={<Icon size={13} />}
-                      label={config.label}
-                      onClick={() => setPriority(key)}
-                      sx={{
-                        bgcolor: isActive ? emeraldCore.primary : 'transparent',
-                        color: isActive ? '#fff' : emeraldCore.primary,
-                        border: `1px solid ${emeraldCore.primary}`,
-                        fontWeight: 600,
-                        fontSize: '0.65rem',
-                        height: 28,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          bgcolor: isActive ? emeraldCore.dark : alpha(emeraldCore.primary, 0.08),
-                        },
-                      }}
-                    />
-                  );
-                })}
+              {attributesExpanded ? <ChevronUp size={16} color={emeraldCore.primary} /> : <ChevronDown size={16} color={emeraldCore.primary} />}
+            </Box>
+
+            <Collapse in={attributesExpanded}>
+              <Box sx={{ p: 1 }}>
+                {allAttributes.map((key) => renderAttribute(key))}
               </Box>
-            </Box>
-
-            {/* Recommendation Card (based on selected priority) */}
-            <RecommendationCard recommendation={currentRecommendation} />
+            </Collapse>
           </Box>
-        )}
-
-        {/* DETAILS TAB */}
-        {viewMode === 'details' && (
-          <Box>
-            {/* Visual Chart Toggle */}
-            <Box sx={{ p: 1.5, borderBottom: '1px solid', borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light }}>
-              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                <Chip
-                  icon={<RadarIcon size={14} />}
-                  label="Radar"
-                  onClick={() => setVisualMode('radar')}
-                  sx={{
-                    bgcolor: visualMode === 'radar' ? emeraldCore.primary : 'transparent',
-                    color: visualMode === 'radar' ? '#fff' : emeraldCore.primary,
-                    border: `1px solid ${emeraldCore.primary}`,
-                    fontWeight: 600,
-                    fontSize: '0.65rem',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      bgcolor: visualMode === 'radar' ? emeraldCore.dark : alpha(emeraldCore.primary, 0.08),
-                    },
-                  }}
-                />
-                <Chip
-                  icon={<BarChart3 size={14} />}
-                  label="Matriz"
-                  onClick={() => setVisualMode('matrix')}
-                  sx={{
-                    bgcolor: visualMode === 'matrix' ? emeraldCore.primary : 'transparent',
-                    color: visualMode === 'matrix' ? '#fff' : emeraldCore.primary,
-                    border: `1px solid ${emeraldCore.primary}`,
-                    fontWeight: 600,
-                    fontSize: '0.65rem',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      bgcolor: visualMode === 'matrix' ? emeraldCore.dark : alpha(emeraldCore.primary, 0.08),
-                    },
-                  }}
-                />
-              </Box>
-            </Box>
-
-            {/* Selected Visual Chart */}
-            {visualMode === 'radar' ? (
-              <RadarChart items={items} />
-            ) : (
-              <ValueMatrix items={items} />
-            )}
-
-            {/* All Attributes */}
-            <Box sx={{ p: 1 }}>
-              <Typography
-                sx={{
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  color: emeraldCore.dark,
-                  mb: 1,
-                  px: 0.25,
-                }}
-              >
-                Todos los Atributos
-              </Typography>
-              {allAttributes.map((key) => renderAttribute(key))}
-            </Box>
-          </Box>
-        )}
+        </Box>
       </Box>
 
       {/* Footer */}
@@ -417,9 +467,7 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
           variant="caption"
           sx={{ color: 'text.secondary', fontSize: '0.55rem' }}
         >
-          {viewMode === 'summary'
-            ? 'Resumen inteligente basado en análisis multidimensional'
-            : 'Detalles completos de comparación • Cada esmeralda es única'}
+          Comparación inteligente basada en análisis multidimensional • Cada esmeralda es única
         </Typography>
       </Box>
     </Box>
