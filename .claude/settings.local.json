@@ -19,7 +19,11 @@
       "Bash(git push:*)",
       "Bash(git push)",
       "Bash(git fetch:*)",
-      "Skill(evolutionary-refactor)"
+      "Skill(evolutionary-refactor)",
+      "Bash(find:*)",
+      "Bash(vercel --version:*)",
+      "Bash(vercel ls:*)",
+      "Bash(vercel project:*)"
     ],
     "deny": [],
     "ask": []

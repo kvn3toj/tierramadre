@@ -185,7 +185,6 @@ export const es = {
     welcomeTitle: 'Tierra Madre',
     welcomeSubtitle: 'Esencia y Poder de la Esmeralda Colombiana',
     guestAccess: 'Modo Invitado',
-    guestDescription: 'Explora tesoros y embajadores sin editar',
     fullAccess: 'Acceso Completo',
     fullDescription: 'Crear catálogos y contenido',
     enterPin: 'Ingresar PIN',

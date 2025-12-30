@@ -23,7 +23,10 @@ import { useAnalytics, useSavedFacts } from './hooks';
 import { SectionSkeleton, ErrorFallback } from './common';
 import { InstallButton, NotificationPermission } from '../pwa';
 import { isPWA } from '../../utils/pwa';
+import { createLogger } from '../../utils/logger';
 import { useNewProductNotification } from '../../hooks/useNewProductNotification';
+
+const log = createLogger('Home');
 import {
   MAX_PRODUCTS_DISPLAY,
   BACKGROUND_OPACITY,
@@ -74,10 +77,8 @@ const Home: React.FC = () => {
   // Check for new products and notify
   useNewProductNotification({ productCount: inventory.length });
 
-  // Log gamification state for debugging (remove in production)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[Home] Gamification:', { level: gamificationState.level, xp: gamificationState.xp });
-  }
+  // Log gamification state for debugging (auto-disabled in production)
+  log.debug('Gamification:', { level: gamificationState.level, xp: gamificationState.xp });
 
   // ==========================================================================
   // DERIVED DATA
@@ -94,9 +95,7 @@ const Home: React.FC = () => {
       .sort((a: InventoryItem, b: InventoryItem) => (b.item || 0) - (a.item || 0))
       .slice(0, MAX_PRODUCTS_DISPLAY);
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Home] Products with images:', productsWithImages.length, 'of', inventory.length);
-    }
+    log.debug('Products with images:', productsWithImages.length, 'of', inventory.length);
 
     return productsWithImages;
   }, [inventory]);
@@ -118,13 +117,13 @@ const Home: React.FC = () => {
           url: window.location.origin,
         });
       } catch (err) {
-        console.log('Share cancelled or failed:', err);
+        log.debug('Share cancelled or failed:', err);
       }
     } else {
       try {
         await navigator.clipboard.writeText(text);
       } catch (err) {
-        console.log('Clipboard write failed:', err);
+        log.debug('Clipboard write failed:', err);
       }
     }
   }, []);

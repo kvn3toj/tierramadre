@@ -48,6 +48,9 @@ import type { MediaItem } from './media/types';
 import { PriceDisplay } from './PriceDisplay';
 import { getColorDot, getQualityBadge } from '../utils/formatting';
 import { uploadToCloudinary } from '../utils/cloudinaryUpload';
+import { createLogger } from '../utils/logger';
+
+const log = createLogger('ProductDetail');
 // Design System Tokens
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 import { emeraldGradients, buttonGradients } from '../design-system/tokens/gradients';
@@ -157,7 +160,7 @@ export default function ProductDetail() {
             }
           }
         } catch (error) {
-          console.error('Error fetching Drive images:', error);
+          log.error('Error fetching Drive images:', error);
           // Keep showing local/legacy items if Drive fetch fails
         }
       };
@@ -204,7 +207,7 @@ export default function ProductDetail() {
 
         newItems.push(newItem);
       } catch (error) {
-        console.error('Error uploading media:', error);
+        log.error('Error uploading media:', error);
         alert(error instanceof Error ? error.message : 'Error al subir el archivo');
       }
     }
@@ -255,7 +258,7 @@ export default function ProductDetail() {
         setImageToCrop(dataUrl);
         setCurrentCropIndex(nextImageIndex);
       } catch (error) {
-        console.error('Error reading next file:', error);
+        log.error('Error reading next file:', error);
         // Continue with upload even if one image fails
         setCropperOpen(false);
         setImageToCrop(null);
@@ -340,7 +343,7 @@ export default function ProductDetail() {
         }
       }
     } catch (error) {
-      console.error('Error refreshing Drive images:', error);
+      log.error('Error refreshing Drive images:', error);
     }
   }, [product, displayName, updateMediaItems, updateImage, updateVideo]);
 

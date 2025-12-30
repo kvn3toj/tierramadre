@@ -4,6 +4,8 @@
  * Memoized filter controls for inventory browsing.
  * Extracted to prevent re-creation on every render,
  * which fixes the iPad keyboard dismissing issue.
+ *
+ * REFACTORED: Props grouped into logical objects to reduce prop drilling.
  */
 
 import { memo } from 'react';
@@ -30,12 +32,67 @@ import {
   ArrowUpDown,
   Layers,
 } from 'lucide-react';
-import { type StatusFilter, type TypeFilter, type SortOption } from '../../hooks/useInventoryFiltering';
+import {
+  type StatusFilter,
+  type TypeFilter,
+  type SortOption,
+  type TreasureFilters,
+} from '../../hooks/useInventoryFiltering';
 import { useInventoryAnalytics } from '../../hooks/useInventoryAnalytics';
 import { InventoryItem } from '../../types';
 import { formatCurrency, getColorDot } from '../../utils/formatting';
 import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
 
+// =============================================================================
+// TYPES - Grouped for cleaner prop drilling
+// =============================================================================
+
+/** All filter setter functions grouped together */
+export interface FilterSetters {
+  setSearch: (value: string) => void;
+  setStatusFilter: (value: StatusFilter) => void;
+  setSortBy: (value: SortOption) => void;
+  setTypeFilter: (value: TypeFilter) => void;
+  setCantidadFilter: (value: string) => void;
+  setColorFilter: (value: string) => void;
+  setShapeFilter: (value: string) => void;
+  setQualityFilter: (value: string) => void;
+  setColeccionFilter: (value: string) => void;
+  setPriceRange: (value: [number, number]) => void;
+}
+
+/** Filter options derived from inventory data */
+export interface FilterOptions {
+  colors: string[];
+  shapes: string[];
+  qualities: string[];
+  colecciones: string[];
+  priceMinMax: { min: number; max: number };
+}
+
+/** UI-specific state for filter panel */
+export interface FilterUIState {
+  showAdvancedFilters: boolean;
+  setShowAdvancedFilters: (value: boolean) => void;
+  searchInputRef: React.RefObject<HTMLInputElement>;
+}
+
+/** New grouped props interface (preferred) */
+export interface FilterContentPropsGrouped {
+  filters: TreasureFilters;
+  setters: FilterSetters;
+  options: FilterOptions;
+  ui: FilterUIState;
+  hasFilters: boolean;
+  handleClearFilters: () => void;
+  sortedInventory: InventoryItem[];
+  analyticsHook: ReturnType<typeof useInventoryAnalytics>;
+  isLight: boolean;
+  theme: Theme;
+  compact?: boolean;
+}
+
+/** @deprecated Use FilterContentPropsGrouped - Legacy flat props for backward compatibility */
 export interface FilterContentProps {
   search: string;
   setSearch: (value: string) => void;

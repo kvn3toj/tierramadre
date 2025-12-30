@@ -198,16 +198,6 @@ export default function WelcomeScreen() {
               {t.auth.guestAccess}
             </Button>
 
-            <Typography
-              variant="caption"
-              sx={{
-                color: '#666',
-                textAlign: 'center',
-                mt: 1,
-              }}
-            >
-              {t.auth.guestDescription}
-            </Typography>
           </Stack>
         </Fade>
       )}

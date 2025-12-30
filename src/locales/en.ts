@@ -185,7 +185,6 @@ export const en = {
     welcomeTitle: 'Tierra Mädre',
     welcomeSubtitle: 'Essence and Power of the Colombian Emerald',
     guestAccess: 'Guest Mode',
-    guestDescription: 'Explore treasures and ambassadors without editing',
     fullAccess: 'Full Access',
     fullDescription: 'Create catalogs and content',
     enterPin: 'Enter PIN',

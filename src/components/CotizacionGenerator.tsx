@@ -60,7 +60,16 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { documentShadows } from '../design-system/tokens';
 import { useInventory } from '../hooks/useInventory';
-import { useCotizacion, formatCotizacionCurrency, getPesoDisplay } from '../hooks/useCotizacion';
+import {
+  useCotizacion,
+  formatCotizacionCurrency,
+  getPesoDisplay,
+  BusinessSettings,
+  ManualProductState,
+  CotizacionProduct,
+  CotizacionInvestment,
+  CustomCost,
+} from '../hooks/useCotizacion';
 import { InventoryItem } from '../types';
 import { SAMPLE_AMBASSADORS } from '../data/ambassadors';
 import { CotizacionHeader, QuotationPreview, brandColors } from './cotizacion';
@@ -401,8 +410,8 @@ interface SettingsAccordionProps {
   regenerateQuotationNumber: () => void;
   date: string;
   setDate: (date: string) => void;
-  businessSettings: any;
-  setBusinessSettings: (settings: any) => void;
+  businessSettings: BusinessSettings;
+  setBusinessSettings: React.Dispatch<React.SetStateAction<BusinessSettings>>;
 }
 
 const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
@@ -508,8 +517,8 @@ interface ProductEntrySectionProps {
   selectedItem: InventoryItem | null;
   setSelectedItem: (item: InventoryItem | null) => void;
   handleAddProduct: () => void;
-  manualProduct: any;
-  setManualProduct: (p: any) => void;
+  manualProduct: ManualProductState;
+  setManualProduct: React.Dispatch<React.SetStateAction<ManualProductState>>;
   handleAddManualProduct: () => void;
 }
 
@@ -606,7 +615,7 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
 );
 
 interface ProductListSectionProps {
-  products: any[];
+  products: CotizacionProduct[];
   handleRemoveProduct: (id: string) => void;
 }
 
@@ -643,10 +652,10 @@ const ProductListSection: React.FC<ProductListSectionProps> = ({ products, handl
 };
 
 interface InvestmentFormSectionProps {
-  investments: any[];
+  investments: CotizacionInvestment[];
   handleInvestmentChange: (id: string, value: number) => void;
   handleResetInvestments: () => void;
-  customCosts: any[];
+  customCosts: CustomCost[];
   handleRemoveCustomCost: (id: string) => void;
   newCustomLabel: string;
   setNewCustomLabel: (v: string) => void;

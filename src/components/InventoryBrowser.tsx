@@ -42,7 +42,10 @@ import { useInventoryAnalytics } from '../hooks/useInventoryAnalytics';
 import { InventoryItem } from '../types';
 import CertificationUpload from './CertificationUpload';
 import { formatCurrency, formatFullCurrency, getColorDot } from '../utils/formatting';
+import { createLogger } from '../utils/logger';
 // Design System Tokens
+
+const log = createLogger('Inventory');
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark, semanticColors } from '../design-system/tokens/colors';
 // Inventory components
 import { GridCard, ListRow, VirtualGrid, FilterContent, type FilterContentProps } from './inventory';
@@ -321,7 +324,7 @@ export default function InventoryBrowser() {
     if (selectedItem) {
       // In a real app, this would update the database
       // For now, we'll just update the local state
-      console.log('Saving certifications for item:', selectedItem.item, certifications);
+      log.info('Saving certifications for item:', selectedItem.item, certifications);
       // TODO: Persist to localStorage or API
     }
     setCertDialogOpen(false);
@@ -334,52 +337,59 @@ export default function InventoryBrowser() {
   // Count active filters for badge
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (search) count++;
-    if (colorFilter !== 'all') count++;
-    if (qualityFilter !== 'all') count++;
-    if (typeFilter !== 'all') count++;
-    if (statusFilter !== 'available') count++;
-    if (shapeFilter !== 'all') count++;
-    if (cantidadFilter !== 'all') count++;
-    if (coleccionFilter !== 'all') count++;
-    if (priceRange[0] !== priceMinMax.min || priceRange[1] !== priceMinMax.max) count++;
+    if (filters.search) count++;
+    if (filters.colorFilter !== 'all') count++;
+    if (filters.qualityFilter !== 'all') count++;
+    if (filters.typeFilter !== 'all') count++;
+    if (filters.statusFilter !== 'available') count++;
+    if (filters.shapeFilter !== 'all') count++;
+    if (filters.cantidadFilter !== 'all') count++;
+    if (filters.coleccionFilter !== 'all') count++;
+    if (filters.priceRange[0] !== priceMinMax.min || filters.priceRange[1] !== priceMinMax.max) count++;
     return count;
-  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, coleccionFilter, priceRange, priceMinMax]);
+  }, [filters, priceMinMax]);
 
   // Props for the memoized FilterContent component
   const filterContentProps: FilterContentProps = {
+    // Filter values
     search,
-    setSearch,
     statusFilter,
-    setStatusFilter,
-    sortBy,
-    setSortBy,
+    sortBy: filters.sortBy,
     typeFilter,
-    setTypeFilter,
     cantidadFilter,
-    setCantidadFilter,
     colorFilter,
-    setColorFilter,
     shapeFilter,
-    setShapeFilter,
     qualityFilter,
-    setQualityFilter,
     coleccionFilter,
-    setColeccionFilter,
     priceRange,
+    // Setters
+    setSearch,
+    setStatusFilter,
+    setSortBy,
+    setTypeFilter,
+    setCantidadFilter,
+    setColorFilter,
+    setShapeFilter,
+    setQualityFilter,
+    setColeccionFilter,
     setPriceRange,
+    // UI state
     showAdvancedFilters,
     setShowAdvancedFilters,
+    // Actions
     hasFilters,
     handleClearFilters,
+    // Data
     searchInputRef,
     sortedInventory,
     analyticsHook,
+    // Filter options
     colors,
     shapes,
     qualities,
     colecciones,
     priceMinMax,
+    // Theme
     isLight,
     theme,
   };

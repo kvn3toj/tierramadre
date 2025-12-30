@@ -9,6 +9,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Achievement } from './AchievementToast';
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('Gamification');
 
 // =============================================================================
 // TYPES
@@ -157,7 +160,7 @@ const loadState = (): GamificationState => {
       return { ...DEFAULT_STATE, ...parsed };
     }
   } catch (e) {
-    console.error('Failed to load gamification state:', e);
+    log.error('Failed to load state:', e);
   }
   return DEFAULT_STATE;
 };
@@ -169,7 +172,7 @@ const saveState = (state: GamificationState) => {
       lastUpdate: new Date().toISOString(),
     }));
   } catch (e) {
-    console.error('Failed to save gamification state:', e);
+    log.error('Failed to save state:', e);
   }
 };
 
@@ -206,7 +209,7 @@ export const useGamification = (): [GamificationState, GamificationActions, Achi
       ...prev,
       xp: prev.xp + amount,
     }));
-    console.log(`[Gamification] +${amount} XP: ${reason}`);
+    log.info(`+${amount} XP:`, reason);
   }, []);
 
   // Record action
