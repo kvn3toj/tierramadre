@@ -188,16 +188,8 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
     calidad: 'premium_quality',
   };
 
-  // Generate recommendations
-  const recommendations = [
-    generateRecommendation(items, priorityToCriteria[priority]),
-    ...(priority === 'todos'
-      ? [
-          generateRecommendation(items, 'best_investment'),
-          generateRecommendation(items, 'premium_quality'),
-        ]
-      : []),
-  ];
+  // Generate recommendation based on selected priority only
+  const currentRecommendation = generateRecommendation(items, priorityToCriteria[priority]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -275,9 +267,7 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
         {/* Recommendations View */}
         {viewMode === 'recommendations' && (
           <Box>
-            {recommendations.map((rec, idx) => (
-              <RecommendationCard key={idx} recommendation={rec} />
-            ))}
+            <RecommendationCard recommendation={currentRecommendation} />
           </Box>
         )}
 

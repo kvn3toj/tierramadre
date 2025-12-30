@@ -130,9 +130,10 @@ export default function WelcomeScreen() {
           src="/logo-brand.png"
           alt="Tierra Madre - Esencia y Poder"
           sx={{
-            width: { xs: '50vw', sm: 260 },
-            maxWidth: 290,
+            width: { xs: '70vw', sm: 360 },
+            maxWidth: 400,
             height: 'auto',
+            mb: 1,
           }}
         />
       </Fade>
@@ -140,7 +141,7 @@ export default function WelcomeScreen() {
       {/* Choice View */}
       {viewMode === 'choice' && (
         <Fade in timeout={800}>
-          <Stack spacing={2} sx={{ width: { xs: '65vw', sm: 300 }, maxWidth: 340, mt: 2.5 }}>
+          <Stack spacing={2} sx={{ width: { xs: '70vw', sm: 340 }, maxWidth: 400, mt: 1.5 }}>
             {/* Full Access Button */}
             <Button
               variant="contained"
