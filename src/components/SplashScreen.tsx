@@ -1,21 +1,22 @@
 /**
  * SplashScreen - Opening animation for Tierra Madre app
  *
- * Displays on cold start with:
- * - Dark background with emerald glow
- * - Logo scale-up animation
- * - Brand name fade-in
- * - Smooth exit transition
+ * Matches WelcomeScreen styling exactly for seamless transition.
+ * Displays on cold start with animated logo and brand elements.
  */
 
 import { motion } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
+import { brandColors } from '../theme';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface SplashScreenProps {
   onComplete?: () => void;
 }
 
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
+  const { t } = useLanguage();
+
   return (
     <Box
       component={motion.div}
@@ -23,95 +24,105 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
       sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: `
-          radial-gradient(ellipse at center, rgba(0, 174, 122, 0.15) 0%, transparent 50%),
-          linear-gradient(180deg, #0D0D0D 0%, #1C1C1E 100%)
-        `,
-        zIndex: 9999,
+        bgcolor: brandColors.darkBg,
+        background: `linear-gradient(180deg, ${brandColors.darkBg} 0%, #0a0a0a 100%)`,
+        position: 'relative',
         overflow: 'hidden',
       }}
     >
-      {/* Emerald glow effect behind logo */}
+      {/* Decorative emerald glow - matches WelcomeScreen */}
       <Box
         component={motion.div}
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ scale: 1, opacity: 0.6 }}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.8, ease: 'easeOut' }}
         sx={{
           position: 'absolute',
-          width: 300,
-          height: 300,
+          width: 400,
+          height: 400,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0, 174, 122, 0.25) 0%, transparent 70%)',
-          filter: 'blur(40px)',
+          background: `radial-gradient(circle, ${brandColors.emeraldGreen}15 0%, transparent 70%)`,
+          top: '10%',
+          filter: 'blur(60px)',
         }}
       />
 
-      {/* Logo */}
+      {/* Logo - matches WelcomeScreen */}
       <Box
         component={motion.img}
-        src="/logo-symbol-only.png"
+        src="/logo-tierra-madre.png"
         alt="Tierra Madre"
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 0.9 }}
         transition={{
           duration: 0.6,
-          ease: [0.34, 1.56, 0.64, 1], // Spring-like ease
-        }}
-        sx={{
-          width: 120,
-          height: 'auto',
-          mb: 3,
-          filter: 'drop-shadow(0 0 20px rgba(0, 174, 122, 0.3))',
+          ease: [0.34, 1.56, 0.64, 1],
         }}
         onAnimationComplete={() => {
-          // After logo animation, wait a moment then signal complete
           setTimeout(() => onComplete?.(), 1400);
+        }}
+        sx={{
+          height: 80,
+          mb: 4,
         }}
       />
 
-      {/* Brand Name */}
+      {/* Title - matches WelcomeScreen */}
       <Typography
         component={motion.h1}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.5 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+        variant="h5"
         sx={{
-          fontFamily: '"Libre Baskerville", serif',
-          fontSize: '1.75rem',
-          fontWeight: 700,
-          color: '#FFFFFF',
-          letterSpacing: '0.15em',
+          color: '#ffffff',
+          fontFamily: '"Libre Baskerville", Georgia, serif',
+          fontWeight: 400,
+          letterSpacing: '0.1em',
+          mb: 1,
           textTransform: 'uppercase',
         }}
       >
-        Tierra Madre
+        {t.auth.studio}
       </Typography>
 
-      {/* Tagline */}
+      {/* Subtitle - matches WelcomeScreen */}
       <Typography
         component={motion.p}
         initial={{ opacity: 0 }}
-        animate={{ opacity: 0.7 }}
-        transition={{ delay: 0.7, duration: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5, duration: 0.5 }}
+        variant="body2"
         sx={{
-          fontFamily: '"Inter", sans-serif',
-          fontSize: '0.875rem',
-          color: '#00AE7A',
-          mt: 1,
+          color: brandColors.emeraldGreen,
+          letterSpacing: '0.2em',
+          mb: 4,
+          fontSize: '0.75rem',
+        }}
+      >
+        {t.auth.welcomeSubtitle}
+      </Typography>
+
+      {/* Footer - matches WelcomeScreen */}
+      <Typography
+        component={motion.span}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.7, duration: 0.5 }}
+        variant="caption"
+        sx={{
+          position: 'absolute',
+          bottom: 32,
+          color: '#444',
           letterSpacing: '0.1em',
         }}
       >
-        Esencia y Poder
+        {t.auth.colombianEmeralds}
       </Typography>
     </Box>
   );
