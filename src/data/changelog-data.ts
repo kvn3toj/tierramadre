@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2025-12-31T06:10:54.442Z
+ * Generated at: 2025-12-31T06:13:20.518Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2025-12-31T06:10:54.442Z",
+  "generatedAt": "2025-12-31T06:13:20.518Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "1 Dic, 2025",
@@ -56,28 +56,28 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "084c84f",
-    "lastCommitDate": "2025-12-31 01:10:50 -0500"
+    "lastCommitHash": "d70f923",
+    "lastCommitDate": "2025-12-31 01:13:16 -0500"
   },
   "stats": {
-    "totalCommits": 263,
-    "totalAdditions": 210880,
-    "totalDeletions": 52621,
-    "totalFilesChanged": 1461,
-    "netLines": 158259
+    "totalCommits": 265,
+    "totalAdditions": 215471,
+    "totalDeletions": 53415,
+    "totalFilesChanged": 1487,
+    "netLines": 162056
   },
   "categoryStats": {
-    "bugfix": 79,
+    "bugfix": 80,
+    "auth": 7,
     "other": 93,
-    "auth": 6,
     "ux": 51,
     "performance": 10,
     "analytics": 3,
     "cleanup": 21
   },
   "typeStats": {
-    "fix": 103,
-    "feat": 110,
+    "fix": 104,
+    "feat": 111,
     "other": 11,
     "refactor": 26,
     "style": 3,
@@ -95,7 +95,7 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "src/App.tsx",
-      "count": 25
+      "count": 26
     },
     {
       "file": "src/components/ios/IOSMoreSheet.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 255
+      "commits": 257
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,37 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "d70f923",
+      "message": "Add driveId parameter for Shared Drive file creation",
+      "fullMessage": "fix: Add driveId parameter for Shared Drive file creation",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2025-12-31",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 6,
+      "deletions": 3,
+      "filesChanged": 1
+    },
+    {
+      "hash": "af0aeaf",
+      "message": "Add admin feedback system with screenshot capture",
+      "fullMessage": "feat: Add admin feedback system with screenshot capture",
+      "author": "Kvn3Toj",
+      "relativeTime": "30 seconds ago",
+      "date": "2025-12-31",
+      "type": "feat",
+      "category": "auth",
+      "additions": 4585,
+      "deletions": 791,
+      "filesChanged": 25
+    },
+    {
       "hash": "084c84f",
       "message": "Use direct upload for Shared Drive migration",
       "fullMessage": "fix: Use direct upload for Shared Drive migration",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "2 minutes ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "bugfix",
@@ -155,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Automate changelog generation with git post-commit hook",
       "fullMessage": "feat: Automate changelog generation with git post-commit hook",
       "author": "Kvn3Toj",
-      "relativeTime": "9 minutes ago",
+      "relativeTime": "12 minutes ago",
       "date": "2025-12-31",
       "type": "feat",
       "category": "other",
@@ -168,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Add admin changelog page with Mermaid diagrams",
       "fullMessage": "feat: Add admin changelog page with Mermaid diagrams",
       "author": "Kvn3Toj",
-      "relativeTime": "58 minutes ago",
+      "relativeTime": "61 minutes ago",
       "date": "2025-12-31",
       "type": "feat",
       "category": "auth",
@@ -181,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Gamification system, tracking context & UI improvements",
       "fullMessage": "feat: Gamification system, tracking context & UI improvements",
       "author": "Kvn3Toj",
-      "relativeTime": "64 minutes ago",
+      "relativeTime": "66 minutes ago",
       "date": "2025-12-31",
       "type": "feat",
       "category": "ux",
@@ -194,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Service Worker cleanup to prevent stale cache",
       "fullMessage": "fix: Add Service Worker cleanup to prevent stale cache",
       "author": "Kvn3Toj",
-      "relativeTime": "66 minutes ago",
+      "relativeTime": "68 minutes ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "performance",
@@ -558,7 +584,7 @@ export const changelogData: ChangelogData = {
       "message": "Redesign mobile filters with modern pill-based UI",
       "fullMessage": "feat: Redesign mobile filters with modern pill-based UI",
       "author": "Kvn3Toj",
-      "relativeTime": "31 hours ago",
+      "relativeTime": "32 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "ux",
