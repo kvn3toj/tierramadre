@@ -11,18 +11,28 @@ const FEEDBACK_SPREADSHEET_ID = process.env.FEEDBACK_SPREADSHEET_ID || '1Nl2gxfZ
 const FEEDBACK_SHEET_NAME = 'Feedback';
 
 // Column indices (0-indexed, matching FEEDBACK_HEADERS in submit-feedback.js)
+// 37 columns: A-AK
 const COLUMN_MAP = {
-  timestamp: 0,      // A
-  id: 1,             // B
-  status: 23,        // X
-  assignee: 24,      // Y
-  resolvedAt: 25,    // Z
-  resolutionTime: 26, // AA
-  notes: 27,         // AB
-  relatedIds: 28,    // AC
-  tags: 11,          // L
-  priority: 9,       // J
-  severity: 10,      // K
+  timestamp: 0,        // A
+  id: 1,               // B
+  priority: 9,         // J
+  severity: 10,        // K
+  tags: 11,            // L
+  status: 23,          // X
+  assignee: 24,        // Y
+  resolvedAt: 25,      // Z
+  resolutionTime: 26,  // AA
+  notes: 27,           // AB
+  relatedIds: 28,      // AC
+  // Steve's Enhancements (AD-AK)
+  reproductionSteps: 29,  // AD
+  affectedUsers: 30,      // AE
+  workaround: 31,         // AF
+  linkedPR: 32,           // AG
+  firstResponseAt: 33,    // AH
+  firstResponseTime: 34,  // AI
+  reopenCount: 35,        // AJ
+  satisfactionScore: 36,  // AK
 };
 
 /**
@@ -92,6 +102,12 @@ export default async function handler(req, res) {
       priority,
       severity,
       relatedIds,
+      // Steve's Enhancements
+      reproductionSteps,
+      affectedUsers,
+      workaround,
+      linkedPR,
+      satisfactionScore,
     } = req.body;
 
     if (!id) {
@@ -105,7 +121,7 @@ export default async function handler(req, res) {
     // Get all rows to find the one with matching ID
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: FEEDBACK_SPREADSHEET_ID,
-      range: `${FEEDBACK_SHEET_NAME}!A:AC`,
+      range: `${FEEDBACK_SHEET_NAME}!A:AK`,
     });
 
     const rows = response.data.values;
@@ -162,8 +178,9 @@ export default async function handler(req, res) {
         });
       }
 
-      // If reopening, clear resolution data
+      // If reopening, clear resolution data and increment reopen count
       if (status === 'open' || status === 'in_progress') {
+        const wasResolved = ['resolved', 'wontfix', 'duplicate'].includes(existingRow[COLUMN_MAP.status]);
         if (existingRow[COLUMN_MAP.resolvedAt]) {
           updates.push({
             range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.resolvedAt)}${rowNum}`,
@@ -172,6 +189,15 @@ export default async function handler(req, res) {
           updates.push({
             range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.resolutionTime)}${rowNum}`,
             values: [['']],
+          });
+        }
+
+        // Increment reopen count if it was previously resolved
+        if (wasResolved) {
+          const currentReopenCount = parseInt(existingRow[COLUMN_MAP.reopenCount] || '0', 10);
+          updates.push({
+            range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.reopenCount)}${rowNum}`,
+            values: [[String(currentReopenCount + 1)]],
           });
         }
       }
@@ -183,6 +209,23 @@ export default async function handler(req, res) {
         range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.assignee)}${rowNum}`,
         values: [[assignee]],
       });
+
+      // Track first response time when assignee is set for the first time
+      if (assignee && !existingRow[COLUMN_MAP.firstResponseAt]) {
+        const now = new Date();
+        const createdAt = new Date(existingRow[COLUMN_MAP.timestamp]);
+        const firstResponseTimeHours = Math.round((now - createdAt) / (1000 * 60 * 60) * 10) / 10;
+
+        updates.push({
+          range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.firstResponseAt)}${rowNum}`,
+          values: [[now.toISOString()]],
+        });
+
+        updates.push({
+          range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.firstResponseTime)}${rowNum}`,
+          values: [[String(firstResponseTimeHours)]],
+        });
+      }
     }
 
     // Notes update
@@ -225,6 +268,48 @@ export default async function handler(req, res) {
       });
     }
 
+    // Steve's Enhancements - New fields (AD-AK)
+
+    // Reproduction steps update
+    if (reproductionSteps !== undefined) {
+      updates.push({
+        range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.reproductionSteps)}${rowNum}`,
+        values: [[reproductionSteps]],
+      });
+    }
+
+    // Affected users update
+    if (affectedUsers !== undefined) {
+      updates.push({
+        range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.affectedUsers)}${rowNum}`,
+        values: [[affectedUsers]],
+      });
+    }
+
+    // Workaround update
+    if (workaround !== undefined) {
+      updates.push({
+        range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.workaround)}${rowNum}`,
+        values: [[workaround]],
+      });
+    }
+
+    // Linked PR update
+    if (linkedPR !== undefined) {
+      updates.push({
+        range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.linkedPR)}${rowNum}`,
+        values: [[linkedPR]],
+      });
+    }
+
+    // Satisfaction score update
+    if (satisfactionScore !== undefined) {
+      updates.push({
+        range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.satisfactionScore)}${rowNum}`,
+        values: [[String(satisfactionScore)]],
+      });
+    }
+
     // Apply updates
     if (updates.length > 0) {
       await sheets.spreadsheets.values.batchUpdate({
@@ -244,6 +329,12 @@ export default async function handler(req, res) {
     if (priority !== undefined) changedFields.push(`priority=${priority}`);
     if (severity !== undefined) changedFields.push(`severity=${severity}`);
     if (relatedIds !== undefined) changedFields.push('relatedIds=updated');
+    // Steve's Enhancements
+    if (reproductionSteps !== undefined) changedFields.push('reproductionSteps=updated');
+    if (affectedUsers !== undefined) changedFields.push(`affectedUsers=${affectedUsers}`);
+    if (workaround !== undefined) changedFields.push('workaround=updated');
+    if (linkedPR !== undefined) changedFields.push('linkedPR=updated');
+    if (satisfactionScore !== undefined) changedFields.push(`satisfactionScore=${satisfactionScore}`);
 
     console.log(`Feedback ${id} updated: ${changedFields.join(', ')}`);
 

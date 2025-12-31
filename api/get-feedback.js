@@ -81,7 +81,7 @@ export default async function handler(req, res) {
     try {
       response = await sheets.spreadsheets.values.get({
         spreadsheetId: FEEDBACK_SPREADSHEET_ID,
-        range: `${FEEDBACK_SHEET_NAME}!A:AC`,
+        range: `${FEEDBACK_SHEET_NAME}!A:AK`,
       });
     } catch (error) {
       // Sheet might not exist yet
@@ -129,6 +129,21 @@ export default async function handler(req, res) {
       // Convert severity to number
       if (item.severity) {
         item.severity = parseInt(item.severity, 10) || 3;
+      }
+
+      // Convert reopenCount to number
+      if (item.reopenCount) {
+        item.reopenCount = parseInt(item.reopenCount, 10) || 0;
+      }
+
+      // Convert satisfactionScore to number
+      if (item.satisfactionScore) {
+        item.satisfactionScore = parseInt(item.satisfactionScore, 10) || null;
+      }
+
+      // Convert firstResponseTime to number
+      if (item.firstResponseTime) {
+        item.firstResponseTime = parseFloat(item.firstResponseTime) || null;
       }
 
       // Optionally exclude screenshots to reduce payload
@@ -237,7 +252,7 @@ export default async function handler(req, res) {
 }
 
 /**
- * Calculate metrics from feedback data
+ * Calculate metrics from feedback data (Enhanced by Steve)
  */
 function calculateMetrics(items) {
   const total = items.length;
@@ -273,8 +288,26 @@ function calculateMetrics(items) {
     unknown: 0,
   };
 
+  // Affected users counts
+  const byAffectedUsers = {
+    single: 0,
+    multiple: 0,
+    all: 0,
+    unknown: 0,
+  };
+
   // Resolution times (for resolved items)
   const resolutionTimes = [];
+
+  // First response times
+  const firstResponseTimes = [];
+
+  // Satisfaction scores
+  const satisfactionScores = [];
+
+  // Reopen counts
+  let totalReopens = 0;
+  let itemsReopened = 0;
 
   // Process each item
   items.forEach((item) => {
@@ -302,15 +335,45 @@ function calculateMetrics(items) {
     const device = item.deviceType || 'unknown';
     byDevice[device] = (byDevice[device] || 0) + 1;
 
+    // Affected users
+    const affected = item.affectedUsers || 'unknown';
+    if (byAffectedUsers[affected] !== undefined) {
+      byAffectedUsers[affected]++;
+    }
+
     // Resolution time
     if (item.resolutionTime && !isNaN(parseFloat(item.resolutionTime))) {
       resolutionTimes.push(parseFloat(item.resolutionTime));
+    }
+
+    // First response time
+    if (item.firstResponseTime && !isNaN(parseFloat(item.firstResponseTime))) {
+      firstResponseTimes.push(parseFloat(item.firstResponseTime));
+    }
+
+    // Satisfaction score
+    if (item.satisfactionScore && !isNaN(parseInt(item.satisfactionScore))) {
+      satisfactionScores.push(parseInt(item.satisfactionScore));
+    }
+
+    // Reopen tracking
+    if (item.reopenCount && parseInt(item.reopenCount) > 0) {
+      totalReopens += parseInt(item.reopenCount);
+      itemsReopened++;
     }
   });
 
   // Calculate averages
   const avgResolutionTime = resolutionTimes.length > 0
     ? resolutionTimes.reduce((a, b) => a + b, 0) / resolutionTimes.length
+    : null;
+
+  const avgFirstResponseTime = firstResponseTimes.length > 0
+    ? firstResponseTimes.reduce((a, b) => a + b, 0) / firstResponseTimes.length
+    : null;
+
+  const avgSatisfaction = satisfactionScores.length > 0
+    ? satisfactionScores.reduce((a, b) => a + b, 0) / satisfactionScores.length
     : null;
 
   // Find oldest open item
@@ -326,33 +389,87 @@ function calculateMetrics(items) {
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
   const thisWeek = items.filter((i) => new Date(i.timestamp) >= oneWeekAgo).length;
 
+  // Last week's count (for trend)
+  const twoWeeksAgo = new Date();
+  twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+  const lastWeek = items.filter((i) => {
+    const ts = new Date(i.timestamp);
+    return ts >= twoWeeksAgo && ts < oneWeekAgo;
+  }).length;
+
+  // SLA metrics
+  const sla = {
+    firstResponseTarget: 4, // hours
+    criticalResolutionTarget: 24, // hours
+    highResolutionTarget: 48, // hours
+    avgFirstResponse: avgFirstResponseTime ? Math.round(avgFirstResponseTime * 10) / 10 : null,
+    avgCriticalResolution: null,
+    avgHighResolution: null,
+  };
+
+  // Calculate priority-specific resolution times
+  const criticalItems = items.filter((i) => i.priority === 'critical' && i.resolutionTime);
+  if (criticalItems.length > 0) {
+    const criticalTimes = criticalItems.map((i) => parseFloat(i.resolutionTime));
+    sla.avgCriticalResolution = Math.round((criticalTimes.reduce((a, b) => a + b, 0) / criticalTimes.length) * 10) / 10;
+  }
+
+  const highItems = items.filter((i) => i.priority === 'high' && i.resolutionTime);
+  if (highItems.length > 0) {
+    const highTimes = highItems.map((i) => parseFloat(i.resolutionTime));
+    sla.avgHighResolution = Math.round((highTimes.reduce((a, b) => a + b, 0) / highTimes.length) * 10) / 10;
+  }
+
   return {
     total,
     thisWeek,
+    lastWeek,
+    weeklyTrend: lastWeek > 0 ? Math.round(((thisWeek - lastWeek) / lastWeek) * 100) : 0,
     byStatus,
     byPriority,
     byCategory,
     byFeature,
     byDevice,
+    byAffectedUsers,
     avgResolutionTimeHours: avgResolutionTime ? Math.round(avgResolutionTime * 10) / 10 : null,
+    avgFirstResponseTimeHours: avgFirstResponseTime ? Math.round(avgFirstResponseTime * 10) / 10 : null,
+    avgSatisfactionScore: avgSatisfaction ? Math.round(avgSatisfaction * 10) / 10 : null,
+    reopenRate: byStatus.resolved > 0 ? Math.round((itemsReopened / byStatus.resolved) * 100) : 0,
+    totalReopens,
+    sla,
     oldestOpenId: oldestOpen?.id || null,
     oldestOpenTimestamp: oldestOpen?.timestamp || null,
   };
 }
 
 /**
- * Return empty metrics structure
+ * Return empty metrics structure (Enhanced)
  */
 function getEmptyMetrics() {
   return {
     total: 0,
     thisWeek: 0,
+    lastWeek: 0,
+    weeklyTrend: 0,
     byStatus: { open: 0, in_progress: 0, resolved: 0, wontfix: 0, duplicate: 0 },
     byPriority: { critical: 0, high: 0, medium: 0, low: 0 },
     byCategory: {},
     byFeature: {},
     byDevice: { mobile: 0, tablet: 0, desktop: 0, unknown: 0 },
+    byAffectedUsers: { single: 0, multiple: 0, all: 0, unknown: 0 },
     avgResolutionTimeHours: null,
+    avgFirstResponseTimeHours: null,
+    avgSatisfactionScore: null,
+    reopenRate: 0,
+    totalReopens: 0,
+    sla: {
+      firstResponseTarget: 4,
+      criticalResolutionTarget: 24,
+      highResolutionTarget: 48,
+      avgFirstResponse: null,
+      avgCriticalResolution: null,
+      avgHighResolution: null,
+    },
     oldestOpenId: null,
     oldestOpenTimestamp: null,
   };

@@ -40,6 +40,8 @@ export type DeviceType = 'mobile' | 'tablet' | 'desktop' | 'unknown';
 // MAIN INTERFACES
 // =============================================================================
 
+export type AffectedUsersType = 'single' | 'multiple' | 'all' | 'unknown';
+
 export interface FeedbackItem {
   // Core identification
   id: string;
@@ -87,6 +89,16 @@ export interface FeedbackItem {
   notes?: string;
   relatedIds?: string;
 
+  // Steve's Enhancements (AD-AK)
+  reproductionSteps?: string; // Steps to reproduce the issue
+  affectedUsers?: AffectedUsersType; // Number/type of affected users
+  workaround?: string; // Temporary workaround if available
+  linkedPR?: string; // GitHub PR link for the fix
+  firstResponseAt?: string; // Timestamp of first response/acknowledgment
+  firstResponseTime?: number; // Hours until first response
+  reopenCount?: number; // Number of times issue was reopened
+  satisfactionScore?: 1 | 2 | 3 | 4 | 5 | null; // User satisfaction after resolution
+
   // Computed (by API)
   ageHours?: number; // Hours since creation (for open items)
   _rowIndex?: number; // Sheet row index
@@ -131,15 +143,32 @@ export interface HighlightBox {
 // METRICS
 // =============================================================================
 
+export interface SLAMetrics {
+  firstResponseTarget: number; // hours
+  criticalResolutionTarget: number; // hours
+  highResolutionTarget: number; // hours
+  avgFirstResponse: number | null;
+  avgCriticalResolution: number | null;
+  avgHighResolution: number | null;
+}
+
 export interface FeedbackMetrics {
   total: number;
   thisWeek: number;
+  lastWeek: number;
+  weeklyTrend: number; // percentage change
   byStatus: Record<FeedbackStatus, number>;
   byPriority: Record<FeedbackPriority, number>;
   byCategory: Record<string, number>;
   byFeature: Record<string, number>;
   byDevice: Record<DeviceType, number>;
+  byAffectedUsers: Record<AffectedUsersType, number>;
   avgResolutionTimeHours: number | null;
+  avgFirstResponseTimeHours: number | null;
+  avgSatisfactionScore: number | null;
+  reopenRate: number; // percentage
+  totalReopens: number;
+  sla: SLAMetrics;
   oldestOpenId: string | null;
   oldestOpenTimestamp: string | null;
 }
@@ -301,4 +330,32 @@ export const STATUS_OPTIONS: { value: FeedbackStatus; label: string; color: stri
   { value: 'resolved', label: 'Resuelto', color: '#4caf50' },
   { value: 'wontfix', label: 'No se hará', color: '#9e9e9e' },
   { value: 'duplicate', label: 'Duplicado', color: '#607d8b' },
+];
+
+// Steve's Enhancements
+export interface AffectedUsersOption {
+  value: AffectedUsersType;
+  label: string;
+  icon: string;
+}
+
+export const AFFECTED_USERS_OPTIONS: AffectedUsersOption[] = [
+  { value: 'single', label: 'Usuario único', icon: '👤' },
+  { value: 'multiple', label: 'Múltiples usuarios', icon: '👥' },
+  { value: 'all', label: 'Todos los usuarios', icon: '🌐' },
+  { value: 'unknown', label: 'Desconocido', icon: '❓' },
+];
+
+export interface SatisfactionOption {
+  value: 1 | 2 | 3 | 4 | 5;
+  label: string;
+  icon: string;
+}
+
+export const SATISFACTION_OPTIONS: SatisfactionOption[] = [
+  { value: 1, label: 'Muy insatisfecho', icon: '😠' },
+  { value: 2, label: 'Insatisfecho', icon: '😟' },
+  { value: 3, label: 'Neutral', icon: '😐' },
+  { value: 4, label: 'Satisfecho', icon: '😊' },
+  { value: 5, label: 'Muy satisfecho', icon: '🤩' },
 ];

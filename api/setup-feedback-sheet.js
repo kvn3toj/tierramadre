@@ -13,7 +13,7 @@ const FEEDBACK_SPREADSHEET_ID = process.env.FEEDBACK_SPREADSHEET_ID || '1Nl2gxfZ
 const FEEDBACK_SHEET_NAME = 'Feedback';
 const DASHBOARD_SHEET_NAME = 'Dashboard';
 
-// Enhanced column headers (29 columns: A-AC)
+// Enhanced column headers (37 columns: A-AK)
 const FEEDBACK_HEADERS = [
   // Core identification (A-D)
   'timestamp',        // A: ISO timestamp
@@ -34,10 +34,10 @@ const FEEDBACK_HEADERS = [
   'tags',             // L: Comma-separated tags
 
   // Details (M-P)
-  'title',            // M: Short summary (NEW)
+  'title',            // M: Short summary
   'description',      // N: Full description
-  'expectedBehavior', // O: What should happen (NEW)
-  'actualBehavior',   // P: What actually happened (NEW)
+  'expectedBehavior', // O: What should happen
+  'actualBehavior',   // P: What actually happened
 
   // Media (Q-R)
   'screenshot',       // Q: Base64 or Cloudinary URL
@@ -54,13 +54,23 @@ const FEEDBACK_HEADERS = [
 
   // Tracking (X-Z)
   'status',           // X: open/in_progress/resolved/wontfix/duplicate
-  'assignee',         // Y: Who's working on it (NEW)
+  'assignee',         // Y: Who's working on it
   'resolvedAt',       // Z: Resolution timestamp
 
-  // Extended (AA-AC) - Additional columns
+  // Extended (AA-AC)
   'resolutionTime',   // AA: Hours to resolve (calculated)
   'notes',            // AB: Developer notes
   'relatedIds',       // AC: Related feedback IDs (duplicates, related)
+
+  // Steve's Enhancements (AD-AK)
+  'reproductionSteps', // AD: Steps to reproduce the issue
+  'affectedUsers',     // AE: Number/type of affected users (single, multiple, all)
+  'workaround',        // AF: Temporary workaround if available
+  'linkedPR',          // AG: GitHub PR link for the fix
+  'firstResponseAt',   // AH: Timestamp of first response/acknowledgment
+  'firstResponseTime', // AI: Hours until first response (calculated)
+  'reopenCount',       // AJ: Number of times issue was reopened
+  'satisfactionScore', // AK: User satisfaction after resolution (1-5)
 ];
 
 /**
@@ -85,7 +95,7 @@ function getSheetsClient() {
 }
 
 /**
- * Setup Dashboard sheet with metrics and formulas
+ * Setup Dashboard sheet with metrics and formulas (Enhanced by Steve)
  */
 async function setupDashboard(sheets) {
   const dashboardContent = [
@@ -125,35 +135,58 @@ async function setupDashboard(sheets) {
     ['📲 Tablet', '=COUNTIF(Feedback!S:S,"tablet")', '=IF(B4>0,B28/B4*100,0)&"%"', '', '', ''],
     ['💻 Desktop', '=COUNTIF(Feedback!S:S,"desktop")', '=IF(B4>0,B29/B4*100,0)&"%"', '', '', ''],
     [''],
-    // Row 31: Performance metrics
+    // Row 31: Performance metrics (Enhanced)
     ['⏱️ MÉTRICAS DE TIEMPO', '', '', '', '', ''],
     ['Tiempo promedio resolución (hrs)', '=IFERROR(AVERAGE(Feedback!AA:AA),"N/A")', '', '', '', ''],
+    ['Tiempo promedio primera respuesta (hrs)', '=IFERROR(AVERAGE(Feedback!AI:AI),"N/A")', '', '', '', ''],
     ['Feedback más antiguo abierto', '=IFERROR(MIN(FILTER(Feedback!A:A,Feedback!X:X="open")),"Ninguno")', '', '', '', ''],
     [''],
-    // Row 35: Feature breakdown
+    // Row 36: SLA Tracking (Steve's Enhancement)
+    ['🎯 SLA TRACKING', 'Meta', 'Actual', 'Estado', '', ''],
+    ['Primera respuesta (<4hrs)', '4', '=IFERROR(AVERAGE(Feedback!AI:AI),0)', '=IF(C38<=B38,"✅ OK","⚠️ LATE")', '', ''],
+    ['Resolución críticos (<24hrs)', '24', '=IFERROR(AVERAGEIF(Feedback!J:J,"critical",Feedback!AA:AA),0)', '=IF(C39<=B39,"✅ OK","⚠️ LATE")', '', ''],
+    ['Resolución alta (<48hrs)', '48', '=IFERROR(AVERAGEIF(Feedback!J:J,"high",Feedback!AA:AA),0)', '=IF(C40<=B40,"✅ OK","⚠️ LATE")', '', ''],
+    [''],
+    // Row 42: Weekly Trends (Steve's Enhancement)
+    ['📈 TENDENCIAS SEMANALES', 'Esta semana', 'Semana pasada', 'Cambio', '', ''],
+    ['Nuevos reportes', '=COUNTIFS(Feedback!A:A,">="&(TODAY()-7),Feedback!A:A,"<="&TODAY())', '=COUNTIFS(Feedback!A:A,">="&(TODAY()-14),Feedback!A:A,"<"&(TODAY()-7))', '=IF(C43>0,(B43-C43)/C43*100,0)&"%"', '', ''],
+    ['Resueltos', '=COUNTIFS(Feedback!Z:Z,">="&(TODAY()-7),Feedback!Z:Z,"<="&TODAY())', '=COUNTIFS(Feedback!Z:Z,">="&(TODAY()-14),Feedback!Z:Z,"<"&(TODAY()-7))', '=IF(C44>0,(B44-C44)/C44*100,0)&"%"', '', ''],
+    [''],
+    // Row 46: Feature breakdown
     ['🎯 POR FEATURE', 'Cantidad', 'Abiertos', '', '', ''],
     ['Inventario', '=COUNTIF(Feedback!G:G,"inventory")', '=COUNTIFS(Feedback!G:G,"inventory",Feedback!X:X,"open")', '', '', ''],
     ['Cotizaciones', '=COUNTIF(Feedback!G:G,"cotizacion")', '=COUNTIFS(Feedback!G:G,"cotizacion",Feedback!X:X,"open")', '', '', ''],
     ['Home', '=COUNTIF(Feedback!G:G,"home")', '=COUNTIFS(Feedback!G:G,"home",Feedback!X:X,"open")', '', '', ''],
     ['Embajadores', '=COUNTIF(Feedback!G:G,"ambassadors")', '=COUNTIFS(Feedback!G:G,"ambassadors",Feedback!X:X,"open")', '', '', ''],
     ['Cuentas', '=COUNTIF(Feedback!G:G,"accounts")', '=COUNTIFS(Feedback!G:G,"accounts",Feedback!X:X,"open")', '', '', ''],
-    ['Otro', '=B4-B36-B37-B38-B39-B40', '', '', '', ''],
+    ['Otro', '=B4-B47-B48-B49-B50-B51', '', '', '', ''],
     [''],
-    // Row 43: Top reporters
+    // Row 54: Quality Metrics (Steve's Enhancement)
+    ['📊 MÉTRICAS DE CALIDAD', '', '', '', '', ''],
+    ['Tasa de reapertura', '=IFERROR(COUNTIF(Feedback!AJ:AJ,">0")/B9*100,0)&"%"', '', 'Total reabiertos', '=SUMIF(Feedback!AJ:AJ,">0",Feedback!AJ:AJ)', ''],
+    ['Satisfacción promedio', '=IFERROR(AVERAGE(Feedback!AK:AK),"N/A")', '', 'Respuestas', '=COUNTA(Feedback!AK:AK)-1', ''],
+    [''],
+    // Row 58: Affected Users (Steve's Enhancement)
+    ['👥 USUARIOS AFECTADOS', 'Cantidad', '', '', '', ''],
+    ['Usuario único', '=COUNTIF(Feedback!AE:AE,"single")', '', '', '', ''],
+    ['Múltiples usuarios', '=COUNTIF(Feedback!AE:AE,"multiple")', '', '', '', ''],
+    ['Todos los usuarios', '=COUNTIF(Feedback!AE:AE,"all")', '', '', '', ''],
+    [''],
+    // Row 63: Top reporters
     ['👥 TOP REPORTADORES', 'Cantidad', '', '', '', ''],
     ['(Ver columna W de Feedback)', '', '', '', '', ''],
   ];
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: FEEDBACK_SPREADSHEET_ID,
-    range: `${DASHBOARD_SHEET_NAME}!A1:F45`,
+    range: `${DASHBOARD_SHEET_NAME}!A1:F65`,
     valueInputOption: 'USER_ENTERED', // Important for formulas!
     resource: {
       values: dashboardContent,
     },
   });
 
-  console.log('Dashboard sheet initialized with formulas');
+  console.log('Dashboard sheet initialized with enhanced formulas');
 }
 
 /**
@@ -227,7 +260,7 @@ export default async function handler(req, res) {
     // Force update headers
     await sheets.spreadsheets.values.update({
       spreadsheetId: FEEDBACK_SPREADSHEET_ID,
-      range: `${FEEDBACK_SHEET_NAME}!A1:AC1`,
+      range: `${FEEDBACK_SHEET_NAME}!A1:AK1`,
       valueInputOption: 'RAW',
       resource: {
         values: [FEEDBACK_HEADERS],
