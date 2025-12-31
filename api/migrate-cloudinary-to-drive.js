@@ -129,24 +129,16 @@ function getExtensionFromMimeType(mimeType) {
 }
 
 async function uploadToDrive(drive, folderId, buffer, fileName, mimeType) {
-  // Step 1: Create file metadata first (without content)
-  const fileMetadata = await drive.files.create({
+  // Use direct upload with Shared Drive support
+  // The key is to use supportsAllDrives AND specify the parent folder in requestBody
+  const { Readable } = await import('stream');
+  const stream = Readable.from(buffer);
+
+  const response = await drive.files.create({
     requestBody: {
       name: fileName,
       parents: [folderId],
     },
-    fields: 'id, name',
-    supportsAllDrives: true,
-  });
-
-  const fileId = fileMetadata.data.id;
-
-  // Step 2: Upload content to the created file
-  const { Readable } = await import('stream');
-  const stream = Readable.from(buffer);
-
-  const response = await drive.files.update({
-    fileId: fileId,
     media: {
       mimeType,
       body: stream,
