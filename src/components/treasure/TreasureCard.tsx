@@ -1,7 +1,7 @@
 /**
- * InventoryCard Component
- * Displays an inventory item in either grid or compact list view.
- * Extracted from InventoryBrowser.tsx for better modularity.
+ * TreasureCard Component
+ * Displays a treasure item in either grid or compact list view.
+ * Extracted from TreasureBrowser.tsx for better modularity.
  *
  * Performance optimized with React.memo and lazy loading.
  * Design system compliant with tokens from design-system/tokens.
@@ -26,20 +26,20 @@ import {
   Images,
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { InventoryItem } from '../../types';
+import { TreasureItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { PriceDisplay } from '../PriceDisplay';
 // Design System Tokens
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 
-export interface InventoryCardProps {
-  item: InventoryItem;
+export interface TreasureCardProps {
+  item: TreasureItem;
   isCompact: boolean;
   onCertClick: () => void;
   onClick: () => void;
 }
 
-export function InventoryCard({ item, isCompact, onCertClick: _onCertClick, onClick }: InventoryCardProps) {
+export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onClick }: TreasureCardProps) {
   const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -386,7 +386,7 @@ export function InventoryCard({ item, isCompact, onCertClick: _onCertClick, onCl
 }
 
 // Memoized version for performance - only re-renders when item data changes
-export const MemoizedInventoryCard = memo(InventoryCard, (prevProps, nextProps) => {
+export const MemoizedTreasureCard = memo(TreasureCard, (prevProps, nextProps) => {
   // Only re-render if these key properties change
   return (
     prevProps.item.item === nextProps.item.item &&
@@ -397,4 +397,4 @@ export const MemoizedInventoryCard = memo(InventoryCard, (prevProps, nextProps) 
   );
 });
 
-export default InventoryCard;
+export default TreasureCard;

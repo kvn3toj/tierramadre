@@ -9,7 +9,6 @@ export const es = {
     gallery: 'Galería',
     upload: 'Subir',
     treasure: 'Tesoros',
-    inventory: 'Tesoros', // @deprecated - use treasure
     ambassadors: 'Embajadores',
     catalog: 'Catálogo',
     calendar: 'Calendario',
@@ -40,10 +39,6 @@ export const es = {
       subtitle: 'Agregar esmeraldas',
     },
     treasure: {
-      title: 'Tesoros',
-      subtitle: 'Colección de esmeraldas',
-    },
-    inventory: { // @deprecated - use treasure
       title: 'Tesoros',
       subtitle: 'Colección de esmeraldas',
     },

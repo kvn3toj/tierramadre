@@ -25,8 +25,8 @@ export interface FeatureFlags {
   /** iOS Catalog feature */
   IOS_CATALOG: boolean;
 
-  /** iOS Inventory feature */
-  IOS_INVENTORY: boolean;
+  /** iOS Treasure feature */
+  IOS_TREASURE: boolean;
 
   /** iOS Ambassadors feature */
   IOS_AMBASSADORS: boolean;
@@ -46,7 +46,7 @@ export const FEATURES: FeatureFlags = {
   IOS_GALLERY: false,   // ⏳ Week 3-4
   IOS_CALENDAR: false,  // ⏳ Week 5-6
   IOS_CATALOG: false,   // ⏳ Week 7-8
-  IOS_INVENTORY: false, // ⏳ Week 7-8
+  IOS_TREASURE: false, // ⏳ Week 7-8
   IOS_AMBASSADORS: false, // ⏳ Future
   AB_GRID_VARIANT: 'ios-hig', // ✅ Default to iOS HIG strict compliance
 };
@@ -137,7 +137,7 @@ export function getAllFeatureFlags(): FeatureFlags {
       if ('IOS_GALLERY' in parsed) flags.IOS_GALLERY = parsed.IOS_GALLERY;
       if ('IOS_CALENDAR' in parsed) flags.IOS_CALENDAR = parsed.IOS_CALENDAR;
       if ('IOS_CATALOG' in parsed) flags.IOS_CATALOG = parsed.IOS_CATALOG;
-      if ('IOS_INVENTORY' in parsed) flags.IOS_INVENTORY = parsed.IOS_INVENTORY;
+      if ('IOS_TREASURE' in parsed) flags.IOS_TREASURE = parsed.IOS_TREASURE;
       if ('IOS_AMBASSADORS' in parsed) flags.IOS_AMBASSADORS = parsed.IOS_AMBASSADORS;
       if ('AB_GRID_VARIANT' in parsed) flags.AB_GRID_VARIANT = parsed.AB_GRID_VARIANT;
     }

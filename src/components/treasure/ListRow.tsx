@@ -1,6 +1,6 @@
 /**
  * ListRow Component
- * Compact list view row for inventory items.
+ * Compact list view row for treasure items.
  * Optimized for scanning and quick comparison.
  */
 import React from 'react';
@@ -15,13 +15,13 @@ import {
 } from '@mui/material';
 import { Heart, Scale } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { InventoryItem } from '../../types';
+import { TreasureItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { PriceDisplay } from '../PriceDisplay';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 
 interface ListRowProps {
-  item: InventoryItem;
+  item: TreasureItem;
   isFavorite: boolean;
   onItemClick: () => void;
   onCertClick: () => void;

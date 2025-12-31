@@ -15,8 +15,8 @@
 import React, { Suspense, lazy, useMemo, useCallback, useEffect } from 'react';
 import { Box } from '@mui/material';
 import { ErrorBoundary } from 'react-error-boundary';
-import { useInventory } from '../../hooks/useInventory';
-import { InventoryItem } from '../../types';
+import { useTreasure } from '../../hooks/useTreasure';
+import { TreasureItem } from '../../types';
 import { DailyOracle } from '../../data/homeContent';
 import { useGamification, AchievementToast } from './gamification';
 import { useAnalytics, useSavedFacts } from './hooks';
@@ -61,7 +61,7 @@ import WhatsAppButton from './sections/WhatsAppButton';
 // =============================================================================
 
 const Home: React.FC = () => {
-  const { inventory } = useInventory();
+  const { treasure } = useTreasure();
   const [gamificationState, gamificationActions, pendingAchievement] = useGamification();
   const analytics = useAnalytics();
   const [{ savedFacts }, savedFactsActions] = useSavedFacts();
@@ -75,7 +75,7 @@ const Home: React.FC = () => {
   }, [analytics]);
 
   // Check for new products and notify
-  useNewProductNotification({ productCount: inventory.length });
+  useNewProductNotification({ productCount: treasure.length });
 
   // Log gamification state for debugging (auto-disabled in production)
   log.debug('Gamification:', { level: gamificationState.level, xp: gamificationState.xp });
@@ -86,19 +86,19 @@ const Home: React.FC = () => {
 
   // Get newest products WITH VALID IMAGES
   const newProducts = useMemo(() => {
-    const productsWithImages = [...inventory]
-      .filter((item: InventoryItem) => {
+    const productsWithImages = [...treasure]
+      .filter((item: TreasureItem) => {
         const img = item.imagen?.trim();
         if (!img) return false;
         return img.startsWith('http') || img.startsWith('/') || img.includes('cloudinary');
       })
-      .sort((a: InventoryItem, b: InventoryItem) => (b.item || 0) - (a.item || 0))
+      .sort((a: TreasureItem, b: TreasureItem) => (b.item || 0) - (a.item || 0))
       .slice(0, MAX_PRODUCTS_DISPLAY);
 
-    log.debug('Products with images:', productsWithImages.length, 'of', inventory.length);
+    log.debug('Products with images:', productsWithImages.length, 'of', treasure.length);
 
     return productsWithImages;
-  }, [inventory]);
+  }, [treasure]);
 
   // ==========================================================================
   // HANDLERS

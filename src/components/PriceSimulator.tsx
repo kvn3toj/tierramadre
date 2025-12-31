@@ -11,8 +11,8 @@ import { Box, Paper, Divider } from '@mui/material';
 
 import { useEmeralds } from '../hooks/useEmeralds';
 import { usePriceCalculation } from '../hooks/usePriceCalculation';
-import { Emerald, InventoryItem } from '../types';
-import { inventoryData } from '../data/inventory';
+import { Emerald, TreasureItem } from '../types';
+import { treasureData } from '../data/treasure';
 import { studioCardStyles } from '../design-system';
 
 // Extracted components
@@ -56,9 +56,9 @@ export default function PriceSimulator() {
     resetAll,
   } = usePriceCalculation({ initialFactor: 1.9 });
 
-  // Selected product from gallery or inventory (UI state)
+  // Selected product from gallery or treasure (UI state)
   const [selectedEmerald, setSelectedEmerald] = useState<Emerald | null>(null);
-  const [selectedInventoryItem, setSelectedInventoryItem] = useState<InventoryItem | null>(null);
+  const [selectedTreasureItem, setSelectedTreasureItem] = useState<TreasureItem | null>(null);
   const [productSource, setProductSource] = useState<ProductSource>('gallery');
 
   // Multi-select mode for collections (enabled by default)
@@ -73,34 +73,34 @@ export default function PriceSimulator() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [productName, setProductName] = useState('');
 
-  // Filter inventory by status
-  const statusFilteredInventory = useMemo(() => {
-    if (statusFilter === 'todas') return inventoryData;
-    if (statusFilter === 'disponibles') return inventoryData.filter(item => item.estado === 'DISPONIBLE');
-    if (statusFilter === 'vendidas') return inventoryData.filter(item => item.estado === 'VENDIDA');
-    return inventoryData;
+  // Filter treasure by status
+  const statusFilteredTreasure = useMemo(() => {
+    if (statusFilter === 'todas') return treasureData;
+    if (statusFilter === 'disponibles') return treasureData.filter(item => item.estado === 'DISPONIBLE');
+    if (statusFilter === 'vendidas') return treasureData.filter(item => item.estado === 'VENDIDA');
+    return treasureData;
   }, [statusFilter]);
 
   // Filter by product type
-  const typeFilteredInventory = useMemo(() => {
-    if (productTypeFilter === 'todas') return statusFilteredInventory;
-    if (productTypeFilter === 'gemas') return statusFilteredInventory.filter(item => !item.isJewelry && item.cantidad === 1);
-    if (productTypeFilter === 'joyas') return statusFilteredInventory.filter(item => item.isJewelry);
-    if (productTypeFilter === 'lotes') return statusFilteredInventory.filter(item => !item.isJewelry && item.cantidad > 1);
-    return statusFilteredInventory;
-  }, [statusFilteredInventory, productTypeFilter]);
+  const typeFilteredTreasure = useMemo(() => {
+    if (productTypeFilter === 'todas') return statusFilteredTreasure;
+    if (productTypeFilter === 'gemas') return statusFilteredTreasure.filter(item => !item.isJewelry && item.cantidad === 1);
+    if (productTypeFilter === 'joyas') return statusFilteredTreasure.filter(item => item.isJewelry);
+    if (productTypeFilter === 'lotes') return statusFilteredTreasure.filter(item => !item.isJewelry && item.cantidad > 1);
+    return statusFilteredTreasure;
+  }, [statusFilteredTreasure, productTypeFilter]);
 
-  // Get unique shapes from type-filtered inventory
+  // Get unique shapes from type-filtered treasure
   const uniqueShapes = useMemo(() => {
-    const shapes = new Set(typeFilteredInventory.map(item => item.talla).filter(Boolean));
+    const shapes = new Set(typeFilteredTreasure.map(item => item.talla).filter(Boolean));
     return ['all', ...Array.from(shapes).sort()];
-  }, [typeFilteredInventory]);
+  }, [typeFilteredTreasure]);
 
-  // Filter inventory by shape
-  const filteredInventory = useMemo(() => {
-    if (shapeFilter === 'all') return typeFilteredInventory;
-    return typeFilteredInventory.filter(item => item.talla === shapeFilter);
-  }, [typeFilteredInventory, shapeFilter]);
+  // Filter treasure by shape
+  const filteredTreasure = useMemo(() => {
+    if (shapeFilter === 'all') return typeFilteredTreasure;
+    return typeFilteredTreasure.filter(item => item.talla === shapeFilter);
+  }, [typeFilteredTreasure, shapeFilter]);
 
   // Total investment adjusted for multiSelectMode
   const totalInvestment = multiSelectMode ? hookTotalInvestment : (hookTotalInvestment - totalProductsValue);
@@ -120,7 +120,7 @@ export default function PriceSimulator() {
       setSelectedEmerald(null);
     } else {
       setSelectedEmerald(emerald);
-      setSelectedInventoryItem(null);
+      setSelectedTreasureItem(null);
       setProductSource('gallery');
       if (emerald) {
         setProductName(emerald.name);
@@ -134,14 +134,14 @@ export default function PriceSimulator() {
     }
   };
 
-  // Handle inventory selection
-  const handleInventorySelect = (item: InventoryItem | null) => {
+  // Handle treasure selection
+  const handleTreasureSelect = (item: TreasureItem | null) => {
     if (multiSelectMode && item) {
       addProduct(item);
       setProductName('');
-      setSelectedInventoryItem(null);
+      setSelectedTreasureItem(null);
     } else {
-      setSelectedInventoryItem(item);
+      setSelectedTreasureItem(item);
       setSelectedEmerald(null);
       setProductSource('inventory');
       if (item) {
@@ -251,13 +251,13 @@ export default function PriceSimulator() {
               multiSelectMode={multiSelectMode}
               toggleMultiSelectMode={toggleMultiSelectMode}
               emeralds={emeralds}
-              filteredInventory={filteredInventory}
+              filteredTreasure={filteredTreasure}
               productName={productName}
               setProductName={setProductName}
               selectedEmerald={selectedEmerald}
-              selectedInventoryItem={selectedInventoryItem}
+              selectedTreasureItem={selectedTreasureItem}
               handleEmeraldSelect={handleEmeraldSelect}
-              handleInventorySelect={handleInventorySelect}
+              handleTreasureSelect={handleTreasureSelect}
               selectedProducts={selectedProducts}
               totalProductsValue={totalProductsValue}
               removeProduct={removeProduct}

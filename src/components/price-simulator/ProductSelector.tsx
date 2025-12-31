@@ -1,6 +1,6 @@
 /**
  * ProductSelector Component
- * Handles product selection from gallery or inventory for price simulation.
+ * Handles product selection from gallery or treasure for price simulation.
  * Extracted from PriceSimulator.tsx for better modularity.
  */
 
@@ -26,7 +26,7 @@ import {
   X,
   RotateCcw,
 } from 'lucide-react';
-import { Emerald, InventoryItem } from '../../types';
+import { Emerald, TreasureItem } from '../../types';
 import { studioColors, studioShadows, accentColors } from '../../design-system';
 import { semanticColors, goldAccent, surfacesLight } from '../../design-system/tokens/colors';
 import { formatFullCurrency as formatCurrency } from '../../utils/formatting';
@@ -45,16 +45,16 @@ export interface ProductSelectorProps {
   multiSelectMode: boolean;
   toggleMultiSelectMode: () => void;
   emeralds: Emerald[];
-  filteredInventory: InventoryItem[];
+  filteredTreasure: TreasureItem[];
   productName: string;
   setProductName: (name: string) => void;
   selectedEmerald: Emerald | null;
-  selectedInventoryItem: InventoryItem | null;
+  selectedTreasureItem: TreasureItem | null;
   handleEmeraldSelect: (emerald: Emerald | null) => void;
-  handleInventorySelect: (item: InventoryItem | null) => void;
-  selectedProducts: (Emerald | InventoryItem)[];
+  handleTreasureSelect: (item: TreasureItem | null) => void;
+  selectedProducts: (Emerald | TreasureItem)[];
   totalProductsValue: number;
-  removeProduct: (product: Emerald | InventoryItem) => void;
+  removeProduct: (product: Emerald | TreasureItem) => void;
   statusFilter: string;
   setStatusFilter: (filter: string) => void;
   productTypeFilter: string;
@@ -74,13 +74,13 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
   multiSelectMode,
   toggleMultiSelectMode,
   emeralds,
-  filteredInventory,
+  filteredTreasure,
   productName,
   setProductName,
   selectedEmerald,
-  selectedInventoryItem,
+  selectedTreasureItem,
   handleEmeraldSelect,
-  handleInventorySelect,
+  handleTreasureSelect,
   selectedProducts,
   totalProductsValue,
   removeProduct,
@@ -109,7 +109,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
         />
         <SourceChip
           icon={<ShoppingBag size={12} />}
-          label={`Inventario (${filteredInventory.length})`}
+          label={`Tesoros (${filteredTreasure.length})`}
           active={productSource === 'inventory'}
           onClick={() => setProductSource('inventory')}
         />
@@ -149,14 +149,14 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
       />
     )}
 
-    {/* Inventory Autocomplete */}
+    {/* Treasure Autocomplete */}
     {productSource === 'inventory' && (
-      <InventoryAutocomplete
-        filteredInventory={filteredInventory}
-        selectedInventoryItem={selectedInventoryItem}
+      <TreasureAutocomplete
+        filteredTreasure={filteredTreasure}
+        selectedTreasureItem={selectedTreasureItem}
         productName={productName}
         setProductName={setProductName}
-        handleInventorySelect={handleInventorySelect}
+        handleTreasureSelect={handleTreasureSelect}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
         productTypeFilter={productTypeFilter}
@@ -180,12 +180,12 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
       />
     )}
 
-    {selectedInventoryItem && !multiSelectMode && (
+    {selectedTreasureItem && !multiSelectMode && (
       <SelectedBadge
         type="inventory"
-        label={`Seleccionado de inventario #${selectedInventoryItem.item}`}
+        label={`Seleccionado de tesoros #${selectedTreasureItem.item}`}
         onClear={() => {
-          handleInventorySelect(null);
+          handleTreasureSelect(null);
           setProductName('');
         }}
       />
@@ -354,13 +354,13 @@ const GalleryAutocomplete: React.FC<GalleryAutocompleteProps> = ({
   />
 );
 
-// Inventory autocomplete with filters
-interface InventoryAutocompleteProps {
-  filteredInventory: InventoryItem[];
-  selectedInventoryItem: InventoryItem | null;
+// Treasure autocomplete with filters
+interface TreasureAutocompleteProps {
+  filteredTreasure: TreasureItem[];
+  selectedTreasureItem: TreasureItem | null;
   productName: string;
   setProductName: (name: string) => void;
-  handleInventorySelect: (item: InventoryItem | null) => void;
+  handleTreasureSelect: (item: TreasureItem | null) => void;
   statusFilter: string;
   setStatusFilter: (filter: string) => void;
   productTypeFilter: string;
@@ -370,12 +370,12 @@ interface InventoryAutocompleteProps {
   uniqueShapes: string[];
 }
 
-const InventoryAutocomplete: React.FC<InventoryAutocompleteProps> = ({
-  filteredInventory,
-  selectedInventoryItem,
+const TreasureAutocomplete: React.FC<TreasureAutocompleteProps> = ({
+  filteredTreasure,
+  selectedTreasureItem,
   productName,
   setProductName,
-  handleInventorySelect,
+  handleTreasureSelect,
   statusFilter,
   setStatusFilter,
   productTypeFilter,
@@ -426,15 +426,15 @@ const InventoryAutocomplete: React.FC<InventoryAutocompleteProps> = ({
 
     <Autocomplete
       freeSolo
-      options={filteredInventory}
-      value={selectedInventoryItem}
+      options={filteredTreasure}
+      value={selectedTreasureItem}
       inputValue={productName}
       onInputChange={(_, newValue) => setProductName(newValue)}
       onChange={(_, newValue) => {
         if (typeof newValue === 'string') {
           setProductName(newValue);
         } else {
-          handleInventorySelect(newValue);
+          handleTreasureSelect(newValue);
         }
       }}
       getOptionLabel={(option) => typeof option === 'string' ? option : `${option.nombre} - ${option.item}`}
@@ -524,7 +524,7 @@ const InventoryAutocomplete: React.FC<InventoryAutocompleteProps> = ({
         <TextField
           {...params}
           size="small"
-          placeholder="Busca en inventario por nombre o numero..."
+          placeholder="Busca en tesoros por nombre o numero..."
           sx={{
             '& .MuiOutlinedInput-root': {
               bgcolor: studioColors.surface,
@@ -550,7 +550,7 @@ const InventoryAutocomplete: React.FC<InventoryAutocompleteProps> = ({
       noOptionsText={
         <Box sx={{ py: 2, textAlign: 'center' }}>
           <Typography variant="body2" sx={{ color: studioColors.textSecondary }}>
-            No hay productos disponibles en inventario
+            No hay productos disponibles en tesoros
           </Typography>
         </Box>
       }
@@ -666,9 +666,9 @@ const SelectedBadge: React.FC<SelectedBadgeProps> = ({ type, label, imageUrl, on
 
 // Collection display
 interface CollectionDisplayProps {
-  selectedProducts: (Emerald | InventoryItem)[];
+  selectedProducts: (Emerald | TreasureItem)[];
   totalProductsValue: number;
-  removeProduct: (product: Emerald | InventoryItem) => void;
+  removeProduct: (product: Emerald | TreasureItem) => void;
 }
 
 const CollectionDisplay: React.FC<CollectionDisplayProps> = ({

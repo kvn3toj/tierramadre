@@ -1,6 +1,6 @@
 /**
  * Shared formatting utilities for currency, colors, and quality badges.
- * Extracted from InventoryBrowser, ProductDetail, and PriceSimulator.
+ * Extracted from TreasureBrowser, ProductDetail, and PriceSimulator.
  */
 
 /**

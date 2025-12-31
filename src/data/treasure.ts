@@ -1537,10 +1537,3 @@ export const getUniqueCuts = (): string[] => {
   return [...new Set(treasureData.map(i => i.talla).filter(t => t && t !== '-'))];
 };
 
-// Backward compatibility exports
-/** @deprecated Use treasureData instead */
-export const inventoryData = treasureData;
-/** @deprecated Use getAvailableTreasure instead */
-export const getAvailableInventory = getAvailableTreasure;
-/** @deprecated Use getTreasureStats instead */
-export const getInventoryStats = getTreasureStats;

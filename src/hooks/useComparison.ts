@@ -4,20 +4,20 @@
  * Supports up to 4 items for side-by-side comparison.
  */
 import { useState, useCallback, useMemo } from 'react';
-import { InventoryItem } from '../types';
+import { TreasureItem } from '../types';
 
 const MAX_COMPARISON_ITEMS = 4;
 
 interface UseComparisonReturn {
   // State
-  selectedItems: InventoryItem[];
+  selectedItems: TreasureItem[];
   selectedIds: Set<number>;
   isComparing: boolean;
 
   // Actions
-  addToComparison: (item: InventoryItem) => boolean; // returns false if max reached
+  addToComparison: (item: TreasureItem) => boolean; // returns false if max reached
   removeFromComparison: (itemId: number) => void;
-  toggleComparison: (item: InventoryItem) => void;
+  toggleComparison: (item: TreasureItem) => void;
   clearComparison: () => void;
   isSelected: (itemId: number) => boolean;
 
@@ -31,7 +31,7 @@ interface UseComparisonReturn {
 }
 
 export function useComparison(): UseComparisonReturn {
-  const [selectedItems, setSelectedItems] = useState<InventoryItem[]>([]);
+  const [selectedItems, setSelectedItems] = useState<TreasureItem[]>([]);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
 
   // Derived state
@@ -46,7 +46,7 @@ export function useComparison(): UseComparisonReturn {
   const showComparisonBar = comparisonCount > 0;
 
   // Add item to comparison
-  const addToComparison = useCallback((item: InventoryItem): boolean => {
+  const addToComparison = useCallback((item: TreasureItem): boolean => {
     if (selectedItems.length >= MAX_COMPARISON_ITEMS) {
       return false;
     }
@@ -68,7 +68,7 @@ export function useComparison(): UseComparisonReturn {
   }, []);
 
   // Toggle item selection
-  const toggleComparison = useCallback((item: InventoryItem) => {
+  const toggleComparison = useCallback((item: TreasureItem) => {
     setSelectedItems(prev => {
       const isCurrentlySelected = prev.some(i => i.item === item.item);
 

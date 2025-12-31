@@ -55,7 +55,7 @@ import {
   ImageQualityCheck,
   ImageQualityLevel,
   ImageVerificationStatus,
-  InventoryItem,
+  TreasureItem,
 } from '../types';
 import {
   analyzeImageQuality,
@@ -132,7 +132,7 @@ const MetricValue = styled(Typography)<{ metricStatus: 'good' | 'warning' | 'bad
 interface ImageVerificationPanelProps {
   open: boolean;
   onClose: () => void;
-  item: InventoryItem | null;
+  item: TreasureItem | null;
   imageUrl?: string;
   onVerify?: (
     itemId: number,

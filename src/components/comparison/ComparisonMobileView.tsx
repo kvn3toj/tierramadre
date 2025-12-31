@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { Box, Typography, Chip, alpha, Collapse } from '@mui/material';
 import { BarChart3, Radar as RadarIcon, TrendingUp, DollarSign, Gem, Award, ChevronDown, ChevronUp, Info } from 'lucide-react';
-import { InventoryItem } from '../../types';
+import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { formatCurrency, getColorDot, getQualityBadge } from '../../utils/formatting';
 import { surfacesLight, surfacesDark, emeraldCore } from '../../design-system/tokens/colors';
@@ -20,7 +20,7 @@ import {
 } from './RecommendationEngine';
 
 interface ComparisonMobileViewProps {
-  items: InventoryItem[];
+  items: TreasureItem[];
 }
 
 type VisualMode = 'radar' | 'matrix';

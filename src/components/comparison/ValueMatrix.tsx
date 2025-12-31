@@ -5,7 +5,7 @@
  */
 import { Box, Typography, alpha } from '@mui/material';
 import { TrendingUp } from 'lucide-react';
-import { InventoryItem } from '../../types';
+import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 
@@ -13,7 +13,7 @@ import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 const emeraldGreen = '#00AE7A';
 
 interface ValueMatrixProps {
-  items: InventoryItem[];
+  items: TreasureItem[];
 }
 
 // High-contrast color palette for better differentiation
@@ -41,7 +41,7 @@ function qualityToScore(quality: string): number {
 /**
  * Identify the "sweet spot" items (high quality, reasonable price)
  */
-function identifyValueLeaders(items: InventoryItem[]): Set<number> {
+function identifyValueLeaders(items: TreasureItem[]): Set<number> {
   const leaders = new Set<number>();
 
   // Calculate average quality and price

@@ -1,6 +1,6 @@
 /**
  * AsesorProfile Component
- * Shows asesor details and their inventory products with filtering
+ * Shows asesor details and their treasure products with filtering
  */
 
 import { useState, useMemo } from 'react';
@@ -44,9 +44,9 @@ import {
   Crown,
 } from 'lucide-react';
 import { useAsesores } from '../../hooks/useAsesores';
-import { useInventory } from '../../hooks/useInventory';
-import { InventoryItem } from '../../types';
-import { InventoryCard } from '../inventory/InventoryCard';
+import { useTreasure } from '../../hooks/useTreasure';
+import { TreasureItem } from '../../types';
+import { TreasureCard } from '../treasure/TreasureCard';
 import { brand, lightTokens, darkTokens, accentColors } from '../../design-system';
 
 // Normalize name for comparison
@@ -80,8 +80,8 @@ export default function AsesorProfilePage() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [showFilters, setShowFilters] = useState(false);
 
-  const { inventory } = useInventory();
-  const { asesores, isLoading } = useAsesores(inventory);
+  const { treasure } = useTreasure();
+  const { asesores, isLoading } = useAsesores(treasure);
 
   // Find the asesor by slug
   const asesor = useMemo(() => {
@@ -91,13 +91,13 @@ export default function AsesorProfilePage() {
 
   // Get products for this asesor
   const allProducts = useMemo(() => {
-    if (!asesor || !inventory) return [];
+    if (!asesor || !treasure) return [];
     const normalizedAsesorName = normalizeName(asesor.name);
-    return inventory.filter(item => {
+    return treasure.filter(item => {
       if (!item.asesor) return false;
       return normalizeName(item.asesor) === normalizedAsesorName;
     });
-  }, [asesor, inventory]);
+  }, [asesor, treasure]);
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
@@ -178,7 +178,7 @@ export default function AsesorProfilePage() {
     navigate('/ambassadors');
   };
 
-  const handleProductClick = (item: InventoryItem) => {
+  const handleProductClick = (item: TreasureItem) => {
     navigate(`/product/${item.item}`);
   };
 
@@ -583,7 +583,7 @@ export default function AsesorProfilePage() {
               md={viewMode === 'list' ? 12 : 4}
               key={item.item}
             >
-              <InventoryCard
+              <TreasureCard
                 item={item}
                 isCompact={viewMode === 'list'}
                 onCertClick={() => {}}

@@ -2,11 +2,11 @@
  * useImageVerification Hook
  *
  * Provides image verification capabilities integrated with the
- * existing inventory and Cloudinary infrastructure.
+ * existing treasure and Cloudinary infrastructure.
  */
 
 import { useState, useCallback } from 'react';
-import { InventoryItem, ImageVerificationStatus, ImageQualityLevel } from '../types';
+import { TreasureItem, ImageVerificationStatus, ImageQualityLevel } from '../types';
 
 export interface ImageVerificationResult {
   success: boolean;
@@ -184,10 +184,10 @@ export function useImageVerification() {
   }, []);
 
   /**
-   * Get items that need image verification from inventory
+   * Get items that need image verification from treasure
    */
-  const getItemsNeedingVerification = useCallback((inventory: InventoryItem[]): InventoryItem[] => {
-    return inventory.filter(item => {
+  const getItemsNeedingVerification = useCallback((treasure: TreasureItem[]): TreasureItem[] => {
+    return treasure.filter(item => {
       // Items without images
       if (!item.imageUrl && !item.imagen) return true;
 
@@ -205,10 +205,10 @@ export function useImageVerification() {
   /**
    * Get items with missing or broken images
    */
-  const getItemsWithImageIssues = useCallback(async (inventory: InventoryItem[]): Promise<InventoryItem[]> => {
-    const issues: InventoryItem[] = [];
+  const getItemsWithImageIssues = useCallback(async (treasure: TreasureItem[]): Promise<TreasureItem[]> => {
+    const issues: TreasureItem[] = [];
 
-    for (const item of inventory) {
+    for (const item of treasure) {
       const imageUrl = item.imageUrl || item.imagen;
       if (!imageUrl) {
         issues.push(item);

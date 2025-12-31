@@ -15,12 +15,12 @@ import {
   alpha,
 } from '@mui/material';
 import { Scale, Trash2 } from 'lucide-react';
-import { InventoryItem } from '../types';
+import { TreasureItem } from '../types';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 
 interface ComparisonBarProps {
-  selectedItems: InventoryItem[];
+  selectedItems: TreasureItem[];
   onRemove: (itemId: number) => void;
   onClear: () => void;
   onCompare: () => void;

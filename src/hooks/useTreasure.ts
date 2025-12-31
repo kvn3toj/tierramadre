@@ -101,14 +101,4 @@ export function useTreasure() {
   };
 }
 
-/** @deprecated Use useTreasure instead */
-export function useInventory() {
-  const result = useTreasure();
-  return {
-    ...result,
-    // Backward-compatible alias
-    inventory: result.treasure,
-  };
-}
-
 export default useTreasure;

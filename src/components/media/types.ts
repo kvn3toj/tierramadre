@@ -1,5 +1,5 @@
 /**
- * Media Gallery Types - Tierra Madre Inventory
+ * Media Gallery Types - Tierra Madre Treasure
  */
 
 export interface MediaItem {

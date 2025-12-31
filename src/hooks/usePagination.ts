@@ -1,6 +1,6 @@
 /**
  * usePagination Hook
- * Manages pagination state for the inventory browser.
+ * Manages pagination state for the treasure browser.
  * Supports both traditional pagination and "Load More" infinite scroll.
  */
 import { useState, useCallback, useMemo } from 'react';

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { InventoryItem } from '../types';
+import { TreasureItem } from '../types';
 
 export interface Asesor {
   id: string;
@@ -10,7 +10,7 @@ export interface Asesor {
   especialidad?: string | null;
   email?: string | null;
   productCount?: number;
-  products?: InventoryItem[];
+  products?: TreasureItem[];
 }
 
 interface UseAsesoresReturn {
@@ -36,7 +36,7 @@ const normalizeName = (name: string): string => {
   return result;
 };
 
-export function useAsesores(inventory?: InventoryItem[]): UseAsesoresReturn {
+export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
   const [asesores, setAsesores] = useState<Asesor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,15 +78,15 @@ export function useAsesores(inventory?: InventoryItem[]): UseAsesoresReturn {
     loadAsesores();
   }, []);
 
-  // Enrich asesores with inventory data
+  // Enrich asesores with treasure data
   const enrichedAsesores = useMemo(() => {
-    if (!inventory || inventory.length === 0) return asesores;
+    if (!treasure || treasure.length === 0) return asesores;
 
     return asesores.map(asesor => {
       const normalizedAsesorName = normalizeName(asesor.name);
 
-      // Match asesor name with inventory items using normalized comparison
-      const matchingProducts = inventory.filter(item => {
+      // Match asesor name with treasure items using normalized comparison
+      const matchingProducts = treasure.filter(item => {
         if (!item.asesor) return false;
         const normalizedItemAsesor = normalizeName(item.asesor);
         return normalizedItemAsesor === normalizedAsesorName;
@@ -98,7 +98,7 @@ export function useAsesores(inventory?: InventoryItem[]): UseAsesoresReturn {
         products: matchingProducts,
       };
     });
-  }, [asesores, inventory]);
+  }, [asesores, treasure]);
 
   return {
     asesores: enrichedAsesores,

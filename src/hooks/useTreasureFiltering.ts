@@ -36,16 +36,10 @@ export interface TreasureFilters {
   coleccionFilter: string; // 'all' | specific collection name
 }
 
-/** @deprecated Use TreasureFilters instead */
-export type InventoryFilters = TreasureFilters;
-
 export interface UseTreasureFilteringOptions {
   treasure: TreasureItem[];
   initialFilters?: Partial<TreasureFilters>;
 }
-
-/** @deprecated Use UseTreasureFilteringOptions instead */
-export type UseInventoryFilteringOptions = UseTreasureFilteringOptions;
 
 export interface UseTreasureFilteringReturn {
   // Filter state
@@ -84,9 +78,6 @@ export interface UseTreasureFilteringReturn {
     priceMinMax: { min: number; max: number };
   };
 }
-
-/** @deprecated Use UseTreasureFilteringReturn instead */
-export type UseInventoryFilteringReturn = UseTreasureFilteringReturn;
 
 const QUALITY_ORDER: Record<string, number> = {
   'SuperFina': 4,
@@ -332,17 +323,6 @@ export function useTreasureFiltering({
     sortedTreasure,
     filteredStats,
     filterOptions,
-  };
-}
-
-/** @deprecated Use useTreasureFiltering instead */
-export function useInventoryFiltering(options: { inventory: TreasureItem[]; initialFilters?: Partial<TreasureFilters> }) {
-  const result = useTreasureFiltering({ treasure: options.inventory, initialFilters: options.initialFilters });
-  return {
-    ...result,
-    // Backward-compatible aliases
-    filteredInventory: result.filteredTreasure,
-    sortedInventory: result.sortedTreasure,
   };
 }
 

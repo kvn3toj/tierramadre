@@ -1,6 +1,6 @@
 /**
  * Image Verification Utilities
- * For Tierra Madre Emerald Inventory
+ * For Tierra Madre Emerald Treasure
  *
  * Provides quality analysis, URL validation, and verification workflow helpers.
  */
@@ -16,7 +16,7 @@ import { analyzeImage, loadImage, getImageData } from './imageNormalizer';
 
 // Cloudinary configuration
 const CLOUDINARY_CLOUD = 'dyam6g2os';
-const CLOUDINARY_FOLDER = 'tierramadre/inventory';
+const CLOUDINARY_FOLDER = 'tierramadre/treasure';
 
 // Quality thresholds
 const QUALITY_THRESHOLDS = {

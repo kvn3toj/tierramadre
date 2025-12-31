@@ -3,12 +3,12 @@
  * Simple horizontal bar chart for visual comparison - neutral, no winners.
  */
 import { Box, Typography, alpha } from '@mui/material';
-import { InventoryItem } from '../../types';
+import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 
 interface ComparisonBarChartProps {
-  items: InventoryItem[];
+  items: TreasureItem[];
 }
 
 // High-contrast color palette for better differentiation

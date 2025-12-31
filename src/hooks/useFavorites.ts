@@ -1,7 +1,7 @@
 /**
  * useFavorites Hook
  * Manages favorite items with localStorage persistence.
- * Part of the engagement features for Tierra Madre inventory browser.
+ * Part of the engagement features for Tierra Madre treasure browser.
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
 

@@ -136,10 +136,10 @@ export const statusColors = {
 } as const;
 
 /**
- * Inventory Status Colors
+ * Treasure Status Colors
  * For emerald availability states
  */
-export const inventoryStatus = {
+export const treasureStatus = {
   /**
    * Available - Emerald green
    */
@@ -172,7 +172,7 @@ export const brand = {
   colors: brandColors,
   gradients: brandGradients,
   status: statusColors,
-  inventory: inventoryStatus,
+  treasure: treasureStatus,
 } as const;
 
 export type Brand = typeof brand;

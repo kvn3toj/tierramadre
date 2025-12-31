@@ -1,7 +1,7 @@
 /**
  * FilterContent Component
  *
- * Memoized filter controls for inventory browsing.
+ * Memoized filter controls for treasure browsing.
  * Extracted to prevent re-creation on every render,
  * which fixes the iPad keyboard dismissing issue.
  *
@@ -38,9 +38,9 @@ import {
   type TypeFilter,
   type SortOption,
   type TreasureFilters,
-} from '../../hooks/useInventoryFiltering';
-import { useInventoryAnalytics } from '../../hooks/useInventoryAnalytics';
-import { InventoryItem } from '../../types';
+} from '../../hooks/useTreasureFiltering';
+import { useTreasureAnalytics } from '../../hooks/useTreasureAnalytics';
+import { TreasureItem } from '../../types';
 import { formatCurrency, getColorDot } from '../../utils/formatting';
 import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
 
@@ -62,7 +62,7 @@ export interface FilterSetters {
   setPriceRange: (value: [number, number]) => void;
 }
 
-/** Filter options derived from inventory data */
+/** Filter options derived from treasure data */
 export interface FilterOptions {
   colors: string[];
   shapes: string[];
@@ -86,8 +86,8 @@ export interface FilterContentPropsGrouped {
   ui: FilterUIState;
   hasFilters: boolean;
   handleClearFilters: () => void;
-  sortedInventory: InventoryItem[];
-  analyticsHook: ReturnType<typeof useInventoryAnalytics>;
+  sortedTreasure: TreasureItem[];
+  analyticsHook: ReturnType<typeof useTreasureAnalytics>;
   isLight: boolean;
   theme: Theme;
   compact?: boolean;
@@ -120,8 +120,8 @@ export interface FilterContentProps {
   hasFilters: boolean;
   handleClearFilters: () => void;
   searchInputRef: React.RefObject<HTMLInputElement>;
-  sortedInventory: InventoryItem[];
-  analyticsHook: ReturnType<typeof useInventoryAnalytics>;
+  sortedTreasure: TreasureItem[];
+  analyticsHook: ReturnType<typeof useTreasureAnalytics>;
   colors: string[];
   shapes: string[];
   qualities: string[];
@@ -159,7 +159,7 @@ export const FilterContent = memo(function FilterContent({
   hasFilters,
   handleClearFilters,
   searchInputRef,
-  sortedInventory,
+  sortedTreasure,
   analyticsHook,
   colors,
   shapes,
@@ -478,8 +478,8 @@ export const FilterContent = memo(function FilterContent({
           onChange={(e) => setSearch(e.target.value)}
           onBlur={() => {
             if (search.trim()) {
-              analyticsHook.trackSearch(search, sortedInventory.length);
-              const itemIds = sortedInventory.map(item => item.item);
+              analyticsHook.trackSearch(search, sortedTreasure.length);
+              const itemIds = sortedTreasure.map(item => item.item);
               analyticsHook.trackSearchHits(itemIds);
             }
           }}

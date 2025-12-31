@@ -40,9 +40,6 @@ export type TabValue = 'home' | 'treasure' | 'ambassadors';
 export const PRIMARY_TABS: TabValue[] = ['home', 'treasure', 'ambassadors'];
 export const SECONDARY_TABS: TabValue[] = [];
 
-/** @deprecated Use 'treasure' instead of 'inventory' */
-export type LegacyTabValue = 'home' | 'inventory' | 'ambassadors';
-
 // Inner component that uses routing hooks
 function AppContent() {
   const navigate = useNavigate();

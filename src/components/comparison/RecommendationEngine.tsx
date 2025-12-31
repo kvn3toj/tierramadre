@@ -3,7 +3,7 @@
  * AI-powered recommendation system that analyzes emeralds and provides
  * intelligent insights based on user priorities.
  */
-import { InventoryItem } from '../../types';
+import { TreasureItem } from '../../types';
 
 export type RecommendationCriteria =
   | 'best_investment'        // Long-term value appreciation
@@ -14,7 +14,7 @@ export type RecommendationCriteria =
   | 'rare_find';             // Unique characteristics
 
 export interface RecommendationScore {
-  item: InventoryItem;
+  item: TreasureItem;
   score: number;              // 0-100
   strengths: string[];        // What makes this item stand out
   considerations: string[];   // Things to consider
@@ -29,7 +29,7 @@ export interface RecommendationScore {
 
 export interface ComparisonRecommendation {
   criteria: RecommendationCriteria;
-  winner: InventoryItem;
+  winner: TreasureItem;
   score: RecommendationScore;
   analysis: string;           // Natural language explanation
   alternatives: RecommendationScore[]; // Other options ranked
@@ -69,8 +69,8 @@ function calculateColorScore(color: string): number {
  * Higher quality + larger size + rare color = better investment
  */
 function calculateInvestmentScore(
-  item: InventoryItem,
-  allItems: InventoryItem[]
+  item: TreasureItem,
+  allItems: TreasureItem[]
 ): number {
   const qualityScore = calculateQualityScore(item.calidad);
   const colorScore = calculateColorScore(item.color);
@@ -102,8 +102,8 @@ function calculateInvestmentScore(
  * Lower price + higher quality = better value
  */
 function calculateValueScore(
-  item: InventoryItem,
-  allItems: InventoryItem[]
+  item: TreasureItem,
+  allItems: TreasureItem[]
 ): number {
   const qualityScore = calculateQualityScore(item.calidad);
 
@@ -120,8 +120,8 @@ function calculateValueScore(
  * Generate strengths based on item analysis
  */
 function identifyStrengths(
-  item: InventoryItem,
-  allItems: InventoryItem[]
+  item: TreasureItem,
+  allItems: TreasureItem[]
 ): string[] {
   const strengths: string[] = [];
   const qualityScore = calculateQualityScore(item.calidad);
@@ -171,8 +171,8 @@ function identifyStrengths(
  * Generate considerations (things to think about)
  */
 function identifyConsiderations(
-  item: InventoryItem,
-  allItems: InventoryItem[]
+  item: TreasureItem,
+  allItems: TreasureItem[]
 ): string[] {
   const considerations: string[] = [];
   const prices = allItems.map(i => i.precioCOP);
@@ -202,8 +202,8 @@ function identifyConsiderations(
  * Build recommendation score for an item
  */
 function buildRecommendationScore(
-  item: InventoryItem,
-  allItems: InventoryItem[],
+  item: TreasureItem,
+  allItems: TreasureItem[],
   criteria: RecommendationCriteria
 ): RecommendationScore {
   const qualityScore = calculateQualityScore(item.calidad);
@@ -289,7 +289,7 @@ function generateAnalysis(
  * Main recommendation function
  */
 export function generateRecommendation(
-  items: InventoryItem[],
+  items: TreasureItem[],
   criteria: RecommendationCriteria
 ): ComparisonRecommendation {
   // Score all items

@@ -381,7 +381,4 @@ export function useTreasureMedia(): UseTreasureMediaReturn {
   };
 }
 
-/** @deprecated Use useTreasureMedia instead */
-export const useInventoryMedia = useTreasureMedia;
-
 export default useTreasureMedia;

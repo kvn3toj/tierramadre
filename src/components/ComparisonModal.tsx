@@ -26,7 +26,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { X, Scale, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { InventoryItem } from '../types';
+import { TreasureItem } from '../types';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { formatFullCurrency, getColorDot, getQualityBadge } from '../utils/formatting';
 import { emeraldCore, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
@@ -35,7 +35,7 @@ import { ComparisonMobileView } from './comparison';
 interface ComparisonModalProps {
   open: boolean;
   onClose: () => void;
-  items: InventoryItem[];
+  items: TreasureItem[];
 }
 
 // Helper to determine best/worst values

@@ -14,7 +14,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { InventoryItem } from '../types';
+import { TreasureItem } from '../types';
 import { triggerHaptic } from './useHaptics';
 import { formatCurrency } from '../utils/formatting';
 import { createLogger } from '../utils/logger';
@@ -53,7 +53,7 @@ interface UseShareReturn {
   /**
    * Share a product with native share or clipboard fallback
    */
-  shareProduct: (product: InventoryItem) => Promise<ShareResult>;
+  shareProduct: (product: TreasureItem) => Promise<ShareResult>;
 
   /**
    * Share custom content
@@ -68,12 +68,12 @@ interface UseShareReturn {
   /**
    * Generate shareable product URL
    */
-  getProductUrl: (product: InventoryItem) => string;
+  getProductUrl: (product: TreasureItem) => string;
 
   /**
    * Generate formatted share text for a product
    */
-  getProductShareText: (product: InventoryItem) => string;
+  getProductShareText: (product: TreasureItem) => string;
 }
 
 /**
@@ -86,7 +86,7 @@ function checkShareSupport(): boolean {
 /**
  * Format product details for sharing
  */
-function formatProductShareText(product: InventoryItem): string {
+function formatProductShareText(product: TreasureItem): string {
   const displayName = product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const weight = typeof product.peso === 'number' ? `${product.peso} ct` : '';
   const price = formatCurrency(product.precioCOP);
@@ -133,14 +133,14 @@ export function useShare(options: UseShareOptions = {}): UseShareReturn {
   /**
    * Generate product URL
    */
-  const getProductUrl = useCallback((product: InventoryItem): string => {
+  const getProductUrl = useCallback((product: TreasureItem): string => {
     return `${STUDIO_BASE_URL}/product/${product.item}`;
   }, []);
 
   /**
    * Generate formatted share text
    */
-  const getProductShareText = useCallback((product: InventoryItem): string => {
+  const getProductShareText = useCallback((product: TreasureItem): string => {
     return formatProductShareText(product);
   }, []);
 
@@ -202,7 +202,7 @@ export function useShare(options: UseShareOptions = {}): UseShareReturn {
   /**
    * Share a product
    */
-  const shareProduct = useCallback(async (product: InventoryItem): Promise<ShareResult> => {
+  const shareProduct = useCallback(async (product: TreasureItem): Promise<ShareResult> => {
     const displayName = product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
     const url = getProductUrl(product);
     const text = getProductShareText(product);

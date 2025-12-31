@@ -1,21 +1,17 @@
 /**
  * Treasure Module
- * Contains all treasure-related components.
- * Re-exports from inventory/ for backward compatibility while transitioning.
+ * Contains all treasure-related components for browsing Colombian emeralds.
  */
 
-// Re-export components with new names
-export { InventoryCard as TreasureCard } from '../inventory/InventoryCard';
-export type { InventoryCardProps as TreasureCardProps } from '../inventory/InventoryCard';
+// Main treasure card component
+export { TreasureCard } from './TreasureCard';
+export type { TreasureCardProps } from './TreasureCard';
 
-// Re-export optimized components
-export { default as GridCard } from '../inventory/GridCard';
-export { default as ListRow } from '../inventory/ListRow';
-export { default as VirtualGrid } from '../inventory/VirtualGrid';
+// Optimized display components
+export { default as GridCard } from './GridCard';
+export { default as ListRow } from './ListRow';
+export { default as VirtualGrid } from './VirtualGrid';
 
-// Re-export filter components
-export { FilterContent } from '../inventory/FilterContent';
-export type { FilterContentProps } from '../inventory/FilterContent';
-
-// Backward compatibility exports
-export { InventoryCard, type InventoryCardProps } from '../inventory/InventoryCard';
+// Filter components
+export { FilterContent } from './FilterContent';
+export type { FilterContentProps } from './FilterContent';

@@ -4,7 +4,7 @@
  * - Text search with instant feedback
  * - Quick filter chips (Type, Quality, City)
  * - Results preview count
- * - Navigates to inventory with query params
+ * - Navigates to treasure with query params
  */
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -31,8 +31,8 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { useInventory } from '../../hooks/useInventory';
-import { useInventoryFiltering, TypeFilter } from '../../hooks/useInventoryFiltering';
+import { useTreasure } from '../../hooks/useTreasure';
+import { useTreasureFiltering, TypeFilter } from '../../hooks/useTreasureFiltering';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { formatCurrency } from '../../utils/formatting';
@@ -56,7 +56,7 @@ interface MoreSheetSearchProps {
 
 const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
   const navigate = useNavigate();
-  const { inventory } = useInventory();
+  const { treasure } = useTreasure();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Read initial values from URL params for persistence
@@ -96,11 +96,11 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
 
   // Use the filtering hook for preview results
   const {
-    sortedInventory,
+    sortedTreasure,
     filteredStats,
     filterOptions,
-  } = useInventoryFiltering({
-    inventory,
+  } = useTreasureFiltering({
+    treasure,
     initialFilters: {
       search: localSearch,
       typeFilter: localTypeFilter,
@@ -430,11 +430,11 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
           <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
             {hasActiveFilters ? (
               <>
-                <strong style={{ color: 'var(--text-primary)' }}>{sortedInventory.length}</strong> resultados encontrados
+                <strong style={{ color: 'var(--text-primary)' }}>{sortedTreasure.length}</strong> resultados encontrados
               </>
             ) : (
               <>
-                <strong style={{ color: 'var(--text-primary)' }}>{inventory.filter(i => i.estado?.toUpperCase() === 'DISPONIBLE').length}</strong> tesoros disponibles
+                <strong style={{ color: 'var(--text-primary)' }}>{treasure.filter(i => i.estado?.toUpperCase() === 'DISPONIBLE').length}</strong> tesoros disponibles
               </>
             )}
           </Typography>
@@ -462,7 +462,7 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             },
           }}
         >
-          {hasActiveFilters ? `Ver ${sortedInventory.length} resultados` : 'Explorar Tesoros'}
+          {hasActiveFilters ? `Ver ${sortedTreasure.length} resultados` : 'Explorar Tesoros'}
         </Button>
       </Box>
     </Box>

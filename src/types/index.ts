@@ -97,10 +97,8 @@ export interface ReceiptData {
   createdAt: string;
 }
 
-// Treasure types for official stock (renamed from "inventory" for consistency with UI)
+// Treasure types for official stock
 export type TreasureStatus = 'DISPONIBLE' | 'VENDIDA' | 'ASESOR';
-/** @deprecated Use TreasureStatus instead */
-export type InventoryStatus = TreasureStatus;
 export type EmeraldColor = 'Verde Vivido' | 'Verde Muzo' | 'Verde Limón' | 'Verde Menta' | 'Verde Natural' | string;
 export type EmeraldQuality = 'Fina' | 'Comercial Fina' | 'Comercial SuperFina' | 'Comercial Superior' | 'Comercial Estándar' | 'Estándar' | string;
 export type EmeraldCut = 'Cushion' | 'Corazón' | 'Esmeralda' | 'Óvalo' | 'Redonda' | 'Cuadrada' | 'Lágrima' | string;
@@ -276,5 +274,3 @@ export interface TreasureItem {
   isVaultExclusive?: boolean;        // True if item is part of Secret Vault collection
 }
 
-/** @deprecated Use TreasureItem instead */
-export type InventoryItem = TreasureItem;

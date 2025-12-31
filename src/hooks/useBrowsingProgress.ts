@@ -1,6 +1,6 @@
 /**
  * useBrowsingProgress Hook
- * Gamification feature that tracks user exploration of the inventory.
+ * Gamification feature that tracks user exploration of the treasure collection.
  * Inspired by Moksart's Octalysis framework (Core Drive 2: Accomplishment).
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -100,7 +100,7 @@ const ACHIEVEMENT_DEFINITIONS: Achievement[] = [
   },
 ];
 
-export function useBrowsingProgress(totalInventoryItems: number = 85): UseBrowsingProgressReturn {
+export function useBrowsingProgress(totalTreasureItems: number = 85): UseBrowsingProgressReturn {
   // Load initial state from localStorage
   const [itemsViewed, setItemsViewed] = useState<Set<number>>(() => {
     try {
@@ -146,9 +146,9 @@ export function useBrowsingProgress(totalInventoryItems: number = 85): UseBrowsi
   const viewedCount = itemsViewed.size;
 
   const percentageExplored = useMemo(() => {
-    if (totalInventoryItems === 0) return 0;
-    return Math.round((viewedCount / totalInventoryItems) * 100);
-  }, [viewedCount, totalInventoryItems]);
+    if (totalTreasureItems === 0) return 0;
+    return Math.round((viewedCount / totalTreasureItems) * 100);
+  }, [viewedCount, totalTreasureItems]);
 
   const level = useMemo((): ExplorerLevel => {
     if (percentageExplored >= LEVEL_THRESHOLDS.Maestro) return 'Maestro';

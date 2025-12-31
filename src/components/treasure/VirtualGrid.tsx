@@ -11,17 +11,17 @@
 import React, { useCallback, useMemo, ReactElement, CSSProperties } from 'react';
 import { Grid } from 'react-window';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
-import { InventoryItem } from '../../types';
+import { TreasureItem } from '../../types';
 import { vhCalc } from '../../hooks/useViewportHeight';
 
 interface VirtualGridProps {
-  items: InventoryItem[];
+  items: TreasureItem[];
   favorites: number[];
-  onItemClick: (item: InventoryItem) => void;
-  onCertClick: (item: InventoryItem) => void;
+  onItemClick: (item: TreasureItem) => void;
+  onCertClick: (item: TreasureItem) => void;
   onToggleFavorite: (itemId: number) => void;
   renderCard: (props: {
-    item: InventoryItem;
+    item: TreasureItem;
     isFavorite: boolean;
     onItemClick: () => void;
     onCertClick: () => void;
@@ -40,11 +40,11 @@ const DESKTOP_GAP = 12; // Comfortable gap for desktop grid
 
 // Cell props passed via cellProps in react-window 2.x
 interface GridCellProps {
-  items: InventoryItem[];
+  items: TreasureItem[];
   columnCount: number;
   favorites: number[];
-  onItemClick: (item: InventoryItem) => void;
-  onCertClick: (item: InventoryItem) => void;
+  onItemClick: (item: TreasureItem) => void;
+  onCertClick: (item: TreasureItem) => void;
   onToggleFavorite: (itemId: number) => void;
   renderCard: VirtualGridProps['renderCard'];
   isMobile: boolean;

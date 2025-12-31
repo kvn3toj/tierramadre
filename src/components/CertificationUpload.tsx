@@ -36,7 +36,7 @@ import { useThemeMode } from '../contexts/ThemeContext';
 // Design System Tokens
 import { emeraldCore, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 import {
-  InventoryItem,
+  TreasureItem,
   GemologicalCertification,
   ColombianOriginCertification,
   EthicalCertification,
@@ -47,8 +47,8 @@ import {
 interface CertificationUploadProps {
   open: boolean;
   onClose: () => void;
-  item: InventoryItem;
-  onSave: (certifications: InventoryItem['certifications']) => void;
+  item: TreasureItem;
+  onSave: (certifications: TreasureItem['certifications']) => void;
 }
 
 interface TabPanelProps {
@@ -124,7 +124,7 @@ export default function CertificationUpload({
   }, []);
 
   const handleSave = () => {
-    const certifications: InventoryItem['certifications'] = {};
+    const certifications: TreasureItem['certifications'] = {};
 
     // Only include gemological if it has required fields
     if (gemological.lab && gemological.certificateNumber) {

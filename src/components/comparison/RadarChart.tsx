@@ -4,12 +4,12 @@
  * Shows quality, color, size, investment potential, and value in a pentagon chart.
  */
 import { Box, Typography, alpha } from '@mui/material';
-import { InventoryItem } from '../../types';
+import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 
 interface RadarChartProps {
-  items: InventoryItem[];
+  items: TreasureItem[];
   maxItems?: number; // Limit to 3 items for clarity
 }
 
@@ -57,7 +57,7 @@ function calculateColorScore(color: string): number {
 /**
  * Normalize size to 0-100 scale
  */
-function normalizeSizeScore(items: InventoryItem[]): number[] {
+function normalizeSizeScore(items: TreasureItem[]): number[] {
   const weights = items.map(i => (typeof i.peso === 'number' ? i.peso : 0));
   const maxWeight = Math.max(...weights, 1);
   return weights.map(w => (w / maxWeight) * 100);
@@ -66,7 +66,7 @@ function normalizeSizeScore(items: InventoryItem[]): number[] {
 /**
  * Calculate investment score (0-100)
  */
-function calculateInvestmentScore(item: InventoryItem, allItems: InventoryItem[]): number {
+function calculateInvestmentScore(item: TreasureItem, allItems: TreasureItem[]): number {
   const qualityScore = calculateQualityScore(item.calidad);
   const colorScore = calculateColorScore(item.color);
   const weights = allItems.map(i => (typeof i.peso === 'number' ? i.peso : 0));
@@ -81,7 +81,7 @@ function calculateInvestmentScore(item: InventoryItem, allItems: InventoryItem[]
 /**
  * Calculate value score (price/quality ratio) - inverted so lower price = better
  */
-function calculateValueScore(items: InventoryItem[]): number[] {
+function calculateValueScore(items: TreasureItem[]): number[] {
   const prices = items.map(i => i.precioCOP);
   const maxPrice = Math.max(...prices);
   const qualities = items.map(i => calculateQualityScore(i.calidad));

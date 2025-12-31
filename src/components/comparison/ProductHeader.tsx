@@ -3,12 +3,12 @@
  * Neutral header showing product avatars - equal treatment for all items.
  */
 import { Box, Avatar, Typography, alpha } from '@mui/material';
-import { InventoryItem } from '../../types';
+import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 
 interface ProductHeaderProps {
-  items: InventoryItem[];
+  items: TreasureItem[];
 }
 
 export default function ProductHeader({ items }: ProductHeaderProps) {

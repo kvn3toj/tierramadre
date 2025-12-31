@@ -33,9 +33,6 @@ interface UseTreasureAnalyticsReturn {
   getSearchHits: () => Record<number, number>;
 }
 
-/** @deprecated Use UseTreasureAnalyticsReturn instead */
-export type UseInventoryAnalyticsReturn = UseTreasureAnalyticsReturn;
-
 export function useTreasureAnalytics(): UseTreasureAnalyticsReturn {
   const sessionStartRef = useRef<number>(Date.now());
 
@@ -122,8 +119,5 @@ export function useTreasureAnalytics(): UseTreasureAnalyticsReturn {
     getSearchHits,
   };
 }
-
-/** @deprecated Use useTreasureAnalytics instead */
-export const useInventoryAnalytics = useTreasureAnalytics;
 
 export default useTreasureAnalytics;

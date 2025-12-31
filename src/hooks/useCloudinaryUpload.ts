@@ -1,6 +1,6 @@
 /**
  * Shared Cloudinary upload hook.
- * Extracted from ProductDetail and useInventory.
+ * Extracted from ProductDetail and useTreasure.
  */
 import { useState, useCallback } from 'react';
 import { isVideoFile } from '../utils/fileTypeDetection';

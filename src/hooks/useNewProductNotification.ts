@@ -1,7 +1,7 @@
 /**
  * useNewProductNotification Hook
  *
- * Detects new products in inventory and shows notification.
+ * Detects new products in treasure and shows notification.
  * Compares current count with stored count on each load.
  */
 

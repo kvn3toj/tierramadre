@@ -9,7 +9,6 @@ export const en = {
     gallery: 'Gallery',
     upload: 'Upload',
     treasure: 'Treasures',
-    inventory: 'Treasures', // @deprecated - use treasure
     ambassadors: 'Ambassadors',
     catalog: 'Catalog',
     calendar: 'Calendar',
@@ -40,10 +39,6 @@ export const en = {
       subtitle: 'Add emeralds',
     },
     treasure: {
-      title: 'Treasures',
-      subtitle: 'Emerald collection',
-    },
-    inventory: { // @deprecated - use treasure
       title: 'Treasures',
       subtitle: 'Emerald collection',
     },

@@ -1,6 +1,6 @@
 /**
  * TIERRA MADRE - Cotización Generator
- * Professional quotation generator selecting from inventory stock.
+ * Professional quotation generator selecting from treasure stock.
  *
  * Refactored: Extracted CotizacionHeader, QuotationPreview, and constants
  * to separate components for better maintainability.
@@ -59,7 +59,7 @@ import {
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { documentShadows } from '../design-system/tokens';
-import { useInventory } from '../hooks/useInventory';
+import { useTreasure } from '../hooks/useTreasure';
 import {
   useCotizacion,
   formatCotizacionCurrency,
@@ -70,7 +70,7 @@ import {
   CotizacionInvestment,
   CustomCost,
 } from '../hooks/useCotizacion';
-import { InventoryItem } from '../types';
+import { TreasureItem } from '../types';
 import { SAMPLE_AMBASSADORS } from '../data/ambassadors';
 import { CotizacionHeader, QuotationPreview, brandColors } from './cotizacion';
 import { createLogger } from '../utils/logger';
@@ -102,7 +102,7 @@ const getInvestmentIcon = (iconId: string) => {
 
 export default function CotizacionGenerator() {
   const quotationRef = useRef<HTMLDivElement>(null);
-  const { inventory } = useInventory();
+  const { treasure } = useTreasure();
   const { track, checkAchievements } = useTracking();
   const recentClients = useRecentClients();
 
@@ -124,7 +124,7 @@ export default function CotizacionGenerator() {
     notes, setNotes,
     discountPercent, setDiscountPercent,
     products,
-    addProductFromInventory,
+    addProductFromTreasure,
     addManualProduct,
     removeProduct,
     manualProduct, setManualProduct,
@@ -139,8 +139,8 @@ export default function CotizacionGenerator() {
     resetAll,
   } = cotizacion;
 
-  // Filter available inventory
-  const availableInventory = inventory.filter(item => item.estado === 'DISPONIBLE');
+  // Filter available treasure
+  const availableTreasure = treasure.filter(item => item.estado === 'DISPONIBLE');
 
   // UI-only state
   const [snackbar, setSnackbar] = useState<{
@@ -150,8 +150,8 @@ export default function CotizacionGenerator() {
   }>({ open: false, message: '', severity: 'success' });
 
   const asesorOptions = SAMPLE_AMBASSADORS.map(amb => amb.displayName);
-  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
-  const [productEntryMode, setProductEntryMode] = useState<'inventory' | 'manual'>('inventory');
+  const [selectedItem, setSelectedItem] = useState<TreasureItem | null>(null);
+  const [productEntryMode, setProductEntryMode] = useState<'treasure' | 'manual'>('treasure');
   const [newCustomLabel, setNewCustomLabel] = useState('');
   const [newCustomValue, setNewCustomValue] = useState<number>(0);
 
@@ -161,14 +161,14 @@ export default function CotizacionGenerator() {
 
   const handleAddProduct = () => {
     if (!selectedItem) return;
-    addProductFromInventory(selectedItem);
+    addProductFromTreasure(selectedItem);
 
-    // Track product added from inventory
+    // Track product added from treasure
     track('cotizacion_product_added', {
       product_id: selectedItem.item,
       product_name: selectedItem.nombre || 'Sin nombre',
       product_price: selectedItem.precioCOP || 0,
-      entry_mode: 'inventory',
+      entry_mode: 'treasure',
       products_count: products.length + 1,
     });
 
@@ -419,7 +419,7 @@ export default function CotizacionGenerator() {
           <ProductEntrySection
             productEntryMode={productEntryMode}
             setProductEntryMode={setProductEntryMode}
-            availableInventory={availableInventory}
+            availableTreasure={availableTreasure}
             selectedItem={selectedItem}
             setSelectedItem={setSelectedItem}
             handleAddProduct={handleAddProduct}
@@ -709,11 +709,11 @@ const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
 );
 
 interface ProductEntrySectionProps {
-  productEntryMode: 'inventory' | 'manual';
-  setProductEntryMode: (mode: 'inventory' | 'manual') => void;
-  availableInventory: InventoryItem[];
-  selectedItem: InventoryItem | null;
-  setSelectedItem: (item: InventoryItem | null) => void;
+  productEntryMode: 'treasure' | 'manual';
+  setProductEntryMode: (mode: 'treasure' | 'manual') => void;
+  availableTreasure: TreasureItem[];
+  selectedItem: TreasureItem | null;
+  setSelectedItem: (item: TreasureItem | null) => void;
   handleAddProduct: () => void;
   manualProduct: ManualProductState;
   setManualProduct: React.Dispatch<React.SetStateAction<ManualProductState>>;
@@ -721,7 +721,7 @@ interface ProductEntrySectionProps {
 }
 
 const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
-  productEntryMode, setProductEntryMode, availableInventory, selectedItem, setSelectedItem,
+  productEntryMode, setProductEntryMode, availableTreasure, selectedItem, setSelectedItem,
   handleAddProduct, manualProduct, setManualProduct, handleAddManualProduct,
 }) => (
   <Box sx={{ mb: 2 }}>
@@ -737,18 +737,18 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
     </Typography>
 
     <ToggleButtonGroup value={productEntryMode} exclusive onChange={(_, value) => value && setProductEntryMode(value)} size="small" sx={{ mb: 2, width: '100%' }}>
-      <ToggleButton value="inventory" sx={{ flex: 1, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', '&.Mui-selected': { bgcolor: alpha(brandColors.emerald, 0.1), color: brandColors.emerald } }}>
-        <Package size={14} style={{ marginRight: 6 }} />Desde Inventario
+      <ToggleButton value="treasure" sx={{ flex: 1, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', '&.Mui-selected': { bgcolor: alpha(brandColors.emerald, 0.1), color: brandColors.emerald } }}>
+        <Package size={14} style={{ marginRight: 6 }} />Desde Tesoros
       </ToggleButton>
       <ToggleButton value="manual" sx={{ flex: 1, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', '&.Mui-selected': { bgcolor: alpha(brandColors.gold, 0.15), color: brandColors.gold } }}>
         <FileText size={14} style={{ marginRight: 6 }} />Entrada Manual
       </ToggleButton>
     </ToggleButtonGroup>
 
-    {productEntryMode === 'inventory' && (
+    {productEntryMode === 'treasure' && (
       <>
         <Autocomplete
-          size="small" options={availableInventory}
+          size="small" options={availableTreasure}
           getOptionLabel={(option) => `#${option.item} - ${option.nombre}`}
           value={selectedItem} onChange={(_, item) => setSelectedItem(item)}
           filterOptions={(options, { inputValue }) => {

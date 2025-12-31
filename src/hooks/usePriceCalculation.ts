@@ -4,7 +4,7 @@
  * Extracted from PriceSimulator.tsx for better modularity.
  */
 import { useState, useMemo, useCallback } from 'react';
-import { Emerald, InventoryItem } from '../types';
+import { Emerald, TreasureItem } from '../types';
 import { emeraldCore, goldAccent, semanticColors, surfacesDark } from '../design-system/tokens/colors';
 
 // Investment item interface
@@ -77,9 +77,9 @@ export interface UsePriceCalculationReturn {
   removeCustomItem: (index: number) => void;
 
   // Multi-select products
-  selectedProducts: (Emerald | InventoryItem)[];
-  addProduct: (product: Emerald | InventoryItem) => void;
-  removeProduct: (product: Emerald | InventoryItem) => void;
+  selectedProducts: (Emerald | TreasureItem)[];
+  addProduct: (product: Emerald | TreasureItem) => void;
+  removeProduct: (product: Emerald | TreasureItem) => void;
   clearProducts: () => void;
   totalProductsValue: number;
 
@@ -99,7 +99,7 @@ export interface UsePriceCalculationReturn {
 
   // Actions
   resetAll: () => void;
-  loadFromProduct: (product: Emerald | InventoryItem) => void;
+  loadFromProduct: (product: Emerald | TreasureItem) => void;
 }
 
 export function usePriceCalculation(options: UsePriceCalculationOptions = {}): UsePriceCalculationReturn {
@@ -112,7 +112,7 @@ export function usePriceCalculation(options: UsePriceCalculationOptions = {}): U
   // Investment state
   const [investments, setInvestments] = useState<InvestmentItem[]>(initialInvestments);
   const [customItems, setCustomItems] = useState<CustomCostItem[]>([{ label: 'Otro', value: 0 }]);
-  const [selectedProducts, setSelectedProducts] = useState<(Emerald | InventoryItem)[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<(Emerald | TreasureItem)[]>([]);
 
   // Price factor
   const [priceFactor, setPriceFactor] = useState(initialFactor);
@@ -187,7 +187,7 @@ export function usePriceCalculation(options: UsePriceCalculationOptions = {}): U
   }, []);
 
   // Add product to selection
-  const addProduct = useCallback((product: Emerald | InventoryItem) => {
+  const addProduct = useCallback((product: Emerald | TreasureItem) => {
     const productId = 'item' in product ? product.item : product.id;
     const isAlreadyAdded = selectedProducts.some(p =>
       ('item' in p ? p.item : p.id) === productId
@@ -199,7 +199,7 @@ export function usePriceCalculation(options: UsePriceCalculationOptions = {}): U
   }, [selectedProducts]);
 
   // Remove product from selection
-  const removeProduct = useCallback((product: Emerald | InventoryItem) => {
+  const removeProduct = useCallback((product: Emerald | TreasureItem) => {
     const productId = 'item' in product ? product.item : product.id;
     setSelectedProducts(prev =>
       prev.filter(p => ('item' in p ? p.item : p.id) !== productId)
@@ -221,11 +221,11 @@ export function usePriceCalculation(options: UsePriceCalculationOptions = {}): U
   }, [initialInvestments]);
 
   // Load values from a product
-  const loadFromProduct = useCallback((product: Emerald | InventoryItem) => {
-    const isInventoryItem = 'item' in product;
+  const loadFromProduct = useCallback((product: Emerald | TreasureItem) => {
+    const isTreasureItem = 'item' in product;
 
-    if (isInventoryItem) {
-      const item = product as InventoryItem;
+    if (isTreasureItem) {
+      const item = product as TreasureItem;
       // Load price
       const price = typeof item.precioCOP === 'number' ? item.precioCOP : 0;
       if (price > 0) {

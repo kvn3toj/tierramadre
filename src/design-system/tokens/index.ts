@@ -38,7 +38,7 @@ import { brandTokens, colors as sacredColors, typography as sacredTypography, ge
 import { motionTokens, duration as animDuration, easing as animEasing, spring as animSpring, cardVariants, fadeInUp, staggerContainer, staggerItem, scaleIn } from './motion';
 
 // Semantics
-import { brand, brandColors, brandGradients, statusColors, inventoryStatus } from './semantic/brand';
+import { brand, brandColors, brandGradients, statusColors, treasureStatus } from './semantic/brand';
 import { surface, surfaceBackgrounds, elevatedSurfaces, glassSurfaces, borderColors, overlayBackgrounds, backdropFilters } from './semantic/surface';
 import { text, textColors, brandText, statusText, linkColors, placeholderText, inverseText } from './semantic/text';
 import { interactive, interactionStates, buttonStates, inputStates, cardStates, toggleStates, selectionStates, listItemStates } from './semantic/interactive';
@@ -69,7 +69,7 @@ export {
   getFibonacci,
   goldenSplit,
 };
-export { brand, brandColors, brandGradients, statusColors, inventoryStatus };
+export { brand, brandColors, brandGradients, statusColors, treasureStatus };
 export { surface, surfaceBackgrounds, elevatedSurfaces, glassSurfaces, borderColors, overlayBackgrounds, backdropFilters };
 export { text, textColors, brandText, statusText, linkColors, placeholderText, inverseText };
 export { interactive, interactionStates, buttonStates, inputStates, cardStates, toggleStates, selectionStates, listItemStates };

@@ -17,7 +17,8 @@ import open from 'open';
 
 const CLIENT_ID = process.env.GOOGLE_OAUTH_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
-const REDIRECT_URI = 'http://localhost:3333/oauth-callback';
+const PORT = process.env.PORT || 3333;
+const REDIRECT_URI = `http://localhost:${PORT}/oauth-callback`;
 
 if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error('Error: Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET environment variables');
@@ -93,8 +94,8 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(3333, () => {
-  console.log('Listening on http://localhost:3333 for callback...');
+server.listen(PORT, () => {
+  console.log(`Listening on http://localhost:${PORT} for callback...`);
   open(authUrl).catch(() => {
     console.log('Could not open browser automatically');
   });

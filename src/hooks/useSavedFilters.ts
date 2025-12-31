@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 const STORAGE_KEY = 'tierramadre-saved-filters';
 const MAX_PRESETS = 10;
 
-// Filter state type (matches useInventoryFiltering)
+// Filter state type (matches useTreasureFiltering)
 export interface FilterState {
   search: string;
   colorFilter: string;

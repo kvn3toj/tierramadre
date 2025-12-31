@@ -1,22 +1,22 @@
 /**
  * useKeyboardNavigation Hook
- * Enables keyboard navigation for the inventory grid.
+ * Enables keyboard navigation for the treasure grid.
  * Supports arrow keys, enter, favorites (F), comparison (C), and search (/).
  */
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { InventoryItem } from '../types';
+import { TreasureItem } from '../types';
 
 interface UseKeyboardNavigationProps {
   /** Array of items currently displayed */
-  items: InventoryItem[];
+  items: TreasureItem[];
   /** Number of columns in the grid */
   columns: number;
   /** Callback when an item is selected (Enter) */
-  onSelect: (item: InventoryItem) => void;
+  onSelect: (item: TreasureItem) => void;
   /** Callback to toggle favorite (F) */
   onToggleFavorite: (itemId: number) => void;
   /** Callback to toggle comparison (C) */
-  onToggleComparison: (item: InventoryItem) => void;
+  onToggleComparison: (item: TreasureItem) => void;
   /** Callback to focus search (/) */
   onFocusSearch: () => void;
   /** Whether keyboard navigation is enabled */

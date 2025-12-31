@@ -2,7 +2,7 @@
  * VaultPage Component
  *
  * Bóveda Secreta - Exclusive space for rare and unique gems
- * NOT the regular inventory. This is a curated collection managed
+ * NOT the regular treasure. This is a curated collection managed
  * exclusively by admin via Google Drive uploads.
  *
  * Currently: Empty placeholder with description

@@ -16,15 +16,15 @@ import {
 } from '@mui/material';
 import { ChevronLeft, ChevronRight, Clock, Gem, X } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
-import { InventoryItem } from '../types';
+import { TreasureItem } from '../types';
 import { formatCurrency } from '../utils/formatting';
 import { emeraldCore, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 
 interface RecentlyViewedCarouselProps {
-  /** Array of recently viewed inventory items */
-  items: InventoryItem[];
+  /** Array of recently viewed treasure items */
+  items: TreasureItem[];
   /** Callback when an item is clicked */
-  onItemClick: (item: InventoryItem) => void;
+  onItemClick: (item: TreasureItem) => void;
   /** Callback to clear all recent items */
   onClear?: () => void;
   /** Title to display */
@@ -204,7 +204,7 @@ function RecentItemCard({
   onClick,
   isLight,
 }: {
-  item: InventoryItem;
+  item: TreasureItem;
   onClick: () => void;
   isLight: boolean;
 }) {

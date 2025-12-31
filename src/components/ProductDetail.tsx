@@ -37,7 +37,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useCanEdit, useIsAdmin } from '../hooks/usePermissions';
 import { useIsGuest } from '../hooks/useAuth';
-import { useInventory } from '../hooks/useInventory';
+import { useTreasure } from '../hooks/useTreasure';
 import { MemberBenefitsTeaser } from './guest';
 import { MediaGallery } from './media';
 import DriveFolderInfo from './media/DriveFolderInfo';
@@ -69,7 +69,7 @@ export default function ProductDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [showDriveInfo, setShowDriveInfo] = useState(false);
 
-  const { inventory, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems, isLoadingSheets } = useInventory();
+  const { treasure, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems, isLoadingSheets } = useTreasure();
   const { shareProduct, isNativeShareSupported } = useShare();
   const { trigger: triggerHaptic } = useHaptics();
 
@@ -80,8 +80,8 @@ export default function ProductDetail() {
 
   // Find the product
   const product = useMemo(() => {
-    return inventory.find(item => item.item.toString() === itemId);
-  }, [inventory, itemId]);
+    return treasure.find(item => item.item.toString() === itemId);
+  }, [treasure, itemId]);
 
   // Get display name early for use in effects
   const displayName = useMemo(() => {

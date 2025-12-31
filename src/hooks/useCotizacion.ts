@@ -4,7 +4,7 @@
  * Extracted from CotizacionGenerator.tsx for better modularity.
  */
 import { useState, useCallback, useMemo } from 'react';
-import { InventoryItem } from '../types';
+import { TreasureItem } from '../types';
 
 // Cotizacion product interface
 export interface CotizacionProduct {
@@ -118,7 +118,7 @@ export const formatCotizacionCurrency = (amount: number, currency: 'COP' | 'USD'
 };
 
 // Get peso display string
-export const getPesoDisplay = (item: CotizacionProduct | InventoryItem): string => {
+export const getPesoDisplay = (item: CotizacionProduct | TreasureItem): string => {
   if (item.isJewelry) {
     return item.metalType || 'Joya';
   }
@@ -159,7 +159,7 @@ export interface UseCotizacionReturn {
 
   // Products
   products: CotizacionProduct[];
-  addProductFromInventory: (item: InventoryItem) => void;
+  addProductFromTreasure: (item: TreasureItem) => void;
   addManualProduct: (product: ManualProductState) => void;
   removeProduct: (productId: string) => void;
 
@@ -277,8 +277,8 @@ export function useCotizacion(): UseCotizacionReturn {
     setQuotationNumber(generateQuotationNumber());
   }, []);
 
-  // Add product from inventory
-  const addProductFromInventory = useCallback((item: InventoryItem) => {
+  // Add product from treasure
+  const addProductFromTreasure = useCallback((item: TreasureItem) => {
     const product: CotizacionProduct = {
       id: crypto.randomUUID(),
       itemNumber: item.item,
@@ -396,7 +396,7 @@ export function useCotizacion(): UseCotizacionReturn {
     discountPercent,
     setDiscountPercent,
     products,
-    addProductFromInventory,
+    addProductFromTreasure,
     addManualProduct,
     removeProduct,
     manualProduct,

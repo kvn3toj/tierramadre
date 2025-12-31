@@ -29,7 +29,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { useAsesores, Asesor } from '../../hooks/useAsesores';
-import { useInventory } from '../../hooks/useInventory';
+import { useTreasure } from '../../hooks/useTreasure';
 import AsesorCard from './AsesorCard';
 import { StatItem } from './StatItem';
 
@@ -58,9 +58,9 @@ export default function AmbassadorDirectory({
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortOption>('products');
 
-  // Load inventory and asesores from Google Sheets
-  const { inventory } = useInventory();
-  const { asesores, isLoading, error } = useAsesores(inventory);
+  // Load treasure and asesores from Google Sheets
+  const { treasure } = useTreasure();
+  const { asesores, isLoading, error } = useAsesores(treasure);
 
   // Calculate aggregate stats
   const stats = useMemo(() => {

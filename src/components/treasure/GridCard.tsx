@@ -1,6 +1,6 @@
 /**
  * GridCard Component
- * Grid view card for inventory items with golden ratio layout.
+ * Grid view card for treasure items with golden ratio layout.
  * Optimized for virtualized rendering.
  *
  * iOS HIG Compliant:
@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { InventoryItem } from '../../types';
+import { TreasureItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { PriceDisplay } from '../PriceDisplay';
 import ProgressiveImage from '../ProgressiveImage';
@@ -41,7 +41,7 @@ import {
 } from '../../design-system';
 
 interface GridCardProps {
-  item: InventoryItem;
+  item: TreasureItem;
   isFavorite: boolean;
   onItemClick: () => void;
   onCertClick: () => void;
