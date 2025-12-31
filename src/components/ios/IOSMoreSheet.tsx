@@ -12,7 +12,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton, Backdrop, Button } from '@mui/material';
 import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode } from '@mui/icons-material';
-import { Vault, BarChart3 } from 'lucide-react';
+import { Vault, BarChart3, GitCommit } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
 import { spacing } from '../../design-system/tokens/primitives/spacing';
@@ -61,6 +61,14 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     route: '/admin/analytics',
     color: '#8B5CF6', // Purple for analytics
   },
+  {
+    id: 'changelog',
+    label: 'Changelog',
+    subtitle: 'Reporte de desarrollo',
+    icon: GitCommit as any,
+    route: '/admin/changelog',
+    color: '#10B981', // Emerald for changelog
+  },
 ];
 
 export interface IOSMoreSheetProps {
@@ -81,7 +89,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   // Get tools and filter admin-only tools for non-admins
   const MORE_TOOLS = useMemo(() => {
     const allTools = getMoreTools(t);
-    const adminOnlyTools = ['accounts', 'analytics'];
+    const adminOnlyTools = ['accounts', 'analytics', 'changelog'];
     // Cuentas and Analytics are admin-only
     return allTools.filter(tool => !adminOnlyTools.includes(tool.id) || isAdmin);
   }, [t, isAdmin]);

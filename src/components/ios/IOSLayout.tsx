@@ -136,6 +136,12 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
     subtitle: 'Métricas y Business Health Score',
     showBackButton: true,
   },
+  '/admin/changelog': {
+    title: 'Changelog',
+    mode: 'large',
+    subtitle: 'Reporte de Desarrollo',
+    showBackButton: true,
+  },
 });
 
 export interface IOSLayoutProps {

@@ -29,6 +29,7 @@ const ReceiptGenerator = lazy(() => import('./components/ReceiptGenerator'));
 const CotizacionGenerator = lazy(() => import('./components/CotizacionGenerator'));
 const QuotationPreview = lazy(() => import('./components/QuotationPreview'));
 const AdminAnalyticsPage = lazy(() => import('./pages/AdminAnalyticsPage'));
+const AdminChangelogPage = lazy(() => import('./pages/AdminChangelogPage'));
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
@@ -147,6 +148,15 @@ function AppContent() {
             <AdminRoute>
               <Suspense fallback={<LoadingFallback message="Cargando analytics..." />}>
                 <AdminAnalyticsPage />
+              </Suspense>
+            </AdminRoute>
+          } />
+
+          {/* Admin Changelog Report */}
+          <Route path="/admin/changelog" element={
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando changelog..." />}>
+                <AdminChangelogPage />
               </Suspense>
             </AdminRoute>
           } />
