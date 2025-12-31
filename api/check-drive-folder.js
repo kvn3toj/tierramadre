@@ -47,9 +47,25 @@ export default async function handler(req, res) {
       pageToken = response.data.nextPageToken;
     } while (pageToken);
 
+    // Also get folder metadata to check if it's in a Shared Drive
+    let folderInfo = null;
+    try {
+      const folderMeta = await drive.files.get({
+        fileId: folderId,
+        fields: 'id, name, driveId, parents',
+        supportsAllDrives: true,
+      });
+      folderInfo = folderMeta.data;
+    } catch (e) {
+      folderInfo = { error: e.message };
+    }
+
     return res.status(200).json({
       success: true,
       folderId,
+      folderInfo,
+      isInSharedDrive: !!folderInfo?.driveId,
+      sharedDriveId: folderInfo?.driveId || null,
       totalFiles: files.length,
       files: files.map(f => ({
         id: f.id,
