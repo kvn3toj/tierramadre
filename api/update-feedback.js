@@ -41,8 +41,10 @@ const COLUMN_MAP = {
  */
 function getSheetsClient() {
   try {
+    // Clean the base64 key (remove embedded newlines, spaces, and quotes from env var)
+    const cleanKey = (process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '').replace(/[\s"]+/g, '');
     const credentials = JSON.parse(
-      Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
+      Buffer.from(cleanKey, 'base64').toString()
     );
 
     const auth = new google.auth.GoogleAuth({
