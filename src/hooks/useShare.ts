@@ -1,0 +1,227 @@
+/**
+ * useShare Hook
+ * Provides Web Share API integration with clipboard fallback.
+ *
+ * Features:
+ * - Native share dialog on supported devices (iOS Safari, Android Chrome)
+ * - Clipboard fallback for desktop browsers
+ * - Share product with pre-formatted text and URL
+ * - Haptic feedback on successful share
+ *
+ * iOS HIG:
+ * - Uses native share sheet for familiar UX
+ * - Respects system dark mode in share UI
+ */
+
+import { useCallback, useMemo } from 'react';
+import { InventoryItem } from '../types';
+import { triggerHaptic } from './useHaptics';
+import { formatCurrency } from '../utils/formatting';
+import { createLogger } from '../utils/logger';
+
+const log = createLogger('useShare');
+
+// Base URL for the Tierra Madre Studio app
+const STUDIO_BASE_URL = 'https://tierra-madre-studio.vercel.app';
+
+interface ShareData {
+  title: string;
+  text: string;
+  url: string;
+}
+
+interface ShareResult {
+  success: boolean;
+  method: 'native' | 'clipboard' | 'failed';
+  error?: Error;
+}
+
+interface UseShareOptions {
+  /**
+   * Enable haptic feedback on share
+   * @default true
+   */
+  hapticFeedback?: boolean;
+}
+
+interface UseShareReturn {
+  /**
+   * Whether Web Share API is supported
+   */
+  isNativeShareSupported: boolean;
+
+  /**
+   * Share a product with native share or clipboard fallback
+   */
+  shareProduct: (product: InventoryItem) => Promise<ShareResult>;
+
+  /**
+   * Share custom content
+   */
+  share: (data: ShareData) => Promise<ShareResult>;
+
+  /**
+   * Copy text to clipboard
+   */
+  copyToClipboard: (text: string) => Promise<boolean>;
+
+  /**
+   * Generate shareable product URL
+   */
+  getProductUrl: (product: InventoryItem) => string;
+
+  /**
+   * Generate formatted share text for a product
+   */
+  getProductShareText: (product: InventoryItem) => string;
+}
+
+/**
+ * Check if Web Share API is supported
+ */
+function checkShareSupport(): boolean {
+  return typeof navigator !== 'undefined' && 'share' in navigator;
+}
+
+/**
+ * Format product details for sharing
+ */
+function formatProductShareText(product: InventoryItem): string {
+  const displayName = product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
+  const weight = typeof product.peso === 'number' ? `${product.peso} ct` : '';
+  const price = formatCurrency(product.precioCOP);
+
+  // Build share text with emoji for visual appeal
+  const lines = [
+    `💎 ${displayName}`,
+    ``,
+    `✨ ${product.calidad} - ${product.color}`,
+  ];
+
+  if (weight) {
+    lines.push(`⚖️ ${weight}`);
+  }
+
+  if (product.precioCOP) {
+    lines.push(`💰 ${price}`);
+  }
+
+  lines.push(``);
+  lines.push(`🌿 Tierra Madre - Colombian Emeralds`);
+
+  return lines.join('\n');
+}
+
+/**
+ * Hook for sharing products and content
+ *
+ * @example
+ * const { shareProduct, isNativeShareSupported } = useShare();
+ *
+ * const handleShare = async () => {
+ *   const result = await shareProduct(product);
+ *   if (result.success) {
+ *     showToast('Compartido exitosamente');
+ *   }
+ * };
+ */
+export function useShare(options: UseShareOptions = {}): UseShareReturn {
+  const { hapticFeedback = true } = options;
+
+  const isNativeShareSupported = useMemo(() => checkShareSupport(), []);
+
+  /**
+   * Generate product URL
+   */
+  const getProductUrl = useCallback((product: InventoryItem): string => {
+    return `${STUDIO_BASE_URL}/product/${product.item}`;
+  }, []);
+
+  /**
+   * Generate formatted share text
+   */
+  const getProductShareText = useCallback((product: InventoryItem): string => {
+    return formatProductShareText(product);
+  }, []);
+
+  /**
+   * Copy text to clipboard
+   */
+  const copyToClipboard = useCallback(async (text: string): Promise<boolean> => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (hapticFeedback) {
+        triggerHaptic('success');
+      }
+      return true;
+    } catch (err) {
+      log.debug('Clipboard write failed:', err);
+      return false;
+    }
+  }, [hapticFeedback]);
+
+  /**
+   * Share custom content
+   */
+  const share = useCallback(async (data: ShareData): Promise<ShareResult> => {
+    // Try native share first
+    if (isNativeShareSupported) {
+      try {
+        await navigator.share({
+          title: data.title,
+          text: data.text,
+          url: data.url,
+        });
+
+        if (hapticFeedback) {
+          triggerHaptic('success');
+        }
+
+        return { success: true, method: 'native' };
+      } catch (err) {
+        // User cancelled or share failed
+        if (err instanceof Error && err.name === 'AbortError') {
+          log.debug('Share cancelled by user');
+          return { success: false, method: 'native', error: err };
+        }
+        log.debug('Native share failed:', err);
+      }
+    }
+
+    // Fallback to clipboard
+    const shareText = `${data.title}\n\n${data.text}\n\n${data.url}`;
+    const clipboardSuccess = await copyToClipboard(shareText);
+
+    if (clipboardSuccess) {
+      return { success: true, method: 'clipboard' };
+    }
+
+    return { success: false, method: 'failed' };
+  }, [isNativeShareSupported, hapticFeedback, copyToClipboard]);
+
+  /**
+   * Share a product
+   */
+  const shareProduct = useCallback(async (product: InventoryItem): Promise<ShareResult> => {
+    const displayName = product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
+    const url = getProductUrl(product);
+    const text = getProductShareText(product);
+
+    return share({
+      title: `${displayName} - Tierra Madre`,
+      text,
+      url,
+    });
+  }, [share, getProductUrl, getProductShareText]);
+
+  return {
+    isNativeShareSupported,
+    shareProduct,
+    share,
+    copyToClipboard,
+    getProductUrl,
+    getProductShareText,
+  };
+}
+
+export default useShare;

@@ -200,4 +200,47 @@ export const es = {
     privateAccess: 'ACCESO PRIVADO',
     colombianEmeralds: 'Colombian Emeralds',
   },
+
+  // Member Benefits (Guest Teaser)
+  membership: {
+    title: 'Comunidad Tierra Madre',
+    subtitle: 'Beneficios Exclusivos',
+    description: 'Descubre los privilegios exclusivos que te esperan como miembro de nuestra comunidad de amantes de las esmeraldas colombianas.',
+    joinCta: 'Únete a la Comunidad',
+    comingSoon: 'Programa de membresía disponible próximamente',
+    showMore: 'beneficios más',
+    showLess: 'Ver menos',
+    benefits: {
+      exclusivePrices: {
+        title: 'Precios Exclusivos',
+        description: 'Descuentos especiales y precios preferenciales solo para miembros',
+        badge: 'Hasta -20%',
+      },
+      privateAuctions: {
+        title: 'Subastas Privadas',
+        description: 'Acceso a subastas exclusivas de piezas únicas y coleccionables',
+        badge: 'Próximamente',
+      },
+      earlyAccess: {
+        title: 'Acceso Anticipado',
+        description: 'Sé el primero en ver nuevas esmeraldas antes del público general',
+        badge: '24h antes',
+      },
+      rewards: {
+        title: 'Recompensas',
+        description: 'Programa de puntos, regalos de cumpleaños y beneficios sorpresa',
+        badge: 'Puntos x2',
+      },
+      community: {
+        title: 'Comunidad Exclusiva',
+        description: 'Eventos privados, tours a minas y conexiones con coleccionistas',
+        badge: 'VIP',
+      },
+      warranty: {
+        title: 'Garantía Extendida',
+        description: 'Certificación premium y garantía de autenticidad vitalicia',
+        badge: 'Vitalicia',
+      },
+    },
+  },
 };

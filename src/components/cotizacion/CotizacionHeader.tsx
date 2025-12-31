@@ -7,6 +7,7 @@ import { Box, Typography, Paper } from '@mui/material';
 import { FileText } from 'lucide-react';
 import { brandColors } from './constants';
 import { formatCotizacionCurrency } from '../../hooks/useCotizacion';
+import { iosTypographyScale } from '../../design-system';
 
 export interface CotizacionHeaderProps {
   productCount: number;
@@ -71,7 +72,7 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
               }}
             >
               <Typography sx={{
-                fontSize: '2rem',
+                fontSize: iosTypographyScale.title1,
                 fontWeight: 800,
                 color: '#FFFFFF',
                 lineHeight: 1,
@@ -80,7 +81,7 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
                 {productCount}
               </Typography>
               <Typography sx={{
-                fontSize: '0.75rem',
+                fontSize: iosTypographyScale.caption1,
                 color: 'rgba(255,255,255,0.95)',
                 fontWeight: 600,
                 mt: 0.5,
@@ -103,7 +104,7 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
               }}
             >
               <Typography sx={{
-                fontSize: '1.1rem',
+                fontSize: iosTypographyScale.headline,
                 fontWeight: 800,
                 color: '#FFFFFF',
                 lineHeight: 1.2,
@@ -112,7 +113,7 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
                 {formatCotizacionCurrency(total)}
               </Typography>
               <Typography sx={{
-                fontSize: '0.75rem',
+                fontSize: iosTypographyScale.caption1,
                 color: 'rgba(255,255,255,0.95)',
                 fontWeight: 600,
                 textShadow: '0 1px 2px rgba(0,0,0,0.2)',

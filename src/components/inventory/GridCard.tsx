@@ -2,6 +2,12 @@
  * GridCard Component
  * Grid view card for inventory items with golden ratio layout.
  * Optimized for virtualized rendering.
+ *
+ * iOS HIG Compliant:
+ * - 44pt minimum touch targets
+ * - Spring animations for tactile feedback
+ * - Consistent typography scale (body 17pt, footnote 13pt)
+ * - Hairline separators and subtle surfaces
  */
 import React from 'react';
 import {
@@ -11,7 +17,6 @@ import {
   CardContent,
   Chip,
   IconButton,
-  useTheme,
 } from '@mui/material';
 import {
   Play,
@@ -19,13 +24,21 @@ import {
   Heart,
   Scale,
 } from 'lucide-react';
+import { triggerHaptic } from '../../hooks/useHaptics';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { InventoryItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { PriceDisplay } from '../PriceDisplay';
 import ProgressiveImage from '../ProgressiveImage';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { iosTypographyScale, accentColors, lightTokens, darkTokens } from '../../design-system';
+import {
+  iosTypographyScale,
+  accentColors,
+  lightTokens,
+  darkTokens,
+  animation,
+  iosSemanticColors,
+} from '../../design-system';
 
 interface GridCardProps {
   item: InventoryItem;
@@ -51,9 +64,12 @@ function GridCard({
   canAddToComparison = true,
   isMobile = false,
 }: GridCardProps) {
-  const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+
+  // iOS semantic colors for proper dark mode support
+  const labelColor = iosSemanticColors.label[mode];
+  const secondaryLabelColor = iosSemanticColors.secondaryLabel[mode];
 
   const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const quality = getQualityBadge(item.calidad);
@@ -63,11 +79,13 @@ function GridCard({
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    triggerHaptic(isFavorite ? 'light' : 'selection');
     onToggleFavorite();
   };
 
   const handleCompareClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    triggerHaptic(isSelectedForComparison ? 'light' : 'medium');
     onToggleComparison?.();
   };
 
@@ -84,14 +102,18 @@ function GridCard({
         borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
         overflow: 'hidden',
-        transition: 'all 0.25s ease',
+        transition: animation.transition.spring,
         cursor: 'pointer',
         '&:hover': {
           borderColor: emeraldCore.primary,
-          transform: 'translateY(-4px)',
+          transform: 'translateY(-2px) scale(1.01)',
           boxShadow: isLight
-            ? '0 20px 40px rgba(0, 0, 0, 0.08)'
-            : '0 20px 40px rgba(0, 0, 0, 0.3)',
+            ? '0 12px 24px rgba(0, 0, 0, 0.08)'
+            : '0 12px 24px rgba(0, 0, 0, 0.25)',
+        },
+        '&:active': {
+          transform: 'scale(0.98)',
+          transition: animation.transition.fast,
         },
         '&:focus-visible': {
           outline: `3px solid ${emeraldCore.primary}`,
@@ -167,32 +189,34 @@ function GridCard({
                 gap: 0.5,
               }}
             >
-              {/* Quality badge */}
+              {/* Quality badge - iOS caption2 (11px) */}
               <Chip
                 label={quality.label}
                 size="small"
                 sx={{
                   height: 20,
-                  fontSize: '0.6rem',
-                  fontWeight: 700,
+                  fontSize: iosTypographyScale.caption2,
+                  fontWeight: 600,
                   textTransform: 'uppercase',
-                  letterSpacing: '0.03em',
+                  letterSpacing: '0.02em',
                   bgcolor: quality.bg,
                   color: quality.color,
                   border: `1px solid ${quality.border}`,
+                  backdropFilter: 'blur(8px)',
                 }}
               />
-              {/* Quantity badge */}
+              {/* Quantity badge - iOS caption2 (11px) */}
               {item.cantidad > 1 && (
                 <Chip
                   label={`×${item.cantidad}`}
                   size="small"
                   sx={{
                     height: 20,
-                    fontSize: '0.65rem',
+                    fontSize: iosTypographyScale.caption2,
                     fontWeight: 600,
                     bgcolor: 'rgba(0, 0, 0, 0.7)',
                     color: 'white',
+                    backdropFilter: 'blur(8px)',
                   }}
                 />
               )}
@@ -230,12 +254,15 @@ function GridCard({
                 : 'rgba(30, 41, 59, 0.95)',
               backdropFilter: 'blur(8px)',
               boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-              transition: 'all 0.2s ease',
+              transition: animation.transition.spring,
               '&:hover': {
                 bgcolor: isLight
                   ? 'rgba(255, 255, 255, 1)'
                   : 'rgba(30, 41, 59, 1)',
-                transform: 'scale(1.05)',
+                transform: 'scale(1.08)',
+              },
+              '&:active': {
+                transform: 'scale(0.92)',
               },
             }}
           >
@@ -263,14 +290,17 @@ function GridCard({
                     : 'rgba(30, 41, 59, 0.95)',
                 backdropFilter: 'blur(8px)',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                transition: 'all 0.2s ease',
+                transition: animation.transition.spring,
                 '&:hover': {
                   bgcolor: isSelectedForComparison
                     ? emeraldCore.dark
                     : isLight
                       ? 'rgba(255, 255, 255, 1)'
                       : 'rgba(30, 41, 59, 1)',
-                  transform: 'scale(1.05)',
+                  transform: 'scale(1.08)',
+                },
+                '&:active': {
+                  transform: 'scale(0.92)',
                 },
                 '&:disabled': {
                   bgcolor: 'rgba(200, 200, 200, 0.5)',
@@ -298,7 +328,7 @@ function GridCard({
           variant="body2"
           sx={{
             fontWeight: 600, // iOS headline weight
-            color: theme.palette.text.primary,
+            color: labelColor,
             mb: isMobile ? 0.5 : 0.25,
             lineHeight: 1.4, // iOS body line height
             overflow: 'hidden',
@@ -327,7 +357,7 @@ function GridCard({
           <Typography
             variant="caption"
             sx={{
-              color: theme.palette.text.secondary,
+              color: secondaryLabelColor,
               // iOS HIG: subhead = 15px mobile, footnote = 13px desktop
               fontSize: isMobile ? iosTypographyScale.subhead : iosTypographyScale.footnote,
               letterSpacing: '-0.01em',

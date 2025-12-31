@@ -200,4 +200,47 @@ export const en = {
     privateAccess: 'PRIVATE ACCESS',
     colombianEmeralds: 'Colombian Emeralds',
   },
+
+  // Member Benefits (Guest Teaser)
+  membership: {
+    title: 'Tierra Madre Community',
+    subtitle: 'Exclusive Benefits',
+    description: 'Discover the exclusive privileges awaiting you as a member of our Colombian emerald enthusiasts community.',
+    joinCta: 'Join the Community',
+    comingSoon: 'Membership program coming soon',
+    showMore: 'more benefits',
+    showLess: 'Show less',
+    benefits: {
+      exclusivePrices: {
+        title: 'Exclusive Prices',
+        description: 'Special discounts and preferential pricing for members only',
+        badge: 'Up to -20%',
+      },
+      privateAuctions: {
+        title: 'Private Auctions',
+        description: 'Access to exclusive auctions of unique and collectible pieces',
+        badge: 'Coming Soon',
+      },
+      earlyAccess: {
+        title: 'Early Access',
+        description: 'Be the first to see new emeralds before the general public',
+        badge: '24h ahead',
+      },
+      rewards: {
+        title: 'Rewards',
+        description: 'Points program, birthday gifts, and surprise benefits',
+        badge: 'Points x2',
+      },
+      community: {
+        title: 'Exclusive Community',
+        description: 'Private events, mine tours, and connections with collectors',
+        badge: 'VIP',
+      },
+      warranty: {
+        title: 'Extended Warranty',
+        description: 'Premium certification and lifetime authenticity guarantee',
+        badge: 'Lifetime',
+      },
+    },
+  },
 };

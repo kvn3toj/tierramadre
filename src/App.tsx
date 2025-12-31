@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { IOSLayout } from './components/ios';
-import { WelcomeScreen } from './components/auth';
+import { WelcomeScreen, AdminRoute } from './components/auth';
 import { useAuth } from './hooks/useAuth';
 import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
@@ -95,31 +95,41 @@ function AppContent() {
             </Suspense>
           } />
 
-          {/* Cuentas Hub and sub-pages */}
+          {/* Cuentas Hub and sub-pages - Admin only */}
           <Route path="/cuentas" element={
-            <Suspense fallback={<LoadingFallback message="Cargando cuentas..." />}>
-              <AccountsHub />
-            </Suspense>
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando cuentas..." />}>
+                <AccountsHub />
+              </Suspense>
+            </AdminRoute>
           } />
           <Route path="/cuentas/simulador" element={
-            <Suspense fallback={<LoadingFallback message="Cargando simulador..." />}>
-              <PriceSimulator />
-            </Suspense>
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando simulador..." />}>
+                <PriceSimulator />
+              </Suspense>
+            </AdminRoute>
           } />
           <Route path="/cuentas/recibos" element={
-            <Suspense fallback={<LoadingFallback message="Cargando recibos..." />}>
-              <ReceiptGenerator />
-            </Suspense>
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando recibos..." />}>
+                <ReceiptGenerator />
+              </Suspense>
+            </AdminRoute>
           } />
           <Route path="/cuentas/cotizaciones" element={
-            <Suspense fallback={<LoadingFallback message="Cargando cotizaciones..." />}>
-              <CotizacionGenerator />
-            </Suspense>
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando cotizaciones..." />}>
+                <CotizacionGenerator />
+              </Suspense>
+            </AdminRoute>
           } />
           <Route path="/cuentas/cotizaciones/preview" element={
-            <Suspense fallback={<LoadingFallback message="Cargando cotización..." />}>
-              <QuotationPreview />
-            </Suspense>
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando cotización..." />}>
+                <QuotationPreview />
+              </Suspense>
+            </AdminRoute>
           } />
 
           {/* Bóveda Secreta */}

@@ -44,6 +44,7 @@ import {
   semanticColors,
 } from '../design-system/tokens/colors';
 import { primitiveColors } from '../design-system/tokens/primitives/colors';
+import { iosTypographyScale } from '../design-system';
 
 // Logo brand green - using design system token
 const logoGreen = emeraldCore.primary; // #00AE7A
@@ -408,10 +409,10 @@ export default function ReceiptGenerator() {
                   minWidth: 80,
                 }}
               >
-                <Typography sx={{ fontSize: '1.75rem', fontWeight: 800, color: surfacesLight.background.primary, lineHeight: 1 }}>
+                <Typography sx={{ fontSize: iosTypographyScale.title1, fontWeight: 800, color: surfacesLight.background.primary, lineHeight: 1 }}>
                   {(receipt.products || []).length}
                 </Typography>
-                <Typography sx={{ fontSize: '0.6875rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+                <Typography sx={{ fontSize: iosTypographyScale.caption2, color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
                   Productos
                 </Typography>
               </Box>
@@ -426,10 +427,10 @@ export default function ReceiptGenerator() {
                   minWidth: 100,
                 }}
               >
-                <Typography sx={{ fontSize: '1.25rem', fontWeight: 800, color: surfacesLight.background.primary, lineHeight: 1.2 }}>
+                <Typography sx={{ fontSize: iosTypographyScale.title3, fontWeight: 800, color: surfacesLight.background.primary, lineHeight: 1.2 }}>
                   {formatCurrency(receipt.total || 0)}
                 </Typography>
-                <Typography sx={{ fontSize: '0.6875rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+                <Typography sx={{ fontSize: iosTypographyScale.caption2, color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
                   Total
                 </Typography>
               </Box>

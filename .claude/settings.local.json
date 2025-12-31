@@ -38,7 +38,8 @@
       "Bash(vercel:*)",
       "Bash(node /tmp/test-welcome-screen.mjs:*)",
       "Bash(node:*)",
-      "Bash(open:*)"
+      "Bash(open:*)",
+      "Bash(wc:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,16 +1,16 @@
 /**
  * Authentication Context - Tiered Access System
  * Guest Mode: View-only access (no PIN required)
- * Full Mode: Complete access (PIN 5555 or Google auth with asesor/embajador role)
- * Admin Mode: Full access + Drive folder management (PIN 1234 or Google auth with admin role)
+ * Full Mode: Complete access (PIN 3333 or Google auth with asesor/embajador role)
+ * Admin Mode: Full access + Drive folder management (PIN 3011 or Google auth with admin role)
  */
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import type { AuthState, AuthContextType, AccessLevel } from '../types/auth';
 import { useGoogleAuth } from './GoogleAuthContext';
 
-const FULL_PIN = '5555';
-const ADMIN_PIN = '1234';
+const FULL_PIN = '3333';
+const ADMIN_PIN = '3011';
 const STORAGE_KEY = 'tierra-madre-auth';
 
 interface StoredAuthState {

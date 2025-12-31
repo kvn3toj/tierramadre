@@ -24,6 +24,7 @@ import { brand, radius, layoutConstants, iosTypographyScale } from '../../design
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsGuest } from '../../hooks/useAuth';
+import { useIsAdmin } from '../../hooks/usePermissions';
 import UnlockPrompt from '../auth/UnlockPrompt';
 
 export interface MoreToolConfig {
@@ -65,10 +66,16 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   const { t } = useLanguage();
   const { mode, toggleTheme } = useTheme();
   const isGuest = useIsGuest();
+  const isAdmin = useIsAdmin();
   const { effectiveConfig } = useLiquidGlassSafe();
   const [unlockOpen, setUnlockOpen] = useState(false);
 
-  const MORE_TOOLS = getMoreTools(t);
+  // Get tools and filter Cuentas for non-admins
+  const MORE_TOOLS = useMemo(() => {
+    const allTools = getMoreTools(t);
+    // Cuentas is admin-only
+    return allTools.filter(tool => tool.id !== 'accounts' || isAdmin);
+  }, [t, isAdmin]);
 
   // Liquid Glass styles for the sheet
   const sheetStyles = useMemo(() => {

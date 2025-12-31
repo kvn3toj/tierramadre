@@ -10,14 +10,12 @@
  * - Zoom capability
  */
 
-import { useState, useCallback, useRef, TouchEvent } from 'react';
+import { useState, useCallback, useRef, TouchEvent, useMemo } from 'react';
 import {
   Box,
   IconButton,
   Typography,
   Chip,
-  Dialog,
-  DialogContent,
   alpha,
   useTheme,
   useMediaQuery,
@@ -26,13 +24,14 @@ import {
   ChevronLeft,
   ChevronRight,
   PlayCircle,
-  X,
   ZoomIn,
   Maximize2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MediaItem, CATEGORY_LABELS } from './types';
 import { brand, darkTokens, lightTokens } from '../../design-system';
+import ImageLightbox from './ImageLightbox';
+import { triggerHaptic } from '../../hooks/useHaptics';
 
 interface MediaGalleryProps {
   media: MediaItem[];
@@ -91,17 +90,38 @@ export default function MediaGallery({
   };
 
   const handleThumbnailClick = (index: number) => {
+    triggerHaptic('selection');
     setCurrentIndex(index);
     setIsPlaying(false);
   };
 
   const handleMainClick = () => {
     if (currentMedia?.type === 'video' && !isPlaying) {
+      triggerHaptic('light');
       setIsPlaying(true);
     } else if (currentMedia?.type === 'image') {
+      triggerHaptic('light');
       setLightboxOpen(true);
     }
   };
+
+  // Prepare images for lightbox (only images, not videos)
+  const lightboxImages = useMemo(() => {
+    return media
+      .filter(item => item.type === 'image')
+      .map(item => ({
+        url: item.url,
+        alt: item.alt || productName,
+      }));
+  }, [media, productName]);
+
+  // Get the lightbox index for current image
+  const lightboxInitialIndex = useMemo(() => {
+    const imageOnlyIndex = media
+      .slice(0, currentIndex + 1)
+      .filter(item => item.type === 'image').length - 1;
+    return Math.max(0, imageOnlyIndex);
+  }, [media, currentIndex]);
 
   // Empty state
   if (!hasMedia) {
@@ -454,104 +474,13 @@ export default function MediaGallery({
         </Box>
       )}
 
-      {/* Lightbox Dialog */}
-      <Dialog
-        open={lightboxOpen}
+      {/* Enhanced Lightbox with gestures */}
+      <ImageLightbox
+        images={lightboxImages}
+        initialIndex={lightboxInitialIndex}
+        isOpen={lightboxOpen}
         onClose={() => setLightboxOpen(false)}
-        maxWidth="xl"
-        fullScreen={isMobile}
-        PaperProps={{
-          sx: {
-            bgcolor: alpha(darkTokens.background.app, 0.95),
-            backgroundImage: 'none',
-            m: isMobile ? 0 : 2,
-          },
-        }}
-      >
-        <IconButton
-          onClick={() => setLightboxOpen(false)}
-          sx={{
-            position: 'absolute',
-            top: 16,
-            right: 16,
-            color: lightTokens.text.inverse,
-            zIndex: 10,
-            bgcolor: alpha(lightTokens.background.surface, 0.1),
-            '&:hover': { bgcolor: alpha(lightTokens.background.surface, 0.2) },
-          }}
-        >
-          <X size={24} />
-        </IconButton>
-
-        <DialogContent
-          sx={{
-            p: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: isMobile ? '100vh' : '80vh',
-          }}
-        >
-          {currentMedia?.type === 'image' && (
-            <img
-              src={currentMedia.url}
-              alt={currentMedia.alt || productName}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '90vh',
-                objectFit: 'contain',
-              }}
-            />
-          )}
-        </DialogContent>
-
-        {/* Lightbox Navigation */}
-        {media.length > 1 && (
-          <>
-            <IconButton
-              onClick={handlePrevious}
-              sx={{
-                position: 'absolute',
-                left: 16,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: lightTokens.text.inverse,
-                bgcolor: alpha(lightTokens.background.surface, 0.1),
-                '&:hover': { bgcolor: alpha(lightTokens.background.surface, 0.2) },
-              }}
-            >
-              <ChevronLeft size={32} />
-            </IconButton>
-            <IconButton
-              onClick={handleNext}
-              sx={{
-                position: 'absolute',
-                right: 16,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: lightTokens.text.inverse,
-                bgcolor: alpha(lightTokens.background.surface, 0.1),
-                '&:hover': { bgcolor: alpha(lightTokens.background.surface, 0.2) },
-              }}
-            >
-              <ChevronRight size={32} />
-            </IconButton>
-          </>
-        )}
-
-        {/* Lightbox Progress */}
-        <Typography
-          sx={{
-            position: 'absolute',
-            bottom: 16,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            color: alpha(lightTokens.text.inverse, 0.7),
-          }}
-        >
-          {currentIndex + 1} / {media.length}
-        </Typography>
-      </Dialog>
+      />
     </Box>
   );
 }

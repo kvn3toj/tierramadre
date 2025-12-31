@@ -29,11 +29,16 @@ import {
   Edit2,
   Check,
   QrCode,
+  Share2,
 } from 'lucide-react';
+import { useShare } from '../hooks/useShare';
+import { useHaptics } from '../hooks/useHaptics';
 import { QRCodeSVG } from 'qrcode.react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useCanEdit, useIsAdmin } from '../hooks/usePermissions';
+import { useIsGuest } from '../hooks/useAuth';
 import { useInventory } from '../hooks/useInventory';
+import { MemberBenefitsTeaser } from './guest';
 import { MediaGallery } from './media';
 import DriveFolderInfo from './media/DriveFolderInfo';
 import type { MediaItem } from './media/types';
@@ -59,11 +64,14 @@ export default function ProductDetail() {
   const isLight = mode === 'light';
   const canEdit = useCanEdit();
   const isAdmin = useIsAdmin();
+  const isGuest = useIsGuest();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showDriveInfo, setShowDriveInfo] = useState(false);
 
   const { inventory, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems, isLoadingSheets } = useInventory();
+  const { shareProduct, isNativeShareSupported } = useShare();
+  const { trigger: triggerHaptic } = useHaptics();
 
   // Scroll to top when navigating to this page
   useEffect(() => {
@@ -208,6 +216,22 @@ export default function ProductDetail() {
       log.error('Error refreshing Drive images:', error);
     }
   }, [product, displayName, updateMediaItems, updateImage, updateVideo]);
+
+  // Handle share product
+  const handleShareProduct = useCallback(async () => {
+    if (!product) return;
+
+    triggerHaptic('light');
+    const result = await shareProduct(product);
+
+    if (result.success) {
+      triggerHaptic('success');
+      if (result.method === 'clipboard') {
+        // Could show a toast here: "Enlace copiado al portapapeles"
+        log.debug('Product link copied to clipboard');
+      }
+    }
+  }, [product, shareProduct, triggerHaptic]);
 
   // Show loading state while inventory is loading
   if (isLoadingSheets && !product) {
@@ -754,29 +778,69 @@ export default function ProductDetail() {
                 {isAvailable ? 'Añadir al Carrito' : 'Vendido'}
               </Button>
 
-              {/* Secondary CTA - Text only, iOS style */}
-              <Button
-                variant="text"
-                fullWidth
-                sx={{
-                  color: emeraldCore.dark,
-                  py: 1,
-                  minHeight: 36,
-                  fontWeight: 600,
-                  fontSize: '15px',
-                  textTransform: 'none',
-                  '&:hover': {
-                    bgcolor: 'transparent',
-                    opacity: 0.7,
-                  },
-                  '&:active': {
-                    opacity: 0.5,
-                  },
-                }}
-              >
-                Contactar Asesor
-              </Button>
+              {/* Secondary CTAs - Horizontal layout */}
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                {/* Share Button - iOS style */}
+                <Button
+                  variant="outlined"
+                  onClick={handleShareProduct}
+                  startIcon={<Share2 size={18} />}
+                  sx={{
+                    flex: 1,
+                    color: emeraldCore.dark,
+                    borderColor: isLight ? surfacesLight.border.default : surfacesDark.border.default,
+                    py: 1,
+                    minHeight: 44,
+                    fontWeight: 600,
+                    fontSize: '15px',
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    '&:hover': {
+                      borderColor: emeraldCore.dark,
+                      bgcolor: alpha(emeraldCore.dark, 0.04),
+                    },
+                    '&:active': {
+                      transform: 'scale(0.98)',
+                    },
+                  }}
+                >
+                  {isNativeShareSupported ? 'Compartir' : 'Copiar Link'}
+                </Button>
+
+                {/* Contact Advisor Button */}
+                <Button
+                  variant="text"
+                  sx={{
+                    flex: 1,
+                    color: emeraldCore.dark,
+                    py: 1,
+                    minHeight: 44,
+                    fontWeight: 600,
+                    fontSize: '15px',
+                    textTransform: 'none',
+                    '&:hover': {
+                      bgcolor: 'transparent',
+                      opacity: 0.7,
+                    },
+                    '&:active': {
+                      opacity: 0.5,
+                    },
+                  }}
+                >
+                  Contactar
+                </Button>
+              </Box>
             </Box>
+
+            {/* Member Benefits Teaser - Only for Guest Users */}
+            {isGuest && (
+              <Box sx={{ mt: 3 }}>
+                <MemberBenefitsTeaser
+                  variant="compact"
+                  onUnlockClick={() => navigate('/')}
+                />
+              </Box>
+            )}
           </Box>
         </Grid>
       </Grid>

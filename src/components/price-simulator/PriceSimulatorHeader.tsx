@@ -135,6 +135,7 @@ export const PriceSimulatorHeader: React.FC<PriceSimulatorHeaderProps> = ({
               fontWeight: 600,
               px: { xs: 2.5, md: 3 },
               py: { xs: 1, md: 1.25 },
+              minHeight: 44, // iOS HIG touch target
               borderRadius: 2,
               textTransform: 'none',
               fontSize: { xs: '0.8125rem', md: '0.875rem' },
