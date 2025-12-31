@@ -35,16 +35,22 @@ function getSheetsClient() {
   return google.sheets({ version: 'v4', auth });
 }
 
-async function findFolder(drive, parentId, folderName) {
+async function findFolder(drive, parentId, itemNumber) {
   // Search for folder starting with the item number (e.g., "32 - Venus")
+  // Use contains but then filter client-side for exact prefix match
   const response = await drive.files.list({
-    q: `name contains '${folderName} -' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`,
+    q: `name contains '${itemNumber} -' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`,
     fields: 'files(id, name)',
     supportsAllDrives: true,
     includeItemsFromAllDrives: true,
   });
 
-  return response.data.files?.[0] || null;
+  // Filter to find exact match for "N - " at the start of the name
+  const exactMatch = response.data.files?.find(f =>
+    f.name.startsWith(`${itemNumber} - `)
+  );
+
+  return exactMatch || null;
 }
 
 async function getProductsFolderId(drive, sharedDriveId) {

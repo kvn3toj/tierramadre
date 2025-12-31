@@ -60,11 +60,12 @@ async function getProductFolderId(drive, parentFolderId, itemNumber) {
     includeItemsFromAllDrives: true,
   });
 
-  if (response.data.files && response.data.files.length > 0) {
-    return response.data.files[0].id;
-  }
+  // Filter to find exact match for "N - " at the start of the name
+  const exactMatch = response.data.files?.find(f =>
+    f.name.startsWith(`${itemNumber} - `)
+  );
 
-  return null;
+  return exactMatch?.id || null;
 }
 
 /**
