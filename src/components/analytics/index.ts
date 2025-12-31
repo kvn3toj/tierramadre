@@ -7,3 +7,4 @@
 
 export { default as FunnelVisualization } from './FunnelVisualization';
 export { default as FrictionInsights } from './FrictionInsights';
+export { default as EngagementHeatmap } from './EngagementHeatmap';

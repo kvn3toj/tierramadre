@@ -445,3 +445,53 @@ export interface UXInsight {
   estimatedImpact: string;
   dataEvidence: string;
 }
+
+// =============================================================================
+// ENGAGEMENT HEATMAP TYPES
+// =============================================================================
+
+/**
+ * Feature area definition for heatmap analysis
+ */
+export interface FeatureArea {
+  id: string;
+  name: string;
+  icon: string;
+  pagePathPatterns: string[];
+  eventPatterns: string[];
+  color: string;
+}
+
+/**
+ * Engagement metrics for a single feature
+ */
+export interface FeatureEngagement {
+  featureId: string;
+  featureName: string;
+  icon: string;
+  color: string;
+  dau: number;
+  dauTrend: 'up' | 'down' | 'neutral';
+  avgTimeSeconds: number;
+  avgTimeFormatted: string;
+  timeTrend: 'up' | 'down' | 'neutral';
+  retentionRate: number;
+  retentionTrend: 'up' | 'down' | 'neutral';
+  totalEvents: number;
+  heatIntensity: number;
+}
+
+/**
+ * Aggregated heatmap data
+ */
+export interface EngagementHeatmapData {
+  features: FeatureEngagement[];
+  dateRange: {
+    start: number;
+    end: number;
+    days: number;
+  };
+  totalDau: number;
+  avgRetention: number;
+  generatedAt: number;
+}

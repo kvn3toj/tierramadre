@@ -36,11 +36,12 @@ import {
   Clock,
   BarChart2,
   GitBranch,
+  Flame,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useTracking } from '../contexts/TrackingContext';
 import { LevelBadge, ProgressRing } from '../components/gamification';
-import { FunnelVisualization, FrictionInsights } from '../components/analytics';
+import { FunnelVisualization, FrictionInsights, EngagementHeatmap } from '../components/analytics';
 import { emeraldCore, goldAccent, semanticColors } from '../design-system/tokens/colors';
 import { spacing } from '../design-system/tokens/primitives/spacing';
 import {
@@ -699,14 +700,20 @@ const AdminAnalyticsPage: React.FC = () => {
           '& .MuiTabs-indicator': { bgcolor: emeraldCore.primary },
         }}
       >
+        <Tab label="Heatmap" icon={<Flame size={16} />} iconPosition="start" />
         <Tab label="Funnels" icon={<GitBranch size={16} />} iconPosition="start" />
         <Tab label="Actividad" icon={<Clock size={16} />} iconPosition="start" />
         <Tab label="Filtros" icon={<Filter size={16} />} iconPosition="start" />
         <Tab label="Páginas" icon={<BarChart2 size={16} />} iconPosition="start" />
       </Tabs>
 
-      {/* Funnels Tab */}
+      {/* Heatmap Tab */}
       {activeTab === 0 && (
+        <EngagementHeatmap />
+      )}
+
+      {/* Funnels Tab */}
+      {activeTab === 1 && (
         <Box>
           {/* Friction Insights Summary */}
           <FrictionInsights
@@ -730,7 +737,7 @@ const AdminAnalyticsPage: React.FC = () => {
       )}
 
       {/* Activity Tab */}
-      {activeTab === 1 && (
+      {activeTab === 2 && (
         <Paper
           elevation={0}
           sx={{
@@ -771,7 +778,7 @@ const AdminAnalyticsPage: React.FC = () => {
       )}
 
       {/* Filters Tab */}
-      {activeTab === 2 && (
+      {activeTab === 3 && (
         <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
             <Paper
@@ -868,7 +875,7 @@ const AdminAnalyticsPage: React.FC = () => {
       )}
 
       {/* Pages Tab */}
-      {activeTab === 3 && (
+      {activeTab === 4 && (
         <Paper
           elevation={0}
           sx={{
