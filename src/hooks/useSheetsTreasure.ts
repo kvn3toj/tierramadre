@@ -89,25 +89,18 @@ function setCachedData(data: TreasureItem[]): void {
  * Fetch treasure from Google Sheets API
  */
 async function fetchFromSheets(): Promise<TreasureItem[]> {
-  // Try new endpoint first, fallback to old for backward compatibility
-  let response = await fetch('/api/get-treasure-sheets');
-  if (!response.ok) {
-    // Fallback to old endpoint during transition
-    response = await fetch('/api/get-inventory-sheets');
-  }
+  const response = await fetch('/api/get-treasure-sheets');
 
   if (!response.ok) {
     throw new Error('Failed to fetch treasure from Google Sheets');
   }
 
   const result = await response.json();
-  // Accept both new and old response formats
-  const treasure = result.treasure || result.inventory;
-  if (!result.success || !treasure) {
+  if (!result.success || !result.treasure) {
     throw new Error('Invalid response from Google Sheets API');
   }
 
-  return treasure;
+  return result.treasure;
 }
 
 /**
