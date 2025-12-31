@@ -47,7 +47,11 @@
       "Bash(/Users/kevinp/Movies/coomunity-universe/TierraMadre/scripts/fix-inventory-inconsistencies.mjs )",
       "Bash(/Users/kevinp/Movies/coomunity-universe/TierraMadre/scripts/sync-prices-to-inventory.mjs )",
       "Bash(/Users/kevinp/Movies/coomunity-universe/TierraMadre/scripts/sync-pricing-from-inventory.mjs)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(yes:*)",
+      "Bash([ -n \"$GOOGLE_SERVICE_ACCOUNT_KEY\" ])",
+      "Bash(python3:*)",
+      "Bash(printf:*)"
     ],
     "deny": [],
     "ask": []
