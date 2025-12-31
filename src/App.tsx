@@ -10,6 +10,8 @@ import SplashScreen from './components/SplashScreen';
 // PWA disabled - service worker not generating correctly
 // import UpdatePrompt from './components/pwa/UpdatePrompt';
 import { LiquidGlassProvider } from './contexts/LiquidGlassContext';
+import { TrackingProvider } from './contexts/TrackingContext';
+import { AchievementToast } from './components/gamification';
 import { useViewportHeight } from './hooks/useViewportHeight';
 
 // All routes lazy loaded for optimal bundle splitting
@@ -26,6 +28,7 @@ const PriceSimulator = lazy(() => import('./components/PriceSimulator'));
 const ReceiptGenerator = lazy(() => import('./components/ReceiptGenerator'));
 const CotizacionGenerator = lazy(() => import('./components/CotizacionGenerator'));
 const QuotationPreview = lazy(() => import('./components/QuotationPreview'));
+const AdminAnalyticsPage = lazy(() => import('./pages/AdminAnalyticsPage'));
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
@@ -138,6 +141,15 @@ function AppContent() {
               <VaultPage />
             </Suspense>
           } />
+
+          {/* Admin Analytics Dashboard */}
+          <Route path="/admin/analytics" element={
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando analytics..." />}>
+                <AdminAnalyticsPage />
+              </Suspense>
+            </AdminRoute>
+          } />
         </Routes>
       </IOSLayout>
     </>
@@ -169,11 +181,14 @@ function App() {
 
   return (
     <LiquidGlassProvider>
-      <BrowserRouter>
-        <AppContent />
-        {/* PWA disabled - service worker not generating correctly */}
-        {/* <UpdatePrompt /> */}
-      </BrowserRouter>
+      <TrackingProvider>
+        <BrowserRouter>
+          <AppContent />
+          <AchievementToast />
+          {/* PWA disabled - service worker not generating correctly */}
+          {/* <UpdatePrompt /> */}
+        </BrowserRouter>
+      </TrackingProvider>
     </LiquidGlassProvider>
   );
 }

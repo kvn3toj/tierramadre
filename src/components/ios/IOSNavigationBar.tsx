@@ -34,6 +34,8 @@ export interface IOSNavigationBarProps {
   onBackClick?: () => void;
   leadingActions?: NavigationAction[];
   trailingActions?: NavigationAction[];
+  /** Custom trailing element (e.g., LevelBadge) */
+  trailingElement?: React.ReactNode;
 }
 
 const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
@@ -45,6 +47,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
   onBackClick,
   leadingActions = [],
   trailingActions = [],
+  trailingElement,
 }) => {
   const navigate = useNavigate();
   const { effectiveConfig } = useLiquidGlassSafe();
@@ -203,6 +206,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
 
         {/* Trailing Section */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: spacing.xxs, justifyContent: 'flex-end', flex: 1 }}>
+          {trailingElement}
           {trailingActions.map((action, index) => {
             const Icon = action.icon;
             return (

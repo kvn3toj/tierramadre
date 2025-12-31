@@ -39,6 +39,7 @@ import { useSavedFilters } from '../hooks/useSavedFilters';
 // TODO: Re-enable keyboard nav when adapted for virtualized grid (react-window)
 // import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 import { useInventoryAnalytics } from '../hooks/useInventoryAnalytics';
+import { useTracking } from '../contexts/TrackingContext';
 import { InventoryItem } from '../types';
 import CertificationUpload from './CertificationUpload';
 import { formatCurrency, formatFullCurrency, getColorDot } from '../utils/formatting';
@@ -226,6 +227,17 @@ export default function InventoryBrowser() {
   // Analytics hook
   const analyticsHook = useInventoryAnalytics();
 
+  // Funnel tracking hook
+  const { track, checkAchievements } = useTracking();
+
+  // Track treasure view on mount
+  useEffect(() => {
+    track('treasure_view', {
+      total_items: inventoryData.length,
+      view_mode: viewMode,
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Search input ref for keyboard navigation
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -308,16 +320,26 @@ export default function InventoryBrowser() {
     setCertDialogOpen(true);
   }, []);
 
-  const handleProductClick = useCallback((item: InventoryItem) => {
+  const handleProductClick = useCallback((item: InventoryItem, positionInList: number = 0) => {
     // Track browsing progress
     browsingProgress.markViewed(item.item);
     // Add to recently viewed
     addToRecent(item.item);
     // Track analytics
     analyticsHook.trackItemView(item.item, item.nombre);
+
+    // Track funnel event
+    track('product_clicked', {
+      item_id: item.item,
+      item_name: item.nombre || 'Sin nombre',
+      position_in_list: positionInList,
+      filters_active: hasFilters,
+      view_mode: viewMode,
+    });
+
     // Navigate to product detail
     navigate(`/product/${item.item}`);
-  }, [navigate, browsingProgress, addToRecent, analyticsHook]);
+  }, [navigate, browsingProgress, addToRecent, analyticsHook, track, hasFilters, viewMode]);
 
   // Handle saving certifications
   const handleSaveCertifications = useCallback((certifications: InventoryItem['certifications']) => {
@@ -348,6 +370,81 @@ export default function InventoryBrowser() {
     if (filters.priceRange[0] !== priceMinMax.min || filters.priceRange[1] !== priceMinMax.max) count++;
     return count;
   }, [filters, priceMinMax]);
+
+  // Previous filters for comparison (to detect changes)
+  const prevFiltersRef = useRef(filters);
+
+  // Track filter changes
+  useEffect(() => {
+    const prev = prevFiltersRef.current;
+
+    // Detect which filter changed
+    if (prev.colorFilter !== filters.colorFilter && filters.colorFilter !== 'all') {
+      track('treasure_filter_applied', {
+        filter_type: 'color',
+        filter_value: filters.colorFilter,
+        filters_count: activeFilterCount,
+        results_count: sortedInventory.length,
+      });
+    }
+    if (prev.qualityFilter !== filters.qualityFilter && filters.qualityFilter !== 'all') {
+      track('treasure_filter_applied', {
+        filter_type: 'quality',
+        filter_value: filters.qualityFilter,
+        filters_count: activeFilterCount,
+        results_count: sortedInventory.length,
+      });
+    }
+    if (prev.shapeFilter !== filters.shapeFilter && filters.shapeFilter !== 'all') {
+      track('treasure_filter_applied', {
+        filter_type: 'shape',
+        filter_value: filters.shapeFilter,
+        filters_count: activeFilterCount,
+        results_count: sortedInventory.length,
+      });
+    }
+    if (prev.typeFilter !== filters.typeFilter && filters.typeFilter !== 'all') {
+      track('treasure_filter_applied', {
+        filter_type: 'type',
+        filter_value: filters.typeFilter,
+        filters_count: activeFilterCount,
+        results_count: sortedInventory.length,
+      });
+    }
+    if (prev.coleccionFilter !== filters.coleccionFilter && filters.coleccionFilter !== 'all') {
+      track('treasure_filter_applied', {
+        filter_type: 'coleccion',
+        filter_value: filters.coleccionFilter,
+        filters_count: activeFilterCount,
+        results_count: sortedInventory.length,
+      });
+    }
+    if (prev.cantidadFilter !== filters.cantidadFilter && filters.cantidadFilter !== 'all') {
+      track('treasure_filter_applied', {
+        filter_type: 'cantidad',
+        filter_value: filters.cantidadFilter,
+        filters_count: activeFilterCount,
+        results_count: sortedInventory.length,
+      });
+    }
+    // Track price range changes (skip initial sync)
+    if (
+      JSON.stringify(prev.priceRange) !== JSON.stringify(filters.priceRange) &&
+      filters.priceRange[0] !== priceMinMax.min
+    ) {
+      track('treasure_filter_applied', {
+        filter_type: 'price',
+        filter_value: `${filters.priceRange[0]}-${filters.priceRange[1]}`,
+        filters_count: activeFilterCount,
+        results_count: sortedInventory.length,
+      });
+    }
+
+    // Check for achievements after filter changes
+    checkAchievements();
+
+    prevFiltersRef.current = filters;
+  }, [filters, track, activeFilterCount, sortedInventory.length, checkAchievements, priceMinMax.min]);
 
   // Props for the memoized FilterContent component
   const filterContentProps: FilterContentProps = {

@@ -12,7 +12,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton, Backdrop, Button } from '@mui/material';
 import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode } from '@mui/icons-material';
-import { Vault } from 'lucide-react';
+import { Vault, BarChart3 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
 import { spacing } from '../../design-system/tokens/primitives/spacing';
@@ -53,6 +53,14 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     route: '/cuentas',
     color: brand.emerald[500], // Emerald from design system
   },
+  {
+    id: 'analytics',
+    label: 'Analytics',
+    subtitle: 'Métricas y Business Health',
+    icon: BarChart3 as any,
+    route: '/admin/analytics',
+    color: '#8B5CF6', // Purple for analytics
+  },
 ];
 
 export interface IOSMoreSheetProps {
@@ -70,11 +78,12 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   const { effectiveConfig } = useLiquidGlassSafe();
   const [unlockOpen, setUnlockOpen] = useState(false);
 
-  // Get tools and filter Cuentas for non-admins
+  // Get tools and filter admin-only tools for non-admins
   const MORE_TOOLS = useMemo(() => {
     const allTools = getMoreTools(t);
-    // Cuentas is admin-only
-    return allTools.filter(tool => tool.id !== 'accounts' || isAdmin);
+    const adminOnlyTools = ['accounts', 'analytics'];
+    // Cuentas and Analytics are admin-only
+    return allTools.filter(tool => !adminOnlyTools.includes(tool.id) || isAdmin);
   }, [t, isAdmin]);
 
   // Liquid Glass styles for the sheet

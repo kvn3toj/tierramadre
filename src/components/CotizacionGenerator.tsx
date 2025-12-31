@@ -74,6 +74,8 @@ import { InventoryItem } from '../types';
 import { SAMPLE_AMBASSADORS } from '../data/ambassadors';
 import { CotizacionHeader, QuotationPreview, brandColors } from './cotizacion';
 import { createLogger } from '../utils/logger';
+import { useTracking } from '../contexts/TrackingContext';
+import { useRecentClients, RecentClient } from '../hooks/useRecentClients';
 
 const log = createLogger('Cotizacion');
 const formatCurrency = formatCotizacionCurrency;
@@ -101,6 +103,11 @@ const getInvestmentIcon = (iconId: string) => {
 export default function CotizacionGenerator() {
   const quotationRef = useRef<HTMLDivElement>(null);
   const { inventory } = useInventory();
+  const { track, checkAchievements } = useTracking();
+  const recentClients = useRecentClients();
+
+  // Track cotización start time for funnel metrics
+  const startTimeRef = useRef<number>(Date.now());
 
   // Use the cotizacion hook for state management
   const cotizacion = useCotizacion();
@@ -155,11 +162,30 @@ export default function CotizacionGenerator() {
   const handleAddProduct = () => {
     if (!selectedItem) return;
     addProductFromInventory(selectedItem);
+
+    // Track product added from inventory
+    track('cotizacion_product_added', {
+      product_id: selectedItem.item,
+      product_name: selectedItem.nombre || 'Sin nombre',
+      product_price: selectedItem.precioCOP || 0,
+      entry_mode: 'inventory',
+      products_count: products.length + 1,
+    });
+
     setSelectedItem(null);
   };
 
   const handleAddManualProduct = () => {
     addManualProduct(manualProduct);
+
+    // Track manual product added
+    track('cotizacion_product_added', {
+      product_id: null,
+      product_name: manualProduct.name || 'Producto manual',
+      product_price: manualProduct.precioCOP || 0,
+      entry_mode: 'manual',
+      products_count: products.length + 1,
+    });
   };
 
   const handleRemoveProduct = (productId: string) => {
@@ -186,6 +212,14 @@ export default function CotizacionGenerator() {
   };
 
   const handleNewQuotation = () => {
+    // Track cotización started
+    track('cotizacion_started', {
+      entry_source: 'accounts_hub',
+    });
+
+    // Reset start time for new cotización
+    startTimeRef.current = Date.now();
+
     resetAll();
     setSelectedItem(null);
   };
@@ -239,6 +273,29 @@ export default function CotizacionGenerator() {
 
       pdf.save(`Cotizacion_${quotationNumber}.pdf`);
 
+      // Track cotización exported - KEY FUNNEL EVENT
+      const timeToComplete = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      track('cotizacion_exported', {
+        quotation_number: quotationNumber,
+        products_count: products.length,
+        total_amount: total,
+        has_discount: discountPercent > 0,
+        time_to_complete: timeToComplete,
+      });
+
+      // Save client for future autocomplete (Quick Win)
+      if (clientName && clientName.length >= 3) {
+        recentClients.saveClient({
+          name: clientName,
+          phone: clientPhone || undefined,
+          email: clientEmail || undefined,
+          document: clientDocument || undefined,
+        });
+      }
+
+      // Check for achievements after export
+      checkAchievements();
+
       setSnackbar({
         open: true,
         message: `✅ Cotización ${quotationNumber} exportada exitosamente`,
@@ -255,6 +312,10 @@ export default function CotizacionGenerator() {
   };
 
   const handlePrint = () => {
+    // Track print action
+    track('cotizacion_printed', {
+      quotation_number: quotationNumber,
+    });
     window.print();
   };
 
@@ -343,6 +404,13 @@ export default function CotizacionGenerator() {
             asesorName={asesorName}
             setAsesorName={setAsesorName}
             asesorOptions={asesorOptions}
+            recentClients={recentClients.clients}
+            onSelectClient={(client) => {
+              setClientName(client.name);
+              if (client.phone) setClientPhone(client.phone);
+              if (client.email) setClientEmail(client.email);
+              if (client.document) setClientDocument(client.document);
+            }}
           />
 
           <Divider sx={{ my: 3 }} />
@@ -520,11 +588,14 @@ interface ClientInfoSectionProps {
   clientDocument: string; setClientDocument: (v: string) => void;
   asesorName: string; setAsesorName: (v: string) => void;
   asesorOptions: string[];
+  recentClients?: RecentClient[];
+  onSelectClient?: (client: RecentClient) => void;
 }
 
 const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
   clientName, setClientName, clientPhone, setClientPhone, clientEmail, setClientEmail,
   clientDocument, setClientDocument, asesorName, setAsesorName, asesorOptions,
+  recentClients = [], onSelectClient,
 }) => (
   <>
     <Typography variant="subtitle2" sx={{
@@ -539,15 +610,45 @@ const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
     </Typography>
     <Grid container spacing={1.5} sx={{ mb: 3 }}>
       <Grid item xs={12}>
-        <TextField
-          fullWidth
-          label="Nombre del Cliente"
-          value={clientName}
-          onChange={(e) => setClientName(e.target.value)}
+        <Autocomplete
+          freeSolo
           size="small"
-          placeholder="Ej: Juan Pérez"
-          helperText={clientName && clientName.length < 3 ? "El nombre debe tener al menos 3 caracteres" : ""}
-          error={clientName !== '' && clientName.length < 3}
+          options={recentClients}
+          getOptionLabel={(option) =>
+            typeof option === 'string' ? option : option.name
+          }
+          value={clientName}
+          onChange={(_, value) => {
+            if (typeof value === 'string') {
+              setClientName(value);
+            } else if (value && onSelectClient) {
+              onSelectClient(value);
+            }
+          }}
+          onInputChange={(_, value) => setClientName(value)}
+          renderOption={(props, option) => (
+            <li {...props}>
+              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {option.name}
+                </Typography>
+                {(option.phone || option.email) && (
+                  <Typography variant="caption" sx={{ color: brandColors.textMuted }}>
+                    {option.phone}{option.phone && option.email ? ' · ' : ''}{option.email}
+                  </Typography>
+                )}
+              </Box>
+            </li>
+          )}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Nombre del Cliente"
+              placeholder="Ej: Juan Pérez (o selecciona uno reciente)"
+              helperText={clientName && clientName.length < 3 ? "El nombre debe tener al menos 3 caracteres" : recentClients.length > 0 ? "Clientes frecuentes disponibles" : ""}
+              error={clientName !== '' && clientName.length < 3}
+            />
+          )}
         />
       </Grid>
       <Grid item xs={12} sm={6}>

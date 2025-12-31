@@ -22,6 +22,7 @@ import {
   Collapse,
   Button,
   Slider,
+  Tooltip,
 } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import {
@@ -227,7 +228,7 @@ export const FilterContent = memo(function FilterContent({
 
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        {/* Row 1: Status segmented control (iOS-style) */}
+        {/* Row 1: Status segmented control (iOS-style) with educational tooltips */}
         <Box
           sx={{
             display: 'flex',
@@ -238,44 +239,51 @@ export const FilterContent = memo(function FilterContent({
           }}
         >
           {[
-            { value: 'available' as StatusFilter, label: 'Disponibles', dot: emeraldCore.primary },
-            { value: 'sold' as StatusFilter, label: 'Vendidas', dot: semanticColors.error.main },
-            { value: 'all' as StatusFilter, label: 'Todas', dot: null },
+            { value: 'available' as StatusFilter, label: 'Disponibles', dot: emeraldCore.primary, tooltip: 'Esmeraldas listas para vender' },
+            { value: 'sold' as StatusFilter, label: 'Vendidas', dot: semanticColors.error.main, tooltip: 'Historial de ventas realizadas' },
+            { value: 'all' as StatusFilter, label: 'Todas', dot: null, tooltip: 'Ver todo el inventario' },
           ].map((option) => (
-            <Box
+            <Tooltip
               key={option.value}
-              onClick={() => setStatusFilter(option.value)}
-              sx={{
-                flex: 1,
-                textAlign: 'center',
-                py: 0.75,
-                px: 1,
-                borderRadius: '20px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 0.5,
-                ...(statusFilter === option.value
-                  ? {
-                      bgcolor: isLight ? 'white' : surfacesDark.background.secondary,
-                      color: emeraldCore.dark,
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-                    }
-                  : {
-                      color: theme.palette.text.secondary,
-                      '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.05) },
-                    }),
-              }}
+              title={option.tooltip}
+              arrow
+              enterDelay={400}
+              placement="top"
             >
-              {option.dot && (
-                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: option.dot }} />
-              )}
-              {option.label}
-            </Box>
+              <Box
+                onClick={() => setStatusFilter(option.value)}
+                sx={{
+                  flex: 1,
+                  textAlign: 'center',
+                  py: 0.75,
+                  px: 1,
+                  borderRadius: '20px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 0.5,
+                  ...(statusFilter === option.value
+                    ? {
+                        bgcolor: isLight ? 'white' : surfacesDark.background.secondary,
+                        color: emeraldCore.dark,
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                      }
+                    : {
+                        color: theme.palette.text.secondary,
+                        '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.05) },
+                      }),
+                }}
+              >
+                {option.dot && (
+                  <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: option.dot }} />
+                )}
+                {option.label}
+              </Box>
+            </Tooltip>
           ))}
         </Box>
 
@@ -494,34 +502,36 @@ export const FilterContent = memo(function FilterContent({
           }}
         />
 
-        {/* Status filter */}
-        <FormControl size="small" sx={{ minWidth: 130 }}>
-          <Select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            displayEmpty
-            sx={{ borderRadius: 2 }}
-          >
-            <MenuItem value="available">
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: emeraldCore.primary }} />
-                Disponibles
-              </Box>
-            </MenuItem>
-            <MenuItem value="sold">
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: semanticColors.error.main }} />
-                Vendidas
-              </Box>
-            </MenuItem>
-            <MenuItem value="all">
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: surfacesLight.text.secondary }} />
-                Todas
-              </Box>
-            </MenuItem>
-          </Select>
-        </FormControl>
+        {/* Status filter with tooltip */}
+        <Tooltip title="Filtra por estado de venta" arrow enterDelay={600} placement="top">
+          <FormControl size="small" sx={{ minWidth: 130 }}>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              displayEmpty
+              sx={{ borderRadius: 2 }}
+            >
+              <MenuItem value="available">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: emeraldCore.primary }} />
+                  Disponibles
+                </Box>
+              </MenuItem>
+              <MenuItem value="sold">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: semanticColors.error.main }} />
+                  Vendidas
+                </Box>
+              </MenuItem>
+              <MenuItem value="all">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: surfacesLight.text.secondary }} />
+                  Todas
+                </Box>
+              </MenuItem>
+            </Select>
+          </FormControl>
+        </Tooltip>
 
         {/* Sort dropdown */}
         <FormControl size="small" sx={{ minWidth: 200 }}>

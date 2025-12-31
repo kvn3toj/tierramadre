@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tierra Madre Studio - Reporte de Desarrollo</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --emerald: #10B981;
+      --emerald-dark: #059669;
+      --emerald-light: #34D399;
+      --gold: #F59E0B;
+      --dark: #0F172A;
+      --gray: #64748B;
+      --light: #F8FAFC;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
+      min-height: 100vh;
+      color: white;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--emerald-light), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .header .subtitle {
+      color: var(--gray);
+      font-size: 1.1rem;
+    }
+
+    .header .date-range {
+      display: inline-block;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--emerald);
+      border-radius: 20px;
+      padding: 8px 20px;
+      margin-top: 16px;
+      color: var(--emerald-light);
+      font-weight: 500;
+    }
+
+    /* Stats Row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+    }
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--emerald-light);
+    }
+
+    .stat-value.gold { color: var(--gold); }
+    .stat-value.red { color: #EF4444; }
+    .stat-value.blue { color: #60A5FA; }
+
+    .stat-label {
+      color: var(--gray);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    /* Section */
+    .section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 30px;
+    }
+
+    .section h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section h2 .icon {
+      width: 32px;
+      height: 32px;
+      background: var(--emerald);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    /* Mermaid Diagrams */
+    .mermaid-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    .mermaid-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 28px;
+    }
+
+    .mermaid-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--emerald-light);
+    }
+
+    .mermaid {
+      display: flex;
+      justify-content: center;
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    /* Main Grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 30px;
+    }
+
+    /* Commits Timeline */
+    .timeline {
+      position: relative;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 16px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, var(--emerald), var(--gold));
+    }
+
+    .commit {
+      position: relative;
+      padding-left: 48px;
+      padding-bottom: 20px;
+    }
+
+    .commit:last-child { padding-bottom: 0; }
+
+    .commit::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 4px;
+      width: 14px;
+      height: 14px;
+      background: var(--emerald);
+      border-radius: 50%;
+      border: 3px solid var(--dark);
+    }
+
+    .commit.feat::before { background: var(--emerald); }
+    .commit.fix::before { background: var(--gold); }
+
+    .commit-hash {
+      font-family: 'SF Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--gray);
+      background: rgba(255,255,255,0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+
+    .commit-message {
+      font-weight: 500;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .commit-time {
+      font-size: 0.8rem;
+      color: var(--gray);
+    }
+
+    /* Categories */
+    .category-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .category-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .category-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .category-icon.auth { background: rgba(99, 102, 241, 0.2); }
+    .category-icon.ux { background: rgba(16, 185, 129, 0.2); }
+    .category-icon.perf { background: rgba(245, 158, 11, 0.2); }
+    .category-icon.clean { background: rgba(239, 68, 68, 0.2); }
+    .category-icon.analytics { background: rgba(139, 92, 246, 0.2); }
+
+    .category-info { flex: 1; }
+
+    .category-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .category-desc {
+      font-size: 0.8rem;
+      color: var(--gray);
+    }
+
+    .category-count {
+      background: rgba(255,255,255,0.1);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    /* Highlights */
+    .highlights {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 30px;
+    }
+
+    .highlight-card {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(245, 158, 11, 0.05));
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .highlight-card h3 {
+      font-size: 0.9rem;
+      color: var(--emerald-light);
+      margin-bottom: 8px;
+    }
+
+    .highlight-card p {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      color: var(--gray);
+      font-size: 0.85rem;
+    }
+
+    .footer .brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .footer .emerald {
+      width: 20px;
+      height: 20px;
+      background: var(--emerald);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .mermaid-grid { grid-template-columns: 1fr; }
+      .highlights { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 900px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .main-grid { grid-template-columns: 1fr; }
+      .highlights { grid-template-columns: 1fr; }
+    }
+
+    /* Animation */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .stat-card, .section, .highlight-card, .mermaid-card {
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    .stat-card:nth-child(2) { animation-delay: 0.1s; }
+    .stat-card:nth-child(3) { animation-delay: 0.2s; }
+    .stat-card:nth-child(4) { animation-delay: 0.3s; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1>Tierra Madre Studio</h1>
+      <p class="subtitle">Reporte de Progreso de Desarrollo</p>
+      <div class="date-range">29 - 30 Dic, 2025</div>
+    </header>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value">7</div>
+        <div class="stat-label">Commits</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value gold">7,940</div>
+        <div class="stat-label">Lineas Agregadas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value red">7,667</div>
+        <div class="stat-label">Lineas Eliminadas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value blue">72</div>
+        <div class="stat-label">Archivos Modificados</div>
+      </div>
+    </div>
+
+    <!-- Mermaid Diagrams Row -->
+    <div class="mermaid-grid">
+      <!-- Git Flow Diagram -->
+      <div class="mermaid-card">
+        <h3>📊 Flujo de Commits</h3>
+        <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#10B981', 'primaryTextColor': '#fff', 'primaryBorderColor': '#34D399', 'lineColor': '#F59E0B', 'secondaryColor': '#1E293B', 'tertiaryColor': '#0F172A'}}}%%
+gitGraph
+   commit id: "da1f56d" tag: "PWA"
+   commit id: "91e0de7" tag: "Cotizacion"
+   commit id: "9e19e7d" tag: "iOS HIG"
+   commit id: "fdfdfad" type: HIGHLIGHT tag: "Cache Fix"
+   commit id: "9c683a3" tag: "Fase 3"
+   commit id: "271e0cb" tag: "Admin"
+   commit id: "a5c9c6c" tag: "Analytics"
+        </pre>
+      </div>
+
+      <!-- Pie Chart - Work Distribution -->
+      <div class="mermaid-card">
+        <h3>🎯 Distribucion del Trabajo</h3>
+        <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'pie1': '#10B981', 'pie2': '#6366F1', 'pie3': '#8B5CF6', 'pie4': '#F59E0B', 'pie5': '#EF4444', 'pieStrokeColor': '#1E293B', 'pieOuterStrokeColor': '#0F172A'}}}%%
+pie showData
+    title Commits por Categoria
+    "iOS HIG y UX" : 3
+    "Auth y Permisos" : 2
+    "Analytics" : 1
+    "Rendimiento" : 1
+        </pre>
+      </div>
+
+      <!-- Architecture Changes -->
+      <div class="mermaid-card">
+        <h3>🏗️ Cambios de Arquitectura</h3>
+        <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#10B981', 'primaryTextColor': '#fff', 'primaryBorderColor': '#34D399', 'lineColor': '#64748B', 'secondaryColor': '#1E293B'}}}%%
+flowchart LR
+    subgraph Agregado["✅ Agregado"]
+        A1[useTracking]
+        A2[AdminRoute]
+        A3[MemberBenefitsTeaser]
+        A4[ImageLightbox]
+        A5[useHaptics]
+        A6[useShare]
+    end
+
+    subgraph Eliminado["❌ Eliminado"]
+        R1[PinLock]
+        R2[DeviceTestPanel]
+        R3[ViewportTest]
+        R4[useABTest]
+        R5[DesignSystemDemo]
+        R6[Templates Legacy]
+    end
+
+    subgraph Mejorado["⬆️ Mejorado"]
+        E1[AuthContext]
+        E2[ProductDetail]
+        E3[MediaGallery]
+        E4[GridCard]
+    end
+
+    style Agregado fill:#064E3B,stroke:#10B981
+    style Eliminado fill:#7F1D1D,stroke:#EF4444
+    style Mejorado fill:#1E3A5F,stroke:#60A5FA
+        </pre>
+      </div>
+
+      <!-- File Impact Timeline -->
+      <div class="mermaid-card">
+        <h3>📈 Impacto en Codigo</h3>
+        <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#10B981'}}}%%
+xychart-beta
+    title "Lineas Cambiadas por Commit"
+    x-axis ["PWA", "Cotizacion", "iOS HIG", "Cache", "Fase 3", "Admin", "Analytics"]
+    y-axis "Lineas" 0 --> 6000
+    bar [42, 288, 1024, 33, 5394, 4579, 1219]
+    line [42, 288, 1024, 33, 5394, 4579, 1219]
+        </pre>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+      <!-- Commits Timeline -->
+      <div class="section">
+        <h2><span class="icon">📝</span> Linea de Tiempo de Commits</h2>
+        <div class="timeline">
+          <div class="commit feat">
+            <span class="commit-hash">a5c9c6c</span>
+            <div class="commit-message">Agregar hook de analytics y eliminar PinLock deprecado</div>
+            <div class="commit-time">Hace 25 minutos • +930 / -289 lineas</div>
+          </div>
+          <div class="commit feat">
+            <span class="commit-hash">271e0cb</span>
+            <div class="commit-message">Permisos admin, teaser beneficios guest y limpieza de codigo</div>
+            <div class="commit-time">Hace 36 minutos • +1,564 / -6,043 lineas</div>
+          </div>
+          <div class="commit feat">
+            <span class="commit-hash">9c683a3</span>
+            <div class="commit-message">Fase 3 validacion cross-device y fixes iOS HIG</div>
+            <div class="commit-time">Hace 2 horas • +4,718 / -676 lineas</div>
+          </div>
+          <div class="commit fix">
+            <span class="commit-hash">fdfdfad</span>
+            <div class="commit-message">Cache busting agresivo para todas las rutas SPA</div>
+            <div class="commit-time">Hace 2 horas • +33 lineas</div>
+          </div>
+          <div class="commit feat">
+            <span class="commit-hash">9e19e7d</span>
+            <div class="commit-message">Rediseno ProductDetail iOS HIG con layout compacto</div>
+            <div class="commit-time">Hace 2 horas • +434 / -590 lineas</div>
+          </div>
+          <div class="commit feat">
+            <span class="commit-hash">91e0de7</span>
+            <div class="commit-message">Mejorar UX de Cotizacion con mejores practicas</div>
+            <div class="commit-time">Hace 24 horas • +230 / -58 lineas</div>
+          </div>
+          <div class="commit feat">
+            <span class="commit-hash">da1f56d</span>
+            <div class="commit-message">Actualizar favicons PWA con logo Tierra Madre</div>
+            <div class="commit-time">Hace 24 horas • +31 / -11 lineas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories -->
+      <div class="section">
+        <h2><span class="icon">🎯</span> Categorias de Trabajo</h2>
+        <div class="category-list">
+          <div class="category-item">
+            <div class="category-icon ux">🎨</div>
+            <div class="category-info">
+              <div class="category-name">iOS HIG y UX</div>
+              <div class="category-desc">Detalle de producto, layouts, diseno compacto</div>
+            </div>
+            <span class="category-count">3</span>
+          </div>
+          <div class="category-item">
+            <div class="category-icon auth">🔐</div>
+            <div class="category-info">
+              <div class="category-name">Auth y Permisos</div>
+              <div class="category-desc">Rutas admin, validacion cross-device</div>
+            </div>
+            <span class="category-count">2</span>
+          </div>
+          <div class="category-item">
+            <div class="category-icon analytics">📊</div>
+            <div class="category-info">
+              <div class="category-name">Analytics</div>
+              <div class="category-desc">Hooks de tracking, tipos de analytics</div>
+            </div>
+            <span class="category-count">1</span>
+          </div>
+          <div class="category-item">
+            <div class="category-icon perf">⚡</div>
+            <div class="category-info">
+              <div class="category-name">Rendimiento</div>
+              <div class="category-desc">Cache busting, rutas SPA</div>
+            </div>
+            <span class="category-count">1</span>
+          </div>
+          <div class="category-item">
+            <div class="category-icon clean">🧹</div>
+            <div class="category-info">
+              <div class="category-name">Limpieza de Codigo</div>
+              <div class="category-desc">Eliminadas 6K+ lineas de codigo muerto</div>
+            </div>
+            <span class="category-count">1</span>
+          </div>
+        </div>
+
+        <!-- State Machine Diagram -->
+        <div style="margin-top: 24px;">
+          <h3 style="font-size: 0.9rem; color: var(--gray); margin-bottom: 12px;">Flujo de Estados Auth</h3>
+          <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#10B981'}}}%%
+stateDiagram-v2
+    [*] --> Invitado
+    Invitado --> Autenticado: Login
+    Autenticado --> Admin: tieneRolAdmin
+    Admin --> Autenticado: revocarAdmin
+    Autenticado --> Invitado: Logout
+    Admin --> Invitado: Logout
+          </pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Highlights -->
+    <div class="highlights">
+      <div class="highlight-card">
+        <h3>🚀 Sistema Analytics</h3>
+        <p>Nuevo hook useTracking con tipos TypeScript para tracking completo de eventos.</p>
+      </div>
+      <div class="highlight-card">
+        <h3>🎨 Rediseno iOS HIG</h3>
+        <p>Layout compacto de ProductDetail con optimizacion mobile-first.</p>
+      </div>
+      <div class="highlight-card">
+        <h3>🔐 Permisos Admin</h3>
+        <p>AdminRoute basado en roles con sistema de validacion cross-device.</p>
+      </div>
+      <div class="highlight-card">
+        <h3>🧹 Limpieza Tecnica</h3>
+        <p>Eliminados templates deprecados, PinLock y paneles dev. Neto -6K lineas legacy.</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="brand">
+        <div class="emerald"></div>
+        <strong>Tierra Madre Studio</strong>
+      </div>
+      <p>Generado el 30 Dic, 2025 • Parte de CoomUnity Universe</p>
+    </footer>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      securityLevel: 'loose',
+      fontFamily: 'Inter, sans-serif',
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'basis'
+      },
+      gitGraph: {
+        useMaxWidth: true,
+        showCommitLabel: true
+      }
+    });
+  </script>
+</body>
+</html>
