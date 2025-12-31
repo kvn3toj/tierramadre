@@ -6,7 +6,7 @@
  * Admin-only access.
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -15,6 +15,7 @@ import {
   alpha,
   Chip,
   Divider,
+  LinearProgress,
 } from '@mui/material';
 import {
   GitCommit,
@@ -28,10 +29,16 @@ import {
   Zap,
   Trash2,
   Activity,
+  Bug,
+  Wrench,
+  Users,
+  TrendingUp,
+  FileText,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { emeraldCore, goldAccent, semanticColors } from '../design-system/tokens/colors';
 import { spacing } from '../design-system/tokens/primitives/spacing';
+import { changelogData, ChangelogCommit } from '../data/changelog-data';
 
 // Mermaid CDN - loaded dynamically
 declare global {
@@ -43,154 +50,58 @@ declare global {
   }
 }
 
-// Commits data (generated from git log)
-const COMMITS = [
-  {
-    hash: 'a5c9c6c',
-    message: 'Agregar hook de analytics y eliminar PinLock deprecado',
-    time: 'Hace 25 minutos',
-    additions: 930,
-    deletions: 289,
-    type: 'feat',
-  },
-  {
-    hash: '271e0cb',
-    message: 'Permisos admin, teaser beneficios guest y limpieza de codigo',
-    time: 'Hace 36 minutos',
-    additions: 1564,
-    deletions: 6043,
-    type: 'feat',
-  },
-  {
-    hash: '9c683a3',
-    message: 'Fase 3 validacion cross-device y fixes iOS HIG',
-    time: 'Hace 2 horas',
-    additions: 4718,
-    deletions: 676,
-    type: 'feat',
-  },
-  {
-    hash: 'fdfdfad',
-    message: 'Cache busting agresivo para todas las rutas SPA',
-    time: 'Hace 2 horas',
-    additions: 33,
-    deletions: 0,
-    type: 'fix',
-  },
-  {
-    hash: '9e19e7d',
-    message: 'Rediseno ProductDetail iOS HIG con layout compacto',
-    time: 'Hace 2 horas',
-    additions: 434,
-    deletions: 590,
-    type: 'feat',
-  },
-  {
-    hash: '91e0de7',
-    message: 'Mejorar UX de Cotizacion con mejores practicas',
-    time: 'Hace 24 horas',
-    additions: 230,
-    deletions: 58,
-    type: 'feat',
-  },
-  {
-    hash: 'da1f56d',
-    message: 'Actualizar favicons PWA con logo Tierra Madre',
-    time: 'Hace 24 horas',
-    additions: 31,
-    deletions: 11,
-    type: 'feat',
-  },
-];
-
-const STATS = {
-  commits: 7,
-  additions: 7940,
-  deletions: 7667,
-  filesChanged: 72,
+// Category configuration with icons and colors
+const CATEGORY_CONFIG: Record<string, { name: string; icon: React.ElementType; color: string }> = {
+  ux: { name: 'iOS HIG y UX', icon: Layers, color: emeraldCore.primary },
+  auth: { name: 'Auth y Permisos', icon: Shield, color: '#6366F1' },
+  analytics: { name: 'Analytics', icon: BarChart3, color: '#8B5CF6' },
+  performance: { name: 'Rendimiento', icon: Zap, color: goldAccent.primary },
+  cleanup: { name: 'Limpieza', icon: Trash2, color: semanticColors.error.main },
+  bugfix: { name: 'Bug Fixes', icon: Bug, color: '#F97316' },
+  other: { name: 'Otros', icon: Wrench, color: '#64748B' },
 };
 
-const CATEGORIES = [
-  { name: 'iOS HIG y UX', desc: 'Detalle de producto, layouts, diseno compacto', icon: Layers, count: 3, color: emeraldCore.primary },
-  { name: 'Auth y Permisos', desc: 'Rutas admin, validacion cross-device', icon: Shield, count: 2, color: '#6366F1' },
-  { name: 'Analytics', desc: 'Hooks de tracking, tipos de analytics', icon: BarChart3, count: 1, color: '#8B5CF6' },
-  { name: 'Rendimiento', desc: 'Cache busting, rutas SPA', icon: Zap, count: 1, color: goldAccent.primary },
-  { name: 'Limpieza de Codigo', desc: 'Eliminadas 6K+ lineas de codigo muerto', icon: Trash2, count: 1, color: semanticColors.error.main },
-];
+// Type configuration
+const TYPE_CONFIG: Record<string, { name: string; color: string }> = {
+  feat: { name: 'Features', color: emeraldCore.primary },
+  fix: { name: 'Fixes', color: goldAccent.primary },
+  refactor: { name: 'Refactors', color: '#8B5CF6' },
+  docs: { name: 'Docs', color: '#64748B' },
+  style: { name: 'Style', color: '#06B6D4' },
+  test: { name: 'Tests', color: '#F97316' },
+  chore: { name: 'Chores', color: '#6B7280' },
+  other: { name: 'Other', color: '#94A3B8' },
+};
 
-const HIGHLIGHTS = [
-  { title: 'Sistema Analytics', desc: 'Nuevo hook useTracking con tipos TypeScript para tracking completo de eventos.' },
-  { title: 'Rediseno iOS HIG', desc: 'Layout compacto de ProductDetail con optimizacion mobile-first.' },
-  { title: 'Permisos Admin', desc: 'AdminRoute basado en roles con sistema de validacion cross-device.' },
-  { title: 'Limpieza Tecnica', desc: 'Eliminados templates deprecados, PinLock y paneles dev. Neto -6K lineas legacy.' },
-];
-
-// Mermaid diagram definitions
-const MERMAID_GIT_GRAPH = `
+// Generate Mermaid diagrams from data
+function generateMermaidDiagrams(commits: ChangelogCommit[], categoryStats: Record<string, number>) {
+  // Git Graph - last 8 commits
+  const gitGraphCommits = commits.slice(0, 8).reverse();
+  const gitGraph = `
 %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#10B981', 'primaryTextColor': '#fff', 'primaryBorderColor': '#34D399', 'lineColor': '#F59E0B', 'secondaryColor': '#1E293B', 'tertiaryColor': '#0F172A'}}}%%
 gitGraph
-   commit id: "da1f56d" tag: "PWA"
-   commit id: "91e0de7" tag: "Cotizacion"
-   commit id: "9e19e7d" tag: "iOS HIG"
-   commit id: "fdfdfad" type: HIGHLIGHT tag: "Cache Fix"
-   commit id: "9c683a3" tag: "Fase 3"
-   commit id: "271e0cb" tag: "Admin"
-   commit id: "a5c9c6c" tag: "Analytics"
-`;
+${gitGraphCommits.map(c => {
+    const tag = c.message.split(' ')[0].slice(0, 8);
+    const type = c.type === 'fix' ? ' type: HIGHLIGHT' : '';
+    return `   commit id: "${c.hash}"${type} tag: "${tag}"`;
+  }).join('\n')}`;
 
-const MERMAID_PIE = `
+  // Pie Chart - category distribution
+  const pieData = Object.entries(categoryStats)
+    .filter(([, count]) => count > 0)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+    .map(([cat, count]) => `    "${CATEGORY_CONFIG[cat]?.name || cat}" : ${count}`)
+    .join('\n');
+
+  const pieChart = `
 %%{init: {'theme': 'dark', 'themeVariables': { 'pie1': '#10B981', 'pie2': '#6366F1', 'pie3': '#8B5CF6', 'pie4': '#F59E0B', 'pie5': '#EF4444', 'pieStrokeColor': '#1E293B', 'pieOuterStrokeColor': '#0F172A'}}}%%
 pie showData
     title Commits por Categoria
-    "iOS HIG y UX" : 3
-    "Auth y Permisos" : 2
-    "Analytics" : 1
-    "Rendimiento" : 1
-`;
+${pieData}`;
 
-const MERMAID_ARCHITECTURE = `
-%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#10B981', 'primaryTextColor': '#fff', 'primaryBorderColor': '#34D399', 'lineColor': '#64748B', 'secondaryColor': '#1E293B'}}}%%
-flowchart LR
-    subgraph Agregado["Agregado"]
-        A1[useTracking]
-        A2[AdminRoute]
-        A3[MemberBenefitsTeaser]
-        A4[ImageLightbox]
-        A5[useHaptics]
-        A6[useShare]
-    end
-
-    subgraph Eliminado["Eliminado"]
-        R1[PinLock]
-        R2[DeviceTestPanel]
-        R3[ViewportTest]
-        R4[useABTest]
-        R5[DesignSystemDemo]
-        R6[Templates Legacy]
-    end
-
-    subgraph Mejorado["Mejorado"]
-        E1[AuthContext]
-        E2[ProductDetail]
-        E3[MediaGallery]
-        E4[GridCard]
-    end
-
-    style Agregado fill:#064E3B,stroke:#10B981
-    style Eliminado fill:#7F1D1D,stroke:#EF4444
-    style Mejorado fill:#1E3A5F,stroke:#60A5FA
-`;
-
-const MERMAID_STATE = `
-%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#10B981'}}}%%
-stateDiagram-v2
-    [*] --> Invitado
-    Invitado --> Autenticado: Login
-    Autenticado --> Admin: tieneRolAdmin
-    Admin --> Autenticado: revocarAdmin
-    Autenticado --> Invitado: Logout
-    Admin --> Invitado: Logout
-`;
+  return { gitGraph, pieChart };
+}
 
 // Stat Card Component
 interface StatCardProps {
@@ -238,7 +149,6 @@ const StatCard: React.FC<StatCardProps> = ({ value, label, color = emeraldCore.l
 
 // Mermaid Diagram Component
 interface MermaidDiagramProps {
-  id: string;
   definition: string;
   title: string;
 }
@@ -311,10 +221,78 @@ const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ definition, title }) =>
   );
 };
 
+// Progress Bar Component
+interface ProgressBarProps {
+  label: string;
+  value: number;
+  maxValue: number;
+  color: string;
+}
+
+const ProgressBar: React.FC<ProgressBarProps> = ({ label, value, maxValue, color }) => {
+  const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
+
+  return (
+    <Box sx={{ mb: 1.5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+        <Typography variant="body2" sx={{ fontWeight: 500 }}>{label}</Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>{value}</Typography>
+      </Box>
+      <LinearProgress
+        variant="determinate"
+        value={percentage}
+        sx={{
+          height: 8,
+          borderRadius: 1,
+          bgcolor: alpha(color, 0.1),
+          '& .MuiLinearProgress-bar': {
+            bgcolor: color,
+            borderRadius: 1,
+          },
+        }}
+      />
+    </Box>
+  );
+};
+
 // Main Component
 const AdminChangelogPage: React.FC = () => {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+
+  // Get data from generated file
+  const { stats, commits, categoryStats, typeStats, mostChangedFiles, contributors, dateRange, branchInfo, generatedAt } = changelogData;
+
+  // Generate Mermaid diagrams dynamically
+  const diagrams = useMemo(() => generateMermaidDiagrams(commits, categoryStats), [commits, categoryStats]);
+
+  // Categories with counts
+  const categories = useMemo(() => {
+    return Object.entries(categoryStats)
+      .filter(([, count]) => count > 0)
+      .sort(([, a], [, b]) => b - a)
+      .map(([key, count]) => ({
+        key,
+        ...CATEGORY_CONFIG[key] || CATEGORY_CONFIG.other,
+        count,
+      }));
+  }, [categoryStats]);
+
+  // Most impactful commits (highlights)
+  const highlights = useMemo(() => {
+    return [...commits]
+      .sort((a, b) => (b.additions + b.deletions) - (a.additions + a.deletions))
+      .slice(0, 4)
+      .map(c => ({
+        title: CATEGORY_CONFIG[c.category]?.name || c.category,
+        desc: c.message.slice(0, 80),
+        hash: c.hash,
+      }));
+  }, [commits]);
+
+  // Max values for progress bars
+  const maxTypeCount = Math.max(...Object.values(typeStats), 1);
+  const maxFileCount = mostChangedFiles[0]?.count || 1;
 
   // Load Mermaid on mount
   useEffect(() => {
@@ -329,24 +307,13 @@ const AdminChangelogPage: React.FC = () => {
             theme: 'dark',
             securityLevel: 'loose',
             fontFamily: 'Inter, sans-serif',
-            flowchart: {
-              useMaxWidth: true,
-              htmlLabels: true,
-              curve: 'basis',
-            },
-            gitGraph: {
-              useMaxWidth: true,
-              showCommitLabel: true,
-            },
+            flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+            gitGraph: { useMaxWidth: true, showCommitLabel: true },
           });
         };
         document.head.appendChild(script);
       } else if (window.mermaid) {
-        window.mermaid.initialize({
-          startOnLoad: true,
-          theme: 'dark',
-          securityLevel: 'loose',
-        });
+        window.mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' });
       }
     };
 
@@ -373,53 +340,76 @@ const AdminChangelogPage: React.FC = () => {
         <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2 }}>
           Reporte de Progreso de Desarrollo
         </Typography>
-        <Chip
-          label="29 - 30 Dic, 2025"
-          sx={{
-            bgcolor: alpha(emeraldCore.primary, 0.15),
-            border: `1px solid ${emeraldCore.primary}`,
-            color: emeraldCore.light,
-            fontWeight: 500,
-          }}
-        />
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, flexWrap: 'wrap' }}>
+          <Chip
+            label={`${dateRange.start} - ${dateRange.end}`}
+            sx={{
+              bgcolor: alpha(emeraldCore.primary, 0.15),
+              border: `1px solid ${emeraldCore.primary}`,
+              color: emeraldCore.light,
+              fontWeight: 500,
+            }}
+          />
+          <Chip
+            icon={<GitBranch size={14} />}
+            label={branchInfo.currentBranch}
+            size="small"
+            sx={{ bgcolor: alpha('#fff', 0.1), color: 'text.secondary' }}
+          />
+        </Box>
       </Box>
 
       {/* Stats Row */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
         <Grid item xs={6} md={3}>
-          <StatCard value={STATS.commits} label="Commits" color={emeraldCore.light} />
+          <StatCard value={stats.totalCommits} label="Commits" color={emeraldCore.light} />
         </Grid>
         <Grid item xs={6} md={3}>
-          <StatCard value={STATS.additions} label="Lineas Agregadas" color={goldAccent.primary} />
+          <StatCard value={stats.totalAdditions} label="Lineas Agregadas" color={goldAccent.primary} />
         </Grid>
         <Grid item xs={6} md={3}>
-          <StatCard value={STATS.deletions} label="Lineas Eliminadas" color={semanticColors.error.main} />
+          <StatCard value={stats.totalDeletions} label="Lineas Eliminadas" color={semanticColors.error.main} />
         </Grid>
         <Grid item xs={6} md={3}>
-          <StatCard value={STATS.filesChanged} label="Archivos Modificados" color={semanticColors.info.main} />
+          <StatCard value={stats.totalFilesChanged} label="Archivos Modificados" color={semanticColors.info.main} />
         </Grid>
       </Grid>
+
+      {/* Net Change Banner */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 4,
+          borderRadius: 2,
+          bgcolor: alpha(stats.netLines >= 0 ? emeraldCore.primary : semanticColors.error.main, 0.1),
+          border: `1px solid ${alpha(stats.netLines >= 0 ? emeraldCore.primary : semanticColors.error.main, 0.3)}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 1,
+        }}
+      >
+        <TrendingUp size={20} color={stats.netLines >= 0 ? emeraldCore.primary : semanticColors.error.main} />
+        <Typography variant="h6" sx={{ fontWeight: 600, color: stats.netLines >= 0 ? emeraldCore.primary : semanticColors.error.main }}>
+          {stats.netLines >= 0 ? '+' : ''}{stats.netLines.toLocaleString()} lineas netas
+        </Typography>
+      </Paper>
 
       {/* Mermaid Diagrams Grid */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
         <Grid item xs={12} md={6}>
-          <MermaidDiagram id="git-graph" definition={MERMAID_GIT_GRAPH} title="Flujo de Commits" />
+          <MermaidDiagram definition={diagrams.gitGraph} title="Flujo de Commits" />
         </Grid>
         <Grid item xs={12} md={6}>
-          <MermaidDiagram id="pie-chart" definition={MERMAID_PIE} title="Distribucion del Trabajo" />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <MermaidDiagram id="architecture" definition={MERMAID_ARCHITECTURE} title="Cambios de Arquitectura" />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <MermaidDiagram id="state" definition={MERMAID_STATE} title="Flujo de Estados Auth" />
+          <MermaidDiagram definition={diagrams.pieChart} title="Distribucion del Trabajo" />
         </Grid>
       </Grid>
 
-      {/* Main Grid: Timeline + Categories */}
+      {/* Main Grid: Timeline + Categories + Stats */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {/* Commits Timeline */}
-        <Grid item xs={12} md={7}>
+        <Grid item xs={12} md={5}>
           <Paper
             elevation={0}
             sx={{
@@ -427,11 +417,13 @@ const AdminChangelogPage: React.FC = () => {
               borderRadius: 3,
               bgcolor: isLight ? 'background.paper' : alpha('#000', 0.2),
               border: `1px solid ${isLight ? alpha('#000', 0.08) : alpha('#fff', 0.1)}`,
+              maxHeight: 500,
+              overflow: 'auto',
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
               <GitCommit size={20} color={emeraldCore.primary} />
-              Linea de Tiempo de Commits
+              Ultimos Commits ({commits.length})
             </Typography>
 
             <Box sx={{ position: 'relative', pl: 3 }}>
@@ -447,13 +439,13 @@ const AdminChangelogPage: React.FC = () => {
                 }}
               />
 
-              {COMMITS.map((commit, idx) => (
+              {commits.slice(0, 12).map((commit, idx) => (
                 <Box
                   key={commit.hash}
                   sx={{
                     position: 'relative',
                     pl: 3,
-                    pb: idx < COMMITS.length - 1 ? 2.5 : 0,
+                    pb: idx < 11 ? 2 : 0,
                   }}
                 >
                   {/* Timeline dot */}
@@ -471,47 +463,66 @@ const AdminChangelogPage: React.FC = () => {
                     }}
                   />
 
-                  <Chip
-                    label={commit.hash}
-                    size="small"
-                    sx={{
-                      fontFamily: 'monospace',
-                      fontSize: '0.7rem',
-                      bgcolor: alpha('#fff', 0.1),
-                      color: 'text.secondary',
-                      mb: 0.5,
-                    }}
-                  />
-                  <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
-                    {commit.message}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                    <Chip
+                      label={commit.hash}
+                      size="small"
+                      sx={{
+                        fontFamily: 'monospace',
+                        fontSize: '0.65rem',
+                        height: 20,
+                        bgcolor: alpha('#fff', 0.1),
+                        color: 'text.secondary',
+                      }}
+                    />
+                    <Chip
+                      label={commit.type}
+                      size="small"
+                      sx={{
+                        fontSize: '0.6rem',
+                        height: 18,
+                        bgcolor: alpha(TYPE_CONFIG[commit.type]?.color || '#666', 0.2),
+                        color: TYPE_CONFIG[commit.type]?.color || '#666',
+                      }}
+                    />
+                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5, fontSize: '0.85rem' }}>
+                    {commit.message.slice(0, 50)}{commit.message.length > 50 ? '...' : ''}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                      {commit.time}
+                      {commit.relativeTime}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Plus size={12} color={emeraldCore.primary} />
-                      <Typography variant="caption" sx={{ color: emeraldCore.primary }}>
-                        {commit.additions.toLocaleString()}
+                      <Plus size={10} color={emeraldCore.primary} />
+                      <Typography variant="caption" sx={{ color: emeraldCore.primary, fontSize: '0.7rem' }}>
+                        {commit.additions}
                       </Typography>
                     </Box>
                     {commit.deletions > 0 && (
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Minus size={12} color={semanticColors.error.main} />
-                        <Typography variant="caption" sx={{ color: semanticColors.error.main }}>
-                          {commit.deletions.toLocaleString()}
+                        <Minus size={10} color={semanticColors.error.main} />
+                        <Typography variant="caption" sx={{ color: semanticColors.error.main, fontSize: '0.7rem' }}>
+                          {commit.deletions}
                         </Typography>
                       </Box>
                     )}
                   </Box>
                 </Box>
               ))}
+
+              {commits.length > 12 && (
+                <Typography variant="caption" sx={{ color: 'text.secondary', pl: 3, display: 'block', mt: 2 }}>
+                  + {commits.length - 12} commits mas...
+                </Typography>
+              )}
             </Box>
           </Paper>
         </Grid>
 
-        {/* Categories */}
-        <Grid item xs={12} md={5}>
+        {/* Categories & Stats Column */}
+        <Grid item xs={12} md={4}>
+          {/* Categories */}
           <Paper
             elevation={0}
             sx={{
@@ -519,18 +530,18 @@ const AdminChangelogPage: React.FC = () => {
               borderRadius: 3,
               bgcolor: isLight ? 'background.paper' : alpha('#000', 0.2),
               border: `1px solid ${isLight ? alpha('#000', 0.08) : alpha('#fff', 0.1)}`,
-              height: '100%',
+              mb: 2,
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
               <GitBranch size={20} color={emeraldCore.primary} />
-              Categorias de Trabajo
+              Categorias
             </Typography>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              {CATEGORIES.map((cat) => (
+              {categories.slice(0, 6).map((cat) => (
                 <Box
-                  key={cat.name}
+                  key={cat.key}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
@@ -555,20 +566,133 @@ const AdminChangelogPage: React.FC = () => {
                       {cat.name}
                     </Typography>
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                      {cat.desc}
+                      {cat.count} commits
                     </Typography>
                   </Box>
-                  <Chip
-                    label={cat.count}
-                    size="small"
-                    sx={{
-                      bgcolor: alpha('#fff', 0.1),
-                      fontWeight: 600,
-                    }}
-                  />
                 </Box>
               ))}
             </Box>
+          </Paper>
+
+          {/* Type Stats */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: 3,
+              bgcolor: isLight ? 'background.paper' : alpha('#000', 0.2),
+              border: `1px solid ${isLight ? alpha('#000', 0.08) : alpha('#fff', 0.1)}`,
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Activity size={20} color={goldAccent.primary} />
+              Tipos de Commits
+            </Typography>
+
+            {Object.entries(typeStats)
+              .filter(([, count]) => count > 0)
+              .sort(([, a], [, b]) => b - a)
+              .slice(0, 5)
+              .map(([type, count]) => (
+                <ProgressBar
+                  key={type}
+                  label={TYPE_CONFIG[type]?.name || type}
+                  value={count}
+                  maxValue={maxTypeCount}
+                  color={TYPE_CONFIG[type]?.color || '#64748B'}
+                />
+              ))}
+          </Paper>
+        </Grid>
+
+        {/* Most Changed Files & Contributors */}
+        <Grid item xs={12} md={3}>
+          {/* Most Changed Files */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: 3,
+              bgcolor: isLight ? 'background.paper' : alpha('#000', 0.2),
+              border: `1px solid ${isLight ? alpha('#000', 0.08) : alpha('#fff', 0.1)}`,
+              mb: 2,
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <FileText size={20} color={semanticColors.info.main} />
+              Archivos Mas Activos
+            </Typography>
+
+            {mostChangedFiles.slice(0, 5).map((file) => (
+              <ProgressBar
+                key={file.file}
+                label={file.file.split('/').pop() || file.file}
+                value={file.count}
+                maxValue={maxFileCount}
+                color={semanticColors.info.main}
+              />
+            ))}
+          </Paper>
+
+          {/* Contributors */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: 3,
+              bgcolor: isLight ? 'background.paper' : alpha('#000', 0.2),
+              border: `1px solid ${isLight ? alpha('#000', 0.08) : alpha('#fff', 0.1)}`,
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Users size={20} color={goldAccent.primary} />
+              Contribuidores
+            </Typography>
+
+            {contributors.map((contributor) => (
+              <Box
+                key={contributor.name}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  mb: 1,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      bgcolor: alpha(emeraldCore.primary, 0.2),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      color: emeraldCore.primary,
+                    }}
+                  >
+                    {contributor.name.slice(0, 2).toUpperCase()}
+                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {contributor.name}
+                  </Typography>
+                </Box>
+                <Chip
+                  label={contributor.commits}
+                  size="small"
+                  sx={{
+                    height: 20,
+                    fontSize: '0.7rem',
+                    bgcolor: alpha(emeraldCore.primary, 0.1),
+                    color: emeraldCore.primary,
+                    fontWeight: 600,
+                  }}
+                />
+              </Box>
+            ))}
           </Paper>
         </Grid>
       </Grid>
@@ -580,7 +704,7 @@ const AdminChangelogPage: React.FC = () => {
       </Typography>
 
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        {HIGHLIGHTS.map((highlight, idx) => (
+        {highlights.map((highlight, idx) => (
           <Grid item xs={12} sm={6} md={3} key={idx}>
             <Paper
               elevation={0}
@@ -623,7 +747,7 @@ const AdminChangelogPage: React.FC = () => {
           </Typography>
         </Box>
         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          Generado el 30 Dic, 2025 - Parte de CoomUnity Universe
+          Generado: {new Date(generatedAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} - Parte de CoomUnity Universe
         </Typography>
       </Box>
     </Box>
