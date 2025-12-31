@@ -2,11 +2,17 @@
  * VirtualGrid Component
  * Virtualized grid rendering using react-window 2.x for smooth scrolling with 500+ items.
  * Only renders items visible in the viewport + overscan for performance.
+ *
+ * iOS Safari Fix:
+ * Uses CSS custom property (--vh) for viewport height instead of 100vh.
+ * This prevents layout shift when the address bar hides/shows on iOS Safari.
+ * The --vh variable is set by useViewportHeight hook in the app root.
  */
-import React, { useCallback, useMemo, ReactElement, CSSProperties, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, ReactElement, CSSProperties } from 'react';
 import { Grid } from 'react-window';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import { InventoryItem } from '../../types';
+import { vhCalc } from '../../hooks/useViewportHeight';
 
 interface VirtualGridProps {
   items: InventoryItem[];
@@ -20,14 +26,17 @@ interface VirtualGridProps {
     onItemClick: () => void;
     onCertClick: () => void;
     onToggleFavorite: () => void;
+    isMobile: boolean;
   }) => React.ReactNode;
   /** Minimum height for the grid container */
   minHeight?: number;
 }
 
-// Card dimensions (compact design)
-const CARD_HEIGHT = 260; // Image (180px) + content (~80px)
-const GAP = 12; // Comfortable gap for grid
+// Card dimensions - Mobile luxury vs Desktop compact
+const MOBILE_CARD_HEIGHT = 420; // Square image (~320px on iPhone 12) + content (~100px)
+const DESKTOP_CARD_HEIGHT = 260; // Image (180px) + content (~80px)
+const MOBILE_GAP = 16; // Luxury spacing for mobile
+const DESKTOP_GAP = 12; // Comfortable gap for desktop grid
 
 // Cell props passed via cellProps in react-window 2.x
 interface GridCellProps {
@@ -38,6 +47,8 @@ interface GridCellProps {
   onCertClick: (item: InventoryItem) => void;
   onToggleFavorite: (itemId: number) => void;
   renderCard: VirtualGridProps['renderCard'];
+  isMobile: boolean;
+  gap: number;
 }
 
 // Props received by the cell component from react-window 2.x
@@ -66,6 +77,8 @@ function CellRenderer({
   onCertClick,
   onToggleFavorite,
   renderCard,
+  isMobile,
+  gap,
 }: CellRendererProps): ReactElement {
   const index = rowIndex * columnCount + columnIndex;
 
@@ -85,9 +98,9 @@ function CellRenderer({
         // First column: padding-right only
         // Middle columns: padding on both sides
         // Last column: padding-left only (prevents cutoff)
-        paddingRight: columnIndex === columnCount - 1 ? 0 : GAP / 2,
-        paddingBottom: GAP,
-        paddingLeft: columnIndex === 0 ? 0 : GAP / 2,
+        paddingRight: columnIndex === columnCount - 1 ? 0 : gap / 2,
+        paddingBottom: gap,
+        paddingLeft: columnIndex === 0 ? 0 : gap / 2,
         // iOS HIG: Ensure content doesn't touch screen edges
         boxSizing: 'border-box',
       }}
@@ -98,6 +111,7 @@ function CellRenderer({
         onItemClick: () => onItemClick(item),
         onCertClick: () => onCertClick(item),
         onToggleFavorite: () => onToggleFavorite(item.item),
+        isMobile,
       })}
     </div>
   );
@@ -118,32 +132,25 @@ export default function VirtualGrid({
 }: VirtualGridProps) {
   const theme = useTheme();
 
-  // Track viewport width for mobile 2-column logic
-  const [viewportWidth, setViewportWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
-
-  useEffect(() => {
-    const handleResize = () => setViewportWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   // Responsive breakpoint detection
   const isXs = useMediaQuery(theme.breakpoints.down('sm'));
   const isSm = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg'));
 
   // Calculate column count based on breakpoints
-  // Mobile: 2 columns if screen >= 340px (optimized for 720x1440 devices)
+  // Mobile (xs): Always 1 column for luxury layout with full-width cards
   const getColumnCount = useCallback(() => {
-    if (isXs) {
-      return viewportWidth >= 340 ? 2 : 1;
-    }
+    if (isXs) return 1; // 1-column luxury layout for mobile
     if (isSm) return 2;
     if (isMd) return 3;
     return 4; // lg and up
-  }, [isXs, isSm, isMd, viewportWidth]);
+  }, [isXs, isSm, isMd]);
 
   const columnCount = getColumnCount();
+
+  // Dynamic card dimensions based on device
+  const cardHeight = isXs ? MOBILE_CARD_HEIGHT : DESKTOP_CARD_HEIGHT;
+  const gap = isXs ? MOBILE_GAP : DESKTOP_GAP;
 
   // Memoize cell props to prevent unnecessary re-renders
   const cellProps = useMemo<GridCellProps>(() => ({
@@ -154,7 +161,9 @@ export default function VirtualGrid({
     onCertClick,
     onToggleFavorite,
     renderCard,
-  }), [items, columnCount, favorites, onItemClick, onCertClick, onToggleFavorite, renderCard]);
+    isMobile: isXs,
+    gap,
+  }), [items, columnCount, favorites, onItemClick, onCertClick, onToggleFavorite, renderCard, isXs, gap]);
 
   if (items.length === 0) {
     return null;
@@ -168,10 +177,16 @@ export default function VirtualGrid({
   // We handle gaps via padding in the cell renderer instead
   const columnWidth = `${100 / columnCount}%`;
 
+  // Header offset for grid height calculation
+  // This accounts for: IOSNavigationBar (~64px) + search/filters (~120px) + safe areas (~96px)
+  const HEADER_OFFSET = 280;
+
   return (
     <Box
       sx={{
-        height: `calc(100vh - 280px)`,
+        // iOS Safari fix: Use --vh custom property instead of 100vh
+        // This prevents layout shift when the address bar hides/shows
+        height: vhCalc(100, HEADER_OFFSET),
         minHeight,
         width: '100%',
         // iOS HIG: Horizontal padding to prevent edge cutoff
@@ -191,7 +206,7 @@ export default function VirtualGrid({
         columnCount={columnCount}
         columnWidth={columnWidth}
         rowCount={rowCount}
-        rowHeight={CARD_HEIGHT + GAP}
+        rowHeight={cardHeight + gap}
         overscanCount={2}
         style={{
           height: '100%',

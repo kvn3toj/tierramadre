@@ -35,6 +35,13 @@ import {
 } from '../types';
 import { getQualityLabel, getQualityColor } from '../utils/imageVerification';
 
+// Design System Imports
+import {
+  semanticColors,
+  surfacesLight,
+} from '../design-system/tokens/colors';
+import { primitiveColors } from '../design-system/tokens/primitives/colors';
+
 // ==========================================
 // Quality Badge - Shows star rating
 // ==========================================
@@ -67,7 +74,7 @@ const BadgeContainer = styled(Box)<{
     fontWeight: 600,
     ...(variant === 'filled' && {
       backgroundColor: color,
-      color: '#fff',
+      color: surfacesLight.background.primary,
     }),
     ...(variant === 'outlined' && {
       backgroundColor: 'transparent',
@@ -120,22 +127,22 @@ const statusConfig: Record<
 > = {
   pending: {
     label: 'Pending',
-    color: '#6b7280',
+    color: surfacesLight.text.secondary,
     icon: <Pending fontSize="small" />,
   },
   verified: {
     label: 'Verified',
-    color: '#10b981',
+    color: primitiveColors.system.green.light,
     icon: <CheckCircle fontSize="small" />,
   },
   rejected: {
     label: 'Rejected',
-    color: '#ef4444',
+    color: semanticColors.error.main,
     icon: <Cancel fontSize="small" />,
   },
   needs_review: {
     label: 'Needs Review',
-    color: '#f59e0b',
+    color: semanticColors.warning.main,
     icon: <Warning fontSize="small" />,
   },
 };
@@ -252,7 +259,7 @@ export const QualityProgress: React.FC<QualityProgressProps> = ({
               borderRadius: 2,
               bgcolor: alpha('#000', 0.05),
               '& .MuiLinearProgress-bar': {
-                bgcolor: metric.ok ? '#10b981' : '#f59e0b',
+                bgcolor: metric.ok ? primitiveColors.system.green.light : semanticColors.warning.main,
                 borderRadius: 2,
               },
             }}
@@ -260,9 +267,9 @@ export const QualityProgress: React.FC<QualityProgressProps> = ({
           {showDetails && (
             <Box sx={{ width: 20, textAlign: 'right' }}>
               {metric.ok ? (
-                <CheckCircle sx={{ fontSize: 14, color: '#10b981' }} />
+                <CheckCircle sx={{ fontSize: 14, color: primitiveColors.system.green.light }} />
               ) : (
-                <Warning sx={{ fontSize: 14, color: '#f59e0b' }} />
+                <Warning sx={{ fontSize: 14, color: semanticColors.warning.main }} />
               )}
             </Box>
           )}
@@ -402,6 +409,14 @@ export const VerificationSummary: React.FC<VerificationSummaryProps> = ({
       ? Math.round((stats.verified / stats.total) * 100)
       : 0;
 
+  // Define semantic colors for stats
+  const successColor = primitiveColors.system.green.light;
+  const pendingColor = surfacesLight.text.secondary;
+  const warningColor = semanticColors.warning.main;
+  const errorColor = semanticColors.error.main;
+  const infoColor = semanticColors.info.main;
+  const purpleColor = '#8b5cf6'; // Purple accent - kept as is since no purple in design system
+
   return (
     <Box
       sx={{
@@ -410,8 +425,8 @@ export const VerificationSummary: React.FC<VerificationSummaryProps> = ({
         gap: 2,
       }}
     >
-      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha('#10b981', 0.1), borderRadius: 2 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#10b981' }}>
+      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(successColor, 0.1), borderRadius: 2 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: successColor }}>
           {stats.verified}
         </Typography>
         <Typography variant="caption" color="text.secondary">
@@ -419,8 +434,8 @@ export const VerificationSummary: React.FC<VerificationSummaryProps> = ({
         </Typography>
       </Box>
 
-      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha('#6b7280', 0.1), borderRadius: 2 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#6b7280' }}>
+      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(pendingColor, 0.1), borderRadius: 2 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: pendingColor }}>
           {stats.pending}
         </Typography>
         <Typography variant="caption" color="text.secondary">
@@ -428,8 +443,8 @@ export const VerificationSummary: React.FC<VerificationSummaryProps> = ({
         </Typography>
       </Box>
 
-      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha('#f59e0b', 0.1), borderRadius: 2 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#f59e0b' }}>
+      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(warningColor, 0.1), borderRadius: 2 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: warningColor }}>
           {stats.needsReview}
         </Typography>
         <Typography variant="caption" color="text.secondary">
@@ -437,8 +452,8 @@ export const VerificationSummary: React.FC<VerificationSummaryProps> = ({
         </Typography>
       </Box>
 
-      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha('#ef4444', 0.1), borderRadius: 2 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#ef4444' }}>
+      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(errorColor, 0.1), borderRadius: 2 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: errorColor }}>
           {stats.rejected}
         </Typography>
         <Typography variant="caption" color="text.secondary">
@@ -446,8 +461,8 @@ export const VerificationSummary: React.FC<VerificationSummaryProps> = ({
         </Typography>
       </Box>
 
-      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha('#3b82f6', 0.1), borderRadius: 2 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#3b82f6' }}>
+      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(infoColor, 0.1), borderRadius: 2 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: infoColor }}>
           {verificationRate}%
         </Typography>
         <Typography variant="caption" color="text.secondary">
@@ -455,8 +470,8 @@ export const VerificationSummary: React.FC<VerificationSummaryProps> = ({
         </Typography>
       </Box>
 
-      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha('#8b5cf6', 0.1), borderRadius: 2 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#8b5cf6' }}>
+      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(purpleColor, 0.1), borderRadius: 2 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: purpleColor }}>
           {stats.averageQuality.toFixed(1)}
         </Typography>
         <Typography variant="caption" color="text.secondary">

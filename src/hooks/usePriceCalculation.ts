@@ -5,6 +5,7 @@
  */
 import { useState, useMemo, useCallback } from 'react';
 import { Emerald, InventoryItem } from '../types';
+import { emeraldCore, goldAccent, semanticColors, surfacesDark } from '../design-system/tokens/colors';
 
 // Investment item interface
 export interface InvestmentItem {
@@ -40,12 +41,12 @@ export interface PricingMetrics {
   pricePerCarat: number;
 }
 
-// Default pricing tiers
+// Default pricing tiers - using design system colors
 export const PRICING_TIERS: PricingTier[] = [
-  { factor: 2.0, margin: 50, roi: 100, label: 'Minimo', color: '#64748B' },
-  { factor: 2.5, margin: 60, roi: 150, label: 'Base', color: '#3B82F6' },
-  { factor: 3.0, margin: 66.7, roi: 200, label: 'Ideal', color: '#059669' },
-  { factor: 3.5, margin: 71.4, roi: 250, label: 'Premium', color: '#D4AF37' },
+  { factor: 2.0, margin: 50, roi: 100, label: 'Minimo', color: surfacesDark.border.dark },
+  { factor: 2.5, margin: 60, roi: 150, label: 'Base', color: semanticColors.info.main },
+  { factor: 3.0, margin: 66.7, roi: 200, label: 'Ideal', color: emeraldCore.primary },
+  { factor: 3.5, margin: 71.4, roi: 250, label: 'Premium', color: goldAccent.primary },
 ];
 
 // Default investment items

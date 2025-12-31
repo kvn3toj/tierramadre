@@ -25,6 +25,7 @@ import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
 import { dynamicBlur, dynamicOpacity, liquidSaturation, tabBarConfig } from '../../design-system/tokens/liquid-glass';
+import { radius, layoutConstants } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import useScrollShrink from '../../hooks/useScrollShrink';
@@ -156,7 +157,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         background: effectiveConfig.specular
           ? 'radial-gradient(ellipse, rgba(0, 174, 122, 0.12) 0%, rgba(0, 174, 122, 0.06) 40%, transparent 70%)'
           : 'rgba(0, 174, 122, 0.08)',
-        borderRadius: '24px',
+        borderRadius: radius['3xl'],
         opacity: 1,
         transition: `all ${durations.liquidFast} ${easingCurves.liquidInOut}`,
         zIndex: 0,
@@ -197,8 +198,8 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
 
         // Instagram-style: straight top, rounded bottom corners matching phone screen
         borderTop: '0.5px solid rgba(255, 255, 255, 0.15)',
-        borderBottomLeftRadius: '20px',
-        borderBottomRightRadius: '20px',
+        borderBottomLeftRadius: radius['2xl'],
+        borderBottomRightRadius: radius['2xl'],
 
         // Enhanced shadow for depth
         boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.35), 0 -2px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
@@ -302,7 +303,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                 maxWidth: 90,
                 padding: `${spacing.xxs} ${spacing.xs}`,
                 cursor: 'pointer',
-                minHeight: '44px',
+                minHeight: `${layoutConstants.minTouchTarget}px`,
                 position: 'relative',
                 isolation: 'isolate', // Create stacking context for z-index
 

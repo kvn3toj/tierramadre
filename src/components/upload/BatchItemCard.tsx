@@ -26,7 +26,7 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { EmeraldCategory } from '../../types';
-import { brandColors } from '../../theme';
+import { brand, darkTokens } from '../../design-system';
 import MediaPreview from '../MediaPreview';
 import { BatchItem } from '../../hooks/useEmeraldUpload';
 
@@ -47,7 +47,7 @@ export function BatchItemCard({
 }: BatchItemCardProps) {
   return (
     <Card sx={{ height: '100%' }}>
-      <Box sx={{ height: 160, overflow: 'hidden', bgcolor: '#000' }}>
+      <Box sx={{ height: 160, overflow: 'hidden', bgcolor: darkTokens.background.app }}>
         {item.mediaType === 'video' ? (
           <MediaPreview
             mediaUrl={item.imageUrl}
@@ -70,7 +70,7 @@ export function BatchItemCard({
       <CardContent sx={{ pb: 1 }}>
         {/* Name suggestions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-          <AIIcon sx={{ fontSize: 16, color: brandColors.gold }} />
+          <AIIcon sx={{ fontSize: 16, color: brand.gold[500] }} />
           <Typography variant="caption">Sugerencias:</Typography>
           <IconButton size="small" onClick={() => onRefreshNames(item.id)}>
             <RefreshIcon sx={{ fontSize: 14 }} />
@@ -203,8 +203,8 @@ export function BatchItemCard({
           onClick={() => onSave(item)}
           disabled={!item.customName && !item.selectedName}
           sx={{
-            bgcolor: brandColors.emeraldGreen,
-            '&:hover': { bgcolor: brandColors.emeraldDark },
+            bgcolor: brand.emerald[500],
+            '&:hover': { bgcolor: brand.emerald[600] },
           }}
         >
           Guardar

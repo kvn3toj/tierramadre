@@ -86,7 +86,7 @@ const getInvestmentIcon = (iconId: string) => {
   const icons: Record<string, React.ReactNode> = {
     emerald: <Gem size={16} color={brandColors.emerald} />,
     gold: <Award size={16} color={brandColors.gold} />,
-    silver: <CircleDollarSign size={16} color="#9CA3AF" />,
+    silver: <CircleDollarSign size={16} color={brandColors.textMuted} />,
     setting: <Sparkles size={16} color={brandColors.emerald} />,
     certification: <FileCheck size={16} color={brandColors.emeraldDark} />,
     packaging: <Gift size={16} color={brandColors.gold} />,
@@ -279,8 +279,8 @@ export default function CotizacionGenerator() {
             flex: '1 1 450px',
             p: { xs: 2, sm: 3 },
             borderRadius: 3,
-            border: '1px solid #E5E7EB',
-            bgcolor: '#FFFFFF',
+            border: `1px solid ${brandColors.borderSubtle}`,
+            bgcolor: brandColors.white,
             boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           }}
         >
@@ -298,7 +298,7 @@ export default function CotizacionGenerator() {
                     flex: 1,
                     height: 4,
                     borderRadius: 2,
-                    bgcolor: step.completed ? brandColors.emerald : '#E5E7EB',
+                    bgcolor: step.completed ? brandColors.emerald : brandColors.borderSubtle,
                     transition: 'all 0.3s ease',
                   }}
                 />
@@ -310,7 +310,7 @@ export default function CotizacionGenerator() {
                   key={index}
                   sx={{
                     fontSize: '0.65rem',
-                    color: '#6B7280',
+                    color: brandColors.textSecondary,
                     fontWeight: 500,
                   }}
                 >
@@ -479,7 +479,7 @@ const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
   <Accordion defaultExpanded={false} sx={{ bgcolor: 'transparent', boxShadow: 'none', '&:before': { display: 'none' }, mb: 2 }}>
     <AccordionSummary
       expandIcon={<ExpandMoreIcon sx={{ color: brandColors.textPrimary }} />}
-      sx={{ bgcolor: '#F9FAFB', borderRadius: 1, minHeight: 40, '& .MuiAccordionSummary-content': { my: 1 } }}
+      sx={{ bgcolor: brandColors.surfaceElevated, borderRadius: 1, minHeight: 44, '& .MuiAccordionSummary-content': { my: 1 } }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Settings size={16} color={brandColors.emerald} />
@@ -488,7 +488,7 @@ const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
         </Typography>
       </Box>
     </AccordionSummary>
-    <AccordionDetails sx={{ bgcolor: '#F9FAFB', borderRadius: 1, mt: 0.5, p: 2 }}>
+    <AccordionDetails sx={{ bgcolor: brandColors.surfaceElevated, borderRadius: 1, mt: 0.5, p: 2 }}>
       <Grid container spacing={1.5}>
         <Grid item xs={12} sm={6}>
           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -680,7 +680,7 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
           disabled={!selectedItem}
           sx={{
             bgcolor: brandColors.emerald,
-            color: '#FFFFFF',
+            color: brandColors.white,
             textTransform: 'none',
             fontWeight: 600,
             py: 1.5,
@@ -692,8 +692,8 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
               boxShadow: `0 6px 16px ${alpha(brandColors.emerald, 0.4)}`,
             },
             '&:disabled': {
-              bgcolor: '#E5E7EB',
-              color: '#9CA3AF',
+              bgcolor: brandColors.borderSubtle,
+              color: brandColors.textMuted,
             },
           }}
         >
@@ -703,7 +703,7 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
     )}
 
     {productEntryMode === 'manual' && (
-      <Box sx={{ bgcolor: '#F9FAFB', p: 2, borderRadius: 2, mb: 3 }}>
+      <Box sx={{ bgcolor: brandColors.surfaceElevated, p: 2, borderRadius: 2, mb: 3 }}>
         <Grid container spacing={1.5}>
           <Grid item xs={12}>
             <TextField fullWidth label="Nombre del producto *" value={manualProduct.name} onChange={(e) => setManualProduct({ ...manualProduct, name: e.target.value })} size="small" placeholder="Ej: Esmeralda Corazón Verde" />
@@ -731,7 +731,7 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
           </Grid>
         </Grid>
         <Button fullWidth variant="contained" startIcon={<Plus size={18} />} onClick={handleAddManualProduct} disabled={!manualProduct.name || manualProduct.precioCOP <= 0}
-          sx={{ mt: 2, bgcolor: brandColors.gold, color: '#fff', textTransform: 'none', fontWeight: 600, py: 1.25, borderRadius: 2, '&:hover': { bgcolor: '#B8941F' }, '&.Mui-disabled': { bgcolor: alpha(brandColors.gold, 0.3), color: 'rgba(255,255,255,0.6)' } }}
+          sx={{ mt: 2, bgcolor: brandColors.gold, color: brandColors.white, textTransform: 'none', fontWeight: 600, py: 1.25, borderRadius: 2, '&:hover': { bgcolor: brandColors.goldDark }, '&.Mui-disabled': { bgcolor: alpha(brandColors.gold, 0.3), color: 'rgba(255,255,255,0.6)' } }}
         >
           Agregar Producto Manual
         </Button>
@@ -759,7 +759,7 @@ const ProductListSection: React.FC<ProductListSectionProps> = ({ products, handl
         }}>Productos Seleccionados ({products.length})</Typography>
       </Box>
       {products.map((product) => (
-        <Box key={product.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, px: 1.5, mb: 1, bgcolor: '#F9FAFB', borderRadius: 1.5, border: '1px solid #E5E7EB' }}>
+        <Box key={product.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, px: 1.5, mb: 1, bgcolor: brandColors.surfaceElevated, borderRadius: 1.5, border: `1px solid ${brandColors.borderSubtle}` }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Avatar src={product.imagen} variant="rounded" sx={{ width: 40, height: 40, bgcolor: brandColors.lightGray }}>
               {product.isJewelry ? <ShoppingBag size={16} /> : <Gem size={16} />}
@@ -771,7 +771,7 @@ const ProductListSection: React.FC<ProductListSectionProps> = ({ products, handl
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="body2" sx={{ color: brandColors.emerald, fontWeight: 700 }}>{formatCurrency(product.precioCOP)}</Typography>
-            <IconButton size="small" onClick={() => handleRemoveProduct(product.id)} sx={{ color: '#9CA3AF', '&:hover': { color: '#EF4444', bgcolor: alpha('#EF4444', 0.1) } }}>
+            <IconButton size="small" onClick={() => handleRemoveProduct(product.id)} sx={{ color: brandColors.textMuted, '&:hover': { color: brandColors.error, bgcolor: alpha(brandColors.error, 0.1) } }}>
               <Trash2 size={16} />
             </IconButton>
           </Box>
@@ -810,7 +810,7 @@ const InvestmentFormSection: React.FC<InvestmentFormSectionProps> = ({
         fontSize: '0.875rem',
       }}>Inversión</Typography>
       <Tooltip title="Reiniciar inversión">
-        <IconButton size="small" onClick={handleResetInvestments} sx={{ color: '#9CA3AF', '&:hover': { color: brandColors.emerald } }}>
+        <IconButton size="small" onClick={handleResetInvestments} sx={{ color: brandColors.textMuted, '&:hover': { color: brandColors.emerald } }}>
           <RotateCcw size={16} />
         </IconButton>
       </Tooltip>
@@ -829,16 +829,16 @@ const InvestmentFormSection: React.FC<InvestmentFormSectionProps> = ({
     </Box>
 
     <Accordion sx={{ bgcolor: 'transparent', boxShadow: 'none', '&:before': { display: 'none' }, mt: 2 }}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: brandColors.textPrimary }} />} sx={{ bgcolor: '#F9FAFB', borderRadius: 1, minHeight: 40, '& .MuiAccordionSummary-content': { my: 1 } }}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: brandColors.textPrimary }} />} sx={{ bgcolor: brandColors.surfaceElevated, borderRadius: 1, minHeight: 40, '& .MuiAccordionSummary-content': { my: 1 } }}>
         <Typography variant="body2" sx={{ color: brandColors.textPrimary, fontWeight: 600 }}>Costos adicionales {customCosts.length > 0 && `(${customCosts.length})`}</Typography>
       </AccordionSummary>
-      <AccordionDetails sx={{ bgcolor: '#F9FAFB', borderRadius: 1, mt: 0.5, p: 2 }}>
+      <AccordionDetails sx={{ bgcolor: brandColors.surfaceElevated, borderRadius: 1, mt: 0.5, p: 2 }}>
         {customCosts.map((cost) => (
-          <Box key={cost.id} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1, borderBottom: '1px solid #E5E7EB' }}>
+          <Box key={cost.id} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1, borderBottom: `1px solid ${brandColors.borderSubtle}` }}>
             <Typography variant="body2">{cost.label}</Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="body2" sx={{ color: brandColors.emerald, fontWeight: 600 }}>{formatCurrency(cost.value)}</Typography>
-              <IconButton size="small" onClick={() => handleRemoveCustomCost(cost.id)} sx={{ color: '#9CA3AF', '&:hover': { color: '#EF4444' } }}><Trash2 size={14} /></IconButton>
+              <IconButton size="small" onClick={() => handleRemoveCustomCost(cost.id)} sx={{ color: brandColors.textMuted, '&:hover': { color: brandColors.error } }}><Trash2 size={14} /></IconButton>
             </Box>
           </Box>
         ))}
@@ -905,12 +905,12 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ handleExportPDF, handlePr
       Exportar PDF
     </Button>
     <Tooltip title="Imprimir">
-      <IconButton onClick={handlePrint} sx={{ border: '1px solid #E5E7EB', borderRadius: 2, color: '#6B7280', '&:hover': { bgcolor: alpha(brandColors.emerald, 0.1), color: brandColors.emerald } }}>
+      <IconButton onClick={handlePrint} sx={{ border: `1px solid ${brandColors.borderSubtle}`, borderRadius: 2, color: brandColors.textSecondary, '&:hover': { bgcolor: alpha(brandColors.emerald, 0.1), color: brandColors.emerald } }}>
         <Printer size={20} />
       </IconButton>
     </Tooltip>
     <Tooltip title="Nueva Cotización">
-      <IconButton onClick={handleNewQuotation} sx={{ border: '1px solid #E5E7EB', borderRadius: 2, color: '#6B7280', '&:hover': { bgcolor: alpha(brandColors.emerald, 0.1), color: brandColors.emerald } }}>
+      <IconButton onClick={handleNewQuotation} sx={{ border: `1px solid ${brandColors.borderSubtle}`, borderRadius: 2, color: brandColors.textSecondary, '&:hover': { bgcolor: alpha(brandColors.emerald, 0.1), color: brandColors.emerald } }}>
         <Copy size={20} />
       </IconButton>
     </Tooltip>

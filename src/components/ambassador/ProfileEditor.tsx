@@ -44,6 +44,7 @@ import {
   Languages,
 } from 'lucide-react';
 import { AmbassadorProfile, ContactMethod, ColorScheme, Language } from '../../types/ambassador';
+import { brand, lightTokens, darkTokens } from '../../design-system';
 
 // Template type for editor
 type TemplateType = 'tm-official' | 'self-brand';
@@ -271,8 +272,8 @@ export default function ProfileEditor({
             onClick={handleSave}
             disabled={!hasChanges || saveStatus === 'saving'}
             sx={{
-              bgcolor: '#059669',
-              '&:hover': { bgcolor: '#047857' },
+              bgcolor: brand.emerald[500],
+              '&:hover': { bgcolor: brand.emerald[600] },
               textTransform: 'none',
             }}
           >
@@ -304,8 +305,8 @@ export default function ProfileEditor({
             fontWeight: 600,
             minHeight: 48,
           },
-          '& .Mui-selected': { color: '#059669' },
-          '& .MuiTabs-indicator': { bgcolor: '#059669' },
+          '& .Mui-selected': { color: brand.emerald[500] },
+          '& .MuiTabs-indicator': { bgcolor: brand.emerald[500] },
         }}
       >
         <Tab icon={<User size={18} />} iconPosition="start" label="Información Básica" value="basic" />
@@ -373,7 +374,7 @@ function BasicInfoTab({
     <Grid container spacing={3}>
       {/* Profile Photo */}
       <Grid item xs={12} md={4}>
-        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
           <CardContent sx={{ textAlign: 'center' }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
               Foto de Perfil
@@ -385,7 +386,7 @@ function BasicInfoTab({
                 height: 120,
                 mx: 'auto',
                 mb: 2,
-                bgcolor: '#059669',
+                bgcolor: brand.emerald[500],
                 fontSize: '3rem',
               }}
             >
@@ -408,7 +409,7 @@ function BasicInfoTab({
 
       {/* Basic Details */}
       <Grid item xs={12} md={8}>
-        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
           <CardContent>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
               Información Personal
@@ -453,10 +454,10 @@ function BasicInfoTab({
         </Card>
 
         {/* Location */}
-        <Card sx={{ mt: 2, borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+        <Card sx={{ mt: 2, borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <MapPin size={18} color="#059669" />
+              <MapPin size={18} color={brand.emerald[500]} />
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 Ubicacion
               </Typography>
@@ -484,10 +485,10 @@ function BasicInfoTab({
         </Card>
 
         {/* Languages */}
-        <Card sx={{ mt: 2, borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+        <Card sx={{ mt: 2, borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <Languages size={18} color="#059669" />
+              <Languages size={18} color={brand.emerald[500]} />
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 Idiomas
               </Typography>
@@ -520,8 +521,8 @@ function BasicInfoTab({
                     variant={isSelected ? 'filled' : 'outlined'}
                     sx={{
                       ...(isSelected && {
-                        bgcolor: '#059669',
-                        '&:hover': { bgcolor: '#047857' },
+                        bgcolor: brand.emerald[500],
+                        '&:hover': { bgcolor: brand.emerald[600] },
                       }),
                     }}
                   />
@@ -557,7 +558,7 @@ function ContactTab({
   };
 
   return (
-    <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+    <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
@@ -582,7 +583,7 @@ function ContactTab({
                 gap: 2,
                 alignItems: 'center',
                 p: 2,
-                bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
+                bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
                 borderRadius: 2,
               }}
             >
@@ -692,7 +693,7 @@ function TemplateTab({
     <Grid container spacing={3}>
       {/* Template Type */}
       <Grid item xs={12}>
-        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
           <CardContent>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
               Tipo de Plantilla
@@ -706,17 +707,17 @@ function TemplateTab({
                     p: 3,
                     borderRadius: 3,
                     border: '2px solid',
-                    borderColor: formData.template.type === 'tm-official' ? '#059669' : (isLight ? '#E5E7EB' : '#2C2C2E'),
-                    bgcolor: formData.template.type === 'tm-official' ? alpha('#059669', 0.05) : 'transparent',
+                    borderColor: formData.template.type === 'tm-official' ? brand.emerald[500] : (isLight ? lightTokens.border.default : darkTokens.border.default),
+                    bgcolor: formData.template.type === 'tm-official' ? alpha(brand.emerald[500], 0.05) : 'transparent',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                     '&:hover': {
-                      borderColor: '#059669',
+                      borderColor: brand.emerald[500],
                     },
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Check size={18} color={formData.template.type === 'tm-official' ? '#059669' : 'transparent'} />
+                    <Check size={18} color={formData.template.type === 'tm-official' ? brand.emerald[500] : 'transparent'} />
                     <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                       Tierra Madre Oficial
                     </Typography>
@@ -725,7 +726,7 @@ function TemplateTab({
                     Plantilla oficial con colores de Tierra Madre. Ideal para mantener coherencia con la marca.
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 0.5, mt: 2 }}>
-                    {['#059669', '#064e3b', '#fbbf24'].map(color => (
+                    {[brand.emerald[500], brand.emerald[900], brand.gold[500]].map(color => (
                       <Box key={color} sx={{ width: 24, height: 24, borderRadius: 1, bgcolor: color }} />
                     ))}
                   </Box>
@@ -739,17 +740,17 @@ function TemplateTab({
                     p: 3,
                     borderRadius: 3,
                     border: '2px solid',
-                    borderColor: formData.template.type === 'self-brand' ? '#059669' : (isLight ? '#E5E7EB' : '#2C2C2E'),
-                    bgcolor: formData.template.type === 'self-brand' ? alpha('#059669', 0.05) : 'transparent',
+                    borderColor: formData.template.type === 'self-brand' ? brand.emerald[500] : (isLight ? lightTokens.border.default : darkTokens.border.default),
+                    bgcolor: formData.template.type === 'self-brand' ? alpha(brand.emerald[500], 0.05) : 'transparent',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                     '&:hover': {
-                      borderColor: '#059669',
+                      borderColor: brand.emerald[500],
                     },
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Check size={18} color={formData.template.type === 'self-brand' ? '#059669' : 'transparent'} />
+                    <Check size={18} color={formData.template.type === 'self-brand' ? brand.emerald[500] : 'transparent'} />
                     <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                       Marca Personal
                     </Typography>
@@ -758,7 +759,7 @@ function TemplateTab({
                     Personaliza colores y estilos para reflejar tu marca personal unica.
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 0.5, mt: 2 }}>
-                    <Palette size={24} color="#9CA3AF" />
+                    <Palette size={24} color={lightTokens.text.muted} />
                     <Typography variant="caption" sx={{ color: 'text.secondary', ml: 1 }}>
                       Colores personalizables
                     </Typography>
@@ -773,7 +774,7 @@ function TemplateTab({
       {/* Color Scheme (only for self-brand) */}
       {formData.template.type === 'self-brand' && (
         <Grid item xs={12}>
-          <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+          <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
             <CardContent>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
                 Esquema de Colores
@@ -793,11 +794,11 @@ function TemplateTab({
                         borderRadius: 2,
                         border: '2px solid',
                         borderColor: formData.template.colorScheme.primary === preset.scheme.primary
-                          ? '#059669'
-                          : (isLight ? '#E5E7EB' : '#2C2C2E'),
+                          ? brand.emerald[500]
+                          : (isLight ? lightTokens.border.default : darkTokens.border.default),
                         cursor: 'pointer',
                         transition: 'all 0.2s',
-                        '&:hover': { borderColor: '#059669' },
+                        '&:hover': { borderColor: brand.emerald[500] },
                       }}
                     >
                       <Box sx={{ display: 'flex', gap: 0.5, mb: 1 }}>
@@ -862,7 +863,7 @@ function TemplateTab({
 
       {/* Module Toggle */}
       <Grid item xs={12}>
-        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
           <CardContent>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
               Secciones del Perfil
@@ -888,10 +889,10 @@ function TemplateTab({
                         }}
                         sx={{
                           '& .MuiSwitch-switchBase.Mui-checked': {
-                            color: '#059669',
+                            color: brand.emerald[500],
                           },
                           '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                            bgcolor: '#059669',
+                            bgcolor: brand.emerald[500],
                           },
                         }}
                       />
@@ -933,7 +934,7 @@ function SpecialtiesTab({
   isLight: boolean;
 }) {
   return (
-    <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+    <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box>
@@ -960,7 +961,7 @@ function SpecialtiesTab({
               key={index}
               sx={{
                 p: 2,
-                bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
+                bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
                 borderRadius: 2,
               }}
             >
@@ -1015,11 +1016,11 @@ function SpecialtiesTab({
             sx={{
               textAlign: 'center',
               py: 4,
-              bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
+              bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
               borderRadius: 2,
             }}
           >
-            <Award size={32} style={{ color: '#9CA3AF', marginBottom: 8 }} />
+            <Award size={32} style={{ color: lightTokens.text.muted, marginBottom: 8 }} />
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               No tienes especialidades agregadas
             </Typography>

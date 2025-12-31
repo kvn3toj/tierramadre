@@ -10,6 +10,13 @@ import {
   Diamond,
   Spa,
 } from '@mui/icons-material';
+import { semanticColors, emeraldCore } from '../design-system/tokens/colors';
+
+// Accent colors for knowledge categories
+const PURPLE_ACCENT = '#9C27B0';
+const ORANGE_ACCENT = semanticColors.warning.main;
+const BLUE_ACCENT = semanticColors.info.main;
+const PINK_ACCENT = '#E91E63';
 
 export interface DailyOracle {
   id: number;
@@ -117,11 +124,11 @@ export const DAILY_ORACLES: DailyOracle[] = [
 
 // Knowledge categories
 export const KNOWLEDGE_CATEGORIES: KnowledgeCategory[] = [
-  { id: 'spiritual', title: 'Espiritualidad', icon: React.createElement(SelfImprovement), color: '#9C27B0', facts: 12 },
-  { id: 'investment', title: 'Inversión', icon: React.createElement(TrendingUp), color: '#4CAF50', facts: 8 },
-  { id: 'history', title: 'Historia', icon: React.createElement(HistoryEdu), color: '#FF9800', facts: 15 },
-  { id: 'jewelry', title: 'Joyería', icon: React.createElement(Diamond), color: '#2196F3', facts: 10 },
-  { id: 'meditation', title: 'Meditación', icon: React.createElement(Spa), color: '#E91E63', facts: 6 },
+  { id: 'spiritual', title: 'Espiritualidad', icon: React.createElement(SelfImprovement), color: PURPLE_ACCENT, facts: 12 },
+  { id: 'investment', title: 'Inversión', icon: React.createElement(TrendingUp), color: semanticColors.success.main, facts: 8 },
+  { id: 'history', title: 'Historia', icon: React.createElement(HistoryEdu), color: ORANGE_ACCENT, facts: 15 },
+  { id: 'jewelry', title: 'Joyería', icon: React.createElement(Diamond), color: BLUE_ACCENT, facts: 10 },
+  { id: 'meditation', title: 'Meditación', icon: React.createElement(Spa), color: PINK_ACCENT, facts: 6 },
 ];
 
 // Daily meditations - different experience each day
@@ -163,7 +170,7 @@ export const DAILY_MEDITATIONS: DailyMeditation[] = [
     duration: 240,
     description: 'Activa tu chakra del corazón con energía esmeralda',
     type: 'chakra',
-    chakraColor: '#00AE7A', // Brand emerald green for heart chakra
+    chakraColor: emeraldCore.primary, // Brand emerald green for heart chakra
   },
   {
     // Thursday - Ambient sounds meditation

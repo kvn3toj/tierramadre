@@ -23,6 +23,7 @@ import {
 import { AmbassadorProfile } from '../../types/ambassador';
 import { StatItem } from './StatItem';
 import { getCardSx } from './styles';
+import { brand, lightTokens, darkTokens } from '../../design-system';
 
 interface AmbassadorCardProps {
   ambassador: AmbassadorProfile;
@@ -71,7 +72,7 @@ export default function AmbassadorCard({
             sx={{
               width: 64,
               height: 64,
-              bgcolor: '#059669',
+              bgcolor: brand.emerald[500],
               fontSize: '1.5rem',
               fontWeight: 700,
             }}
@@ -110,7 +111,7 @@ export default function AmbassadorCard({
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <MapPin size={12} style={{ color: isLight ? '#6B7280' : '#9CA3AF' }} />
+              <MapPin size={12} style={{ color: isLight ? lightTokens.text.secondary : darkTokens.text.secondary }} />
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 {ambassador.location.city}, {ambassador.location.country}
               </Typography>
@@ -127,7 +128,7 @@ export default function AmbassadorCard({
               mb: 2,
               py: 1.5,
               px: 2,
-              bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
+              bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
               borderRadius: 2,
             }}
           >
@@ -158,8 +159,8 @@ export default function AmbassadorCard({
                 label={specialty.name}
                 size="small"
                 sx={{
-                  bgcolor: alpha('#059669', 0.1),
-                  color: '#059669',
+                  bgcolor: alpha(brand.emerald[500], 0.1),
+                  color: brand.emerald[500],
                   fontSize: '0.7rem',
                   height: 24,
                 }}
@@ -185,8 +186,8 @@ export default function AmbassadorCard({
             onClick={() => onContact?.(ambassador)}
             sx={{
               flex: 1,
-              bgcolor: '#059669',
-              '&:hover': { bgcolor: '#047857' },
+              bgcolor: brand.emerald[500],
+              '&:hover': { bgcolor: brand.emerald[600] },
               textTransform: 'none',
               fontWeight: 600,
             }}
@@ -200,13 +201,13 @@ export default function AmbassadorCard({
             onClick={() => onViewProfile?.(ambassador)}
             sx={{
               flex: 1,
-              borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+              borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
               color: 'text.primary',
               textTransform: 'none',
               fontWeight: 600,
               '&:hover': {
-                borderColor: '#059669',
-                bgcolor: alpha('#059669', 0.05),
+                borderColor: brand.emerald[500],
+                bgcolor: alpha(brand.emerald[500], 0.05),
               },
             }}
           >
@@ -233,8 +234,8 @@ function CompactCard({
         ...getCardSx(isLight, { borderRadius: 2, withHover: false }),
         cursor: 'pointer',
         '&:hover': {
-          borderColor: '#059669',
-          bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
+          borderColor: brand.emerald[500],
+          bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
         },
       }}
     >
@@ -243,7 +244,7 @@ function CompactCard({
           <Avatar
             src={ambassador.photoUrl}
             alt={ambassador.displayName}
-            sx={{ width: 40, height: 40, bgcolor: '#059669' }}
+            sx={{ width: 40, height: 40, bgcolor: brand.emerald[500] }}
           >
             {ambassador.displayName.charAt(0)}
           </Avatar>
@@ -290,10 +291,10 @@ function FeaturedCard({
   return (
     <Card
       sx={{
-        bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+        bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
         borderRadius: 4,
         border: '2px solid',
-        borderColor: '#059669',
+        borderColor: brand.emerald[500],
         overflow: 'hidden',
         position: 'relative',
       }}
@@ -304,7 +305,7 @@ function FeaturedCard({
           height: 100,
           background: ambassador.bannerUrl
             ? `url(${ambassador.bannerUrl}) center/cover`
-            : `linear-gradient(135deg, #059669 0%, ${alpha('#059669', 0.6)} 100%)`,
+            : `linear-gradient(135deg, ${brand.emerald[500]} 0%, ${alpha(brand.emerald[500], 0.6)} 100%)`,
         }}
       />
 
@@ -316,9 +317,9 @@ function FeaturedCard({
           sx={{
             width: 80,
             height: 80,
-            bgcolor: '#059669',
+            bgcolor: brand.emerald[500],
             border: '4px solid',
-            borderColor: isLight ? '#FFFFFF' : '#1C1C1E',
+            borderColor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
             fontSize: '2rem',
             fontWeight: 700,
           }}
@@ -364,11 +365,11 @@ function FeaturedCard({
               mb: 2,
               borderTop: '1px solid',
               borderBottom: '1px solid',
-              borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+              borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
             }}
           >
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#059669' }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: brand.emerald[500] }}>
                 {ambassador.reputation.totalSales}
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -405,8 +406,8 @@ function FeaturedCard({
             startIcon={<MessageCircle size={18} />}
             onClick={() => onContact?.(ambassador)}
             sx={{
-              bgcolor: '#059669',
-              '&:hover': { bgcolor: alpha('#059669', 0.9) },
+              bgcolor: brand.emerald[500],
+              '&:hover': { bgcolor: alpha(brand.emerald[500], 0.9) },
               textTransform: 'none',
               fontWeight: 600,
               py: 1.25,

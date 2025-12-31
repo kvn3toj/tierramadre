@@ -9,9 +9,9 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Box, Typography, Chip } from '@mui/material';
+import { Box, Typography, Chip, alpha } from '@mui/material';
 import { LocalFireDepartment, Whatshot } from '@mui/icons-material';
-import { goldAccent } from '../../../design-system/tokens/colors';
+import { goldAccent, semanticColors } from '../../../design-system/tokens/colors';
 
 // =============================================================================
 // TYPES
@@ -58,9 +58,9 @@ const SIZE_CONFIG = {
 // Fire colors based on streak level
 const getFireColor = (streak: number): string => {
   if (streak >= 100) return goldAccent.primary; // Gold fire
-  if (streak >= 30) return '#FF6B6B'; // Red fire
-  if (streak >= 7) return '#FF8C42'; // Orange fire
-  return '#FFB347'; // Yellow fire
+  if (streak >= 30) return semanticColors.error.main; // Red fire
+  if (streak >= 7) return semanticColors.warning.main; // Orange fire
+  return semanticColors.warning.light; // Yellow fire (light warning for lower streaks)
 };
 
 // =============================================================================
@@ -140,12 +140,12 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
           }
           sx={{
             bgcolor: isAtRisk
-              ? 'rgba(255, 107, 107, 0.2)'
-              : 'rgba(255, 255, 255, 0.2)',
+              ? alpha(semanticColors.error.main, 0.2)
+              : alpha('#FFFFFF', 0.2),
             color: 'white',
             fontWeight: 600,
             backdropFilter: 'blur(8px)',
-            border: isAtRisk ? '1px solid rgba(255, 107, 107, 0.4)' : 'none',
+            border: isAtRisk ? `1px solid ${alpha(semanticColors.error.main, 0.4)}` : 'none',
             '& .MuiChip-icon': {
               color: fireColor,
             },
@@ -202,7 +202,7 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
             <Typography
               variant="caption"
               sx={{
-                color: '#FF6B6B',
+                color: semanticColors.error.main,
                 fontWeight: 600,
               }}
             >

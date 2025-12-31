@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MediaItem, CATEGORY_LABELS } from './types';
+import { brand, darkTokens, lightTokens } from '../../design-system';
 
 interface MediaGalleryProps {
   media: MediaItem[];
@@ -110,9 +111,9 @@ export default function MediaGallery({
           width: '100%',
           aspectRatio: '4/3',
           borderRadius: 3,
-          bgcolor: alpha('#059669', 0.05),
+          bgcolor: alpha(brand.emerald[500], 0.05),
           border: '2px dashed',
-          borderColor: alpha('#059669', 0.3),
+          borderColor: alpha(brand.emerald[500], 0.3),
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -120,13 +121,13 @@ export default function MediaGallery({
           cursor: isEditing ? 'pointer' : 'default',
           transition: 'all 0.3s ease',
           '&:hover': isEditing ? {
-            borderColor: '#059669',
-            bgcolor: alpha('#059669', 0.1),
+            borderColor: brand.emerald[500],
+            bgcolor: alpha(brand.emerald[500], 0.1),
           } : {},
         }}
         onClick={isEditing ? onAddMedia : undefined}
       >
-        <ZoomIn size={48} color="#059669" style={{ opacity: 0.5 }} />
+        <ZoomIn size={48} color={brand.emerald[500]} style={{ opacity: 0.5 }} />
         <Typography
           variant="body1"
           sx={{ mt: 2, color: 'text.secondary', textAlign: 'center' }}
@@ -152,7 +153,7 @@ export default function MediaGallery({
           aspectRatio: '4/3',
           borderRadius: 3,
           overflow: 'hidden',
-          bgcolor: '#000',
+          bgcolor: darkTokens.background.app,
           cursor: currentMedia?.type === 'video' ? 'pointer' : 'zoom-in',
         }}
         onTouchStart={handleTouchStart}
@@ -204,7 +205,7 @@ export default function MediaGallery({
                       }}
                     />
                   ) : (
-                    <Box sx={{ bgcolor: '#1a1a1a', width: '100%', height: '100%' }} />
+                    <Box sx={{ bgcolor: darkTokens.background.surface, width: '100%', height: '100%' }} />
                   )}
                   <Box
                     sx={{
@@ -243,8 +244,8 @@ export default function MediaGallery({
               position: 'absolute',
               bottom: 12,
               left: 12,
-              bgcolor: 'rgba(0,0,0,0.7)',
-              color: 'white',
+              bgcolor: alpha(darkTokens.background.app, 0.7),
+              color: lightTokens.text.inverse,
               fontSize: '0.75rem',
               backdropFilter: 'blur(4px)',
             }}
@@ -262,9 +263,9 @@ export default function MediaGallery({
               position: 'absolute',
               top: 12,
               right: 12,
-              bgcolor: 'rgba(0,0,0,0.5)',
-              color: 'white',
-              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+              bgcolor: alpha(darkTokens.background.app, 0.5),
+              color: lightTokens.text.inverse,
+              '&:hover': { bgcolor: alpha(darkTokens.background.app, 0.7) },
             }}
           >
             <Maximize2 size={20} />
@@ -284,8 +285,8 @@ export default function MediaGallery({
                 left: 12,
                 top: '50%',
                 transform: 'translateY(-50%)',
-                bgcolor: 'rgba(255,255,255,0.9)',
-                '&:hover': { bgcolor: 'white' },
+                bgcolor: alpha(lightTokens.background.surface, 0.9),
+                '&:hover': { bgcolor: lightTokens.background.surface },
               }}
             >
               <ChevronLeft size={24} />
@@ -300,8 +301,8 @@ export default function MediaGallery({
                 right: 12,
                 top: '50%',
                 transform: 'translateY(-50%)',
-                bgcolor: 'rgba(255,255,255,0.9)',
-                '&:hover': { bgcolor: 'white' },
+                bgcolor: alpha(lightTokens.background.surface, 0.9),
+                '&:hover': { bgcolor: lightTokens.background.surface },
               }}
             >
               <ChevronRight size={24} />
@@ -334,11 +335,11 @@ export default function MediaGallery({
                   width: index === currentIndex ? 20 : 8,
                   height: 8,
                   borderRadius: 4,
-                  bgcolor: index === currentIndex ? '#059669' : alpha('#059669', 0.3),
+                  bgcolor: index === currentIndex ? brand.emerald[500] : alpha(brand.emerald[500], 0.3),
                   transition: 'all 0.3s ease',
                   cursor: 'pointer',
                   '&:hover': {
-                    bgcolor: index === currentIndex ? '#059669' : alpha('#059669', 0.5),
+                    bgcolor: index === currentIndex ? brand.emerald[500] : alpha(brand.emerald[500], 0.5),
                   },
                 }}
               />
@@ -358,7 +359,7 @@ export default function MediaGallery({
             px: 0.5,
             '&::-webkit-scrollbar': { height: 4 },
             '&::-webkit-scrollbar-thumb': {
-              bgcolor: '#059669',
+              bgcolor: brand.emerald[500],
               borderRadius: 2,
             },
           }}
@@ -374,7 +375,7 @@ export default function MediaGallery({
                 overflow: 'hidden',
                 cursor: 'pointer',
                 border: '2px solid',
-                borderColor: index === currentIndex ? '#059669' : 'transparent',
+                borderColor: index === currentIndex ? brand.emerald[500] : 'transparent',
                 opacity: index === currentIndex ? 1 : 0.6,
                 transition: 'all 0.2s ease',
                 position: 'relative',
@@ -397,7 +398,7 @@ export default function MediaGallery({
                       }}
                     />
                   ) : (
-                    <Box sx={{ bgcolor: '#1a1a1a', width: '100%', height: '100%' }} />
+                    <Box sx={{ bgcolor: darkTokens.background.surface, width: '100%', height: '100%' }} />
                   )}
                   <Box
                     sx={{
@@ -435,19 +436,19 @@ export default function MediaGallery({
                 height: 64,
                 borderRadius: 1.5,
                 border: '2px dashed',
-                borderColor: alpha('#059669', 0.4),
+                borderColor: alpha(brand.emerald[500], 0.4),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 '&:hover': {
-                  borderColor: '#059669',
-                  bgcolor: alpha('#059669', 0.1),
+                  borderColor: brand.emerald[500],
+                  bgcolor: alpha(brand.emerald[500], 0.1),
                 },
               }}
             >
-              <Typography sx={{ fontSize: 24, color: '#059669' }}>+</Typography>
+              <Typography sx={{ fontSize: 24, color: brand.emerald[500] }}>+</Typography>
             </Box>
           )}
         </Box>
@@ -461,7 +462,7 @@ export default function MediaGallery({
         fullScreen={isMobile}
         PaperProps={{
           sx: {
-            bgcolor: 'rgba(0,0,0,0.95)',
+            bgcolor: alpha(darkTokens.background.app, 0.95),
             backgroundImage: 'none',
             m: isMobile ? 0 : 2,
           },
@@ -473,10 +474,10 @@ export default function MediaGallery({
             position: 'absolute',
             top: 16,
             right: 16,
-            color: 'white',
+            color: lightTokens.text.inverse,
             zIndex: 10,
-            bgcolor: 'rgba(255,255,255,0.1)',
-            '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+            bgcolor: alpha(lightTokens.background.surface, 0.1),
+            '&:hover': { bgcolor: alpha(lightTokens.background.surface, 0.2) },
           }}
         >
           <X size={24} />
@@ -514,9 +515,9 @@ export default function MediaGallery({
                 left: 16,
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: 'white',
-                bgcolor: 'rgba(255,255,255,0.1)',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+                color: lightTokens.text.inverse,
+                bgcolor: alpha(lightTokens.background.surface, 0.1),
+                '&:hover': { bgcolor: alpha(lightTokens.background.surface, 0.2) },
               }}
             >
               <ChevronLeft size={32} />
@@ -528,9 +529,9 @@ export default function MediaGallery({
                 right: 16,
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: 'white',
-                bgcolor: 'rgba(255,255,255,0.1)',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+                color: lightTokens.text.inverse,
+                bgcolor: alpha(lightTokens.background.surface, 0.1),
+                '&:hover': { bgcolor: alpha(lightTokens.background.surface, 0.2) },
               }}
             >
               <ChevronRight size={32} />
@@ -545,7 +546,7 @@ export default function MediaGallery({
             bottom: 16,
             left: '50%',
             transform: 'translateX(-50%)',
-            color: 'rgba(255,255,255,0.7)',
+            color: alpha(lightTokens.text.inverse, 0.7),
           }}
         >
           {currentIndex + 1} / {media.length}

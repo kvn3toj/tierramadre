@@ -7,7 +7,12 @@ import React, { forwardRef } from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import { Package, DollarSign, Shield } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { documentShadows } from '../../design-system/tokens';
+import {
+  documentShadows,
+  goldColors,
+  primitiveColors,
+} from '../../design-system/tokens';
+import { lightTokens, accentColors } from '../../design-system';
 import { brandColors } from './constants';
 import {
   CotizacionProduct,
@@ -98,7 +103,7 @@ export const QuotationPreview = forwardRef<HTMLDivElement, QuotationPreviewProps
               position: 'relative',
               borderRadius: 1,
               p: '3px',
-              background: `linear-gradient(135deg, #B8860B 0%, #D4AF37 25%, #F4E4C1 50%, #D4AF37 75%, #B8860B 100%)`,
+              background: `linear-gradient(135deg, ${goldColors[700]} 0%, ${goldColors[500]} 25%, ${goldColors[200]} 50%, ${goldColors[500]} 75%, ${goldColors[700]} 100%)`,
               boxShadow: `
                 0 2px 8px rgba(212, 175, 55, 0.2),
                 0 4px 16px rgba(0, 0, 0, 0.1),
@@ -111,7 +116,7 @@ export const QuotationPreview = forwardRef<HTMLDivElement, QuotationPreviewProps
               sx={{
                 border: `1.5px solid ${brandColors.emerald}`,
                 borderRadius: 0.5,
-                background: '#FFFFFF',
+                background: lightTokens.background.surface,
               }}
             >
               {/* Premium Paper */}
@@ -311,7 +316,7 @@ const TitleBar: React.FC = () => (
     sx={{
       position: 'relative',
       background: `
-        linear-gradient(180deg, ${brandColors.emeraldDark} 0%, #0D4019 100%),
+        linear-gradient(180deg, ${brandColors.emeraldDark} 0%, ${primitiveColors.emerald[800]} 100%),
         repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(0,0,0,0.03) 1px, rgba(0,0,0,0.03) 2px)
       `,
       py: 1.5,
@@ -342,7 +347,7 @@ const TitleBar: React.FC = () => (
   >
     <Typography
       sx={{
-        color: '#fff',
+        color: lightTokens.text.inverse,
         fontSize: '0.8rem',
         fontWeight: 500,
         textAlign: 'center',
@@ -534,7 +539,7 @@ const TotalsSection: React.FC<{
         <Typography sx={{ fontSize: '0.65rem', color: brandColors.gray }}>
           Descuento ({discountPercent}%)
         </Typography>
-        <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: '#EF4444' }}>
+        <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: accentColors.error.light }}>
           -{formatCurrency(discount)}
         </Typography>
       </Box>
@@ -674,8 +679,8 @@ const QRCodeBox: React.FC<{ products: CotizacionProduct[] }> = ({ products }) =>
         value={`https://www.tierramadre.co/products/${generateProductSlug(products[0].name)}`}
         size={52}
         level="L"
-        fgColor="#1B5E20"
-        bgColor="#FFFFFF"
+        fgColor={primitiveColors.emerald[800]}
+        bgColor={lightTokens.background.surface}
         style={{ width: '100%', height: '100%', display: 'block' }}
       />
     ) : (
@@ -731,7 +736,7 @@ const PremiumSeal: React.FC = () => (
         width: 54,
         height: 54,
         borderRadius: '50%',
-        bgcolor: '#fff',
+        bgcolor: lightTokens.background.surface,
         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)',
       }}
     />

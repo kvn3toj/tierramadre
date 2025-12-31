@@ -13,6 +13,7 @@
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { createLogger } from '../../utils/logger';
+import { brand, accentColors, lightTokens } from '../../design-system';
 
 const log = createLogger('MediaUpload');
 import {
@@ -172,22 +173,22 @@ export default function MediaUploadZone({
           borderRadius: 3,
           border: '2px dashed',
           borderColor: isDragActive
-            ? '#059669'
+            ? brand.emerald[500]
             : canUpload
-            ? alpha('#059669', 0.4)
+            ? alpha(brand.emerald[500], 0.4)
             : 'grey.300',
           bgcolor: isDragActive
-            ? alpha('#059669', 0.1)
+            ? alpha(brand.emerald[500], 0.1)
             : canUpload
-            ? alpha('#059669', 0.02)
+            ? alpha(brand.emerald[500], 0.02)
             : 'grey.50',
           textAlign: 'center',
           cursor: canUpload ? 'pointer' : 'not-allowed',
           transition: 'all 0.3s ease',
           '&:hover': canUpload
             ? {
-                borderColor: '#059669',
-                bgcolor: alpha('#059669', 0.05),
+                borderColor: brand.emerald[500],
+                bgcolor: alpha(brand.emerald[500], 0.05),
               }
             : {},
         }}
@@ -196,7 +197,7 @@ export default function MediaUploadZone({
 
         <Upload
           size={48}
-          color={canUpload ? '#059669' : '#9CA3AF'}
+          color={canUpload ? brand.emerald[500] : '#9CA3AF'}
           style={{ opacity: 0.5, marginBottom: 16 }}
         />
 
@@ -238,7 +239,7 @@ export default function MediaUploadZone({
                 gap: 2,
                 p: 1.5,
                 borderRadius: 2,
-                bgcolor: item.error ? alpha('#EF4444', 0.1) : 'grey.50',
+                bgcolor: item.error ? alpha(accentColors.error.light, 0.1) : 'grey.50',
                 mb: 1,
               }}
             >
@@ -285,8 +286,8 @@ export default function MediaUploadZone({
                       mt: 0.5,
                       height: 4,
                       borderRadius: 2,
-                      bgcolor: alpha('#059669', 0.1),
-                      '& .MuiLinearProgress-bar': { bgcolor: '#059669' },
+                      bgcolor: alpha(brand.emerald[500], 0.1),
+                      '& .MuiLinearProgress-bar': { bgcolor: brand.emerald[500] },
                     }}
                   />
                 )}
@@ -341,9 +342,9 @@ export default function MediaUploadZone({
                       gap: 1.5,
                       p: 1.5,
                       borderRadius: 2,
-                      bgcolor: index === 0 ? alpha('#059669', 0.05) : 'grey.50',
+                      bgcolor: index === 0 ? alpha(brand.emerald[500], 0.05) : 'grey.50',
                       border: '1px solid',
-                      borderColor: index === 0 ? alpha('#059669', 0.3) : 'grey.200',
+                      borderColor: index === 0 ? alpha(brand.emerald[500], 0.3) : 'grey.200',
                       cursor: 'grab',
                       '&:active': { cursor: 'grabbing' },
                     }}
@@ -406,9 +407,9 @@ export default function MediaUploadZone({
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         {item.type === 'video' ? (
-                          <Video size={14} color="#059669" />
+                          <Video size={14} color={brand.emerald[500]} />
                         ) : (
-                          <ImageIcon size={14} color="#059669" />
+                          <ImageIcon size={14} color={brand.emerald[500]} />
                         )}
                         <Typography variant="body2" fontWeight={500}>
                           {CATEGORY_LABELS[item.category]}
@@ -417,8 +418,8 @@ export default function MediaUploadZone({
                           <Typography
                             variant="caption"
                             sx={{
-                              bgcolor: '#059669',
-                              color: 'white',
+                              bgcolor: brand.emerald[500],
+                              color: lightTokens.text.inverse,
                               px: 1,
                               py: 0.25,
                               borderRadius: 1,
@@ -444,7 +445,7 @@ export default function MediaUploadZone({
                       disabled={deleting === item.id}
                       sx={{
                         color: 'grey.500',
-                        '&:hover': { color: '#EF4444', bgcolor: alpha('#EF4444', 0.1) },
+                        '&:hover': { color: accentColors.error.light, bgcolor: alpha(accentColors.error.light, 0.1) },
                       }}
                     >
                       {deleting === item.id ? (

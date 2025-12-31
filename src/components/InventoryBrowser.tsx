@@ -802,6 +802,7 @@ export default function InventoryBrowser() {
               isSelectedForComparison={comparison.isSelected(props.item.item)}
               onToggleComparison={() => comparison.toggleComparison(props.item)}
               canAddToComparison={comparison.canAddMore}
+              isMobile={props.isMobile}
             />
           )}
         />

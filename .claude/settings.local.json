@@ -24,7 +24,21 @@
       "Bash(vercel --version:*)",
       "Bash(vercel ls:*)",
       "Bash(vercel project:*)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Bash(vercel logs:*)",
+      "Bash(vercel inspect:*)",
+      "Bash(magick:*)",
+      "Bash(apple-touch-icon.png)",
+      "Bash(pwa-192x192.png)",
+      "Bash(public/pwa-192x192.png)",
+      "Bash(/Users/kevinp/Movies/coomunity-universe/TierraMadre/public/pwa-192x192.png)",
+      "Bash(/Users/kevinp/Movies/coomunity-universe/TierraMadre/public/pwa-512x512.png)",
+      "Bash(/Users/kevinp/Movies/coomunity-universe/TierraMadre/public/favicon.ico)",
+      "Bash(npx playwright test --list)",
+      "Bash(vercel:*)",
+      "Bash(node /tmp/test-welcome-screen.mjs:*)",
+      "Bash(node:*)",
+      "Bash(open:*)"
     ],
     "deny": [],
     "ask": []

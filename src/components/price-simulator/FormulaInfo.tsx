@@ -6,11 +6,15 @@
 import { Box, Typography, Paper, alpha } from '@mui/material';
 import { Info } from 'lucide-react';
 import { studioColors } from '../../design-system';
+import { semanticColors } from '../../design-system/tokens/colors';
+
+// Accent color for purple elements
+const PURPLE_ACCENT = '#8B5CF6';
 
 const FORMULAS = [
-  { color: '#3B82F6', formula: 'Precio = Inversión × Factor' },
-  { color: '#8B5CF6', formula: 'Margen = (Precio - Inversión) / Precio × 100' },
-  { color: studioColors.emerald, formula: 'ROI = (Precio - Inversión) / Inversión × 100' },
+  { color: semanticColors.info.main, formula: 'Precio = Inversion x Factor' },
+  { color: PURPLE_ACCENT, formula: 'Margen = (Precio - Inversion) / Precio x 100' },
+  { color: studioColors.emerald, formula: 'ROI = (Precio - Inversion) / Inversion x 100' },
 ];
 
 export const FormulaInfo: React.FC = () => {
@@ -37,16 +41,16 @@ export const FormulaInfo: React.FC = () => {
             width: 28,
             height: 28,
             borderRadius: 1.5,
-            bgcolor: alpha('#3B82F6', 0.1),
+            bgcolor: alpha(semanticColors.info.main, 0.1),
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Info size={14} color="#3B82F6" />
+          <Info size={14} color={semanticColors.info.main} />
         </Box>
-        <Typography variant="body2" sx={{ fontWeight: 600, color: '#3B82F6' }}>
-          Fórmulas Aplicadas
+        <Typography variant="body2" sx={{ fontWeight: 600, color: semanticColors.info.main }}>
+          Formulas Aplicadas
         </Typography>
       </Box>
       <Box

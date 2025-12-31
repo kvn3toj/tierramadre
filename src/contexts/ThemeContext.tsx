@@ -31,11 +31,42 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
+/**
+ * Detect system color scheme preference
+ * Returns 'dark' or 'light' based on OS/browser settings
+ */
+const getSystemPreference = (): ThemeMode => {
+  if (typeof window === 'undefined') return 'dark';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [mode, setMode] = useState<ThemeMode>(() => {
+    // Check localStorage first for user preference
     const saved = localStorage.getItem('tierra-madre-theme');
-    return (saved as ThemeMode) || 'dark';
+    if (saved === 'light' || saved === 'dark') {
+      return saved;
+    }
+
+    // Fall back to system preference (iOS HIG: respect user's system settings)
+    return getSystemPreference();
   });
+
+  // Listen for system theme changes (iOS HIG: dynamic theme switching)
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+      // Only follow system preference if user hasn't set a manual preference
+      const hasManualPreference = localStorage.getItem('tierra-madre-theme');
+      if (!hasManualPreference) {
+        setMode(e.matches ? 'dark' : 'light');
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('tierra-madre-theme', mode);

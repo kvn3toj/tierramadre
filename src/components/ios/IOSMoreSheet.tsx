@@ -20,6 +20,7 @@ import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
 import { floatingLayers, liquidSaturation, specularHighlights } from '../../design-system/tokens/liquid-glass';
 import { floatingLayerShadows } from '../../design-system/tokens/shadows';
+import { brand, radius, layoutConstants, iosTypographyScale } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsGuest } from '../../hooks/useAuth';
@@ -41,7 +42,7 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     subtitle: t.tools.vault.subtitle,
     icon: Vault as any,
     route: '/boveda-secreta',
-    color: '#D4AF37', // Gold accent
+    color: brand.gold[500], // Gold accent
   },
   {
     id: 'accounts',
@@ -49,7 +50,7 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     subtitle: t.tools.accounts.subtitle,
     icon: AccountBalance,
     route: '/cuentas',
-    color: primitiveColors.emerald[500], // Emerald from design system
+    color: brand.emerald[500], // Emerald from design system
   },
 ];
 
@@ -166,8 +167,8 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
           right: 0,
           zIndex: 1101,
           ...sheetStyles,
-          borderTopLeftRadius: spacing.lg,
-          borderTopRightRadius: spacing.lg,
+          borderTopLeftRadius: radius.xl,
+          borderTopRightRadius: radius.xl,
           maxHeight: '85vh',
           overflowY: 'auto',
           transform: open ? 'translateY(0)' : 'translateY(100%)',
@@ -216,7 +217,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
             <Typography
               variant="h2"
               sx={{
-                fontSize: '22px',
+                fontSize: iosTypographyScale.title2,
                 fontWeight: 700,
                 color: 'var(--text-primary)',
               }}
@@ -230,9 +231,9 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                 onClick={handleThemeToggle}
                 aria-label={mode === 'dark' ? 'Modo claro' : 'Modo oscuro'}
                 sx={{
-                  color: primitiveColors.emerald[500],
-                  backgroundColor: `${primitiveColors.emerald[500]}15`,
-                  '&:hover': { backgroundColor: `${primitiveColors.emerald[500]}25` },
+                  color: brand.emerald[500],
+                  backgroundColor: `${brand.emerald[500]}15`,
+                  '&:hover': { backgroundColor: `${brand.emerald[500]}25` },
                 }}
               >
                 {mode === 'dark' ? <LightMode /> : <DarkMode />}
@@ -276,7 +277,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
               <Lock
                 sx={{
                   fontSize: 48,
-                  color: primitiveColors.emerald[500],
+                  color: brand.emerald[500],
                   mb: 2,
                 }}
               />
@@ -296,15 +297,15 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                 onClick={() => setUnlockOpen(true)}
                 startIcon={<Lock />}
                 sx={{
-                  backgroundColor: primitiveColors.emerald[500],
+                  backgroundColor: brand.emerald[500],
                   color: 'white',
                   textTransform: 'none',
                   fontWeight: 600,
                   px: 4,
                   py: 1.5,
-                  borderRadius: spacing.md,
+                  borderRadius: radius.md,
                   '&:hover': {
-                    backgroundColor: primitiveColors.emerald[600],
+                    backgroundColor: brand.emerald[600],
                   },
                 }}
               >
@@ -346,7 +347,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                   background: effectiveConfig.blur
                     ? `linear-gradient(135deg, ${tool.color}08 0%, ${tool.color}03 100%)`
                     : 'var(--surface-primary)',
-                  borderRadius: spacing.lg,
+                  borderRadius: radius.lg,
                   cursor: 'pointer',
                   border: '1px solid',
                   borderColor: `${tool.color}20`,
@@ -382,7 +383,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                   sx={{
                     width: '48px',
                     height: '48px',
-                    borderRadius: spacing.md,
+                    borderRadius: radius.md,
                     background: `linear-gradient(135deg, ${tool.color}20 0%, ${tool.color}10 100%)`,
                     display: 'flex',
                     alignItems: 'center',
@@ -391,7 +392,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                     boxShadow: `0 2px 8px ${tool.color}15`,
                   }}
                 >
-                  <Icon sx={{ fontSize: '26px', color: tool.color }} />
+                  <Icon sx={{ fontSize: iosTypographyScale.title1, color: tool.color }} />
                 </Box>
 
                 {/* Text Content */}
@@ -399,7 +400,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                   <Typography
                     variant="body1"
                     sx={{
-                      fontSize: '17px',
+                      fontSize: iosTypographyScale.body,
                       fontWeight: 600,
                       color: 'var(--text-primary)',
                       marginBottom: spacing.xxs,
@@ -410,7 +411,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                   <Typography
                     variant="body2"
                     sx={{
-                      fontSize: '13px',
+                      fontSize: iosTypographyScale.footnote,
                       color: 'var(--text-secondary)',
                     }}
                   >
@@ -444,7 +445,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
               gap: spacing.sm,
               padding: spacing.sm,
               backgroundColor: 'var(--surface-primary)',
-              borderRadius: spacing.md,
+              borderRadius: radius.md,
               cursor: 'pointer',
               transition: effectiveConfig.animations
                 ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
@@ -462,9 +463,9 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
             {/* Icon Container */}
             <Box
               sx={{
-                width: '44px',
-                height: '44px',
-                borderRadius: spacing.md,
+                width: `${layoutConstants.minTouchTarget}px`,
+                height: `${layoutConstants.minTouchTarget}px`,
+                borderRadius: radius.md,
                 backgroundColor: `${primitiveColors.metallic.silver[500]}15`,
                 display: 'flex',
                 alignItems: 'center',
@@ -472,7 +473,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                 flexShrink: 0,
               }}
             >
-              <Settings sx={{ fontSize: '24px', color: primitiveColors.metallic.silver[500] }} />
+              <Settings sx={{ fontSize: iosTypographyScale.title2, color: primitiveColors.metallic.silver[500] }} />
             </Box>
 
             {/* Text Content */}
@@ -480,7 +481,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
               <Typography
                 variant="body1"
                 sx={{
-                  fontSize: '17px',
+                  fontSize: iosTypographyScale.body,
                   fontWeight: 600,
                   color: 'var(--text-primary)',
                   marginBottom: spacing.xxs,
@@ -491,7 +492,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
               <Typography
                 variant="body2"
                 sx={{
-                  fontSize: '13px',
+                  fontSize: iosTypographyScale.footnote,
                   color: 'var(--text-secondary)',
                 }}
               >

@@ -13,6 +13,7 @@ import React from 'react';
 import { Box, Typography, IconButton, Backdrop, Switch, SxProps, Theme } from '@mui/material';
 import { Close, DarkMode, LightMode, Language } from '@mui/icons-material';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
+import { radius, layoutConstants } from '../../design-system';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import MeditationReminderSetting from '../settings/MeditationReminderSetting';
@@ -86,9 +87,9 @@ const SettingToggleItem: React.FC<SettingToggleItemProps> = ({
       {icon && (
         <Box
           sx={{
-            width: '44px',
-            height: '44px',
-            borderRadius: spacing.md,
+            width: `${layoutConstants.minTouchTarget}px`,
+            height: `${layoutConstants.minTouchTarget}px`,
+            borderRadius: radius.md,
             backgroundColor: iconBgColor,
             display: 'flex',
             alignItems: 'center',
@@ -163,8 +164,8 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
           right: 0,
           zIndex: 1101,
           backgroundColor: 'var(--surface-secondary)',
-          borderTopLeftRadius: spacing.lg,
-          borderTopRightRadius: spacing.lg,
+          borderTopLeftRadius: radius.xl,
+          borderTopRightRadius: radius.xl,
           boxShadow: 'var(--shadow-lg)',
           transform: open ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.4s cubic-bezier(0.5, 1.25, 0.75, 1.25)',

@@ -40,6 +40,7 @@ import {
 import { AmbassadorProfile as AmbassadorProfileType, Testimonial, AmbassadorBadge } from '../../types/ambassador';
 import { loadTestimonials } from '../../data/ambassadors';
 import PriceSimulator from '../PriceSimulator';
+import { brand, lightTokens, darkTokens, accentColors } from '../../design-system';
 
 interface AmbassadorProfileProps {
   ambassador: AmbassadorProfileType;
@@ -74,7 +75,7 @@ export default function AmbassadorProfile({
           Perfil del Asesor
         </Typography>
         <IconButton onClick={() => setIsFavorite(!isFavorite)}>
-          <Heart size={20} fill={isFavorite ? '#EF4444' : 'none'} color={isFavorite ? '#EF4444' : undefined} />
+          <Heart size={20} fill={isFavorite ? accentColors.error.light : 'none'} color={isFavorite ? accentColors.error.light : undefined} />
         </IconButton>
         <IconButton>
           <Share2 size={20} />
@@ -88,7 +89,7 @@ export default function AmbassadorProfile({
           borderRadius: 4,
           overflow: 'hidden',
           border: '1px solid',
-          borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+          borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
         }}
       >
         {/* Banner */}
@@ -97,7 +98,7 @@ export default function AmbassadorProfile({
             height: 160,
             background: ambassador.bannerUrl
               ? `url(${ambassador.bannerUrl}) center/cover`
-              : `linear-gradient(135deg, #059669 0%, ${alpha('#059669', 0.6)} 100%)`,
+              : `linear-gradient(135deg, ${brand.emerald[500]} 0%, ${alpha(brand.emerald[500], 0.6)} 100%)`,
           }}
         />
 
@@ -111,9 +112,9 @@ export default function AmbassadorProfile({
               sx={{
                 width: 120,
                 height: 120,
-                bgcolor: '#059669',
+                bgcolor: brand.emerald[500],
                 border: '4px solid',
-                borderColor: isLight ? '#FFFFFF' : '#1C1C1E',
+                borderColor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
                 fontSize: '3rem',
                 fontWeight: 700,
               }}
@@ -144,19 +145,19 @@ export default function AmbassadorProfile({
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <MapPin size={16} style={{ color: isLight ? '#6B7280' : '#9CA3AF' }} />
+                  <MapPin size={16} style={{ color: isLight ? lightTokens.text.secondary : darkTokens.text.secondary }} />
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     {ambassador.location.city}, {ambassador.location.country}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Calendar size={16} style={{ color: isLight ? '#6B7280' : '#9CA3AF' }} />
+                  <Calendar size={16} style={{ color: isLight ? lightTokens.text.secondary : darkTokens.text.secondary }} />
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Miembro desde {new Date(ambassador.joinedDate).toLocaleDateString('es-CO', { year: 'numeric', month: 'short' })}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Globe size={16} style={{ color: isLight ? '#6B7280' : '#9CA3AF' }} />
+                  <Globe size={16} style={{ color: isLight ? lightTokens.text.secondary : darkTokens.text.secondary }} />
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     {ambassador.languages.map(l => l.toUpperCase()).join(', ')}
                   </Typography>
@@ -172,8 +173,8 @@ export default function AmbassadorProfile({
                 startIcon={<MessageCircle size={20} />}
                 onClick={() => onContact?.(ambassador)}
                 sx={{
-                  bgcolor: '#059669',
-                  '&:hover': { bgcolor: '#047857' },
+                  bgcolor: brand.emerald[500],
+                  '&:hover': { bgcolor: brand.emerald[600] },
                   textTransform: 'none',
                   fontWeight: 600,
                   px: 4,
@@ -195,7 +196,7 @@ export default function AmbassadorProfile({
                 py: 2,
                 borderTop: '1px solid',
                 borderBottom: '1px solid',
-                borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+                borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
               }}
             >
               <StatBox
@@ -242,10 +243,10 @@ export default function AmbassadorProfile({
               minHeight: 48,
             },
             '& .Mui-selected': {
-              color: '#059669',
+              color: brand.emerald[500],
             },
             '& .MuiTabs-indicator': {
-              bgcolor: '#059669',
+              bgcolor: brand.emerald[500],
             },
           }}
         >
@@ -317,8 +318,8 @@ function BadgeDisplay({ badges, maxVisible = 4 }: { badges: AmbassadorBadge[]; m
           label={getBadgeLabel(badge.type)}
           size="small"
           sx={{
-            bgcolor: alpha('#059669', 0.1),
-            color: '#059669',
+            bgcolor: alpha(brand.emerald[500], 0.1),
+            color: brand.emerald[500],
             fontSize: '0.7rem',
             height: 24,
           }}
@@ -345,7 +346,7 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
     <Grid container spacing={3}>
       {/* Bio */}
       <Grid item xs={12} md={8}>
-        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
           <CardContent>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
               Biografia
@@ -358,7 +359,7 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
 
         {/* Specialties */}
         {ambassador.specialties.length > 0 && (
-          <Card sx={{ mt: 2, borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+          <Card sx={{ mt: 2, borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                 Especialidades
@@ -367,7 +368,7 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
                 {ambassador.specialties.map((specialty, idx) => (
                   <Box key={idx}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                      <Award size={16} color="#059669" />
+                      <Award size={16} color={brand.emerald[500]} />
                       <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                         {specialty.name}
                       </Typography>
@@ -391,7 +392,7 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
 
         {/* Certifications */}
         {ambassador.certifications.length > 0 && (
-          <Card sx={{ mt: 2, borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+          <Card sx={{ mt: 2, borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                 Certificaciones
@@ -404,11 +405,11 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
                         width: 40,
                         height: 40,
                         borderRadius: 2,
-                        bgcolor: alpha('#059669', 0.1),
+                        bgcolor: alpha(brand.emerald[500], 0.1),
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#059669',
+                        color: brand.emerald[500],
                       }}
                     >
                       <CheckCircle size={20} />
@@ -435,7 +436,7 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
       {/* Sidebar */}
       <Grid item xs={12} md={4}>
         {/* Contact Info */}
-        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
           <CardContent>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
               Contacto
@@ -447,7 +448,7 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
                   {contact.type === 'email' && <Mail size={16} />}
                   {contact.type === 'instagram' && <Instagram size={16} />}
                   <Typography variant="body2">{contact.value}</Typography>
-                  {contact.verified && <CheckCircle size={12} color="#059669" />}
+                  {contact.verified && <CheckCircle size={12} color={brand.emerald[500]} />}
                 </Box>
               ))}
             </Box>
@@ -466,8 +467,8 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
                       href={social.url}
                       target="_blank"
                       sx={{
-                        bgcolor: isLight ? '#F3F4F6' : '#2C2C2E',
-                        '&:hover': { bgcolor: alpha('#059669', 0.1) },
+                        bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
+                        '&:hover': { bgcolor: alpha(brand.emerald[500], 0.1) },
                       }}
                     >
                       {social.platform === 'instagram' && <Instagram size={18} />}
@@ -493,7 +494,7 @@ function ReviewsTab({ ambassador, testimonials }: { ambassador: AmbassadorProfil
   if (testimonials.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
-        <Star size={48} style={{ color: '#D1D5DB', marginBottom: 16 }} />
+        <Star size={48} style={{ color: brand.slate[300], marginBottom: 16 }} />
         <Typography variant="h6" sx={{ mb: 1, color: 'text.secondary' }}>
           Sin resenas aun
         </Typography>
@@ -508,7 +509,7 @@ function ReviewsTab({ ambassador, testimonials }: { ambassador: AmbassadorProfil
     <Box>
       {/* Rating Summary */}
       {ambassador.reputation && (
-        <Card sx={{ mb: 3, borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+        <Card sx={{ mb: 3, borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <Box sx={{ textAlign: 'center' }}>
@@ -540,7 +541,7 @@ function ReviewsTab({ ambassador, testimonials }: { ambassador: AmbassadorProfil
                           flex: 1,
                           height: 8,
                           borderRadius: 4,
-                          bgcolor: isLight ? '#E5E7EB' : '#2C2C2E',
+                          bgcolor: isLight ? lightTokens.border.default : darkTokens.border.default,
                           '& .MuiLinearProgress-bar': {
                             bgcolor: '#F59E0B',
                             borderRadius: 4,
@@ -562,11 +563,11 @@ function ReviewsTab({ ambassador, testimonials }: { ambassador: AmbassadorProfil
       {/* Reviews List */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {testimonials.map(review => (
-          <Card key={review.id} sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? '#E5E7EB' : '#2C2C2E' }}>
+          <Card key={review.id} sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Avatar sx={{ width: 40, height: 40, bgcolor: '#059669' }}>
+                  <Avatar sx={{ width: 40, height: 40, bgcolor: brand.emerald[500] }}>
                     {review.customerName.charAt(0)}
                   </Avatar>
                   <Box>
@@ -605,12 +606,12 @@ function ReviewsTab({ ambassador, testimonials }: { ambassador: AmbassadorProfil
                   sx={{
                     mt: 2,
                     p: 2,
-                    bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
+                    bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
                     borderRadius: 2,
-                    borderLeft: '3px solid #059669',
+                    borderLeft: `3px solid ${brand.emerald[500]}`,
                   }}
                 >
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#059669' }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: brand.emerald[500] }}>
                     Respuesta de {ambassador.displayName}
                   </Typography>
                   <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
@@ -630,7 +631,7 @@ function ReviewsTab({ ambassador, testimonials }: { ambassador: AmbassadorProfil
 function PortfolioTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
   return (
     <Box sx={{ textAlign: 'center', py: 8 }}>
-      <Award size={48} style={{ color: '#D1D5DB', marginBottom: 16 }} />
+      <Award size={48} style={{ color: brand.slate[300], marginBottom: 16 }} />
       <Typography variant="h6" sx={{ mb: 1, color: 'text.secondary' }}>
         Portafolio en construccion
       </Typography>

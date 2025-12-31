@@ -13,9 +13,10 @@ import {
   Typography,
   IconButton,
   Alert,
+  alpha,
 } from '@mui/material';
 import { LockOpenOutlined, Backspace as BackspaceIcon } from '@mui/icons-material';
-import { brandColors } from '../../theme';
+import { emeraldCore, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
 import { useAuth } from '../../hooks/useAuth';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -92,7 +93,7 @@ export default function UnlockPrompt({ open, onClose, feature }: UnlockPromptPro
       PaperProps={{
         sx: {
           borderRadius: 3,
-          bgcolor: brandColors.darkBg,
+          bgcolor: surfacesDark.background.primary,
           backgroundImage: 'none',
         },
       }}
@@ -115,7 +116,7 @@ export default function UnlockPrompt({ open, onClose, feature }: UnlockPromptPro
         <LockOpenOutlined
           sx={{
             fontSize: 48,
-            color: brandColors.emeraldGreen,
+            color: emeraldCore.primary,
             mb: 1,
           }}
         />
@@ -151,9 +152,9 @@ export default function UnlockPrompt({ open, onClose, feature }: UnlockPromptPro
                 width: 14,
                 height: 14,
                 borderRadius: '50%',
-                border: `2px solid ${error ? '#ff4444' : brandColors.emeraldGreen}`,
+                border: `2px solid ${error ? semanticColors.error.main : emeraldCore.primary}`,
                 bgcolor: pin.length > i
-                  ? (error ? '#ff4444' : brandColors.emeraldGreen)
+                  ? (error ? semanticColors.error.main : emeraldCore.primary)
                   : 'transparent',
                 transition: 'all 0.2s ease',
               }}
@@ -190,9 +191,9 @@ export default function UnlockPrompt({ open, onClose, feature }: UnlockPromptPro
                   sx={{
                     width: 56,
                     height: 56,
-                    color: '#666',
+                    color: surfacesDark.text.secondary,
                     '&:hover': {
-                      bgcolor: '#ffffff08',
+                      bgcolor: alpha('#FFFFFF', 0.03),
                     },
                   }}
                 >
@@ -209,17 +210,17 @@ export default function UnlockPrompt({ open, onClose, feature }: UnlockPromptPro
                   height: 56,
                   fontSize: '1.5rem',
                   fontWeight: 300,
-                  color: '#ffffff',
-                  bgcolor: '#ffffff08',
-                  border: '1px solid #ffffff10',
+                  color: surfacesDark.text.primary,
+                  bgcolor: alpha('#FFFFFF', 0.03),
+                  border: `1px solid ${alpha('#FFFFFF', 0.06)}`,
                   borderRadius: '50%',
                   transition: 'all 0.2s ease',
                   '&:hover': {
-                    bgcolor: '#ffffff15',
-                    borderColor: brandColors.emeraldGreen + '40',
+                    bgcolor: alpha('#FFFFFF', 0.08),
+                    borderColor: alpha(emeraldCore.primary, 0.25),
                   },
                   '&:active': {
-                    bgcolor: brandColors.emeraldGreen + '20',
+                    bgcolor: alpha(emeraldCore.primary, 0.12),
                     transform: 'scale(0.95)',
                   },
                 }}
@@ -235,7 +236,7 @@ export default function UnlockPrompt({ open, onClose, feature }: UnlockPromptPro
         <Button
           onClick={onClose}
           sx={{
-            color: '#666',
+            color: surfacesDark.text.secondary,
             textTransform: 'none',
           }}
         >

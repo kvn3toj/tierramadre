@@ -1,13 +1,16 @@
 /**
- * Authentication Context - Dual Access System
+ * Authentication Context - Tiered Access System
  * Guest Mode: View-only access (no PIN required)
- * Full Mode: Complete access (PIN 5555 required)
+ * Full Mode: Complete access (PIN 5555 or Google auth with asesor/embajador role)
+ * Admin Mode: Full access + Drive folder management (PIN 1234 or Google auth with admin role)
  */
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import type { AuthState, AuthContextType, AccessLevel } from '../types/auth';
+import { useGoogleAuth } from './GoogleAuthContext';
 
-const CORRECT_PIN = '5555';
+const FULL_PIN = '5555';
+const ADMIN_PIN = '1234';
 const STORAGE_KEY = 'tierra-madre-auth';
 
 interface StoredAuthState {
@@ -54,6 +57,8 @@ const clearStoredAuth = () => {
 };
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const { user: googleUser, isSignedIn: isGoogleSignedIn, isAuthorized: isGoogleAuthorized } = useGoogleAuth();
+
   const [authState, setAuthState] = useState<AuthState>(() => {
     const stored = getStoredAuth();
     if (stored) {
@@ -62,6 +67,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return { isAuthenticated: false, accessLevel: 'guest' };
   });
 
+  // Sync with Google auth when user signs in/out
+  useEffect(() => {
+    if (isGoogleSignedIn && isGoogleAuthorized && googleUser?.accessLevel) {
+      // User signed in with Google and is authorized
+      const newState: AuthState = {
+        isAuthenticated: true,
+        accessLevel: googleUser.accessLevel,
+      };
+      setAuthState(newState);
+      setStoredAuth(newState);
+    } else if (isGoogleSignedIn && !isGoogleAuthorized) {
+      // User signed in but not authorized - guest mode
+      const newState: AuthState = {
+        isAuthenticated: true,
+        accessLevel: 'guest',
+      };
+      setAuthState(newState);
+      setStoredAuth(newState);
+    }
+  }, [isGoogleSignedIn, isGoogleAuthorized, googleUser?.accessLevel]);
+
   const loginAsGuest = useCallback(() => {
     const newState: AuthState = { isAuthenticated: true, accessLevel: 'guest' };
     setAuthState(newState);
@@ -69,7 +95,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const loginWithPin = useCallback((pin: string): boolean => {
-    if (pin === CORRECT_PIN) {
+    // Check for admin PIN first
+    if (pin === ADMIN_PIN) {
+      const newState: AuthState = { isAuthenticated: true, accessLevel: 'admin' };
+      setAuthState(newState);
+      setStoredAuth(newState);
+      return true;
+    }
+    // Then check for full access PIN
+    if (pin === FULL_PIN) {
       const newState: AuthState = { isAuthenticated: true, accessLevel: 'full' };
       setAuthState(newState);
       setStoredAuth(newState);
@@ -79,7 +113,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const upgradeToFull = useCallback((pin: string): boolean => {
-    if (pin === CORRECT_PIN) {
+    // Check for admin PIN first
+    if (pin === ADMIN_PIN) {
+      const newState: AuthState = { isAuthenticated: true, accessLevel: 'admin' };
+      setAuthState(newState);
+      setStoredAuth(newState);
+      return true;
+    }
+    // Then check for full access PIN
+    if (pin === FULL_PIN) {
       const newState: AuthState = { isAuthenticated: true, accessLevel: 'full' };
       setAuthState(newState);
       setStoredAuth(newState);

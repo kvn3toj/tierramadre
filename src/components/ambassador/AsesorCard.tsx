@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import { Package, ChevronRight, Image, MessageCircle } from 'lucide-react';
 import { Asesor } from '../../hooks/useAsesores';
+import { brand, lightTokens, darkTokens, accentColors } from '../../design-system';
 
 // Format phone for WhatsApp link
 const formatWhatsAppLink = (phone: string): string => {
@@ -49,14 +50,14 @@ export default function AsesorCard({
   return (
     <Card
       sx={{
-        bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+        bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
         borderRadius: 3,
         border: '1px solid',
-        borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+        borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
         transition: 'all 0.2s ease',
         '&:hover': {
-          borderColor: '#059669',
-          boxShadow: `0 4px 20px ${alpha('#059669', 0.15)}`,
+          borderColor: brand.emerald[500],
+          boxShadow: `0 4px 20px ${alpha(brand.emerald[500], 0.15)}`,
           transform: 'translateY(-2px)',
         },
       }}
@@ -68,7 +69,7 @@ export default function AsesorCard({
             sx={{
               width: 56,
               height: 56,
-              bgcolor: '#059669',
+              bgcolor: brand.emerald[500],
               fontSize: '1.3rem',
               fontWeight: 700,
             }}
@@ -99,15 +100,15 @@ export default function AsesorCard({
                 fontSize: '0.65rem',
                 fontWeight: 600,
                 bgcolor: asesor.role === 'Administrador'
-                  ? alpha('#7C3AED', 0.15)
+                  ? alpha(accentColors.purple.light, 0.15)
                   : asesor.role === 'Embajador'
-                  ? alpha('#F59E0B', 0.15)
-                  : alpha('#059669', 0.15),
+                  ? alpha(accentColors.warning.light, 0.15)
+                  : alpha(brand.emerald[500], 0.15),
                 color: asesor.role === 'Administrador'
-                  ? '#7C3AED'
+                  ? accentColors.purple.light
                   : asesor.role === 'Embajador'
-                  ? '#D97706'
-                  : '#059669',
+                  ? accentColors.warning.light
+                  : brand.emerald[500],
               }}
             />
           </Box>
@@ -122,17 +123,17 @@ export default function AsesorCard({
             mb: 2,
             py: 1.5,
             px: 2,
-            bgcolor: isLight ? '#F0FDF4' : alpha('#059669', 0.1),
+            bgcolor: isLight ? brand.emerald[50] : alpha(brand.emerald[500], 0.1),
             borderRadius: 2,
           }}
         >
-          <Package size={20} style={{ color: '#059669' }} />
+          <Package size={20} style={{ color: brand.emerald[500] }} />
           <Box>
             <Typography
               variant="h6"
               sx={{
                 fontWeight: 700,
-                color: '#059669',
+                color: brand.emerald[500],
                 fontSize: '1.1rem',
                 lineHeight: 1,
               }}
@@ -161,7 +162,7 @@ export default function AsesorCard({
                     borderRadius: 1.5,
                     overflow: 'hidden',
                     border: '2px solid',
-                    borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                    borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
                     flexShrink: 0,
                   }}
                 >
@@ -183,7 +184,7 @@ export default function AsesorCard({
                     height: 48,
                     borderRadius: 1.5,
                     border: '2px dashed',
-                    borderColor: isLight ? '#D1D5DB' : '#4B4B4D',
+                    borderColor: isLight ? brand.slate[300] : darkTokens.border.default,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -209,11 +210,11 @@ export default function AsesorCard({
               alignItems: 'center',
               justifyContent: 'center',
               py: 1.5,
-              bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
+              bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
               borderRadius: 2,
             }}
           >
-            <Image size={16} color="#9CA3AF" />
+            <Image size={16} color={lightTokens.text.muted} />
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
               {asesor.productCount} productos sin fotos
             </Typography>
@@ -230,8 +231,8 @@ export default function AsesorCard({
               onClick={() => onViewProducts?.(asesor)}
               sx={{
                 flex: 1,
-                bgcolor: '#059669',
-                '&:hover': { bgcolor: '#047857' },
+                bgcolor: brand.emerald[500],
+                '&:hover': { bgcolor: brand.emerald[600] },
                 textTransform: 'none',
                 fontWeight: 600,
               }}
@@ -261,13 +262,13 @@ export default function AsesorCard({
                 onContact?.(asesor);
               }}
               sx={{
-                borderColor: '#25D366',
-                color: '#25D366',
+                borderColor: accentColors.whatsapp,
+                color: accentColors.whatsapp,
                 textTransform: 'none',
                 fontWeight: 600,
                 '&:hover': {
-                  borderColor: '#128C7E',
-                  bgcolor: alpha('#25D366', 0.1),
+                  borderColor: accentColors.whatsappHover,
+                  bgcolor: alpha(accentColors.whatsapp, 0.1),
                 },
               }}
             >
@@ -279,7 +280,7 @@ export default function AsesorCard({
               size="small"
               disabled
               sx={{
-                borderColor: isLight ? '#E5E7EB' : '#3C3C3E',
+                borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
                 color: 'text.secondary',
                 textTransform: 'none',
                 fontWeight: 600,

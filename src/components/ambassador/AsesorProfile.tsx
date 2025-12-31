@@ -47,6 +47,7 @@ import { useAsesores } from '../../hooks/useAsesores';
 import { useInventory } from '../../hooks/useInventory';
 import { InventoryItem } from '../../types';
 import { InventoryCard } from '../inventory/InventoryCard';
+import { brand, lightTokens, darkTokens, accentColors } from '../../design-system';
 
 // Normalize name for comparison
 const normalizeName = (name: string): string => {
@@ -220,7 +221,7 @@ export default function AsesorProfilePage() {
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <CircularProgress sx={{ color: '#059669' }} />
+        <CircularProgress sx={{ color: brand.emerald[500] }} />
       </Box>
     );
   }
@@ -252,7 +253,7 @@ export default function AsesorProfilePage() {
           textTransform: 'none',
           color: 'text.secondary',
           mb: 2,
-          '&:hover': { color: '#059669' },
+          '&:hover': { color: brand.emerald[500] },
         }}
       >
         Volver a Asesores
@@ -265,9 +266,9 @@ export default function AsesorProfilePage() {
           p: 3,
           mb: 3,
           borderRadius: 3,
-          bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+          bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
           border: '1px solid',
-          borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+          borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
         }}
       >
         <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'flex-start' }}>
@@ -277,7 +278,7 @@ export default function AsesorProfilePage() {
               sx={{
                 width: 80,
                 height: 80,
-                bgcolor: '#059669',
+                bgcolor: brand.emerald[500],
                 fontSize: '2rem',
                 fontWeight: 700,
               }}
@@ -297,8 +298,8 @@ export default function AsesorProfilePage() {
                   icon={<CheckCircle size={12} />}
                   label={`${stats.disponibleCount} disponibles`}
                   sx={{
-                    bgcolor: alpha('#059669', 0.1),
-                    color: '#059669',
+                    bgcolor: alpha(brand.emerald[500], 0.1),
+                    color: brand.emerald[500],
                     fontSize: '0.7rem',
                   }}
                 />
@@ -307,8 +308,8 @@ export default function AsesorProfilePage() {
                     size="small"
                     label={`${stats.vendidaCount} vendidas`}
                     sx={{
-                      bgcolor: alpha('#9CA3AF', 0.1),
-                      color: '#6B7280',
+                      bgcolor: alpha(lightTokens.text.muted, 0.1),
+                      color: lightTokens.text.secondary,
                       fontSize: '0.7rem',
                     }}
                   />
@@ -329,8 +330,8 @@ export default function AsesorProfilePage() {
               startIcon={<Phone size={18} />}
               onClick={handleContact}
               sx={{
-                bgcolor: '#059669',
-                '&:hover': { bgcolor: '#047857' },
+                bgcolor: brand.emerald[500],
+                '&:hover': { bgcolor: brand.emerald[600] },
                 textTransform: 'none',
                 fontWeight: 600,
               }}
@@ -348,7 +349,7 @@ export default function AsesorProfilePage() {
             mt: 3,
             pt: 3,
             borderTop: '1px solid',
-            borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+            borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
             flexWrap: 'wrap',
           }}
         >
@@ -356,7 +357,7 @@ export default function AsesorProfilePage() {
             icon={<Package size={20} />}
             value={allProducts.length.toString()}
             label="Total Productos"
-            color="#059669"
+            color={brand.emerald[500]}
           />
           <StatBox
             icon={<Gem size={20} />}
@@ -386,9 +387,9 @@ export default function AsesorProfilePage() {
           p: 2,
           mb: 3,
           borderRadius: 2,
-          bgcolor: isLight ? '#FFFFFF' : '#1C1C1E',
+          bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
           border: '1px solid',
-          borderColor: isLight ? '#E5E7EB' : '#2C2C2E',
+          borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
         }}
       >
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -432,8 +433,8 @@ export default function AsesorProfilePage() {
             sx={{
               textTransform: 'none',
               ...(showFilters && {
-                bgcolor: '#059669',
-                '&:hover': { bgcolor: '#047857' },
+                bgcolor: brand.emerald[500],
+                '&:hover': { bgcolor: brand.emerald[600] },
               }),
             }}
           >
@@ -446,8 +447,8 @@ export default function AsesorProfilePage() {
                   ml: 0.5,
                   height: 16,
                   fontSize: '0.6rem',
-                  bgcolor: '#EF4444',
-                  color: 'white',
+                  bgcolor: accentColors.error.light,
+                  color: lightTokens.text.inverse,
                 }}
               />
             )}
@@ -468,13 +469,13 @@ export default function AsesorProfilePage() {
                 <MenuItem value="all">Todos</MenuItem>
                 <MenuItem value="disponible">
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CheckCircle size={14} color="#059669" />
+                    <CheckCircle size={14} color={brand.emerald[500]} />
                     Disponible
                   </Box>
                 </MenuItem>
                 <MenuItem value="vendida">
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <XCircle size={14} color="#9CA3AF" />
+                    <XCircle size={14} color={lightTokens.text.muted} />
                     Vendida
                   </Box>
                 </MenuItem>
@@ -553,10 +554,10 @@ export default function AsesorProfilePage() {
             p: 4,
             textAlign: 'center',
             borderRadius: 3,
-            bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
+            bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
           }}
         >
-          <Package size={48} style={{ color: '#9CA3AF', marginBottom: 16 }} />
+          <Package size={48} style={{ color: lightTokens.text.muted, marginBottom: 16 }} />
           <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2 }}>
             {hasActiveFilters
               ? 'No se encontraron productos con los filtros seleccionados'

@@ -29,12 +29,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <LanguageProvider>
       <ThemeProvider>
-        <AuthProvider>
-          <GoogleWrapper>
+        <GoogleWrapper>
+          <AuthProvider>
             <App />
             <Analytics />
-          </GoogleWrapper>
-        </AuthProvider>
+          </AuthProvider>
+        </GoogleWrapper>
       </ThemeProvider>
     </LanguageProvider>
   </React.StrictMode>

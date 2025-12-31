@@ -17,6 +17,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 import { spacing } from '../design-system/tokens/primitives/spacing';
+import { iosTypographyScale } from '../design-system';
 
 interface VaultGateProps {
   onUnlock: () => void;
@@ -166,7 +167,7 @@ const VaultGate: React.FC<VaultGateProps> = ({
         <Typography
           variant="h2"
           sx={{
-            fontSize: { xs: '24px', sm: '28px' },
+            fontSize: { xs: iosTypographyScale.title1, sm: iosTypographyScale.largeTitle },
             fontWeight: 700,
             color: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
             textAlign: 'center',
@@ -208,7 +209,7 @@ const VaultGate: React.FC<VaultGateProps> = ({
             sx={{
               color: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
               fontWeight: 500,
-              fontSize: '14px',
+              fontSize: iosTypographyScale.subhead,
             }}
           >
             {content.infoBadge}
@@ -238,7 +239,7 @@ const VaultGate: React.FC<VaultGateProps> = ({
               '& .MuiOutlinedInput-root': {
                 borderRadius: spacing.md,
                 bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
-                fontSize: '24px',
+                fontSize: iosTypographyScale.title1,
                 letterSpacing: '8px',
                 textAlign: 'center',
                 fontWeight: 600,
@@ -288,7 +289,7 @@ const VaultGate: React.FC<VaultGateProps> = ({
               background: `linear-gradient(135deg, ${content.accentColor} 0%, ${alpha(content.accentColor, 0.8)} 100%)`,
               color: 'white',
               fontWeight: 600,
-              fontSize: '16px',
+              fontSize: iosTypographyScale.callout,
               textTransform: 'none',
               boxShadow: `0 4px 16px ${alpha(content.accentColor, 0.4)}`,
               '&:hover': {

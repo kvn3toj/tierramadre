@@ -555,3 +555,196 @@ export const studioCardStyles = {
     fontWeight: typography.weight.semibold,
   },
 };
+
+// ============================================
+// 13. iOS SEMANTIC COLORS (HIG Compliant)
+// ============================================
+// These match Apple's iOS semantic color system for proper dark mode support
+export const iosSemanticColors = {
+  // Labels - for text hierarchy
+  label: {
+    light: 'rgba(0, 0, 0, 1)',
+    dark: 'rgba(255, 255, 255, 1)',
+  },
+  secondaryLabel: {
+    light: 'rgba(60, 60, 67, 0.6)',
+    dark: 'rgba(235, 235, 245, 0.6)',
+  },
+  tertiaryLabel: {
+    light: 'rgba(60, 60, 67, 0.3)',
+    dark: 'rgba(235, 235, 245, 0.3)',
+  },
+  quaternaryLabel: {
+    light: 'rgba(60, 60, 67, 0.18)',
+    dark: 'rgba(235, 235, 245, 0.16)',
+  },
+  // Fills - for UI elements
+  fill: {
+    light: 'rgba(120, 120, 128, 0.2)',
+    dark: 'rgba(120, 120, 128, 0.36)',
+  },
+  secondaryFill: {
+    light: 'rgba(120, 120, 128, 0.16)',
+    dark: 'rgba(120, 120, 128, 0.32)',
+  },
+  tertiaryFill: {
+    light: 'rgba(118, 118, 128, 0.12)',
+    dark: 'rgba(118, 118, 128, 0.24)',
+  },
+  // Backgrounds
+  systemBackground: {
+    light: '#FFFFFF',
+    dark: '#000000',
+  },
+  secondarySystemBackground: {
+    light: '#F2F2F7',
+    dark: '#1C1C1E',
+  },
+  tertiarySystemBackground: {
+    light: '#FFFFFF',
+    dark: '#2C2C2E',
+  },
+  // Grouped backgrounds
+  systemGroupedBackground: {
+    light: '#F2F2F7',
+    dark: '#000000',
+  },
+  secondarySystemGroupedBackground: {
+    light: '#FFFFFF',
+    dark: '#1C1C1E',
+  },
+  // Separators
+  separator: {
+    light: 'rgba(60, 60, 67, 0.29)',
+    dark: 'rgba(84, 84, 88, 0.6)',
+  },
+  opaqueSeparator: {
+    light: '#C6C6C8',
+    dark: '#38383A',
+  },
+} as const;
+
+// ============================================
+// 14. LAYOUT CONSTANTS (iOS HIG)
+// ============================================
+// Fixed dimensions for consistent UI across the app
+export const layoutConstants = {
+  // Navigation
+  tabBarHeight: 56,
+  tabBarClearance: 80, // tabBar + safe spacing for floating elements
+  navBarHeight: 44,
+  largeNavBarHeight: 96,
+  // Safe areas (fallback values when env() not available)
+  safeAreaTopFallback: 47, // iPhone notch
+  safeAreaBottomFallback: 34, // iPhone home indicator
+  // Touch targets (iOS HIG minimum: 44pt)
+  minTouchTarget: 44,
+  // Common offsets
+  floatingButtonOffset: 96, // For WhatsApp button, FABs
+  comparisonBarOffset: 64,
+  quickActionsOffset: 80,
+} as const;
+
+// ============================================
+// 15. ACCENT & STATUS COLORS
+// ============================================
+// Consolidated accent colors for various UI elements
+export const accentColors = {
+  // Social/Brand
+  whatsapp: '#25D366',
+  whatsappHover: '#20BD5A',
+  instagram: '#E4405F',
+  facebook: '#1877F2',
+  // Status (semantic)
+  success: {
+    light: '#22C55E',
+    dark: '#4ADE80',
+  },
+  warning: {
+    light: '#F59E0B',
+    dark: '#FBBF24',
+  },
+  error: {
+    light: '#EF4444',
+    dark: '#F87171',
+  },
+  info: {
+    light: '#3B82F6',
+    dark: '#60A5FA',
+  },
+  // UI Accents
+  purple: {
+    light: '#8B5CF6',
+    dark: '#A78BFA',
+  },
+  indigo: {
+    light: '#6366F1',
+    dark: '#818CF8',
+  },
+  cyan: {
+    light: '#06B6D4',
+    dark: '#22D3EE',
+  },
+  pink: {
+    light: '#EC4899',
+    dark: '#F472B6',
+  },
+  // Price tiers
+  priceTiers: {
+    minimum: { color: '#64748B', label: 'Mínimo' },
+    base: { color: '#3B82F6', label: 'Base' },
+    ideal: { color: brand.emerald[500], label: 'Ideal' },
+    premium: { color: '#D4AF37', label: 'Premium' },
+  },
+} as const;
+
+// ============================================
+// 16. iOS TYPOGRAPHY SCALE (HIG Compliant)
+// ============================================
+// Matches iOS Dynamic Type sizes for consistency
+export const iosTypographyScale = {
+  // Large Title - 34pt
+  largeTitle: '2.125rem',
+  // Title 1 - 28pt
+  title1: '1.75rem',
+  // Title 2 - 22pt
+  title2: '1.375rem',
+  // Title 3 - 20pt
+  title3: '1.25rem',
+  // Headline - 17pt semibold
+  headline: '1.0625rem',
+  // Body - 17pt
+  body: '1.0625rem',
+  // Callout - 16pt
+  callout: '1rem',
+  // Subhead - 15pt
+  subhead: '0.9375rem',
+  // Footnote - 13pt
+  footnote: '0.8125rem',
+  // Caption 1 - 12pt
+  caption1: '0.75rem',
+  // Caption 2 - 11pt
+  caption2: '0.6875rem',
+} as const;
+
+// ============================================
+// 17. HELPER: Get iOS Semantic Color
+// ============================================
+export const getIOSColor = (
+  colorKey: keyof typeof iosSemanticColors,
+  mode: 'light' | 'dark'
+): string => {
+  return iosSemanticColors[colorKey][mode];
+};
+
+// ============================================
+// 18. HELPER: Get Accent Color
+// ============================================
+export const getAccentColor = (
+  colorKey: keyof Omit<typeof accentColors, 'priceTiers'>,
+  mode: 'light' | 'dark' = 'light'
+): string => {
+  const color = accentColors[colorKey];
+  if (typeof color === 'string') return color;
+  return color[mode];
+};

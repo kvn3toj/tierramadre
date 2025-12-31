@@ -215,7 +215,7 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
                   sx={{
                     mb: 0.5,
                     borderRadius: 2,
-                    minHeight: 42,
+                    minHeight: 44, // iOS HIG minimum touch target
                     justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
                     px: sidebarCollapsed ? 1.5 : 2,
                     bgcolor: isActive ? colors.activeBg : 'transparent',
@@ -282,7 +282,7 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
                   sx={{
                     mb: 0.5,
                     borderRadius: 2,
-                    minHeight: 42,
+                    minHeight: 44, // iOS HIG minimum touch target
                     justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
                     px: sidebarCollapsed ? 1.5 : 2,
                     bgcolor: isActive ? colors.activeBg : 'transparent',
@@ -328,7 +328,7 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
           <ListItemButton
             sx={{
               borderRadius: 2,
-              minHeight: 42,
+              minHeight: 44, // iOS HIG minimum touch target
               justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
               px: sidebarCollapsed ? 1.5 : 2,
               '&:hover': { bgcolor: alpha('#000', 0.04) },
@@ -606,12 +606,25 @@ export default function Layout({ children, currentTab, onTabChange }: LayoutProp
           </Box>
         )}
 
-        {/* Page Content - Optimized padding for narrow screens */}
+        {/* Page Content - Optimized padding for narrow screens with iOS safe areas */}
         <Box
           sx={{
             flex: 1,
             p: { xs: 1.5, sm: 2.5, md: 4 },
             pt: { xs: 'calc(56px + 12px)', md: 4 },
+            // iOS Safe Area support for notched devices
+            pb: {
+              xs: 'max(12px, env(safe-area-inset-bottom))',
+              md: 4,
+            },
+            pl: {
+              xs: 'max(12px, env(safe-area-inset-left))',
+              md: 4,
+            },
+            pr: {
+              xs: 'max(12px, env(safe-area-inset-right))',
+              md: 4,
+            },
             maxWidth: 1400,
             width: '100%',
             mx: 'auto',

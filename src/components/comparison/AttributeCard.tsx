@@ -130,7 +130,7 @@ export default function AttributeCard({
                     ? alpha('#000', 0.02)
                     : alpha('#fff', 0.02),
                 textAlign: 'center',
-                minHeight: 36,
+                minHeight: 44, // iOS HIG minimum touch target
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',

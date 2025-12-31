@@ -9,9 +9,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Box, Typography, IconButton, Paper } from '@mui/material';
+import { Box, Typography, IconButton, Paper, alpha } from '@mui/material';
 import { Close, EmojiEvents, Star, Whatshot, Diamond } from '@mui/icons-material';
-import { emeraldCore, goldAccent } from '../../../design-system/tokens/colors';
+import { emeraldCore, goldAccent, semanticColors } from '../../../design-system/tokens/colors';
 
 // =============================================================================
 // TYPES
@@ -36,8 +36,11 @@ interface AchievementToastProps {
 // CONSTANTS
 // =============================================================================
 
+// Fire/streak accent color
+const FIRE_ACCENT = semanticColors.error.main;
+
 const ACHIEVEMENT_ICONS: Record<string, React.ReactNode> = {
-  streak: <Whatshot sx={{ fontSize: 32, color: '#FF6B6B' }} />,
+  streak: <Whatshot sx={{ fontSize: 32, color: FIRE_ACCENT }} />,
   knowledge: <Star sx={{ fontSize: 32, color: goldAccent.primary }} />,
   meditation: <Diamond sx={{ fontSize: 32, color: emeraldCore.primary }} />,
   exploration: <EmojiEvents sx={{ fontSize: 32, color: goldAccent.light }} />,
@@ -49,8 +52,8 @@ const CONFETTI_COLORS = [
   emeraldCore.light,
   goldAccent.primary,
   goldAccent.light,
-  '#FF6B6B',
-  '#FFB347',
+  FIRE_ACCENT,
+  semanticColors.warning.main,
 ];
 
 // =============================================================================
@@ -196,7 +199,7 @@ export const AchievementToast: React.FC<AchievementToastProps> = ({
                       width: 56,
                       height: 56,
                       borderRadius: '50%',
-                      bgcolor: 'rgba(255, 255, 255, 0.15)',
+                      bgcolor: alpha('#FFFFFF', 0.15),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -217,7 +220,7 @@ export const AchievementToast: React.FC<AchievementToastProps> = ({
                       letterSpacing: 1,
                     }}
                   >
-                    ¡Logro Desbloqueado!
+                    Logro Desbloqueado!
                   </Typography>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                     {achievement.title}
@@ -252,9 +255,9 @@ export const AchievementToast: React.FC<AchievementToastProps> = ({
                 <IconButton
                   size="small"
                   onClick={onDismiss}
-                  aria-label="Cerrar notificación"
+                  aria-label="Cerrar notificacion"
                   sx={{
-                    color: 'rgba(255, 255, 255, 0.7)',
+                    color: alpha('#FFFFFF', 0.7),
                     '&:hover': { color: 'white' },
                   }}
                 >
@@ -268,7 +271,7 @@ export const AchievementToast: React.FC<AchievementToastProps> = ({
                   position: 'absolute',
                   inset: -2,
                   borderRadius: 4,
-                  background: `linear-gradient(135deg, ${emeraldCore.primary}40 0%, ${goldAccent.primary}40 100%)`,
+                  background: `linear-gradient(135deg, ${alpha(emeraldCore.primary, 0.25)} 0%, ${alpha(goldAccent.primary, 0.25)} 100%)`,
                   filter: 'blur(8px)',
                   zIndex: -1,
                 }}

@@ -36,8 +36,17 @@ import jsPDF from 'jspdf';
 import { ReceiptData, ReceiptProduct, Emerald } from '../types';
 import { useEmeralds } from '../hooks/useEmeralds';
 
-// Logo brand green - now also in brandColors
-const logoGreen = '#00AE7A';
+// Design System Imports
+import {
+  emeraldCore,
+  surfacesLight,
+  surfacesDark,
+  semanticColors,
+} from '../design-system/tokens/colors';
+import { primitiveColors } from '../design-system/tokens/primitives/colors';
+
+// Logo brand green - using design system token
+const logoGreen = emeraldCore.primary; // #00AE7A
 
 // Generate unique receipt number
 const generateReceiptNumber = (): string => {
@@ -83,30 +92,30 @@ const paymentMethodLabels: Record<string, string> = {
   crypto: 'Criptomoneda',
 };
 
-// Receipt theme colors
+// Receipt theme colors - using design system tokens
 const receiptThemes = {
   dark: {
-    bg: '#1a1a1a',
-    headerBg: '#0d0d0d',
-    cardBg: '#252525',
-    text: '#ffffff',
-    textSecondary: '#9e9e9e',
-    textMuted: '#616161',
-    border: '#333333',
+    bg: surfacesDark.background.secondary,
+    headerBg: surfacesDark.background.primary,
+    cardBg: surfacesDark.background.tertiary,
+    text: surfacesDark.text.primary,
+    textSecondary: surfacesDark.text.secondary,
+    textMuted: surfacesDark.text.tertiary,
+    border: surfacesDark.border.light,
     accent: logoGreen,
-    metallic: '#9e9e9e',
+    metallic: primitiveColors.metallic.silver[400],
   },
   light: {
     // Elegant gray tones with GREEN decorative lines
-    bg: '#f8f8f8',           // Soft warm gray
-    headerBg: '#e8e8e8',     // Light silver gray
-    cardBg: '#f0f0f0',       // Subtle gray card
-    text: '#2c2c2c',         // Charcoal for readability
-    textSecondary: '#5a5a5a', // Medium gray
-    textMuted: '#8a8a8a',    // Muted silver
-    border: '#c0c0c0',       // Silver border
-    accent: logoGreen,       // GREEN for decorative lines (brand color)
-    metallic: '#a8a8a8',     // Brushed silver metallic
+    bg: surfacesLight.background.secondary,
+    headerBg: primitiveColors.metallic.silver[100],
+    cardBg: surfacesLight.background.tertiary,
+    text: surfacesLight.text.primary,
+    textSecondary: surfacesLight.text.secondary,
+    textMuted: surfacesLight.text.tertiary,
+    border: surfacesLight.border.default,
+    accent: logoGreen,
+    metallic: primitiveColors.metallic.silver[300],
   },
 };
 
@@ -332,7 +341,7 @@ export default function ReceiptGenerator() {
           mb: 4,
           p: 3,
           borderRadius: 4,
-          background: 'linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%)',
+          background: `linear-gradient(135deg, ${primitiveColors.emerald[600]} 0%, ${primitiveColors.emerald[700]} 50%, ${primitiveColors.emerald[800]} 100%)`,
           position: 'relative',
           overflow: 'hidden',
           '&::before': {
@@ -374,10 +383,10 @@ export default function ReceiptGenerator() {
                   boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
                 }}
               >
-                <Receipt size={28} color="#FFFFFF" />
+                <Receipt size={28} color={surfacesLight.background.primary} />
               </Box>
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+                <Typography variant="h4" sx={{ fontWeight: 800, color: surfacesLight.background.primary, letterSpacing: '-0.02em' }}>
                   {documentType === 'invoice' ? 'Generador de Facturas' : 'Generador de Recibos'}
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
@@ -399,7 +408,7 @@ export default function ReceiptGenerator() {
                   minWidth: 80,
                 }}
               >
-                <Typography sx={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>
+                <Typography sx={{ fontSize: '1.75rem', fontWeight: 800, color: surfacesLight.background.primary, lineHeight: 1 }}>
                   {(receipt.products || []).length}
                 </Typography>
                 <Typography sx={{ fontSize: '0.6875rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
@@ -417,7 +426,7 @@ export default function ReceiptGenerator() {
                   minWidth: 100,
                 }}
               >
-                <Typography sx={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFFFFF', lineHeight: 1.2 }}>
+                <Typography sx={{ fontSize: '1.25rem', fontWeight: 800, color: surfacesLight.background.primary, lineHeight: 1.2 }}>
                   {formatCurrency(receipt.total || 0)}
                 </Typography>
                 <Typography sx={{ fontSize: '0.6875rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
@@ -437,8 +446,8 @@ export default function ReceiptGenerator() {
           flex: '1 1 400px',
           p: 3,
           borderRadius: 3,
-          border: '1px solid #E5E7EB',
-          bgcolor: '#FFFFFF',
+          border: `1px solid ${surfacesLight.border.light}`,
+          bgcolor: surfacesLight.background.primary,
           boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
           maxHeight: 'calc(100vh - 300px)',
           overflowY: 'auto',
@@ -450,15 +459,15 @@ export default function ReceiptGenerator() {
               width: 36,
               height: 36,
               borderRadius: 2,
-              bgcolor: alpha('#059669', 0.1),
+              bgcolor: alpha(primitiveColors.emerald[600], 0.1),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Receipt size={18} color="#059669" />
+            <Receipt size={18} color={primitiveColors.emerald[600]} />
           </Box>
-          <Typography sx={{ fontWeight: 700, color: '#1F2937' }}>
+          <Typography sx={{ fontWeight: 700, color: surfacesLight.text.primary }}>
             {documentType === 'invoice' ? 'Información de la Factura' : 'Información del Recibo'}
           </Typography>
         </Box>
@@ -473,22 +482,22 @@ export default function ReceiptGenerator() {
           }}
         >
           <AccordionSummary
-            expandIcon={<ExpandMoreIcon sx={{ color: '#6B7280' }} />}
+            expandIcon={<ExpandMoreIcon sx={{ color: surfacesLight.text.secondary }} />}
             sx={{
-              bgcolor: '#F9FAFB',
+              bgcolor: surfacesLight.background.secondary,
               borderRadius: 1,
-              minHeight: 40,
+              minHeight: 44, // iOS HIG minimum touch target
               '& .MuiAccordionSummary-content': { my: 1 },
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Settings size={16} color="#6B7280" />
-              <Typography variant="body2" sx={{ color: '#6B7280', fontWeight: 500 }}>
+              <Settings size={16} color={surfacesLight.text.secondary} />
+              <Typography variant="body2" sx={{ color: surfacesLight.text.secondary, fontWeight: 500 }}>
                 {documentType === 'invoice' ? 'Configuración de la Factura' : 'Configuración del Recibo'}
               </Typography>
             </Box>
           </AccordionSummary>
-          <AccordionDetails sx={{ bgcolor: '#F9FAFB', borderRadius: 1, mt: 0.5, p: 2 }}>
+          <AccordionDetails sx={{ bgcolor: surfacesLight.background.secondary, borderRadius: 1, mt: 0.5, p: 2 }}>
             <Grid container spacing={{ xs: 1.5, md: 2 }}>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth size="small">
@@ -771,15 +780,15 @@ export default function ReceiptGenerator() {
               onClick={handleAddProduct}
               disabled={!newProduct.name || !newProduct.priceUSD}
               sx={{
-                borderColor: '#059669',
-                color: '#059669',
+                borderColor: primitiveColors.emerald[600],
+                color: primitiveColors.emerald[600],
                 textTransform: 'none',
                 fontWeight: 600,
                 py: 1.25,
                 borderRadius: 2,
                 '&:hover': {
-                  borderColor: '#047857',
-                  bgcolor: alpha('#059669', 0.05),
+                  borderColor: primitiveColors.emerald[700],
+                  bgcolor: alpha(primitiveColors.emerald[600], 0.05),
                 },
               }}
             >
@@ -815,15 +824,15 @@ export default function ReceiptGenerator() {
                   )}
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2" sx={{ color: '#059669', fontWeight: 600 }}>
+                  <Typography variant="body2" sx={{ color: primitiveColors.emerald[600], fontWeight: 600 }}>
                     {formatCurrency(product.priceUSD)}
                   </Typography>
                   <IconButton
                     size="small"
                     onClick={() => handleRemoveProduct(product.id)}
                     sx={{
-                      color: '#9CA3AF',
-                      '&:hover': { color: '#EF4444', bgcolor: alpha('#EF4444', 0.1) },
+                      color: surfacesLight.text.tertiary,
+                      '&:hover': { color: semanticColors.error.main, bgcolor: alpha(semanticColors.error.main, 0.1) },
                     }}
                   >
                     <Trash2 size={16} />
@@ -887,16 +896,16 @@ export default function ReceiptGenerator() {
             onClick={handleExportPDF}
             disabled={(receipt.products || []).length === 0}
             sx={{
-              bgcolor: '#059669',
+              bgcolor: primitiveColors.emerald[600],
               flex: 1,
               textTransform: 'none',
               fontWeight: 700,
               py: 1.25,
               borderRadius: 2,
-              boxShadow: '0 4px 16px rgba(5,150,105,0.3)',
+              boxShadow: `0 4px 16px ${alpha(primitiveColors.emerald[600], 0.3)}`,
               '&:hover': {
-                bgcolor: '#047857',
-                boxShadow: '0 6px 20px rgba(5,150,105,0.4)',
+                bgcolor: primitiveColors.emerald[700],
+                boxShadow: `0 6px 20px ${alpha(primitiveColors.emerald[600], 0.4)}`,
               },
             }}
           >
@@ -907,11 +916,11 @@ export default function ReceiptGenerator() {
               onClick={() => setReceiptTheme(receiptTheme === 'dark' ? 'light' : 'dark')}
               sx={{
                 border: '1px solid',
-                borderColor: receiptTheme === 'dark' ? '#374151' : '#059669',
-                color: receiptTheme === 'dark' ? '#9CA3AF' : '#059669',
+                borderColor: receiptTheme === 'dark' ? surfacesDark.border.light : primitiveColors.emerald[600],
+                color: receiptTheme === 'dark' ? surfacesDark.text.tertiary : primitiveColors.emerald[600],
                 borderRadius: 2,
                 '&:hover': {
-                  bgcolor: receiptTheme === 'dark' ? alpha('#374151', 0.1) : alpha('#059669', 0.1),
+                  bgcolor: receiptTheme === 'dark' ? alpha(surfacesDark.border.light, 0.1) : alpha(primitiveColors.emerald[600], 0.1),
                 },
               }}
             >
@@ -922,10 +931,10 @@ export default function ReceiptGenerator() {
             <IconButton
               onClick={handlePrint}
               sx={{
-                border: '1px solid #E5E7EB',
+                border: `1px solid ${surfacesLight.border.light}`,
                 borderRadius: 2,
-                color: '#6B7280',
-                '&:hover': { bgcolor: alpha('#059669', 0.1), color: '#059669' },
+                color: surfacesLight.text.secondary,
+                '&:hover': { bgcolor: alpha(primitiveColors.emerald[600], 0.1), color: primitiveColors.emerald[600] },
               }}
             >
               <Printer size={20} />
@@ -946,10 +955,10 @@ export default function ReceiptGenerator() {
                 notes: '',
               })}
               sx={{
-                border: '1px solid #E5E7EB',
+                border: `1px solid ${surfacesLight.border.light}`,
                 borderRadius: 2,
-                color: '#6B7280',
-                '&:hover': { bgcolor: alpha('#059669', 0.1), color: '#059669' },
+                color: surfacesLight.text.secondary,
+                '&:hover': { bgcolor: alpha(primitiveColors.emerald[600], 0.1), color: primitiveColors.emerald[600] },
               }}
             >
               <Copy size={20} />
@@ -1174,7 +1183,7 @@ export default function ReceiptGenerator() {
                   <Typography sx={{ fontSize: '0.8rem', color: theme.textSecondary }}>
                     Descuento ({receipt.discountPercent}%)
                   </Typography>
-                  <Typography sx={{ fontSize: '0.8rem', color: '#ef5350' }}>
+                  <Typography sx={{ fontSize: '0.8rem', color: semanticColors.error.main }}>
                     -{formatCurrency(receipt.discount || 0)}
                   </Typography>
                 </Box>

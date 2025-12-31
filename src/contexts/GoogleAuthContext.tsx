@@ -2,13 +2,14 @@
  * GoogleAuthContext
  *
  * Google Sign-In authentication for user profiles.
- * Works alongside existing PIN auth for access control.
- * Syncs user preferences with Google Sheets.
+ * Validates users against Google Sheets Asesores list.
+ * Sets access level (admin/full/guest) based on user role.
  */
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { googleLogout } from '@react-oauth/google';
 import { createLogger } from '../utils/logger';
+import type { AccessLevel } from '../types/auth';
 
 const log = createLogger('Auth');
 
@@ -24,6 +25,8 @@ export interface GoogleUserProfile {
   familyName: string;
   picture: string;
   locale?: string;
+  role?: string;
+  accessLevel?: AccessLevel;
 }
 
 export interface UserPreferences {
@@ -39,7 +42,9 @@ interface GoogleAuthContextType {
   user: GoogleUserProfile | null;
   preferences: UserPreferences;
   isSignedIn: boolean;
+  isAuthorized: boolean;
   isLoading: boolean;
+  authError: string | null;
   signIn: (credential: string) => Promise<void>;
   signOut: () => void;
   updatePreferences: (prefs: Partial<UserPreferences>) => Promise<void>;
@@ -72,6 +77,8 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
   const [user, setUser] = useState<GoogleUserProfile | null>(null);
   const [preferences, setPreferences] = useState<UserPreferences>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // Load user from localStorage on mount
   useEffect(() => {
@@ -81,7 +88,10 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
         const storedPrefs = localStorage.getItem(GOOGLE_PREFS_KEY);
 
         if (storedUser) {
-          setUser(JSON.parse(storedUser));
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          // User is authorized if they have a role (validated previously)
+          setIsAuthorized(!!parsedUser.role);
         }
         if (storedPrefs) {
           setPreferences(JSON.parse(storedPrefs));
@@ -127,10 +137,37 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
   // Sign in with Google credential
   const signIn = useCallback(async (credential: string) => {
     setIsLoading(true);
+    setAuthError(null);
     try {
       const profile = decodeJwt(credential);
       if (!profile) {
         throw new Error('Failed to decode credential');
+      }
+
+      // Validate user email against Asesores sheet
+      try {
+        const validateResponse = await fetch(`/api/validate-user?email=${encodeURIComponent(profile.email)}`);
+        const validateData = await validateResponse.json();
+
+        if (validateData.success && validateData.isAuthorized) {
+          // User is authorized - add role and access level to profile
+          profile.role = validateData.user.role;
+          profile.accessLevel = validateData.user.accessLevel;
+          setIsAuthorized(true);
+          log.debug('User authorized:', { email: profile.email, role: profile.role, accessLevel: profile.accessLevel });
+        } else {
+          // User email not found in authorized list
+          setIsAuthorized(false);
+          setAuthError('Tu correo no está registrado en el sistema. Contacta al administrador.');
+          log.warn('User not authorized:', profile.email);
+        }
+      } catch (validateError) {
+        log.error('Validation API error:', validateError);
+        // On API error, allow login but without special permissions
+        profile.role = 'Invitado';
+        profile.accessLevel = 'guest';
+        setIsAuthorized(false);
+        setAuthError('Error validando usuario. Acceso como invitado.');
       }
 
       // Store user and token
@@ -158,6 +195,7 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
       localStorage.setItem(GOOGLE_PREFS_KEY, JSON.stringify(newPrefs));
     } catch (error) {
       log.error('Sign in error:', error);
+      setAuthError('Error al iniciar sesión. Intenta nuevamente.');
       throw error;
     } finally {
       setIsLoading(false);
@@ -169,6 +207,8 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
     googleLogout();
     setUser(null);
     setPreferences({});
+    setIsAuthorized(false);
+    setAuthError(null);
     localStorage.removeItem(GOOGLE_USER_KEY);
     localStorage.removeItem(GOOGLE_PREFS_KEY);
     localStorage.removeItem(GOOGLE_TOKEN_KEY);
@@ -216,7 +256,9 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
     user,
     preferences,
     isSignedIn: !!user,
+    isAuthorized,
     isLoading,
+    authError,
     signIn,
     signOut,
     updatePreferences,
@@ -235,7 +277,9 @@ const defaultContext: GoogleAuthContextType = {
   user: null,
   preferences: {},
   isSignedIn: false,
+  isAuthorized: false,
   isLoading: false,
+  authError: null,
   signIn: async () => {},
   signOut: () => {},
   updatePreferences: async () => {},

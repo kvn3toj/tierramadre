@@ -27,9 +27,13 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { Emerald, InventoryItem } from '../../types';
-import { studioColors, studioShadows } from '../../design-system';
+import { studioColors, studioShadows, accentColors } from '../../design-system';
+import { semanticColors, goldAccent, surfacesLight } from '../../design-system/tokens/colors';
 import { formatFullCurrency as formatCurrency } from '../../utils/formatting';
 import { getCategoryLabel, ProductSource, STATUS_FILTERS, PRODUCT_TYPE_FILTERS } from './index';
+
+// Use design system accent color for purple elements (multi-select, lot badges)
+const PURPLE_ACCENT = accentColors.purple.light;
 
 // =============================================================================
 // TYPES
@@ -119,15 +123,15 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
             height: 22,
             fontSize: '0.625rem',
             fontWeight: 500,
-            bgcolor: multiSelectMode ? '#8B5CF6' : alpha('#8B5CF6', 0.1),
-            color: multiSelectMode ? '#FFFFFF' : '#8B5CF6',
+            bgcolor: multiSelectMode ? PURPLE_ACCENT : alpha(PURPLE_ACCENT, 0.1),
+            color: multiSelectMode ? surfacesLight.text.primary : PURPLE_ACCENT,
             cursor: 'pointer',
             border: '1px solid',
-            borderColor: multiSelectMode ? '#8B5CF6' : alpha('#8B5CF6', 0.3),
-            '& .MuiChip-icon': { color: multiSelectMode ? '#FFFFFF' : '#8B5CF6' },
+            borderColor: multiSelectMode ? PURPLE_ACCENT : alpha(PURPLE_ACCENT, 0.3),
+            '& .MuiChip-icon': { color: multiSelectMode ? surfacesLight.text.primary : PURPLE_ACCENT },
             '&:hover': {
-              bgcolor: multiSelectMode ? '#8B5CF6' : alpha('#8B5CF6', 0.2),
-              borderColor: '#8B5CF6',
+              bgcolor: multiSelectMode ? PURPLE_ACCENT : alpha(PURPLE_ACCENT, 0.2),
+              borderColor: PURPLE_ACCENT,
             },
           }}
         />
@@ -220,9 +224,9 @@ const SourceChip: React.FC<SourceChipProps> = ({ icon, label, active, onClick })
       fontSize: '0.625rem',
       fontWeight: 500,
       bgcolor: active ? studioColors.emerald : alpha(studioColors.emerald, 0.1),
-      color: active ? '#FFFFFF' : studioColors.emerald,
+      color: active ? surfacesLight.background.primary : studioColors.emerald,
       cursor: 'pointer',
-      '& .MuiChip-icon': { color: active ? '#FFFFFF' : studioColors.emerald },
+      '& .MuiChip-icon': { color: active ? surfacesLight.background.primary : studioColors.emerald },
       '&:hover': {
         bgcolor: active ? studioColors.emerald : alpha(studioColors.emerald, 0.2),
       },
@@ -302,7 +306,7 @@ const GalleryAutocomplete: React.FC<GalleryAutocompleteProps> = ({
               </Typography>
             )}
             {option.priceCOP && option.priceCOP > 0 && (
-              <Typography variant="caption" sx={{ color: '#3B82F6', fontWeight: 500 }}>
+              <Typography variant="caption" sx={{ color: semanticColors.info.main, fontWeight: 500 }}>
                 {formatCurrency(option.priceCOP)}
               </Typography>
             )}
@@ -484,8 +488,8 @@ const InventoryAutocomplete: React.FC<InventoryAutocompleteProps> = ({
                   sx={{
                     height: 16,
                     fontSize: '0.6rem',
-                    bgcolor: alpha(studioColors.gold, 0.1),
-                    color: studioColors.gold,
+                    bgcolor: alpha(goldAccent.primary, 0.1),
+                    color: goldAccent.primary,
                   }}
                 />
               )}
@@ -496,8 +500,8 @@ const InventoryAutocomplete: React.FC<InventoryAutocompleteProps> = ({
                   sx={{
                     height: 16,
                     fontSize: '0.6rem',
-                    bgcolor: alpha('#8B5CF6', 0.1),
-                    color: '#8B5CF6',
+                    bgcolor: alpha(PURPLE_ACCENT, 0.1),
+                    color: PURPLE_ACCENT,
                     fontWeight: 600,
                   }}
                 />
@@ -508,7 +512,7 @@ const InventoryAutocomplete: React.FC<InventoryAutocompleteProps> = ({
                 </Typography>
               )}
               {option.precioCOP && option.precioCOP > 0 && (
-                <Typography variant="caption" sx={{ color: '#3B82F6', fontWeight: 500 }}>
+                <Typography variant="caption" sx={{ color: semanticColors.info.main, fontWeight: 500 }}>
                   {formatCurrency(option.precioCOP)}
                 </Typography>
               )}
@@ -588,7 +592,7 @@ const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick, variant
         ? (variant === 'primary' ? studioColors.emerald : alpha(studioColors.emerald, 0.15))
         : alpha(studioColors.emerald, variant === 'primary' ? 0.08 : 0.05),
       color: active
-        ? (variant === 'primary' ? '#FFFFFF' : studioColors.emerald)
+        ? (variant === 'primary' ? surfacesLight.background.primary : studioColors.emerald)
         : studioColors.textSecondary,
       border: '1px solid',
       borderColor: active ? studioColors.emerald : 'transparent',
@@ -612,7 +616,7 @@ interface SelectedBadgeProps {
 }
 
 const SelectedBadge: React.FC<SelectedBadgeProps> = ({ type, label, imageUrl, onClear }) => {
-  const color = type === 'gallery' ? studioColors.emerald : '#3B82F6';
+  const color = type === 'gallery' ? studioColors.emerald : semanticColors.info.main;
   return (
     <Box
       sx={{
@@ -652,7 +656,7 @@ const SelectedBadge: React.FC<SelectedBadgeProps> = ({ type, label, imageUrl, on
       <IconButton
         size="small"
         onClick={onClear}
-        sx={{ color: studioColors.textMuted, '&:hover': { color: '#EF4444' } }}
+        sx={{ color: studioColors.textMuted, '&:hover': { color: semanticColors.error.main } }}
       >
         <RotateCcw size={14} />
       </IconButton>
@@ -676,19 +680,19 @@ const CollectionDisplay: React.FC<CollectionDisplayProps> = ({
     sx={{
       mt: 2,
       p: 2,
-      bgcolor: alpha('#8B5CF6', 0.04),
+      bgcolor: alpha(PURPLE_ACCENT, 0.04),
       borderRadius: 2,
-      border: `1px solid ${alpha('#8B5CF6', 0.2)}`,
+      border: `1px solid ${alpha(PURPLE_ACCENT, 0.2)}`,
     }}
   >
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Layers size={16} color="#8B5CF6" />
-        <Typography variant="body2" sx={{ fontWeight: 600, color: '#8B5CF6' }}>
+        <Layers size={16} color={PURPLE_ACCENT} />
+        <Typography variant="body2" sx={{ fontWeight: 600, color: PURPLE_ACCENT }}>
           Coleccion ({selectedProducts.length} productos)
         </Typography>
       </Box>
-      <Typography variant="caption" sx={{ color: '#8B5CF6', fontWeight: 600 }}>
+      <Typography variant="caption" sx={{ color: PURPLE_ACCENT, fontWeight: 600 }}>
         {formatCurrency(totalProductsValue)}
       </Typography>
     </Box>
@@ -707,9 +711,9 @@ const CollectionDisplay: React.FC<CollectionDisplayProps> = ({
               alignItems: 'center',
               gap: 1,
               p: 1,
-              bgcolor: alpha('#FFFFFF', 0.8),
+              bgcolor: alpha(surfacesLight.background.primary, 0.8),
               borderRadius: 1,
-              border: `1px solid ${alpha('#8B5CF6', 0.1)}`,
+              border: `1px solid ${alpha(PURPLE_ACCENT, 0.1)}`,
             }}
           >
             <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -726,7 +730,7 @@ const CollectionDisplay: React.FC<CollectionDisplayProps> = ({
               >
                 {productName}
               </Typography>
-              <Typography variant="caption" sx={{ color: '#8B5CF6', fontWeight: 500 }}>
+              <Typography variant="caption" sx={{ color: PURPLE_ACCENT, fontWeight: 500 }}>
                 {formatCurrency(productPrice)}
               </Typography>
             </Box>
@@ -735,7 +739,7 @@ const CollectionDisplay: React.FC<CollectionDisplayProps> = ({
               onClick={() => removeProduct(product)}
               sx={{
                 color: studioColors.textMuted,
-                '&:hover': { color: '#EF4444', bgcolor: alpha('#EF4444', 0.1) },
+                '&:hover': { color: semanticColors.error.main, bgcolor: alpha(semanticColors.error.main, 0.1) },
               }}
             >
               <X size={14} />

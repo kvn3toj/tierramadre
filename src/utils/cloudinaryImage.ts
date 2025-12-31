@@ -155,12 +155,14 @@ export function getOptimalWidth(containerWidth: number, dpr: number = 1): number
 export function getImageSizes(layout: 'grid' | 'full' | 'thumbnail' = 'grid'): string {
   switch (layout) {
     case 'full':
-      return '100vw';
+      // Mobile: Full viewport width minus 32px padding for luxury 1-column layout
+      return '(max-width: 600px) calc(100vw - 32px), 100vw';
     case 'thumbnail':
       return '80px';
     case 'grid':
     default:
-      // Grid layout: 1 col xs, 2 col sm, 3 col md, 4 col lg
-      return '(max-width: 600px) 100vw, (max-width: 900px) 50vw, (max-width: 1200px) 33vw, 25vw';
+      // Grid layout: 1 col xs (full width), 2 col sm, 3 col md, 4 col lg
+      // Updated for 1-column mobile luxury layout with proper sizing
+      return '(max-width: 600px) calc(100vw - 32px), (max-width: 900px) 50vw, (max-width: 1200px) 33vw, 25vw';
   }
 }

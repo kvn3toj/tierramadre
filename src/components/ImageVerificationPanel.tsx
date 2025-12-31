@@ -64,6 +64,13 @@ import {
   getQualityColor,
   getDriveDirectUrl,
 } from '../utils/imageVerification';
+
+// Design System Imports
+import {
+  semanticColors,
+  surfacesLight,
+} from '../design-system/tokens/colors';
+import { primitiveColors } from '../design-system/tokens/primitives/colors';
 // Hook available for API-based verification:
 // import { useImageVerification } from '../hooks/useImageVerification';
 
@@ -94,7 +101,7 @@ const QualityBadge = styled(Box)<{ score: ImageQualityLevel }>(({ score }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: 6,
-  color: '#fff',
+  color: surfacesLight.background.primary,
   fontWeight: 600,
   fontSize: '0.85rem',
   boxShadow: `0 2px 8px ${alpha(getQualityColor(score), 0.4)}`,
@@ -115,10 +122,10 @@ const MetricValue = styled(Typography)<{ metricStatus: 'good' | 'warning' | 'bad
     fontWeight: 600,
     color:
       metricStatus === 'good'
-        ? '#10b981'
+        ? primitiveColors.system.green.light
         : metricStatus === 'warning'
-        ? '#f59e0b'
-        : '#ef4444',
+        ? semanticColors.warning.main
+        : semanticColors.error.main,
   })
 );
 
@@ -340,8 +347,8 @@ export const ImageVerificationPanel: React.FC<ImageVerificationPanelProps> = ({
                     readOnly
                     size="small"
                     sx={{
-                      '& .MuiRating-iconFilled': { color: '#fff' },
-                      '& .MuiRating-iconEmpty': { color: alpha('#fff', 0.3) },
+                      '& .MuiRating-iconFilled': { color: surfacesLight.background.primary },
+                      '& .MuiRating-iconEmpty': { color: alpha(surfacesLight.background.primary, 0.3) },
                     }}
                   />
                   {getQualityLabel(qualityCheck.overallScore)}
@@ -467,9 +474,9 @@ export const ImageVerificationPanel: React.FC<ImageVerificationPanelProps> = ({
                         </MetricValue>
                       </Box>
                       {qualityCheck.resolution.isAcceptable ? (
-                        <CheckCircle sx={{ color: '#10b981' }} />
+                        <CheckCircle sx={{ color: primitiveColors.system.green.light }} />
                       ) : (
-                        <Cancel sx={{ color: '#ef4444' }} />
+                        <Cancel sx={{ color: semanticColors.error.main }} />
                       )}
                     </MetricItem>
 
@@ -487,9 +494,9 @@ export const ImageVerificationPanel: React.FC<ImageVerificationPanelProps> = ({
                         </MetricValue>
                       </Box>
                       {qualityCheck.fileSize.isOptimal ? (
-                        <CheckCircle sx={{ color: '#10b981' }} />
+                        <CheckCircle sx={{ color: primitiveColors.system.green.light }} />
                       ) : (
-                        <Warning sx={{ color: '#f59e0b' }} />
+                        <Warning sx={{ color: semanticColors.warning.main }} />
                       )}
                     </MetricItem>
 
@@ -539,7 +546,7 @@ export const ImageVerificationPanel: React.FC<ImageVerificationPanelProps> = ({
                           width: 24,
                           height: 24,
                           borderRadius: '50%',
-                          bgcolor: '#10b981',
+                          bgcolor: primitiveColors.system.green.light,
                         }}
                       />
                       <Box sx={{ flex: 1 }}>

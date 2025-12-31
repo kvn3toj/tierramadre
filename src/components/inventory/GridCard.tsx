@@ -25,6 +25,7 @@ import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { PriceDisplay } from '../PriceDisplay';
 import ProgressiveImage from '../ProgressiveImage';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { iosTypographyScale, accentColors, lightTokens, darkTokens } from '../../design-system';
 
 interface GridCardProps {
   item: InventoryItem;
@@ -36,6 +37,8 @@ interface GridCardProps {
   isSelectedForComparison?: boolean;
   onToggleComparison?: () => void;
   canAddToComparison?: boolean;
+  // Mobile optimization
+  isMobile?: boolean;
 }
 
 function GridCard({
@@ -46,6 +49,7 @@ function GridCard({
   isSelectedForComparison = false,
   onToggleComparison,
   canAddToComparison = true,
+  isMobile = false,
 }: GridCardProps) {
   const theme = useTheme();
   const { mode } = useThemeMode();
@@ -102,10 +106,13 @@ function GridCard({
             <ProgressiveImage
               src={item.imagen}
               alt={`${item.nombre} - ${item.color}`}
-              height={180}
-              width={200}
-              layout="grid"
-              quality="eco"
+              // Mobile: Square 1:1 aspect ratio for luxury feel
+              // Desktop: Fixed height for compact grid
+              aspectRatio={isMobile ? '1 / 1' : undefined}
+              height={isMobile ? undefined : 180}
+              width={isMobile ? undefined : 200}
+              layout={isMobile ? 'full' : 'grid'}
+              quality={isMobile ? 'good' : 'eco'}
             />
 
             {/* Video play indicator */}
@@ -130,7 +137,7 @@ function GridCard({
               </Box>
             )}
 
-            {/* Gallery count badge */}
+            {/* Gallery count badge - iOS HIG caption1 = 12px */}
             {(item.galleryCount ?? 0) > 1 && (
               <Chip
                 icon={<Images size={14} />}
@@ -142,7 +149,7 @@ function GridCard({
                   right: 8,
                   bgcolor: 'rgba(0, 0, 0, 0.7)',
                   color: 'white',
-                  fontSize: '0.7rem',
+                  fontSize: iosTypographyScale.caption1, // 12px iOS HIG
                   fontWeight: 600,
                   height: 24,
                   '& .MuiChip-icon': { color: 'white' },
@@ -203,53 +210,67 @@ function GridCard({
         <Box
           sx={{
             position: 'absolute',
-            top: 8,
-            right: 8,
+            top: isMobile ? 12 : 8,
+            right: isMobile ? 12 : 8,
             display: 'flex',
             flexDirection: 'column',
-            gap: 0.5,
+            gap: isMobile ? 1 : 0.5,
           }}
         >
-          {/* Favorite button */}
+          {/* Favorite button - 44px touch target on mobile (Apple HIG) */}
           <IconButton
             onClick={handleFavoriteClick}
             aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
-            size="small"
+            size={isMobile ? 'medium' : 'small'}
             sx={{
-              width: 32,
-              height: 32,
-              bgcolor: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(4px)',
+              width: isMobile ? 44 : 32,
+              height: isMobile ? 44 : 32,
+              bgcolor: isLight
+                ? 'rgba(255, 255, 255, 0.95)'
+                : 'rgba(30, 41, 59, 0.95)',
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
               transition: 'all 0.2s ease',
               '&:hover': {
-                bgcolor: 'rgba(255, 255, 255, 1)',
-                transform: 'scale(1.1)',
+                bgcolor: isLight
+                  ? 'rgba(255, 255, 255, 1)'
+                  : 'rgba(30, 41, 59, 1)',
+                transform: 'scale(1.05)',
               },
             }}
           >
             <Heart
-              size={16}
-              fill={isFavorite ? '#ef4444' : 'none'}
-              color={isFavorite ? '#ef4444' : '#6b7280'}
+              size={isMobile ? 22 : 16}
+              fill={isFavorite ? accentColors.error.light : 'none'}
+              color={isFavorite ? accentColors.error.light : isLight ? lightTokens.text.secondary : darkTokens.text.secondary}
             />
           </IconButton>
 
-          {/* Comparison button */}
+          {/* Comparison button - 44px touch target on mobile */}
           {onToggleComparison && (
             <IconButton
               onClick={handleCompareClick}
               aria-label={isSelectedForComparison ? 'Quitar de comparación' : 'Agregar a comparación'}
               disabled={!isSelectedForComparison && !canAddToComparison}
-              size="small"
+              size={isMobile ? 'medium' : 'small'}
               sx={{
-                width: 32,
-                height: 32,
-                bgcolor: isSelectedForComparison ? emeraldCore.primary : 'rgba(255, 255, 255, 0.9)',
-                backdropFilter: 'blur(4px)',
+                width: isMobile ? 44 : 32,
+                height: isMobile ? 44 : 32,
+                bgcolor: isSelectedForComparison
+                  ? emeraldCore.primary
+                  : isLight
+                    ? 'rgba(255, 255, 255, 0.95)'
+                    : 'rgba(30, 41, 59, 0.95)',
+                backdropFilter: 'blur(8px)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                 transition: 'all 0.2s ease',
                 '&:hover': {
-                  bgcolor: isSelectedForComparison ? emeraldCore.dark : 'rgba(255, 255, 255, 1)',
-                  transform: 'scale(1.1)',
+                  bgcolor: isSelectedForComparison
+                    ? emeraldCore.dark
+                    : isLight
+                      ? 'rgba(255, 255, 255, 1)'
+                      : 'rgba(30, 41, 59, 1)',
+                  transform: 'scale(1.05)',
                 },
                 '&:disabled': {
                   bgcolor: 'rgba(200, 200, 200, 0.5)',
@@ -257,49 +278,59 @@ function GridCard({
               }}
             >
               <Scale
-                size={16}
-                color={isSelectedForComparison ? 'white' : '#6b7280'}
+                size={isMobile ? 22 : 16}
+                color={isSelectedForComparison ? lightTokens.text.inverse : isLight ? lightTokens.text.secondary : darkTokens.text.secondary}
               />
             </IconButton>
           )}
         </Box>
       </Box>
 
-      {/* Compact Content Section */}
-      <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
-        {/* Name */}
+      {/* Content Section - Enhanced padding and typography on mobile */}
+      <CardContent
+        sx={{
+          p: isMobile ? 2 : 1.25,
+          '&:last-child': { pb: isMobile ? 2 : 1.25 },
+        }}
+      >
+        {/* Name - iOS HIG body (17px) on mobile for readability */}
         <Typography
           variant="body2"
           sx={{
-            fontWeight: 700,
+            fontWeight: 600, // iOS headline weight
             color: theme.palette.text.primary,
-            mb: 0.25,
-            lineHeight: 1.2,
+            mb: isMobile ? 0.5 : 0.25,
+            lineHeight: 1.4, // iOS body line height
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            fontSize: '0.85rem',
+            // iOS HIG: body = 17px, subhead = 15px for desktop
+            fontSize: isMobile ? iosTypographyScale.body : iosTypographyScale.subhead,
+            letterSpacing: '-0.01em', // iOS native letter spacing
           }}
         >
           {displayName}
         </Typography>
 
-        {/* Specs with color dot */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+        {/* Specs with color dot - iOS HIG subhead (15px) / footnote (13px) */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: isMobile ? 0.75 : 0.5, mb: isMobile ? 1 : 0.5 }}>
           <Box
             sx={{
-              width: 6,
-              height: 6,
+              width: isMobile ? 8 : 6, // 8pt grid aligned
+              height: isMobile ? 8 : 6,
               borderRadius: '50%',
               bgcolor: colorDot,
               flexShrink: 0,
+              border: isMobile ? '1px solid rgba(0,0,0,0.1)' : 'none',
             }}
           />
           <Typography
             variant="caption"
             sx={{
               color: theme.palette.text.secondary,
-              fontSize: '0.7rem',
+              // iOS HIG: subhead = 15px mobile, footnote = 13px desktop
+              fontSize: isMobile ? iosTypographyScale.subhead : iosTypographyScale.footnote,
+              letterSpacing: '-0.01em',
             }}
           >
             {item.color}
@@ -323,6 +354,7 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.item.estado === nextProps.item.estado &&
     prevProps.isFavorite === nextProps.isFavorite &&
     prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
-    prevProps.canAddToComparison === nextProps.canAddToComparison
+    prevProps.canAddToComparison === nextProps.canAddToComparison &&
+    prevProps.isMobile === nextProps.isMobile
   );
 });

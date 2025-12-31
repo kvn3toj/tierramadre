@@ -1,26 +1,36 @@
 /**
- * WelcomeScreen - Dual Access Entry Point
- * Offers Guest Mode (no PIN) or Full Access (PIN required)
+ * WelcomeScreen - Multi Access Entry Point
+ * Offers: Google Sign-In (validated against Asesores sheet)
+ *         PIN Access (legacy)
+ *         Guest Mode (no auth required)
  * Smooth fade-in transition from splash screen
  */
 
 import { useState } from 'react';
-import { Box, Typography, Button, IconButton, Fade, Stack } from '@mui/material';
+import { Box, Typography, Button, IconButton, Fade, Stack, alpha, Divider, Alert } from '@mui/material';
 import { motion } from 'framer-motion';
 import { Backspace as BackspaceIcon, VisibilityOutlined, LockOpenOutlined } from '@mui/icons-material';
-import { brandColors } from '../../theme';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
+import { emeraldCore, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
 import { useAuth } from '../../hooks/useAuth';
+import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 
-type ViewMode = 'choice' | 'pin';
+// Check if Google OAuth is configured
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const isGoogleConfigured = Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length > 10);
+
+type ViewMode = 'choice' | 'pin' | 'google';
 
 export default function WelcomeScreen() {
   const { loginAsGuest, loginWithPin } = useAuth();
+  const { signIn, authError } = useGoogleAuth();
   const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<ViewMode>('choice');
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
 
   const handleDigit = (digit: string) => {
     if (pin.length >= 4) return;
@@ -73,6 +83,22 @@ export default function WelcomeScreen() {
     setViewMode('choice');
     setPin('');
     setError(false);
+    setGoogleError(null);
+  };
+
+  const handleGoogleSuccess = async (response: CredentialResponse) => {
+    if (response.credential) {
+      try {
+        await signIn(response.credential);
+        // Auth context will automatically update on successful sign-in
+      } catch (err) {
+        setGoogleError('Error al iniciar sesión con Google');
+      }
+    }
+  };
+
+  const handleGoogleError = () => {
+    setGoogleError('No se pudo completar el inicio de sesión con Google');
   };
 
   const digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'back'];
@@ -89,8 +115,8 @@ export default function WelcomeScreen() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: brandColors.darkBg,
-        background: `radial-gradient(ellipse at 50% 30%, #0d1a14 0%, ${brandColors.darkBg} 50%, #050505 100%)`,
+        bgcolor: surfacesDark.background.primary,
+        background: `radial-gradient(ellipse at 50% 30%, #0d1a14 0%, ${surfacesDark.background.primary} 50%, #050505 100%)`,
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -104,7 +130,7 @@ export default function WelcomeScreen() {
           width: 300,
           height: 300,
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${brandColors.emeraldGreen}12 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${alpha(emeraldCore.primary, 0.07)} 0%, transparent 70%)`,
           top: '5%',
           filter: 'blur(50px)',
         }}
@@ -117,13 +143,13 @@ export default function WelcomeScreen() {
           width: 250,
           height: 250,
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${brandColors.emeraldGreen}08 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${alpha(emeraldCore.primary, 0.03)} 0%, transparent 70%)`,
           bottom: '15%',
           filter: 'blur(40px)',
         }}
       />
 
-      {/* Branded Logo - includes "TIERRA MÄDRE" and "Esencia y Poder" */}
+      {/* Branded Logo - includes "TIERRA MADRE" and "Esencia y Poder" */}
       <Fade in timeout={400}>
         <Box
           component="img"
@@ -141,46 +167,98 @@ export default function WelcomeScreen() {
       {/* Choice View */}
       {viewMode === 'choice' && (
         <Fade in timeout={800}>
-          <Stack spacing={2} sx={{ width: { xs: '70vw', sm: 340 }, maxWidth: 400, mt: 1.5 }}>
-            {/* Full Access Button */}
+          <Stack spacing={2} sx={{ width: { xs: '80vw', sm: 340 }, maxWidth: 400, mt: 1.5 }}>
+            {/* Google Sign-In - Only shown if configured */}
+            {isGoogleConfigured && (
+              <>
+                <Box sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  '& > div': { width: '100%' },
+                  '& iframe': { colorScheme: 'normal' },
+                }}>
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    theme="filled_black"
+                    shape="pill"
+                    text="signin_with"
+                    locale="es"
+                    width="340"
+                  />
+                </Box>
+
+                {/* Error messages */}
+                {(googleError || authError) && (
+                  <Alert
+                    severity="warning"
+                    sx={{
+                      bgcolor: alpha(semanticColors.warning.main, 0.15),
+                      color: semanticColors.warning.main,
+                      border: `1px solid ${alpha(semanticColors.warning.main, 0.3)}`,
+                      '& .MuiAlert-icon': { color: semanticColors.warning.main },
+                    }}
+                  >
+                    {googleError || authError}
+                  </Alert>
+                )}
+
+                {/* Divider */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, my: 1 }}>
+                  <Divider sx={{ flex: 1, borderColor: alpha('#FFFFFF', 0.15) }} />
+                  <Typography variant="caption" sx={{ color: surfacesDark.text.tertiary }}>
+                    o
+                  </Typography>
+                  <Divider sx={{ flex: 1, borderColor: alpha('#FFFFFF', 0.15) }} />
+                </Box>
+              </>
+            )}
+
+            {/* PIN Access Button - Primary when Google not configured */}
             <Button
-              variant="contained"
+              variant={isGoogleConfigured ? 'outlined' : 'contained'}
               size="large"
               startIcon={<LockOpenOutlined />}
               onClick={handleFullAccessClick}
               fullWidth
               sx={{
                 py: 1.5,
-                fontSize: '1rem',
+                fontSize: isGoogleConfigured ? '0.9rem' : '1rem',
                 textTransform: 'none',
-                bgcolor: brandColors.emeraldGreen,
-                color: '#ffffff',
+                ...(isGoogleConfigured
+                  ? {
+                      borderColor: alpha('#FFFFFF', 0.25),
+                      color: surfacesDark.text.secondary,
+                    }
+                  : {
+                      bgcolor: emeraldCore.primary,
+                      color: surfacesDark.text.primary,
+                    }),
                 borderRadius: 2,
                 '&:hover': {
-                  bgcolor: brandColors.emeraldGreen + 'dd',
+                  borderColor: emeraldCore.primary,
+                  bgcolor: isGoogleConfigured ? alpha('#FFFFFF', 0.03) : alpha(emeraldCore.primary, 0.87),
                 },
               }}
             >
-              {t.auth.fullAccess}
+              {isGoogleConfigured ? 'Acceso con PIN' : t.auth.fullAccess}
             </Button>
 
             {/* Guest Access Button */}
             <Button
-              variant="outlined"
-              size="large"
-              startIcon={<VisibilityOutlined />}
+              variant="text"
+              size="small"
+              startIcon={<VisibilityOutlined sx={{ fontSize: 16 }} />}
               onClick={handleGuestAccess}
               fullWidth
               sx={{
-                py: 1.5,
-                fontSize: '1rem',
+                py: 1,
+                fontSize: '0.85rem',
                 textTransform: 'none',
-                borderColor: '#ffffff40',
-                color: '#ffffff',
-                borderRadius: 2,
+                color: surfacesDark.text.tertiary,
                 '&:hover': {
-                  borderColor: brandColors.emeraldGreen,
-                  bgcolor: '#ffffff08',
+                  color: surfacesDark.text.secondary,
+                  bgcolor: alpha('#FFFFFF', 0.03),
                 },
               }}
             >
@@ -216,13 +294,13 @@ export default function WelcomeScreen() {
                     width: 16,
                     height: 16,
                     borderRadius: '50%',
-                    border: `2px solid ${error ? '#ff4444' : brandColors.emeraldGreen}`,
+                    border: `2px solid ${error ? semanticColors.error.main : emeraldCore.primary}`,
                     bgcolor: pin.length > i
-                      ? (error ? '#ff4444' : brandColors.emeraldGreen)
+                      ? (error ? semanticColors.error.main : emeraldCore.primary)
                       : 'transparent',
                     transition: 'all 0.2s ease',
                     boxShadow: pin.length > i
-                      ? `0 0 10px ${error ? '#ff4444' : brandColors.emeraldGreen}50`
+                      ? `0 0 10px ${alpha(error ? semanticColors.error.main : emeraldCore.primary, 0.3)}`
                       : 'none',
                   }}
                 />
@@ -238,7 +316,7 @@ export default function WelcomeScreen() {
               aria-live="assertive"
               aria-atomic="true"
               sx={{
-                color: '#ff4444',
+                color: semanticColors.error.main,
                 mb: 2,
                 minHeight: 20,
               }}
@@ -269,9 +347,9 @@ export default function WelcomeScreen() {
                       sx={{
                         width: 72,
                         height: 72,
-                        color: '#666',
+                        color: surfacesDark.text.secondary,
                         '&:hover': {
-                          bgcolor: '#ffffff08',
+                          bgcolor: alpha('#FFFFFF', 0.03),
                         },
                       }}
                     >
@@ -288,17 +366,17 @@ export default function WelcomeScreen() {
                       height: 72,
                       fontSize: '1.75rem',
                       fontWeight: 300,
-                      color: '#ffffff',
-                      bgcolor: '#ffffff08',
-                      border: '1px solid #ffffff10',
+                      color: surfacesDark.text.primary,
+                      bgcolor: alpha('#FFFFFF', 0.03),
+                      border: `1px solid ${alpha('#FFFFFF', 0.06)}`,
                       borderRadius: '50%',
                       transition: 'all 0.2s ease',
                       '&:hover': {
-                        bgcolor: '#ffffff15',
-                        borderColor: brandColors.emeraldGreen + '40',
+                        bgcolor: alpha('#FFFFFF', 0.08),
+                        borderColor: alpha(emeraldCore.primary, 0.25),
                       },
                       '&:active': {
-                        bgcolor: brandColors.emeraldGreen + '20',
+                        bgcolor: alpha(emeraldCore.primary, 0.12),
                         transform: 'scale(0.95)',
                       },
                     }}
@@ -316,10 +394,10 @@ export default function WelcomeScreen() {
               onClick={handleBackToChoice}
               sx={{
                 mt: 3,
-                color: '#666',
+                color: surfacesDark.text.secondary,
                 textTransform: 'none',
                 '&:hover': {
-                  color: '#999',
+                  color: surfacesDark.text.tertiary,
                   bgcolor: 'transparent',
                 },
               }}
@@ -336,7 +414,7 @@ export default function WelcomeScreen() {
         sx={{
           position: 'absolute',
           bottom: 32,
-          color: '#444',
+          color: surfacesDark.text.tertiary,
           letterSpacing: '0.1em',
         }}
       >

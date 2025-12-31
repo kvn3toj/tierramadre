@@ -15,6 +15,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 import { spacing } from '../design-system/tokens/primitives/spacing';
+import { accentColors, iosTypographyScale } from '../design-system';
 
 interface AccountTool {
   id: string;
@@ -32,6 +33,11 @@ const AccountsHub: React.FC = () => {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
 
+  // Get theme-aware accent colors from design system
+  const indigoColor = isLight ? accentColors.indigo.light : accentColors.indigo.dark;
+  const cyanColor = isLight ? accentColors.cyan.light : accentColors.cyan.dark;
+  const purpleColor = isLight ? accentColors.purple.light : accentColors.purple.dark;
+
   const tools: AccountTool[] = [
     {
       id: 'simulator',
@@ -39,8 +45,8 @@ const AccountsHub: React.FC = () => {
       description: t.tools.simulator.subtitle,
       icon: Calculator,
       route: '/cuentas/simulador',
-      color: '#3F51B5',
-      bgColor: alpha('#3F51B5', 0.1),
+      color: indigoColor,
+      bgColor: alpha(indigoColor, 0.1),
     },
     {
       id: 'receipts',
@@ -48,8 +54,8 @@ const AccountsHub: React.FC = () => {
       description: t.tools.receipts.subtitle,
       icon: Receipt,
       route: '/cuentas/recibos',
-      color: '#00BCD4',
-      bgColor: alpha('#00BCD4', 0.1),
+      color: cyanColor,
+      bgColor: alpha(cyanColor, 0.1),
     },
     {
       id: 'quotation',
@@ -57,8 +63,8 @@ const AccountsHub: React.FC = () => {
       description: t.tools.cotizacion.subtitle,
       icon: FileText,
       route: '/cuentas/cotizaciones',
-      color: '#7C3AED',
-      bgColor: alpha('#7C3AED', 0.1),
+      color: purpleColor,
+      bgColor: alpha(purpleColor, 0.1),
     },
   ];
 
@@ -94,7 +100,7 @@ const AccountsHub: React.FC = () => {
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: '24px', md: '32px' },
+              fontSize: { xs: iosTypographyScale.title1, md: iosTypographyScale.largeTitle },
               fontWeight: 700,
               color: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
             }}
@@ -106,7 +112,7 @@ const AccountsHub: React.FC = () => {
           variant="body1"
           sx={{
             color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
-            fontSize: '16px',
+            fontSize: iosTypographyScale.callout,
           }}
         >
           {t.pages.accounts.subtitle}
@@ -167,7 +173,7 @@ const AccountsHub: React.FC = () => {
                     <Typography
                       variant="h3"
                       sx={{
-                        fontSize: '18px',
+                        fontSize: iosTypographyScale.title3,
                         fontWeight: 600,
                         color: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
                         mb: 1,
@@ -181,7 +187,7 @@ const AccountsHub: React.FC = () => {
                       variant="body2"
                       sx={{
                         color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
-                        fontSize: '14px',
+                        fontSize: iosTypographyScale.subhead,
                         lineHeight: 1.6,
                       }}
                     >
@@ -209,7 +215,7 @@ const AccountsHub: React.FC = () => {
         <Typography
           variant="h4"
           sx={{
-            fontSize: '16px',
+            fontSize: iosTypographyScale.callout,
             fontWeight: 600,
             color: goldAccent.dark,
             mb: 1,

@@ -10,6 +10,7 @@ import SplashScreen from './components/SplashScreen';
 // PWA disabled - service worker not generating correctly
 // import UpdatePrompt from './components/pwa/UpdatePrompt';
 import { LiquidGlassProvider } from './contexts/LiquidGlassContext';
+import { useViewportHeight } from './hooks/useViewportHeight';
 
 // All routes lazy loaded for optimal bundle splitting
 const Home = lazy(() => import('./components/home'));
@@ -136,6 +137,10 @@ function AppContent() {
 function App() {
   const { isAuthenticated } = useAuth();
   const [showSplash, setShowSplash] = useState(true);
+
+  // Initialize viewport height CSS variable for iOS Safari 100vh fix
+  // This sets --vh to the actual viewport height (excluding address bar)
+  useViewportHeight();
 
   // Initialize PWA behaviors on mount
   useEffect(() => {

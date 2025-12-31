@@ -11,11 +11,13 @@ export const usePermissions = (): Permission => {
 
   return useMemo(() => {
     const isGuest = accessLevel === 'guest';
+    const isAdmin = accessLevel === 'admin';
 
     return {
       canEdit: !isGuest,
       canUpload: !isGuest,
       canDownload: !isGuest,
+      isAdmin,
     };
   }, [accessLevel]);
 };
@@ -34,4 +36,9 @@ export const useCanUpload = (): boolean => {
 export const useCanDownload = (): boolean => {
   const { canDownload } = usePermissions();
   return canDownload;
+};
+
+export const useIsAdmin = (): boolean => {
+  const { isAdmin } = usePermissions();
+  return isAdmin;
 };

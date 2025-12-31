@@ -8,13 +8,9 @@
 import { useState, useCallback } from 'react';
 import Cropper, { Area, Point } from 'react-easy-crop';
 import { createLogger } from '../../utils/logger';
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { brand, darkTokens, lightTokens } from '../../design-system';
 
 const log = createLogger('ImageCropper');
-
-// Brand emerald color (primary) for consistent styling
-const brandEmerald = primitiveColors.emerald[500]; // #00AE7A - brand color
-const emeraldShades = primitiveColors.emerald;
 
 import {
   Box,
@@ -229,7 +225,7 @@ export default function ImageCropper({
       fullWidth
       PaperProps={{
         sx: {
-          bgcolor: '#0a0a0a',
+          bgcolor: darkTokens.background.app,
           borderRadius: 3,
           overflow: 'hidden',
           maxHeight: '95vh',
@@ -244,13 +240,13 @@ export default function ImageCropper({
           justifyContent: 'space-between',
           px: 2,
           py: 1.5,
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
+          borderBottom: `1px solid ${alpha(lightTokens.text.inverse, 0.1)}`,
         }}
       >
-        <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600 }}>
+        <Typography variant="subtitle1" sx={{ color: lightTokens.text.inverse, fontWeight: 600 }}>
           Ajustar Imagen
         </Typography>
-        <IconButton onClick={handleClose} size="small" sx={{ color: '#fff' }}>
+        <IconButton onClick={handleClose} size="small" sx={{ color: lightTokens.text.inverse }}>
           <X size={20} />
         </IconButton>
       </Box>
@@ -261,7 +257,7 @@ export default function ImageCropper({
           sx={{
             position: 'relative',
             height: { xs: '50vh', sm: '60vh' },
-            bgcolor: '#1a1a1a',
+            bgcolor: darkTokens.background.surface,
           }}
         >
           <Cropper
@@ -275,24 +271,24 @@ export default function ImageCropper({
             onCropComplete={onCropCompleteCallback}
             style={{
               containerStyle: {
-                backgroundColor: '#1a1a1a',
+                backgroundColor: darkTokens.background.surface,
               },
               cropAreaStyle: {
-                border: `2px solid ${brandEmerald}`,
+                border: `2px solid ${brand.emerald[500]}`,
               },
             }}
           />
         </Box>
 
         {/* Controls */}
-        <Box sx={{ px: 2, py: 2, bgcolor: '#0a0a0a' }}>
+        <Box sx={{ px: 2, py: 2, bgcolor: darkTokens.background.app }}>
           {/* Aspect Ratio */}
           <Box sx={{ mb: 2 }}>
             <Typography
               variant="caption"
-              sx={{ color: 'rgba(255,255,255,0.6)', mb: 1, display: 'block' }}
+              sx={{ color: alpha(lightTokens.text.inverse, 0.6), mb: 1, display: 'block' }}
             >
-              Proporción
+              Proporcion
             </Typography>
             <ToggleButtonGroup
               value={aspect}
@@ -301,15 +297,15 @@ export default function ImageCropper({
               size="small"
               sx={{
                 '& .MuiToggleButton-root': {
-                  color: 'rgba(255,255,255,0.7)',
-                  borderColor: 'rgba(255,255,255,0.2)',
+                  color: alpha(lightTokens.text.inverse, 0.7),
+                  borderColor: alpha(lightTokens.text.inverse, 0.2),
                   px: 2,
                   '&.Mui-selected': {
-                    bgcolor: alpha(brandEmerald, 0.2),
-                    color: brandEmerald,
-                    borderColor: brandEmerald,
+                    bgcolor: alpha(brand.emerald[500], 0.2),
+                    color: brand.emerald[500],
+                    borderColor: brand.emerald[500],
                     '&:hover': {
-                      bgcolor: alpha(brandEmerald, 0.3),
+                      bgcolor: alpha(brand.emerald[500], 0.3),
                     },
                   },
                 },
@@ -330,12 +326,12 @@ export default function ImageCropper({
           <Box sx={{ mb: 2 }}>
             <Typography
               variant="caption"
-              sx={{ color: 'rgba(255,255,255,0.6)', mb: 1, display: 'block' }}
+              sx={{ color: alpha(lightTokens.text.inverse, 0.6), mb: 1, display: 'block' }}
             >
               Zoom
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <ZoomOut size={18} color="rgba(255,255,255,0.6)" />
+              <ZoomOut size={18} color={alpha(lightTokens.text.inverse, 0.6)} />
               <Slider
                 value={zoom}
                 min={1}
@@ -343,14 +339,14 @@ export default function ImageCropper({
                 step={0.1}
                 onChange={(_, value) => setZoom(value as number)}
                 sx={{
-                  color: brandEmerald,
+                  color: brand.emerald[500],
                   '& .MuiSlider-thumb': {
                     width: 16,
                     height: 16,
                   },
                 }}
               />
-              <ZoomIn size={18} color="rgba(255,255,255,0.6)" />
+              <ZoomIn size={18} color={alpha(lightTokens.text.inverse, 0.6)} />
             </Box>
           </Box>
 
@@ -361,23 +357,23 @@ export default function ImageCropper({
             onClick={handleRotate}
             size="small"
             sx={{
-              color: 'rgba(255,255,255,0.7)',
-              borderColor: 'rgba(255,255,255,0.2)',
+              color: alpha(lightTokens.text.inverse, 0.7),
+              borderColor: alpha(lightTokens.text.inverse, 0.2),
               '&:hover': {
-                borderColor: brandEmerald,
-                color: brandEmerald,
+                borderColor: brand.emerald[500],
+                color: brand.emerald[500],
               },
             }}
           >
-            Rotar 90°
+            Rotar 90
           </Button>
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+      <DialogActions sx={{ p: 2, borderTop: `1px solid ${alpha(lightTokens.text.inverse, 0.1)}` }}>
         <Button
           onClick={handleClose}
-          sx={{ color: 'rgba(255,255,255,0.7)' }}
+          sx={{ color: alpha(lightTokens.text.inverse, 0.7) }}
         >
           Cancelar
         </Button>
@@ -387,9 +383,9 @@ export default function ImageCropper({
           disabled={isProcessing}
           startIcon={<Check size={18} />}
           sx={{
-            background: `linear-gradient(135deg, ${brandEmerald} 0%, ${emeraldShades[600]} 100%)`,
+            background: `linear-gradient(135deg, ${brand.emerald[500]} 0%, ${brand.emerald[600]} 100%)`,
             '&:hover': {
-              background: `linear-gradient(135deg, ${emeraldShades[600]} 0%, ${emeraldShades[700]} 100%)`,
+              background: `linear-gradient(135deg, ${brand.emerald[600]} 0%, ${brand.emerald[700]} 100%)`,
             },
           }}
         >

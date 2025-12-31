@@ -7,6 +7,11 @@
  * if (FEATURES.IOS_UPLOAD) { ... }
  */
 
+import { useState, useEffect, useCallback } from 'react';
+
+/** A/B Test Variant for Grid Layout */
+export type ABGridVariant = 'control' | 'ios-hig' | 'premium';
+
 export interface FeatureFlags {
   /** iOS Upload feature (EmeraldUploader.ios.tsx) */
   IOS_UPLOAD: boolean;
@@ -25,6 +30,9 @@ export interface FeatureFlags {
 
   /** iOS Ambassadors feature */
   IOS_AMBASSADORS: boolean;
+
+  /** A/B Test: Grid Layout Variant */
+  AB_GRID_VARIANT: ABGridVariant;
 }
 
 /**
@@ -40,6 +48,7 @@ export const FEATURES: FeatureFlags = {
   IOS_CATALOG: false,   // ⏳ Week 7-8
   IOS_INVENTORY: false, // ⏳ Week 7-8
   IOS_AMBASSADORS: false, // ⏳ Future
+  AB_GRID_VARIANT: 'ios-hig', // ✅ Default to iOS HIG strict compliance
 };
 
 /**
@@ -52,7 +61,7 @@ const FEATURE_OVERRIDE_KEY = 'tierra-madre-feature-flags';
  * Get Feature Flag Value
  * Checks localStorage override first, then default config
  */
-export function getFeatureFlag(flagName: keyof FeatureFlags): boolean {
+export function getFeatureFlag<K extends keyof FeatureFlags>(flagName: K): FeatureFlags[K] {
   if (typeof window === 'undefined') return FEATURES[flagName];
 
   try {
@@ -76,8 +85,9 @@ export function getFeatureFlag(flagName: keyof FeatureFlags): boolean {
  *
  * @example
  * setFeatureFlag('IOS_UPLOAD', true);
+ * setFeatureFlag('AB_GRID_VARIANT', 'premium');
  */
-export function setFeatureFlag(flagName: keyof FeatureFlags, value: boolean): void {
+export function setFeatureFlag<K extends keyof FeatureFlags>(flagName: K, value: FeatureFlags[K]): void {
   if (typeof window === 'undefined') return;
 
   try {
@@ -114,7 +124,7 @@ export function clearFeatureFlags(): void {
  * Returns current state of all flags (with overrides applied)
  */
 export function getAllFeatureFlags(): FeatureFlags {
-  const flags: FeatureFlags = { ...FEATURES };
+  const flags = { ...FEATURES };
 
   if (typeof window === 'undefined') return flags;
 
@@ -122,11 +132,14 @@ export function getAllFeatureFlags(): FeatureFlags {
     const overrides = localStorage.getItem(FEATURE_OVERRIDE_KEY);
     if (overrides) {
       const parsed = JSON.parse(overrides);
-      Object.keys(parsed).forEach((key) => {
-        if (key in flags) {
-          flags[key as keyof FeatureFlags] = parsed[key];
-        }
-      });
+      // Merge overrides for each known flag
+      if ('IOS_UPLOAD' in parsed) flags.IOS_UPLOAD = parsed.IOS_UPLOAD;
+      if ('IOS_GALLERY' in parsed) flags.IOS_GALLERY = parsed.IOS_GALLERY;
+      if ('IOS_CALENDAR' in parsed) flags.IOS_CALENDAR = parsed.IOS_CALENDAR;
+      if ('IOS_CATALOG' in parsed) flags.IOS_CATALOG = parsed.IOS_CATALOG;
+      if ('IOS_INVENTORY' in parsed) flags.IOS_INVENTORY = parsed.IOS_INVENTORY;
+      if ('IOS_AMBASSADORS' in parsed) flags.IOS_AMBASSADORS = parsed.IOS_AMBASSADORS;
+      if ('AB_GRID_VARIANT' in parsed) flags.AB_GRID_VARIANT = parsed.AB_GRID_VARIANT;
     }
   } catch (error) {
     console.warn('Failed to read feature flag overrides:', error);
@@ -167,6 +180,43 @@ if (typeof window !== 'undefined') {
   console.log('  • window.featureFlags.enable("IOS_UPLOAD")  - Enable a flag');
   console.log('  • window.featureFlags.disable("IOS_UPLOAD") - Disable a flag');
   console.log('  • window.featureFlags.reset()        - Reset to defaults');
+}
+
+/**
+ * React Hook for Feature Flags
+ * Provides reactive access to feature flags with localStorage sync
+ */
+export function useFeatureFlags() {
+  const [flags, setFlags] = useState<FeatureFlags>(() => getAllFeatureFlags());
+
+  // Sync with localStorage changes
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === FEATURE_OVERRIDE_KEY) {
+        setFlags(getAllFeatureFlags());
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  const setFlag = useCallback(<K extends keyof FeatureFlags>(flagName: K, value: FeatureFlags[K]) => {
+    setFeatureFlag(flagName, value);
+    setFlags(getAllFeatureFlags());
+  }, []);
+
+  const resetFlags = useCallback(() => {
+    clearFeatureFlags();
+    setFlags({ ...FEATURES });
+  }, []);
+
+  return {
+    flags,
+    setFlag,
+    resetFlags,
+    getFlag: <K extends keyof FeatureFlags>(flagName: K) => flags[flagName],
+  };
 }
 
 export default FEATURES;

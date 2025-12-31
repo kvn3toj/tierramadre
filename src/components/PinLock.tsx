@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Box, Typography, IconButton, Fade } from '@mui/material';
+import { Box, Typography, IconButton, Fade, alpha } from '@mui/material';
 import { Backspace as BackspaceIcon } from '@mui/icons-material';
-import { brandColors } from '../theme';
+import { emeraldCore, surfacesDark, semanticColors } from '../design-system/tokens/colors';
 
 interface PinLockProps {
   onUnlock: () => void;
@@ -74,8 +74,8 @@ export default function PinLock({ onUnlock }: PinLockProps) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: brandColors.darkBg,
-        background: `linear-gradient(180deg, ${brandColors.darkBg} 0%, #0a0a0a 100%)`,
+        bgcolor: surfacesDark.background.primary,
+        background: `linear-gradient(180deg, ${surfacesDark.background.primary} 0%, #0a0a0a 100%)`,
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -102,7 +102,7 @@ export default function PinLock({ onUnlock }: PinLockProps) {
           width: 400,
           height: 400,
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${brandColors.emeraldGreen}15 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${alpha(emeraldCore.primary, 0.08)} 0%, transparent 70%)`,
           top: '10%',
           filter: 'blur(60px)',
         }}
@@ -127,7 +127,7 @@ export default function PinLock({ onUnlock }: PinLockProps) {
         <Typography
           variant="h5"
           sx={{
-            color: '#ffffff',
+            color: surfacesDark.text.primary,
             fontFamily: '"Libre Baskerville", Georgia, serif',
             fontWeight: 400,
             letterSpacing: '0.1em',
@@ -143,7 +143,7 @@ export default function PinLock({ onUnlock }: PinLockProps) {
         <Typography
           variant="body2"
           sx={{
-            color: brandColors.emeraldGreen,
+            color: emeraldCore.primary,
             letterSpacing: '0.2em',
             mb: 4,
             fontSize: '0.75rem',
@@ -175,13 +175,13 @@ export default function PinLock({ onUnlock }: PinLockProps) {
                 width: 16,
                 height: 16,
                 borderRadius: '50%',
-                border: `2px solid ${error ? '#ff4444' : brandColors.emeraldGreen}`,
+                border: `2px solid ${error ? semanticColors.error.main : emeraldCore.primary}`,
                 bgcolor: pin.length > i
-                  ? (error ? '#ff4444' : brandColors.emeraldGreen)
+                  ? (error ? semanticColors.error.main : emeraldCore.primary)
                   : 'transparent',
                 transition: 'all 0.2s ease',
                 boxShadow: pin.length > i
-                  ? `0 0 10px ${error ? '#ff4444' : brandColors.emeraldGreen}50`
+                  ? `0 0 10px ${alpha(error ? semanticColors.error.main : emeraldCore.primary, 0.3)}`
                   : 'none',
               }}
             />
@@ -194,7 +194,7 @@ export default function PinLock({ onUnlock }: PinLockProps) {
         <Typography
           variant="caption"
           sx={{
-            color: '#ff4444',
+            color: semanticColors.error.main,
             mb: 2,
             height: 20,
           }}
@@ -225,9 +225,9 @@ export default function PinLock({ onUnlock }: PinLockProps) {
                   sx={{
                     width: 72,
                     height: 72,
-                    color: '#666',
+                    color: surfacesDark.text.secondary,
                     '&:hover': {
-                      bgcolor: '#ffffff08',
+                      bgcolor: alpha('#FFFFFF', 0.03),
                     },
                   }}
                 >
@@ -244,17 +244,17 @@ export default function PinLock({ onUnlock }: PinLockProps) {
                   height: 72,
                   fontSize: '1.75rem',
                   fontWeight: 300,
-                  color: '#ffffff',
-                  bgcolor: '#ffffff08',
-                  border: '1px solid #ffffff10',
+                  color: surfacesDark.text.primary,
+                  bgcolor: alpha('#FFFFFF', 0.03),
+                  border: `1px solid ${alpha('#FFFFFF', 0.06)}`,
                   borderRadius: '50%',
                   transition: 'all 0.2s ease',
                   '&:hover': {
-                    bgcolor: '#ffffff15',
-                    borderColor: brandColors.emeraldGreen + '40',
+                    bgcolor: alpha('#FFFFFF', 0.08),
+                    borderColor: alpha(emeraldCore.primary, 0.25),
                   },
                   '&:active': {
-                    bgcolor: brandColors.emeraldGreen + '20',
+                    bgcolor: alpha(emeraldCore.primary, 0.12),
                     transform: 'scale(0.95)',
                   },
                 }}
@@ -272,7 +272,7 @@ export default function PinLock({ onUnlock }: PinLockProps) {
         sx={{
           position: 'absolute',
           bottom: 32,
-          color: '#444',
+          color: surfacesDark.text.tertiary,
           letterSpacing: '0.1em',
         }}
       >

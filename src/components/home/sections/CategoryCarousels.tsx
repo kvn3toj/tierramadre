@@ -15,9 +15,15 @@ import {
   IconButton,
   Dialog,
   DialogContent,
+  alpha,
 } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight, Close } from '@mui/icons-material';
 import { fadeInUp } from '../../../design-system/tokens/motion';
+import { goldAccent, surfacesDark } from '../../../design-system/tokens/colors';
+
+// Accent colors for carousels
+const GOLD_CAROUSEL_ACCENT = goldAccent.primary;
+const TEAL_CAROUSEL_ACCENT = '#4ECDC4';
 
 // =============================================================================
 // GALLERY DATA
@@ -34,7 +40,7 @@ const RINGS_IMAGES: GalleryImage[] = [
   { id: 'ring-2', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621937/tierramadre/gallery/rings/srwbqwvnqropetlnxics.jpg', alt: 'Anillo de compromiso esmeralda' },
   { id: 'ring-3', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621941/tierramadre/gallery/rings/wkzofxy8mm1sbhhxaomr.jpg', alt: 'Joya de esmeralda colombiana' },
   { id: 'ring-4', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621944/tierramadre/gallery/rings/esgn24ccuncy6ioj8dxs.jpg', alt: 'Anillo elegante con esmeralda' },
-  { id: 'ring-5', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621955/tierramadre/gallery/rings/gdpu0dzc5r6la7phhpqq.jpg', alt: 'Diseño exclusivo esmeralda' },
+  { id: 'ring-5', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621955/tierramadre/gallery/rings/gdpu0dzc5r6la7phhpqq.jpg', alt: 'Diseno exclusivo esmeralda' },
   { id: 'ring-6', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621959/tierramadre/gallery/rings/sl1qmwz8p6qdkhpygbl4.jpg', alt: 'Anillo artesanal esmeralda' },
   { id: 'ring-7', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621963/tierramadre/gallery/rings/skoytaj1ap1jfezmrtzi.jpg', alt: 'Sortija de esmeralda' },
   { id: 'ring-8', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621966/tierramadre/gallery/rings/vpeir3hvfvsg0kf4ggao.jpg', alt: 'Anillo de lujo esmeralda' },
@@ -130,7 +136,7 @@ const SingleCarousel: React.FC<SingleCarouselProps> = ({
         <Typography
           variant="h6"
           sx={{
-            color: 'white',
+            color: surfacesDark.text.primary,
             fontWeight: 300,
             letterSpacing: '0.2em',
             textTransform: 'uppercase',
@@ -164,13 +170,13 @@ const SingleCarousel: React.FC<SingleCarouselProps> = ({
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 3,
-            color: 'white',
-            bgcolor: 'rgba(0,0,0,0.5)',
+            color: surfacesDark.text.primary,
+            bgcolor: alpha('#000000', 0.5),
             backdropFilter: 'blur(8px)',
             width: 36,
             height: 36,
             '&:hover': {
-              bgcolor: 'rgba(0,0,0,0.7)',
+              bgcolor: alpha('#000000', 0.7),
             },
           }}
         >
@@ -186,13 +192,13 @@ const SingleCarousel: React.FC<SingleCarouselProps> = ({
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 3,
-            color: 'white',
-            bgcolor: 'rgba(0,0,0,0.5)',
+            color: surfacesDark.text.primary,
+            bgcolor: alpha('#000000', 0.5),
             backdropFilter: 'blur(8px)',
             width: 36,
             height: 36,
             '&:hover': {
-              bgcolor: 'rgba(0,0,0,0.7)',
+              bgcolor: alpha('#000000', 0.7),
             },
           }}
         >
@@ -207,7 +213,7 @@ const SingleCarousel: React.FC<SingleCarouselProps> = ({
             top: 0,
             bottom: 0,
             width: 60,
-            background: 'linear-gradient(to right, rgba(0,0,0,0.8) 0%, transparent 100%)',
+            background: `linear-gradient(to right, ${alpha('#000000', 0.8)} 0%, transparent 100%)`,
             zIndex: 2,
             pointerEvents: 'none',
           }}
@@ -221,7 +227,7 @@ const SingleCarousel: React.FC<SingleCarouselProps> = ({
             top: 0,
             bottom: 0,
             width: 60,
-            background: 'linear-gradient(to left, rgba(0,0,0,0.8) 0%, transparent 100%)',
+            background: `linear-gradient(to left, ${alpha('#000000', 0.8)} 0%, transparent 100%)`,
             zIndex: 2,
             pointerEvents: 'none',
           }}
@@ -277,7 +283,7 @@ const SingleCarousel: React.FC<SingleCarouselProps> = ({
                       position: 'absolute',
                       inset: 0,
                       border: '1px solid',
-                      borderColor: 'rgba(255,255,255,0.1)',
+                      borderColor: alpha('#FFFFFF', 0.1),
                       borderRadius: 1,
                       zIndex: 1,
                       transition: 'border-color 0.3s ease',
@@ -292,7 +298,7 @@ const SingleCarousel: React.FC<SingleCarouselProps> = ({
                       left: 0,
                       right: 0,
                       height: '40%',
-                      background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)',
+                      background: `linear-gradient(to top, ${alpha('#000000', 0.6)} 0%, transparent 100%)`,
                       zIndex: 1,
                       opacity: 0,
                       transition: 'opacity 0.3s ease',
@@ -336,7 +342,7 @@ export const CategoryCarousels: React.FC = () => {
 
   return (
     <>
-      <Box component="section" aria-label="Galería de esmeraldas" sx={{ py: 2, px: { xs: 0, md: 2, lg: 4 } }}>
+      <Box component="section" aria-label="Galeria de esmeraldas" sx={{ py: 2, px: { xs: 0, md: 2, lg: 4 } }}>
         <motion.div variants={fadeInUp} initial="initial" animate="animate">
           {/* Two carousels - responsive for landscape */}
           <Box
@@ -356,9 +362,9 @@ export const CategoryCarousels: React.FC = () => {
             {/* Rings Carousel */}
             <SingleCarousel
               title="Anillos"
-              subtitle="Colección"
+              subtitle="Coleccion"
               images={RINGS_IMAGES}
-              accentColor="#C9A962"
+              accentColor={GOLD_CAROUSEL_ACCENT}
               onImageClick={setSelectedImage}
             />
 
@@ -381,7 +387,7 @@ export const CategoryCarousels: React.FC = () => {
                 sx={{
                   width: 1,
                   height: '60%',
-                  bgcolor: 'rgba(255,255,255,0.15)',
+                  bgcolor: alpha('#FFFFFF', 0.15),
                   borderRadius: 1,
                 }}
               />
@@ -390,9 +396,9 @@ export const CategoryCarousels: React.FC = () => {
             {/* Gems Carousel */}
             <SingleCarousel
               title="Gemas"
-              subtitle="Selección"
+              subtitle="Seleccion"
               images={GEMS_IMAGES}
-              accentColor="#4ECDC4"
+              accentColor={TEAL_CAROUSEL_ACCENT}
               onImageClick={setSelectedImage}
             />
           </Box>
@@ -414,7 +420,7 @@ export const CategoryCarousels: React.FC = () => {
         slotProps={{
           backdrop: {
             sx: {
-              bgcolor: 'rgba(0,0,0,0.95)',
+              bgcolor: alpha('#000000', 0.95),
               backdropFilter: 'blur(20px)',
             },
           },
@@ -427,9 +433,9 @@ export const CategoryCarousels: React.FC = () => {
               position: 'absolute',
               top: -50,
               right: 0,
-              color: 'rgba(255,255,255,0.7)',
+              color: alpha('#FFFFFF', 0.7),
               '&:hover': {
-                color: 'white',
+                color: surfacesDark.text.primary,
                 bgcolor: 'transparent',
               },
             }}
@@ -458,7 +464,7 @@ export const CategoryCarousels: React.FC = () => {
               <Typography
                 variant="caption"
                 sx={{
-                  color: 'rgba(255,255,255,0.5)',
+                  color: alpha('#FFFFFF', 0.5),
                   textAlign: 'center',
                   display: 'block',
                   mt: 2,
