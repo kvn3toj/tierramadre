@@ -109,10 +109,17 @@ const getOrCreateSession = (): { sessionId: string; startTime: number } => {
   try {
     const saved = sessionStorage.getItem(SESSION_KEY);
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      // Validate session structure
+      if (parsed && typeof parsed.sessionId === 'string' && typeof parsed.startTime === 'number') {
+        return parsed;
+      }
+      // Invalid session data, will create new one below
+      sessionStorage.removeItem(SESSION_KEY);
     }
   } catch {
-    // Ignore
+    // Clear corrupted data
+    sessionStorage.removeItem(SESSION_KEY);
   }
 
   const session = {
@@ -126,14 +133,29 @@ const getOrCreateSession = (): { sessionId: string; startTime: number } => {
 const loadEvents = (): AnalyticsEvent[] => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    const parsed = JSON.parse(saved);
+    // Validate that parsed data is actually an array
+    if (!Array.isArray(parsed)) {
+      log.warn('Invalid analytics data in localStorage, resetting');
+      localStorage.removeItem(STORAGE_KEY);
+      return [];
+    }
+    return parsed;
   } catch {
+    // Clear corrupted data
+    localStorage.removeItem(STORAGE_KEY);
     return [];
   }
 };
 
 const saveEvents = (events: AnalyticsEvent[]) => {
   try {
+    // Ensure events is an array before slicing
+    if (!Array.isArray(events)) {
+      log.error('saveEvents received non-array:', typeof events);
+      return;
+    }
     // Keep only the last MAX_EVENTS
     const trimmed = events.slice(-MAX_EVENTS);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
