@@ -6,20 +6,15 @@ import {
   Button,
   Paper,
   Chip,
-  Divider,
   Grid,
-  Card,
-  CardContent,
   alpha,
   useTheme,
-  Breadcrumbs,
-  Link,
   Collapse,
   IconButton,
   Tooltip,
 } from '@mui/material';
 import {
-  ArrowLeft,
+  ChevronLeft,
   Package,
   Gem,
   Ruler,
@@ -30,24 +25,21 @@ import {
   Calendar,
   Crown,
   ShoppingCart,
-  Upload,
   ChevronUp,
-  Images,
+  FolderOpen,
   Edit2,
   Check,
   QrCode,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useThemeMode } from '../contexts/ThemeContext';
-import { useCanEdit, useCanUpload } from '../hooks/usePermissions';
+import { useCanEdit, useIsAdmin } from '../hooks/usePermissions';
 import { useInventory } from '../hooks/useInventory';
-import { extractVideoThumbnail } from '../utils/videoStorage';
-import { MediaGallery, ImageCropper } from './media';
+import { MediaGallery } from './media';
 import DriveFolderInfo from './media/DriveFolderInfo';
 import type { MediaItem } from './media/types';
 import { PriceDisplay } from './PriceDisplay';
 import { getColorDot, getQualityBadge } from '../utils/formatting';
-import { uploadToCloudinary } from '../utils/cloudinaryUpload';
 import { createLogger } from '../utils/logger';
 
 const log = createLogger('ProductDetail');
@@ -55,16 +47,7 @@ const log = createLogger('ProductDetail');
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 import { emeraldGradients, buttonGradients } from '../design-system/tokens/gradients';
 import { emeraldShadows } from '../design-system/tokens/shadows';
-
-// Convert File to data URL (base64) - more reliable than blob URLs in production
-const fileToDataURL = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.readAsDataURL(file);
-  });
-};
+import { accentColors, lightTokens } from '../design-system';
 
 // Base URL for the Tierra Madre Studio app
 const STUDIO_BASE_URL = 'https://tierra-madre-studio.vercel.app';
@@ -76,18 +59,10 @@ export default function ProductDetail() {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const canEdit = useCanEdit();
-  const canUpload = useCanUpload();
-  const [showUploadZone, setShowUploadZone] = useState(false);
+  const isAdmin = useIsAdmin();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isEditing, setIsEditing] = useState(false);
-
-  // Image cropper state (kept for potential future use)
-  const [cropperOpen, setCropperOpen] = useState(false);
-  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
-  const [pendingFiles, setPendingFiles] = useState<{ file: File; isVideo: boolean }[]>([]);
-  const [currentCropIndex, setCurrentCropIndex] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [uploadCategory, _setUploadCategory] = useState<MediaItem['category']>('hero');
+  const [showDriveInfo, setShowDriveInfo] = useState(false);
 
   const { inventory, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems, isLoadingSheets } = useInventory();
 
@@ -168,118 +143,6 @@ export default function ProductDetail() {
       loadMedia();
     }
   }, [product, getMediaItems, updateMediaItems, displayName]);
-
-  // Upload files to Cloudinary (kept for potential cropper use)
-  const uploadFiles = useCallback(async (
-    files: { file: File | Blob; isVideo: boolean }[],
-    category: MediaItem['category']
-  ) => {
-    if (!product) return;
-
-    const newItems: MediaItem[] = [];
-
-    for (const { file, isVideo } of files) {
-      try {
-        // Convert Blob to File if needed
-        const fileToUpload = file instanceof File
-          ? file
-          : new File([file], `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
-
-        // Upload directly to Cloudinary (no size limits)
-        const mediaUrl = await uploadToCloudinary(fileToUpload, {
-          folder: `tierramadre/product-${product.item}`,
-        });
-
-        let thumbnailUrl: string | undefined;
-        if (isVideo && file instanceof File) {
-          thumbnailUrl = await extractVideoThumbnail(file, 1);
-        }
-
-        const newItem: MediaItem = {
-          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          url: mediaUrl,
-          type: isVideo ? 'video' : 'image',
-          thumbnailUrl,
-          category,
-          alt: `${displayName} - ${category}`,
-          order: mediaItems.length + newItems.length,
-        };
-
-        newItems.push(newItem);
-      } catch (error) {
-        log.error('Error uploading media:', error);
-        alert(error instanceof Error ? error.message : 'Error al subir el archivo');
-      }
-    }
-
-    if (newItems.length > 0) {
-      const updatedItems = [...mediaItems, ...newItems];
-      setMediaItems(updatedItems);
-      if (updateMediaItems) {
-        updateMediaItems(product.item, updatedItems);
-      }
-      // Also update legacy image field with first item
-      if (updatedItems.length > 0) {
-        const firstItem = updatedItems[0];
-        if (firstItem.type === 'video') {
-          updateVideo(product.item, firstItem.url, firstItem.thumbnailUrl || '');
-        } else {
-          updateImage(product.item, firstItem.url);
-        }
-      }
-    }
-
-    setShowUploadZone(false);
-  }, [product, mediaItems, updateMediaItems, updateImage, updateVideo, displayName]);
-
-  // Handle crop completion
-  const handleCropComplete = useCallback(async (croppedBlob: Blob) => {
-    // Replace the current image with cropped version
-    const updatedFiles = [...pendingFiles];
-    updatedFiles[currentCropIndex] = {
-      file: croppedBlob as unknown as File,
-      isVideo: false,
-    };
-    setPendingFiles(updatedFiles);
-
-    // Find next image to crop
-    let nextImageIndex = -1;
-    for (let i = currentCropIndex + 1; i < updatedFiles.length; i++) {
-      if (!updatedFiles[i].isVideo && updatedFiles[i].file instanceof File) {
-        nextImageIndex = i;
-        break;
-      }
-    }
-
-    if (nextImageIndex >= 0) {
-      // More images to crop - use data URL for reliability
-      try {
-        const dataUrl = await fileToDataURL(updatedFiles[nextImageIndex].file as File);
-        setImageToCrop(dataUrl);
-        setCurrentCropIndex(nextImageIndex);
-      } catch (error) {
-        log.error('Error reading next file:', error);
-        // Continue with upload even if one image fails
-        setCropperOpen(false);
-        setImageToCrop(null);
-        await uploadFiles(updatedFiles, uploadCategory);
-        setPendingFiles([]);
-      }
-    } else {
-      // All images cropped, upload all files
-      setCropperOpen(false);
-      setImageToCrop(null);
-      await uploadFiles(updatedFiles, uploadCategory);
-      setPendingFiles([]);
-    }
-  }, [pendingFiles, currentCropIndex, uploadCategory, uploadFiles]);
-
-  // Handle cropper close without completing
-  const handleCropperClose = useCallback(() => {
-    setCropperOpen(false);
-    setImageToCrop(null);
-    setPendingFiles([]);
-  }, []);
 
   // Handle media delete
   const handleMediaDelete = useCallback(async (itemId: string) => {
@@ -371,11 +234,11 @@ export default function ProductDetail() {
         </Typography>
         <Button
           variant="contained"
-          startIcon={<ArrowLeft size={18} />}
+          startIcon={<ChevronLeft size={18} />}
           onClick={() => navigate('/treasure')}
           sx={{
             background: buttonGradients.primary,
-            color: '#FFFFFF',
+            color: lightTokens.text.inverse,
           }}
         >
           Volver a Tesoros
@@ -389,65 +252,18 @@ export default function ProductDetail() {
   const weight = typeof product.peso === 'number' ? `${product.peso} ct` : product.metalType;
   const isAvailable = product.estado === 'DISPONIBLE';
 
+  // iOS HIG colors
+  const separatorColor = isLight ? 'rgba(60, 60, 67, 0.12)' : 'rgba(235, 235, 245, 0.12)';
+  const secondaryTextColor = isLight ? 'rgba(60, 60, 67, 0.6)' : 'rgba(235, 235, 245, 0.6)';
+
   return (
     <Box sx={{
       maxWidth: 1400,
       mx: 'auto',
-      px: { xs: 1.5, sm: 3, md: 4 },
-      py: { xs: 1.5, sm: 3 },
+      px: { xs: 0, sm: 3, md: 4 },
       pb: { xs: 'calc(12px + env(safe-area-inset-bottom))', sm: 3 }
     }}>
-      {/* Breadcrumbs - Compact */}
-      <Breadcrumbs sx={{ mb: 2, '& .MuiBreadcrumbs-li': { fontSize: '0.75rem' } }}>
-        <Link
-          component="button"
-          variant="body2"
-          onClick={() => navigate('/')}
-          sx={{
-            color: theme.palette.text.secondary,
-            textDecoration: 'none',
-            '&:hover': { color: emeraldCore.dark },
-          }}
-        >
-          Inicio
-        </Link>
-        <Link
-          component="button"
-          variant="body2"
-          onClick={() => navigate('/treasure')}
-          sx={{
-            color: theme.palette.text.secondary,
-            textDecoration: 'none',
-            '&:hover': { color: emeraldCore.dark },
-          }}
-        >
-          Tesoros
-        </Link>
-        <Typography variant="body2" color="text.primary">
-          {displayName}
-        </Typography>
-      </Breadcrumbs>
-
-      {/* Back Button - Compact */}
-      <Button
-        size="small"
-        startIcon={<ArrowLeft size={16} />}
-        onClick={() => navigate('/treasure')}
-        sx={{
-          mb: 2,
-          py: 0.5,
-          color: theme.palette.text.secondary,
-          fontSize: '0.8rem',
-          '&:hover': {
-            bgcolor: isLight ? alpha(emeraldCore.dark, 0.08) : alpha(emeraldCore.dark, 0.15),
-            color: emeraldCore.dark,
-          },
-        }}
-      >
-        Volver al Inventario
-      </Button>
-
-      <Grid container spacing={{ xs: 2, md: 4 }}>
+      <Grid container spacing={{ xs: 1.5, md: 3 }}>
         {/* Left Column - Image & Gallery */}
         <Grid item xs={12} md={6}>
           <Paper
@@ -461,53 +277,43 @@ export default function ProductDetail() {
               position: 'relative',
             }}
           >
-            {/* Status Badge and Edit Toggle */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 16,
-                right: 16,
-                zIndex: 10,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              {/* Edit Toggle - Only show for users with edit permission */}
-              {canEdit && (
-                <Tooltip title={isEditing ? 'Terminar edición' : 'Editar galería'}>
-                  <IconButton
-                    size="small"
-                    onClick={() => setIsEditing(!isEditing)}
-                    sx={{
-                      bgcolor: isEditing ? emeraldCore.dark : 'rgba(0,0,0,0.5)',
-                      color: '#fff',
-                      '&:hover': {
-                        bgcolor: isEditing ? emeraldCore.darker : 'rgba(0,0,0,0.7)',
-                      },
-                      backdropFilter: 'blur(4px)',
-                    }}
-                  >
-                    {isEditing ? <Check size={18} /> : <Edit2 size={18} />}
-                  </IconButton>
-                </Tooltip>
-              )}
-              <Chip
-                label={isAvailable ? 'Disponible' : 'Vendido'}
-                color={isAvailable ? 'success' : 'default'}
-                sx={{
-                  fontWeight: 600,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                }}
-              />
-            </Box>
+            {/* Edit Toggle - Only show for users with edit permission, top-left minimal */}
+            {canEdit && (
+              <Tooltip title={isEditing ? 'Terminar edición' : 'Editar galería'}>
+                <IconButton
+                  size="small"
+                  onClick={() => setIsEditing(!isEditing)}
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    left: 8,
+                    zIndex: 10,
+                    width: 28,
+                    height: 28,
+                    bgcolor: isEditing
+                      ? 'rgba(52, 199, 89, 0.9)'
+                      : 'rgba(0, 0, 0, 0.3)',
+                    color: '#FFFFFF',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    '&:hover': {
+                      bgcolor: isEditing
+                        ? 'rgba(52, 199, 89, 1)'
+                        : 'rgba(0, 0, 0, 0.5)',
+                    },
+                  }}
+                >
+                  {isEditing ? <Check size={14} /> : <Edit2 size={14} />}
+                </IconButton>
+              </Tooltip>
+            )}
 
             {/* Media Gallery Carousel */}
             {mediaItems.length > 0 ? (
               <MediaGallery
                 media={mediaItems}
                 productName={displayName}
-                onAddMedia={canUpload ? () => setShowUploadZone(true) : undefined}
+                onAddMedia={isAdmin ? () => setShowDriveInfo(true) : undefined}
                 isEditing={isEditing && canEdit}
               />
             ) : (
@@ -533,31 +339,31 @@ export default function ProductDetail() {
                 >
                   Sin imágenes
                 </Typography>
-                {canUpload && (
+                {isAdmin && (
                   <Button
-                    startIcon={<Upload size={18} />}
+                    startIcon={<FolderOpen size={18} />}
                     variant="contained"
-                    onClick={() => setShowUploadZone(true)}
+                    onClick={() => setShowDriveInfo(true)}
                     sx={{
                       mt: 2,
                       bgcolor: emeraldCore.dark,
                       '&:hover': { bgcolor: emeraldCore.darker },
                     }}
                   >
-                    Subir Imágenes
+                    Ver Carpeta en Drive
                   </Button>
                 )}
               </Box>
             )}
           </Paper>
 
-          {/* Upload Zone Toggle - Only show for users with upload permission */}
-          {mediaItems.length > 0 && canUpload && (
+          {/* Drive Folder Toggle - Admin only for verification and gallery management */}
+          {mediaItems.length > 0 && isAdmin && (
             <Button
               fullWidth
               variant="outlined"
-              startIcon={showUploadZone ? <ChevronUp size={18} /> : <Images size={18} />}
-              onClick={() => setShowUploadZone(!showUploadZone)}
+              startIcon={showDriveInfo ? <ChevronUp size={18} /> : <FolderOpen size={18} />}
+              onClick={() => setShowDriveInfo(!showDriveInfo)}
               sx={{
                 mt: 2,
                 borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
@@ -569,13 +375,13 @@ export default function ProductDetail() {
                 },
               }}
             >
-              {showUploadZone ? 'Ocultar zona de subida' : 'Agregar más imágenes'}
+              {showDriveInfo ? 'Ocultar carpeta de Drive' : 'Ver carpeta en Google Drive'}
             </Button>
           )}
 
-          {/* Collapsible Drive Folder Info - Only for users with upload permission */}
-          {canUpload && (
-            <Collapse in={showUploadZone}>
+          {/* Collapsible Drive Folder Info - Admin only */}
+          {isAdmin && (
+            <Collapse in={showDriveInfo}>
               <Box sx={{ mt: 2 }}>
                 <DriveFolderInfo
                   itemNumber={product.item}
@@ -590,328 +396,392 @@ export default function ProductDetail() {
 
         {/* Right Column - Product Details */}
         <Grid item xs={12} md={6}>
-          {/* Header */}
-          <Box sx={{ mb: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-              {product.isJewelry && <Crown size={20} color={goldAccent.primary} />}
-              <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 600 }}>
-                #{product.item}
+          <Box sx={{ px: { xs: 2, sm: 0 } }}>
+            {/* Header - iOS Large Title Style */}
+            <Box sx={{ mb: 2 }}>
+              {/* Product Name - Large Title (28pt for better density) */}
+              <Typography
+                sx={{
+                  fontSize: '28px',
+                  fontWeight: 700,
+                  color: theme.palette.text.primary,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.15,
+                  mb: 0.5,
+                }}
+              >
+                {displayName}
               </Typography>
-            </Box>
-            <Typography variant="h3" sx={{ fontWeight: 700, mb: 1, lineHeight: 1.2 }}>
-              {displayName}
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-              <Chip
-                label={product.isJewelry ? 'Joyería' : 'Gema'}
-                size="small"
-                sx={{ bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary }}
-              />
-              <Chip
-                label={quality.label}
-                size="small"
-                sx={{
-                  bgcolor: quality.bg,
-                  color: quality.color,
-                  border: `1px solid ${quality.border}`,
-                  fontWeight: 600,
-                }}
-              />
-              {product.cantidad > 1 && (
-                <Chip
-                  label={`Lote x${product.cantidad}`}
-                  size="small"
+
+              {/* Inline metadata - iOS secondary style with status */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mb: 1.5 }}>
+                {product.isJewelry && <Crown size={14} color={goldAccent.primary} />}
+                <Typography
+                  component="span"
                   sx={{
-                    bgcolor: alpha('#8B5CF6', 0.1),
-                    color: '#8B5CF6',  // Purple for lot indicator - unique accent
-                    fontWeight: 600,
-                  }}
-                />
-              )}
-            </Box>
-
-            {/* Price - Dual display (International + National) */}
-            <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />
-          </Box>
-
-          <Divider sx={{ my: { xs: 2, sm: 3 } }} />
-
-          {/* Specifications - Compact */}
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
-            Especificaciones
-          </Typography>
-
-          <Grid container spacing={1.5} sx={{ mb: 2 }}>
-            {/* Color */}
-            <Grid item xs={6}>
-              <Card
-                elevation={0}
-                sx={{
-                  bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.secondary,
-                  border: '1px solid',
-                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-                }}
-              >
-                <CardContent sx={{ p: { xs: 1.25, sm: 2 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-                    <Palette size={14} color={theme.palette.text.secondary} />
-                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontSize: '0.65rem' }}>
-                      Color
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                    {product.color}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Weight */}
-            <Grid item xs={6}>
-              <Card
-                elevation={0}
-                sx={{
-                  bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.secondary,
-                  border: '1px solid',
-                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-                }}
-              >
-                <CardContent sx={{ p: { xs: 1.25, sm: 2 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-                    <Gem size={14} color={theme.palette.text.secondary} />
-                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontSize: '0.65rem' }}>
-                      {product.isJewelry ? 'Metal' : 'Peso'}
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                    {weight}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Shape/Talla */}
-            {product.talla && product.talla !== '-' && (
-              <Grid item xs={6}>
-                <Card
-                  elevation={0}
-                  sx={{
-                    bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
-                    border: '1px solid',
-                    borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+                    fontSize: '13px',
+                    color: secondaryTextColor,
+                    fontWeight: 400,
                   }}
                 >
-                  <CardContent sx={{ p: { xs: 1.25, sm: 2 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-                      <Ruler size={14} color={theme.palette.text.secondary} />
-                      <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontSize: '0.65rem' }}>
-                        {product.isJewelry ? 'Talla' : 'Corte'}
-                      </Typography>
-                    </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                      {product.talla}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            )}
-
-            {/* Measurements */}
-            {product.medidas && product.medidas !== '-' && product.medidas !== 'Anillo' && (
-              <Grid item xs={6}>
-                <Card
-                  elevation={0}
-                  sx={{
-                    bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
-                    border: '1px solid',
-                    borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-                  }}
-                >
-                  <CardContent sx={{ p: { xs: 1.25, sm: 2 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-                      <Ruler size={14} color={theme.palette.text.secondary} />
-                      <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontSize: '0.65rem' }}>
-                        Medidas ({product.medidas})
-                      </Typography>
-                    </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                      {product.medidasValores
-                        ? product.medidasValores.replace(/\n/g, ' x ') + ' mm'
-                        : product.medidas + ' mm'}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            )}
-
-            {/* Quality */}
-            <Grid item xs={12}>
-              <Card
-                elevation={0}
-                sx={{
-                  bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.secondary,
-                  border: '1px solid',
-                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-                }}
-              >
-                <CardContent sx={{ p: { xs: 1.25, sm: 2 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-                    <Award size={14} color={theme.palette.text.secondary} />
-                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontSize: '0.65rem' }}>
-                      Calidad
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                    {product.calidad}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-
-          <Divider sx={{ my: { xs: 2, sm: 3 } }} />
-
-          {/* Additional Info - Compact */}
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
-            Información Adicional
-          </Typography>
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <MapPin size={18} color={surfacesLight.text.secondary} />
-              <Box>
-                <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block' }}>
-                  Ubicación
+                  {product.isJewelry ? 'Joyería' : 'Gema'}
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                <Typography component="span" sx={{ color: secondaryTextColor, fontSize: '13px', opacity: 0.5 }}>·</Typography>
+                <Typography
+                  component="span"
+                  sx={{
+                    fontSize: '13px',
+                    color: quality.color,
+                    fontWeight: 500,
+                  }}
+                >
+                  {quality.label}
+                </Typography>
+                <Typography component="span" sx={{ color: secondaryTextColor, fontSize: '13px', opacity: 0.5 }}>·</Typography>
+                <Typography
+                  component="span"
+                  sx={{
+                    fontSize: '13px',
+                    color: isAvailable ? 'rgb(52, 199, 89)' : secondaryTextColor,
+                    fontWeight: 500,
+                  }}
+                >
+                  {isAvailable ? 'Disponible' : 'Vendido'}
+                </Typography>
+                {product.cantidad > 1 && (
+                  <>
+                    <Typography component="span" sx={{ color: secondaryTextColor, fontSize: '13px', opacity: 0.5 }}>·</Typography>
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontSize: '13px',
+                        color: accentColors.purple.light,
+                        fontWeight: 500,
+                      }}
+                    >
+                      Lote x{product.cantidad}
+                    </Typography>
+                  </>
+                )}
+              </Box>
+
+              {/* Price - Dual display (International + National) */}
+              <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />
+            </Box>
+
+            {/* iOS Hairline Separator */}
+            <Box sx={{ height: '0.5px', bgcolor: separatorColor, my: 2 }} />
+
+            {/* Specifications - iOS List Style */}
+            <Typography
+              sx={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: secondaryTextColor,
+                letterSpacing: '0.02em',
+                textTransform: 'uppercase',
+                mb: 0.5,
+              }}
+            >
+              Especificaciones
+            </Typography>
+
+            {/* iOS List Rows - Compact */}
+            <Box sx={{ mb: 2 }}>
+              {/* Color Row */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  minHeight: 36,
+                  py: 0.75,
+                  borderBottom: `0.5px solid ${separatorColor}`,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Palette size={18} color={secondaryTextColor} />
+                  <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
+                    Color
+                  </Typography>
+                </Box>
+                <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary }}>
+                  {product.color}
+                </Typography>
+              </Box>
+
+              {/* Weight Row */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  minHeight: 36,
+                  py: 0.75,
+                  borderBottom: `0.5px solid ${separatorColor}`,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Gem size={18} color={secondaryTextColor} />
+                  <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
+                    {product.isJewelry ? 'Metal' : 'Peso'}
+                  </Typography>
+                </Box>
+                <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary }}>
+                  {weight}
+                </Typography>
+              </Box>
+
+              {/* Shape/Talla Row */}
+              {product.talla && product.talla !== '-' && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    minHeight: 36,
+                    py: 0.75,
+                    borderBottom: `0.5px solid ${separatorColor}`,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Ruler size={18} color={secondaryTextColor} />
+                    <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
+                      {product.isJewelry ? 'Talla' : 'Corte'}
+                    </Typography>
+                  </Box>
+                  <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary }}>
+                    {product.talla}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Measurements Row */}
+              {product.medidas && product.medidas !== '-' && product.medidas !== 'Anillo' && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    minHeight: 36,
+                    py: 0.75,
+                    borderBottom: `0.5px solid ${separatorColor}`,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Ruler size={18} color={secondaryTextColor} />
+                    <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
+                      Medidas
+                    </Typography>
+                  </Box>
+                  <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary, textAlign: 'right' }}>
+                    {product.medidasValores
+                      ? product.medidasValores.replace(/\n/g, ' × ') + ' mm'
+                      : product.medidas + ' mm'}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Quality Row */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  minHeight: 36,
+                  py: 0.75,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Award size={18} color={secondaryTextColor} />
+                  <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
+                    Calidad
+                  </Typography>
+                </Box>
+                <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary }}>
+                  {product.calidad}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* iOS Hairline Separator */}
+            <Box sx={{ height: '0.5px', bgcolor: separatorColor, my: 2 }} />
+
+            {/* Additional Info - iOS List Style */}
+            <Typography
+              sx={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: secondaryTextColor,
+                letterSpacing: '0.02em',
+                textTransform: 'uppercase',
+                mb: 0.5,
+              }}
+            >
+              Información Adicional
+            </Typography>
+
+            <Box sx={{ mb: 2 }}>
+              {/* Location Row */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  minHeight: 36,
+                  py: 0.75,
+                  borderBottom: `0.5px solid ${separatorColor}`,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <MapPin size={18} color={secondaryTextColor} />
+                  <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
+                    Ubicación
+                  </Typography>
+                </Box>
+                <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary }}>
                   {product.ubicacion}
                 </Typography>
               </Box>
-            </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <User size={18} color={surfacesLight.text.secondary} />
-              <Box>
-                <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block' }}>
-                  Asesor
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {/* Advisor Row */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  minHeight: 36,
+                  py: 0.75,
+                  borderBottom: `0.5px solid ${separatorColor}`,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <User size={18} color={secondaryTextColor} />
+                  <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
+                    Asesor
+                  </Typography>
+                </Box>
+                <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary }}>
                   {product.asesor}
                 </Typography>
               </Box>
-            </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Calendar size={18} color={surfacesLight.text.secondary} />
-              <Box>
-                <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block' }}>
-                  Fecha de Ingreso
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {/* Date Row */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  minHeight: 36,
+                  py: 0.75,
+                  borderBottom: `0.5px solid ${separatorColor}`,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Calendar size={18} color={secondaryTextColor} />
+                  <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
+                    Fecha de Ingreso
+                  </Typography>
+                </Box>
+                <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary }}>
                   {product.fechaIngreso}
                 </Typography>
               </Box>
-            </Box>
 
-            {/* QR Code Section */}
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mt: 1 }}>
-              <QrCode size={18} color={surfacesLight.text.secondary} style={{ marginTop: 4 }} />
-              <Box>
-                <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block', mb: 1 }}>
-                  Código QR del Producto
-                </Typography>
+              {/* QR Code Row - Compact */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  minHeight: 36,
+                  py: 1,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <QrCode size={18} color={secondaryTextColor} />
+                  <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
+                    Código QR
+                  </Typography>
+                </Box>
                 <Paper
                   elevation={0}
                   sx={{
-                    p: 1.5,
-                    borderRadius: 2,
+                    p: 1,
+                    borderRadius: 1.5,
                     bgcolor: '#FFFFFF',
-                    border: '1px solid',
-                    borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                     display: 'inline-block',
                   }}
                 >
                   <QRCodeSVG
                     value={`${STUDIO_BASE_URL}/product/${itemId}`}
-                    size={80}
+                    size={56}
                     level="H"
                     fgColor={emeraldCore.darkest}
                     bgColor="#FFFFFF"
                     style={{ display: 'block' }}
                   />
                 </Paper>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: theme.palette.text.secondary,
-                    display: 'block',
-                    mt: 0.5,
-                    fontSize: '0.65rem',
-                    maxWidth: 120,
-                    wordBreak: 'break-all',
-                  }}
-                >
-                  /product/{itemId}
-                </Typography>
               </Box>
             </Box>
-          </Box>
 
-          {/* CTA Buttons - Compact */}
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, mt: 3 }}>
-            <Button
-              variant="contained"
-              size="medium"
-              fullWidth
-              disabled={!isAvailable}
-              startIcon={<ShoppingCart size={18} />}
-              sx={{
-                background: isAvailable ? buttonGradients.primary : undefined,
-                color: '#FFFFFF',
-                py: { xs: 1, sm: 1.5 },
-                minHeight: { xs: 44, sm: 48 },
-                fontWeight: 600,
-                fontSize: { xs: '0.85rem', sm: '1rem' },
-                boxShadow: isAvailable ? emeraldShadows.primary : undefined,
-                '&:hover': {
-                  background: isAvailable ? emeraldGradients.deep : undefined,
-                  boxShadow: isAvailable ? emeraldShadows.lg : undefined,
-                },
-              }}
-            >
-              {isAvailable ? 'Añadir al Carrito' : 'Vendido'}
-            </Button>
-            <Button
-              variant="outlined"
-              size="medium"
-              sx={{
-                borderColor: emeraldCore.dark,
-                color: emeraldCore.dark,
-                py: { xs: 1, sm: 1.5 },
-                minHeight: { xs: 44, sm: 48 },
-                fontWeight: 600,
-                fontSize: { xs: '0.85rem', sm: '1rem' },
-                '&:hover': {
-                  borderColor: emeraldCore.darker,
-                  bgcolor: alpha(emeraldCore.dark, 0.08),
-                },
-              }}
-            >
-              Contactar
-            </Button>
+            {/* CTA Buttons - iOS Style Compact */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 1 }}>
+              {/* Primary CTA - Full width filled */}
+              <Button
+                variant="contained"
+                fullWidth
+                disabled={!isAvailable}
+                startIcon={<ShoppingCart size={18} />}
+                sx={{
+                  background: isAvailable ? buttonGradients.primary : undefined,
+                  color: '#FFFFFF',
+                  py: 1.5,
+                  minHeight: 44,
+                  fontWeight: 600,
+                  fontSize: '15px',
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  boxShadow: isAvailable ? emeraldShadows.primary : undefined,
+                  '&:hover': {
+                    background: isAvailable ? emeraldGradients.deep : undefined,
+                    boxShadow: isAvailable ? emeraldShadows.lg : undefined,
+                  },
+                  '&:active': {
+                    transform: 'scale(0.98)',
+                  },
+                }}
+              >
+                {isAvailable ? 'Añadir al Carrito' : 'Vendido'}
+              </Button>
+
+              {/* Secondary CTA - Text only, iOS style */}
+              <Button
+                variant="text"
+                fullWidth
+                sx={{
+                  color: emeraldCore.dark,
+                  py: 1,
+                  minHeight: 36,
+                  fontWeight: 600,
+                  fontSize: '15px',
+                  textTransform: 'none',
+                  '&:hover': {
+                    bgcolor: 'transparent',
+                    opacity: 0.7,
+                  },
+                  '&:active': {
+                    opacity: 0.5,
+                  },
+                }}
+              >
+                Contactar Asesor
+              </Button>
+            </Box>
           </Box>
         </Grid>
       </Grid>
 
-      {/* Image Cropper Dialog */}
-      {imageToCrop && (
-        <ImageCropper
-          open={cropperOpen}
-          imageSrc={imageToCrop}
-          onClose={handleCropperClose}
-          onCropComplete={handleCropComplete}
-        />
-      )}
     </Box>
   );
 }

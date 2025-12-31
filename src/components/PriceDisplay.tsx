@@ -3,12 +3,11 @@
  * Muestra precios: Price y Comunidad TM
  *
  * Diseñado por Aria - Capitana del Concilio de Creación
+ * Refactored: Uses design system tokens for iOS HIG compliance
  */
 import { Box, Stack, Typography, useTheme } from '@mui/material';
-import FlagIcon from '@mui/icons-material/Flag';
-import PublicIcon from '@mui/icons-material/Public';
 // Design System Tokens
-import { emeraldCore } from '../design-system/tokens/colors';
+import { brand, iosSemanticColors, iosTypographyScale, typography } from '../design-system';
 
 export interface PriceDisplayProps {
   /** Precio Comunidad TM (con descuento) */
@@ -56,15 +55,18 @@ export const PriceDisplay = ({
   const comunidadPrice = price;
   const regularPrice = precioInternacional;
 
-  // Modo compacto para tarjetas - solo precio (Comunidad TM sin label)
+  // Modo compacto para tarjetas - iOS HIG body typography (17px)
   if (compact) {
     return (
       <Typography
         variant="body2"
         sx={{
-          fontWeight: 700,
-          color: emeraldCore.dark,
-          fontFamily: 'monospace',
+          fontWeight: typography.weight.semibold,
+          color: brand.emerald[600],
+          fontFamily: typography.fontFamily.mono,
+          fontSize: iosTypographyScale.body,
+          letterSpacing: typography.letterSpacing.tight,
+          fontFeatureSettings: '"tnum"',
         }}
       >
         {formatCompact(comunidadPrice)}
@@ -72,40 +74,39 @@ export const PriceDisplay = ({
     );
   }
 
-  // Modo completo para vista de detalle - ambos precios
+  // iOS HIG-inspired: weight & opacity hierarchy, clean layout
+  const isDark = theme.palette.mode === 'dark';
+  const mode = isDark ? 'dark' : 'light';
+
+  // iOS semantic colors from design system
+  const labelColor = iosSemanticColors.secondaryLabel[mode];
+  const primaryTextColor = iosSemanticColors.label[mode];
+  const secondaryTextColor = iosSemanticColors.secondaryLabel[mode];
+
   return (
-    <Stack spacing={1.5} sx={{ width: '100%' }}>
-      {/* Precio regular (Price) - mostrar si disponible */}
+    <Stack spacing={0.5} sx={{ width: '100%' }}>
+      {/* Price - Primary (iOS Title style: 28pt bold for compact density) */}
       {regularPrice && regularPrice > 0 && (
-        <Box
-          sx={{
-            p: 2,
-            bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : theme.palette.grey[50],
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : theme.palette.grey[200],
-          }}
-        >
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
-            <PublicIcon fontSize="small" sx={{ color: theme.palette.text.secondary }} />
-            <Typography
-              variant="caption"
-              sx={{
-                color: theme.palette.text.secondary,
-                fontWeight: 600,
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-              }}
-            >
-              Price
-            </Typography>
-          </Stack>
+        <Box>
           <Typography
-            variant="h5"
             sx={{
-              fontWeight: 700,
-              color: theme.palette.text.primary,
-              fontFamily: 'monospace',
+              fontSize: '13px',
+              fontWeight: typography.weight.normal,
+              color: labelColor,
+              letterSpacing: typography.letterSpacing.tight,
+              mb: 0.25,
+            }}
+          >
+            Price
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '26px',
+              fontWeight: typography.weight.bold,
+              color: primaryTextColor,
+              letterSpacing: typography.letterSpacing.tighter,
+              lineHeight: 1.1,
+              fontFeatureSettings: '"tnum"',
             }}
           >
             {formatCurrency(regularPrice, currency)}
@@ -113,54 +114,27 @@ export const PriceDisplay = ({
         </Box>
       )}
 
-      {/* Precio Comunidad TM - siempre visible */}
-      <Box
-        sx={{
-          p: 2,
-          bgcolor: emeraldCore.lightest,
-          borderRadius: 2,
-          border: '2px solid',
-          borderColor: emeraldCore.primary,
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Background decorativo */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: -20,
-            right: -20,
-            width: 100,
-            height: 100,
-            bgcolor: emeraldCore.primary,
-            opacity: 0.1,
-            borderRadius: '50%',
-          }}
-        />
-
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
-          <FlagIcon fontSize="small" sx={{ color: emeraldCore.dark }} />
-          <Typography
-            variant="caption"
-            sx={{
-              color: emeraldCore.darker,
-              fontWeight: 600,
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase',
-            }}
-          >
-            Comunidad TM
-          </Typography>
-        </Stack>
+      {/* Comunidad TM - Secondary (iOS 15pt, 60% opacity) */}
+      <Box>
         <Typography
-          variant="h4"
+          component="span"
           sx={{
-            fontWeight: 700,
-            color: emeraldCore.darker,
-            fontFamily: 'monospace',
-            position: 'relative',
-            zIndex: 1,
+            fontSize: '14px',
+            fontWeight: typography.weight.normal,
+            color: secondaryTextColor,
+            letterSpacing: typography.letterSpacing.tight,
+          }}
+        >
+          Comunidad TM{' '}
+        </Typography>
+        <Typography
+          component="span"
+          sx={{
+            fontSize: '14px',
+            fontWeight: typography.weight.semibold,
+            color: brand.emerald[600],
+            letterSpacing: typography.letterSpacing.tight,
+            fontFeatureSettings: '"tnum"',
           }}
         >
           {formatCurrency(comunidadPrice, currency)}
