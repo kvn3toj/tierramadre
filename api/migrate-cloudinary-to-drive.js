@@ -155,12 +155,24 @@ async function uploadToDrive(drive, folderId, buffer, fileName, mimeType, shared
 async function checkFileExists(drive, folderId, fileName) {
   const response = await drive.files.list({
     q: `name='${fileName}' and '${folderId}' in parents and trashed=false`,
-    fields: 'files(id, name)',
+    fields: 'files(id, name, size)',
     supportsAllDrives: true,
     includeItemsFromAllDrives: true,
   });
 
-  return response.data.files?.length > 0;
+  const file = response.data.files?.[0];
+  if (!file) return { exists: false, fileId: null, isEmpty: false };
+
+  // Check if file is empty (size 0 or undefined)
+  const isEmpty = !file.size || parseInt(file.size) === 0;
+  return { exists: true, fileId: file.id, isEmpty };
+}
+
+async function deleteFile(drive, fileId) {
+  await drive.files.delete({
+    fileId,
+    supportsAllDrives: true,
+  });
 }
 
 export default async function handler(req, res) {
@@ -244,13 +256,29 @@ export default async function handler(req, res) {
         const fileName = `hero.${extension}`;
 
         // Check if already migrated
-        const exists = await checkFileExists(drive, productFolder.id, fileName);
-        if (exists) {
-          results.skipped.push({
-            itemNumber: item.itemNumber,
-            reason: 'File already exists',
-          });
-          continue;
+        const forceReplace = req.query.forceReplace === 'true';
+        const fileStatus = await checkFileExists(drive, productFolder.id, fileName);
+
+        if (fileStatus.exists) {
+          // If file exists but is empty, delete it and re-upload
+          if (fileStatus.isEmpty && forceReplace) {
+            console.log(`Deleting empty file for item ${item.itemNumber}...`);
+            await deleteFile(drive, fileStatus.fileId);
+          } else if (!fileStatus.isEmpty) {
+            // File exists and has content, skip
+            results.skipped.push({
+              itemNumber: item.itemNumber,
+              reason: 'File already exists with content',
+            });
+            continue;
+          } else {
+            // File is empty but forceReplace not set
+            results.skipped.push({
+              itemNumber: item.itemNumber,
+              reason: 'File exists but is empty (use forceReplace=true to fix)',
+            });
+            continue;
+          }
         }
 
         // Download from Cloudinary
