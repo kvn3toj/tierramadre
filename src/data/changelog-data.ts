@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2025-12-31T07:32:44.888Z
+ * Generated at: 2025-12-31T08:24:08.700Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2025-12-31T07:32:44.888Z",
+  "generatedAt": "2025-12-31T08:24:08.700Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "1 Dic, 2025",
@@ -56,19 +56,19 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "ee38db4",
-    "lastCommitDate": "2025-12-31 02:32:40 -0500"
+    "lastCommitHash": "c286ef7",
+    "lastCommitDate": "2025-12-31 03:24:02 -0500"
   },
   "stats": {
-    "totalCommits": 274,
-    "totalAdditions": 217860,
-    "totalDeletions": 53583,
-    "totalFilesChanged": 1507,
-    "netLines": 164277
+    "totalCommits": 276,
+    "totalAdditions": 221850,
+    "totalDeletions": 57799,
+    "totalFilesChanged": 1599,
+    "netLines": 164051
   },
   "categoryStats": {
+    "other": 97,
     "bugfix": 83,
-    "other": 95,
     "auth": 9,
     "cleanup": 23,
     "ux": 51,
@@ -76,30 +76,38 @@ export const changelogData: ChangelogData = {
     "analytics": 3
   },
   "typeStats": {
+    "feat": 115,
+    "refactor": 27,
     "fix": 108,
-    "feat": 114,
     "other": 12,
     "chore": 9,
-    "refactor": 26,
     "style": 3,
     "docs": 2
   },
   "mostChangedFiles": [
     {
       "file": "src/components/InventoryBrowser.tsx",
-      "count": 43
+      "count": 44
     },
     {
       "file": "src/components/ProductDetail.tsx",
-      "count": 39
+      "count": 40
     },
     {
       "file": "src/App.tsx",
-      "count": 26
+      "count": 27
+    },
+    {
+      "file": "api/get-inventory-sheets.js",
+      "count": 18
     },
     {
       "file": "src/components/ios/IOSMoreSheet.tsx",
       "count": 18
+    },
+    {
+      "file": "src/hooks/useInventory.ts",
+      "count": 17
     },
     {
       "file": "vercel.json",
@@ -110,26 +118,18 @@ export const changelogData: ChangelogData = {
       "count": 17
     },
     {
-      "file": "api/get-inventory-sheets.js",
-      "count": 17
-    },
-    {
       "file": "src/components/ios/IOSTabBar.tsx",
       "count": 16
     },
     {
-      "file": "src/hooks/useInventory.ts",
-      "count": 16
-    },
-    {
-      "file": "src/components/inventory/VirtualGrid.tsx",
+      "file": "package.json",
       "count": 14
     }
   ],
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 266
+      "commits": 268
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,37 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "c286ef7",
+      "message": "Enhanced feedback system with Steve's improvements",
+      "fullMessage": "feat: Enhanced feedback system with Steve's improvements",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2025-12-31",
+      "type": "feat",
+      "category": "other",
+      "additions": 927,
+      "deletions": 46,
+      "filesChanged": 6
+    },
+    {
+      "hash": "952d3be",
+      "message": "Complete inventory → treasure renaming across entire codebase",
+      "fullMessage": "refactor: Complete inventory → treasure renaming across entire codebase",
+      "author": "Kvn3Toj",
+      "relativeTime": "40 minutes ago",
+      "date": "2025-12-31",
+      "type": "refactor",
+      "category": "other",
+      "additions": 3063,
+      "deletions": 4170,
+      "filesChanged": 86
+    },
+    {
       "hash": "ee38db4",
       "message": "Update vercel.json for renamed inventory->treasure APIs and add feedback APIs",
       "fullMessage": "fix: Update vercel.json for renamed inventory->treasure APIs and add feedback APIs",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "51 minutes ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "bugfix",
@@ -155,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Enhanced feedback system with 29-column schema",
       "fullMessage": "feat: Enhanced feedback system with 29-column schema",
       "author": "Kvn3Toj",
-      "relativeTime": "18 minutes ago",
+      "relativeTime": "69 minutes ago",
       "date": "2025-12-31",
       "type": "feat",
       "category": "other",
@@ -168,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Add OAuth-based migration for Google Drive upload",
       "fullMessage": "feat: Add OAuth-based migration for Google Drive upload",
       "author": "Kvn3Toj",
-      "relativeTime": "37 minutes ago",
+      "relativeTime": "88 minutes ago",
       "date": "2025-12-31",
       "type": "feat",
       "category": "auth",
@@ -181,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Add User Engagement Heatmap to Admin Analytics Dashboard",
       "fullMessage": "feat: Add User Engagement Heatmap to Admin Analytics Dashboard",
       "author": "Kvn3Toj",
-      "relativeTime": "37 minutes ago",
+      "relativeTime": "89 minutes ago",
       "date": "2025-12-31",
       "type": "feat",
       "category": "auth",
@@ -194,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Use exact prefix match for product folder search",
       "fullMessage": "fix: Use exact prefix match for product folder search",
       "author": "Kvn3Toj",
-      "relativeTime": "52 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "bugfix",
@@ -207,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "debug: Add shared drive detection to folder check",
       "fullMessage": "debug: Add shared drive detection to folder check",
       "author": "Kvn3Toj",
-      "relativeTime": "62 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2025-12-31",
       "type": "other",
       "category": "bugfix",
@@ -220,7 +246,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove invalid driveId from requestBody",
       "fullMessage": "fix: Remove invalid driveId from requestBody",
       "author": "Kvn3Toj",
-      "relativeTime": "65 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "cleanup",
@@ -233,7 +259,7 @@ export const changelogData: ChangelogData = {
       "message": "Add forceReplace to delete empty files and re-upload",
       "fullMessage": "fix: Add forceReplace to delete empty files and re-upload",
       "author": "Kvn3Toj",
-      "relativeTime": "74 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "cleanup",
@@ -246,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog data",
       "fullMessage": "chore: Update changelog data",
       "author": "Kvn3Toj",
-      "relativeTime": "79 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2025-12-31",
       "type": "chore",
       "category": "other",
@@ -259,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Add driveId parameter for Shared Drive file creation",
       "fullMessage": "fix: Add driveId parameter for Shared Drive file creation",
       "author": "Kvn3Toj",
-      "relativeTime": "79 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "bugfix",
@@ -272,7 +298,7 @@ export const changelogData: ChangelogData = {
       "message": "Add admin feedback system with screenshot capture",
       "fullMessage": "feat: Add admin feedback system with screenshot capture",
       "author": "Kvn3Toj",
-      "relativeTime": "80 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2025-12-31",
       "type": "feat",
       "category": "auth",
@@ -285,7 +311,7 @@ export const changelogData: ChangelogData = {
       "message": "Use direct upload for Shared Drive migration",
       "fullMessage": "fix: Use direct upload for Shared Drive migration",
       "author": "Kvn3Toj",
-      "relativeTime": "82 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "bugfix",
@@ -311,7 +337,7 @@ export const changelogData: ChangelogData = {
       "message": "Add admin changelog page with Mermaid diagrams",
       "fullMessage": "feat: Add admin changelog page with Mermaid diagrams",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "3 hours ago",
       "date": "2025-12-31",
       "type": "feat",
       "category": "auth",
@@ -324,7 +350,7 @@ export const changelogData: ChangelogData = {
       "message": "Gamification system, tracking context & UI improvements",
       "fullMessage": "feat: Gamification system, tracking context & UI improvements",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "3 hours ago",
       "date": "2025-12-31",
       "type": "feat",
       "category": "ux",
@@ -337,7 +363,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Service Worker cleanup to prevent stale cache",
       "fullMessage": "fix: Add Service Worker cleanup to prevent stale cache",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "3 hours ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "performance",
@@ -350,7 +376,7 @@ export const changelogData: ChangelogData = {
       "message": "Add analytics tracking hook & remove deprecated PinLock",
       "fullMessage": "feat: Add analytics tracking hook & remove deprecated PinLock",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "4 hours ago",
       "date": "2025-12-30",
       "type": "feat",
       "category": "analytics",
@@ -363,7 +389,7 @@ export const changelogData: ChangelogData = {
       "message": "Admin permissions, guest benefits teaser & codebase cleanup",
       "fullMessage": "feat: Admin permissions, guest benefits teaser & codebase cleanup",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "4 hours ago",
       "date": "2025-12-30",
       "type": "feat",
       "category": "auth",
@@ -376,7 +402,7 @@ export const changelogData: ChangelogData = {
       "message": "Phase 3 cross-device validation & iOS HIG fixes",
       "fullMessage": "feat: Phase 3 cross-device validation & iOS HIG fixes",
       "author": "Kvn3Toj",
-      "relativeTime": "4 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2025-12-30",
       "type": "feat",
       "category": "ux",
@@ -389,7 +415,7 @@ export const changelogData: ChangelogData = {
       "message": "Aggressive cache busting for all SPA routes",
       "fullMessage": "fix: Aggressive cache busting for all SPA routes",
       "author": "Kvn3Toj",
-      "relativeTime": "4 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2025-12-30",
       "type": "fix",
       "category": "performance",
@@ -402,7 +428,7 @@ export const changelogData: ChangelogData = {
       "message": "iOS HIG redesign with compact layout",
       "fullMessage": "feat(ProductDetail): iOS HIG redesign with compact layout",
       "author": "Kvn3Toj",
-      "relativeTime": "5 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2025-12-30",
       "type": "feat",
       "category": "ux",
@@ -441,7 +467,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove unused TypeScript variables",
       "fullMessage": "fix: Remove unused TypeScript variables",
       "author": "Kvn3Toj",
-      "relativeTime": "27 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2025-12-29",
       "type": "fix",
       "category": "cleanup",
@@ -454,7 +480,7 @@ export const changelogData: ChangelogData = {
       "message": "VirtualGrid react-window calc() compatibility",
       "fullMessage": "fix: VirtualGrid react-window calc() compatibility",
       "author": "Kvn3Toj",
-      "relativeTime": "27 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2025-12-29",
       "type": "fix",
       "category": "bugfix",
@@ -467,7 +493,7 @@ export const changelogData: ChangelogData = {
       "message": "refine: Subtle price chip in recently viewed carousel",
       "fullMessage": "refine: Subtle price chip in recently viewed carousel",
       "author": "Kvn3Toj",
-      "relativeTime": "27 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2025-12-29",
       "type": "other",
       "category": "other",
@@ -480,7 +506,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve iOS HIG scroll UX & layout bounds",
       "fullMessage": "fix: Improve iOS HIG scroll UX & layout bounds",
       "author": "Kvn3Toj",
-      "relativeTime": "27 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2025-12-29",
       "type": "fix",
       "category": "ux",
@@ -493,7 +519,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve active tab indicator with premium pill glow",
       "fullMessage": "feat: Improve active tab indicator with premium pill glow",
       "author": "Kvn3Toj",
-      "relativeTime": "27 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "other",
@@ -506,7 +532,7 @@ export const changelogData: ChangelogData = {
       "message": "Apple HIG compliant navigation UX + comparison improvements",
       "fullMessage": "feat: Apple HIG compliant navigation UX + comparison improvements",
       "author": "Kvn3Toj",
-      "relativeTime": "28 hours ago",
+      "relativeTime": "29 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "ux",
@@ -545,7 +571,7 @@ export const changelogData: ChangelogData = {
       "message": "Premium splash animation & refined comparison tool",
       "fullMessage": "feat: Premium splash animation & refined comparison tool",
       "author": "Kvn3Toj",
-      "relativeTime": "29 hours ago",
+      "relativeTime": "30 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "other",
@@ -558,7 +584,7 @@ export const changelogData: ChangelogData = {
       "message": "Replace hardcoded Tailwind colors with brand tokens",
       "fullMessage": "refactor: Replace hardcoded Tailwind colors with brand tokens",
       "author": "Kvn3Toj",
-      "relativeTime": "29 hours ago",
+      "relativeTime": "30 hours ago",
       "date": "2025-12-29",
       "type": "refactor",
       "category": "other",
@@ -571,7 +597,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve onboarding UX with accessibility and polish",
       "fullMessage": "feat: Improve onboarding UX with accessibility and polish",
       "author": "Kvn3Toj",
-      "relativeTime": "29 hours ago",
+      "relativeTime": "30 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "ux",
@@ -584,7 +610,7 @@ export const changelogData: ChangelogData = {
       "message": "Consolidate logging and color tokens across codebase",
       "fullMessage": "refactor: Consolidate logging and color tokens across codebase",
       "author": "Kvn3Toj",
-      "relativeTime": "31 hours ago",
+      "relativeTime": "32 hours ago",
       "date": "2025-12-29",
       "type": "refactor",
       "category": "other",
@@ -597,7 +623,7 @@ export const changelogData: ChangelogData = {
       "message": "Premium splash animation with iOS/Android best practices",
       "fullMessage": "feat: Premium splash animation with iOS/Android best practices",
       "author": "Kvn3Toj",
-      "relativeTime": "31 hours ago",
+      "relativeTime": "32 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "ux",
@@ -610,7 +636,7 @@ export const changelogData: ChangelogData = {
       "message": "Restore original splash design with smooth fade transition",
       "fullMessage": "fix: Restore original splash design with smooth fade transition",
       "author": "Kvn3Toj",
-      "relativeTime": "31 hours ago",
+      "relativeTime": "32 hours ago",
       "date": "2025-12-29",
       "type": "fix",
       "category": "ux",
@@ -649,7 +675,7 @@ export const changelogData: ChangelogData = {
       "message": "Add splash screen animation and fix PIN keyboard",
       "fullMessage": "feat: Add splash screen animation and fix PIN keyboard",
       "author": "Kvn3Toj",
-      "relativeTime": "32 hours ago",
+      "relativeTime": "33 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "bugfix",
@@ -662,7 +688,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Vercel deployment rules to prevent duplicate projects",
       "fullMessage": "docs: Add Vercel deployment rules to prevent duplicate projects",
       "author": "Kvn3Toj",
-      "relativeTime": "32 hours ago",
+      "relativeTime": "33 hours ago",
       "date": "2025-12-29",
       "type": "docs",
       "category": "other",
@@ -701,7 +727,7 @@ export const changelogData: ChangelogData = {
       "message": "Redesign mobile filters with modern pill-based UI",
       "fullMessage": "feat: Redesign mobile filters with modern pill-based UI",
       "author": "Kvn3Toj",
-      "relativeTime": "33 hours ago",
+      "relativeTime": "34 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "ux",
@@ -714,7 +740,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve comparison bar UX - floating design above nav",
       "fullMessage": "fix: Improve comparison bar UX - floating design above nav",
       "author": "Kvn3Toj",
-      "relativeTime": "33 hours ago",
+      "relativeTime": "34 hours ago",
       "date": "2025-12-29",
       "type": "fix",
       "category": "ux",
@@ -727,7 +753,7 @@ export const changelogData: ChangelogData = {
       "message": "Rename inventory to treasure across codebase",
       "fullMessage": "refactor: Rename inventory to treasure across codebase",
       "author": "Kvn3Toj",
-      "relativeTime": "33 hours ago",
+      "relativeTime": "34 hours ago",
       "date": "2025-12-29",
       "type": "refactor",
       "category": "other",
@@ -740,7 +766,7 @@ export const changelogData: ChangelogData = {
       "message": "Compact stats row to single line with minimal favorites indicator",
       "fullMessage": "fix: Compact stats row to single line with minimal favorites indicator",
       "author": "Kvn3Toj",
-      "relativeTime": "33 hours ago",
+      "relativeTime": "34 hours ago",
       "date": "2025-12-29",
       "type": "fix",
       "category": "bugfix",
@@ -753,7 +779,7 @@ export const changelogData: ChangelogData = {
       "message": "Inline search filters and remove trust score system",
       "fullMessage": "feat: Inline search filters and remove trust score system",
       "author": "Kvn3Toj",
-      "relativeTime": "34 hours ago",
+      "relativeTime": "35 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "cleanup",
@@ -766,7 +792,7 @@ export const changelogData: ChangelogData = {
       "message": "UI improvements - search-first hero, compact widgets, fixed grid",
       "fullMessage": "feat: UI improvements - search-first hero, compact widgets, fixed grid",
       "author": "Kvn3Toj",
-      "relativeTime": "34 hours ago",
+      "relativeTime": "35 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "ux",
@@ -779,7 +805,7 @@ export const changelogData: ChangelogData = {
       "message": "UI improvements - compact cards, simplified pricing, better layout",
       "fullMessage": "feat: UI improvements - compact cards, simplified pricing, better layout",
       "author": "Kvn3Toj",
-      "relativeTime": "35 hours ago",
+      "relativeTime": "2 days ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "ux",
@@ -805,7 +831,7 @@ export const changelogData: ChangelogData = {
       "message": "Optimize responsive layout for 720x1440 devices",
       "fullMessage": "fix: Optimize responsive layout for 720x1440 devices",
       "author": "kvn3toj",
-      "relativeTime": "2 days ago",
+      "relativeTime": "3 days ago",
       "date": "2025-12-28",
       "type": "fix",
       "category": "ux",
