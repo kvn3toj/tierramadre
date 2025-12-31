@@ -7,8 +7,8 @@
 
 import { google } from 'googleapis';
 
-// Same sheet as submit-feedback
-const FEEDBACK_SPREADSHEET_ID = process.env.FEEDBACK_SPREADSHEET_ID || '1Nl2gxfZzWy4lUv_C-9xTt90MzFDIgHLvWtWtDRNzJaU';
+// Same sheet as submit-feedback - trim to remove any trailing whitespace/newlines from env var
+const FEEDBACK_SPREADSHEET_ID = (process.env.FEEDBACK_SPREADSHEET_ID || '1Nl2gxfZzWy4lUv_C-9xTt90MzFDIgHLvWtWtDRNzJaU').trim();
 const FEEDBACK_SHEET_NAME = 'Feedback';
 const DASHBOARD_SHEET_NAME = 'Dashboard';
 

@@ -7,7 +7,8 @@
 
 import { google } from 'googleapis';
 
-const FEEDBACK_SPREADSHEET_ID = process.env.FEEDBACK_SPREADSHEET_ID || '1Nl2gxfZzWy4lUv_C-9xTt90MzFDIgHLvWtWtDRNzJaU';
+// Trim to remove any trailing whitespace/newlines from env var
+const FEEDBACK_SPREADSHEET_ID = (process.env.FEEDBACK_SPREADSHEET_ID || '1Nl2gxfZzWy4lUv_C-9xTt90MzFDIgHLvWtWtDRNzJaU').trim();
 const FEEDBACK_SHEET_NAME = 'Feedback';
 
 // Column indices (0-indexed, matching FEEDBACK_HEADERS in submit-feedback.js)

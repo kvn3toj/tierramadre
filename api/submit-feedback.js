@@ -14,7 +14,8 @@ import { google } from 'googleapis';
 import { v4 as uuidv4 } from 'uuid';
 
 // Dedicated Feedback Sheet - SEPARATE from inventory to avoid overload
-const FEEDBACK_SPREADSHEET_ID = process.env.FEEDBACK_SPREADSHEET_ID || '1Nl2gxfZzWy4lUv_C-9xTt90MzFDIgHLvWtWtDRNzJaU';
+// Trim to remove any trailing whitespace/newlines from env var
+const FEEDBACK_SPREADSHEET_ID = (process.env.FEEDBACK_SPREADSHEET_ID || '1Nl2gxfZzWy4lUv_C-9xTt90MzFDIgHLvWtWtDRNzJaU').trim();
 const FEEDBACK_SHEET_NAME = 'Feedback';
 const DASHBOARD_SHEET_NAME = 'Dashboard';
 
