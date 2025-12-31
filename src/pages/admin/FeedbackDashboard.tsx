@@ -49,6 +49,7 @@ const STATUS_CONFIG: Record<FeedbackStatus, { label: string; color: string }> = 
   in_progress: { label: 'En Progreso', color: '#ff9800' },
   resolved: { label: 'Resuelto', color: '#4caf50' },
   wontfix: { label: 'No se hará', color: '#9e9e9e' },
+  duplicate: { label: 'Duplicado', color: '#607d8b' },
 };
 
 const formatDate = (isoString: string) => {

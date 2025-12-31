@@ -1,13 +1,29 @@
 /**
- * Vercel Serverless Function - Update Feedback Status
+ * Vercel Serverless Function - Update Feedback (Enhanced)
  *
- * Updates the status and notes of a feedback entry.
+ * Updates feedback entries with: status, assignee, notes, tags, and related IDs.
+ * Automatically calculates resolution time when status changes to resolved.
  */
 
 import { google } from 'googleapis';
 
 const FEEDBACK_SPREADSHEET_ID = process.env.FEEDBACK_SPREADSHEET_ID || '1Nl2gxfZzWy4lUv_C-9xTt90MzFDIgHLvWtWtDRNzJaU';
 const FEEDBACK_SHEET_NAME = 'Feedback';
+
+// Column indices (0-indexed, matching FEEDBACK_HEADERS in submit-feedback.js)
+const COLUMN_MAP = {
+  timestamp: 0,      // A
+  id: 1,             // B
+  status: 23,        // X
+  assignee: 24,      // Y
+  resolvedAt: 25,    // Z
+  resolutionTime: 26, // AA
+  notes: 27,         // AB
+  relatedIds: 28,    // AC
+  tags: 11,          // L
+  priority: 9,       // J
+  severity: 10,      // K
+};
 
 /**
  * Initialize Google Sheets API with service account credentials
@@ -28,6 +44,19 @@ function getSheetsClient() {
     console.error('Error initializing Sheets client:', error);
     throw new Error('Failed to initialize Google Sheets client');
   }
+}
+
+/**
+ * Convert column index to column letter (0=A, 1=B, ..., 26=AA, etc.)
+ */
+function columnToLetter(col) {
+  let letter = '';
+  let temp = col;
+  while (temp >= 0) {
+    letter = String.fromCharCode((temp % 26) + 65) + letter;
+    temp = Math.floor(temp / 26) - 1;
+  }
+  return letter;
 }
 
 /**
@@ -54,7 +83,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { id, status, notes } = req.body;
+    const {
+      id,
+      status,
+      assignee,
+      notes,
+      tags,
+      priority,
+      severity,
+      relatedIds,
+    } = req.body;
 
     if (!id) {
       return res.status(400).json({
@@ -67,7 +105,7 @@ export default async function handler(req, res) {
     // Get all rows to find the one with matching ID
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: FEEDBACK_SPREADSHEET_ID,
-      range: `${FEEDBACK_SHEET_NAME}!A:N`,
+      range: `${FEEDBACK_SHEET_NAME}!A:AC`,
     });
 
     const rows = response.data.values;
@@ -77,17 +115,13 @@ export default async function handler(req, res) {
       });
     }
 
-    // Find the row with matching ID (column B = index 1)
-    const headers = rows[0];
-    const idIndex = headers.indexOf('id');
-    const statusIndex = headers.indexOf('status');
-    const resolvedAtIndex = headers.indexOf('resolvedAt');
-    const notesIndex = headers.indexOf('notes');
-
+    // Find the row with matching ID
     let targetRowIndex = -1;
+    let existingRow = null;
     for (let i = 1; i < rows.length; i++) {
-      if (rows[i][idIndex] === id) {
+      if (rows[i][COLUMN_MAP.id] === id) {
         targetRowIndex = i;
+        existingRow = rows[i];
         break;
       }
     }
@@ -101,27 +135,93 @@ export default async function handler(req, res) {
 
     // Prepare updates
     const updates = [];
+    const rowNum = targetRowIndex + 1; // 1-indexed for Sheets
 
+    // Status update
     if (status) {
-      // Update status (column L = 12, 1-indexed)
       updates.push({
-        range: `${FEEDBACK_SHEET_NAME}!${String.fromCharCode(65 + statusIndex)}${targetRowIndex + 1}`,
+        range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.status)}${rowNum}`,
         values: [[status]],
       });
 
-      // If resolved, set resolvedAt timestamp
-      if (status === 'resolved' || status === 'wontfix') {
+      // If resolving, calculate resolution time
+      if ((status === 'resolved' || status === 'wontfix' || status === 'duplicate') &&
+          existingRow[COLUMN_MAP.status] !== status) {
+        const now = new Date();
+        const createdAt = new Date(existingRow[COLUMN_MAP.timestamp]);
+        const resolutionTimeHours = Math.round((now - createdAt) / (1000 * 60 * 60) * 10) / 10;
+
         updates.push({
-          range: `${FEEDBACK_SHEET_NAME}!${String.fromCharCode(65 + resolvedAtIndex)}${targetRowIndex + 1}`,
-          values: [[new Date().toISOString()]],
+          range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.resolvedAt)}${rowNum}`,
+          values: [[now.toISOString()]],
         });
+
+        updates.push({
+          range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.resolutionTime)}${rowNum}`,
+          values: [[String(resolutionTimeHours)]],
+        });
+      }
+
+      // If reopening, clear resolution data
+      if (status === 'open' || status === 'in_progress') {
+        if (existingRow[COLUMN_MAP.resolvedAt]) {
+          updates.push({
+            range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.resolvedAt)}${rowNum}`,
+            values: [['']],
+          });
+          updates.push({
+            range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.resolutionTime)}${rowNum}`,
+            values: [['']],
+          });
+        }
       }
     }
 
+    // Assignee update
+    if (assignee !== undefined) {
+      updates.push({
+        range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.assignee)}${rowNum}`,
+        values: [[assignee]],
+      });
+    }
+
+    // Notes update
     if (notes !== undefined) {
       updates.push({
-        range: `${FEEDBACK_SHEET_NAME}!${String.fromCharCode(65 + notesIndex)}${targetRowIndex + 1}`,
+        range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.notes)}${rowNum}`,
         values: [[notes]],
+      });
+    }
+
+    // Tags update
+    if (tags !== undefined) {
+      updates.push({
+        range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.tags)}${rowNum}`,
+        values: [[tags]],
+      });
+    }
+
+    // Priority update
+    if (priority !== undefined) {
+      updates.push({
+        range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.priority)}${rowNum}`,
+        values: [[priority]],
+      });
+    }
+
+    // Severity update
+    if (severity !== undefined) {
+      updates.push({
+        range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.severity)}${rowNum}`,
+        values: [[String(severity)]],
+      });
+    }
+
+    // Related IDs update
+    if (relatedIds !== undefined) {
+      updates.push({
+        range: `${FEEDBACK_SHEET_NAME}!${columnToLetter(COLUMN_MAP.relatedIds)}${rowNum}`,
+        values: [[relatedIds]],
       });
     }
 
@@ -136,12 +236,22 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log(`Feedback ${id} updated: status=${status}, notes=${notes ? 'updated' : 'unchanged'}`);
+    const changedFields = [];
+    if (status) changedFields.push(`status=${status}`);
+    if (assignee !== undefined) changedFields.push(`assignee=${assignee || 'unassigned'}`);
+    if (notes !== undefined) changedFields.push('notes=updated');
+    if (tags !== undefined) changedFields.push('tags=updated');
+    if (priority !== undefined) changedFields.push(`priority=${priority}`);
+    if (severity !== undefined) changedFields.push(`severity=${severity}`);
+    if (relatedIds !== undefined) changedFields.push('relatedIds=updated');
+
+    console.log(`Feedback ${id} updated: ${changedFields.join(', ')}`);
 
     return res.status(200).json({
       success: true,
       id,
       message: 'Feedback updated successfully',
+      updated: changedFields,
     });
   } catch (error) {
     console.error('Error updating feedback:', error);
