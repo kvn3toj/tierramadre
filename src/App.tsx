@@ -13,6 +13,7 @@ import { LiquidGlassProvider } from './contexts/LiquidGlassContext';
 import { TrackingProvider } from './contexts/TrackingContext';
 import { AchievementToast } from './components/gamification';
 import { useViewportHeight } from './hooks/useViewportHeight';
+import FeedbackFAB from './components/feedback/FeedbackFAB';
 
 // All routes lazy loaded for optimal bundle splitting
 const Home = lazy(() => import('./components/home'));
@@ -30,6 +31,7 @@ const CotizacionGenerator = lazy(() => import('./components/CotizacionGenerator'
 const QuotationPreview = lazy(() => import('./components/QuotationPreview'));
 const AdminAnalyticsPage = lazy(() => import('./pages/AdminAnalyticsPage'));
 const AdminChangelogPage = lazy(() => import('./pages/AdminChangelogPage'));
+const FeedbackDashboard = lazy(() => import('./pages/admin/FeedbackDashboard'));
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
@@ -160,6 +162,15 @@ function AppContent() {
               </Suspense>
             </AdminRoute>
           } />
+
+          {/* Admin Feedback Dashboard */}
+          <Route path="/admin/feedback" element={
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando feedback..." />}>
+                <FeedbackDashboard />
+              </Suspense>
+            </AdminRoute>
+          } />
         </Routes>
       </IOSLayout>
     </>
@@ -195,6 +206,7 @@ function App() {
         <BrowserRouter>
           <AppContent />
           <AchievementToast />
+          <FeedbackFAB />
           {/* PWA disabled - service worker not generating correctly */}
           {/* <UpdatePrompt /> */}
         </BrowserRouter>

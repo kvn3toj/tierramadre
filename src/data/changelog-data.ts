@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2025-12-31T05:31:35.508Z
+ * Generated at: 2025-12-31T06:10:54.442Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2025-12-31T05:31:35.508Z",
+  "generatedAt": "2025-12-31T06:10:54.442Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "1 Dic, 2025",
@@ -56,28 +56,28 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "d61df9a",
-    "lastCommitDate": "2025-12-31 00:12:28 -0500"
+    "lastCommitHash": "084c84f",
+    "lastCommitDate": "2025-12-31 01:10:50 -0500"
   },
   "stats": {
-    "totalCommits": 262,
-    "totalAdditions": 206659,
-    "totalDeletions": 52389,
-    "totalFilesChanged": 1458,
-    "netLines": 154270
+    "totalCommits": 263,
+    "totalAdditions": 210880,
+    "totalDeletions": 52621,
+    "totalFilesChanged": 1461,
+    "netLines": 158259
   },
   "categoryStats": {
+    "bugfix": 79,
+    "other": 93,
     "auth": 6,
-    "ux": 52,
+    "ux": 51,
     "performance": 10,
     "analytics": 3,
-    "other": 92,
-    "cleanup": 21,
-    "bugfix": 78
+    "cleanup": 21
   },
   "typeStats": {
-    "feat": 109,
     "fix": 103,
+    "feat": 110,
     "other": 11,
     "refactor": 26,
     "style": 3,
@@ -87,11 +87,11 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/components/InventoryBrowser.tsx",
-      "count": 44
+      "count": 43
     },
     {
       "file": "src/components/ProductDetail.tsx",
-      "count": 40
+      "count": 39
     },
     {
       "file": "src/App.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 254
+      "commits": 255
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,37 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "084c84f",
+      "message": "Use direct upload for Shared Drive migration",
+      "fullMessage": "fix: Use direct upload for Shared Drive migration",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2025-12-31",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 6,
+      "deletions": 14,
+      "filesChanged": 1
+    },
+    {
+      "hash": "51cad8c",
+      "message": "Automate changelog generation with git post-commit hook",
+      "fullMessage": "feat: Automate changelog generation with git post-commit hook",
+      "author": "Kvn3Toj",
+      "relativeTime": "9 minutes ago",
+      "date": "2025-12-31",
+      "type": "feat",
+      "category": "other",
+      "additions": 4216,
+      "deletions": 220,
+      "filesChanged": 4
+    },
+    {
       "hash": "d61df9a",
       "message": "Add admin changelog page with Mermaid diagrams",
       "fullMessage": "feat: Add admin changelog page with Mermaid diagrams",
       "author": "Kvn3Toj",
-      "relativeTime": "19 minutes ago",
+      "relativeTime": "58 minutes ago",
       "date": "2025-12-31",
       "type": "feat",
       "category": "auth",
@@ -155,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Gamification system, tracking context & UI improvements",
       "fullMessage": "feat: Gamification system, tracking context & UI improvements",
       "author": "Kvn3Toj",
-      "relativeTime": "25 minutes ago",
+      "relativeTime": "64 minutes ago",
       "date": "2025-12-31",
       "type": "feat",
       "category": "ux",
@@ -168,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Service Worker cleanup to prevent stale cache",
       "fullMessage": "fix: Add Service Worker cleanup to prevent stale cache",
       "author": "Kvn3Toj",
-      "relativeTime": "26 minutes ago",
+      "relativeTime": "66 minutes ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "performance",
@@ -181,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Add analytics tracking hook & remove deprecated PinLock",
       "fullMessage": "feat: Add analytics tracking hook & remove deprecated PinLock",
       "author": "Kvn3Toj",
-      "relativeTime": "69 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2025-12-30",
       "type": "feat",
       "category": "analytics",
@@ -194,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Admin permissions, guest benefits teaser & codebase cleanup",
       "fullMessage": "feat: Admin permissions, guest benefits teaser & codebase cleanup",
       "author": "Kvn3Toj",
-      "relativeTime": "80 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2025-12-30",
       "type": "feat",
       "category": "auth",
@@ -207,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Phase 3 cross-device validation & iOS HIG fixes",
       "fullMessage": "feat: Phase 3 cross-device validation & iOS HIG fixes",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "3 hours ago",
       "date": "2025-12-30",
       "type": "feat",
       "category": "ux",
@@ -220,7 +246,7 @@ export const changelogData: ChangelogData = {
       "message": "Aggressive cache busting for all SPA routes",
       "fullMessage": "fix: Aggressive cache busting for all SPA routes",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "3 hours ago",
       "date": "2025-12-30",
       "type": "fix",
       "category": "performance",
@@ -233,7 +259,7 @@ export const changelogData: ChangelogData = {
       "message": "iOS HIG redesign with compact layout",
       "fullMessage": "feat(ProductDetail): iOS HIG redesign with compact layout",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "4 hours ago",
       "date": "2025-12-30",
       "type": "feat",
       "category": "ux",
@@ -246,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve Cotización UX with industry best practices",
       "fullMessage": "feat: Improve Cotización UX with industry best practices",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2025-12-30",
       "type": "feat",
       "category": "ux",
@@ -272,7 +298,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove unused TypeScript variables",
       "fullMessage": "fix: Remove unused TypeScript variables",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2025-12-29",
       "type": "fix",
       "category": "cleanup",
@@ -285,7 +311,7 @@ export const changelogData: ChangelogData = {
       "message": "VirtualGrid react-window calc() compatibility",
       "fullMessage": "fix: VirtualGrid react-window calc() compatibility",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2025-12-29",
       "type": "fix",
       "category": "bugfix",
@@ -298,7 +324,7 @@ export const changelogData: ChangelogData = {
       "message": "refine: Subtle price chip in recently viewed carousel",
       "fullMessage": "refine: Subtle price chip in recently viewed carousel",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2025-12-29",
       "type": "other",
       "category": "other",
@@ -311,7 +337,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve iOS HIG scroll UX & layout bounds",
       "fullMessage": "fix: Improve iOS HIG scroll UX & layout bounds",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2025-12-29",
       "type": "fix",
       "category": "ux",
@@ -324,7 +350,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve active tab indicator with premium pill glow",
       "fullMessage": "feat: Improve active tab indicator with premium pill glow",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "other",
@@ -376,7 +402,7 @@ export const changelogData: ChangelogData = {
       "message": "Premium splash animation & refined comparison tool",
       "fullMessage": "feat: Premium splash animation & refined comparison tool",
       "author": "Kvn3Toj",
-      "relativeTime": "27 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "other",
@@ -389,7 +415,7 @@ export const changelogData: ChangelogData = {
       "message": "Replace hardcoded Tailwind colors with brand tokens",
       "fullMessage": "refactor: Replace hardcoded Tailwind colors with brand tokens",
       "author": "Kvn3Toj",
-      "relativeTime": "27 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2025-12-29",
       "type": "refactor",
       "category": "other",
@@ -402,7 +428,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve onboarding UX with accessibility and polish",
       "fullMessage": "feat: Improve onboarding UX with accessibility and polish",
       "author": "Kvn3Toj",
-      "relativeTime": "27 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "ux",
@@ -428,7 +454,7 @@ export const changelogData: ChangelogData = {
       "message": "Premium splash animation with iOS/Android best practices",
       "fullMessage": "feat: Premium splash animation with iOS/Android best practices",
       "author": "Kvn3Toj",
-      "relativeTime": "29 hours ago",
+      "relativeTime": "30 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "ux",
@@ -441,7 +467,7 @@ export const changelogData: ChangelogData = {
       "message": "Restore original splash design with smooth fade transition",
       "fullMessage": "fix: Restore original splash design with smooth fade transition",
       "author": "Kvn3Toj",
-      "relativeTime": "29 hours ago",
+      "relativeTime": "30 hours ago",
       "date": "2025-12-29",
       "type": "fix",
       "category": "ux",
@@ -480,7 +506,7 @@ export const changelogData: ChangelogData = {
       "message": "Add splash screen animation and fix PIN keyboard",
       "fullMessage": "feat: Add splash screen animation and fix PIN keyboard",
       "author": "Kvn3Toj",
-      "relativeTime": "30 hours ago",
+      "relativeTime": "31 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "bugfix",
@@ -493,7 +519,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Vercel deployment rules to prevent duplicate projects",
       "fullMessage": "docs: Add Vercel deployment rules to prevent duplicate projects",
       "author": "Kvn3Toj",
-      "relativeTime": "30 hours ago",
+      "relativeTime": "31 hours ago",
       "date": "2025-12-29",
       "type": "docs",
       "category": "other",
@@ -545,7 +571,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve comparison bar UX - floating design above nav",
       "fullMessage": "fix: Improve comparison bar UX - floating design above nav",
       "author": "Kvn3Toj",
-      "relativeTime": "31 hours ago",
+      "relativeTime": "32 hours ago",
       "date": "2025-12-29",
       "type": "fix",
       "category": "ux",
@@ -558,7 +584,7 @@ export const changelogData: ChangelogData = {
       "message": "Rename inventory to treasure across codebase",
       "fullMessage": "refactor: Rename inventory to treasure across codebase",
       "author": "Kvn3Toj",
-      "relativeTime": "31 hours ago",
+      "relativeTime": "32 hours ago",
       "date": "2025-12-29",
       "type": "refactor",
       "category": "other",
@@ -571,7 +597,7 @@ export const changelogData: ChangelogData = {
       "message": "Compact stats row to single line with minimal favorites indicator",
       "fullMessage": "fix: Compact stats row to single line with minimal favorites indicator",
       "author": "Kvn3Toj",
-      "relativeTime": "31 hours ago",
+      "relativeTime": "32 hours ago",
       "date": "2025-12-29",
       "type": "fix",
       "category": "bugfix",
@@ -597,7 +623,7 @@ export const changelogData: ChangelogData = {
       "message": "UI improvements - search-first hero, compact widgets, fixed grid",
       "fullMessage": "feat: UI improvements - search-first hero, compact widgets, fixed grid",
       "author": "Kvn3Toj",
-      "relativeTime": "32 hours ago",
+      "relativeTime": "33 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "ux",
@@ -610,7 +636,7 @@ export const changelogData: ChangelogData = {
       "message": "UI improvements - compact cards, simplified pricing, better layout",
       "fullMessage": "feat: UI improvements - compact cards, simplified pricing, better layout",
       "author": "Kvn3Toj",
-      "relativeTime": "33 hours ago",
+      "relativeTime": "34 hours ago",
       "date": "2025-12-29",
       "type": "feat",
       "category": "ux",
@@ -623,7 +649,7 @@ export const changelogData: ChangelogData = {
       "message": "Update Claude Code local permissions",
       "fullMessage": "chore: Update Claude Code local permissions",
       "author": "Kvn3Toj",
-      "relativeTime": "34 hours ago",
+      "relativeTime": "35 hours ago",
       "date": "2025-12-29",
       "type": "chore",
       "category": "auth",
@@ -3529,19 +3555,6 @@ export const changelogData: ChangelogData = {
       "additions": 6605,
       "deletions": 1,
       "filesChanged": 25
-    },
-    {
-      "hash": "bf47070",
-      "message": "Remove unused TypeScript variables for build compliance",
-      "fullMessage": "fix: Remove unused TypeScript variables for build compliance",
-      "author": "Kvn3Toj",
-      "relativeTime": "4 weeks ago",
-      "date": "2025-12-01",
-      "type": "fix",
-      "category": "ux",
-      "additions": 1,
-      "deletions": 2,
-      "filesChanged": 2
     }
   ]
 };

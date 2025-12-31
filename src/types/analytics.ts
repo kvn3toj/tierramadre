@@ -376,3 +376,72 @@ export interface AnalyticsStorage {
     streak: number;
   };
 }
+
+// =============================================================================
+// FUNNEL ANALYSIS TYPES
+// =============================================================================
+
+export interface FunnelStep {
+  id: string;
+  name: string;
+  event: string;
+  count: number;
+  percentage: number;
+  dropOffRate: number;
+  avgTimeToNext?: number; // seconds
+}
+
+export interface FunnelDefinition {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  steps: {
+    id: string;
+    name: string;
+    event: string;
+  }[];
+  targets: {
+    completionRate: number;
+    avgTimeToComplete?: number;
+  };
+}
+
+export interface FunnelAnalysis {
+  funnel: FunnelDefinition;
+  steps: FunnelStep[];
+  totalEntries: number;
+  totalCompletions: number;
+  completionRate: number;
+  avgTimeToComplete: number;
+  isOnTarget: boolean;
+  criticalDropOff?: {
+    stepFrom: string;
+    stepTo: string;
+    dropOffRate: number;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+  };
+}
+
+export interface FrictionPoint {
+  id: string;
+  funnel: string;
+  step: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  issue: string;
+  recommendation: string;
+  impact: string;
+  metric: number;
+  threshold: number;
+}
+
+export interface UXInsight {
+  id: string;
+  type: 'quick_win' | 'improvement' | 'critical_fix' | 'optimization';
+  title: string;
+  description: string;
+  funnel: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  estimatedImpact: string;
+  dataEvidence: string;
+}

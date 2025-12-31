@@ -35,12 +35,19 @@ import {
   Filter,
   Clock,
   BarChart2,
+  GitBranch,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useTracking } from '../contexts/TrackingContext';
 import { LevelBadge, ProgressRing } from '../components/gamification';
+import { FunnelVisualization, FrictionInsights } from '../components/analytics';
 import { emeraldCore, goldAccent, semanticColors } from '../design-system/tokens/colors';
 import { spacing } from '../design-system/tokens/primitives/spacing';
+import {
+  analyzeAllFunnels,
+  detectFrictionPoints,
+  generateUXInsights,
+} from '../utils/funnelAnalyzer';
 
 interface MetricCardProps {
   title: string;
@@ -363,6 +370,21 @@ const AdminAnalyticsPage: React.FC = () => {
       .slice(0, 5);
   }, [analyticsData.events]);
 
+  // Funnel analysis
+  const funnelAnalyses = useMemo(() => {
+    return analyzeAllFunnels(analyticsData.events);
+  }, [analyticsData.events]);
+
+  // Friction points detection
+  const frictionPoints = useMemo(() => {
+    return detectFrictionPoints(funnelAnalyses);
+  }, [funnelAnalyses]);
+
+  // UX insights generation
+  const uxInsights = useMemo(() => {
+    return generateUXInsights(funnelAnalyses, frictionPoints);
+  }, [funnelAnalyses, frictionPoints]);
+
   // Export to CSV
   const handleExportCSV = useCallback(() => {
     const data = exportAnalytics();
@@ -668,6 +690,8 @@ const AdminAnalyticsPage: React.FC = () => {
       <Tabs
         value={activeTab}
         onChange={(_, v) => setActiveTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
         sx={{
           mb: 2,
           '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, minWidth: 'auto', px: 2 },
@@ -675,13 +699,38 @@ const AdminAnalyticsPage: React.FC = () => {
           '& .MuiTabs-indicator': { bgcolor: emeraldCore.primary },
         }}
       >
+        <Tab label="Funnels" icon={<GitBranch size={16} />} iconPosition="start" />
         <Tab label="Actividad" icon={<Clock size={16} />} iconPosition="start" />
         <Tab label="Filtros" icon={<Filter size={16} />} iconPosition="start" />
         <Tab label="Páginas" icon={<BarChart2 size={16} />} iconPosition="start" />
       </Tabs>
 
-      {/* Activity Tab */}
+      {/* Funnels Tab */}
       {activeTab === 0 && (
+        <Box>
+          {/* Friction Insights Summary */}
+          <FrictionInsights
+            frictionPoints={frictionPoints}
+            insights={uxInsights}
+          />
+
+          {/* Individual Funnel Visualizations */}
+          <Typography variant="h6" sx={{ fontWeight: 600, mt: 4, mb: 2 }}>
+            Análisis de Funnels Individuales
+          </Typography>
+
+          <Grid container spacing={2}>
+            {funnelAnalyses.map((analysis) => (
+              <Grid item xs={12} lg={6} key={analysis.funnel.id}>
+                <FunnelVisualization analysis={analysis} />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
+
+      {/* Activity Tab */}
+      {activeTab === 1 && (
         <Paper
           elevation={0}
           sx={{
@@ -722,7 +771,7 @@ const AdminAnalyticsPage: React.FC = () => {
       )}
 
       {/* Filters Tab */}
-      {activeTab === 1 && (
+      {activeTab === 2 && (
         <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
             <Paper
@@ -819,7 +868,7 @@ const AdminAnalyticsPage: React.FC = () => {
       )}
 
       {/* Pages Tab */}
-      {activeTab === 2 && (
+      {activeTab === 3 && (
         <Paper
           elevation={0}
           sx={{
