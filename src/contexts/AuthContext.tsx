@@ -1,7 +1,7 @@
 /**
  * Authentication Context - Tiered Access System
  * Guest Mode: View-only access (no PIN required)
- * Full Mode: Complete access (PIN 3333 or Google auth with asesor/embajador role)
+ * Full Mode: Complete access (PIN 7777 asesores, PIN 3333 embajadores, or Google auth)
  * Admin Mode: Full access + Drive folder management (PIN 3011 or Google auth with admin role)
  */
 
@@ -9,7 +9,8 @@ import React, { createContext, useContext, useState, useCallback, useEffect, Rea
 import type { AuthState, AuthContextType, AccessLevel } from '../types/auth';
 import { useGoogleAuth } from './GoogleAuthContext';
 
-const FULL_PIN = '3333';
+const ASSESSOR_PIN = '7777';    // Asesores
+const AMBASSADOR_PIN = '3333';  // Embajadores
 const ADMIN_PIN = '3011';
 const STORAGE_KEY = 'tierra-madre-auth';
 
@@ -102,8 +103,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setStoredAuth(newState);
       return true;
     }
-    // Then check for full access PIN
-    if (pin === FULL_PIN) {
+    // Then check for full access PINs (assessors or ambassadors)
+    if (pin === ASSESSOR_PIN || pin === AMBASSADOR_PIN) {
       const newState: AuthState = { isAuthenticated: true, accessLevel: 'full' };
       setAuthState(newState);
       setStoredAuth(newState);
@@ -120,8 +121,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setStoredAuth(newState);
       return true;
     }
-    // Then check for full access PIN
-    if (pin === FULL_PIN) {
+    // Then check for full access PINs (assessors or ambassadors)
+    if (pin === ASSESSOR_PIN || pin === AMBASSADOR_PIN) {
       const newState: AuthState = { isAuthenticated: true, accessLevel: 'full' };
       setAuthState(newState);
       setStoredAuth(newState);
