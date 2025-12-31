@@ -128,9 +128,9 @@ function getExtensionFromMimeType(mimeType) {
   return map[mimeType] || 'jpg';
 }
 
-async function uploadToDrive(drive, folderId, buffer, fileName, mimeType) {
+async function uploadToDrive(drive, folderId, buffer, fileName, mimeType, sharedDriveId) {
   // Use direct upload with Shared Drive support
-  // The key is to use supportsAllDrives AND specify the parent folder in requestBody
+  // CRITICAL: driveId tells Google this file belongs to the Shared Drive, not the Service Account
   const { Readable } = await import('stream');
   const stream = Readable.from(buffer);
 
@@ -138,6 +138,8 @@ async function uploadToDrive(drive, folderId, buffer, fileName, mimeType) {
     requestBody: {
       name: fileName,
       parents: [folderId],
+      // Explicitly set the drive ID to ensure file is created in Shared Drive
+      driveId: sharedDriveId,
     },
     media: {
       mimeType,
@@ -262,7 +264,8 @@ export default async function handler(req, res) {
           productFolder.id,
           buffer,
           fileName,
-          contentType
+          contentType,
+          sharedDriveId
         );
 
         results.migrated.push({
