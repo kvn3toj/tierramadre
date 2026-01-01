@@ -86,8 +86,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
       setAuthState(newState);
       setStoredAuth(newState);
+    } else if (!isGoogleSignedIn && !googleUser) {
+      // User signed out from Google - reset to unauthenticated
+      setAuthState({ isAuthenticated: false, accessLevel: 'guest' });
+      clearStoredAuth();
     }
-  }, [isGoogleSignedIn, isGoogleAuthorized, googleUser?.accessLevel]);
+  }, [isGoogleSignedIn, isGoogleAuthorized, googleUser?.accessLevel, googleUser]);
 
   const loginAsGuest = useCallback(() => {
     const newState: AuthState = { isAuthenticated: true, accessLevel: 'guest' };
