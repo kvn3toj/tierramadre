@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-01T21:56:00.145Z
+ * Generated at: 2026-01-01T22:22:51.739Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-01T21:56:00.145Z",
+  "generatedAt": "2026-01-01T22:22:51.739Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "2 Dic, 2025",
@@ -56,27 +56,27 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "eadd429",
-    "lastCommitDate": "2026-01-01 16:55:56 -0500"
+    "lastCommitHash": "6b7f45f",
+    "lastCommitDate": "2026-01-01 17:22:44 -0500"
   },
   "stats": {
-    "totalCommits": 249,
-    "totalAdditions": 205174,
-    "totalDeletions": 55745,
-    "totalFilesChanged": 1471,
-    "netLines": 149429
+    "totalCommits": 251,
+    "totalAdditions": 205265,
+    "totalDeletions": 55773,
+    "totalFilesChanged": 1476,
+    "netLines": 149492
   },
   "categoryStats": {
+    "performance": 11,
+    "analytics": 5,
     "auth": 9,
     "other": 87,
     "cleanup": 24,
-    "analytics": 4,
     "bugfix": 72,
-    "ux": 43,
-    "performance": 10
+    "ux": 43
   },
   "typeStats": {
-    "fix": 98,
+    "fix": 100,
     "feat": 98,
     "other": 13,
     "chore": 10,
@@ -106,11 +106,11 @@ export const changelogData: ChangelogData = {
       "count": 17
     },
     {
-      "file": ".claude/settings.local.json",
-      "count": 15
+      "file": "vercel.json",
+      "count": 16
     },
     {
-      "file": "vercel.json",
+      "file": ".claude/settings.local.json",
       "count": 15
     },
     {
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 241
+      "commits": 243
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,37 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "6b7f45f",
+      "message": "Safari cache busting with version detection and stronger headers",
+      "fullMessage": "fix: Safari cache busting with version detection and stronger headers",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-01",
+      "type": "fix",
+      "category": "performance",
+      "additions": 38,
+      "deletions": 4,
+      "filesChanged": 3
+    },
+    {
+      "hash": "4fef1c2",
+      "message": "Handle incomplete localStorage data in TrackingContext",
+      "fullMessage": "fix: Handle incomplete localStorage data in TrackingContext",
+      "author": "Kvn3Toj",
+      "relativeTime": "12 minutes ago",
+      "date": "2026-01-01",
+      "type": "fix",
+      "category": "analytics",
+      "additions": 53,
+      "deletions": 24,
+      "filesChanged": 2
+    },
+    {
       "hash": "eadd429",
       "message": "Sync AuthContext with Google sign-out to reset permissions",
       "fullMessage": "fix: Sync AuthContext with Google sign-out to reset permissions",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "27 minutes ago",
       "date": "2026-01-01",
       "type": "fix",
       "category": "auth",
@@ -155,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Move feedback tool to Más menu with manual screenshot capture",
       "fullMessage": "feat: Move feedback tool to Más menu with manual screenshot capture",
       "author": "Kvn3Toj",
-      "relativeTime": "21 minutes ago",
+      "relativeTime": "48 minutes ago",
       "date": "2026-01-01",
       "type": "feat",
       "category": "other",
@@ -168,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove deprecated get-inventory-sheets fallback",
       "fullMessage": "fix: Remove deprecated get-inventory-sheets fallback",
       "author": "Kvn3Toj",
-      "relativeTime": "29 hours ago",
+      "relativeTime": "30 hours ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "cleanup",

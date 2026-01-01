@@ -12,7 +12,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton, Backdrop, Button, Chip } from '@mui/material';
 import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport } from '@mui/icons-material';
-import { Vault, BarChart3, GitCommit } from 'lucide-react';
+import { Vault, BarChart3 } from 'lucide-react';
 import FeedbackWizard from '../feedback/FeedbackWizard';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -65,14 +65,6 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     color: '#8B5CF6', // Purple for analytics
   },
   {
-    id: 'changelog',
-    label: 'Changelog',
-    subtitle: 'Reporte de desarrollo',
-    icon: GitCommit as any,
-    route: '/admin/changelog',
-    color: '#10B981', // Emerald for changelog
-  },
-  {
     id: 'feedback',
     label: 'Reportar Feedback',
     subtitle: 'Reporta bugs, sugiere features o mejoras de UX. Incluye captura de pantalla automática.',
@@ -102,7 +94,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   // Get tools and filter admin-only tools for non-admins
   const MORE_TOOLS = useMemo(() => {
     const allTools = getMoreTools(t);
-    const adminOnlyTools = ['accounts', 'analytics', 'changelog', 'feedback'];
+    const adminOnlyTools = ['accounts', 'analytics', 'feedback'];
     // Admin-only tools filtered for non-admins
     return allTools.filter(tool => !adminOnlyTools.includes(tool.id) || isAdmin);
   }, [t, isAdmin]);

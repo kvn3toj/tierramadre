@@ -29,7 +29,6 @@ const ReceiptGenerator = lazy(() => import('./components/ReceiptGenerator'));
 const CotizacionGenerator = lazy(() => import('./components/CotizacionGenerator'));
 const QuotationPreview = lazy(() => import('./components/QuotationPreview'));
 const AdminAnalyticsPage = lazy(() => import('./pages/AdminAnalyticsPage'));
-const AdminChangelogPage = lazy(() => import('./pages/AdminChangelogPage'));
 const FeedbackDashboard = lazy(() => import('./pages/admin/FeedbackDashboard'));
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
@@ -150,14 +149,6 @@ function AppContent() {
             </AdminRoute>
           } />
 
-          {/* Admin Changelog Report */}
-          <Route path="/admin/changelog" element={
-            <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando changelog..." />}>
-                <AdminChangelogPage />
-              </Suspense>
-            </AdminRoute>
-          } />
 
           {/* Admin Feedback Dashboard */}
           <Route path="/admin/feedback" element={
