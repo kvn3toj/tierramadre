@@ -200,16 +200,7 @@ const getSessionId = (): string => {
 };
 
 const getStoredAnalytics = (): AnalyticsStorage => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    log.error('Failed to load analytics storage', error);
-  }
-
-  return {
+  const defaults: AnalyticsStorage = {
     events: [],
     achievements: {
       unlocked: [],
@@ -226,6 +217,31 @@ const getStoredAnalytics = (): AnalyticsStorage => {
       streak: 0,
     },
   };
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Deep merge with defaults to handle incomplete stored data
+      return {
+        events: Array.isArray(parsed.events) ? parsed.events : defaults.events,
+        achievements: {
+          unlocked: Array.isArray(parsed.achievements?.unlocked) ? parsed.achievements.unlocked : defaults.achievements.unlocked,
+          progress: parsed.achievements?.progress && typeof parsed.achievements.progress === 'object' ? parsed.achievements.progress : defaults.achievements.progress,
+          totalXp: typeof parsed.achievements?.totalXp === 'number' ? parsed.achievements.totalXp : defaults.achievements.totalXp,
+          level: typeof parsed.achievements?.level === 'number' ? parsed.achievements.level : defaults.achievements.level,
+        },
+        metrics: {
+          ...defaults.metrics,
+          ...(parsed.metrics && typeof parsed.metrics === 'object' ? parsed.metrics : {}),
+        },
+      };
+    }
+  } catch (error) {
+    log.error('Failed to load analytics storage', error);
+  }
+
+  return defaults;
 };
 
 const saveAnalytics = (data: AnalyticsStorage): void => {

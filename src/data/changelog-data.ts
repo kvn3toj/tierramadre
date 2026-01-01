@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-01T21:34:54.984Z
+ * Generated at: 2026-01-01T21:56:00.145Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-01T21:34:54.984Z",
+  "generatedAt": "2026-01-01T21:56:00.145Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "2 Dic, 2025",
@@ -56,28 +56,28 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "136a88f",
-    "lastCommitDate": "2026-01-01 16:34:50 -0500"
+    "lastCommitHash": "eadd429",
+    "lastCommitDate": "2026-01-01 16:55:56 -0500"
   },
   "stats": {
-    "totalCommits": 248,
-    "totalAdditions": 205024,
-    "totalDeletions": 55157,
-    "totalFilesChanged": 1469,
-    "netLines": 149867
+    "totalCommits": 249,
+    "totalAdditions": 205174,
+    "totalDeletions": 55745,
+    "totalFilesChanged": 1471,
+    "netLines": 149429
   },
   "categoryStats": {
+    "auth": 9,
     "other": 87,
     "cleanup": 24,
     "analytics": 4,
     "bugfix": 72,
-    "auth": 8,
     "ux": 43,
     "performance": 10
   },
   "typeStats": {
+    "fix": 98,
     "feat": 98,
-    "fix": 97,
     "other": 13,
     "chore": 10,
     "refactor": 27,
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 240
+      "commits": 241
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "eadd429",
+      "message": "Sync AuthContext with Google sign-out to reset permissions",
+      "fullMessage": "fix: Sync AuthContext with Google sign-out to reset permissions",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-01",
+      "type": "fix",
+      "category": "auth",
+      "additions": 150,
+      "deletions": 588,
+      "filesChanged": 2
+    },
+    {
       "hash": "136a88f",
       "message": "Move feedback tool to Más menu with manual screenshot capture",
       "fullMessage": "feat: Move feedback tool to Más menu with manual screenshot capture",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "21 minutes ago",
       "date": "2026-01-01",
       "type": "feat",
       "category": "other",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Add validation for localStorage/sessionStorage data in useAnalytics",
       "fullMessage": "fix: Add validation for localStorage/sessionStorage data in useAnalytics",
       "author": "Kvn3Toj",
-      "relativeTime": "29 hours ago",
+      "relativeTime": "30 hours ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "analytics",
