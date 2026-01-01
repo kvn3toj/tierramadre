@@ -10,9 +10,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, IconButton, Backdrop, Button } from '@mui/material';
-import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode } from '@mui/icons-material';
+import { Box, Typography, IconButton, Backdrop, Button, Chip } from '@mui/material';
+import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport } from '@mui/icons-material';
 import { Vault, BarChart3, GitCommit } from 'lucide-react';
+import FeedbackWizard from '../feedback/FeedbackWizard';
 import { useTheme } from '../../contexts/ThemeContext';
 
 import { spacing } from '../../design-system/tokens/primitives/spacing';
@@ -32,8 +33,10 @@ export interface MoreToolConfig {
   label: string;
   subtitle: string;
   icon: React.ElementType;
-  route: string;
+  route?: string;
+  action?: 'feedback'; // Special action types
   color: string;
+  badge?: string; // Optional badge text
 }
 
 const getMoreTools = (t: any): MoreToolConfig[] => [
@@ -69,6 +72,15 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     route: '/admin/changelog',
     color: '#10B981', // Emerald for changelog
   },
+  {
+    id: 'feedback',
+    label: 'Reportar Feedback',
+    subtitle: 'Reporta bugs, sugiere features o mejoras de UX. Incluye captura de pantalla automática.',
+    icon: BugReport,
+    action: 'feedback',
+    color: '#F59E0B', // Amber for feedback
+    badge: 'DEV',
+  },
 ];
 
 export interface IOSMoreSheetProps {
@@ -85,12 +97,13 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   const isAdmin = useIsAdmin();
   const { effectiveConfig } = useLiquidGlassSafe();
   const [unlockOpen, setUnlockOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   // Get tools and filter admin-only tools for non-admins
   const MORE_TOOLS = useMemo(() => {
     const allTools = getMoreTools(t);
-    const adminOnlyTools = ['accounts', 'analytics', 'changelog'];
-    // Cuentas and Analytics are admin-only
+    const adminOnlyTools = ['accounts', 'analytics', 'changelog', 'feedback'];
+    // Admin-only tools filtered for non-admins
     return allTools.filter(tool => !adminOnlyTools.includes(tool.id) || isAdmin);
   }, [t, isAdmin]);
 
@@ -137,7 +150,21 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
       navigator.vibrate(10);
     }
 
-    navigate(tool.route);
+    // Handle special actions
+    if (tool.action === 'feedback') {
+      setFeedbackOpen(true);
+      return; // Don't close sheet yet - will close when wizard closes
+    }
+
+    // Navigate to route
+    if (tool.route) {
+      navigate(tool.route);
+      onClose();
+    }
+  };
+
+  const handleFeedbackClose = () => {
+    setFeedbackOpen(false);
     onClose();
   };
 
@@ -421,17 +448,32 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
 
                 {/* Text Content */}
                 <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      fontSize: iosTypographyScale.body,
-                      fontWeight: 600,
-                      color: 'var(--text-primary)',
-                      marginBottom: spacing.xxs,
-                    }}
-                  >
-                    {tool.label}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, marginBottom: spacing.xxs }}>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontSize: iosTypographyScale.body,
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      {tool.label}
+                    </Typography>
+                    {tool.badge && (
+                      <Chip
+                        label={tool.badge}
+                        size="small"
+                        sx={{
+                          height: 18,
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          backgroundColor: `${tool.color}20`,
+                          color: tool.color,
+                          border: `1px solid ${tool.color}40`,
+                        }}
+                      />
+                    )}
+                  </Box>
                   <Typography
                     variant="body2"
                     sx={{
@@ -534,6 +576,13 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
       <UnlockPrompt
         open={unlockOpen}
         onClose={handleUnlockClose}
+      />
+
+      {/* Feedback Wizard - Admin only */}
+      <FeedbackWizard
+        open={feedbackOpen}
+        onClose={handleFeedbackClose}
+        onCaptureStart={onClose} // Close the More sheet when capture mode starts
       />
     </>
   );

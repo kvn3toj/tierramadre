@@ -2,7 +2,7 @@
  * FeedbackWizard - Chatbot-style Feedback Modal
  *
  * Step-by-step wizard for collecting admin feedback:
- * 1. Capture screenshot
+ * 1. Capture screenshot (manual mode with floating button)
  * 2. Annotate with highlight box
  * 3. Categorize issue type
  * 4. Describe the problem
@@ -18,6 +18,7 @@ import {
   IconButton,
   LinearProgress,
   Slide,
+  Portal,
 } from '@mui/material';
 import { TransitionProps } from '@mui/material/transitions';
 import CloseIcon from '@mui/icons-material/Close';
@@ -39,6 +40,7 @@ import AnnotateStep from './steps/AnnotateStep';
 import CategorizeStep from './steps/CategorizeStep';
 import DescribeStep from './steps/DescribeStep';
 import SuccessStep from './steps/SuccessStep';
+import FloatingCaptureButton from './FloatingCaptureButton';
 
 // =============================================================================
 // TYPES
@@ -47,6 +49,7 @@ import SuccessStep from './steps/SuccessStep';
 interface FeedbackWizardProps {
   open: boolean;
   onClose: () => void;
+  onCaptureStart?: () => void; // Called when capture mode starts (to close parent menus)
 }
 
 interface WizardState {
@@ -59,6 +62,7 @@ interface WizardState {
   isSubmitting: boolean;
   submittedId: string | null;
   error: string | null;
+  isCaptureMode: boolean; // When true, dialog is hidden and floating button is shown
 }
 
 // =============================================================================
@@ -90,7 +94,7 @@ const STEP_PROGRESS: Record<WizardStep, number> = {
 // COMPONENT
 // =============================================================================
 
-export default function FeedbackWizard({ open, onClose }: FeedbackWizardProps) {
+export default function FeedbackWizard({ open, onClose, onCaptureStart }: FeedbackWizardProps) {
   const location = useLocation();
   const { user } = useGoogleAuth();
 
@@ -104,6 +108,7 @@ export default function FeedbackWizard({ open, onClose }: FeedbackWizardProps) {
     isSubmitting: false,
     submittedId: null,
     error: null,
+    isCaptureMode: false,
   });
 
   // Reset wizard state
@@ -118,7 +123,30 @@ export default function FeedbackWizard({ open, onClose }: FeedbackWizardProps) {
       isSubmitting: false,
       submittedId: null,
       error: null,
+      isCaptureMode: false,
     });
+  }, []);
+
+  // Start capture mode - hide dialog, show floating button
+  const startCaptureMode = useCallback(() => {
+    // Notify parent to close any menus (e.g., IOSMoreSheet)
+    onCaptureStart?.();
+    setState((prev) => ({ ...prev, isCaptureMode: true }));
+  }, [onCaptureStart]);
+
+  // Handle capture from floating button
+  const handleFloatingCapture = useCallback((screenshot: string) => {
+    setState((prev) => ({
+      ...prev,
+      screenshot,
+      isCaptureMode: false,
+      step: 'annotate',
+    }));
+  }, []);
+
+  // Cancel capture mode
+  const handleCaptureCancel = useCallback(() => {
+    setState((prev) => ({ ...prev, isCaptureMode: false }));
   }, []);
 
   // Navigate to next/prev step
@@ -229,6 +257,8 @@ export default function FeedbackWizard({ open, onClose }: FeedbackWizardProps) {
               nextStep();
             }}
             onClose={handleClose}
+            onStartCaptureMode={startCaptureMode}
+            existingScreenshot={state.screenshot}
           />
         );
       case 'annotate':
@@ -280,9 +310,21 @@ export default function FeedbackWizard({ open, onClose }: FeedbackWizardProps) {
     }
   };
 
+  // Show floating capture button when in capture mode
+  if (state.isCaptureMode && open) {
+    return (
+      <Portal>
+        <FloatingCaptureButton
+          onCapture={handleFloatingCapture}
+          onCancel={handleCaptureCancel}
+        />
+      </Portal>
+    );
+  }
+
   return (
     <Dialog
-      open={open}
+      open={open && !state.isCaptureMode}
       onClose={state.step === 'success' ? handleClose : undefined}
       TransitionComponent={Transition}
       maxWidth="sm"

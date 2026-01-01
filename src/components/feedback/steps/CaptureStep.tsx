@@ -1,30 +1,43 @@
 /**
  * CaptureStep - Screenshot Capture Step
  *
- * Captures the current screen using html2canvas.
+ * Two modes:
+ * 1. Manual mode: Shows instructions, user clicks to start capture mode
+ * 2. Capture mode: Closes dialog, shows floating capture button
  */
 
 import { useState, useCallback } from 'react';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 import { alpha } from '@mui/material/styles';
-import html2canvas from 'html2canvas';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 
 interface CaptureStepProps {
   onCapture: (screenshot: string) => void;
   onClose: () => void;
+  onStartCaptureMode?: () => void; // Called to close wizard and show floating button
+  existingScreenshot?: string | null; // If user already captured
 }
 
-export default function CaptureStep({ onCapture, onClose }: CaptureStepProps) {
+export default function CaptureStep({
+  onCapture,
+  onClose,
+  onStartCaptureMode,
+  existingScreenshot
+}: CaptureStepProps) {
   const [isCapturing, setIsCapturing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const captureScreen = useCallback(async () => {
+  // Direct capture (for cases where wizard is already hidden or FAB mode)
+  const captureDirectly = useCallback(async () => {
     setIsCapturing(true);
     setError(null);
 
     try {
+      // Dynamically import html2canvas
+      const html2canvas = (await import('html2canvas')).default;
+
       // Hide the dialog temporarily for capture
       const dialogs = document.querySelectorAll('[role="dialog"]');
       dialogs.forEach((d) => ((d as HTMLElement).style.visibility = 'hidden'));
@@ -36,7 +49,7 @@ export default function CaptureStep({ onCapture, onClose }: CaptureStepProps) {
       const canvas = await html2canvas(document.body, {
         useCORS: true,
         allowTaint: true,
-        scale: 1, // Reduce scale to keep file size manageable
+        scale: 1,
         logging: false,
         windowWidth: window.innerWidth,
         windowHeight: window.innerHeight,
@@ -63,6 +76,16 @@ export default function CaptureStep({ onCapture, onClose }: CaptureStepProps) {
     }
   }, [onCapture]);
 
+  // Start manual capture mode (closes wizard, shows floating button)
+  const handleStartCaptureMode = useCallback(() => {
+    if (onStartCaptureMode) {
+      onStartCaptureMode();
+    } else {
+      // Fallback to direct capture if no callback provided
+      captureDirectly();
+    }
+  }, [onStartCaptureMode, captureDirectly]);
+
   return (
     <Box
       sx={{
@@ -81,7 +104,7 @@ export default function CaptureStep({ onCapture, onClose }: CaptureStepProps) {
           bgcolor: alpha(emeraldCore.primary, 0.1),
           borderRadius: 3,
           p: 3,
-          maxWidth: 320,
+          maxWidth: 340,
           border: `1px solid ${alpha(emeraldCore.primary, 0.2)}`,
         }}
       >
@@ -92,36 +115,156 @@ export default function CaptureStep({ onCapture, onClose }: CaptureStepProps) {
             lineHeight: 1.6,
           }}
         >
-          Te ayudaré a reportar un problema de UI.
-          <br />
-          <strong>Primero, voy a capturar la pantalla actual.</strong>
+          {existingScreenshot ? (
+            <>
+              <strong>Ya tienes una captura.</strong>
+              <br />
+              Puedes continuar o capturar una nueva.
+            </>
+          ) : (
+            <>
+              Te ayudaré a reportar un problema.
+              <br />
+              <strong>Primero, captura la pantalla donde está el problema.</strong>
+            </>
+          )}
         </Typography>
       </Box>
 
-      {/* Capture button */}
-      <Button
-        variant="contained"
-        size="large"
-        startIcon={isCapturing ? <CircularProgress size={20} color="inherit" /> : <CameraAltIcon />}
-        onClick={captureScreen}
-        disabled={isCapturing}
-        sx={{
-          bgcolor: emeraldCore.primary,
-          px: 4,
-          py: 1.5,
-          borderRadius: 2,
-          fontSize: '1rem',
-          '&:hover': {
-            bgcolor: emeraldCore.dark,
-          },
-          '&:disabled': {
-            bgcolor: alpha(emeraldCore.primary, 0.5),
-            color: 'white',
-          },
-        }}
-      >
-        {isCapturing ? 'Capturando...' : 'Capturar Pantalla'}
-      </Button>
+      {/* Instructions */}
+      {!existingScreenshot && (
+        <Box
+          sx={{
+            bgcolor: alpha('#fff', 0.05),
+            borderRadius: 2,
+            p: 2,
+            maxWidth: 300,
+          }}
+        >
+          <Typography
+            sx={{
+              color: alpha('#fff', 0.7),
+              fontSize: '0.85rem',
+              lineHeight: 1.5,
+            }}
+          >
+            📸 Al presionar, este menú se cerrará.
+            <br />
+            Navega a la pantalla con el problema y presiona el botón flotante para capturar.
+          </Typography>
+        </Box>
+      )}
+
+      {/* Existing screenshot preview */}
+      {existingScreenshot && (
+        <Box
+          sx={{
+            width: 200,
+            height: 120,
+            borderRadius: 2,
+            overflow: 'hidden',
+            border: `2px solid ${emeraldCore.primary}`,
+            position: 'relative',
+          }}
+        >
+          <img
+            src={existingScreenshot}
+            alt="Captura actual"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              bgcolor: alpha('#000', 0.7),
+              py: 0.5,
+            }}
+          >
+            <Typography sx={{ color: 'white', fontSize: '0.75rem' }}>
+              Captura actual
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
+      {/* Action buttons */}
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+        {existingScreenshot ? (
+          <>
+            {/* Continue with existing */}
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<PhotoLibraryIcon />}
+              onClick={() => onCapture(existingScreenshot)}
+              sx={{
+                bgcolor: emeraldCore.primary,
+                px: 3,
+                py: 1.5,
+                borderRadius: 2,
+                fontSize: '0.95rem',
+                '&:hover': {
+                  bgcolor: emeraldCore.dark,
+                },
+              }}
+            >
+              Usar esta captura
+            </Button>
+            {/* Capture new */}
+            <Button
+              variant="outlined"
+              size="large"
+              startIcon={isCapturing ? <CircularProgress size={20} color="inherit" /> : <CameraAltIcon />}
+              onClick={handleStartCaptureMode}
+              disabled={isCapturing}
+              sx={{
+                borderColor: alpha('#fff', 0.3),
+                color: 'white',
+                px: 3,
+                py: 1.5,
+                borderRadius: 2,
+                fontSize: '0.95rem',
+                '&:hover': {
+                  borderColor: 'white',
+                  bgcolor: alpha('#fff', 0.05),
+                },
+              }}
+            >
+              Capturar nueva
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={isCapturing ? <CircularProgress size={20} color="inherit" /> : <CameraAltIcon />}
+            onClick={handleStartCaptureMode}
+            disabled={isCapturing}
+            sx={{
+              bgcolor: emeraldCore.primary,
+              px: 4,
+              py: 1.5,
+              borderRadius: 2,
+              fontSize: '1rem',
+              '&:hover': {
+                bgcolor: emeraldCore.dark,
+              },
+              '&:disabled': {
+                bgcolor: alpha(emeraldCore.primary, 0.5),
+                color: 'white',
+              },
+            }}
+          >
+            {isCapturing ? 'Preparando...' : 'Iniciar Captura'}
+          </Button>
+        )}
+      </Box>
 
       {/* Error message */}
       {error && (

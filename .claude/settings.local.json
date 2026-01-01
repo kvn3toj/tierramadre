@@ -51,7 +51,8 @@
       "Bash(yes:*)",
       "Bash([ -n \"$GOOGLE_SERVICE_ACCOUNT_KEY\" ])",
       "Bash(python3:*)",
-      "Bash(printf:*)"
+      "Bash(printf:*)",
+      "Bash(npx playwright install chromium)"
     ],
     "deny": [],
     "ask": []
