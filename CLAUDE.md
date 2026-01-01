@@ -78,6 +78,13 @@ Always clean ports before running dev server if conflicts occur.
 vercel --prod  # Uses existing project link
 ```
 
+### Safari Cache Busting (Required on Deploy)
+Before each deployment, update the `APP_VERSION` in `index.html`:
+```javascript
+var APP_VERSION = 'YYYY.MM.DD.N';  // e.g., 2026.01.01.1
+```
+This forces Safari to refresh its aggressive cache on version mismatch.
+
 ## Part of CoomUnity Universe
 Built with the CoomUnity agent ecosystem:
 - **ARIA**: Frontend experience

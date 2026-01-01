@@ -39,8 +39,9 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- Cleanup old Service Workers to prevent stale cache -->
+    <!-- Cleanup old Service Workers and Safari cache busting -->
     <script>
+      // Unregister any service workers and clear caches
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(registrations => {
           registrations.forEach(r => r.unregister());
@@ -49,6 +50,20 @@
           caches.keys().then(names => names.forEach(n => caches.delete(n)));
         }
       }
+      // Safari-specific: Force reload if version mismatch
+      (function() {
+        var APP_VERSION = '2026.01.01.1';
+        var storedVersion = localStorage.getItem('tm_app_version');
+        if (storedVersion && storedVersion !== APP_VERSION) {
+          localStorage.setItem('tm_app_version', APP_VERSION);
+          // Safari needs location.reload(true) for hard refresh
+          if (window.safari !== undefined || /^((?!chrome|android).)*safari/i.test(navigator.userAgent)) {
+            window.location.reload(true);
+          }
+        } else if (!storedVersion) {
+          localStorage.setItem('tm_app_version', APP_VERSION);
+        }
+      })();
     </script>
   </body>
 </html>
