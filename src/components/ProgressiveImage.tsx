@@ -3,8 +3,8 @@
  * Lazy-loading image with Cloudinary optimization, LQIP blur-up, and responsive srcset.
  * Uses Intersection Observer for viewport-aware loading.
  */
-import { useState, useEffect, useMemo } from 'react';
-import { Box, Skeleton } from '@mui/material';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Box, Skeleton, CircularProgress } from '@mui/material';
 import { useInView } from 'react-intersection-observer';
 import { Gem } from 'lucide-react';
 import { surfacesLight, surfacesDark } from '../design-system/tokens/colors';
@@ -16,6 +16,13 @@ import {
   getImageSizes,
   isCloudinaryUrl,
 } from '../utils/cloudinaryImage';
+import { createLogger } from '../utils/logger';
+
+const log = createLogger('ProgressiveImage');
+
+// Retry configuration for failed image loads
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff in ms
 
 interface ProgressiveImageProps {
   src: string | undefined;
@@ -55,6 +62,9 @@ export default function ProgressiveImage({
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
   const [lqipLoaded, setLqipLoaded] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [imageKey, setImageKey] = useState(0); // Force re-render on retry
 
   const { ref, inView } = useInView({
     triggerOnce: true,
@@ -93,11 +103,39 @@ export default function ProgressiveImage({
     };
   }, [src, width, layout, enableLQIP, quality, cloudinaryQuality]);
 
+  /**
+   * Retry image loading with exponential backoff
+   */
+  const retryImageLoad = useCallback((currentRetry: number) => {
+    if (currentRetry >= MAX_RETRY_ATTEMPTS) {
+      log.error('Image load failed after max retries', { src: optimizedSrc });
+      setError(true);
+      setIsRetrying(false);
+      return;
+    }
+
+    const delay = RETRY_DELAYS[currentRetry];
+    log.warn(`Retrying image load (${currentRetry + 1}/${MAX_RETRY_ATTEMPTS})`, {
+      src: optimizedSrc,
+      delay: `${delay}ms`
+    });
+
+    setIsRetrying(true);
+    setTimeout(() => {
+      setRetryCount(currentRetry + 1);
+      setImageKey(prev => prev + 1);
+      setIsRetrying(false);
+    }, delay);
+  }, [optimizedSrc]);
+
   // Reset states when src changes
   useEffect(() => {
     setLoaded(false);
     setError(false);
     setLqipLoaded(false);
+    setRetryCount(0);
+    setIsRetrying(false);
+    setImageKey(0);
   }, [src]);
 
   // Preload LQIP image
@@ -113,21 +151,37 @@ export default function ProgressiveImage({
     };
   }, [lqipSrc, enableLQIP]);
 
-  // Preload main image (skip for eco mode - use native lazy loading)
+  // Preload main image with retry logic (skip for eco mode - use native lazy loading)
   useEffect(() => {
     if (!shouldLoad || !optimizedSrc || quality === 'eco') return;
 
     const img = new Image();
-    img.src = optimizedSrc;
+
+    // Add cache-busting for retries
+    const srcWithCacheBust = retryCount > 0
+      ? `${optimizedSrc}${optimizedSrc.includes('?') ? '&' : '?'}retry=${retryCount}&t=${Date.now()}`
+      : optimizedSrc;
+
+    img.src = srcWithCacheBust;
     if (srcSet) img.srcset = srcSet;
-    img.onload = () => setLoaded(true);
-    img.onerror = () => setError(true);
+
+    img.onload = () => {
+      log.info('Image preload success', { src: optimizedSrc, attempts: retryCount + 1 });
+      setLoaded(true);
+      setError(false);
+      setRetryCount(0);
+    };
+
+    img.onerror = () => {
+      log.warn('Image preload failed', { src: optimizedSrc, attempt: retryCount + 1 });
+      retryImageLoad(retryCount);
+    };
 
     return () => {
       img.onload = null;
       img.onerror = null;
     };
-  }, [optimizedSrc, srcSet, shouldLoad, quality]);
+  }, [optimizedSrc, srcSet, shouldLoad, quality, retryCount, retryImageLoad]);
 
   const containerStyles = {
     position: 'relative' as const,
@@ -201,19 +255,50 @@ export default function ProgressiveImage({
         />
       )}
 
+      {/* Retry loading indicator */}
+      {isRetrying && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 10,
+          }}
+        >
+          <CircularProgress
+            size={24}
+            sx={{ color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary }}
+          />
+        </Box>
+      )}
+
       {/* Actual image with fade-in effect */}
       {shouldLoad && !error && (
         <Box
           component="img"
-          src={optimizedSrc}
+          src={
+            retryCount > 0
+              ? `${optimizedSrc}${optimizedSrc.includes('?') ? '&' : '?'}retry=${retryCount}&t=${Date.now()}`
+              : optimizedSrc
+          }
+          key={`img-${imageKey}`}
           srcSet={srcSet || undefined}
           sizes={sizes || undefined}
           alt={alt}
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
           fetchPriority={priority ? 'high' : 'auto'}
-          onLoad={() => setLoaded(true)}
-          onError={() => setError(true)}
+          onLoad={() => {
+            log.info('Image render success', { src: optimizedSrc, attempts: retryCount + 1 });
+            setLoaded(true);
+            setError(false);
+            setRetryCount(0);
+          }}
+          onError={() => {
+            log.warn('Image render failed', { src: optimizedSrc, attempt: retryCount + 1 });
+            retryImageLoad(retryCount);
+          }}
           sx={{
             width: '100%',
             height: '100%',

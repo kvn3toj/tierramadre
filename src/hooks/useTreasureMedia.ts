@@ -10,8 +10,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MediaType } from '../types';
 import { MediaItem } from '../components/media/types';
-import { uploadProductMedia } from '../utils/cloudinaryUpload';
-import { extractVideoThumbnail } from '../utils/videoStorage';
 import { createLogger } from '../utils/logger';
 
 const log = createLogger('TreasureMedia');
@@ -304,44 +302,18 @@ export function useTreasureMedia(): UseTreasureMediaReturn {
     saveGalleries(newGalleries);
   }, [galleries, saveGalleries]);
 
+  /**
+   * @deprecated Cloudinary upload removed - all media now stored in Google Drive
+   * Use Google Drive API endpoints for new uploads
+   */
   const uploadToGallery = useCallback(async (
-    itemNumber: number,
-    files: File[],
-    category: MediaItem['category']
+    _itemNumber: number,
+    _files: File[],
+    _category: MediaItem['category']
   ): Promise<MediaItem[]> => {
-    const uploadedItems: MediaItem[] = [];
-
-    for (const file of files) {
-      const isVideo = file.type.startsWith('video/');
-
-      try {
-        // Upload to Cloudinary
-        const mediaUrl = await uploadProductMedia(file, itemNumber);
-
-        // Extract thumbnail for videos
-        let thumbnailUrl: string | undefined;
-        if (isVideo) {
-          thumbnailUrl = await extractVideoThumbnail(file);
-        }
-
-        // Add to gallery
-        const mediaItem = await addToGallery(
-          itemNumber,
-          mediaUrl,
-          isVideo ? 'video' : 'image',
-          category,
-          thumbnailUrl
-        );
-
-        uploadedItems.push(mediaItem);
-      } catch (error) {
-        log.error('Error uploading file:', error);
-        throw error;
-      }
-    }
-
-    return uploadedItems;
-  }, [addToGallery]);
+    log.warn('uploadToGallery is deprecated - use Google Drive API for uploads');
+    throw new Error('Cloudinary upload removed. Please upload media to Google Drive manually.');
+  }, []);
 
   const updateMediaItems = useCallback((itemNumber: number, items: MediaItem[]) => {
     const reorderedItems = items.map((item, index) => ({

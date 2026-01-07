@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-01T22:22:51.739Z
+ * Generated at: 2026-01-01T22:36:18.450Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-01T22:22:51.739Z",
+  "generatedAt": "2026-01-01T22:36:18.450Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "2 Dic, 2025",
@@ -56,31 +56,31 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "6b7f45f",
-    "lastCommitDate": "2026-01-01 17:22:44 -0500"
+    "lastCommitHash": "3623a37",
+    "lastCommitDate": "2026-01-01 17:36:14 -0500"
   },
   "stats": {
-    "totalCommits": 251,
-    "totalAdditions": 205265,
-    "totalDeletions": 55773,
-    "totalFilesChanged": 1476,
-    "netLines": 149492
+    "totalCommits": 252,
+    "totalAdditions": 205643,
+    "totalDeletions": 56579,
+    "totalFilesChanged": 1480,
+    "netLines": 149064
   },
   "categoryStats": {
+    "ux": 44,
     "performance": 11,
     "analytics": 5,
     "auth": 9,
     "other": 87,
     "cleanup": 24,
-    "bugfix": 72,
-    "ux": 43
+    "bugfix": 72
   },
   "typeStats": {
+    "refactor": 28,
     "fix": 100,
     "feat": 98,
     "other": 13,
     "chore": 10,
-    "refactor": 27,
     "style": 1,
     "docs": 2
   },
@@ -95,15 +95,15 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "src/App.tsx",
-      "count": 25
+      "count": 26
+    },
+    {
+      "file": "src/components/ios/IOSMoreSheet.tsx",
+      "count": 18
     },
     {
       "file": "api/get-inventory-sheets.js",
       "count": 18
-    },
-    {
-      "file": "src/components/ios/IOSMoreSheet.tsx",
-      "count": 17
     },
     {
       "file": "vercel.json",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 243
+      "commits": 244
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "3623a37",
+      "message": "Simplify analytics dashboard and remove changelog from UI",
+      "fullMessage": "refactor: Simplify analytics dashboard and remove changelog from UI",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-01",
+      "type": "refactor",
+      "category": "ux",
+      "additions": 378,
+      "deletions": 806,
+      "filesChanged": 4
+    },
+    {
       "hash": "6b7f45f",
       "message": "Safari cache busting with version detection and stronger headers",
       "fullMessage": "fix: Safari cache busting with version detection and stronger headers",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "14 minutes ago",
       "date": "2026-01-01",
       "type": "fix",
       "category": "performance",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Handle incomplete localStorage data in TrackingContext",
       "fullMessage": "fix: Handle incomplete localStorage data in TrackingContext",
       "author": "Kvn3Toj",
-      "relativeTime": "12 minutes ago",
+      "relativeTime": "25 minutes ago",
       "date": "2026-01-01",
       "type": "fix",
       "category": "analytics",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Sync AuthContext with Google sign-out to reset permissions",
       "fullMessage": "fix: Sync AuthContext with Google sign-out to reset permissions",
       "author": "Kvn3Toj",
-      "relativeTime": "27 minutes ago",
+      "relativeTime": "40 minutes ago",
       "date": "2026-01-01",
       "type": "fix",
       "category": "auth",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Move feedback tool to Más menu with manual screenshot capture",
       "fullMessage": "feat: Move feedback tool to Más menu with manual screenshot capture",
       "author": "Kvn3Toj",
-      "relativeTime": "48 minutes ago",
+      "relativeTime": "61 minutes ago",
       "date": "2026-01-01",
       "type": "feat",
       "category": "other",

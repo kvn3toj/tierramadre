@@ -10,7 +10,7 @@ Internal Advertising Agency Tool for Colombian Emeralds - "Esencia y Poder"
 - **Build Tool**: Vite 5
 - **UI Framework**: Material-UI v6
 - **PDF Generation**: jsPDF + html2canvas
-- **Storage**: LocalStorage persistence
+- **Storage**: Google Drive (media), LocalStorage (app state)
 - **PWA**: vite-plugin-pwa
 - **AI Integration**: Groq API (GROQ_API_KEY in .env)
 
@@ -36,8 +36,8 @@ npm run preview  # Preview production build
 
 ## Key Features
 1. **AI-Powered Name Generator**: Smart suggestions from 80+ curated names
-2. **Batch Upload**: Multiple emerald photos at once
-3. **Individual Upload**: Detailed metadata for single emeralds
+2. **Google Drive Media Storage**: All product photos and videos stored in organized Drive folders
+3. **Product Gallery**: Multiple images per product with automatic retry on load failures
 4. **PDF Catalog Export**: Professional catalogs with jsPDF
 5. **Instagram Planner**: Visual 3x3 grid preview
 6. **AI Slide Generator**: Create presentations with Groq AI
@@ -84,6 +84,31 @@ Before each deployment, update the `APP_VERSION` in `index.html`:
 var APP_VERSION = 'YYYY.MM.DD.N';  // e.g., 2026.01.01.1
 ```
 This forces Safari to refresh its aggressive cache on version mismatch.
+
+## Media Storage Architecture
+
+### Google Drive Integration
+All product media is stored in Google Drive with the following structure:
+```
+products/
+  ├── 32 - Venus/
+  │   ├── hero.jpg
+  │   ├── detail-1.jpg
+  │   └── video.mp4
+  ├── 45 - Esperanza/
+  │   └── hero.jpg
+  ...
+```
+
+### Image Loading with Auto-Retry
+Images served from Google Drive proxy API with automatic retry logic:
+- Retries failed images up to 3 times
+- Exponential backoff (1s, 2s, 4s delays)
+- Cache-busting on retries
+- Logging for debugging
+
+### Legacy Cloudinary URLs
+Cloudinary URL optimization is maintained for backward compatibility with legacy image URLs. New uploads go directly to Google Drive via API endpoints.
 
 ## Part of CoomUnity Universe
 Built with the CoomUnity agent ecosystem:
