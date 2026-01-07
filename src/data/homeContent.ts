@@ -8,7 +8,6 @@ import {
   TrendingUp,
   HistoryEdu,
   Diamond,
-  Spa,
 } from '@mui/icons-material';
 import { semanticColors, emeraldCore } from '../design-system/tokens/colors';
 
@@ -16,7 +15,6 @@ import { semanticColors, emeraldCore } from '../design-system/tokens/colors';
 const PURPLE_ACCENT = '#9C27B0';
 const ORANGE_ACCENT = semanticColors.warning.main;
 const BLUE_ACCENT = semanticColors.info.main;
-const PINK_ACCENT = '#E91E63';
 
 export interface DailyOracle {
   id: number;
@@ -63,72 +61,72 @@ export interface DailyMeditation {
 }
 
 // Daily Oracle facts - rotates based on day of year
+// Simplified content for minimalistic display
 export const DAILY_ORACLES: DailyOracle[] = [
   {
     id: 1,
     category: 'spiritual',
-    icon: '🧘',
-    title: 'El Chakra del Corazón',
-    content: 'Las esmeraldas activan el chakra del corazón, promoviendo amor incondicional y compasión. Los antiguos egipcios las usaban para conectar con la energía del amor divino.',
+    icon: '💚',
+    title: 'Chakra del Corazón',
+    content: 'Las esmeraldas activan el chakra del corazón, promoviendo amor y compasión.',
     source: 'Tradición védica',
   },
   {
     id: 2,
     category: 'investment',
     icon: '📈',
-    title: 'Inversión Inteligente',
-    content: 'Las esmeraldas colombianas han apreciado un 12% anual entre 2015-2024, superando a los diamantes en subastas de joyas de alta gama.',
-    source: "Sotheby's Gemstone Report",
+    title: 'Valor en Alza',
+    content: 'Las esmeraldas colombianas han apreciado 12% anual, superando a los diamantes.',
+    source: "Sotheby's",
   },
   {
     id: 3,
     category: 'history',
-    icon: '📜',
-    title: 'Las Minas de Muzo',
-    content: 'Las minas de Muzo en Colombia han sido trabajadas por más de 500 años, primero por los indígenas Muzo y luego durante la colonia española.',
-    source: 'Instituto Smithsoniano',
+    icon: '⛏️',
+    title: 'Minas de Muzo',
+    content: 'Más de 500 años de historia, desde los indígenas Muzo hasta hoy.',
+    source: 'Smithsoniano',
   },
   {
     id: 4,
     category: 'spiritual',
     icon: '✨',
-    title: 'Claridad Mental',
-    content: 'Cleopatra meditaba con esmeraldas para manifestar claridad en decisiones importantes. La tradición egipcia asociaba la piedra con la sabiduría divina.',
-    source: 'Historia del Antiguo Egipto',
+    title: 'Claridad',
+    content: 'Cleopatra meditaba con esmeraldas para tomar decisiones importantes.',
+    source: 'Antiguo Egipto',
   },
   {
     id: 5,
     category: 'jewelry',
     icon: '💎',
-    title: 'Rareza Excepcional',
-    content: 'Las esmeraldas colombianas son 20 veces más raras que los diamantes. Su color verde intenso proviene del cromo presente únicamente en las montañas andinas.',
-    source: 'GIA - Instituto Gemológico',
+    title: 'Rareza Única',
+    content: '20 veces más raras que los diamantes. Color único por el cromo andino.',
+    source: 'GIA',
   },
   {
     id: 6,
-    category: 'meditation',
-    icon: '🌿',
-    title: 'Ritual de Luna Llena',
-    content: 'En la tradición colombiana, las esmeraldas se cargan energéticamente durante la luna llena. Coloca tu piedra bajo la luz lunar para renovar su energía.',
-    source: 'Tradición ancestral colombiana',
+    category: 'spiritual',
+    icon: '🌙',
+    title: 'Luna Llena',
+    content: 'Tradición colombiana: cargar esmeraldas bajo la luz lunar.',
+    source: 'Tradición ancestral',
   },
   {
     id: 7,
     category: 'investment',
-    icon: '🏦',
-    title: 'Patrimonio Familiar',
-    content: 'A diferencia del oro, las esmeraldas no requieren almacenamiento especial y pueden transmitirse de generación en generación como joyas funcionales.',
-    source: "Christie's Heritage Report",
+    icon: '👨‍👩‍👧',
+    title: 'Legado Familiar',
+    content: 'Joyas que pasan de generación en generación sin perder valor.',
+    source: "Christie's",
   },
 ];
 
-// Knowledge categories
+// Knowledge categories - Simplified titles
 export const KNOWLEDGE_CATEGORIES: KnowledgeCategory[] = [
-  { id: 'spiritual', title: 'Espiritualidad', icon: React.createElement(SelfImprovement), color: PURPLE_ACCENT, facts: 12 },
-  { id: 'investment', title: 'Inversión', icon: React.createElement(TrendingUp), color: semanticColors.success.main, facts: 8 },
-  { id: 'history', title: 'Historia', icon: React.createElement(HistoryEdu), color: ORANGE_ACCENT, facts: 15 },
-  { id: 'jewelry', title: 'Joyería', icon: React.createElement(Diamond), color: BLUE_ACCENT, facts: 10 },
-  { id: 'meditation', title: 'Meditación', icon: React.createElement(Spa), color: PINK_ACCENT, facts: 6 },
+  { id: 'spiritual', title: 'Energía', icon: React.createElement(SelfImprovement), color: PURPLE_ACCENT, facts: 12 },
+  { id: 'investment', title: 'Valor', icon: React.createElement(TrendingUp), color: semanticColors.success.main, facts: 8 },
+  { id: 'history', title: 'Origen', icon: React.createElement(HistoryEdu), color: ORANGE_ACCENT, facts: 15 },
+  { id: 'jewelry', title: 'Piedras', icon: React.createElement(Diamond), color: BLUE_ACCENT, facts: 10 },
 ];
 
 // Daily meditations - different experience each day

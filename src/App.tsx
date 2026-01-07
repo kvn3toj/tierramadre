@@ -30,6 +30,7 @@ const CotizacionGenerator = lazy(() => import('./components/CotizacionGenerator'
 const QuotationPreview = lazy(() => import('./components/QuotationPreview'));
 const AdminAnalyticsPage = lazy(() => import('./pages/AdminAnalyticsPage'));
 const FeedbackDashboard = lazy(() => import('./pages/admin/FeedbackDashboard'));
+const ValuationPage = lazy(() => import('./pages/ValuationPage'));
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
@@ -93,6 +94,13 @@ function AppContent() {
           <Route path="/ambassadors/:slug" element={
             <Suspense fallback={<LoadingFallback message="Cargando perfil..." />}>
               <AsesorProfilePage />
+            </Suspense>
+          } />
+
+          {/* Valuation Page - Emerald investment information */}
+          <Route path="/valuation" element={
+            <Suspense fallback={<LoadingFallback message="Cargando información..." />}>
+              <ValuationPage />
             </Suspense>
           } />
 

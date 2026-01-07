@@ -26,6 +26,7 @@ export const TAB_BAR_HEIGHT = 96;
 
 export const SKELETON_HEIGHTS = {
   products: 200,
+  valuation: 280,
   meditation: 180,
   knowledge: 300,
   welcome: 250,

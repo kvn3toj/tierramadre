@@ -39,29 +39,80 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- Cleanup old Service Workers and Safari cache busting -->
+    <!-- Safari-aggressive cache busting (Best Practices 2025) -->
     <script>
-      // Unregister any service workers and clear caches
+      // 1. Cleanup ALL service workers and caches immediately
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(registrations => {
-          registrations.forEach(r => r.unregister());
+        navigator.serviceWorker.getRegistrations().then(function(r) {
+          r.forEach(function(reg) { reg.unregister(); });
         });
-        if ('caches' in window) {
-          caches.keys().then(names => names.forEach(n => caches.delete(n)));
-        }
       }
-      // Safari-specific: Force reload if version mismatch
+      if ('caches' in window) {
+        caches.keys().then(function(n) { n.forEach(function(k) { caches.delete(k); }); });
+      }
+
+      // 2. Safari-aggressive version check
+      // Safari has TWO cache layers: memory + disk. location.reload() only updates disk cache.
+      // PWA Home Screen always starts from disk cache, so we must check server on EVERY load.
       (function() {
-        var APP_VERSION = '2026.01.01.1';
-        var storedVersion = localStorage.getItem('tm_app_version');
+        var APP_VERSION = '2026.01.07.94';
+        var VERSION_KEY = 'tm_app_version';
+        var RELOAD_KEY = 'tm_reload_pending';
+        var storedVersion = localStorage.getItem(VERSION_KEY);
+        var now = Date.now();
+
+        // Detect Safari (including iOS Safari and PWA mode)
+        var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) ||
+                       /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                       (navigator.standalone === true); // PWA mode
+
+        // Check if we're in a reload loop (prevent infinite reloads)
+        var reloadPending = sessionStorage.getItem(RELOAD_KEY);
+        if (reloadPending) {
+          sessionStorage.removeItem(RELOAD_KEY);
+          localStorage.setItem(VERSION_KEY, APP_VERSION);
+          return; // Already reloaded, stop here
+        }
+
+        // If local version differs from embedded version, reload immediately
         if (storedVersion && storedVersion !== APP_VERSION) {
-          localStorage.setItem('tm_app_version', APP_VERSION);
-          // Safari needs location.reload(true) for hard refresh
-          if (window.safari !== undefined || /^((?!chrome|android).)*safari/i.test(navigator.userAgent)) {
-            window.location.reload(true);
-          }
-        } else if (!storedVersion) {
-          localStorage.setItem('tm_app_version', APP_VERSION);
+          sessionStorage.setItem(RELOAD_KEY, '1');
+          localStorage.setItem(VERSION_KEY, APP_VERSION);
+          // Use cache-busting URL with unique timestamp
+          var url = window.location.pathname + '?_v=' + APP_VERSION + '&_t=' + now;
+          window.location.replace(url);
+          return;
+        }
+
+        // Update stored version
+        localStorage.setItem(VERSION_KEY, APP_VERSION);
+
+        // For Safari: ALWAYS check server version on load (bypass Safari's aggressive cache)
+        // This is the key fix - Safari ignores Cache-Control headers, so we must fetch fresh
+        if (isSafari) {
+          fetch('/version.json?_nocache=' + now, {
+            method: 'GET',
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          })
+          .then(function(r) {
+            if (!r.ok) throw new Error('Version check failed');
+            return r.json();
+          })
+          .then(function(data) {
+            if (data.version && data.version !== APP_VERSION) {
+              // Server has newer version - force reload
+              sessionStorage.setItem(RELOAD_KEY, '1');
+              localStorage.setItem(VERSION_KEY, data.version);
+              var url = window.location.pathname + '?_v=' + data.version + '&_t=' + now;
+              window.location.replace(url);
+            }
+          })
+          .catch(function() { /* Ignore network errors, app works offline */ });
         }
       })();
     </script>

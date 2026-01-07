@@ -192,7 +192,7 @@ const Home: React.FC = () => {
             backgroundPosition: 'center top',
             backgroundRepeat: 'no-repeat',
             backgroundAttachment: 'fixed', // Parallax scroll effect
-            opacity: 0.85,
+            opacity: 0.25,
             // Fade in from top
             maskImage: 'linear-gradient(to bottom, transparent 0%, black 8%)',
             WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 8%)',

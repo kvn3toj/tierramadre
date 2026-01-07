@@ -1,29 +1,16 @@
 /**
  * KnowledgeSection Component
  *
- * Knowledge gems accordion with category progress tracking
- * and fact exploration.
+ * HIG Minimalistic Design - Simple category list
+ * Principles: Clarity, Visual Hierarchy
  *
  * Designed by: Aria + Moksart
  */
 
-import React, { useCallback, useMemo } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import {
-  Box,
-  Typography,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Avatar,
-  Chip,
-  LinearProgress,
-} from '@mui/material';
-import { ExpandMore, CheckCircle, CircleOutlined } from '@mui/icons-material';
+import { Box, Typography } from '@mui/material';
+import { ChevronRight } from '@mui/icons-material';
 import { KNOWLEDGE_CATEGORIES, DAILY_ORACLES, DailyOracle } from '../../../data/homeContent';
 import { fadeInUp } from '../../../design-system/tokens/motion';
 
@@ -37,190 +24,124 @@ interface KnowledgeSectionProps {
 }
 
 // =============================================================================
-// COMPONENT
+// COMPONENT - HIG Minimalistic
 // =============================================================================
 
 export const KnowledgeSection: React.FC<KnowledgeSectionProps> = ({
   savedFacts,
-  onSelectFact,
 }) => {
-  // Calculate progress for each category
-  const categoryProgress = useMemo(() => {
-    return KNOWLEDGE_CATEGORIES.reduce((acc, category) => {
-      const categoryFacts = DAILY_ORACLES.filter(f => f.category === category.id);
-      const savedInCategory = categoryFacts.filter(f => savedFacts.includes(f.id)).length;
-      acc[category.id] = {
-        saved: savedInCategory,
-        total: categoryFacts.length,
-        percentage: categoryFacts.length > 0
-          ? (savedInCategory / categoryFacts.length) * 100
-          : 0,
-      };
-      return acc;
-    }, {} as Record<string, { saved: number; total: number; percentage: number }>);
-  }, [savedFacts]);
-
-  const handleFactClick = useCallback((fact: DailyOracle) => {
-    onSelectFact(fact);
-  }, [onSelectFact]);
-
-  const handleFactKeyDown = useCallback((e: React.KeyboardEvent, fact: DailyOracle) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleFactClick(fact);
-    }
-  }, [handleFactClick]);
+  // Count facts per category
+  const getCategoryCount = (categoryId: string) => {
+    const total = DAILY_ORACLES.filter(f => f.category === categoryId).length;
+    const saved = DAILY_ORACLES.filter(f => f.category === categoryId && savedFacts.includes(f.id)).length;
+    return { total, saved };
+  };
 
   return (
-    <Box sx={{ px: 2, mb: 2 }} component="section" aria-labelledby="knowledge-title">
+    <Box sx={{ px: 2, py: 2 }} component="section" aria-labelledby="knowledge-title">
       <motion.div variants={fadeInUp} initial="initial" animate="animate">
+        {/* Section title */}
         <Typography
           id="knowledge-title"
-          variant="h6"
+          variant="overline"
           component="h2"
-          sx={{ mb: 1.5, fontWeight: 600, color: 'var(--text-primary)' }}
+          sx={{
+            color: 'rgba(255,255,255,0.5)',
+            fontSize: '0.7rem',
+            letterSpacing: '0.1em',
+            mb: 1.5,
+            px: 0.5,
+          }}
         >
-          Gemas de Conocimiento
+          Explora
         </Typography>
 
-        {KNOWLEDGE_CATEGORIES.map((category, index) => {
-          const progress = categoryProgress[category.id];
-          const categoryFacts = DAILY_ORACLES.filter(f => f.category === category.id);
+        {/* Category list - iOS Settings style */}
+        <Box
+          sx={{
+            bgcolor: 'rgba(0,0,0,0.3)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: 3,
+            overflow: 'hidden',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}
+        >
+          {KNOWLEDGE_CATEGORIES.map((category, index) => {
+            const { total, saved } = getCategoryCount(category.id);
+            const isLast = index === KNOWLEDGE_CATEGORIES.length - 1;
 
-          return (
-            <motion.div
-              key={category.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Accordion
+            return (
+              <Box
+                key={category.id}
+                role="button"
+                tabIndex={0}
                 sx={{
-                  bgcolor: 'var(--surface-secondary)',
-                  mb: 1,
-                  '&:before': { display: 'none' },
-                  borderRadius: '12px !important',
-                  overflow: 'hidden',
-                  '&:focus-within': {
-                    outline: `2px solid ${category.color}`,
-                    outlineOffset: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  px: 2,
+                  py: 1.5,
+                  cursor: 'pointer',
+                  transition: 'background 0.15s ease',
+                  borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.06)',
+                  '&:hover': {
+                    bgcolor: 'rgba(255,255,255,0.05)',
                   },
-                }}
-                slotProps={{
-                  transition: {
-                    unmountOnExit: true,
+                  '&:active': {
+                    bgcolor: 'rgba(255,255,255,0.08)',
                   },
                 }}
               >
-                <AccordionSummary
-                  expandIcon={<ExpandMore />}
-                  aria-controls={`${category.id}-content`}
-                  id={`${category.id}-header`}
+                {/* Icon */}
+                <Box
                   sx={{
-                    '&:focus-visible': {
-                      bgcolor: `${category.color}10`,
-                    },
+                    width: 32,
+                    height: 32,
+                    borderRadius: 2,
+                    bgcolor: `${category.color}20`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: category.color,
+                    '& svg': { fontSize: 18 },
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%', pr: 2 }}>
-                    <Avatar
-                      sx={{
-                        bgcolor: `${category.color}20`,
-                        color: category.color,
-                        width: 40,
-                        height: 40,
-                      }}
-                      aria-hidden="true"
-                    >
-                      {category.icon}
-                    </Avatar>
+                  {category.icon}
+                </Box>
 
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        variant="subtitle2"
-                        component="h3"
-                        sx={{ fontWeight: 600, color: 'var(--text-primary)' }}
-                      >
-                        {category.title}
-                      </Typography>
+                {/* Title */}
+                <Typography
+                  variant="body2"
+                  sx={{
+                    flex: 1,
+                    color: 'white',
+                    fontWeight: 500,
+                    fontSize: '0.95rem',
+                  }}
+                >
+                  {category.title}
+                </Typography>
 
-                      <LinearProgress
-                        variant="determinate"
-                        value={progress.percentage}
-                        aria-label={`Progreso en ${category.title}: ${progress.saved} de ${progress.total}`}
-                        sx={{
-                          mt: 0.5,
-                          height: 4,
-                          borderRadius: 2,
-                          bgcolor: `${category.color}20`,
-                          '& .MuiLinearProgress-bar': {
-                            bgcolor: category.color,
-                            borderRadius: 2,
-                          },
-                        }}
-                      />
-                    </Box>
+                {/* Count badge */}
+                {saved > 0 && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: category.color,
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {saved}/{total}
+                  </Typography>
+                )}
 
-                    <Chip
-                      label={`${progress.saved}/${progress.total}`}
-                      size="small"
-                      aria-label={`${progress.saved} de ${progress.total} completados`}
-                      sx={{
-                        bgcolor: progress.percentage === 100 ? `${category.color}20` : 'default',
-                        color: progress.percentage === 100 ? category.color : 'inherit',
-                        fontWeight: progress.percentage === 100 ? 600 : 400,
-                      }}
-                    />
-                  </Box>
-                </AccordionSummary>
-
-                <AccordionDetails sx={{ pt: 0 }}>
-                  <List dense role="list" aria-label={`Datos de ${category.title}`}>
-                    {categoryFacts.map((fact) => {
-                      const isSaved = savedFacts.includes(fact.id);
-
-                      return (
-                        <ListItemButton
-                          key={fact.id}
-                          onClick={() => handleFactClick(fact)}
-                          onKeyDown={(e) => handleFactKeyDown(e, fact)}
-                          aria-label={`${fact.title}. ${isSaved ? 'Guardado' : 'No guardado'}. Presiona Enter para ver detalles.`}
-                          sx={{
-                            borderRadius: 2,
-                            mb: 0.5,
-                            '&:focus-visible': {
-                              outline: `2px solid ${category.color}`,
-                              outlineOffset: -2,
-                            },
-                          }}
-                        >
-                          <ListItemIcon sx={{ minWidth: 36 }}>
-                            {isSaved ? (
-                              <CheckCircle sx={{ color: category.color }} aria-hidden="true" />
-                            ) : (
-                              <CircleOutlined sx={{ color: 'var(--text-tertiary)' }} aria-hidden="true" />
-                            )}
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={fact.title}
-                            secondary={`${fact.content.substring(0, 60)}...`}
-                            primaryTypographyProps={{
-                              variant: 'body2',
-                              fontWeight: isSaved ? 600 : 500,
-                            }}
-                            secondaryTypographyProps={{
-                              variant: 'caption',
-                            }}
-                          />
-                        </ListItemButton>
-                      );
-                    })}
-                  </List>
-                </AccordionDetails>
-              </Accordion>
-            </motion.div>
-          );
-        })}
+                {/* Chevron */}
+                <ChevronRight sx={{ color: 'rgba(255,255,255,0.3)', fontSize: 20 }} />
+              </Box>
+            );
+          })}
+        </Box>
       </motion.div>
     </Box>
   );
