@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-07T06:36:18.824Z
+ * Generated at: 2026-01-07T06:38:05.465Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-07T06:36:18.824Z",
+  "generatedAt": "2026-01-07T06:38:05.465Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "8 Dic, 2025",
@@ -56,18 +56,18 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "014d02f",
-    "lastCommitDate": "2026-01-07 01:36:13 -0500"
+    "lastCommitHash": "3a83882",
+    "lastCommitDate": "2026-01-07 01:38:01 -0500"
   },
   "stats": {
-    "totalCommits": 250,
-    "totalAdditions": 97210,
-    "totalDeletions": 160166,
-    "totalFilesChanged": 1345,
-    "netLines": -62956
+    "totalCommits": 251,
+    "totalAdditions": 99082,
+    "totalDeletions": 161715,
+    "totalFilesChanged": 1366,
+    "netLines": -62633
   },
   "categoryStats": {
-    "ux": 42,
+    "ux": 43,
     "other": 87,
     "cleanup": 24,
     "performance": 11,
@@ -76,7 +76,7 @@ export const changelogData: ChangelogData = {
     "bugfix": 72
   },
   "typeStats": {
-    "feat": 97,
+    "feat": 98,
     "refactor": 28,
     "fix": 99,
     "other": 13,
@@ -95,7 +95,7 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "src/App.tsx",
-      "count": 24
+      "count": 25
     },
     {
       "file": "api/get-inventory-sheets.js",
@@ -103,7 +103,7 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "vercel.json",
-      "count": 16
+      "count": 17
     },
     {
       "file": "src/components/ios/IOSMoreSheet.tsx",
@@ -114,22 +114,22 @@ export const changelogData: ChangelogData = {
       "count": 15
     },
     {
+      "file": "src/components/home/Home.tsx",
+      "count": 14
+    },
+    {
       "file": "src/components/ios/IOSLayout.tsx",
       "count": 14
     },
     {
       "file": "src/components/inventory/VirtualGrid.tsx",
       "count": 14
-    },
-    {
-      "file": "api/get-asesores.js",
-      "count": 14
     }
   ],
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 242
+      "commits": 243
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "3a83882",
+      "message": "Implement Liquid Glass home page with background parallax",
+      "fullMessage": "feat: Implement Liquid Glass home page with background parallax",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-07",
+      "type": "feat",
+      "category": "ux",
+      "additions": 1872,
+      "deletions": 1549,
+      "filesChanged": 21
+    },
+    {
       "hash": "014d02f",
       "message": "Enhance valuation chart with iOS HIG-inspired design",
       "fullMessage": "feat: Enhance valuation chart with iOS HIG-inspired design",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "2 minutes ago",
       "date": "2026-01-07",
       "type": "feat",
       "category": "ux",
