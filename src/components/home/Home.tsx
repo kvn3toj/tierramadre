@@ -14,6 +14,7 @@
 
 import React, { Suspense, lazy, useMemo, useCallback, useEffect } from 'react';
 import { Box } from '@mui/material';
+import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useTreasure } from '../../hooks/useTreasure';
 import { TreasureItem } from '../../types';
@@ -61,6 +62,8 @@ import WhatsAppButton from './sections/WhatsAppButton';
 // =============================================================================
 
 const Home: React.FC = () => {
+  const muiTheme = useMuiTheme();
+  const isDarkMode = muiTheme.palette.mode === 'dark';
   const { treasure } = useTreasure();
   const [gamificationState, gamificationActions, pendingAchievement] = useGamification();
   const analytics = useAnalytics();
@@ -148,21 +151,28 @@ const Home: React.FC = () => {
         position: 'relative',
       }}
     >
-      {/* Background Image */}
+      {/* Background Image - Theme-aware with different images */}
       <Box
         sx={{
           position: 'fixed',
           inset: 0,
           zIndex: -1,
-          backgroundImage: 'url(/images/home-bg.png)',
+          backgroundImage: isDarkMode
+            ? 'url(/images/home-bg.png)'
+            : 'url(/images/home-bg-light.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          opacity: BACKGROUND_OPACITY,
+          backgroundRepeat: 'no-repeat',
+          opacity: isDarkMode ? BACKGROUND_OPACITY : 0.6,
           '&::after': {
             content: '""',
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.7) 100%)',
+            // Dark mode: dark gradient for luxury feel
+            // Light mode: subtle gradient to ensure content readability
+            background: isDarkMode
+              ? 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.7) 100%)'
+              : `linear-gradient(to bottom, ${alpha('#FFFFFF', 0.3)} 0%, ${alpha('#FFFFFF', 0.4)} 50%, ${alpha('#F0FDF4', 0.5)} 100%)`,
           },
         }}
       />
