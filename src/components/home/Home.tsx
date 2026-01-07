@@ -1,20 +1,22 @@
 /**
  * Home Page Component (Orchestrator)
  *
- * Composes all home page sections with:
- * - Beautiful background image
- * - Lazy loading for below-the-fold content
- * - Error boundaries for resilience
- * - Shared state management
- * - Accessibility structure
+ * Liquid Glass Design - Apple iOS 26 inspired
+ * Minimalistic, elegant, content-first approach
  *
- * Refactored by: CoomÜnity Council (Aria, Moksart, Eunoia, Zeno, Steve)
- * Evolutionary Refactor: Modular architecture with sacred geometry
+ * Sections:
+ * 1. HeroGallery - Full-bleed hero with thumbnail carousel (click to change)
+ * 2. Products - Latest arrivals
+ * 3. Oracle - Compact quote card
+ * 4. Knowledge - iOS Settings-style list
+ * 5. Footer - Minimal contact info
+ *
+ * Refactored by: CoomÜnity Council (Aria, Moksart, Eunoia, Zeno)
  */
 
 import React, { Suspense, lazy, useMemo, useCallback, useEffect } from 'react';
 import { Box } from '@mui/material';
-import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
+import { useTheme as useMuiTheme } from '@mui/material/styles';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useTreasure } from '../../hooks/useTreasure';
 import { TreasureItem } from '../../types';
@@ -30,7 +32,7 @@ import { useNewProductNotification } from '../../hooks/useNewProductNotification
 const log = createLogger('Home');
 import {
   MAX_PRODUCTS_DISPLAY,
-  BACKGROUND_OPACITY,
+
   TAB_BAR_HEIGHT,
   SKELETON_HEIGHTS,
   SHARE_CONFIG,
@@ -42,17 +44,18 @@ import {
 // =============================================================================
 
 // Critical sections - load immediately
-import HeroSection from './sections/HeroSection';
-import CategoryCarousels from './sections/CategoryCarousels';
+import HeroGallery from './sections/HeroGallery';
 import OracleSection from './sections/OracleSection';
-import InstagramSection from './sections/InstagramSection';
 
 // Below-the-fold sections - lazy load
-const MeditationSection = lazy(() => import('./sections/MeditationSection'));
 const ProductsSection = lazy(() => import('./sections/ProductsSection'));
+const ValuationSection = lazy(() => import('./sections/ValuationSection'));
 const KnowledgeSection = lazy(() => import('./sections/KnowledgeSection'));
-const WelcomeCard = lazy(() => import('./sections/WelcomeCard'));
 const Footer = lazy(() => import('./sections/Footer'));
+
+// Reserved for future use (minimalistic redesign)
+// const MeditationSection = lazy(() => import('./sections/MeditationSection'));
+// const WelcomeCard = lazy(() => import('./sections/WelcomeCard'));
 
 // Always visible components
 import WhatsAppButton from './sections/WhatsAppButton';
@@ -151,43 +154,12 @@ const Home: React.FC = () => {
         position: 'relative',
       }}
     >
-      {/* Background Image - Theme-aware with different images */}
-      <Box
-        sx={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: -1,
-          backgroundImage: isDarkMode
-            ? 'url(/images/home-bg.png)'
-            : 'url(/images/home-bg-light.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          opacity: isDarkMode ? BACKGROUND_OPACITY : 0.6,
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            inset: 0,
-            // Dark mode: dark gradient for luxury feel
-            // Light mode: subtle gradient to ensure content readability
-            background: isDarkMode
-              ? 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.7) 100%)'
-              : `linear-gradient(to bottom, ${alpha('#FFFFFF', 0.3)} 0%, ${alpha('#FFFFFF', 0.4)} 50%, ${alpha('#F0FDF4', 0.5)} 100%)`,
-          },
-        }}
-      />
-
-      {/* Hero Section - Logo + Brand */}
+      {/* Hero + Gallery - Merged with interactive thumbnails */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <HeroSection />
+        <HeroGallery />
       </ErrorBoundary>
 
-      {/* Category Carousels - Rings & Gems */}
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <CategoryCarousels />
-      </ErrorBoundary>
-
-      {/* Products Section - High visibility */}
+      {/* Products Section - Latest arrivals */}
       {newProducts.length > 0 && (
         <ErrorBoundary FallbackComponent={ErrorFallback}>
           <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.products} />}>
@@ -196,7 +168,7 @@ const Home: React.FC = () => {
         </ErrorBoundary>
       )}
 
-      {/* Oracle Section - Daily wisdom */}
+      {/* Oracle - Floating glass quote */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <OracleSection
           savedFacts={savedFacts}
@@ -205,56 +177,72 @@ const Home: React.FC = () => {
         />
       </ErrorBoundary>
 
-      {/* Install App Prompt - Only shown when not installed */}
-      {!isPWA() && (
-        <Box sx={{ px: 2, mb: 2 }}>
-          <InstallButton variant="card" />
+      {/* Lower sections with background image - starts from chart */}
+      <Box
+        sx={{
+          position: 'relative',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: isDarkMode
+              ? 'url(/images/home-bg.png)'
+              : 'url(/images/home-bg-light.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center top',
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed', // Parallax scroll effect
+            opacity: 0.85,
+            // Fade in from top
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 8%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 8%)',
+            zIndex: 0,
+          },
+        }}
+      >
+        {/* Valuation - Emerald appreciation */}
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <ErrorBoundary FallbackComponent={ErrorFallback}>
+            <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.valuation} />}>
+              <ValuationSection />
+            </Suspense>
+          </ErrorBoundary>
         </Box>
-      )}
 
-      {/* Notification Permission - Gentle prompt */}
-      <Box sx={{ px: 2, mb: 2 }}>
-        <NotificationPermission variant="card" />
+        {/* Knowledge - iOS Settings-style list */}
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <ErrorBoundary FallbackComponent={ErrorFallback}>
+            <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.knowledge} />}>
+              <KnowledgeSection
+                savedFacts={savedFacts}
+                onSelectFact={handleSelectFact}
+              />
+            </Suspense>
+          </ErrorBoundary>
+        </Box>
+
+        {/* Install App Prompt - Before footer */}
+        {!isPWA() && (
+          <Box sx={{ px: 2, mb: 2, position: 'relative', zIndex: 1 }}>
+            <InstallButton variant="card" />
+          </Box>
+        )}
+
+        {/* Footer - Social links and contact */}
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <ErrorBoundary FallbackComponent={ErrorFallback}>
+            <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.footer} />}>
+              <Footer />
+            </Suspense>
+          </ErrorBoundary>
+        </Box>
       </Box>
-
-      {/* Instagram Section - Profile preview */}
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <InstagramSection />
-      </ErrorBoundary>
-
-      {/* Meditation Section - Lazy loaded */}
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.meditation} />}>
-          <MeditationSection />
-        </Suspense>
-      </ErrorBoundary>
-
-      {/* Knowledge Section - Lazy loaded */}
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.knowledge} />}>
-          <KnowledgeSection
-            savedFacts={savedFacts}
-            onSelectFact={handleSelectFact}
-          />
-        </Suspense>
-      </ErrorBoundary>
-
-      {/* Welcome Card - Gamification stats */}
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.welcome} />}>
-          <WelcomeCard />
-        </Suspense>
-      </ErrorBoundary>
-
-      {/* Footer - Social links and contact */}
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.footer} />}>
-          <Footer />
-        </Suspense>
-      </ErrorBoundary>
 
       {/* WhatsApp Button - Floating contact */}
       <WhatsAppButton />
+
+      {/* Notification Permission - Floating tooltip */}
+      <NotificationPermission variant="tooltip" />
 
       {/* Achievement Toast - Global notification */}
       <AchievementToast
