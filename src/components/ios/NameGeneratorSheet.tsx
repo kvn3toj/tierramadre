@@ -3,12 +3,13 @@
  *
  * Admin-only name generator for emeralds
  * - Uses AI (Groq) or local generation strategies
+ * - Upload photo for AI-powered name suggestions
  * - Shows used names count
  * - Allows regeneration
  * - Copy to clipboard functionality
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -19,7 +20,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import { Close, Refresh, ContentCopy, AutoAwesome } from '@mui/icons-material';
+import { Close, Refresh, ContentCopy, AutoAwesome, CameraAlt, Delete } from '@mui/icons-material';
 
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
@@ -38,13 +39,17 @@ export interface NameGeneratorSheetProps {
 const NameGeneratorSheet: React.FC<NameGeneratorSheetProps> = ({ open, onClose }) => {
   const { t } = useLanguage();
   const { effectiveConfig } = useLiquidGlassSafe();
-  const { getRandomSuggestions } = useAI();
+  const { getRandomSuggestions, analyzeEmerald } = useAI();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [generatedNames, setGeneratedNames] = useState<string[]>([]);
+  const [description, setDescription] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedName, setCopiedName] = useState<string | null>(null);
   const [showCopiedSnackbar, setShowCopiedSnackbar] = useState(false);
   const [usedCount, setUsedCount] = useState(getUsedNamesCount);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
 
   // Generate new names
   const handleGenerate = useCallback(() => {
@@ -82,6 +87,69 @@ const NameGeneratorSheet: React.FC<NameGeneratorSheetProps> = ({ open, onClose }
 
     if ('vibrate' in navigator) {
       navigator.vibrate([10, 50, 10]);
+    }
+  }, []);
+
+  // Handle image upload for AI analysis
+  const handleImageUpload = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  // Process uploaded image
+  const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      return;
+    }
+
+    // Haptic feedback
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+
+    setIsAnalyzingImage(true);
+    setDescription('');
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64 = e.target?.result as string;
+      setPreviewImage(base64);
+
+      // Analyze with AI
+      try {
+        const result = await analyzeEmerald(base64);
+        if (result) {
+          setGeneratedNames(result.names);
+          setDescription(result.description || '');
+          setUsedCount(getUsedNamesCount());
+        }
+      } catch (err) {
+        console.error('Error analyzing image:', err);
+        // Fallback to random names
+        const names = getRandomSuggestions();
+        setGeneratedNames(names);
+      } finally {
+        setIsAnalyzingImage(false);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input so same file can be selected again
+    event.target.value = '';
+  }, [analyzeEmerald, getRandomSuggestions]);
+
+  // Clear uploaded image
+  const handleClearImage = useCallback(() => {
+    setPreviewImage(null);
+    setDescription('');
+    setGeneratedNames([]);
+
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
     }
   }, []);
 
@@ -252,37 +320,160 @@ const NameGeneratorSheet: React.FC<NameGeneratorSheetProps> = ({ open, onClose }
 
         {/* Content */}
         <Box sx={{ padding: spacing.md }}>
-          {/* Generate Button */}
-          <Button
-            variant="contained"
-            fullWidth
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <AutoAwesome />}
-            sx={{
-              backgroundColor: toolColor,
-              color: 'white',
-              textTransform: 'none',
-              fontWeight: 600,
-              py: 1.5,
-              borderRadius: radius.md,
-              mb: 3,
-              '&:hover': {
-                backgroundColor: brand.emerald[600],
-              },
-              '&:disabled': {
-                backgroundColor: `${toolColor}80`,
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+          />
+
+          {/* Action Buttons Row */}
+          <Box sx={{ display: 'flex', gap: 1.5, mb: 3 }}>
+            {/* Generate Random Names Button */}
+            <Button
+              variant="contained"
+              onClick={handleGenerate}
+              disabled={isGenerating || isAnalyzingImage}
+              startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <AutoAwesome />}
+              sx={{
+                flex: 1,
+                backgroundColor: toolColor,
                 color: 'white',
-              },
-            }}
-          >
-            {isGenerating
-              ? (t.tools.nameGenerator?.generating || 'Generando...')
-              : (t.tools.nameGenerator?.generate || 'Generar Nombres')}
-          </Button>
+                textTransform: 'none',
+                fontWeight: 600,
+                py: 1.5,
+                borderRadius: radius.md,
+                '&:hover': {
+                  backgroundColor: brand.emerald[600],
+                },
+                '&:disabled': {
+                  backgroundColor: `${toolColor}80`,
+                  color: 'white',
+                },
+              }}
+            >
+              {isGenerating
+                ? (t.tools.nameGenerator?.generating || 'Generando...')
+                : (t.tools.nameGenerator?.generate || 'Generar')}
+            </Button>
+
+            {/* Upload Photo Button */}
+            <Button
+              variant="outlined"
+              onClick={handleImageUpload}
+              disabled={isGenerating || isAnalyzingImage}
+              startIcon={isAnalyzingImage ? <CircularProgress size={20} color="inherit" /> : <CameraAlt />}
+              sx={{
+                flex: 1,
+                borderColor: brand.gold[500],
+                color: brand.gold[500],
+                textTransform: 'none',
+                fontWeight: 600,
+                py: 1.5,
+                borderRadius: radius.md,
+                '&:hover': {
+                  backgroundColor: `${brand.gold[500]}10`,
+                  borderColor: brand.gold[600],
+                },
+                '&:disabled': {
+                  borderColor: `${brand.gold[500]}50`,
+                  color: `${brand.gold[500]}80`,
+                },
+              }}
+            >
+              {isAnalyzingImage
+                ? (t.tools.nameGenerator?.analyzing || 'Analizando...')
+                : (t.tools.nameGenerator?.uploadPhoto || 'Analizar Foto')}
+            </Button>
+          </Box>
+
+          {/* Image Preview */}
+          {previewImage && (
+            <Box sx={{ mb: 3 }}>
+              <Box sx={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+                <Box
+                  component="img"
+                  src={previewImage}
+                  alt="Emerald preview"
+                  sx={{
+                    width: '100%',
+                    maxHeight: 200,
+                    objectFit: 'cover',
+                    borderRadius: radius.md,
+                    border: `2px solid ${brand.gold[500]}`,
+                  }}
+                />
+                <IconButton
+                  onClick={handleClearImage}
+                  size="small"
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    },
+                  }}
+                >
+                  <Delete fontSize="small" />
+                </IconButton>
+                {isAnalyzingImage && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      borderRadius: radius.md,
+                    }}
+                  >
+                    <Box sx={{ textAlign: 'center', color: 'white' }}>
+                      <CircularProgress size={32} sx={{ color: brand.gold[500] }} />
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        {t.tools.nameGenerator?.analyzingImage || 'Analizando esmeralda...'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+              </Box>
+            </Box>
+          )}
+
+          {/* AI Description */}
+          {description && !isAnalyzingImage && (
+            <Box
+              sx={{
+                mb: 3,
+                p: 2,
+                backgroundColor: `${brand.gold[500]}10`,
+                borderRadius: radius.md,
+                borderLeft: `3px solid ${brand.gold[500]}`,
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: iosTypographyScale.footnote,
+                  color: 'var(--text-secondary)',
+                  fontStyle: 'italic',
+                }}
+              >
+                {description}
+              </Typography>
+            </Box>
+          )}
 
           {/* Generated Names */}
-          {generatedNames.length > 0 && (
+          {generatedNames.length > 0 && !isAnalyzingImage && (
             <Box sx={{ mb: 3 }}>
               <Typography
                 variant="body2"
@@ -294,7 +485,9 @@ const NameGeneratorSheet: React.FC<NameGeneratorSheetProps> = ({ open, onClose }
                   letterSpacing: '0.5px',
                 }}
               >
-                {t.tools.nameGenerator?.suggestions || 'Sugerencias'}
+                {previewImage
+                  ? (t.tools.nameGenerator?.aiSuggestions || 'Sugerencias IA')
+                  : (t.tools.nameGenerator?.suggestions || 'Sugerencias')}
               </Typography>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -341,8 +534,8 @@ const NameGeneratorSheet: React.FC<NameGeneratorSheetProps> = ({ open, onClose }
               <Button
                 variant="text"
                 fullWidth
-                onClick={handleGenerate}
-                disabled={isGenerating}
+                onClick={previewImage ? () => handleFileChange({ target: { files: null } } as any) : handleGenerate}
+                disabled={isGenerating || isAnalyzingImage}
                 startIcon={<Refresh />}
                 sx={{
                   mt: 2,
@@ -359,7 +552,7 @@ const NameGeneratorSheet: React.FC<NameGeneratorSheetProps> = ({ open, onClose }
           )}
 
           {/* Empty State */}
-          {generatedNames.length === 0 && !isGenerating && (
+          {generatedNames.length === 0 && !isGenerating && !isAnalyzingImage && !previewImage && (
             <Box
               sx={{
                 textAlign: 'center',
@@ -368,8 +561,11 @@ const NameGeneratorSheet: React.FC<NameGeneratorSheetProps> = ({ open, onClose }
               }}
             >
               <AutoAwesome sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
-              <Typography variant="body2">
-                {t.tools.nameGenerator?.emptyState || 'Presiona el botón para generar nombres únicos para esmeraldas'}
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                {t.tools.nameGenerator?.emptyState || 'Genera nombres únicos para esmeraldas'}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'var(--text-quaternary)' }}>
+                {t.tools.nameGenerator?.emptyStateHint || 'Sube una foto para nombres personalizados con IA'}
               </Typography>
             </Box>
           )}
