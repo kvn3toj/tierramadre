@@ -216,6 +216,7 @@ const Home: React.FC = () => {
               <KnowledgeSection
                 savedFacts={savedFacts}
                 onSelectFact={handleSelectFact}
+                onSaveFact={handleSaveFact}
               />
             </Suspense>
           </ErrorBoundary>
