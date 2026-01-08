@@ -534,7 +534,7 @@ const NameGeneratorSheet: React.FC<NameGeneratorSheetProps> = ({ open, onClose }
               <Button
                 variant="text"
                 fullWidth
-                onClick={previewImage ? () => handleFileChange({ target: { files: null } } as any) : handleGenerate}
+                onClick={handleGenerate}
                 disabled={isGenerating || isAnalyzingImage}
                 startIcon={<Refresh />}
                 sx={{

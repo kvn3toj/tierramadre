@@ -52,7 +52,8 @@
       "Bash([ -n \"$GOOGLE_SERVICE_ACCOUNT_KEY\" ])",
       "Bash(python3:*)",
       "Bash(printf:*)",
-      "Bash(npx playwright install chromium)"
+      "Bash(npx playwright install chromium)",
+      "Bash(time npm run build:*)"
     ],
     "deny": [],
     "ask": []
