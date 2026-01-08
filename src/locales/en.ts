@@ -141,6 +141,18 @@ export const en = {
       label: 'Settings',
       subtitle: 'Theme, language and preferences',
     },
+    nameGenerator: {
+      label: 'Name Generator',
+      subtitle: 'Generate unique emerald names with AI',
+      generate: 'Generate Names',
+      generating: 'Generating...',
+      regenerate: 'Generate others',
+      suggestions: 'Suggestions',
+      usedNames: 'names used',
+      copied: 'Name copied',
+      clearUsed: 'Clear name history',
+      emptyState: 'Press the button to generate unique names for emeralds',
+    },
   },
 
   // Actions

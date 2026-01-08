@@ -141,6 +141,18 @@ export const es = {
       label: 'Configuración',
       subtitle: 'Tema, idioma y preferencias',
     },
+    nameGenerator: {
+      label: 'Generador de Nombres',
+      subtitle: 'Genera nombres únicos para esmeraldas con IA',
+      generate: 'Generar Nombres',
+      generating: 'Generando...',
+      regenerate: 'Generar otros',
+      suggestions: 'Sugerencias',
+      usedNames: 'nombres usados',
+      copied: 'Nombre copiado',
+      clearUsed: 'Limpiar historial de nombres',
+      emptyState: 'Presiona el botón para generar nombres únicos para esmeraldas',
+    },
   },
 
   // Actions

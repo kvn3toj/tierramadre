@@ -11,9 +11,10 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton, Backdrop, Button, Chip } from '@mui/material';
-import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport } from '@mui/icons-material';
+import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport, AutoAwesome } from '@mui/icons-material';
 import { Vault, BarChart3 } from 'lucide-react';
 import FeedbackWizard from '../feedback/FeedbackWizard';
+import NameGeneratorSheet from './NameGeneratorSheet';
 import { useTheme } from '../../contexts/ThemeContext';
 
 import { spacing } from '../../design-system/tokens/primitives/spacing';
@@ -34,7 +35,7 @@ export interface MoreToolConfig {
   subtitle: string;
   icon: React.ElementType;
   route?: string;
-  action?: 'feedback'; // Special action types
+  action?: 'feedback' | 'name-generator'; // Special action types
   color: string;
   badge?: string; // Optional badge text
 }
@@ -73,6 +74,15 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     color: '#F59E0B', // Amber for feedback
     badge: 'DEV',
   },
+  {
+    id: 'name-generator',
+    label: t.tools.nameGenerator?.label || 'Generador de Nombres',
+    subtitle: t.tools.nameGenerator?.subtitle || 'Genera nombres únicos para esmeraldas con IA',
+    icon: AutoAwesome,
+    action: 'name-generator',
+    color: '#00AE7A', // Emerald green
+    badge: 'AI',
+  },
 ];
 
 export interface IOSMoreSheetProps {
@@ -90,11 +100,12 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   const { effectiveConfig } = useLiquidGlassSafe();
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [nameGeneratorOpen, setNameGeneratorOpen] = useState(false);
 
   // Get tools and filter admin-only tools for non-admins
   const MORE_TOOLS = useMemo(() => {
     const allTools = getMoreTools(t);
-    const adminOnlyTools = ['accounts', 'analytics', 'feedback'];
+    const adminOnlyTools = ['accounts', 'analytics', 'feedback', 'name-generator'];
     // Admin-only tools filtered for non-admins
     return allTools.filter(tool => !adminOnlyTools.includes(tool.id) || isAdmin);
   }, [t, isAdmin]);
@@ -148,6 +159,11 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
       return; // Don't close sheet yet - will close when wizard closes
     }
 
+    if (tool.action === 'name-generator') {
+      setNameGeneratorOpen(true);
+      return; // Don't close sheet yet - will close when generator closes
+    }
+
     // Navigate to route
     if (tool.route) {
       navigate(tool.route);
@@ -157,6 +173,11 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
 
   const handleFeedbackClose = () => {
     setFeedbackOpen(false);
+    onClose();
+  };
+
+  const handleNameGeneratorClose = () => {
+    setNameGeneratorOpen(false);
     onClose();
   };
 
@@ -575,6 +596,12 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
         open={feedbackOpen}
         onClose={handleFeedbackClose}
         onCaptureStart={onClose} // Close the More sheet when capture mode starts
+      />
+
+      {/* Name Generator - Admin only */}
+      <NameGeneratorSheet
+        open={nameGeneratorOpen}
+        onClose={handleNameGeneratorClose}
       />
     </>
   );
