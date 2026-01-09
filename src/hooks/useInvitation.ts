@@ -28,6 +28,7 @@ interface ValidationResult {
   timeRemainingMinutes?: number;
   createdBy?: string;
   error?: string;
+  activatedToken?: string; // New token with activation time embedded
 }
 
 interface UseInvitationReturn {
@@ -111,6 +112,7 @@ export const useInvitation = (): UseInvitationReturn => {
         timeRemainingMinutes: data.timeRemainingMinutes,
         createdBy: data.createdBy,
         error: data.error,
+        activatedToken: data.activatedToken,
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error de conexion';

@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-09T04:51:45.995Z
+ * Generated at: 2026-01-09T05:49:45.393Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,38 +48,38 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-09T04:51:45.995Z",
+  "generatedAt": "2026-01-09T05:49:45.393Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "10 Dic, 2025",
-    "end": "8 Ene, 2026"
+    "end": "9 Ene, 2026"
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "90aa856",
-    "lastCommitDate": "2026-01-08 23:51:41 -0500"
+    "lastCommitHash": "1e246b8",
+    "lastCommitDate": "2026-01-09 00:49:41 -0500"
   },
   "stats": {
-    "totalCommits": 186,
-    "totalAdditions": 88020,
-    "totalDeletions": 159751,
-    "totalFilesChanged": 1232,
-    "netLines": -71731
+    "totalCommits": 189,
+    "totalAdditions": 88124,
+    "totalDeletions": 159813,
+    "totalFilesChanged": 1240,
+    "netLines": -71689
   },
   "categoryStats": {
-    "ux": 39,
+    "bugfix": 37,
+    "ux": 40,
+    "other": 67,
     "auth": 11,
-    "other": 66,
     "performance": 10,
     "cleanup": 19,
-    "analytics": 5,
-    "bugfix": 36
+    "analytics": 5
   },
   "typeStats": {
+    "fix": 66,
+    "chore": 8,
     "refactor": 22,
     "feat": 81,
-    "chore": 7,
-    "fix": 64,
     "other": 9,
     "style": 1,
     "docs": 2
@@ -94,19 +94,19 @@ export const changelogData: ChangelogData = {
       "count": 24
     },
     {
+      "file": ".claude/settings.local.json",
+      "count": 17
+    },
+    {
       "file": "src/components/ios/IOSMoreSheet.tsx",
       "count": 17
     },
     {
-      "file": ".claude/settings.local.json",
+      "file": "src/data/changelog-data.ts",
       "count": 16
     },
     {
       "file": "src/components/ios/IOSLayout.tsx",
-      "count": 15
-    },
-    {
-      "file": "src/data/changelog-data.ts",
       "count": 15
     },
     {
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 178
+      "commits": 181
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,50 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "1e246b8",
+      "message": "Refactor user-prefs API to use GOOGLE_SERVICE_ACCOUNT_KEY",
+      "fullMessage": "fix: Refactor user-prefs API to use GOOGLE_SERVICE_ACCOUNT_KEY",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-09",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 23,
+      "deletions": 22,
+      "filesChanged": 1
+    },
+    {
+      "hash": "afd0c91",
+      "message": "Use crypto.randomUUID instead of uuid package in API",
+      "fullMessage": "fix: Use crypto.randomUUID instead of uuid package in API",
+      "author": "Kvn3Toj",
+      "relativeTime": "43 minutes ago",
+      "date": "2026-01-09",
+      "type": "fix",
+      "category": "ux",
+      "additions": 2,
+      "deletions": 2,
+      "filesChanged": 1
+    },
+    {
+      "hash": "19a403a",
+      "message": "Update changelog and version metadata",
+      "fullMessage": "chore: Update changelog and version metadata",
+      "author": "Kvn3Toj",
+      "relativeTime": "56 minutes ago",
+      "date": "2026-01-08",
+      "type": "chore",
+      "category": "other",
+      "additions": 79,
+      "deletions": 38,
+      "filesChanged": 6
+    },
+    {
       "hash": "90aa856",
       "message": "Apply iOS HIG design system to Provider Portal",
       "fullMessage": "refactor: Apply iOS HIG design system to Provider Portal",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "58 minutes ago",
       "date": "2026-01-08",
       "type": "refactor",
       "category": "ux",
@@ -155,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Add invitation link system for Embajadores/Admins",
       "fullMessage": "feat: Add invitation link system for Embajadores/Admins",
       "author": "Kvn3Toj",
-      "relativeTime": "23 seconds ago",
+      "relativeTime": "58 minutes ago",
       "date": "2026-01-08",
       "type": "feat",
       "category": "auth",
@@ -168,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Provider Portal with quotation request system",
       "fullMessage": "feat: Add Provider Portal with quotation request system",
       "author": "Kvn3Toj",
-      "relativeTime": "18 minutes ago",
+      "relativeTime": "76 minutes ago",
       "date": "2026-01-08",
       "type": "feat",
       "category": "other",
@@ -181,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Hide Comunidad TM price for guest users",
       "fullMessage": "feat: Hide Comunidad TM price for guest users",
       "author": "Kvn3Toj",
-      "relativeTime": "50 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-08",
       "type": "feat",
       "category": "other",
@@ -194,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Update version and misc changes",
       "fullMessage": "chore: Update version and misc changes",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-08",
       "type": "chore",
       "category": "other",
@@ -207,7 +246,7 @@ export const changelogData: ChangelogData = {
       "message": "Update icon-inicio-gris PWA icons with new versions",
       "fullMessage": "feat: Update icon-inicio-gris PWA icons with new versions",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-08",
       "type": "feat",
       "category": "other",
@@ -220,7 +259,7 @@ export const changelogData: ChangelogData = {
       "message": "Switch to icon-inicio-gris PWA icons",
       "fullMessage": "feat: Switch to icon-inicio-gris PWA icons",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-07",
       "type": "feat",
       "category": "other",
@@ -233,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Tierra Madre branded PWA icons",
       "fullMessage": "feat: Add Tierra Madre branded PWA icons",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-07",
       "type": "feat",
       "category": "other",
@@ -246,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Add photo analysis to Name Generator for AI-powered suggestions",
       "fullMessage": "feat: Add photo analysis to Name Generator for AI-powered suggestions",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-07",
       "type": "feat",
       "category": "other",
@@ -259,7 +298,7 @@ export const changelogData: ChangelogData = {
       "message": "Add AI Name Generator tool for admins in More menu",
       "fullMessage": "feat: Add AI Name Generator tool for admins in More menu",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2026-01-07",
       "type": "feat",
       "category": "auth",
@@ -272,7 +311,7 @@ export const changelogData: ChangelogData = {
       "message": "Add expandable facts to Explora section in home page",
       "fullMessage": "feat: Add expandable facts to Explora section in home page",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2026-01-07",
       "type": "feat",
       "category": "other",
@@ -1273,7 +1312,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove trailing spaces from folder names for Windows compatibility",
       "fullMessage": "fix: Remove trailing spaces from folder names for Windows compatibility",
       "author": "kvn3toj",
-      "relativeTime": "12 days ago",
+      "relativeTime": "13 days ago",
       "date": "2025-12-27",
       "type": "fix",
       "category": "cleanup",

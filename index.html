@@ -2,8 +2,9 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-inicio-gris-512.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-inicio-gris-192.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-inicio-gris-192.png" />
     <link rel="manifest" href="/manifest.json" />
     <!-- WCAG 2.1 AA: Enable zoom for accessibility (up to 5x) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
@@ -56,7 +57,7 @@
       // Safari has TWO cache layers: memory + disk. location.reload() only updates disk cache.
       // PWA Home Screen always starts from disk cache, so we must check server on EVERY load.
       (function() {
-        var APP_VERSION = '2026.01.08.1427';
+        var APP_VERSION = '2026.01.09.48';
         var VERSION_KEY = 'tm_app_version';
         var RELOAD_KEY = 'tm_reload_pending';
         var storedVersion = localStorage.getItem(VERSION_KEY);

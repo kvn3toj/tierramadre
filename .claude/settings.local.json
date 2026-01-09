@@ -54,7 +54,13 @@
       "Bash(printf:*)",
       "Bash(npx playwright install chromium)",
       "Bash(time npm run build:*)",
-      "Bash(npm run dev:api:*)"
+      "Bash(npm run dev:api:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImEzYTU1OGQwLTBhNmEtNDgyYy1hNTMyLWRjM2E3ZDczOWIzMSIsImNyZWF0b3JFbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJjcmVhdG9yTmFtZSI6InRlc3QiLCJjcmVhdGVkQXQiOiIyMDI2LTAxLTA5VDA2OjEyOjQ5LjY0NVoiLCJpYXQiOjE3Njc5MzkxNjksImV4cCI6MTc2ODU0Mzk2OX0.G3v2nXvoLlWvrQoJurw4-PKwdHoBa5fwCXK6vbYYb9c\")",
+      "Bash(ACTIVATED_TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImEzYTU1OGQwLTBhNmEtNDgyYy1hNTMyLWRjM2E3ZDczOWIzMSIsImNyZWF0b3JFbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJjcmVhdG9yTmFtZSI6InRlc3QiLCJjcmVhdGVkQXQiOiIyMDI2LTAxLTA5VDA2OjEyOjQ5LjY0NVoiLCJhY3RpdmF0ZWRBdCI6IjIwMjYtMDEtMDlUMDY6MTM6MDUuNTMzWiIsImV4cGlyZXNBdCI6IjIwMjYtMDEtMDlUMDc6MTM6MDUuNTMzWiIsImlhdCI6MTc2NzkzOTE4NSwiZXhwIjoxNzY3OTQ2Mzg1fQ.VBQ-qg38kw0KmKbjKHb05URDOE82EYfVWTn7vRdnhUU\")",
+      "Bash(pkill:*)",
+      "Bash(openssl rand:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQxNjgxMmM0LTNlM2QtNGE3My05YWU1LTQ2YzBlZTE1MmViNSIsImNyZWF0b3JFbWFpbCI6InRlc3RAdGllcnJhbWFkcmUuY28iLCJjcmVhdG9yTmFtZSI6InRlc3QiLCJjcmVhdGVkQXQiOiIyMDI2LTAxLTA5VDA2OjIzOjMyLjU4N1oiLCJpYXQiOjE3Njc5Mzk4MTIsImV4cCI6MTc2ODU0NDYxMn0.CMjeKo0_8nEJ0ufNLSEC3w5rFF4tWYghBXe_y4q7kD0\")",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

@@ -10,9 +10,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Card, CardContent, CardActionArea, Grid, alpha } from '@mui/material';
-import { Calculator, Receipt, FileText, TrendingUp } from 'lucide-react';
+import { Calculator, Receipt, FileText, TrendingUp, Send } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useThemeMode } from '../contexts/ThemeContext';
+import { useIsAdmin } from '../hooks/usePermissions';
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 import { spacing } from '../design-system/tokens/primitives/spacing';
 import { accentColors, iosTypographyScale } from '../design-system';
@@ -31,12 +32,14 @@ const AccountsHub: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { mode } = useThemeMode();
+  const isAdmin = useIsAdmin();
   const isLight = mode === 'light';
 
   // Get theme-aware accent colors from design system
   const indigoColor = isLight ? accentColors.indigo.light : accentColors.indigo.dark;
   const cyanColor = isLight ? accentColors.cyan.light : accentColors.cyan.dark;
   const purpleColor = isLight ? accentColors.purple.light : accentColors.purple.dark;
+  const orangeColor = isLight ? accentColors.warning.light : accentColors.warning.dark;
 
   const tools: AccountTool[] = [
     {
@@ -66,6 +69,16 @@ const AccountsHub: React.FC = () => {
       color: purpleColor,
       bgColor: alpha(purpleColor, 0.1),
     },
+    // Admin-only: Provider quotation requests
+    ...(isAdmin ? [{
+      id: 'provider-requests',
+      title: 'Solicitudes a Proveedores',
+      description: 'Enviar solicitudes de cotizacion',
+      icon: Send,
+      route: '/cuentas/solicitudes',
+      color: orangeColor,
+      bgColor: alpha(orangeColor, 0.1),
+    }] : []),
   ];
 
   const handleToolClick = (route: string) => {

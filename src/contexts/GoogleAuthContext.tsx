@@ -158,6 +158,21 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
         } else {
           // Not found in Asesores, check Proveedores sheet
           log.debug('Not found in Asesores, checking Proveedores...');
+
+          // TODO: REMOVE THIS - Temporary bypass for local testing
+          const DEV_TEST_PROVIDER = true; // Set to false to disable bypass
+          if (DEV_TEST_PROVIDER && import.meta.env.DEV) {
+            log.warn('🧪 DEV MODE: Bypassing provider validation');
+            profile.role = 'Proveedor';
+            profile.accessLevel = 'provider';
+            setIsAuthorized(true);
+            setUser(profile);
+            localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(profile));
+            setIsLoading(false);
+            return;
+          }
+          // END TEMPORARY BYPASS
+
           try {
             const providerResponse = await fetch(`/api/validate-provider?email=${encodeURIComponent(profile.email)}`);
             const providerData = await providerResponse.json();

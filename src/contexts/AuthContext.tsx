@@ -12,6 +12,7 @@ import { useGoogleAuth } from './GoogleAuthContext';
 const ASSESSOR_PIN = '7777';    // Asesores
 const AMBASSADOR_PIN = '3333';  // Embajadores
 const ADMIN_PIN = '3011';
+const PROVIDER_PIN = '1234';    // Proveedores (dev testing only)
 const STORAGE_KEY = 'tierra-madre-auth';
 
 interface StoredAuthState {
@@ -103,6 +104,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check for admin PIN first
     if (pin === ADMIN_PIN) {
       const newState: AuthState = { isAuthenticated: true, accessLevel: 'admin' };
+      setAuthState(newState);
+      setStoredAuth(newState);
+      return true;
+    }
+    // Check for provider PIN (dev testing)
+    if (pin === PROVIDER_PIN) {
+      const newState: AuthState = { isAuthenticated: true, accessLevel: 'provider' };
       setAuthState(newState);
       setStoredAuth(newState);
       return true;

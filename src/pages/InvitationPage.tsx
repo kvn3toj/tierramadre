@@ -45,7 +45,8 @@ export default function InvitationPage() {
         // Store invitation expiration in sessionStorage
         if (result.expiresAt) {
           sessionStorage.setItem('invitation-expires', result.expiresAt);
-          sessionStorage.setItem('invitation-token', token);
+          // Use activated token if available (has expiration baked in), otherwise use original
+          sessionStorage.setItem('invitation-token', result.activatedToken || token);
         }
       } else if (result.status === 'expired') {
         setStatus('expired');
