@@ -7,7 +7,7 @@
  */
 
 import { google } from 'googleapis';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 // Sheet configuration
 const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
@@ -203,7 +203,7 @@ export default async function handler(req, res) {
     await ensureInvitationsSheet(sheets);
 
     // Generate unique token
-    const token = uuidv4();
+    const token = crypto.randomUUID();
     const createdAt = new Date().toISOString();
 
     // Append to invitations sheet
