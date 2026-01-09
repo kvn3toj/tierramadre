@@ -2,37 +2,35 @@
  * User Preferences API
  *
  * Stores and retrieves user preferences from Google Sheets.
- * Uses a shared Google Sheet as a simple database.
+ * Uses the same Google Sheet as other APIs for consistency.
  *
  * Environment Variables Required:
- * - GOOGLE_SERVICE_ACCOUNT_EMAIL
- * - GOOGLE_PRIVATE_KEY
- * - GOOGLE_SHEETS_USER_PREFS_ID
+ * - GOOGLE_SERVICE_ACCOUNT_KEY (base64-encoded service account JSON)
  */
 
-const { google } = require('googleapis');
+import { google } from 'googleapis';
 
-// Initialize Google Sheets API
-const getAuth = () => {
-  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-  if (!privateKey || !process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL) {
-    throw new Error('Missing Google credentials');
-  }
-
-  return new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: privateKey,
-    },
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
-};
-
-const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_USER_PREFS_ID;
+// Sheet configuration (same spreadsheet as other APIs)
+const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
 const SHEET_NAME = 'UserPreferences';
 
-module.exports = async (req, res) => {
+/**
+ * Initialize Google Sheets API with service account credentials
+ */
+function getSheetsClient() {
+  const credentials = JSON.parse(
+    Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
+  );
+
+  const auth = new google.auth.GoogleAuth({
+    credentials,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+
+  return google.sheets({ version: 'v4', auth });
+}
+
+export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -42,9 +40,12 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
+  if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+    return res.status(500).json({ error: 'Google Service Account not configured' });
+  }
+
   try {
-    const auth = getAuth();
-    const sheets = google.sheets({ version: 'v4', auth });
+    const sheets = getSheetsClient();
 
     if (req.method === 'GET') {
       // Get user preferences
