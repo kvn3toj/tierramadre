@@ -53,7 +53,8 @@
       "Bash(python3:*)",
       "Bash(printf:*)",
       "Bash(npx playwright install chromium)",
-      "Bash(time npm run build:*)"
+      "Bash(time npm run build:*)",
+      "Bash(npm run dev:api:*)"
     ],
     "deny": [],
     "ask": []

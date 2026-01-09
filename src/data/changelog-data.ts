@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-09T04:01:56.033Z
+ * Generated at: 2026-01-09T04:51:45.995Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-09T04:01:56.033Z",
+  "generatedAt": "2026-01-09T04:51:45.995Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "10 Dic, 2025",
@@ -56,30 +56,30 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "9361a16",
-    "lastCommitDate": "2026-01-08 23:01:52 -0500"
+    "lastCommitHash": "90aa856",
+    "lastCommitDate": "2026-01-08 23:51:41 -0500"
   },
   "stats": {
-    "totalCommits": 183,
-    "totalAdditions": 82280,
-    "totalDeletions": 158682,
-    "totalFilesChanged": 1189,
-    "netLines": -76402
+    "totalCommits": 186,
+    "totalAdditions": 88020,
+    "totalDeletions": 159751,
+    "totalFilesChanged": 1232,
+    "netLines": -71731
   },
   "categoryStats": {
-    "other": 65,
-    "auth": 10,
+    "ux": 39,
+    "auth": 11,
+    "other": 66,
     "performance": 10,
-    "ux": 38,
     "cleanup": 19,
     "analytics": 5,
     "bugfix": 36
   },
   "typeStats": {
-    "feat": 79,
+    "refactor": 22,
+    "feat": 81,
     "chore": 7,
     "fix": 64,
-    "refactor": 21,
     "other": 9,
     "style": 1,
     "docs": 2
@@ -91,15 +91,23 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "src/App.tsx",
-      "count": 22
+      "count": 24
+    },
+    {
+      "file": "src/components/ios/IOSMoreSheet.tsx",
+      "count": 17
     },
     {
       "file": ".claude/settings.local.json",
       "count": 16
     },
     {
-      "file": "src/components/ios/IOSMoreSheet.tsx",
-      "count": 16
+      "file": "src/components/ios/IOSLayout.tsx",
+      "count": 15
+    },
+    {
+      "file": "src/data/changelog-data.ts",
+      "count": 15
     },
     {
       "file": "src/components/home/Home.tsx",
@@ -110,15 +118,7 @@ export const changelogData: ChangelogData = {
       "count": 15
     },
     {
-      "file": "src/data/changelog-data.ts",
-      "count": 14
-    },
-    {
       "file": "vercel.json",
-      "count": 14
-    },
-    {
-      "file": "src/components/ios/IOSLayout.tsx",
       "count": 14
     },
     {
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 175
+      "commits": 178
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,50 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "90aa856",
+      "message": "Apply iOS HIG design system to Provider Portal",
+      "fullMessage": "refactor: Apply iOS HIG design system to Provider Portal",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-08",
+      "type": "refactor",
+      "category": "ux",
+      "additions": 475,
+      "deletions": 109,
+      "filesChanged": 4
+    },
+    {
+      "hash": "9021529",
+      "message": "Add invitation link system for Embajadores/Admins",
+      "fullMessage": "feat: Add invitation link system for Embajadores/Admins",
+      "author": "Kvn3Toj",
+      "relativeTime": "23 seconds ago",
+      "date": "2026-01-08",
+      "type": "feat",
+      "category": "auth",
+      "additions": 894,
+      "deletions": 15,
+      "filesChanged": 8
+    },
+    {
+      "hash": "74c574b",
+      "message": "Add Provider Portal with quotation request system",
+      "fullMessage": "feat: Add Provider Portal with quotation request system",
+      "author": "Kvn3Toj",
+      "relativeTime": "18 minutes ago",
+      "date": "2026-01-08",
+      "type": "feat",
+      "category": "other",
+      "additions": 4371,
+      "deletions": 945,
+      "filesChanged": 31
+    },
+    {
       "hash": "9361a16",
       "message": "Hide Comunidad TM price for guest users",
       "fullMessage": "feat: Hide Comunidad TM price for guest users",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "50 minutes ago",
       "date": "2026-01-08",
       "type": "feat",
       "category": "other",
@@ -155,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Update version and misc changes",
       "fullMessage": "chore: Update version and misc changes",
       "author": "Kvn3Toj",
-      "relativeTime": "23 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-08",
       "type": "chore",
       "category": "other",
@@ -168,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Update icon-inicio-gris PWA icons with new versions",
       "fullMessage": "feat: Update icon-inicio-gris PWA icons with new versions",
       "author": "Kvn3Toj",
-      "relativeTime": "23 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-08",
       "type": "feat",
       "category": "other",
@@ -181,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Switch to icon-inicio-gris PWA icons",
       "fullMessage": "feat: Switch to icon-inicio-gris PWA icons",
       "author": "Kvn3Toj",
-      "relativeTime": "23 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-07",
       "type": "feat",
       "category": "other",
@@ -220,7 +259,7 @@ export const changelogData: ChangelogData = {
       "message": "Add AI Name Generator tool for admins in More menu",
       "fullMessage": "feat: Add AI Name Generator tool for admins in More menu",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-07",
       "type": "feat",
       "category": "auth",
@@ -233,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Add expandable facts to Explora section in home page",
       "fullMessage": "feat: Add expandable facts to Explora section in home page",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-07",
       "type": "feat",
       "category": "other",
@@ -376,7 +415,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove deprecated get-inventory-sheets fallback",
       "fullMessage": "fix: Remove deprecated get-inventory-sheets fallback",
       "author": "Kvn3Toj",
-      "relativeTime": "8 days ago",
+      "relativeTime": "9 days ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "cleanup",

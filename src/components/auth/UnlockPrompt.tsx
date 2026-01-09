@@ -120,7 +120,7 @@ export default function UnlockPrompt({ open, onClose, feature }: UnlockPromptPro
             mb: 1,
           }}
         />
-        <Typography variant="h6" color="white">
+        <Typography variant="h6" component="span" display="block" color="white">
           {t.auth.unlockRequired}
         </Typography>
       </DialogTitle>
