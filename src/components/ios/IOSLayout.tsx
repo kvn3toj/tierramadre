@@ -16,6 +16,7 @@ import IOSNavigationBar, { NavigationBarMode, NavigationAction } from './IOSNavi
 import IOSMoreSheet from './IOSMoreSheet';
 import IOSSettingsSheet from './IOSSettingsSheet';
 import { LevelBadge } from '../gamification';
+import { InvitationBanner } from '../invitation';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
@@ -187,6 +188,9 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         backgroundColor: 'var(--surface-primary)',
       }}
     >
+      {/* Invitation countdown banner - shows for invited guests */}
+      <InvitationBanner />
+
       <IOSNavigationBar
         mode={pageConfig.mode}
         title={pageConfig.title}

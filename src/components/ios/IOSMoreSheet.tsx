@@ -11,10 +11,11 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton, Backdrop, Button, Chip } from '@mui/material';
-import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport, AutoAwesome } from '@mui/icons-material';
+import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport, AutoAwesome, PersonAdd } from '@mui/icons-material';
 import { Vault, BarChart3 } from 'lucide-react';
 import FeedbackWizard from '../feedback/FeedbackWizard';
 import NameGeneratorSheet from './NameGeneratorSheet';
+import { InvitationGenerator } from '../invitation';
 import { useTheme } from '../../contexts/ThemeContext';
 
 import { spacing } from '../../design-system/tokens/primitives/spacing';
@@ -25,7 +26,7 @@ import { floatingLayerShadows } from '../../design-system/tokens/shadows';
 import { brand, radius, layoutConstants, iosTypographyScale } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
-import { useIsGuest } from '../../hooks/useAuth';
+import { useIsGuest, useCanCreateInvitations } from '../../hooks/useAuth';
 import { useIsAdmin } from '../../hooks/usePermissions';
 import UnlockPrompt from '../auth/UnlockPrompt';
 
@@ -35,7 +36,7 @@ export interface MoreToolConfig {
   subtitle: string;
   icon: React.ElementType;
   route?: string;
-  action?: 'feedback' | 'name-generator'; // Special action types
+  action?: 'feedback' | 'name-generator' | 'invitation'; // Special action types
   color: string;
   badge?: string; // Optional badge text
 }
@@ -83,6 +84,14 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     color: '#00AE7A', // Emerald green
     badge: 'AI',
   },
+  {
+    id: 'invitation',
+    label: 'Invitar',
+    subtitle: 'Genera un enlace temporal de 1 hora para tus clientes',
+    icon: PersonAdd,
+    action: 'invitation',
+    color: '#3B82F6', // Blue for invitation
+  },
 ];
 
 export interface IOSMoreSheetProps {
@@ -97,18 +106,31 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   const { mode, toggleTheme } = useTheme();
   const isGuest = useIsGuest();
   const isAdmin = useIsAdmin();
+  const canCreateInvitations = useCanCreateInvitations();
   const { effectiveConfig } = useLiquidGlassSafe();
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [nameGeneratorOpen, setNameGeneratorOpen] = useState(false);
+  const [invitationOpen, setInvitationOpen] = useState(false);
 
-  // Get tools and filter admin-only tools for non-admins
+  // Get tools and filter based on permissions
   const MORE_TOOLS = useMemo(() => {
     const allTools = getMoreTools(t);
     const adminOnlyTools = ['accounts', 'analytics', 'feedback', 'name-generator'];
-    // Admin-only tools filtered for non-admins
-    return allTools.filter(tool => !adminOnlyTools.includes(tool.id) || isAdmin);
-  }, [t, isAdmin]);
+    const invitationTools = ['invitation']; // Embajadores and Admins only
+
+    return allTools.filter(tool => {
+      // Admin-only tools
+      if (adminOnlyTools.includes(tool.id)) {
+        return isAdmin;
+      }
+      // Invitation tool - Embajadores and Admins
+      if (invitationTools.includes(tool.id)) {
+        return canCreateInvitations;
+      }
+      return true;
+    });
+  }, [t, isAdmin, canCreateInvitations]);
 
   // Liquid Glass styles for the sheet
   const sheetStyles = useMemo(() => {
@@ -164,6 +186,11 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
       return; // Don't close sheet yet - will close when generator closes
     }
 
+    if (tool.action === 'invitation') {
+      setInvitationOpen(true);
+      return; // Don't close sheet yet - will close when generator closes
+    }
+
     // Navigate to route
     if (tool.route) {
       navigate(tool.route);
@@ -178,6 +205,11 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
 
   const handleNameGeneratorClose = () => {
     setNameGeneratorOpen(false);
+    onClose();
+  };
+
+  const handleInvitationClose = () => {
+    setInvitationOpen(false);
     onClose();
   };
 
@@ -602,6 +634,12 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
       <NameGeneratorSheet
         open={nameGeneratorOpen}
         onClose={handleNameGeneratorClose}
+      />
+
+      {/* Invitation Generator - Embajadores and Admins */}
+      <InvitationGenerator
+        open={invitationOpen}
+        onClose={handleInvitationClose}
       />
     </>
   );

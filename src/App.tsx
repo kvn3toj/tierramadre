@@ -43,6 +43,9 @@ const QuotationRequestForm = lazy(() => import('./components/admin/QuotationRequ
 const QuotationRequestList = lazy(() => import('./components/admin/QuotationRequestList'));
 const ProviderQuotationsList = lazy(() => import('./components/admin/ProviderQuotationsList'));
 
+// Invitation Page (public route - accessible without auth)
+const InvitationPage = lazy(() => import('./pages/InvitationPage'));
+
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
 
@@ -236,8 +239,41 @@ function AppContent() {
   );
 }
 
-function App() {
+// Component to handle invitation route before auth check
+function InvitationRouter() {
+  return (
+    <Routes>
+      <Route
+        path="/invite/:token"
+        element={
+          <Suspense fallback={<LoadingFallback message="Cargando..." />}>
+            <InvitationPage />
+          </Suspense>
+        }
+      />
+      <Route path="*" element={<AuthenticatedApp />} />
+    </Routes>
+  );
+}
+
+// Main authenticated app with all routes
+function AuthenticatedApp() {
   const { isAuthenticated } = useAuth();
+
+  // Show welcome screen if not authenticated
+  if (!isAuthenticated) {
+    return <WelcomeScreen />;
+  }
+
+  return (
+    <>
+      <AppContent />
+      <AchievementToast />
+    </>
+  );
+}
+
+function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   // Initialize viewport height CSS variable for iOS Safari 100vh fix
@@ -254,17 +290,11 @@ function App() {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
 
-  // Show welcome screen if not authenticated
-  if (!isAuthenticated) {
-    return <WelcomeScreen />;
-  }
-
   return (
     <LiquidGlassProvider>
       <TrackingProvider>
         <BrowserRouter>
-          <AppContent />
-          <AchievementToast />
+          <InvitationRouter />
           {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
           {/* PWA disabled - service worker not generating correctly */}
           {/* <UpdatePrompt /> */}
