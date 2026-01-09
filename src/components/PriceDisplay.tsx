@@ -1,6 +1,6 @@
 /**
  * PriceDisplay Component
- * Muestra precios: Price y Comunidad TM
+ * Muestra precios: Price y Comunidad TM (solo para embajadores autenticados)
  *
  * Diseñado por Aria - Capitana del Concilio de Creación
  * Refactored: Uses design system tokens for iOS HIG compliance
@@ -8,6 +8,7 @@
 import { Box, Stack, Typography, useTheme } from '@mui/material';
 // Design System Tokens
 import { brand, iosSemanticColors, iosTypographyScale, typography } from '../design-system';
+import { useIsGuest } from '../hooks/useAuth';
 
 export interface PriceDisplayProps {
   /** Precio Comunidad TM (con descuento) */
@@ -52,11 +53,14 @@ export const PriceDisplay = ({
   compact = false,
 }: PriceDisplayProps) => {
   const theme = useTheme();
+  const isGuest = useIsGuest();
   const comunidadPrice = price;
   const regularPrice = precioInternacional;
 
   // Modo compacto para tarjetas - iOS HIG body typography (17px)
+  // Guests see regular price, authenticated users see comunidad price
   if (compact) {
+    const displayPrice = isGuest && regularPrice ? regularPrice : comunidadPrice;
     return (
       <Typography
         variant="body2"
@@ -69,7 +73,7 @@ export const PriceDisplay = ({
           fontFeatureSettings: '"tnum"',
         }}
       >
-        {formatCompact(comunidadPrice)}
+        {formatCompact(displayPrice)}
       </Typography>
     );
   }
@@ -114,32 +118,34 @@ export const PriceDisplay = ({
         </Box>
       )}
 
-      {/* Comunidad TM - Secondary (iOS 15pt, 60% opacity) */}
-      <Box>
-        <Typography
-          component="span"
-          sx={{
-            fontSize: '14px',
-            fontWeight: typography.weight.normal,
-            color: secondaryTextColor,
-            letterSpacing: typography.letterSpacing.tight,
-          }}
-        >
-          Comunidad TM{' '}
-        </Typography>
-        <Typography
-          component="span"
-          sx={{
-            fontSize: '14px',
-            fontWeight: typography.weight.semibold,
-            color: brand.emerald[600],
-            letterSpacing: typography.letterSpacing.tight,
-            fontFeatureSettings: '"tnum"',
-          }}
-        >
-          {formatCurrency(comunidadPrice, currency)}
-        </Typography>
-      </Box>
+      {/* Comunidad TM - Secondary (iOS 15pt, 60% opacity) - Solo para embajadores autenticados */}
+      {!isGuest && (
+        <Box>
+          <Typography
+            component="span"
+            sx={{
+              fontSize: '14px',
+              fontWeight: typography.weight.normal,
+              color: secondaryTextColor,
+              letterSpacing: typography.letterSpacing.tight,
+            }}
+          >
+            Comunidad TM{' '}
+          </Typography>
+          <Typography
+            component="span"
+            sx={{
+              fontSize: '14px',
+              fontWeight: typography.weight.semibold,
+              color: brand.emerald[600],
+              letterSpacing: typography.letterSpacing.tight,
+              fontFeatureSettings: '"tnum"',
+            }}
+          >
+            {formatCurrency(comunidadPrice, currency)}
+          </Typography>
+        </Box>
+      )}
     </Stack>
   );
 };
