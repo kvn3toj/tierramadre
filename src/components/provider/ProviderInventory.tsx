@@ -2,6 +2,9 @@
  * ProviderInventory - List of provider's submitted quotations
  *
  * Shows all quotations submitted by the provider with their status.
+ * Designed with iOS HIG compliance.
+ *
+ * Designed by Aria - Capitana del Concilio de Creación
  */
 
 import { useState, useEffect } from 'react';
@@ -17,18 +20,27 @@ import {
   alpha,
   CircularProgress,
   IconButton,
+  useTheme,
 } from '@mui/material';
 import { Package, Eye, EyeOff, Trash2, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
-import { emeraldCore } from '../../design-system/tokens/colors';
+import { brand, iosSemanticColors, iosTypographyScale, typography, radius } from '../../design-system';
 import { PRODUCT_TYPE_LABELS, QUOTATION_STATUS_LABELS } from '../../types/provider';
 import type { ProviderQuotation, QuotationStatus } from '../../types/provider';
 
 export default function ProviderInventory() {
+  const theme = useTheme();
   const { user } = useGoogleAuth();
   const [quotations, setQuotations] = useState<ProviderQuotation[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | QuotationStatus>('all');
+
+  // iOS HIG semantic colors
+  const isDark = theme.palette.mode === 'dark';
+  const mode = isDark ? 'dark' : 'light';
+  const labelColor = iosSemanticColors.label[mode];
+  const secondaryLabelColor = iosSemanticColors.secondaryLabel[mode];
+  const tertiaryLabelColor = iosSemanticColors.tertiaryLabel[mode];
 
   useEffect(() => {
     const fetchQuotations = async () => {
@@ -60,7 +72,7 @@ export default function ProviderInventory() {
 
   const getStatusColor = (status: QuotationStatus) => {
     switch (status) {
-      case 'disponible': return emeraldCore.primary;
+      case 'disponible': return brand.emerald[500];
       case 'reservado': return '#f59e0b';
       case 'vendido': return '#6366f1';
       default: return '#6b7280';
@@ -112,40 +124,57 @@ export default function ProviderInventory() {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <CircularProgress sx={{ color: emeraldCore.primary }} />
+        <CircularProgress sx={{ color: brand.emerald[500] }} />
       </Box>
     );
   }
 
   return (
     <Box sx={{ pb: 10 }}>
-      {/* Header */}
+      {/* Header - iOS Large Title style */}
       <Box sx={{ p: 2, pb: 0 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+        <Typography
+          sx={{
+            fontSize: iosTypographyScale.largeTitle,
+            fontWeight: typography.weight.bold,
+            color: labelColor,
+            letterSpacing: typography.letterSpacing.tighter,
+            mb: 0.5,
+          }}
+        >
           Mis Cotizaciones
         </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+        <Typography
+          sx={{
+            fontSize: iosTypographyScale.subhead,
+            color: secondaryLabelColor,
+            letterSpacing: typography.letterSpacing.tight,
+          }}
+        >
           {quotations.length} cotizacion{quotations.length !== 1 ? 'es' : ''} enviada{quotations.length !== 1 ? 's' : ''}
         </Typography>
       </Box>
 
-      {/* Tabs */}
+      {/* Tabs - iOS Segmented Control style */}
       <Tabs
         value={activeTab}
         onChange={(_, v) => setActiveTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
         sx={{
           px: 2,
           '& .MuiTab-root': {
             textTransform: 'none',
-            fontWeight: 600,
+            fontWeight: typography.weight.semibold,
+            fontSize: iosTypographyScale.subhead,
             minWidth: 'auto',
             px: 2,
           },
           '& .Mui-selected': {
-            color: emeraldCore.primary,
+            color: brand.emerald[500],
           },
           '& .MuiTabs-indicator': {
-            bgcolor: emeraldCore.primary,
+            bgcolor: brand.emerald[500],
           },
         }}
       >
@@ -158,13 +187,31 @@ export default function ProviderInventory() {
       {/* Quotation List */}
       <Box sx={{ p: 2 }}>
         {filteredQuotations.length === 0 ? (
-          <Card sx={{ bgcolor: alpha(emeraldCore.primary, 0.04), border: 'none', boxShadow: 'none' }}>
+          <Card
+            sx={{
+              bgcolor: alpha(brand.emerald[500], 0.04),
+              border: 'none',
+              boxShadow: 'none',
+              borderRadius: radius.lg,
+            }}
+          >
             <CardContent sx={{ textAlign: 'center', py: 6 }}>
-              <Package size={48} color={emeraldCore.primary} style={{ marginBottom: 16, opacity: 0.5 }} />
-              <Typography variant="body1" sx={{ color: 'text.secondary', mb: 1 }}>
+              <Package size={48} color={brand.emerald[500]} style={{ marginBottom: 16, opacity: 0.5 }} />
+              <Typography
+                sx={{
+                  fontSize: iosTypographyScale.body,
+                  color: secondaryLabelColor,
+                  mb: 1,
+                }}
+              >
                 No hay cotizaciones {activeTab !== 'all' ? QUOTATION_STATUS_LABELS[activeTab].toLowerCase() + 's' : ''}
               </Typography>
-              <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+              <Typography
+                sx={{
+                  fontSize: iosTypographyScale.caption1,
+                  color: tertiaryLabelColor,
+                }}
+              >
                 Envia tu primera cotizacion para verla aqui
               </Typography>
             </CardContent>
@@ -181,6 +228,7 @@ export default function ProviderInventory() {
                     border: '1px solid',
                     borderColor: 'divider',
                     boxShadow: 'none',
+                    borderRadius: radius.md,
                     position: 'relative',
                   }}
                 >
@@ -188,10 +236,21 @@ export default function ProviderInventory() {
                     {/* Header */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                        <Typography
+                          sx={{
+                            fontSize: iosTypographyScale.headline,
+                            fontWeight: typography.weight.semibold,
+                            color: labelColor,
+                          }}
+                        >
                           {PRODUCT_TYPE_LABELS[quotation.productType]}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        <Typography
+                          sx={{
+                            fontSize: iosTypographyScale.caption1,
+                            color: secondaryLabelColor,
+                          }}
+                        >
                           {formatDate(quotation.createdAt)} | {quotation.weightCarats} ct
                         </Typography>
                       </Box>
@@ -203,7 +262,9 @@ export default function ProviderInventory() {
                           sx={{
                             bgcolor: alpha(getStatusColor(quotation.status), 0.1),
                             color: getStatusColor(quotation.status),
-                            fontWeight: 600,
+                            fontWeight: typography.weight.semibold,
+                            fontSize: iosTypographyScale.caption2,
+                            borderRadius: radius.sm,
                             '& .MuiChip-icon': {
                               color: 'inherit',
                             },
@@ -212,7 +273,7 @@ export default function ProviderInventory() {
                         <IconButton
                           size="small"
                           onClick={() => handleDelete(quotation.id)}
-                          sx={{ color: 'text.disabled' }}
+                          sx={{ color: tertiaryLabelColor }}
                         >
                           <Trash2 size={16} />
                         </IconButton>
@@ -221,9 +282,9 @@ export default function ProviderInventory() {
 
                     {/* Description */}
                     <Typography
-                      variant="body2"
                       sx={{
-                        color: 'text.secondary',
+                        fontSize: iosTypographyScale.subhead,
+                        color: secondaryLabelColor,
                         mb: 1.5,
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
@@ -235,33 +296,47 @@ export default function ProviderInventory() {
                     </Typography>
 
                     {/* Specs */}
-                    <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 1.5 }}>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 1.5, gap: 0.5 }}>
                       <Chip
                         label={quotation.color}
                         size="small"
                         variant="outlined"
-                        sx={{ borderColor: 'divider' }}
+                        sx={{
+                          borderColor: 'divider',
+                          fontSize: iosTypographyScale.caption2,
+                          borderRadius: radius.sm,
+                        }}
                       />
                       <Chip
                         label={quotation.quality}
                         size="small"
                         variant="outlined"
-                        sx={{ borderColor: 'divider' }}
+                        sx={{
+                          borderColor: 'divider',
+                          fontSize: iosTypographyScale.caption2,
+                          borderRadius: radius.sm,
+                        }}
                       />
                       <Chip
                         label={formatPrice(quotation.priceCOP)}
                         size="small"
                         sx={{
-                          bgcolor: alpha(emeraldCore.primary, 0.1),
-                          color: emeraldCore.primary,
-                          fontWeight: 600,
+                          bgcolor: alpha(brand.emerald[500], 0.1),
+                          color: brand.emerald[500],
+                          fontWeight: typography.weight.semibold,
+                          fontSize: iosTypographyScale.caption2,
+                          borderRadius: radius.sm,
                         }}
                       />
                       <Chip
                         label={`${quotation.availability} disponible${quotation.availability !== 1 ? 's' : ''}`}
                         size="small"
                         variant="outlined"
-                        sx={{ borderColor: 'divider' }}
+                        sx={{
+                          borderColor: 'divider',
+                          fontSize: iosTypographyScale.caption2,
+                          borderRadius: radius.sm,
+                        }}
                       />
                     </Stack>
 
@@ -269,15 +344,25 @@ export default function ProviderInventory() {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       {quotation.viewedByAdmin ? (
                         <>
-                          <Eye size={14} color={emeraldCore.primary} />
-                          <Typography variant="caption" sx={{ color: emeraldCore.primary }}>
+                          <Eye size={14} color={brand.emerald[500]} />
+                          <Typography
+                            sx={{
+                              fontSize: iosTypographyScale.caption1,
+                              color: brand.emerald[500],
+                            }}
+                          >
                             Vista por el administrador
                           </Typography>
                         </>
                       ) : (
                         <>
-                          <EyeOff size={14} color="#9ca3af" />
-                          <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                          <EyeOff size={14} color={tertiaryLabelColor} />
+                          <Typography
+                            sx={{
+                              fontSize: iosTypographyScale.caption1,
+                              color: tertiaryLabelColor,
+                            }}
+                          >
                             Pendiente de revision
                           </Typography>
                         </>
@@ -286,7 +371,14 @@ export default function ProviderInventory() {
 
                     {/* Request link */}
                     {quotation.requestId && (
-                      <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', mt: 1 }}>
+                      <Typography
+                        sx={{
+                          fontSize: iosTypographyScale.caption2,
+                          color: tertiaryLabelColor,
+                          display: 'block',
+                          mt: 1,
+                        }}
+                      >
                         Respuesta a solicitud #{quotation.requestId}
                       </Typography>
                     )}

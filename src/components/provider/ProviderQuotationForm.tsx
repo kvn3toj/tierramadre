@@ -2,6 +2,9 @@
  * ProviderQuotationForm - Form for providers to submit quotations
  *
  * Can be used to respond to a specific request or submit a general quotation.
+ * Designed with iOS HIG compliance.
+ *
+ * Designed by Aria - Capitana del Concilio de Creación
  */
 
 import { useState, useEffect } from 'react';
@@ -18,11 +21,12 @@ import {
   alpha,
   CircularProgress,
   InputAdornment,
+  useTheme,
 } from '@mui/material';
 import { Send, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
-import { emeraldCore } from '../../design-system/tokens/colors';
+import { brand, iosSemanticColors, iosTypographyScale, typography, radius } from '../../design-system';
 import {
   PRODUCT_TYPE_LABELS,
   type ProductType,
@@ -63,6 +67,7 @@ const initialFormData: ProviderQuotationFormData = {
 };
 
 export default function ProviderQuotationForm() {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useGoogleAuth();
@@ -72,6 +77,12 @@ export default function ProviderQuotationForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // iOS HIG semantic colors
+  const isDark = theme.palette.mode === 'dark';
+  const mode = isDark ? 'dark' : 'light';
+  const labelColor = iosSemanticColors.label[mode];
+  const secondaryLabelColor = iosSemanticColors.secondaryLabel[mode];
 
   const requestId = searchParams.get('requestId');
 
@@ -177,7 +188,7 @@ export default function ProviderQuotationForm() {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <CircularProgress sx={{ color: emeraldCore.primary }} />
+        <CircularProgress sx={{ color: brand.emerald[500] }} />
       </Box>
     );
   }
@@ -190,19 +201,32 @@ export default function ProviderQuotationForm() {
             width: 80,
             height: 80,
             borderRadius: '50%',
-            bgcolor: alpha(emeraldCore.primary, 0.1),
+            bgcolor: alpha(brand.emerald[500], 0.1),
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             mb: 3,
           }}
         >
-          <CheckCircle size={40} color={emeraldCore.primary} />
+          <CheckCircle size={40} color={brand.emerald[500]} />
         </Box>
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+        <Typography
+          sx={{
+            fontSize: iosTypographyScale.title1,
+            fontWeight: typography.weight.bold,
+            color: labelColor,
+            mb: 1,
+          }}
+        >
           Cotizacion Enviada
         </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
+        <Typography
+          sx={{
+            fontSize: iosTypographyScale.subhead,
+            color: secondaryLabelColor,
+            textAlign: 'center',
+          }}
+        >
           Tu cotizacion ha sido enviada exitosamente. El administrador la revisara pronto.
         </Typography>
       </Box>
@@ -215,15 +239,26 @@ export default function ProviderQuotationForm() {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
         <Button
           onClick={() => navigate(-1)}
-          sx={{ minWidth: 'auto', p: 1 }}
+          sx={{ minWidth: 'auto', p: 1, borderRadius: radius.sm }}
         >
           <ArrowLeft size={20} />
         </Button>
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          <Typography
+            sx={{
+              fontSize: iosTypographyScale.title2,
+              fontWeight: typography.weight.bold,
+              color: labelColor,
+            }}
+          >
             {linkedRequest ? 'Responder Solicitud' : 'Nueva Cotizacion'}
           </Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          <Typography
+            sx={{
+              fontSize: iosTypographyScale.caption1,
+              color: secondaryLabelColor,
+            }}
+          >
             {linkedRequest ? `Solicitud #${linkedRequest.id}` : 'Enviar oferta de inventario'}
           </Typography>
         </Box>
@@ -231,12 +266,32 @@ export default function ProviderQuotationForm() {
 
       {/* Linked Request Info */}
       {linkedRequest && (
-        <Card sx={{ mb: 3, bgcolor: alpha(emeraldCore.primary, 0.04), border: 'none', boxShadow: 'none' }}>
+        <Card
+          sx={{
+            mb: 3,
+            bgcolor: alpha(brand.emerald[500], 0.04),
+            border: 'none',
+            boxShadow: 'none',
+            borderRadius: radius.lg,
+          }}
+        >
           <CardContent sx={{ py: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+            <Typography
+              sx={{
+                fontSize: iosTypographyScale.headline,
+                fontWeight: typography.weight.semibold,
+                color: labelColor,
+                mb: 1,
+              }}
+            >
               Solicitud de Tierra Madre
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            <Typography
+              sx={{
+                fontSize: iosTypographyScale.subhead,
+                color: secondaryLabelColor,
+              }}
+            >
               <strong>Tipo:</strong> {PRODUCT_TYPE_LABELS[linkedRequest.productType]}
               {' | '}
               <strong>Peso:</strong> {linkedRequest.weightMin}-{linkedRequest.weightMax} ct
@@ -244,7 +299,13 @@ export default function ProviderQuotationForm() {
               <strong>Presupuesto:</strong> ${linkedRequest.budgetMax.toLocaleString('es-CO')}
             </Typography>
             {linkedRequest.notes && (
-              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+              <Typography
+                sx={{
+                  fontSize: iosTypographyScale.subhead,
+                  color: secondaryLabelColor,
+                  mt: 1,
+                }}
+              >
                 <strong>Notas:</strong> {linkedRequest.notes}
               </Typography>
             )}
@@ -262,6 +323,11 @@ export default function ProviderQuotationForm() {
           onChange={(e) => handleChange('productType', e.target.value)}
           fullWidth
           disabled={!!linkedRequest}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: radius.md,
+            },
+          }}
         >
           {(Object.keys(PRODUCT_TYPE_LABELS) as ProductType[]).map((type) => (
             <MenuItem key={type} value={type}>
@@ -279,6 +345,11 @@ export default function ProviderQuotationForm() {
           multiline
           rows={3}
           placeholder="Describe las caracteristicas de la esmeralda..."
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: radius.md,
+            },
+          }}
         />
 
         {/* Weight */}
@@ -292,6 +363,11 @@ export default function ProviderQuotationForm() {
             endAdornment: <InputAdornment position="end">ct</InputAdornment>,
           }}
           inputProps={{ step: 0.01, min: 0 }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: radius.md,
+            },
+          }}
         />
 
         {/* Color */}
@@ -301,6 +377,11 @@ export default function ProviderQuotationForm() {
           value={formData.color}
           onChange={(e) => handleChange('color', e.target.value)}
           fullWidth
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: radius.md,
+            },
+          }}
         >
           {COLOR_OPTIONS.map((color) => (
             <MenuItem key={color} value={color}>
@@ -316,6 +397,11 @@ export default function ProviderQuotationForm() {
           value={formData.quality}
           onChange={(e) => handleChange('quality', e.target.value)}
           fullWidth
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: radius.md,
+            },
+          }}
         >
           {QUALITY_OPTIONS.map((quality) => (
             <MenuItem key={quality} value={quality}>
@@ -335,6 +421,11 @@ export default function ProviderQuotationForm() {
             startAdornment: <InputAdornment position="start">$</InputAdornment>,
           }}
           inputProps={{ min: 0 }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: radius.md,
+            },
+          }}
         />
 
         {/* Availability */}
@@ -345,6 +436,11 @@ export default function ProviderQuotationForm() {
           onChange={(e) => handleChange('availability', parseInt(e.target.value) || 0)}
           fullWidth
           inputProps={{ min: 1 }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: radius.md,
+            },
+          }}
         />
 
         {/* Notes */}
@@ -356,11 +452,23 @@ export default function ProviderQuotationForm() {
           multiline
           rows={2}
           placeholder="Informacion adicional, condiciones, etc..."
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: radius.md,
+            },
+          }}
         />
 
         {/* Error */}
         {error && (
-          <Alert severity="error" sx={{ py: 0.5 }}>
+          <Alert
+            severity="error"
+            sx={{
+              py: 0.5,
+              borderRadius: radius.md,
+              fontSize: iosTypographyScale.subhead,
+            }}
+          >
             {error}
           </Alert>
         )}
@@ -373,11 +481,13 @@ export default function ProviderQuotationForm() {
           onClick={handleSubmit}
           disabled={submitting}
           sx={{
-            bgcolor: emeraldCore.primary,
-            '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.87) },
+            bgcolor: brand.emerald[500],
+            '&:hover': { bgcolor: alpha(brand.emerald[500], 0.87) },
             py: 1.5,
+            borderRadius: radius.md,
             textTransform: 'none',
-            fontWeight: 600,
+            fontSize: iosTypographyScale.body,
+            fontWeight: typography.weight.semibold,
           }}
           fullWidth
         >
