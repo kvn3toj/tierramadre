@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { IOSLayout } from './components/ios';
-import { WelcomeScreen, AdminRoute } from './components/auth';
+import { WelcomeScreen, AdminRoute, ProviderRoute } from './components/auth';
 import { useAuth } from './hooks/useAuth';
 import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
@@ -31,6 +31,17 @@ const QuotationPreview = lazy(() => import('./components/QuotationPreview'));
 const AdminAnalyticsPage = lazy(() => import('./pages/AdminAnalyticsPage'));
 const FeedbackDashboard = lazy(() => import('./pages/admin/FeedbackDashboard'));
 const ValuationPage = lazy(() => import('./pages/ValuationPage'));
+
+// Provider Portal pages
+const ProviderDashboard = lazy(() => import('./components/provider/ProviderDashboard'));
+const ProviderRequestList = lazy(() => import('./components/provider/ProviderRequestList'));
+const ProviderQuotationForm = lazy(() => import('./components/provider/ProviderQuotationForm'));
+const ProviderInventory = lazy(() => import('./components/provider/ProviderInventory'));
+
+// Admin Quotation Management
+const QuotationRequestForm = lazy(() => import('./components/admin/QuotationRequestForm'));
+const QuotationRequestList = lazy(() => import('./components/admin/QuotationRequestList'));
+const ProviderQuotationsList = lazy(() => import('./components/admin/ProviderQuotationsList'));
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
@@ -165,6 +176,59 @@ function AppContent() {
                 <FeedbackDashboard />
               </Suspense>
             </AdminRoute>
+          } />
+
+          {/* Admin Quotation Management */}
+          <Route path="/cuentas/solicitudes" element={
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando solicitudes..." />}>
+                <QuotationRequestList />
+              </Suspense>
+            </AdminRoute>
+          } />
+          <Route path="/cuentas/solicitudes/nueva" element={
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando formulario..." />}>
+                <QuotationRequestForm />
+              </Suspense>
+            </AdminRoute>
+          } />
+          <Route path="/cuentas/cotizaciones-proveedor" element={
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando cotizaciones..." />}>
+                <ProviderQuotationsList />
+              </Suspense>
+            </AdminRoute>
+          } />
+
+          {/* Provider Portal Routes */}
+          <Route path="/provider" element={
+            <ProviderRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando portal..." />}>
+                <ProviderDashboard />
+              </Suspense>
+            </ProviderRoute>
+          } />
+          <Route path="/provider/requests" element={
+            <ProviderRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando solicitudes..." />}>
+                <ProviderRequestList />
+              </Suspense>
+            </ProviderRoute>
+          } />
+          <Route path="/provider/submit" element={
+            <ProviderRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando formulario..." />}>
+                <ProviderQuotationForm />
+              </Suspense>
+            </ProviderRoute>
+          } />
+          <Route path="/provider/inventory" element={
+            <ProviderRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando inventario..." />}>
+                <ProviderInventory />
+              </Suspense>
+            </ProviderRoute>
           } />
         </Routes>
       </IOSLayout>

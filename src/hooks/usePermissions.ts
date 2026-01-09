@@ -12,12 +12,15 @@ export const usePermissions = (): Permission => {
   return useMemo(() => {
     const isGuest = accessLevel === 'guest';
     const isAdmin = accessLevel === 'admin';
+    const isProvider = accessLevel === 'provider';
 
     return {
-      canEdit: !isGuest,
+      canEdit: !isGuest && !isProvider,
       canUpload: !isGuest,
-      canDownload: !isGuest,
+      canDownload: !isGuest && !isProvider,
       isAdmin,
+      isProvider,
+      canViewPrices: !isProvider,  // Providers cannot see prices
     };
   }, [accessLevel]);
 };
@@ -41,4 +44,14 @@ export const useCanDownload = (): boolean => {
 export const useIsAdmin = (): boolean => {
   const { isAdmin } = usePermissions();
   return isAdmin;
+};
+
+export const useIsProvider = (): boolean => {
+  const { isProvider } = usePermissions();
+  return isProvider;
+};
+
+export const useCanViewPrices = (): boolean => {
+  const { canViewPrices } = usePermissions();
+  return canViewPrices;
 };

@@ -144,22 +144,43 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
         throw new Error('Failed to decode credential');
       }
 
-      // Validate user email against Asesores sheet
+      // Validate user email against Asesores sheet first
       try {
         const validateResponse = await fetch(`/api/validate-user?email=${encodeURIComponent(profile.email)}`);
         const validateData = await validateResponse.json();
 
         if (validateData.success && validateData.isAuthorized) {
-          // User is authorized - add role and access level to profile
+          // User is authorized as asesor/admin - add role and access level to profile
           profile.role = validateData.user.role;
           profile.accessLevel = validateData.user.accessLevel;
           setIsAuthorized(true);
           log.debug('User authorized:', { email: profile.email, role: profile.role, accessLevel: profile.accessLevel });
         } else {
-          // User email not found in authorized list
-          setIsAuthorized(false);
-          setAuthError('Tu correo no está registrado en el sistema. Contacta al administrador.');
-          log.warn('User not authorized:', profile.email);
+          // Not found in Asesores, check Proveedores sheet
+          log.debug('Not found in Asesores, checking Proveedores...');
+          try {
+            const providerResponse = await fetch(`/api/validate-provider?email=${encodeURIComponent(profile.email)}`);
+            const providerData = await providerResponse.json();
+
+            if (providerData.success && providerData.isProvider) {
+              // User is authorized as provider
+              profile.role = 'Proveedor';
+              profile.accessLevel = 'provider';
+              setIsAuthorized(true);
+              log.debug('Provider authorized:', { email: profile.email, provider: providerData.provider?.name });
+            } else {
+              // User email not found in any authorized list
+              setIsAuthorized(false);
+              setAuthError('Tu correo no está registrado en el sistema. Contacta al administrador.');
+              log.warn('User not authorized:', profile.email);
+            }
+          } catch (providerError) {
+            log.error('Provider validation API error:', providerError);
+            // User email not found in any authorized list
+            setIsAuthorized(false);
+            setAuthError('Tu correo no está registrado en el sistema. Contacta al administrador.');
+            log.warn('User not authorized:', profile.email);
+          }
         }
       } catch (validateError) {
         log.error('Validation API error:', validateError);

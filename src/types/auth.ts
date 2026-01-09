@@ -2,7 +2,7 @@
  * Authentication Types for Dual-Access System
  */
 
-export type AccessLevel = 'guest' | 'full' | 'admin';
+export type AccessLevel = 'guest' | 'full' | 'admin' | 'provider';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -14,6 +14,8 @@ export interface Permission {
   canUpload: boolean;
   canDownload: boolean;
   isAdmin: boolean;
+  isProvider: boolean;
+  canViewPrices: boolean;
 }
 
 export interface AuthContextType extends AuthState {

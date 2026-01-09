@@ -4,3 +4,4 @@ export { default as GuestModeBanner } from './GuestModeBanner';
 export { default as GoogleLoginButton } from './GoogleLoginButton';
 export { default as UserProfileCard } from './UserProfileCard';
 export { default as AdminRoute } from './AdminRoute';
+export { default as ProviderRoute } from './ProviderRoute';

@@ -18,7 +18,8 @@ import {
   MoreHoriz,
   People,
 } from '@mui/icons-material';
-import { Gem } from 'lucide-react';
+import { Gem, FileText, PlusCircle, Package } from 'lucide-react';
+import { useIsProvider } from '../../hooks/usePermissions';
 
 // Design tokens
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
@@ -66,6 +67,34 @@ const getPrimaryTabs = (t: any): TabConfig[] => [
   },
 ];
 
+// Provider-specific tabs
+const getProviderTabs = (): TabConfig[] => [
+  {
+    id: 'provider-home',
+    label: 'Inicio',
+    icon: Home,
+    route: '/provider',
+  },
+  {
+    id: 'provider-requests',
+    label: 'Solicitudes',
+    icon: FileText as React.ElementType,
+    route: '/provider/requests',
+  },
+  {
+    id: 'provider-submit',
+    label: 'Cotizar',
+    icon: PlusCircle as React.ElementType,
+    route: '/provider/submit',
+  },
+  {
+    id: 'provider-inventory',
+    label: 'Inventario',
+    icon: Package as React.ElementType,
+    route: '/provider/inventory',
+  },
+];
+
 export interface IOSTabBarProps {
   onMoreClick?: () => void;
 }
@@ -75,6 +104,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
   const location = useLocation();
   const { t } = useLanguage();
   const { effectiveConfig } = useLiquidGlassSafe();
+  const isProvider = useIsProvider();
 
   // Dynamic shrink/expand behavior - DISABLED for always-visible navigation
   const {
@@ -87,10 +117,26 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
     collapsedHeight: tabBarConfig.height.collapsed,
   });
 
-  const PRIMARY_TABS = useMemo(() => getPrimaryTabs(t), [t]);
+  // Use provider tabs if user is a provider, otherwise use primary tabs
+  const PRIMARY_TABS = useMemo(() => {
+    if (isProvider) {
+      return getProviderTabs();
+    }
+    return getPrimaryTabs(t);
+  }, [t, isProvider]);
 
   const getActiveTab = (): string => {
     const currentPath = location.pathname;
+
+    // For providers, match against provider routes
+    if (isProvider) {
+      const matchingTab = PRIMARY_TABS.find(tab =>
+        currentPath === tab.route || currentPath.startsWith(tab.route + '/')
+      );
+      return matchingTab?.id || 'provider-home';
+    }
+
+    // For regular users
     const matchingTab = PRIMARY_TABS.find(tab =>
       currentPath.startsWith(tab.route) && tab.id !== 'more'
     );
@@ -108,6 +154,12 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
   const handleTabClick = (tab: TabConfig) => {
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
+    }
+
+    // For providers, all tabs navigate directly (no "more" menu)
+    if (isProvider) {
+      navigate(tab.route);
+      return;
     }
 
     if (tab.id === 'more') {
@@ -279,7 +331,9 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         {PRIMARY_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
-          const isLucideIcon = tab.id === 'treasure'; // Gem is from lucide-react
+          // Lucide icons: treasure (Gem), provider tabs (FileText, PlusCircle, Package)
+          const lucideIconIds = ['treasure', 'provider-requests', 'provider-submit', 'provider-inventory'];
+          const isLucideIcon = lucideIconIds.includes(tab.id);
 
           return (
             <Box

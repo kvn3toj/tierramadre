@@ -13,7 +13,7 @@ export interface BaseEvent {
   timestamp: number;
   sessionId: string;
   userId?: string;
-  accessLevel: 'guest' | 'full' | 'admin';
+  accessLevel: 'guest' | 'full' | 'admin' | 'provider';
 }
 
 // =============================================================================

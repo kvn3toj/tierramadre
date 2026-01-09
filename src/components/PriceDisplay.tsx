@@ -8,7 +8,8 @@
 import { Box, Stack, Typography, useTheme } from '@mui/material';
 // Design System Tokens
 import { brand, iosSemanticColors, iosTypographyScale, typography } from '../design-system';
-import { useIsGuest } from '../hooks/useAuth';
+import { useCanSeeComunidadPrice } from '../hooks/useAuth';
+import { useCanViewPrices } from '../hooks/usePermissions';
 
 export interface PriceDisplayProps {
   /** Precio Comunidad TM (con descuento) */
@@ -53,14 +54,20 @@ export const PriceDisplay = ({
   compact = false,
 }: PriceDisplayProps) => {
   const theme = useTheme();
-  const isGuest = useIsGuest();
+  const canSeeComunidadPrice = useCanSeeComunidadPrice();
+  const canViewPrices = useCanViewPrices();
   const comunidadPrice = price;
   const regularPrice = precioInternacional;
 
+  // If provider, don't show any prices
+  if (!canViewPrices) {
+    return null;
+  }
+
   // Modo compacto para tarjetas - iOS HIG body typography (17px)
-  // Guests see regular price, authenticated users see comunidad price
+  // Only Embajadores/Admins see comunidad price, everyone else sees regular price
   if (compact) {
-    const displayPrice = isGuest && regularPrice ? regularPrice : comunidadPrice;
+    const displayPrice = canSeeComunidadPrice ? comunidadPrice : (regularPrice || comunidadPrice);
     return (
       <Typography
         variant="body2"
@@ -118,8 +125,8 @@ export const PriceDisplay = ({
         </Box>
       )}
 
-      {/* Comunidad TM - Secondary (iOS 15pt, 60% opacity) - Solo para embajadores autenticados */}
-      {!isGuest && (
+      {/* Comunidad TM - Secondary (iOS 15pt, 60% opacity) - Solo para Embajadores y Admins */}
+      {canSeeComunidadPrice && (
         <Box>
           <Typography
             component="span"

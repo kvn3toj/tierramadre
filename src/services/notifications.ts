@@ -234,3 +234,87 @@ export function checkNewProducts(currentCount: number): number {
   setLastProductCount(currentCount);
   return newProductsCount;
 }
+
+// =============================================================================
+// QUOTATION NOTIFICATIONS
+// =============================================================================
+
+const LAST_REQUEST_CHECK_KEY = 'tierramadre-last-request-check';
+const LAST_QUOTATION_CHECK_KEY = 'tierramadre-last-quotation-check';
+
+/**
+ * Get last request check timestamp
+ */
+export function getLastRequestCheck(): string | null {
+  return localStorage.getItem(LAST_REQUEST_CHECK_KEY);
+}
+
+/**
+ * Set last request check timestamp
+ */
+export function setLastRequestCheck(): void {
+  localStorage.setItem(LAST_REQUEST_CHECK_KEY, new Date().toISOString());
+}
+
+/**
+ * Get last quotation check timestamp
+ */
+export function getLastQuotationCheck(): string | null {
+  return localStorage.getItem(LAST_QUOTATION_CHECK_KEY);
+}
+
+/**
+ * Set last quotation check timestamp
+ */
+export function setLastQuotationCheck(): void {
+  localStorage.setItem(LAST_QUOTATION_CHECK_KEY, new Date().toISOString());
+}
+
+/**
+ * Show notification for new quotation requests (for providers)
+ */
+export function showNewRequestNotification(count: number): void {
+  showNotification({
+    title: 'Nueva Solicitud de Cotizacion',
+    body: `Tienes ${count} nueva${count > 1 ? 's' : ''} solicitud${count > 1 ? 'es' : ''} de Tierra Madre`,
+    tag: 'provider-request',
+    onClick: () => {
+      window.focus();
+      window.location.href = '/provider/requests';
+    },
+  });
+}
+
+/**
+ * Show notification for provider response (for admin)
+ */
+export function showProviderResponseNotification(providerName: string): void {
+  showNotification({
+    title: 'Respuesta de Proveedor',
+    body: `${providerName} ha respondido a tu solicitud de cotizacion`,
+    tag: 'admin-response',
+    onClick: () => {
+      window.focus();
+      window.location.href = '/cuentas/cotizaciones-proveedor';
+    },
+  });
+}
+
+/**
+ * Show notification for new provider quotation upload (for admin)
+ */
+export function showNewProviderQuotationNotification(count: number, providerName?: string): void {
+  const body = providerName
+    ? `${providerName} ha enviado ${count > 1 ? count : 'una'} nueva${count > 1 ? 's' : ''} cotizacion${count > 1 ? 'es' : ''}`
+    : `Tienes ${count} nueva${count > 1 ? 's' : ''} cotizacion${count > 1 ? 'es' : ''} de proveedores`;
+
+  showNotification({
+    title: 'Nueva Cotizacion de Proveedor',
+    body,
+    tag: 'admin-quotation',
+    onClick: () => {
+      window.focus();
+      window.location.href = '/cuentas/cotizaciones-proveedor';
+    },
+  });
+}
