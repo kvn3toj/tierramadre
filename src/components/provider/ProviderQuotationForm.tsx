@@ -23,7 +23,7 @@ import {
   InputAdornment,
   useTheme,
 } from '@mui/material';
-import { Send, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Send, ArrowLeft, CheckCircle, ImagePlus } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { brand, iosSemanticColors, iosTypographyScale, typography, radius } from '../../design-system';
@@ -33,6 +33,7 @@ import {
   type QuotationRequest,
   type ProviderQuotationFormData,
 } from '../../types/provider';
+import QuotationMediaUpload from './QuotationMediaUpload';
 
 // Color options
 const COLOR_OPTIONS = [
@@ -66,6 +67,11 @@ const initialFormData: ProviderQuotationFormData = {
   notes: '',
 };
 
+// Generate a temporary quotation ID for media uploads before submission
+function generateTempQuotationId(): string {
+  return `QUO-${Date.now().toString(36).toUpperCase()}`;
+}
+
 export default function ProviderQuotationForm() {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -77,6 +83,8 @@ export default function ProviderQuotationForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  // Temporary ID for media uploads (generated once per form session)
+  const [tempQuotationId] = useState<string>(() => generateTempQuotationId());
 
   // iOS HIG semantic colors
   const isDark = theme.palette.mode === 'dark';
@@ -442,6 +450,47 @@ export default function ProviderQuotationForm() {
             },
           }}
         />
+
+        {/* Media Upload */}
+        <Card
+          sx={{
+            bgcolor: alpha(brand.emerald[500], 0.04),
+            border: 'none',
+            boxShadow: 'none',
+            borderRadius: radius.lg,
+          }}
+        >
+          <CardContent sx={{ py: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <ImagePlus size={18} color={brand.emerald[500]} />
+              <Typography
+                sx={{
+                  fontSize: iosTypographyScale.headline,
+                  fontWeight: typography.weight.semibold,
+                  color: labelColor,
+                }}
+              >
+                Fotos y Videos
+              </Typography>
+            </Box>
+            <Typography
+              sx={{
+                fontSize: iosTypographyScale.caption1,
+                color: secondaryLabelColor,
+                mb: 2,
+              }}
+            >
+              Sube imagenes, GIFs o videos del producto (maximo 5 archivos)
+            </Typography>
+            <QuotationMediaUpload
+              quotationId={tempQuotationId}
+              uploadedUrls={formData.photoUrls}
+              onUploadComplete={(urls) => handleChange('photoUrls', urls)}
+              maxFiles={5}
+              disabled={submitting}
+            />
+          </CardContent>
+        </Card>
 
         {/* Notes */}
         <TextField

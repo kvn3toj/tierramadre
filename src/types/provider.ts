@@ -34,6 +34,7 @@ export interface QuotationRequest {
   assignedProvider?: string;   // Provider email (optional)
   responseId?: string;         // Link to provider response
   createdBy: string;           // Admin email
+  referencePhotoUrls?: string[]; // Reference images/videos from admin
 }
 
 /**
@@ -86,6 +87,7 @@ export interface QuotationRequestFormData {
   budgetMax: number;
   notes: string;
   assignedProvider?: string;
+  referencePhotoUrls?: string[]; // Reference images/videos from admin
 }
 
 /**

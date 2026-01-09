@@ -4,7 +4,7 @@
  * Allows admin to specify detailed emerald requirements for providers to quote.
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Typography,
@@ -19,7 +19,7 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
-import { Send, ArrowLeft, CheckCircle, Users } from 'lucide-react';
+import { Send, ArrowLeft, CheckCircle, ImagePlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { emeraldCore } from '../../design-system/tokens/colors';
@@ -27,8 +27,8 @@ import {
   PRODUCT_TYPE_LABELS,
   type ProductType,
   type QuotationRequestFormData,
-  type ProviderProfile,
 } from '../../types/provider';
+import QuotationMediaUpload from '../provider/QuotationMediaUpload';
 
 // Color options
 const COLOR_OPTIONS = [
@@ -60,37 +60,23 @@ const initialFormData: QuotationRequestFormData = {
   budgetMax: 10000000,
   notes: '',
   assignedProvider: undefined,
+  referencePhotoUrls: [],
 };
+
+// Generate a temporary request ID for media uploads before submission
+function generateTempRequestId(): string {
+  return `REQ-${Date.now().toString(36).toUpperCase()}`;
+}
 
 export default function QuotationRequestForm() {
   const navigate = useNavigate();
   const { user } = useGoogleAuth();
   const [formData, setFormData] = useState<QuotationRequestFormData>(initialFormData);
-  const [providers, setProviders] = useState<ProviderProfile[]>([]);
-  const [loadingProviders, setLoadingProviders] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
-  // Load available providers
-  useEffect(() => {
-    const fetchProviders = async () => {
-      try {
-        const response = await fetch('/api/providers');
-        const data = await response.json();
-
-        if (data.success) {
-          setProviders(data.providers || []);
-        }
-      } catch (err) {
-        console.error('Error fetching providers:', err);
-      } finally {
-        setLoadingProviders(false);
-      }
-    };
-
-    fetchProviders();
-  }, []);
+  // Temporary ID for media uploads (generated once per form session)
+  const [tempRequestId] = useState<string>(() => generateTempRequestId());
 
   const handleChange = (field: keyof QuotationRequestFormData, value: unknown) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -289,35 +275,25 @@ export default function QuotationRequestForm() {
           helperText="Precio maximo en COP"
         />
 
-        {/* Assign to Provider (Optional) */}
+        {/* Reference Media Upload */}
         <Card sx={{ bgcolor: alpha(emeraldCore.primary, 0.04), border: 'none', boxShadow: 'none' }}>
           <CardContent sx={{ py: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-              <Users size={18} color={emeraldCore.primary} />
+              <ImagePlus size={18} color={emeraldCore.primary} />
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                Asignar a Proveedor (Opcional)
+                Fotos de Referencia (Opcional)
               </Typography>
             </Box>
-            <TextField
-              select
-              value={formData.assignedProvider || ''}
-              onChange={(e) => handleChange('assignedProvider', e.target.value || undefined)}
-              fullWidth
-              size="small"
-              disabled={loadingProviders}
-              SelectProps={{
-                displayEmpty: true,
-              }}
-            >
-              <MenuItem value="">
-                <em>Todos los proveedores</em>
-              </MenuItem>
-              {providers.map((provider) => (
-                <MenuItem key={provider.id} value={provider.email}>
-                  {provider.name} ({provider.specialty})
-                </MenuItem>
-              ))}
-            </TextField>
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2 }}>
+              Sube imagenes, GIFs o videos de referencia para el proveedor
+            </Typography>
+            <QuotationMediaUpload
+              quotationId={tempRequestId}
+              uploadedUrls={formData.referencePhotoUrls || []}
+              onUploadComplete={(urls) => handleChange('referencePhotoUrls', urls)}
+              maxFiles={5}
+              disabled={submitting}
+            />
           </CardContent>
         </Card>
 

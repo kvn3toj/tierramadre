@@ -7,7 +7,7 @@
  * Sheet Schema:
  * A=ID, B=FechaCreacion, C=TipoProducto, D=PesoMin, E=PesoMax, F=ColorPreferencia,
  * G=CalidadPreferencia, H=PresupuestoMax, I=Notas, J=Estado, K=ProveedorAsignado,
- * L=RespuestaId, M=CreadoPor
+ * L=RespuestaId, M=CreadoPor, N=FotosReferenciaUrls
  */
 
 import { google } from 'googleapis';
@@ -73,13 +73,13 @@ export default async function handler(req, res) {
       // Add headers
       await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A1:M1`,
+        range: `'${SHEET_NAME}'!A1:N1`,
         valueInputOption: 'RAW',
         requestBody: {
           values: [[
             'ID', 'FechaCreacion', 'TipoProducto', 'PesoMin', 'PesoMax',
             'ColorPreferencia', 'CalidadPreferencia', 'PresupuestoMax', 'Notas',
-            'Estado', 'ProveedorAsignado', 'RespuestaId', 'CreadoPor'
+            'Estado', 'ProveedorAsignado', 'RespuestaId', 'CreadoPor', 'FotosReferenciaUrls'
           ]],
         },
       });
@@ -91,7 +91,7 @@ export default async function handler(req, res) {
 
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A:M`,
+        range: `'${SHEET_NAME}'!A:N`,
       });
 
       const rows = response.data.values || [];
@@ -113,6 +113,7 @@ export default async function handler(req, res) {
         assignedProvider: row[10] || '',
         responseId: row[11] || '',
         createdBy: row[12] || '',
+        referencePhotoUrls: (row[13] || '').split(',').filter(Boolean),
       }));
 
       // Filter by ID if provided
@@ -149,6 +150,7 @@ export default async function handler(req, res) {
         notes,
         assignedProvider,
         createdBy,
+        referencePhotoUrls,
       } = req.body;
 
       const newRequest = [
@@ -165,11 +167,12 @@ export default async function handler(req, res) {
         assignedProvider || '',
         '',
         createdBy || '',
+        (referencePhotoUrls || []).join(','),
       ];
 
       await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A:M`,
+        range: `'${SHEET_NAME}'!A:N`,
         valueInputOption: 'RAW',
         requestBody: {
           values: [newRequest],
@@ -191,6 +194,7 @@ export default async function handler(req, res) {
           status: 'pendiente',
           assignedProvider,
           createdBy,
+          referencePhotoUrls: referencePhotoUrls || [],
         },
       });
     }
@@ -201,7 +205,7 @@ export default async function handler(req, res) {
 
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A:M`,
+        range: `'${SHEET_NAME}'!A:N`,
       });
 
       const rows = response.data.values || [];
@@ -239,7 +243,7 @@ export default async function handler(req, res) {
 
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A:M`,
+        range: `'${SHEET_NAME}'!A:N`,
       });
 
       const rows = response.data.values || [];
