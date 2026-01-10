@@ -11,6 +11,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import {
@@ -236,7 +237,9 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
     };
   };
 
-  return (
+  // Use portal to render at document.body level, outside any scrolling containers
+  // This ensures fixed positioning works correctly in PWA standalone mode
+  const tabBarContent = (
     <Box
       component="nav"
       aria-label="Primary navigation"
@@ -482,6 +485,10 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         })}
     </Box>
   );
+
+  // Render via portal to document.body to escape any parent scroll containers
+  // This is critical for PWA standalone mode where body is position:fixed
+  return createPortal(tabBarContent, document.body);
 };
 
 export default IOSTabBar;

@@ -343,12 +343,6 @@ body {
 
   /* Additional PWA-specific iOS fixes */
   @media (display-mode: standalone) {
-    /* Prevent browser chrome from appearing during scroll */
-    * {
-      -webkit-transform: translateZ(0);
-      transform: translateZ(0);
-    }
-
     /* Lock body scroll position to prevent address bar */
     body {
       position: fixed;
@@ -363,6 +357,8 @@ body {
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-y: contain;
+      /* Create positioning context for fixed children */
+      position: relative;
     }
 
     /* Prevent any links from breaking out */
@@ -370,9 +366,26 @@ body {
       -webkit-touch-callout: none;
     }
 
-    /* Ensure transitions don't trigger browser chrome */
-    * {
-      will-change: auto !important;
+    /* CRITICAL: Bottom navigation must stay fixed in PWA mode */
+    /* Override any inherited transforms that could break fixed positioning */
+    nav[aria-label="Primary navigation"] {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      /* Use transform for GPU layer but ensure it stays at bottom */
+      transform: translate3d(0, 0, 0) !important;
+      -webkit-transform: translate3d(0, 0, 0) !important;
+      /* Ensure highest z-index in PWA */
+      z-index: 9999 !important;
+      /* Force visibility */
+      visibility: visible !important;
+      opacity: 1 !important;
+      /* Prevent clipping */
+      clip: auto !important;
+      clip-path: none !important;
+      /* Ensure not affected by parent transforms */
+      contain: layout style;
     }
   }
 }
