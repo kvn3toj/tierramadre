@@ -621,9 +621,9 @@ export default function TreasureBrowser() {
             hidePriceFilter={!guestCanSeePrices}
           />
 
-          {/* Quick info row - only show when filters are closed */}
+          {/* Quick info row with active filters - only show when filters are closed */}
           {!filterSheetOpen && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1, flexWrap: 'wrap', rowGap: 0.5 }}>
               {/* Favorites toggle */}
               <Box
                 onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
@@ -641,6 +641,7 @@ export default function TreasureBrowser() {
                       ? surfacesLight.background.secondary
                       : surfacesDark.background.tertiary,
                   border: showFavoritesOnly ? '1px solid #ef4444' : 'none',
+                  flexShrink: 0,
                 }}
               >
                 <Heart
@@ -659,12 +660,106 @@ export default function TreasureBrowser() {
                 </Typography>
               </Box>
 
-              {/* Stats */}
+              {/* Active filter chips - inline */}
+              {(priceRange[0] !== priceMinMax.min || priceRange[1] !== priceMinMax.max) && (
+                <Chip
+                  label={`${formatCurrency(priceRange[0])} - ${formatCurrency(priceRange[1])}`}
+                  size="small"
+                  onDelete={() => setPriceRange([priceMinMax.min, priceMinMax.max])}
+                  deleteIcon={<X size={12} />}
+                  sx={{
+                    bgcolor: alpha(emeraldCore.primary, 0.1),
+                    color: emeraldCore.dark,
+                    height: 24,
+                    '& .MuiChip-deleteIcon': { color: emeraldCore.dark },
+                    '& .MuiChip-label': { px: 1, fontSize: '0.7rem' },
+                  }}
+                />
+              )}
+              {colorFilter !== 'all' && (
+                <Chip
+                  icon={<Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: getColorDot(colorFilter), ml: 0.5 }} />}
+                  label={colorFilter.replace('Verde ', '')}
+                  size="small"
+                  onDelete={() => setColorFilter('all')}
+                  deleteIcon={<X size={12} />}
+                  sx={{
+                    bgcolor: alpha(emeraldCore.primary, 0.1),
+                    color: emeraldCore.dark,
+                    height: 24,
+                    '& .MuiChip-deleteIcon': { color: emeraldCore.dark },
+                    '& .MuiChip-label': { px: 1, fontSize: '0.7rem' },
+                  }}
+                />
+              )}
+              {qualityFilter !== 'all' && (
+                <Chip
+                  label={qualityFilter}
+                  size="small"
+                  onDelete={() => setQualityFilter('all')}
+                  deleteIcon={<X size={12} />}
+                  sx={{
+                    bgcolor: alpha(goldAccent.primary, 0.15),
+                    color: goldAccent.dark,
+                    height: 24,
+                    '& .MuiChip-deleteIcon': { color: goldAccent.dark },
+                    '& .MuiChip-label': { px: 1, fontSize: '0.7rem' },
+                  }}
+                />
+              )}
+              {typeFilter !== 'all' && (
+                <Chip
+                  label={typeFilter === 'loose' ? 'Gemas' : 'Joyería'}
+                  size="small"
+                  onDelete={() => setTypeFilter('all')}
+                  deleteIcon={<X size={12} />}
+                  sx={{
+                    bgcolor: alpha(emeraldCore.primary, 0.1),
+                    color: emeraldCore.dark,
+                    height: 24,
+                    '& .MuiChip-deleteIcon': { color: emeraldCore.dark },
+                    '& .MuiChip-label': { px: 1, fontSize: '0.7rem' },
+                  }}
+                />
+              )}
+              {shapeFilter !== 'all' && (
+                <Chip
+                  label={shapeFilter}
+                  size="small"
+                  onDelete={() => setShapeFilter('all')}
+                  deleteIcon={<X size={12} />}
+                  sx={{
+                    bgcolor: alpha(emeraldCore.primary, 0.1),
+                    color: emeraldCore.dark,
+                    height: 24,
+                    '& .MuiChip-deleteIcon': { color: emeraldCore.dark },
+                    '& .MuiChip-label': { px: 1, fontSize: '0.7rem' },
+                  }}
+                />
+              )}
+              {cantidadFilter !== 'all' && (
+                <Chip
+                  label={cantidadFilter === '2+' ? 'Lotes' : cantidadFilter}
+                  size="small"
+                  onDelete={() => setCantidadFilter('all')}
+                  deleteIcon={<X size={12} />}
+                  sx={{
+                    bgcolor: alpha(emeraldCore.primary, 0.1),
+                    color: emeraldCore.dark,
+                    height: 24,
+                    '& .MuiChip-deleteIcon': { color: emeraldCore.dark },
+                    '& .MuiChip-label': { px: 1, fontSize: '0.7rem' },
+                  }}
+                />
+              )}
+
+              {/* Stats - pushed to the right */}
               <Typography
                 sx={{
                   color: theme.palette.text.secondary,
                   fontSize: '0.75rem',
                   ml: 'auto',
+                  flexShrink: 0,
                 }}
               >
                 {sortedTreasure.length} items
@@ -782,8 +877,8 @@ export default function TreasureBrowser() {
         </>
       )}
 
-      {/* Active Filter Chips - Individual removal */}
-      {hasFilters && (
+      {/* Active Filter Chips - Individual removal (Desktop only, mobile shows inline above) */}
+      {!isMobile && hasFilters && (
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
           {search && (
             <Chip
