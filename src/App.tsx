@@ -245,16 +245,16 @@ function AppContent() {
 function InvitationRouter() {
   return (
     <Routes>
-      {/* Full invitation link with JWT token */}
+      {/* Invitation page with short code (e.g., /invite/ABC123) */}
       <Route
-        path="/invite/:token"
+        path="/invite/:shortCode"
         element={
           <Suspense fallback={<LoadingFallback message="Cargando..." />}>
             <InvitationPage />
           </Suspense>
         }
       />
-      {/* Short link redirect (e.g., /g/ABC123) */}
+      {/* Short link alias (e.g., /g/ABC123) - redirects to /invite/:shortCode */}
       <Route
         path="/g/:shortCode"
         element={

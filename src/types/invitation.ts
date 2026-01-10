@@ -1,8 +1,8 @@
 /**
  * Invitation System Types
  *
- * Types for the guest invitation system including short links,
- * pricing modes, and guest registration.
+ * Types for the guest invitation system using short codes.
+ * NO JWT - Google Sheets is the single source of truth.
  */
 
 export type PricingMode = 'with_prices' | 'no_prices';
@@ -26,8 +26,8 @@ export interface GenerateInvitationOptions {
  * Response from generating an invitation
  */
 export interface InvitationData {
-  token: string;
-  url: string;
+  token: string; // Short code (e.g., ABC123)
+  url: string; // Full URL with short code
   shortCode: string | null;
   shortUrl: string | null;
   createdAt: string;
@@ -56,7 +56,6 @@ export interface ValidationResult {
   pricingMode?: PricingMode;
   createdBy?: string;
   shortCode?: string;
-  activatedToken?: string;
   error?: string;
 }
 

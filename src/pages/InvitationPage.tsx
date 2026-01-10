@@ -4,6 +4,9 @@
  * Handles invitation link validation and grants temporary guest access.
  * Includes a guest contact form (name + email/phone) before granting access.
  * Fixed 24-hour duration with configurable pricing mode.
+ *
+ * Route: /invite/:shortCode (or /g/:shortCode via redirect)
+ * NO JWT - Uses short codes validated against Google Sheets.
  */
 
 import { useEffect, useState } from 'react';
@@ -34,7 +37,8 @@ import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import type { ContactType, PricingMode } from '../types/invitation';
 
 export default function InvitationPage() {
-  const { token } = useParams<{ token: string }>();
+  // Short code from URL (e.g., ABC123)
+  const { shortCode } = useParams<{ shortCode: string }>();
   const navigate = useNavigate();
   const { validateInvitation, registerGuest, isValidating, isRegistering } = useInvitation();
   const { loginAsGuest } = useAuth();
@@ -45,7 +49,7 @@ export default function InvitationPage() {
   const [invitationId, setInvitationId] = useState<string>('');
   const [createdBy, setCreatedBy] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [activatedToken, setActivatedToken] = useState<string>('');
+  const [currentShortCode, setCurrentShortCode] = useState<string>('');
   const [expiresAt, setExpiresAt] = useState<string>('');
 
   // Guest form state
@@ -55,14 +59,15 @@ export default function InvitationPage() {
   const [formError, setFormError] = useState<string>('');
 
   useEffect(() => {
-    if (!token) {
+    if (!shortCode) {
       setStatus('error');
       setErrorMessage('Enlace de invitacion invalido');
       return;
     }
 
     const validate = async () => {
-      const result = await validateInvitation(token);
+      // Validate using short code (Google Sheets lookup)
+      const result = await validateInvitation(shortCode);
 
       if (result.isValid) {
         // Store invitation info (fixed 24-hour duration)
@@ -70,7 +75,7 @@ export default function InvitationPage() {
         setPricingMode(result.pricingMode || 'with_prices');
         setCreatedBy(result.createdBy || '');
         setInvitationId(result.invitationId || '');
-        setActivatedToken(result.activatedToken || token);
+        setCurrentShortCode(result.shortCode || shortCode);
         setExpiresAt(result.expiresAt || '');
 
         // Show the guest registration form
@@ -85,7 +90,7 @@ export default function InvitationPage() {
     };
 
     validate();
-  }, [token, validateInvitation]);
+  }, [shortCode, validateInvitation]);
 
   const validateForm = (): boolean => {
     if (!guestName.trim()) {
@@ -141,7 +146,7 @@ export default function InvitationPage() {
 
     // Store invitation data in sessionStorage (fixed 24-hour duration)
     sessionStorage.setItem(INVITATION_STORAGE_KEYS.EXPIRES, expiresAt);
-    sessionStorage.setItem(INVITATION_STORAGE_KEYS.TOKEN, activatedToken);
+    sessionStorage.setItem(INVITATION_STORAGE_KEYS.TOKEN, currentShortCode);
     sessionStorage.setItem(INVITATION_STORAGE_KEYS.PRICING_MODE, pricingMode);
     sessionStorage.setItem(INVITATION_STORAGE_KEYS.DURATION_HOURS, '24');
     sessionStorage.setItem(INVITATION_STORAGE_KEYS.INVITATION_ID, invitationId);

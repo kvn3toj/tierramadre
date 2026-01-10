@@ -1,14 +1,14 @@
 /**
  * Vercel Serverless Function - Generate Invitation Link
  *
- * Creates a JWT invitation token for Embajadores/Admins to share.
+ * Creates a short invitation link stored in Google Sheets.
  * The timer starts when the guest opens the link, not when created.
  * Duration is fixed at 24 hours.
  *
- * Also stores invitation data in Google Sheets for tracking and analytics.
+ * NO JWT - Google Sheets is the single source of truth.
+ * Short codes are 6 characters, easy to share.
  */
 
-import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { google } from 'googleapis';
 
@@ -32,7 +32,7 @@ const HEADERS = [
 
 function getSheetsClient() {
   if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-    return null;
+    throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY not configured');
   }
   const credentials = JSON.parse(
     Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
@@ -138,13 +138,6 @@ export default async function handler(req, res) {
     });
   }
 
-  if (!process.env.JWT_SECRET) {
-    return res.status(500).json({
-      success: false,
-      error: 'JWT_SECRET not configured',
-    });
-  }
-
   // Fixed 24-hour duration
   const duration = 24;
 
@@ -154,82 +147,57 @@ export default async function handler(req, res) {
 
   try {
     const sheets = getSheetsClient();
-    let shortCode = null;
-    let shortUrl = null;
+    await ensureSheetExists(sheets);
 
-    // Generate short code and store in sheets if available
-    if (sheets) {
-      await ensureSheetExists(sheets);
-      shortCode = await getUniqueShortCode(sheets);
-    }
-
+    const shortCode = await getUniqueShortCode(sheets);
     const invitationId = crypto.randomUUID();
     const creatorName = email.split('@')[0];
     const createdAt = new Date().toISOString();
-
-    // Create token payload
-    const payload = {
-      id: invitationId,
-      creatorEmail: email,
-      creatorName,
-      createdAt,
-      durationHours: duration,
-      pricingMode: pricing,
-      shortCode,
-      // activatedAt and expiresAt will be set when guest first opens the link
-    };
-
-    // Sign token (7 days max lifetime for unused invitations)
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
-
-    // Generate the invitation URLs
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'https://tierra-madre-studio.vercel.app';
-    const inviteUrl = `${baseUrl}/invite/${token}`;
-
-    if (shortCode) {
-      shortUrl = `${baseUrl}/g/${shortCode}`;
-    }
 
     // Format guest contact with type prefix if provided
     const formattedContact = guestContact
       ? (contactType === 'phone' ? `tel:${guestContact}` : guestContact)
       : '';
 
-    // Store in Google Sheets for tracking
-    if (sheets && shortCode) {
-      const newRow = [
-        invitationId,
-        shortCode,
-        email,
-        creatorName,
-        guestName || '', // GuestName - from creator form
-        formattedContact, // GuestContact - from creator form
-        createdAt,
-        '', // ActivatedAt - filled on first access
-        '', // ExpiresAt - calculated on activation
-        pricing,
-        duration,
-        'pending',
-      ];
+    // Store in Google Sheets
+    const newRow = [
+      invitationId,
+      shortCode,
+      email,
+      creatorName,
+      guestName || '',
+      formattedContact,
+      createdAt,
+      '', // ActivatedAt - filled on first access
+      '', // ExpiresAt - calculated on activation
+      pricing,
+      duration,
+      'pending',
+    ];
 
-      await sheets.spreadsheets.values.append({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A:L`,
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [newRow],
-        },
-      });
-    }
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `'${SHEET_NAME}'!A:L`,
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [newRow],
+      },
+    });
+
+    // Generate the invitation URL - SHORT CODE ONLY, no JWT
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'https://tierra-madre-studio.vercel.app';
+
+    // The short URL IS the invitation URL now
+    const inviteUrl = `${baseUrl}/g/${shortCode}`;
 
     return res.status(200).json({
       success: true,
-      token,
-      url: inviteUrl,
       shortCode,
-      shortUrl,
+      url: inviteUrl,
+      shortUrl: inviteUrl, // Same as url now
+      invitationId,
       createdAt,
       durationHours: duration,
       pricingMode: pricing,

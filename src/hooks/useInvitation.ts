@@ -3,6 +3,8 @@
  *
  * Handles invitation link generation, validation, and guest registration.
  * Used by Embajadores/Admins to create shareable guest access links.
+ *
+ * NO JWT - Uses short codes and Google Sheets as source of truth.
  */
 
 import { useState, useCallback } from 'react';
@@ -17,9 +19,8 @@ import type {
 
 interface UseInvitationReturn {
   generateInvitation: (options?: GenerateInvitationOptions) => Promise<InvitationData | null>;
-  validateInvitation: (token: string) => Promise<ValidationResult>;
+  validateInvitation: (shortCode: string) => Promise<ValidationResult>;
   registerGuest: (registration: GuestRegistration) => Promise<boolean>;
-  resolveShortCode: (shortCode: string) => Promise<string | null>;
   isGenerating: boolean;
   isValidating: boolean;
   isRegistering: boolean;
@@ -66,7 +67,7 @@ export const useInvitation = (): UseInvitationReturn => {
       }
 
       const invitation: InvitationData = {
-        token: data.token,
+        token: data.shortCode, // Short code IS the token now
         url: data.url,
         shortCode: data.shortCode,
         shortUrl: data.shortUrl,
@@ -87,12 +88,13 @@ export const useInvitation = (): UseInvitationReturn => {
     }
   }, [user?.email]);
 
-  const validateInvitation = useCallback(async (token: string): Promise<ValidationResult> => {
+  const validateInvitation = useCallback(async (shortCode: string): Promise<ValidationResult> => {
     setIsValidating(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/validate-invitation?token=${encodeURIComponent(token)}`);
+      // Use 'code' param for the new Google Sheets-based validation
+      const response = await fetch(`/api/validate-invitation?code=${encodeURIComponent(shortCode)}`);
       const data = await response.json();
 
       if (!data.success) {
@@ -118,7 +120,6 @@ export const useInvitation = (): UseInvitationReturn => {
         createdBy: data.createdBy,
         shortCode: data.shortCode,
         error: data.error,
-        activatedToken: data.activatedToken,
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error de conexion';
@@ -163,29 +164,10 @@ export const useInvitation = (): UseInvitationReturn => {
     }
   }, []);
 
-  const resolveShortCode = useCallback(async (shortCode: string): Promise<string | null> => {
-    try {
-      const response = await fetch(`/api/short-link?code=${encodeURIComponent(shortCode)}`);
-      const data = await response.json();
-
-      if (!data.success || !data.invitation) {
-        return null;
-      }
-
-      // Return the invitation ID which can be used to look up the full token
-      // In practice, we'll need to regenerate the token from the stored data
-      // For now, return null and handle via InvitationPage directly
-      return data.invitation.invitationId;
-    } catch {
-      return null;
-    }
-  }, []);
-
   return {
     generateInvitation,
     validateInvitation,
     registerGuest,
-    resolveShortCode,
     isGenerating,
     isValidating,
     isRegistering,
