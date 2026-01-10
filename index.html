@@ -33,105 +33,115 @@
     <!-- Force all links to stay in PWA -->
     <meta name="apple-mobile-web-app-navigation" content="same-origin" />
 
+    <!-- CRITICAL: Blocking version check - MUST run before React loads -->
+    <script>
+      (function() {
+        var APP_VERSION = '2026.01.09.1250';
+        var VERSION_KEY = 'tm_app_version';
+        var RELOAD_KEY = 'tm_reload_pending';
+
+        // Expose for main.tsx to check
+        window.__TM_VERSION__ = APP_VERSION;
+        window.__TM_VERSION_READY__ = false;
+
+        var storedVersion = localStorage.getItem(VERSION_KEY);
+        var now = Date.now();
+
+        // Check for reload loop
+        var reloadPending = sessionStorage.getItem(RELOAD_KEY);
+        if (reloadPending) {
+          sessionStorage.removeItem(RELOAD_KEY);
+          localStorage.setItem(VERSION_KEY, APP_VERSION);
+          window.__TM_VERSION_READY__ = true;
+          return;
+        }
+
+        // If versions match, we're good
+        if (storedVersion === APP_VERSION) {
+          window.__TM_VERSION_READY__ = true;
+          return;
+        }
+
+        // Version mismatch - reload BEFORE React starts
+        if (storedVersion && storedVersion !== APP_VERSION) {
+          sessionStorage.setItem(RELOAD_KEY, '1');
+          localStorage.setItem(VERSION_KEY, APP_VERSION);
+          window.location.replace(window.location.pathname + '?_v=' + APP_VERSION + '&_t=' + now);
+          // Halt script execution
+          throw new Error('Reloading for new version');
+        }
+
+        // First visit - store version
+        localStorage.setItem(VERSION_KEY, APP_VERSION);
+        window.__TM_VERSION_READY__ = true;
+      })();
+    </script>
+
     <!-- Google Fonts - Luxury Typography System -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
-
-    <!-- Screenshot Deterrent: NoPrint.js -->
-    <script src="https://pdfanticopy.com/noprint.js" id="noprint-script"></script>
-    <script>
-      // Configure NoPrint.js for content protection
-      // Note: autoblur disabled - we use custom ScreenProtectionContext instead
-      if (typeof noPrint === 'function') {
-        noPrint({
-          disablePrint: true,      // Block Ctrl+P / Cmd+P
-          disableCopy: true,       // Block Ctrl+C / Cmd+C
-          disableRightClick: true, // Block context menu
-          autoblur: false          // Disabled - using custom blur in Phase 3
-        });
-      }
-    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-    <!-- Safari-aggressive cache busting (Best Practices 2025) -->
+
+    <!-- Service worker cleanup (non-blocking) -->
     <script>
-      // 1. Cleanup ALL service workers and caches immediately
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(r) {
           r.forEach(function(reg) { reg.unregister(); });
         });
       }
       if ('caches' in window) {
-        caches.keys().then(function(n) { n.forEach(function(k) { caches.delete(k); }); });
+        caches.keys().then(function(n) {
+          n.forEach(function(k) { caches.delete(k); });
+        });
       }
+    </script>
 
-      // 2. Safari-aggressive version check
-      // Safari has TWO cache layers: memory + disk. location.reload() only updates disk cache.
-      // PWA Home Screen always starts from disk cache, so we must check server on EVERY load.
+    <!-- Screenshot Deterrent: NoPrint.js with error handling -->
+    <script src="https://pdfanticopy.com/noprint.js" id="noprint-script"></script>
+    <script>
+      try {
+        // The library may expose noPrint OR noCopy - check both
+        var protectionFn = typeof noPrint === 'function' ? noPrint :
+                           typeof noCopy === 'function' ? noCopy : null;
+        if (protectionFn) {
+          protectionFn({
+            disablePrint: true,
+            disableCopy: true,
+            disableRightClick: true,
+            autoblur: false
+          });
+        }
+      } catch (e) {
+        console.warn('[NoPrint] Protection script unavailable:', e.message);
+      }
+    </script>
+
+    <!-- Safari async version check (backup for server-side updates between page loads) -->
+    <script>
       (function() {
-        var APP_VERSION = '2026.01.09.1130';
-        var VERSION_KEY = 'tm_app_version';
-        var RELOAD_KEY = 'tm_reload_pending';
-        var storedVersion = localStorage.getItem(VERSION_KEY);
-        var now = Date.now();
-
-        // Detect Safari (including iOS Safari and PWA mode)
+        var APP_VERSION = window.__TM_VERSION__;
         var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) ||
                        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                       (navigator.standalone === true); // PWA mode
+                       navigator.standalone === true;
 
-        // Check if we're in a reload loop (prevent infinite reloads)
-        var reloadPending = sessionStorage.getItem(RELOAD_KEY);
-        if (reloadPending) {
-          sessionStorage.removeItem(RELOAD_KEY);
-          localStorage.setItem(VERSION_KEY, APP_VERSION);
-          return; // Already reloaded, stop here
-        }
-
-        // If local version differs from embedded version, reload immediately
-        if (storedVersion && storedVersion !== APP_VERSION) {
-          sessionStorage.setItem(RELOAD_KEY, '1');
-          localStorage.setItem(VERSION_KEY, APP_VERSION);
-          // Use cache-busting URL with unique timestamp
-          var url = window.location.pathname + '?_v=' + APP_VERSION + '&_t=' + now;
-          window.location.replace(url);
-          return;
-        }
-
-        // Update stored version
-        localStorage.setItem(VERSION_KEY, APP_VERSION);
-
-        // For Safari: ALWAYS check server version on load (bypass Safari's aggressive cache)
-        // This is the key fix - Safari ignores Cache-Control headers, so we must fetch fresh
-        if (isSafari) {
-          fetch('/version.json?_nocache=' + now, {
-            method: 'GET',
-            cache: 'no-store',
-            headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache',
-              'Expires': '0'
-            }
-          })
-          .then(function(r) {
-            if (!r.ok) throw new Error('Version check failed');
-            return r.json();
-          })
-          .then(function(data) {
-            if (data.version && data.version !== APP_VERSION) {
-              // Server has newer version - force reload
-              sessionStorage.setItem(RELOAD_KEY, '1');
-              localStorage.setItem(VERSION_KEY, data.version);
-              var url = window.location.pathname + '?_v=' + data.version + '&_t=' + now;
-              window.location.replace(url);
-            }
-          })
-          .catch(function() { /* Ignore network errors, app works offline */ });
+        if (isSafari && window.__TM_VERSION_READY__) {
+          fetch('/version.json?_t=' + Date.now(), { cache: 'no-store' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              if (data.version && data.version !== APP_VERSION) {
+                sessionStorage.setItem('tm_reload_pending', '1');
+                localStorage.setItem('tm_app_version', data.version);
+                window.location.replace(window.location.pathname + '?_v=' + data.version);
+              }
+            })
+            .catch(function() { /* Offline - ignore */ });
         }
       })();
     </script>
+
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

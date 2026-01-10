@@ -1,0 +1,136 @@
+import { Component, ReactNode } from 'react';
+import { Box, Typography, Button, CircularProgress } from '@mui/material';
+
+interface ChunkErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ChunkErrorBoundaryState {
+  hasError: boolean;
+  isReloading: boolean;
+  error: Error | null;
+}
+
+function isChunkLoadError(error: Error): boolean {
+  // Vite chunk load errors
+  if (error.name === 'ChunkLoadError') return true;
+
+  // Dynamic import failures
+  const message = error.message.toLowerCase();
+  if (message.includes('failed to fetch dynamically imported module')) return true;
+  if (message.includes('loading chunk')) return true;
+  if (message.includes('loading css chunk')) return true;
+  if (message.includes('importing a module script failed')) return true;
+
+  // Network errors during import
+  if (error.name === 'TypeError' && message.includes('failed to fetch')) return true;
+
+  return false;
+}
+
+export class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, ChunkErrorBoundaryState> {
+  state: ChunkErrorBoundaryState = {
+    hasError: false,
+    isReloading: false,
+    error: null,
+  };
+
+  static getDerivedStateFromError(error: Error): Partial<ChunkErrorBoundaryState> {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error('[ChunkErrorBoundary] Caught error:', error.name, error.message);
+
+    if (isChunkLoadError(error)) {
+      this.handleChunkError();
+    }
+  }
+
+  handleChunkError = () => {
+    const RELOAD_KEY = 'tm_chunk_reload';
+    const lastReload = sessionStorage.getItem(RELOAD_KEY);
+    const now = Date.now();
+
+    // Prevent reload loop - only allow one reload per 10 seconds
+    if (lastReload && (now - parseInt(lastReload, 10)) < 10000) {
+      console.warn('[ChunkErrorBoundary] Reload loop detected, showing manual retry');
+      return;
+    }
+
+    this.setState({ isReloading: true });
+    sessionStorage.setItem(RELOAD_KEY, now.toString());
+
+    // Clear caches
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        names.forEach(name => caches.delete(name));
+      });
+    }
+
+    // Clear version storage to force re-fetch
+    localStorage.removeItem('tm_app_version');
+
+    // Reload with cache bust
+    const url = window.location.pathname + '?_refresh=' + now;
+    window.location.replace(url);
+  };
+
+  handleManualReload = () => {
+    sessionStorage.removeItem('tm_chunk_reload');
+    this.handleChunkError();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      if (this.state.isReloading) {
+        return (
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100vh',
+            bgcolor: '#0a0a0a',
+            color: 'white',
+            gap: 2,
+          }}>
+            <CircularProgress sx={{ color: '#00AE7A' }} />
+            <Typography>Actualizando aplicación...</Typography>
+          </Box>
+        );
+      }
+
+      return (
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          bgcolor: '#0a0a0a',
+          color: 'white',
+          gap: 3,
+          p: 3,
+          textAlign: 'center',
+        }}>
+          <Typography variant="h5">Nueva versión disponible</Typography>
+          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+            Hay una actualización disponible. Por favor recarga la página.
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={this.handleManualReload}
+            sx={{ bgcolor: '#00AE7A', '&:hover': { bgcolor: '#008f64' } }}
+          >
+            Recargar Ahora
+          </Button>
+        </Box>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export default ChunkErrorBoundary;

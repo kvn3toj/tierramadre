@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, lazy, Suspense } from 'react';
+import { useCallback, useEffect, useState, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { IOSLayout } from './components/ios';
 import { WelcomeScreen, AdminRoute, ProviderRoute } from './components/auth';
@@ -14,39 +14,41 @@ import { TrackingProvider } from './contexts/TrackingContext';
 import { ScreenProtectionProvider } from './contexts/ScreenProtectionContext';
 import { AchievementToast } from './components/gamification';
 import { useViewportHeight } from './hooks/useViewportHeight';
+import { ChunkErrorBoundary } from './components/ChunkErrorBoundary';
+import { lazyWithRetry } from './utils/lazyWithRetry';
 
-// All routes lazy loaded for optimal bundle splitting
-const Home = lazy(() => import('./components/home'));
-const TreasureBrowser = lazy(() => import('./components/TreasureBrowser'));
-const ProductDetail = lazy(() => import('./components/ProductDetail'));
-const AmbassadorsPage = lazy(() => import('./pages/AmbassadorsPage'));
-const AsesorProfilePage = lazy(() => import('./components/ambassador/AsesorProfile'));
-const AccountsHub = lazy(() => import('./components/AccountsHub'));
-const VaultPage = lazy(() => import('./pages/VaultPage'));
+// All routes lazy loaded with retry for optimal bundle splitting
+const Home = lazyWithRetry(() => import('./components/home'), 'Home');
+const TreasureBrowser = lazyWithRetry(() => import('./components/TreasureBrowser'), 'TreasureBrowser');
+const ProductDetail = lazyWithRetry(() => import('./components/ProductDetail'), 'ProductDetail');
+const AmbassadorsPage = lazyWithRetry(() => import('./pages/AmbassadorsPage'), 'AmbassadorsPage');
+const AsesorProfilePage = lazyWithRetry(() => import('./components/ambassador/AsesorProfile'), 'AsesorProfilePage');
+const AccountsHub = lazyWithRetry(() => import('./components/AccountsHub'), 'AccountsHub');
+const VaultPage = lazyWithRetry(() => import('./pages/VaultPage'), 'VaultPage');
 
 // Cuentas sub-pages (accessed from AccountsHub)
-const PriceSimulator = lazy(() => import('./components/PriceSimulator'));
-const ReceiptGenerator = lazy(() => import('./components/ReceiptGenerator'));
-const CotizacionGenerator = lazy(() => import('./components/CotizacionGenerator'));
-const QuotationPreview = lazy(() => import('./components/QuotationPreview'));
-const AdminAnalyticsPage = lazy(() => import('./pages/AdminAnalyticsPage'));
-const FeedbackDashboard = lazy(() => import('./pages/admin/FeedbackDashboard'));
-const ValuationPage = lazy(() => import('./pages/ValuationPage'));
+const PriceSimulator = lazyWithRetry(() => import('./components/PriceSimulator'), 'PriceSimulator');
+const ReceiptGenerator = lazyWithRetry(() => import('./components/ReceiptGenerator'), 'ReceiptGenerator');
+const CotizacionGenerator = lazyWithRetry(() => import('./components/CotizacionGenerator'), 'CotizacionGenerator');
+const QuotationPreview = lazyWithRetry(() => import('./components/QuotationPreview'), 'QuotationPreview');
+const AdminAnalyticsPage = lazyWithRetry(() => import('./pages/AdminAnalyticsPage'), 'AdminAnalyticsPage');
+const FeedbackDashboard = lazyWithRetry(() => import('./pages/admin/FeedbackDashboard'), 'FeedbackDashboard');
+const ValuationPage = lazyWithRetry(() => import('./pages/ValuationPage'), 'ValuationPage');
 
 // Provider Portal pages
-const ProviderDashboard = lazy(() => import('./components/provider/ProviderDashboard'));
-const ProviderRequestList = lazy(() => import('./components/provider/ProviderRequestList'));
-const ProviderQuotationForm = lazy(() => import('./components/provider/ProviderQuotationForm'));
-const ProviderInventory = lazy(() => import('./components/provider/ProviderInventory'));
+const ProviderDashboard = lazyWithRetry(() => import('./components/provider/ProviderDashboard'), 'ProviderDashboard');
+const ProviderRequestList = lazyWithRetry(() => import('./components/provider/ProviderRequestList'), 'ProviderRequestList');
+const ProviderQuotationForm = lazyWithRetry(() => import('./components/provider/ProviderQuotationForm'), 'ProviderQuotationForm');
+const ProviderInventory = lazyWithRetry(() => import('./components/provider/ProviderInventory'), 'ProviderInventory');
 
 // Admin Quotation Management
-const QuotationRequestForm = lazy(() => import('./components/admin/QuotationRequestForm'));
-const QuotationRequestList = lazy(() => import('./components/admin/QuotationRequestList'));
-const ProviderQuotationsList = lazy(() => import('./components/admin/ProviderQuotationsList'));
+const QuotationRequestForm = lazyWithRetry(() => import('./components/admin/QuotationRequestForm'), 'QuotationRequestForm');
+const QuotationRequestList = lazyWithRetry(() => import('./components/admin/QuotationRequestList'), 'QuotationRequestList');
+const ProviderQuotationsList = lazyWithRetry(() => import('./components/admin/ProviderQuotationsList'), 'ProviderQuotationsList');
 
 // Invitation Pages (public routes - accessible without auth)
-const InvitationPage = lazy(() => import('./pages/InvitationPage'));
-const ShortLinkRedirect = lazy(() => import('./pages/ShortLinkRedirect'));
+const InvitationPage = lazyWithRetry(() => import('./pages/InvitationPage'), 'InvitationPage');
+const ShortLinkRedirect = lazyWithRetry(() => import('./pages/ShortLinkRedirect'), 'ShortLinkRedirect');
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
@@ -303,18 +305,20 @@ function App() {
   }
 
   return (
-    <LiquidGlassProvider>
-      <TrackingProvider>
-        <ScreenProtectionProvider>
-          <BrowserRouter>
-            <InvitationRouter />
-            {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
-            {/* PWA disabled - service worker not generating correctly */}
-            {/* <UpdatePrompt /> */}
-          </BrowserRouter>
-        </ScreenProtectionProvider>
-      </TrackingProvider>
-    </LiquidGlassProvider>
+    <ChunkErrorBoundary>
+      <LiquidGlassProvider>
+        <TrackingProvider>
+          <ScreenProtectionProvider>
+            <BrowserRouter>
+              <InvitationRouter />
+              {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
+              {/* PWA disabled - service worker not generating correctly */}
+              {/* <UpdatePrompt /> */}
+            </BrowserRouter>
+          </ScreenProtectionProvider>
+        </TrackingProvider>
+      </LiquidGlassProvider>
+    </ChunkErrorBoundary>
   );
 }
 
