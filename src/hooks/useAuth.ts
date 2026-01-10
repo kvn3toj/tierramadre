@@ -68,3 +68,25 @@ export const useCanCreateInvitations = () => {
   // Embajadores need Google sign-in
   return isSignedIn && isAuthorized && isEmbajador;
 };
+
+/**
+ * Check if guest can see prices
+ * Guests invited with 'no_prices' mode cannot see prices
+ * Non-guests always can see prices (unless other restrictions apply)
+ */
+export const useGuestCanSeePrices = () => {
+  const { accessLevel } = useAuthContext();
+
+  // Not a guest - can see prices
+  if (accessLevel !== 'guest') {
+    return true;
+  }
+
+  // Check guest pricing mode from sessionStorage
+  if (typeof window !== 'undefined') {
+    const pricingMode = sessionStorage.getItem('guest-pricing-mode');
+    return pricingMode !== 'no_prices';
+  }
+
+  return true;
+};

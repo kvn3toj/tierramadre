@@ -151,12 +151,17 @@ export default function InvitationPage() {
     sessionStorage.setItem(INVITATION_STORAGE_KEYS.DURATION_HOURS, '24');
     sessionStorage.setItem(INVITATION_STORAGE_KEYS.INVITATION_ID, invitationId);
 
+    // Clear any stale filter data from previous sessions
+    // This ensures guests start with clean filters
+    sessionStorage.removeItem('treasure-filters');
+
     // Update status to show welcome screen
     setStatus('valid');
   };
 
   const handleExplore = () => {
-    navigate('/treasure');
+    // Navigate to treasure without any URL params to ensure clean filters
+    navigate('/treasure', { replace: true });
   };
 
   const handleGoHome = () => {

@@ -30,6 +30,7 @@ import {
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useTreasure } from '../hooks/useTreasure';
 import { useTreasureFiltering, type StatusFilter, type TypeFilter, type SortOption } from '../hooks/useTreasureFiltering';
+import { useGuestCanSeePrices } from '../hooks/useAuth';
 import { useFavorites } from '../hooks/useFavorites';
 import { usePagination } from '../hooks/usePagination';
 import { useBrowsingProgress } from '../hooks/useBrowsingProgress';
@@ -168,10 +169,10 @@ export default function TreasureBrowser() {
 
     const params = new URLSearchParams();
 
-    // Only add non-default values to URL
+    // Only add non-default values to URL (default status is 'available')
     if (filters.search) params.set('search', filters.search);
     if (filters.typeFilter !== 'all') params.set('type', filters.typeFilter);
-    if (filters.statusFilter !== 'all') params.set('status', filters.statusFilter);
+    if (filters.statusFilter !== 'available' && filters.statusFilter !== 'all') params.set('status', filters.statusFilter);
     if (filters.qualityFilter && filters.qualityFilter !== 'all') params.set('quality', filters.qualityFilter);
     if (filters.colorFilter && filters.colorFilter !== 'all') params.set('color', filters.colorFilter);
     if (filters.shapeFilter && filters.shapeFilter !== 'all') params.set('shape', filters.shapeFilter);
@@ -229,6 +230,9 @@ export default function TreasureBrowser() {
 
   // Funnel tracking hook
   const { track, checkAchievements } = useTracking();
+
+  // Guest pricing hook - determines if price filters should be hidden
+  const guestCanSeePrices = useGuestCanSeePrices();
 
   // Track treasure view on mount
   useEffect(() => {
@@ -489,6 +493,8 @@ export default function TreasureBrowser() {
     // Theme
     isLight,
     theme,
+    // Guest pricing - hide price filter for guests who can't see prices
+    hidePriceFilter: !guestCanSeePrices,
   };
 
   return (

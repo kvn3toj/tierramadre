@@ -131,6 +131,8 @@ export interface FilterContentProps {
   theme: Theme;
   /** Hide search field (when parent already has one) */
   compact?: boolean;
+  /** Hide price filter (for guests with no_prices mode) */
+  hidePriceFilter?: boolean;
 }
 
 export const FilterContent = memo(function FilterContent({
@@ -169,6 +171,7 @@ export const FilterContent = memo(function FilterContent({
   isLight,
   theme,
   compact = false,
+  hidePriceFilter = false,
 }: FilterContentProps) {
   // Compact mode: Beautiful modern pill-based filters (mobile)
   if (compact) {
@@ -369,26 +372,28 @@ export const FilterContent = memo(function FilterContent({
           </Box>
         </Box>
 
-        {/* Row 4: Price tiers (smart chips) */}
-        <Box>
-          <Typography variant="caption" sx={{ color: theme.palette.text.secondary, mb: 0.5, display: 'block' }}>
-            Precio
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-            {priceTiers.map((tier) => (
-              <Box
-                key={tier.label}
-                onClick={() => setPriceRange([tier.min, tier.max])}
-                sx={{
-                  ...pillBase,
-                  ...(currentPriceTier === tier.label ? pillActive : pillInactive),
-                }}
-              >
-                {tier.label}
-              </Box>
-            ))}
+        {/* Row 4: Price tiers (smart chips) - Hidden for guests with no_prices mode */}
+        {!hidePriceFilter && (
+          <Box>
+            <Typography variant="caption" sx={{ color: theme.palette.text.secondary, mb: 0.5, display: 'block' }}>
+              Precio
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+              {priceTiers.map((tier) => (
+                <Box
+                  key={tier.label}
+                  onClick={() => setPriceRange([tier.min, tier.max])}
+                  sx={{
+                    ...pillBase,
+                    ...(currentPriceTier === tier.label ? pillActive : pillInactive),
+                  }}
+                >
+                  {tier.label}
+                </Box>
+              ))}
+            </Box>
           </Box>
-        </Box>
+        )}
 
         {/* Row 5: Additional filters (horizontal scroll) */}
         <Box
@@ -706,35 +711,37 @@ export const FilterContent = memo(function FilterContent({
           )}
         </Box>
 
-        {/* Price Range Slider */}
-        <Box sx={{ mt: 2, px: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
-              Rango de Precio
-            </Typography>
-            <Typography variant="caption" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
-              {formatCurrency(priceRange[0])} - {formatCurrency(priceRange[1])}
-            </Typography>
+        {/* Price Range Slider - Hidden for guests with no_prices mode */}
+        {!hidePriceFilter && (
+          <Box sx={{ mt: 2, px: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+                Rango de Precio
+              </Typography>
+              <Typography variant="caption" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
+                {formatCurrency(priceRange[0])} - {formatCurrency(priceRange[1])}
+              </Typography>
+            </Box>
+            <Slider
+              value={priceRange}
+              onChange={(_, value) => setPriceRange(value as [number, number])}
+              min={priceMinMax.min}
+              max={priceMinMax.max}
+              step={100000}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(value) => formatCurrency(value)}
+              sx={{
+                color: emeraldCore.dark,
+                '& .MuiSlider-thumb': { width: 20, height: 20 },
+                '& .MuiSlider-track': { height: 4 },
+                '& .MuiSlider-rail': {
+                  height: 4,
+                  bgcolor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+                },
+              }}
+            />
           </Box>
-          <Slider
-            value={priceRange}
-            onChange={(_, value) => setPriceRange(value as [number, number])}
-            min={priceMinMax.min}
-            max={priceMinMax.max}
-            step={100000}
-            valueLabelDisplay="auto"
-            valueLabelFormat={(value) => formatCurrency(value)}
-            sx={{
-              color: emeraldCore.dark,
-              '& .MuiSlider-thumb': { width: 20, height: 20 },
-              '& .MuiSlider-track': { height: 4 },
-              '& .MuiSlider-rail': {
-                height: 4,
-                bgcolor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-              },
-            }}
-          />
-        </Box>
+        )}
       </Collapse>
     </>
   );
