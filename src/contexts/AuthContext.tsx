@@ -59,7 +59,7 @@ const clearStoredAuth = () => {
 };
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const { user: googleUser, isSignedIn: isGoogleSignedIn, isAuthorized: isGoogleAuthorized } = useGoogleAuth();
+  const { user: googleUser, isSignedIn: isGoogleSignedIn, isAuthorized: isGoogleAuthorized, isLoading: isGoogleLoading } = useGoogleAuth();
 
   const [authState, setAuthState] = useState<AuthState>(() => {
     const stored = getStoredAuth();
@@ -70,7 +70,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   });
 
   // Sync with Google auth when user signs in/out
+  // IMPORTANT: Wait for loading to complete to avoid race condition where
+  // accessLevel is not yet set during async provider validation
   useEffect(() => {
+    // Don't update auth state while Google auth is still loading
+    if (isGoogleLoading) {
+      return;
+    }
+
     if (isGoogleSignedIn && isGoogleAuthorized && googleUser?.accessLevel) {
       // User signed in with Google and is authorized
       const newState: AuthState = {
@@ -92,7 +99,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setAuthState({ isAuthenticated: false, accessLevel: 'guest' });
       clearStoredAuth();
     }
-  }, [isGoogleSignedIn, isGoogleAuthorized, googleUser?.accessLevel, googleUser]);
+  }, [isGoogleSignedIn, isGoogleAuthorized, googleUser?.accessLevel, googleUser, isGoogleLoading]);
 
   const loginAsGuest = useCallback(() => {
     const newState: AuthState = { isAuthenticated: true, accessLevel: 'guest' };

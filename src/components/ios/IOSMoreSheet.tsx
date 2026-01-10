@@ -87,7 +87,7 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
   {
     id: 'invitation',
     label: 'Invitar',
-    subtitle: 'Genera un enlace temporal de 1 hora para tus clientes',
+    subtitle: 'Genera un enlace temporal de 24 horas para tus clientes',
     icon: PersonAdd,
     action: 'invitation',
     color: '#3B82F6', // Blue for invitation

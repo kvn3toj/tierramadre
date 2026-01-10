@@ -2,7 +2,9 @@
  * InvitationGenerator Component
  *
  * Modal for Embajadores/Admins to generate shareable guest access links.
- * Links are valid for 1 hour after the guest first opens them.
+ * Links are valid for 24 hours after the guest first opens them.
+ * Supports pricing mode toggle (with/without prices).
+ * Generates short links for easier sharing.
  */
 
 import { useState } from 'react';
@@ -19,6 +21,8 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
+  Switch,
+  InputAdornment,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -27,10 +31,15 @@ import {
   QrCode2 as QrCodeIcon,
   LinkOutlined as LinkIcon,
   CheckCircle as CheckIcon,
+  AttachMoney as PriceIcon,
+  Person as PersonIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
 } from '@mui/icons-material';
 import { QRCodeSVG } from 'qrcode.react';
 import { useInvitation } from '../../hooks/useInvitation';
 import { brand, typography } from '../../design-system';
+import type { PricingMode } from '../../types/invitation';
 
 interface InvitationGeneratorProps {
   open: boolean;
@@ -41,43 +50,111 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
   const { generateInvitation, isGenerating, error, lastInvitation } = useInvitation();
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedShort, setCopiedShort] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  // Form state
+  const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
+  const [showPrices, setShowPrices] = useState(true);
+  const [formError, setFormError] = useState('');
+
+  // Validation: name required, and at least one of email or phone
+  const isFormValid = guestName.trim().length > 0 && (guestEmail.trim().length > 0 || guestPhone.trim().length > 0);
 
   const handleGenerate = async () => {
-    await generateInvitation();
+    // Validate
+    if (!guestName.trim()) {
+      setFormError('El nombre es requerido');
+      return;
+    }
+    if (!guestEmail.trim() && !guestPhone.trim()) {
+      setFormError('Ingresa al menos un email o telefono');
+      return;
+    }
+
+    setFormError('');
+    const pricingMode: PricingMode = showPrices ? 'with_prices' : 'no_prices';
+
+    // Determine contact info - prefer email if both provided
+    const contactInfo = guestEmail.trim() || guestPhone.trim();
+    const contactType = guestEmail.trim() ? 'email' : 'phone';
+
+    await generateInvitation({
+      pricingMode,
+      guestName: guestName.trim(),
+      guestContact: contactInfo,
+      contactType,
+    });
+  };
+
+  const handleGenerateNew = () => {
+    // Reset form state
+    setGuestName('');
+    setGuestEmail('');
+    setGuestPhone('');
+    setShowPrices(true);
+    setFormError('');
+  };
+
+  const copyToClipboard = async (text: string, isShort = false) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (isShort) {
+        setCopiedShort(true);
+        setTimeout(() => setCopiedShort(false), 2000);
+      } else {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+      setSnackbarMessage(isShort ? 'Enlace corto copiado' : 'Enlace copiado al portapapeles');
+      setSnackbarOpen(true);
+    } catch {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (isShort) {
+        setCopiedShort(true);
+        setTimeout(() => setCopiedShort(false), 2000);
+      } else {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+      setSnackbarMessage(isShort ? 'Enlace corto copiado' : 'Enlace copiado al portapapeles');
+      setSnackbarOpen(true);
+    }
   };
 
   const handleCopy = async () => {
+    if (lastInvitation?.shortUrl) {
+      await copyToClipboard(lastInvitation.shortUrl, true);
+    } else if (lastInvitation?.url) {
+      await copyToClipboard(lastInvitation.url, false);
+    }
+  };
+
+  const handleCopyFull = async () => {
     if (lastInvitation?.url) {
-      try {
-        await navigator.clipboard.writeText(lastInvitation.url);
-        setCopied(true);
-        setSnackbarOpen(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = lastInvitation.url;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        setCopied(true);
-        setSnackbarOpen(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
+      await copyToClipboard(lastInvitation.url, false);
     }
   };
 
   const handleShare = async () => {
-    if (lastInvitation?.url && 'share' in navigator) {
+    const shareUrl = lastInvitation?.shortUrl || lastInvitation?.url;
+    if (shareUrl && 'share' in navigator) {
       try {
         await navigator.share({
           title: 'Tierra Madre - Invitacion',
-          text: 'Te invito a explorar nuestra coleccion de esmeraldas colombianas. Este enlace es valido por 1 hora.',
-          url: lastInvitation.url,
+          text: `Hola ${guestName}, te invito a explorar nuestra coleccion de esmeraldas colombianas. Este enlace es valido por 24 horas.`,
+          url: shareUrl,
         });
-      } catch (err) {
+      } catch {
         // User cancelled or share failed
         console.log('Share cancelled or failed');
       }
@@ -91,6 +168,9 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
     setShowQR(false);
     onClose();
   };
+
+  // Get the URL to display in QR code (prefer short URL)
+  const qrUrl = lastInvitation?.shortUrl || lastInvitation?.url || '';
 
   return (
     <>
@@ -128,7 +208,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Genera un enlace de acceso temporal para que tus clientes exploren
-            nuestra coleccion. El enlace sera valido por 1 hora desde que lo abran.
+            nuestra coleccion de esmeraldas colombianas.
           </Typography>
 
           {error && (
@@ -137,25 +217,165 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
             </Alert>
           )}
 
+          {formError && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              {formError}
+            </Alert>
+          )}
+
           {!lastInvitation ? (
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                py: 4,
-              }}
-            >
+            <Box>
+              {/* Guest Info Card */}
+              <Box
+                sx={{
+                  p: 2.5,
+                  mb: 2,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: 'background.paper',
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  fontWeight={typography.weight.semibold}
+                  sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+                >
+                  <PersonIcon fontSize="small" sx={{ color: brand.emerald[600] }} />
+                  Datos del invitado
+                </Typography>
+
+                {/* Guest Name Field */}
+                <TextField
+                  fullWidth
+                  label="Nombre"
+                  placeholder="Maria Garcia"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  required
+                  size="small"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PersonIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ mb: 2 }}
+                />
+
+                {/* Contact Fields - Both visible, one required */}
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                  Al menos uno requerido
+                </Typography>
+
+                <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' } }}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    placeholder="maria@email.com"
+                    type="email"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    size="small"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EmailIcon fontSize="small" sx={{ color: guestEmail ? brand.emerald[600] : 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderColor: guestEmail ? brand.emerald[300] : undefined,
+                      },
+                    }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Telefono"
+                    placeholder="+57 300 123 4567"
+                    type="tel"
+                    value={guestPhone}
+                    onChange={(e) => setGuestPhone(e.target.value)}
+                    size="small"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PhoneIcon fontSize="small" sx={{ color: guestPhone ? brand.emerald[600] : 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+              </Box>
+
+              {/* Pricing Mode Toggle */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: 2,
+                  mb: 3,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: showPrices ? brand.emerald[200] : 'divider',
+                  bgcolor: showPrices ? `${brand.emerald[50]}50` : 'background.paper',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 1.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: showPrices ? brand.emerald[100] : 'action.hover',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <PriceIcon sx={{ color: showPrices ? brand.emerald[600] : 'text.disabled' }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" fontWeight={typography.weight.medium}>
+                      {showPrices ? 'Con precios' : 'Solo informacion'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {showPrices
+                        ? 'El invitado vera los precios'
+                        : 'Solo caracteristicas, sin precios'}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Switch
+                  checked={showPrices}
+                  onChange={(e) => setShowPrices(e.target.checked)}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: brand.emerald[600],
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: brand.emerald[400],
+                    },
+                  }}
+                />
+              </Box>
+
               <Button
                 variant="contained"
                 size="large"
+                fullWidth
                 onClick={handleGenerate}
-                disabled={isGenerating}
+                disabled={isGenerating || !isFormValid}
                 startIcon={isGenerating ? <CircularProgress size={20} /> : <LinkIcon />}
                 sx={{
                   bgcolor: brand.emerald[600],
                   '&:hover': { bgcolor: brand.emerald[700] },
-                  px: 4,
+                  '&:disabled': { bgcolor: 'action.disabledBackground' },
                   py: 1.5,
                   borderRadius: 2,
                 }}
@@ -165,10 +385,67 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
             </Box>
           ) : (
             <Box>
-              <Alert severity="success" sx={{ mb: 2 }}>
-                Enlace generado exitosamente
-              </Alert>
+              {/* Success Header */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  p: 2,
+                  mb: 2,
+                  borderRadius: 2,
+                  bgcolor: `${brand.emerald[50]}`,
+                  border: '1px solid',
+                  borderColor: brand.emerald[200],
+                }}
+              >
+                <CheckIcon sx={{ color: brand.emerald[600], fontSize: 28 }} />
+                <Box>
+                  <Typography variant="body1" fontWeight={typography.weight.semibold}>
+                    Enlace generado para {guestName}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Valido por 24 horas desde que lo abra
+                  </Typography>
+                </Box>
+              </Box>
 
+              {/* Short URL - Primary display */}
+              {lastInvitation.shortUrl && (
+                <>
+                  <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                    Enlace corto (recomendado)
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    value={lastInvitation.shortUrl}
+                    InputProps={{
+                      readOnly: true,
+                      sx: {
+                        fontFamily: typography.fontFamily.mono,
+                        fontSize: '1rem',
+                        fontWeight: typography.weight.semibold,
+                        bgcolor: 'background.default',
+                      },
+                      endAdornment: (
+                        <IconButton onClick={handleCopy} size="small">
+                          {copiedShort ? (
+                            <CheckIcon sx={{ color: brand.emerald[600] }} />
+                          ) : (
+                            <CopyIcon />
+                          )}
+                        </IconButton>
+                      ),
+                    }}
+                    sx={{ mb: 2 }}
+                  />
+                </>
+              )}
+
+              {/* Full URL - Secondary display */}
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                Enlace completo
+              </Typography>
               <TextField
                 fullWidth
                 value={lastInvitation.url}
@@ -176,10 +453,11 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   readOnly: true,
                   sx: {
                     fontFamily: typography.fontFamily.mono,
-                    fontSize: '0.85rem',
+                    fontSize: '0.7rem',
+                    bgcolor: 'background.default',
                   },
                   endAdornment: (
-                    <IconButton onClick={handleCopy} size="small">
+                    <IconButton onClick={handleCopyFull} size="small">
                       {copied ? (
                         <CheckIcon sx={{ color: brand.emerald[600] }} />
                       ) : (
@@ -191,14 +469,84 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                 sx={{ mb: 2 }}
               />
 
-              <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+              {/* Summary chips */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 1,
+                  mb: 2,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 1,
+                    bgcolor: lastInvitation.pricingMode === 'with_prices' ? brand.emerald[50] : 'action.hover',
+                    border: '1px solid',
+                    borderColor: lastInvitation.pricingMode === 'with_prices' ? brand.emerald[200] : 'divider',
+                  }}
+                >
+                  <PriceIcon fontSize="small" sx={{ color: lastInvitation.pricingMode === 'with_prices' ? brand.emerald[600] : 'text.secondary' }} />
+                  <Typography variant="caption" fontWeight={500}>
+                    {lastInvitation.pricingMode === 'with_prices' ? 'Con precios' : 'Sin precios'}
+                  </Typography>
+                </Box>
+                {guestEmail && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 1,
+                      bgcolor: 'action.hover',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <EmailIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                    <Typography variant="caption">{guestEmail}</Typography>
+                  </Box>
+                )}
+                {guestPhone && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 1,
+                      bgcolor: 'action.hover',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <PhoneIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                    <Typography variant="caption">{guestPhone}</Typography>
+                  </Box>
+                )}
+              </Box>
+
+              {/* Action buttons */}
+              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   startIcon={<CopyIcon />}
                   onClick={handleCopy}
-                  sx={{ flex: 1 }}
+                  sx={{
+                    flex: 1,
+                    bgcolor: brand.emerald[600],
+                    '&:hover': { bgcolor: brand.emerald[700] },
+                  }}
                 >
-                  {copied ? 'Copiado' : 'Copiar'}
+                  {copiedShort ? 'Copiado!' : 'Copiar'}
                 </Button>
                 {'share' in navigator && (
                   <Button
@@ -214,9 +562,8 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   variant="outlined"
                   startIcon={<QrCodeIcon />}
                   onClick={() => setShowQR(!showQR)}
-                  sx={{ flex: 1 }}
                 >
-                  {showQR ? 'Ocultar QR' : 'Ver QR'}
+                  QR
                 </Button>
               </Box>
 
@@ -233,22 +580,14 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   }}
                 >
                   <QRCodeSVG
-                    value={lastInvitation.url}
-                    size={200}
+                    value={qrUrl}
+                    size={180}
                     level="M"
                     includeMargin
                     fgColor={brand.emerald[800]}
                   />
                 </Box>
               )}
-
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', mt: 2, textAlign: 'center' }}
-              >
-                El enlace expirara 1 hora despues de que el invitado lo abra
-              </Typography>
             </Box>
           )}
         </DialogContent>
@@ -256,14 +595,17 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
         <DialogActions sx={{ px: 3, pb: 2 }}>
           {lastInvitation && (
             <Button
-              onClick={handleGenerate}
+              onClick={handleGenerateNew}
               disabled={isGenerating}
-              startIcon={isGenerating ? <CircularProgress size={16} /> : <LinkIcon />}
+              startIcon={<LinkIcon />}
+              sx={{ color: brand.emerald[600] }}
             >
-              Generar Nuevo
+              Nuevo Enlace
             </Button>
           )}
-          <Button onClick={handleClose}>Cerrar</Button>
+          <Button onClick={handleClose} color="inherit">
+            Cerrar
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -271,7 +613,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
         open={snackbarOpen}
         autoHideDuration={2000}
         onClose={() => setSnackbarOpen(false)}
-        message="Enlace copiado al portapapeles"
+        message={snackbarMessage}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
     </>

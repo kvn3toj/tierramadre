@@ -3,6 +3,7 @@
  *
  * Shows a countdown timer banner for users accessing via invitation link.
  * Displays remaining time and auto-logs out when expired.
+ * Fixed 24-hour duration.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -11,29 +12,44 @@ import { Timer, Close as CloseIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { brand, typography } from '../../design-system';
+import { INVITATION_STORAGE_KEYS } from '../../types/invitation';
 
 interface InvitationSession {
   expiresAt: string;
   token: string;
+  durationHours: number;
 }
 
 function getInvitationSession(): InvitationSession | null {
-  const expiresAt = sessionStorage.getItem('invitation-expires');
-  const token = sessionStorage.getItem('invitation-token');
+  const expiresAt = sessionStorage.getItem(INVITATION_STORAGE_KEYS.EXPIRES);
+  const token = sessionStorage.getItem(INVITATION_STORAGE_KEYS.TOKEN);
+  // Fixed 24-hour duration
+  const durationHours = 24;
+
   if (expiresAt && token) {
-    return { expiresAt, token };
+    return { expiresAt, token, durationHours };
   }
   return null;
 }
 
 function clearInvitationSession() {
-  sessionStorage.removeItem('invitation-expires');
-  sessionStorage.removeItem('invitation-token');
+  sessionStorage.removeItem(INVITATION_STORAGE_KEYS.EXPIRES);
+  sessionStorage.removeItem(INVITATION_STORAGE_KEYS.TOKEN);
+  sessionStorage.removeItem(INVITATION_STORAGE_KEYS.PRICING_MODE);
+  sessionStorage.removeItem(INVITATION_STORAGE_KEYS.DURATION_HOURS);
+  sessionStorage.removeItem(INVITATION_STORAGE_KEYS.INVITATION_ID);
 }
 
 function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
+
+  // For durations > 1 hour, show hours:minutes:seconds
+  if (hours > 0) {
+    return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  // For shorter durations, show minutes:seconds
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
@@ -89,9 +105,12 @@ export default function InvitationBanner() {
   // Don't render if no invitation session or dismissed
   if (!session || dismissed) return null;
 
-  const totalDuration = 60 * 60; // 1 hour in seconds
+  // Fixed 24-hour duration
+  const totalDuration = 24 * 60 * 60; // in seconds
   const progress = (timeRemaining / totalDuration) * 100;
-  const isLowTime = timeRemaining < 5 * 60; // Less than 5 minutes
+  // Low time threshold: 10% of total duration or 5 minutes, whichever is less
+  const lowTimeThreshold = Math.min(totalDuration * 0.1, 5 * 60);
+  const isLowTime = timeRemaining < lowTimeThreshold;
 
   return (
     <Alert

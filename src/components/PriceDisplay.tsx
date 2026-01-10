@@ -1,6 +1,7 @@
 /**
  * PriceDisplay Component
  * Muestra precios: Price y Comunidad TM (solo para embajadores autenticados)
+ * Supports guest pricing mode: hides prices for guests with 'no_prices' mode
  *
  * Diseñado por Aria - Capitana del Concilio de Creación
  * Refactored: Uses design system tokens for iOS HIG compliance
@@ -8,8 +9,9 @@
 import { Box, Stack, Typography, useTheme } from '@mui/material';
 // Design System Tokens
 import { brand, iosSemanticColors, iosTypographyScale, typography } from '../design-system';
-import { useCanSeeComunidadPrice } from '../hooks/useAuth';
+import { useCanSeeComunidadPrice, useIsGuest } from '../hooks/useAuth';
 import { useCanViewPrices } from '../hooks/usePermissions';
+import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 
 export interface PriceDisplayProps {
   /** Precio Comunidad TM (con descuento) */
@@ -56,12 +58,22 @@ export const PriceDisplay = ({
   const theme = useTheme();
   const canSeeComunidadPrice = useCanSeeComunidadPrice();
   const canViewPrices = useCanViewPrices();
+  const isGuest = useIsGuest();
   const comunidadPrice = price;
   const regularPrice = precioInternacional;
 
   // If provider, don't show any prices
   if (!canViewPrices) {
     return null;
+  }
+
+  // Check guest pricing mode from sessionStorage
+  // If guest was invited with 'no_prices' mode, hide all prices
+  if (isGuest) {
+    const guestPricingMode = sessionStorage.getItem(INVITATION_STORAGE_KEYS.PRICING_MODE);
+    if (guestPricingMode === 'no_prices') {
+      return null;
+    }
   }
 
   // Modo compacto para tarjetas - iOS HIG body typography (17px)
