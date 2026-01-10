@@ -7,8 +7,9 @@ import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
 import LoadingFallback from './components/LoadingFallback';
 import SplashScreen from './components/SplashScreen';
-// PWA disabled - service worker not generating correctly
-// import UpdatePrompt from './components/pwa/UpdatePrompt';
+// PWA update toast (version check on visibility change)
+import UpdateToast from './components/pwa/UpdateToast';
+import { usePWAUpdate } from './hooks/usePWAUpdate';
 import { LiquidGlassProvider } from './contexts/LiquidGlassContext';
 import { TrackingProvider } from './contexts/TrackingContext';
 import { ScreenProtectionProvider } from './contexts/ScreenProtectionContext';
@@ -273,6 +274,7 @@ function InvitationRouter() {
 // Main authenticated app with all routes
 function AuthenticatedApp() {
   const { isAuthenticated } = useAuth();
+  const { showToast, dismissToast } = usePWAUpdate();
 
   // Show welcome screen if not authenticated
   if (!isAuthenticated) {
@@ -283,6 +285,7 @@ function AuthenticatedApp() {
     <>
       <AppContent />
       <AchievementToast />
+      <UpdateToast visible={showToast} onDismiss={dismissToast} />
     </>
   );
 }

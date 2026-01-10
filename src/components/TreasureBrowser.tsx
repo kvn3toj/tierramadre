@@ -13,9 +13,7 @@ import {
   IconButton,
   TextField,
   InputAdornment,
-  Collapse,
   Button,
-  ClickAwayListener,
 } from '@mui/material';
 import {
   LayoutGrid,
@@ -26,6 +24,7 @@ import {
   X,
   Gem,
   Crown,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useTreasure } from '../hooks/useTreasure';
@@ -56,6 +55,7 @@ import ComparisonBar from './ComparisonBar';
 import ComparisonModal from './ComparisonModal';
 import RecentlyViewedCarousel from './RecentlyViewedCarousel';
 import SavedFiltersDropdown from './SavedFiltersDropdown';
+import IOSFilterSheet from './ios/IOSFilterSheet';
 // Keyboard shortcuts disabled - target devices are mobile (iPhone 12+, iPad)
 // import KeyboardShortcutsHelp, { KeyboardShortcutsButton } from './KeyboardShortcutsHelp';
 
@@ -263,7 +263,8 @@ export default function TreasureBrowser() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   // Keyboard shortcuts disabled - target devices are mobile
   // const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
+  // iOS filter sheet state (mobile only)
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
   // Filter by favorites if enabled
   const displayTreasure = useMemo(() => {
@@ -499,95 +500,150 @@ export default function TreasureBrowser() {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
-      {/* Mobile: Search-first compact header */}
+      {/* Mobile: Compact filter bar + iOS filter sheet */}
       {isMobile ? (
         <>
-          <ClickAwayListener onClickAway={() => setSearchFocused(false)}>
-            <Box>
-              {/* Search Bar - Primary Element */}
-              <Box sx={{ mb: 1 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="Descubre tesoros por nombre, color, calidad..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onFocus={() => setSearchFocused(true)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Search size={18} color={theme.palette.text.secondary} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: search && (
-                      <InputAdornment position="end">
-                        <IconButton size="small" onClick={() => setSearch('')}>
-                          <X size={16} />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 3,
-                      bgcolor: isLight
-                        ? surfacesLight.background.primary
-                        : surfacesDark.background.secondary,
-                      '& fieldset': {
-                        borderColor: isLight
-                          ? surfacesLight.border.light
-                          : surfacesDark.border.light,
-                      },
-                      '&:hover fieldset': {
-                        borderColor: emeraldCore.primary,
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: emeraldCore.primary,
-                      },
-                    },
-                  }}
-                />
-              </Box>
-
-              {/* Inline Filters - Expand on focus or when filters active */}
-              <Collapse in={searchFocused || hasFilters}>
-                <Box
-                  sx={{
-                    mb: 1.5,
-                    p: 1.5,
-                    borderRadius: 2,
-                    bgcolor: isLight
-                      ? alpha(surfacesLight.background.secondary, 0.5)
-                      : alpha(surfacesDark.background.tertiary, 0.5),
-                    border: '1px solid',
-                    borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-                  }}
-                >
-                  <FilterContent {...filterContentProps} compact />
-                </Box>
-              </Collapse>
-            </Box>
-          </ClickAwayListener>
-
-          {/* Elegant Stats Row - Single line */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-            {/* Stats + Total */}
-            <Typography
-              variant="caption"
+          {/* Search Bar Row */}
+          <Box sx={{ display: 'flex', gap: 1, mb: 1.5, alignItems: 'center' }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Buscar esmeraldas..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search size={18} color={theme.palette.text.secondary} />
+                  </InputAdornment>
+                ),
+                endAdornment: search && (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setSearch('')}>
+                      <X size={16} />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
               sx={{
-                color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
-                fontSize: '0.75rem',
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 3,
+                  height: 44,
+                  bgcolor: isLight
+                    ? surfacesLight.background.primary
+                    : surfacesDark.background.secondary,
+                  '& fieldset': {
+                    borderColor: isLight
+                      ? surfacesLight.border.light
+                      : surfacesDark.border.light,
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: emeraldCore.primary,
+                  },
+                },
+              }}
+            />
+            {/* Filter button with badge */}
+            <IconButton
+              onClick={() => setFilterSheetOpen(true)}
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: 3,
+                bgcolor: hasFilters
+                  ? alpha(emeraldCore.primary, 0.15)
+                  : isLight
+                    ? surfacesLight.background.secondary
+                    : surfacesDark.background.tertiary,
+                border: '1px solid',
+                borderColor: hasFilters
+                  ? emeraldCore.primary
+                  : isLight
+                    ? surfacesLight.border.light
+                    : surfacesDark.border.light,
+                position: 'relative',
               }}
             >
-              {stats.looseStones} gemas · {stats.jewelry} joyas
-              {sortedTreasure.length !== treasureData.length && ` · ${sortedTreasure.length} resultados`}
-              {' · '}
-              <Box component="span" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
-                {formatFullCurrency(filteredStats.totalValue)}
-              </Box>
-            </Typography>
+              <SlidersHorizontal
+                size={20}
+                color={hasFilters ? emeraldCore.primary : theme.palette.text.secondary}
+              />
+              {activeFilterCount > 0 && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -4,
+                    minWidth: 18,
+                    height: 18,
+                    borderRadius: '50%',
+                    bgcolor: emeraldCore.primary,
+                    color: 'white',
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {activeFilterCount}
+                </Box>
+              )}
+            </IconButton>
+          </Box>
 
-            {/* Favorites - Heart + number only */}
+          {/* Compact Status Pills + Quick Actions Row */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, overflowX: 'auto', pb: 0.5 }}>
+            {/* Status segmented control */}
+            <Box
+              sx={{
+                display: 'flex',
+                bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.tertiary,
+                borderRadius: '20px',
+                p: 0.3,
+                flexShrink: 0,
+              }}
+            >
+              {[
+                { value: 'available' as StatusFilter, label: 'Disponibles', dot: emeraldCore.primary },
+                { value: 'sold' as StatusFilter, label: 'Vendidas', dot: semanticColors.error.main },
+                { value: 'all' as StatusFilter, label: 'Todas', dot: null },
+              ].map((option) => (
+                <Box
+                  key={option.value}
+                  onClick={() => setStatusFilter(option.value)}
+                  sx={{
+                    px: 1.5,
+                    py: 0.6,
+                    borderRadius: '16px',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    whiteSpace: 'nowrap',
+                    ...(statusFilter === option.value
+                      ? {
+                          bgcolor: isLight ? 'white' : surfacesDark.background.secondary,
+                          color: emeraldCore.dark,
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        }
+                      : {
+                          color: theme.palette.text.secondary,
+                        }),
+                  }}
+                >
+                  {option.dot && (
+                    <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: option.dot }} />
+                  )}
+                  {option.label}
+                </Box>
+              ))}
+            </Box>
+
+            {/* Favorites toggle */}
             <Box
               onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
               sx={{
@@ -595,27 +651,75 @@ export default function TreasureBrowser() {
                 alignItems: 'center',
                 gap: 0.5,
                 cursor: 'pointer',
-                padding: '4px 8px',
-                borderRadius: 2,
-                bgcolor: showFavoritesOnly ? alpha('#ef4444', 0.1) : 'transparent',
-                '&:hover': {
-                  bgcolor: alpha('#ef4444', 0.1),
-                },
+                px: 1.5,
+                py: 0.6,
+                borderRadius: '16px',
+                flexShrink: 0,
+                bgcolor: showFavoritesOnly
+                  ? alpha('#ef4444', 0.15)
+                  : isLight
+                    ? surfacesLight.background.secondary
+                    : surfacesDark.background.tertiary,
+                border: showFavoritesOnly ? '1px solid #ef4444' : 'none',
               }}
             >
-              <Heart size={14} fill={showFavoritesOnly ? '#ef4444' : 'none'} color={showFavoritesOnly ? '#ef4444' : '#6b7280'} />
+              <Heart
+                size={14}
+                fill={showFavoritesOnly ? '#ef4444' : 'none'}
+                color={showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary}
+              />
               <Typography
-                variant="caption"
                 sx={{
                   color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
-                  fontWeight: showFavoritesOnly ? 600 : 400,
-                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  fontSize: '0.7rem',
                 }}
               >
                 {favoritesCount}
               </Typography>
             </Box>
+
+            {/* Stats */}
+            <Typography
+              sx={{
+                color: theme.palette.text.secondary,
+                fontSize: '0.7rem',
+                whiteSpace: 'nowrap',
+                ml: 'auto',
+              }}
+            >
+              {sortedTreasure.length} items
+            </Typography>
           </Box>
+
+          {/* iOS Filter Sheet */}
+          <IOSFilterSheet
+            open={filterSheetOpen}
+            onClose={() => setFilterSheetOpen(false)}
+            statusFilter={statusFilter}
+            sortBy={sortBy}
+            typeFilter={typeFilter}
+            colorFilter={colorFilter}
+            shapeFilter={shapeFilter}
+            qualityFilter={qualityFilter}
+            priceRange={priceRange}
+            cantidadFilter={cantidadFilter}
+            setStatusFilter={setStatusFilter}
+            setSortBy={setSortBy}
+            setTypeFilter={setTypeFilter}
+            setColorFilter={setColorFilter}
+            setShapeFilter={setShapeFilter}
+            setQualityFilter={setQualityFilter}
+            setPriceRange={setPriceRange}
+            setCantidadFilter={setCantidadFilter}
+            colors={colors}
+            shapes={shapes}
+            qualities={qualities}
+            priceMinMax={priceMinMax}
+            hasFilters={hasFilters}
+            onClearFilters={handleClearFilters}
+            hidePriceFilter={!guestCanSeePrices}
+          />
         </>
       ) : (
         <>

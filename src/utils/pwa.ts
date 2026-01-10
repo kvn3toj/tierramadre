@@ -3,6 +3,14 @@
  * Detect and handle PWA-specific behaviors
  */
 
+// Declare the global version variable from index.html
+declare global {
+  interface Window {
+    __TM_VERSION__?: string;
+    __TM_VERSION_READY__?: boolean;
+  }
+}
+
 /**
  * Check if the app is running as an installed PWA
  */
@@ -156,4 +164,86 @@ export const initPWA = (): void => {
     // External link - allow normal behavior
     return originalOpen.call(window, url, target, features);
   };
+};
+
+/**
+ * Check if a new version is available
+ * Compares version.json on server with current app version
+ * @returns Promise<boolean> - true if update available
+ */
+export const checkForUpdates = async (): Promise<boolean> => {
+  try {
+    const response = await fetch('/version.json?_t=' + Date.now(), {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      },
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const data = await response.json();
+    const currentVersion = window.__TM_VERSION__;
+
+    if (!currentVersion || !data.version) {
+      return false;
+    }
+
+    return data.version !== currentVersion;
+  } catch {
+    // Network error or offline - no update available
+    return false;
+  }
+};
+
+/**
+ * Get current and remote version info
+ */
+export const getVersionInfo = async (): Promise<{
+  current: string;
+  remote: string | null;
+  updateAvailable: boolean;
+}> => {
+  const current = window.__TM_VERSION__ || 'unknown';
+
+  try {
+    const response = await fetch('/version.json?_t=' + Date.now(), {
+      cache: 'no-store',
+    });
+    const data = await response.json();
+
+    return {
+      current,
+      remote: data.version || null,
+      updateAvailable: data.version !== current,
+    };
+  } catch {
+    return {
+      current,
+      remote: null,
+      updateAvailable: false,
+    };
+  }
+};
+
+/**
+ * Force refresh the PWA to load new version
+ * Clears caches and reloads the page
+ */
+export const forceRefreshPWA = async (): Promise<void> => {
+  // Clear any remaining caches
+  if ('caches' in window) {
+    try {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(name => caches.delete(name)));
+    } catch {
+      // Ignore cache clearing errors
+    }
+  }
+
+  // Force reload bypassing cache
+  window.location.replace(window.location.pathname + '?_refresh=' + Date.now());
 };

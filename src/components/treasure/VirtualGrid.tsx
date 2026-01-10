@@ -192,11 +192,22 @@ export default function VirtualGrid({
         // iOS HIG: Horizontal padding to prevent edge cutoff
         px: isXs ? 2 : 0, // 16px margins on mobile
         boxSizing: 'border-box',
+        // PWA fix: Ensure consistent layout in standalone mode
+        // Prevent any fixed/absolute positioning from affecting grid width
+        position: 'relative',
+        isolation: 'isolate',
         // Grid container styles for react-window 2.x
         '& > div': {
           overflowX: 'hidden !important',
           // Ensure grid doesn't overflow horizontally
           width: '100% !important',
+          // PWA: Force box-sizing for consistent spacing
+          boxSizing: 'border-box',
+        },
+        // PWA standalone mode - additional consistency
+        '@media (display-mode: standalone)': {
+          // Ensure padding is applied consistently
+          px: isXs ? 2 : 0,
         },
       }}
     >

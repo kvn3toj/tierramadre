@@ -207,6 +207,10 @@
 html {
   /* iOS smooth scrolling */
   scroll-behavior: smooth;
+  /* Prevent overscroll showing different background */
+  background-color: var(--surface-primary);
+  /* Ensure no overscroll bounce reveals content behind */
+  overscroll-behavior: none;
 }
 
 body {
