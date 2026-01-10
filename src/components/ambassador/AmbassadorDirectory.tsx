@@ -193,7 +193,7 @@ export default function AmbassadorDirectory({
           <StatItem
             icon={<Gem size={18} />}
             value={stats.looseCount.toString()}
-            label="Gemas sueltas"
+            label="Gemas"
             color="#8B5CF6"
             variant="stacked"
           />

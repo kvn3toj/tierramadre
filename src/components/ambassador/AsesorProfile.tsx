@@ -362,7 +362,7 @@ export default function AsesorProfilePage() {
           <StatBox
             icon={<Gem size={20} />}
             value={stats.looseCount.toString()}
-            label="Gemas Sueltas"
+            label="Gemas"
             color="#3B82F6"
           />
           <StatBox

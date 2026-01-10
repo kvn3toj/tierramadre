@@ -500,11 +500,11 @@ export default function TreasureBrowser() {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
-      {/* Mobile: Compact filter bar + iOS filter sheet */}
+      {/* Mobile: Compact filter bar + inline filter panel */}
       {isMobile ? (
         <>
           {/* Search Bar Row */}
-          <Box sx={{ display: 'flex', gap: 1, mb: 1.5, alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
             <TextField
               fullWidth
               size="small"
@@ -543,20 +543,20 @@ export default function TreasureBrowser() {
                 },
               }}
             />
-            {/* Filter button with badge */}
+            {/* Filter toggle button with badge */}
             <IconButton
-              onClick={() => setFilterSheetOpen(true)}
+              onClick={() => setFilterSheetOpen(!filterSheetOpen)}
               sx={{
                 width: 44,
                 height: 44,
                 borderRadius: 3,
-                bgcolor: hasFilters
+                bgcolor: filterSheetOpen || hasFilters
                   ? alpha(emeraldCore.primary, 0.15)
                   : isLight
                     ? surfacesLight.background.secondary
                     : surfacesDark.background.tertiary,
                 border: '1px solid',
-                borderColor: hasFilters
+                borderColor: filterSheetOpen || hasFilters
                   ? emeraldCore.primary
                   : isLight
                     ? surfacesLight.border.light
@@ -566,7 +566,7 @@ export default function TreasureBrowser() {
             >
               <SlidersHorizontal
                 size={20}
-                color={hasFilters ? emeraldCore.primary : theme.palette.text.secondary}
+                color={filterSheetOpen || hasFilters ? emeraldCore.primary : theme.palette.text.secondary}
               />
               {activeFilterCount > 0 && (
                 <Box
@@ -592,107 +592,7 @@ export default function TreasureBrowser() {
             </IconButton>
           </Box>
 
-          {/* Compact Status Pills + Quick Actions Row */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, overflowX: 'auto', pb: 0.5 }}>
-            {/* Status segmented control */}
-            <Box
-              sx={{
-                display: 'flex',
-                bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.tertiary,
-                borderRadius: '20px',
-                p: 0.3,
-                flexShrink: 0,
-              }}
-            >
-              {[
-                { value: 'available' as StatusFilter, label: 'Disponibles', dot: emeraldCore.primary },
-                { value: 'sold' as StatusFilter, label: 'Vendidas', dot: semanticColors.error.main },
-                { value: 'all' as StatusFilter, label: 'Todas', dot: null },
-              ].map((option) => (
-                <Box
-                  key={option.value}
-                  onClick={() => setStatusFilter(option.value)}
-                  sx={{
-                    px: 1.5,
-                    py: 0.6,
-                    borderRadius: '16px',
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.5,
-                    whiteSpace: 'nowrap',
-                    ...(statusFilter === option.value
-                      ? {
-                          bgcolor: isLight ? 'white' : surfacesDark.background.secondary,
-                          color: emeraldCore.dark,
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                        }
-                      : {
-                          color: theme.palette.text.secondary,
-                        }),
-                  }}
-                >
-                  {option.dot && (
-                    <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: option.dot }} />
-                  )}
-                  {option.label}
-                </Box>
-              ))}
-            </Box>
-
-            {/* Favorites toggle */}
-            <Box
-              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                cursor: 'pointer',
-                px: 1.5,
-                py: 0.6,
-                borderRadius: '16px',
-                flexShrink: 0,
-                bgcolor: showFavoritesOnly
-                  ? alpha('#ef4444', 0.15)
-                  : isLight
-                    ? surfacesLight.background.secondary
-                    : surfacesDark.background.tertiary,
-                border: showFavoritesOnly ? '1px solid #ef4444' : 'none',
-              }}
-            >
-              <Heart
-                size={14}
-                fill={showFavoritesOnly ? '#ef4444' : 'none'}
-                color={showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary}
-              />
-              <Typography
-                sx={{
-                  color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
-                  fontWeight: 600,
-                  fontSize: '0.7rem',
-                }}
-              >
-                {favoritesCount}
-              </Typography>
-            </Box>
-
-            {/* Stats */}
-            <Typography
-              sx={{
-                color: theme.palette.text.secondary,
-                fontSize: '0.7rem',
-                whiteSpace: 'nowrap',
-                ml: 'auto',
-              }}
-            >
-              {sortedTreasure.length} items
-            </Typography>
-          </Box>
-
-          {/* iOS Filter Sheet */}
+          {/* Inline Filter Panel (below search bar) */}
           <IOSFilterSheet
             open={filterSheetOpen}
             onClose={() => setFilterSheetOpen(false)}
@@ -720,6 +620,57 @@ export default function TreasureBrowser() {
             onClearFilters={handleClearFilters}
             hidePriceFilter={!guestCanSeePrices}
           />
+
+          {/* Quick info row - only show when filters are closed */}
+          {!filterSheetOpen && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              {/* Favorites toggle */}
+              <Box
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  cursor: 'pointer',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: '16px',
+                  bgcolor: showFavoritesOnly
+                    ? alpha('#ef4444', 0.15)
+                    : isLight
+                      ? surfacesLight.background.secondary
+                      : surfacesDark.background.tertiary,
+                  border: showFavoritesOnly ? '1px solid #ef4444' : 'none',
+                }}
+              >
+                <Heart
+                  size={14}
+                  fill={showFavoritesOnly ? '#ef4444' : 'none'}
+                  color={showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary}
+                />
+                <Typography
+                  sx={{
+                    color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
+                    fontWeight: 600,
+                    fontSize: '0.7rem',
+                  }}
+                >
+                  {favoritesCount}
+                </Typography>
+              </Box>
+
+              {/* Stats */}
+              <Typography
+                sx={{
+                  color: theme.palette.text.secondary,
+                  fontSize: '0.75rem',
+                  ml: 'auto',
+                }}
+              >
+                {sortedTreasure.length} items
+              </Typography>
+            </Box>
+          )}
         </>
       ) : (
         <>

@@ -31,7 +31,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { brand, iosSemanticColors, iosTypographyScale, typography, radius } from '../../design-system';
-import type { QuotationRequest, ProviderQuotation } from '../../types/provider';
+import { PRODUCT_TYPE_LABELS, type QuotationRequest, type ProviderQuotation } from '../../types/provider';
 
 interface DashboardStats {
   pendingRequests: number;
@@ -319,7 +319,7 @@ export default function ProviderDashboard() {
                         color: labelColor,
                       }}
                     >
-                      {request.productType === 'piedra_suelta' ? 'Piedra Suelta' : request.productType}
+                      {PRODUCT_TYPE_LABELS[request.productType] || request.productType}
                     </Typography>
                     <Typography
                       sx={{

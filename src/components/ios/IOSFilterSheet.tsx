@@ -1,25 +1,23 @@
 /**
  * IOSFilterSheet Component
  *
- * iOS HIG-compliant modal bottom sheet for treasure filters.
- * - Swipeable with grabber handle
- * - Modal behavior (blocks grid interaction)
- * - Sections: Sort, Type, Color, Shape, Quality, Price
- * - Spring animations
+ * Clean inline filter panel with clear labels and values.
+ * - Shows current filter values clearly
+ * - Includes status filter (disponibles/vendidas)
+ * - Tap to expand and select options
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Box,
-  Typography,
-  Drawer,
-  IconButton,
   Chip,
   Button,
-  Slider,
   alpha,
+  Collapse,
+  IconButton,
+  Typography,
 } from '@mui/material';
-import { X, Check, Trash2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import {
   type StatusFilter,
@@ -34,9 +32,7 @@ import {
   semanticColors,
 } from '../../design-system/tokens/colors';
 import {
-  iosTypographyScale,
   radius,
-  animation,
   iosSemanticColors,
 } from '../../design-system';
 
@@ -83,7 +79,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
   shapeFilter,
   qualityFilter,
   priceRange,
-  cantidadFilter,
+  cantidadFilter: _cantidadFilter,
   setStatusFilter,
   setSortBy,
   setTypeFilter,
@@ -91,7 +87,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
   setShapeFilter,
   setQualityFilter,
   setPriceRange,
-  setCantidadFilter,
+  setCantidadFilter: _setCantidadFilter,
   colors,
   shapes,
   qualities,
@@ -102,33 +98,42 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
 }) => {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
-  const labelColor = iosSemanticColors.label[mode];
   const secondaryLabelColor = iosSemanticColors.secondaryLabel[mode];
 
-  // Chip styles
+  // Track which section is expanded
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
+  // Filter row item style
+  const getFilterRowStyle = (isActive: boolean) => ({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    py: 1,
+    px: 1.5,
+    cursor: 'pointer',
+    borderBottom: '1px solid',
+    borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+    bgcolor: isActive ? alpha(emeraldCore.primary, 0.05) : 'transparent',
+    '&:hover': {
+      bgcolor: alpha(emeraldCore.primary, 0.05),
+    },
+  });
+
+  // Option chip style
   const getChipStyle = (isActive: boolean) => ({
-    height: 36,
-    borderRadius: radius.full,
-    fontSize: iosTypographyScale.footnote,
+    height: 32,
+    borderRadius: 16,
+    fontSize: '0.75rem',
     fontWeight: isActive ? 600 : 500,
-    px: 1,
-    transition: animation.transition.fast,
     bgcolor: isActive
       ? alpha(emeraldCore.primary, 0.15)
       : isLight
         ? surfacesLight.background.secondary
         : surfacesDark.background.tertiary,
-    color: isActive ? emeraldCore.dark : secondaryLabelColor,
-    border: '1px solid',
-    borderColor: isActive
-      ? emeraldCore.primary
-      : isLight
-        ? surfacesLight.border.light
-        : surfacesDark.border.light,
+    color: isActive ? emeraldCore.primary : secondaryLabelColor,
+    border: isActive ? `1px solid ${emeraldCore.primary}` : '1px solid transparent',
     '&:hover': {
-      bgcolor: isActive
-        ? alpha(emeraldCore.primary, 0.2)
-        : alpha(emeraldCore.primary, 0.05),
+      bgcolor: alpha(emeraldCore.primary, 0.1),
     },
   });
 
@@ -148,488 +153,357 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
     if (min >= 1000000 && max <= 5000000) return '$1M - $5M';
     if (min >= 5000000 && max <= 20000000) return '$5M - $20M';
     if (min >= 20000000) return '> $20M';
-    return null;
+    return `${formatCurrency(min)} - ${formatCurrency(max)}`;
   }, [priceRange, priceMinMax]);
 
-  const handleApply = () => {
-    onClose();
+  // Get labels
+  const getStatusLabel = () => {
+    if (statusFilter === 'available') return 'Disponibles';
+    if (statusFilter === 'sold') return 'Vendidas';
+    return 'Todas';
   };
 
-  const handleClear = () => {
-    onClearFilters();
-    onClose();
+  const getSortLabel = () => {
+    const labels: Record<SortOption, string> = {
+      'price-desc': 'Mayor precio',
+      'price-asc': 'Menor precio',
+      'name-asc': 'A-Z',
+      'name-desc': 'Z-A',
+      'newest': 'Recientes',
+      'quality-premium': 'Mejor calidad',
+      'item-number': '# Item',
+      'most-searched': 'Popular',
+    };
+    return labels[sortBy] || 'Mayor precio';
   };
+
+  const getTypeLabel = () => {
+    if (typeFilter === 'all') return 'Todos';
+    if (typeFilter === 'loose') return 'Gemas';
+    return 'Joyería';
+  };
+
+  // Toggle section
+  const toggleSection = (section: string) => {
+    setExpandedSection(expandedSection === section ? null : section);
+  };
+
+  // Filter row component
+  const FilterRow = ({
+    label,
+    value,
+    section,
+    isActive = false,
+    dotColor,
+  }: {
+    label: string;
+    value: string;
+    section: string;
+    isActive?: boolean;
+    dotColor?: string;
+  }) => (
+    <>
+      <Box
+        onClick={() => toggleSection(section)}
+        sx={getFilterRowStyle(isActive || expandedSection === section)}
+      >
+        <Typography sx={{ fontSize: '0.8rem', color: secondaryLabelColor }}>
+          {label}
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          {dotColor && (
+            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: dotColor }} />
+          )}
+          <Typography
+            sx={{
+              fontSize: '0.8rem',
+              fontWeight: isActive ? 600 : 500,
+              color: isActive ? emeraldCore.primary : (isLight ? surfacesLight.text.primary : surfacesDark.text.primary),
+            }}
+          >
+            {value}
+          </Typography>
+        </Box>
+      </Box>
+    </>
+  );
 
   return (
-    <Drawer
-      anchor="bottom"
-      open={open}
-      onClose={onClose}
-      PaperProps={{
-        sx: {
-          borderTopLeftRadius: radius['2xl'],
-          borderTopRightRadius: radius['2xl'],
-          maxHeight: '85vh',
+    <Collapse in={open} timeout={200}>
+      <Box
+        sx={{
           bgcolor: isLight
             ? surfacesLight.background.primary
-            : surfacesDark.background.primary,
-          // iOS glass effect
-          backdropFilter: 'blur(20px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        },
-      }}
-      // Modal behavior - blocks interaction with content behind
-      ModalProps={{
-        keepMounted: true,
-      }}
-    >
-      {/* Grabber handle */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          pt: 1.5,
-          pb: 1,
-        }}
-      >
-        <Box
-          sx={{
-            width: 36,
-            height: 5,
-            borderRadius: 3,
-            bgcolor: isLight
-              ? surfacesLight.border.default
-              : surfacesDark.border.default,
-          }}
-        />
-      </Box>
-
-      {/* Header */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          px: 2,
-          pb: 2,
-          borderBottom: '0.5px solid',
+            : surfacesDark.background.secondary,
+          borderRadius: radius.lg,
+          border: '1px solid',
           borderColor: isLight
             ? surfacesLight.border.light
             : surfacesDark.border.light,
+          mb: 1,
+          overflow: 'hidden',
         }}
       >
-        <Typography
-          sx={{
-            fontSize: iosTypographyScale.title3,
-            fontWeight: 600,
-            color: labelColor,
-          }}
-        >
-          Filtros
-        </Typography>
-        <IconButton
-          onClick={onClose}
-          size="small"
-          sx={{
-            width: 32,
-            height: 32,
-            bgcolor: isLight
-              ? surfacesLight.background.secondary
-              : surfacesDark.background.tertiary,
-          }}
-        >
-          <X size={18} color={secondaryLabelColor} />
-        </IconButton>
-      </Box>
-
-      {/* Content */}
-      <Box
-        sx={{
-          overflowY: 'auto',
-          px: 2,
-          py: 2,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 3,
-        }}
-      >
-        {/* Status Section */}
-        <Box>
-          <Typography
-            sx={{
-              fontSize: iosTypographyScale.footnote,
-              fontWeight: 600,
-              color: secondaryLabelColor,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              mb: 1.5,
-            }}
-          >
-            Estado
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        {/* Sort filter */}
+        <FilterRow
+          label="Ordenar"
+          value={getSortLabel()}
+          section="sort"
+          isActive={sortBy !== 'price-desc'}
+        />
+        <Collapse in={expandedSection === 'sort'}>
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
             {[
-              { value: 'available' as StatusFilter, label: 'Disponibles', dot: emeraldCore.primary },
-              { value: 'sold' as StatusFilter, label: 'Vendidas', dot: semanticColors.error.main },
-              { value: 'all' as StatusFilter, label: 'Todas', dot: null },
-            ].map((option) => (
-              <Chip
-                key={option.value}
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                    {option.dot && (
-                      <Box
-                        sx={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          bgcolor: option.dot,
-                        }}
-                      />
-                    )}
-                    {option.label}
-                  </Box>
-                }
-                onClick={() => setStatusFilter(option.value)}
-                sx={getChipStyle(statusFilter === option.value)}
-              />
-            ))}
-          </Box>
-        </Box>
-
-        {/* Sort Section */}
-        <Box>
-          <Typography
-            sx={{
-              fontSize: iosTypographyScale.footnote,
-              fontWeight: 600,
-              color: secondaryLabelColor,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              mb: 1.5,
-            }}
-          >
-            Ordenar
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {[
-              { value: 'price-desc' as SortOption, label: 'Precio Mayor' },
-              { value: 'price-asc' as SortOption, label: 'Precio Menor' },
+              { value: 'price-desc' as SortOption, label: 'Mayor precio' },
+              { value: 'price-asc' as SortOption, label: 'Menor precio' },
               { value: 'name-asc' as SortOption, label: 'A-Z' },
               { value: 'newest' as SortOption, label: 'Recientes' },
-              { value: 'quality-premium' as SortOption, label: 'Calidad' },
+              { value: 'quality-premium' as SortOption, label: 'Mejor calidad' },
             ].map((option) => (
               <Chip
                 key={option.value}
                 label={option.label}
-                onClick={() => setSortBy(option.value)}
+                onClick={() => {
+                  setSortBy(option.value);
+                  setExpandedSection(null);
+                }}
                 sx={getChipStyle(sortBy === option.value)}
               />
             ))}
           </Box>
-        </Box>
+        </Collapse>
 
-        {/* Type Section */}
-        <Box>
-          <Typography
-            sx={{
-              fontSize: iosTypographyScale.footnote,
-              fontWeight: 600,
-              color: secondaryLabelColor,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              mb: 1.5,
-            }}
-          >
-            Tipo
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        {/* Type filter */}
+        <FilterRow
+          label="Tipo"
+          value={getTypeLabel()}
+          section="type"
+          isActive={typeFilter !== 'all'}
+        />
+        <Collapse in={expandedSection === 'type'}>
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
             {[
-              { value: 'all' as TypeFilter, label: 'Todo' },
+              { value: 'all' as TypeFilter, label: 'Todos' },
               { value: 'loose' as TypeFilter, label: 'Gemas' },
-              { value: 'jewelry' as TypeFilter, label: 'Joyeria' },
+              { value: 'jewelry' as TypeFilter, label: 'Joyería' },
             ].map((option) => (
               <Chip
                 key={option.value}
                 label={option.label}
-                onClick={() => setTypeFilter(option.value)}
+                onClick={() => {
+                  setTypeFilter(option.value);
+                  setExpandedSection(null);
+                }}
                 sx={getChipStyle(typeFilter === option.value)}
               />
             ))}
           </Box>
-        </Box>
+        </Collapse>
 
-        {/* Color Section */}
-        <Box>
-          <Typography
-            sx={{
-              fontSize: iosTypographyScale.footnote,
-              fontWeight: 600,
-              color: secondaryLabelColor,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              mb: 1.5,
-            }}
-          >
-            Color
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        {/* Color filter */}
+        <FilterRow
+          label="Color"
+          value={colorFilter === 'all' ? 'Todos' : colorFilter.replace('Verde ', '')}
+          section="color"
+          isActive={colorFilter !== 'all'}
+          dotColor={colorFilter !== 'all' ? getColorDot(colorFilter) : undefined}
+        />
+        <Collapse in={expandedSection === 'color'}>
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
             <Chip
               label="Todos"
-              onClick={() => setColorFilter('all')}
+              onClick={() => {
+                setColorFilter('all');
+                setExpandedSection(null);
+              }}
               sx={getChipStyle(colorFilter === 'all')}
             />
-            {colors.slice(0, 8).map((color) => (
+            {colors.map((color) => (
               <Chip
                 key={color}
                 label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                    <Box
-                      sx={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: '50%',
-                        bgcolor: getColorDot(color),
-                        border: '1px solid rgba(0,0,0,0.1)',
-                      }}
-                    />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: getColorDot(color) }} />
                     {color.replace('Verde ', '')}
                   </Box>
                 }
-                onClick={() => setColorFilter(color)}
+                onClick={() => {
+                  setColorFilter(color);
+                  setExpandedSection(null);
+                }}
                 sx={getChipStyle(colorFilter === color)}
               />
             ))}
           </Box>
-        </Box>
+        </Collapse>
 
-        {/* Shape Section */}
-        <Box>
-          <Typography
-            sx={{
-              fontSize: iosTypographyScale.footnote,
-              fontWeight: 600,
-              color: secondaryLabelColor,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              mb: 1.5,
-            }}
-          >
-            Talla
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        {/* Quality filter */}
+        <FilterRow
+          label="Calidad"
+          value={qualityFilter === 'all' ? 'Todas' : qualityFilter}
+          section="quality"
+          isActive={qualityFilter !== 'all'}
+        />
+        <Collapse in={expandedSection === 'quality'}>
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
             <Chip
               label="Todas"
-              onClick={() => setShapeFilter('all')}
-              sx={getChipStyle(shapeFilter === 'all')}
-            />
-            {shapes.slice(0, 6).map((shape) => (
-              <Chip
-                key={shape}
-                label={shape}
-                onClick={() => setShapeFilter(shape)}
-                sx={getChipStyle(shapeFilter === shape)}
-              />
-            ))}
-          </Box>
-        </Box>
-
-        {/* Quality Section */}
-        <Box>
-          <Typography
-            sx={{
-              fontSize: iosTypographyScale.footnote,
-              fontWeight: 600,
-              color: secondaryLabelColor,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              mb: 1.5,
-            }}
-          >
-            Calidad
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <Chip
-              label="Todas"
-              onClick={() => setQualityFilter('all')}
+              onClick={() => {
+                setQualityFilter('all');
+                setExpandedSection(null);
+              }}
               sx={getChipStyle(qualityFilter === 'all')}
             />
             {qualities.map((quality) => (
               <Chip
                 key={quality}
                 label={quality}
-                onClick={() => setQualityFilter(quality)}
+                onClick={() => {
+                  setQualityFilter(quality);
+                  setExpandedSection(null);
+                }}
                 sx={getChipStyle(qualityFilter === quality)}
               />
             ))}
           </Box>
-        </Box>
+        </Collapse>
 
-        {/* Cantidad Section */}
-        <Box>
-          <Typography
-            sx={{
-              fontSize: iosTypographyScale.footnote,
-              fontWeight: 600,
-              color: secondaryLabelColor,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              mb: 1.5,
-            }}
-          >
-            Cantidad
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {[
-              { value: 'all', label: 'Todas' },
-              { value: '1', label: '1 unidad' },
-              { value: '2+', label: 'Lotes (2+)' },
-            ].map((option) => (
+        {/* Shape filter */}
+        <FilterRow
+          label="Talla"
+          value={shapeFilter === 'all' ? 'Todas' : shapeFilter}
+          section="shape"
+          isActive={shapeFilter !== 'all'}
+        />
+        <Collapse in={expandedSection === 'shape'}>
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+            <Chip
+              label="Todas"
+              onClick={() => {
+                setShapeFilter('all');
+                setExpandedSection(null);
+              }}
+              sx={getChipStyle(shapeFilter === 'all')}
+            />
+            {shapes.map((shape) => (
               <Chip
-                key={option.value}
-                label={option.label}
-                onClick={() => setCantidadFilter(option.value)}
-                sx={getChipStyle(cantidadFilter === option.value)}
+                key={shape}
+                label={shape}
+                onClick={() => {
+                  setShapeFilter(shape);
+                  setExpandedSection(null);
+                }}
+                sx={getChipStyle(shapeFilter === shape)}
               />
             ))}
           </Box>
-        </Box>
+        </Collapse>
 
-        {/* Price Section - Hidden for guests */}
+        {/* Price filter */}
         {!hidePriceFilter && (
-          <Box>
-            <Typography
-              sx={{
-                fontSize: iosTypographyScale.footnote,
-                fontWeight: 600,
-                color: secondaryLabelColor,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                mb: 1.5,
-              }}
-            >
-              Precio
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-              {priceTiers.map((tier) => (
-                <Chip
-                  key={tier.label}
-                  label={tier.label}
-                  onClick={() => setPriceRange([tier.min, tier.max])}
-                  sx={getChipStyle(getCurrentPriceTier() === tier.label)}
-                />
-              ))}
-            </Box>
-
-            {/* Price Range Slider */}
-            <Box sx={{ px: 1 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  mb: 1,
-                }}
-              >
-                <Typography
-                  sx={{ fontSize: iosTypographyScale.caption1, color: secondaryLabelColor }}
-                >
-                  {formatCurrency(priceRange[0])}
-                </Typography>
-                <Typography
-                  sx={{ fontSize: iosTypographyScale.caption1, color: secondaryLabelColor }}
-                >
-                  {formatCurrency(priceRange[1])}
-                </Typography>
+          <>
+            <FilterRow
+              label="Precio"
+              value={getCurrentPriceTier()}
+              section="price"
+              isActive={priceRange[0] !== priceMinMax.min || priceRange[1] !== priceMinMax.max}
+            />
+            <Collapse in={expandedSection === 'price'}>
+              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+                {priceTiers.map((tier) => (
+                  <Chip
+                    key={tier.label}
+                    label={tier.label}
+                    onClick={() => {
+                      setPriceRange([tier.min, tier.max]);
+                      setExpandedSection(null);
+                    }}
+                    sx={getChipStyle(getCurrentPriceTier() === tier.label)}
+                  />
+                ))}
               </Box>
-              <Slider
-                value={priceRange}
-                onChange={(_, value) => setPriceRange(value as [number, number])}
-                min={priceMinMax.min}
-                max={priceMinMax.max}
-                step={100000}
-                valueLabelDisplay="off"
-                sx={{
-                  color: emeraldCore.primary,
-                  '& .MuiSlider-thumb': {
-                    width: 24,
-                    height: 24,
-                    bgcolor: 'white',
-                    border: `2px solid ${emeraldCore.primary}`,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                  },
-                  '& .MuiSlider-track': { height: 4 },
-                  '& .MuiSlider-rail': {
-                    height: 4,
-                    bgcolor: isLight
-                      ? surfacesLight.border.light
-                      : surfacesDark.border.default,
-                  },
-                }}
-              />
-            </Box>
-          </Box>
+            </Collapse>
+          </>
         )}
-      </Box>
 
-      {/* Footer Actions */}
-      <Box
-        sx={{
-          display: 'flex',
-          gap: 2,
-          p: 2,
-          pt: 1.5,
-          borderTop: '0.5px solid',
-          borderColor: isLight
-            ? surfacesLight.border.light
-            : surfacesDark.border.light,
-          // Safe area for bottom (16px + safe area)
-          pb: `calc(16px + env(safe-area-inset-bottom))`,
-        }}
-      >
-        {hasFilters && (
-          <Button
-            variant="outlined"
-            startIcon={<Trash2 size={16} />}
-            onClick={handleClear}
-            sx={{
-              flex: 1,
-              height: 50,
-              borderRadius: radius.lg,
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: iosTypographyScale.body,
-              borderColor: semanticColors.error.main,
-              color: semanticColors.error.main,
-              '&:hover': {
-                bgcolor: alpha(semanticColors.error.main, 0.08),
-                borderColor: semanticColors.error.main,
-              },
-            }}
-          >
-            Limpiar
-          </Button>
-        )}
-        <Button
-          variant="contained"
-          startIcon={<Check size={18} />}
-          onClick={handleApply}
+        {/* Status filter - at bottom */}
+        <FilterRow
+          label="Estado"
+          value={getStatusLabel()}
+          section="status"
+          isActive={statusFilter !== 'all'}
+          dotColor={statusFilter === 'available' ? emeraldCore.primary : statusFilter === 'sold' ? semanticColors.error.main : undefined}
+        />
+        <Collapse in={expandedSection === 'status'}>
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+            {[
+              { value: 'all' as StatusFilter, label: 'Todas', dot: null },
+              { value: 'available' as StatusFilter, label: 'Disponibles', dot: emeraldCore.primary },
+              { value: 'sold' as StatusFilter, label: 'Vendidas', dot: semanticColors.error.main },
+            ].map((option) => (
+              <Chip
+                key={option.value}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {option.dot && <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: option.dot }} />}
+                    {option.label}
+                  </Box>
+                }
+                onClick={() => {
+                  setStatusFilter(option.value);
+                  setExpandedSection(null);
+                }}
+                sx={getChipStyle(statusFilter === option.value)}
+              />
+            ))}
+          </Box>
+        </Collapse>
+
+        {/* Footer */}
+        <Box
           sx={{
-            flex: hasFilters ? 2 : 1,
-            height: 50,
-            borderRadius: radius.lg,
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: iosTypographyScale.body,
-            bgcolor: emeraldCore.primary,
-            '&:hover': {
-              bgcolor: emeraldCore.dark,
-            },
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 1.5,
+            py: 1,
+            borderTop: '1px solid',
+            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+            bgcolor: isLight
+              ? alpha(surfacesLight.background.secondary, 0.3)
+              : alpha(surfacesDark.background.tertiary, 0.3),
           }}
         >
-          Aplicar
-        </Button>
+          {hasFilters ? (
+            <Button
+              size="small"
+              onClick={onClearFilters}
+              sx={{
+                fontSize: '0.75rem',
+                textTransform: 'none',
+                color: semanticColors.error.main,
+                p: 0,
+                minWidth: 'auto',
+                '&:hover': { bgcolor: 'transparent' },
+              }}
+            >
+              Limpiar filtros
+            </Button>
+          ) : (
+            <Typography sx={{ fontSize: '0.75rem', color: secondaryLabelColor }}>
+              Toca para filtrar
+            </Typography>
+          )}
+          <IconButton
+            size="small"
+            onClick={onClose}
+            sx={{ p: 0.5 }}
+          >
+            <X size={16} color={secondaryLabelColor} />
+          </IconButton>
+        </Box>
       </Box>
-    </Drawer>
+    </Collapse>
   );
 };
 

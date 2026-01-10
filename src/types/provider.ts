@@ -108,7 +108,7 @@ export interface ProviderQuotationFormData {
 
 // Product type labels for UI
 export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
-  piedra_suelta: 'Piedra Suelta',
+  piedra_suelta: 'Gemas',
   anillo: 'Anillo',
   collar: 'Collar',
   pendientes: 'Pendientes',

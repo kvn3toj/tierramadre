@@ -39,6 +39,8 @@ export interface TreasureFilters {
 export interface UseTreasureFilteringOptions {
   treasure: TreasureItem[];
   initialFilters?: Partial<TreasureFilters>;
+  /** Clear filters after this many minutes of inactivity. Default: 5 minutes. Set to 0 to disable. */
+  inactivityTimeoutMinutes?: number;
 }
 
 export interface UseTreasureFilteringReturn {
@@ -86,9 +88,12 @@ const QUALITY_ORDER: Record<string, number> = {
   'Comercial': 1,
 };
 
+const DEFAULT_INACTIVITY_TIMEOUT_MINUTES = 5;
+
 export function useTreasureFiltering({
   treasure,
   initialFilters = {},
+  inactivityTimeoutMinutes = DEFAULT_INACTIVITY_TIMEOUT_MINUTES,
 }: UseTreasureFilteringOptions): UseTreasureFilteringReturn {
   // Get price range from treasure
   const priceMinMax = useMemo(() => {
@@ -105,7 +110,7 @@ export function useTreasureFiltering({
   const [colorFilter, setColorFilter] = useState(initialFilters.colorFilter || 'all');
   const [qualityFilter, setQualityFilter] = useState(initialFilters.qualityFilter || 'all');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>(initialFilters.typeFilter || 'all');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialFilters.statusFilter || 'available');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialFilters.statusFilter || 'all');
   const [shapeFilter, setShapeFilter] = useState(initialFilters.shapeFilter || 'all');
   const [priceRange, setPriceRange] = useState<[number, number]>(
     initialFilters.priceRange || [0, Number.MAX_SAFE_INTEGER]
@@ -258,13 +263,13 @@ export function useTreasureFiltering({
     return { count: filteredTreasure.length, totalValue };
   }, [filteredTreasure]);
 
-  // Clear all filters (reset to defaults, showing available items)
+  // Clear all filters (reset to defaults, showing all items)
   const clearFilters = useCallback(() => {
     setSearch('');
     setColorFilter('all');
     setQualityFilter('all');
     setTypeFilter('all');
-    setStatusFilter('available'); // Default to available items
+    setStatusFilter('all'); // Default to all items
     setShapeFilter('all');
     setCantidadFilter('all');
     setCityFilter('all');
@@ -272,14 +277,14 @@ export function useTreasureFiltering({
     setPriceRange([priceMinMax.min, priceMinMax.max]);
   }, [priceMinMax]);
 
-  // Check if any filters are active (note: 'available' is the default status, not a filter)
+  // Check if any filters are active (note: 'all' is the default status)
   const hasFilters = useMemo(() => {
     return (
       search !== '' ||
       colorFilter !== 'all' ||
       qualityFilter !== 'all' ||
       typeFilter !== 'all' ||
-      (statusFilter !== 'all' && statusFilter !== 'available') ||
+      statusFilter !== 'all' ||
       shapeFilter !== 'all' ||
       cantidadFilter !== 'all' ||
       cityFilter !== 'all' ||
@@ -288,6 +293,72 @@ export function useTreasureFiltering({
       priceRange[1] !== priceMinMax.max
     );
   }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, cityFilter, coleccionFilter, priceRange, priceMinMax]);
+
+  // Track last activity time for inactivity timeout
+  const lastActivityRef = useRef<number>(Date.now());
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset activity timer when filters change
+  const resetActivityTimer = useCallback(() => {
+    lastActivityRef.current = Date.now();
+  }, []);
+
+  // Clear filters after inactivity (only if filters are active)
+  useEffect(() => {
+    // Disabled if timeout is 0 or no filters active
+    if (inactivityTimeoutMinutes <= 0 || !hasFilters) {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+      return;
+    }
+
+    // Reset timer on any filter change
+    resetActivityTimer();
+
+    // Set up inactivity check
+    const checkInactivity = () => {
+      const now = Date.now();
+      const inactiveMs = now - lastActivityRef.current;
+      const timeoutMs = inactivityTimeoutMinutes * 60 * 1000;
+
+      if (inactiveMs >= timeoutMs) {
+        // User has been inactive, clear filters
+        clearFilters();
+      } else {
+        // Check again when timeout would expire
+        const remainingMs = timeoutMs - inactiveMs;
+        inactivityTimerRef.current = setTimeout(checkInactivity, remainingMs);
+      }
+    };
+
+    // Start the timer
+    inactivityTimerRef.current = setTimeout(checkInactivity, inactivityTimeoutMinutes * 60 * 1000);
+
+    // Cleanup on unmount or dependency change
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+    };
+  }, [hasFilters, inactivityTimeoutMinutes, clearFilters, resetActivityTimer]);
+
+  // Track user activity on visibility change (back/forward navigation)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // User returned to the page, reset activity timer
+        resetActivityTimer();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [resetActivityTimer]);
 
   // Memoize filters object to prevent infinite re-render loops in URL sync
   const filters = useMemo(() => ({

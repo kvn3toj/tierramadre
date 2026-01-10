@@ -1,13 +1,12 @@
 /**
  * GridCard Component
- * Grid view card for treasure items with golden ratio layout.
- * Optimized for virtualized rendering.
+ * Grid view card for treasure items optimized for 2-column mobile layout.
  *
  * iOS HIG Compliant:
  * - 44pt minimum touch targets
+ * - 8pt grid system spacing
+ * - Compact typography for 2-column grid
  * - Spring animations for tactile feedback
- * - Consistent typography scale (body 17pt, footnote 13pt)
- * - Hairline separators and subtle surfaces
  */
 import React from 'react';
 import {
@@ -32,7 +31,6 @@ import { PriceDisplay } from '../PriceDisplay';
 import ProgressiveImage from '../ProgressiveImage';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 import {
-  iosTypographyScale,
   accentColors,
   lightTokens,
   darkTokens,
@@ -46,11 +44,9 @@ interface GridCardProps {
   onItemClick: () => void;
   onCertClick: () => void;
   onToggleFavorite: () => void;
-  // Comparison props
   isSelectedForComparison?: boolean;
   onToggleComparison?: () => void;
   canAddToComparison?: boolean;
-  // Mobile optimization
   isMobile?: boolean;
 }
 
@@ -67,7 +63,6 @@ function GridCard({
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
 
-  // iOS semantic colors for proper dark mode support
   const labelColor = iosSemanticColors.label[mode];
   const secondaryLabelColor = iosSemanticColors.secondaryLabel[mode];
 
@@ -75,7 +70,6 @@ function GridCard({
   const quality = getQualityBadge(item.calidad);
   const colorDot = getColorDot(item.color);
   const isLoose = !item.isJewelry;
-  const weight = typeof item.peso === 'number' ? `${item.peso} ct` : item.metalType;
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -89,15 +83,22 @@ function GridCard({
     onToggleComparison?.();
   };
 
+  // Button sizes - iOS HIG 44pt touch target, but smaller visually for compact cards
+  const buttonSize = isMobile ? 36 : 32;
+  const iconSize = isMobile ? 18 : 16;
+
   return (
     <Card
       elevation={0}
       onClick={onItemClick}
       role="article"
-      aria-label={`${item.nombre} - ${item.color}, ${weight}`}
+      aria-label={`${item.nombre} - ${item.color}`}
       tabIndex={0}
       sx={{
-        borderRadius: 3,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: 2,
         border: '1px solid',
         borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
@@ -106,35 +107,31 @@ function GridCard({
         cursor: 'pointer',
         '&:hover': {
           borderColor: emeraldCore.primary,
-          transform: 'translateY(-2px) scale(1.01)',
+          transform: 'translateY(-1px)',
           boxShadow: isLight
-            ? '0 12px 24px rgba(0, 0, 0, 0.08)'
-            : '0 12px 24px rgba(0, 0, 0, 0.25)',
+            ? '0 8px 16px rgba(0, 0, 0, 0.06)'
+            : '0 8px 16px rgba(0, 0, 0, 0.2)',
         },
         '&:active': {
           transform: 'scale(0.98)',
           transition: animation.transition.fast,
         },
         '&:focus-visible': {
-          outline: `3px solid ${emeraldCore.primary}`,
+          outline: `2px solid ${emeraldCore.primary}`,
           outlineOffset: 2,
         },
       }}
     >
-      {/* Image Section - Golden Ratio: ~61.8% */}
+      {/* Image Section - 1:1 aspect ratio */}
       <Box sx={{ position: 'relative', flexShrink: 0 }}>
         {item.imagen ? (
           <>
             <ProgressiveImage
               src={item.imagen}
               alt={`${item.nombre} - ${item.color}`}
-              // Mobile: Square 1:1 aspect ratio for luxury feel
-              // Desktop: Fixed height for compact grid
-              aspectRatio={isMobile ? '1 / 1' : undefined}
-              height={isMobile ? undefined : 180}
-              width={isMobile ? undefined : 200}
-              layout={isMobile ? 'full' : 'grid'}
-              quality={isMobile ? 'good' : 'eco'}
+              aspectRatio="1 / 1"
+              layout="full"
+              quality="eco"
             />
 
             {/* Video play indicator */}
@@ -145,170 +142,158 @@ function GridCard({
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  width: 48,
-                  height: 48,
+                  width: 40,
+                  height: 40,
                   borderRadius: '50%',
                   bgcolor: 'rgba(0, 0, 0, 0.6)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
-                aria-label="Video disponible"
               >
-                <Play size={24} color="white" fill="white" />
+                <Play size={20} color="white" fill="white" />
               </Box>
             )}
 
-            {/* Gallery count badge - iOS HIG caption1 = 12px */}
+            {/* Gallery count badge */}
             {(item.galleryCount ?? 0) > 1 && (
               <Chip
-                icon={<Images size={14} />}
+                icon={<Images size={12} />}
                 label={item.galleryCount}
                 size="small"
                 sx={{
                   position: 'absolute',
-                  bottom: 8,
-                  right: 8,
+                  bottom: 6,
+                  right: 6,
                   bgcolor: 'rgba(0, 0, 0, 0.7)',
                   color: 'white',
-                  fontSize: iosTypographyScale.caption1, // 12px iOS HIG
+                  fontSize: 10,
                   fontWeight: 600,
-                  height: 24,
-                  '& .MuiChip-icon': { color: 'white' },
+                  height: 20,
+                  '& .MuiChip-icon': { color: 'white', ml: 0.5 },
+                  '& .MuiChip-label': { px: 0.5 },
                 }}
               />
             )}
 
-            {/* Quality and quantity badges - overlay on image bottom-left */}
-            <Box
+            {/* Quality badge */}
+            <Chip
+              label={quality.label}
+              size="small"
               sx={{
                 position: 'absolute',
-                bottom: 8,
-                left: 8,
-                display: 'flex',
-                gap: 0.5,
+                bottom: 6,
+                left: 6,
+                height: 18,
+                fontSize: 9,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.03em',
+                bgcolor: quality.bg,
+                color: quality.color,
+                border: `1px solid ${quality.border}`,
+                backdropFilter: 'blur(4px)',
+                '& .MuiChip-label': { px: 0.75 },
               }}
-            >
-              {/* Quality badge - iOS caption2 (11px) */}
+            />
+
+            {/* Quantity badge */}
+            {item.cantidad > 1 && (
               <Chip
-                label={quality.label}
+                label={`×${item.cantidad}`}
                 size="small"
                 sx={{
-                  height: 20,
-                  fontSize: iosTypographyScale.caption2,
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.02em',
-                  bgcolor: quality.bg,
-                  color: quality.color,
-                  border: `1px solid ${quality.border}`,
-                  backdropFilter: 'blur(8px)',
+                  position: 'absolute',
+                  bottom: 6,
+                  left: quality.label.length > 4 ? 52 : 44,
+                  height: 18,
+                  fontSize: 9,
+                  fontWeight: 700,
+                  bgcolor: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  backdropFilter: 'blur(4px)',
+                  '& .MuiChip-label': { px: 0.5 },
                 }}
               />
-              {/* Quantity badge - iOS caption2 (11px) */}
-              {item.cantidad > 1 && (
-                <Chip
-                  label={`×${item.cantidad}`}
-                  size="small"
-                  sx={{
-                    height: 20,
-                    fontSize: iosTypographyScale.caption2,
-                    fontWeight: 600,
-                    bgcolor: 'rgba(0, 0, 0, 0.7)',
-                    color: 'white',
-                    backdropFilter: 'blur(8px)',
-                  }}
-                />
-              )}
-            </Box>
+            )}
           </>
         ) : (
           <ProgressiveImage
             src={undefined}
             alt={`${item.nombre} - placeholder`}
-            height={80}
+            aspectRatio="1 / 1"
           />
         )}
 
-        {/* Action buttons - Top right */}
+        {/* Action buttons - Top right, stacked vertically */}
         <Box
           sx={{
             position: 'absolute',
-            top: isMobile ? 12 : 8,
-            right: isMobile ? 12 : 8,
+            top: 6,
+            right: 6,
             display: 'flex',
             flexDirection: 'column',
-            gap: isMobile ? 1 : 0.5,
+            gap: 0.5,
           }}
         >
-          {/* Favorite button - 44px touch target on mobile (Apple HIG) */}
+          {/* Favorite button */}
           <IconButton
             onClick={handleFavoriteClick}
             aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
-            size={isMobile ? 'medium' : 'small'}
+            size="small"
             sx={{
-              width: isMobile ? 44 : 32,
-              height: isMobile ? 44 : 32,
+              width: buttonSize,
+              height: buttonSize,
+              minWidth: 44, // iOS HIG touch target
+              minHeight: 44,
               bgcolor: isLight
-                ? 'rgba(255, 255, 255, 0.95)'
-                : 'rgba(30, 41, 59, 0.95)',
+                ? 'rgba(255, 255, 255, 0.9)'
+                : 'rgba(30, 41, 59, 0.9)',
               backdropFilter: 'blur(8px)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
               transition: animation.transition.spring,
-              '&:hover': {
-                bgcolor: isLight
-                  ? 'rgba(255, 255, 255, 1)'
-                  : 'rgba(30, 41, 59, 1)',
-                transform: 'scale(1.08)',
-              },
               '&:active': {
-                transform: 'scale(0.92)',
+                transform: 'scale(0.9)',
               },
             }}
           >
             <Heart
-              size={isMobile ? 22 : 16}
+              size={iconSize}
               fill={isFavorite ? accentColors.error.light : 'none'}
               color={isFavorite ? accentColors.error.light : isLight ? lightTokens.text.secondary : darkTokens.text.secondary}
             />
           </IconButton>
 
-          {/* Comparison button - 44px touch target on mobile */}
+          {/* Comparison button */}
           {onToggleComparison && (
             <IconButton
               onClick={handleCompareClick}
               aria-label={isSelectedForComparison ? 'Quitar de comparación' : 'Agregar a comparación'}
               disabled={!isSelectedForComparison && !canAddToComparison}
-              size={isMobile ? 'medium' : 'small'}
+              size="small"
               sx={{
-                width: isMobile ? 44 : 32,
-                height: isMobile ? 44 : 32,
+                width: buttonSize,
+                height: buttonSize,
+                minWidth: 44,
+                minHeight: 44,
                 bgcolor: isSelectedForComparison
                   ? emeraldCore.primary
                   : isLight
-                    ? 'rgba(255, 255, 255, 0.95)'
-                    : 'rgba(30, 41, 59, 0.95)',
+                    ? 'rgba(255, 255, 255, 0.9)'
+                    : 'rgba(30, 41, 59, 0.9)',
                 backdropFilter: 'blur(8px)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
                 transition: animation.transition.spring,
-                '&:hover': {
-                  bgcolor: isSelectedForComparison
-                    ? emeraldCore.dark
-                    : isLight
-                      ? 'rgba(255, 255, 255, 1)'
-                      : 'rgba(30, 41, 59, 1)',
-                  transform: 'scale(1.08)',
-                },
                 '&:active': {
-                  transform: 'scale(0.92)',
+                  transform: 'scale(0.9)',
                 },
                 '&:disabled': {
-                  bgcolor: 'rgba(200, 200, 200, 0.5)',
+                  bgcolor: 'rgba(200, 200, 200, 0.4)',
                 },
               }}
             >
               <Scale
-                size={isMobile ? 22 : 16}
+                size={iconSize}
                 color={isSelectedForComparison ? lightTokens.text.inverse : isLight ? lightTokens.text.secondary : darkTokens.text.secondary}
               />
             </IconButton>
@@ -316,51 +301,57 @@ function GridCard({
         </Box>
       </Box>
 
-      {/* Content Section - Enhanced padding and typography on mobile */}
+      {/* Content Section - Compact for 2-column grid */}
       <CardContent
         sx={{
-          p: isMobile ? 2 : 1.25,
-          '&:last-child': { pb: isMobile ? 2 : 1.25 },
+          p: isMobile ? 1 : 1.25,
+          pt: isMobile ? 1 : 1,
+          '&:last-child': { pb: isMobile ? 1 : 1.25 },
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          minHeight: 0,
         }}
       >
-        {/* Name - iOS HIG body (17px) on mobile for readability */}
+        {/* Name - Truncated to 1 line */}
         <Typography
           variant="body2"
           sx={{
-            fontWeight: 600, // iOS headline weight
+            fontWeight: 600,
             color: labelColor,
-            mb: isMobile ? 0.5 : 0.25,
-            lineHeight: 1.4, // iOS body line height
+            lineHeight: 1.3,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            // iOS HIG: body = 17px, subhead = 15px for desktop
-            fontSize: isMobile ? iosTypographyScale.body : iosTypographyScale.subhead,
-            letterSpacing: '-0.01em', // iOS native letter spacing
+            fontSize: isMobile ? 13 : 14,
+            letterSpacing: '-0.01em',
+            mb: 0.25,
           }}
         >
           {displayName}
         </Typography>
 
-        {/* Specs with color dot - iOS HIG subhead (15px) / footnote (13px) */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: isMobile ? 0.75 : 0.5, mb: isMobile ? 1 : 0.5 }}>
+        {/* Specs with color dot */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
           <Box
             sx={{
-              width: isMobile ? 8 : 6, // 8pt grid aligned
-              height: isMobile ? 8 : 6,
+              width: 6,
+              height: 6,
               borderRadius: '50%',
               bgcolor: colorDot,
               flexShrink: 0,
-              border: isMobile ? '1px solid rgba(0,0,0,0.1)' : 'none',
             }}
           />
           <Typography
             variant="caption"
             sx={{
               color: secondaryLabelColor,
-              // iOS HIG: subhead = 15px mobile, footnote = 13px desktop
-              fontSize: isMobile ? iosTypographyScale.subhead : iosTypographyScale.footnote,
+              fontSize: isMobile ? 11 : 12,
               letterSpacing: '-0.01em',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {item.color}
@@ -369,7 +360,7 @@ function GridCard({
           </Typography>
         </Box>
 
-        {/* Price */}
+        {/* Price - Compact */}
         <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
       </CardContent>
     </Card>
