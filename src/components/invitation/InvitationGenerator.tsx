@@ -50,7 +50,6 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
   const { generateInvitation, isGenerating, error, lastInvitation } = useInvitation();
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [copiedShort, setCopiedShort] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
@@ -99,17 +98,12 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
     setFormError('');
   };
 
-  const copyToClipboard = async (text: string, isShort = false) => {
+  const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      if (isShort) {
-        setCopiedShort(true);
-        setTimeout(() => setCopiedShort(false), 2000);
-      } else {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
-      setSnackbarMessage(isShort ? 'Enlace corto copiado' : 'Enlace copiado al portapapeles');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      setSnackbarMessage('Enlace copiado al portapapeles');
       setSnackbarOpen(true);
     } catch {
       // Fallback for older browsers
@@ -119,34 +113,21 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
       textArea.select();
       document.execCommand('copy');
       document.body.removeChild(textArea);
-      if (isShort) {
-        setCopiedShort(true);
-        setTimeout(() => setCopiedShort(false), 2000);
-      } else {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
-      setSnackbarMessage(isShort ? 'Enlace corto copiado' : 'Enlace copiado al portapapeles');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      setSnackbarMessage('Enlace copiado al portapapeles');
       setSnackbarOpen(true);
     }
   };
 
   const handleCopy = async () => {
-    if (lastInvitation?.shortUrl) {
-      await copyToClipboard(lastInvitation.shortUrl, true);
-    } else if (lastInvitation?.url) {
-      await copyToClipboard(lastInvitation.url, false);
-    }
-  };
-
-  const handleCopyFull = async () => {
     if (lastInvitation?.url) {
-      await copyToClipboard(lastInvitation.url, false);
+      await copyToClipboard(lastInvitation.url);
     }
   };
 
   const handleShare = async () => {
-    const shareUrl = lastInvitation?.shortUrl || lastInvitation?.url;
+    const shareUrl = lastInvitation?.url;
     if (shareUrl && 'share' in navigator) {
       try {
         await navigator.share({
@@ -170,7 +151,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
   };
 
   // Get the URL to display in QR code (prefer short URL)
-  const qrUrl = lastInvitation?.shortUrl || lastInvitation?.url || '';
+  const qrUrl = lastInvitation?.url || '';
 
   return (
     <>
@@ -410,41 +391,9 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                 </Box>
               </Box>
 
-              {/* Short URL - Primary display */}
-              {lastInvitation.shortUrl && (
-                <>
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
-                    Enlace corto (recomendado)
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    value={lastInvitation.shortUrl}
-                    InputProps={{
-                      readOnly: true,
-                      sx: {
-                        fontFamily: typography.fontFamily.mono,
-                        fontSize: '1rem',
-                        fontWeight: typography.weight.semibold,
-                        bgcolor: 'background.default',
-                      },
-                      endAdornment: (
-                        <IconButton onClick={handleCopy} size="small">
-                          {copiedShort ? (
-                            <CheckIcon sx={{ color: brand.emerald[600] }} />
-                          ) : (
-                            <CopyIcon />
-                          )}
-                        </IconButton>
-                      ),
-                    }}
-                    sx={{ mb: 2 }}
-                  />
-                </>
-              )}
-
-              {/* Full URL - Secondary display */}
+              {/* Invitation URL */}
               <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
-                Enlace completo
+                Enlace de invitacion
               </Typography>
               <TextField
                 fullWidth
@@ -453,11 +402,12 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   readOnly: true,
                   sx: {
                     fontFamily: typography.fontFamily.mono,
-                    fontSize: '0.7rem',
+                    fontSize: '0.9rem',
+                    fontWeight: typography.weight.semibold,
                     bgcolor: 'background.default',
                   },
                   endAdornment: (
-                    <IconButton onClick={handleCopyFull} size="small">
+                    <IconButton onClick={handleCopy} size="small">
                       {copied ? (
                         <CheckIcon sx={{ color: brand.emerald[600] }} />
                       ) : (
@@ -546,7 +496,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                     '&:hover': { bgcolor: brand.emerald[700] },
                   }}
                 >
-                  {copiedShort ? 'Copiado!' : 'Copiar'}
+                  {copied ? 'Copiado!' : 'Copiar'}
                 </Button>
                 {'share' in navigator && (
                   <Button
