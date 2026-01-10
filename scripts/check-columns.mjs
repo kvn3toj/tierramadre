@@ -1,4 +1,5 @@
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { sheets_v4 } from '@googleapis/sheets';
 import { config } from 'dotenv';
 import { readFileSync } from 'fs';
 
@@ -13,12 +14,12 @@ async function getHeaders() {
   }
   const credentials = JSON.parse(Buffer.from(key, 'base64').toString());
 
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
 
-  const sheets = google.sheets({ version: 'v4', auth });
+  const sheets = new sheets_v4.Sheets({ auth });
   const spreadsheetId = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
 
   // Get headers from row 1

@@ -5,7 +5,8 @@
  * Run with: node scripts/setup-feedback-sheet.js
  */
 
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { sheets_v4 } from '@googleapis/sheets';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -26,12 +27,12 @@ async function setupFeedbackSheet() {
     Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
   );
 
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
 
-  const sheets = google.sheets({ version: 'v4', auth });
+  const sheets = new sheets_v4.Sheets({ auth });
 
   try {
     // Check if Feedback sheet already exists

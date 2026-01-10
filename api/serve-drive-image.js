@@ -5,7 +5,8 @@
  * allowing access to files without requiring public sharing.
  */
 
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { drive_v3 } from '@googleapis/drive';
 
 /**
  * Initialize Google Drive API with service account credentials
@@ -16,12 +17,12 @@ function getDriveClient() {
       Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
     );
 
-    const auth = new google.auth.GoogleAuth({
+    const auth = new GoogleAuth({
       credentials,
       scopes: ['https://www.googleapis.com/auth/drive.readonly'],
     });
 
-    return google.drive({ version: 'v3', auth });
+    return new drive_v3.Drive({ auth });
   } catch (error) {
     console.error('Error initializing Drive client:', error);
     throw new Error('Failed to initialize Google Drive client');

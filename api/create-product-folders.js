@@ -4,19 +4,21 @@
  * Creates the products folder structure based on inventory items
  */
 
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { drive_v3 } from '@googleapis/drive';
+import { sheets_v4 } from '@googleapis/sheets';
 
 function getDriveClient() {
   const credentials = JSON.parse(
     Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
   );
 
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/drive'],
   });
 
-  return google.drive({ version: 'v3', auth });
+  return new drive_v3.Drive({ auth });
 }
 
 function getSheetsClient() {
@@ -24,12 +26,12 @@ function getSheetsClient() {
     Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
   );
 
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
 
-  return google.sheets({ version: 'v4', auth });
+  return new sheets_v4.Sheets({ auth });
 }
 
 async function findFolder(drive, parentId, folderName) {

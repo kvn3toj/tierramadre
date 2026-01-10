@@ -2,19 +2,20 @@
  * Test Google Drive upload capabilities
  */
 
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { drive_v3 } from '@googleapis/drive';
 
 function getDriveClient() {
   const credentials = JSON.parse(
     Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
   );
 
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/drive'],
   });
 
-  return google.drive({ version: 'v3', auth });
+  return new drive_v3.Drive({ auth });
 }
 
 export default async function handler(req, res) {

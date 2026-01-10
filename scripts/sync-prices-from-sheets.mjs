@@ -3,7 +3,8 @@
  * Lee Column H (Precio Internacional) y Column J (Precio Nacional) de Google Sheets
  * y actualiza el archivo inventory.ts con precioInternacional
  */
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { sheets_v4 } from '@googleapis/sheets';
 import { config } from 'dotenv';
 import fs from 'fs';
 import path from 'path';
@@ -33,12 +34,12 @@ async function syncPricesFromSheets() {
   }
 
   const credentials = JSON.parse(Buffer.from(key, 'base64').toString());
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
 
-  const sheets = google.sheets({ version: 'v4', auth });
+  const sheets = new sheets_v4.Sheets({ auth });
 
   // 1. Read pricing data from CUALIFICACION-PRECIO
   console.log('=== Leyendo CUALIFICACION -PRECIO ===');

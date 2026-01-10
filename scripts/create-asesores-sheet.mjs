@@ -8,7 +8,8 @@
  * Usage: node scripts/create-asesores-sheet.mjs
  */
 
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { sheets_v4 } from '@googleapis/sheets';
 import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -62,12 +63,12 @@ function getCredentials() {
 function getSheetsClient() {
   const credentials = getCredentials();
 
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
 
-  return google.sheets({ version: 'v4', auth });
+  return new sheets_v4.Sheets({ auth });
 }
 
 /**

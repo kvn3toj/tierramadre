@@ -2,7 +2,8 @@
  * Script para corregir errores de tipeo en la columna Calidad
  * "Comercial Final" → "Comercial Fina"
  */
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { sheets_v4 } from '@googleapis/sheets';
 import { config } from 'dotenv';
 
 config({ path: '.env.local' });
@@ -22,12 +23,12 @@ async function fixCalidadTypos() {
   }
 
   const credentials = JSON.parse(Buffer.from(key, 'base64').toString());
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
 
-  const sheets = google.sheets({ version: 'v4', auth });
+  const sheets = new sheets_v4.Sheets({ auth });
 
   // Leer columna Calidad (G)
   console.log('=== Leyendo columna Calidad del INVENTARIO ===');

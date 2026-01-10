@@ -5,13 +5,15 @@
  * This allows uploading to regular Drive folders, not just Shared Drives
  */
 
-import { google } from 'googleapis';
+import { GoogleAuth, OAuth2Client } from 'google-auth-library';
+import { drive_v3 } from '@googleapis/drive';
+import { sheets_v4 } from '@googleapis/sheets';
 import fetch from 'node-fetch';
 
 const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
 
 function getOAuthClient() {
-  const oauth2Client = new google.auth.OAuth2(
+  const oauth2Client = new OAuth2Client(
     process.env.GOOGLE_OAUTH_CLIENT_ID,
     process.env.GOOGLE_OAUTH_CLIENT_SECRET
   );
@@ -24,7 +26,7 @@ function getOAuthClient() {
 }
 
 function getDriveClient(auth) {
-  return google.drive({ version: 'v3', auth });
+  return new drive_v3.Drive({ auth });
 }
 
 function getSheetsClient() {
@@ -33,12 +35,12 @@ function getSheetsClient() {
     Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
   );
 
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
 
-  return google.sheets({ version: 'v4', auth });
+  return new sheets_v4.Sheets({ auth });
 }
 
 async function findFolder(drive, parentId, itemNumber) {

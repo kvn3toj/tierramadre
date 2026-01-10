@@ -4,7 +4,9 @@
  * Downloads images from Cloudinary URLs and uploads them to Google Drive product folders
  */
 
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { drive_v3 } from '@googleapis/drive';
+import { sheets_v4 } from '@googleapis/sheets';
 import fetch from 'node-fetch';
 
 const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
@@ -14,12 +16,12 @@ function getDriveClient() {
     Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
   );
 
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/drive'],
   });
 
-  return google.drive({ version: 'v3', auth });
+  return new drive_v3.Drive({ auth });
 }
 
 function getSheetsClient() {
@@ -27,12 +29,12 @@ function getSheetsClient() {
     Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
   );
 
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
 
-  return google.sheets({ version: 'v4', auth });
+  return new sheets_v4.Sheets({ auth });
 }
 
 async function findFolder(drive, parentId, itemNumber) {

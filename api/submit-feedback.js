@@ -10,7 +10,8 @@
  * - Tags: Reference list of available tags
  */
 
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { sheets_v4 } from '@googleapis/sheets';
 import { v4 as uuidv4 } from 'uuid';
 
 // Dedicated Feedback Sheet - SEPARATE from inventory to avoid overload
@@ -90,12 +91,12 @@ function getSheetsClient() {
       Buffer.from(cleanKey, 'base64').toString()
     );
 
-    const auth = new google.auth.GoogleAuth({
+    const auth = new GoogleAuth({
       credentials,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
-    return google.sheets({ version: 'v4', auth });
+    return new sheets_v4.Sheets({ auth });
   } catch (error) {
     console.error('Error initializing Sheets client:', error);
     throw new Error('Failed to initialize Google Sheets client');

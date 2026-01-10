@@ -2,7 +2,8 @@
  * Script para limpiar y re-aplicar validaciones en hoja CUALIFICACION -PRECIO
  * Solo aplica a las filas con datos, no a filas vacías
  */
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { sheets_v4 } from '@googleapis/sheets';
 import { config } from 'dotenv';
 
 config({ path: '.env.local' });
@@ -23,12 +24,12 @@ async function fixPricingDropdowns() {
   }
 
   const credentials = JSON.parse(Buffer.from(key, 'base64').toString());
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
 
-  const sheets = google.sheets({ version: 'v4', auth });
+  const sheets = new sheets_v4.Sheets({ auth });
 
   // Get sheet info
   const metadata = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });

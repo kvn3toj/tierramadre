@@ -8,7 +8,8 @@
  * - GOOGLE_SERVICE_ACCOUNT_KEY (base64-encoded service account JSON)
  */
 
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { sheets_v4 } from '@googleapis/sheets';
 
 // Sheet configuration (same spreadsheet as other APIs)
 const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
@@ -22,12 +23,12 @@ function getSheetsClient() {
     Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
   );
 
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
 
-  return google.sheets({ version: 'v4', auth });
+  return new sheets_v4.Sheets({ auth });
 }
 
 export default async function handler(req, res) {

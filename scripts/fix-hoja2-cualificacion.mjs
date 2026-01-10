@@ -3,7 +3,8 @@
  * - Corregir typo "nombe" -> "nombre" en A1
  * - Verificar que las validaciones están correctas
  */
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { sheets_v4 } from '@googleapis/sheets';
 import { config } from 'dotenv';
 
 config({ path: '.env.local' });
@@ -19,12 +20,12 @@ async function fixHoja2() {
   }
 
   const credentials = JSON.parse(Buffer.from(key, 'base64').toString());
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
 
-  const sheets = google.sheets({ version: 'v4', auth });
+  const sheets = new sheets_v4.Sheets({ auth });
 
   console.log('=== Arreglando Hoja CUALIFICACION -PRECIO ===\n');
 

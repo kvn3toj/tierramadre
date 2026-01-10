@@ -5,7 +5,8 @@
  * directly to Google Drive, bypassing Vercel's 4.5MB limit.
  */
 
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { drive_v3 } from '@googleapis/drive';
 
 export const config = {
   api: {
@@ -22,7 +23,7 @@ async function getDriveClient() {
       Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
     );
 
-    const auth = new google.auth.GoogleAuth({
+    const auth = new GoogleAuth({
       credentials,
       scopes: ['https://www.googleapis.com/auth/drive.file'],
     });
@@ -32,7 +33,7 @@ async function getDriveClient() {
     const accessToken = await authClient.getAccessToken();
 
     return {
-      drive: google.drive({ version: 'v3', auth }),
+      drive: new drive_v3.Drive({ auth }),
       accessToken: accessToken.token
     };
   } catch (error) {

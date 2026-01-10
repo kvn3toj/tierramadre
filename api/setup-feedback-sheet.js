@@ -7,7 +7,8 @@
  * Call this endpoint once to migrate the existing sheet.
  */
 
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { sheets_v4 } from '@googleapis/sheets';
 
 // Trim to remove any trailing whitespace/newlines from env var
 const FEEDBACK_SPREADSHEET_ID = (process.env.FEEDBACK_SPREADSHEET_ID || '1Nl2gxfZzWy4lUv_C-9xTt90MzFDIgHLvWtWtDRNzJaU').trim();
@@ -85,12 +86,12 @@ function getSheetsClient() {
       Buffer.from(cleanKey, 'base64').toString()
     );
 
-    const auth = new google.auth.GoogleAuth({
+    const auth = new GoogleAuth({
       credentials,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
-    return google.sheets({ version: 'v4', auth });
+    return new sheets_v4.Sheets({ auth });
   } catch (error) {
     console.error('Error initializing Sheets client:', error);
     throw new Error('Failed to initialize Google Sheets client');

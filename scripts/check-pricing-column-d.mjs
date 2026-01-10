@@ -2,7 +2,8 @@
  * Script para verificar valores en columna D (Puntuación del Jurado)
  * de la hoja CUALIFICACION -PRECIO
  */
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { sheets_v4 } from '@googleapis/sheets';
 import { config } from 'dotenv';
 
 config({ path: '.env.local' });
@@ -17,12 +18,12 @@ async function checkColumnD() {
   }
 
   const credentials = JSON.parse(Buffer.from(key, 'base64').toString());
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
 
-  const sheets = google.sheets({ version: 'v4', auth });
+  const sheets = new sheets_v4.Sheets({ auth });
 
   // Get values from column D
   const response = await sheets.spreadsheets.values.get({

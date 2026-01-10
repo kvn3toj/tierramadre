@@ -5,7 +5,9 @@
  * Run with: node scripts/create-feedback-spreadsheet.js
  */
 
-import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
+import { sheets_v4 } from '@googleapis/sheets';
+import { drive_v3 } from '@googleapis/drive';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -25,7 +27,7 @@ async function createFeedbackSpreadsheet() {
 
   console.log('📧 Service Account:', credentials.client_email);
 
-  const auth = new google.auth.GoogleAuth({
+  const auth = new GoogleAuth({
     credentials,
     scopes: [
       'https://www.googleapis.com/auth/spreadsheets',
@@ -33,8 +35,8 @@ async function createFeedbackSpreadsheet() {
     ],
   });
 
-  const sheets = google.sheets({ version: 'v4', auth });
-  const drive = google.drive({ version: 'v3', auth });
+  const sheets = new sheets_v4.Sheets({ auth });
+  const drive = new drive_v3.Drive({ auth });
 
   try {
     // Create new spreadsheet
