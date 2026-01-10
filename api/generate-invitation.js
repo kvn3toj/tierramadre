@@ -185,9 +185,8 @@ export default async function handler(req, res) {
     });
 
     // Generate the invitation URL - SHORT CODE ONLY, no JWT
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'https://tierra-madre-studio.vercel.app';
+    // Use production URL always (VERCEL_URL gives preview URLs with hashes)
+    const baseUrl = 'https://tierra-madre-studio.vercel.app';
 
     // The short URL IS the invitation URL now
     const inviteUrl = `${baseUrl}/g/${shortCode}`;
