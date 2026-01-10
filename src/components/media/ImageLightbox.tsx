@@ -21,6 +21,7 @@ import { X, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 import { motion, AnimatePresence, PanInfo, useAnimation } from 'framer-motion';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import { lightTokens, darkTokens } from '../../design-system';
+import ProtectedContent from '../ProtectedContent';
 
 interface ImageLightboxProps {
   images: Array<{
@@ -272,49 +273,54 @@ export default function ImageLightbox({
               )}
             </Box>
 
-            {/* Main Image Container */}
-            <motion.div
-              drag={scale === 1 ? 'x' : false}
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.2}
-              onDragEnd={handleDragEnd}
-              animate={controls}
-              style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transform: `translateY(${translateY}px)`,
-              }}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              onClick={handleTap}
-            >
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={currentIndex}
-                  src={currentImage.url}
-                  alt={currentImage.alt || `Image ${currentIndex + 1}`}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.2 }}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '90vh',
-                    objectFit: 'contain',
-                    transform: `scale(${scale})`,
-                    transition: 'transform 0.2s ease',
-                    touchAction: 'none',
-                    userSelect: 'none',
-                    pointerEvents: 'none',
-                  }}
-                  draggable={false}
-                />
-              </AnimatePresence>
-            </motion.div>
+            {/* Main Image Container - Wrapped with ProtectedContent for screenshot deterrent */}
+            <ProtectedContent blurIntensity={30}>
+              <motion.div
+                drag={scale === 1 ? 'x' : false}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.2}
+                onDragEnd={handleDragEnd}
+                animate={controls}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transform: `translateY(${translateY}px)`,
+                }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onClick={handleTap}
+              >
+                <AnimatePresence mode="wait">
+                  <motion.img
+                    key={currentIndex}
+                    src={currentImage.url}
+                    alt={currentImage.alt || `Image ${currentIndex + 1}`}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.2 }}
+                    onContextMenu={(e) => e.preventDefault()}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '90vh',
+                      objectFit: 'contain',
+                      transform: `scale(${scale})`,
+                      transition: 'transform 0.2s ease',
+                      touchAction: 'none',
+                      userSelect: 'none',
+                      WebkitUserDrag: 'none',
+                      WebkitTouchCallout: 'none',
+                      pointerEvents: 'none',
+                    } as React.CSSProperties}
+                    draggable={false}
+                  />
+                </AnimatePresence>
+              </motion.div>
+            </ProtectedContent>
 
             {/* Navigation Arrows */}
             {images.length > 1 && (

@@ -11,6 +11,7 @@ import SplashScreen from './components/SplashScreen';
 // import UpdatePrompt from './components/pwa/UpdatePrompt';
 import { LiquidGlassProvider } from './contexts/LiquidGlassContext';
 import { TrackingProvider } from './contexts/TrackingContext';
+import { ScreenProtectionProvider } from './contexts/ScreenProtectionContext';
 import { AchievementToast } from './components/gamification';
 import { useViewportHeight } from './hooks/useViewportHeight';
 
@@ -43,8 +44,9 @@ const QuotationRequestForm = lazy(() => import('./components/admin/QuotationRequ
 const QuotationRequestList = lazy(() => import('./components/admin/QuotationRequestList'));
 const ProviderQuotationsList = lazy(() => import('./components/admin/ProviderQuotationsList'));
 
-// Invitation Page (public route - accessible without auth)
+// Invitation Pages (public routes - accessible without auth)
 const InvitationPage = lazy(() => import('./pages/InvitationPage'));
+const ShortLinkRedirect = lazy(() => import('./pages/ShortLinkRedirect'));
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
@@ -239,15 +241,25 @@ function AppContent() {
   );
 }
 
-// Component to handle invitation route before auth check
+// Component to handle invitation routes before auth check
 function InvitationRouter() {
   return (
     <Routes>
+      {/* Full invitation link with JWT token */}
       <Route
         path="/invite/:token"
         element={
           <Suspense fallback={<LoadingFallback message="Cargando..." />}>
             <InvitationPage />
+          </Suspense>
+        }
+      />
+      {/* Short link redirect (e.g., /g/ABC123) */}
+      <Route
+        path="/g/:shortCode"
+        element={
+          <Suspense fallback={<LoadingFallback message="Cargando..." />}>
+            <ShortLinkRedirect />
           </Suspense>
         }
       />
@@ -293,12 +305,14 @@ function App() {
   return (
     <LiquidGlassProvider>
       <TrackingProvider>
-        <BrowserRouter>
-          <InvitationRouter />
-          {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
-          {/* PWA disabled - service worker not generating correctly */}
-          {/* <UpdatePrompt /> */}
-        </BrowserRouter>
+        <ScreenProtectionProvider>
+          <BrowserRouter>
+            <InvitationRouter />
+            {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
+            {/* PWA disabled - service worker not generating correctly */}
+            {/* <UpdatePrompt /> */}
+          </BrowserRouter>
+        </ScreenProtectionProvider>
       </TrackingProvider>
     </LiquidGlassProvider>
   );

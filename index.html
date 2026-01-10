@@ -37,6 +37,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+
+    <!-- Screenshot Deterrent: NoPrint.js -->
+    <script src="https://pdfanticopy.com/noprint.js" id="noprint-script"></script>
+    <script>
+      // Configure NoPrint.js for content protection
+      // Note: autoblur disabled - we use custom ScreenProtectionContext instead
+      if (typeof noPrint === 'function') {
+        noPrint({
+          disablePrint: true,      // Block Ctrl+P / Cmd+P
+          disableCopy: true,       // Block Ctrl+C / Cmd+C
+          disableRightClick: true, // Block context menu
+          autoblur: false          // Disabled - using custom blur in Phase 3
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
@@ -57,7 +72,7 @@
       // Safari has TWO cache layers: memory + disk. location.reload() only updates disk cache.
       // PWA Home Screen always starts from disk cache, so we must check server on EVERY load.
       (function() {
-        var APP_VERSION = '2026.01.09.48';
+        var APP_VERSION = '2026.01.09.1130';
         var VERSION_KEY = 'tm_app_version';
         var RELOAD_KEY = 'tm_reload_pending';
         var storedVersion = localStorage.getItem(VERSION_KEY);

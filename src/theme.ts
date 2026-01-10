@@ -280,6 +280,20 @@ export const theme = createTheme({
           // iOS overscroll behavior
           overscrollBehavior: 'none',
         },
+        // Screenshot Deterrent: Global image protections
+        'img, video': {
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          MozUserSelect: 'none',
+          msUserSelect: 'none',
+          WebkitUserDrag: 'none',
+          WebkitTouchCallout: 'none',
+          pointerEvents: 'auto', // Keep interactions, just prevent drag
+        },
+        // Prevent drag on all images globally
+        'img': {
+          draggable: 'false',
+        },
       },
     },
     // Button with iOS styling

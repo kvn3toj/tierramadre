@@ -128,7 +128,14 @@ export default function EmeraldCard({
             height="200"
             image={emerald.imageUrl}
             alt={emerald.name}
-            sx={{ objectFit: 'cover' }}
+            draggable={false}
+            onContextMenu={(e) => e.preventDefault()}
+            sx={{
+              objectFit: 'cover',
+              userSelect: 'none',
+              WebkitUserDrag: 'none',
+              pointerEvents: 'none',
+            }}
           />
         )}
         <Chip

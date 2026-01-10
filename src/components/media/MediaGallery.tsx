@@ -32,6 +32,7 @@ import { MediaItem, CATEGORY_LABELS } from './types';
 import { brand, darkTokens, lightTokens } from '../../design-system';
 import ImageLightbox from './ImageLightbox';
 import { triggerHaptic } from '../../hooks/useHaptics';
+import ProtectedContent from '../ProtectedContent';
 
 interface MediaGalleryProps {
   media: MediaItem[];
@@ -165,22 +166,23 @@ export default function MediaGallery({
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* Main Carousel */}
-      <Box
-        sx={{
-          position: 'relative',
-          width: '100%',
-          aspectRatio: '4/3',
-          borderRadius: 3,
-          overflow: 'hidden',
-          bgcolor: darkTokens.background.app,
-          cursor: currentMedia?.type === 'video' ? 'pointer' : 'zoom-in',
-        }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onClick={handleMainClick}
-      >
+      {/* Main Carousel - Wrapped with ProtectedContent for screenshot deterrent */}
+      <ProtectedContent>
+        <Box
+          sx={{
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '4/3',
+            borderRadius: 3,
+            overflow: 'hidden',
+            bgcolor: darkTokens.background.app,
+            cursor: currentMedia?.type === 'video' ? 'pointer' : 'zoom-in',
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onClick={handleMainClick}
+        >
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
@@ -218,11 +220,16 @@ export default function MediaGallery({
                     <img
                       src={currentMedia.thumbnailUrl}
                       alt={currentMedia.alt}
+                      draggable={false}
+                      onContextMenu={(e) => e.preventDefault()}
                       style={{
                         width: '100%',
                         height: '100%',
                         objectFit: 'contain',
-                      }}
+                        userSelect: 'none',
+                        WebkitUserDrag: 'none',
+                        pointerEvents: 'none',
+                      } as React.CSSProperties}
                     />
                   ) : (
                     <Box sx={{ bgcolor: darkTokens.background.surface, width: '100%', height: '100%' }} />
@@ -245,11 +252,16 @@ export default function MediaGallery({
               <img
                 src={currentMedia?.url}
                 alt={currentMedia?.alt || productName}
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
                 style={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'contain',
-                }}
+                  userSelect: 'none',
+                  WebkitUserDrag: 'none',
+                  pointerEvents: 'none',
+                } as React.CSSProperties}
               />
             )}
           </motion.div>
@@ -329,7 +341,8 @@ export default function MediaGallery({
             </IconButton>
           </>
         )}
-      </Box>
+        </Box>
+      </ProtectedContent>
 
       {/* Progress Indicator */}
       {media.length > 1 && (
@@ -411,11 +424,15 @@ export default function MediaGallery({
                     <img
                       src={item.thumbnailUrl}
                       alt={`Thumbnail ${index + 1}`}
+                      draggable={false}
+                      onContextMenu={(e) => e.preventDefault()}
                       style={{
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                      }}
+                        userSelect: 'none',
+                        WebkitUserDrag: 'none',
+                      } as React.CSSProperties}
                     />
                   ) : (
                     <Box sx={{ bgcolor: darkTokens.background.surface, width: '100%', height: '100%' }} />
@@ -437,11 +454,15 @@ export default function MediaGallery({
                 <img
                   src={item.url}
                   alt={`Thumbnail ${index + 1}`}
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
                   style={{
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
-                  }}
+                    userSelect: 'none',
+                    WebkitUserDrag: 'none',
+                  } as React.CSSProperties}
                 />
               )}
             </Box>
