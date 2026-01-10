@@ -90,7 +90,7 @@ const Home: React.FC = () => {
   // DERIVED DATA
   // ==========================================================================
 
-  // Get newest products WITH VALID IMAGES
+  // Get newest products WITH VALID IMAGES (sorted by entry date, not item number)
   const newProducts = useMemo(() => {
     const productsWithImages = [...treasure]
       .filter((item: TreasureItem) => {
@@ -98,10 +98,36 @@ const Home: React.FC = () => {
         if (!img) return false;
         return img.startsWith('http') || img.startsWith('/') || img.includes('cloudinary');
       })
-      .sort((a: TreasureItem, b: TreasureItem) => (b.item || 0) - (a.item || 0))
+      .sort((a: TreasureItem, b: TreasureItem) => {
+        // Sort by fechaIngreso (entry date) - newest first
+        // fechaIngreso format: "DD/MM/YYYY" (Colombian format)
+        const parseDate = (dateStr: string | undefined): number => {
+          if (!dateStr) return 0;
+          // Handle DD/MM/YYYY format
+          const parts = dateStr.split('/');
+          if (parts.length === 3) {
+            const [day, month, year] = parts;
+            return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+          }
+          // Fallback: try direct parsing
+          const parsed = Date.parse(dateStr);
+          return isNaN(parsed) ? 0 : parsed;
+        };
+
+        const dateA = parseDate(a.fechaIngreso);
+        const dateB = parseDate(b.fechaIngreso);
+
+        // If both have dates, sort by date (newest first)
+        if (dateA && dateB) return dateB - dateA;
+        // If only one has a date, prioritize the one with a date
+        if (dateA && !dateB) return -1;
+        if (!dateA && dateB) return 1;
+        // Fallback to item number if no dates
+        return (b.item || 0) - (a.item || 0);
+      })
       .slice(0, MAX_PRODUCTS_DISPLAY);
 
-    log.debug('Products with images:', productsWithImages.length, 'of', treasure.length);
+    log.debug('New products (sorted by fechaIngreso):', productsWithImages.length, 'of', treasure.length);
 
     return productsWithImages;
   }, [treasure]);

@@ -120,6 +120,12 @@ export {
   textAlpha,
   borderAlpha,
   surfaceAlpha,
+  // iOS HIG Contrast Tokens (WCAG AA Compliant)
+  iosLabels,
+  textOnGlass,
+  getContrastText,
+  iosFills,
+  iosSeparators,
 } from './utils/colorUtils';
 
 // =============================================================================

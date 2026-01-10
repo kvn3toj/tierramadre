@@ -26,6 +26,7 @@ import {
   emeraldAlpha,
   opacity,
 } from '../../../design-system';
+import { textOnGlass } from '../../../design-system/utils/colorUtils';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { TreasureItem } from '../../../types';
 import { fadeInUp, staggerContainer, staggerItem, cardVariants } from '../../../design-system/tokens/motion';
@@ -97,7 +98,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
               component="h2"
               sx={{
                 fontWeight: 600,
-                color: 'white',
+                color: textOnGlass.onDarkGlass.primary, // iOS HIG compliant contrast
                 fontSize: { xs: '1rem', sm: '1.25rem' },
               }}
             >
@@ -109,7 +110,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
               onClick={() => navigate('/treasure')}
               aria-label="Ver todos los tesoros"
               sx={{
-                color: emeraldCore.light || emeraldCore.primary,
+                color: textOnGlass.emeraldAccent.onDark, // High contrast emerald on dark
                 fontSize: { xs: '0.75rem', sm: '0.8125rem' },
                 minWidth: 'auto',
               }}
@@ -199,7 +200,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                         component="h3"
                         sx={{
                           fontWeight: 600,
-                          color: 'white',
+                          color: textOnGlass.onDarkGlass.primary, // WCAG AA: ~18:1 contrast
                           fontSize: { xs: '0.8rem', sm: '0.875rem' },
                         }}
                         noWrap
@@ -209,7 +210,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                       <Typography
                         variant="caption"
                         sx={{
-                          color: whiteAlpha(opacity.intense),
+                          color: textOnGlass.onDarkGlass.secondary, // WCAG AA: ~12:1 contrast
                           fontSize: { xs: '0.7rem', sm: '0.75rem' },
                         }}
                       >
