@@ -290,8 +290,36 @@ function AuthenticatedApp() {
   );
 }
 
+// Session storage key for splash screen
+const SPLASH_SESSION_KEY = 'tm_session_active';
+const LAST_ACTIVITY_KEY = 'tm_last_activity';
+const INACTIVITY_THRESHOLD = 30 * 60 * 1000; // 30 minutes
+
+function shouldShowSplash(): boolean {
+  // Check if this is a fresh session (browser was closed)
+  const sessionActive = sessionStorage.getItem(SPLASH_SESSION_KEY);
+
+  if (!sessionActive) {
+    // Fresh session - show splash
+    return true;
+  }
+
+  // Check for inactivity timeout
+  const lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY);
+  if (lastActivity) {
+    const timeSinceActivity = Date.now() - parseInt(lastActivity, 10);
+    if (timeSinceActivity > INACTIVITY_THRESHOLD) {
+      // User was inactive for too long - show splash
+      return true;
+    }
+  }
+
+  // Same session and recently active - skip splash
+  return false;
+}
+
 function App() {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => shouldShowSplash());
 
   // Initialize viewport height CSS variable for iOS Safari 100vh fix
   // This sets --vh to the actual viewport height (excluding address bar)
@@ -302,7 +330,41 @@ function App() {
     initPWA();
   }, []);
 
-  // Show splash screen on app open
+  // Mark session as active and track activity
+  useEffect(() => {
+    // Mark this session as active (survives refresh, clears on browser close)
+    sessionStorage.setItem(SPLASH_SESSION_KEY, 'true');
+
+    // Update last activity timestamp
+    const updateActivity = () => {
+      localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+    };
+
+    // Initial activity mark
+    updateActivity();
+
+    // Track user activity (throttled)
+    let activityTimeout: ReturnType<typeof setTimeout>;
+    const throttledActivity = () => {
+      clearTimeout(activityTimeout);
+      activityTimeout = setTimeout(updateActivity, 5000); // Update at most every 5s
+    };
+
+    window.addEventListener('click', throttledActivity);
+    window.addEventListener('keydown', throttledActivity);
+    window.addEventListener('scroll', throttledActivity);
+    window.addEventListener('touchstart', throttledActivity);
+
+    return () => {
+      clearTimeout(activityTimeout);
+      window.removeEventListener('click', throttledActivity);
+      window.removeEventListener('keydown', throttledActivity);
+      window.removeEventListener('scroll', throttledActivity);
+      window.removeEventListener('touchstart', throttledActivity);
+    };
+  }, []);
+
+  // Show splash screen only on fresh session or after inactivity
   if (showSplash) {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
