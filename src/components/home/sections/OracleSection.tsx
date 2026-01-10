@@ -10,14 +10,11 @@
 import React, { useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography, IconButton } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { Share, Bookmark, BookmarkBorder } from '@mui/icons-material';
-import { emeraldCore } from '../../../design-system/tokens/colors';
-import {
-  glassStyle,
-  overlays,
-  whiteAlpha,
-  opacity,
-} from '../../../design-system';
+import { emeraldCore, surfacesLight } from '../../../design-system/tokens/colors';
+import { blackAlpha, opacity } from '../../../design-system';
+import { textOnGlass, iosLabels, iosSeparators } from '../../../design-system/utils/colorUtils';
 import { DAILY_ORACLES } from '../../../data/homeContent';
 
 // =============================================================================
@@ -39,6 +36,9 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
   onSaveFact,
   onShare,
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+
   // Get daily oracle based on day of year
   const dailyOracle = useMemo(() => {
     const dayOfYear = Math.floor(
@@ -57,6 +57,16 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
     onShare(`${dailyOracle.title}: ${dailyOracle.content}`);
   }, [dailyOracle, onShare]);
 
+  // Theme-aware colors for iOS HIG compliance
+  const colors = {
+    cardBg: isDarkMode ? blackAlpha(opacity.overlay) : surfacesLight.surface.glass,
+    cardBorder: isDarkMode ? 'rgba(255,255,255,0.1)' : iosSeparators.default.light,
+    textPrimary: isDarkMode ? textOnGlass.onDarkGlass.primary : iosLabels.primary.light,
+    textSecondary: isDarkMode ? textOnGlass.onDarkGlass.secondary : iosLabels.secondary.light,
+    iconDefault: isDarkMode ? textOnGlass.onDarkGlass.tertiary : iosLabels.tertiary.light,
+    iconHover: isDarkMode ? textOnGlass.onDarkGlass.primary : iosLabels.primary.light,
+  };
+
   return (
     <Box sx={{ px: 2, py: 1.5 }} component="section" aria-labelledby="oracle-title">
       <motion.div
@@ -70,8 +80,12 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            // Liquid Glass effect - using design system tokens
-            ...glassStyle.light,
+            // Theme-aware glass effect
+            bgcolor: colors.cardBg,
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid',
+            borderColor: colors.cardBorder,
             borderRadius: 3,
             px: 2,
             py: 1.5,
@@ -93,7 +107,7 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
             <Typography
               variant="body2"
               sx={{
-                color: overlays.text.primary,
+                color: colors.textPrimary, // WCAG AA compliant
                 fontSize: '0.875rem',
                 fontWeight: 400,
                 lineHeight: 1.5,
@@ -108,7 +122,7 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
             <Typography
               variant="caption"
               sx={{
-                color: whiteAlpha(opacity.strong),
+                color: colors.textSecondary, // WCAG AA compliant
                 fontSize: '0.7rem',
                 mt: 0.25,
                 display: 'block',
@@ -125,7 +139,7 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
               onClick={handleSave}
               aria-label={isSaved ? 'Guardado' : 'Guardar'}
               sx={{
-                color: isSaved ? emeraldCore.primary : whiteAlpha(opacity.prominent),
+                color: isSaved ? emeraldCore.primary : colors.iconDefault,
                 p: 0.75,
                 '&:hover': { color: emeraldCore.primary },
               }}
@@ -137,9 +151,9 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
               onClick={handleShare}
               aria-label="Compartir"
               sx={{
-                color: whiteAlpha(opacity.prominent),
+                color: colors.iconDefault,
                 p: 0.75,
-                '&:hover': { color: whiteAlpha(opacity.intense) },
+                '&:hover': { color: colors.iconHover },
               }}
             >
               <Share sx={{ fontSize: 18 }} />
