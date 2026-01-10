@@ -14,12 +14,12 @@
  * Refactored by: CoomÜnity Council (Aria, Moksart, Eunoia, Zeno)
  */
 
-import React, { Suspense, lazy, useMemo, useCallback, useEffect } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect } from 'react';
 import { Box } from '@mui/material';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useTreasure } from '../../hooks/useTreasure';
-import { TreasureItem } from '../../types';
+import { useNewProductImages } from '../../hooks/useNewProductImages';
 import { DailyOracle } from '../../data/homeContent';
 import { useGamification, AchievementToast } from './gamification';
 import { useAnalytics, useSavedFacts } from './hooks';
@@ -68,7 +68,16 @@ const Home: React.FC = () => {
   const muiTheme = useMuiTheme();
   const isDarkMode = muiTheme.palette.mode === 'dark';
   const { treasure } = useTreasure();
-  const [gamificationState, gamificationActions, pendingAchievement] = useGamification();
+
+  // Pre-fetch Drive images for newest products (images stored in Drive folders, not Sheets URL)
+  // Scan up to 30 items - the hook will stop early once enough products with images are found
+  const { productsWithImages: newProducts } = useNewProductImages(
+    treasure,
+    MAX_PRODUCTS_DISPLAY,
+    30
+  );
+
+  const [, gamificationActions, pendingAchievement] = useGamification();
   const analytics = useAnalytics();
   const [{ savedFacts }, savedFactsActions] = useSavedFacts();
 
@@ -83,28 +92,6 @@ const Home: React.FC = () => {
   // Check for new products and notify
   useNewProductNotification({ productCount: treasure.length });
 
-  // Log gamification state for debugging (auto-disabled in production)
-  log.debug('Gamification:', { level: gamificationState.level, xp: gamificationState.xp });
-
-  // ==========================================================================
-  // DERIVED DATA
-  // ==========================================================================
-
-  // Get newest products WITH VALID IMAGES (sorted by item number - highest = newest)
-  const newProducts = useMemo(() => {
-    const productsWithImages = [...treasure]
-      .filter((item: TreasureItem) => {
-        const img = item.imagen?.trim();
-        if (!img) return false;
-        return img.startsWith('http') || img.startsWith('/') || img.includes('cloudinary');
-      })
-      .sort((a: TreasureItem, b: TreasureItem) => (b.item || 0) - (a.item || 0))
-      .slice(0, MAX_PRODUCTS_DISPLAY);
-
-    log.debug('New products (by item number):', productsWithImages.length, 'of', treasure.length);
-
-    return productsWithImages;
-  }, [treasure]);
 
   // ==========================================================================
   // HANDLERS
