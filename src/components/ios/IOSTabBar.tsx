@@ -241,6 +241,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
       component="nav"
       aria-label="Primary navigation"
       sx={{
+        // CRITICAL: Always visible - prevent browser from hiding on scroll
         position: 'fixed',
         bottom: 0,
         left: 0,
@@ -262,9 +263,18 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         paddingBottom: `calc(${spacing.xs} + env(safe-area-inset-bottom))`,
         zIndex: 1000,
         overflow: 'hidden', // Contain shimmer effect within rounded corners
-        WebkitTransform: 'translateZ(0)',
-        transform: 'translateZ(0)',
-        willChange: effectiveConfig.animations ? 'height, padding, backdrop-filter' : 'auto',
+
+        // GPU acceleration - forces browser to keep element visible on scroll
+        WebkitTransform: 'translate3d(0, 0, 0)',
+        transform: 'translate3d(0, 0, 0)',
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden',
+
+        // Ensure always visible
+        visibility: 'visible',
+        opacity: 1,
+
+        willChange: 'transform', // Hint to browser to optimize
         transition: effectiveConfig.animations
           ? `all ${tabBarConfig.transitionDuration} ${easingCurves.liquidInOut}`
           : 'none',

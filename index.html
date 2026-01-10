@@ -33,10 +33,14 @@
     <!-- Force all links to stay in PWA -->
     <meta name="apple-mobile-web-app-navigation" content="same-origin" />
 
+    <!-- Prevent browser chrome from hiding on scroll (Android Chrome) -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#00AE7A" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#00AE7A" />
+
     <!-- CRITICAL: Blocking version check - MUST run before React loads -->
     <script>
       (function() {
-        var APP_VERSION = '2026.01.09.1250';
+        var APP_VERSION = '2026.01.09.1262';
         var VERSION_KEY = 'tm_app_version';
         var RELOAD_KEY = 'tm_reload_pending';
 
