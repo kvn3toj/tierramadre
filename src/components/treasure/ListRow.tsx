@@ -18,7 +18,8 @@ import { useThemeMode } from '../../contexts/ThemeContext';
 import { TreasureItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { PriceDisplay } from '../PriceDisplay';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
+import { errorAlpha } from '../../design-system';
 
 interface ListRowProps {
   item: TreasureItem;
@@ -169,15 +170,15 @@ function ListRow({
           aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
           size="small"
           sx={{
-            color: isFavorite ? '#ef4444' : theme.palette.text.secondary,
+            color: isFavorite ? semanticColors.error.main : theme.palette.text.secondary,
             '&:hover': {
-              bgcolor: alpha(isFavorite ? '#ef4444' : emeraldCore.primary, 0.1),
+              bgcolor: isFavorite ? errorAlpha(0.1) : alpha(emeraldCore.primary, 0.1),
             },
           }}
         >
           <Heart
             size={18}
-            fill={isFavorite ? '#ef4444' : 'none'}
+            fill={isFavorite ? semanticColors.error.main : 'none'}
           />
         </IconButton>
       </Box>

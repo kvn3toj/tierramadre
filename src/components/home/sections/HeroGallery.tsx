@@ -11,6 +11,13 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
+import {
+  overlays,
+  thumbnailStates,
+  whiteAlpha,
+  blackAlpha,
+  opacity,
+} from '../../../design-system';
 
 // Auto-transition interval (ms)
 const AUTO_TRANSITION_INTERVAL = 6000;
@@ -146,12 +153,12 @@ export const HeroGallery: React.FC = () => {
           </motion.div>
         </AnimatePresence>
 
-        {/* Gradient overlay - stronger at bottom for thumbnails */}
+        {/* Gradient overlay - using design system tokens */}
         <Box
           sx={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.8) 100%)',
+            background: overlays.hero.gradient,
             pointerEvents: 'none',
           }}
         />
@@ -180,11 +187,11 @@ export const HeroGallery: React.FC = () => {
                 display: 'inline-flex',
                 gap: 0.5,
                 p: 0.5,
-                bgcolor: 'rgba(0,0,0,0.4)',
+                bgcolor: blackAlpha(opacity.overlay),
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
                 borderRadius: 3,
-                border: '1px solid rgba(255,255,255,0.1)',
+                border: `1px solid ${whiteAlpha(opacity.soft)}`,
               }}
             >
               {CATEGORIES.map((cat) => (
@@ -201,14 +208,14 @@ export const HeroGallery: React.FC = () => {
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                     ...(activeCategory === cat.id && {
-                      bgcolor: 'rgba(255,255,255,0.2)',
+                      bgcolor: overlays.pill.active.bg,
                     }),
                   }}
                 >
                   <Typography
                     variant="body2"
                     sx={{
-                      color: activeCategory === cat.id ? 'white' : 'rgba(255,255,255,0.6)',
+                      color: activeCategory === cat.id ? 'white' : whiteAlpha(opacity.muted),
                       fontWeight: activeCategory === cat.id ? 600 : 400,
                       fontSize: '0.8rem',
                     }}
@@ -262,13 +269,13 @@ export const HeroGallery: React.FC = () => {
                           cursor: 'pointer',
                           position: 'relative',
                           border: isActive
-                            ? '2px solid rgba(255,255,255,0.9)'
+                            ? thumbnailStates.active.border
                             : '2px solid transparent',
                           opacity: isActive ? 1 : 0.7,
                           transition: 'all 0.2s ease',
                           '&:hover': {
                             opacity: 1,
-                            border: '2px solid rgba(255,255,255,0.5)',
+                            border: thumbnailStates.hover.border,
                           },
                         }}
                       >

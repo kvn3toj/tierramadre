@@ -12,6 +12,12 @@ import { motion } from 'framer-motion';
 import { Box, Typography, IconButton } from '@mui/material';
 import { Share, Bookmark, BookmarkBorder } from '@mui/icons-material';
 import { emeraldCore } from '../../../design-system/tokens/colors';
+import {
+  glassStyle,
+  overlays,
+  whiteAlpha,
+  opacity,
+} from '../../../design-system';
 import { DAILY_ORACLES } from '../../../data/homeContent';
 
 // =============================================================================
@@ -64,12 +70,9 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            // Liquid Glass effect
-            bgcolor: 'rgba(255,255,255,0.06)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
+            // Liquid Glass effect - using design system tokens
+            ...glassStyle.light,
             borderRadius: 3,
-            border: '1px solid rgba(255,255,255,0.08)',
             px: 2,
             py: 1.5,
           }}
@@ -90,7 +93,7 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
             <Typography
               variant="body2"
               sx={{
-                color: 'rgba(255,255,255,0.85)',
+                color: overlays.text.primary,
                 fontSize: '0.875rem',
                 fontWeight: 400,
                 lineHeight: 1.5,
@@ -105,7 +108,7 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
             <Typography
               variant="caption"
               sx={{
-                color: 'rgba(255,255,255,0.35)',
+                color: whiteAlpha(opacity.strong),
                 fontSize: '0.7rem',
                 mt: 0.25,
                 display: 'block',
@@ -122,7 +125,7 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
               onClick={handleSave}
               aria-label={isSaved ? 'Guardado' : 'Guardar'}
               sx={{
-                color: isSaved ? emeraldCore.primary : 'rgba(255,255,255,0.3)',
+                color: isSaved ? emeraldCore.primary : whiteAlpha(opacity.prominent),
                 p: 0.75,
                 '&:hover': { color: emeraldCore.primary },
               }}
@@ -134,9 +137,9 @@ export const OracleSection: React.FC<OracleSectionProps> = ({
               onClick={handleShare}
               aria-label="Compartir"
               sx={{
-                color: 'rgba(255,255,255,0.3)',
+                color: whiteAlpha(opacity.prominent),
                 p: 0.75,
-                '&:hover': { color: 'rgba(255,255,255,0.7)' },
+                '&:hover': { color: whiteAlpha(opacity.intense) },
               }}
             >
               <Share sx={{ fontSize: 18 }} />

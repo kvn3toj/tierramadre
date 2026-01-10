@@ -87,6 +87,41 @@ export {
   gradients,
 } from './tokens/gradients';
 
+// Opacity
+export { opacity, type OpacityLevel } from './tokens/opacity';
+
+// Overlays
+export {
+  overlays,
+  glassStyle,
+  thumbnailStates,
+} from './tokens/overlays';
+
+// Charts / Data Visualization
+export {
+  chartTokens,
+  chartColors,
+  chartBadge,
+} from './tokens/charts';
+
+// =============================================================================
+// UTILITIES
+// =============================================================================
+
+export {
+  whiteAlpha,
+  blackAlpha,
+  emeraldAlpha,
+  emeraldDarkAlpha,
+  goldAlpha,
+  errorAlpha,
+  successAlpha,
+  warningAlpha,
+  textAlpha,
+  borderAlpha,
+  surfaceAlpha,
+} from './utils/colorUtils';
+
 // =============================================================================
 // COMPONENTS
 // =============================================================================

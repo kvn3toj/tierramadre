@@ -748,3 +748,269 @@ export const getAccentColor = (
   if (typeof color === 'string') return color;
   return color[mode];
 };
+
+// ============================================
+// 19. OPACITY TOKENS
+// ============================================
+export const opacity = {
+  transparent: 0,
+  whisper: 0.03,
+  subtle: 0.05,
+  glass: 0.06,
+  light: 0.08,
+  soft: 0.1,
+  guide: 0.12,
+  medium: 0.15,
+  regular: 0.2,
+  elevated: 0.25,
+  prominent: 0.3,
+  strong: 0.35,
+  overlay: 0.4,
+  half: 0.5,
+  muted: 0.6,
+  intense: 0.7,
+  heavy: 0.8,
+  solid: 0.85,
+  near: 0.9,
+  tooltip: 0.95,
+  opaque: 1,
+} as const;
+
+export type OpacityLevel = keyof typeof opacity;
+
+// ============================================
+// 20. OVERLAY TOKENS
+// ============================================
+export const overlays = {
+  glass: {
+    light: {
+      bg: `rgba(255,255,255,${opacity.glass})`,
+      border: `rgba(255,255,255,${opacity.light})`,
+      blur: 'blur(20px)',
+    },
+    dark: {
+      bg: `rgba(0,0,0,${opacity.overlay})`,
+      border: `rgba(255,255,255,${opacity.soft})`,
+      blur: 'blur(20px)',
+    },
+    frosted: {
+      bg: `rgba(255,255,255,${opacity.soft})`,
+      border: `rgba(255,255,255,${opacity.medium})`,
+      blur: 'blur(24px) saturate(180%)',
+    },
+  },
+  hero: {
+    gradient: `linear-gradient(to bottom, rgba(0,0,0,${opacity.soft}) 0%, rgba(0,0,0,${opacity.prominent}) 60%, rgba(0,0,0,${opacity.heavy}) 100%)`,
+    subtle: `linear-gradient(to bottom, transparent 0%, rgba(0,0,0,${opacity.overlay}) 100%)`,
+    strong: `linear-gradient(to bottom, transparent 40%, rgba(0,0,0,${opacity.intense}) 100%)`,
+  },
+  tooltip: {
+    light: `rgba(255,255,255,${opacity.tooltip})`,
+    dark: `rgba(30,41,59,${opacity.tooltip})`,
+  },
+  backdrop: {
+    modal: `rgba(0,0,0,${opacity.half})`,
+    sheet: `rgba(0,0,0,${opacity.prominent})`,
+    heavy: `rgba(0,0,0,${opacity.intense})`,
+  },
+  pill: {
+    active: {
+      bg: `rgba(255,255,255,${opacity.regular})`,
+      border: `rgba(255,255,255,${opacity.near})`,
+    },
+    inactive: {
+      bg: 'transparent',
+      border: `rgba(255,255,255,${opacity.half})`,
+    },
+    hover: {
+      bg: `rgba(255,255,255,${opacity.soft})`,
+    },
+  },
+  text: {
+    primary: `rgba(255,255,255,${opacity.solid})`,
+    secondary: `rgba(255,255,255,${opacity.muted})`,
+    tertiary: `rgba(255,255,255,${opacity.half})`,
+    hint: `rgba(255,255,255,${opacity.strong})`,
+  },
+} as const;
+
+export const glassStyle = {
+  light: {
+    bgcolor: overlays.glass.light.bg,
+    backdropFilter: overlays.glass.light.blur,
+    WebkitBackdropFilter: overlays.glass.light.blur,
+    border: '1px solid',
+    borderColor: overlays.glass.light.border,
+  },
+  dark: {
+    bgcolor: overlays.glass.dark.bg,
+    backdropFilter: overlays.glass.dark.blur,
+    WebkitBackdropFilter: overlays.glass.dark.blur,
+    border: '1px solid',
+    borderColor: overlays.glass.dark.border,
+  },
+  frosted: {
+    bgcolor: overlays.glass.frosted.bg,
+    backdropFilter: overlays.glass.frosted.blur,
+    WebkitBackdropFilter: overlays.glass.frosted.blur,
+    border: '1px solid',
+    borderColor: overlays.glass.frosted.border,
+  },
+} as const;
+
+export const thumbnailStates = {
+  active: {
+    border: `2px solid rgba(255,255,255,${opacity.near})`,
+    boxShadow: `0 0 0 1px rgba(0,0,0,${opacity.regular})`,
+  },
+  inactive: {
+    border: `2px solid rgba(255,255,255,${opacity.half})`,
+    boxShadow: 'none',
+  },
+  hover: {
+    border: `2px solid rgba(255,255,255,${opacity.intense})`,
+  },
+} as const;
+
+// ============================================
+// 21. COLOR UTILITY FUNCTIONS
+// ============================================
+export const whiteAlpha = (opacityValue: number | OpacityLevel): string => {
+  const value = typeof opacityValue === 'string' ? opacity[opacityValue] : opacityValue;
+  return `rgba(255, 255, 255, ${value})`;
+};
+
+export const blackAlpha = (opacityValue: number | OpacityLevel): string => {
+  const value = typeof opacityValue === 'string' ? opacity[opacityValue] : opacityValue;
+  return `rgba(0, 0, 0, ${value})`;
+};
+
+export const emeraldAlpha = (opacityValue: number | OpacityLevel): string => {
+  const value = typeof opacityValue === 'string' ? opacity[opacityValue] : opacityValue;
+  return alpha(brand.emerald[500], value);
+};
+
+export const emeraldDarkAlpha = (opacityValue: number | OpacityLevel): string => {
+  const value = typeof opacityValue === 'string' ? opacity[opacityValue] : opacityValue;
+  return alpha(brand.emerald[700], value);
+};
+
+export const goldAlpha = (opacityValue: number | OpacityLevel): string => {
+  const value = typeof opacityValue === 'string' ? opacity[opacityValue] : opacityValue;
+  return alpha(brand.gold[500], value);
+};
+
+export const errorAlpha = (opacityValue: number | OpacityLevel): string => {
+  const value = typeof opacityValue === 'string' ? opacity[opacityValue] : opacityValue;
+  return alpha('#EF4444', value); // Tailwind red-500
+};
+
+export const successAlpha = (opacityValue: number | OpacityLevel): string => {
+  const value = typeof opacityValue === 'string' ? opacity[opacityValue] : opacityValue;
+  return alpha(brand.emerald[500], value);
+};
+
+export const warningAlpha = (opacityValue: number | OpacityLevel): string => {
+  const value = typeof opacityValue === 'string' ? opacity[opacityValue] : opacityValue;
+  return alpha('#F59E0B', value); // Tailwind amber-500
+};
+
+export const textAlpha = (isLight: boolean, opacityValue: number | OpacityLevel): string => {
+  const value = typeof opacityValue === 'string' ? opacity[opacityValue] : opacityValue;
+  return isLight ? blackAlpha(value) : whiteAlpha(value);
+};
+
+export const borderAlpha = (isLight: boolean, opacityValue: number | OpacityLevel): string => {
+  const value = typeof opacityValue === 'string' ? opacity[opacityValue] : opacityValue;
+  return isLight ? `rgba(0, 0, 0, ${value})` : `rgba(255, 255, 255, ${value})`;
+};
+
+// ============================================
+// 22. CHART TOKENS
+// ============================================
+export const chartTokens = {
+  dimensions: {
+    width: 400,
+    height: 180,
+    heightTall: 280,
+    heightMini: 60,
+  },
+  padding: {
+    top: 28,
+    right: 12,
+    bottom: 30,
+    left: 36,
+  },
+  point: {
+    radius: 6,
+    radiusHover: 8,
+    touchTargetRadius: 22,
+  },
+  line: {
+    width: 2.5,
+    widthThin: 1.5,
+    widthThick: 3.5,
+  },
+  grid: {
+    opacity: opacity.guide,
+    width: 1,
+    dashArray: '4,4',
+  },
+  tooltip: {
+    width: 58,
+    height: 32,
+    borderRadius: 6,
+    padding: 8,
+  },
+  animation: {
+    pathDraw: 1500,
+    pointAppear: 800,
+    hover: 200,
+  },
+} as const;
+
+export const chartColors = {
+  emerald: {
+    line: '#00AE7A',
+    lineGradientStart: '#33C194',
+    lineGradientEnd: '#008C61',
+    area: `rgba(0, 174, 122, ${opacity.medium})`,
+    areaGradientEnd: `rgba(0, 174, 122, ${opacity.whisper})`,
+    point: '#00AE7A',
+    pointHover: '#008C61',
+    grid: `rgba(255, 255, 255, ${opacity.guide})`,
+    gridDark: `rgba(0, 0, 0, ${opacity.guide})`,
+  },
+  gold: {
+    line: '#D4AF37',
+    lineGradientStart: '#E5C866',
+    lineGradientEnd: '#8F7318',
+    area: `rgba(212, 175, 55, ${opacity.medium})`,
+    areaGradientEnd: `rgba(212, 175, 55, ${opacity.whisper})`,
+    point: '#D4AF37',
+    pointHover: '#B8941F',
+    grid: `rgba(255, 255, 255, ${opacity.guide})`,
+    gridDark: `rgba(0, 0, 0, ${opacity.guide})`,
+  },
+} as const;
+
+export const chartBadge = {
+  positive: {
+    bg: `rgba(0, 174, 122, ${opacity.elevated})`,
+    bgLight: `rgba(0, 174, 122, ${opacity.guide})`,
+    text: '#00AE7A',
+    border: 'transparent',
+  },
+  negative: {
+    bg: `rgba(239, 68, 68, ${opacity.elevated})`,
+    bgLight: `rgba(239, 68, 68, ${opacity.guide})`,
+    text: '#EF4444',
+    border: 'transparent',
+  },
+  neutral: {
+    bg: `rgba(148, 163, 184, ${opacity.elevated})`,
+    bgLight: `rgba(148, 163, 184, ${opacity.guide})`,
+    text: '#94A3B8',
+    border: 'transparent',
+  },
+} as const;

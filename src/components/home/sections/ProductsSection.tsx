@@ -20,6 +20,12 @@ import {
 } from '@mui/material';
 import { ArrowForward } from '@mui/icons-material';
 import { emeraldCore } from '../../../design-system/tokens/colors';
+import {
+  whiteAlpha,
+  blackAlpha,
+  emeraldAlpha,
+  opacity,
+} from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { TreasureItem } from '../../../types';
 import { fadeInUp, staggerContainer, staggerItem, cardVariants } from '../../../design-system/tokens/motion';
@@ -73,14 +79,14 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
   return (
     <Box sx={{ px: 2, mb: 3 }} component="section" aria-labelledby="products-title">
       <motion.div variants={fadeInUp} initial="initial" animate="animate">
-        {/* Section Container - differentiated from gallery carousels */}
+        {/* Section Container - using design system glass tokens */}
         <Box
           sx={{
-            bgcolor: 'rgba(255,255,255,0.08)',
+            bgcolor: whiteAlpha(opacity.light),
             backdropFilter: 'blur(10px)',
             borderRadius: 3,
             p: 2,
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: `1px solid ${whiteAlpha(opacity.soft)}`,
           }}
         >
           {/* Section Header */}
@@ -161,19 +167,19 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                     sx={{
                       minWidth: { xs: 140, sm: 160 },
                       maxWidth: { xs: 140, sm: 160 },
-                      bgcolor: 'rgba(0,0,0,0.4)',
+                      bgcolor: blackAlpha(opacity.overlay),
                       backdropFilter: 'blur(10px)',
                       cursor: 'pointer',
                       flexShrink: 0,
                       transition: 'all 0.2s ease-out',
-                      border: '1px solid rgba(255,255,255,0.1)',
+                      border: `1px solid ${whiteAlpha(opacity.soft)}`,
                       '&:focus-visible': {
                         outline: `3px solid ${emeraldCore.primary}`,
                         outlineOffset: 2,
                       },
                       '&:hover': {
-                        boxShadow: '0 8px 24px rgba(0, 174, 122, 0.2)',
-                        bgcolor: 'rgba(0,0,0,0.5)',
+                        boxShadow: `0 8px 24px ${emeraldAlpha(opacity.regular)}`,
+                        bgcolor: blackAlpha(opacity.half),
                       },
                     }}
                   >
@@ -203,7 +209,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                       <Typography
                         variant="caption"
                         sx={{
-                          color: 'rgba(255,255,255,0.7)',
+                          color: whiteAlpha(opacity.intense),
                           fontSize: { xs: '0.7rem', sm: '0.75rem' },
                         }}
                       >
