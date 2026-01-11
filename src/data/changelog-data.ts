@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-11T21:33:13.085Z
+ * Generated at: 2026-01-11T21:50:35.878Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-11T21:33:13.085Z",
+  "generatedAt": "2026-01-11T21:50:35.878Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "12 Dic, 2025",
@@ -56,29 +56,29 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "fe94b7d",
-    "lastCommitDate": "2026-01-11 16:33:05 -0500"
+    "lastCommitHash": "d516dd8",
+    "lastCommitDate": "2026-01-11 16:50:31 -0500"
   },
   "stats": {
     "totalCommits": 187,
-    "totalAdditions": 82382,
-    "totalDeletions": 162634,
-    "totalFilesChanged": 1354,
-    "netLines": -80252
+    "totalAdditions": 82439,
+    "totalDeletions": 162655,
+    "totalFilesChanged": 1357,
+    "netLines": -80216
   },
   "categoryStats": {
+    "other": 59,
     "cleanup": 18,
     "auth": 11,
-    "other": 58,
     "ux": 44,
     "analytics": 5,
-    "bugfix": 42,
+    "bugfix": 41,
     "performance": 9
   },
   "typeStats": {
+    "feat": 80,
     "chore": 8,
-    "fix": 68,
-    "feat": 79,
+    "fix": 67,
     "other": 6,
     "refactor": 24,
     "style": 1,
@@ -95,11 +95,11 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "index.html",
-      "count": 19
+      "count": 20
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 19
+      "count": 20
     },
     {
       "file": ".claude/settings.local.json",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "d516dd8",
+      "message": "Convert Google Drive URLs to proxy for reliable image loading",
+      "fullMessage": "feat: Convert Google Drive URLs to proxy for reliable image loading",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "other",
+      "additions": 82,
+      "deletions": 26,
+      "filesChanged": 4
+    },
+    {
       "hash": "fe94b7d",
       "message": "Update icons, refine blocking version check, remove unused logo",
       "fullMessage": "chore: Update icons, refine blocking version check, remove unused logo",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "17 minutes ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "cleanup",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Block unauthorized users from Google sign-in",
       "fullMessage": "fix: Block unauthorized users from Google sign-in",
       "author": "Kvn3Toj",
-      "relativeTime": "3 minutes ago",
+      "relativeTime": "20 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "auth",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Replace Gem icon placeholders with logo-symbol watermark",
       "fullMessage": "feat: Replace Gem icon placeholders with logo-symbol watermark",
       "author": "Kvn3Toj",
-      "relativeTime": "3 minutes ago",
+      "relativeTime": "20 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Optimize treasure grid with iOS HIG alignment",
       "fullMessage": "feat: Optimize treasure grid with iOS HIG alignment",
       "author": "Kvn3Toj",
-      "relativeTime": "33 minutes ago",
+      "relativeTime": "50 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "ux",
@@ -207,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Ensure bottom nav stays visible in PWA standalone mode",
       "fullMessage": "fix: Ensure bottom nav stays visible in PWA standalone mode",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-10",
       "type": "fix",
       "category": "bugfix",
@@ -2554,19 +2567,6 @@ export const changelogData: ChangelogData = {
       "additions": 559,
       "deletions": 413,
       "filesChanged": 2
-    },
-    {
-      "hash": "6aea0cc",
-      "message": "Dynamic sheet name discovery for sync API",
-      "fullMessage": "fix: Dynamic sheet name discovery for sync API",
-      "author": "Kvn3Toj",
-      "relativeTime": "4 weeks ago",
-      "date": "2025-12-12",
-      "type": "fix",
-      "category": "bugfix",
-      "additions": 25,
-      "deletions": 5,
-      "filesChanged": 1
     }
   ]
 };
