@@ -4,6 +4,7 @@
  * Main treasure management hook that composes:
  * - useSheetsTreasure: Google Sheets data with caching
  * - useTreasureMedia: Legacy and gallery media management
+ * - useBatchThumbnails: Grid thumbnails from Google Drive folders
  *
  * Provides a unified API for treasure data with media merged in.
  *
@@ -15,6 +16,7 @@ import { TreasureItem } from '../types';
 import { treasureData as defaultTreasureData } from '../data/treasure';
 import { useSheetsTreasure } from './useSheetsTreasure';
 import { useTreasureMedia } from './useTreasureMedia';
+import { useBatchThumbnails } from './useBatchThumbnails';
 
 /**
  * Extract Google Drive file ID from various URL formats
@@ -83,6 +85,9 @@ export function useTreasure() {
     updateMediaItems,
   } = useTreasureMedia();
 
+  // Batch thumbnails from Google Drive folders
+  const { thumbnails: batchThumbnails } = useBatchThumbnails();
+
   // Merge treasure data with media (memoized for performance)
   const treasure = useMemo((): TreasureItem[] => {
     // Use Google Sheets data if available, otherwise fall back to local data
@@ -91,6 +96,7 @@ export function useTreasure() {
     return baseTreasure.map((item) => {
       const itemMedia = legacyMedia[item.item];
       const gallery = galleries[item.item] || [];
+      const batchThumb = batchThumbnails[item.item];
 
       // If we have a gallery, use the first item as the main image
       const mainMedia = gallery[0];
@@ -98,9 +104,9 @@ export function useTreasure() {
       // Count gallery items (includes legacy media if no gallery)
       const galleryCount = gallery.length || (itemMedia ? 1 : 0);
 
-      // Priority: gallery main → legacy media → Sheets imageUrl → original imagen
+      // Priority: gallery main → legacy media → batch thumbnail → Sheets imageUrl → original imagen
       // Convert any Google Drive URLs to proxy URLs for reliable loading
-      const rawImageUrl = mainMedia?.url || itemMedia?.url || item.imageUrl || item.imagen;
+      const rawImageUrl = mainMedia?.url || itemMedia?.url || batchThumb || item.imageUrl || item.imagen;
       const rawThumbnailUrl = mainMedia?.thumbnailUrl || itemMedia?.thumbnailUrl || item.thumbnailUrl;
 
       return {
@@ -111,7 +117,7 @@ export function useTreasure() {
         galleryCount,
       };
     });
-  }, [sheetsTreasure, legacyMedia, galleries]);
+  }, [sheetsTreasure, legacyMedia, galleries, batchThumbnails]);
 
   // Legacy getter for backwards compatibility
   const getTreasureWithMedia = (): TreasureItem[] => treasure;
