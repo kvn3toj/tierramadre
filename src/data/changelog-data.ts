@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-11T21:30:39.029Z
+ * Generated at: 2026-01-11T21:33:13.085Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-11T21:30:39.029Z",
+  "generatedAt": "2026-01-11T21:33:13.085Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "12 Dic, 2025",
@@ -56,31 +56,31 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "7907bbb",
-    "lastCommitDate": "2026-01-11 16:30:35 -0500"
+    "lastCommitHash": "fe94b7d",
+    "lastCommitDate": "2026-01-11 16:33:05 -0500"
   },
   "stats": {
-    "totalCommits": 186,
-    "totalAdditions": 82328,
-    "totalDeletions": 162580,
-    "totalFilesChanged": 1350,
+    "totalCommits": 187,
+    "totalAdditions": 82382,
+    "totalDeletions": 162634,
+    "totalFilesChanged": 1354,
     "netLines": -80252
   },
   "categoryStats": {
+    "cleanup": 18,
     "auth": 11,
     "other": 58,
     "ux": 44,
     "analytics": 5,
     "bugfix": 42,
-    "performance": 9,
-    "cleanup": 17
+    "performance": 9
   },
   "typeStats": {
+    "chore": 8,
     "fix": 68,
     "feat": 79,
     "other": 6,
     "refactor": 24,
-    "chore": 7,
     "style": 1,
     "docs": 1
   },
@@ -94,16 +94,16 @@ export const changelogData: ChangelogData = {
       "count": 24
     },
     {
-      "file": ".claude/settings.local.json",
+      "file": "index.html",
       "count": 19
     },
     {
-      "file": "index.html",
-      "count": 18
+      "file": "src/data/changelog-data.ts",
+      "count": 19
     },
     {
-      "file": "src/data/changelog-data.ts",
-      "count": 18
+      "file": ".claude/settings.local.json",
+      "count": 19
     },
     {
       "file": "src/components/home/Home.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 178
+      "commits": 179
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "fe94b7d",
+      "message": "Update icons, refine blocking version check, remove unused logo",
+      "fullMessage": "chore: Update icons, refine blocking version check, remove unused logo",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-11",
+      "type": "chore",
+      "category": "cleanup",
+      "additions": 54,
+      "deletions": 54,
+      "filesChanged": 4
+    },
+    {
       "hash": "7907bbb",
       "message": "Block unauthorized users from Google sign-in",
       "fullMessage": "fix: Block unauthorized users from Google sign-in",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "3 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "auth",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Replace Gem icon placeholders with logo-symbol watermark",
       "fullMessage": "feat: Replace Gem icon placeholders with logo-symbol watermark",
       "author": "Kvn3Toj",
-      "relativeTime": "2 seconds ago",
+      "relativeTime": "3 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Optimize treasure grid with iOS HIG alignment",
       "fullMessage": "feat: Optimize treasure grid with iOS HIG alignment",
       "author": "Kvn3Toj",
-      "relativeTime": "30 minutes ago",
+      "relativeTime": "33 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "ux",
