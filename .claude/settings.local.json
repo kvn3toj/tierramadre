@@ -60,7 +60,13 @@
       "Bash(pkill:*)",
       "Bash(openssl rand:*)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQxNjgxMmM0LTNlM2QtNGE3My05YWU1LTQ2YzBlZTE1MmViNSIsImNyZWF0b3JFbWFpbCI6InRlc3RAdGllcnJhbWFkcmUuY28iLCJjcmVhdG9yTmFtZSI6InRlc3QiLCJjcmVhdGVkQXQiOiIyMDI2LTAxLTA5VDA2OjIzOjMyLjU4N1oiLCJpYXQiOjE3Njc5Mzk4MTIsImV4cCI6MTc2ODU0NDYxMn0.CMjeKo0_8nEJ0ufNLSEC3w5rFF4tWYghBXe_y4q7kD0\")",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(xargs:*)",
+      "Bash(git show:*)",
+      "Bash(for i in 150 151 152 153 154 155)",
+      "Bash(do)",
+      "Bash(done)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

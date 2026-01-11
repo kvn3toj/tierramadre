@@ -13,7 +13,18 @@ export default defineConfig({
   ],
   server: {
     port: 3000,
-    open: true
+    open: true,
+    // Proxy API requests to production for local development
+    // This allows local dev to fetch real data from Vercel serverless functions
+    proxy: {
+      '/api/': {
+        target: 'https://tierra-madre-studio.vercel.app',
+        changeOrigin: true,
+        secure: true,
+        // Rewrite to ensure correct path
+        rewrite: (path) => path,
+      },
+    },
   },
   optimizeDeps: {
     include: [

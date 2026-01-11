@@ -8,7 +8,7 @@ import { Box, Skeleton, CircularProgress } from '@mui/material';
 import { useInView } from 'react-intersection-observer';
 import { surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 // Logo placeholder for products without images - use Vite asset import
-import logoPlaceholder from '../assets/watergrreen.png';
+import logoPlaceholder from '../assets/logo-symbol.png';
 import { useThemeMode } from '../contexts/ThemeContext';
 import {
   getCloudinaryUrl,
@@ -214,8 +214,8 @@ export default function ProgressiveImage({
                 width: '40%',
                 maxWidth: 64,
                 height: 'auto',
-                opacity: 0.3,
-                filter: isLight ? 'none' : 'brightness(0.8)',
+                opacity: 0.28,
+                filter: isLight ? 'brightness(0.7)' : 'brightness(0.5)',
               }}
             />
           </Box>
@@ -338,8 +338,8 @@ export default function ProgressiveImage({
               width: '40%',
               maxWidth: 64,
               height: 'auto',
-              opacity: 0.3,
-              filter: isLight ? 'none' : 'brightness(0.8)',
+              opacity: 0.28,
+              filter: isLight ? 'brightness(0.7)' : 'brightness(0.5)',
             }}
           />
         </Box>

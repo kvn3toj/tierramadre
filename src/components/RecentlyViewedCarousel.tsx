@@ -14,7 +14,9 @@ import {
   alpha,
   Skeleton,
 } from '@mui/material';
-import { ChevronLeft, ChevronRight, Clock, Gem, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, X } from 'lucide-react';
+// Logo placeholder for products without images - use Vite asset import
+import logoPlaceholder from '../assets/logo-symbol.png';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { TreasureItem } from '../types';
 import { formatCurrency } from '../utils/formatting';
@@ -268,7 +270,17 @@ function RecentItemCard({
                 justifyContent: 'center',
               }}
             >
-              <Gem size={20} color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled} />
+              <Box
+                component="img"
+                src={logoPlaceholder}
+                alt=""
+                sx={{
+                  width: 24,
+                  height: 'auto',
+                  opacity: 0.28,
+                  filter: isLight ? 'brightness(0.7)' : 'brightness(0.5)',
+                }}
+              />
             </Box>
           )}
 

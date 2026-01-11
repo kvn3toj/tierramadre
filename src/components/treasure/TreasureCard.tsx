@@ -19,13 +19,14 @@ import {
   Collapse,
 } from '@mui/material';
 import {
-  Gem,
   MapPin,
   User,
   Play,
   Images,
   Eye,
 } from 'lucide-react';
+// Logo placeholder for products without images - use Vite asset import
+import logoPlaceholder from '../../assets/logo-symbol.png';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { TreasureItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
@@ -273,7 +274,17 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
             justifyContent: 'center',
           }}
         >
-          <Gem size={48} color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled} />
+          <Box
+            component="img"
+            src={logoPlaceholder}
+            alt=""
+            sx={{
+              width: 48,
+              height: 'auto',
+              opacity: 0.28,
+              filter: isLight ? 'brightness(0.7)' : 'brightness(0.5)',
+            }}
+          />
         </Box>
       )}
 

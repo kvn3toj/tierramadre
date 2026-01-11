@@ -219,25 +219,56 @@ export function useTreasureMedia(): UseTreasureMediaReturn {
 
   const fetchCloudGallery = useCallback(async (itemNumber: number): Promise<MediaItem[]> => {
     try {
-      const response = await fetch(`/api/get-product-media?itemNumber=${itemNumber}`);
-      if (!response.ok) {
-        log.warn('Could not fetch cloud gallery');
-        return galleries[itemNumber] || [];
+      // Primary source: Google Drive folders
+      const driveResponse = await fetch(`/api/get-drive-images?itemNumber=${itemNumber}`);
+      if (driveResponse.ok) {
+        const driveData = await driveResponse.json();
+        if (driveData.success && driveData.images && driveData.images.length > 0) {
+          // Transform Drive images to MediaItem format
+          const media: MediaItem[] = driveData.images.map((img: {
+            id: string;
+            name: string;
+            proxyUrl?: string;
+            url: string;
+            thumbnailUrl?: string;
+            type: 'image' | 'video';
+            order?: number;
+          }, index: number) => ({
+            id: img.id,
+            url: img.proxyUrl || img.url, // Prefer proxy URL for better loading
+            thumbnailUrl: img.thumbnailUrl,
+            type: img.type,
+            category: 'producto' as const,
+            alt: `Producto ${itemNumber} - ${img.name}`,
+            order: img.order ?? index,
+          }));
+
+          const newGalleries = {
+            ...galleries,
+            [itemNumber]: media,
+          };
+          saveGalleries(newGalleries);
+          return media;
+        }
       }
 
-      const data = await response.json();
-      if (data.media && data.media.length > 0) {
-        const newGalleries = {
-          ...galleries,
-          [itemNumber]: data.media,
-        };
-        saveGalleries(newGalleries);
-        return data.media;
+      // Fallback: Legacy Cloudinary folder (for backward compatibility)
+      const cloudinaryResponse = await fetch(`/api/get-product-media?itemNumber=${itemNumber}`);
+      if (cloudinaryResponse.ok) {
+        const cloudinaryData = await cloudinaryResponse.json();
+        if (cloudinaryData.media && cloudinaryData.media.length > 0) {
+          const newGalleries = {
+            ...galleries,
+            [itemNumber]: cloudinaryData.media,
+          };
+          saveGalleries(newGalleries);
+          return cloudinaryData.media;
+        }
       }
 
       return galleries[itemNumber] || [];
     } catch (error) {
-      log.error('Error fetching cloud gallery:', error);
+      log.error('Error fetching gallery:', error);
       return galleries[itemNumber] || [];
     }
   }, [galleries, saveGalleries]);

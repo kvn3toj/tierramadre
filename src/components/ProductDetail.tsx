@@ -31,6 +31,8 @@ import {
   QrCode,
   Share2,
 } from 'lucide-react';
+// Logo placeholder for products without images - use Vite asset import
+import logoPlaceholder from '../assets/logo-symbol.png';
 import { useShare } from '../hooks/useShare';
 import { useHaptics } from '../hooks/useHaptics';
 import { useProductView } from '../hooks/useProductView';
@@ -245,7 +247,18 @@ export default function ProductDetail() {
   if (isLoadingSheets && !product) {
     return (
       <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3 }, py: 8, textAlign: 'center' }}>
-        <Gem size={64} color={emeraldCore.primary} style={{ marginBottom: 16, opacity: 0.7 }} />
+        <Box
+          component="img"
+          src={logoPlaceholder}
+          alt=""
+          sx={{
+            width: 64,
+            height: 'auto',
+            mb: 2,
+            opacity: 0.28,
+            filter: 'brightness(0.7)',
+          }}
+        />
         <Typography variant="h5" sx={{ fontWeight: 600, mb: 2, color: theme.palette.text.secondary }}>
           Cargando producto...
         </Typography>
@@ -360,7 +373,17 @@ export default function ProductDetail() {
                   position: 'relative',
                 }}
               >
-                <Gem size={120} color={colorDot} style={{ opacity: 0.3 }} />
+                <Box
+                  component="img"
+                  src={logoPlaceholder}
+                  alt=""
+                  sx={{
+                    width: 120,
+                    height: 'auto',
+                    opacity: 0.28,
+                    filter: isLight ? 'brightness(0.7)' : 'brightness(0.5)',
+                  }}
+                />
                 <Typography
                   variant="body2"
                   sx={{
