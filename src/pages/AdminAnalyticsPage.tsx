@@ -25,9 +25,15 @@ import {
   Activity,
   Zap,
   Target,
+  BarChart3,
+  RefreshCw,
+  User,
+  Users,
+  UserCheck,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useTracking } from '../contexts/TrackingContext';
+import { useProductViews } from '../hooks/useProductViews';
 import { emeraldCore, goldAccent, semanticColors } from '../design-system/tokens/colors';
 import { spacing } from '../design-system/tokens/primitives/spacing';
 
@@ -213,6 +219,7 @@ const formatTimeAgo = (ts: number): string => {
 const AdminAnalyticsPage: React.FC = () => {
   const { mode } = useThemeMode();
   const { metrics, achievements, levelInfo, unlockedAchievements, ACHIEVEMENTS, exportAnalytics } = useTracking();
+  const { stats: viewStats, topProducts, topViewers, recentActivity: recentProductViews, isLoading: viewsLoading, refetch: refetchViews } = useProductViews();
   const isLight = mode === 'light';
 
   // Calculate Business Health Score
@@ -397,6 +404,288 @@ const AdminAnalyticsPage: React.FC = () => {
           subtitle={`Nivel ${levelInfo.level}`}
         />
       </Box>
+
+      {/* Product Views from Google Sheets */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          Product Views (Sheets)
+        </Typography>
+        <Tooltip title="Actualizar datos">
+          <IconButton
+            onClick={refetchViews}
+            size="small"
+            disabled={viewsLoading}
+            sx={{ color: emeraldCore.primary }}
+          >
+            <RefreshCw size={16} className={viewsLoading ? 'animate-spin' : ''} />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      {viewStats && (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 2,
+            mb: 3,
+          }}
+        >
+          <StatCard
+            label="Total Views"
+            value={viewStats.totalViews}
+            icon={Eye}
+            color="#3B82F6"
+            subtitle="Todas las vistas"
+          />
+          <StatCard
+            label="Hoy"
+            value={viewStats.todayViews}
+            icon={BarChart3}
+            color={emeraldCore.primary}
+            subtitle="Views de hoy"
+          />
+          <StatCard
+            label="Esta Semana"
+            value={viewStats.weekViews}
+            icon={TrendingUp}
+            color="#8B5CF6"
+            subtitle="Últimos 7 días"
+          />
+          <StatCard
+            label="Productos"
+            value={viewStats.uniqueProducts}
+            icon={Target}
+            color={goldAccent.primary}
+            subtitle="Con al menos 1 vista"
+          />
+        </Box>
+      )}
+
+      {/* Top Viewed Products */}
+      {topProducts.length > 0 && (
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: 3,
+            bgcolor: isLight ? 'background.paper' : alpha('#000', 0.2),
+            border: `1px solid ${isLight ? alpha('#000', 0.08) : alpha('#fff', 0.1)}`,
+            overflow: 'hidden',
+            mb: 3,
+          }}
+        >
+          <Box sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${alpha('#000', 0.06)}` }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <BarChart3 size={16} color={emeraldCore.primary} />
+              Top 10 Productos Más Vistos
+            </Typography>
+          </Box>
+          {topProducts.slice(0, 10).map((product, idx) => (
+            <Box
+              key={product.itemId}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                px: 2.5,
+                py: 1.5,
+                borderBottom: idx < Math.min(topProducts.length, 10) - 1 ? `1px solid ${alpha('#000', 0.06)}` : 'none',
+              }}
+            >
+              <Typography
+                sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  bgcolor: idx < 3 ? alpha(goldAccent.primary, 0.15) : alpha('#000', 0.05),
+                  color: idx < 3 ? goldAccent.primary : 'text.secondary',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                }}
+              >
+                {idx + 1}
+              </Typography>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 500,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {product.productName}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Item #{product.itemId}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Eye size={14} color={emeraldCore.primary} />
+                <Typography variant="body2" sx={{ fontWeight: 600, color: emeraldCore.primary }}>
+                  {product.views}
+                </Typography>
+              </Box>
+            </Box>
+          ))}
+        </Paper>
+      )}
+
+      {/* Top Viewers (Who is viewing products) */}
+      {topViewers.length > 0 && (
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: 3,
+            bgcolor: isLight ? 'background.paper' : alpha('#000', 0.2),
+            border: `1px solid ${isLight ? alpha('#000', 0.08) : alpha('#fff', 0.1)}`,
+            overflow: 'hidden',
+            mb: 3,
+          }}
+        >
+          <Box sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${alpha('#000', 0.06)}` }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Users size={16} color="#8B5CF6" />
+              Top Viewers (Usuarios que vieron productos)
+            </Typography>
+          </Box>
+          {topViewers.map((viewer, idx) => (
+            <Box
+              key={viewer.email || viewer.name}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                px: 2.5,
+                py: 1.5,
+                borderBottom: idx < topViewers.length - 1 ? `1px solid ${alpha('#000', 0.06)}` : 'none',
+              }}
+            >
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  bgcolor: alpha('#8B5CF6', 0.12),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <User size={16} color="#8B5CF6" />
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 500,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {viewer.name}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  {viewer.role === 'admin' ? 'Admin' : viewer.role === 'full' ? 'Asesor' : 'Usuario'}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Eye size={14} color="#8B5CF6" />
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#8B5CF6' }}>
+                  {viewer.views}
+                </Typography>
+              </Box>
+            </Box>
+          ))}
+        </Paper>
+      )}
+
+      {/* Recent Activity (Who viewed what) */}
+      {recentProductViews.length > 0 && (
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: 3,
+            bgcolor: isLight ? 'background.paper' : alpha('#000', 0.2),
+            border: `1px solid ${isLight ? alpha('#000', 0.08) : alpha('#fff', 0.1)}`,
+            overflow: 'hidden',
+            mb: 3,
+          }}
+        >
+          <Box sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${alpha('#000', 0.06)}` }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Activity size={16} color={semanticColors.info.main} />
+              Actividad Reciente de Productos
+            </Typography>
+          </Box>
+          {recentProductViews.slice(0, 10).map((activity, idx) => {
+            const timeAgo = (() => {
+              const diff = Date.now() - new Date(activity.timestamp).getTime();
+              if (diff < 60000) return 'Ahora';
+              if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
+              if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`;
+              return `${Math.floor(diff / 86400000)}d`;
+            })();
+
+            return (
+              <Box
+                key={`${activity.timestamp}-${activity.itemId}`}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  px: 2.5,
+                  py: 1.5,
+                  borderBottom: idx < Math.min(recentProductViews.length, 10) - 1 ? `1px solid ${alpha('#000', 0.06)}` : 'none',
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    bgcolor: activity.userName ? alpha(emeraldCore.primary, 0.12) : alpha('#000', 0.08),
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {activity.userName ? (
+                    <UserCheck size={14} color={emeraldCore.primary} />
+                  ) : (
+                    <User size={14} color={isLight ? '#666' : '#999'} />
+                  )}
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 500,
+                      fontSize: '0.8rem',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {activity.userName || 'Guest'} vió{' '}
+                    <Typography component="span" sx={{ color: emeraldCore.primary, fontWeight: 600, fontSize: 'inherit' }}>
+                      {activity.productName}
+                    </Typography>
+                  </Typography>
+                </Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', flexShrink: 0 }}>
+                  {timeAgo}
+                </Typography>
+              </Box>
+            );
+          })}
+        </Paper>
+      )}
 
       {/* Achievements Progress */}
       <Paper

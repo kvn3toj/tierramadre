@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { useShare } from '../hooks/useShare';
 import { useHaptics } from '../hooks/useHaptics';
+import { useProductView } from '../hooks/useProductView';
 import { QRCodeSVG } from 'qrcode.react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useCanEdit, useIsAdmin } from '../hooks/usePermissions';
@@ -88,6 +89,13 @@ export default function ProductDetail() {
     if (!product) return '';
     return product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   }, [product]);
+
+  // Track product view (once per session, fire-and-forget)
+  useProductView({
+    itemId: product?.item || 0,
+    productName: displayName,
+    enabled: !!product && !isLoadingSheets,
+  });
 
   // Load media items for the product from Google Drive folder
   useEffect(() => {

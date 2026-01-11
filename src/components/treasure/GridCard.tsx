@@ -15,15 +15,12 @@ import {
   Card,
   CardContent,
   Chip,
-  IconButton,
 } from '@mui/material';
 import {
   Play,
   Images,
-  Heart,
-  Scale,
+  Eye,
 } from 'lucide-react';
-import { triggerHaptic } from '../../hooks/useHaptics';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { TreasureItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
@@ -31,34 +28,29 @@ import { PriceDisplay } from '../PriceDisplay';
 import ProgressiveImage from '../ProgressiveImage';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 import {
-  accentColors,
-  lightTokens,
-  darkTokens,
   animation,
   iosSemanticColors,
 } from '../../design-system';
 
 interface GridCardProps {
   item: TreasureItem;
-  isFavorite: boolean;
+  isFavorite?: boolean;
   onItemClick: () => void;
-  onCertClick: () => void;
-  onToggleFavorite: () => void;
+  onCertClick?: () => void;
+  onToggleFavorite?: () => void;
   isSelectedForComparison?: boolean;
   onToggleComparison?: () => void;
   canAddToComparison?: boolean;
   isMobile?: boolean;
+  /** View count for this product (optional) */
+  viewCount?: number;
 }
 
 function GridCard({
   item,
-  isFavorite,
   onItemClick,
-  onToggleFavorite,
-  isSelectedForComparison = false,
-  onToggleComparison,
-  canAddToComparison = true,
   isMobile = false,
+  viewCount,
 }: GridCardProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -70,22 +62,6 @@ function GridCard({
   const quality = getQualityBadge(item.calidad);
   const colorDot = getColorDot(item.color);
   const isLoose = !item.isJewelry;
-
-  const handleFavoriteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    triggerHaptic(isFavorite ? 'light' : 'selection');
-    onToggleFavorite();
-  };
-
-  const handleCompareClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    triggerHaptic(isSelectedForComparison ? 'light' : 'medium');
-    onToggleComparison?.();
-  };
-
-  // Button sizes - iOS HIG 44pt touch target, but smaller visually for compact cards
-  const buttonSize = isMobile ? 36 : 32;
-  const iconSize = isMobile ? 18 : 16;
 
   return (
     <Card
@@ -216,6 +192,28 @@ function GridCard({
                 }}
               />
             )}
+
+            {/* View count badge - top left */}
+            {viewCount !== undefined && viewCount > 0 && (
+              <Chip
+                icon={<Eye size={10} />}
+                label={viewCount > 999 ? `${(viewCount / 1000).toFixed(1)}k` : viewCount}
+                size="small"
+                sx={{
+                  position: 'absolute',
+                  top: 6,
+                  left: 6,
+                  height: 18,
+                  fontSize: 9,
+                  fontWeight: 500,
+                  bgcolor: 'rgba(0, 0, 0, 0.55)',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(4px)',
+                  '& .MuiChip-icon': { color: 'rgba(255, 255, 255, 0.7)', ml: 0.5 },
+                  '& .MuiChip-label': { px: 0.5 },
+                }}
+              />
+            )}
           </>
         ) : (
           <ProgressiveImage
@@ -225,80 +223,6 @@ function GridCard({
           />
         )}
 
-        {/* Action buttons - Top right, stacked vertically */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 6,
-            right: 6,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 0.5,
-          }}
-        >
-          {/* Favorite button */}
-          <IconButton
-            onClick={handleFavoriteClick}
-            aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
-            size="small"
-            sx={{
-              width: buttonSize,
-              height: buttonSize,
-              minWidth: 44, // iOS HIG touch target
-              minHeight: 44,
-              bgcolor: isLight
-                ? 'rgba(255, 255, 255, 0.9)'
-                : 'rgba(30, 41, 59, 0.9)',
-              backdropFilter: 'blur(8px)',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
-              transition: animation.transition.spring,
-              '&:active': {
-                transform: 'scale(0.9)',
-              },
-            }}
-          >
-            <Heart
-              size={iconSize}
-              fill={isFavorite ? accentColors.error.light : 'none'}
-              color={isFavorite ? accentColors.error.light : isLight ? lightTokens.text.secondary : darkTokens.text.secondary}
-            />
-          </IconButton>
-
-          {/* Comparison button */}
-          {onToggleComparison && (
-            <IconButton
-              onClick={handleCompareClick}
-              aria-label={isSelectedForComparison ? 'Quitar de comparación' : 'Agregar a comparación'}
-              disabled={!isSelectedForComparison && !canAddToComparison}
-              size="small"
-              sx={{
-                width: buttonSize,
-                height: buttonSize,
-                minWidth: 44,
-                minHeight: 44,
-                bgcolor: isSelectedForComparison
-                  ? emeraldCore.primary
-                  : isLight
-                    ? 'rgba(255, 255, 255, 0.9)'
-                    : 'rgba(30, 41, 59, 0.9)',
-                backdropFilter: 'blur(8px)',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
-                transition: animation.transition.spring,
-                '&:active': {
-                  transform: 'scale(0.9)',
-                },
-                '&:disabled': {
-                  bgcolor: 'rgba(200, 200, 200, 0.4)',
-                },
-              }}
-            >
-              <Scale
-                size={iconSize}
-                color={isSelectedForComparison ? lightTokens.text.inverse : isLight ? lightTokens.text.secondary : darkTokens.text.secondary}
-              />
-            </IconButton>
-          )}
-        </Box>
       </Box>
 
       {/* Content Section - Compact for 2-column grid */}
@@ -373,9 +297,7 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.item.imagen === nextProps.item.imagen &&
     prevProps.item.precioCOP === nextProps.item.precioCOP &&
     prevProps.item.estado === nextProps.item.estado &&
-    prevProps.isFavorite === nextProps.isFavorite &&
-    prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
-    prevProps.canAddToComparison === nextProps.canAddToComparison &&
-    prevProps.isMobile === nextProps.isMobile
+    prevProps.isMobile === nextProps.isMobile &&
+    prevProps.viewCount === nextProps.viewCount
   );
 });

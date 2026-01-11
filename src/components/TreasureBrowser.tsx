@@ -34,12 +34,12 @@ import { useFavorites } from '../hooks/useFavorites';
 import { usePagination } from '../hooks/usePagination';
 import { useBrowsingProgress } from '../hooks/useBrowsingProgress';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
-import { useComparison } from '../hooks/useComparison';
 import { useSavedFilters } from '../hooks/useSavedFilters';
 // TODO: Re-enable keyboard nav when adapted for virtualized grid (react-window)
 // import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 import { useTreasureAnalytics } from '../hooks/useTreasureAnalytics';
 import { useTracking } from '../contexts/TrackingContext';
+import { useProductViews } from '../hooks/useProductViews';
 import { TreasureItem } from '../types';
 import CertificationUpload from './CertificationUpload';
 import { formatCurrency, formatFullCurrency, getColorDot } from '../utils/formatting';
@@ -51,8 +51,6 @@ import { emeraldCore, goldAccent, surfacesLight, surfacesDark, semanticColors } 
 // Treasure components
 import { GridCard, ListRow, VirtualGrid, FilterContent, type FilterContentProps } from './treasure';
 import ProgressBadge from './ProgressBadge';
-import ComparisonBar from './ComparisonBar';
-import ComparisonModal from './ComparisonModal';
 import RecentlyViewedCarousel from './RecentlyViewedCarousel';
 import SavedFiltersDropdown from './SavedFiltersDropdown';
 import IOSFilterSheet from './ios/IOSFilterSheet';
@@ -219,9 +217,6 @@ export default function TreasureBrowser() {
   // Recently viewed hook
   const { addToRecent, recentItems, clearRecent } = useRecentlyViewed();
 
-  // Comparison hook
-  const comparison = useComparison();
-
   // Saved filters hook
   const savedFilters = useSavedFilters();
 
@@ -233,6 +228,9 @@ export default function TreasureBrowser() {
 
   // Guest pricing hook - determines if price filters should be hidden
   const guestCanSeePrices = useGuestCanSeePrices();
+
+  // Product view counts for badges
+  const { getViewCount } = useProductViews();
 
   // Track treasure view on mount
   useEffect(() => {
@@ -499,7 +497,7 @@ export default function TreasureBrowser() {
   };
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 1, sm: 2, md: 0 } }}>
       {/* Mobile: Compact filter bar + inline filter panel */}
       {isMobile ? (
         <>
@@ -1048,14 +1046,9 @@ export default function TreasureBrowser() {
           renderCard={(props) => (
             <GridCard
               item={props.item}
-              isFavorite={props.isFavorite}
-              onCertClick={props.onCertClick}
               onItemClick={props.onItemClick}
-              onToggleFavorite={props.onToggleFavorite}
-              isSelectedForComparison={comparison.isSelected(props.item.item)}
-              onToggleComparison={() => comparison.toggleComparison(props.item)}
-              canAddToComparison={comparison.canAddMore}
               isMobile={props.isMobile}
+              viewCount={getViewCount(props.item.item)}
             />
           )}
         />
@@ -1069,9 +1062,6 @@ export default function TreasureBrowser() {
               onCertClick={() => handleCertClick(item)}
               onItemClick={() => handleProductClick(item)}
               onToggleFavorite={() => toggleFavorite(item.item)}
-              isSelectedForComparison={comparison.isSelected(item.item)}
-              onToggleComparison={() => comparison.toggleComparison(item)}
-              canAddToComparison={comparison.canAddMore}
             />
           ))}
         </Box>
@@ -1173,24 +1163,6 @@ export default function TreasureBrowser() {
           onSave={handleSaveCertifications}
         />
       )}
-
-      {/* Comparison Bar - Sticky bottom bar */}
-      <ComparisonBar
-        selectedItems={comparison.selectedItems}
-        onRemove={comparison.removeFromComparison}
-        onClear={comparison.clearComparison}
-        onCompare={comparison.openComparisonModal}
-      />
-
-      {/* Comparison Modal - Side-by-side comparison */}
-      <ComparisonModal
-        open={comparison.showComparisonModal}
-        onClose={() => {
-          comparison.closeComparisonModal();
-          analyticsHook.trackComparisonOpen(comparison.selectedItems.map(i => i.item));
-        }}
-        items={comparison.selectedItems}
-      />
 
       {/* Keyboard Shortcuts Help Dialog - Disabled for mobile-first (iPhone 12+, iPad) */}
     </Box>

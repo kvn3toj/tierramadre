@@ -24,6 +24,7 @@ import {
   User,
   Play,
   Images,
+  Eye,
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { TreasureItem } from '../../types';
@@ -37,9 +38,11 @@ export interface TreasureCardProps {
   isCompact: boolean;
   onCertClick: () => void;
   onClick: () => void;
+  /** View count for this product (optional) */
+  viewCount?: number;
 }
 
-export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onClick }: TreasureCardProps) {
+export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onClick, viewCount }: TreasureCardProps) {
   const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -232,6 +235,32 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
               }}
             />
           )}
+
+          {/* View count badge */}
+          {viewCount !== undefined && viewCount > 0 && (
+            <Chip
+              icon={<Eye size={12} />}
+              label={viewCount > 999 ? `${(viewCount / 1000).toFixed(1)}k` : viewCount}
+              size="small"
+              sx={{
+                position: 'absolute',
+                bottom: 8,
+                left: 8,
+                bgcolor: 'rgba(0, 0, 0, 0.6)',
+                color: 'white',
+                fontSize: '0.65rem',
+                fontWeight: 500,
+                height: 22,
+                '& .MuiChip-icon': {
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  marginLeft: '4px',
+                },
+                '& .MuiChip-label': {
+                  paddingRight: '8px',
+                },
+              }}
+            />
+          )}
         </Box>
       ) : (
         // Placeholder for items without media
@@ -393,7 +422,8 @@ export const MemoizedTreasureCard = memo(TreasureCard, (prevProps, nextProps) =>
     prevProps.item.imagen === nextProps.item.imagen &&
     prevProps.item.precioCOP === nextProps.item.precioCOP &&
     prevProps.item.estado === nextProps.item.estado &&
-    prevProps.isCompact === nextProps.isCompact
+    prevProps.isCompact === nextProps.isCompact &&
+    prevProps.viewCount === nextProps.viewCount
   );
 });
 
