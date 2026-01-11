@@ -159,20 +159,6 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
           // Not found in Asesores, check Proveedores sheet
           log.debug('Not found in Asesores, checking Proveedores...');
 
-          // TODO: REMOVE THIS - Temporary bypass for local testing
-          const DEV_TEST_PROVIDER = true; // Set to false to disable bypass
-          if (DEV_TEST_PROVIDER && import.meta.env.DEV) {
-            log.warn('🧪 DEV MODE: Bypassing provider validation');
-            profile.role = 'Proveedor';
-            profile.accessLevel = 'provider';
-            setIsAuthorized(true);
-            setUser(profile);
-            localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(profile));
-            setIsLoading(false);
-            return;
-          }
-          // END TEMPORARY BYPASS
-
           try {
             const providerResponse = await fetch(`/api/validate-provider?email=${encodeURIComponent(profile.email)}`);
             const providerData = await providerResponse.json();
@@ -184,29 +170,33 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
               setIsAuthorized(true);
               log.debug('Provider authorized:', { email: profile.email, provider: providerData.provider?.name });
             } else {
-              // User email not found in any authorized list
+              // User email not found in any authorized list - BLOCK ACCESS
               setIsAuthorized(false);
               setAuthError('Tu correo no está registrado en el sistema. Contacta al administrador.');
-              log.warn('User not authorized:', profile.email);
+              log.warn('User not authorized - access blocked:', profile.email);
+              setIsLoading(false);
+              return; // Don't store user or continue
             }
           } catch (providerError) {
             log.error('Provider validation API error:', providerError);
-            // User email not found in any authorized list
+            // API error checking providers - BLOCK ACCESS
             setIsAuthorized(false);
-            setAuthError('Tu correo no está registrado en el sistema. Contacta al administrador.');
-            log.warn('User not authorized:', profile.email);
+            setAuthError('Error validando proveedor. Intenta nuevamente.');
+            log.warn('Provider validation failed - access blocked:', profile.email);
+            setIsLoading(false);
+            return; // Don't store user or continue
           }
         }
       } catch (validateError) {
         log.error('Validation API error:', validateError);
-        // On API error, allow login but without special permissions
-        profile.role = 'Invitado';
-        profile.accessLevel = 'guest';
+        // API error - BLOCK ACCESS (don't allow guest fallback)
         setIsAuthorized(false);
-        setAuthError('Error validando usuario. Acceso como invitado.');
+        setAuthError('Error validando usuario. Intenta nuevamente.');
+        setIsLoading(false);
+        return; // Don't store user or continue
       }
 
-      // Store user and token
+      // Only reach here if user is authorized - store user and token
       setUser(profile);
       localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(profile));
       localStorage.setItem(GOOGLE_TOKEN_KEY, credential);
