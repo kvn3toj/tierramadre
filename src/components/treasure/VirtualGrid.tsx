@@ -46,9 +46,9 @@ interface VirtualGridProps {
  * - 4:5 aspect ratio for product images (more compact than 1:1)
  */
 
-// Gap sizes following 8pt grid
-const MOBILE_GAP = 8;   // 8pt - compact for 2-column mobile
-const TABLET_GAP = 12;  // 12pt - comfortable for tablet
+// Gap sizes following 8pt grid (iOS HIG)
+const MOBILE_GAP = 8;   // 8pt - iOS standard for compact layouts
+const TABLET_GAP = 12;  // 12pt - 1.5x base for tablet
 
 // Cell props passed via cellProps in react-window 2.x
 interface GridCellProps {
@@ -179,7 +179,7 @@ export default function VirtualGrid({
   // Uses 4:5 aspect ratio for images (height = width * 1.0)
   const cardHeight = useMemo(() => {
     // Calculate available width per card
-    const horizontalPadding = 32; // 16px on each side
+    const horizontalPadding = 16; // 8px on each side (reduced for mobile)
     const totalGapWidth = (columnCount - 1) * (isXs ? MOBILE_GAP : TABLET_GAP);
     const availableWidth = viewportWidth - horizontalPadding;
     const cardWidth = (availableWidth - totalGapWidth) / columnCount;
@@ -188,9 +188,9 @@ export default function VirtualGrid({
     // For product cards, we want compact but not too squished
     const imageHeight = Math.round(cardWidth * 1.0); // 1:1 for simplicity, adjust as needed
 
-    // Content area: name + specs + price
-    // Mobile: more compact (72px), Desktop: more spacious (80px)
-    const contentHeight = isXs ? 72 : 80;
+    // Content area: name (15pt) + specs (12pt) + price + padding
+    // iOS HIG: 12px padding top/bottom = 24px + 20px name + 16px specs + 20px price = ~80px
+    const contentHeight = isXs ? 80 : 84;
 
     return imageHeight + contentHeight;
   }, [viewportWidth, columnCount, isXs]);
@@ -235,8 +235,8 @@ export default function VirtualGrid({
         height: vhCalc(100, HEADER_OFFSET),
         minHeight,
         width: '100%',
-        // iOS HIG: 16px horizontal margins on all devices
-        px: 2,
+        // Compact horizontal margins for mobile (8px), desktop uses parent padding
+        px: 1,
         boxSizing: 'border-box',
         position: 'relative',
         isolation: 'isolate',
@@ -248,7 +248,7 @@ export default function VirtualGrid({
         },
         // PWA standalone mode consistency
         '@media (display-mode: standalone)': {
-          px: 2,
+          px: 1,
         },
       }}
     >

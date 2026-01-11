@@ -74,7 +74,7 @@ function GridCard({
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: 2,
+        borderRadius: '10px', // iOS HIG standard border radius
         border: '1px solid',
         borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
@@ -225,12 +225,12 @@ function GridCard({
 
       </Box>
 
-      {/* Content Section - Compact for 2-column grid */}
+      {/* Content Section - iOS HIG spacing (8pt base) */}
       <CardContent
         sx={{
-          p: isMobile ? 1 : 1.25,
-          pt: isMobile ? 1 : 1,
-          '&:last-child': { pb: isMobile ? 1 : 1.25 },
+          p: isMobile ? 1.5 : 1.5, // 12px - 1.5x base unit
+          pt: isMobile ? 1 : 1.25, // 8-10px top
+          '&:last-child': { pb: isMobile ? 1.5 : 1.5 },
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
@@ -238,7 +238,7 @@ function GridCard({
           minHeight: 0,
         }}
       >
-        {/* Name - Truncated to 1 line */}
+        {/* Name - iOS HIG Subheadline (15pt) */}
         <Typography
           variant="body2"
           sx={{
@@ -248,20 +248,20 @@ function GridCard({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            fontSize: isMobile ? 13 : 14,
-            letterSpacing: '-0.01em',
-            mb: 0.25,
+            fontSize: isMobile ? 15 : 15, // iOS HIG subheadline
+            letterSpacing: '-0.24px', // iOS HIG subheadline tracking
+            mb: 0.5,
           }}
         >
           {displayName}
         </Typography>
 
-        {/* Specs with color dot */}
+        {/* Specs with color dot - iOS HIG Caption1 (12pt) */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
           <Box
             sx={{
-              width: 6,
-              height: 6,
+              width: 8, // Slightly larger for visibility
+              height: 8,
               borderRadius: '50%',
               bgcolor: colorDot,
               flexShrink: 0,
@@ -271,8 +271,8 @@ function GridCard({
             variant="caption"
             sx={{
               color: secondaryLabelColor,
-              fontSize: isMobile ? 11 : 12,
-              letterSpacing: '-0.01em',
+              fontSize: 12, // iOS HIG caption1
+              letterSpacing: 0, // iOS HIG caption1 tracking
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',

@@ -6,8 +6,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Box, Skeleton, CircularProgress } from '@mui/material';
 import { useInView } from 'react-intersection-observer';
-import { Gem } from 'lucide-react';
 import { surfacesLight, surfacesDark } from '../design-system/tokens/colors';
+// Logo placeholder for products without images - use Vite asset import
+import logoPlaceholder from '../assets/watergrreen.png';
 import { useThemeMode } from '../contexts/ThemeContext';
 import {
   getCloudinaryUrl,
@@ -205,9 +206,17 @@ export default function ProgressiveImage({
               justifyContent: 'center',
             }}
           >
-            <Gem
-              size={32}
-              color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled}
+            <Box
+              component="img"
+              src={logoPlaceholder}
+              alt=""
+              sx={{
+                width: '40%',
+                maxWidth: 64,
+                height: 'auto',
+                opacity: 0.3,
+                filter: isLight ? 'none' : 'brightness(0.8)',
+              }}
             />
           </Box>
         )}
@@ -321,9 +330,17 @@ export default function ProgressiveImage({
             justifyContent: 'center',
           }}
         >
-          <Gem
-            size={32}
-            color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled}
+          <Box
+            component="img"
+            src={logoPlaceholder}
+            alt=""
+            sx={{
+              width: '40%',
+              maxWidth: 64,
+              height: 'auto',
+              opacity: 0.3,
+              filter: isLight ? 'none' : 'brightness(0.8)',
+            }}
           />
         </Box>
       )}
