@@ -48,6 +48,27 @@ function extractDriveFileId(url: string): string | null {
 }
 
 /**
+ * Check if a string looks like a valid image URL
+ * Filters out text content accidentally placed in image URL fields
+ */
+function isValidImageUrl(url: string | undefined): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (trimmed.length === 0) return false;
+
+  // Valid patterns for image URLs
+  return (
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('/api/') ||
+    trimmed.startsWith('data:image/') ||
+    trimmed.includes('cloudinary.com') ||
+    trimmed.includes('drive.google.com') ||
+    trimmed.includes('googleusercontent.com')
+  );
+}
+
+/**
  * Convert Google Drive URL to proxy URL for reliable loading
  * If not a Drive URL, returns the original URL unchanged
  */
@@ -116,7 +137,10 @@ export function useTreasure() {
       // Image Priority: gallery → legacy → batch thumbnail (PRIMARY) → Sheets imageUrl (fallback) → imagen
       // Batch thumbnails from Google Drive product folders are the PRIMARY source for most products
       // Convert any Google Drive URLs to proxy URLs for reliable loading
-      const rawImageUrl = mainMedia?.url || itemMedia?.url || batchThumb?.url || item.imageUrl || item.imagen;
+      // Validate fallback URLs to filter out text accidentally placed in image fields (e.g., "Vendido en primicia")
+      const validatedImageUrl = isValidImageUrl(item.imageUrl) ? item.imageUrl : undefined;
+      const validatedImagen = isValidImageUrl(item.imagen) ? item.imagen : undefined;
+      const rawImageUrl = mainMedia?.url || itemMedia?.url || batchThumb?.url || validatedImageUrl || validatedImagen;
       const rawThumbnailUrl = mainMedia?.thumbnailUrl || itemMedia?.thumbnailUrl || item.thumbnailUrl;
 
       // Determine media type: check if batch thumbnail is from a video-only product

@@ -124,7 +124,7 @@ export default function MediaGallery({
       <Box
         sx={{
           width: '100%',
-          aspectRatio: '1/1',
+          aspectRatio: '4/3',
           borderRadius: 3,
           bgcolor: alpha(brand.emerald[500], 0.05),
           border: '2px dashed',
@@ -166,7 +166,7 @@ export default function MediaGallery({
           sx={{
             position: 'relative',
             width: '100%',
-            aspectRatio: '1/1',
+            aspectRatio: '4/3',
             borderRadius: 3,
             overflow: 'hidden',
             bgcolor: darkTokens.background.app,
