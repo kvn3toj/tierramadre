@@ -64,9 +64,9 @@ async function listProductFolders(drive, productsFolderId) {
 }
 
 /**
- * Get first image (not video) from a folder
+ * Get first image from a folder, or video thumbnail if no images exist
  */
-async function getFirstImage(drive, folderId) {
+async function getFirstImageOrVideoThumbnail(drive, folderId) {
   const imageTypes = [
     'image/jpeg',
     'image/png',
@@ -76,10 +76,22 @@ async function getFirstImage(drive, folderId) {
     'image/heif',
   ];
 
-  const mimeTypeQuery = imageTypes.map(t => `mimeType='${t}'`).join(' or ');
+  const videoTypes = [
+    'video/mp4',
+    'video/quicktime',
+    'video/webm',
+    'video/x-msvideo',
+    'video/x-matroska',
+    'video/mpeg',
+    'video/3gpp',
+    'video/x-m4v',
+  ];
 
-  const response = await drive.files.list({
-    q: `'${folderId}' in parents and (${mimeTypeQuery}) and trashed=false`,
+  const imageMimeTypeQuery = imageTypes.map(t => `mimeType='${t}'`).join(' or ');
+
+  // First, try to get an image
+  const imageResponse = await drive.files.list({
+    q: `'${folderId}' in parents and (${imageMimeTypeQuery}) and trashed=false`,
     fields: 'files(id, name, mimeType)',
     orderBy: 'name',
     pageSize: 1,
@@ -87,7 +99,27 @@ async function getFirstImage(drive, folderId) {
     includeItemsFromAllDrives: true,
   });
 
-  return response.data.files?.[0] || null;
+  if (imageResponse.data.files?.length > 0) {
+    return { file: imageResponse.data.files[0], isVideo: false };
+  }
+
+  // If no images, try to get a video with its thumbnail
+  const videoMimeTypeQuery = videoTypes.map(t => `mimeType='${t}'`).join(' or ');
+
+  const videoResponse = await drive.files.list({
+    q: `'${folderId}' in parents and (${videoMimeTypeQuery}) and trashed=false`,
+    fields: 'files(id, name, mimeType, thumbnailLink)',
+    orderBy: 'name',
+    pageSize: 1,
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+  });
+
+  if (videoResponse.data.files?.length > 0) {
+    return { file: videoResponse.data.files[0], isVideo: true };
+  }
+
+  return null;
 }
 
 /**
@@ -155,12 +187,25 @@ export default async function handler(req, res) {
           if (!itemNumber) return null;
 
           try {
-            const firstImage = await getFirstImage(drive, folder.id);
-            if (firstImage) {
+            const result = await getFirstImageOrVideoThumbnail(drive, folder.id);
+            if (result) {
+              const { file, isVideo } = result;
+
+              // For videos, use Google Drive's thumbnail if available
+              // Otherwise, use our proxy with thumbnail parameter
+              let proxyUrl;
+              if (isVideo && file.thumbnailLink) {
+                // Google Drive thumbnail URL - convert to larger size
+                proxyUrl = file.thumbnailLink.replace(/=s\d+/, '=s400');
+              } else {
+                proxyUrl = `/api/serve-drive-image?fileId=${file.id}${isVideo ? '&thumbnail=true' : ''}`;
+              }
+
               return {
                 itemNumber,
-                fileId: firstImage.id,
-                proxyUrl: `/api/serve-drive-image?fileId=${firstImage.id}`,
+                fileId: file.id,
+                proxyUrl,
+                isVideo,
               };
             }
           } catch (error) {
@@ -172,7 +217,10 @@ export default async function handler(req, res) {
 
       results.forEach((result) => {
         if (result) {
-          thumbnails[result.itemNumber] = result.proxyUrl;
+          thumbnails[result.itemNumber] = {
+            url: result.proxyUrl,
+            isVideoThumbnail: result.isVideo,
+          };
         }
       });
     }

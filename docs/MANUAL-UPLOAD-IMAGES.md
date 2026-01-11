@@ -170,13 +170,15 @@ El sistema califica automáticamente cada imagen:
 
 ### Proceso Automático
 
-Una vez subidas las imágenes a Drive:
+Una vez subidas las imágenes a la carpeta correcta de Drive:
 
 ```
-Google Drive → Cloudinary (CDN) → App Tierra Madre
-     ↓              ↓                    ↓
-  Backup       Optimización         Visualización
+Carpetas de Productos Google Drive → API Proxy Drive → App Tierra Madre
+              ↓                            ↓                  ↓
+       products/{item}/            Auto-retry logic     Grilla de Productos
 ```
+
+**Importante**: Las imágenes deben estar en carpetas nombradas `{item} - {nombre}/` (ej: `32 - Venus/`) para la detección automática.
 
 ### Verificar en la App
 

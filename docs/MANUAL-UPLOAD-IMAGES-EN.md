@@ -170,13 +170,15 @@ The system automatically rates each image:
 
 ### Automatic Process
 
-Once images are uploaded to Drive:
+Once images are uploaded to the correct Drive folder:
 
 ```
-Google Drive → Cloudinary (CDN) → Tierra Madre App
-     ↓              ↓                    ↓
-  Backup       Optimization         Display
+Google Drive Product Folders → Drive Proxy API → Tierra Madre App
+           ↓                        ↓                   ↓
+    products/{item}/         Auto-retry logic      Grid Display
 ```
+
+**Important**: Images must be in folders named `{item} - {name}/` (e.g., `32 - Venus/`) for automatic detection.
 
 ### Verify in the App
 
@@ -233,13 +235,24 @@ https://tierra-madre-studio.vercel.app/api/verify-image?itemNumber=101
 │                    TIERRA MADRE IMAGE SYSTEM                │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐     │
-│  │   GOOGLE    │    │  CLOUDINARY │    │   GOOGLE    │     │
-│  │    DRIVE    │───▶│    (CDN)    │◀───│   SHEETS    │     │
-│  │             │    │             │    │             │     │
-│  │  Originals  │    │  Optimized  │    │  Database   │     │
-│  │   Backup    │    │  Delivery   │    │  Tracking   │     │
-│  └─────────────┘    └─────────────┘    └─────────────┘     │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │                  GOOGLE DRIVE                        │   │
+│  │           (Primary Image Source)                     │   │
+│  │                                                      │   │
+│  │    products/                                         │   │
+│  │    ├── 32 - Venus/                                  │   │
+│  │    │   ├── hero.jpg  <- First image = thumbnail     │   │
+│  │    │   └── detail.jpg                               │   │
+│  │    ├── 45 - Esperanza/                              │   │
+│  │    │   └── hero.jpg                                 │   │
+│  │    └── ...                                          │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                            │                                │
+│                            ▼                                │
+│              ┌─────────────────────────┐                   │
+│              │    /api/serve-drive-    │                   │
+│              │       image proxy       │                   │
+│              └─────────────────────────┘                   │
 │                            │                                │
 │                            ▼                                │
 │                   ┌─────────────────┐                      │
@@ -254,23 +267,26 @@ https://tierra-madre-studio.vercel.app/api/verify-image?itemNumber=101
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Cloudinary Folder Structure
+### Google Drive Folder Structure
 
 ```
-cloudinary/dyam6g2os/
-└── tierramadre/
-    ├── product-100/
-    │   ├── image1.jpg
-    │   └── image2.jpg
-    ├── product-101/
-    │   └── image1.jpg
-    ├── product-102/
-    │   ├── image1.jpg
-    │   ├── image2.jpg
-    │   └── image3.jpg
-    └── inventory/
-        └── general-assets/
+Shared Drive/
+└── products/
+    ├── 32 - Venus/
+    │   ├── hero.jpg       <- First image used as thumbnail
+    │   ├── detail-1.jpg
+    │   └── video.mp4
+    ├── 45 - Esperanza/
+    │   └── hero.jpg
+    ├── 101 - Aurora/
+    │   ├── front.jpg
+    │   └── macro.jpg
+    └── ...
 ```
+
+**Folder Naming Convention**: `{item_number} - {product_name}/`
+
+The first image (alphabetically) in each folder is automatically used as the product thumbnail in the grid view.
 
 ---
 

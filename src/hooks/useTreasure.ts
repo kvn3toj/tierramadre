@@ -2,13 +2,22 @@
  * useTreasure Hook
  *
  * Main treasure management hook that composes:
- * - useSheetsTreasure: Google Sheets data with caching
- * - useTreasureMedia: Legacy and gallery media management
- * - useBatchThumbnails: Grid thumbnails from Google Drive folders
+ * - useSheetsTreasure: Google Sheets data with caching (product metadata only)
+ * - useTreasureMedia: Legacy and gallery media management (localStorage)
+ * - useBatchThumbnails: Grid thumbnails from Google Drive product folders (PRIMARY IMAGE SOURCE)
+ *
+ * IMAGE SOURCE PRIORITY (highest to lowest):
+ * 1. Gallery (first item) - Manual gallery uploads from localStorage
+ * 2. Legacy media - Legacy localStorage entries
+ * 3. Batch thumbnails - First image from Google Drive product folders (PRIMARY)
+ * 4. Sheets imageUrl - Fallback from Google Sheets column K (DEPRECATED)
+ * 5. Original imagen - Static data fallback
+ *
+ * PRIMARY IMAGE SOURCE: Google Drive product folders
+ * Folder naming convention: "{item} - {name}/" (e.g., "32 - Venus/")
+ * The first image (alphabetically) in each folder is used as the thumbnail.
  *
  * Provides a unified API for treasure data with media merged in.
- *
- * Refactored: Extracted separate hooks for better modularity and testability.
  */
 
 import { useMemo } from 'react';
@@ -104,15 +113,20 @@ export function useTreasure() {
       // Count gallery items (includes legacy media if no gallery)
       const galleryCount = gallery.length || (itemMedia ? 1 : 0);
 
-      // Priority: gallery main → legacy media → batch thumbnail → Sheets imageUrl → original imagen
+      // Image Priority: gallery → legacy → batch thumbnail (PRIMARY) → Sheets imageUrl (fallback) → imagen
+      // Batch thumbnails from Google Drive product folders are the PRIMARY source for most products
       // Convert any Google Drive URLs to proxy URLs for reliable loading
-      const rawImageUrl = mainMedia?.url || itemMedia?.url || batchThumb || item.imageUrl || item.imagen;
+      const rawImageUrl = mainMedia?.url || itemMedia?.url || batchThumb?.url || item.imageUrl || item.imagen;
       const rawThumbnailUrl = mainMedia?.thumbnailUrl || itemMedia?.thumbnailUrl || item.thumbnailUrl;
+
+      // Determine media type: check if batch thumbnail is from a video-only product
+      const isVideoOnly = batchThumb?.isVideoThumbnail && !mainMedia && !itemMedia;
+      const mediaType = mainMedia?.type || itemMedia?.mediaType || (isVideoOnly ? 'video' : item.mediaType) || 'image';
 
       return {
         ...item,
         imagen: convertToProxyUrl(rawImageUrl),
-        mediaType: mainMedia?.type || itemMedia?.mediaType || item.mediaType || 'image',
+        mediaType,
         thumbnailUrl: convertToProxyUrl(rawThumbnailUrl),
         galleryCount,
       };

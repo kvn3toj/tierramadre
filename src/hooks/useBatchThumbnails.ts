@@ -8,16 +8,21 @@
 import { useState, useEffect, useCallback } from 'react';
 
 // Cache configuration
-const CACHE_KEY = 'tierramadre-batch-thumbnails';
+const CACHE_KEY = 'tierramadre-batch-thumbnails-v2'; // v2 for new format
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
+export interface ThumbnailInfo {
+  url: string;
+  isVideoThumbnail: boolean;
+}
+
 interface ThumbnailCache {
-  thumbnails: Record<number, string>;
+  thumbnails: Record<number, ThumbnailInfo>;
   timestamp: number;
 }
 
 interface UseBatchThumbnailsReturn {
-  thumbnails: Record<number, string>;
+  thumbnails: Record<number, ThumbnailInfo>;
   isLoading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -26,7 +31,7 @@ interface UseBatchThumbnailsReturn {
 /**
  * Load cached thumbnails
  */
-function getCachedThumbnails(): Record<number, string> | null {
+function getCachedThumbnails(): Record<number, ThumbnailInfo> | null {
   try {
     const cached = localStorage.getItem(CACHE_KEY);
     if (!cached) return null;
@@ -44,7 +49,7 @@ function getCachedThumbnails(): Record<number, string> | null {
 /**
  * Save thumbnails to cache
  */
-function setCachedThumbnails(thumbnails: Record<number, string>): void {
+function setCachedThumbnails(thumbnails: Record<number, ThumbnailInfo>): void {
   try {
     const cache: ThumbnailCache = {
       thumbnails,
@@ -59,7 +64,7 @@ function setCachedThumbnails(thumbnails: Record<number, string>): void {
 /**
  * Fetch thumbnails from API
  */
-async function fetchThumbnails(): Promise<Record<number, string>> {
+async function fetchThumbnails(): Promise<Record<number, ThumbnailInfo>> {
   const response = await fetch('/api/get-batch-thumbnails');
 
   if (!response.ok) {
@@ -71,11 +76,25 @@ async function fetchThumbnails(): Promise<Record<number, string>> {
     throw new Error('Invalid response from thumbnails API');
   }
 
-  return data.thumbnails;
+  // Handle both old format (string) and new format (object)
+  const thumbnails: Record<number, ThumbnailInfo> = {};
+  for (const [key, value] of Object.entries(data.thumbnails)) {
+    const itemNumber = parseInt(key, 10);
+    if (typeof value === 'string') {
+      // Old format: just a URL string
+      thumbnails[itemNumber] = { url: value, isVideoThumbnail: false };
+    } else if (value && typeof value === 'object') {
+      // New format: { url, isVideoThumbnail }
+      const obj = value as { url: string; isVideoThumbnail: boolean };
+      thumbnails[itemNumber] = { url: obj.url, isVideoThumbnail: obj.isVideoThumbnail };
+    }
+  }
+
+  return thumbnails;
 }
 
 export function useBatchThumbnails(): UseBatchThumbnailsReturn {
-  const [thumbnails, setThumbnails] = useState<Record<number, string>>({});
+  const [thumbnails, setThumbnails] = useState<Record<number, ThumbnailInfo>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

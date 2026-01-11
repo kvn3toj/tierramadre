@@ -87,18 +87,33 @@ This forces Safari to refresh its aggressive cache on version mismatch.
 
 ## Media Storage Architecture
 
-### Google Drive Integration
-All product media is stored in Google Drive with the following structure:
+### Primary Image Source: Google Drive Product Folders
+Product images are sourced from **Google Drive product folders** (NOT from Google Sheets columns).
+
+Folder naming convention: `{item} - {name}/` (e.g., `32 - Venus/`)
 ```
 products/
   ├── 32 - Venus/
-  │   ├── hero.jpg
+  │   ├── hero.jpg        <- First image used as thumbnail
   │   ├── detail-1.jpg
   │   └── video.mp4
   ├── 45 - Esperanza/
   │   └── hero.jpg
   ...
 ```
+
+### Image Priority Order (in `useTreasure.ts`)
+1. **Gallery** - Manual gallery uploads (localStorage)
+2. **Legacy media** - localStorage legacy entries
+3. **Batch thumbnails** - First image from Google Drive product folders (PRIMARY)
+4. **Sheets imageUrl** - Fallback from Google Sheets column K (DEPRECATED)
+5. **Original imagen** - Static data fallback
+
+### How It Works
+- `/api/get-batch-thumbnails` scans Drive `products/` folder
+- Extracts item number from folder name (e.g., `32` from `32 - Venus`)
+- Returns first image from each folder as the product thumbnail
+- Images served via `/api/serve-drive-image?fileId={id}` proxy
 
 ### Image Loading with Auto-Retry
 Images served from Google Drive proxy API with automatic retry logic:
@@ -107,8 +122,9 @@ Images served from Google Drive proxy API with automatic retry logic:
 - Cache-busting on retries
 - Logging for debugging
 
-### Legacy Cloudinary URLs
-Cloudinary URL optimization is maintained for backward compatibility with legacy image URLs. New uploads go directly to Google Drive via API endpoints.
+### Legacy Support
+- **Cloudinary URLs**: Maintained for backward compatibility with legacy image URLs
+- **Sheets imageUrl column**: Kept as fallback but NOT the primary source
 
 ## Part of CoomUnity Universe
 Built with the CoomUnity agent ecosystem:

@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-11T21:58:59.534Z
+ * Generated at: 2026-01-11T22:36:22.465Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-11T21:58:59.534Z",
+  "generatedAt": "2026-01-11T22:36:22.465Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "12 Dic, 2025",
@@ -56,19 +56,19 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "a72cb11",
-    "lastCommitDate": "2026-01-11 16:58:55 -0500"
+    "lastCommitHash": "ec6dc5c",
+    "lastCommitDate": "2026-01-11 17:36:17 -0500"
   },
   "stats": {
-    "totalCommits": 188,
-    "totalAdditions": 82474,
-    "totalDeletions": 162690,
-    "totalFilesChanged": 1360,
-    "netLines": -80216
+    "totalCommits": 190,
+    "totalAdditions": 82871,
+    "totalDeletions": 162781,
+    "totalFilesChanged": 1368,
+    "netLines": -79910
   },
   "categoryStats": {
-    "other": 60,
-    "cleanup": 18,
+    "cleanup": 19,
+    "other": 61,
     "auth": 11,
     "ux": 44,
     "analytics": 5,
@@ -76,8 +76,8 @@ export const changelogData: ChangelogData = {
     "performance": 9
   },
   "typeStats": {
+    "feat": 82,
     "chore": 9,
-    "feat": 80,
     "fix": 67,
     "other": 6,
     "refactor": 24,
@@ -95,15 +95,19 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "index.html",
-      "count": 21
+      "count": 22
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 21
+      "count": 22
     },
     {
       "file": ".claude/settings.local.json",
       "count": 19
+    },
+    {
+      "file": "src/components/ProductDetail.tsx",
+      "count": 17
     },
     {
       "file": "src/components/home/Home.tsx",
@@ -114,22 +118,18 @@ export const changelogData: ChangelogData = {
       "count": 17
     },
     {
-      "file": "src/components/ProductDetail.tsx",
-      "count": 16
+      "file": "public/version.json",
+      "count": 15
     },
     {
       "file": "src/components/ios/IOSTabBar.tsx",
       "count": 15
-    },
-    {
-      "file": "public/version.json",
-      "count": 14
     }
   ],
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 180
+      "commits": 182
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,37 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "ec6dc5c",
+      "message": "Improve video player - autoplay muted, remove play icon, images first",
+      "fullMessage": "feat: Improve video player - autoplay muted, remove play icon, images first",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "cleanup",
+      "additions": 30,
+      "deletions": 66,
+      "filesChanged": 2
+    },
+    {
+      "hash": "0c89b37",
+      "message": "Add batch thumbnails for treasure grid from Google Drive folders",
+      "fullMessage": "feat: Add batch thumbnails for treasure grid from Google Drive folders",
+      "author": "Kvn3Toj",
+      "relativeTime": "3 minutes ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "other",
+      "additions": 367,
+      "deletions": 25,
+      "filesChanged": 6
+    },
+    {
       "hash": "a72cb11",
       "message": "Bump version to 2026.01.11.1656",
       "fullMessage": "chore: Bump version to 2026.01.11.1656",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "37 minutes ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "other",
@@ -155,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Convert Google Drive URLs to proxy for reliable image loading",
       "fullMessage": "feat: Convert Google Drive URLs to proxy for reliable image loading",
       "author": "Kvn3Toj",
-      "relativeTime": "8 minutes ago",
+      "relativeTime": "46 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -168,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Update icons, refine blocking version check, remove unused logo",
       "fullMessage": "chore: Update icons, refine blocking version check, remove unused logo",
       "author": "Kvn3Toj",
-      "relativeTime": "26 minutes ago",
+      "relativeTime": "63 minutes ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "cleanup",
@@ -181,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Block unauthorized users from Google sign-in",
       "fullMessage": "fix: Block unauthorized users from Google sign-in",
       "author": "Kvn3Toj",
-      "relativeTime": "28 minutes ago",
+      "relativeTime": "66 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "auth",
@@ -194,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Replace Gem icon placeholders with logo-symbol watermark",
       "fullMessage": "feat: Replace Gem icon placeholders with logo-symbol watermark",
       "author": "Kvn3Toj",
-      "relativeTime": "28 minutes ago",
+      "relativeTime": "66 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -207,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Optimize treasure grid with iOS HIG alignment",
       "fullMessage": "feat: Optimize treasure grid with iOS HIG alignment",
       "author": "Kvn3Toj",
-      "relativeTime": "58 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "ux",
@@ -220,7 +246,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product views tracking with user identity analytics",
       "fullMessage": "feat: Add product views tracking with user identity analytics",
       "author": "Kvn3Toj",
-      "relativeTime": "21 hours ago",
+      "relativeTime": "22 hours ago",
       "date": "2026-01-10",
       "type": "feat",
       "category": "analytics",

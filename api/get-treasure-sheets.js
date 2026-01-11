@@ -100,7 +100,7 @@ function normalizeHeader(h) {
  * H = Talla (7)
  * I = Medidas tipo (8)
  * J = Medidas valores (9)
- * K = Imagen (10)
+ * K = Imagen (10) - DEPRECATED: Fallback only. Primary images come from Google Drive product folders.
  * L = Precio COP (11)
  * M = UBICACION (12)
  * N = ASESOR (13)
@@ -108,6 +108,10 @@ function normalizeHeader(h) {
  * P = QR (15)
  * Q = Coleccion (16)
  * R = CAJA (17)
+ *
+ * NOTE: The imageUrl field from column K is a FALLBACK. The primary image source is
+ * Google Drive product folders (via /api/get-batch-thumbnails), which uses the folder
+ * naming convention: "{item} - {name}/" (e.g., "32 - Venus/").
  */
 function mapRowToTreasureItem(row, headers) {
   // Normalize all headers once
@@ -144,7 +148,8 @@ function mapRowToTreasureItem(row, headers) {
   const peso = getValue('peso', 'peso ct', 'peso (ct)', 'weight', 'quilates', 'ct') || getByIndex(3);
   const pesoData = parsePeso(peso);
 
-  // Get image URL from column K (Imagen) or column with URL
+  // Get image URL from column K (Imagen) - FALLBACK ONLY
+  // Primary images come from Google Drive product folders via /api/get-batch-thumbnails
   const imageUrl = getValue('imagen', 'image', 'foto', 'photo', 'url imagen') || getByIndex(10) || '';
 
   // NOTE: precioCOP comes ONLY from CUALIFICACION-PRECIO sheet, not from Inventario

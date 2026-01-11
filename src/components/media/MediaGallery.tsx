@@ -189,6 +189,7 @@ export default function MediaGallery({
             {currentMedia?.type === 'video' ? (
               <video
                 src={currentMedia.url}
+                poster={currentMedia.thumbnailUrl}
                 autoPlay
                 muted
                 loop
@@ -198,6 +199,7 @@ export default function MediaGallery({
                   width: '100%',
                   height: '100%',
                   objectFit: 'contain',
+                  backgroundColor: '#000',
                 }}
               />
             ) : (
