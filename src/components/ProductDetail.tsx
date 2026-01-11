@@ -144,7 +144,13 @@ export default function ProductDetail() {
               alt: img.name || `${displayName} - ${img.order + 1}`,
               order: img.order,
             }));
-            setMediaItems(driveItems);
+            // Sort: images first, then videos (preserving original order within each group)
+            const sortedItems = [...driveItems].sort((a, b) => {
+              if (a.type === 'image' && b.type === 'video') return -1;
+              if (a.type === 'video' && b.type === 'image') return 1;
+              return a.order - b.order;
+            });
+            setMediaItems(sortedItems);
 
             // Update local cache
             if (updateMediaItems) {
@@ -206,7 +212,13 @@ export default function ProductDetail() {
           alt: img.name || `${displayName} - ${img.order + 1}`,
           order: img.order,
         }));
-        setMediaItems(driveItems);
+        // Sort: images first, then videos (preserving original order within each group)
+        const sortedItems = [...driveItems].sort((a, b) => {
+          if (a.type === 'image' && b.type === 'video') return -1;
+          if (a.type === 'video' && b.type === 'image') return 1;
+          return a.order - b.order;
+        });
+        setMediaItems(sortedItems);
 
         if (updateMediaItems) {
           updateMediaItems(product.item, driveItems);

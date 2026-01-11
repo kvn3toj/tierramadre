@@ -51,7 +51,6 @@ export default function MediaGallery({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
 
   // Touch handling for swipe
   const touchStartX = useRef(0);
@@ -63,12 +62,10 @@ export default function MediaGallery({
 
   const handlePrevious = useCallback(() => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : media.length - 1));
-    setIsPlaying(false);
   }, [media.length]);
 
   const handleNext = useCallback(() => {
     setCurrentIndex((prev) => (prev < media.length - 1 ? prev + 1 : 0));
-    setIsPlaying(false);
   }, [media.length]);
 
   const handleTouchStart = (e: TouchEvent) => {
@@ -93,14 +90,11 @@ export default function MediaGallery({
   const handleThumbnailClick = (index: number) => {
     triggerHaptic('selection');
     setCurrentIndex(index);
-    setIsPlaying(false);
   };
 
   const handleMainClick = () => {
-    if (currentMedia?.type === 'video' && !isPlaying) {
-      triggerHaptic('light');
-      setIsPlaying(true);
-    } else if (currentMedia?.type === 'image') {
+    // Only open lightbox for images (videos autoplay silently)
+    if (currentMedia?.type === 'image') {
       triggerHaptic('light');
       setLightboxOpen(true);
     }
@@ -176,7 +170,7 @@ export default function MediaGallery({
             borderRadius: 3,
             overflow: 'hidden',
             bgcolor: darkTokens.background.app,
-            cursor: currentMedia?.type === 'video' ? 'pointer' : 'zoom-in',
+            cursor: currentMedia?.type === 'image' ? 'zoom-in' : 'default',
           }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -193,61 +187,19 @@ export default function MediaGallery({
             style={{ width: '100%', height: '100%' }}
           >
             {currentMedia?.type === 'video' ? (
-              isPlaying ? (
-                <video
-                  src={currentMedia.url}
-                  autoPlay
-                  controls
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {currentMedia.thumbnailUrl ? (
-                    <img
-                      src={currentMedia.thumbnailUrl}
-                      alt={currentMedia.alt}
-                      draggable={false}
-                      onContextMenu={(e) => e.preventDefault()}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                        userSelect: 'none',
-                        WebkitUserDrag: 'none',
-                        pointerEvents: 'none',
-                      } as React.CSSProperties}
-                    />
-                  ) : (
-                    <Box sx={{ bgcolor: darkTokens.background.surface, width: '100%', height: '100%' }} />
-                  )}
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      inset: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      bgcolor: 'rgba(0,0,0,0.3)',
-                    }}
-                  >
-                    <PlayCircle size={64} color="white" />
-                  </Box>
-                </Box>
-              )
+              <video
+                src={currentMedia.url}
+                autoPlay
+                muted
+                loop
+                playsInline
+                controls={false}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                }}
+              />
             ) : (
               <img
                 src={currentMedia?.url}
