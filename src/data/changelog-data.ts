@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-11T21:00:36.171Z
+ * Generated at: 2026-01-11T21:30:39.029Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-11T21:00:36.171Z",
+  "generatedAt": "2026-01-11T21:30:39.029Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "12 Dic, 2025",
@@ -56,28 +56,28 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "e44de85",
-    "lastCommitDate": "2026-01-11 16:00:32 -0500"
+    "lastCommitHash": "7907bbb",
+    "lastCommitDate": "2026-01-11 16:30:35 -0500"
   },
   "stats": {
     "totalCommits": 186,
-    "totalAdditions": 81197,
-    "totalDeletions": 162625,
-    "totalFilesChanged": 1309,
-    "netLines": -81428
+    "totalAdditions": 82328,
+    "totalDeletions": 162580,
+    "totalFilesChanged": 1350,
+    "netLines": -80252
   },
   "categoryStats": {
+    "auth": 11,
+    "other": 58,
     "ux": 44,
     "analytics": 5,
-    "bugfix": 43,
+    "bugfix": 42,
     "performance": 9,
-    "other": 57,
-    "auth": 10,
-    "cleanup": 18
+    "cleanup": 17
   },
   "typeStats": {
-    "feat": 78,
-    "fix": 69,
+    "fix": 68,
+    "feat": 79,
     "other": 6,
     "refactor": 24,
     "chore": 7,
@@ -95,6 +95,14 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": ".claude/settings.local.json",
+      "count": 19
+    },
+    {
+      "file": "index.html",
+      "count": 18
+    },
+    {
+      "file": "src/data/changelog-data.ts",
       "count": 18
     },
     {
@@ -102,20 +110,12 @@ export const changelogData: ChangelogData = {
       "count": 17
     },
     {
-      "file": "index.html",
-      "count": 17
-    },
-    {
       "file": "src/components/ios/IOSMoreSheet.tsx",
       "count": 17
     },
     {
-      "file": "src/data/changelog-data.ts",
-      "count": 17
-    },
-    {
       "file": "src/components/ProductDetail.tsx",
-      "count": 15
+      "count": 16
     },
     {
       "file": "src/components/ios/IOSTabBar.tsx",
@@ -138,11 +138,37 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "7907bbb",
+      "message": "Block unauthorized users from Google sign-in",
+      "fullMessage": "fix: Block unauthorized users from Google sign-in",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-11",
+      "type": "fix",
+      "category": "auth",
+      "additions": 14,
+      "deletions": 24,
+      "filesChanged": 1
+    },
+    {
+      "hash": "e3db3e8",
+      "message": "Replace Gem icon placeholders with logo-symbol watermark",
+      "fullMessage": "feat: Replace Gem icon placeholders with logo-symbol watermark",
+      "author": "Kvn3Toj",
+      "relativeTime": "2 seconds ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "other",
+      "additions": 1125,
+      "deletions": 497,
+      "filesChanged": 84
+    },
+    {
       "hash": "e44de85",
       "message": "Optimize treasure grid with iOS HIG alignment",
       "fullMessage": "feat: Optimize treasure grid with iOS HIG alignment",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "30 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "ux",
@@ -155,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product views tracking with user identity analytics",
       "fullMessage": "feat: Add product views tracking with user identity analytics",
       "author": "Kvn3Toj",
-      "relativeTime": "20 hours ago",
+      "relativeTime": "21 hours ago",
       "date": "2026-01-10",
       "type": "feat",
       "category": "analytics",
@@ -766,7 +792,7 @@ export const changelogData: ChangelogData = {
       "message": "Update settings and changelog data",
       "fullMessage": "Update settings and changelog data",
       "author": "Kvn3Toj",
-      "relativeTime": "11 days ago",
+      "relativeTime": "12 days ago",
       "date": "2025-12-31",
       "type": "other",
       "category": "other",
@@ -2528,32 +2554,6 @@ export const changelogData: ChangelogData = {
       "additions": 25,
       "deletions": 5,
       "filesChanged": 1
-    },
-    {
-      "hash": "cad78ea",
-      "message": "Use correct spreadsheet ID and sheet name for sync",
-      "fullMessage": "fix: Use correct spreadsheet ID and sheet name for sync",
-      "author": "Kvn3Toj",
-      "relativeTime": "4 weeks ago",
-      "date": "2025-12-12",
-      "type": "fix",
-      "category": "bugfix",
-      "additions": 8,
-      "deletions": 6,
-      "filesChanged": 2
-    },
-    {
-      "hash": "2bb44dd",
-      "message": "Remove excess API functions (Hobby plan limit 12)",
-      "fullMessage": "fix: Remove excess API functions (Hobby plan limit 12)",
-      "author": "Kvn3Toj",
-      "relativeTime": "4 weeks ago",
-      "date": "2025-12-12",
-      "type": "fix",
-      "category": "cleanup",
-      "additions": 0,
-      "deletions": 560,
-      "filesChanged": 42
     }
   ]
 };
