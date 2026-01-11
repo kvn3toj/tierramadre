@@ -124,7 +124,7 @@ export default function MediaGallery({
       <Box
         sx={{
           width: '100%',
-          aspectRatio: '4/3',
+          aspectRatio: '1/1',
           borderRadius: 3,
           bgcolor: alpha(brand.emerald[500], 0.05),
           border: '2px dashed',
@@ -166,7 +166,7 @@ export default function MediaGallery({
           sx={{
             position: 'relative',
             width: '100%',
-            aspectRatio: '4/3',
+            aspectRatio: '1/1',
             borderRadius: 3,
             overflow: 'hidden',
             bgcolor: darkTokens.background.app,
@@ -198,8 +198,7 @@ export default function MediaGallery({
                 style={{
                   width: '100%',
                   height: '100%',
-                  objectFit: 'contain',
-                  backgroundColor: '#000',
+                  objectFit: 'cover',
                 }}
               />
             ) : (
@@ -211,7 +210,7 @@ export default function MediaGallery({
                 style={{
                   width: '100%',
                   height: '100%',
-                  objectFit: 'contain',
+                  objectFit: 'cover',
                   userSelect: 'none',
                   WebkitUserDrag: 'none',
                   pointerEvents: 'none',
