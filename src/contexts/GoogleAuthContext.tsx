@@ -81,21 +81,71 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Load user from localStorage on mount
+  // Load user from localStorage on mount and RE-VALIDATE against sheets
   useEffect(() => {
-    const loadStoredUser = () => {
+    const loadStoredUser = async () => {
       try {
         const storedUser = localStorage.getItem(GOOGLE_USER_KEY);
         const storedPrefs = localStorage.getItem(GOOGLE_PREFS_KEY);
 
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
-          // User is authorized if they have a role (validated previously)
-          setIsAuthorized(!!parsedUser.role);
-        }
         if (storedPrefs) {
           setPreferences(JSON.parse(storedPrefs));
+        }
+
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+
+          // RE-VALIDATE user against sheets to ensure they're still authorized
+          // This catches users who were removed from sheets after their last login
+          log.debug('Re-validating stored user:', parsedUser.email);
+
+          try {
+            // First check Asesores sheet
+            const validateResponse = await fetch(`/api/validate-user?email=${encodeURIComponent(parsedUser.email)}`);
+            const validateData = await validateResponse.json();
+
+            if (validateData.success && validateData.isAuthorized) {
+              // User still authorized - update role/accessLevel in case it changed
+              parsedUser.role = validateData.user.role;
+              parsedUser.accessLevel = validateData.user.accessLevel;
+              setUser(parsedUser);
+              setIsAuthorized(true);
+              localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(parsedUser));
+              log.debug('User re-validated successfully:', { email: parsedUser.email, role: parsedUser.role });
+            } else {
+              // Not in Asesores, check Proveedores
+              const providerResponse = await fetch(`/api/validate-provider?email=${encodeURIComponent(parsedUser.email)}`);
+              const providerData = await providerResponse.json();
+
+              if (providerData.success && providerData.isProvider) {
+                // User is still authorized as provider
+                parsedUser.role = 'Proveedor';
+                parsedUser.accessLevel = 'provider';
+                setUser(parsedUser);
+                setIsAuthorized(true);
+                localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(parsedUser));
+                log.debug('Provider re-validated successfully:', parsedUser.email);
+              } else {
+                // User NO LONGER AUTHORIZED - force sign out silently
+                log.warn('User no longer authorized - forcing sign out:', parsedUser.email);
+                googleLogout();
+                localStorage.removeItem(GOOGLE_USER_KEY);
+                localStorage.removeItem(GOOGLE_PREFS_KEY);
+                localStorage.removeItem(GOOGLE_TOKEN_KEY);
+                setUser(null);
+                setPreferences({});
+                setIsAuthorized(false);
+                // No error message - just redirect to login screen
+              }
+            }
+          } catch (validationError) {
+            // API error during re-validation - keep user logged in but mark as needing re-auth
+            // This prevents locking out users due to temporary API issues
+            log.error('Re-validation API error:', validationError);
+            setUser(parsedUser);
+            setIsAuthorized(!!parsedUser.role);
+            log.warn('Could not re-validate user, keeping session (API error)');
+          }
         }
       } catch (error) {
         log.error('Error loading stored user:', error);
