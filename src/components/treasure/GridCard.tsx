@@ -8,7 +8,7 @@
  * - Compact typography for 2-column grid
  * - Spring animations for tactile feedback
  */
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -19,7 +19,6 @@ import {
   alpha,
 } from '@mui/material';
 import {
-  Play,
   Images,
   Eye,
   Scale,
@@ -29,6 +28,7 @@ import { TreasureItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { PriceDisplay } from '../PriceDisplay';
 import ProgressiveImage from '../ProgressiveImage';
+import logoPlaceholder from '../../assets/logo-symbol.png';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 import {
   animation,
@@ -63,6 +63,8 @@ function GridCard({
 }: GridCardProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [posterError, setPosterError] = useState(false);
 
   const labelColor = iosSemanticColors.label[mode];
   const secondaryLabelColor = iosSemanticColors.secondaryLabel[mode];
@@ -71,11 +73,12 @@ function GridCard({
   const quality = getQualityBadge(item.calidad);
   const colorDot = getColorDot(item.color);
   const isLoose = !item.isJewelry;
+  const isVideoOnly = item.mediaType === 'video';
 
-  const handleCompareClick = (e: React.MouseEvent) => {
+  const handleCompareClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onToggleComparison?.();
-  };
+  }, [onToggleComparison]);
 
   return (
     <Card
@@ -112,37 +115,74 @@ function GridCard({
         },
       }}
     >
-      {/* Image Section - 1:1 aspect ratio */}
+      {/* Image/Video Section - 1:1 aspect ratio */}
       <Box sx={{ position: 'relative', flexShrink: 0 }}>
         {item.imagen ? (
           <>
-            <ProgressiveImage
-              src={item.imagen}
-              alt={`${item.nombre} - ${item.color}`}
-              aspectRatio="1 / 1"
-              layout="full"
-              quality="eco"
-            />
-
-            {/* Video play indicator */}
-            {item.mediaType === 'video' && (
+            {isVideoOnly ? (
+              /* Video-only product: show video with poster fallback */
               <Box
                 sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  width: 40,
-                  height: 40,
-                  borderRadius: '50%',
-                  bgcolor: 'rgba(0, 0, 0, 0.6)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  position: 'relative',
+                  width: '100%',
+                  aspectRatio: '1 / 1',
+                  bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.tertiary,
+                  overflow: 'hidden',
                 }}
               >
-                <Play size={20} color="white" fill="white" />
+                {/* Logo placeholder shown until video loads */}
+                {!videoLoaded && posterError && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 1,
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={logoPlaceholder}
+                      alt=""
+                      sx={{
+                        width: '40%',
+                        maxWidth: 64,
+                        height: 'auto',
+                        opacity: 0.28,
+                        filter: isLight ? 'brightness(0.7)' : 'brightness(0.5)',
+                      }}
+                    />
+                  </Box>
+                )}
+                <video
+                  src={item.imagen}
+                  poster={item.thumbnailUrl || undefined}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  onLoadedData={() => setVideoLoaded(true)}
+                  onError={() => setPosterError(true)}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    opacity: videoLoaded ? 1 : 0,
+                    transition: 'opacity 0.3s ease',
+                  }}
+                />
               </Box>
+            ) : (
+              /* Image product: use ProgressiveImage */
+              <ProgressiveImage
+                src={item.imagen}
+                alt={`${item.nombre} - ${item.color}`}
+                aspectRatio="1 / 1"
+                layout="full"
+                quality="eco"
+              />
             )}
 
             {/* Gallery count badge */}

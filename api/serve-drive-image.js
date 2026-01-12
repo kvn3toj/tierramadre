@@ -82,17 +82,30 @@ export default async function handler(req, res) {
       if (thumbResponse.data.thumbnailLink) {
         // Fetch the thumbnail and proxy it (avoid CORS issues with direct redirect)
         const thumbnailUrl = thumbResponse.data.thumbnailLink.replace(/=s\d+/, '=s800');
-        const thumbFetch = await fetch(thumbnailUrl);
+        try {
+          const thumbFetch = await fetch(thumbnailUrl);
 
-        if (thumbFetch.ok) {
-          const thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
-          res.setHeader('Content-Type', 'image/jpeg');
-          res.setHeader('Content-Length', thumbBuffer.length);
-          res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
-          return res.status(200).send(thumbBuffer);
+          if (thumbFetch.ok) {
+            const thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
+            res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Content-Length', thumbBuffer.length);
+            res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+            return res.status(200).send(thumbBuffer);
+          }
+        } catch (thumbError) {
+          console.warn('Thumbnail fetch failed:', thumbError.message);
         }
       }
-      // If thumbnail fetch fails, fall through to serve the original file
+
+      // If thumbnail fetch fails for a video, return a 404 instead of the video file
+      // (serving a video when an image is expected would break the UI)
+      if (mimeType.startsWith('video/')) {
+        return res.status(404).json({
+          error: 'Thumbnail not available',
+          message: 'No thumbnail available for this video',
+        });
+      }
+      // For images, fall through to serve the original file
     }
 
     // Download the file

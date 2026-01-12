@@ -23,7 +23,6 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
-  PlayCircle,
   ZoomIn,
   Maximize2,
 } from 'lucide-react';
@@ -372,65 +371,25 @@ export default function MediaGallery({
                 },
               }}
             >
-              {item.type === 'video' ? (
-                <>
-                  {item.thumbnailUrl ? (
-                    <img
-                      src={item.thumbnailUrl}
-                      alt={`Thumbnail ${index + 1}`}
-                      draggable={false}
-                      onContextMenu={(e) => e.preventDefault()}
-                      onError={(e: SyntheticEvent<HTMLImageElement>) => {
-                        e.currentTarget.src = logoPlaceholder;
-                        e.currentTarget.style.objectFit = 'contain';
-                        e.currentTarget.style.padding = '12px';
-                        e.currentTarget.style.opacity = '0.4';
-                      }}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        userSelect: 'none',
-                        WebkitUserDrag: 'none',
-                      } as React.CSSProperties}
-                    />
-                  ) : (
-                    <Box sx={{ bgcolor: darkTokens.background.surface, width: '100%', height: '100%' }} />
-                  )}
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      inset: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      bgcolor: 'rgba(0,0,0,0.4)',
-                    }}
-                  >
-                    <PlayCircle size={20} color="white" />
-                  </Box>
-                </>
-              ) : (
                 <img
-                  src={item.thumbnailUrl || item.url}
-                  alt={`Thumbnail ${index + 1}`}
-                  draggable={false}
-                  onContextMenu={(e) => e.preventDefault()}
-                  onError={(e: SyntheticEvent<HTMLImageElement>) => {
-                    e.currentTarget.src = logoPlaceholder;
-                    e.currentTarget.style.objectFit = 'contain';
-                    e.currentTarget.style.padding = '12px';
-                    e.currentTarget.style.opacity = '0.4';
-                  }}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    userSelect: 'none',
-                    WebkitUserDrag: 'none',
-                  } as React.CSSProperties}
-                />
-              )}
+                src={item.thumbnailUrl || item.url}
+                alt={`Thumbnail ${index + 1}`}
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+                onError={(e: SyntheticEvent<HTMLImageElement>) => {
+                  e.currentTarget.src = logoPlaceholder;
+                  e.currentTarget.style.objectFit = 'contain';
+                  e.currentTarget.style.padding = '12px';
+                  e.currentTarget.style.opacity = '0.4';
+                }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  userSelect: 'none',
+                  WebkitUserDrag: 'none',
+                } as React.CSSProperties}
+              />
             </Box>
           ))}
 

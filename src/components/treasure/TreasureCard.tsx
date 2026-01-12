@@ -21,7 +21,6 @@ import {
 import {
   MapPin,
   User,
-  Play,
   Images,
   Eye,
 } from 'lucide-react';
@@ -50,12 +49,15 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const [showDetails] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [posterError, setPosterError] = useState(false);
 
   const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const quality = getQualityBadge(item.calidad);
   const colorDot = getColorDot(item.color);
   const isLoose = !item.isJewelry;
   const weight = typeof item.peso === 'number' ? `${item.peso} ct` : item.metalType;
+  const isVideoOnly = item.mediaType === 'video';
 
   // Compact list view
   if (isCompact) {
@@ -171,40 +173,55 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
             bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.tertiary,
           }}
         >
-          {item.mediaType === 'video' ? (
-            // Video with thumbnail and play icon
-            <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
-              <img
-                src={item.thumbnailUrl || item.imagen}
-                alt={`${item.nombre} - ${item.color}`}
-                loading="lazy"
+          {isVideoOnly ? (
+            /* Video-only product: show video with poster fallback */
+            <>
+              {/* Logo placeholder shown until video loads */}
+              {!videoLoaded && posterError && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1,
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={logoPlaceholder}
+                    alt=""
+                    sx={{
+                      width: '40%',
+                      maxWidth: 48,
+                      height: 'auto',
+                      opacity: 0.28,
+                      filter: isLight ? 'brightness(0.7)' : 'brightness(0.5)',
+                    }}
+                  />
+                </Box>
+              )}
+              <video
+                src={item.imagen}
+                poster={item.thumbnailUrl || undefined}
+                autoPlay
+                muted
+                loop
+                playsInline
+                onLoadedData={() => setVideoLoaded(true)}
+                onError={() => setPosterError(true)}
                 style={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
+                  opacity: videoLoaded ? 1 : 0,
+                  transition: 'opacity 0.3s ease',
                 }}
               />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  width: 48,
-                  height: 48,
-                  borderRadius: '50%',
-                  bgcolor: 'rgba(0, 0, 0, 0.6)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-                aria-label="Video disponible"
-              >
-                <Play size={24} color="white" fill="white" />
-              </Box>
-            </Box>
+            </>
           ) : (
-            // Image with lazy loading
+            /* Image product */
             <img
               src={item.imagen}
               alt={`${item.nombre} - ${item.color}`}
