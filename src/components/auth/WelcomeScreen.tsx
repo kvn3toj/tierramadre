@@ -62,11 +62,49 @@ export default function WelcomeScreen() {
 
   // Handle opening in external browser (iOS/Android specific)
   const handleOpenExternal = () => {
-    // On iOS, we can try to open Safari with the URL
-    // On Android, the share menu often has "Open in Browser" option
     const url = window.location.href;
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isAndroid = /Android/i.test(navigator.userAgent);
 
-    // Try native share API first (works well on mobile)
+    // Try platform-specific deep links to external browsers
+    if (isAndroid) {
+      // Android: Use intent URL to open in default browser
+      // Format: intent://HOST/PATH#Intent;scheme=https;package=com.android.chrome;end
+      try {
+        const intentUrl = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;action=android.intent.action.VIEW;end`;
+        window.location.href = intentUrl;
+        return;
+      } catch {
+        // Intent failed, fall through to share
+      }
+    }
+
+    if (isIOS) {
+      // iOS: Try x-safari-https scheme (works on some versions)
+      // Also works: googlechrome:// for Chrome
+      try {
+        const safariUrl = url.replace(/^https:\/\//, 'x-safari-https://');
+        window.location.href = safariUrl;
+        // Give it a moment to redirect, then fall back
+        setTimeout(() => {
+          // If we're still here, Safari scheme didn't work - use share
+          if (navigator.share) {
+            navigator.share({
+              title: 'Tierra Madre',
+              text: 'Abre en Safari para iniciar sesión con Google',
+              url: url,
+            }).catch(() => handleCopyUrl());
+          } else {
+            handleCopyUrl();
+          }
+        }, 500);
+        return;
+      } catch {
+        // Safari scheme failed, fall through to share
+      }
+    }
+
+    // Fallback: Use native share API (shows "Open in Browser" option on most devices)
     if (navigator.share) {
       navigator.share({
         title: 'Tierra Madre',
@@ -77,7 +115,7 @@ export default function WelcomeScreen() {
         handleCopyUrl();
       });
     } else {
-      // Fallback: copy URL
+      // Final fallback: copy URL
       handleCopyUrl();
     }
   };
@@ -230,71 +268,72 @@ export default function WelcomeScreen() {
             {/* Google Sign-In - Only shown if configured */}
             {isGoogleConfigured && (
               <>
-                {/* In-app browser warning (Telegram, Instagram, etc.) */}
+                {/* In-app browser notice (Telegram, Instagram, etc.) */}
                 {isInAppBrowser ? (
                   <Box sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: alpha(semanticColors.warning.main, 0.1),
-                    border: `1px solid ${alpha(semanticColors.warning.main, 0.3)}`,
+                    p: 2.5,
+                    borderRadius: 3,
+                    bgcolor: alpha(emeraldCore.primary, 0.08),
+                    border: `1px solid ${alpha(emeraldCore.primary, 0.2)}`,
                   }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        color: emeraldCore.light,
+                        mb: 1,
+                        textAlign: 'center',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {t.auth.inAppBrowserTitle || 'Para una mejor experiencia'}
+                    </Typography>
                     <Typography
                       variant="body2"
                       sx={{
-                        color: surfacesDark.text.primary,
-                        mb: 1.5,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {t.auth.inAppBrowserWarning?.replace('{browser}', browserName || 'esta app') ||
-                        `El navegador de ${browserName || 'esta app'} no soporta Google Sign-In.`}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{
                         color: surfacesDark.text.secondary,
-                        display: 'block',
-                        mb: 2,
+                        mb: 2.5,
                         textAlign: 'center',
+                        lineHeight: 1.5,
                       }}
                     >
-                      {t.auth.openInExternalBrowser || 'Abre en Chrome o Safari para usar Google'}
+                      {t.auth.inAppBrowserMessage || 'Abre en tu navegador favorito (Chrome, Safari, etc.) para iniciar sesión con Google.'}
                     </Typography>
 
-                    <Stack direction="row" spacing={1} justifyContent="center">
+                    <Stack spacing={1.5}>
                       <Button
                         variant="contained"
-                        size="small"
+                        fullWidth
                         startIcon={<OpenInNew />}
                         onClick={handleOpenExternal}
                         sx={{
                           bgcolor: emeraldCore.primary,
                           color: '#000',
                           textTransform: 'none',
+                          py: 1.2,
+                          fontWeight: 500,
                           '&:hover': {
                             bgcolor: emeraldCore.light,
                           },
                         }}
                       >
-                        {t.auth.shareLink || 'Compartir enlace'}
+                        {t.auth.openInBrowser || 'Abrir en navegador'}
                       </Button>
                       <Button
-                        variant="outlined"
+                        variant="text"
                         size="small"
                         startIcon={urlCopied ? <CheckCircleOutline /> : <ContentCopy />}
                         onClick={handleCopyUrl}
                         sx={{
-                          borderColor: alpha('#FFFFFF', 0.3),
-                          color: urlCopied ? emeraldCore.primary : surfacesDark.text.secondary,
+                          color: urlCopied ? emeraldCore.primary : surfacesDark.text.tertiary,
                           textTransform: 'none',
                           '&:hover': {
-                            borderColor: emeraldCore.primary,
+                            color: surfacesDark.text.secondary,
                           },
                         }}
                       >
                         {urlCopied
                           ? (t.auth.urlCopied || 'Copiado')
-                          : (t.auth.copyUrl || 'Copiar URL')}
+                          : (t.auth.copyUrl || 'Copiar enlace')}
                       </Button>
                     </Stack>
                   </Box>

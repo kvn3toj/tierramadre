@@ -214,10 +214,10 @@ export const es = {
     invitationOnly: 'Acceso solo con invitación',
     invitationOnlyMessage: 'El acceso de invitado requiere un enlace de invitación. Solicita uno a un embajador de Tierra Madre.',
     // In-app browser (Telegram, Instagram, etc.) messages
-    inAppBrowserWarning: 'El navegador de {browser} no soporta Google Sign-In.',
-    openInExternalBrowser: 'Abre en Chrome o Safari para usar Google',
-    shareLink: 'Compartir enlace',
-    copyUrl: 'Copiar URL',
+    inAppBrowserTitle: 'Para una mejor experiencia',
+    inAppBrowserMessage: 'Abre en tu navegador favorito (Chrome, Safari, etc.) para iniciar sesión con Google.',
+    openInBrowser: 'Abrir en navegador',
+    copyUrl: 'Copiar enlace',
     urlCopied: 'Copiado',
   },
 
