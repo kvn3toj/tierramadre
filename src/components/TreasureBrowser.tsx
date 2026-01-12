@@ -237,6 +237,12 @@ export default function TreasureBrowser() {
   // Search input ref for keyboard navigation
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Hide recently viewed carousel when scrolling down in grid
+  const [hideRecentlyViewed, setHideRecentlyViewed] = useState(false);
+  const handleScrollDirectionChange = useCallback((direction: 'up' | 'down') => {
+    setHideRecentlyViewed(direction === 'down');
+  }, []);
+
   // Get visible items based on pagination
   const visibleTreasure = useMemo(
     () => pagination.getVisibleItems(sortedTreasure),
@@ -1022,8 +1028,8 @@ export default function TreasureBrowser() {
         </Box>
       )}
 
-      {/* Recently Viewed Carousel */}
-      {recentlyViewedItems.length > 0 && (
+      {/* Recently Viewed Carousel - Hidden when scrolling down in grid */}
+      {recentlyViewedItems.length > 0 && !hideRecentlyViewed && (
         <RecentlyViewedCarousel
           items={recentlyViewedItems}
           onItemClick={handleProductClick}
@@ -1039,6 +1045,7 @@ export default function TreasureBrowser() {
           onItemClick={handleProductClick}
           onCertClick={handleCertClick}
           onToggleFavorite={toggleFavorite}
+          onScrollDirectionChange={handleScrollDirectionChange}
           renderCard={(props) => (
             <GridCard
               item={props.item}

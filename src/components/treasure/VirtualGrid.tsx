@@ -36,6 +36,8 @@ interface VirtualGridProps {
   }) => React.ReactNode;
   /** Minimum height for the grid container */
   minHeight?: number;
+  /** Callback when scroll direction changes */
+  onScrollDirectionChange?: (direction: 'up' | 'down') => void;
 }
 
 /**
@@ -144,6 +146,7 @@ export default function VirtualGrid({
   onToggleFavorite,
   renderCard,
   minHeight = 600,
+  onScrollDirectionChange,
 }: VirtualGridProps) {
   const theme = useTheme();
 
@@ -151,6 +154,10 @@ export default function VirtualGrid({
   const [viewportWidth, setViewportWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 390
   );
+
+  // Track scroll position for direction detection
+  const lastScrollTop = React.useRef(0);
+  const lastDirection = React.useRef<'up' | 'down' | null>(null);
 
   // Update viewport width on resize
   useEffect(() => {
@@ -260,6 +267,23 @@ export default function VirtualGrid({
         rowCount={rowCount}
         rowHeight={cardHeight + gap}
         overscanCount={3}
+        onScroll={(event) => {
+          if (!onScrollDirectionChange) return;
+
+          const target = event.currentTarget;
+          const scrollTop = target.scrollTop;
+          const scrollThreshold = 10;
+          const delta = scrollTop - lastScrollTop.current;
+
+          if (Math.abs(delta) > scrollThreshold) {
+            const direction = delta > 0 ? 'down' : 'up';
+            if (direction !== lastDirection.current) {
+              lastDirection.current = direction;
+              onScrollDirectionChange(direction);
+            }
+            lastScrollTop.current = scrollTop;
+          }
+        }}
         style={{
           height: '100%',
           width: '100%',
