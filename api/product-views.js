@@ -286,35 +286,123 @@ async function getUserViews(sheets, email, name) {
 
   const rows = response.data.values || [];
   if (rows.length <= 1) {
-    return { success: true, totalViews: 0, views: [] };
+    return {
+      success: true,
+      user: { email: email || null, name: name || null, role: 'guest', firstSeen: null, lastSeen: null },
+      totalViews: 0,
+      uniqueProducts: 0,
+      products: [],
+      recentViews: [],
+      deviceBreakdown: {},
+      browserBreakdown: {},
+    };
   }
 
   const normalizedEmail = email?.toLowerCase().trim();
   const normalizedName = name?.toLowerCase().trim();
 
-  const views = rows.slice(1)
-    .filter(row => {
-      const rowEmail = (row[9] || '').toLowerCase().trim();
-      const rowName = (row[8] || '').toLowerCase().trim();
-      if (normalizedEmail && rowEmail === normalizedEmail) return true;
-      if (normalizedName && rowName.includes(normalizedName)) return true;
-      return false;
-    })
-    .map(row => ({
-      timestamp: row[0],
-      itemId: row[1],
-      productName: row[2],
-      deviceType: row[5],
-      browser: row[6],
+  // Collect all matching views
+  const matchingViews = [];
+  const productMap = {}; // Track per-product stats
+  const deviceCounts = {};
+  const browserCounts = {};
+  let userInfo = { email: null, name: null, role: 'guest' };
+  let firstSeen = null;
+  let lastSeen = null;
+
+  for (const row of rows.slice(1)) {
+    const rowEmail = (row[9] || '').toLowerCase().trim();
+    const rowName = (row[8] || '').toLowerCase().trim();
+
+    const isMatch =
+      (normalizedEmail && rowEmail === normalizedEmail) ||
+      (normalizedName && rowName.includes(normalizedName));
+
+    if (!isMatch) continue;
+
+    const timestamp = row[0];
+    const itemId = row[1];
+    const productName = row[2] || `Product ${itemId}`;
+    const deviceType = row[5] || 'unknown';
+    const browser = row[6] || 'unknown';
+    const country = row[7] || '';
+    const userName = row[8] || '';
+    const userEmail = row[9] || '';
+    const userRole = row[10] || 'guest';
+
+    // Update user info (take the most recent)
+    if (userName || userEmail) {
+      userInfo = { email: userEmail || null, name: userName || null, role: userRole };
+    }
+
+    // Track first/last seen
+    const viewTime = new Date(timestamp).getTime();
+    if (!firstSeen || viewTime < new Date(firstSeen).getTime()) {
+      firstSeen = timestamp;
+    }
+    if (!lastSeen || viewTime > new Date(lastSeen).getTime()) {
+      lastSeen = timestamp;
+    }
+
+    // Track per-product stats
+    if (!productMap[itemId]) {
+      productMap[itemId] = {
+        itemId: parseInt(itemId),
+        productName,
+        views: 0,
+        firstView: timestamp,
+        lastView: timestamp,
+        devices: new Set(),
+        browsers: new Set(),
+      };
+    }
+    productMap[itemId].views++;
+    productMap[itemId].devices.add(deviceType);
+    productMap[itemId].browsers.add(browser);
+    if (viewTime < new Date(productMap[itemId].firstView).getTime()) {
+      productMap[itemId].firstView = timestamp;
+    }
+    if (viewTime > new Date(productMap[itemId].lastView).getTime()) {
+      productMap[itemId].lastView = timestamp;
+    }
+
+    // Track device/browser counts
+    deviceCounts[deviceType] = (deviceCounts[deviceType] || 0) + 1;
+    browserCounts[browser] = (browserCounts[browser] || 0) + 1;
+
+    // Collect for recent views
+    matchingViews.push({ timestamp, itemId: parseInt(itemId), productName, deviceType, browser, country });
+  }
+
+  // Convert productMap to array and sort by views
+  const products = Object.values(productMap)
+    .map(p => ({
+      ...p,
+      devices: Array.from(p.devices),
+      browsers: Array.from(p.browsers),
     }))
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    .sort((a, b) => b.views - a.views);
+
+  // Sort recent views by timestamp (newest first)
+  const recentViews = matchingViews
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 100);
 
   return {
     success: true,
-    email: email || undefined,
-    name: name || undefined,
-    totalViews: views.length,
-    views: views.slice(0, 100),
+    user: {
+      email: userInfo.email || email || null,
+      name: userInfo.name || name || null,
+      role: userInfo.role,
+      firstSeen,
+      lastSeen,
+    },
+    totalViews: matchingViews.length,
+    uniqueProducts: products.length,
+    products,
+    recentViews,
+    deviceBreakdown: deviceCounts,
+    browserBreakdown: browserCounts,
   };
 }
 
