@@ -18,6 +18,7 @@ import {
   isCloudinaryUrl,
 } from '../utils/cloudinaryImage';
 import { createLogger } from '../utils/logger';
+import ImageWatermark from './ImageWatermark';
 
 const log = createLogger('ProgressiveImage');
 
@@ -192,7 +193,7 @@ export default function ProgressiveImage({
     ...(aspectRatio ? { aspectRatio } : { height }),
   };
 
-  // No source provided - show placeholder
+  // No source provided - show placeholder with watermark
   if (!src) {
     return (
       <Box ref={ref} sx={containerStyles}>
@@ -220,6 +221,8 @@ export default function ProgressiveImage({
             />
           </Box>
         )}
+        {/* Watermark for placeholder */}
+        <ImageWatermark opacity={0.2} size="medium" />
       </Box>
     );
   }
@@ -344,6 +347,9 @@ export default function ProgressiveImage({
           />
         </Box>
       )}
+
+      {/* Watermark overlay - visible on loaded images and placeholders */}
+      <ImageWatermark opacity={0.2} size="medium" />
     </Box>
   );
 }
