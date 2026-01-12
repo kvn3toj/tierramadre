@@ -1,7 +1,7 @@
 /**
  * ImageWatermark Component
- * Displays a subtle logo watermark overlay on images with 0.2 opacity.
- * Used for product protection on images and placeholders.
+ * Displays a logo watermark overlay on images with 0.2 opacity.
+ * Used for loading states and products without images.
  */
 import { Box } from '@mui/material';
 import logoSymbol from '../assets/logo-symbol.png';

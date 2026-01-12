@@ -221,7 +221,7 @@ export default function ProgressiveImage({
             />
           </Box>
         )}
-        {/* Watermark for placeholder */}
+        {/* Watermark for products without images */}
         <ImageWatermark opacity={0.2} size="medium" />
       </Box>
     );
@@ -348,8 +348,8 @@ export default function ProgressiveImage({
         </Box>
       )}
 
-      {/* Watermark overlay - visible on loaded images and placeholders */}
-      <ImageWatermark opacity={0.2} size="medium" />
+      {/* Watermark overlay - only visible while loading or on error (not on loaded images) */}
+      {(!loaded || error) && <ImageWatermark opacity={0.2} size="medium" />}
     </Box>
   );
 }

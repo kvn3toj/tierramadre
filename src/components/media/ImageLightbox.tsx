@@ -22,7 +22,6 @@ import { motion, AnimatePresence, PanInfo, useAnimation } from 'framer-motion';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import { lightTokens, darkTokens } from '../../design-system';
 import ProtectedContent from '../ProtectedContent';
-import ImageWatermark from '../ImageWatermark';
 
 interface ImageLightboxProps {
   images: Array<{
@@ -329,8 +328,6 @@ export default function ImageLightbox({
                       } as React.CSSProperties}
                       draggable={false}
                     />
-                    {/* Watermark overlay for lightbox */}
-                    <ImageWatermark opacity={0.2} size="large" />
                   </motion.div>
                 </AnimatePresence>
               </motion.div>
