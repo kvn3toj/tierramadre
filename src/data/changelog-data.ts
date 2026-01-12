@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-12T04:37:53.965Z
+ * Generated at: 2026-01-12T04:51:20.507Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-12T04:37:53.965Z",
+  "generatedAt": "2026-01-12T04:51:20.507Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "13 Dic, 2025",
@@ -56,28 +56,28 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "b6593b7",
-    "lastCommitDate": "2026-01-11 23:37:50 -0500"
+    "lastCommitHash": "b814d6d",
+    "lastCommitDate": "2026-01-11 23:51:17 -0500"
   },
   "stats": {
-    "totalCommits": 221,
-    "totalAdditions": 88884,
-    "totalDeletions": 61366,
-    "totalFilesChanged": 1444,
-    "netLines": 27518
+    "totalCommits": 223,
+    "totalAdditions": 89087,
+    "totalDeletions": 71555,
+    "totalFilesChanged": 1490,
+    "netLines": 17532
   },
   "categoryStats": {
+    "cleanup": 21,
+    "bugfix": 49,
     "performance": 12,
-    "bugfix": 48,
     "analytics": 6,
     "auth": 15,
     "ux": 47,
-    "other": 73,
-    "cleanup": 20
+    "other": 73
   },
   "typeStats": {
+    "fix": 80,
     "chore": 14,
-    "fix": 78,
     "feat": 93,
     "refactor": 26,
     "other": 7,
@@ -87,19 +87,19 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "index.html",
-      "count": 32
+      "count": 33
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 28
+      "count": 29
     },
     {
       "file": "src/App.tsx",
-      "count": 27
+      "count": 28
     },
     {
       "file": "public/version.json",
-      "count": 23
+      "count": 24
     },
     {
       "file": "src/components/InventoryBrowser.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 213
+      "commits": 215
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,37 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "b814d6d",
+      "message": "Remove deleted API refs from vercel.json",
+      "fullMessage": "fix: Remove deleted API refs from vercel.json",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-11",
+      "type": "fix",
+      "category": "cleanup",
+      "additions": 0,
+      "deletions": 33,
+      "filesChanged": 1
+    },
+    {
+      "hash": "ce4aea4",
+      "message": "Reduce API endpoints from 44 to 12 for Vercel Hobby limit",
+      "fullMessage": "fix: Reduce API endpoints from 44 to 12 for Vercel Hobby limit",
+      "author": "Kvn3Toj",
+      "relativeTime": "74 seconds ago",
+      "date": "2026-01-11",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 203,
+      "deletions": 10156,
+      "filesChanged": 45
+    },
+    {
       "hash": "b6593b7",
       "message": "Bump version to force cache refresh for asesor roles",
       "fullMessage": "chore: Bump version to force cache refresh for asesor roles",
       "author": "Kvn3Toj",
-      "relativeTime": "1 second ago",
+      "relativeTime": "13 minutes ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "performance",
@@ -155,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Use thumbnail images instead of autoplay videos in grid cards",
       "fullMessage": "fix: Use thumbnail images instead of autoplay videos in grid cards",
       "author": "Kvn3Toj",
-      "relativeTime": "3 minutes ago",
+      "relativeTime": "17 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -168,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Add detailed analytics pages for products and users",
       "fullMessage": "feat: Add detailed analytics pages for products and users",
       "author": "Kvn3Toj",
-      "relativeTime": "17 minutes ago",
+      "relativeTime": "31 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "analytics",
@@ -181,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Re-validate Google auth users against sheets on app load",
       "fullMessage": "fix: Re-validate Google auth users against sheets on app load",
       "author": "Kvn3Toj",
-      "relativeTime": "19 minutes ago",
+      "relativeTime": "32 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "auth",
@@ -194,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Replace video play icons with autoplay videos in grid cards",
       "fullMessage": "fix: Replace video play icons with autoplay videos in grid cards",
       "author": "Kvn3Toj",
-      "relativeTime": "32 minutes ago",
+      "relativeTime": "45 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -207,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Fix unused import and update build version",
       "fullMessage": "chore: Fix unused import and update build version",
       "author": "Kvn3Toj",
-      "relativeTime": "42 minutes ago",
+      "relativeTime": "55 minutes ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "ux",
@@ -220,7 +246,7 @@ export const changelogData: ChangelogData = {
       "message": "Reorder More menu options and unify settings style",
       "fullMessage": "refactor: Reorder More menu options and unify settings style",
       "author": "Kvn3Toj",
-      "relativeTime": "45 minutes ago",
+      "relativeTime": "58 minutes ago",
       "date": "2026-01-11",
       "type": "refactor",
       "category": "other",
@@ -233,7 +259,7 @@ export const changelogData: ChangelogData = {
       "message": "Hide Comunidad TM price from shared product links",
       "fullMessage": "fix: Hide Comunidad TM price from shared product links",
       "author": "Kvn3Toj",
-      "relativeTime": "46 minutes ago",
+      "relativeTime": "59 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -246,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve responsive layout for Treasure Browser on desktop/iPad",
       "fullMessage": "fix: Improve responsive layout for Treasure Browser on desktop/iPad",
       "author": "Kvn3Toj",
-      "relativeTime": "48 minutes ago",
+      "relativeTime": "62 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "ux",
@@ -259,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Clear treasure filters after 3min inactivity or browser close",
       "fullMessage": "fix: Clear treasure filters after 3min inactivity or browser close",
       "author": "Kvn3Toj",
-      "relativeTime": "49 minutes ago",
+      "relativeTime": "62 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -272,7 +298,7 @@ export const changelogData: ChangelogData = {
       "message": "Extract ValuationPage sub-components and shared chart utilities",
       "fullMessage": "refactor: Extract ValuationPage sub-components and shared chart utilities",
       "author": "Kvn3Toj",
-      "relativeTime": "65 minutes ago",
+      "relativeTime": "79 minutes ago",
       "date": "2026-01-11",
       "type": "refactor",
       "category": "other",
@@ -285,7 +311,7 @@ export const changelogData: ChangelogData = {
       "message": "perf: Improve loading speed for returning users with stale-while-revalidate",
       "fullMessage": "perf: Improve loading speed for returning users with stale-while-revalidate",
       "author": "Kvn3Toj",
-      "relativeTime": "75 minutes ago",
+      "relativeTime": "89 minutes ago",
       "date": "2026-01-11",
       "type": "other",
       "category": "performance",
@@ -376,7 +402,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve in-app browser UX for Google Auth",
       "fullMessage": "feat: Improve in-app browser UX for Google Auth",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "ux",
@@ -402,7 +428,7 @@ export const changelogData: ChangelogData = {
       "message": "Block large binary files in .gitignore",
       "fullMessage": "chore: Block large binary files in .gitignore",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "4 hours ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "other",
@@ -675,7 +701,7 @@ export const changelogData: ChangelogData = {
       "message": "Ensure bottom nav stays visible in PWA standalone mode",
       "fullMessage": "fix: Ensure bottom nav stays visible in PWA standalone mode",
       "author": "Kvn3Toj",
-      "relativeTime": "31 hours ago",
+      "relativeTime": "32 hours ago",
       "date": "2026-01-10",
       "type": "fix",
       "category": "bugfix",

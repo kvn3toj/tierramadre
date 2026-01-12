@@ -68,7 +68,7 @@ export default function AddToTreasureModal({
   open,
   onClose,
   imageUrl,
-  onSuccess,
+  onSuccess: _onSuccess,
 }: AddToTreasureModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,39 +96,8 @@ export default function AddToTreasureModal({
     setError(null);
 
     try {
-      const response = await fetch('/api/add-treasure-item', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre: nombre.trim(),
-          peso: peso || undefined,
-          color,
-          calidad,
-          talla,
-          medidas: medidas || undefined,
-          costoTM: costoTM ? parseInt(costoTM.replace(/[^\d]/g, '')) : undefined,
-          precioCOP: precioCOP ? parseInt(precioCOP.replace(/[^\d]/g, '')) : undefined,
-          ubicacion,
-          asesor: asesor || undefined,
-          imagenUrl: imageUrl,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || 'Error al agregar al tesoro');
-      }
-
-      setSuccess({ itemNumber: result.item, nombre: result.nombre });
-      onSuccess?.(result.item);
-
-      // Reset form after success
-      setTimeout(() => {
-        resetForm();
-        onClose();
-      }, 2000);
-
+      // API endpoint temporarily disabled to stay within Vercel Hobby limit
+      throw new Error('Agregar productos temporalmente deshabilitado. Usa Google Sheets directamente.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {

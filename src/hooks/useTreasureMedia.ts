@@ -252,20 +252,7 @@ export function useTreasureMedia(): UseTreasureMediaReturn {
         }
       }
 
-      // Fallback: Legacy Cloudinary folder (for backward compatibility)
-      const cloudinaryResponse = await fetch(`/api/get-product-media?itemNumber=${itemNumber}`);
-      if (cloudinaryResponse.ok) {
-        const cloudinaryData = await cloudinaryResponse.json();
-        if (cloudinaryData.media && cloudinaryData.media.length > 0) {
-          const newGalleries = {
-            ...galleries,
-            [itemNumber]: cloudinaryData.media,
-          };
-          saveGalleries(newGalleries);
-          return cloudinaryData.media;
-        }
-      }
-
+      // Legacy Cloudinary API disabled - return cached/local galleries only
       return galleries[itemNumber] || [];
     } catch (error) {
       log.error('Error fetching gallery:', error);

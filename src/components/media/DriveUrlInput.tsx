@@ -126,38 +126,8 @@ export default function DriveUrlInput({
     setError(null);
 
     try {
-      const response = await fetch('/api/fetch-drive-to-cloudinary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ driveUrl, itemNumber }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || data.error || 'Upload failed');
-      }
-
-      setStatus('success');
-
-      // Notify parent component
-      onUploadComplete(data.url, {
-        publicId: data.publicId,
-        format: data.format,
-        width: data.width,
-        height: data.height,
-        resourceType: data.resourceType,
-        bytes: data.bytes,
-        originalName: data.originalName,
-      });
-
-      // Clear input after successful upload
-      setTimeout(() => {
-        setDriveUrl('');
-        setPreviewUrl(null);
-        setStatus('idle');
-      }, 2000);
-
+      // API endpoint temporarily disabled to stay within Vercel Hobby limit
+      throw new Error('Subida desde Drive temporalmente deshabilitada. Usa las carpetas de Drive directamente.');
     } catch (err) {
       setStatus('error');
       setError(err instanceof Error ? err.message : 'Failed to upload');

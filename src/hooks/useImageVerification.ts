@@ -62,74 +62,46 @@ export interface CloudinaryImagesSummary {
 }
 
 export function useImageVerification() {
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationResults, setVerificationResults] = useState<Map<number, ProductImagesResult>>(new Map());
-  const [cloudinarySummary, setCloudinarySummary] = useState<CloudinaryImagesSummary | null>(null);
+  // State kept for interface compatibility even though APIs are disabled
+  const [isVerifying] = useState(false);
+  const [verificationResults] = useState<Map<number, ProductImagesResult>>(new Map());
+  const [cloudinarySummary] = useState<CloudinaryImagesSummary | null>(null);
 
   /**
    * Verify a single image URL
+   * NOTE: API endpoint temporarily disabled to stay within Vercel Hobby limit
    */
   const verifyImageUrl = useCallback(async (url: string): Promise<ImageVerificationResult> => {
-    setIsVerifying(true);
-    try {
-      const response = await fetch(`/api/verify-image?url=${encodeURIComponent(url)}`);
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      return {
-        success: false,
-        url,
-        source: 'external',
-        error: error instanceof Error ? error.message : 'Verification failed',
-      };
-    } finally {
-      setIsVerifying(false);
-    }
+    // API disabled - return basic result
+    return {
+      success: true,
+      url,
+      source: 'external',
+    };
   }, []);
 
   /**
    * Get all images for a product and their quality scores
+   * NOTE: API endpoint temporarily disabled to stay within Vercel Hobby limit
    */
   const verifyProductImages = useCallback(async (itemNumber: number): Promise<ProductImagesResult> => {
-    setIsVerifying(true);
-    try {
-      const response = await fetch(`/api/verify-image?itemNumber=${itemNumber}`);
-      const result = await response.json();
-
-      // Cache result
-      setVerificationResults(prev => new Map(prev).set(itemNumber, result));
-
-      return result;
-    } catch (error) {
-      const errorResult: ProductImagesResult = {
-        success: false,
-        itemNumber,
-        imageCount: 0,
-        images: [],
-        bestImage: null,
-      };
-      return errorResult;
-    } finally {
-      setIsVerifying(false);
-    }
+    // API disabled - return empty result
+    return {
+      success: true,
+      itemNumber,
+      imageCount: 0,
+      images: [],
+      bestImage: null,
+    };
   }, []);
 
   /**
    * Get summary of all images in Cloudinary
+   * NOTE: API endpoint temporarily disabled to stay within Vercel Hobby limit
    */
   const fetchCloudinarySummary = useCallback(async (): Promise<CloudinaryImagesSummary | null> => {
-    setIsVerifying(true);
-    try {
-      const response = await fetch('/api/check-cloudinary-images');
-      const result = await response.json();
-      setCloudinarySummary(result);
-      return result;
-    } catch (error) {
-      console.error('Failed to fetch Cloudinary summary:', error);
-      return null;
-    } finally {
-      setIsVerifying(false);
-    }
+    // API disabled - return null
+    return null;
   }, []);
 
   /**
