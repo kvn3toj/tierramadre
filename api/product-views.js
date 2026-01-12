@@ -124,9 +124,9 @@ async function getStats(sheets) {
   const topProducts = Object.entries(productCounts)
     .map(([key, count]) => {
       const [itemId, productName] = key.split('|');
-      return { itemId: parseInt(itemId), productName, viewCount: count };
+      return { itemId: parseInt(itemId), productName, views: count };
     })
-    .sort((a, b) => b.viewCount - a.viewCount)
+    .sort((a, b) => b.views - a.views)
     .slice(0, 20);
 
   return {
