@@ -204,17 +204,15 @@ async function getStats(sheets) {
       guestViews++;
     }
 
-    // Recent activity (last 20)
-    if (recentActivity.length < 20) {
-      recentActivity.push({
-        timestamp,
-        itemId: itemNum,
-        productName: productName || `Item ${itemNum}`,
-        userName: userName || null,
-        userEmail: userEmail || null,
-        userRole: userRole || 'guest',
-      });
-    }
+    // Collect ALL activity for later sorting (we'll take the most recent 20)
+    recentActivity.push({
+      timestamp,
+      itemId: itemNum,
+      productName: productName || `Item ${itemNum}`,
+      userName: userName || null,
+      userEmail: userEmail || null,
+      userRole: userRole || 'guest',
+    });
   }
 
   // Top products
@@ -232,15 +230,16 @@ async function getStats(sheets) {
     .sort((a, b) => b.views - a.views)
     .slice(0, 10);
 
-  // Sort recent by timestamp desc
+  // Sort recent by timestamp desc and take only the last 20
   recentActivity.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  const recentActivitySliced = recentActivity.slice(0, 20);
 
   return {
     success: true,
     views,
     topProducts,
     topViewers,
-    recentActivity,
+    recentActivity: recentActivitySliced,
     totalViews: dataRows.length,
     todayViews,
     weekViews,
