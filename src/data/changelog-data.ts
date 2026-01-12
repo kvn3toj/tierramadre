@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-11T22:36:22.465Z
+ * Generated at: 2026-01-12T00:43:01.859Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-11T22:36:22.465Z",
+  "generatedAt": "2026-01-12T00:43:01.859Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "12 Dic, 2025",
@@ -56,33 +56,33 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "ec6dc5c",
-    "lastCommitDate": "2026-01-11 17:36:17 -0500"
+    "lastCommitHash": "27a4ed8",
+    "lastCommitDate": "2026-01-11 19:42:57 -0500"
   },
   "stats": {
-    "totalCommits": 190,
-    "totalAdditions": 82871,
-    "totalDeletions": 162781,
-    "totalFilesChanged": 1368,
-    "netLines": -79910
+    "totalCommits": 196,
+    "totalAdditions": 83237,
+    "totalDeletions": 162942,
+    "totalFilesChanged": 1392,
+    "netLines": -79705
   },
   "categoryStats": {
+    "other": 65,
+    "auth": 12,
+    "bugfix": 42,
     "cleanup": 19,
-    "other": 61,
-    "auth": 11,
     "ux": 44,
     "analytics": 5,
-    "bugfix": 41,
     "performance": 9
   },
   "typeStats": {
-    "feat": 82,
+    "feat": 86,
+    "fix": 68,
+    "docs": 2,
     "chore": 9,
-    "fix": 67,
     "other": 6,
     "refactor": 24,
-    "style": 1,
-    "docs": 1
+    "style": 1
   },
   "mostChangedFiles": [
     {
@@ -95,11 +95,11 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "index.html",
-      "count": 22
+      "count": 23
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 22
+      "count": 23
     },
     {
       "file": ".claude/settings.local.json",
@@ -119,7 +119,7 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "public/version.json",
-      "count": 15
+      "count": 16
     },
     {
       "file": "src/components/ios/IOSTabBar.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 182
+      "commits": 188
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,89 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "27a4ed8",
+      "message": "Restrict guest mode to invitation-only access",
+      "fullMessage": "feat: Restrict guest mode to invitation-only access",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "other",
+      "additions": 25,
+      "deletions": 2,
+      "filesChanged": 3
+    },
+    {
+      "hash": "8c76088",
+      "message": "Restrict view counts to admins and make search bar sticky",
+      "fullMessage": "feat: Restrict view counts to admins and make search bar sticky",
+      "author": "Kvn3Toj",
+      "relativeTime": "37 minutes ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "auth",
+      "additions": 35,
+      "deletions": 31,
+      "filesChanged": 3
+    },
+    {
+      "hash": "5166283",
+      "message": "Proxy video thumbnails to avoid CORS issues",
+      "fullMessage": "fix: Proxy video thumbnails to avoid CORS issues",
+      "author": "Kvn3Toj",
+      "relativeTime": "38 minutes ago",
+      "date": "2026-01-11",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 17,
+      "deletions": 25,
+      "filesChanged": 3
+    },
+    {
+      "hash": "8c8044e",
+      "message": "Use objectFit cover for product gallery media",
+      "fullMessage": "feat: Use objectFit cover for product gallery media",
+      "author": "Kvn3Toj",
+      "relativeTime": "2 hours ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "other",
+      "additions": 27,
+      "deletions": 3,
+      "filesChanged": 2
+    },
+    {
+      "hash": "6f43588",
+      "message": "Change product gallery to 1:1 square aspect ratio",
+      "fullMessage": "feat: Change product gallery to 1:1 square aspect ratio",
+      "author": "Kvn3Toj",
+      "relativeTime": "2 hours ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "other",
+      "additions": 4,
+      "deletions": 5,
+      "filesChanged": 1
+    },
+    {
+      "hash": "fda4196",
+      "message": "Clarify Google Drive product folders as primary image source",
+      "fullMessage": "docs: Clarify Google Drive product folders as primary image source",
+      "author": "Kvn3Toj",
+      "relativeTime": "2 hours ago",
+      "date": "2026-01-11",
+      "type": "docs",
+      "category": "other",
+      "additions": 258,
+      "deletions": 95,
+      "filesChanged": 12
+    },
+    {
       "hash": "ec6dc5c",
       "message": "Improve video player - autoplay muted, remove play icon, images first",
       "fullMessage": "feat: Improve video player - autoplay muted, remove play icon, images first",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "cleanup",
@@ -155,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Add batch thumbnails for treasure grid from Google Drive folders",
       "fullMessage": "feat: Add batch thumbnails for treasure grid from Google Drive folders",
       "author": "Kvn3Toj",
-      "relativeTime": "3 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -168,7 +246,7 @@ export const changelogData: ChangelogData = {
       "message": "Bump version to 2026.01.11.1656",
       "fullMessage": "chore: Bump version to 2026.01.11.1656",
       "author": "Kvn3Toj",
-      "relativeTime": "37 minutes ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "other",
@@ -181,7 +259,7 @@ export const changelogData: ChangelogData = {
       "message": "Convert Google Drive URLs to proxy for reliable image loading",
       "fullMessage": "feat: Convert Google Drive URLs to proxy for reliable image loading",
       "author": "Kvn3Toj",
-      "relativeTime": "46 minutes ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -194,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Update icons, refine blocking version check, remove unused logo",
       "fullMessage": "chore: Update icons, refine blocking version check, remove unused logo",
       "author": "Kvn3Toj",
-      "relativeTime": "63 minutes ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "cleanup",
@@ -207,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Block unauthorized users from Google sign-in",
       "fullMessage": "fix: Block unauthorized users from Google sign-in",
       "author": "Kvn3Toj",
-      "relativeTime": "66 minutes ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "auth",
@@ -220,7 +298,7 @@ export const changelogData: ChangelogData = {
       "message": "Replace Gem icon placeholders with logo-symbol watermark",
       "fullMessage": "feat: Replace Gem icon placeholders with logo-symbol watermark",
       "author": "Kvn3Toj",
-      "relativeTime": "66 minutes ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -233,7 +311,7 @@ export const changelogData: ChangelogData = {
       "message": "Optimize treasure grid with iOS HIG alignment",
       "fullMessage": "feat: Optimize treasure grid with iOS HIG alignment",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "4 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "ux",
@@ -246,7 +324,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product views tracking with user identity analytics",
       "fullMessage": "feat: Add product views tracking with user identity analytics",
       "author": "Kvn3Toj",
-      "relativeTime": "22 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-10",
       "type": "feat",
       "category": "analytics",
@@ -259,7 +337,7 @@ export const changelogData: ChangelogData = {
       "message": "Ensure bottom nav stays visible in PWA standalone mode",
       "fullMessage": "fix: Ensure bottom nav stays visible in PWA standalone mode",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2026-01-10",
       "type": "fix",
       "category": "bugfix",
