@@ -132,8 +132,8 @@ export const ValuationSection: React.FC = () => {
   const ref = React.useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: '-50px' });
 
-  // Year range state - default to full range (21 years: 2005-2026)
-  const [yearsBack, setYearsBack] = useState(21);
+  // Year range state - default to 5 years
+  const [yearsBack, setYearsBack] = useState(5);
 
   const glassEffect = isDarkMode ? glassDark.frosted : glassLight.frosted;
 

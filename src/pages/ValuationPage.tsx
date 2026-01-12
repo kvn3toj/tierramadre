@@ -17,21 +17,12 @@ import {
   CardContent,
   IconButton,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Slider,
   Tooltip,
 } from '@mui/material';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import {
   ArrowBack,
   TrendingUp,
-  EmojiEvents,
-  Public,
   Timeline,
   Verified,
   Info,
@@ -46,19 +37,31 @@ import {
   BRAZILIAN_VALUATION_DATA,
   ORIGIN_PRICE_HISTORY,
   HISTORICAL_EVENTS,
-  ORIGIN_COMPARISON,
-  AUCTION_RECORDS,
   VALUATION_METADATA,
   filterDataByYearRange,
   calculateAppreciation,
-  ValuationDataPoint,
 } from '../data/emerald-valuation';
+import {
+  calculateChartPointsMulti,
+  createLinePath,
+  formatPriceAxis,
+  calculateYAxisTicks,
+  calculateXAxisTicks,
+  ChartConfig,
+} from '../utils/chart-helpers';
+import {
+  StatCard,
+  TimeRangeSlider,
+  OriginComparisonTable,
+  ChartLegend,
+  AuctionRecordsCard,
+} from './ValuationPage/components';
 
 // =============================================================================
 // CHART CONFIGURATION - Larger for detail page
 // =============================================================================
 
-const CHART_CONFIG = {
+const CHART_CONFIG: ChartConfig = {
   width: 400,
   height: 280,
   padding: { top: 30, right: 60, bottom: 45, left: 55 },
@@ -67,82 +70,13 @@ const CHART_CONFIG = {
 
 const CURRENT_YEAR = 2026;
 const MIN_YEAR = 2005;
-const MIN_YEARS = 1; // Now supports 1 year since we have yearly data
+const MIN_YEARS = 1;
 const YEAR_MARKS = [
   { value: 1, label: '1A' },
   { value: 5, label: '5A' },
   { value: 10, label: '10A' },
   { value: 21, label: 'Max' },
 ];
-
-// =============================================================================
-// HELPER FUNCTIONS
-// =============================================================================
-
-interface ChartPoint extends ValuationDataPoint {
-  x: number;
-  y: number;
-}
-
-function calculateChartPointsMulti(
-  allData: ValuationDataPoint[][],
-  startYear: number,
-  endYear: number
-) {
-  const { width, height, padding } = CHART_CONFIG;
-  const chartWidth = width - padding.left - padding.right;
-  const chartHeight = height - padding.top - padding.bottom;
-
-  const allPrices = allData.flatMap((data) =>
-    data.filter((d) => d.year >= startYear && d.year <= endYear).map((d) => d.price)
-  );
-  const minPrice = 0;
-  const maxPrice = Math.max(...allPrices) * 1.1;
-  const priceRange = maxPrice - minPrice || 1;
-
-  return allData.map((data) => {
-    const filtered = data.filter((d) => d.year >= startYear && d.year <= endYear);
-    return filtered.map((point) => ({
-      ...point,
-      x: padding.left + ((point.year - startYear) / (endYear - startYear)) * chartWidth,
-      y: padding.top + chartHeight - ((point.price - minPrice) / priceRange) * chartHeight,
-    }));
-  });
-}
-
-function createLinePath(points: ChartPoint[]) {
-  if (points.length < 2) return '';
-  return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-}
-
-function formatPriceAxis(price: number): string {
-  if (price >= 1000) return `$${(price / 1000).toFixed(0)}k`;
-  return `$${price}`;
-}
-
-function calculateYAxisTicks(maxPrice: number): number[] {
-  const niceMax = Math.ceil(maxPrice / 20000) * 20000;
-  const step = niceMax / 5;
-  return [0, step, step * 2, step * 3, step * 4, niceMax];
-}
-
-function calculateXAxisTicks(startYear: number, endYear: number): number[] {
-  const range = endYear - startYear;
-  if (range <= 3) {
-    const ticks = [];
-    for (let y = startYear; y <= endYear; y++) ticks.push(y);
-    return ticks;
-  }
-  if (range <= 10) {
-    const step = Math.ceil(range / 5);
-    const ticks = [];
-    for (let y = startYear; y <= endYear; y += step) ticks.push(y);
-    if (ticks[ticks.length - 1] !== endYear) ticks.push(endYear);
-    return ticks;
-  }
-  const step = Math.floor(range / 5);
-  return [startYear, startYear + step, startYear + step * 2, startYear + step * 3, startYear + step * 4, endYear];
-}
 
 // =============================================================================
 // COMPONENT
@@ -167,7 +101,7 @@ const ValuationPage: React.FC = () => {
   );
 
   const chartPointsMulti = useMemo(
-    () => calculateChartPointsMulti(allOriginData, startYear, endYear),
+    () => calculateChartPointsMulti(allOriginData, startYear, endYear, CHART_CONFIG),
     [allOriginData, startYear, endYear]
   );
 
@@ -256,111 +190,17 @@ const ValuationPage: React.FC = () => {
                 </Tooltip>
               </Box>
 
-              {/* Time Range Slider - Enhanced UX */}
-              <Box
-                sx={{
-                  px: 2,
-                  py: 2,
-                  mb: 3,
-                  borderRadius: 2,
-                  bgcolor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}`,
-                }}
-              >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-                  <Typography sx={{ fontSize: '13px', color: 'text.secondary', fontWeight: 500 }}>
-                    Período de Análisis
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.75,
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 1.5,
-                      bgcolor: isDarkMode ? 'rgba(0,174,122,0.15)' : 'rgba(0,174,122,0.1)',
-                    }}
-                  >
-                    <Typography sx={{ fontSize: '14px', fontWeight: 700, color: emeraldCore.primary }}>
-                      {startYear} - {endYear}
-                    </Typography>
-                    <Typography sx={{ fontSize: '11px', color: 'text.secondary' }}>
-                      ({yearsBack} años)
-                    </Typography>
-                  </Box>
-                </Box>
-                <Slider
-                  value={yearsBack}
-                  onChange={handleSliderChange}
-                  min={MIN_YEARS}
-                  max={21}
-                  step={1}
-                  marks={YEAR_MARKS}
-                  valueLabelDisplay="auto"
-                  valueLabelFormat={(v) => `${v} años`}
-                  sx={{
-                    color: emeraldCore.primary,
-                    height: 8,
-                    '& .MuiSlider-thumb': {
-                      width: 24,
-                      height: 24,
-                      bgcolor: emeraldCore.primary,
-                      boxShadow: `0 2px 8px ${isDarkMode ? 'rgba(0,174,122,0.4)' : 'rgba(0,174,122,0.3)'}`,
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        width: 10,
-                        height: 10,
-                        borderRadius: '50%',
-                        bgcolor: 'white',
-                      },
-                      '&:hover, &.Mui-focusVisible': {
-                        boxShadow: `0 0 0 10px ${isDarkMode ? 'rgba(0,174,122,0.2)' : 'rgba(0,174,122,0.15)'}`,
-                      },
-                    },
-                    '& .MuiSlider-track': {
-                      bgcolor: emeraldCore.primary,
-                      border: 'none',
-                    },
-                    '& .MuiSlider-rail': {
-                      bgcolor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
-                      opacity: 1,
-                    },
-                    '& .MuiSlider-mark': {
-                      bgcolor: isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.25)',
-                      width: 3,
-                      height: 12,
-                      borderRadius: 1,
-                    },
-                    '& .MuiSlider-markActive': {
-                      bgcolor: 'white',
-                    },
-                    '& .MuiSlider-markLabel': {
-                      fontSize: '11px',
-                      color: 'text.secondary',
-                      fontWeight: 500,
-                    },
-                    '& .MuiSlider-valueLabel': {
-                      bgcolor: emeraldCore.dark,
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      borderRadius: 1,
-                    },
-                  }}
-                />
-                <Typography
-                  sx={{
-                    fontSize: '10px',
-                    color: 'text.secondary',
-                    textAlign: 'center',
-                    mt: 1,
-                    opacity: 0.7,
-                  }}
-                >
-                  Desliza para ajustar el rango de tiempo del análisis
-                </Typography>
-              </Box>
+              {/* Time Range Slider */}
+              <TimeRangeSlider
+                yearsBack={yearsBack}
+                onChange={handleSliderChange}
+                startYear={startYear}
+                endYear={endYear}
+                minYears={MIN_YEARS}
+                maxYears={21}
+                marks={YEAR_MARKS}
+                isDarkMode={isDarkMode}
+              />
 
               {/* Professional Multi-Origin Chart */}
               <Box sx={{ height: height + 20, mb: 2 }}>
@@ -527,74 +367,13 @@ const ValuationPage: React.FC = () => {
               </Box>
 
               {/* Interactive Legend */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: 3,
-                  mb: 3,
-                  flexWrap: 'wrap',
-                }}
-              >
-                {ORIGIN_PRICE_HISTORY.map((origin) => {
-                  const originData = filterDataByYearRange(origin.data, startYear, endYear);
-                  const originAppreciation = calculateAppreciation(originData);
-                  const isHovered = hoveredOrigin === origin.origin;
-
-                  return (
-                    <Box
-                      key={origin.origin}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        px: 1.5,
-                        py: 0.75,
-                        borderRadius: 2,
-                        cursor: 'pointer',
-                        bgcolor: isHovered
-                          ? isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
-                          : 'transparent',
-                        transition: 'all 0.2s',
-                        '&:hover': {
-                          bgcolor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                        },
-                      }}
-                      onMouseEnter={() => setHoveredOrigin(origin.origin)}
-                      onMouseLeave={() => setHoveredOrigin(null)}
-                    >
-                      <Box
-                        sx={{
-                          width: 16,
-                          height: 4,
-                          borderRadius: 2,
-                          bgcolor: origin.color,
-                        }}
-                      />
-                      <Box>
-                        <Typography
-                          sx={{
-                            fontSize: '12px',
-                            fontWeight: origin.origin === 'Colombia' ? 600 : 500,
-                            color: isHovered ? origin.color : 'text.primary',
-                          }}
-                        >
-                          {origin.origin}
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: '10px',
-                            color: origin.color,
-                            fontWeight: 600,
-                          }}
-                        >
-                          +{originAppreciation.percentage}%
-                        </Typography>
-                      </Box>
-                    </Box>
-                  );
-                })}
-              </Box>
+              <ChartLegend
+                startYear={startYear}
+                endYear={endYear}
+                hoveredOrigin={hoveredOrigin}
+                onHover={setHoveredOrigin}
+                isDarkMode={isDarkMode}
+              />
 
               {/* Stats Grid */}
               <Box
@@ -607,78 +386,31 @@ const ValuationPage: React.FC = () => {
                   bgcolor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
                 }}
               >
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography
-                    sx={{
-                      fontSize: '10px',
-                      color: 'text.secondary',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      mb: 0.5,
-                    }}
-                  >
-                    Retorno Colombia
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: '1.75rem',
-                      fontWeight: 700,
-                      color: emeraldCore.primary,
-                      lineHeight: 1,
-                    }}
-                  >
-                    +{appreciation.percentage}%
-                  </Typography>
-                </Box>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography
-                    sx={{
-                      fontSize: '10px',
-                      color: 'text.secondary',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      mb: 0.5,
-                    }}
-                  >
-                    CAGR
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: '1.75rem',
-                      fontWeight: 700,
-                      color: isDarkMode ? goldAccent.light : goldAccent.dark,
-                      lineHeight: 1,
-                    }}
-                  >
-                    {cagr}%
-                  </Typography>
-                </Box>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography
-                    sx={{
-                      fontSize: '10px',
-                      color: 'text.secondary',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      mb: 0.5,
-                    }}
-                  >
-                    Período
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: '1.75rem',
-                      fontWeight: 700,
-                      color: 'text.primary',
-                      lineHeight: 1,
-                    }}
-                  >
-                    {appreciation.years} años
-                  </Typography>
-                </Box>
+                <StatCard
+                  label="Retorno Colombia"
+                  value={`+${appreciation.percentage}`}
+                  color={emeraldCore.primary}
+                  suffix="%"
+                />
+                <StatCard
+                  label="CAGR"
+                  value={cagr}
+                  color={isDarkMode ? goldAccent.light : goldAccent.dark}
+                  suffix="%"
+                />
+                <StatCard
+                  label="Periodo"
+                  value={appreciation.years}
+                  suffix=" anos"
+                />
               </Box>
             </CardContent>
           </Card>
+        </motion.div>
+
+        {/* Origin Comparison */}
+        <motion.div variants={staggerItem}>
+          <OriginComparisonTable glassEffect={glassSubtle} />
         </motion.div>
 
         {/* Price Context / Understanding the Data */}
@@ -781,124 +513,9 @@ const ValuationPage: React.FC = () => {
           </Card>
         </motion.div>
 
-        {/* Origin Comparison */}
-        <motion.div variants={staggerItem}>
-          <Card sx={{ ...applyGlass(glassSubtle), borderRadius: 4, mb: 2 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <Public sx={{ color: emeraldCore.primary }} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  Comparación por Origen (2025)
-                </Typography>
-              </Box>
-
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Origen</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>
-                        Comercial
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>
-                        Inversión
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {ORIGIN_COMPARISON.map((row) => (
-                      <TableRow key={row.origin}>
-                        <TableCell sx={{ fontSize: '0.8rem' }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <span>{row.flag}</span>
-                            <span>{row.origin}</span>
-                            {row.origin === 'Colombia' && (
-                              <Verified sx={{ fontSize: 14, color: emeraldCore.primary }} />
-                            )}
-                          </Box>
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontSize: '0.75rem' }}>
-                          ${row.commercial.min.toLocaleString()}-${row.commercial.max.toLocaleString()}
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{
-                            fontSize: '0.75rem',
-                            fontWeight: row.origin === 'Colombia' ? 600 : 400,
-                            color: row.origin === 'Colombia' ? emeraldCore.primary : 'inherit',
-                          }}
-                        >
-                          ${row.investment.min.toLocaleString()}-${row.investment.max.toLocaleString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', mt: 1.5, textAlign: 'center' }}
-              >
-                Las esmeraldas colombianas comandan un premium de 2-4x sobre otras fuentes
-              </Typography>
-            </CardContent>
-          </Card>
-        </motion.div>
-
         {/* Auction Records */}
         <motion.div variants={staggerItem}>
-          <Card sx={{ ...applyGlass(glassSubtle), borderRadius: 4, mb: 2 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <EmojiEvents sx={{ color: goldAccent.primary }} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  Récords en Subastas
-                </Typography>
-              </Box>
-
-              {AUCTION_RECORDS.map((record, index) => (
-                <Box
-                  key={record.name}
-                  sx={{
-                    p: 1.5,
-                    mb: index < AUCTION_RECORDS.length - 1 ? 1.5 : 0,
-                    borderRadius: 2,
-                    bgcolor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                  }}
-                >
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {record.name}
-                    </Typography>
-                    <Chip
-                      label={record.year}
-                      size="small"
-                      sx={{ height: 18, fontSize: '0.65rem' }}
-                    />
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="caption" color="text.secondary">
-                      {record.house} • {record.carats} ct
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ fontWeight: 700, color: goldAccent.primary }}
-                    >
-                      ${record.price.toLocaleString()}
-                    </Typography>
-                  </Box>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: emeraldCore.primary, fontWeight: 500 }}
-                  >
-                    ${record.pricePerCarat.toLocaleString()}/ct
-                  </Typography>
-                </Box>
-              ))}
-            </CardContent>
-          </Card>
+          <AuctionRecordsCard glassEffect={glassSubtle} isDarkMode={isDarkMode} />
         </motion.div>
 
         {/* Sources with Links */}
