@@ -98,6 +98,8 @@ const Home: React.FC = () => {
         pb: `calc(env(safe-area-inset-bottom, 0px) + ${TAB_BAR_HEIGHT}px)`,
         minHeight: '100vh',
         position: 'relative',
+        // Prevent overscroll bounce showing black background
+        overscrollBehavior: 'contain',
       }}
     >
       {/* Hero + Gallery - Merged with interactive thumbnails */}
