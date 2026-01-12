@@ -11,19 +11,6 @@ import { useLocation } from 'react-router-dom';
 import { useGoogleAuth } from '../contexts/GoogleAuthContext';
 
 const VIEWS_STORAGE_KEY = 'tm_product_views';
-const SESSION_ID_KEY = 'tm_session_id';
-
-/**
- * Generate a simple session ID
- */
-function getSessionId(): string {
-  let sessionId = sessionStorage.getItem(SESSION_ID_KEY);
-  if (!sessionId) {
-    sessionId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    sessionStorage.setItem(SESSION_ID_KEY, sessionId);
-  }
-  return sessionId;
-}
 
 /**
  * Check if this product was already viewed this session
@@ -63,38 +50,16 @@ interface UserInfo {
 
 /**
  * Track a product view (fire and forget)
+ * NOTE: API endpoint temporarily disabled to stay within Vercel Hobby limit
  */
 async function trackView(
-  itemId: number,
-  productName: string,
-  referrer: string,
-  userInfo?: UserInfo
+  _itemId: number,
+  _productName: string,
+  _referrer: string,
+  _userInfo?: UserInfo
 ): Promise<void> {
-  try {
-    const sessionId = getSessionId();
-
-    // Fire and forget - don't await in the component
-    fetch('/api/track-product-view', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        itemId,
-        productName,
-        sessionId,
-        referrer,
-        // User identity (if logged in)
-        userName: userInfo?.name || null,
-        userEmail: userInfo?.email || null,
-        userRole: userInfo?.accessLevel || 'guest',
-      }),
-    }).catch(() => {
-      // Silently fail - view tracking should never break the app
-    });
-  } catch {
-    // Silently fail
-  }
+  // API endpoint temporarily disabled - tracking silently skipped
+  // To re-enable: upgrade to Vercel Pro or restore api/track-product-view.js
 }
 
 interface UseProductViewOptions {

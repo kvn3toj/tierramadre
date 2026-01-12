@@ -33,8 +33,6 @@ const ReceiptGenerator = lazyWithRetry(() => import('./components/ReceiptGenerat
 const CotizacionGenerator = lazyWithRetry(() => import('./components/CotizacionGenerator'), 'CotizacionGenerator');
 const QuotationPreview = lazyWithRetry(() => import('./components/QuotationPreview'), 'QuotationPreview');
 const AdminAnalyticsPage = lazyWithRetry(() => import('./pages/AdminAnalyticsPage'), 'AdminAnalyticsPage');
-const ProductViewersPage = lazyWithRetry(() => import('./pages/ProductViewersPage'), 'ProductViewersPage');
-const UserViewsPage = lazyWithRetry(() => import('./pages/UserViewsPage'), 'UserViewsPage');
 const FeedbackDashboard = lazyWithRetry(() => import('./pages/admin/FeedbackDashboard'), 'FeedbackDashboard');
 const ValuationPage = lazyWithRetry(() => import('./pages/ValuationPage'), 'ValuationPage');
 
@@ -174,24 +172,6 @@ function AppContent() {
             <AdminRoute>
               <Suspense fallback={<LoadingFallback message="Cargando analytics..." />}>
                 <AdminAnalyticsPage />
-              </Suspense>
-            </AdminRoute>
-          } />
-
-          {/* Product Viewers Detail - Who viewed a specific product */}
-          <Route path="/admin/analytics/product/:itemId" element={
-            <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando analytics..." />}>
-                <ProductViewersPage />
-              </Suspense>
-            </AdminRoute>
-          } />
-
-          {/* User Views Detail - What products a user viewed */}
-          <Route path="/admin/analytics/user" element={
-            <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando analytics..." />}>
-                <UserViewsPage />
               </Suspense>
             </AdminRoute>
           } />

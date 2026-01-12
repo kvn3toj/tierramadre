@@ -87,19 +87,9 @@ export default function FeedbackDashboard() {
     setError(null);
 
     try {
-      const params = new URLSearchParams();
-      if (statusFilter !== 'all') {
-        params.set('status', statusFilter);
-      }
-
-      const response = await fetch(`/api/get-feedback?${params}`);
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch feedback');
-      }
-
-      setFeedback(data.data || []);
+      // API endpoint temporarily disabled to stay within Vercel Hobby limit
+      setFeedback([]);
+      setError('Sistema de feedback temporalmente deshabilitado');
     } catch (err) {
       console.error('Fetch feedback error:', err);
       setError(err instanceof Error ? err.message : 'Error al cargar feedback');
@@ -132,24 +122,8 @@ export default function FeedbackDashboard() {
 
     setIsSaving(true);
     try {
-      const response = await fetch('/api/update-feedback', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: selectedFeedback.id,
-          status: editStatus,
-          notes: editNotes,
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to update');
-      }
-
-      // Refresh list
-      await fetchFeedback();
-      handleCloseDetail();
+      // API endpoint temporarily disabled to stay within Vercel Hobby limit
+      throw new Error('Sistema de feedback temporalmente deshabilitado');
     } catch (err) {
       console.error('Update error:', err);
       setError(err instanceof Error ? err.message : 'Error al actualizar');

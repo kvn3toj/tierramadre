@@ -95,22 +95,11 @@ export default function ProviderQuotationsList() {
   };
 
   const handleMarkAsViewed = async (id: string) => {
-    try {
-      const response = await fetch('/api/mark-quotation-viewed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      });
-      const data = await response.json();
-
-      if (data.success) {
-        setQuotations(prev =>
-          prev.map(q => q.id === id ? { ...q, viewedByAdmin: true } : q)
-        );
-      }
-    } catch (error) {
-      console.error('Error marking as viewed:', error);
-    }
+    // API endpoint temporarily disabled to stay within Vercel Hobby limit
+    // Just update local state for now
+    setQuotations(prev =>
+      prev.map(q => q.id === id ? { ...q, viewedByAdmin: true } : q)
+    );
   };
 
   const newCount = quotations.filter(q => !q.viewedByAdmin).length;

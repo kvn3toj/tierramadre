@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-12T03:52:59.716Z
+ * Generated at: 2026-01-12T04:37:53.965Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-12T03:52:59.716Z",
+  "generatedAt": "2026-01-12T04:37:53.965Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "13 Dic, 2025",
@@ -56,54 +56,58 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "488bf29",
-    "lastCommitDate": "2026-01-11 22:52:56 -0500"
+    "lastCommitHash": "b6593b7",
+    "lastCommitDate": "2026-01-11 23:37:50 -0500"
   },
   "stats": {
-    "totalCommits": 215,
-    "totalAdditions": 86918,
-    "totalDeletions": 61065,
-    "totalFilesChanged": 1425,
-    "netLines": 25853
+    "totalCommits": 221,
+    "totalAdditions": 88884,
+    "totalDeletions": 61366,
+    "totalFilesChanged": 1444,
+    "netLines": 27518
   },
   "categoryStats": {
+    "performance": 12,
+    "bugfix": 48,
+    "analytics": 6,
+    "auth": 15,
+    "ux": 47,
     "other": 73,
-    "bugfix": 46,
-    "ux": 46,
-    "performance": 11,
-    "auth": 14,
-    "cleanup": 20,
-    "analytics": 5
+    "cleanup": 20
   },
   "typeStats": {
+    "chore": 14,
+    "fix": 78,
+    "feat": 93,
     "refactor": 26,
-    "fix": 75,
     "other": 7,
-    "feat": 92,
-    "chore": 12,
     "docs": 2,
     "style": 1
   },
   "mostChangedFiles": [
     {
       "file": "index.html",
-      "count": 30
+      "count": 32
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 27
+      "count": 28
     },
     {
       "file": "src/App.tsx",
-      "count": 26
+      "count": 27
+    },
+    {
+      "file": "public/version.json",
+      "count": 23
     },
     {
       "file": "src/components/InventoryBrowser.tsx",
       "count": 23
     },
     {
-      "file": "public/version.json",
-      "count": 21
+      "file": "src/components/ios/IOSMoreSheet.tsx",
+      "count": 19
     },
     {
       "file": "src/components/home/Home.tsx",
@@ -112,10 +116,6 @@ export const changelogData: ChangelogData = {
     {
       "file": ".claude/settings.local.json",
       "count": 19
-    },
-    {
-      "file": "src/components/ios/IOSMoreSheet.tsx",
-      "count": 18
     },
     {
       "file": "src/components/ProductDetail.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 207
+      "commits": 213
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,89 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "b6593b7",
+      "message": "Bump version to force cache refresh for asesor roles",
+      "fullMessage": "chore: Bump version to force cache refresh for asesor roles",
+      "author": "Kvn3Toj",
+      "relativeTime": "1 second ago",
+      "date": "2026-01-11",
+      "type": "chore",
+      "category": "performance",
+      "additions": 3,
+      "deletions": 3,
+      "filesChanged": 2
+    },
+    {
+      "hash": "3adbdc2",
+      "message": "Use thumbnail images instead of autoplay videos in grid cards",
+      "fullMessage": "fix: Use thumbnail images instead of autoplay videos in grid cards",
+      "author": "Kvn3Toj",
+      "relativeTime": "3 minutes ago",
+      "date": "2026-01-11",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 22,
+      "deletions": 135,
+      "filesChanged": 2
+    },
+    {
+      "hash": "98092aa",
+      "message": "Add detailed analytics pages for products and users",
+      "fullMessage": "feat: Add detailed analytics pages for products and users",
+      "author": "Kvn3Toj",
+      "relativeTime": "17 minutes ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "analytics",
+      "additions": 1686,
+      "deletions": 0,
+      "filesChanged": 6
+    },
+    {
+      "hash": "0e02ed3",
+      "message": "Re-validate Google auth users against sheets on app load",
+      "fullMessage": "fix: Re-validate Google auth users against sheets on app load",
+      "author": "Kvn3Toj",
+      "relativeTime": "19 minutes ago",
+      "date": "2026-01-11",
+      "type": "fix",
+      "category": "auth",
+      "additions": 58,
+      "deletions": 8,
+      "filesChanged": 1
+    },
+    {
+      "hash": "52a64e3",
+      "message": "Replace video play icons with autoplay videos in grid cards",
+      "fullMessage": "fix: Replace video play icons with autoplay videos in grid cards",
+      "author": "Kvn3Toj",
+      "relativeTime": "32 minutes ago",
+      "date": "2026-01-11",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 152,
+      "deletions": 123,
+      "filesChanged": 4
+    },
+    {
+      "hash": "fa7fdd9",
+      "message": "Fix unused import and update build version",
+      "fullMessage": "chore: Fix unused import and update build version",
+      "author": "Kvn3Toj",
+      "relativeTime": "42 minutes ago",
+      "date": "2026-01-11",
+      "type": "chore",
+      "category": "ux",
+      "additions": 45,
+      "deletions": 32,
+      "filesChanged": 4
+    },
+    {
       "hash": "488bf29",
       "message": "Reorder More menu options and unify settings style",
       "fullMessage": "refactor: Reorder More menu options and unify settings style",
       "author": "Kvn3Toj",
-      "relativeTime": "1 second ago",
+      "relativeTime": "45 minutes ago",
       "date": "2026-01-11",
       "type": "refactor",
       "category": "other",
@@ -155,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Hide Comunidad TM price from shared product links",
       "fullMessage": "fix: Hide Comunidad TM price from shared product links",
       "author": "Kvn3Toj",
-      "relativeTime": "56 seconds ago",
+      "relativeTime": "46 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -168,7 +246,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve responsive layout for Treasure Browser on desktop/iPad",
       "fullMessage": "fix: Improve responsive layout for Treasure Browser on desktop/iPad",
       "author": "Kvn3Toj",
-      "relativeTime": "3 minutes ago",
+      "relativeTime": "48 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "ux",
@@ -181,7 +259,7 @@ export const changelogData: ChangelogData = {
       "message": "Clear treasure filters after 3min inactivity or browser close",
       "fullMessage": "fix: Clear treasure filters after 3min inactivity or browser close",
       "author": "Kvn3Toj",
-      "relativeTime": "4 minutes ago",
+      "relativeTime": "49 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -194,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Extract ValuationPage sub-components and shared chart utilities",
       "fullMessage": "refactor: Extract ValuationPage sub-components and shared chart utilities",
       "author": "Kvn3Toj",
-      "relativeTime": "21 minutes ago",
+      "relativeTime": "65 minutes ago",
       "date": "2026-01-11",
       "type": "refactor",
       "category": "other",
@@ -207,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "perf: Improve loading speed for returning users with stale-while-revalidate",
       "fullMessage": "perf: Improve loading speed for returning users with stale-while-revalidate",
       "author": "Kvn3Toj",
-      "relativeTime": "30 minutes ago",
+      "relativeTime": "75 minutes ago",
       "date": "2026-01-11",
       "type": "other",
       "category": "performance",
@@ -220,7 +298,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve image loading with fallback placeholders and TypeScript fixes",
       "fullMessage": "fix: Improve image loading with fallback placeholders and TypeScript fixes",
       "author": "Kvn3Toj",
-      "relativeTime": "56 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -233,7 +311,7 @@ export const changelogData: ChangelogData = {
       "message": "Prevent noCopy ReferenceError from noprint.js security script",
       "fullMessage": "fix: Prevent noCopy ReferenceError from noprint.js security script",
       "author": "Kvn3Toj",
-      "relativeTime": "60 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "auth",
@@ -246,7 +324,7 @@ export const changelogData: ChangelogData = {
       "message": "Upgrade emerald valuation chart with accurate 2005-2026 data",
       "fullMessage": "feat: Upgrade emerald valuation chart with accurate 2005-2026 data",
       "author": "Kvn3Toj",
-      "relativeTime": "65 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -259,7 +337,7 @@ export const changelogData: ChangelogData = {
       "message": "Prevent overscroll bounce showing black background",
       "fullMessage": "fix: Prevent overscroll bounce showing black background",
       "author": "Kvn3Toj",
-      "relativeTime": "66 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -272,7 +350,7 @@ export const changelogData: ChangelogData = {
       "message": "Add New Products carousel based on Google Drive image upload date",
       "fullMessage": "feat: Add New Products carousel based on Google Drive image upload date",
       "author": "Kvn3Toj",
-      "relativeTime": "69 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -285,7 +363,7 @@ export const changelogData: ChangelogData = {
       "message": "Replace Explora section with animated Oracle quotes",
       "fullMessage": "feat: Replace Explora section with animated Oracle quotes",
       "author": "Kvn3Toj",
-      "relativeTime": "73 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -311,7 +389,7 @@ export const changelogData: ChangelogData = {
       "message": "Add \"try another account\" button and in-app browser detection for Google Auth",
       "fullMessage": "feat: Add \"try another account\" button and in-app browser detection for Google Auth",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "auth",
@@ -337,7 +415,7 @@ export const changelogData: ChangelogData = {
       "message": "Update version for deploy",
       "fullMessage": "chore: Update version for deploy",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "4 hours ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "other",
@@ -350,7 +428,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove LevelBadge gamification from navigation bar",
       "fullMessage": "fix: Remove LevelBadge gamification from navigation bar",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "4 hours ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "cleanup",
@@ -363,7 +441,7 @@ export const changelogData: ChangelogData = {
       "message": "Auto-invalidate localStorage caches on new deploy",
       "fullMessage": "feat: Auto-invalidate localStorage caches on new deploy",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "4 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "performance",
@@ -376,7 +454,7 @@ export const changelogData: ChangelogData = {
       "message": "Hide recently viewed carousel when scrolling down in grid",
       "fullMessage": "feat: Hide recently viewed carousel when scrolling down in grid",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "4 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -389,7 +467,7 @@ export const changelogData: ChangelogData = {
       "message": "Update version and changelog data",
       "fullMessage": "chore: Update version and changelog data",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "4 hours ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "other",
@@ -402,7 +480,7 @@ export const changelogData: ChangelogData = {
       "message": "Restrict guest mode to invitation-only access",
       "fullMessage": "feat: Restrict guest mode to invitation-only access",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "4 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -415,7 +493,7 @@ export const changelogData: ChangelogData = {
       "message": "Restrict view counts to admins and make search bar sticky",
       "fullMessage": "feat: Restrict view counts to admins and make search bar sticky",
       "author": "Kvn3Toj",
-      "relativeTime": "4 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "auth",
@@ -428,7 +506,7 @@ export const changelogData: ChangelogData = {
       "message": "Proxy video thumbnails to avoid CORS issues",
       "fullMessage": "fix: Proxy video thumbnails to avoid CORS issues",
       "author": "Kvn3Toj",
-      "relativeTime": "4 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -441,7 +519,7 @@ export const changelogData: ChangelogData = {
       "message": "Use objectFit cover for product gallery media",
       "fullMessage": "feat: Use objectFit cover for product gallery media",
       "author": "Kvn3Toj",
-      "relativeTime": "5 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -454,7 +532,7 @@ export const changelogData: ChangelogData = {
       "message": "Change product gallery to 1:1 square aspect ratio",
       "fullMessage": "feat: Change product gallery to 1:1 square aspect ratio",
       "author": "Kvn3Toj",
-      "relativeTime": "5 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -467,7 +545,7 @@ export const changelogData: ChangelogData = {
       "message": "Clarify Google Drive product folders as primary image source",
       "fullMessage": "docs: Clarify Google Drive product folders as primary image source",
       "author": "Kvn3Toj",
-      "relativeTime": "5 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2026-01-11",
       "type": "docs",
       "category": "other",
@@ -480,7 +558,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve video player - autoplay muted, remove play icon, images first",
       "fullMessage": "feat: Improve video player - autoplay muted, remove play icon, images first",
       "author": "Kvn3Toj",
-      "relativeTime": "5 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "cleanup",
@@ -493,7 +571,7 @@ export const changelogData: ChangelogData = {
       "message": "Add batch thumbnails for treasure grid from Google Drive folders",
       "fullMessage": "feat: Add batch thumbnails for treasure grid from Google Drive folders",
       "author": "Kvn3Toj",
-      "relativeTime": "5 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -506,7 +584,7 @@ export const changelogData: ChangelogData = {
       "message": "Bump version to 2026.01.11.1656",
       "fullMessage": "chore: Bump version to 2026.01.11.1656",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "other",
@@ -519,7 +597,7 @@ export const changelogData: ChangelogData = {
       "message": "Convert Google Drive URLs to proxy for reliable image loading",
       "fullMessage": "feat: Convert Google Drive URLs to proxy for reliable image loading",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -532,7 +610,7 @@ export const changelogData: ChangelogData = {
       "message": "Update icons, refine blocking version check, remove unused logo",
       "fullMessage": "chore: Update icons, refine blocking version check, remove unused logo",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "cleanup",
@@ -545,7 +623,7 @@ export const changelogData: ChangelogData = {
       "message": "Block unauthorized users from Google sign-in",
       "fullMessage": "fix: Block unauthorized users from Google sign-in",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "auth",
@@ -558,7 +636,7 @@ export const changelogData: ChangelogData = {
       "message": "Replace Gem icon placeholders with logo-symbol watermark",
       "fullMessage": "feat: Replace Gem icon placeholders with logo-symbol watermark",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -571,7 +649,7 @@ export const changelogData: ChangelogData = {
       "message": "Optimize treasure grid with iOS HIG alignment",
       "fullMessage": "feat: Optimize treasure grid with iOS HIG alignment",
       "author": "Kvn3Toj",
-      "relativeTime": "7 hours ago",
+      "relativeTime": "8 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "ux",
@@ -584,7 +662,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product views tracking with user identity analytics",
       "fullMessage": "feat: Add product views tracking with user identity analytics",
       "author": "Kvn3Toj",
-      "relativeTime": "27 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2026-01-10",
       "type": "feat",
       "category": "analytics",
@@ -1169,7 +1247,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove deprecated get-inventory-sheets fallback",
       "fullMessage": "fix: Remove deprecated get-inventory-sheets fallback",
       "author": "Kvn3Toj",
-      "relativeTime": "11 days ago",
+      "relativeTime": "12 days ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "cleanup",

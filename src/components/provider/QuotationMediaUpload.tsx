@@ -68,20 +68,8 @@ export default function QuotationMediaUpload({
     });
 
     try {
-      const response = await fetch('/api/upload-cotizacion-media', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.urls) {
-        // Add new URLs to existing ones
-        const newUrls = [...uploadedUrls, ...data.urls];
-        onUploadComplete(newUrls);
-      } else {
-        throw new Error(data.message || 'Upload failed');
-      }
+      // API endpoint temporarily disabled to stay within Vercel Hobby limit
+      throw new Error('Subida de medios temporalmente deshabilitada');
     } catch (error) {
       console.error('Upload error:', error);
       // Mark files as errored
