@@ -10,7 +10,7 @@ export { default as OracleSection } from './OracleSection';
 export { default as InstagramSection } from './InstagramSection';
 export { default as MeditationSection } from './MeditationSection';
 export { default as ProductsSection } from './ProductsSection';
-export { default as KnowledgeSection } from './KnowledgeSection';
+// KnowledgeSection removed - content consolidated into OracleSection
 export { default as WelcomeCard } from './WelcomeCard';
 export { default as Footer } from './Footer';
 export { default as WhatsAppButton } from './WhatsAppButton';

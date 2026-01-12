@@ -1,36 +1,16 @@
 /**
  * Home page content data.
  * Extracted from Home.tsx for better separation of concerns.
+ *
+ * Oracle quotes about Colombian emeralds - wisdom, history, and mystique.
  */
-import React from 'react';
-import {
-  SelfImprovement,
-  TrendingUp,
-  HistoryEdu,
-  Diamond,
-} from '@mui/icons-material';
-import { semanticColors, emeraldCore } from '../design-system/tokens/colors';
+import { emeraldCore } from '../design-system/tokens/colors';
 
-// Accent colors for knowledge categories
-const PURPLE_ACCENT = '#9C27B0';
-const ORANGE_ACCENT = semanticColors.warning.main;
-const BLUE_ACCENT = semanticColors.info.main;
-
-export interface DailyOracle {
+export interface OracleQuote {
   id: number;
-  category: string;
   icon: string;
-  title: string;
   content: string;
   source: string;
-}
-
-export interface KnowledgeCategory {
-  id: string;
-  title: string;
-  icon: React.ReactElement;
-  color: string;
-  facts: number;
 }
 
 export type MeditationType =
@@ -53,80 +33,271 @@ export interface DailyMeditation {
   duration: number;
   description: string;
   type: MeditationType;
-  // Type-specific configurations
   breathingPattern?: BreathingPattern;
   chakraColor?: string;
   guidedSteps?: string[];
-  ambientFrequency?: number; // Hz for tone generation
+  ambientFrequency?: number;
 }
 
-// Daily Oracle facts - rotates based on day of year
-// Simplified content for minimalistic display
-export const DAILY_ORACLES: DailyOracle[] = [
+// =============================================================================
+// ORACLE QUOTES - Extensive collection of emerald wisdom
+// Random quote shown on each Home visit
+// =============================================================================
+
+export const ORACLE_QUOTES: OracleQuote[] = [
+  // --- SPIRITUAL & MYSTICAL ---
   {
     id: 1,
-    category: 'spiritual',
     icon: '💚',
-    title: 'Chakra del Corazón',
-    content: 'Las esmeraldas activan el chakra del corazón, promoviendo amor y compasión.',
+    content: 'La esmeralda es la piedra del corazón. Quien la porta, abre las puertas del amor incondicional.',
     source: 'Tradición védica',
   },
   {
     id: 2,
-    category: 'investment',
-    icon: '📈',
-    title: 'Valor en Alza',
-    content: 'Las esmeraldas colombianas han apreciado 12% anual, superando a los diamantes.',
-    source: "Sotheby's",
-  },
-  {
-    id: 3,
-    category: 'history',
-    icon: '⛏️',
-    title: 'Minas de Muzo',
-    content: 'Más de 500 años de historia, desde los indígenas Muzo hasta hoy.',
-    source: 'Smithsoniano',
-  },
-  {
-    id: 4,
-    category: 'spiritual',
     icon: '✨',
-    title: 'Claridad',
-    content: 'Cleopatra meditaba con esmeraldas para tomar decisiones importantes.',
+    content: 'Cleopatra adornaba su palacio con esmeraldas, creyendo que traían eterna juventud y sabiduría divina.',
     source: 'Antiguo Egipto',
   },
   {
+    id: 3,
+    icon: '🌙',
+    content: 'Las esmeraldas absorben la luz de la luna llena. Los ancestros Muzo las dejaban bajo el cielo nocturno para recargar su energía.',
+    source: 'Tradición Muzo',
+  },
+  {
+    id: 4,
+    icon: '🔮',
+    content: 'En la antigua Roma, Nerón observaba las luchas de gladiadores a través de una esmeralda para calmar su vista y su espíritu.',
+    source: 'Historia romana',
+  },
+  {
     id: 5,
-    category: 'jewelry',
-    icon: '💎',
-    title: 'Rareza Única',
-    content: '20 veces más raras que los diamantes. Color único por el cromo andino.',
-    source: 'GIA',
+    icon: '💫',
+    content: 'La esmeralda colombiana vibra en la frecuencia del chakra del corazón, sanando heridas emocionales del pasado.',
+    source: 'Cristaloterapia',
   },
   {
     id: 6,
-    category: 'spiritual',
-    icon: '🌙',
-    title: 'Luna Llena',
-    content: 'Tradición colombiana: cargar esmeraldas bajo la luz lunar.',
-    source: 'Tradición ancestral',
+    icon: '🌿',
+    content: 'Los Incas consideraban la esmeralda como lágrimas de la diosa de la fertilidad, símbolo de vida eterna.',
+    source: 'Mitología Inca',
   },
   {
     id: 7,
-    category: 'investment',
-    icon: '👨‍👩‍👧',
-    title: 'Legado Familiar',
-    content: 'Joyas que pasan de generación en generación sin perder valor.',
+    icon: '⚡',
+    content: 'Se dice que la esmeralda revela la verdad: cambia de tono cuando hay falsedad cerca de quien la porta.',
+    source: 'Leyenda medieval',
+  },
+  {
+    id: 8,
+    icon: '🕊️',
+    content: 'La piedra de Venus. Los alquimistas la asociaban con el amor, la armonía y la abundancia espiritual.',
+    source: 'Tradición alquímica',
+  },
+
+  // --- HISTORY & ORIGIN ---
+  {
+    id: 9,
+    icon: '⛏️',
+    content: 'Las minas de Muzo producen esmeraldas desde hace más de 500 años. Los indígenas las llamaban "fuego verde".',
+    source: 'Smithsoniano',
+  },
+  {
+    id: 10,
+    icon: '🏔️',
+    content: 'Colombia produce el 70% de las esmeraldas más finas del mundo. El verde de los Andes es incomparable.',
+    source: 'GIA',
+  },
+  {
+    id: 11,
+    icon: '👑',
+    content: 'La corona de los Andes, creada en 1599, contiene 453 esmeraldas colombianas. Hoy vale más de 10 millones de dólares.',
+    source: 'Museo Metropolitano',
+  },
+  {
+    id: 12,
+    icon: '🗺️',
+    content: 'Los conquistadores españoles encontraron esmeraldas tan grandes que no creyeron fueran reales. Las destruyeron buscando "verdaderas".',
+    source: 'Crónicas de Indias',
+  },
+  {
+    id: 13,
+    icon: '📜',
+    content: 'Chivor y Muzo: dos minas legendarias separadas por montañas, unidas por la misma magia verde.',
+    source: 'Historia colombiana',
+  },
+  {
+    id: 14,
+    icon: '🌎',
+    content: 'Las esmeraldas colombianas se formaron hace 65 millones de años, cuando los Andes emergían del mar.',
+    source: 'Geología andina',
+  },
+  {
+    id: 15,
+    icon: '⚔️',
+    content: 'Los Muzo defendieron sus minas durante 20 años contra los españoles. El verde era sagrado.',
+    source: 'Historia precolombina',
+  },
+
+  // --- VALUE & INVESTMENT ---
+  {
+    id: 16,
+    icon: '📈',
+    content: 'Las esmeraldas de alta calidad han apreciado 12% anual en la última década, superando a los diamantes.',
+    source: "Sotheby's",
+  },
+  {
+    id: 17,
+    icon: '💎',
+    content: 'Una esmeralda de 1 quilate puede valer más que un diamante del mismo peso. El color lo es todo.',
     source: "Christie's",
   },
-];
+  {
+    id: 18,
+    icon: '🏆',
+    content: 'La esmeralda Rockefeller se vendió por $5.5 millones en 2017. 18 quilates de perfección colombiana.',
+    source: "Christie's",
+  },
+  {
+    id: 19,
+    icon: '💰',
+    content: 'Las esmeraldas sin tratamiento son cada vez más raras. Su valor aumenta exponencialmente cada año.',
+    source: 'Mercado de gemas',
+  },
+  {
+    id: 20,
+    icon: '👨‍👩‍👧',
+    content: 'Una esmeralda es un legado. Pasa de generación en generación ganando historia y valor.',
+    source: 'Tradición familiar',
+  },
+  {
+    id: 21,
+    icon: '🔒',
+    content: 'En tiempos de incertidumbre económica, las gemas de color son refugio de valor tangible.',
+    source: 'Análisis financiero',
+  },
 
-// Knowledge categories - Simplified titles
-export const KNOWLEDGE_CATEGORIES: KnowledgeCategory[] = [
-  { id: 'spiritual', title: 'Energía', icon: React.createElement(SelfImprovement), color: PURPLE_ACCENT, facts: 12 },
-  { id: 'investment', title: 'Valor', icon: React.createElement(TrendingUp), color: semanticColors.success.main, facts: 8 },
-  { id: 'history', title: 'Origen', icon: React.createElement(HistoryEdu), color: ORANGE_ACCENT, facts: 15 },
-  { id: 'jewelry', title: 'Piedras', icon: React.createElement(Diamond), color: BLUE_ACCENT, facts: 10 },
+  // --- JEWELRY & CRAFTSMANSHIP ---
+  {
+    id: 22,
+    icon: '💍',
+    content: 'Jackie Kennedy recibió un anillo de compromiso con esmeralda de 2.84 quilates. Elegancia atemporal.',
+    source: 'Historia del diseño',
+  },
+  {
+    id: 23,
+    icon: '👗',
+    content: 'Elizabeth Taylor coleccionaba esmeraldas colombianas. Decía que ninguna otra gema capturaba así la luz.',
+    source: 'Colección Taylor',
+  },
+  {
+    id: 24,
+    icon: '🎨',
+    content: 'El "jardín" de una esmeralda son sus inclusiones naturales. Cada piedra cuenta una historia única de millones de años.',
+    source: 'Arte gemológico',
+  },
+  {
+    id: 25,
+    icon: '⭐',
+    content: 'El corte esmeralda fue diseñado específicamente para esta gema, maximizando su color y protegiendo sus esquinas.',
+    source: 'Historia de la joyería',
+  },
+  {
+    id: 26,
+    icon: '🌟',
+    content: 'Las esmeraldas colombianas son 20 veces más raras que los diamantes. El cromo andino crea su verde único.',
+    source: 'GIA',
+  },
+
+  // --- COLOMBIAN PRIDE ---
+  {
+    id: 27,
+    icon: '🇨🇴',
+    content: 'Colombia: donde la tierra guarda fuego verde. Cada esmeralda es un pedazo de los Andes.',
+    source: 'Orgullo colombiano',
+  },
+  {
+    id: 28,
+    icon: '🌄',
+    content: 'De Boyacá al mundo. Las esmeraldas colombianas adornan coronas, museos y corazones en los cinco continentes.',
+    source: 'Herencia boyacense',
+  },
+  {
+    id: 29,
+    icon: '💪',
+    content: 'Detrás de cada esmeralda hay manos colombianas. Generaciones de familias mineras que guardan el secreto del verde.',
+    source: 'Comunidad minera',
+  },
+  {
+    id: 30,
+    icon: '🌺',
+    content: 'El verde de Colombia no solo está en sus montañas, sino en las gemas que el mundo entero desea.',
+    source: 'Identidad nacional',
+  },
+
+  // --- WISDOM & PHILOSOPHY ---
+  {
+    id: 31,
+    icon: '🧘',
+    content: 'La esmeralda enseña paciencia. Millones de años para formarse, una vida para apreciarla.',
+    source: 'Filosofía de las gemas',
+  },
+  {
+    id: 32,
+    icon: '💭',
+    content: 'Poseer una esmeralda es guardar un secreto de la tierra. Un misterio verde que solo tú conoces.',
+    source: 'Reflexión personal',
+  },
+  {
+    id: 33,
+    icon: '🌱',
+    content: 'Como la naturaleza, la esmeralda perfecta no existe. Sus "imperfecciones" son su autenticidad.',
+    source: 'Sabiduría gemológica',
+  },
+  {
+    id: 34,
+    icon: '♾️',
+    content: 'La esmeralda simboliza la renovación. Cada vez que la miras, ves algo nuevo en su profundidad verde.',
+    source: 'Simbolismo antiguo',
+  },
+  {
+    id: 35,
+    icon: '🎁',
+    content: 'Regalar una esmeralda es desear abundancia, amor y prosperidad a quien la recibe.',
+    source: 'Tradición de regalos',
+  },
+
+  // --- CURIOUS FACTS ---
+  {
+    id: 36,
+    icon: '🔬',
+    content: 'El verde de la esmeralda viene del cromo y vanadio atrapados hace millones de años. Química convertida en belleza.',
+    source: 'Ciencia gemológica',
+  },
+  {
+    id: 37,
+    icon: '📊',
+    content: 'Solo 1 de cada millón de cristales de berilo tiene la calidad para ser una esmeralda de joyería.',
+    source: 'Estadística minera',
+  },
+  {
+    id: 38,
+    icon: '🌡️',
+    content: 'Las esmeraldas se formaron a 200°C bajo tierra, en venas de cuarzo y calcita. Fuego verde del interior de la Tierra.',
+    source: 'Geología',
+  },
+  {
+    id: 39,
+    icon: '👁️',
+    content: 'El color verde de la esmeralda es el más relajante para el ojo humano. Por eso los joyeros la usan para descansar la vista.',
+    source: 'Oftalmología',
+  },
+  {
+    id: 40,
+    icon: '🎭',
+    content: 'La palabra "esmeralda" viene del griego "smaragdos": piedra verde. Simple y perfecto.',
+    source: 'Etimología',
+  },
 ];
 
 // Daily meditations - different experience each day

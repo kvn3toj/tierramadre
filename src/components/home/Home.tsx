@@ -14,28 +14,23 @@
  * Refactored by: CoomÜnity Council (Aria, Moksart, Eunoia, Zeno)
  */
 
-import React, { Suspense, lazy, useCallback, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { Box } from '@mui/material';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useTreasure } from '../../hooks/useTreasure';
-import { useNewProductImages } from '../../hooks/useNewProductImages';
-import { DailyOracle } from '../../data/homeContent';
+import { useNewestProducts } from '../../hooks/useNewestProducts';
 import { useGamification, AchievementToast } from './gamification';
-import { useAnalytics, useSavedFacts } from './hooks';
+import { useAnalytics } from './hooks';
 import { SectionSkeleton, ErrorFallback } from './common';
 import { InstallButton, NotificationPermission } from '../pwa';
 import { isPWA } from '../../utils/pwa';
-import { createLogger } from '../../utils/logger';
 import { useNewProductNotification } from '../../hooks/useNewProductNotification';
 
-const log = createLogger('Home');
 import {
   MAX_PRODUCTS_DISPLAY,
-
   TAB_BAR_HEIGHT,
   SKELETON_HEIGHTS,
-  SHARE_CONFIG,
   ANIMATION_DELAYS,
 } from './constants';
 
@@ -50,7 +45,7 @@ import OracleSection from './sections/OracleSection';
 // Below-the-fold sections - lazy load
 const ProductsSection = lazy(() => import('./sections/ProductsSection'));
 const ValuationSection = lazy(() => import('./sections/ValuationSection'));
-const KnowledgeSection = lazy(() => import('./sections/KnowledgeSection'));
+// KnowledgeSection removed - content consolidated into OracleSection
 const Footer = lazy(() => import('./sections/Footer'));
 
 // Reserved for future use (minimalistic redesign)
@@ -69,17 +64,14 @@ const Home: React.FC = () => {
   const isDarkMode = muiTheme.palette.mode === 'dark';
   const { treasure } = useTreasure();
 
-  // Pre-fetch Drive images for newest products (images stored in Drive folders, not Sheets URL)
-  // Scan up to 30 items - the hook will stop early once enough products with images are found
-  const { productsWithImages: newProducts } = useNewProductImages(
+  // Fetch newest products based on image upload date in Google Drive (SOURCE OF TRUTH)
+  const { newestProducts: newProducts, isLoading: isLoadingNewProducts } = useNewestProducts(
     treasure,
-    MAX_PRODUCTS_DISPLAY,
-    30
+    MAX_PRODUCTS_DISPLAY
   );
 
   const [, gamificationActions, pendingAchievement] = useGamification();
   const analytics = useAnalytics();
-  const [{ savedFacts }, savedFactsActions] = useSavedFacts();
 
   // ==========================================================================
   // ANALYTICS TRACKING
@@ -92,39 +84,6 @@ const Home: React.FC = () => {
   // Check for new products and notify
   useNewProductNotification({ productCount: treasure.length });
 
-
-  // ==========================================================================
-  // HANDLERS
-  // ==========================================================================
-
-  const handleSaveFact = useCallback((factId: number) => {
-    savedFactsActions.toggleSave(factId);
-  }, [savedFactsActions]);
-
-  const handleShare = useCallback(async (text: string) => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: SHARE_CONFIG.title,
-          text: text,
-          url: window.location.origin,
-        });
-      } catch (err) {
-        log.debug('Share cancelled or failed:', err);
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(text);
-      } catch (err) {
-        log.debug('Clipboard write failed:', err);
-      }
-    }
-  }, []);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleSelectFact = useCallback((_fact: DailyOracle) => {
-    // Reserved for fact detail modal integration
-  }, []);
 
   // ==========================================================================
   // RENDER
@@ -147,21 +106,22 @@ const Home: React.FC = () => {
       </ErrorBoundary>
 
       {/* Products Section - Latest arrivals */}
-      {newProducts.length > 0 && (
+      {/* Show skeleton while loading, then show products if found */}
+      {(isLoadingNewProducts || newProducts.length > 0) && (
         <ErrorBoundary FallbackComponent={ErrorFallback}>
           <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.products} />}>
-            <ProductsSection products={newProducts} />
+            {isLoadingNewProducts ? (
+              <SectionSkeleton height={SKELETON_HEIGHTS.products} />
+            ) : (
+              <ProductsSection products={newProducts} />
+            )}
           </Suspense>
         </ErrorBoundary>
       )}
 
-      {/* Oracle - Floating glass quote */}
+      {/* Oracle - Animated random quote */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <OracleSection
-          savedFacts={savedFacts}
-          onSaveFact={handleSaveFact}
-          onShare={handleShare}
-        />
+        <OracleSection />
       </ErrorBoundary>
 
       {/* Lower sections with background image - starts from chart */}
@@ -192,19 +152,6 @@ const Home: React.FC = () => {
           <ErrorBoundary FallbackComponent={ErrorFallback}>
             <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.valuation} />}>
               <ValuationSection />
-            </Suspense>
-          </ErrorBoundary>
-        </Box>
-
-        {/* Knowledge - iOS Settings-style list */}
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
-          <ErrorBoundary FallbackComponent={ErrorFallback}>
-            <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.knowledge} />}>
-              <KnowledgeSection
-                savedFacts={savedFacts}
-                onSelectFact={handleSelectFact}
-                onSaveFact={handleSaveFact}
-              />
             </Suspense>
           </ErrorBoundary>
         </Box>
