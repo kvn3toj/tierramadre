@@ -40,7 +40,7 @@
     <!-- CRITICAL: Blocking version check - MUST run before React loads -->
     <script>
       (function() {
-        var APP_VERSION = '2026.01.11.1204';
+        var APP_VERSION = '2026.01.11.1311';
         var VERSION_KEY = 'tm_app_version';
         var RELOAD_KEY = 'tm_reload_pending';
 
@@ -104,7 +104,16 @@
     </script>
 
     <!-- Screenshot Deterrent: NoPrint.js with error handling -->
-    <script src="https://pdfanticopy.com/noprint.js" id="noprint-script"></script>
+    <script>
+      // Pre-define noCopy to prevent ReferenceError from external script
+      if (typeof noCopy === 'undefined') {
+        window.noCopy = function(options) {
+          // Placeholder - will be overwritten by noprint.js if it loads correctly
+          console.log('[NoPrint] Using fallback protection');
+        };
+      }
+    </script>
+    <script src="https://pdfanticopy.com/noprint.js" id="noprint-script" onerror="console.warn('[NoPrint] Failed to load external script')"></script>
     <script>
       try {
         // The library may expose noPrint OR noCopy - check both
