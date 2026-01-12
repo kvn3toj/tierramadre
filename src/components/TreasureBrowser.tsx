@@ -27,12 +27,12 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
+import { useAuthContext } from '../contexts/AuthContext';
 import { useTreasure } from '../hooks/useTreasure';
 import { useTreasureFiltering, type StatusFilter, type TypeFilter, type SortOption } from '../hooks/useTreasureFiltering';
 import { useGuestCanSeePrices } from '../hooks/useAuth';
 import { useFavorites } from '../hooks/useFavorites';
 import { usePagination } from '../hooks/usePagination';
-import { useBrowsingProgress } from '../hooks/useBrowsingProgress';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { useSavedFilters } from '../hooks/useSavedFilters';
 // TODO: Re-enable keyboard nav when adapted for virtualized grid (react-window)
@@ -50,7 +50,6 @@ const log = createLogger('Treasure');
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark, semanticColors } from '../design-system/tokens/colors';
 // Treasure components
 import { GridCard, ListRow, VirtualGrid, FilterContent, type FilterContentProps } from './treasure';
-import ProgressBadge from './ProgressBadge';
 import RecentlyViewedCarousel from './RecentlyViewedCarousel';
 import SavedFiltersDropdown from './SavedFiltersDropdown';
 import IOSFilterSheet from './ios/IOSFilterSheet';
@@ -60,6 +59,8 @@ import IOSFilterSheet from './ios/IOSFilterSheet';
 export default function TreasureBrowser() {
   const theme = useTheme();
   const { mode } = useThemeMode();
+  const { accessLevel } = useAuthContext();
+  const isAdmin = accessLevel === 'admin';
   const isLight = mode === 'light';
   const navigate = useNavigate();
   // Note: We read URL params directly from window.location.search for reliable initial values
@@ -207,13 +208,6 @@ export default function TreasureBrowser() {
     itemsPerPage: 24,
   });
 
-  // Browsing progress hook (gamification)
-  const totalAvailable = useMemo(() =>
-    treasureData.filter(i => i.estado?.toUpperCase() === 'DISPONIBLE').length,
-    [treasureData]
-  );
-  const browsingProgress = useBrowsingProgress(totalAvailable);
-
   // Recently viewed hook
   const { addToRecent, recentItems, clearRecent } = useRecentlyViewed();
 
@@ -324,8 +318,6 @@ export default function TreasureBrowser() {
   }, []);
 
   const handleProductClick = useCallback((item: TreasureItem, positionInList: number = 0) => {
-    // Track browsing progress
-    browsingProgress.markViewed(item.item);
     // Add to recently viewed
     addToRecent(item.item);
     // Track analytics
@@ -342,7 +334,7 @@ export default function TreasureBrowser() {
 
     // Navigate to product detail
     navigate(`/product/${item.item}`);
-  }, [navigate, browsingProgress, addToRecent, analyticsHook, track, hasFilters, viewMode]);
+  }, [navigate, addToRecent, analyticsHook, track, hasFilters, viewMode]);
 
   // Handle saving certifications
   const handleSaveCertifications = useCallback((certifications: TreasureItem['certifications']) => {
@@ -501,8 +493,22 @@ export default function TreasureBrowser() {
       {/* Mobile: Compact filter bar + inline filter panel */}
       {isMobile ? (
         <>
-          {/* Search Bar Row */}
-          <Box sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+          {/* Search Bar Row - Sticky on mobile so it's always visible when scrolling grid */}
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              mb: 1,
+              alignItems: 'center',
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
+              bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
+              py: 1,
+              mx: -1,
+              px: 1,
+            }}
+          >
             <TextField
               fullWidth
               size="small"
@@ -782,16 +788,6 @@ export default function TreasureBrowser() {
             <FilterContent {...filterContentProps} />
             {/* View toggle, stats and keyboard shortcuts - Desktop only */}
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 2, pt: 2, borderTop: '1px solid', borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default }}>
-              {/* Compact Progress Badge */}
-              <ProgressBadge
-                level={browsingProgress.level}
-                percentageExplored={browsingProgress.percentageExplored}
-                viewedCount={browsingProgress.viewedCount}
-                totalItems={totalAvailable}
-                levelProgress={browsingProgress.levelProgress}
-                nextLevel={browsingProgress.nextLevel}
-                compact
-              />
               {/* Compact Stats */}
               <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
                 <Chip
@@ -1049,6 +1045,7 @@ export default function TreasureBrowser() {
               onItemClick={props.onItemClick}
               isMobile={props.isMobile}
               viewCount={getViewCount(props.item.item)}
+              isAdmin={isAdmin}
             />
           )}
         />

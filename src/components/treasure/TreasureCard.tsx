@@ -41,9 +41,11 @@ export interface TreasureCardProps {
   onClick: () => void;
   /** View count for this product (optional) */
   viewCount?: number;
+  /** Whether the current user is an admin (required to see view counts) */
+  isAdmin?: boolean;
 }
 
-export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onClick, viewCount }: TreasureCardProps) {
+export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onClick, viewCount, isAdmin }: TreasureCardProps) {
   const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -237,8 +239,8 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
             />
           )}
 
-          {/* View count badge */}
-          {viewCount !== undefined && viewCount > 0 && (
+          {/* View count badge - Admin only */}
+          {isAdmin && viewCount !== undefined && viewCount > 0 && (
             <Chip
               icon={<Eye size={12} />}
               label={viewCount > 999 ? `${(viewCount / 1000).toFixed(1)}k` : viewCount}
@@ -434,7 +436,8 @@ export const MemoizedTreasureCard = memo(TreasureCard, (prevProps, nextProps) =>
     prevProps.item.precioCOP === nextProps.item.precioCOP &&
     prevProps.item.estado === nextProps.item.estado &&
     prevProps.isCompact === nextProps.isCompact &&
-    prevProps.viewCount === nextProps.viewCount
+    prevProps.viewCount === nextProps.viewCount &&
+    prevProps.isAdmin === nextProps.isAdmin
   );
 });
 

@@ -44,6 +44,8 @@ interface GridCardProps {
   isMobile?: boolean;
   /** View count for this product (optional) */
   viewCount?: number;
+  /** Whether the current user is an admin (required to see view counts) */
+  isAdmin?: boolean;
 }
 
 function GridCard({
@@ -51,6 +53,7 @@ function GridCard({
   onItemClick,
   isMobile = false,
   viewCount,
+  isAdmin,
 }: GridCardProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -193,8 +196,8 @@ function GridCard({
               />
             )}
 
-            {/* View count badge - top left */}
-            {viewCount !== undefined && viewCount > 0 && (
+            {/* View count badge - top left (Admin only) */}
+            {isAdmin && viewCount !== undefined && viewCount > 0 && (
               <Chip
                 icon={<Eye size={10} />}
                 label={viewCount > 999 ? `${(viewCount / 1000).toFixed(1)}k` : viewCount}
@@ -298,6 +301,7 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.item.precioCOP === nextProps.item.precioCOP &&
     prevProps.item.estado === nextProps.item.estado &&
     prevProps.isMobile === nextProps.isMobile &&
-    prevProps.viewCount === nextProps.viewCount
+    prevProps.viewCount === nextProps.viewCount &&
+    prevProps.isAdmin === nextProps.isAdmin
   );
 });
