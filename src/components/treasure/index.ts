@@ -14,4 +14,6 @@ export { default as VirtualGrid } from './VirtualGrid';
 
 // Filter components
 export { FilterContent } from './FilterContent';
-export type { FilterContentProps } from './FilterContent';
+export type { FilterContentProps, FilterContentPropsGrouped } from './FilterContent';
+export { ActiveFilterChips } from './ActiveFilterChips';
+export type { ActiveFilterChipsProps } from './ActiveFilterChips';
