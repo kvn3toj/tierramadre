@@ -47,6 +47,7 @@ interface GoogleAuthContextType {
   authError: string | null;
   signIn: (credential: string) => Promise<void>;
   signOut: () => void;
+  clearError: () => void;
   updatePreferences: (prefs: Partial<UserPreferences>) => Promise<void>;
   syncWithSheets: () => Promise<void>;
 }
@@ -240,6 +241,11 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
     localStorage.removeItem(GOOGLE_TOKEN_KEY);
   }, []);
 
+  // Clear auth error (for retry with different account)
+  const clearError = useCallback(() => {
+    setAuthError(null);
+  }, []);
+
   // Update preferences
   const updatePreferences = useCallback(async (prefs: Partial<UserPreferences>) => {
     const newPrefs = { ...preferences, ...prefs };
@@ -287,6 +293,7 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
     authError,
     signIn,
     signOut,
+    clearError,
     updatePreferences,
     syncWithSheets,
   };
@@ -308,6 +315,7 @@ const defaultContext: GoogleAuthContextType = {
   authError: null,
   signIn: async () => {},
   signOut: () => {},
+  clearError: () => {},
   updatePreferences: async () => {},
   syncWithSheets: async () => {},
 };

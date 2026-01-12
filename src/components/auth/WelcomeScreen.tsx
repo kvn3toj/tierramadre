@@ -6,15 +6,16 @@
  * Smooth fade-in transition from splash screen
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Box, Typography, Button, IconButton, Fade, Stack, alpha, Divider, Alert } from '@mui/material';
 import { motion } from 'framer-motion';
-import { Backspace as BackspaceIcon, VisibilityOutlined, LockOpenOutlined } from '@mui/icons-material';
+import { Backspace as BackspaceIcon, VisibilityOutlined, LockOpenOutlined, OpenInNew, ContentCopy, CheckCircleOutline } from '@mui/icons-material';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { emeraldCore, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
 import { useAuth } from '../../hooks/useAuth';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { getCachedBrowserInfo } from '../../utils/deviceTier';
 
 // Check if Google OAuth is configured
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
@@ -24,7 +25,7 @@ type ViewMode = 'choice' | 'pin' | 'google';
 
 export default function WelcomeScreen() {
   const { loginWithPin } = useAuth();
-  const { signIn, authError } = useGoogleAuth();
+  const { signIn, authError, clearError } = useGoogleAuth();
   const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<ViewMode>('choice');
   const [pin, setPin] = useState('');
@@ -32,6 +33,54 @@ export default function WelcomeScreen() {
   const [shake, setShake] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
   const [showInvitationMessage, setShowInvitationMessage] = useState(false);
+  const [googleLoginKey, setGoogleLoginKey] = useState(0);
+  const [urlCopied, setUrlCopied] = useState(false);
+
+  // Detect in-app browsers (Telegram, Instagram, etc.) that have OAuth issues
+  const browserInfo = useMemo(() => getCachedBrowserInfo(), []);
+  const isInAppBrowser = browserInfo.isInAppBrowser;
+  const browserName = browserInfo.browserName;
+
+  // Handle copying URL to clipboard
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 2000);
+    } catch {
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement('textarea');
+      textArea.value = window.location.href;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 2000);
+    }
+  };
+
+  // Handle opening in external browser (iOS/Android specific)
+  const handleOpenExternal = () => {
+    // On iOS, we can try to open Safari with the URL
+    // On Android, the share menu often has "Open in Browser" option
+    const url = window.location.href;
+
+    // Try native share API first (works well on mobile)
+    if (navigator.share) {
+      navigator.share({
+        title: 'Tierra Madre',
+        text: 'Abre este enlace en Chrome o Safari para iniciar sesión con Google',
+        url: url,
+      }).catch(() => {
+        // User cancelled or error - just copy the URL
+        handleCopyUrl();
+      });
+    } else {
+      // Fallback: copy URL
+      handleCopyUrl();
+    }
+  };
 
   const handleDigit = (digit: string) => {
     if (pin.length >= 4) return;
@@ -101,6 +150,14 @@ export default function WelcomeScreen() {
 
   const handleGoogleError = () => {
     setGoogleError('No se pudo completar el inicio de sesión con Google');
+  };
+
+  const handleTryAnotherAccount = () => {
+    // Clear any auth errors (both local and context)
+    setGoogleError(null);
+    clearError();
+    // Force Google to show account chooser by re-rendering GoogleLogin component
+    setGoogleLoginKey(prev => prev + 1);
   };
 
   const digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'back'];
@@ -173,25 +230,98 @@ export default function WelcomeScreen() {
             {/* Google Sign-In - Only shown if configured */}
             {isGoogleConfigured && (
               <>
-                <Box sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  '& > div': { width: '100%' },
-                  '& iframe': { colorScheme: 'normal' },
-                }}>
-                  <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={handleGoogleError}
-                    theme="filled_black"
-                    shape="pill"
-                    text="signin_with"
-                    locale="es"
-                    width="340"
-                  />
-                </Box>
+                {/* In-app browser warning (Telegram, Instagram, etc.) */}
+                {isInAppBrowser ? (
+                  <Box sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: alpha(semanticColors.warning.main, 0.1),
+                    border: `1px solid ${alpha(semanticColors.warning.main, 0.3)}`,
+                  }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: surfacesDark.text.primary,
+                        mb: 1.5,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {t.auth.inAppBrowserWarning?.replace('{browser}', browserName || 'esta app') ||
+                        `El navegador de ${browserName || 'esta app'} no soporta Google Sign-In.`}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: surfacesDark.text.secondary,
+                        display: 'block',
+                        mb: 2,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {t.auth.openInExternalBrowser || 'Abre en Chrome o Safari para usar Google'}
+                    </Typography>
+
+                    <Stack direction="row" spacing={1} justifyContent="center">
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<OpenInNew />}
+                        onClick={handleOpenExternal}
+                        sx={{
+                          bgcolor: emeraldCore.primary,
+                          color: '#000',
+                          textTransform: 'none',
+                          '&:hover': {
+                            bgcolor: emeraldCore.light,
+                          },
+                        }}
+                      >
+                        {t.auth.shareLink || 'Compartir enlace'}
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={urlCopied ? <CheckCircleOutline /> : <ContentCopy />}
+                        onClick={handleCopyUrl}
+                        sx={{
+                          borderColor: alpha('#FFFFFF', 0.3),
+                          color: urlCopied ? emeraldCore.primary : surfacesDark.text.secondary,
+                          textTransform: 'none',
+                          '&:hover': {
+                            borderColor: emeraldCore.primary,
+                          },
+                        }}
+                      >
+                        {urlCopied
+                          ? (t.auth.urlCopied || 'Copiado')
+                          : (t.auth.copyUrl || 'Copiar URL')}
+                      </Button>
+                    </Stack>
+                  </Box>
+                ) : (
+                  /* Normal Google Sign-In button */
+                  <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    '& > div': { width: '100%' },
+                    '& iframe': { colorScheme: 'normal' },
+                  }}>
+                    <GoogleLogin
+                      key={googleLoginKey}
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      theme="filled_black"
+                      shape="pill"
+                      text="signin_with"
+                      locale="es"
+                      width="340"
+                      useOneTap={false}
+                    />
+                  </Box>
+                )}
 
                 {/* Error messages */}
-                {(googleError || authError) && (
+                {(googleError || authError) && !isInAppBrowser && (
                   <Alert
                     severity="warning"
                     sx={{
@@ -203,6 +333,26 @@ export default function WelcomeScreen() {
                   >
                     {googleError || authError}
                   </Alert>
+                )}
+
+                {/* Try another account button - shown after auth error */}
+                {authError && !isInAppBrowser && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={handleTryAnotherAccount}
+                    sx={{
+                      textTransform: 'none',
+                      borderColor: alpha(emeraldCore.primary, 0.5),
+                      color: emeraldCore.light,
+                      '&:hover': {
+                        borderColor: emeraldCore.primary,
+                        bgcolor: alpha(emeraldCore.primary, 0.1),
+                      },
+                    }}
+                  >
+                    Intentar con otra cuenta
+                  </Button>
                 )}
 
                 {/* Divider */}

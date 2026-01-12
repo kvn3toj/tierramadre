@@ -213,6 +213,12 @@ export const es = {
     colombianEmeralds: 'Colombian Emeralds',
     invitationOnly: 'Acceso solo con invitación',
     invitationOnlyMessage: 'El acceso de invitado requiere un enlace de invitación. Solicita uno a un embajador de Tierra Madre.',
+    // In-app browser (Telegram, Instagram, etc.) messages
+    inAppBrowserWarning: 'El navegador de {browser} no soporta Google Sign-In.',
+    openInExternalBrowser: 'Abre en Chrome o Safari para usar Google',
+    shareLink: 'Compartir enlace',
+    copyUrl: 'Copiar URL',
+    urlCopied: 'Copiado',
   },
 
   // Member Benefits (Guest Teaser)

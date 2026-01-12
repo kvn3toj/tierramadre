@@ -274,6 +274,73 @@ export const clearDeviceCache = (): void => {
 };
 
 // =============================================================================
+// BROWSER DETECTION (for OAuth compatibility)
+// =============================================================================
+
+export interface BrowserInfo {
+  /** Is Telegram in-app browser */
+  isTelegram: boolean;
+  /** Is any in-app browser (Instagram, Facebook, etc.) */
+  isInAppBrowser: boolean;
+  /** Browser name for display */
+  browserName: string | null;
+}
+
+/**
+ * Detect if running in Telegram or other in-app browsers
+ * These browsers have issues with Google OAuth popups/redirects
+ */
+export const detectBrowser = (): BrowserInfo => {
+  const ua = navigator.userAgent || '';
+
+  // Telegram WebView detection
+  const isTelegram = /TelegramBot|Telegram/i.test(ua) ||
+    // Telegram iOS/Android WebView
+    /Telegram/i.test(ua) ||
+    // Additional Telegram detection via window object
+    typeof (window as unknown as { TelegramWebviewProxy?: unknown }).TelegramWebviewProxy !== 'undefined';
+
+  // Other in-app browsers that have OAuth issues
+  const isInstagram = /Instagram/i.test(ua);
+  const isFacebook = /FBAN|FBAV|FB_IAB/i.test(ua);
+  const isSnapchat = /Snapchat/i.test(ua);
+  const isTwitter = /Twitter/i.test(ua);
+  const isLinkedIn = /LinkedInApp/i.test(ua);
+  const isLine = /Line\//i.test(ua);
+  const isWeChat = /MicroMessenger/i.test(ua);
+
+  const isInAppBrowser = isTelegram || isInstagram || isFacebook ||
+    isSnapchat || isTwitter || isLinkedIn || isLine || isWeChat;
+
+  // Determine browser name for user-friendly message
+  let browserName: string | null = null;
+  if (isTelegram) browserName = 'Telegram';
+  else if (isInstagram) browserName = 'Instagram';
+  else if (isFacebook) browserName = 'Facebook';
+  else if (isSnapchat) browserName = 'Snapchat';
+  else if (isTwitter) browserName = 'Twitter/X';
+  else if (isLinkedIn) browserName = 'LinkedIn';
+  else if (isLine) browserName = 'Line';
+  else if (isWeChat) browserName = 'WeChat';
+
+  return {
+    isTelegram,
+    isInAppBrowser,
+    browserName,
+  };
+};
+
+// Cache browser detection (doesn't change during session)
+let cachedBrowserInfo: BrowserInfo | null = null;
+
+export const getCachedBrowserInfo = (): BrowserInfo => {
+  if (cachedBrowserInfo === null) {
+    cachedBrowserInfo = detectBrowser();
+  }
+  return cachedBrowserInfo;
+};
+
+// =============================================================================
 // COMPOSITE EXPORT
 // =============================================================================
 
@@ -286,6 +353,9 @@ export const deviceTier = {
   getCachedCapabilities,
   clearCache: clearDeviceCache,
   configs: tierConfigs,
+  // Browser detection
+  detectBrowser,
+  getCachedBrowserInfo,
 } as const;
 
 export default deviceTier;
