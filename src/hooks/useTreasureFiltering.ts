@@ -88,7 +88,10 @@ const QUALITY_ORDER: Record<string, number> = {
   'Comercial': 1,
 };
 
-const DEFAULT_INACTIVITY_TIMEOUT_MINUTES = 5;
+const DEFAULT_INACTIVITY_TIMEOUT_MINUTES = 3;
+
+// Session storage key to track filter activity
+const FILTER_ACTIVITY_KEY = 'treasure-filter-activity';
 
 export function useTreasureFiltering({
   treasure,
@@ -294,14 +297,63 @@ export function useTreasureFiltering({
     );
   }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, cityFilter, coleccionFilter, priceRange, priceMinMax]);
 
-  // Track last activity time for inactivity timeout
-  const lastActivityRef = useRef<number>(Date.now());
+  // Track last activity time for inactivity timeout (persisted to sessionStorage)
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset activity timer when filters change
-  const resetActivityTimer = useCallback(() => {
-    lastActivityRef.current = Date.now();
+  // Get last activity time from sessionStorage (survives page refreshes within session)
+  const getLastActivity = useCallback((): number => {
+    try {
+      const stored = sessionStorage.getItem(FILTER_ACTIVITY_KEY);
+      if (stored) {
+        const data = JSON.parse(stored);
+        return data.lastActivity || Date.now();
+      }
+    } catch {
+      // Ignore parse errors
+    }
+    return Date.now();
   }, []);
+
+  // Save activity time to sessionStorage
+  const saveActivity = useCallback((timestamp: number) => {
+    try {
+      sessionStorage.setItem(FILTER_ACTIVITY_KEY, JSON.stringify({
+        lastActivity: timestamp,
+      }));
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
+
+  // Clear stored activity on filter clear
+  const clearStoredActivity = useCallback(() => {
+    try {
+      sessionStorage.removeItem(FILTER_ACTIVITY_KEY);
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
+
+  // Reset activity timer when user interacts
+  const resetActivityTimer = useCallback(() => {
+    saveActivity(Date.now());
+  }, [saveActivity]);
+
+  // Check if filters should be cleared on mount (new browser session = no sessionStorage)
+  // sessionStorage is cleared when browser closes, so filters should reset
+  useEffect(() => {
+    // Check if this is a fresh session (no activity stored)
+    const stored = sessionStorage.getItem(FILTER_ACTIVITY_KEY);
+    if (!stored && hasFilters) {
+      // Fresh session with URL filters - check if they're stale
+      // This handles the case when user closed browser and reopened with URL params
+      clearFilters();
+      // Also clear URL params
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    }
+  }, []); // Only run on mount
 
   // Clear filters after inactivity (only if filters are active)
   useEffect(() => {
@@ -311,6 +363,10 @@ export function useTreasureFiltering({
         clearTimeout(inactivityTimerRef.current);
         inactivityTimerRef.current = null;
       }
+      // Clear stored activity when no filters
+      if (!hasFilters) {
+        clearStoredActivity();
+      }
       return;
     }
 
@@ -319,13 +375,19 @@ export function useTreasureFiltering({
 
     // Set up inactivity check
     const checkInactivity = () => {
+      const lastActivity = getLastActivity();
       const now = Date.now();
-      const inactiveMs = now - lastActivityRef.current;
+      const inactiveMs = now - lastActivity;
       const timeoutMs = inactivityTimeoutMinutes * 60 * 1000;
 
       if (inactiveMs >= timeoutMs) {
         // User has been inactive, clear filters
         clearFilters();
+        clearStoredActivity();
+        // Also clear URL params
+        if (typeof window !== 'undefined') {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
       } else {
         // Check again when timeout would expire
         const remainingMs = timeoutMs - inactiveMs;
@@ -333,8 +395,24 @@ export function useTreasureFiltering({
       }
     };
 
-    // Start the timer
-    inactivityTimerRef.current = setTimeout(checkInactivity, inactivityTimeoutMinutes * 60 * 1000);
+    // Start the timer - check based on stored activity time
+    const lastActivity = getLastActivity();
+    const now = Date.now();
+    const inactiveMs = now - lastActivity;
+    const timeoutMs = inactivityTimeoutMinutes * 60 * 1000;
+
+    if (inactiveMs >= timeoutMs) {
+      // Already past timeout, clear immediately
+      clearFilters();
+      clearStoredActivity();
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    } else {
+      // Schedule check for remaining time
+      const remainingMs = timeoutMs - inactiveMs;
+      inactivityTimerRef.current = setTimeout(checkInactivity, remainingMs);
+    }
 
     // Cleanup on unmount or dependency change
     return () => {
@@ -343,14 +421,27 @@ export function useTreasureFiltering({
         inactivityTimerRef.current = null;
       }
     };
-  }, [hasFilters, inactivityTimeoutMinutes, clearFilters, resetActivityTimer]);
+  }, [hasFilters, inactivityTimeoutMinutes, clearFilters, resetActivityTimer, getLastActivity, clearStoredActivity]);
 
-  // Track user activity on visibility change (back/forward navigation)
+  // Track user activity on visibility change (but check for staleness when returning)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        // User returned to the page, reset activity timer
-        resetActivityTimer();
+      if (document.visibilityState === 'visible' && hasFilters) {
+        // User returned to the page - check if timeout expired while away
+        const lastActivity = getLastActivity();
+        const now = Date.now();
+        const inactiveMs = now - lastActivity;
+        const timeoutMs = inactivityTimeoutMinutes * 60 * 1000;
+
+        if (inactiveMs >= timeoutMs) {
+          // Timeout expired while away, clear filters
+          clearFilters();
+          clearStoredActivity();
+          if (typeof window !== 'undefined') {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
+        }
+        // Don't reset timer on return - user needs to interact with filters
       }
     };
 
@@ -358,7 +449,7 @@ export function useTreasureFiltering({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [resetActivityTimer]);
+  }, [hasFilters, inactivityTimeoutMinutes, clearFilters, getLastActivity, clearStoredActivity]);
 
   // Memoize filters object to prevent infinite re-render loops in URL sync
   const filters = useMemo(() => ({
