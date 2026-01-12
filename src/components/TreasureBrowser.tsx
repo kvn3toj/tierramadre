@@ -40,8 +40,11 @@ import { useSavedFilters } from '../hooks/useSavedFilters';
 import { useTreasureAnalytics } from '../hooks/useTreasureAnalytics';
 import { useTracking } from '../contexts/TrackingContext';
 import { useProductViews } from '../hooks/useProductViews';
+import { useComparison } from '../hooks/useComparison';
 import { TreasureItem } from '../types';
 import CertificationUpload from './CertificationUpload';
+import ComparisonBar from './ComparisonBar';
+import ComparisonModal from './ComparisonModal';
 import { formatCurrency, formatFullCurrency, getColorDot } from '../utils/formatting';
 import { createLogger } from '../utils/logger';
 // Design System Tokens
@@ -225,6 +228,9 @@ export default function TreasureBrowser() {
 
   // Product view counts for badges
   const { getViewCount } = useProductViews();
+
+  // Comparison hook for side-by-side comparison
+  const comparison = useComparison();
 
   // Track treasure view on mount
   useEffect(() => {
@@ -1053,6 +1059,9 @@ export default function TreasureBrowser() {
               isMobile={props.isMobile}
               viewCount={getViewCount(props.item.item)}
               isAdmin={isAdmin}
+              isSelectedForComparison={comparison.isSelected(props.item.item)}
+              onToggleComparison={() => comparison.toggleComparison(props.item)}
+              canAddToComparison={comparison.canAddMore}
             />
           )}
         />
@@ -1169,6 +1178,21 @@ export default function TreasureBrowser() {
       )}
 
       {/* Keyboard Shortcuts Help Dialog - Disabled for mobile-first (iPhone 12+, iPad) */}
+
+      {/* Comparison Bar - floating bottom bar */}
+      <ComparisonBar
+        selectedItems={comparison.selectedItems}
+        onRemove={(itemId) => comparison.removeFromComparison(itemId)}
+        onClear={comparison.clearComparison}
+        onCompare={comparison.openComparisonModal}
+      />
+
+      {/* Comparison Modal */}
+      <ComparisonModal
+        open={comparison.showComparisonModal}
+        onClose={comparison.closeComparisonModal}
+        items={comparison.selectedItems}
+      />
     </Box>
   );
 }
