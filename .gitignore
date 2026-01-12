@@ -39,9 +39,36 @@ Legado*.html
 *_files/
 .vercel
 
-# Large files
+# Large files (>5MB should not be in git)
 release/
 docs/*.mp4
+docs/brand/
+
+# Large binary formats - use Google Drive instead
+*.pptx
+*.ppt
+*.ai
+*.psd
+*.sketch
+*.fig
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.zip
+*.rar
+*.7z
+
+# Large image formats
+*.raw
+*.cr2
+*.nef
+*.tiff
+*.bmp
+
+# Slides and presentations
+public/slides/
+public/catalog-media/
 
 # Large files - Electron builds
 release/
