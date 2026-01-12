@@ -68,17 +68,28 @@ export default function QuotationMediaUpload({
     });
 
     try {
-      // API endpoint temporarily disabled to stay within Vercel Hobby limit
-      throw new Error('Subida de medios temporalmente deshabilitada');
+      const response = await fetch('/api/provider-quotations?action=upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.urls) {
+        // Add new URLs to existing ones
+        const newUrls = [...uploadedUrls, ...data.urls];
+        onUploadComplete(newUrls);
+        setUploadingFiles([]);
+      } else {
+        throw new Error(data.error || 'Error al subir archivos');
+      }
     } catch (error) {
       console.error('Upload error:', error);
-      // Mark files as errored
       setUploadingFiles((prev) =>
         prev.map((f) => ({ ...f, error: 'Error al subir' }))
       );
     } finally {
       setIsUploading(false);
-      setUploadingFiles([]);
     }
   };
 

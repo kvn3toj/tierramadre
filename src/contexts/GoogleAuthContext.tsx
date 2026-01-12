@@ -100,43 +100,37 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
           log.debug('Re-validating stored user:', parsedUser.email);
 
           try {
-            // First check Asesores sheet
-            const validateResponse = await fetch(`/api/validate-user?email=${encodeURIComponent(parsedUser.email)}`);
+            // Validate against both Asesores and Proveedores in one call
+            const validateResponse = await fetch(`/api/validate?email=${encodeURIComponent(parsedUser.email)}&type=both`);
             const validateData = await validateResponse.json();
 
-            if (validateData.success && validateData.isAuthorized) {
-              // User still authorized - update role/accessLevel in case it changed
+            if (validateData.success && validateData.isAuthorized && validateData.user) {
+              // User found in Asesores - update role/accessLevel in case it changed
               parsedUser.role = validateData.user.role;
               parsedUser.accessLevel = validateData.user.accessLevel;
               setUser(parsedUser);
               setIsAuthorized(true);
               localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(parsedUser));
               log.debug('User re-validated successfully:', { email: parsedUser.email, role: parsedUser.role });
+            } else if (validateData.success && validateData.isProvider && validateData.provider) {
+              // User found in Proveedores
+              parsedUser.role = 'Proveedor';
+              parsedUser.accessLevel = 'provider';
+              setUser(parsedUser);
+              setIsAuthorized(true);
+              localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(parsedUser));
+              log.debug('Provider re-validated successfully:', parsedUser.email);
             } else {
-              // Not in Asesores, check Proveedores
-              const providerResponse = await fetch(`/api/validate-provider?email=${encodeURIComponent(parsedUser.email)}`);
-              const providerData = await providerResponse.json();
-
-              if (providerData.success && providerData.isProvider) {
-                // User is still authorized as provider
-                parsedUser.role = 'Proveedor';
-                parsedUser.accessLevel = 'provider';
-                setUser(parsedUser);
-                setIsAuthorized(true);
-                localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(parsedUser));
-                log.debug('Provider re-validated successfully:', parsedUser.email);
-              } else {
-                // User NO LONGER AUTHORIZED - force sign out silently
-                log.warn('User no longer authorized - forcing sign out:', parsedUser.email);
-                googleLogout();
-                localStorage.removeItem(GOOGLE_USER_KEY);
-                localStorage.removeItem(GOOGLE_PREFS_KEY);
-                localStorage.removeItem(GOOGLE_TOKEN_KEY);
-                setUser(null);
-                setPreferences({});
-                setIsAuthorized(false);
-                // No error message - just redirect to login screen
-              }
+              // User NO LONGER AUTHORIZED - force sign out silently
+              log.warn('User no longer authorized - forcing sign out:', parsedUser.email);
+              googleLogout();
+              localStorage.removeItem(GOOGLE_USER_KEY);
+              localStorage.removeItem(GOOGLE_PREFS_KEY);
+              localStorage.removeItem(GOOGLE_TOKEN_KEY);
+              setUser(null);
+              setPreferences({});
+              setIsAuthorized(false);
+              // No error message - just redirect to login screen
             }
           } catch (validationError) {
             // API error during re-validation - keep user logged in but mark as needing re-auth
@@ -195,48 +189,30 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
         throw new Error('Failed to decode credential');
       }
 
-      // Validate user email against Asesores sheet first
+      // Validate user email against both Asesores and Proveedores sheets
       try {
-        const validateResponse = await fetch(`/api/validate-user?email=${encodeURIComponent(profile.email)}`);
+        const validateResponse = await fetch(`/api/validate?email=${encodeURIComponent(profile.email)}&type=both`);
         const validateData = await validateResponse.json();
 
-        if (validateData.success && validateData.isAuthorized) {
-          // User is authorized as asesor/admin - add role and access level to profile
+        if (validateData.success && validateData.isAuthorized && validateData.user) {
+          // User is authorized as asesor/admin
           profile.role = validateData.user.role;
           profile.accessLevel = validateData.user.accessLevel;
           setIsAuthorized(true);
           log.debug('User authorized:', { email: profile.email, role: profile.role, accessLevel: profile.accessLevel });
+        } else if (validateData.success && validateData.isProvider && validateData.provider) {
+          // User is authorized as provider
+          profile.role = 'Proveedor';
+          profile.accessLevel = 'provider';
+          setIsAuthorized(true);
+          log.debug('Provider authorized:', { email: profile.email, provider: validateData.provider?.name });
         } else {
-          // Not found in Asesores, check Proveedores sheet
-          log.debug('Not found in Asesores, checking Proveedores...');
-
-          try {
-            const providerResponse = await fetch(`/api/validate-provider?email=${encodeURIComponent(profile.email)}`);
-            const providerData = await providerResponse.json();
-
-            if (providerData.success && providerData.isProvider) {
-              // User is authorized as provider
-              profile.role = 'Proveedor';
-              profile.accessLevel = 'provider';
-              setIsAuthorized(true);
-              log.debug('Provider authorized:', { email: profile.email, provider: providerData.provider?.name });
-            } else {
-              // User email not found in any authorized list - BLOCK ACCESS
-              setIsAuthorized(false);
-              setAuthError('Tu correo no está registrado en el sistema. Contacta al administrador.');
-              log.warn('User not authorized - access blocked:', profile.email);
-              setIsLoading(false);
-              return; // Don't store user or continue
-            }
-          } catch (providerError) {
-            log.error('Provider validation API error:', providerError);
-            // API error checking providers - BLOCK ACCESS
-            setIsAuthorized(false);
-            setAuthError('Error validando proveedor. Intenta nuevamente.');
-            log.warn('Provider validation failed - access blocked:', profile.email);
-            setIsLoading(false);
-            return; // Don't store user or continue
-          }
+          // User email not found in any authorized list - BLOCK ACCESS
+          setIsAuthorized(false);
+          setAuthError('Tu correo no está registrado en el sistema. Contacta al administrador.');
+          log.warn('User not authorized - access blocked:', profile.email);
+          setIsLoading(false);
+          return; // Don't store user or continue
         }
       } catch (validateError) {
         log.error('Validation API error:', validateError);

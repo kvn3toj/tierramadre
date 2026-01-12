@@ -50,16 +50,30 @@ interface UserInfo {
 
 /**
  * Track a product view (fire and forget)
- * NOTE: API endpoint temporarily disabled to stay within Vercel Hobby limit
  */
 async function trackView(
-  _itemId: number,
-  _productName: string,
-  _referrer: string,
-  _userInfo?: UserInfo
+  itemId: number,
+  productName: string,
+  referrer: string,
+  userInfo?: UserInfo
 ): Promise<void> {
-  // API endpoint temporarily disabled - tracking silently skipped
-  // To re-enable: upgrade to Vercel Pro or restore api/track-product-view.js
+  try {
+    await fetch('/api/product-views?action=track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        itemId,
+        productName,
+        referrer,
+        sessionId: sessionStorage.getItem('tm_session_id') || crypto.randomUUID(),
+        userName: userInfo?.name,
+        userEmail: userInfo?.email,
+        userRole: userInfo?.accessLevel || 'guest',
+      }),
+    });
+  } catch {
+    // Silently fail - tracking is non-critical
+  }
 }
 
 interface UseProductViewOptions {

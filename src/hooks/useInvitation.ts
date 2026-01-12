@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useGoogleAuth } from '../contexts/GoogleAuthContext';
 import type {
   InvitationData,
   ValidationResult,
@@ -27,43 +28,122 @@ interface UseInvitationReturn {
 }
 
 export const useInvitation = (): UseInvitationReturn => {
-  // State kept for interface compatibility even though API is disabled
+  const { user } = useGoogleAuth();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastInvitation] = useState<InvitationData | null>(null);
+  const [lastInvitation, setLastInvitation] = useState<InvitationData | null>(null);
 
   const generateInvitation = useCallback(async (
-    _options: GenerateInvitationOptions = {}
+    options: GenerateInvitationOptions = {}
   ): Promise<InvitationData | null> => {
-    // API endpoint temporarily disabled to stay within Vercel Hobby limit
-    setError('Sistema de invitaciones temporalmente deshabilitado');
-    return null;
-  }, []);
+    if (!user) {
+      setError('Debes iniciar sesión para generar invitaciones');
+      return null;
+    }
 
-  const validateInvitation = useCallback(async (_shortCode: string): Promise<ValidationResult> => {
-    // API endpoint temporarily disabled to stay within Vercel Hobby limit
-    return {
-      success: false,
-      isValid: false,
-      status: 'expired',
-      error: 'Sistema de invitaciones temporalmente deshabilitado',
-    };
+    setIsGenerating(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/invitations?action=generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorEmail: user.email,
+          creatorName: user.name,
+          creatorRole: user.role,
+          pricingMode: options.pricingMode || 'with_prices',
+          guestName: options.guestName,
+          guestContact: options.guestContact,
+          contactType: options.contactType,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.invitation) {
+        setLastInvitation(data.invitation);
+        return data.invitation;
+      }
+
+      setError(data.error || 'Error al generar invitación');
+      return null;
+    } catch (err) {
+      console.error('Generate invitation error:', err);
+      setError('Error de conexión. Intenta nuevamente.');
+      return null;
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [user]);
+
+  const validateInvitation = useCallback(async (shortCode: string): Promise<ValidationResult> => {
+    setIsValidating(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/invitations?action=validate&code=${encodeURIComponent(shortCode)}`);
+      const data = await response.json();
+
+      if (!data.success) {
+        setError(data.error || 'Invitación inválida');
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Validate invitation error:', err);
+      const errorResult: ValidationResult = {
+        success: false,
+        isValid: false,
+        status: 'expired',
+        error: 'Error de conexión. Intenta nuevamente.',
+      };
+      setError(errorResult.error || null);
+      return errorResult;
+    } finally {
+      setIsValidating(false);
+    }
   }, []);
 
   const registerGuest = useCallback(async (
-    _registration: GuestRegistration
+    registration: GuestRegistration
   ): Promise<boolean> => {
-    // API endpoint temporarily disabled to stay within Vercel Hobby limit
-    setError('Sistema de invitaciones temporalmente deshabilitado');
-    return false;
+    setIsRegistering(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/invitations?action=register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(registration),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        return true;
+      }
+
+      setError(data.error || 'Error al registrar invitado');
+      return false;
+    } catch (err) {
+      console.error('Register guest error:', err);
+      setError('Error de conexión. Intenta nuevamente.');
+      return false;
+    } finally {
+      setIsRegistering(false);
+    }
   }, []);
 
   return {
     generateInvitation,
     validateInvitation,
     registerGuest,
-    isGenerating: false,
-    isValidating: false,
-    isRegistering: false,
+    isGenerating,
+    isValidating,
+    isRegistering,
     error,
     lastInvitation,
   };

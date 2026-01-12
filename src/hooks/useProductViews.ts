@@ -87,23 +87,29 @@ export function useProductViews(): UseProductViewsResult {
     setError(null);
 
     try {
-      // API endpoint temporarily disabled - return empty stats
-      const emptyStats: ViewStats = {
-        views: {},
-        topProducts: [],
-        topViewers: [],
-        recentActivity: [],
-        totalViews: 0,
-        todayViews: 0,
-        weekViews: 0,
-        guestViews: 0,
-        loggedInViews: 0,
-        uniqueProducts: 0,
-        uniqueViewers: 0,
-      };
-      cachedStats = emptyStats;
-      cacheTimestamp = Date.now();
-      setStats(emptyStats);
+      const response = await fetch('/api/product-views?action=stats');
+      if (!response.ok) {
+        throw new Error('Failed to fetch view stats');
+      }
+      const data = await response.json();
+      if (data.success) {
+        const fetchedStats: ViewStats = {
+          views: data.views || {},
+          topProducts: data.topProducts || [],
+          topViewers: data.topViewers || [],
+          recentActivity: data.recentActivity || [],
+          totalViews: data.totalViews || 0,
+          todayViews: data.todayViews || 0,
+          weekViews: data.weekViews || 0,
+          guestViews: data.guestViews || 0,
+          loggedInViews: data.loggedInViews || 0,
+          uniqueProducts: data.uniqueProducts || 0,
+          uniqueViewers: data.uniqueViewers || 0,
+        };
+        cachedStats = fetchedStats;
+        cacheTimestamp = Date.now();
+        setStats(fetchedStats);
+      }
     } catch (err) {
       setError('Error fetching view data');
       console.error('useProductViews error:', err);
