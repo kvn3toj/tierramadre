@@ -71,7 +71,7 @@ export default async function handler(req, res) {
 
     const { mimeType, name } = metadataResponse.data;
 
-    // For thumbnail requests, get the thumbnail
+    // For thumbnail requests (videos), fetch and proxy the thumbnail
     if (thumbnail === 'true') {
       const thumbResponse = await drive.files.get({
         fileId,
@@ -80,9 +80,19 @@ export default async function handler(req, res) {
       });
 
       if (thumbResponse.data.thumbnailLink) {
-        // Redirect to thumbnail
-        return res.redirect(302, thumbResponse.data.thumbnailLink);
+        // Fetch the thumbnail and proxy it (avoid CORS issues with direct redirect)
+        const thumbnailUrl = thumbResponse.data.thumbnailLink.replace(/=s\d+/, '=s800');
+        const thumbFetch = await fetch(thumbnailUrl);
+
+        if (thumbFetch.ok) {
+          const thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
+          res.setHeader('Content-Type', 'image/jpeg');
+          res.setHeader('Content-Length', thumbBuffer.length);
+          res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+          return res.status(200).send(thumbBuffer);
+        }
       }
+      // If thumbnail fetch fails, fall through to serve the original file
     }
 
     // Download the file

@@ -191,15 +191,8 @@ export default async function handler(req, res) {
             if (result) {
               const { file, isVideo } = result;
 
-              // For videos, use Google Drive's thumbnail if available
-              // Otherwise, use our proxy with thumbnail parameter
-              let proxyUrl;
-              if (isVideo && file.thumbnailLink) {
-                // Google Drive thumbnail URL - convert to larger size
-                proxyUrl = file.thumbnailLink.replace(/=s\d+/, '=s400');
-              } else {
-                proxyUrl = `/api/serve-drive-image?fileId=${file.id}${isVideo ? '&thumbnail=true' : ''}`;
-              }
+              // Always use proxy URL for reliable loading (Google Drive thumbnailLink has CORS issues)
+              const proxyUrl = `/api/serve-drive-image?fileId=${file.id}${isVideo ? '&thumbnail=true' : ''}`;
 
               return {
                 itemNumber,

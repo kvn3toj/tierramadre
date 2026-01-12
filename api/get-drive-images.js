@@ -191,19 +191,8 @@ export default async function handler(req, res) {
     const images = files.map((file, index) => {
       const isVideo = file.mimeType.startsWith('video/');
 
-      // For video thumbnails, use Google Drive's thumbnail or proxy with thumbnail param
-      let thumbnailUrl;
-      if (isVideo) {
-        if (file.thumbnailLink) {
-          // Use Google Drive's generated thumbnail, scaled up
-          thumbnailUrl = file.thumbnailLink.replace(/=s\d+/, '=s800');
-        } else {
-          // Fallback: proxy the video with thumbnail param (will serve first frame if supported)
-          thumbnailUrl = `/api/serve-drive-image?fileId=${file.id}&thumbnail=true`;
-        }
-      } else {
-        thumbnailUrl = `/api/serve-drive-image?fileId=${file.id}`;
-      }
+      // Always use proxy URL for thumbnails (Google Drive direct URLs have CORS issues)
+      const thumbnailUrl = `/api/serve-drive-image?fileId=${file.id}${isVideo ? '&thumbnail=true' : ''}`;
 
       return {
         id: file.id,
