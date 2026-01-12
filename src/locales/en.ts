@@ -211,6 +211,8 @@ export const en = {
     studio: 'Studio',
     privateAccess: 'PRIVATE ACCESS',
     colombianEmeralds: 'Colombian Emeralds',
+    invitationOnly: 'Invitation only access',
+    invitationOnlyMessage: 'Guest access requires an invitation link. Request one from a Tierra Madre ambassador.',
   },
 
   // Member Benefits (Guest Teaser)

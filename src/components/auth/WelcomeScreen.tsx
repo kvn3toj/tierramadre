@@ -23,7 +23,7 @@ const isGoogleConfigured = Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length >
 type ViewMode = 'choice' | 'pin' | 'google';
 
 export default function WelcomeScreen() {
-  const { loginAsGuest, loginWithPin } = useAuth();
+  const { loginWithPin } = useAuth();
   const { signIn, authError } = useGoogleAuth();
   const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<ViewMode>('choice');
@@ -31,6 +31,7 @@ export default function WelcomeScreen() {
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
+  const [showInvitationMessage, setShowInvitationMessage] = useState(false);
 
   const handleDigit = (digit: string) => {
     if (pin.length >= 4) return;
@@ -70,7 +71,8 @@ export default function WelcomeScreen() {
   };
 
   const handleGuestAccess = () => {
-    loginAsGuest();
+    // Guest mode is now invitation-only - show message instead of logging in
+    setShowInvitationMessage(true);
   };
 
   const handleFullAccessClick = () => {
@@ -243,6 +245,23 @@ export default function WelcomeScreen() {
             >
               {isGoogleConfigured ? 'Acceso con PIN' : t.auth.fullAccess}
             </Button>
+
+            {/* Invitation-only message */}
+            {showInvitationMessage && (
+              <Alert
+                severity="info"
+                onClose={() => setShowInvitationMessage(false)}
+                sx={{
+                  bgcolor: alpha(emeraldCore.primary, 0.12),
+                  color: surfacesDark.text.primary,
+                  border: `1px solid ${alpha(emeraldCore.primary, 0.3)}`,
+                  '& .MuiAlert-icon': { color: emeraldCore.primary },
+                  '& .MuiAlert-action': { color: surfacesDark.text.secondary },
+                }}
+              >
+                {t.auth.invitationOnlyMessage}
+              </Alert>
+            )}
 
             {/* Guest Access Button */}
             <Button
