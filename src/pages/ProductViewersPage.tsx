@@ -432,7 +432,7 @@ const ProductViewersPage: React.FC = () => {
                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                           {viewer.views} {viewer.views === 1 ? 'vista' : 'vistas'}
                         </Typography>
-                        {viewer.devices.length > 0 && (
+                        {viewer.devices?.length > 0 && (
                           <>
                             <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.disabled' }} />
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>

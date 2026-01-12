@@ -189,7 +189,7 @@ function AppContent() {
           } />
 
           {/* Product Viewers Analytics */}
-          <Route path="/admin/analytics/product/:itemId" element={
+          <Route path="/admin/analytics/item/:itemId" element={
             <AdminRoute>
               <Suspense fallback={<LoadingFallback message="Cargando vistas..." />}>
                 <ProductViewersPage />

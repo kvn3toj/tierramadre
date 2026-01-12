@@ -428,7 +428,7 @@ const UserViewsPage: React.FC = () => {
                 {data.products.map((product, idx) => (
                   <Box
                     key={product.itemId}
-                    onClick={() => navigate(`/admin/analytics/product/${product.itemId}`)}
+                    onClick={() => navigate(`/admin/analytics/item/${product.itemId}`)}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
@@ -478,7 +478,7 @@ const UserViewsPage: React.FC = () => {
                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                           Última: {formatTimeAgo(product.lastView)}
                         </Typography>
-                        {product.devices.length > 0 && (
+                        {product.devices?.length > 0 && (
                           <>
                             <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.disabled' }} />
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>

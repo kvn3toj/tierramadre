@@ -486,7 +486,7 @@ const AdminAnalyticsPage: React.FC = () => {
           {topProducts.slice(0, 10).map((product, idx) => (
             <Box
               key={product.itemId}
-              onClick={() => navigate(`/admin/analytics/product/${product.itemId}`)}
+              onClick={() => navigate(`/admin/analytics/item/${product.itemId}`)}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
