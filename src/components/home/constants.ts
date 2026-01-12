@@ -12,7 +12,7 @@
 // =============================================================================
 
 /** Number of newest products to display in the Products section */
-export const MAX_PRODUCTS_DISPLAY = 6;
+export const MAX_PRODUCTS_DISPLAY = 10;
 
 /** Background opacity for the home background image */
 export const BACKGROUND_OPACITY = 0.77;
