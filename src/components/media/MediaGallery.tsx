@@ -10,7 +10,7 @@
  * - Zoom capability
  */
 
-import { useState, useCallback, useRef, TouchEvent, useMemo } from 'react';
+import { useState, useCallback, useRef, TouchEvent, useMemo, SyntheticEvent } from 'react';
 import {
   Box,
   IconButton,
@@ -33,6 +33,7 @@ import { brand, darkTokens, lightTokens } from '../../design-system';
 import ImageLightbox from './ImageLightbox';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import ProtectedContent from '../ProtectedContent';
+import logoPlaceholder from '../../assets/logo-symbol.png';
 
 interface MediaGalleryProps {
   media: MediaItem[];
@@ -379,6 +380,12 @@ export default function MediaGallery({
                       alt={`Thumbnail ${index + 1}`}
                       draggable={false}
                       onContextMenu={(e) => e.preventDefault()}
+                      onError={(e: SyntheticEvent<HTMLImageElement>) => {
+                        e.currentTarget.src = logoPlaceholder;
+                        e.currentTarget.style.objectFit = 'contain';
+                        e.currentTarget.style.padding = '12px';
+                        e.currentTarget.style.opacity = '0.4';
+                      }}
                       style={{
                         width: '100%',
                         height: '100%',
@@ -405,10 +412,16 @@ export default function MediaGallery({
                 </>
               ) : (
                 <img
-                  src={item.url}
+                  src={item.thumbnailUrl || item.url}
                   alt={`Thumbnail ${index + 1}`}
                   draggable={false}
                   onContextMenu={(e) => e.preventDefault()}
+                  onError={(e: SyntheticEvent<HTMLImageElement>) => {
+                    e.currentTarget.src = logoPlaceholder;
+                    e.currentTarget.style.objectFit = 'contain';
+                    e.currentTarget.style.padding = '12px';
+                    e.currentTarget.style.opacity = '0.4';
+                  }}
                   style={{
                     width: '100%',
                     height: '100%',

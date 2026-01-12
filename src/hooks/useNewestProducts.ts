@@ -154,13 +154,25 @@ export function useNewestProducts(
     }
 
     // Fallback if no treasure match (shouldn't happen, but safety first)
+    // Using type assertion since this is a minimal fallback for display purposes only
     return {
       item: product.itemNumber,
       nombre: product.productName,
       imagen: product.proxyUrl,
+      fechaIngreso: '',
       peso: 0,
+      color: '',
+      calidad: '',
+      cantidad: 1,
+      talla: '',
+      medidas: '',
+      precioCOP: 0,
+      ubicacion: '',
+      asesor: '',
+      estado: 'DISPONIBLE',
+      isJewelry: false,
       mediaType: 'image' as const,
-    };
+    } as TreasureItem;
   });
 
   // Refresh function

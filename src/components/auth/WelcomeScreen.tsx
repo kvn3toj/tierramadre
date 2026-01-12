@@ -39,7 +39,6 @@ export default function WelcomeScreen() {
   // Detect in-app browsers (Telegram, Instagram, etc.) that have OAuth issues
   const browserInfo = useMemo(() => getCachedBrowserInfo(), []);
   const isInAppBrowser = browserInfo.isInAppBrowser;
-  const browserName = browserInfo.browserName;
 
   // Handle copying URL to clipboard
   const handleCopyUrl = async () => {
