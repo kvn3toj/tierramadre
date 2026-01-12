@@ -7,7 +7,7 @@
  * - Cloud sync with Cloudinary
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { MediaType } from '../types';
 import { MediaItem } from '../components/media/types';
 import { createLogger } from '../utils/logger';
@@ -135,23 +135,35 @@ function generateMediaId(): string {
 }
 
 // =============================================================================
+// INITIAL DATA (synchronous to prevent image blinking)
+// =============================================================================
+
+/**
+ * Get initial legacy media synchronously to prevent URL changes causing image blinks
+ */
+function getInitialLegacyMedia(): LegacyTreasureMedia {
+  // Run storage migration first (synchronous)
+  migrateStorageKey(OLD_LEGACY_STORAGE_KEY, LEGACY_STORAGE_KEY);
+  return loadLegacyMedia();
+}
+
+/**
+ * Get initial galleries synchronously to prevent URL changes causing image blinks
+ */
+function getInitialGalleries(): ProductGallery {
+  // Run storage migration first (synchronous)
+  migrateStorageKey(OLD_GALLERY_STORAGE_KEY, GALLERY_STORAGE_KEY);
+  return loadGalleries();
+}
+
+// =============================================================================
 // HOOK
 // =============================================================================
 
 export function useTreasureMedia(): UseTreasureMediaReturn {
-  const [legacyMedia, setLegacyMedia] = useState<LegacyTreasureMedia>({});
-  const [galleries, setGalleries] = useState<ProductGallery>({});
-
-  // Load from localStorage on mount (with migration)
-  useEffect(() => {
-    // Run storage migration first
-    migrateStorageKey(OLD_LEGACY_STORAGE_KEY, LEGACY_STORAGE_KEY);
-    migrateStorageKey(OLD_GALLERY_STORAGE_KEY, GALLERY_STORAGE_KEY);
-
-    // Then load data
-    setLegacyMedia(loadLegacyMedia());
-    setGalleries(loadGalleries());
-  }, []);
+  // Initialize with cached data synchronously to prevent image URL changes (blinking)
+  const [legacyMedia, setLegacyMedia] = useState<LegacyTreasureMedia>(getInitialLegacyMedia);
+  const [galleries, setGalleries] = useState<ProductGallery>(getInitialGalleries);
 
   // ==========================================================================
   // LEGACY MEDIA FUNCTIONS

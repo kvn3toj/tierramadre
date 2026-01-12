@@ -57,6 +57,21 @@ function loadCache(): DriveImagesCache {
 }
 
 /**
+ * Get initial cache synchronously to prevent image blinking
+ * Filters to only return valid (non-expired) entries
+ */
+function getInitialCache(): DriveImagesCache {
+  const cache = loadCache();
+  const validCache: DriveImagesCache = {};
+  for (const [key, entry] of Object.entries(cache)) {
+    if (isCacheValid(entry.timestamp)) {
+      validCache[parseInt(key, 10)] = entry;
+    }
+  }
+  return validCache;
+}
+
+/**
  * Save Drive images to localStorage cache
  */
 function saveCache(cache: DriveImagesCache): void {
@@ -108,8 +123,9 @@ export function useNewProductImages(
   maxDisplay: number = 10,
   scanLimit: number = 50
 ): UseNewProductImagesReturn {
-  const [driveImages, setDriveImages] = useState<DriveImagesCache>({});
-  const [isLoading, setIsLoading] = useState(true);
+  // Initialize with cached data synchronously to prevent image blinking
+  const [driveImages, setDriveImages] = useState<DriveImagesCache>(getInitialCache);
+  const [isLoading, setIsLoading] = useState(() => Object.keys(getInitialCache()).length === 0);
   const [fetchTrigger, setFetchTrigger] = useState(0);
 
   // Get newest items by item number (highest = newest)

@@ -93,9 +93,18 @@ async function fetchThumbnails(): Promise<Record<number, ThumbnailInfo>> {
   return thumbnails;
 }
 
+/**
+ * Get initial thumbnails synchronously to prevent URL changes causing image blinks
+ */
+function getInitialThumbnails(): Record<number, ThumbnailInfo> {
+  const cached = getCachedThumbnails();
+  return cached && Object.keys(cached).length > 0 ? cached : {};
+}
+
 export function useBatchThumbnails(): UseBatchThumbnailsReturn {
-  const [thumbnails, setThumbnails] = useState<Record<number, ThumbnailInfo>>({});
-  const [isLoading, setIsLoading] = useState(true);
+  // Initialize with cached data synchronously to prevent image URL changes (blinking)
+  const [thumbnails, setThumbnails] = useState<Record<number, ThumbnailInfo>>(getInitialThumbnails);
+  const [isLoading, setIsLoading] = useState(() => Object.keys(getInitialThumbnails()).length === 0);
   const [error, setError] = useState<string | null>(null);
 
   const loadThumbnails = useCallback(async (skipCache = false) => {
@@ -123,10 +132,13 @@ export function useBatchThumbnails(): UseBatchThumbnailsReturn {
     }
   }, []);
 
-  // Initial load
+  // Initial load - only fetch from API if cache was empty (already loaded synchronously)
   useEffect(() => {
-    loadThumbnails();
-  }, [loadThumbnails]);
+    const hasInitialCache = Object.keys(thumbnails).length > 0;
+    if (!hasInitialCache) {
+      loadThumbnails(true); // Skip cache check, go directly to API
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Force refresh
   const refresh = useCallback(async () => {

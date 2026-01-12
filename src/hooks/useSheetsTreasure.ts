@@ -104,29 +104,31 @@ async function fetchFromSheets(): Promise<TreasureItem[]> {
 }
 
 /**
+ * Get initial sheets data synchronously to prevent URL changes causing image blinks
+ */
+function getInitialSheetsData(): TreasureItem[] | null {
+  // Run storage migration first (synchronous)
+  migrateStorageKey(OLD_SHEETS_CACHE_KEY, SHEETS_CACHE_KEY);
+  return getCachedData();
+}
+
+/**
  * Hook to fetch and manage treasure data from Google Sheets
  */
 export function useSheetsTreasure(): UseSheetsTreasureReturn {
-  const [sheetsTreasure, setSheetsTreasure] = useState<TreasureItem[] | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Initialize with cached data synchronously to prevent treasure changes (image blinking)
+  const [sheetsTreasure, setSheetsTreasure] = useState<TreasureItem[] | null>(getInitialSheetsData);
+  const [isLoading, setIsLoading] = useState(() => getInitialSheetsData() === null);
   const [error, setError] = useState<string | null>(null);
 
-  // Initial load with cache check and migration
+  // Load from API only if cache was empty
   useEffect(() => {
-    // Run storage migration first
-    migrateStorageKey(OLD_SHEETS_CACHE_KEY, SHEETS_CACHE_KEY);
+    // Skip if we already have cached data
+    if (sheetsTreasure !== null) return;
 
     const loadFromSheets = async () => {
       try {
-        // Check cache first
-        const cachedData = getCachedData();
-        if (cachedData) {
-          setSheetsTreasure(cachedData);
-          setIsLoading(false);
-          return;
-        }
-
-        // Fetch from API
+        // Fetch from API (cache was empty)
         const treasure = await fetchFromSheets();
         setSheetsTreasure(treasure);
         setCachedData(treasure);
@@ -139,7 +141,7 @@ export function useSheetsTreasure(): UseSheetsTreasureReturn {
     };
 
     loadFromSheets();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Force refresh (ignores cache)
   const refresh = useCallback(async () => {
