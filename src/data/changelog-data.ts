@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-12T00:43:01.859Z
+ * Generated at: 2026-01-12T00:56:18.160Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-12T00:43:01.859Z",
+  "generatedAt": "2026-01-12T00:56:18.160Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "12 Dic, 2025",
@@ -56,18 +56,18 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "27a4ed8",
-    "lastCommitDate": "2026-01-11 19:42:57 -0500"
+    "lastCommitHash": "c389c1f",
+    "lastCommitDate": "2026-01-11 19:56:13 -0500"
   },
   "stats": {
-    "totalCommits": 196,
-    "totalAdditions": 83237,
-    "totalDeletions": 162942,
-    "totalFilesChanged": 1392,
-    "netLines": -79705
+    "totalCommits": 198,
+    "totalAdditions": 83381,
+    "totalDeletions": 162977,
+    "totalFilesChanged": 1397,
+    "netLines": -79596
   },
   "categoryStats": {
-    "other": 65,
+    "other": 67,
     "auth": 12,
     "bugfix": 42,
     "cleanup": 19,
@@ -76,10 +76,10 @@ export const changelogData: ChangelogData = {
     "performance": 9
   },
   "typeStats": {
-    "feat": 86,
+    "feat": 87,
+    "chore": 10,
     "fix": 68,
     "docs": 2,
-    "chore": 9,
     "other": 6,
     "refactor": 24,
     "style": 1
@@ -90,20 +90,24 @@ export const changelogData: ChangelogData = {
       "count": 26
     },
     {
+      "file": "index.html",
+      "count": 24
+    },
+    {
+      "file": "src/data/changelog-data.ts",
+      "count": 24
+    },
+    {
       "file": "src/components/InventoryBrowser.tsx",
       "count": 24
     },
     {
-      "file": "index.html",
-      "count": 23
-    },
-    {
-      "file": "src/data/changelog-data.ts",
-      "count": 23
-    },
-    {
       "file": ".claude/settings.local.json",
       "count": 19
+    },
+    {
+      "file": "public/version.json",
+      "count": 17
     },
     {
       "file": "src/components/ProductDetail.tsx",
@@ -118,10 +122,6 @@ export const changelogData: ChangelogData = {
       "count": 17
     },
     {
-      "file": "public/version.json",
-      "count": 16
-    },
-    {
       "file": "src/components/ios/IOSTabBar.tsx",
       "count": 15
     }
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 188
+      "commits": 190
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,37 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "c389c1f",
+      "message": "Hide recently viewed carousel when scrolling down in grid",
+      "fullMessage": "feat: Hide recently viewed carousel when scrolling down in grid",
+      "author": "Kvn3Toj",
+      "relativeTime": "1 second ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "other",
+      "additions": 33,
+      "deletions": 2,
+      "filesChanged": 2
+    },
+    {
+      "hash": "47bd363",
+      "message": "Update version and changelog data",
+      "fullMessage": "chore: Update version and changelog data",
+      "author": "Kvn3Toj",
+      "relativeTime": "7 minutes ago",
+      "date": "2026-01-11",
+      "type": "chore",
+      "category": "other",
+      "additions": 111,
+      "deletions": 33,
+      "filesChanged": 3
+    },
+    {
       "hash": "27a4ed8",
       "message": "Restrict guest mode to invitation-only access",
       "fullMessage": "feat: Restrict guest mode to invitation-only access",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "13 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -155,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Restrict view counts to admins and make search bar sticky",
       "fullMessage": "feat: Restrict view counts to admins and make search bar sticky",
       "author": "Kvn3Toj",
-      "relativeTime": "37 minutes ago",
+      "relativeTime": "50 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "auth",
@@ -168,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Proxy video thumbnails to avoid CORS issues",
       "fullMessage": "fix: Proxy video thumbnails to avoid CORS issues",
       "author": "Kvn3Toj",
-      "relativeTime": "38 minutes ago",
+      "relativeTime": "51 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",

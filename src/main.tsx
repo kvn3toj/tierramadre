@@ -7,7 +7,11 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { GoogleAuthProvider } from './contexts/GoogleAuthContext';
+import { checkAndInvalidateCaches } from './utils/cacheInvalidation';
 import './design-system/tokens/css-variables.css';
+
+// Invalidate transient caches on new deploy (before any data fetching)
+checkAndInvalidateCaches();
 
 // Extend Window interface for version check
 declare global {
