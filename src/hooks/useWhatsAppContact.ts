@@ -12,13 +12,13 @@ import type { Asesor } from './useAsesores';
 
 // Admin contacts - these are the only people staff can contact
 const ADMIN_NAMES = [
-  'Maritza Campuzano',
+  'Martiza campuzano',  // Note: "Martiza" (not Maritza) matches Google Sheet
   'Isa La Negra Vikinga',
   'Juan Manuel',
 ];
 
 // Admin to receive duplicate invitation notifications
-const NOTIFICATION_ADMIN = 'Maritza Campuzano';
+const NOTIFICATION_ADMIN = 'Martiza campuzano';
 
 interface GuestHistoryResult {
   success: boolean;
@@ -137,7 +137,8 @@ export function useWhatsAppContact(): UseWhatsAppContactReturn {
       const data = await response.json();
 
       if (data.success && data.asesores) {
-        // Filter to only include admin names and get their WhatsApp
+        // Map admin names to their WhatsApp contacts
+        // Show all admins even if WhatsApp not found (dialog will show "Sin WhatsApp")
         const adminContacts = ADMIN_NAMES.map((name) => {
           const asesor = data.asesores.find(
             (a: Asesor) =>
@@ -148,7 +149,7 @@ export function useWhatsAppContact(): UseWhatsAppContactReturn {
             name,
             whatsapp: asesor?.whatsapp || null,
           };
-        }).filter((admin) => admin.whatsapp);
+        });
 
         setAdmins(adminContacts);
         return adminContacts;

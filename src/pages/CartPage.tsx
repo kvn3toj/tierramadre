@@ -273,32 +273,15 @@ export default function CartPage() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                mb: 1,
               }}
             >
               <Typography variant="body2" color="text.secondary">
-                Total (COP)
+                Total
               </Typography>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 {formatCurrency(totals.cop)}
               </Typography>
             </Box>
-            {totals.usd > 0 && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  Total (USD)
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  ${totals.usd.toLocaleString('en-US')}
-                </Typography>
-              </Box>
-            )}
           </Paper>
 
           {/* Guest info banner */}

@@ -975,7 +975,7 @@ export default function ProductDetail() {
         autoHideDuration={3000}
         onClose={() => setSnackbarOpen(false)}
         message={snackbarMessage}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         sx={{
           '& .MuiSnackbarContent-root': {
             bgcolor: emeraldCore.dark,
