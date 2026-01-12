@@ -55,6 +55,7 @@ export interface ValidationResult {
   durationHours?: number;
   pricingMode?: PricingMode;
   createdBy?: string;
+  creatorEmail?: string;
   shortCode?: string;
   error?: string;
 }
@@ -96,4 +97,11 @@ export const INVITATION_STORAGE_KEYS = {
   PRICING_MODE: 'guest-pricing-mode',
   DURATION_HOURS: 'invitation-duration',
   INVITATION_ID: 'invitation-id',
+  // Inviter data for WhatsApp contact functionality
+  INVITER_NAME: 'invitation-inviter-name',
+  INVITER_EMAIL: 'invitation-inviter-email',
+  INVITER_WHATSAPP: 'invitation-inviter-whatsapp',
+  // Guest contact for duplicate invitation check
+  GUEST_NAME: 'invitation-guest-name',
+  GUEST_CONTACT: 'invitation-guest-contact',
 } as const;

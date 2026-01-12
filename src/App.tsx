@@ -33,6 +33,8 @@ const ReceiptGenerator = lazyWithRetry(() => import('./components/ReceiptGenerat
 const CotizacionGenerator = lazyWithRetry(() => import('./components/CotizacionGenerator'), 'CotizacionGenerator');
 const QuotationPreview = lazyWithRetry(() => import('./components/QuotationPreview'), 'QuotationPreview');
 const AdminAnalyticsPage = lazyWithRetry(() => import('./pages/AdminAnalyticsPage'), 'AdminAnalyticsPage');
+const ProductViewersPage = lazyWithRetry(() => import('./pages/ProductViewersPage'), 'ProductViewersPage');
+const UserViewsPage = lazyWithRetry(() => import('./pages/UserViewsPage'), 'UserViewsPage');
 const FeedbackDashboard = lazyWithRetry(() => import('./pages/admin/FeedbackDashboard'), 'FeedbackDashboard');
 const ValuationPage = lazyWithRetry(() => import('./pages/ValuationPage'), 'ValuationPage');
 
@@ -50,6 +52,9 @@ const ProviderQuotationsList = lazyWithRetry(() => import('./components/admin/Pr
 // Invitation Pages (public routes - accessible without auth)
 const InvitationPage = lazyWithRetry(() => import('./pages/InvitationPage'), 'InvitationPage');
 const ShortLinkRedirect = lazyWithRetry(() => import('./pages/ShortLinkRedirect'), 'ShortLinkRedirect');
+
+// Cart Page
+const CartPage = lazyWithRetry(() => import('./pages/CartPage'), 'CartPage');
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
@@ -95,6 +100,13 @@ function AppContent() {
           <Route path="/product/:itemId" element={
             <Suspense fallback={<LoadingFallback message="Cargando producto..." />}>
               <ProductDetail />
+            </Suspense>
+          } />
+
+          {/* Cart / Selection */}
+          <Route path="/cart" element={
+            <Suspense fallback={<LoadingFallback message="Cargando seleccion..." />}>
+              <CartPage />
             </Suspense>
           } />
 
@@ -172,6 +184,24 @@ function AppContent() {
             <AdminRoute>
               <Suspense fallback={<LoadingFallback message="Cargando analytics..." />}>
                 <AdminAnalyticsPage />
+              </Suspense>
+            </AdminRoute>
+          } />
+
+          {/* Product Viewers Analytics */}
+          <Route path="/admin/analytics/product/:itemId" element={
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando vistas..." />}>
+                <ProductViewersPage />
+              </Suspense>
+            </AdminRoute>
+          } />
+
+          {/* User Views Analytics */}
+          <Route path="/admin/analytics/user" element={
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando historial..." />}>
+                <UserViewsPage />
               </Suspense>
             </AdminRoute>
           } />

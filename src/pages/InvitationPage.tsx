@@ -48,6 +48,8 @@ export default function InvitationPage() {
   const [pricingMode, setPricingMode] = useState<PricingMode>('with_prices');
   const [invitationId, setInvitationId] = useState<string>('');
   const [createdBy, setCreatedBy] = useState<string>('');
+  const [creatorEmail, setCreatorEmail] = useState<string>('');
+  const [inviterWhatsApp, setInviterWhatsApp] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [currentShortCode, setCurrentShortCode] = useState<string>('');
   const [expiresAt, setExpiresAt] = useState<string>('');
@@ -74,9 +76,31 @@ export default function InvitationPage() {
         setTimeRemaining(result.timeRemainingMinutes || (24 * 60));
         setPricingMode(result.pricingMode || 'with_prices');
         setCreatedBy(result.createdBy || '');
+        setCreatorEmail(result.creatorEmail || '');
         setInvitationId(result.invitationId || '');
         setCurrentShortCode(result.shortCode || shortCode);
         setExpiresAt(result.expiresAt || '');
+
+        // Fetch inviter's WhatsApp from asesores if we have their email
+        if (result.creatorEmail) {
+          try {
+            const asesoresResponse = await fetch('/api/get-asesores');
+            const asesoresData = await asesoresResponse.json();
+            if (asesoresData.success && asesoresData.asesores) {
+              // Find asesor by name (more reliable than email since email might not match)
+              const inviter = asesoresData.asesores.find(
+                (a: { name: string; email?: string }) =>
+                  a.name.toLowerCase().includes((result.createdBy || '').toLowerCase()) ||
+                  (a.email && a.email.toLowerCase() === result.creatorEmail?.toLowerCase())
+              );
+              if (inviter?.whatsapp) {
+                setInviterWhatsApp(inviter.whatsapp);
+              }
+            }
+          } catch (error) {
+            console.warn('Could not fetch inviter WhatsApp:', error);
+          }
+        }
 
         // Show the guest registration form
         setStatus('form');
@@ -150,6 +174,17 @@ export default function InvitationPage() {
     sessionStorage.setItem(INVITATION_STORAGE_KEYS.PRICING_MODE, pricingMode);
     sessionStorage.setItem(INVITATION_STORAGE_KEYS.DURATION_HOURS, '24');
     sessionStorage.setItem(INVITATION_STORAGE_KEYS.INVITATION_ID, invitationId);
+
+    // Store inviter data for WhatsApp contact functionality
+    sessionStorage.setItem(INVITATION_STORAGE_KEYS.INVITER_NAME, createdBy);
+    sessionStorage.setItem(INVITATION_STORAGE_KEYS.INVITER_EMAIL, creatorEmail);
+    if (inviterWhatsApp) {
+      sessionStorage.setItem(INVITATION_STORAGE_KEYS.INVITER_WHATSAPP, inviterWhatsApp);
+    }
+
+    // Store guest contact for duplicate invitation check
+    sessionStorage.setItem(INVITATION_STORAGE_KEYS.GUEST_NAME, guestName.trim());
+    sessionStorage.setItem(INVITATION_STORAGE_KEYS.GUEST_CONTACT, guestContact.trim());
 
     // Clear any stale filter data from previous sessions
     // This ensures guests start with clean filters

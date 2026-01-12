@@ -11,6 +11,8 @@ import {
   Collapse,
   IconButton,
   Tooltip,
+  Snackbar,
+  Badge,
 } from '@mui/material';
 import {
   ChevronLeft,
@@ -30,12 +32,17 @@ import {
   Check,
   QrCode,
   Share2,
+  MessageCircle,
 } from 'lucide-react';
 // Logo placeholder for products without images - use Vite asset import
 import logoPlaceholder from '../assets/logo-symbol.png';
 import { useShare } from '../hooks/useShare';
 import { useHaptics } from '../hooks/useHaptics';
 import { useProductView } from '../hooks/useProductView';
+import { useCart } from '../hooks/useCart';
+import { useWhatsAppContact } from '../hooks/useWhatsAppContact';
+import { treasureToCartItem } from '../types/cart';
+import AdminSelectDialog from './cart/AdminSelectDialog';
 import { QRCodeSVG } from 'qrcode.react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useCanEdit, useIsAdmin } from '../hooks/usePermissions';
@@ -71,10 +78,20 @@ export default function ProductDetail() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showDriveInfo, setShowDriveInfo] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [adminDialogOpen, setAdminDialogOpen] = useState(false);
 
   const { treasure, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems, isLoadingSheets } = useTreasure();
   const { shareProduct, isNativeShareSupported } = useShare();
   const { trigger: triggerHaptic } = useHaptics();
+  const { addToCart, isInCart, cartCount } = useCart();
+  const {
+    openWhatsAppToInviter,
+    openWhatsAppToAdmin,
+    admins,
+    hasInviter,
+  } = useWhatsAppContact();
 
   // Scroll to top when navigating to this page
   useEffect(() => {
@@ -254,6 +271,50 @@ export default function ProductDetail() {
       }
     }
   }, [product, shareProduct, triggerHaptic]);
+
+  // Handle add to cart
+  const handleAddToCart = useCallback(() => {
+    if (!product) return;
+
+    if (isInCart(product.item)) {
+      // Already in cart - navigate to cart
+      navigate('/cart');
+      return;
+    }
+
+    addToCart(product);
+    triggerHaptic('success');
+    setSnackbarMessage('Producto agregado a tu seleccion');
+    setSnackbarOpen(true);
+  }, [product, isInCart, addToCart, triggerHaptic, navigate]);
+
+  // Handle contact action
+  const handleContact = useCallback(async () => {
+    if (!product) return;
+
+    triggerHaptic('light');
+
+    if (isGuest) {
+      // Guest flow - send single product to inviter
+      if (!hasInviter) {
+        setSnackbarMessage('No se encontro el contacto de tu invitador');
+        setSnackbarOpen(true);
+        return;
+      }
+      const cartItem = treasureToCartItem(product);
+      await openWhatsAppToInviter([cartItem]);
+    } else {
+      // Staff flow - open admin selection dialog
+      setAdminDialogOpen(true);
+    }
+  }, [product, isGuest, hasInviter, openWhatsAppToInviter, triggerHaptic]);
+
+  // Handle admin selected (for staff contact flow)
+  const handleAdminSelected = useCallback(async (adminName: string) => {
+    if (!product) return;
+    const cartItem = treasureToCartItem(product);
+    await openWhatsAppToAdmin([cartItem], adminName);
+  }, [product, openWhatsAppToAdmin]);
 
   // Show loading state while inventory is loading
   if (isLoadingSheets && !product) {
@@ -793,14 +854,21 @@ export default function ProductDetail() {
 
             {/* CTA Buttons - iOS Style Compact */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 1 }}>
-              {/* Primary CTA - Full width filled */}
+              {/* Primary CTA - Add to Selection */}
               <Button
                 variant="contained"
                 fullWidth
                 disabled={!isAvailable}
-                startIcon={<ShoppingCart size={18} />}
+                onClick={handleAddToCart}
+                startIcon={
+                  <Badge badgeContent={cartCount} color="secondary" max={9}>
+                    <ShoppingCart size={18} />
+                  </Badge>
+                }
                 sx={{
-                  background: isAvailable ? buttonGradients.primary : undefined,
+                  background: isAvailable
+                    ? (product && isInCart(product.item) ? emeraldCore.dark : buttonGradients.primary)
+                    : undefined,
                   color: '#FFFFFF',
                   py: 1.5,
                   minHeight: 44,
@@ -818,7 +886,11 @@ export default function ProductDetail() {
                   },
                 }}
               >
-                {isAvailable ? 'Añadir al Carrito' : 'Vendido'}
+                {!isAvailable
+                  ? 'Vendido'
+                  : product && isInCart(product.item)
+                    ? 'Ver Seleccion'
+                    : 'Agregar a Seleccion'}
               </Button>
 
               {/* Secondary CTAs - Horizontal layout */}
@@ -850,9 +922,11 @@ export default function ProductDetail() {
                   {isNativeShareSupported ? 'Compartir' : 'Copiar Link'}
                 </Button>
 
-                {/* Contact Advisor Button */}
+                {/* Contact Button - WhatsApp */}
                 <Button
                   variant="text"
+                  onClick={handleContact}
+                  startIcon={<MessageCircle size={18} />}
                   sx={{
                     flex: 1,
                     color: emeraldCore.dark,
@@ -862,15 +936,14 @@ export default function ProductDetail() {
                     fontSize: '15px',
                     textTransform: 'none',
                     '&:hover': {
-                      bgcolor: 'transparent',
-                      opacity: 0.7,
+                      bgcolor: alpha(emeraldCore.dark, 0.04),
                     },
                     '&:active': {
-                      opacity: 0.5,
+                      opacity: 0.7,
                     },
                   }}
                 >
-                  Contactar
+                  Consultar
                 </Button>
               </Box>
             </Box>
@@ -888,6 +961,28 @@ export default function ProductDetail() {
         </Grid>
       </Grid>
 
+      {/* Admin Selection Dialog (for staff) */}
+      <AdminSelectDialog
+        open={adminDialogOpen}
+        onClose={() => setAdminDialogOpen(false)}
+        onSelect={handleAdminSelected}
+        admins={admins}
+      />
+
+      {/* Snackbar for feedback */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        sx={{
+          '& .MuiSnackbarContent-root': {
+            bgcolor: emeraldCore.dark,
+            color: '#FFFFFF',
+          },
+        }}
+      />
     </Box>
   );
 }
