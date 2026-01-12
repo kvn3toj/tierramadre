@@ -6,6 +6,7 @@
  */
 
 import React, { useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -30,6 +31,7 @@ import {
   User,
   Users,
   UserCheck,
+  ChevronRight,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useTracking } from '../contexts/TrackingContext';
@@ -218,6 +220,7 @@ const formatTimeAgo = (ts: number): string => {
 
 const AdminAnalyticsPage: React.FC = () => {
   const { mode } = useThemeMode();
+  const navigate = useNavigate();
   const { metrics, achievements, levelInfo, unlockedAchievements, ACHIEVEMENTS, exportAnalytics } = useTracking();
   const { stats: viewStats, topProducts, topViewers, recentActivity: recentProductViews, isLoading: viewsLoading, refetch: refetchViews } = useProductViews();
   const isLight = mode === 'light';
@@ -483,6 +486,7 @@ const AdminAnalyticsPage: React.FC = () => {
           {topProducts.slice(0, 10).map((product, idx) => (
             <Box
               key={product.itemId}
+              onClick={() => navigate(`/admin/analytics/product/${product.itemId}`)}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -490,6 +494,14 @@ const AdminAnalyticsPage: React.FC = () => {
                 px: 2.5,
                 py: 1.5,
                 borderBottom: idx < Math.min(topProducts.length, 10) - 1 ? `1px solid ${alpha('#000', 0.06)}` : 'none',
+                cursor: 'pointer',
+                transition: 'background-color 0.15s',
+                '&:hover': {
+                  bgcolor: alpha(emeraldCore.primary, 0.05),
+                },
+                '&:active': {
+                  bgcolor: alpha(emeraldCore.primary, 0.1),
+                },
               }}
             >
               <Typography
@@ -530,6 +542,7 @@ const AdminAnalyticsPage: React.FC = () => {
                   {product.views}
                 </Typography>
               </Box>
+              <ChevronRight size={16} color={alpha(isLight ? '#000' : '#fff', 0.3)} />
             </Box>
           ))}
         </Paper>
@@ -556,6 +569,12 @@ const AdminAnalyticsPage: React.FC = () => {
           {topViewers.map((viewer, idx) => (
             <Box
               key={viewer.email || viewer.name}
+              onClick={() => {
+                const params = new URLSearchParams();
+                if (viewer.email) params.set('email', viewer.email);
+                else params.set('name', viewer.name);
+                navigate(`/admin/analytics/user?${params.toString()}`);
+              }}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -563,6 +582,14 @@ const AdminAnalyticsPage: React.FC = () => {
                 px: 2.5,
                 py: 1.5,
                 borderBottom: idx < topViewers.length - 1 ? `1px solid ${alpha('#000', 0.06)}` : 'none',
+                cursor: 'pointer',
+                transition: 'background-color 0.15s',
+                '&:hover': {
+                  bgcolor: alpha('#8B5CF6', 0.05),
+                },
+                '&:active': {
+                  bgcolor: alpha('#8B5CF6', 0.1),
+                },
               }}
             >
               <Box
@@ -600,6 +627,7 @@ const AdminAnalyticsPage: React.FC = () => {
                   {viewer.views}
                 </Typography>
               </Box>
+              <ChevronRight size={16} color={alpha(isLight ? '#000' : '#fff', 0.3)} />
             </Box>
           ))}
         </Paper>
