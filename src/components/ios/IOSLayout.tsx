@@ -15,12 +15,10 @@ import IOSTabBar from './IOSTabBar';
 import IOSNavigationBar, { NavigationBarMode, NavigationAction } from './IOSNavigationBar';
 import IOSMoreSheet from './IOSMoreSheet';
 import IOSSettingsSheet from './IOSSettingsSheet';
-import { LevelBadge } from '../gamification';
 import { InvitationBanner } from '../invitation';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { useAuth } from '../../hooks/useAuth';
 
 interface PageConfig {
   title: string;
@@ -153,9 +151,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   const location = useLocation();
   const { t } = useLanguage();
   const { mode } = useThemeMode();
-  const { accessLevel } = useAuth();
   const isLight = mode === 'light';
-  const isAdmin = accessLevel === 'admin';
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
   const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
 
@@ -199,7 +195,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         showBackButton={pageConfig.showBackButton}
         leadingActions={pageConfig.leadingActions}
         trailingActions={pageConfig.trailingActions}
-        trailingElement={isAdmin ? <LevelBadge compact /> : undefined}
+        trailingElement={undefined}
       />
 
       <Box
