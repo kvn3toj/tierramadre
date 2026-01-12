@@ -51,6 +51,7 @@ interface VirtualGridProps {
 // Gap sizes following 8pt grid (iOS HIG)
 const MOBILE_GAP = 8;   // 8pt - iOS standard for compact layouts
 const TABLET_GAP = 12;  // 12pt - 1.5x base for tablet
+const DESKTOP_GAP = 16; // 16pt - 2x base for desktop
 
 // Cell props passed via cellProps in react-window 2.x
 interface GridCellProps {
@@ -183,27 +184,35 @@ export default function VirtualGrid({
   const columnCount = getColumnCount();
 
   // Dynamic card height based on viewport and column count
-  // Uses 4:5 aspect ratio for images (height = width * 1.0)
+  // Uses 1:1 aspect ratio for images
   const cardHeight = useMemo(() => {
     // Calculate available width per card
-    const horizontalPadding = 16; // 8px on each side (reduced for mobile)
-    const totalGapWidth = (columnCount - 1) * (isXs ? MOBILE_GAP : TABLET_GAP);
-    const availableWidth = viewportWidth - horizontalPadding;
+    // Desktop/iPad respects maxWidth: 1200px container
+    const isDesktop = !isXs && !isSm;
+    const containerMaxWidth = 1200;
+    const effectiveWidth = isDesktop
+      ? Math.min(viewportWidth, containerMaxWidth)
+      : viewportWidth;
+
+    // Horizontal padding: 8px mobile, 16px tablet, 0 desktop (parent handles it)
+    const horizontalPadding = isXs ? 16 : isSm ? 16 : isMd ? 32 : 0;
+    const currentGap = isXs ? MOBILE_GAP : isSm ? MOBILE_GAP : isMd ? TABLET_GAP : DESKTOP_GAP;
+    const totalGapWidth = (columnCount - 1) * currentGap;
+    const availableWidth = effectiveWidth - horizontalPadding;
     const cardWidth = (availableWidth - totalGapWidth) / columnCount;
 
-    // Image height with 4:5 aspect ratio (slightly taller than wide)
-    // For product cards, we want compact but not too squished
-    const imageHeight = Math.round(cardWidth * 1.0); // 1:1 for simplicity, adjust as needed
+    // Image height with 1:1 aspect ratio
+    const imageHeight = Math.round(cardWidth);
 
     // Content area: name (15pt) + specs (12pt) + price + padding
     // iOS HIG: 12px padding top/bottom = 24px + 20px name + 16px specs + 20px price = ~80px
-    const contentHeight = isXs ? 80 : 84;
+    const contentHeight = isXs ? 80 : 88;
 
     return imageHeight + contentHeight;
-  }, [viewportWidth, columnCount, isXs]);
+  }, [viewportWidth, columnCount, isXs, isSm, isMd]);
 
-  // Gap based on device
-  const gap = isXs ? MOBILE_GAP : isSm ? MOBILE_GAP : TABLET_GAP;
+  // Gap based on device - larger gaps for bigger screens
+  const gap = isXs ? MOBILE_GAP : isSm ? MOBILE_GAP : isMd ? TABLET_GAP : DESKTOP_GAP;
 
   // Determine if mobile for card rendering optimization
   const isMobile = isXs || isSm;
@@ -242,8 +251,8 @@ export default function VirtualGrid({
         height: vhCalc(100, HEADER_OFFSET),
         minHeight,
         width: '100%',
-        // Compact horizontal margins for mobile (8px), desktop uses parent padding
-        px: 1,
+        // Responsive horizontal padding
+        px: { xs: 1, sm: 1, md: 2, lg: 0 },
         boxSizing: 'border-box',
         position: 'relative',
         isolation: 'isolate',

@@ -15,11 +15,14 @@ import {
   Card,
   CardContent,
   Chip,
+  IconButton,
+  alpha,
 } from '@mui/material';
 import {
   Play,
   Images,
   Eye,
+  Scale,
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { TreasureItem } from '../../types';
@@ -54,6 +57,9 @@ function GridCard({
   isMobile = false,
   viewCount,
   isAdmin,
+  isSelectedForComparison = false,
+  onToggleComparison,
+  canAddToComparison = true,
 }: GridCardProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -66,6 +72,11 @@ function GridCard({
   const colorDot = getColorDot(item.color);
   const isLoose = !item.isJewelry;
 
+  const handleCompareClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleComparison?.();
+  };
+
   return (
     <Card
       elevation={0}
@@ -77,7 +88,7 @@ function GridCard({
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: '10px', // iOS HIG standard border radius
+        borderRadius: isMobile ? '10px' : '12px', // iOS HIG standard border radius
         border: '1px solid',
         borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
@@ -86,10 +97,10 @@ function GridCard({
         cursor: 'pointer',
         '&:hover': {
           borderColor: emeraldCore.primary,
-          transform: 'translateY(-1px)',
+          transform: isMobile ? 'none' : 'translateY(-2px)',
           boxShadow: isLight
-            ? '0 8px 16px rgba(0, 0, 0, 0.06)'
-            : '0 8px 16px rgba(0, 0, 0, 0.2)',
+            ? '0 8px 20px rgba(0, 0, 0, 0.08)'
+            : '0 8px 20px rgba(0, 0, 0, 0.25)',
         },
         '&:active': {
           transform: 'scale(0.98)',
@@ -217,6 +228,39 @@ function GridCard({
                 }}
               />
             )}
+
+            {/* Compare button - top right */}
+            {onToggleComparison && (
+              <IconButton
+                onClick={handleCompareClick}
+                aria-label={isSelectedForComparison ? 'Quitar de comparación' : 'Agregar a comparación'}
+                disabled={!isSelectedForComparison && !canAddToComparison}
+                size="small"
+                sx={{
+                  position: 'absolute',
+                  top: 6,
+                  right: 6,
+                  width: 32,
+                  height: 32,
+                  bgcolor: isSelectedForComparison
+                    ? emeraldCore.primary
+                    : alpha('#000000', 0.55),
+                  color: 'white',
+                  backdropFilter: 'blur(4px)',
+                  '&:hover': {
+                    bgcolor: isSelectedForComparison
+                      ? emeraldCore.dark
+                      : alpha('#000000', 0.7),
+                  },
+                  '&:disabled': {
+                    bgcolor: alpha('#000000', 0.3),
+                    color: 'rgba(255, 255, 255, 0.5)',
+                  },
+                }}
+              >
+                <Scale size={16} />
+              </IconButton>
+            )}
           </>
         ) : (
           <ProgressiveImage
@@ -231,9 +275,9 @@ function GridCard({
       {/* Content Section - iOS HIG spacing (8pt base) */}
       <CardContent
         sx={{
-          p: isMobile ? 1.5 : 1.5, // 12px - 1.5x base unit
-          pt: isMobile ? 1 : 1.25, // 8-10px top
-          '&:last-child': { pb: isMobile ? 1.5 : 1.5 },
+          p: isMobile ? 1.5 : 2, // 12px mobile, 16px desktop
+          pt: isMobile ? 1 : 1.5, // 8px mobile, 12px desktop
+          '&:last-child': { pb: isMobile ? 1.5 : 2 },
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
@@ -241,7 +285,7 @@ function GridCard({
           minHeight: 0,
         }}
       >
-        {/* Name - iOS HIG Subheadline (15pt) */}
+        {/* Name - iOS HIG Subheadline (15pt mobile, 16pt desktop) */}
         <Typography
           variant="body2"
           sx={{
@@ -251,7 +295,7 @@ function GridCard({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            fontSize: isMobile ? 15 : 15, // iOS HIG subheadline
+            fontSize: isMobile ? 15 : 16, // iOS HIG subheadline
             letterSpacing: '-0.24px', // iOS HIG subheadline tracking
             mb: 0.5,
           }}
@@ -259,12 +303,12 @@ function GridCard({
           {displayName}
         </Typography>
 
-        {/* Specs with color dot - iOS HIG Caption1 (12pt) */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+        {/* Specs with color dot - iOS HIG Caption1 (12pt mobile, 13pt desktop) */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75 }}>
           <Box
             sx={{
-              width: 8, // Slightly larger for visibility
-              height: 8,
+              width: isMobile ? 8 : 10, // Slightly larger for visibility
+              height: isMobile ? 8 : 10,
               borderRadius: '50%',
               bgcolor: colorDot,
               flexShrink: 0,
@@ -274,7 +318,7 @@ function GridCard({
             variant="caption"
             sx={{
               color: secondaryLabelColor,
-              fontSize: 12, // iOS HIG caption1
+              fontSize: isMobile ? 12 : 13, // iOS HIG caption1
               letterSpacing: 0, // iOS HIG caption1 tracking
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -302,6 +346,8 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.item.estado === nextProps.item.estado &&
     prevProps.isMobile === nextProps.isMobile &&
     prevProps.viewCount === nextProps.viewCount &&
-    prevProps.isAdmin === nextProps.isAdmin
+    prevProps.isAdmin === nextProps.isAdmin &&
+    prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
+    prevProps.canAddToComparison === nextProps.canAddToComparison
   );
 });

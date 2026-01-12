@@ -495,7 +495,7 @@ export default function TreasureBrowser() {
   };
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 1, sm: 2, md: 0 } }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 1, sm: 2, md: 3, lg: 2 } }}>
       {/* Mobile: Compact filter bar + inline filter panel */}
       {isMobile ? (
         <>
