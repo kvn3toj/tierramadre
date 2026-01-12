@@ -64,7 +64,7 @@ interface UseProductViewsResult {
 // Cache view data in memory to avoid repeated fetches
 let cachedStats: ViewStats | null = null;
 let cacheTimestamp = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 60 * 1000; // 1 minute (reduced for fresher data)
 
 /**
  * Hook to fetch and access product view counts
@@ -74,10 +74,10 @@ export function useProductViews(): UseProductViewsResult {
   const [isLoading, setIsLoading] = useState(!cachedStats);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchViews = useCallback(async () => {
-    // Use cache if still valid
+  const fetchViews = useCallback(async (forceRefresh = false) => {
+    // Use cache if still valid (unless force refresh)
     const now = Date.now();
-    if (cachedStats && now - cacheTimestamp < CACHE_DURATION) {
+    if (!forceRefresh && cachedStats && now - cacheTimestamp < CACHE_DURATION) {
       setStats(cachedStats);
       setIsLoading(false);
       return;
@@ -87,7 +87,11 @@ export function useProductViews(): UseProductViewsResult {
     setError(null);
 
     try {
-      const response = await fetch('/api/product-views?action=stats');
+      // Add cache-busting timestamp for force refresh to bypass Vercel edge cache
+      const url = forceRefresh
+        ? `/api/product-views?action=stats&_t=${Date.now()}`
+        : '/api/product-views?action=stats';
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch view stats');
       }
@@ -140,6 +144,9 @@ export function useProductViews(): UseProductViewsResult {
   // Memoized recent activity
   const recentActivity = useMemo(() => stats?.recentActivity || [], [stats]);
 
+  // Force refresh function that bypasses all caches
+  const forceRefetch = useCallback(() => fetchViews(true), [fetchViews]);
+
   return {
     getViewCount,
     stats,
@@ -148,7 +155,7 @@ export function useProductViews(): UseProductViewsResult {
     recentActivity,
     isLoading,
     error,
-    refetch: fetchViews,
+    refetch: forceRefetch,
   };
 }
 

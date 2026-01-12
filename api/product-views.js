@@ -447,7 +447,8 @@ export default async function handler(req, res) {
 
       // Get stats
       if (action === 'stats') {
-        res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
+        // Cache for 60 seconds, allow stale for 30 more while revalidating
+        res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=30');
         const result = await getStats(sheets);
         return res.status(200).json(result);
       }
@@ -467,7 +468,7 @@ export default async function handler(req, res) {
       }
 
       // Default to stats
-      res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
+      res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=30');
       const result = await getStats(sheets);
       return res.status(200).json(result);
     }
