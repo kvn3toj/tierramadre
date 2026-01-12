@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-12T00:56:18.160Z
+ * Generated at: 2026-01-12T01:04:42.874Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-12T00:56:18.160Z",
+  "generatedAt": "2026-01-12T01:04:42.874Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "12 Dic, 2025",
@@ -56,29 +56,29 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "c389c1f",
-    "lastCommitDate": "2026-01-11 19:56:13 -0500"
+    "lastCommitHash": "e86a0d3",
+    "lastCommitDate": "2026-01-11 20:04:39 -0500"
   },
   "stats": {
-    "totalCommits": 198,
-    "totalAdditions": 83381,
-    "totalDeletions": 162977,
-    "totalFilesChanged": 1397,
-    "netLines": -79596
+    "totalCommits": 200,
+    "totalAdditions": 83581,
+    "totalDeletions": 163010,
+    "totalFilesChanged": 1403,
+    "netLines": -79429
   },
   "categoryStats": {
+    "cleanup": 20,
+    "performance": 10,
     "other": 67,
     "auth": 12,
     "bugfix": 42,
-    "cleanup": 19,
     "ux": 44,
-    "analytics": 5,
-    "performance": 9
+    "analytics": 5
   },
   "typeStats": {
-    "feat": 87,
+    "fix": 69,
+    "feat": 88,
     "chore": 10,
-    "fix": 68,
     "docs": 2,
     "other": 6,
     "refactor": 24,
@@ -91,11 +91,11 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "index.html",
-      "count": 24
+      "count": 25
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 24
+      "count": 25
     },
     {
       "file": "src/components/InventoryBrowser.tsx",
@@ -107,7 +107,7 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "public/version.json",
-      "count": 17
+      "count": 18
     },
     {
       "file": "src/components/ProductDetail.tsx",
@@ -122,14 +122,14 @@ export const changelogData: ChangelogData = {
       "count": 17
     },
     {
-      "file": "src/components/ios/IOSTabBar.tsx",
+      "file": "src/components/ios/IOSLayout.tsx",
       "count": 15
     }
   ],
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 190
+      "commits": 192
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,37 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "e86a0d3",
+      "message": "Remove LevelBadge gamification from navigation bar",
+      "fullMessage": "fix: Remove LevelBadge gamification from navigation bar",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-11",
+      "type": "fix",
+      "category": "cleanup",
+      "additions": 1,
+      "deletions": 5,
+      "filesChanged": 1
+    },
+    {
+      "hash": "10e6f09",
+      "message": "Auto-invalidate localStorage caches on new deploy",
+      "fullMessage": "feat: Auto-invalidate localStorage caches on new deploy",
+      "author": "Kvn3Toj",
+      "relativeTime": "2 minutes ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "performance",
+      "additions": 199,
+      "deletions": 28,
+      "filesChanged": 5
+    },
+    {
       "hash": "c389c1f",
       "message": "Hide recently viewed carousel when scrolling down in grid",
       "fullMessage": "feat: Hide recently viewed carousel when scrolling down in grid",
       "author": "Kvn3Toj",
-      "relativeTime": "1 second ago",
+      "relativeTime": "8 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -155,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Update version and changelog data",
       "fullMessage": "chore: Update version and changelog data",
       "author": "Kvn3Toj",
-      "relativeTime": "7 minutes ago",
+      "relativeTime": "15 minutes ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "other",
@@ -168,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Restrict guest mode to invitation-only access",
       "fullMessage": "feat: Restrict guest mode to invitation-only access",
       "author": "Kvn3Toj",
-      "relativeTime": "13 minutes ago",
+      "relativeTime": "22 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -181,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Restrict view counts to admins and make search bar sticky",
       "fullMessage": "feat: Restrict view counts to admins and make search bar sticky",
       "author": "Kvn3Toj",
-      "relativeTime": "50 minutes ago",
+      "relativeTime": "58 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "auth",
@@ -194,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Proxy video thumbnails to avoid CORS issues",
       "fullMessage": "fix: Proxy video thumbnails to avoid CORS issues",
       "author": "Kvn3Toj",
-      "relativeTime": "51 minutes ago",
+      "relativeTime": "60 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -259,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Add batch thumbnails for treasure grid from Google Drive folders",
       "fullMessage": "feat: Add batch thumbnails for treasure grid from Google Drive folders",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -298,7 +324,7 @@ export const changelogData: ChangelogData = {
       "message": "Update icons, refine blocking version check, remove unused logo",
       "fullMessage": "chore: Update icons, refine blocking version check, remove unused logo",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "4 hours ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "cleanup",
@@ -311,7 +337,7 @@ export const changelogData: ChangelogData = {
       "message": "Block unauthorized users from Google sign-in",
       "fullMessage": "fix: Block unauthorized users from Google sign-in",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "4 hours ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "auth",
@@ -324,7 +350,7 @@ export const changelogData: ChangelogData = {
       "message": "Replace Gem icon placeholders with logo-symbol watermark",
       "fullMessage": "feat: Replace Gem icon placeholders with logo-symbol watermark",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "4 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
