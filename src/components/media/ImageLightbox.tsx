@@ -22,6 +22,7 @@ import { motion, AnimatePresence, PanInfo, useAnimation } from 'framer-motion';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import { lightTokens, darkTokens } from '../../design-system';
 import ProtectedContent from '../ProtectedContent';
+import ImageWatermark from '../ImageWatermark';
 
 interface ImageLightboxProps {
   images: Array<{
@@ -295,29 +296,42 @@ export default function ImageLightbox({
                 onClick={handleTap}
               >
                 <AnimatePresence mode="wait">
-                  <motion.img
+                  <motion.div
                     key={currentIndex}
-                    src={currentImage.url}
-                    alt={currentImage.alt || `Image ${currentIndex + 1}`}
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.2 }}
-                    onContextMenu={(e) => e.preventDefault()}
                     style={{
+                      position: 'relative',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       maxWidth: '100%',
                       maxHeight: '90vh',
-                      objectFit: 'contain',
-                      transform: `scale(${scale})`,
-                      transition: 'transform 0.2s ease',
-                      touchAction: 'none',
-                      userSelect: 'none',
-                      WebkitUserDrag: 'none',
-                      WebkitTouchCallout: 'none',
-                      pointerEvents: 'none',
-                    } as React.CSSProperties}
-                    draggable={false}
-                  />
+                    }}
+                  >
+                    <img
+                      src={currentImage.url}
+                      alt={currentImage.alt || `Image ${currentIndex + 1}`}
+                      onContextMenu={(e) => e.preventDefault()}
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '90vh',
+                        objectFit: 'contain',
+                        transform: `scale(${scale})`,
+                        transition: 'transform 0.2s ease',
+                        touchAction: 'none',
+                        userSelect: 'none',
+                        WebkitUserDrag: 'none',
+                        WebkitTouchCallout: 'none',
+                        pointerEvents: 'none',
+                      } as React.CSSProperties}
+                      draggable={false}
+                    />
+                    {/* Watermark overlay for lightbox */}
+                    <ImageWatermark opacity={0.2} size="large" />
+                  </motion.div>
                 </AnimatePresence>
               </motion.div>
             </ProtectedContent>
