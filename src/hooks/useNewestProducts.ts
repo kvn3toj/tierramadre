@@ -14,8 +14,9 @@ import { createLogger } from '../utils/logger';
 const log = createLogger('NewestProducts');
 
 // Cache configuration
-const NEWEST_PRODUCTS_CACHE_KEY = 'tierramadre-newest-products-cache-v4';
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const NEWEST_PRODUCTS_CACHE_KEY = 'tierramadre-newest-products-cache-v5';
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes - show cached data longer
+const STALE_REVALIDATE_TTL = 5 * 60 * 1000; // After 5 min, refresh in background
 
 interface NewestProduct {
   itemNumber: number;
@@ -41,22 +42,40 @@ interface UseNewestProductsReturn {
   refresh: () => void;
 }
 
+interface CacheResult {
+  products: NewestProduct[] | null;
+  isStale: boolean;
+  isExpired: boolean;
+}
+
 /**
  * Load cached newest products from localStorage
+ * Returns cache status for stale-while-revalidate pattern
  */
-function loadCache(): NewestProduct[] | null {
+function loadCache(): CacheResult {
   try {
     const cached = localStorage.getItem(NEWEST_PRODUCTS_CACHE_KEY);
-    if (!cached) return null;
+    if (!cached) return { products: null, isStale: true, isExpired: true };
 
     const { products, timestamp }: NewestProductsCache = JSON.parse(cached);
-    if (Date.now() - timestamp < CACHE_TTL) {
-      return products;
+    const age = Date.now() - timestamp;
+
+    // Fresh: under stale threshold
+    if (age < STALE_REVALIDATE_TTL) {
+      return { products, isStale: false, isExpired: false };
     }
+
+    // Stale but usable: show immediately, refresh in background
+    if (age < CACHE_TTL) {
+      return { products, isStale: true, isExpired: false };
+    }
+
+    // Expired: still return for instant display, but mark as expired
+    return { products, isStale: true, isExpired: true };
   } catch {
     // Ignore cache errors
   }
-  return null;
+  return { products: null, isStale: true, isExpired: true };
 }
 
 /**
@@ -110,22 +129,38 @@ export function useNewestProducts(
   const [isLoading, setIsLoading] = useState(true);
   const [fetchTrigger, setFetchTrigger] = useState(0);
 
-  // Fetch newest products from API
+  // Fetch newest products with stale-while-revalidate pattern
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
+      // Check cache first - stale-while-revalidate pattern
+      const { products: cachedProducts, isStale } = loadCache();
 
-      // Check cache first
-      const cached = loadCache();
-      if (cached && cached.length > 0) {
-        log.debug(`Using cached newest products (${cached.length} items)`);
-        setNewestProductsData(cached);
+      // If we have cached data, show it immediately (even if stale)
+      if (cachedProducts && cachedProducts.length > 0) {
+        log.debug(`Using cached newest products (${cachedProducts.length} items, stale: ${isStale})`);
+        setNewestProductsData(cachedProducts);
         setIsLoading(false);
+
+        // If cache is fresh, we're done
+        if (!isStale) {
+          return;
+        }
+
+        // Stale or expired: refresh in background (don't block UI)
+        log.debug('Cache is stale, refreshing in background...');
+        fetchNewestProducts(limit).then((freshProducts) => {
+          if (freshProducts.length > 0) {
+            log.debug(`Background refresh: ${freshProducts.length} products`);
+            saveCache(freshProducts);
+            setNewestProductsData(freshProducts);
+          }
+        });
         return;
       }
 
-      // Fetch from API
-      log.debug('Fetching newest products from API...');
+      // No cache - must fetch (show loading state)
+      setIsLoading(true);
+      log.debug('No cache, fetching newest products from API...');
       const products = await fetchNewestProducts(limit);
 
       if (products.length > 0) {
