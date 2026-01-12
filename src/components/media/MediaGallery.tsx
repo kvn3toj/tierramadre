@@ -32,6 +32,7 @@ import { brand, darkTokens, lightTokens } from '../../design-system';
 import ImageLightbox from './ImageLightbox';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import ProtectedContent from '../ProtectedContent';
+import ImageWatermark from '../ImageWatermark';
 import logoPlaceholder from '../../assets/logo-symbol.png';
 
 interface MediaGalleryProps {
@@ -217,6 +218,8 @@ export default function MediaGallery({
                 } as React.CSSProperties}
               />
             )}
+            {/* Watermark overlay */}
+            <ImageWatermark opacity={0.2} size="large" />
           </motion.div>
         </AnimatePresence>
 
