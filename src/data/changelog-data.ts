@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-12T01:04:42.874Z
+ * Generated at: 2026-01-12T03:52:03.968Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,73 +48,73 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-12T01:04:42.874Z",
+  "generatedAt": "2026-01-12T03:52:03.968Z",
   "daysIncluded": 30,
   "dateRange": {
-    "start": "12 Dic, 2025",
+    "start": "13 Dic, 2025",
     "end": "11 Ene, 2026"
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "e86a0d3",
-    "lastCommitDate": "2026-01-11 20:04:39 -0500"
+    "lastCommitHash": "bb19ecf",
+    "lastCommitDate": "2026-01-11 22:52:01 -0500"
   },
   "stats": {
-    "totalCommits": 200,
-    "totalAdditions": 83581,
-    "totalDeletions": 163010,
-    "totalFilesChanged": 1403,
-    "netLines": -79429
+    "totalCommits": 214,
+    "totalAdditions": 86423,
+    "totalDeletions": 60681,
+    "totalFilesChanged": 1421,
+    "netLines": 25742
   },
   "categoryStats": {
+    "bugfix": 46,
+    "ux": 46,
+    "other": 72,
+    "performance": 11,
+    "auth": 14,
     "cleanup": 20,
-    "performance": 10,
-    "other": 67,
-    "auth": 12,
-    "bugfix": 42,
-    "ux": 44,
     "analytics": 5
   },
   "typeStats": {
-    "fix": 69,
-    "feat": 88,
-    "chore": 10,
+    "fix": 75,
+    "refactor": 25,
+    "other": 7,
+    "feat": 92,
+    "chore": 12,
     "docs": 2,
-    "other": 6,
-    "refactor": 24,
     "style": 1
   },
   "mostChangedFiles": [
+    {
+      "file": "index.html",
+      "count": 29
+    },
+    {
+      "file": "src/data/changelog-data.ts",
+      "count": 26
+    },
     {
       "file": "src/App.tsx",
       "count": 26
     },
     {
-      "file": "index.html",
-      "count": 25
-    },
-    {
-      "file": "src/data/changelog-data.ts",
-      "count": 25
-    },
-    {
       "file": "src/components/InventoryBrowser.tsx",
-      "count": 24
+      "count": 23
+    },
+    {
+      "file": "public/version.json",
+      "count": 20
+    },
+    {
+      "file": "src/components/home/Home.tsx",
+      "count": 19
     },
     {
       "file": ".claude/settings.local.json",
       "count": 19
     },
     {
-      "file": "public/version.json",
-      "count": 18
-    },
-    {
       "file": "src/components/ProductDetail.tsx",
-      "count": 17
-    },
-    {
-      "file": "src/components/home/Home.tsx",
       "count": 17
     },
     {
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 192
+      "commits": 206
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,206 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
-      "hash": "e86a0d3",
+      "hash": "bb19ecf",
+      "message": "Hide Comunidad TM price from shared product links",
+      "fullMessage": "fix: Hide Comunidad TM price from shared product links",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-11",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 5,
+      "deletions": 3,
+      "filesChanged": 1
+    },
+    {
+      "hash": "f0486e7",
+      "message": "Improve responsive layout for Treasure Browser on desktop/iPad",
+      "fullMessage": "fix: Improve responsive layout for Treasure Browser on desktop/iPad",
+      "author": "Kvn3Toj",
+      "relativeTime": "2 minutes ago",
+      "date": "2026-01-11",
+      "type": "fix",
+      "category": "ux",
+      "additions": 84,
+      "deletions": 29,
+      "filesChanged": 3
+    },
+    {
+      "hash": "0edaa8d",
+      "message": "Clear treasure filters after 3min inactivity or browser close",
+      "fullMessage": "fix: Clear treasure filters after 3min inactivity or browser close",
+      "author": "Kvn3Toj",
+      "relativeTime": "3 minutes ago",
+      "date": "2026-01-11",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 106,
+      "deletions": 15,
+      "filesChanged": 1
+    },
+    {
+      "hash": "f57f0a1",
+      "message": "Extract ValuationPage sub-components and shared chart utilities",
+      "fullMessage": "refactor: Extract ValuationPage sub-components and shared chart utilities",
+      "author": "Kvn3Toj",
+      "relativeTime": "20 minutes ago",
+      "date": "2026-01-11",
+      "type": "refactor",
+      "category": "other",
+      "additions": 643,
+      "deletions": 444,
+      "filesChanged": 9
+    },
+    {
+      "hash": "b8fa122",
+      "message": "perf: Improve loading speed for returning users with stale-while-revalidate",
+      "fullMessage": "perf: Improve loading speed for returning users with stale-while-revalidate",
+      "author": "Kvn3Toj",
+      "relativeTime": "30 minutes ago",
+      "date": "2026-01-11",
+      "type": "other",
+      "category": "performance",
+      "additions": 56,
+      "deletions": 17,
+      "filesChanged": 2
+    },
+    {
+      "hash": "3909e5a",
+      "message": "Improve image loading with fallback placeholders and TypeScript fixes",
+      "fullMessage": "fix: Improve image loading with fallback placeholders and TypeScript fixes",
+      "author": "Kvn3Toj",
+      "relativeTime": "55 minutes ago",
+      "date": "2026-01-11",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 31,
+      "deletions": 7,
+      "filesChanged": 5
+    },
+    {
+      "hash": "2b62430",
+      "message": "Prevent noCopy ReferenceError from noprint.js security script",
+      "fullMessage": "fix: Prevent noCopy ReferenceError from noprint.js security script",
+      "author": "Kvn3Toj",
+      "relativeTime": "59 minutes ago",
+      "date": "2026-01-11",
+      "type": "fix",
+      "category": "auth",
+      "additions": 11,
+      "deletions": 2,
+      "filesChanged": 1
+    },
+    {
+      "hash": "bc0c101",
+      "message": "Upgrade emerald valuation chart with accurate 2005-2026 data",
+      "fullMessage": "feat: Upgrade emerald valuation chart with accurate 2005-2026 data",
+      "author": "Kvn3Toj",
+      "relativeTime": "64 minutes ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "other",
+      "additions": 1166,
+      "deletions": 719,
+      "filesChanged": 3
+    },
+    {
+      "hash": "5dfeada",
+      "message": "Prevent overscroll bounce showing black background",
+      "fullMessage": "fix: Prevent overscroll bounce showing black background",
+      "author": "Kvn3Toj",
+      "relativeTime": "65 minutes ago",
+      "date": "2026-01-11",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 2,
+      "deletions": 0,
+      "filesChanged": 1
+    },
+    {
+      "hash": "6af3097",
+      "message": "Add New Products carousel based on Google Drive image upload date",
+      "fullMessage": "feat: Add New Products carousel based on Google Drive image upload date",
+      "author": "Kvn3Toj",
+      "relativeTime": "68 minutes ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "other",
+      "additions": 420,
+      "deletions": 1,
+      "filesChanged": 3
+    },
+    {
+      "hash": "7febf63",
+      "message": "Replace Explora section with animated Oracle quotes",
+      "fullMessage": "feat: Replace Explora section with animated Oracle quotes",
+      "author": "Kvn3Toj",
+      "relativeTime": "72 minutes ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "other",
+      "additions": 459,
+      "deletions": 550,
+      "filesChanged": 5
+    },
+    {
+      "hash": "01cde83",
+      "message": "Improve in-app browser UX for Google Auth",
+      "fullMessage": "feat: Improve in-app browser UX for Google Auth",
+      "author": "Kvn3Toj",
+      "relativeTime": "2 hours ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "ux",
+      "additions": 73,
+      "deletions": 34,
+      "filesChanged": 3
+    },
+    {
+      "hash": "3daae7b",
+      "message": "Add \"try another account\" button and in-app browser detection for Google Auth",
+      "fullMessage": "feat: Add \"try another account\" button and in-app browser detection for Google Auth",
+      "author": "Kvn3Toj",
+      "relativeTime": "2 hours ago",
+      "date": "2026-01-11",
+      "type": "feat",
+      "category": "auth",
+      "additions": 260,
+      "deletions": 20,
+      "filesChanged": 5
+    },
+    {
+      "hash": "815b474",
+      "message": "Block large binary files in .gitignore",
+      "fullMessage": "chore: Block large binary files in .gitignore",
+      "author": "Kvn3Toj",
+      "relativeTime": "3 hours ago",
+      "date": "2026-01-11",
+      "type": "chore",
+      "category": "other",
+      "additions": 28,
+      "deletions": 1,
+      "filesChanged": 1
+    },
+    {
+      "hash": "c43658c",
+      "message": "Update version for deploy",
+      "fullMessage": "chore: Update version for deploy",
+      "author": "Kvn3Toj",
+      "relativeTime": "3 hours ago",
+      "date": "2026-01-11",
+      "type": "chore",
+      "category": "other",
+      "additions": 57,
+      "deletions": 31,
+      "filesChanged": 3
+    },
+    {
+      "hash": "69397b3",
       "message": "Remove LevelBadge gamification from navigation bar",
       "fullMessage": "fix: Remove LevelBadge gamification from navigation bar",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "cleanup",
@@ -151,11 +346,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "10e6f09",
+      "hash": "55afcd5",
       "message": "Auto-invalidate localStorage caches on new deploy",
       "fullMessage": "feat: Auto-invalidate localStorage caches on new deploy",
       "author": "Kvn3Toj",
-      "relativeTime": "2 minutes ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "performance",
@@ -164,11 +359,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 5
     },
     {
-      "hash": "c389c1f",
+      "hash": "3697e04",
       "message": "Hide recently viewed carousel when scrolling down in grid",
       "fullMessage": "feat: Hide recently viewed carousel when scrolling down in grid",
       "author": "Kvn3Toj",
-      "relativeTime": "8 minutes ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -177,11 +372,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "47bd363",
+      "hash": "a208b4c",
       "message": "Update version and changelog data",
       "fullMessage": "chore: Update version and changelog data",
       "author": "Kvn3Toj",
-      "relativeTime": "15 minutes ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "other",
@@ -190,11 +385,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "27a4ed8",
+      "hash": "a4a1a14",
       "message": "Restrict guest mode to invitation-only access",
       "fullMessage": "feat: Restrict guest mode to invitation-only access",
       "author": "Kvn3Toj",
-      "relativeTime": "22 minutes ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -203,11 +398,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "8c76088",
+      "hash": "1276e8f",
       "message": "Restrict view counts to admins and make search bar sticky",
       "fullMessage": "feat: Restrict view counts to admins and make search bar sticky",
       "author": "Kvn3Toj",
-      "relativeTime": "58 minutes ago",
+      "relativeTime": "4 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "auth",
@@ -216,11 +411,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "5166283",
+      "hash": "60d6986",
       "message": "Proxy video thumbnails to avoid CORS issues",
       "fullMessage": "fix: Proxy video thumbnails to avoid CORS issues",
       "author": "Kvn3Toj",
-      "relativeTime": "60 minutes ago",
+      "relativeTime": "4 hours ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -229,11 +424,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "8c8044e",
+      "hash": "5dad454",
       "message": "Use objectFit cover for product gallery media",
       "fullMessage": "feat: Use objectFit cover for product gallery media",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -242,11 +437,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "6f43588",
+      "hash": "e9c0b6d",
       "message": "Change product gallery to 1:1 square aspect ratio",
       "fullMessage": "feat: Change product gallery to 1:1 square aspect ratio",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -255,11 +450,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "fda4196",
+      "hash": "d6b1d3d",
       "message": "Clarify Google Drive product folders as primary image source",
       "fullMessage": "docs: Clarify Google Drive product folders as primary image source",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2026-01-11",
       "type": "docs",
       "category": "other",
@@ -268,11 +463,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 12
     },
     {
-      "hash": "ec6dc5c",
+      "hash": "1338e71",
       "message": "Improve video player - autoplay muted, remove play icon, images first",
       "fullMessage": "feat: Improve video player - autoplay muted, remove play icon, images first",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "cleanup",
@@ -281,11 +476,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "0c89b37",
+      "hash": "8f73ee2",
       "message": "Add batch thumbnails for treasure grid from Google Drive folders",
       "fullMessage": "feat: Add batch thumbnails for treasure grid from Google Drive folders",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -294,11 +489,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 6
     },
     {
-      "hash": "a72cb11",
+      "hash": "7343d78",
       "message": "Bump version to 2026.01.11.1656",
       "fullMessage": "chore: Bump version to 2026.01.11.1656",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "other",
@@ -307,11 +502,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "d516dd8",
+      "hash": "92b977d",
       "message": "Convert Google Drive URLs to proxy for reliable image loading",
       "fullMessage": "feat: Convert Google Drive URLs to proxy for reliable image loading",
       "author": "Kvn3Toj",
-      "relativeTime": "3 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -320,11 +515,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "fe94b7d",
+      "hash": "8d446d4",
       "message": "Update icons, refine blocking version check, remove unused logo",
       "fullMessage": "chore: Update icons, refine blocking version check, remove unused logo",
       "author": "Kvn3Toj",
-      "relativeTime": "4 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "cleanup",
@@ -333,11 +528,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "7907bbb",
+      "hash": "b493e13",
       "message": "Block unauthorized users from Google sign-in",
       "fullMessage": "fix: Block unauthorized users from Google sign-in",
       "author": "Kvn3Toj",
-      "relativeTime": "4 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "auth",
@@ -346,24 +541,24 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "e3db3e8",
+      "hash": "27548e2",
       "message": "Replace Gem icon placeholders with logo-symbol watermark",
       "fullMessage": "feat: Replace Gem icon placeholders with logo-symbol watermark",
       "author": "Kvn3Toj",
-      "relativeTime": "4 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
       "additions": 1125,
       "deletions": 497,
-      "filesChanged": 84
+      "filesChanged": 83
     },
     {
-      "hash": "e44de85",
+      "hash": "842fe1a",
       "message": "Optimize treasure grid with iOS HIG alignment",
       "fullMessage": "feat: Optimize treasure grid with iOS HIG alignment",
       "author": "Kvn3Toj",
-      "relativeTime": "4 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "ux",
@@ -372,11 +567,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "9baf6fe",
+      "hash": "c457dc1",
       "message": "Add product views tracking with user identity analytics",
       "fullMessage": "feat: Add product views tracking with user identity analytics",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "27 hours ago",
       "date": "2026-01-10",
       "type": "feat",
       "category": "analytics",
@@ -385,11 +580,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 9
     },
     {
-      "hash": "7290669",
+      "hash": "4ea8352",
       "message": "Ensure bottom nav stays visible in PWA standalone mode",
       "fullMessage": "fix: Ensure bottom nav stays visible in PWA standalone mode",
       "author": "Kvn3Toj",
-      "relativeTime": "28 hours ago",
+      "relativeTime": "31 hours ago",
       "date": "2026-01-10",
       "type": "fix",
       "category": "bugfix",
@@ -398,7 +593,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "56d186d",
+      "hash": "7e7d8b7",
       "message": "perf: Optimize new products image loading with early termination",
       "fullMessage": "perf: Optimize new products image loading with early termination",
       "author": "Kvn3Toj",
@@ -411,7 +606,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "97ca248",
+      "hash": "3e74ea7",
       "message": "Fix new products sorting and add iOS HIG contrast tokens",
       "fullMessage": "feat: Fix new products sorting and add iOS HIG contrast tokens",
       "author": "Kvn3Toj",
@@ -424,7 +619,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "b7526dc",
+      "hash": "d4dcdba",
       "message": "perf: Replace googleapis with individual packages for faster builds",
       "fullMessage": "perf: Replace googleapis with individual packages for faster builds",
       "author": "Kvn3Toj",
@@ -437,7 +632,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 62
     },
     {
-      "hash": "54f866e",
+      "hash": "2085371",
       "message": "Fix new products sorting and add iOS HIG contrast tokens",
       "fullMessage": "feat: Fix new products sorting and add iOS HIG contrast tokens",
       "author": "Kvn3Toj",
@@ -450,7 +645,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "0b62ea7",
+      "hash": "f0aab2a",
       "message": "Move active filter chips inline with favorites and item count on mobile",
       "fullMessage": "fix: Move active filter chips inline with favorites and item count on mobile",
       "author": "Kvn3Toj",
@@ -463,7 +658,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "5aa9952",
+      "hash": "000679c",
       "message": "Show splash screen only on fresh session or after inactivity",
       "fullMessage": "feat: Show splash screen only on fresh session or after inactivity",
       "author": "Kvn3Toj",
@@ -476,7 +671,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "0d931cc",
+      "hash": "de21021",
       "message": "Rename 'Gemas sueltas' to 'Gemas' and improve filter UX",
       "fullMessage": "refactor: Rename 'Gemas sueltas' to 'Gemas' and improve filter UX",
       "author": "Kvn3Toj",
@@ -489,7 +684,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 11
     },
     {
-      "hash": "a6ff61e",
+      "hash": "803ce6e",
       "message": "Centralize UI design system with new token files",
       "fullMessage": "feat: Centralize UI design system with new token files",
       "author": "Kvn3Toj",
@@ -502,7 +697,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 10
     },
     {
-      "hash": "df24ea6",
+      "hash": "7430ac4",
       "message": "iOS HIG filter redesign with PWA update notifications",
       "fullMessage": "feat: iOS HIG filter redesign with PWA update notifications",
       "author": "Kvn3Toj",
@@ -515,7 +710,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 11
     },
     {
-      "hash": "7b0f9d3",
+      "hash": "c20f21d",
       "message": "Ensure bottom navigation bar stays visible on scroll",
       "fullMessage": "fix: Ensure bottom navigation bar stays visible on scroll",
       "author": "Kvn3Toj",
@@ -528,7 +723,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "68aac58",
+      "hash": "ca57e67",
       "message": "Hide price filters for guests in no_prices mode and show regular prices",
       "fullMessage": "fix: Hide price filters for guests in no_prices mode and show regular prices",
       "author": "Kvn3Toj",
@@ -541,7 +736,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 6
     },
     {
-      "hash": "6d973c1",
+      "hash": "58fca9d",
       "message": "Add comprehensive chunk loading error recovery",
       "fullMessage": "fix: Add comprehensive chunk loading error recovery",
       "author": "Kvn3Toj",
@@ -554,7 +749,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 6
     },
     {
-      "hash": "c1f89fd",
+      "hash": "d0d04bb",
       "message": "Show single URL field in invitation generator",
       "fullMessage": "fix: Show single URL field in invitation generator",
       "author": "Kvn3Toj",
@@ -567,7 +762,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "0690383",
+      "hash": "40283a9",
       "message": "Use production URL for invitation links instead of preview URL",
       "fullMessage": "fix: Use production URL for invitation links instead of preview URL",
       "author": "Kvn3Toj",
@@ -580,7 +775,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "c8778c0",
+      "hash": "539dd3c",
       "message": "Replace JWT with Google Sheets for invitation system",
       "fullMessage": "refactor: Replace JWT with Google Sheets for invitation system",
       "author": "Kvn3Toj",
@@ -593,7 +788,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 8
     },
     {
-      "hash": "258b9f7",
+      "hash": "2ef296c",
       "message": "Add complete guest invitation system with short links",
       "fullMessage": "feat: Add complete guest invitation system with short links",
       "author": "Kvn3Toj",
@@ -606,7 +801,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 14
     },
     {
-      "hash": "69d2922",
+      "hash": "11bcc55",
       "message": "Add screenshot deterrent protection for product images",
       "fullMessage": "feat: Add screenshot deterrent protection for product images",
       "author": "Kvn3Toj",
@@ -619,7 +814,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 9
     },
     {
-      "hash": "a1ba919",
+      "hash": "4d5b15e",
       "message": "Add media upload to Provider Portal quotations",
       "fullMessage": "feat: Add media upload to Provider Portal quotations",
       "author": "Kvn3Toj",
@@ -632,7 +827,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 6
     },
     {
-      "hash": "2141b76",
+      "hash": "f8f6547",
       "message": "Add Provider Portal PIN access and admin quotation requests UI",
       "fullMessage": "feat: Add Provider Portal PIN access and admin quotation requests UI",
       "author": "Kvn3Toj",
@@ -645,7 +840,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 15
     },
     {
-      "hash": "1e246b8",
+      "hash": "f2b1130",
       "message": "Refactor user-prefs API to use GOOGLE_SERVICE_ACCOUNT_KEY",
       "fullMessage": "fix: Refactor user-prefs API to use GOOGLE_SERVICE_ACCOUNT_KEY",
       "author": "Kvn3Toj",
@@ -658,7 +853,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "afd0c91",
+      "hash": "2f1d626",
       "message": "Use crypto.randomUUID instead of uuid package in API",
       "fullMessage": "fix: Use crypto.randomUUID instead of uuid package in API",
       "author": "Kvn3Toj",
@@ -671,7 +866,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "19a403a",
+      "hash": "2feddca",
       "message": "Update changelog and version metadata",
       "fullMessage": "chore: Update changelog and version metadata",
       "author": "Kvn3Toj",
@@ -684,7 +879,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 6
     },
     {
-      "hash": "90aa856",
+      "hash": "bf98815",
       "message": "Apply iOS HIG design system to Provider Portal",
       "fullMessage": "refactor: Apply iOS HIG design system to Provider Portal",
       "author": "Kvn3Toj",
@@ -697,7 +892,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "9021529",
+      "hash": "4d00ccd",
       "message": "Add invitation link system for Embajadores/Admins",
       "fullMessage": "feat: Add invitation link system for Embajadores/Admins",
       "author": "Kvn3Toj",
@@ -710,7 +905,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 8
     },
     {
-      "hash": "74c574b",
+      "hash": "85687da",
       "message": "Add Provider Portal with quotation request system",
       "fullMessage": "feat: Add Provider Portal with quotation request system",
       "author": "Kvn3Toj",
@@ -723,7 +918,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 31
     },
     {
-      "hash": "9361a16",
+      "hash": "5c8b576",
       "message": "Hide Comunidad TM price for guest users",
       "fullMessage": "feat: Hide Comunidad TM price for guest users",
       "author": "Kvn3Toj",
@@ -736,7 +931,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "1ce35f8",
+      "hash": "9ec8919",
       "message": "Update version and misc changes",
       "fullMessage": "chore: Update version and misc changes",
       "author": "Kvn3Toj",
@@ -749,7 +944,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 5
     },
     {
-      "hash": "c089f53",
+      "hash": "a144e2e",
       "message": "Update icon-inicio-gris PWA icons with new versions",
       "fullMessage": "feat: Update icon-inicio-gris PWA icons with new versions",
       "author": "Kvn3Toj",
@@ -762,7 +957,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "dd3a2a5",
+      "hash": "0d6ff13",
       "message": "Switch to icon-inicio-gris PWA icons",
       "fullMessage": "feat: Switch to icon-inicio-gris PWA icons",
       "author": "Kvn3Toj",
@@ -775,7 +970,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 5
     },
     {
-      "hash": "f560b89",
+      "hash": "0e1ce4c",
       "message": "Add Tierra Madre branded PWA icons",
       "fullMessage": "feat: Add Tierra Madre branded PWA icons",
       "author": "Kvn3Toj",
@@ -788,7 +983,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 5
     },
     {
-      "hash": "dea515f",
+      "hash": "27e1324",
       "message": "Add photo analysis to Name Generator for AI-powered suggestions",
       "fullMessage": "feat: Add photo analysis to Name Generator for AI-powered suggestions",
       "author": "Kvn3Toj",
@@ -801,7 +996,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "1adee03",
+      "hash": "9bc2864",
       "message": "Add AI Name Generator tool for admins in More menu",
       "fullMessage": "feat: Add AI Name Generator tool for admins in More menu",
       "author": "Kvn3Toj",
@@ -814,7 +1009,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "511eb60",
+      "hash": "3cca3d6",
       "message": "Add expandable facts to Explora section in home page",
       "fullMessage": "feat: Add expandable facts to Explora section in home page",
       "author": "Kvn3Toj",
@@ -827,7 +1022,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "8986be7",
+      "hash": "c6785b3",
       "message": "Safari aggressive cache busting with version polling and sw.js stub",
       "fullMessage": "fix: Safari aggressive cache busting with version polling and sw.js stub",
       "author": "Kvn3Toj",
@@ -840,7 +1035,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 5
     },
     {
-      "hash": "3a83882",
+      "hash": "e9d9b99",
       "message": "Implement Liquid Glass home page with background parallax",
       "fullMessage": "feat: Implement Liquid Glass home page with background parallax",
       "author": "Kvn3Toj",
@@ -853,7 +1048,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 21
     },
     {
-      "hash": "014d02f",
+      "hash": "4267ad7",
       "message": "Enhance valuation chart with iOS HIG-inspired design",
       "fullMessage": "feat: Enhance valuation chart with iOS HIG-inspired design",
       "author": "Kvn3Toj",
@@ -866,7 +1061,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "010e3c7",
+      "hash": "a4823d4",
       "message": "Add theme-aware background images for home page",
       "fullMessage": "feat: Add theme-aware background images for home page",
       "author": "Kvn3Toj",
@@ -879,7 +1074,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "17a99dc",
+      "hash": "9ac691e",
       "message": "Add image retry logic and remove Cloudinary upload dependencies",
       "fullMessage": "feat: Add image retry logic and remove Cloudinary upload dependencies",
       "author": "Kvn3Toj",
@@ -888,11 +1083,11 @@ export const changelogData: ChangelogData = {
       "type": "feat",
       "category": "cleanup",
       "additions": 172,
-      "deletions": 104058,
-      "filesChanged": 11
+      "deletions": 269,
+      "filesChanged": 7
     },
     {
-      "hash": "3623a37",
+      "hash": "b6ddd7a",
       "message": "Simplify analytics dashboard and remove changelog from UI",
       "fullMessage": "refactor: Simplify analytics dashboard and remove changelog from UI",
       "author": "Kvn3Toj",
@@ -905,7 +1100,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "6b7f45f",
+      "hash": "65ba3b6",
       "message": "Safari cache busting with version detection and stronger headers",
       "fullMessage": "fix: Safari cache busting with version detection and stronger headers",
       "author": "Kvn3Toj",
@@ -918,7 +1113,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "4fef1c2",
+      "hash": "7d3872a",
       "message": "Handle incomplete localStorage data in TrackingContext",
       "fullMessage": "fix: Handle incomplete localStorage data in TrackingContext",
       "author": "Kvn3Toj",
@@ -931,7 +1126,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "eadd429",
+      "hash": "f78a664",
       "message": "Sync AuthContext with Google sign-out to reset permissions",
       "fullMessage": "fix: Sync AuthContext with Google sign-out to reset permissions",
       "author": "Kvn3Toj",
@@ -944,7 +1139,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "136a88f",
+      "hash": "6a0688d",
       "message": "Move feedback tool to Más menu with manual screenshot capture",
       "fullMessage": "feat: Move feedback tool to Más menu with manual screenshot capture",
       "author": "Kvn3Toj",
@@ -957,7 +1152,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 12
     },
     {
-      "hash": "f33ae43",
+      "hash": "c9616d0",
       "message": "Remove deprecated get-inventory-sheets fallback",
       "fullMessage": "fix: Remove deprecated get-inventory-sheets fallback",
       "author": "Kvn3Toj",
@@ -970,11 +1165,11 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "679df84",
+      "hash": "4fbcf7a",
       "message": "Add validation for localStorage/sessionStorage data in useAnalytics",
       "fullMessage": "fix: Add validation for localStorage/sessionStorage data in useAnalytics",
       "author": "Kvn3Toj",
-      "relativeTime": "11 days ago",
+      "relativeTime": "12 days ago",
       "date": "2025-12-31",
       "type": "fix",
       "category": "analytics",
@@ -983,7 +1178,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "8937c19",
+      "hash": "6fc63b8",
       "message": "Update settings and changelog data",
       "fullMessage": "Update settings and changelog data",
       "author": "Kvn3Toj",
@@ -996,7 +1191,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "58c86e8",
+      "hash": "97f40ff",
       "message": "Clean base64 service account key to handle embedded newlines/spaces",
       "fullMessage": "fix: Clean base64 service account key to handle embedded newlines/spaces",
       "author": "Kvn3Toj",
@@ -1009,7 +1204,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "73a48f1",
+      "hash": "7aa2e4a",
       "message": "Add .trim() to FEEDBACK_SPREADSHEET_ID to handle env var with trailing newline",
       "fullMessage": "fix: Add .trim() to FEEDBACK_SPREADSHEET_ID to handle env var with trailing newline",
       "author": "Kvn3Toj",
@@ -1022,7 +1217,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 5
     },
     {
-      "hash": "31e1808",
+      "hash": "de1de43",
       "message": "Update changelog data and add feedback setup script",
       "fullMessage": "chore: Update changelog data and add feedback setup script",
       "author": "Kvn3Toj",
@@ -1035,7 +1230,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "c286ef7",
+      "hash": "c6882cd",
       "message": "Enhanced feedback system with Steve's improvements",
       "fullMessage": "feat: Enhanced feedback system with Steve's improvements",
       "author": "Kvn3Toj",
@@ -1048,7 +1243,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 6
     },
     {
-      "hash": "952d3be",
+      "hash": "efa56a6",
       "message": "Complete inventory → treasure renaming across entire codebase",
       "fullMessage": "refactor: Complete inventory → treasure renaming across entire codebase",
       "author": "Kvn3Toj",
@@ -1061,7 +1256,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 86
     },
     {
-      "hash": "ee38db4",
+      "hash": "cc7bc2e",
       "message": "Update vercel.json for renamed inventory->treasure APIs and add feedback APIs",
       "fullMessage": "fix: Update vercel.json for renamed inventory->treasure APIs and add feedback APIs",
       "author": "Kvn3Toj",
@@ -1074,7 +1269,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "24d77e6",
+      "hash": "c4add95",
       "message": "Enhanced feedback system with 29-column schema",
       "fullMessage": "feat: Enhanced feedback system with 29-column schema",
       "author": "Kvn3Toj",
@@ -1087,7 +1282,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 6
     },
     {
-      "hash": "02e44c1",
+      "hash": "b068c42",
       "message": "Add OAuth-based migration for Google Drive upload",
       "fullMessage": "feat: Add OAuth-based migration for Google Drive upload",
       "author": "Kvn3Toj",
@@ -1100,7 +1295,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "a7b489c",
+      "hash": "bb75325",
       "message": "Add User Engagement Heatmap to Admin Analytics Dashboard",
       "fullMessage": "feat: Add User Engagement Heatmap to Admin Analytics Dashboard",
       "author": "Kvn3Toj",
@@ -1113,7 +1308,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 5
     },
     {
-      "hash": "943cc24",
+      "hash": "53d08d1",
       "message": "Use exact prefix match for product folder search",
       "fullMessage": "fix: Use exact prefix match for product folder search",
       "author": "Kvn3Toj",
@@ -1126,7 +1321,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "d5bdab4",
+      "hash": "8c33f1b",
       "message": "debug: Add shared drive detection to folder check",
       "fullMessage": "debug: Add shared drive detection to folder check",
       "author": "Kvn3Toj",
@@ -1139,7 +1334,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "b43ca06",
+      "hash": "238d261",
       "message": "Remove invalid driveId from requestBody",
       "fullMessage": "fix: Remove invalid driveId from requestBody",
       "author": "Kvn3Toj",
@@ -1152,7 +1347,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "3304aff",
+      "hash": "52d8b3e",
       "message": "Add forceReplace to delete empty files and re-upload",
       "fullMessage": "fix: Add forceReplace to delete empty files and re-upload",
       "author": "Kvn3Toj",
@@ -1165,7 +1360,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "9587c67",
+      "hash": "50ce3f9",
       "message": "Update changelog data",
       "fullMessage": "chore: Update changelog data",
       "author": "Kvn3Toj",
@@ -1178,7 +1373,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "d70f923",
+      "hash": "d9d2724",
       "message": "Add driveId parameter for Shared Drive file creation",
       "fullMessage": "fix: Add driveId parameter for Shared Drive file creation",
       "author": "Kvn3Toj",
@@ -1191,7 +1386,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "af0aeaf",
+      "hash": "41af947",
       "message": "Add admin feedback system with screenshot capture",
       "fullMessage": "feat: Add admin feedback system with screenshot capture",
       "author": "Kvn3Toj",
@@ -1204,7 +1399,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 25
     },
     {
-      "hash": "084c84f",
+      "hash": "5c05f17",
       "message": "Use direct upload for Shared Drive migration",
       "fullMessage": "fix: Use direct upload for Shared Drive migration",
       "author": "Kvn3Toj",
@@ -1217,7 +1412,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "51cad8c",
+      "hash": "3707cec",
       "message": "Automate changelog generation with git post-commit hook",
       "fullMessage": "feat: Automate changelog generation with git post-commit hook",
       "author": "Kvn3Toj",
@@ -1230,7 +1425,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "d61df9a",
+      "hash": "9308b75",
       "message": "Add admin changelog page with Mermaid diagrams",
       "fullMessage": "feat: Add admin changelog page with Mermaid diagrams",
       "author": "Kvn3Toj",
@@ -1243,7 +1438,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "6aebaa6",
+      "hash": "3269a86",
       "message": "Gamification system, tracking context & UI improvements",
       "fullMessage": "feat: Gamification system, tracking context & UI improvements",
       "author": "Kvn3Toj",
@@ -1256,7 +1451,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 16
     },
     {
-      "hash": "32ddc4a",
+      "hash": "e241c92",
       "message": "Add Service Worker cleanup to prevent stale cache",
       "fullMessage": "fix: Add Service Worker cleanup to prevent stale cache",
       "author": "Kvn3Toj",
@@ -1269,7 +1464,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "a5c9c6c",
+      "hash": "8f6955a",
       "message": "Add analytics tracking hook & remove deprecated PinLock",
       "fullMessage": "feat: Add analytics tracking hook & remove deprecated PinLock",
       "author": "Kvn3Toj",
@@ -1282,7 +1477,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "271e0cb",
+      "hash": "52cce7a",
       "message": "Admin permissions, guest benefits teaser & codebase cleanup",
       "fullMessage": "feat: Admin permissions, guest benefits teaser & codebase cleanup",
       "author": "Kvn3Toj",
@@ -1295,7 +1490,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 28
     },
     {
-      "hash": "9c683a3",
+      "hash": "7ba54dc",
       "message": "Phase 3 cross-device validation & iOS HIG fixes",
       "fullMessage": "feat: Phase 3 cross-device validation & iOS HIG fixes",
       "author": "Kvn3Toj",
@@ -1308,7 +1503,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 56
     },
     {
-      "hash": "fdfdfad",
+      "hash": "2e3c9f7",
       "message": "Aggressive cache busting for all SPA routes",
       "fullMessage": "fix: Aggressive cache busting for all SPA routes",
       "author": "Kvn3Toj",
@@ -1321,7 +1516,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "9e19e7d",
+      "hash": "c4744c0",
       "message": "iOS HIG redesign with compact layout",
       "fullMessage": "feat(ProductDetail): iOS HIG redesign with compact layout",
       "author": "Kvn3Toj",
@@ -1334,7 +1529,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "91e0de7",
+      "hash": "bf722fc",
       "message": "Improve Cotización UX with industry best practices",
       "fullMessage": "feat: Improve Cotización UX with industry best practices",
       "author": "Kvn3Toj",
@@ -1347,7 +1542,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "da1f56d",
+      "hash": "65344fb",
       "message": "Update PWA favicons with Tierra Madre logo",
       "fullMessage": "feat: Update PWA favicons with Tierra Madre logo",
       "author": "Kvn3Toj",
@@ -1360,7 +1555,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 6
     },
     {
-      "hash": "4440f6b",
+      "hash": "4b62957",
       "message": "Remove unused TypeScript variables",
       "fullMessage": "fix: Remove unused TypeScript variables",
       "author": "Kvn3Toj",
@@ -1373,7 +1568,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "8b64a61",
+      "hash": "b0606f9",
       "message": "VirtualGrid react-window calc() compatibility",
       "fullMessage": "fix: VirtualGrid react-window calc() compatibility",
       "author": "Kvn3Toj",
@@ -1386,7 +1581,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "eb8469e",
+      "hash": "4205d19",
       "message": "refine: Subtle price chip in recently viewed carousel",
       "fullMessage": "refine: Subtle price chip in recently viewed carousel",
       "author": "Kvn3Toj",
@@ -1399,7 +1594,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "027f5e6",
+      "hash": "fc36d18",
       "message": "Improve iOS HIG scroll UX & layout bounds",
       "fullMessage": "fix: Improve iOS HIG scroll UX & layout bounds",
       "author": "Kvn3Toj",
@@ -1412,7 +1607,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 5
     },
     {
-      "hash": "9517c18",
+      "hash": "6f282e7",
       "message": "Improve active tab indicator with premium pill glow",
       "fullMessage": "feat: Improve active tab indicator with premium pill glow",
       "author": "Kvn3Toj",
@@ -1425,7 +1620,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "bb1ed13",
+      "hash": "d4c025a",
       "message": "Apple HIG compliant navigation UX + comparison improvements",
       "fullMessage": "feat: Apple HIG compliant navigation UX + comparison improvements",
       "author": "Kvn3Toj",
@@ -1438,7 +1633,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 8
     },
     {
-      "hash": "faa5bea",
+      "hash": "ce53c58",
       "message": "Enhanced visual clarity in comparison tool",
       "fullMessage": "feat: Enhanced visual clarity in comparison tool",
       "author": "Kvn3Toj",
@@ -1451,7 +1646,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 5
     },
     {
-      "hash": "c3be7ea",
+      "hash": "a42db81",
       "message": "Show only selected priority recommendation in comparison view",
       "fullMessage": "refactor: Show only selected priority recommendation in comparison view",
       "author": "Kvn3Toj",
@@ -1464,7 +1659,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "9705159",
+      "hash": "d2f4023",
       "message": "Premium splash animation & refined comparison tool",
       "fullMessage": "feat: Premium splash animation & refined comparison tool",
       "author": "Kvn3Toj",
@@ -1477,7 +1672,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 15
     },
     {
-      "hash": "4ed2e3a",
+      "hash": "57f8d61",
       "message": "Replace hardcoded Tailwind colors with brand tokens",
       "fullMessage": "refactor: Replace hardcoded Tailwind colors with brand tokens",
       "author": "Kvn3Toj",
@@ -1490,7 +1685,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 13
     },
     {
-      "hash": "668f066",
+      "hash": "27755aa",
       "message": "Improve onboarding UX with accessibility and polish",
       "fullMessage": "feat: Improve onboarding UX with accessibility and polish",
       "author": "Kvn3Toj",
@@ -1503,7 +1698,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "bec05ac",
+      "hash": "86d7973",
       "message": "Consolidate logging and color tokens across codebase",
       "fullMessage": "refactor: Consolidate logging and color tokens across codebase",
       "author": "Kvn3Toj",
@@ -1516,7 +1711,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 18
     },
     {
-      "hash": "ed867ac",
+      "hash": "5c59e48",
       "message": "Premium splash animation with iOS/Android best practices",
       "fullMessage": "feat: Premium splash animation with iOS/Android best practices",
       "author": "Kvn3Toj",
@@ -1529,7 +1724,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "b97e26e",
+      "hash": "2da07cf",
       "message": "Restore original splash design with smooth fade transition",
       "fullMessage": "fix: Restore original splash design with smooth fade transition",
       "author": "Kvn3Toj",
@@ -1542,7 +1737,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "28bd46f",
+      "hash": "08643eb",
       "message": "Clean up codebase and remove unused guest description",
       "fullMessage": "refactor: Clean up codebase and remove unused guest description",
       "author": "Kvn3Toj",
@@ -1555,7 +1750,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 16
     },
     {
-      "hash": "f6ee5a0",
+      "hash": "ce0f226",
       "message": "Match SplashScreen exactly with WelcomeScreen styling",
       "fullMessage": "style: Match SplashScreen exactly with WelcomeScreen styling",
       "author": "Kvn3Toj",
@@ -1568,7 +1763,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "a897b8b",
+      "hash": "cd51177",
       "message": "Add splash screen animation and fix PIN keyboard",
       "fullMessage": "feat: Add splash screen animation and fix PIN keyboard",
       "author": "Kvn3Toj",
@@ -1581,7 +1776,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "920a330",
+      "hash": "6fd3b56",
       "message": "Add Vercel deployment rules to prevent duplicate projects",
       "fullMessage": "docs: Add Vercel deployment rules to prevent duplicate projects",
       "author": "Kvn3Toj",
@@ -1594,7 +1789,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "2502c11",
+      "hash": "1a1934c",
       "message": "Consolidate ambassador component redundancies",
       "fullMessage": "refactor: Consolidate ambassador component redundancies",
       "author": "Kvn3Toj",
@@ -1607,7 +1802,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "887308a",
+      "hash": "d5a45ee",
       "message": "Reduce liquid glass blur intensity for subtle, coherent UI",
       "fullMessage": "fix: Reduce liquid glass blur intensity for subtle, coherent UI",
       "author": "Kvn3Toj",
@@ -1620,7 +1815,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 9
     },
     {
-      "hash": "67d6240",
+      "hash": "fee266d",
       "message": "Redesign mobile filters with modern pill-based UI",
       "fullMessage": "feat: Redesign mobile filters with modern pill-based UI",
       "author": "Kvn3Toj",
@@ -1633,7 +1828,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "368629b",
+      "hash": "6e0184c",
       "message": "Improve comparison bar UX - floating design above nav",
       "fullMessage": "fix: Improve comparison bar UX - floating design above nav",
       "author": "Kvn3Toj",
@@ -1646,7 +1841,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 5
     },
     {
-      "hash": "df512f2",
+      "hash": "197f72a",
       "message": "Rename inventory to treasure across codebase",
       "fullMessage": "refactor: Rename inventory to treasure across codebase",
       "author": "Kvn3Toj",
@@ -1659,7 +1854,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 43
     },
     {
-      "hash": "a78fb43",
+      "hash": "8ac4951",
       "message": "Compact stats row to single line with minimal favorites indicator",
       "fullMessage": "fix: Compact stats row to single line with minimal favorites indicator",
       "author": "Kvn3Toj",
@@ -1672,7 +1867,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 13
     },
     {
-      "hash": "60b8123",
+      "hash": "2d727b7",
       "message": "Inline search filters and remove trust score system",
       "fullMessage": "feat: Inline search filters and remove trust score system",
       "author": "Kvn3Toj",
@@ -1685,7 +1880,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 18
     },
     {
-      "hash": "48d6a5b",
+      "hash": "840324b",
       "message": "UI improvements - search-first hero, compact widgets, fixed grid",
       "fullMessage": "feat: UI improvements - search-first hero, compact widgets, fixed grid",
       "author": "Kvn3Toj",
@@ -1698,7 +1893,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 12
     },
     {
-      "hash": "a61aed5",
+      "hash": "1524bfc",
       "message": "UI improvements - compact cards, simplified pricing, better layout",
       "fullMessage": "feat: UI improvements - compact cards, simplified pricing, better layout",
       "author": "Kvn3Toj",
@@ -1711,7 +1906,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 12
     },
     {
-      "hash": "0e25617",
+      "hash": "c7412f7",
       "message": "Update Claude Code local permissions",
       "fullMessage": "chore: Update Claude Code local permissions",
       "author": "Kvn3Toj",
@@ -1724,7 +1919,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "29dfa1a",
+      "hash": "870c3d1",
       "message": "Optimize responsive layout for 720x1440 devices",
       "fullMessage": "fix: Optimize responsive layout for 720x1440 devices",
       "author": "kvn3toj",
@@ -1737,7 +1932,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "8540da1",
+      "hash": "b06d616",
       "message": "Display actual measurement values instead of labels in ProductDetail",
       "fullMessage": "fix: Display actual measurement values instead of labels in ProductDetail",
       "author": "kvn3toj",
@@ -1750,7 +1945,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "c49a9b9",
+      "hash": "7a80979",
       "message": "Show loading state instead of 'not found' flash on ProductDetail",
       "fullMessage": "fix: Show loading state instead of 'not found' flash on ProductDetail",
       "author": "kvn3toj",
@@ -1763,7 +1958,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "2302e40",
+      "hash": "b68dc48",
       "message": "Simplify Vercel rewrites for SPA routing",
       "fullMessage": "fix: Simplify Vercel rewrites for SPA routing",
       "author": "kvn3toj",
@@ -1776,7 +1971,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "0d120f8",
+      "hash": "2887d1f",
       "message": "Expand supported media formats for Drive images",
       "fullMessage": "feat: Expand supported media formats for Drive images",
       "author": "kvn3toj",
@@ -1789,7 +1984,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "dc6aad7",
+      "hash": "3801210",
       "message": "Add Drive management APIs for product folders",
       "fullMessage": "feat: Add Drive management APIs for product folders",
       "author": "kvn3toj",
@@ -1802,7 +1997,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 9
     },
     {
-      "hash": "9c952d3",
+      "hash": "ead74c8",
       "message": "Add Google Drive folder integration for product images",
       "fullMessage": "feat: Add Google Drive folder integration for product images",
       "author": "kvn3toj",
@@ -1815,7 +2010,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 7
     },
     {
-      "hash": "fb5424e",
+      "hash": "450811c",
       "message": "Remove trailing spaces from folder names for Windows compatibility",
       "fullMessage": "fix: Remove trailing spaces from folder names for Windows compatibility",
       "author": "kvn3toj",
@@ -1825,10 +2020,10 @@ export const changelogData: ChangelogData = {
       "category": "cleanup",
       "additions": 28,
       "deletions": 116,
-      "filesChanged": 81
+      "filesChanged": 80
     },
     {
-      "hash": "eb4ebbe",
+      "hash": "5338157",
       "message": "Use ONLY prices from CUALIFICACION-PRECIO sheet",
       "fullMessage": "fix(api): Use ONLY prices from CUALIFICACION-PRECIO sheet",
       "author": "Kvn3Toj",
@@ -1841,7 +2036,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "173e3f1",
+      "hash": "3df987e",
       "message": "Enhance asesor data handling and UI components",
       "fullMessage": "feat(asesores): Enhance asesor data handling and UI components",
       "author": "Kvn3Toj",
@@ -1854,7 +2049,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "61823e0",
+      "hash": "8f9a248",
       "message": "Correct sheet name 'CUALIFICACION -PRECIO' with space",
       "fullMessage": "fix(api): Correct sheet name 'CUALIFICACION -PRECIO' with space",
       "author": "Kvn3Toj",
@@ -1867,7 +2062,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "260702e",
+      "hash": "2ff534c",
       "message": "Merge pricing from CUALIFICACION-PRECIO sheet",
       "fullMessage": "fix(api): Merge pricing from CUALIFICACION-PRECIO sheet",
       "author": "Kvn3Toj",
@@ -1880,7 +2075,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "84d5266",
+      "hash": "c834ba5",
       "message": "Force clean build for pricing update",
       "fullMessage": "fix: Force clean build for pricing update",
       "author": "Kvn3Toj",
@@ -1893,7 +2088,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "24b7bb1",
+      "hash": "d3b22ad",
       "message": "Sync both national and international prices from Google Sheets",
       "fullMessage": "fix(pricing): Sync both national and international prices from Google Sheets",
       "author": "Kvn3Toj",
@@ -1906,7 +2101,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "1473ce3",
+      "hash": "4dd91b2",
       "message": "Fix sync script to properly add precioInternacional to all items",
       "fullMessage": "fix(pricing): Fix sync script to properly add precioInternacional to all items",
       "author": "Kvn3Toj",
@@ -1919,7 +2114,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "afa0d82",
+      "hash": "7bfe560",
       "message": "Hide global search FAB on ambassadors page",
       "fullMessage": "fix(ambassadors): Hide global search FAB on ambassadors page",
       "author": "Kvn3Toj",
@@ -1932,7 +2127,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "5945af3",
+      "hash": "341035e",
       "message": "Sync international prices from Google Sheets",
       "fullMessage": "feat(pricing): Sync international prices from Google Sheets",
       "author": "Kvn3Toj",
@@ -1945,7 +2140,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 8
     },
     {
-      "hash": "19c062a",
+      "hash": "a3b102f",
       "message": "Remove Reintentar button from error state",
       "fullMessage": "refactor(ambassadors): Remove Reintentar button from error state",
       "author": "Kvn3Toj",
@@ -1958,7 +2153,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "6be05a8",
+      "hash": "bc92932",
       "message": "Remove redundant refresh button (no cache = always fresh)",
       "fullMessage": "refactor(ambassadors): Remove redundant refresh button (no cache = always fresh)",
       "author": "Kvn3Toj",
@@ -1971,7 +2166,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "07465d1",
+      "hash": "824f5c7",
       "message": "Remove cache - always fetch fresh data",
       "fullMessage": "feat(asesores): Remove cache - always fetch fresh data",
       "author": "Kvn3Toj",
@@ -1984,7 +2179,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "0ae78f6",
+      "hash": "d820ef8",
       "message": "Replace inventory with exclusive vault description",
       "fullMessage": "feat(vault): Replace inventory with exclusive vault description",
       "author": "Kvn3Toj",
@@ -1997,7 +2192,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "b729f60",
+      "hash": "b554c20",
       "message": "Read Nombre column from Asesores sheet with additional fields",
       "fullMessage": "fix(asesores): Read Nombre column from Asesores sheet with additional fields",
       "author": "Kvn3Toj",
@@ -2010,7 +2205,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "0d50c86",
+      "hash": "ae7e495",
       "message": "Read asesores from sheet 3 instead of inventory sheet",
       "fullMessage": "fix(asesores): Read asesores from sheet 3 instead of inventory sheet",
       "author": "Kvn3Toj",
@@ -2023,7 +2218,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "e5dfcfc",
+      "hash": "694c57d",
       "message": "Remove PIN requirement from ambassadors page",
       "fullMessage": "fix(ambassadors): Remove PIN requirement from ambassadors page",
       "author": "Kvn3Toj",
@@ -2036,7 +2231,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "675ad8e",
+      "hash": "d719752",
       "message": "Prevent stale asesores data",
       "fullMessage": "fix(cache): Prevent stale asesores data",
       "author": "Kvn3Toj",
@@ -2049,7 +2244,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "5c86a71",
+      "hash": "a1d7d17",
       "message": "Fix infinite loop on mobile search",
       "fullMessage": "fix(treasures): Fix infinite loop on mobile search",
       "author": "Kvn3Toj",
@@ -2062,7 +2257,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "93b31d6",
+      "hash": "b37bd47",
       "message": "Remove manualChunks to fix MUI initialization error",
       "fullMessage": "fix(build): Remove manualChunks to fix MUI initialization error",
       "author": "Kvn3Toj",
@@ -2075,7 +2270,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "8347d9c",
+      "hash": "9a6a287",
       "message": "Combine MUI + Emotion chunks to prevent initialization errors",
       "fullMessage": "fix(build): Combine MUI + Emotion chunks to prevent initialization errors",
       "author": "Kvn3Toj",
@@ -2088,7 +2283,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "17da200",
+      "hash": "432aade",
       "message": "Prevent infinite loop on mobile search",
       "fullMessage": "fix(inventory): Prevent infinite loop on mobile search",
       "author": "Kvn3Toj",
@@ -2101,7 +2296,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "c8a44c1",
+      "hash": "ee1eef3",
       "message": "Disable PWA features and enhance inventory filtering",
       "fullMessage": "feat: Disable PWA features and enhance inventory filtering",
       "author": "Kvn3Toj",
@@ -2114,7 +2309,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 9
     },
     {
-      "hash": "191c6d3",
+      "hash": "346bc3a",
       "message": "Simplify filter handling and remove URL sync logic",
       "fullMessage": "refactor(InventoryBrowser): Simplify filter handling and remove URL sync logic",
       "author": "Kvn3Toj",
@@ -2127,7 +2322,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "ef6acbf",
+      "hash": "a1fb0aa",
       "message": "Inventory filtering improvements and API updates",
       "fullMessage": "fix: Inventory filtering improvements and API updates",
       "author": "Kvn3Toj",
@@ -2140,7 +2335,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 5
     },
     {
-      "hash": "52b20af",
+      "hash": "b82096e",
       "message": "Make VaultGate customizable + improve More sheet styling",
       "fullMessage": "feat(vault): Make VaultGate customizable + improve More sheet styling",
       "author": "Kvn3Toj",
@@ -2153,7 +2348,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "4c6255f",
+      "hash": "e699d03",
       "message": "Add global search FAB + remove add-product FAB",
       "fullMessage": "feat(search): Add global search FAB + remove add-product FAB",
       "author": "Kvn3Toj",
@@ -2166,7 +2361,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 8
     },
     {
-      "hash": "1461ef5",
+      "hash": "b5a7acf",
       "message": "Evolutionary refactor + cache optimization + mobile-first",
       "fullMessage": "feat: Evolutionary refactor + cache optimization + mobile-first",
       "author": "Kvn3Toj",
@@ -2179,7 +2374,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 15
     },
     {
-      "hash": "0f902a3",
+      "hash": "442b396",
       "message": "Remove backwards-compat design token re-exports",
       "fullMessage": "refactor(premium-header): Remove backwards-compat design token re-exports",
       "author": "Kvn3Toj",
@@ -2192,7 +2387,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "e702c6d",
+      "hash": "3e4cb7c",
       "message": "Import design tokens from source",
       "fullMessage": "refactor(price-simulator): Import design tokens from source",
       "author": "Kvn3Toj",
@@ -2205,7 +2400,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 5
     },
     {
-      "hash": "3cb9266",
+      "hash": "adc83b4",
       "message": "Use shared Cloudinary upload utility",
       "fullMessage": "refactor(product): Use shared Cloudinary upload utility",
       "author": "Kvn3Toj",
@@ -2218,7 +2413,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "0265b56",
+      "hash": "63b533e",
       "message": "Consolidate duplicate constants and utilities",
       "fullMessage": "refactor(quotation): Consolidate duplicate constants and utilities",
       "author": "Kvn3Toj",
@@ -2231,7 +2426,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "afe3597",
+      "hash": "dd29aaa",
       "message": "Extract FilterContent to separate module",
       "fullMessage": "refactor(inventory): Extract FilterContent to separate module",
       "author": "Kvn3Toj",
@@ -2244,7 +2439,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "f8bca4c",
+      "hash": "98d2d2f",
       "message": "Import Theme type from @mui/material/styles",
       "fullMessage": "fix(types): Import Theme type from @mui/material/styles",
       "author": "Kvn3Toj",
@@ -2257,7 +2452,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "5793ce1",
+      "hash": "5eeb6fc",
       "message": "Evolutionary cleanup and token unification",
       "fullMessage": "refactor(arch): Evolutionary cleanup and token unification",
       "author": "Kvn3Toj",
@@ -2270,7 +2465,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 28
     },
     {
-      "hash": "3a92d54",
+      "hash": "36d7229",
       "message": "Update inventory API column mapping and add debug info",
       "fullMessage": "fix(api): Update inventory API column mapping and add debug info",
       "author": "Kvn3Toj",
@@ -2283,7 +2478,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "6eaca0b",
+      "hash": "e03af80",
       "message": "Align pricing sheet columns with actual structure A-K",
       "fullMessage": "fix(sheets): Align pricing sheet columns with actual structure A-K",
       "author": "Kvn3Toj",
@@ -2296,7 +2491,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "e37b49d",
+      "hash": "38c7469",
       "message": "Update column structure and remove sync FAB",
       "fullMessage": "fix(sheets): Update column structure and remove sync FAB",
       "author": "Kvn3Toj",
@@ -2309,7 +2504,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "ad6ca22",
+      "hash": "8951c88",
       "message": "Add Settings to More menu and compact inventory indicators",
       "fullMessage": "feat(ui): Add Settings to More menu and compact inventory indicators",
       "author": "Kvn3Toj",
@@ -2322,7 +2517,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 8
     },
     {
-      "hash": "2fb286b",
+      "hash": "33da05e",
       "message": "Start with empty search state in More menu",
       "fullMessage": "fix(search): Start with empty search state in More menu",
       "author": "Kvn3Toj",
@@ -2335,7 +2530,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "a0cdcb3",
+      "hash": "2aa263a",
       "message": "Add enhanced search with filters in More menu",
       "fullMessage": "feat(search): Add enhanced search with filters in More menu",
       "author": "Kvn3Toj",
@@ -2348,7 +2543,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 5
     },
     {
-      "hash": "1db2838",
+      "hash": "cb153b7",
       "message": "Remove unused component files and services",
       "fullMessage": "chore: Remove unused component files and services",
       "author": "Kvn3Toj",
@@ -2361,7 +2556,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 23
     },
     {
-      "hash": "3036a02",
+      "hash": "ade6c41",
       "message": "Restructure navigation with 4 tabs and simplified More menu",
       "fullMessage": "feat(nav): Restructure navigation with 4 tabs and simplified More menu",
       "author": "Kvn3Toj",
@@ -2374,7 +2569,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "004609b",
+      "hash": "994f0d3",
       "message": "Remove unused menu options and routes",
       "fullMessage": "feat(nav): Remove unused menu options and routes",
       "author": "Kvn3Toj",
@@ -2387,7 +2582,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "f852262",
+      "hash": "39d72cb",
       "message": "Extract components from PriceSimulator",
       "fullMessage": "refactor(price-simulator): Extract components from PriceSimulator",
       "author": "Kvn3Toj",
@@ -2400,7 +2595,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 7
     },
     {
-      "hash": "a7170ed",
+      "hash": "d19fc47",
       "message": "Improve CategoryCarousels layout on iPad/desktop",
       "fullMessage": "fix(carousel): Improve CategoryCarousels layout on iPad/desktop",
       "author": "Kvn3Toj",
@@ -2413,7 +2608,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "d9b2ee3",
+      "hash": "575bb1c",
       "message": "Extract components from CotizacionGenerator",
       "fullMessage": "refactor(cotizacion): Extract components from CotizacionGenerator",
       "author": "Kvn3Toj",
@@ -2426,7 +2621,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 5
     },
     {
-      "hash": "4607fc8",
+      "hash": "185ff61",
       "message": "Split useInventory into modular hooks",
       "fullMessage": "refactor(inventory): Split useInventory into modular hooks",
       "author": "Kvn3Toj",
@@ -2439,7 +2634,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "899888d",
+      "hash": "70aa45d",
       "message": "Extract reusable components from IOSSettingsSheet",
       "fullMessage": "refactor(settings): Extract reusable components from IOSSettingsSheet",
       "author": "Kvn3Toj",
@@ -2452,7 +2647,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "5e17fe0",
+      "hash": "f1cbfce",
       "message": "Apply Liquid Glass effects to all iOS components",
       "fullMessage": "feat(ios-components): Apply Liquid Glass effects to all iOS components",
       "author": "Kvn3Toj",
@@ -2465,7 +2660,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 4
     },
     {
-      "hash": "baf768f",
+      "hash": "09cddf5",
       "message": "Implement Apple Liquid Glass (iOS 26) design language",
       "fullMessage": "feat(design-system): Implement Apple Liquid Glass (iOS 26) design language",
       "author": "Kvn3Toj",
@@ -2478,7 +2673,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 10
     },
     {
-      "hash": "b8f4b87",
+      "hash": "03f53c9",
       "message": "Redesign main navigation with new UX architecture",
       "fullMessage": "feat(navigation): Redesign main navigation with new UX architecture",
       "author": "Kvn3Toj",
@@ -2491,7 +2686,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 13
     },
     {
-      "hash": "0801d4a",
+      "hash": "4748422",
       "message": "Add Vercel Web Analytics integration",
       "fullMessage": "feat(analytics): Add Vercel Web Analytics integration",
       "author": "Kvn3Toj",
@@ -2504,7 +2699,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "63ebc96",
+      "hash": "243852e",
       "message": "Fix fixed positioning for WhatsApp button",
       "fullMessage": "fix(whatsapp): Fix fixed positioning for WhatsApp button",
       "author": "Kvn3Toj",
@@ -2517,7 +2712,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "c90e882",
+      "hash": "31296fe",
       "message": "Position WhatsApp button above bottom navigation",
       "fullMessage": "fix(responsive): Position WhatsApp button above bottom navigation",
       "author": "Kvn3Toj",
@@ -2530,7 +2725,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "d1fb807",
+      "hash": "8134cd4",
       "message": "Improve landscape mode for carousels",
       "fullMessage": "fix(responsive): Improve landscape mode for carousels",
       "author": "Kvn3Toj",
@@ -2543,7 +2738,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "91853f9",
+      "hash": "1df6d42",
       "message": "Hide Google Sign-In when client ID not configured",
       "fullMessage": "fix: Hide Google Sign-In when client ID not configured",
       "author": "Kvn3Toj",
@@ -2556,7 +2751,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "b62e4b1",
+      "hash": "3987cf7",
       "message": "Remove one-time API scripts to stay within Hobby plan limit",
       "fullMessage": "fix: Remove one-time API scripts to stay within Hobby plan limit",
       "author": "Kvn3Toj",
@@ -2569,7 +2764,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 2
     },
     {
-      "hash": "9cfbdd7",
+      "hash": "e3edd2d",
       "message": "Remove A. Molano from frontend ambassadors",
       "fullMessage": "chore: Remove A. Molano from frontend ambassadors",
       "author": "Kvn3Toj",
@@ -2582,7 +2777,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "5a64380",
+      "hash": "d015d01",
       "message": "ci: Add GitHub Actions workflow for Vercel deployment",
       "fullMessage": "ci: Add GitHub Actions workflow for Vercel deployment",
       "author": "Kvn3Toj",
@@ -2595,7 +2790,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "5e3b4cd",
+      "hash": "b5a43b2",
       "message": "Add Asesores sheet creation scripts",
       "fullMessage": "feat(scripts): Add Asesores sheet creation scripts",
       "author": "Kvn3Toj",
@@ -2608,7 +2803,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "ba615b8",
+      "hash": "00a5250",
       "message": "Add Asesores sheet setup endpoint",
       "fullMessage": "feat(api): Add Asesores sheet setup endpoint",
       "author": "Kvn3Toj",
@@ -2621,7 +2816,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 1
     },
     {
-      "hash": "f55e542",
+      "hash": "fac12b2",
       "message": "Add Google Sign-In with Sheets sync",
       "fullMessage": "feat(auth): Add Google Sign-In with Sheets sync",
       "author": "Kvn3Toj",
@@ -2634,7 +2829,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 9
     },
     {
-      "hash": "3b11279",
+      "hash": "671be7d",
       "message": "Add notifications system and fix update prompt",
       "fullMessage": "feat(pwa): Add notifications system and fix update prompt",
       "author": "Kvn3Toj",
@@ -2647,7 +2842,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 10
     },
     {
-      "hash": "0844114",
+      "hash": "e236254",
       "message": "Redesign home page with carousels, footer, and Cloudinary images",
       "fullMessage": "feat(home): Redesign home page with carousels, footer, and Cloudinary images",
       "author": "Kvn3Toj",
@@ -2657,10 +2852,10 @@ export const changelogData: ChangelogData = {
       "category": "ux",
       "additions": 1124,
       "deletions": 361,
-      "filesChanged": 31
+      "filesChanged": 21
     },
     {
-      "hash": "d11407d",
+      "hash": "0493257",
       "message": "Add emerald gallery section with gems and rings",
       "fullMessage": "feat(home): Add emerald gallery section with gems and rings",
       "author": "Kvn3Toj",
@@ -2670,10 +2865,10 @@ export const changelogData: ChangelogData = {
       "category": "other",
       "additions": 330,
       "deletions": 0,
-      "filesChanged": 17
+      "filesChanged": 7
     },
     {
-      "hash": "a9297f2",
+      "hash": "370cab4",
       "message": "Add 7 immersive emerald meditation experiences",
       "fullMessage": "feat(meditation): Add 7 immersive emerald meditation experiences",
       "author": "Kvn3Toj",
@@ -2686,7 +2881,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 10
     },
     {
-      "hash": "ce58911",
+      "hash": "75cf470",
       "message": "Compact iOS header with Tierra Mädre branding",
       "fullMessage": "fix(header): Compact iOS header with Tierra Mädre branding",
       "author": "Kvn3Toj",
@@ -2699,7 +2894,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 3
     },
     {
-      "hash": "3f52baf",
+      "hash": "e135e3b",
       "message": "Move products section to priority position + brand update",
       "fullMessage": "feat(home): Move products section to priority position + brand update",
       "author": "Kvn3Toj",
@@ -2712,7 +2907,7 @@ export const changelogData: ChangelogData = {
       "filesChanged": 8
     },
     {
-      "hash": "b906ef6",
+      "hash": "acaf95d",
       "message": "Only show products with images in Nuevos Productos section",
       "fullMessage": "fix(home): Only show products with images in Nuevos Productos section",
       "author": "Kvn3Toj",
@@ -2723,19 +2918,6 @@ export const changelogData: ChangelogData = {
       "additions": 14,
       "deletions": 2,
       "filesChanged": 1
-    },
-    {
-      "hash": "1cc4b21",
-      "message": "Add collapsible filter drawer for mobile inventory",
-      "fullMessage": "feat(mobile): Add collapsible filter drawer for mobile inventory",
-      "author": "Kvn3Toj",
-      "relativeTime": "4 weeks ago",
-      "date": "2025-12-12",
-      "type": "feat",
-      "category": "other",
-      "additions": 559,
-      "deletions": 413,
-      "filesChanged": 2
     }
   ]
 };

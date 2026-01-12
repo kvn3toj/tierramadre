@@ -36,19 +36,19 @@ export interface MoreToolConfig {
   subtitle: string;
   icon: React.ElementType;
   route?: string;
-  action?: 'feedback' | 'name-generator' | 'invitation'; // Special action types
+  action?: 'feedback' | 'name-generator' | 'invitation' | 'settings'; // Special action types
   color: string;
   badge?: string; // Optional badge text
 }
 
 const getMoreTools = (t: any): MoreToolConfig[] => [
   {
-    id: 'vault',
-    label: t.tools.vault.label,
-    subtitle: t.tools.vault.subtitle,
-    icon: Vault as any,
-    route: '/boveda-secreta',
-    color: brand.gold[500], // Gold accent
+    id: 'invitation',
+    label: 'Invitar',
+    subtitle: 'Genera un enlace temporal de 24 horas para tus clientes',
+    icon: PersonAdd,
+    action: 'invitation',
+    color: '#3B82F6', // Blue for invitation
   },
   {
     id: 'accounts',
@@ -67,15 +67,6 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     color: '#8B5CF6', // Purple for analytics
   },
   {
-    id: 'feedback',
-    label: 'Reportar Feedback',
-    subtitle: 'Reporta bugs, sugiere features o mejoras de UX. Incluye captura de pantalla automática.',
-    icon: BugReport,
-    action: 'feedback',
-    color: '#F59E0B', // Amber for feedback
-    badge: 'DEV',
-  },
-  {
     id: 'name-generator',
     label: t.tools.nameGenerator?.label || 'Generador de Nombres',
     subtitle: t.tools.nameGenerator?.subtitle || 'Genera nombres únicos para esmeraldas con IA',
@@ -85,12 +76,29 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     badge: 'AI',
   },
   {
-    id: 'invitation',
-    label: 'Invitar',
-    subtitle: 'Genera un enlace temporal de 24 horas para tus clientes',
-    icon: PersonAdd,
-    action: 'invitation',
-    color: '#3B82F6', // Blue for invitation
+    id: 'settings',
+    label: t.tools.settings.label,
+    subtitle: t.tools.settings.subtitle,
+    icon: Settings,
+    action: 'settings',
+    color: primitiveColors.metallic.silver[500],
+  },
+  {
+    id: 'feedback',
+    label: 'Reportar Feedback',
+    subtitle: 'Reporta bugs, sugiere features o mejoras de UX. Incluye captura de pantalla automática.',
+    icon: BugReport,
+    action: 'feedback',
+    color: '#F59E0B', // Amber for feedback
+    badge: 'DEV',
+  },
+  {
+    id: 'vault',
+    label: t.tools.vault.label,
+    subtitle: t.tools.vault.subtitle,
+    icon: Vault as any,
+    route: '/boveda-secreta',
+    color: brand.gold[500], // Gold accent
   },
 ];
 
@@ -191,6 +199,12 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
       return; // Don't close sheet yet - will close when generator closes
     }
 
+    if (tool.action === 'settings') {
+      onOpenSettings?.();
+      onClose();
+      return;
+    }
+
     // Navigate to route
     if (tool.route) {
       navigate(tool.route);
@@ -220,14 +234,6 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
     setTimeout(() => {
       onClose();
     }, 100);
-  };
-
-  const handleSettingsClick = () => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate(10);
-    }
-    onOpenSettings?.();
-    onClose();
   };
 
   const handleThemeToggle = () => {
@@ -538,83 +544,6 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
           </Box>
         </Box>
 
-        {/* Settings Section - Always accessible */}
-        <Box sx={{ padding: spacing.md, paddingTop: 0 }}>
-          <Box
-            role="button"
-            aria-label={`${t.tools.settings.label}: ${t.tools.settings.subtitle}`}
-            tabIndex={0}
-            onClick={handleSettingsClick}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                handleSettingsClick();
-              }
-            }}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: spacing.sm,
-              padding: spacing.sm,
-              backgroundColor: 'var(--surface-primary)',
-              borderRadius: radius.md,
-              cursor: 'pointer',
-              transition: effectiveConfig.animations
-                ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
-                : 'none',
-
-              '&:hover': {
-                backgroundColor: 'var(--surface-tertiary)',
-                transform: effectiveConfig.animations ? 'scale(1.01)' : 'none',
-              },
-              '&:active': {
-                transform: effectiveConfig.animations ? 'scale(0.98)' : 'none',
-              },
-            }}
-          >
-            {/* Icon Container */}
-            <Box
-              sx={{
-                width: `${layoutConstants.minTouchTarget}px`,
-                height: `${layoutConstants.minTouchTarget}px`,
-                borderRadius: radius.md,
-                backgroundColor: `${primitiveColors.metallic.silver[500]}15`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <Settings sx={{ fontSize: iosTypographyScale.title2, color: primitiveColors.metallic.silver[500] }} />
-            </Box>
-
-            {/* Text Content */}
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                variant="body1"
-                sx={{
-                  fontSize: iosTypographyScale.body,
-                  fontWeight: 600,
-                  color: 'var(--text-primary)',
-                  marginBottom: spacing.xxs,
-                }}
-              >
-                {t.tools.settings.label}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  fontSize: iosTypographyScale.footnote,
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                {t.tools.settings.subtitle}
-              </Typography>
-            </Box>
-
-            {/* Chevron */}
-            <Box sx={{ color: 'var(--text-quaternary)', fontSize: '20px' }}>›</Box>
-          </Box>
-        </Box>
       </Box>
 
       {/* Unlock Prompt */}
