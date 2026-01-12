@@ -101,26 +101,99 @@ async function getStats(sheets) {
 
   const rows = response.data.values || [];
   if (rows.length <= 1) {
-    return { success: true, totalViews: 0, uniqueProducts: 0, topProducts: [], deviceStats: {}, browserStats: {} };
+    return {
+      success: true,
+      totalViews: 0,
+      uniqueProducts: 0,
+      uniqueViewers: 0,
+      todayViews: 0,
+      weekViews: 0,
+      guestViews: 0,
+      loggedInViews: 0,
+      topProducts: [],
+      topViewers: [],
+      recentActivity: [],
+      deviceStats: {},
+      browserStats: {},
+    };
   }
 
   const dataRows = rows.slice(1);
   const productCounts = {};
   const deviceCounts = { desktop: 0, mobile: 0, tablet: 0 };
   const browserCounts = {};
+  const viewerCounts = {}; // Track views per user
+
+  // Time boundaries
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const weekStart = todayStart - (7 * 24 * 60 * 60 * 1000);
+
+  let todayViews = 0;
+  let weekViews = 0;
+  let guestViews = 0;
+  let loggedInViews = 0;
+
+  // Recent activity (collect all, sort later)
+  const allActivity = [];
 
   for (const row of dataRows) {
+    const timestamp = row[0];
     const itemId = row[1];
     const productName = row[2] || `Product ${itemId}`;
     const device = row[5] || 'unknown';
     const browser = row[6] || 'unknown';
+    const userName = row[8] || '';
+    const userEmail = row[9] || '';
+    const userRole = row[10] || 'guest';
 
+    // Product counts
     const key = `${itemId}|${productName}`;
     productCounts[key] = (productCounts[key] || 0) + 1;
+
+    // Device/browser counts
     deviceCounts[device] = (deviceCounts[device] || 0) + 1;
     browserCounts[browser] = (browserCounts[browser] || 0) + 1;
+
+    // Time-based counts
+    const viewTime = new Date(timestamp).getTime();
+    if (viewTime >= todayStart) todayViews++;
+    if (viewTime >= weekStart) weekViews++;
+
+    // User tracking
+    if (userName || userEmail) {
+      loggedInViews++;
+      const viewerKey = userEmail || userName;
+      if (!viewerCounts[viewerKey]) {
+        viewerCounts[viewerKey] = {
+          name: userName || userEmail.split('@')[0],
+          email: userEmail || null,
+          role: userRole,
+          views: 0,
+          lastSeen: timestamp,
+        };
+      }
+      viewerCounts[viewerKey].views++;
+      // Update lastSeen if this view is more recent
+      if (new Date(timestamp) > new Date(viewerCounts[viewerKey].lastSeen)) {
+        viewerCounts[viewerKey].lastSeen = timestamp;
+      }
+    } else {
+      guestViews++;
+    }
+
+    // Collect for recent activity
+    allActivity.push({
+      timestamp,
+      itemId: parseInt(itemId),
+      productName,
+      userName: userName || null,
+      userEmail: userEmail || null,
+      userRole,
+    });
   }
 
+  // Top products
   const topProducts = Object.entries(productCounts)
     .map(([key, count]) => {
       const [itemId, productName] = key.split('|');
@@ -129,11 +202,28 @@ async function getStats(sheets) {
     .sort((a, b) => b.views - a.views)
     .slice(0, 20);
 
+  // Top viewers (sorted by views)
+  const topViewers = Object.values(viewerCounts)
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 20);
+
+  // Recent activity (sorted by timestamp, newest first)
+  const recentActivity = allActivity
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 50);
+
   return {
     success: true,
     totalViews: dataRows.length,
     uniqueProducts: Object.keys(productCounts).length,
+    uniqueViewers: Object.keys(viewerCounts).length,
+    todayViews,
+    weekViews,
+    guestViews,
+    loggedInViews,
     topProducts,
+    topViewers,
+    recentActivity,
     deviceStats: deviceCounts,
     browserStats: browserCounts,
     lastUpdated: new Date().toISOString(),
