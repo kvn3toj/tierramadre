@@ -10,81 +10,35 @@
  * L=RespuestaId, M=CreadoPor, N=FotosReferenciaUrls
  */
 
-import { GoogleAuth } from 'google-auth-library';
-import { sheets_v4 } from '@googleapis/sheets';
+import {
+  getSheetsClient,
+  isGoogleConfigured,
+  initApi,
+  sendError,
+  sendSuccess,
+  SPREADSHEET_ID,
+  SHEETS,
+  ensureSheet,
+  generateId,
+} from './_lib/index.js';
 
-const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
-const SHEET_NAME = 'SolicitudesCotizacion';
-
-function getSheetsClient() {
-  const credentials = JSON.parse(
-    Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
-  );
-
-  const auth = new GoogleAuth({
-    credentials,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
-
-  return new sheets_v4.Sheets({ auth });
-}
-
-function generateId() {
-  return `REQ-${Date.now().toString(36).toUpperCase()}`;
-}
+const SHEET_NAME = SHEETS.QUOTATION_REQUESTS;
+const HEADERS = [
+  'ID', 'FechaCreacion', 'TipoProducto', 'PesoMin', 'PesoMax',
+  'ColorPreferencia', 'CalidadPreferencia', 'PresupuestoMax', 'Notas',
+  'Estado', 'ProveedorAsignado', 'RespuestaId', 'CreadoPor', 'FotosReferenciaUrls'
+];
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (initApi(req, res, { methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'] })) return;
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-    return res.status(500).json({
-      success: false,
-      error: 'Google Service Account not configured',
-    });
+  if (!isGoogleConfigured()) {
+    return sendError(res, 500, 'Google Service Account not configured');
   }
 
   try {
     const sheets = getSheetsClient();
-
-    // Ensure sheet exists
-    const metadata = await sheets.spreadsheets.get({
-      spreadsheetId: SPREADSHEET_ID,
-    });
-
-    const sheetNames = metadata.data.sheets.map(s => s.properties.title);
-    if (!sheetNames.includes(SHEET_NAME)) {
-      // Create sheet if it doesn't exist
-      await sheets.spreadsheets.batchUpdate({
-        spreadsheetId: SPREADSHEET_ID,
-        requestBody: {
-          requests: [{
-            addSheet: {
-              properties: { title: SHEET_NAME },
-            },
-          }],
-        },
-      });
-
-      // Add headers
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A1:N1`,
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [[
-            'ID', 'FechaCreacion', 'TipoProducto', 'PesoMin', 'PesoMax',
-            'ColorPreferencia', 'CalidadPreferencia', 'PresupuestoMax', 'Notas',
-            'Estado', 'ProveedorAsignado', 'RespuestaId', 'CreadoPor', 'FotosReferenciaUrls'
-          ]],
-        },
-      });
-    }
+    await ensureSheet(sheets, SHEET_NAME, HEADERS);
 
     // GET - Fetch requests
     if (req.method === 'GET') {
@@ -97,7 +51,7 @@ export default async function handler(req, res) {
 
       const rows = response.data.values || [];
       if (rows.length <= 1) {
-        return res.status(200).json({ success: true, requests: [] });
+        return sendSuccess(res, { requests: [] });
       }
 
       let requests = rows.slice(1).map(row => ({
@@ -117,45 +71,34 @@ export default async function handler(req, res) {
         referencePhotoUrls: (row[13] || '').split(',').filter(Boolean),
       }));
 
-      // Filter by ID if provided
       if (id) {
         const request = requests.find(r => r.id === id);
-        return res.status(200).json({ success: true, request });
+        return sendSuccess(res, { request });
       }
 
-      // Filter by status
       if (status) {
         requests = requests.filter(r => r.status === status);
       }
 
-      // Filter by assigned provider email
       if (email) {
         requests = requests.filter(r => !r.assignedProvider || r.assignedProvider === email);
       }
 
-      // Sort by date descending
       requests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-      return res.status(200).json({ success: true, requests });
+      return sendSuccess(res, { requests });
     }
 
     // POST - Create new request
     if (req.method === 'POST') {
       const {
-        productType,
-        weightMin,
-        weightMax,
-        colorPreference,
-        qualityPreference,
-        budgetMax,
-        notes,
-        assignedProvider,
-        createdBy,
-        referencePhotoUrls,
+        productType, weightMin, weightMax, colorPreference,
+        qualityPreference, budgetMax, notes, assignedProvider,
+        createdBy, referencePhotoUrls,
       } = req.body;
 
       const newRequest = [
-        generateId(),
+        generateId('REQ'),
         new Date().toISOString(),
         productType,
         weightMin,
@@ -175,26 +118,17 @@ export default async function handler(req, res) {
         spreadsheetId: SPREADSHEET_ID,
         range: `'${SHEET_NAME}'!A:N`,
         valueInputOption: 'RAW',
-        requestBody: {
-          values: [newRequest],
-        },
+        requestBody: { values: [newRequest] },
       });
 
-      return res.status(200).json({
-        success: true,
+      return sendSuccess(res, {
         request: {
           id: newRequest[0],
           createdAt: newRequest[1],
-          productType,
-          weightMin,
-          weightMax,
-          colorPreference,
-          qualityPreference,
-          budgetMax,
-          notes,
+          productType, weightMin, weightMax, colorPreference,
+          qualityPreference, budgetMax, notes,
           status: 'pendiente',
-          assignedProvider,
-          createdBy,
+          assignedProvider, createdBy,
           referencePhotoUrls: referencePhotoUrls || [],
         },
       });
@@ -213,10 +147,9 @@ export default async function handler(req, res) {
       const rowIndex = rows.findIndex(row => row[0] === id);
 
       if (rowIndex === -1) {
-        return res.status(404).json({ success: false, error: 'Request not found' });
+        return sendError(res, 404, 'Request not found');
       }
 
-      // Update status and/or responseId
       if (status) {
         await sheets.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
@@ -235,7 +168,7 @@ export default async function handler(req, res) {
         });
       }
 
-      return res.status(200).json({ success: true });
+      return sendSuccess(res, {});
     }
 
     // DELETE - Delete request
@@ -251,10 +184,9 @@ export default async function handler(req, res) {
       const rowIndex = rows.findIndex(row => row[0] === id);
 
       if (rowIndex === -1) {
-        return res.status(404).json({ success: false, error: 'Request not found' });
+        return sendError(res, 404, 'Request not found');
       }
 
-      // Clear the row (or mark as deleted)
       await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
         range: `'${SHEET_NAME}'!J${rowIndex + 1}`,
@@ -262,17 +194,13 @@ export default async function handler(req, res) {
         requestBody: { values: [['cancelada']] },
       });
 
-      return res.status(200).json({ success: true });
+      return sendSuccess(res, {});
     }
 
-    return res.status(405).json({ error: 'Method not allowed' });
+    return sendError(res, 405, 'Method not allowed');
 
   } catch (error) {
     console.error('Error in quotation-requests:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to process request',
-      message: error.message,
-    });
+    return sendError(res, 500, 'Failed to process request', error.message);
   }
 }

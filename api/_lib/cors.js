@@ -1,0 +1,112 @@
+/**
+ * CORS and Response Helpers
+ *
+ * Standardized CORS headers and response utilities for API functions.
+ */
+
+import { CACHE } from './constants.js';
+
+/**
+ * Set standard CORS headers on response
+ * @param {object} res - Vercel response object
+ * @param {string[]} methods - Allowed HTTP methods (default: GET, OPTIONS)
+ */
+export function setCorsHeaders(res, methods = ['GET', 'OPTIONS']) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', methods.join(', '));
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+/**
+ * Set cache control headers
+ * @param {object} res - Vercel response object
+ * @param {string} cacheType - Cache type from CACHE constants
+ */
+export function setCacheHeaders(res, cacheType = CACHE.NONE) {
+  res.setHeader('Cache-Control', cacheType);
+  if (cacheType === CACHE.NONE) {
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+  }
+}
+
+/**
+ * Handle OPTIONS preflight request
+ * @param {object} req - Vercel request object
+ * @param {object} res - Vercel response object
+ * @returns {boolean} True if handled (caller should return)
+ */
+export function handleOptions(req, res) {
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Send standardized error response
+ * @param {object} res - Vercel response object
+ * @param {number} status - HTTP status code
+ * @param {string} error - Error message
+ * @param {string} [message] - Optional detailed message
+ */
+export function sendError(res, status, error, message = null) {
+  const response = { success: false, error };
+  if (message) response.message = message;
+  return res.status(status).json(response);
+}
+
+/**
+ * Send standardized success response
+ * @param {object} res - Vercel response object
+ * @param {object} data - Response data
+ */
+export function sendSuccess(res, data) {
+  return res.status(200).json({ success: true, ...data });
+}
+
+/**
+ * Check if method is allowed
+ * @param {object} req - Vercel request object
+ * @param {object} res - Vercel response object
+ * @param {string[]} allowedMethods - Array of allowed methods
+ * @returns {boolean} True if method not allowed (caller should return)
+ */
+export function checkMethod(req, res, allowedMethods) {
+  if (!allowedMethods.includes(req.method)) {
+    sendError(res, 405, 'Method not allowed');
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Standard API initialization - sets CORS and handles OPTIONS
+ * @param {object} req - Vercel request object
+ * @param {object} res - Vercel response object
+ * @param {object} options - Configuration options
+ * @param {string[]} options.methods - Allowed HTTP methods
+ * @param {string} options.cache - Cache type from CACHE constants
+ * @returns {boolean} True if request was handled (caller should return)
+ */
+export function initApi(req, res, options = {}) {
+  const { methods = ['GET', 'OPTIONS'], cache = null } = options;
+
+  setCorsHeaders(res, methods);
+
+  if (cache) {
+    setCacheHeaders(res, cache);
+  }
+
+  if (handleOptions(req, res)) {
+    return true;
+  }
+
+  if (checkMethod(req, res, methods)) {
+    return true;
+  }
+
+  return false;
+}

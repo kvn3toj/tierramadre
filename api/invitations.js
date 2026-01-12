@@ -2,7 +2,6 @@
  * Vercel Serverless Function - Invitations API
  *
  * Unified API for guest invitation management.
- * Replaces: generate-invitation.js, validate-invitation.js, register-guest.js
  *
  * Actions (via query param or POST body):
  * - generate: Create a new invitation (POST)
@@ -11,16 +10,19 @@
  * - check-guest: Check if guest contact has previous invitations (GET ?guestContact=X)
  */
 
-import { GoogleAuth } from 'google-auth-library';
-import { sheets_v4 } from '@googleapis/sheets';
+import {
+  getSheetsClient,
+  isGoogleConfigured,
+  initApi,
+  sendError,
+  SPREADSHEET_ID,
+  SHEETS,
+  INVITATION_DURATION_HOURS,
+  ensureSheet,
+  generateShortCode,
+} from './_lib/index.js';
 
-const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
-const INVITATIONS_SHEET = 'Invitations';
-
-// Fixed 24-hour duration for all invitations
-const INVITATION_DURATION_HOURS = 24;
-
-// Headers for the Invitations sheet
+const SHEET_NAME = SHEETS.INVITATIONS;
 const HEADERS = [
   'invitationId', 'shortCode', 'creatorEmail', 'creatorName', 'creatorRole',
   'guestName', 'guestContact', 'contactType', 'createdAt', 'activatedAt',
@@ -28,75 +30,12 @@ const HEADERS = [
 ];
 
 /**
- * Initialize Google Sheets API
- */
-function getSheetsClient(readonly = false) {
-  try {
-    const cleanKey = (process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '').replace(/[\s"]+/g, '');
-    const credentials = JSON.parse(Buffer.from(cleanKey, 'base64').toString());
-
-    const auth = new GoogleAuth({
-      credentials,
-      scopes: [readonly
-        ? 'https://www.googleapis.com/auth/spreadsheets.readonly'
-        : 'https://www.googleapis.com/auth/spreadsheets'
-      ],
-    });
-
-    return new sheets_v4.Sheets({ auth });
-  } catch (error) {
-    console.error('Error initializing Sheets client:', error);
-    throw new Error('Failed to initialize Google Sheets client');
-  }
-}
-
-/**
- * Generate a random short code (6 characters, alphanumeric uppercase)
- */
-function generateShortCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars: I, O, 0, 1
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
-
-/**
- * Ensure Invitations sheet exists
- */
-async function ensureSheet(sheets) {
-  const metadata = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
-  const sheetNames = metadata.data.sheets.map(s => s.properties.title);
-
-  if (!sheetNames.includes(INVITATIONS_SHEET)) {
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId: SPREADSHEET_ID,
-      requestBody: {
-        requests: [{
-          addSheet: { properties: { title: INVITATIONS_SHEET } },
-        }],
-      },
-    });
-
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `'${INVITATIONS_SHEET}'!A1:N1`,
-      valueInputOption: 'RAW',
-      requestBody: { values: [HEADERS] },
-    });
-  }
-
-  return true;
-}
-
-/**
  * Find invitation by short code
  */
 async function findInvitationByCode(sheets, shortCode) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${INVITATIONS_SHEET}'!A:N`,
+    range: `'${SHEET_NAME}'!A:N`,
   });
 
   const rows = response.data.values || [];
@@ -106,7 +45,7 @@ async function findInvitationByCode(sheets, shortCode) {
     const row = rows[i];
     if (row[1] && row[1].toUpperCase() === shortCode.toUpperCase()) {
       return {
-        rowIndex: i + 1, // 1-based for Sheets
+        rowIndex: i + 1,
         data: {
           invitationId: row[0],
           shortCode: row[1],
@@ -135,20 +74,15 @@ async function findInvitationByCode(sheets, shortCode) {
  */
 async function generateInvitation(sheets, body) {
   const {
-    creatorEmail,
-    creatorName,
-    creatorRole,
+    creatorEmail, creatorName, creatorRole,
     pricingMode = 'with_prices',
-    guestName,
-    guestContact,
-    contactType,
+    guestName, guestContact, contactType,
   } = body;
 
   if (!creatorEmail || !creatorName) {
     return { success: false, error: 'Creator email and name are required' };
   }
 
-  // Generate unique short code
   let shortCode = generateShortCode();
   let attempts = 0;
   while (await findInvitationByCode(sheets, shortCode) && attempts < 5) {
@@ -160,25 +94,15 @@ async function generateInvitation(sheets, body) {
   const createdAt = new Date().toISOString();
 
   const row = [
-    invitationId,
-    shortCode,
-    creatorEmail,
-    creatorName,
-    creatorRole || 'Asesor',
-    guestName || '',
-    guestContact || '',
-    contactType || '',
-    createdAt,
-    '', // activatedAt
-    '', // expiresAt
-    pricingMode,
-    INVITATION_DURATION_HOURS,
-    'pending',
+    invitationId, shortCode, creatorEmail, creatorName,
+    creatorRole || 'Asesor', guestName || '', guestContact || '',
+    contactType || '', createdAt, '', '',
+    pricingMode, INVITATION_DURATION_HOURS, 'pending',
   ];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${INVITATIONS_SHEET}'!A:N`,
+    range: `'${SHEET_NAME}'!A:N`,
     valueInputOption: 'RAW',
     requestBody: { values: [row] },
   });
@@ -193,15 +117,11 @@ async function generateInvitation(sheets, body) {
       token: shortCode,
       url: `${baseUrl}/guest/${shortCode}`,
       shortCode,
-      shortUrl: null, // Short URL generation could be added later
+      shortUrl: null,
       createdAt,
       durationHours: INVITATION_DURATION_HOURS,
       pricingMode,
-      createdBy: {
-        email: creatorEmail,
-        name: creatorName,
-        role: creatorRole || 'Asesor',
-      },
+      createdBy: { email: creatorEmail, name: creatorName, role: creatorRole || 'Asesor' },
     },
   };
 }
@@ -212,9 +132,7 @@ async function generateInvitation(sheets, body) {
 async function validateInvitation(sheets, shortCode) {
   if (!shortCode || shortCode.length !== 6) {
     return {
-      success: false,
-      isValid: false,
-      status: 'expired',
+      success: false, isValid: false, status: 'expired',
       error: 'Código de invitación inválido',
     };
   }
@@ -223,9 +141,7 @@ async function validateInvitation(sheets, shortCode) {
 
   if (!invitation) {
     return {
-      success: false,
-      isValid: false,
-      status: 'expired',
+      success: false, isValid: false, status: 'expired',
       error: 'Invitación no encontrada',
     };
   }
@@ -233,14 +149,8 @@ async function validateInvitation(sheets, shortCode) {
   const { data, rowIndex } = invitation;
   const now = new Date();
 
-  // Check if already expired by status
   if (data.status === 'expired') {
-    return {
-      success: true,
-      isValid: false,
-      status: 'expired',
-      error: 'Esta invitación ha expirado',
-    };
+    return { success: true, isValid: false, status: 'expired', error: 'Esta invitación ha expirado' };
   }
 
   // If pending, activate it now
@@ -248,10 +158,9 @@ async function validateInvitation(sheets, shortCode) {
     const activatedAt = now.toISOString();
     const expiresAt = new Date(now.getTime() + data.durationHours * 60 * 60 * 1000).toISOString();
 
-    // Update the row with activation time and expiry
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
-      range: `'${INVITATIONS_SHEET}'!J${rowIndex}:N${rowIndex}`,
+      range: `'${SHEET_NAME}'!J${rowIndex}:N${rowIndex}`,
       valueInputOption: 'RAW',
       requestBody: {
         values: [[activatedAt, expiresAt, data.pricingMode, data.durationHours, 'active']],
@@ -261,18 +170,11 @@ async function validateInvitation(sheets, shortCode) {
     const timeRemaining = data.durationHours * 60 * 60 * 1000;
 
     return {
-      success: true,
-      isValid: true,
-      status: 'active',
-      invitationId: data.invitationId,
-      activatedAt,
-      expiresAt,
-      timeRemaining,
-      timeRemainingMinutes: Math.floor(timeRemaining / 60000),
-      durationHours: data.durationHours,
-      pricingMode: data.pricingMode,
-      createdBy: data.creatorName,
-      creatorEmail: data.creatorEmail,
+      success: true, isValid: true, status: 'active',
+      invitationId: data.invitationId, activatedAt, expiresAt,
+      timeRemaining, timeRemainingMinutes: Math.floor(timeRemaining / 60000),
+      durationHours: data.durationHours, pricingMode: data.pricingMode,
+      createdBy: data.creatorName, creatorEmail: data.creatorEmail,
       shortCode: data.shortCode,
     };
   }
@@ -281,52 +183,34 @@ async function validateInvitation(sheets, shortCode) {
   if (data.status === 'active' && data.expiresAt) {
     const expiresAt = new Date(data.expiresAt);
     if (now > expiresAt) {
-      // Expired - update status
       await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${INVITATIONS_SHEET}'!N${rowIndex}`,
+        range: `'${SHEET_NAME}'!N${rowIndex}`,
         valueInputOption: 'RAW',
         requestBody: { values: [['expired']] },
       });
 
-      return {
-        success: true,
-        isValid: false,
-        status: 'expired',
-        error: 'Esta invitación ha expirado',
-      };
+      return { success: true, isValid: false, status: 'expired', error: 'Esta invitación ha expirado' };
     }
 
     const timeRemaining = expiresAt.getTime() - now.getTime();
 
     return {
-      success: true,
-      isValid: true,
-      status: 'active',
+      success: true, isValid: true, status: 'active',
       invitationId: data.invitationId,
-      activatedAt: data.activatedAt,
-      expiresAt: data.expiresAt,
-      timeRemaining,
-      timeRemainingMinutes: Math.floor(timeRemaining / 60000),
-      durationHours: data.durationHours,
-      pricingMode: data.pricingMode,
-      createdBy: data.creatorName,
-      creatorEmail: data.creatorEmail,
+      activatedAt: data.activatedAt, expiresAt: data.expiresAt,
+      timeRemaining, timeRemainingMinutes: Math.floor(timeRemaining / 60000),
+      durationHours: data.durationHours, pricingMode: data.pricingMode,
+      createdBy: data.creatorName, creatorEmail: data.creatorEmail,
       shortCode: data.shortCode,
     };
   }
 
-  return {
-    success: false,
-    isValid: false,
-    status: data.status || 'expired',
-    error: 'Estado de invitación desconocido',
-  };
+  return { success: false, isValid: false, status: data.status || 'expired', error: 'Estado de invitación desconocido' };
 }
 
 /**
- * Check if a guest contact has previous invitations from different creators (GET ?guestContact=X)
- * Used to detect if a guest was invited by multiple users
+ * Check if a guest contact has previous invitations
  */
 async function checkGuestHistory(sheets, guestContact) {
   if (!guestContact) {
@@ -335,26 +219,20 @@ async function checkGuestHistory(sheets, guestContact) {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${INVITATIONS_SHEET}'!A:N`,
+    range: `'${SHEET_NAME}'!A:N`,
   });
 
   const rows = response.data.values || [];
   if (rows.length <= 1) {
-    return {
-      success: true,
-      hasMultipleInviters: false,
-      invitations: [],
-    };
+    return { success: true, hasMultipleInviters: false, invitations: [] };
   }
 
-  // Normalize contact for comparison (lowercase, trim)
   const normalizedContact = guestContact.toLowerCase().trim();
-
-  // Find all invitations with matching guestContact
   const matchingInvitations = [];
+
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    const rowContact = (row[6] || '').toLowerCase().trim(); // Column G: guestContact
+    const rowContact = (row[6] || '').toLowerCase().trim();
 
     if (rowContact === normalizedContact) {
       matchingInvitations.push({
@@ -368,7 +246,6 @@ async function checkGuestHistory(sheets, guestContact) {
     }
   }
 
-  // Check for multiple unique creators
   const uniqueCreators = new Set(matchingInvitations.map(inv => inv.creatorEmail));
 
   return {
@@ -390,10 +267,9 @@ async function registerGuest(sheets, body) {
     return { success: false, error: 'Invitation ID and guest name are required' };
   }
 
-  // Find the invitation by ID
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${INVITATIONS_SHEET}'!A:N`,
+    range: `'${SHEET_NAME}'!A:N`,
   });
 
   const rows = response.data.values || [];
@@ -410,43 +286,30 @@ async function registerGuest(sheets, body) {
     return { success: false, error: 'Invitación no encontrada' };
   }
 
-  // Update guest info
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${INVITATIONS_SHEET}'!F${rowIndex}:H${rowIndex}`,
+    range: `'${SHEET_NAME}'!F${rowIndex}:H${rowIndex}`,
     valueInputOption: 'RAW',
     requestBody: {
       values: [[guestName, guestContact || '', contactType || '']],
     },
   });
 
-  return {
-    success: true,
-    message: 'Guest registered successfully',
-    guestName,
-  };
+  return { success: true, message: 'Guest registered successfully', guestName };
 }
 
-/**
- * Main handler
- */
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (initApi(req, res, { methods: ['GET', 'POST', 'OPTIONS'] })) return;
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
-
-  if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-    return res.status(500).json({ success: false, error: 'Google Service Account not configured' });
+  if (!isGoogleConfigured()) {
+    return sendError(res, 500, 'Google Service Account not configured');
   }
 
   const action = req.query.action || req.body?.action || 'validate';
 
   try {
-    // Always use write scope since ensureSheet may need to create the sheet
-    const sheets = getSheetsClient(false);
-    await ensureSheet(sheets);
+    const sheets = getSheetsClient();
+    await ensureSheet(sheets, SHEET_NAME, HEADERS);
 
     // POST - Generate invitation
     if (req.method === 'POST' && action === 'generate') {
@@ -464,30 +327,26 @@ export default async function handler(req, res) {
     if (req.method === 'GET' && (action === 'validate' || req.query.code)) {
       const code = req.query.code || req.query.shortCode;
       if (!code) {
-        return res.status(400).json({ success: false, error: 'Code is required' });
+        return sendError(res, 400, 'Code is required');
       }
       const result = await validateInvitation(sheets, code);
       return res.status(200).json(result);
     }
 
-    // GET - Check guest history for duplicate invitations
+    // GET - Check guest history
     if (req.method === 'GET' && action === 'check-guest') {
       const guestContact = req.query.guestContact;
       if (!guestContact) {
-        return res.status(400).json({ success: false, error: 'guestContact is required' });
+        return sendError(res, 400, 'guestContact is required');
       }
       const result = await checkGuestHistory(sheets, guestContact);
       return res.status(200).json(result);
     }
 
-    return res.status(405).json({ error: 'Method not allowed' });
+    return sendError(res, 405, 'Method not allowed');
 
   } catch (error) {
     console.error('Error in invitations:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to process request',
-      message: error.message,
-    });
+    return sendError(res, 500, 'Failed to process request', error.message);
   }
 }

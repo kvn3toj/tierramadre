@@ -3,7 +3,6 @@
  *
  * Validates users against Asesores or Proveedores sheets.
  * Also provides list endpoints for providers.
- * Replaces: validate-user.js, validate-provider.js, providers.js
  *
  * Query params:
  * - email: User email to validate (required for validation)
@@ -11,43 +10,25 @@
  * - action: 'validate' | 'list-providers' (default: 'validate')
  */
 
-import { GoogleAuth } from 'google-auth-library';
-import { sheets_v4 } from '@googleapis/sheets';
-
-const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
-
-/**
- * Initialize Google Sheets API with service account credentials
- */
-function getSheetsClient() {
-  try {
-    const credentials = JSON.parse(
-      Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
-    );
-
-    const auth = new GoogleAuth({
-      credentials,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-    });
-
-    return new sheets_v4.Sheets({ auth });
-  } catch (error) {
-    console.error('Error initializing Sheets client:', error);
-    throw new Error('Failed to initialize Google Sheets client');
-  }
-}
+import {
+  getSheetsClient,
+  isGoogleConfigured,
+  initApi,
+  sendError,
+  sendSuccess,
+  SPREADSHEET_ID,
+  getSheetNames,
+  findSheetByPattern,
+  findColumnIndex,
+} from './_lib/index.js';
 
 /**
  * Validate user against Asesores sheet
  */
 async function validateUser(sheets, normalizedEmail, sheetNames) {
-  // Use sheet 3 (index 2) for asesores data
   let asesoresSheet = sheetNames[2];
   if (!asesoresSheet) {
-    asesoresSheet = sheetNames.find(name =>
-      name.toLowerCase().includes('asesor') ||
-      name.toLowerCase().includes('embajador')
-    ) || sheetNames[0];
+    asesoresSheet = findSheetByPattern(sheetNames, ['asesor', 'embajador']) || sheetNames[0];
   }
 
   const response = await sheets.spreadsheets.values.get({
@@ -58,17 +39,11 @@ async function validateUser(sheets, normalizedEmail, sheetNames) {
   const rows = response.data.values || [];
   if (!rows || rows.length === 0) return null;
 
-  const headers = rows[0].map(h => h ? h.toLowerCase().trim() : '');
-  const nameColumnIndex = headers.findIndex(h =>
-    h === 'nombre' || h === 'name' || h.includes('asesor')
-  );
-  const roleIndex = headers.findIndex(h =>
-    h === 'datos' || h === 'rol' || h === 'role' || h === 'tipo'
-  );
-  const emailIndex = headers.findIndex(h =>
-    h.includes('email') || h.includes('correo') || h.includes('instagram')
-  );
-  const estadoIndex = headers.findIndex(h => h === 'estado' || h === 'status');
+  const headers = rows[0];
+  const nameColumnIndex = findColumnIndex(headers, ['nombre', 'name', 'asesor']);
+  const roleIndex = findColumnIndex(headers, ['datos', 'rol', 'role', 'tipo']);
+  const emailIndex = findColumnIndex(headers, ['email', 'correo', 'instagram']);
+  const estadoIndex = findColumnIndex(headers, ['estado', 'status']);
 
   const dataRows = rows.slice(1);
 
@@ -107,10 +82,7 @@ async function validateUser(sheets, normalizedEmail, sheetNames) {
  * List all active providers
  */
 async function listProviders(sheets, sheetNames) {
-  const proveedoresSheet = sheetNames.find(name =>
-    name.toLowerCase() === 'proveedores' ||
-    name.toLowerCase().includes('proveedor')
-  );
+  const proveedoresSheet = findSheetByPattern(sheetNames, ['proveedores', 'proveedor']);
 
   if (!proveedoresSheet) {
     return [];
@@ -124,15 +96,15 @@ async function listProviders(sheets, sheetNames) {
   const rows = response.data.values || [];
   if (rows.length <= 1) return [];
 
-  const headers = rows[0].map(h => h ? h.toLowerCase().trim() : '');
-  const idIndex = headers.findIndex(h => h === 'id');
-  const nombreIndex = headers.findIndex(h => h === 'nombre' || h === 'name');
-  const emailIndex = headers.findIndex(h => h === 'email' || h === 'correo');
-  const contactoIndex = headers.findIndex(h => h === 'contacto' || h === 'contact');
-  const whatsappIndex = headers.findIndex(h => h === 'whatsapp' || h === 'telefono');
-  const especialidadIndex = headers.findIndex(h => h === 'especialidad' || h === 'specialty');
-  const estadoIndex = headers.findIndex(h => h === 'estado' || h === 'status');
-  const fechaIndex = headers.findIndex(h => h.includes('fecha') || h === 'registeredat');
+  const headers = rows[0];
+  const idIndex = findColumnIndex(headers, ['id']);
+  const nombreIndex = findColumnIndex(headers, ['nombre', 'name']);
+  const emailIndex = findColumnIndex(headers, ['email', 'correo']);
+  const contactoIndex = findColumnIndex(headers, ['contacto', 'contact']);
+  const whatsappIndex = findColumnIndex(headers, ['whatsapp', 'telefono']);
+  const especialidadIndex = findColumnIndex(headers, ['especialidad', 'specialty']);
+  const estadoIndex = findColumnIndex(headers, ['estado', 'status']);
+  const fechaIndex = findColumnIndex(headers, ['fecha', 'registeredat']);
 
   return rows.slice(1)
     .map(row => ({
@@ -152,10 +124,7 @@ async function listProviders(sheets, sheetNames) {
  * Validate user against Proveedores sheet
  */
 async function validateProvider(sheets, normalizedEmail, sheetNames) {
-  const proveedoresSheet = sheetNames.find(name =>
-    name.toLowerCase() === 'proveedores' ||
-    name.toLowerCase().includes('proveedor')
-  );
+  const proveedoresSheet = findSheetByPattern(sheetNames, ['proveedores', 'proveedor']);
 
   if (!proveedoresSheet) return null;
 
@@ -167,15 +136,15 @@ async function validateProvider(sheets, normalizedEmail, sheetNames) {
   const rows = response.data.values || [];
   if (!rows || rows.length <= 1) return null;
 
-  const headers = rows[0].map(h => h ? h.toLowerCase().trim() : '');
-  const idIndex = headers.findIndex(h => h === 'id');
-  const nombreIndex = headers.findIndex(h => h === 'nombre' || h === 'name');
-  const emailIndex = headers.findIndex(h => h === 'email' || h === 'correo');
-  const contactoIndex = headers.findIndex(h => h === 'contacto' || h === 'contact');
-  const whatsappIndex = headers.findIndex(h => h === 'whatsapp' || h === 'telefono');
-  const especialidadIndex = headers.findIndex(h => h === 'especialidad' || h === 'specialty');
-  const estadoIndex = headers.findIndex(h => h === 'estado' || h === 'status');
-  const fechaIndex = headers.findIndex(h => h.includes('fecha') || h === 'registeredat');
+  const headers = rows[0];
+  const idIndex = findColumnIndex(headers, ['id']);
+  const nombreIndex = findColumnIndex(headers, ['nombre', 'name']);
+  const emailIndex = findColumnIndex(headers, ['email', 'correo']);
+  const contactoIndex = findColumnIndex(headers, ['contacto', 'contact']);
+  const whatsappIndex = findColumnIndex(headers, ['whatsapp', 'telefono']);
+  const especialidadIndex = findColumnIndex(headers, ['especialidad', 'specialty']);
+  const estadoIndex = findColumnIndex(headers, ['estado', 'status']);
+  const fechaIndex = findColumnIndex(headers, ['fecha', 'registeredat']);
 
   const dataRows = rows.slice(1);
 
@@ -204,19 +173,8 @@ async function validateProvider(sheets, normalizedEmail, sheetNames) {
   return null;
 }
 
-/**
- * Main handler
- */
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
-
-  if (req.method !== 'GET' && req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (initApi(req, res, { methods: ['GET', 'POST', 'OPTIONS'] })) return;
 
   const action = req.query.action || req.body?.action || 'validate';
   const email = req.method === 'GET' ? req.query.email : req.body?.email;
@@ -225,37 +183,33 @@ export default async function handler(req, res) {
   // List providers action - no email required
   if (action === 'list-providers') {
     try {
-      const sheets = getSheetsClient();
-      const metadata = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
-      const sheetNames = metadata.data.sheets.map(s => s.properties.title);
+      const sheets = getSheetsClient(true);
+      const sheetNames = await getSheetNames(sheets);
       const providers = await listProviders(sheets, sheetNames);
-      return res.status(200).json({ success: true, providers });
+      return sendSuccess(res, { providers });
     } catch (error) {
       console.error('Error listing providers:', error);
-      return res.status(500).json({ success: false, error: 'Failed to fetch providers' });
+      return sendError(res, 500, 'Failed to fetch providers');
     }
   }
 
   // Validation actions require email
   if (!email) {
-    return res.status(400).json({ success: false, error: 'Email is required' });
+    return sendError(res, 400, 'Email is required');
   }
 
-  if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-    return res.status(500).json({ success: false, error: 'Google Service Account not configured' });
+  if (!isGoogleConfigured()) {
+    return sendError(res, 500, 'Google Service Account not configured');
   }
 
   try {
-    const sheets = getSheetsClient();
-    const metadata = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
-    const sheetNames = metadata.data.sheets.map(s => s.properties.title);
+    const sheets = getSheetsClient(true);
+    const sheetNames = await getSheetNames(sheets);
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Validate based on type
     if (type === 'user') {
       const user = await validateUser(sheets, normalizedEmail, sheetNames);
-      return res.status(200).json({
-        success: true,
+      return sendSuccess(res, {
         isAuthorized: !!user,
         user: user || undefined,
         error: user ? undefined : 'Email not found in authorized users list',
@@ -264,8 +218,7 @@ export default async function handler(req, res) {
 
     if (type === 'provider') {
       const provider = await validateProvider(sheets, normalizedEmail, sheetNames);
-      return res.status(200).json({
-        success: true,
+      return sendSuccess(res, {
         isProvider: !!provider,
         provider: provider || undefined,
         error: provider ? undefined : 'Email not found in providers list',
@@ -275,8 +228,7 @@ export default async function handler(req, res) {
     // Default: check both (user first, then provider)
     const user = await validateUser(sheets, normalizedEmail, sheetNames);
     if (user) {
-      return res.status(200).json({
-        success: true,
+      return sendSuccess(res, {
         isAuthorized: true,
         user,
         accountType: 'user',
@@ -285,16 +237,14 @@ export default async function handler(req, res) {
 
     const provider = await validateProvider(sheets, normalizedEmail, sheetNames);
     if (provider) {
-      return res.status(200).json({
-        success: true,
+      return sendSuccess(res, {
         isProvider: true,
         provider,
         accountType: 'provider',
       });
     }
 
-    return res.status(200).json({
-      success: true,
+    return sendSuccess(res, {
       isAuthorized: false,
       isProvider: false,
       error: 'Email not found in any authorized list',
@@ -302,10 +252,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error validating:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to validate',
-      message: error.message,
-    });
+    return sendError(res, 500, 'Failed to validate', error.message);
   }
 }

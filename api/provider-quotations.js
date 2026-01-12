@@ -13,15 +13,32 @@
  * K=FotosUrls, L=SolicitudId, M=Estado, N=Notas, O=VistoAdmin, P=ProveedorNombre
  */
 
-import { GoogleAuth } from 'google-auth-library';
-import { sheets_v4 } from '@googleapis/sheets';
-import { drive_v3 } from '@googleapis/drive';
 import formidable from 'formidable';
 import fs from 'fs';
 
-const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
-const SHEET_NAME = 'CotizacionesProveedor';
-const COTIZACIONES_FOLDER_NAME = 'cotizaciones';
+import {
+  getSheetsClient,
+  getDriveClient,
+  isGoogleConfigured,
+  getSharedDriveId,
+  setCorsHeaders,
+  handleOptions,
+  sendError,
+  sendSuccess,
+  SPREADSHEET_ID,
+  SHEETS,
+  DRIVE_FOLDERS,
+  ensureSheet,
+  generateId,
+  getOrCreateFolder,
+} from './_lib/index.js';
+
+const SHEET_NAME = SHEETS.PROVIDER_QUOTATIONS;
+const HEADERS = [
+  'ID', 'ProveedorEmail', 'FechaCreacion', 'TipoProducto', 'Descripcion',
+  'PesoCarates', 'Color', 'Calidad', 'PrecioCOP', 'Disponibilidad',
+  'FotosUrls', 'SolicitudId', 'Estado', 'Notas', 'VistoAdmin', 'ProveedorNombre'
+];
 
 // Disable body parsing for file uploads
 export const config = {
@@ -30,89 +47,7 @@ export const config = {
   },
 };
 
-function getCredentials() {
-  return JSON.parse(
-    Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
-  );
-}
-
-function getSheetsClient() {
-  const auth = new GoogleAuth({
-    credentials: getCredentials(),
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
-  return new sheets_v4.Sheets({ auth });
-}
-
-function getDriveClient() {
-  const auth = new GoogleAuth({
-    credentials: getCredentials(),
-    scopes: ['https://www.googleapis.com/auth/drive.file'],
-  });
-  return new drive_v3.Drive({ auth });
-}
-
-function generateId() {
-  return `QUO-${Date.now().toString(36).toUpperCase()}`;
-}
-
 // ============ MEDIA UPLOAD HELPERS ============
-
-async function getOrCreateCotizacionesFolder(drive, parentFolderId) {
-  const searchResponse = await drive.files.list({
-    q: `name='${COTIZACIONES_FOLDER_NAME}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-    fields: 'files(id, name)',
-    spaces: 'drive',
-  });
-
-  if (searchResponse.data.files && searchResponse.data.files.length > 0) {
-    return searchResponse.data.files[0].id;
-  }
-
-  const folder = await drive.files.create({
-    resource: {
-      name: COTIZACIONES_FOLDER_NAME,
-      mimeType: 'application/vnd.google-apps.folder',
-      parents: [parentFolderId],
-    },
-    fields: 'id',
-  });
-
-  await drive.permissions.create({
-    fileId: folder.data.id,
-    requestBody: { role: 'reader', type: 'anyone' },
-  });
-
-  return folder.data.id;
-}
-
-async function getOrCreateQuotationFolder(drive, cotizacionesFolderId, quotationId) {
-  const searchResponse = await drive.files.list({
-    q: `name='${quotationId}' and '${cotizacionesFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-    fields: 'files(id, name)',
-    spaces: 'drive',
-  });
-
-  if (searchResponse.data.files && searchResponse.data.files.length > 0) {
-    return searchResponse.data.files[0].id;
-  }
-
-  const folder = await drive.files.create({
-    resource: {
-      name: quotationId,
-      mimeType: 'application/vnd.google-apps.folder',
-      parents: [cotizacionesFolderId],
-    },
-    fields: 'id',
-  });
-
-  await drive.permissions.create({
-    fileId: folder.data.id,
-    requestBody: { role: 'reader', type: 'anyone' },
-  });
-
-  return folder.data.id;
-}
 
 async function uploadFileToDrive(drive, folderId, file, index) {
   const originalName = file.originalFilename || file.newFilename || 'upload';
@@ -157,10 +92,9 @@ async function uploadFileToDrive(drive, folderId, file, index) {
 }
 
 async function handleMediaUpload(req, res) {
-  if (!process.env.GOOGLE_SHARED_DRIVE_ID) {
-    return res.status(500).json({
-      error: 'Google Drive folder not configured',
-    });
+  const sharedDriveId = getSharedDriveId();
+  if (!sharedDriveId) {
+    return sendError(res, 500, 'Google Drive folder not configured');
   }
 
   const form = formidable({
@@ -180,23 +114,23 @@ async function handleMediaUpload(req, res) {
     : fields.quotationId;
 
   if (!quotationId) {
-    return res.status(400).json({ error: 'Missing quotationId' });
+    return sendError(res, 400, 'Missing quotationId');
   }
 
   let fileList = files.file || files.files;
   if (!fileList) {
-    return res.status(400).json({ error: 'No files uploaded' });
+    return sendError(res, 400, 'No files uploaded');
   }
 
   if (!Array.isArray(fileList)) {
     fileList = [fileList];
   }
 
-  const drive = getDriveClient();
-  const parentFolderId = process.env.GOOGLE_SHARED_DRIVE_ID.trim();
+  const drive = getDriveClient(false);
+  const parentFolderId = sharedDriveId;
 
-  const cotizacionesFolderId = await getOrCreateCotizacionesFolder(drive, parentFolderId);
-  const quotationFolderId = await getOrCreateQuotationFolder(drive, cotizacionesFolderId, quotationId);
+  const cotizacionesFolderId = await getOrCreateFolder(drive, parentFolderId, DRIVE_FOLDERS.COTIZACIONES);
+  const quotationFolderId = await getOrCreateFolder(drive, cotizacionesFolderId, quotationId);
 
   const uploadedFiles = [];
   for (let i = 0; i < fileList.length; i++) {
@@ -214,11 +148,10 @@ async function handleMediaUpload(req, res) {
   }
 
   if (uploadedFiles.length === 0) {
-    return res.status(500).json({ error: 'No files were uploaded successfully' });
+    return sendError(res, 500, 'No files were uploaded successfully');
   }
 
-  return res.status(200).json({
-    success: true,
+  return sendSuccess(res, {
     quotationId,
     files: uploadedFiles,
     urls: uploadedFiles.map(f => f.url),
@@ -226,19 +159,12 @@ async function handleMediaUpload(req, res) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCorsHeaders(res, ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS']);
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (handleOptions(req, res)) return;
 
-  if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-    return res.status(500).json({
-      success: false,
-      error: 'Google Service Account not configured',
-    });
+  if (!isGoogleConfigured()) {
+    return sendError(res, 500, 'Google Service Account not configured');
   }
 
   // Handle media upload: POST /api/provider-quotations?action=upload
@@ -247,46 +173,13 @@ export default async function handler(req, res) {
       return await handleMediaUpload(req, res);
     } catch (error) {
       console.error('Upload error:', error);
-      return res.status(500).json({ error: 'Upload failed', message: error.message });
+      return sendError(res, 500, 'Upload failed', error.message);
     }
   }
 
   try {
     const sheets = getSheetsClient();
-
-    // Ensure sheet exists
-    const metadata = await sheets.spreadsheets.get({
-      spreadsheetId: SPREADSHEET_ID,
-    });
-
-    const sheetNames = metadata.data.sheets.map(s => s.properties.title);
-    if (!sheetNames.includes(SHEET_NAME)) {
-      // Create sheet if it doesn't exist
-      await sheets.spreadsheets.batchUpdate({
-        spreadsheetId: SPREADSHEET_ID,
-        requestBody: {
-          requests: [{
-            addSheet: {
-              properties: { title: SHEET_NAME },
-            },
-          }],
-        },
-      });
-
-      // Add headers
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A1:P1`,
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [[
-            'ID', 'ProveedorEmail', 'FechaCreacion', 'TipoProducto', 'Descripcion',
-            'PesoCarates', 'Color', 'Calidad', 'PrecioCOP', 'Disponibilidad',
-            'FotosUrls', 'SolicitudId', 'Estado', 'Notas', 'VistoAdmin', 'ProveedorNombre'
-          ]],
-        },
-      });
-    }
+    await ensureSheet(sheets, SHEET_NAME, HEADERS);
 
     // GET - Fetch quotations
     if (req.method === 'GET') {
@@ -299,7 +192,7 @@ export default async function handler(req, res) {
 
       const rows = response.data.values || [];
       if (rows.length <= 1) {
-        return res.status(200).json({ success: true, quotations: [] });
+        return sendSuccess(res, { quotations: [] });
       }
 
       let quotations = rows.slice(1).map(row => ({
@@ -321,77 +214,49 @@ export default async function handler(req, res) {
         providerName: row[15] || '',
       }));
 
-      // Filter by ID
       if (id) {
         const quotation = quotations.find(q => q.id === id);
-        return res.status(200).json({ success: true, quotation });
+        return sendSuccess(res, { quotation });
       }
 
-      // Filter by provider email
       if (email) {
         quotations = quotations.filter(q => q.providerEmail === email);
       }
 
-      // Filter by status
       if (status) {
         quotations = quotations.filter(q => q.status === status);
       }
 
-      // Filter by request ID
       if (requestId) {
         quotations = quotations.filter(q => q.requestId === requestId);
       }
 
-      // Sort by date descending
       quotations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-      return res.status(200).json({ success: true, quotations });
+      return sendSuccess(res, { quotations });
     }
 
     // POST - Create new quotation
     if (req.method === 'POST') {
       const {
-        providerEmail,
-        providerName,
-        productType,
-        description,
-        weightCarats,
-        color,
-        quality,
-        priceCOP,
-        availability,
-        photoUrls,
-        requestId,
-        notes,
+        providerEmail, providerName, productType, description,
+        weightCarats, color, quality, priceCOP, availability,
+        photoUrls, requestId, notes,
       } = req.body;
 
-      const quotationId = generateId();
+      const quotationId = generateId('QUO');
       const newQuotation = [
-        quotationId,
-        providerEmail,
-        new Date().toISOString(),
-        productType,
-        description,
-        weightCarats,
-        color,
-        quality,
-        priceCOP,
-        availability,
-        (photoUrls || []).join(','),
-        requestId || '',
-        'disponible',
-        notes || '',
-        'FALSE',
-        providerName || '',
+        quotationId, providerEmail, new Date().toISOString(),
+        productType, description, weightCarats, color, quality,
+        priceCOP, availability, (photoUrls || []).join(','),
+        requestId || '', 'disponible', notes || '', 'FALSE', providerName || '',
       ];
 
       await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
         range: `'${SHEET_NAME}'!A:P`,
         valueInputOption: 'RAW',
-        requestBody: {
-          values: [newQuotation],
-        },
+        requestBody: { values: [newQuotation] },
       });
 
       // If responding to a request, update the request status
@@ -406,7 +271,6 @@ export default async function handler(req, res) {
           const reqRowIndex = reqRows.findIndex(row => row[0] === requestId);
 
           if (reqRowIndex > 0) {
-            // Update status to 'respondida' and add response ID
             await sheets.spreadsheets.values.update({
               spreadsheetId: SPREADSHEET_ID,
               range: `'SolicitudesCotizacion'!J${reqRowIndex + 1}:L${reqRowIndex + 1}`,
@@ -419,24 +283,15 @@ export default async function handler(req, res) {
         }
       }
 
-      return res.status(200).json({
-        success: true,
+      return sendSuccess(res, {
         quotation: {
           id: quotationId,
-          providerEmail,
-          providerName,
+          providerEmail, providerName,
           createdAt: newQuotation[2],
-          productType,
-          description,
-          weightCarats,
-          color,
-          quality,
-          priceCOP,
-          availability,
+          productType, description, weightCarats, color, quality,
+          priceCOP, availability,
           photoUrls: photoUrls || [],
-          requestId,
-          status: 'disponible',
-          notes,
+          requestId, status: 'disponible', notes,
           viewedByAdmin: false,
         },
       });
@@ -455,10 +310,9 @@ export default async function handler(req, res) {
       const rowIndex = rows.findIndex(row => row[0] === id);
 
       if (rowIndex === -1) {
-        return res.status(404).json({ success: false, error: 'Quotation not found' });
+        return sendError(res, 404, 'Quotation not found');
       }
 
-      // Update status
       if (status) {
         await sheets.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
@@ -468,7 +322,6 @@ export default async function handler(req, res) {
         });
       }
 
-      // Update viewedByAdmin
       if (viewedByAdmin !== undefined) {
         await sheets.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
@@ -478,7 +331,7 @@ export default async function handler(req, res) {
         });
       }
 
-      return res.status(200).json({ success: true });
+      return sendSuccess(res, {});
     }
 
     // DELETE - Delete quotation
@@ -494,7 +347,7 @@ export default async function handler(req, res) {
       const rowIndex = rows.findIndex(row => row[0] === id);
 
       if (rowIndex === -1) {
-        return res.status(404).json({ success: false, error: 'Quotation not found' });
+        return sendError(res, 404, 'Quotation not found');
       }
 
       // Mark as sold/unavailable instead of deleting
@@ -505,17 +358,13 @@ export default async function handler(req, res) {
         requestBody: { values: [['vendido']] },
       });
 
-      return res.status(200).json({ success: true });
+      return sendSuccess(res, {});
     }
 
-    return res.status(405).json({ error: 'Method not allowed' });
+    return sendError(res, 405, 'Method not allowed');
 
   } catch (error) {
     console.error('Error in provider-quotations:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to process request',
-      message: error.message,
-    });
+    return sendError(res, 500, 'Failed to process request', error.message);
   }
 }

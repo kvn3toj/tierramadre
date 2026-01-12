@@ -1,82 +1,41 @@
 /**
  * Vercel Serverless Function - Get Asesores from Google Sheets
  *
- * Extracts unique asesores from the inventory data (column P - Asesor)
+ * Extracts unique asesores from the inventory data
  * and returns them as JSON for the ambassadors page.
  */
 
-import { GoogleAuth } from 'google-auth-library';
-import { sheets_v4 } from '@googleapis/sheets';
+import {
+  getSheetsClient,
+  isGoogleConfigured,
+  initApi,
+  sendError,
+  sendSuccess,
+  SPREADSHEET_ID,
+  CACHE,
+  setCacheHeaders,
+  getSheetNames,
+  findColumnIndex,
+  formatDisplayName,
+} from './_lib/index.js';
 
-// Sheet configuration
-const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
-
-/**
- * Initialize Google Sheets API with service account credentials
- */
-function getSheetsClient() {
-  try {
-    const credentials = JSON.parse(
-      Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString()
-    );
-
-    const auth = new GoogleAuth({
-      credentials,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-    });
-
-    return new sheets_v4.Sheets({ auth });
-  } catch (error) {
-    console.error('Error initializing Sheets client:', error);
-    throw new Error('Failed to initialize Google Sheets client');
-  }
-}
-
-/**
- * Main handler
- */
 export default async function handler(req, res) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Initialize API with CORS and cache headers
+  if (initApi(req, res, { methods: ['GET', 'OPTIONS'] })) return;
 
-  // Prevent caching - always fetch fresh data from Google Sheets
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.setHeader('Surrogate-Control', 'no-store');
+  // Prevent caching - always fetch fresh data
+  setCacheHeaders(res, CACHE.NONE);
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  // Check if service account key is configured
-  if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-    return res.status(500).json({
-      error: 'Google Service Account not configured',
-      message: 'Please set up GOOGLE_SERVICE_ACCOUNT_KEY environment variable'
-    });
+  if (!isGoogleConfigured()) {
+    return sendError(res, 500, 'Google Service Account not configured');
   }
 
   try {
-    const sheets = getSheetsClient();
+    const sheets = getSheetsClient(true);
+    const sheetNames = await getSheetNames(sheets);
 
-    // Get sheet metadata to find correct sheet name
-    const metadata = await sheets.spreadsheets.get({
-      spreadsheetId: SPREADSHEET_ID,
-    });
-
-    const sheetNames = metadata.data.sheets.map(s => s.properties.title);
-
-    // Use sheet 3 (index 2) for asesores data, or find sheet with "asesor" in name
-    let asesoresSheet = sheetNames[2]; // Sheet 3 (0-indexed)
-
-    // Fallback: look for sheet with "asesor" or "embajador" in name
+    // Use sheet 3 (index 2) for asesores data
+    let asesoresSheet = sheetNames[2];
     if (!asesoresSheet) {
       asesoresSheet = sheetNames.find(name =>
         name.toLowerCase().includes('asesor') ||
@@ -85,7 +44,6 @@ export default async function handler(req, res) {
       ) || sheetNames[0];
     }
 
-    // Read all data from asesores sheet
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `'${asesoresSheet}'!A:Z`,
@@ -94,60 +52,41 @@ export default async function handler(req, res) {
     const rows = response.data.values || [];
 
     if (!rows || rows.length === 0) {
-      return res.status(200).json({
-        success: true,
+      return sendSuccess(res, {
         asesores: [],
         message: 'No data found in asesores sheet',
         sheetName: asesoresSheet,
-        availableSheets: sheetNames
+        availableSheets: sheetNames,
       });
     }
 
-    // Find relevant column indices from header row
-    const headers = rows[0].map(h => h ? h.toLowerCase().trim() : '');
-
-    // Look for name column (Nombre, Name, Asesor)
-    const nameColumnIndex = headers.findIndex(h =>
-      h === 'nombre' || h === 'name' || h.includes('asesor') || h.includes('vendedor')
-    );
+    const headers = rows[0];
+    const nameColumnIndex = findColumnIndex(headers, ['nombre', 'name', 'asesor', 'vendedor']);
 
     if (nameColumnIndex === -1) {
-      return res.status(200).json({
-        success: true,
+      return sendSuccess(res, {
         asesores: [],
         message: 'No name column found in sheet',
         headers: rows[0],
-        availableSheets: sheetNames
+        availableSheets: sheetNames,
       });
     }
 
-    // Find optional columns for additional data
-    // Hoja Asesores: A=ID, B=Nombre, C=Datos(rol), D=WhatsApp, E=Especialidad, F=Instagram, G=Estado, H=Fecha
-    const roleIndex = headers.findIndex(h => h === 'datos' || h === 'rol' || h === 'role' || h === 'tipo');
-    const whatsappIndex = headers.findIndex(h => h.includes('whatsapp') || h.includes('telefono') || h.includes('phone'));
-    const especialidadIndex = headers.findIndex(h => h.includes('especialidad') || h.includes('specialty'));
-    const instagramIndex = headers.findIndex(h => h.includes('instagram') || h.includes('ig') || h.includes('email'));
-    const estadoIndex = headers.findIndex(h => h === 'estado' || h === 'status');
+    // Find optional columns
+    const roleIndex = findColumnIndex(headers, ['datos', 'rol', 'role', 'tipo']);
+    const whatsappIndex = findColumnIndex(headers, ['whatsapp', 'telefono', 'phone']);
+    const especialidadIndex = findColumnIndex(headers, ['especialidad', 'specialty']);
+    const instagramIndex = findColumnIndex(headers, ['instagram', 'ig', 'email']);
+    const estadoIndex = findColumnIndex(headers, ['estado', 'status']);
 
-    // Extract asesores from dedicated sheet
     const dataRows = rows.slice(1);
-
-    // Format display name (clean but preserve original style)
-    const formatDisplayName = (name) => {
-      return String(name || '')
-        .replace(/\r?\n/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-    };
-
-    // Build asesor objects with all available data
     const asesoresData = [];
 
     dataRows.forEach((row, index) => {
       const name = row[nameColumnIndex];
       if (!name || String(name).trim() === '') return;
 
-      // Check if asesor is active (if estado column exists)
+      // Check if asesor is active
       if (estadoIndex !== -1) {
         const estado = String(row[estadoIndex] || '').toLowerCase();
         if (estado === 'inactivo' || estado === 'inactive') return;
@@ -166,22 +105,17 @@ export default async function handler(req, res) {
       });
     });
 
-    // Sort by name
     asesoresData.sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
-    return res.status(200).json({
-      success: true,
+    return sendSuccess(res, {
       asesores: asesoresData,
       count: asesoresData.length,
       sheetName: asesoresSheet,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     });
 
   } catch (error) {
     console.error('Error reading asesores from Google Sheets:', error);
-    return res.status(500).json({
-      error: 'Failed to read asesores',
-      message: error.message
-    });
+    return sendError(res, 500, 'Failed to read asesores', error.message);
   }
 }
