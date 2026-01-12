@@ -85,11 +85,12 @@ function checkShareSupport(): boolean {
 
 /**
  * Format product details for sharing
+ * Uses precioInternacional (regular price) for external sharing
+ * Does NOT show price if precioInternacional is not available (to protect Comunidad TM pricing)
  */
 function formatProductShareText(product: TreasureItem): string {
   const displayName = product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const weight = typeof product.peso === 'number' ? `${product.peso} ct` : '';
-  const price = formatCurrency(product.precioCOP);
 
   // Build share text with emoji for visual appeal
   const lines = [
@@ -102,8 +103,9 @@ function formatProductShareText(product: TreasureItem): string {
     lines.push(`⚖️ ${weight}`);
   }
 
-  if (product.precioCOP) {
-    lines.push(`💰 ${price}`);
+  // Only show price if precioInternacional is available (never expose Comunidad TM price)
+  if (product.precioInternacional) {
+    lines.push(`💰 ${formatCurrency(product.precioInternacional)}`);
   }
 
   lines.push(``);
