@@ -23,7 +23,7 @@ import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
 import { floatingLayers, liquidSaturation, specularHighlights } from '../../design-system/tokens/liquid-glass';
 import { floatingLayerShadows } from '../../design-system/tokens/shadows';
-import { brand, radius, layoutConstants, iosTypographyScale } from '../../design-system';
+import { brand, radius, iosTypographyScale } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsGuest, useCanCreateInvitations } from '../../hooks/useAuth';

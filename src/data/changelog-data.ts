@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-12T03:52:03.968Z
+ * Generated at: 2026-01-12T03:52:59.716Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-12T03:52:03.968Z",
+  "generatedAt": "2026-01-12T03:52:59.716Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "13 Dic, 2025",
@@ -56,28 +56,28 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "bb19ecf",
-    "lastCommitDate": "2026-01-11 22:52:01 -0500"
+    "lastCommitHash": "488bf29",
+    "lastCommitDate": "2026-01-11 22:52:56 -0500"
   },
   "stats": {
-    "totalCommits": 214,
-    "totalAdditions": 86423,
-    "totalDeletions": 60681,
-    "totalFilesChanged": 1421,
-    "netLines": 25742
+    "totalCommits": 215,
+    "totalAdditions": 86918,
+    "totalDeletions": 61065,
+    "totalFilesChanged": 1425,
+    "netLines": 25853
   },
   "categoryStats": {
+    "other": 73,
     "bugfix": 46,
     "ux": 46,
-    "other": 72,
     "performance": 11,
     "auth": 14,
     "cleanup": 20,
     "analytics": 5
   },
   "typeStats": {
+    "refactor": 26,
     "fix": 75,
-    "refactor": 25,
     "other": 7,
     "feat": 92,
     "chore": 12,
@@ -87,11 +87,11 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "index.html",
-      "count": 29
+      "count": 30
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 26
+      "count": 27
     },
     {
       "file": "src/App.tsx",
@@ -103,7 +103,7 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "public/version.json",
-      "count": 20
+      "count": 21
     },
     {
       "file": "src/components/home/Home.tsx",
@@ -114,11 +114,11 @@ export const changelogData: ChangelogData = {
       "count": 19
     },
     {
-      "file": "src/components/ProductDetail.tsx",
-      "count": 17
+      "file": "src/components/ios/IOSMoreSheet.tsx",
+      "count": 18
     },
     {
-      "file": "src/components/ios/IOSMoreSheet.tsx",
+      "file": "src/components/ProductDetail.tsx",
       "count": 17
     },
     {
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 206
+      "commits": 207
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "488bf29",
+      "message": "Reorder More menu options and unify settings style",
+      "fullMessage": "refactor: Reorder More menu options and unify settings style",
+      "author": "Kvn3Toj",
+      "relativeTime": "1 second ago",
+      "date": "2026-01-11",
+      "type": "refactor",
+      "category": "other",
+      "additions": 495,
+      "deletions": 384,
+      "filesChanged": 4
+    },
+    {
       "hash": "bb19ecf",
       "message": "Hide Comunidad TM price from shared product links",
       "fullMessage": "fix: Hide Comunidad TM price from shared product links",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "56 seconds ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve responsive layout for Treasure Browser on desktop/iPad",
       "fullMessage": "fix: Improve responsive layout for Treasure Browser on desktop/iPad",
       "author": "Kvn3Toj",
-      "relativeTime": "2 minutes ago",
+      "relativeTime": "3 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "ux",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Clear treasure filters after 3min inactivity or browser close",
       "fullMessage": "fix: Clear treasure filters after 3min inactivity or browser close",
       "author": "Kvn3Toj",
-      "relativeTime": "3 minutes ago",
+      "relativeTime": "4 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Extract ValuationPage sub-components and shared chart utilities",
       "fullMessage": "refactor: Extract ValuationPage sub-components and shared chart utilities",
       "author": "Kvn3Toj",
-      "relativeTime": "20 minutes ago",
+      "relativeTime": "21 minutes ago",
       "date": "2026-01-11",
       "type": "refactor",
       "category": "other",
@@ -207,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve image loading with fallback placeholders and TypeScript fixes",
       "fullMessage": "fix: Improve image loading with fallback placeholders and TypeScript fixes",
       "author": "Kvn3Toj",
-      "relativeTime": "55 minutes ago",
+      "relativeTime": "56 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -220,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Prevent noCopy ReferenceError from noprint.js security script",
       "fullMessage": "fix: Prevent noCopy ReferenceError from noprint.js security script",
       "author": "Kvn3Toj",
-      "relativeTime": "59 minutes ago",
+      "relativeTime": "60 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "auth",
@@ -233,7 +246,7 @@ export const changelogData: ChangelogData = {
       "message": "Upgrade emerald valuation chart with accurate 2005-2026 data",
       "fullMessage": "feat: Upgrade emerald valuation chart with accurate 2005-2026 data",
       "author": "Kvn3Toj",
-      "relativeTime": "64 minutes ago",
+      "relativeTime": "65 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -246,7 +259,7 @@ export const changelogData: ChangelogData = {
       "message": "Prevent overscroll bounce showing black background",
       "fullMessage": "fix: Prevent overscroll bounce showing black background",
       "author": "Kvn3Toj",
-      "relativeTime": "65 minutes ago",
+      "relativeTime": "66 minutes ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -259,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Add New Products carousel based on Google Drive image upload date",
       "fullMessage": "feat: Add New Products carousel based on Google Drive image upload date",
       "author": "Kvn3Toj",
-      "relativeTime": "68 minutes ago",
+      "relativeTime": "69 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
@@ -272,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Replace Explora section with animated Oracle quotes",
       "fullMessage": "feat: Replace Explora section with animated Oracle quotes",
       "author": "Kvn3Toj",
-      "relativeTime": "72 minutes ago",
+      "relativeTime": "73 minutes ago",
       "date": "2026-01-11",
       "type": "feat",
       "category": "other",
