@@ -107,15 +107,14 @@ async function generateInvitation(sheets, body) {
     requestBody: { values: [row] },
   });
 
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'https://tierra-madre-studio.vercel.app';
+  // Always use production URL for invitation links (not preview URLs)
+  const baseUrl = 'https://tierra-madre-studio.vercel.app';
 
   return {
     success: true,
     invitation: {
       token: shortCode,
-      url: `${baseUrl}/guest/${shortCode}`,
+      url: `${baseUrl}/invite/${shortCode}`,
       shortCode,
       shortUrl: null,
       createdAt,
