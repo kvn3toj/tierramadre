@@ -113,7 +113,7 @@ export function useTreasureFiltering({
   const [colorFilter, setColorFilter] = useState(initialFilters.colorFilter || 'all');
   const [qualityFilter, setQualityFilter] = useState(initialFilters.qualityFilter || 'all');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>(initialFilters.typeFilter || 'all');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialFilters.statusFilter || 'all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialFilters.statusFilter || 'available');
   const [shapeFilter, setShapeFilter] = useState(initialFilters.shapeFilter || 'all');
   const [priceRange, setPriceRange] = useState<[number, number]>(
     initialFilters.priceRange || [0, Number.MAX_SAFE_INTEGER]
@@ -266,13 +266,13 @@ export function useTreasureFiltering({
     return { count: filteredTreasure.length, totalValue };
   }, [filteredTreasure]);
 
-  // Clear all filters (reset to defaults, showing all items)
+  // Clear all filters (reset to defaults, showing available items)
   const clearFilters = useCallback(() => {
     setSearch('');
     setColorFilter('all');
     setQualityFilter('all');
     setTypeFilter('all');
-    setStatusFilter('all'); // Default to all items
+    setStatusFilter('available'); // Default to available items
     setShapeFilter('all');
     setCantidadFilter('all');
     setCityFilter('all');
@@ -280,14 +280,14 @@ export function useTreasureFiltering({
     setPriceRange([priceMinMax.min, priceMinMax.max]);
   }, [priceMinMax]);
 
-  // Check if any filters are active (note: 'all' is the default status)
+  // Check if any filters are active (note: 'available' is the default status)
   const hasFilters = useMemo(() => {
     return (
       search !== '' ||
       colorFilter !== 'all' ||
       qualityFilter !== 'all' ||
       typeFilter !== 'all' ||
-      statusFilter !== 'all' ||
+      statusFilter !== 'available' ||
       shapeFilter !== 'all' ||
       cantidadFilter !== 'all' ||
       cityFilter !== 'all' ||
