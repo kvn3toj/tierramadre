@@ -202,8 +202,33 @@ export default function FeedbackWizard({ open, onClose, onCaptureStart }: Feedba
     setState((prev) => ({ ...prev, isSubmitting: true, error: null }));
 
     try {
-      // API endpoint temporarily disabled to stay within Vercel Hobby limit
-      throw new Error('Sistema de feedback temporalmente deshabilitado');
+      const response = await fetch('/api/user-prefs?action=feedback.submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          page: location.pathname,
+          category: state.category,
+          priority: state.priority,
+          description: state.description,
+          screenshot: state.screenshot,
+          highlightBox: state.highlightBox,
+          adminEmail: user?.email || '',
+          adminName: user?.name || '',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Error al enviar feedback');
+      }
+
+      setState((prev) => ({
+        ...prev,
+        isSubmitting: false,
+        submittedId: data.id,
+        step: 'success',
+      }));
     } catch (error) {
       console.error('Submit feedback error:', error);
       setState((prev) => ({

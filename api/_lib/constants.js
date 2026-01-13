@@ -17,6 +17,7 @@ export const SHEETS = {
   PROVIDER_QUOTATIONS: 'CotizacionesProveedor',
   QUOTATION_REQUESTS: 'SolicitudesCotizacion',
   USER_PREFERENCES: 'UserPreferences',
+  FEEDBACK: 'Feedback',
 };
 
 // Google Drive Folder Names
