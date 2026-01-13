@@ -64,6 +64,8 @@ async function validateUser(sheets, normalizedEmail, sheetNames) {
 
       if (roleLower.includes('admin') || roleLower.includes('administrador')) {
         accessLevel = 'admin';
+      } else if (roleLower.includes('proveedor') || roleLower.includes('provider')) {
+        accessLevel = 'provider';
       }
 
       return {
