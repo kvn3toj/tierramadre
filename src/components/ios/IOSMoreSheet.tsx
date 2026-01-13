@@ -141,9 +141,9 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   // Get tools and filter based on permissions
   const MORE_TOOLS = useMemo(() => {
     const allTools = getMoreTools(t);
-    const adminOnlyTools = ['accounts', 'analytics', 'name-generator'];
+    const adminOnlyTools = ['analytics', 'name-generator'];
     const invitationTools = ['invitation']; // Embajadores and Admins only
-    const fullAccessTools = ['request-product', 'my-requests', 'feedback']; // Asesores, Embajadores and Admins
+    const fullAccessTools = ['request-product', 'my-requests', 'feedback', 'accounts']; // Asesores, Embajadores and Admins
 
     return allTools.filter(tool => {
       // Admin-only tools
