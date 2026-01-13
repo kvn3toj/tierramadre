@@ -120,29 +120,34 @@ export default function ProductDetail() {
   // Load media items for the product from Google Drive folder
   useEffect(() => {
     if (product) {
+      let isCancelled = false;
+
       const loadMedia = async () => {
         // First, check local cache
         const localItems = getMediaItems ? getMediaItems(product.item) : [];
 
-        if (localItems.length > 0) {
-          setMediaItems(localItems);
-        } else if (product.imagen) {
-          // If no local items but has legacy image, use it temporarily
-          const legacyItem: MediaItem = {
-            id: `legacy-${product.item}`,
-            url: product.imagen,
-            type: product.mediaType === 'video' ? 'video' : 'image',
-            thumbnailUrl: product.thumbnailUrl,
-            category: 'hero',
-            alt: displayName || `Producto ${product.item}`,
-            order: 0,
-          };
-          setMediaItems([legacyItem]);
+        // Create legacy fallback item
+        const legacyItem: MediaItem | null = product.imagen ? {
+          id: `legacy-${product.item}`,
+          url: product.imagen,
+          type: product.mediaType === 'video' ? 'video' : 'image',
+          thumbnailUrl: product.thumbnailUrl,
+          category: 'hero',
+          alt: displayName || `Producto ${product.item}`,
+          order: 0,
+        } : null;
+
+        // Set initial items only if we don't have any yet (avoid blink on re-renders)
+        const initialItems = localItems.length > 0 ? localItems : (legacyItem ? [legacyItem] : []);
+        if (initialItems.length > 0) {
+          setMediaItems(initialItems);
         }
 
         // Fetch images from Google Drive folder
         try {
           const response = await fetch(`/api/get-drive-images?itemNumber=${product.item}`);
+          if (isCancelled) return;
+
           const data = await response.json();
 
           if (data.success && data.images && data.images.length > 0) {
@@ -168,20 +173,29 @@ export default function ProductDetail() {
               if (a.type === 'video' && b.type === 'image') return 1;
               return a.order - b.order;
             });
-            setMediaItems(sortedItems);
 
-            // Update local cache
-            if (updateMediaItems) {
-              updateMediaItems(product.item, driveItems);
+            if (!isCancelled) {
+              setMediaItems(sortedItems);
+
+              // Update local cache
+              if (updateMediaItems) {
+                updateMediaItems(product.item, driveItems);
+              }
             }
           }
         } catch (error) {
-          log.error('Error fetching Drive images:', error);
+          if (!isCancelled) {
+            log.error('Error fetching Drive images:', error);
+          }
           // Keep showing local/legacy items if Drive fetch fails
         }
       };
 
       loadMedia();
+
+      return () => {
+        isCancelled = true;
+      };
     }
   }, [product, getMediaItems, updateMediaItems, displayName]);
 

@@ -177,13 +177,13 @@ export default function MediaGallery({
           onTouchEnd={handleTouchEnd}
           onClick={handleMainClick}
         >
-        <AnimatePresence mode="wait">
+        <AnimatePresence initial={false} mode="popLayout">
           <motion.div
-            key={currentIndex}
-            initial={{ opacity: 0 }}
+            key={currentMedia?.id || currentIndex}
+            initial={{ opacity: 0.6 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            exit={{ opacity: 0.6 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             style={{ width: '100%', height: '100%' }}
           >
             {currentMedia?.type === 'video' ? (
