@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-route
 import { IOSLayout } from './components/ios';
 import { WelcomeScreen, AdminRoute, ProviderRoute } from './components/auth';
 import { useAuth } from './hooks/useAuth';
+import { useIsProvider } from './hooks/usePermissions';
 import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
 import LoadingFallback from './components/LoadingFallback';
@@ -49,6 +50,11 @@ const QuotationRequestForm = lazyWithRetry(() => import('./components/admin/Quot
 const QuotationRequestList = lazyWithRetry(() => import('./components/admin/QuotationRequestList'), 'QuotationRequestList');
 const ProviderQuotationsList = lazyWithRetry(() => import('./components/admin/ProviderQuotationsList'), 'ProviderQuotationsList');
 
+// Product Requests (Asesor/Embajador -> Admin)
+const ProductRequestForm = lazyWithRetry(() => import('./components/requests/ProductRequestForm'), 'ProductRequestForm');
+const AdminProductRequestList = lazyWithRetry(() => import('./components/requests/AdminProductRequestList'), 'AdminProductRequestList');
+const MyProductRequests = lazyWithRetry(() => import('./components/requests/MyProductRequests'), 'MyProductRequests');
+
 // Invitation Pages (public routes - accessible without auth)
 const InvitationPage = lazyWithRetry(() => import('./pages/InvitationPage'), 'InvitationPage');
 const ShortLinkRedirect = lazyWithRetry(() => import('./pages/ShortLinkRedirect'), 'ShortLinkRedirect');
@@ -62,6 +68,25 @@ export type TabValue = 'home' | 'treasure' | 'ambassadors';
 // Tab categories for navigation logic
 export const PRIMARY_TABS: TabValue[] = ['home', 'treasure', 'ambassadors'];
 export const SECONDARY_TABS: TabValue[] = [];
+
+// Smart redirect based on user role
+function RoleBasedRedirect() {
+  const isProvider = useIsProvider();
+  return <Navigate to={isProvider ? '/provider' : '/home'} replace />;
+}
+
+// Redirect providers away from regular home to provider dashboard
+function HomeOrProviderRedirect() {
+  const isProvider = useIsProvider();
+  if (isProvider) {
+    return <Navigate to="/provider" replace />;
+  }
+  return (
+    <Suspense fallback={<LoadingFallback message="Cargando..." />}>
+      <Home />
+    </Suspense>
+  );
+}
 
 // Inner component that uses routing hooks
 function AppContent() {
@@ -81,13 +106,9 @@ function AppContent() {
     <>
       <IOSLayout>
         <Routes>
-          {/* Primary routes */}
-          <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route path="/home" element={
-            <Suspense fallback={<LoadingFallback message="Cargando..." />}>
-              <Home />
-            </Suspense>
-          } />
+          {/* Primary routes - smart redirect based on role */}
+          <Route path="/" element={<RoleBasedRedirect />} />
+          <Route path="/home" element={<HomeOrProviderRedirect />} />
           <Route path="/treasure" element={
             <Suspense fallback={<LoadingFallback message="Cargando tesoros..." />}>
               <TreasureBrowser />
@@ -234,6 +255,25 @@ function AppContent() {
             <AdminRoute>
               <Suspense fallback={<LoadingFallback message="Cargando cotizaciones..." />}>
                 <ProviderQuotationsList />
+              </Suspense>
+            </AdminRoute>
+          } />
+
+          {/* Product Requests (Asesor/Embajador -> Admin) */}
+          <Route path="/solicitar-producto" element={
+            <Suspense fallback={<LoadingFallback message="Cargando formulario..." />}>
+              <ProductRequestForm />
+            </Suspense>
+          } />
+          <Route path="/mis-solicitudes" element={
+            <Suspense fallback={<LoadingFallback message="Cargando solicitudes..." />}>
+              <MyProductRequests />
+            </Suspense>
+          } />
+          <Route path="/cuentas/solicitudes-asesores" element={
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando solicitudes..." />}>
+                <AdminProductRequestList />
               </Suspense>
             </AdminRoute>
           } />
