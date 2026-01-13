@@ -79,13 +79,14 @@ export interface QualityBadgeStyle {
 /**
  * Get quality badge styling based on quality level.
  * Uses warm tones (amber, blue, purple) instead of green to avoid confusion with emerald colors.
+ * Label uses the exact calidad value from Google Sheets.
  * @param calidad - The quality string
  * @returns Badge style object
  */
 export const getQualityBadge = (calidad: string): QualityBadgeStyle => {
   if (calidad.includes('SuperFina') || calidad === 'Fina') {
     return {
-      label: 'Premium',
+      label: calidad,
       bg: '#FEF3C7',      // Amber 100
       color: '#92400E',   // Amber 900
       border: '#F59E0B',  // Amber 500
@@ -93,7 +94,7 @@ export const getQualityBadge = (calidad: string): QualityBadgeStyle => {
   }
   if (calidad.includes('Superior')) {
     return {
-      label: 'Superior',
+      label: calidad,
       bg: '#DBEAFE',      // Blue 100
       color: '#1E3A8A',   // Blue 900
       border: '#3B82F6',  // Blue 500
@@ -101,14 +102,14 @@ export const getQualityBadge = (calidad: string): QualityBadgeStyle => {
   }
   if (calidad.includes('Fina')) {
     return {
-      label: 'Fina',
+      label: calidad,
       bg: '#F3E8FF',      // Purple 100
       color: '#6B21A8',   // Purple 800
       border: '#A855F7',  // Purple 500
     };
   }
   return {
-    label: 'Comercial',
+    label: calidad || 'Comercial',
     bg: '#F3F4F6',        // Gray 100
     color: '#374151',     // Gray 700
     border: '#9CA3AF',    // Gray 400

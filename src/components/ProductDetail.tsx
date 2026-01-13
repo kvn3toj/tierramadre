@@ -33,6 +33,7 @@ import {
   QrCode,
   Share2,
   MessageCircle,
+  Layers,
 } from 'lucide-react';
 // Logo placeholder for products without images - use Vite asset import
 import logoPlaceholder from '../assets/logo-symbol.png';
@@ -53,7 +54,7 @@ import { MediaGallery } from './media';
 import DriveFolderInfo from './media/DriveFolderInfo';
 import type { MediaItem } from './media/types';
 import { PriceDisplay } from './PriceDisplay';
-import { getColorDot, getQualityBadge } from '../utils/formatting';
+import { getColorDot } from '../utils/formatting';
 import { createLogger } from '../utils/logger';
 
 const log = createLogger('ProductDetail');
@@ -364,7 +365,6 @@ export default function ProductDetail() {
     );
   }
 
-  const quality = getQualityBadge(product.calidad);
   const colorDot = getColorDot(product.color);
   const weight = typeof product.peso === 'number' ? `${product.peso} ct` : product.metalType;
   const isAvailable = product.estado === 'DISPONIBLE';
@@ -542,6 +542,17 @@ export default function ProductDetail() {
 
               {/* Inline metadata - iOS secondary style with status */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mb: 1.5 }}>
+                <Typography
+                  component="span"
+                  sx={{
+                    fontSize: '13px',
+                    color: secondaryTextColor,
+                    fontWeight: 500,
+                  }}
+                >
+                  #{product.item}
+                </Typography>
+                <Typography component="span" sx={{ color: secondaryTextColor, fontSize: '13px', opacity: 0.5 }}>·</Typography>
                 {product.isJewelry && <Crown size={14} color={goldAccent.primary} />}
                 <Typography
                   component="span"
@@ -552,17 +563,6 @@ export default function ProductDetail() {
                   }}
                 >
                   {product.isJewelry ? 'Joyería' : 'Gema'}
-                </Typography>
-                <Typography component="span" sx={{ color: secondaryTextColor, fontSize: '13px', opacity: 0.5 }}>·</Typography>
-                <Typography
-                  component="span"
-                  sx={{
-                    fontSize: '13px',
-                    color: quality.color,
-                    fontWeight: 500,
-                  }}
-                >
-                  {quality.label}
                 </Typography>
                 <Typography component="span" sx={{ color: secondaryTextColor, fontSize: '13px', opacity: 0.5 }}>·</Typography>
                 <Typography
@@ -717,6 +717,7 @@ export default function ProductDetail() {
                   justifyContent: 'space-between',
                   minHeight: 36,
                   py: 0.75,
+                  borderBottom: product.coleccion ? `0.5px solid ${separatorColor}` : undefined,
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -729,6 +730,29 @@ export default function ProductDetail() {
                   {product.calidad}
                 </Typography>
               </Box>
+
+              {/* Collection Row - Only show if collection exists */}
+              {product.coleccion && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    minHeight: 36,
+                    py: 0.75,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Layers size={18} color={secondaryTextColor} />
+                    <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
+                      Colección
+                    </Typography>
+                  </Box>
+                  <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary }}>
+                    {product.coleccion}
+                  </Typography>
+                </Box>
+              )}
             </Box>
 
             {/* iOS Hairline Separator */}
@@ -749,71 +773,76 @@ export default function ProductDetail() {
             </Typography>
 
             <Box sx={{ mb: 2 }}>
-              {/* Location Row */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  minHeight: 36,
-                  py: 0.75,
-                  borderBottom: `0.5px solid ${separatorColor}`,
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <MapPin size={18} color={secondaryTextColor} />
-                  <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
-                    Ubicación
-                  </Typography>
-                </Box>
-                <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary }}>
-                  {product.ubicacion}
-                </Typography>
-              </Box>
+              {/* Admin-only fields: Location, Advisor, Date */}
+              {isAdmin && (
+                <>
+                  {/* Location Row */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      minHeight: 36,
+                      py: 0.75,
+                      borderBottom: `0.5px solid ${separatorColor}`,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <MapPin size={18} color={secondaryTextColor} />
+                      <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
+                        Ubicación
+                      </Typography>
+                    </Box>
+                    <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary }}>
+                      {product.ubicacion}
+                    </Typography>
+                  </Box>
 
-              {/* Advisor Row */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  minHeight: 36,
-                  py: 0.75,
-                  borderBottom: `0.5px solid ${separatorColor}`,
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <User size={18} color={secondaryTextColor} />
-                  <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
-                    Asesor
-                  </Typography>
-                </Box>
-                <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary }}>
-                  {product.asesor}
-                </Typography>
-              </Box>
+                  {/* Advisor Row */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      minHeight: 36,
+                      py: 0.75,
+                      borderBottom: `0.5px solid ${separatorColor}`,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <User size={18} color={secondaryTextColor} />
+                      <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
+                        Asesor
+                      </Typography>
+                    </Box>
+                    <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary }}>
+                      {product.asesor}
+                    </Typography>
+                  </Box>
 
-              {/* Date Row */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  minHeight: 36,
-                  py: 0.75,
-                  borderBottom: `0.5px solid ${separatorColor}`,
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Calendar size={18} color={secondaryTextColor} />
-                  <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
-                    Fecha de Ingreso
-                  </Typography>
-                </Box>
-                <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary }}>
-                  {product.fechaIngreso}
-                </Typography>
-              </Box>
+                  {/* Date Row */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      minHeight: 36,
+                      py: 0.75,
+                      borderBottom: `0.5px solid ${separatorColor}`,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Calendar size={18} color={secondaryTextColor} />
+                      <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
+                        Fecha de Ingreso
+                      </Typography>
+                    </Box>
+                    <Typography sx={{ fontSize: '15px', fontWeight: 500, color: theme.palette.text.primary }}>
+                      {product.fechaIngreso}
+                    </Typography>
+                  </Box>
+                </>
+              )}
 
               {/* QR Code Row - Compact */}
               <Box
