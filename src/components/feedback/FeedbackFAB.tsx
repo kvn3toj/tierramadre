@@ -1,23 +1,25 @@
 /**
- * FeedbackFAB - Floating Action Button for Admin Feedback
+ * FeedbackFAB - Floating Action Button for Dev Feedback
  *
- * Visible only to admins. Opens the feedback wizard modal.
+ * Visible to admins, asesores, and embajadores (full access users).
+ * Opens the feedback wizard modal to report UI issues.
  */
 
 import { useState } from 'react';
 import { Fab, Tooltip, Zoom, Badge } from '@mui/material';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import { alpha } from '@mui/material/styles';
-import { useIsAdmin } from '../../hooks/usePermissions';
+import { useAuthContext } from '../../contexts/AuthContext';
 import { emeraldCore } from '../../design-system/tokens/colors';
 import FeedbackWizard from './FeedbackWizard';
 
 export default function FeedbackFAB() {
-  const isAdmin = useIsAdmin();
+  const { accessLevel } = useAuthContext();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Only render for admins
-  if (!isAdmin) {
+  // Render for admins and full access users (asesores/embajadores)
+  const canAccessFeedback = accessLevel === 'admin' || accessLevel === 'full';
+  if (!canAccessFeedback) {
     return null;
   }
 
