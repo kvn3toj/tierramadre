@@ -12,7 +12,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton, Backdrop, Button, Chip } from '@mui/material';
 import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport, AutoAwesome, PersonAdd } from '@mui/icons-material';
-import { Vault, BarChart3 } from 'lucide-react';
+import { Vault, BarChart3, ShoppingBag, FileText } from 'lucide-react';
 import FeedbackWizard from '../feedback/FeedbackWizard';
 import NameGeneratorSheet from './NameGeneratorSheet';
 import { InvitationGenerator } from '../invitation';
@@ -49,6 +49,23 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     icon: PersonAdd,
     action: 'invitation',
     color: '#3B82F6', // Blue for invitation
+  },
+  // Product Requests - for asesores/embajadores
+  {
+    id: 'request-product',
+    label: 'Solicitar Producto',
+    subtitle: 'Solicita productos especificos para tus clientes',
+    icon: ShoppingBag as any,
+    route: '/solicitar-producto',
+    color: '#10B981', // Green
+  },
+  {
+    id: 'my-requests',
+    label: 'Mis Solicitudes',
+    subtitle: 'Ver el estado de tus solicitudes de producto',
+    icon: FileText as any,
+    route: '/mis-solicitudes',
+    color: '#6366F1', // Indigo
   },
   {
     id: 'accounts',
@@ -124,8 +141,9 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   // Get tools and filter based on permissions
   const MORE_TOOLS = useMemo(() => {
     const allTools = getMoreTools(t);
-    const adminOnlyTools = ['accounts', 'analytics', 'feedback', 'name-generator'];
+    const adminOnlyTools = ['accounts', 'analytics', 'name-generator'];
     const invitationTools = ['invitation']; // Embajadores and Admins only
+    const fullAccessTools = ['request-product', 'my-requests', 'feedback']; // Asesores, Embajadores and Admins
 
     return allTools.filter(tool => {
       // Admin-only tools
@@ -136,9 +154,13 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
       if (invitationTools.includes(tool.id)) {
         return canCreateInvitations;
       }
+      // Full access tools - Asesores, Embajadores, Admins (not guests)
+      if (fullAccessTools.includes(tool.id)) {
+        return !isGuest;
+      }
       return true;
     });
-  }, [t, isAdmin, canCreateInvitations]);
+  }, [t, isAdmin, canCreateInvitations, isGuest]);
 
   // Liquid Glass styles for the sheet
   const sheetStyles = useMemo(() => {
