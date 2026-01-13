@@ -423,7 +423,7 @@ const AdminChangelogPage: React.FC = () => {
           >
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
               <GitCommit size={20} color={emeraldCore.primary} />
-              Ultimos Commits ({commits.length})
+              Últimos Commits ({commits.length})
             </Typography>
 
             <Box sx={{ position: 'relative', pl: 3 }}>

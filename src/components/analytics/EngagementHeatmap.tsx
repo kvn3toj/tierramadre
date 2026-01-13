@@ -205,7 +205,7 @@ const EngagementHeatmap: React.FC<EngagementHeatmapProps> = ({
             </Typography>
             {!compact && (
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                Ultimos {heatmapData.dateRange.days} dias -{' '}
+                Últimos {heatmapData.dateRange.days} días -{' '}
                 {heatmapData.features.length} features analizadas
               </Typography>
             )}
