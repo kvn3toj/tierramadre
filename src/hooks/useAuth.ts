@@ -52,21 +52,18 @@ export const useCanSeeComunidadPrice = () => {
 
 /**
  * Check if user can create invitation links
- * Only Embajadores and Admins can create invitations
+ * Admins, Embajadores, and Asesores can create invitations
  * Admins with PIN access can also create invitations (even without Google sign-in)
  */
 export const useCanCreateInvitations = () => {
   const { accessLevel } = useAuthContext();
-  const { isSignedIn, isAuthorized } = useGoogleAuth();
-  const isEmbajador = useIsEmbajador();
 
-  // Admin with PIN access can create invitations
-  if (accessLevel === 'admin') {
+  // Admin or full access (asesores/embajadores) with PIN can create invitations
+  if (accessLevel === 'admin' || accessLevel === 'full') {
     return true;
   }
 
-  // Embajadores need Google sign-in
-  return isSignedIn && isAuthorized && isEmbajador;
+  return false;
 };
 
 /**
