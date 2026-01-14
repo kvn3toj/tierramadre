@@ -77,12 +77,10 @@ export const PriceDisplay = ({
   }
 
   // Modo compacto para tarjetas - iOS HIG body typography (17px)
-  // Guests always see regular price, only Embajadores/Admins see comunidad price
+  // Always show regular price (precioInternacional) to all users in compact mode
   if (compact) {
-    // Guests always see the regular (internacional) price, not comunidad price
-    const displayPrice = isGuest
-      ? (regularPrice || comunidadPrice)
-      : (canSeeComunidadPrice ? comunidadPrice : (regularPrice || comunidadPrice));
+    // Always display the regular (internacional) price for all user roles
+    const displayPrice = regularPrice || comunidadPrice;
     return (
       <Typography
         variant="body2"
