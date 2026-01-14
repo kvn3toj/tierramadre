@@ -8,9 +8,20 @@
  * - Vary header for proper CDN caching
  * - Accept-Ranges for partial content support
  * - Responsive image sizing via ?size= parameter
+ * - HEIC/HEIF fallback to Google Drive thumbnail conversion
  */
 
 import sharp from 'sharp';
+
+/**
+ * MIME types that require special handling (not natively supported by browsers)
+ * HEIC/HEIF are Apple formats that Chrome/Firefox don't support natively
+ */
+const UNSUPPORTED_BROWSER_FORMATS = [
+  'image/heic',
+  'image/heif',
+  'image/avif', // Some browsers don't support AVIF yet
+];
 import {
   getDriveClient,
   isGoogleConfigured,
@@ -202,9 +213,87 @@ export default async function handler(req, res) {
 
         return res.status(200).send(buffer);
       } catch (resizeError) {
-        console.warn('Image resize failed, serving original:', resizeError.message);
-        // Fall through to serve original
+        console.warn('Image resize failed:', resizeError.message);
+
+        // For browser-unsupported formats (HEIC/HEIF), use Google Drive's thumbnail as fallback
+        if (UNSUPPORTED_BROWSER_FORMATS.includes(mimeType)) {
+          console.log(`Using Drive thumbnail fallback for ${mimeType} file: ${name}`);
+          try {
+            const thumbResponse = await drive.files.get({
+              fileId,
+              fields: 'thumbnailLink',
+              supportsAllDrives: true,
+            });
+
+            if (thumbResponse.data.thumbnailLink) {
+              // Request larger thumbnail based on target size
+              const thumbSize = targetWidth || 800;
+              const thumbnailUrl = thumbResponse.data.thumbnailLink.replace(/=s\d+/, `=s${thumbSize}`);
+              const thumbFetch = await fetch(thumbnailUrl);
+
+              if (thumbFetch.ok) {
+                const thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
+
+                res.setHeader('Content-Type', 'image/jpeg');
+                res.setHeader('Content-Length', thumbBuffer.length);
+                res.setHeader('Cache-Control', imageCache);
+                res.setHeader('ETag', `"heic-thumb-${fileId}-${sizeParam}"`);
+                res.setHeader('Vary', 'Accept-Encoding');
+                res.setHeader('Accept-Ranges', 'bytes');
+                res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(name.replace(/\.[^.]+$/, '.jpg'))}"`);
+                res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
+                res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+                res.setHeader('Timing-Allow-Origin', '*');
+                res.setHeader('CDN-Cache-Control', 'public, max-age=604800');
+
+                return res.status(200).send(thumbBuffer);
+              }
+            }
+          } catch (thumbError) {
+            console.warn('Drive thumbnail fallback failed:', thumbError.message);
+          }
+        }
+        // Fall through to serve original (for supported formats that just failed resize)
       }
+    }
+
+    // For browser-unsupported formats without resize (original size), also use Drive thumbnail
+    if (UNSUPPORTED_BROWSER_FORMATS.includes(mimeType)) {
+      console.log(`Using Drive thumbnail for unsupported format ${mimeType}: ${name}`);
+      try {
+        const thumbResponse = await drive.files.get({
+          fileId,
+          fields: 'thumbnailLink',
+          supportsAllDrives: true,
+        });
+
+        if (thumbResponse.data.thumbnailLink) {
+          // Use max size for original requests
+          const thumbnailUrl = thumbResponse.data.thumbnailLink.replace(/=s\d+/, '=s1600');
+          const thumbFetch = await fetch(thumbnailUrl);
+
+          if (thumbFetch.ok) {
+            const thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
+
+            res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Content-Length', thumbBuffer.length);
+            res.setHeader('Cache-Control', imageCache);
+            res.setHeader('ETag', `"heic-orig-${fileId}"`);
+            res.setHeader('Vary', 'Accept-Encoding');
+            res.setHeader('Accept-Ranges', 'bytes');
+            res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(name.replace(/\.[^.]+$/, '.jpg'))}"`);
+            res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
+            res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+            res.setHeader('Timing-Allow-Origin', '*');
+            res.setHeader('CDN-Cache-Control', 'public, max-age=604800');
+
+            return res.status(200).send(thumbBuffer);
+          }
+        }
+      } catch (thumbError) {
+        console.warn('Drive thumbnail fallback failed for original:', thumbError.message);
+      }
+      // Fall through to serve original HEIC (browser won't display but at least it won't error)
     }
 
     // Set all headers for original image
