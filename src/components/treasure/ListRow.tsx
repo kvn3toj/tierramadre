@@ -31,6 +31,8 @@ interface ListRowProps {
   isSelectedForComparison?: boolean;
   onToggleComparison?: () => void;
   canAddToComparison?: boolean;
+  /** Provider mode - hides prices and action buttons */
+  isProviderMode?: boolean;
 }
 
 function ListRow({
@@ -41,6 +43,7 @@ function ListRow({
   isSelectedForComparison = false,
   onToggleComparison,
   canAddToComparison = true,
+  isProviderMode = false,
 }: ListRowProps) {
   const theme = useTheme();
   const { mode } = useThemeMode();
@@ -133,15 +136,18 @@ function ListRow({
         }}
       />
 
-      {/* Price */}
-      <Box sx={{ minWidth: 100, textAlign: 'right' }}>
-        <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
-      </Box>
+      {/* Price (hidden in provider mode) */}
+      {!isProviderMode && (
+        <Box sx={{ minWidth: 100, textAlign: 'right' }}>
+          <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
+        </Box>
+      )}
 
-      {/* Action buttons */}
-      <Box sx={{ display: 'flex', gap: 0.5 }}>
-        {/* Comparison button */}
-        {onToggleComparison && (
+      {/* Action buttons (hidden in provider mode) */}
+      {!isProviderMode && (
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          {/* Comparison button */}
+          {onToggleComparison && (
           <IconButton
             onClick={handleCompareClick}
             aria-label={isSelectedForComparison ? 'Quitar de comparación' : 'Agregar a comparación'}
@@ -164,24 +170,25 @@ function ListRow({
           </IconButton>
         )}
 
-        {/* Favorite button */}
-        <IconButton
-          onClick={handleFavoriteClick}
-          aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
-          size="small"
-          sx={{
-            color: isFavorite ? semanticColors.error.main : theme.palette.text.secondary,
-            '&:hover': {
-              bgcolor: isFavorite ? errorAlpha(0.1) : alpha(emeraldCore.primary, 0.1),
-            },
-          }}
-        >
-          <Heart
-            size={18}
-            fill={isFavorite ? semanticColors.error.main : 'none'}
-          />
-        </IconButton>
-      </Box>
+          {/* Favorite button */}
+          <IconButton
+            onClick={handleFavoriteClick}
+            aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+            size="small"
+            sx={{
+              color: isFavorite ? semanticColors.error.main : theme.palette.text.secondary,
+              '&:hover': {
+                bgcolor: isFavorite ? errorAlpha(0.1) : alpha(emeraldCore.primary, 0.1),
+              },
+            }}
+          >
+            <Heart
+              size={18}
+              fill={isFavorite ? semanticColors.error.main : 'none'}
+            />
+          </IconButton>
+        </Box>
+      )}
     </Paper>
   );
 }

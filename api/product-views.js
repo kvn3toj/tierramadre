@@ -212,6 +212,13 @@ async function getStats(sheets) {
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 50);
 
+  // Build views object mapping itemId to view count
+  const views = {};
+  for (const [key, count] of Object.entries(productCounts)) {
+    const [itemId] = key.split('|');
+    views[itemId] = count;
+  }
+
   return {
     success: true,
     totalViews: dataRows.length,
@@ -224,6 +231,7 @@ async function getStats(sheets) {
     topProducts,
     topViewers,
     recentActivity,
+    views,
     deviceStats: deviceCounts,
     browserStats: browserCounts,
     lastUpdated: new Date().toISOString(),

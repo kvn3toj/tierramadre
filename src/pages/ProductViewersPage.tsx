@@ -194,16 +194,22 @@ const ProductViewersPage: React.FC = () => {
   // Get display name
   const productName = data?.productName || product?.nombre || `Item #${itemId}`;
 
-  // Role display helper
+  // Role display helper - handles both accessLevel and actual role text
   const getRoleLabel = (role: string): string => {
-    if (role === 'admin') return 'Admin';
-    if (role === 'full') return 'Asesor';
+    const r = role.toLowerCase();
+    if (r === 'admin' || r.includes('admin')) return 'Admin';
+    if (r === 'embajador' || r === 'ambassador') return 'Embajador';
+    if (r === 'full' || r === 'asesor') return 'Asesor';
+    if (r === 'provider' || r === 'proveedor') return 'Proveedor';
     return 'Usuario';
   };
 
   const getRoleColor = (role: string): string => {
-    if (role === 'admin') return goldAccent.primary;
-    if (role === 'full') return emeraldCore.primary;
+    const r = role.toLowerCase();
+    if (r === 'admin' || r.includes('admin')) return goldAccent.primary;
+    if (r === 'embajador' || r === 'ambassador') return '#8B5CF6'; // Purple for ambassadors
+    if (r === 'full' || r === 'asesor') return emeraldCore.primary;
+    if (r === 'provider' || r === 'proveedor') return '#3B82F6';
     return '#6B7280';
   };
 

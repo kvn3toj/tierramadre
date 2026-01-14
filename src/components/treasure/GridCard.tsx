@@ -48,6 +48,8 @@ interface GridCardProps {
   viewCount?: number;
   /** Whether the current user is an admin (required to see view counts) */
   isAdmin?: boolean;
+  /** Provider mode - hides prices and comparison features */
+  isProviderMode?: boolean;
 }
 
 function GridCard({
@@ -59,6 +61,7 @@ function GridCard({
   isSelectedForComparison = false,
   onToggleComparison,
   canAddToComparison = true,
+  isProviderMode = false,
 }: GridCardProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -208,8 +211,8 @@ function GridCard({
               />
             )}
 
-            {/* Compare button - top right */}
-            {onToggleComparison && (
+            {/* Compare button - top right (hidden in provider mode) */}
+            {onToggleComparison && !isProviderMode && (
               <IconButton
                 onClick={handleCompareClick}
                 aria-label={isSelectedForComparison ? 'Quitar de comparación' : 'Agregar a comparación'}
@@ -310,8 +313,10 @@ function GridCard({
           </Typography>
         </Box>
 
-        {/* Price - Compact */}
-        <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
+        {/* Price - Compact (hidden in provider mode) */}
+        {!isProviderMode && (
+          <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
+        )}
       </CardContent>
     </Card>
   );
@@ -327,6 +332,7 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.viewCount === nextProps.viewCount &&
     prevProps.isAdmin === nextProps.isAdmin &&
     prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
-    prevProps.canAddToComparison === nextProps.canAddToComparison
+    prevProps.canAddToComparison === nextProps.canAddToComparison &&
+    prevProps.isProviderMode === nextProps.isProviderMode
   );
 });
