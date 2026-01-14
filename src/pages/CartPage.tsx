@@ -179,7 +179,7 @@ export default function CartPage() {
               color: '#FFFFFF',
             }}
           >
-            Explorar Coleccion
+            Explorar Colección
           </Button>
         </Paper>
       ) : (

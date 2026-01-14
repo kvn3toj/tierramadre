@@ -175,7 +175,7 @@ export default function PriceSimulator() {
     setMultiSelectMode(!multiSelectMode);
     if (!multiSelectMode) {
       clearProducts();
-      setProductName('Coleccion de Productos');
+      setProductName('Colección de Productos');
     } else {
       clearProducts();
     }

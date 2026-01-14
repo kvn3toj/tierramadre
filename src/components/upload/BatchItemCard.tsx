@@ -118,10 +118,10 @@ export function BatchItemCard({
           </Grid>
           <Grid item xs={12}>
             <FormControl fullWidth size="small">
-              <InputLabel>Categoria</InputLabel>
+              <InputLabel>Categoría</InputLabel>
               <Select
                 value={item.category}
-                label="Categoria"
+                label="Categoría"
                 onChange={(e) => onUpdate(item.id, { category: e.target.value as EmeraldCategory })}
               >
                 <MenuItem value="loose">Gema</MenuItem>

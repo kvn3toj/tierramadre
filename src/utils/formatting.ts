@@ -83,6 +83,19 @@ export interface QualityBadgeStyle {
  * @param calidad - The quality string
  * @returns Badge style object
  */
+/**
+ * Format collection name for display in dropdown.
+ * Removes redundant "COLECCION" prefix since the dropdown is already labeled "Colección".
+ * @param name - The raw collection name from data source
+ * @returns Cleaned collection name without prefix
+ */
+export const formatCollectionName = (name: string): string => {
+  return name
+    .replace(/^COLECCION\s*/i, '')  // Remove "COLECCION " prefix
+    .replace(/^Colección\s*/i, '')   // Remove "Colección " prefix
+    .trim();
+};
+
 export const getQualityBadge = (calidad: string): QualityBadgeStyle => {
   if (calidad.includes('SuperFina') || calidad === 'Fina') {
     return {

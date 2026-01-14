@@ -260,12 +260,12 @@ export default function ProductRequestForm() {
           onChange={(e) => handleChange('quantity', parseInt(e.target.value) || 1)}
           fullWidth
           inputProps={{ min: 1 }}
-          helperText="Numero de piezas que necesitas"
+          helperText="Número de piezas que necesitas"
         />
 
         {/* Description */}
         <TextField
-          label="Descripcion del Producto"
+          label="Descripción del Producto"
           value={formData.description}
           onChange={(e) => handleChange('description', e.target.value)}
           fullWidth
@@ -278,7 +278,7 @@ export default function ProductRequestForm() {
         {/* Weight Range */}
         <Stack direction="row" spacing={2}>
           <TextField
-            label="Peso Minimo (ct)"
+            label="Peso Mínimo (ct)"
             type="number"
             value={formData.weightMin || ''}
             onChange={(e) => handleChange('weightMin', parseFloat(e.target.value) || 0)}
@@ -289,7 +289,7 @@ export default function ProductRequestForm() {
             inputProps={{ step: 0.1, min: 0 }}
           />
           <TextField
-            label="Peso Maximo (ct)"
+            label="Peso Máximo (ct)"
             type="number"
             value={formData.weightMax || ''}
             onChange={(e) => handleChange('weightMax', parseFloat(e.target.value) || 0)}
@@ -366,7 +366,7 @@ export default function ProductRequestForm() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
               <User size={18} color={emeraldCore.primary} />
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                Informacion del Cliente (Opcional)
+                Información del Cliente (Opcional)
               </Typography>
             </Box>
             <Stack spacing={2}>

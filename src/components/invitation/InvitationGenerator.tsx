@@ -274,7 +274,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   />
                   <TextField
                     fullWidth
-                    label="Telefono"
+                    label="Teléfono"
                     placeholder="+57 300 123 4567"
                     type="tel"
                     value={guestPhone}

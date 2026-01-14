@@ -689,7 +689,7 @@ const CollectionDisplay: React.FC<CollectionDisplayProps> = ({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Layers size={16} color={PURPLE_ACCENT} />
         <Typography variant="body2" sx={{ fontWeight: 600, color: PURPLE_ACCENT }}>
-          Coleccion ({selectedProducts.length} productos)
+          Colección ({selectedProducts.length} productos)
         </Typography>
       </Box>
       <Typography variant="caption" sx={{ color: PURPLE_ACCENT, fontWeight: 600 }}>

@@ -41,7 +41,7 @@ import {
 } from '../../hooks/useTreasureFiltering';
 import { useTreasureAnalytics } from '../../hooks/useTreasureAnalytics';
 import { TreasureItem } from '../../types';
-import { formatCurrency, getColorDot } from '../../utils/formatting';
+import { formatCurrency, getColorDot, formatCollectionName } from '../../utils/formatting';
 import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
 
 // =============================================================================
@@ -561,8 +561,8 @@ export const FilterContent = memo(function FilterContent({
             <MenuItem value="name-asc">Nombre A-Z</MenuItem>
             <MenuItem value="name-desc">Nombre Z-A</MenuItem>
             <MenuItem value="quality-premium">Mejor Calidad</MenuItem>
-            <MenuItem value="item-number">Numero de Item</MenuItem>
-            <MenuItem value="newest">Mas Recientes</MenuItem>
+            <MenuItem value="item-number">Número de Ítem</MenuItem>
+            <MenuItem value="newest">Más Recientes</MenuItem>
             <MenuItem value="most-searched">Más Buscados</MenuItem>
           </Select>
         </FormControl>
@@ -703,7 +703,7 @@ export const FilterContent = memo(function FilterContent({
                 <MenuItem value="all">Colección</MenuItem>
                 {colecciones.map((coleccion) => (
                   <MenuItem key={coleccion} value={coleccion}>
-                    {coleccion}
+                    {formatCollectionName(coleccion)}
                   </MenuItem>
                 ))}
               </Select>

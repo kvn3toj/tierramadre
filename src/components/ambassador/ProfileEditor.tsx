@@ -611,7 +611,7 @@ function ContactTab({
                   </MenuItem>
                   <MenuItem value="phone">
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Phone size={14} /> Telefono
+                      <Phone size={14} /> Teléfono
                     </Box>
                   </MenuItem>
                 </Select>
@@ -623,7 +623,7 @@ function ContactTab({
                 placeholder={
                   contact.type === 'whatsapp' ? '+57 300 123 4567' :
                   contact.type === 'email' ? 'correo@ejemplo.com' :
-                  contact.type === 'instagram' ? '@usuario' : 'Numero'
+                  contact.type === 'instagram' ? '@usuario' : 'Número'
                 }
                 value={contact.value}
                 onChange={(e) => updateContactMethod(index, 'value', e.target.value)}

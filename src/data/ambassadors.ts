@@ -127,19 +127,19 @@ export const SAMPLE_AMBASSADORS: AmbassadorProfile[] = [
     languages: ['es', 'en'],
     timezone: 'America/Bogota',
     specialties: [
-      { name: 'Joyeria Fina', description: 'Anillos y aretes en oro y plata', yearsExperience: 10 },
-      { name: 'Disenos Personalizados', description: 'Piezas unicas a medida', yearsExperience: 8 }
+      { name: 'Joyería Fina', description: 'Anillos y aretes en oro y plata', yearsExperience: 10 },
+      { name: 'Diseños Personalizados', description: 'Piezas únicas a medida', yearsExperience: 8 }
     ],
     priceRange: 'luxury',
     expertise: [
-      { area: 'jewelry', level: 'expert', description: 'Joyeria de alta calidad' },
-      { area: 'custom-design', level: 'expert', description: 'Disenos personalizados' }
+      { area: 'jewelry', level: 'expert', description: 'Joyería de alta calidad' },
+      { area: 'custom-design', level: 'expert', description: 'Diseños personalizados' }
     ],
     certifications: [
       {
         type: 'jewelry-designer',
-        name: 'Disenador de Joyas Certificado',
-        issuingBody: 'Academia de Joyeria Colombiana',
+        name: 'Diseñador de Joyas Certificado',
+        issuingBody: 'Academia de Joyería Colombiana',
         dateIssued: '2019-09-20',
         verified: true
       }

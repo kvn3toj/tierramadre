@@ -471,7 +471,7 @@ export default function ProviderQuotationForm() {
           onChange={(e) => handleChange('availability', parseInt(e.target.value) || 0)}
           fullWidth
           inputProps={{ min: 1 }}
-          helperText="Numero de piezas disponibles (gemas, anillos, etc.)"
+          helperText="Número de piezas disponibles (gemas, anillos, etc.)"
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: radius.md,
@@ -508,7 +508,7 @@ export default function ProviderQuotationForm() {
                 mb: 2,
               }}
             >
-              Sube imagenes, GIFs o videos del producto (maximo 5 archivos)
+              Sube imágenes, GIFs o videos del producto (máximo 5 archivos)
             </Typography>
             <QuotationMediaUpload
               quotationId={tempQuotationId}
@@ -528,7 +528,7 @@ export default function ProviderQuotationForm() {
           fullWidth
           multiline
           rows={2}
-          placeholder="Informacion adicional, condiciones, etc..."
+          placeholder="Información adicional, condiciones, etc..."
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: radius.md,

@@ -97,7 +97,7 @@ ${gitGraphCommits.map(c => {
   const pieChart = `
 %%{init: {'theme': 'dark', 'themeVariables': { 'pie1': '#10B981', 'pie2': '#6366F1', 'pie3': '#8B5CF6', 'pie4': '#F59E0B', 'pie5': '#EF4444', 'pieStrokeColor': '#1E293B', 'pieOuterStrokeColor': '#0F172A'}}}%%
 pie showData
-    title Commits por Categoria
+    title Commits por Categoría
 ${pieData}`;
 
   return { gitGraph, pieChart };
@@ -535,7 +535,7 @@ const AdminChangelogPage: React.FC = () => {
           >
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
               <GitBranch size={20} color={emeraldCore.primary} />
-              Categorias
+              Categorías
             </Typography>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -620,7 +620,7 @@ const AdminChangelogPage: React.FC = () => {
           >
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
               <FileText size={20} color={semanticColors.info.main} />
-              Archivos Mas Activos
+              Archivos Más Activos
             </Typography>
 
             {mostChangedFiles.slice(0, 5).map((file) => (

@@ -39,7 +39,7 @@ const RINGS_IMAGES: GalleryImage[] = [
   { id: 'ring-2', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621937/tierramadre/gallery/rings/srwbqwvnqropetlnxics.jpg', alt: 'Anillo de compromiso esmeralda' },
   { id: 'ring-3', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621941/tierramadre/gallery/rings/wkzofxy8mm1sbhhxaomr.jpg', alt: 'Joya de esmeralda colombiana' },
   { id: 'ring-4', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621944/tierramadre/gallery/rings/esgn24ccuncy6ioj8dxs.jpg', alt: 'Anillo elegante con esmeralda' },
-  { id: 'ring-5', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621955/tierramadre/gallery/rings/gdpu0dzc5r6la7phhpqq.jpg', alt: 'Diseno exclusivo esmeralda' },
+  { id: 'ring-5', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621955/tierramadre/gallery/rings/gdpu0dzc5r6la7phhpqq.jpg', alt: 'Diseño exclusivo esmeralda' },
   { id: 'ring-6', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621959/tierramadre/gallery/rings/sl1qmwz8p6qdkhpygbl4.jpg', alt: 'Anillo artesanal esmeralda' },
 ];
 

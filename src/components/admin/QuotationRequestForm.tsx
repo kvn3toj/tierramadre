@@ -293,12 +293,12 @@ export default function QuotationRequestForm() {
           onChange={(e) => handleChange('quantity', parseInt(e.target.value) || 1)}
           fullWidth
           inputProps={{ min: 1 }}
-          helperText="Numero de piezas que necesitas"
+          helperText="Número de piezas que necesitas"
         />
 
         {/* Budget Max */}
         <TextField
-          label="Presupuesto Maximo"
+          label="Presupuesto Máximo"
           value={budgetDisplay}
           onChange={(e) => handleBudgetChange(e.target.value)}
           fullWidth

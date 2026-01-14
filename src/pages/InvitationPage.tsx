@@ -344,13 +344,13 @@ export default function InvitationPage() {
             </ToggleButton>
             <ToggleButton value="phone" sx={{ flex: 1 }}>
               <PhoneIcon sx={{ mr: 1 }} fontSize="small" />
-              Telefono
+              Teléfono
             </ToggleButton>
           </ToggleButtonGroup>
 
           <TextField
             fullWidth
-            label={contactType === 'email' ? 'Tu email' : 'Tu telefono'}
+            label={contactType === 'email' ? 'Tu email' : 'Tu teléfono'}
             type={contactType === 'email' ? 'email' : 'tel'}
             value={guestContact}
             onChange={(e) => setGuestContact(e.target.value)}
@@ -373,7 +373,7 @@ export default function InvitationPage() {
           >
             <Timer sx={{ color: brand.gold[600], fontSize: 20 }} />
             <Typography variant="body2">
-              Tendras {timeRemaining} minutos para explorar
+              Tendrás {timeRemaining} minutos para explorar
             </Typography>
           </Box>
 
@@ -389,7 +389,7 @@ export default function InvitationPage() {
               '&:hover': { bgcolor: brand.emerald[700] },
             }}
           >
-            {isRegistering ? 'Registrando...' : 'Explorar Coleccion'}
+            {isRegistering ? 'Registrando...' : 'Explorar Colección'}
           </Button>
         </Paper>
       </Box>
@@ -465,7 +465,7 @@ export default function InvitationPage() {
             mb: 1,
           }}
         >
-          Explorar Coleccion
+          Explorar Colección
         </Button>
 
         <Button

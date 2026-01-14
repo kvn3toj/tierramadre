@@ -88,6 +88,33 @@ const QUALITY_ORDER: Record<string, number> = {
   'Comercial': 1,
 };
 
+/**
+ * Normalize quality strings to consistent format
+ * Fixes typos and variations from Google Sheets data
+ */
+function normalizeQuality(quality: string): string {
+  if (!quality) return '';
+  const q = quality.trim();
+
+  // Fix common typos and variations
+  const normalizations: Record<string, string> = {
+    'Comercial Standar': 'Comercial Estándar',
+    'Comercial Estandar': 'Comercial Estándar',
+    'Comercial Standard': 'Comercial Estándar',
+  };
+
+  return normalizations[q] || q;
+}
+
+/**
+ * Normalize color strings to consistent format
+ * Ensures colors from Google Sheets are properly formatted
+ */
+function normalizeColor(color: string): string {
+  if (!color) return '';
+  return color.trim();
+}
+
 const DEFAULT_INACTIVITY_TIMEOUT_MINUTES = 3;
 
 // Session storage key to track filter activity
@@ -135,7 +162,7 @@ export function useTreasureFiltering({
     }
   }, [priceMinMax.min, priceMinMax.max, treasure.length]);
 
-  // Get unique filter options from treasure
+  // Get unique filter options from treasure (with normalization)
   const filterOptions = useMemo(() => {
     const colors = new Set<string>();
     const shapes = new Set<string>();
@@ -144,9 +171,12 @@ export function useTreasureFiltering({
     const colecciones = new Set<string>();
 
     treasure.forEach(item => {
-      if (item.color) colors.add(item.color);
+      const normalizedColor = normalizeColor(item.color);
+      const normalizedQuality = normalizeQuality(item.calidad);
+
+      if (normalizedColor) colors.add(normalizedColor);
       if (item.talla) shapes.add(item.talla);
-      if (item.calidad) qualities.add(item.calidad);
+      if (normalizedQuality) qualities.add(normalizedQuality);
       if (item.cantidad) cantidades.add(item.cantidad);
       if (item.coleccion) colecciones.add(item.coleccion);
     });
@@ -181,8 +211,8 @@ export function useTreasureFiltering({
         fuzzyMatch(item.calidad, search) ||
         item.item.toString().includes(search.trim());
 
-      const matchesColor = colorFilter === 'all' || item.color === colorFilter;
-      const matchesQuality = qualityFilter === 'all' || item.calidad === qualityFilter;
+      const matchesColor = colorFilter === 'all' || normalizeColor(item.color) === colorFilter;
+      const matchesQuality = qualityFilter === 'all' || normalizeQuality(item.calidad) === qualityFilter;
       const matchesType =
         typeFilter === 'all' ||
         (typeFilter === 'loose' && !item.isJewelry) ||
@@ -224,10 +254,24 @@ export function useTreasureFiltering({
         case 'item-number':
           return a.item - b.item;
         case 'newest': {
-          // Parse dates in format "20-nov-2025"
+          // Parse dates in format "20-nov-2025" (Spanish month abbreviations)
+          const spanishMonths: Record<string, number> = {
+            'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5,
+            'jul': 6, 'ago': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11,
+          };
           const parseDate = (dateStr: string) => {
             if (!dateStr) return 0;
-            return new Date(dateStr).getTime();
+            const parts = dateStr.toLowerCase().split('-');
+            if (parts.length === 3) {
+              const day = parseInt(parts[0], 10);
+              const month = spanishMonths[parts[1]];
+              const year = parseInt(parts[2], 10);
+              if (!isNaN(day) && month !== undefined && !isNaN(year)) {
+                return new Date(year, month, day).getTime();
+              }
+            }
+            // Fallback to native parsing
+            return new Date(dateStr).getTime() || 0;
           };
           return parseDate(b.fechaIngreso) - parseDate(a.fechaIngreso);
         }
