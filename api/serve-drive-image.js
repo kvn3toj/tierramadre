@@ -1,8 +1,12 @@
 /**
  * Vercel Serverless Function - Serve Image from Google Drive
  *
- * This endpoint proxies images from Google Drive through the service account,
- * allowing access to files without requiring public sharing.
+ * Optimized for Chrome browser compatibility:
+ * - Proper CORS headers with Access-Control-Expose-Headers
+ * - RFC 5987 compliant Content-Disposition encoding
+ * - ETag support for conditional requests
+ * - Vary header for proper CDN caching
+ * - Accept-Ranges for partial content support
  */
 
 import {
@@ -13,8 +17,26 @@ import {
   CACHE,
 } from './_lib/index.js';
 
+/**
+ * Encode filename for Content-Disposition header (RFC 5987)
+ * Chrome is strict about header encoding - Safari is lenient
+ */
+function encodeFilename(filename) {
+  // Remove or replace problematic characters for ASCII fallback
+  const sanitized = filename.replace(/[^\w\s.-]/g, '_');
+  return sanitized;
+}
+
+/**
+ * Generate ETag from file metadata for conditional requests
+ */
+function generateETag(fileId, size, mimeType) {
+  const hash = Buffer.from(`${fileId}-${size}-${mimeType}`).toString('base64').slice(0, 16);
+  return `"${hash}"`;
+}
+
 export default async function handler(req, res) {
-  if (initApi(req, res, { methods: ['GET', 'OPTIONS'] })) return;
+  if (initApi(req, res, { methods: ['GET', 'HEAD', 'OPTIONS'] })) return;
 
   if (!isGoogleConfigured()) {
     return sendError(res, 500, 'Google Service Account not configured');
@@ -29,14 +51,23 @@ export default async function handler(req, res) {
 
     const drive = getDriveClient();
 
-    // Get file metadata first
+    // Get file metadata first (needed for all request types)
     const metadataResponse = await drive.files.get({
       fileId,
       fields: 'id,name,mimeType,size',
       supportsAllDrives: true,
     });
 
-    const { mimeType, name } = metadataResponse.data;
+    const { mimeType, name, size } = metadataResponse.data;
+    const etag = generateETag(fileId, size, mimeType);
+
+    // Check If-None-Match for conditional requests (304 Not Modified)
+    const ifNoneMatch = req.headers['if-none-match'];
+    if (ifNoneMatch === etag) {
+      res.setHeader('ETag', etag);
+      res.setHeader('Cache-Control', CACHE.LONG);
+      return res.status(304).end();
+    }
 
     // For thumbnail requests (videos), fetch and proxy the thumbnail
     if (thumbnail === 'true') {
@@ -53,9 +84,20 @@ export default async function handler(req, res) {
 
           if (thumbFetch.ok) {
             const thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
+
+            // Chrome-optimized headers for thumbnails
             res.setHeader('Content-Type', 'image/jpeg');
             res.setHeader('Content-Length', thumbBuffer.length);
             res.setHeader('Cache-Control', CACHE.LONG);
+            res.setHeader('ETag', `"thumb-${fileId}"`);
+            res.setHeader('Vary', 'Accept-Encoding');
+            res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, ETag');
+
+            // HEAD request - return headers only
+            if (req.method === 'HEAD') {
+              return res.status(200).end();
+            }
+
             return res.status(200).send(thumbBuffer);
           }
         } catch (thumbError) {
@@ -73,7 +115,29 @@ export default async function handler(req, res) {
       // For images, fall through to serve the original file
     }
 
-    // Download the file
+    // Set common headers first (for HEAD requests and conditional requests)
+    const commonHeaders = () => {
+      res.setHeader('Content-Type', mimeType);
+      res.setHeader('Content-Length', size || 0);
+      res.setHeader('Cache-Control', CACHE.LONG);
+      res.setHeader('ETag', etag);
+      res.setHeader('Vary', 'Accept-Encoding');
+      res.setHeader('Accept-Ranges', 'bytes');
+      res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(name)}"; filename*=UTF-8''${encodeURIComponent(name)}`);
+      // Chrome requires explicit header exposure for CORS
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
+      // Cross-Origin headers for Chrome image handling
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.setHeader('Timing-Allow-Origin', '*');
+    };
+
+    // HEAD request - return headers without body
+    if (req.method === 'HEAD') {
+      commonHeaders();
+      return res.status(200).end();
+    }
+
+    // Download the file for GET requests
     const response = await drive.files.get(
       { fileId, alt: 'media', supportsAllDrives: true },
       { responseType: 'arraybuffer' }
@@ -81,10 +145,10 @@ export default async function handler(req, res) {
 
     const buffer = Buffer.from(response.data);
 
-    res.setHeader('Content-Type', mimeType);
+    // Set all headers
+    commonHeaders();
+    // Update Content-Length with actual buffer size (may differ from metadata)
     res.setHeader('Content-Length', buffer.length);
-    res.setHeader('Cache-Control', CACHE.LONG);
-    res.setHeader('Content-Disposition', `inline; filename="${name}"`);
 
     return res.status(200).send(buffer);
 

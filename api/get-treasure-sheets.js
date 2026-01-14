@@ -11,6 +11,8 @@ import {
   initApi,
   sendError,
   sendSuccess,
+  setCacheHeaders,
+  CACHE,
   SPREADSHEET_ID,
   getSheetNames,
   findSheetByPattern,
@@ -142,6 +144,9 @@ async function fetchPricingData(sheets) {
 
 export default async function handler(req, res) {
   if (initApi(req, res, { methods: ['GET', 'OPTIONS'] })) return;
+
+  // NO cache for sheets data - prices and inventory must always be fresh
+  setCacheHeaders(res, CACHE.NONE);
 
   if (!isGoogleConfigured()) {
     return sendError(res, 500, 'Google Service Account not configured');

@@ -21,6 +21,7 @@ import {
   extractItemNumber,
   getProxyUrl,
 } from './_lib/index.js';
+import crypto from 'crypto';
 
 export default async function handler(req, res) {
   if (initApi(req, res, { methods: ['GET', 'OPTIONS'] })) return;
@@ -88,9 +89,26 @@ export default async function handler(req, res) {
 
     console.log(`Generated ${Object.keys(thumbnails).length} thumbnails`);
 
+    // Generate ETag from thumbnail count for conditional requests
+    const count = Object.keys(thumbnails).length;
+    const dataHash = crypto.createHash('md5')
+      .update(JSON.stringify({ count, keys: Object.keys(thumbnails).sort().join(',') }))
+      .digest('hex')
+      .slice(0, 16);
+    const etag = `"batch-${dataHash}"`;
+
+    // Check If-None-Match for 304 response
+    const ifNoneMatch = req.headers['if-none-match'];
+    if (ifNoneMatch === etag) {
+      res.setHeader('ETag', etag);
+      return res.status(304).end();
+    }
+
+    res.setHeader('ETag', etag);
+
     return sendSuccess(res, {
       thumbnails,
-      count: Object.keys(thumbnails).length,
+      count,
       lastUpdated: new Date().toISOString(),
     });
 

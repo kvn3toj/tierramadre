@@ -12,6 +12,8 @@ import {
   initApi,
   sendError,
   sendSuccess,
+  setCacheHeaders,
+  CACHE,
   getProductsFolderId,
   getProductFolderById,
   listMediaFiles,
@@ -21,6 +23,9 @@ import {
 
 export default async function handler(req, res) {
   if (initApi(req, res, { methods: ['GET', 'OPTIONS'] })) return;
+
+  // Cache for 5 minutes - product images don't change frequently
+  setCacheHeaders(res, CACHE.MEDIUM);
 
   if (!isGoogleConfigured()) {
     return sendError(res, 500, 'Google Service Account not configured');
