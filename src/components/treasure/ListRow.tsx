@@ -201,6 +201,7 @@ export default React.memo(ListRow, (prevProps, nextProps) => {
     prevProps.item.estado === nextProps.item.estado &&
     prevProps.isFavorite === nextProps.isFavorite &&
     prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
-    prevProps.canAddToComparison === nextProps.canAddToComparison
+    prevProps.canAddToComparison === nextProps.canAddToComparison &&
+    prevProps.isProviderMode === nextProps.isProviderMode
   );
 });

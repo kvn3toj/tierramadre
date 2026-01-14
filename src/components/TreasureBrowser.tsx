@@ -61,7 +61,17 @@ import IOSFilterSheet from './ios/IOSFilterSheet';
 
 const log = createLogger('Treasure');
 
-export default function TreasureBrowser() {
+export interface TreasureBrowserProps {
+  /** Provider mode - restricts features: hides prices, share, contact, cart, comparison */
+  isProviderMode?: boolean;
+  /** Default view mode (defaults to 'grid', provider mode defaults to 'list') */
+  defaultViewMode?: 'grid' | 'list';
+}
+
+export default function TreasureBrowser({
+  isProviderMode = false,
+  defaultViewMode,
+}: TreasureBrowserProps = {}) {
   const theme = useTheme();
   const { mode } = useThemeMode();
   const { accessLevel } = useAuthContext();
@@ -163,8 +173,10 @@ export default function TreasureBrowser() {
   // Search input ref
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // UI state
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  // UI state - provider mode defaults to list view
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(
+    defaultViewMode ?? (isProviderMode ? 'list' : 'grid')
+  );
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
@@ -280,7 +292,7 @@ export default function TreasureBrowser() {
     priceMinMax,
     isLight,
     theme,
-    hidePriceFilter: !guestCanSeePrices,
+    hidePriceFilter: !guestCanSeePrices || isProviderMode,
   };
 
   return (
@@ -413,47 +425,49 @@ export default function TreasureBrowser() {
             priceMinMax={priceMinMax}
             hasFilters={hasFilters}
             onClearFilters={urlSync.handleClearFilters}
-            hidePriceFilter={!guestCanSeePrices}
+            hidePriceFilter={!guestCanSeePrices || isProviderMode}
           />
 
           {/* Quick info row with active filters */}
           {!filterSheetOpen && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1, flexWrap: 'wrap', rowGap: 0.5 }}>
-              {/* Favorites toggle */}
-              <Box
-                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                  cursor: 'pointer',
-                  px: 1.5,
-                  py: 0.5,
-                  borderRadius: '16px',
-                  bgcolor: showFavoritesOnly
-                    ? alpha('#ef4444', 0.15)
-                    : isLight
-                      ? surfacesLight.background.secondary
-                      : surfacesDark.background.tertiary,
-                  border: showFavoritesOnly ? '1px solid #ef4444' : 'none',
-                  flexShrink: 0,
-                }}
-              >
-                <Heart
-                  size={14}
-                  fill={showFavoritesOnly ? '#ef4444' : 'none'}
-                  color={showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary}
-                />
-                <Typography
+              {/* Favorites toggle (hidden in provider mode) */}
+              {!isProviderMode && (
+                <Box
+                  onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
                   sx={{
-                    color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
-                    fontWeight: 600,
-                    fontSize: '0.7rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    cursor: 'pointer',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: '16px',
+                    bgcolor: showFavoritesOnly
+                      ? alpha('#ef4444', 0.15)
+                      : isLight
+                        ? surfacesLight.background.secondary
+                        : surfacesDark.background.tertiary,
+                    border: showFavoritesOnly ? '1px solid #ef4444' : 'none',
+                    flexShrink: 0,
                   }}
                 >
-                  {favoritesCount}
-                </Typography>
-              </Box>
+                  <Heart
+                    size={14}
+                    fill={showFavoritesOnly ? '#ef4444' : 'none'}
+                    color={showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary}
+                  />
+                  <Typography
+                    sx={{
+                      color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
+                      fontWeight: 600,
+                      fontSize: '0.7rem',
+                    }}
+                  >
+                    {favoritesCount}
+                  </Typography>
+                </Box>
+              )}
 
               {/* Active filter chips - compact mode */}
               <ActiveFilterChips
@@ -617,28 +631,33 @@ export default function TreasureBrowser() {
                 </>
               )}
             </Typography>
-            {/* Favorites toggle */}
-            <Chip
-              icon={<Heart size={14} fill={showFavoritesOnly ? '#ef4444' : 'none'} color={showFavoritesOnly ? '#ef4444' : '#6b7280'} />}
-              label={`Favoritos (${favoritesCount})`}
-              size="small"
-              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-              sx={{
-                cursor: 'pointer',
-                bgcolor: showFavoritesOnly ? alpha('#ef4444', 0.1) : 'transparent',
-                color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
-                border: '1px solid',
-                borderColor: showFavoritesOnly ? '#ef4444' : isLight ? surfacesLight.border.light : surfacesDark.border.default,
-                fontWeight: showFavoritesOnly ? 600 : 400,
-                '&:hover': {
-                  bgcolor: alpha('#ef4444', 0.1),
-                },
-              }}
-            />
+            {/* Favorites toggle (hidden in provider mode) */}
+            {!isProviderMode && (
+              <Chip
+                icon={<Heart size={14} fill={showFavoritesOnly ? '#ef4444' : 'none'} color={showFavoritesOnly ? '#ef4444' : '#6b7280'} />}
+                label={`Favoritos (${favoritesCount})`}
+                size="small"
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                sx={{
+                  cursor: 'pointer',
+                  bgcolor: showFavoritesOnly ? alpha('#ef4444', 0.1) : 'transparent',
+                  color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
+                  border: '1px solid',
+                  borderColor: showFavoritesOnly ? '#ef4444' : isLight ? surfacesLight.border.light : surfacesDark.border.default,
+                  fontWeight: showFavoritesOnly ? 600 : 400,
+                  '&:hover': {
+                    bgcolor: alpha('#ef4444', 0.1),
+                  },
+                }}
+              />
+            )}
           </Box>
-          <Typography variant="body2" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
-            {formatFullCurrency(filteredStats.totalValue)} total
-          </Typography>
+          {/* Total value (hidden in provider mode) */}
+          {!isProviderMode && (
+            <Typography variant="body2" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
+              {formatFullCurrency(filteredStats.totalValue)} total
+            </Typography>
+          )}
         </Box>
       )}
 
@@ -668,8 +687,9 @@ export default function TreasureBrowser() {
               viewCount={getViewCount(props.item.item)}
               isAdmin={isAdmin}
               isSelectedForComparison={comparison.isSelected(props.item.item)}
-              onToggleComparison={() => comparison.toggleComparison(props.item)}
+              onToggleComparison={isProviderMode ? undefined : () => comparison.toggleComparison(props.item)}
               canAddToComparison={comparison.canAddMore}
+              isProviderMode={isProviderMode}
             />
           )}
         />
@@ -683,6 +703,7 @@ export default function TreasureBrowser() {
               onCertClick={() => handleCertClick(item)}
               onItemClick={() => handleItemClick(item)}
               onToggleFavorite={() => toggleFavorite(item.item)}
+              isProviderMode={isProviderMode}
             />
           ))}
         </Box>
@@ -785,20 +806,24 @@ export default function TreasureBrowser() {
         />
       )}
 
-      {/* Comparison Bar */}
-      <ComparisonBar
-        selectedItems={comparison.selectedItems}
-        onRemove={(itemId) => comparison.removeFromComparison(itemId)}
-        onClear={comparison.clearComparison}
-        onCompare={comparison.openComparisonModal}
-      />
+      {/* Comparison Bar (hidden in provider mode) */}
+      {!isProviderMode && (
+        <ComparisonBar
+          selectedItems={comparison.selectedItems}
+          onRemove={(itemId) => comparison.removeFromComparison(itemId)}
+          onClear={comparison.clearComparison}
+          onCompare={comparison.openComparisonModal}
+        />
+      )}
 
-      {/* Comparison Modal */}
-      <ComparisonModal
-        open={comparison.showComparisonModal}
-        onClose={comparison.closeComparisonModal}
-        items={comparison.selectedItems}
-      />
+      {/* Comparison Modal (hidden in provider mode) */}
+      {!isProviderMode && (
+        <ComparisonModal
+          open={comparison.showComparisonModal}
+          onClose={comparison.closeComparisonModal}
+          items={comparison.selectedItems}
+        />
+      )}
     </Box>
   );
 }

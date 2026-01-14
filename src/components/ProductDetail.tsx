@@ -46,7 +46,7 @@ import { treasureToCartItem } from '../types/cart';
 import AdminSelectDialog from './cart/AdminSelectDialog';
 import { QRCodeSVG } from 'qrcode.react';
 import { useThemeMode } from '../contexts/ThemeContext';
-import { useCanEdit, useIsAdmin } from '../hooks/usePermissions';
+import { useCanEdit, useIsAdmin, useIsProvider } from '../hooks/usePermissions';
 import { useIsGuest } from '../hooks/useAuth';
 import { useTreasure } from '../hooks/useTreasure';
 import { MemberBenefitsTeaser } from './guest';
@@ -76,6 +76,7 @@ export default function ProductDetail() {
   const canEdit = useCanEdit();
   const isAdmin = useIsAdmin();
   const isGuest = useIsGuest();
+  const isProvider = useIsProvider();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showDriveInfo, setShowDriveInfo] = useState(false);
@@ -895,101 +896,103 @@ export default function ProductDetail() {
               </Box>
             </Box>
 
-            {/* CTA Buttons - iOS Style Compact */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 1 }}>
-              {/* Primary CTA - Add to Selection */}
-              <Button
-                variant="contained"
-                fullWidth
-                disabled={!isAvailable}
-                onClick={handleAddToCart}
-                startIcon={
-                  <Badge badgeContent={cartCount} color="secondary" max={9}>
-                    <ShoppingCart size={18} />
-                  </Badge>
-                }
-                sx={{
-                  background: isAvailable
-                    ? (product && isInCart(product.item) ? emeraldCore.dark : buttonGradients.primary)
-                    : undefined,
-                  color: '#FFFFFF',
-                  py: 1.5,
-                  minHeight: 44,
-                  fontWeight: 600,
-                  fontSize: '15px',
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  boxShadow: isAvailable ? emeraldShadows.primary : undefined,
-                  '&:hover': {
-                    background: isAvailable ? emeraldGradients.deep : undefined,
-                    boxShadow: isAvailable ? emeraldShadows.lg : undefined,
-                  },
-                  '&:active': {
-                    transform: 'scale(0.98)',
-                  },
-                }}
-              >
-                {!isAvailable
-                  ? 'Vendido'
-                  : product && isInCart(product.item)
-                    ? 'Ver Seleccion'
-                    : 'Agregar a Seleccion'}
-              </Button>
-
-              {/* Secondary CTAs - Horizontal layout */}
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                {/* Share Button - iOS style */}
+            {/* CTA Buttons - iOS Style Compact (hidden for providers) */}
+            {!isProvider && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 1 }}>
+                {/* Primary CTA - Add to Selection */}
                 <Button
-                  variant="outlined"
-                  onClick={handleShareProduct}
-                  startIcon={<Share2 size={18} />}
+                  variant="contained"
+                  fullWidth
+                  disabled={!isAvailable}
+                  onClick={handleAddToCart}
+                  startIcon={
+                    <Badge badgeContent={cartCount} color="secondary" max={9}>
+                      <ShoppingCart size={18} />
+                    </Badge>
+                  }
                   sx={{
-                    flex: 1,
-                    color: emeraldCore.dark,
-                    borderColor: isLight ? surfacesLight.border.default : surfacesDark.border.default,
-                    py: 1,
+                    background: isAvailable
+                      ? (product && isInCart(product.item) ? emeraldCore.dark : buttonGradients.primary)
+                      : undefined,
+                    color: '#FFFFFF',
+                    py: 1.5,
                     minHeight: 44,
                     fontWeight: 600,
                     fontSize: '15px',
                     borderRadius: 2,
                     textTransform: 'none',
+                    boxShadow: isAvailable ? emeraldShadows.primary : undefined,
                     '&:hover': {
-                      borderColor: emeraldCore.dark,
-                      bgcolor: alpha(emeraldCore.dark, 0.04),
+                      background: isAvailable ? emeraldGradients.deep : undefined,
+                      boxShadow: isAvailable ? emeraldShadows.lg : undefined,
                     },
                     '&:active': {
                       transform: 'scale(0.98)',
                     },
                   }}
                 >
-                  {isNativeShareSupported ? 'Compartir' : 'Copiar Link'}
+                  {!isAvailable
+                    ? 'Vendido'
+                    : product && isInCart(product.item)
+                      ? 'Ver Seleccion'
+                      : 'Agregar a Seleccion'}
                 </Button>
 
-                {/* Contact Button - WhatsApp */}
-                <Button
-                  variant="text"
-                  onClick={handleContact}
-                  startIcon={<MessageCircle size={18} />}
-                  sx={{
-                    flex: 1,
-                    color: emeraldCore.dark,
-                    py: 1,
-                    minHeight: 44,
-                    fontWeight: 600,
-                    fontSize: '15px',
-                    textTransform: 'none',
-                    '&:hover': {
-                      bgcolor: alpha(emeraldCore.dark, 0.04),
-                    },
-                    '&:active': {
-                      opacity: 0.7,
-                    },
-                  }}
-                >
-                  Consultar
-                </Button>
+                {/* Secondary CTAs - Horizontal layout */}
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  {/* Share Button - iOS style */}
+                  <Button
+                    variant="outlined"
+                    onClick={handleShareProduct}
+                    startIcon={<Share2 size={18} />}
+                    sx={{
+                      flex: 1,
+                      color: emeraldCore.dark,
+                      borderColor: isLight ? surfacesLight.border.default : surfacesDark.border.default,
+                      py: 1,
+                      minHeight: 44,
+                      fontWeight: 600,
+                      fontSize: '15px',
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      '&:hover': {
+                        borderColor: emeraldCore.dark,
+                        bgcolor: alpha(emeraldCore.dark, 0.04),
+                      },
+                      '&:active': {
+                        transform: 'scale(0.98)',
+                      },
+                    }}
+                  >
+                    {isNativeShareSupported ? 'Compartir' : 'Copiar Link'}
+                  </Button>
+
+                  {/* Contact Button - WhatsApp */}
+                  <Button
+                    variant="text"
+                    onClick={handleContact}
+                    startIcon={<MessageCircle size={18} />}
+                    sx={{
+                      flex: 1,
+                      color: emeraldCore.dark,
+                      py: 1,
+                      minHeight: 44,
+                      fontWeight: 600,
+                      fontSize: '15px',
+                      textTransform: 'none',
+                      '&:hover': {
+                        bgcolor: alpha(emeraldCore.dark, 0.04),
+                      },
+                      '&:active': {
+                        opacity: 0.7,
+                      },
+                    }}
+                  >
+                    Consultar
+                  </Button>
+                </Box>
               </Box>
-            </Box>
+            )}
 
             {/* Member Benefits Teaser - Only for Guest Users */}
             {isGuest && (
