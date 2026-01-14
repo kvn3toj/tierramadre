@@ -8,9 +8,6 @@ import {
   Grid,
   alpha,
   useTheme,
-  Collapse,
-  IconButton,
-  Tooltip,
   Snackbar,
   Badge,
 } from '@mui/material';
@@ -26,10 +23,6 @@ import {
   Calendar,
   Crown,
   ShoppingCart,
-  ChevronUp,
-  FolderOpen,
-  Edit2,
-  Check,
   QrCode,
   Share2,
   MessageCircle,
@@ -46,12 +39,11 @@ import { treasureToCartItem } from '../types/cart';
 import AdminSelectDialog from './cart/AdminSelectDialog';
 import { QRCodeSVG } from 'qrcode.react';
 import { useThemeMode } from '../contexts/ThemeContext';
-import { useCanEdit, useIsAdmin, useIsProvider } from '../hooks/usePermissions';
+import { useIsAdmin, useIsProvider } from '../hooks/usePermissions';
 import { useIsGuest } from '../hooks/useAuth';
 import { useTreasure } from '../hooks/useTreasure';
 import { MemberBenefitsTeaser } from './guest';
 import { MediaGallery } from './media';
-import DriveFolderInfo from './media/DriveFolderInfo';
 import type { MediaItem } from './media/types';
 import { PriceDisplay } from './PriceDisplay';
 import { getColorDot } from '../utils/formatting';
@@ -73,18 +65,15 @@ export default function ProductDetail() {
   const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
-  const canEdit = useCanEdit();
   const isAdmin = useIsAdmin();
   const isGuest = useIsGuest();
   const isProvider = useIsProvider();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [showDriveInfo, setShowDriveInfo] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
 
-  const { treasure, updateImage, updateVideo, removeImage, updateMediaItems, getMediaItems, isLoadingSheets } = useTreasure();
+  const { treasure, updateMediaItems, getMediaItems, isLoadingSheets } = useTreasure();
   const { shareProduct, isNativeShareSupported } = useShare();
   const { trigger: triggerHaptic } = useHaptics();
   const { addToCart, isInCart, cartCount } = useCart();
@@ -199,78 +188,6 @@ export default function ProductDetail() {
       };
     }
   }, [product, getMediaItems, updateMediaItems, displayName]);
-
-  // Handle media delete
-  const handleMediaDelete = useCallback(async (itemId: string) => {
-    const updatedItems = mediaItems.filter(item => item.id !== itemId);
-    setMediaItems(updatedItems);
-    if (product && updateMediaItems) {
-      updateMediaItems(product.item, updatedItems);
-      // Update legacy image
-      if (updatedItems.length > 0) {
-        const firstItem = updatedItems[0];
-        if (firstItem.type === 'video') {
-          updateVideo(product.item, firstItem.url, firstItem.thumbnailUrl || '');
-        } else {
-          updateImage(product.item, firstItem.url);
-        }
-      } else {
-        removeImage(product.item);
-      }
-    }
-  }, [product, mediaItems, updateMediaItems, updateImage, updateVideo, removeImage]);
-
-  // Refresh images from Google Drive folder
-  const handleRefreshDriveImages = useCallback(async () => {
-    if (!product) return;
-
-    try {
-      const response = await fetch(`/api/get-drive-images?itemNumber=${product.item}`);
-      const data = await response.json();
-
-      if (data.success && data.images) {
-        const driveItems: MediaItem[] = data.images.map((img: {
-          id: string;
-          name: string;
-          proxyUrl: string;
-          thumbnailUrl: string;
-          type: 'image' | 'video';
-          order: number;
-        }) => ({
-          id: img.id,
-          url: img.proxyUrl,
-          type: img.type,
-          thumbnailUrl: img.thumbnailUrl,
-          category: 'hero' as const,
-          alt: img.name || `${displayName} - ${img.order + 1}`,
-          order: img.order,
-        }));
-        // Sort: images first, then videos (preserving original order within each group)
-        const sortedItems = [...driveItems].sort((a, b) => {
-          if (a.type === 'image' && b.type === 'video') return -1;
-          if (a.type === 'video' && b.type === 'image') return 1;
-          return a.order - b.order;
-        });
-        setMediaItems(sortedItems);
-
-        if (updateMediaItems) {
-          updateMediaItems(product.item, driveItems);
-        }
-
-        // Update legacy image field with first item
-        if (driveItems.length > 0) {
-          const firstItem = driveItems[0];
-          if (firstItem.type === 'video') {
-            updateVideo(product.item, firstItem.url, firstItem.thumbnailUrl || '');
-          } else {
-            updateImage(product.item, firstItem.url);
-          }
-        }
-      }
-    } catch (error) {
-      log.error('Error refreshing Drive images:', error);
-    }
-  }, [product, displayName, updateMediaItems, updateImage, updateVideo]);
 
   // Handle share product
   const handleShareProduct = useCallback(async () => {
@@ -409,44 +326,11 @@ export default function ProductDetail() {
               position: 'relative',
             }}
           >
-            {/* Edit Toggle - Only show for users with edit permission, top-left minimal */}
-            {canEdit && (
-              <Tooltip title={isEditing ? 'Terminar edición' : 'Editar galería'}>
-                <IconButton
-                  size="small"
-                  onClick={() => setIsEditing(!isEditing)}
-                  sx={{
-                    position: 'absolute',
-                    top: 8,
-                    left: 8,
-                    zIndex: 10,
-                    width: 28,
-                    height: 28,
-                    bgcolor: isEditing
-                      ? 'rgba(52, 199, 89, 0.9)'
-                      : 'rgba(0, 0, 0, 0.3)',
-                    color: '#FFFFFF',
-                    backdropFilter: 'blur(8px)',
-                    WebkitBackdropFilter: 'blur(8px)',
-                    '&:hover': {
-                      bgcolor: isEditing
-                        ? 'rgba(52, 199, 89, 1)'
-                        : 'rgba(0, 0, 0, 0.5)',
-                    },
-                  }}
-                >
-                  {isEditing ? <Check size={14} /> : <Edit2 size={14} />}
-                </IconButton>
-              </Tooltip>
-            )}
-
             {/* Media Gallery Carousel */}
             {mediaItems.length > 0 ? (
               <MediaGallery
                 media={mediaItems}
                 productName={displayName}
-                onAddMedia={isAdmin ? () => setShowDriveInfo(true) : undefined}
-                isEditing={isEditing && canEdit}
               />
             ) : (
               <Box
@@ -481,59 +365,10 @@ export default function ProductDetail() {
                 >
                   Sin imágenes
                 </Typography>
-                {isAdmin && (
-                  <Button
-                    startIcon={<FolderOpen size={18} />}
-                    variant="contained"
-                    onClick={() => setShowDriveInfo(true)}
-                    sx={{
-                      mt: 2,
-                      bgcolor: emeraldCore.dark,
-                      '&:hover': { bgcolor: emeraldCore.darker },
-                    }}
-                  >
-                    Ver Carpeta en Drive
-                  </Button>
-                )}
               </Box>
             )}
           </Paper>
 
-          {/* Drive Folder Toggle - Admin only for verification and gallery management */}
-          {mediaItems.length > 0 && isAdmin && (
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={showDriveInfo ? <ChevronUp size={18} /> : <FolderOpen size={18} />}
-              onClick={() => setShowDriveInfo(!showDriveInfo)}
-              sx={{
-                mt: 2,
-                borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-                color: theme.palette.text.secondary,
-                '&:hover': {
-                  borderColor: emeraldCore.dark,
-                  color: emeraldCore.dark,
-                  bgcolor: alpha(emeraldCore.dark, 0.08),
-                },
-              }}
-            >
-              {showDriveInfo ? 'Ocultar carpeta de Drive' : 'Ver carpeta en Google Drive'}
-            </Button>
-          )}
-
-          {/* Collapsible Drive Folder Info - Admin only */}
-          {isAdmin && (
-            <Collapse in={showDriveInfo}>
-              <Box sx={{ mt: 2 }}>
-                <DriveFolderInfo
-                  itemNumber={product.item}
-                  media={mediaItems}
-                  onRefresh={handleRefreshDriveImages}
-                  onDelete={handleMediaDelete}
-                />
-              </Box>
-            </Collapse>
-          )}
         </Grid>
 
         {/* Right Column - Product Details */}
