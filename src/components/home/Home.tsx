@@ -51,8 +51,6 @@ const Footer = lazy(() => import('./sections/Footer'));
 // const MeditationSection = lazy(() => import('./sections/MeditationSection'));
 // const WelcomeCard = lazy(() => import('./sections/WelcomeCard'));
 
-// Always visible components
-import WhatsAppButton from './sections/WhatsAppButton';
 
 // =============================================================================
 // MAIN COMPONENT
@@ -166,9 +164,6 @@ const Home: React.FC = () => {
           </ErrorBoundary>
         </Box>
       </Box>
-
-      {/* WhatsApp Button - Floating contact */}
-      <WhatsAppButton />
 
       {/* Notification Permission - Floating tooltip */}
       <NotificationPermission variant="tooltip" />

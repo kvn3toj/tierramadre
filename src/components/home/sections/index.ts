@@ -13,4 +13,3 @@ export { default as ProductsSection } from './ProductsSection';
 // KnowledgeSection removed - content consolidated into OracleSection
 export { default as WelcomeCard } from './WelcomeCard';
 export { default as Footer } from './Footer';
-export { default as WhatsAppButton } from './WhatsAppButton';
