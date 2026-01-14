@@ -83,6 +83,28 @@ export const chartTokens = {
     /** Hover transition */
     hover: 200,
   },
+
+  /** Area chart dimensions (for weekly trends) */
+  areaChart: {
+    height: 200,
+    heightCompact: 140,
+    padding: { top: 20, right: 16, bottom: 40, left: 44 },
+  },
+
+  /** Progress bar styling */
+  progressBar: {
+    height: 8,
+    heightCompact: 6,
+    borderRadius: 4,
+    trackOpacity: 0.12,
+  },
+
+  /** Insight card styling */
+  insightCard: {
+    minHeight: 80,
+    iconSize: 40,
+    borderRadius: 12,
+  },
 } as const;
 
 // =============================================================================

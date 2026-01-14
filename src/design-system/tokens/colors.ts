@@ -238,6 +238,45 @@ export const priceTiers = {
 } as const;
 
 // =============================================================================
+// INSIGHT/RECOMMENDATION COLORS
+// =============================================================================
+
+export const insightColors = {
+  opportunity: {
+    bg: 'rgba(59, 130, 246, 0.08)',
+    bgDark: 'rgba(59, 130, 246, 0.15)',
+    border: 'rgba(59, 130, 246, 0.2)',
+    icon: '#3B82F6',
+    text: '#1D4ED8',
+    textDark: '#60A5FA',
+  },
+  warning: {
+    bg: 'rgba(245, 158, 11, 0.08)',
+    bgDark: 'rgba(245, 158, 11, 0.15)',
+    border: 'rgba(245, 158, 11, 0.2)',
+    icon: '#F59E0B',
+    text: '#D97706',
+    textDark: '#FBBF24',
+  },
+  success: {
+    bg: 'rgba(0, 174, 122, 0.08)',
+    bgDark: 'rgba(0, 174, 122, 0.15)',
+    border: 'rgba(0, 174, 122, 0.2)',
+    icon: '#00AE7A',
+    text: '#006A48',
+    textDark: '#33C194',
+  },
+  critical: {
+    bg: 'rgba(239, 68, 68, 0.08)',
+    bgDark: 'rgba(239, 68, 68, 0.15)',
+    border: 'rgba(239, 68, 68, 0.2)',
+    icon: '#EF4444',
+    text: '#DC2626',
+    textDark: '#F87171',
+  },
+} as const;
+
+// =============================================================================
 // COMPOSITE EXPORT
 // =============================================================================
 
@@ -250,6 +289,7 @@ export const colors = {
   light: surfacesLight,
   dark: surfacesDark,
   price: priceTiers,
+  insight: insightColors,
 } as const;
 
 export default colors;

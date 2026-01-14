@@ -2,13 +2,12 @@
  * Admin Analytics Dashboard
  *
  * Redesigned with iOS HIG principles:
- * - Tabbed navigation (Overview/Products/Users)
- * - Sparkline trend charts
- * - Horizontal bar visualizations
- * - Donut charts for breakdowns
- * - Comparison badges (vs yesterday/week)
+ * - 4 Tabs: Overview, Products, Users, Health
+ * - AI-powered recommendations
+ * - Beautiful charts and visualizations
+ * - Real-time health score breakdown
  *
- * Designed by ARIA - Capitana del Concilio de Creación
+ * Designed by ARIA - Capitana del Concilio de Creacion
  */
 
 import React, { useMemo, useCallback, useState } from 'react';
@@ -23,7 +22,6 @@ import {
   Tooltip,
   Tabs,
   Tab,
-  Chip,
 } from '@mui/material';
 import {
   TrendingUp,
@@ -43,6 +41,9 @@ import {
   Clock,
   BarChart3,
   PieChart,
+  Heart,
+  Sparkles,
+  TrendingUp as TrendUp,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useTracking } from '../contexts/TrackingContext';
@@ -52,6 +53,17 @@ import { spacing, iosDimensions } from '../design-system/tokens/primitives/spaci
 import { SparklineChart } from '../components/analytics/SparklineChart';
 import { HorizontalBarChart } from '../components/analytics/HorizontalBarChart';
 import { DonutChart } from '../components/analytics/DonutChart';
+import { AreaChart } from '../components/analytics/AreaChart';
+import { InsightCard } from '../components/analytics/InsightCard';
+import { ProgressBar } from '../components/analytics/ProgressBar';
+import { HealthScoreHero } from '../components/analytics/HealthScoreHero';
+import {
+  generateInsights,
+  generateHealthInsights,
+  generateWeeklyTrend,
+  type AnalyticsData,
+  type HealthScores,
+} from '../utils/insightGenerator';
 
 // =============================================================================
 // iOS HIG STYLED TAB COMPONENT
@@ -274,70 +286,6 @@ const GlassCard: React.FC<GlassCardProps> = ({ children, noPadding = false }) =>
 };
 
 // =============================================================================
-// HEALTH SCORE RING (Improved)
-// =============================================================================
-
-interface HealthScoreProps {
-  score: number;
-  label: string;
-  color: string;
-}
-
-const HealthScoreRing: React.FC<HealthScoreProps> = ({ score, label, color }) => {
-  const circumference = 2 * Math.PI * 54;
-  const progress = (score / 100) * circumference;
-
-  return (
-    <Box sx={{ position: 'relative', width: 120, height: 120 }}>
-      <svg width="120" height="120" style={{ transform: 'rotate(-90deg)' }}>
-        <circle
-          cx="60"
-          cy="60"
-          r="54"
-          fill="none"
-          stroke={alpha(color, 0.12)}
-          strokeWidth="8"
-        />
-        <circle
-          cx="60"
-          cy="60"
-          r="54"
-          fill="none"
-          stroke={color}
-          strokeWidth="8"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference - progress}
-          style={{
-            transition: 'stroke-dashoffset 1s ease-out',
-            filter: `drop-shadow(0 0 8px ${alpha(color, 0.4)})`,
-          }}
-        />
-      </svg>
-      <Box
-        sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          textAlign: 'center',
-        }}
-      >
-        <Typography variant="h4" sx={{ fontWeight: 800, color: color, lineHeight: 1 }}>
-          {score}
-        </Typography>
-        <Typography
-          variant="caption"
-          sx={{ color: 'text.secondary', fontWeight: 500, fontSize: '0.65rem' }}
-        >
-          {label}
-        </Typography>
-      </Box>
-    </Box>
-  );
-};
-
-// =============================================================================
 // ACTIVITY ITEM
 // =============================================================================
 
@@ -417,35 +365,43 @@ const AdminAnalyticsPage: React.FC = () => {
       const factor = 1 - (variance * Math.random()) + (i * 0.05);
       data.push(Math.max(0, Math.round(current * factor)));
     }
-    data[6] = current; // Ensure last point is current value
+    data[6] = current;
     return data;
   }, []);
 
-  // Calculate Business Health Score
-  const healthScore = useMemo(() => {
-    const scores = {
-      cotizacion: Math.min(100, (metrics.totalCotizaciones / 10) * 100),
-      engagement: Math.min(100, (metrics.totalProductViews / 50) * 100),
-      retention: 60,
-      conversion: 25,
-    };
-    const avg = Object.values(scores).reduce((a, b) => a + b, 0) / Object.values(scores).length;
-    return Math.min(100, Math.round(avg));
-  }, [metrics]);
+  // Calculate Health Scores (real calculations, not hardcoded)
+  const healthScores: HealthScores = useMemo(() => {
+    // Cotizacion Score (target: 10 cotizaciones = 100%)
+    const cotizacion = Math.min(100, Math.round((metrics.totalCotizaciones / 10) * 100));
+
+    // Engagement Score (based on views and unique products)
+    const weeklyViewsScore = viewStats ? Math.min(100, Math.round((viewStats.weekViews / 50) * 100)) : 0;
+    const uniqueProductScore = viewStats ? Math.min(100, Math.round((viewStats.uniqueProducts / 20) * 100)) : 0;
+    const engagement = Math.round((weeklyViewsScore + uniqueProductScore) / 2);
+
+    // Retention Score (based on streak and sessions)
+    const streakScore = Math.min(100, Math.round((metrics.streak / 7) * 100));
+    const sessionsScore = metrics.totalSessions ? Math.min(100, Math.round((metrics.totalSessions / 10) * 100)) : 50;
+    const retention = Math.round((streakScore + sessionsScore) / 2);
+
+    // Conversion Score (cotizaciones per view)
+    const viewToCotizacion = viewStats && viewStats.totalViews > 0
+      ? (metrics.totalCotizaciones / viewStats.totalViews) * 100
+      : 0;
+    const conversionTarget = 5; // 5% target
+    const conversion = Math.min(100, Math.round((viewToCotizacion / conversionTarget) * 100));
+
+    const overall = Math.round((cotizacion + engagement + retention + conversion) / 4);
+
+    return { overall, cotizacion, engagement, retention, conversion };
+  }, [metrics, viewStats]);
 
   const healthColor = useMemo(() => {
-    if (healthScore >= 80) return semanticColors.success.main;
-    if (healthScore >= 60) return goldAccent.primary;
-    if (healthScore >= 40) return semanticColors.warning.main;
+    if (healthScores.overall >= 80) return semanticColors.success.main;
+    if (healthScores.overall >= 60) return goldAccent.primary;
+    if (healthScores.overall >= 40) return semanticColors.warning.main;
     return semanticColors.error.main;
-  }, [healthScore]);
-
-  const healthLabel = useMemo(() => {
-    if (healthScore >= 80) return 'Excelente';
-    if (healthScore >= 60) return 'Bueno';
-    if (healthScore >= 40) return 'Regular';
-    return 'Atenci\u00f3n';
-  }, [healthScore]);
+  }, [healthScores.overall]);
 
   // User breakdown for donut chart
   const userBreakdown = useMemo(() => {
@@ -470,14 +426,14 @@ const AdminAnalyticsPage: React.FC = () => {
   const analyticsData = useMemo(() => exportAnalytics(), [exportAnalytics]);
   const recentActivity = useMemo(() => {
     const eventConfig: Record<string, { icon: string; label: string }> = {
-      'session_start': { icon: '\ud83d\udfe2', label: 'Sesi\u00f3n iniciada' },
-      'page_view': { icon: '\ud83d\udcc4', label: 'P\u00e1gina vista' },
-      'treasure_view': { icon: '\ud83d\udc8e', label: 'Explor\u00f3 tesoros' },
+      'session_start': { icon: '\ud83d\udfe2', label: 'Sesión iniciada' },
+      'page_view': { icon: '\ud83d\udcc4', label: 'Página vista' },
+      'treasure_view': { icon: '\ud83d\udc8e', label: 'Exploró tesoros' },
       'product_clicked': { icon: '\ud83d\udc46', label: 'Producto seleccionado' },
       'product_engaged': { icon: '\ud83d\udc41\ufe0f', label: 'Producto visualizado' },
-      'cotizacion_exported': { icon: '\ud83d\udccb', label: 'Cotizaci\u00f3n exportada' },
+      'cotizacion_exported': { icon: '\ud83d\udccb', label: 'Cotización exportada' },
       'treasure_filter_applied': { icon: '\ud83d\udd0d', label: 'Filtro aplicado' },
-      'simulator_factors_adjusted': { icon: '\ud83e\uddee', label: 'Simulaci\u00f3n' },
+      'simulator_factors_adjusted': { icon: '\ud83e\uddee', label: 'Simulación' },
     };
     return analyticsData.events
       .slice(-10)
@@ -489,12 +445,36 @@ const AdminAnalyticsPage: React.FC = () => {
       }));
   }, [analyticsData.events]);
 
+  // AI Insights
+  const analyticsDataForInsights: AnalyticsData = useMemo(() => ({
+    metrics: {
+      totalCotizaciones: metrics.totalCotizaciones,
+      totalProductViews: metrics.totalProductViews,
+      streak: metrics.streak,
+      totalSessions: metrics.totalSessions,
+    },
+    viewStats,
+    topProducts,
+    topViewers,
+    totalProductCount: 50, // Approximate
+  }), [metrics, viewStats, topProducts, topViewers]);
+
+  const insights = useMemo(() => generateInsights(analyticsDataForInsights, 2), [analyticsDataForInsights]);
+  const healthInsights = useMemo(() => generateHealthInsights(healthScores), [healthScores]);
+
+  // Weekly trend data
+  const weeklyTrendData = useMemo(() => {
+    if (!viewStats) return [];
+    return generateWeeklyTrend(viewStats.weekViews, viewStats.todayViews);
+  }, [viewStats]);
+
   // Export handler
   const handleExport = useCallback(() => {
     const data = exportAnalytics();
     const summary = {
       exportDate: new Date().toISOString(),
-      healthScore,
+      healthScore: healthScores.overall,
+      healthBreakdown: healthScores,
       metrics,
       achievements: {
         totalXp: achievements.totalXp,
@@ -511,7 +491,7 @@ const AdminAnalyticsPage: React.FC = () => {
     link.download = `analytics-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
-  }, [exportAnalytics, healthScore, metrics, achievements, levelInfo, unlockedAchievements]);
+  }, [exportAnalytics, healthScores, metrics, achievements, levelInfo, unlockedAchievements]);
 
   // Tab content
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -549,7 +529,7 @@ const AdminAnalyticsPage: React.FC = () => {
         </Box>
       </Box>
 
-      {/* iOS-style Segmented Control Tabs */}
+      {/* iOS-style Segmented Control Tabs - Now 4 tabs */}
       <Paper
         elevation={0}
         sx={{
@@ -571,10 +551,12 @@ const AdminAnalyticsPage: React.FC = () => {
               borderRadius: iosDimensions.borderRadiusStandard,
               textTransform: 'none',
               fontWeight: 600,
-              fontSize: '0.8rem',
+              fontSize: '0.75rem',
               color: 'text.secondary',
               transition: 'all 0.2s ease',
               py: 0.5,
+              px: 1,
+              minWidth: 0,
               '&.Mui-selected': {
                 color: 'text.primary',
                 bgcolor: isLight ? 'background.paper' : alpha('#fff', 0.12),
@@ -586,164 +568,137 @@ const AdminAnalyticsPage: React.FC = () => {
           <Tab icon={<BarChart3 size={14} />} iconPosition="start" label="Overview" />
           <Tab icon={<Package size={14} />} iconPosition="start" label="Products" />
           <Tab icon={<Users size={14} />} iconPosition="start" label="Users" />
+          <Tab icon={<Heart size={14} />} iconPosition="start" label="Health" />
         </Tabs>
       </Paper>
 
       {/* ========== TAB: OVERVIEW ========== */}
       <TabPanel value={activeTab} index={0}>
-        {/* Health Score Hero */}
-        <GlassCard>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
-            <HealthScoreRing score={healthScore} label={healthLabel} color={healthColor} />
-            <Box sx={{ flex: 1, minWidth: 180 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-                Business Health
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5, fontSize: '0.8rem' }}>
-                Basado en cotizaciones, engagement y actividad
-              </Typography>
-
-              {/* Quick stats */}
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                <Chip
-                  icon={<FileText size={12} />}
-                  label={`${metrics.totalCotizaciones} cotizaciones`}
-                  size="small"
-                  sx={{
-                    bgcolor: alpha(emeraldCore.primary, 0.1),
-                    color: emeraldCore.primary,
-                    fontWeight: 600,
-                    fontSize: '0.7rem',
-                    '& .MuiChip-icon': { color: emeraldCore.primary },
-                  }}
-                />
-                <Chip
-                  icon={<Eye size={12} />}
-                  label={`${viewStats?.totalViews || 0} views`}
-                  size="small"
-                  sx={{
-                    bgcolor: alpha(goldAccent.primary, 0.1),
-                    color: goldAccent.primary,
-                    fontWeight: 600,
-                    fontSize: '0.7rem',
-                    '& .MuiChip-icon': { color: goldAccent.primary },
-                  }}
-                />
-              </Box>
-            </Box>
-          </Box>
-        </GlassCard>
-
-        {/* Key Metrics Grid */}
-        <Box sx={{ mt: 3 }}>
-          <SectionHeader title="M\u00e9tricas Clave" icon={BarChart3} />
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5 }}>
-            <MetricCard
-              label="Cotizaciones"
-              value={metrics.totalCotizaciones}
-              icon={FileText}
-              color={emeraldCore.primary}
-              trend={{ data: generateTrendData(metrics.totalCotizaciones) }}
-              subtitle="Exportadas"
-              compact
-            />
-            <MetricCard
-              label="Views Hoy"
-              value={viewStats?.todayViews || 0}
-              icon={Eye}
-              color={goldAccent.primary}
-              comparison={
-                viewStats && viewStats.todayViews > 0
-                  ? { value: Math.round((viewStats.todayViews / Math.max(viewStats.weekViews / 7, 1)) * 100 - 100), label: 'vs promedio' }
-                  : undefined
-              }
-              subtitle="Productos vistos"
-              compact
-            />
-            <MetricCard
-              label="Esta Semana"
-              value={viewStats?.weekViews || 0}
-              icon={Calendar}
-              color="#8B5CF6"
-              trend={{ data: generateTrendData(viewStats?.weekViews || 0) }}
-              subtitle="\u00daltimos 7 d\u00edas"
-              compact
-            />
-            <MetricCard
-              label="Racha"
-              value={`${metrics.streak} d\u00edas`}
-              icon={Zap}
-              color="#F59E0B"
-              subtitle="D\u00edas consecutivos"
-              compact
-            />
-          </Box>
+        {/* Hero KPI Cards */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5, mb: 3 }}>
+          <MetricCard
+            label="Views Hoy"
+            value={viewStats?.todayViews || 0}
+            icon={Eye}
+            color={emeraldCore.primary}
+            comparison={
+              viewStats && viewStats.todayViews > 0
+                ? { value: Math.round((viewStats.todayViews / Math.max(viewStats.weekViews / 7, 1)) * 100 - 100), label: 'vs promedio' }
+                : undefined
+            }
+            subtitle="Productos vistos"
+            compact
+          />
+          <MetricCard
+            label="Cotizaciones"
+            value={metrics.totalCotizaciones}
+            icon={FileText}
+            color={goldAccent.primary}
+            trend={{ data: generateTrendData(metrics.totalCotizaciones) }}
+            subtitle="Exportadas"
+            compact
+          />
+          <MetricCard
+            label="Esta Semana"
+            value={viewStats?.weekViews || 0}
+            icon={Calendar}
+            color="#8B5CF6"
+            trend={{ data: generateTrendData(viewStats?.weekViews || 0) }}
+            subtitle="Últimos 7 días"
+            compact
+          />
+          <MetricCard
+            label="Racha"
+            value={`${metrics.streak} días`}
+            icon={Zap}
+            color="#F59E0B"
+            subtitle="Días consecutivos"
+            compact
+          />
         </Box>
 
-        {/* Achievements Progress */}
-        <Box sx={{ mt: 3 }}>
+        {/* Weekly Trend Chart */}
+        {weeklyTrendData.length > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <SectionHeader title="Actividad Semanal" icon={TrendUp} />
+            <GlassCard>
+              <AreaChart
+                data={weeklyTrendData}
+                height={160}
+                color={emeraldCore.primary}
+                showXAxis={true}
+                showYAxis={true}
+                showGrid={true}
+                animated={true}
+              />
+            </GlassCard>
+          </Box>
+        )}
+
+        {/* AI Recommendations */}
+        {insights.length > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <SectionHeader title="Recomendaciones" icon={Sparkles} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {insights.map((insight) => (
+                <InsightCard
+                  key={insight.id}
+                  type={insight.type}
+                  title={insight.title}
+                  description={insight.description}
+                  metric={insight.metric}
+                  compact
+                />
+              ))}
+            </Box>
+          </Box>
+        )}
+
+        {/* Quick Stats Row */}
+        <Box sx={{ mb: 3 }}>
+          <SectionHeader title="Resumen Rápido" icon={BarChart3} />
           <GlassCard>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: iosDimensions.borderRadiusStandard,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor: alpha(goldAccent.primary, 0.12),
-                  }}
-                >
-                  <Target size={18} color={goldAccent.primary} />
-                </Box>
-                <Box>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    Logros
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    {unlockedAchievements.length} de {ACHIEVEMENTS.length} desbloqueados
-                  </Typography>
-                </Box>
-              </Box>
-              <Box sx={{ textAlign: 'right' }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: goldAccent.primary, lineHeight: 1 }}>
-                  {Math.round((unlockedAchievements.length / ACHIEVEMENTS.length) * 100)}%
+            <Box sx={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: emeraldCore.primary }}>
+                  {viewStats?.uniqueProducts || 0}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {achievements.totalXp} XP
+                  Productos únicos
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: '#8B5CF6' }}>
+                  {viewStats?.uniqueViewers || 0}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Viewers
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: goldAccent.primary }}>
+                  {healthScores.overall}%
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Health Score
                 </Typography>
               </Box>
             </Box>
-            <LinearProgress
-              variant="determinate"
-              value={(unlockedAchievements.length / ACHIEVEMENTS.length) * 100}
-              sx={{
-                height: 6,
-                borderRadius: 3,
-                bgcolor: alpha(goldAccent.primary, 0.1),
-                '& .MuiLinearProgress-bar': {
-                  bgcolor: goldAccent.primary,
-                  borderRadius: 3,
-                },
-              }}
-            />
           </GlassCard>
         </Box>
 
-        {/* Recent Activity */}
-        <Box sx={{ mt: 3 }}>
+        {/* Recent Activity (Compact) */}
+        <Box>
           <SectionHeader title="Actividad Reciente" icon={Activity} />
           <GlassCard noPadding>
             {recentActivity.length > 0 ? (
-              recentActivity.slice(0, 5).map((item, idx) => (
+              recentActivity.slice(0, 3).map((item, idx) => (
                 <ActivityItem
                   key={idx}
                   icon={<Typography sx={{ fontSize: '1.1rem' }}>{item.icon}</Typography>}
                   primary={item.label}
                   time={formatTimeAgo(item.timestamp)}
-                  isLast={idx === Math.min(recentActivity.length, 5) - 1}
+                  isLast={idx === Math.min(recentActivity.length, 3) - 1}
                 />
               ))
             ) : (
@@ -840,7 +795,7 @@ const AdminAnalyticsPage: React.FC = () => {
                   }
                   primary={
                     <>
-                      {activity.userName || 'Guest'} vi\u00f3{' '}
+                      {activity.userName || 'Guest'} vió{' '}
                       <Typography
                         component="span"
                         sx={{ color: emeraldCore.primary, fontWeight: 600, fontSize: 'inherit' }}
@@ -867,7 +822,7 @@ const AdminAnalyticsPage: React.FC = () => {
             value={viewStats?.uniqueViewers || 0}
             icon={Users}
             color="#8B5CF6"
-            subtitle="\u00danicos este mes"
+            subtitle="Únicos este mes"
             compact
           />
           <MetricCard
@@ -928,6 +883,187 @@ const AdminAnalyticsPage: React.FC = () => {
             </GlassCard>
           </Box>
         )}
+      </TabPanel>
+
+      {/* ========== TAB: HEALTH ========== */}
+      <TabPanel value={activeTab} index={3}>
+        {/* Health Score Hero */}
+        <GlassCard>
+          <HealthScoreHero
+            score={healthScores.overall}
+            breakdown={healthScores}
+            animated={true}
+            size={180}
+          />
+        </GlassCard>
+
+        {/* Score Breakdown */}
+        <Box sx={{ mt: 3 }}>
+          <SectionHeader title="Desglose de Puntaje" icon={BarChart3} />
+          <GlassCard noPadding>
+            <ProgressBar
+              value={healthScores.cotizacion}
+              label="Cotizaciones"
+              sublabel="Meta: 10 cotizaciones"
+              color={emeraldCore.primary}
+              icon={FileText}
+              status={healthScores.cotizacion >= 60 ? 'Activo' : 'Bajo'}
+              animated
+            />
+            <ProgressBar
+              value={healthScores.engagement}
+              label="Engagement"
+              sublabel="Vistas y productos únicos"
+              color={goldAccent.primary}
+              icon={Eye}
+              status={healthScores.engagement >= 60 ? 'Activo' : 'Bajo'}
+              animated
+            />
+            <ProgressBar
+              value={healthScores.retention}
+              label="Retención"
+              sublabel="Racha y sesiones"
+              color="#8B5CF6"
+              icon={Zap}
+              status={healthScores.retention >= 60 ? 'Activo' : 'Bajo'}
+              animated
+            />
+            <ProgressBar
+              value={healthScores.conversion}
+              label="Conversión"
+              sublabel="Cotizaciones por vista"
+              color="#F59E0B"
+              icon={Target}
+              status={healthScores.conversion >= 60 ? 'Activo' : 'Bajo'}
+              animated
+            />
+          </GlassCard>
+        </Box>
+
+        {/* Health Recommendations */}
+        {healthInsights.length > 0 && (
+          <Box sx={{ mt: 3 }}>
+            <SectionHeader title="Recomendaciones para Mejorar" icon={Sparkles} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {healthInsights.map((insight) => (
+                <InsightCard
+                  key={insight.id}
+                  type={insight.type}
+                  title={insight.title}
+                  description={insight.description}
+                  metric={insight.metric}
+                />
+              ))}
+            </Box>
+          </Box>
+        )}
+
+        {/* Benchmarks */}
+        <Box sx={{ mt: 3 }}>
+          <SectionHeader title="Benchmarks" icon={Target} />
+          <GlassCard>
+            <Box sx={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: semanticColors.success.main }}>
+                  80%
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Meta
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: healthColor }}>
+                  {healthScores.overall}%
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Actual
+                </Typography>
+              </Box>
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    color: healthScores.overall >= 80
+                      ? semanticColors.success.main
+                      : semanticColors.warning.main,
+                  }}
+                >
+                  {Math.max(0, 80 - healthScores.overall)} pts
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Gap
+                </Typography>
+              </Box>
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={Math.min(100, (healthScores.overall / 80) * 100)}
+              sx={{
+                mt: 2,
+                height: 8,
+                borderRadius: 4,
+                bgcolor: alpha(emeraldCore.primary, 0.1),
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: healthColor,
+                  borderRadius: 4,
+                },
+              }}
+            />
+          </GlassCard>
+        </Box>
+
+        {/* Achievements Progress */}
+        <Box sx={{ mt: 3 }}>
+          <GlassCard>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: iosDimensions.borderRadiusStandard,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: alpha(goldAccent.primary, 0.12),
+                  }}
+                >
+                  <Target size={18} color={goldAccent.primary} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    Logros
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    {unlockedAchievements.length} de {ACHIEVEMENTS.length} desbloqueados
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ textAlign: 'right' }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: goldAccent.primary, lineHeight: 1 }}>
+                  {Math.round((unlockedAchievements.length / ACHIEVEMENTS.length) * 100)}%
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  {achievements.totalXp} XP
+                </Typography>
+              </Box>
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={(unlockedAchievements.length / ACHIEVEMENTS.length) * 100}
+              sx={{
+                height: 6,
+                borderRadius: 3,
+                bgcolor: alpha(goldAccent.primary, 0.1),
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: goldAccent.primary,
+                  borderRadius: 3,
+                },
+              }}
+            />
+          </GlassCard>
+        </Box>
       </TabPanel>
 
       {/* Footer */}
