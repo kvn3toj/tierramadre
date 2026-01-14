@@ -7,6 +7,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Box, Typography, Button, IconButton, Fade, Stack, alpha, Divider, Alert } from '@mui/material';
 import { motion } from 'framer-motion';
 import { Backspace as BackspaceIcon, VisibilityOutlined, LockOpenOutlined, OpenInNew, ContentCopy, CheckCircleOutline } from '@mui/icons-material';
@@ -27,6 +28,7 @@ export default function WelcomeScreen() {
   const { loginWithPin } = useAuth();
   const { signIn, authError, clearError } = useGoogleAuth();
   const { t } = useLanguage();
+  const location = useLocation();
   const [viewMode, setViewMode] = useState<ViewMode>('choice');
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
@@ -35,6 +37,9 @@ export default function WelcomeScreen() {
   const [showInvitationMessage, setShowInvitationMessage] = useState(false);
   const [googleLoginKey, setGoogleLoginKey] = useState(0);
   const [urlCopied, setUrlCopied] = useState(false);
+
+  // Detect if user arrived at a product URL (shared link)
+  const isProductUrl = location.pathname.startsWith('/product/');
 
   // Detect in-app browsers (Telegram, Instagram, etc.) that have OAuth issues
   const browserInfo = useMemo(() => getCachedBrowserInfo(), []);
@@ -264,6 +269,27 @@ export default function WelcomeScreen() {
       {viewMode === 'choice' && (
         <Fade in timeout={800}>
           <Stack spacing={2} sx={{ width: { xs: '80vw', sm: 340 }, maxWidth: 400, mt: 1.5 }}>
+            {/* Product URL Access Alert - Show when arriving from shared link */}
+            {isProductUrl && (
+              <Alert
+                severity="info"
+                sx={{
+                  bgcolor: alpha(emeraldCore.primary, 0.12),
+                  color: surfacesDark.text.primary,
+                  border: `1px solid ${alpha(emeraldCore.primary, 0.3)}`,
+                  '& .MuiAlert-icon': { color: emeraldCore.primary },
+                  mb: 1,
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                  Acceso Exclusivo
+                </Typography>
+                <Typography variant="caption" sx={{ color: surfacesDark.text.secondary }}>
+                  Para ver este producto necesitas una invitación de un asesor o embajador de Tierra Madre.
+                </Typography>
+              </Alert>
+            )}
+
             {/* Google Sign-In - Only shown if configured */}
             {isGoogleConfigured && (
               <>

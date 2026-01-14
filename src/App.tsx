@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { IOSLayout } from './components/ios';
-import { WelcomeScreen, AdminRoute, ProviderRoute } from './components/auth';
+import { WelcomeScreen, AdminRoute, ProviderRoute, StaffRoute } from './components/auth';
 import { useAuth } from './hooks/useAuth';
 import { useIsProvider } from './hooks/usePermissions';
 import { Asesor } from './hooks/useAsesores';
@@ -259,16 +259,20 @@ function AppContent() {
             </AdminRoute>
           } />
 
-          {/* Product Requests (Asesor/Embajador -> Admin) */}
+          {/* Product Requests (Asesor/Embajador -> Admin) - Staff only */}
           <Route path="/solicitar-producto" element={
-            <Suspense fallback={<LoadingFallback message="Cargando formulario..." />}>
-              <ProductRequestForm />
-            </Suspense>
+            <StaffRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando formulario..." />}>
+                <ProductRequestForm />
+              </Suspense>
+            </StaffRoute>
           } />
           <Route path="/mis-solicitudes" element={
-            <Suspense fallback={<LoadingFallback message="Cargando solicitudes..." />}>
-              <MyProductRequests />
-            </Suspense>
+            <StaffRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando solicitudes..." />}>
+                <MyProductRequests />
+              </Suspense>
+            </StaffRoute>
           } />
           <Route path="/cuentas/solicitudes-asesores" element={
             <AdminRoute>

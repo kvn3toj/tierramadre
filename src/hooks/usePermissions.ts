@@ -55,3 +55,12 @@ export const useCanViewPrices = (): boolean => {
   const { canViewPrices } = usePermissions();
   return canViewPrices;
 };
+
+/**
+ * Check if user is staff (admin, full access - asesores/embajadores)
+ * Staff can access features like product requests, not available to guests
+ */
+export const useIsStaff = (): boolean => {
+  const { accessLevel } = useAuthContext();
+  return accessLevel === 'admin' || accessLevel === 'full';
+};

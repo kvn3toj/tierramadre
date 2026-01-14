@@ -16,7 +16,6 @@
 import { useCallback, useMemo } from 'react';
 import { TreasureItem } from '../types';
 import { triggerHaptic } from './useHaptics';
-import { formatCurrency } from '../utils/formatting';
 import { createLogger } from '../utils/logger';
 
 const log = createLogger('useShare');
@@ -85,14 +84,13 @@ function checkShareSupport(): boolean {
 
 /**
  * Format product details for sharing
- * Uses precioInternacional (regular price) for external sharing
- * Does NOT show price if precioInternacional is not available (to protect Comunidad TM pricing)
+ * Never includes prices - sharing is for external audiences
  */
-function formatProductShareText(product: TreasureItem): string {
+function formatProductShareText(product: TreasureItem, productUrl: string): string {
   const displayName = product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const weight = typeof product.peso === 'number' ? `${product.peso} ct` : '';
 
-  // Build share text with emoji for visual appeal
+  // Build share text with emoji for visual appeal - NO PRICES for external sharing
   const lines = [
     `💎 ${displayName}`,
     ``,
@@ -103,13 +101,10 @@ function formatProductShareText(product: TreasureItem): string {
     lines.push(`⚖️ ${weight}`);
   }
 
-  // Only show price if precioInternacional is available (never expose Comunidad TM price)
-  if (product.precioInternacional) {
-    lines.push(`💰 ${formatCurrency(product.precioInternacional)}`);
-  }
-
   lines.push(``);
   lines.push(`🌿 Tierra Madre - Colombian Emeralds`);
+  lines.push(``);
+  lines.push(`🔗 ${productUrl}`);
 
   return lines.join('\n');
 }
@@ -143,8 +138,9 @@ export function useShare(options: UseShareOptions = {}): UseShareReturn {
    * Generate formatted share text
    */
   const getProductShareText = useCallback((product: TreasureItem): string => {
-    return formatProductShareText(product);
-  }, []);
+    const url = getProductUrl(product);
+    return formatProductShareText(product, url);
+  }, [getProductUrl]);
 
   /**
    * Copy text to clipboard

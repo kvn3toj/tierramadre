@@ -1,10 +1,10 @@
 /**
- * ProviderDashboard - Main dashboard for provider portal
+ * ProviderDashboard - Provider's personal activity center
  *
- * Shows overview of pending requests, submitted quotations, and quick actions.
- * Designed with iOS HIG compliance.
+ * Shows the provider's own submitted quotations, their status,
+ * and engagement metrics. Distinct from Solicitudes (TM's requests).
  *
- * Designed by Aria - Capitana del Concilio de Creación
+ * Designed by Aria - Capitana del Concilio de Creacion
  */
 
 import { useState, useEffect } from 'react';
@@ -13,7 +13,6 @@ import {
   Typography,
   Card,
   CardContent,
-  Button,
   Stack,
   Chip,
   alpha,
@@ -21,34 +20,36 @@ import {
   useTheme,
 } from '@mui/material';
 import {
-  FileText,
-  PlusCircle,
   Package,
-  Clock,
-  CheckCircle,
   Eye,
+  CheckCircle,
+  Clock,
+  ShoppingBag,
+  TrendingUp,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { brand, iosSemanticColors, iosTypographyScale, typography, radius } from '../../design-system';
-import { PRODUCT_TYPE_LABELS, type QuotationRequest, type ProviderQuotation } from '../../types/provider';
+import { PRODUCT_TYPE_LABELS, QUOTATION_STATUS_LABELS, type ProviderQuotation, type QuotationStatus } from '../../types/provider';
 
 interface DashboardStats {
-  pendingRequests: number;
-  myQuotations: number;
+  totalQuotations: number;
+  disponibles: number;
+  reservados: number;
+  vendidos: number;
   viewedByAdmin: number;
 }
 
 export default function ProviderDashboard() {
   const theme = useTheme();
-  const navigate = useNavigate();
   const { user } = useGoogleAuth();
   const [stats, setStats] = useState<DashboardStats>({
-    pendingRequests: 0,
-    myQuotations: 0,
+    totalQuotations: 0,
+    disponibles: 0,
+    reservados: 0,
+    vendidos: 0,
     viewedByAdmin: 0,
   });
-  const [recentRequests, setRecentRequests] = useState<QuotationRequest[]>([]);
+  const [myQuotations, setMyQuotations] = useState<ProviderQuotation[]>([]);
   const [loading, setLoading] = useState(true);
 
   // iOS HIG semantic colors
@@ -60,31 +61,29 @@ export default function ProviderDashboard() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
+      if (!user?.email) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        // Fetch quotation requests
-        const requestsRes = await fetch('/api/quotation-requests?status=pendiente');
-        const requestsData = await requestsRes.json();
-
-        // Fetch provider's quotations
-        const quotationsRes = await fetch(`/api/provider-quotations?email=${encodeURIComponent(user?.email || '')}`);
+        // Fetch provider's own quotations
+        const quotationsRes = await fetch(`/api/provider-quotations?email=${encodeURIComponent(user.email)}`);
         const quotationsData = await quotationsRes.json();
-
-        if (requestsData.success) {
-          const requests = requestsData.requests || [];
-          setRecentRequests(requests.slice(0, 3));
-          setStats(prev => ({
-            ...prev,
-            pendingRequests: requests.length,
-          }));
-        }
 
         if (quotationsData.success) {
           const quotations: ProviderQuotation[] = quotationsData.quotations || [];
-          setStats(prev => ({
-            ...prev,
-            myQuotations: quotations.length,
+          // Sort by date (newest first)
+          quotations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+          setMyQuotations(quotations);
+          setStats({
+            totalQuotations: quotations.length,
+            disponibles: quotations.filter(q => q.status === 'disponible').length,
+            reservados: quotations.filter(q => q.status === 'reservado').length,
+            vendidos: quotations.filter(q => q.status === 'vendido').length,
             viewedByAdmin: quotations.filter(q => q.viewedByAdmin).length,
-          }));
+          });
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -93,61 +92,48 @@ export default function ProviderDashboard() {
       }
     };
 
-    if (user?.email) {
-      fetchDashboardData();
-    } else {
-      setLoading(false);
-    }
+    fetchDashboardData();
   }, [user?.email]);
 
-  const StatCard = ({
-    icon: Icon,
-    label,
-    value,
-    color,
-  }: {
-    icon: typeof FileText;
-    label: string;
-    value: number;
-    color: string;
-  }) => (
-    <Card
-      sx={{
-        flex: 1,
-        minWidth: 100,
-        bgcolor: alpha(color, 0.08),
-        border: 'none',
-        boxShadow: 'none',
-        borderRadius: radius.lg,
-      }}
-    >
-      <CardContent sx={{ py: 2, px: 2, '&:last-child': { pb: 2 } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Icon size={18} color={color} />
-          <Typography
-            sx={{
-              fontSize: iosTypographyScale.caption1,
-              fontWeight: typography.weight.medium,
-              color: secondaryLabelColor,
-              letterSpacing: typography.letterSpacing.tight,
-            }}
-          >
-            {label}
-          </Typography>
-        </Box>
-        <Typography
-          sx={{
-            fontSize: iosTypographyScale.title1,
-            fontWeight: typography.weight.bold,
-            color,
-            fontFeatureSettings: '"tnum"',
-          }}
-        >
-          {value}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
+  const getStatusColor = (status: QuotationStatus) => {
+    switch (status) {
+      case 'disponible': return brand.emerald[500];
+      case 'reservado': return '#f59e0b';
+      case 'vendido': return '#ef4444';
+      default: return '#6b7280';
+    }
+  };
+
+  const getStatusIcon = (status: QuotationStatus) => {
+    switch (status) {
+      case 'disponible': return CheckCircle;
+      case 'reservado': return Clock;
+      case 'vendido': return ShoppingBag;
+      default: return Package;
+    }
+  };
+
+  const formatPrice = (price: number) => {
+    if (price >= 1000000) {
+      return `$${(price / 1000000).toFixed(1)}M`;
+    }
+    return `$${price.toLocaleString('es-CO')}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Hoy';
+    if (diffDays === 1) return 'Ayer';
+    if (diffDays < 7) return `Hace ${diffDays} dias`;
+
+    return date.toLocaleDateString('es-CO', {
+      day: '2-digit',
+      month: 'short',
+    });
+  };
 
   if (loading) {
     return (
@@ -159,7 +145,7 @@ export default function ProviderDashboard() {
 
   return (
     <Box sx={{ p: 2, pb: 10 }}>
-      {/* Welcome Header - iOS Large Title style */}
+      {/* Welcome Header */}
       <Box sx={{ mb: 3 }}>
         <Typography
           sx={{
@@ -170,7 +156,7 @@ export default function ProviderDashboard() {
             mb: 0.5,
           }}
         >
-          Portal Proveedor
+          Mis Cotizaciones
         </Typography>
         <Typography
           sx={{
@@ -180,33 +166,108 @@ export default function ProviderDashboard() {
             letterSpacing: typography.letterSpacing.tight,
           }}
         >
-          Bienvenido, {user?.name || 'Proveedor'}
+          Hola, {user?.name?.split(' ')[0] || 'Proveedor'}
         </Typography>
       </Box>
 
-      {/* Stats Cards */}
-      <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
-        <StatCard
-          icon={Clock}
-          label="Solicitudes"
-          value={stats.pendingRequests}
-          color="#f59e0b"
-        />
-        <StatCard
-          icon={Package}
-          label="Mis Cotizaciones"
-          value={stats.myQuotations}
-          color={brand.emerald[500]}
-        />
-        <StatCard
-          icon={Eye}
-          label="Vistas"
-          value={stats.viewedByAdmin}
-          color="#6366f1"
-        />
-      </Stack>
+      {/* Stats Summary - Horizontal scroll on mobile */}
+      <Box sx={{ mb: 3, mx: -2, px: 2, overflowX: 'auto', '&::-webkit-scrollbar': { display: 'none' } }}>
+        <Stack direction="row" spacing={1.5} sx={{ minWidth: 'max-content' }}>
+          {/* Total */}
+          <Card
+            sx={{
+              minWidth: 100,
+              bgcolor: alpha(brand.emerald[500], 0.08),
+              border: 'none',
+              boxShadow: 'none',
+              borderRadius: radius.lg,
+            }}
+          >
+            <CardContent sx={{ py: 2, px: 2, '&:last-child': { pb: 2 } }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Package size={16} color={brand.emerald[500]} />
+                <Typography sx={{ fontSize: iosTypographyScale.caption1, color: secondaryLabelColor }}>
+                  Enviadas
+                </Typography>
+              </Box>
+              <Typography sx={{ fontSize: iosTypographyScale.title2, fontWeight: typography.weight.bold, color: brand.emerald[500] }}>
+                {stats.totalQuotations}
+              </Typography>
+            </CardContent>
+          </Card>
 
-      {/* Quick Actions - iOS Section Header style */}
+          {/* Disponibles */}
+          <Card
+            sx={{
+              minWidth: 100,
+              bgcolor: alpha(brand.emerald[500], 0.08),
+              border: 'none',
+              boxShadow: 'none',
+              borderRadius: radius.lg,
+            }}
+          >
+            <CardContent sx={{ py: 2, px: 2, '&:last-child': { pb: 2 } }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <CheckCircle size={16} color={brand.emerald[500]} />
+                <Typography sx={{ fontSize: iosTypographyScale.caption1, color: secondaryLabelColor }}>
+                  Activas
+                </Typography>
+              </Box>
+              <Typography sx={{ fontSize: iosTypographyScale.title2, fontWeight: typography.weight.bold, color: brand.emerald[500] }}>
+                {stats.disponibles}
+              </Typography>
+            </CardContent>
+          </Card>
+
+          {/* Vistas */}
+          <Card
+            sx={{
+              minWidth: 100,
+              bgcolor: alpha('#6366f1', 0.08),
+              border: 'none',
+              boxShadow: 'none',
+              borderRadius: radius.lg,
+            }}
+          >
+            <CardContent sx={{ py: 2, px: 2, '&:last-child': { pb: 2 } }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Eye size={16} color="#6366f1" />
+                <Typography sx={{ fontSize: iosTypographyScale.caption1, color: secondaryLabelColor }}>
+                  Vistas
+                </Typography>
+              </Box>
+              <Typography sx={{ fontSize: iosTypographyScale.title2, fontWeight: typography.weight.bold, color: '#6366f1' }}>
+                {stats.viewedByAdmin}
+              </Typography>
+            </CardContent>
+          </Card>
+
+          {/* Vendidas */}
+          <Card
+            sx={{
+              minWidth: 100,
+              bgcolor: alpha('#10b981', 0.08),
+              border: 'none',
+              boxShadow: 'none',
+              borderRadius: radius.lg,
+            }}
+          >
+            <CardContent sx={{ py: 2, px: 2, '&:last-child': { pb: 2 } }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <TrendingUp size={16} color="#10b981" />
+                <Typography sx={{ fontSize: iosTypographyScale.caption1, color: secondaryLabelColor }}>
+                  Vendidas
+                </Typography>
+              </Box>
+              <Typography sx={{ fontSize: iosTypographyScale.title2, fontWeight: typography.weight.bold, color: '#10b981' }}>
+                {stats.vendidos}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Stack>
+      </Box>
+
+      {/* My Quotations History */}
       <Typography
         sx={{
           fontSize: iosTypographyScale.footnote,
@@ -217,63 +278,10 @@ export default function ProviderDashboard() {
           mb: 1.5,
         }}
       >
-        Acciones Rapidas
+        Historial de Cotizaciones
       </Typography>
-      <Stack spacing={1.5} sx={{ mb: 3 }}>
-        <Button
-          variant="contained"
-          startIcon={<PlusCircle size={20} />}
-          onClick={() => navigate('/provider/submit')}
-          sx={{
-            bgcolor: brand.emerald[500],
-            '&:hover': { bgcolor: alpha(brand.emerald[500], 0.87) },
-            py: 1.5,
-            borderRadius: radius.md,
-            textTransform: 'none',
-            fontSize: iosTypographyScale.body,
-            fontWeight: typography.weight.semibold,
-          }}
-          fullWidth
-        >
-          Enviar Nueva Cotizacion
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<FileText size={20} />}
-          onClick={() => navigate('/provider/requests')}
-          sx={{
-            borderColor: brand.emerald[500],
-            color: brand.emerald[500],
-            '&:hover': {
-              borderColor: brand.emerald[500],
-              bgcolor: alpha(brand.emerald[500], 0.04),
-            },
-            py: 1.5,
-            borderRadius: radius.md,
-            textTransform: 'none',
-            fontSize: iosTypographyScale.body,
-            fontWeight: typography.weight.semibold,
-          }}
-          fullWidth
-        >
-          Ver Solicitudes ({stats.pendingRequests})
-        </Button>
-      </Stack>
 
-      {/* Recent Requests - iOS Section Header style */}
-      <Typography
-        sx={{
-          fontSize: iosTypographyScale.footnote,
-          fontWeight: typography.weight.semibold,
-          color: secondaryLabelColor,
-          textTransform: 'uppercase',
-          letterSpacing: typography.letterSpacing.wide,
-          mb: 1.5,
-        }}
-      >
-        Solicitudes Recientes
-      </Typography>
-      {recentRequests.length === 0 ? (
+      {myQuotations.length === 0 ? (
         <Card
           sx={{
             bgcolor: alpha(brand.emerald[500], 0.04),
@@ -282,69 +290,146 @@ export default function ProviderDashboard() {
             borderRadius: radius.lg,
           }}
         >
-          <CardContent sx={{ textAlign: 'center', py: 4 }}>
-            <CheckCircle size={40} color={brand.emerald[500]} style={{ marginBottom: 8 }} />
+          <CardContent sx={{ textAlign: 'center', py: 6 }}>
+            <Package size={48} color={brand.emerald[500]} style={{ marginBottom: 16, opacity: 0.5 }} />
             <Typography
               sx={{
-                fontSize: iosTypographyScale.subhead,
+                fontSize: iosTypographyScale.body,
+                color: secondaryLabelColor,
+                mb: 1,
+              }}
+            >
+              Aun no has enviado cotizaciones
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: iosTypographyScale.caption1,
                 color: tertiaryLabelColor,
               }}
             >
-              No hay solicitudes pendientes
+              Usa el tab "Cotizar" para enviar tu primera oferta
             </Typography>
           </CardContent>
         </Card>
       ) : (
         <Stack spacing={1.5}>
-          {recentRequests.map((request) => (
-            <Card
-              key={request.id}
-              sx={{
-                cursor: 'pointer',
-                '&:hover': { bgcolor: alpha(brand.emerald[500], 0.04) },
-                border: '1px solid',
-                borderColor: 'divider',
-                boxShadow: 'none',
-                borderRadius: radius.md,
-              }}
-              onClick={() => navigate(`/provider/requests?id=${request.id}`)}
-            >
-              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontSize: iosTypographyScale.body,
-                        fontWeight: typography.weight.semibold,
-                        color: labelColor,
-                      }}
-                    >
-                      {PRODUCT_TYPE_LABELS[request.productType] || request.productType}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: iosTypographyScale.caption1,
-                        color: secondaryLabelColor,
-                      }}
-                    >
-                      {request.weightMin}-{request.weightMax} ct | {request.colorPreference}
-                    </Typography>
+          {myQuotations.map((quotation) => {
+            const StatusIcon = getStatusIcon(quotation.status);
+
+            return (
+              <Card
+                key={quotation.id}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  boxShadow: 'none',
+                  borderRadius: radius.md,
+                  overflow: 'hidden',
+                }}
+              >
+                <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
+                  <Box sx={{ display: 'flex' }}>
+                    {/* Thumbnail */}
+                    {quotation.photoUrls && quotation.photoUrls.length > 0 ? (
+                      <Box
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          flexShrink: 0,
+                          bgcolor: alpha(brand.emerald[500], 0.1),
+                          backgroundImage: `url(${quotation.photoUrls[0]})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          flexShrink: 0,
+                          bgcolor: alpha(brand.emerald[500], 0.1),
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Package size={32} color={brand.emerald[500]} />
+                      </Box>
+                    )}
+
+                    {/* Content */}
+                    <Box sx={{ flex: 1, p: 1.5, minWidth: 0 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
+                        <Typography
+                          sx={{
+                            fontSize: iosTypographyScale.subhead,
+                            fontWeight: typography.weight.semibold,
+                            color: labelColor,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {PRODUCT_TYPE_LABELS[quotation.productType]} - {quotation.color}
+                        </Typography>
+                        <Chip
+                          icon={<StatusIcon size={12} />}
+                          label={QUOTATION_STATUS_LABELS[quotation.status]}
+                          size="small"
+                          sx={{
+                            bgcolor: alpha(getStatusColor(quotation.status), 0.1),
+                            color: getStatusColor(quotation.status),
+                            fontWeight: typography.weight.semibold,
+                            fontSize: '10px',
+                            height: 20,
+                            ml: 1,
+                            '& .MuiChip-icon': { color: 'inherit' },
+                            '& .MuiChip-label': { px: 0.75 },
+                          }}
+                        />
+                      </Box>
+
+                      <Typography
+                        sx={{
+                          fontSize: iosTypographyScale.caption1,
+                          color: secondaryLabelColor,
+                          mb: 0.5,
+                        }}
+                      >
+                        {quotation.quality} {quotation.weightCarats > 0 && `| ${quotation.weightCarats} ct`}
+                      </Typography>
+
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography
+                          sx={{
+                            fontSize: iosTypographyScale.subhead,
+                            fontWeight: typography.weight.bold,
+                            color: brand.emerald[600],
+                          }}
+                        >
+                          {formatPrice(quotation.priceCOP)}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          {quotation.viewedByAdmin && (
+                            <Eye size={12} color="#6366f1" />
+                          )}
+                          <Typography
+                            sx={{
+                              fontSize: iosTypographyScale.caption2,
+                              color: tertiaryLabelColor,
+                            }}
+                          >
+                            {formatDate(quotation.createdAt)}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
                   </Box>
-                  <Chip
-                    label={request.status}
-                    size="small"
-                    sx={{
-                      bgcolor: alpha('#f59e0b', 0.1),
-                      color: '#f59e0b',
-                      fontWeight: typography.weight.semibold,
-                      fontSize: iosTypographyScale.caption2,
-                      borderRadius: radius.sm,
-                    }}
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </Stack>
       )}
     </Box>
