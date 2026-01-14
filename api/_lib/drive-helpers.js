@@ -215,7 +215,8 @@ export async function getOrCreateFolder(drive, parentFolderId, folderName) {
   const searchResponse = await drive.files.list({
     q: `name='${folderName}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: 'files(id, name)',
-    spaces: 'drive',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
   });
 
   if (searchResponse.data.files && searchResponse.data.files.length > 0) {
@@ -229,11 +230,13 @@ export async function getOrCreateFolder(drive, parentFolderId, folderName) {
       parents: [parentFolderId],
     },
     fields: 'id',
+    supportsAllDrives: true,
   });
 
   await drive.permissions.create({
     fileId: folder.data.id,
     requestBody: { role: 'reader', type: 'anyone' },
+    supportsAllDrives: true,
   });
 
   return folder.data.id;

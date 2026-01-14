@@ -23,8 +23,7 @@ import { useNewestProducts } from '../../hooks/useNewestProducts';
 import { useGamification, AchievementToast } from './gamification';
 import { useAnalytics } from './hooks';
 import { SectionSkeleton, ErrorFallback } from './common';
-import { InstallButton, NotificationPermission } from '../pwa';
-import { isPWA } from '../../utils/pwa';
+import { NotificationPermission } from '../pwa';
 import { useNewProductNotification } from '../../hooks/useNewProductNotification';
 
 import {
@@ -157,13 +156,6 @@ const Home: React.FC = () => {
             </Suspense>
           </ErrorBoundary>
         </Box>
-
-        {/* Install App Prompt - Before footer */}
-        {!isPWA() && (
-          <Box sx={{ px: 2, mb: 2, position: 'relative', zIndex: 1 }}>
-            <InstallButton variant="card" />
-          </Box>
-        )}
 
         {/* Footer - Social links and contact */}
         <Box sx={{ position: 'relative', zIndex: 1 }}>

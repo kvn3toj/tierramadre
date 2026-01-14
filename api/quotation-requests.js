@@ -6,8 +6,8 @@
  *
  * Sheet Schema:
  * A=ID, B=FechaCreacion, C=TipoProducto, D=PesoMin, E=PesoMax, F=ColorPreferencia,
- * G=CalidadPreferencia, H=PresupuestoMax, I=Notas, J=Estado, K=ProveedorAsignado,
- * L=RespuestaId, M=CreadoPor, N=FotosReferenciaUrls
+ * G=CalidadPreferencia, H=PresupuestoMax, I=Cantidad, J=Notas, K=Estado, L=ProveedorAsignado,
+ * M=RespuestaId, N=CreadoPor, O=FotosReferenciaUrls
  */
 
 import {
@@ -25,7 +25,7 @@ import {
 const SHEET_NAME = SHEETS.QUOTATION_REQUESTS;
 const HEADERS = [
   'ID', 'FechaCreacion', 'TipoProducto', 'PesoMin', 'PesoMax',
-  'ColorPreferencia', 'CalidadPreferencia', 'PresupuestoMax', 'Notas',
+  'ColorPreferencia', 'CalidadPreferencia', 'PresupuestoMax', 'Cantidad', 'Notas',
   'Estado', 'ProveedorAsignado', 'RespuestaId', 'CreadoPor', 'FotosReferenciaUrls'
 ];
 
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
 
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A:N`,
+        range: `'${SHEET_NAME}'!A:O`,
       });
 
       const rows = response.data.values || [];
@@ -63,12 +63,13 @@ export default async function handler(req, res) {
         colorPreference: row[5] || '',
         qualityPreference: row[6] || '',
         budgetMax: parseFloat(row[7]) || 0,
-        notes: row[8] || '',
-        status: row[9] || 'pendiente',
-        assignedProvider: row[10] || '',
-        responseId: row[11] || '',
-        createdBy: row[12] || '',
-        referencePhotoUrls: (row[13] || '').split(',').filter(Boolean),
+        quantity: parseInt(row[8]) || 1,
+        notes: row[9] || '',
+        status: row[10] || 'pendiente',
+        assignedProvider: row[11] || '',
+        responseId: row[12] || '',
+        createdBy: row[13] || '',
+        referencePhotoUrls: (row[14] || '').split(',').filter(Boolean),
       }));
 
       if (id) {
@@ -93,7 +94,7 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const {
         productType, weightMin, weightMax, colorPreference,
-        qualityPreference, budgetMax, notes, assignedProvider,
+        qualityPreference, budgetMax, quantity, notes, assignedProvider,
         createdBy, referencePhotoUrls,
       } = req.body;
 
@@ -106,6 +107,7 @@ export default async function handler(req, res) {
         colorPreference,
         qualityPreference,
         budgetMax,
+        quantity || 1,
         notes || '',
         'pendiente',
         assignedProvider || '',
@@ -116,7 +118,7 @@ export default async function handler(req, res) {
 
       await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A:N`,
+        range: `'${SHEET_NAME}'!A:O`,
         valueInputOption: 'RAW',
         requestBody: { values: [newRequest] },
       });
@@ -126,7 +128,7 @@ export default async function handler(req, res) {
           id: newRequest[0],
           createdAt: newRequest[1],
           productType, weightMin, weightMax, colorPreference,
-          qualityPreference, budgetMax, notes,
+          qualityPreference, budgetMax, quantity: quantity || 1, notes,
           status: 'pendiente',
           assignedProvider, createdBy,
           referencePhotoUrls: referencePhotoUrls || [],
@@ -140,7 +142,7 @@ export default async function handler(req, res) {
 
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A:N`,
+        range: `'${SHEET_NAME}'!A:O`,
       });
 
       const rows = response.data.values || [];
@@ -150,19 +152,21 @@ export default async function handler(req, res) {
         return sendError(res, 404, 'Request not found');
       }
 
+      // K column = Estado (status)
       if (status) {
         await sheets.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
-          range: `'${SHEET_NAME}'!J${rowIndex + 1}`,
+          range: `'${SHEET_NAME}'!K${rowIndex + 1}`,
           valueInputOption: 'RAW',
           requestBody: { values: [[status]] },
         });
       }
 
+      // M column = RespuestaId (responseId)
       if (responseId) {
         await sheets.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
-          range: `'${SHEET_NAME}'!L${rowIndex + 1}`,
+          range: `'${SHEET_NAME}'!M${rowIndex + 1}`,
           valueInputOption: 'RAW',
           requestBody: { values: [[responseId]] },
         });
@@ -177,7 +181,7 @@ export default async function handler(req, res) {
 
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A:N`,
+        range: `'${SHEET_NAME}'!A:O`,
       });
 
       const rows = response.data.values || [];
@@ -187,9 +191,10 @@ export default async function handler(req, res) {
         return sendError(res, 404, 'Request not found');
       }
 
+      // K column = Estado (status)
       await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!J${rowIndex + 1}`,
+        range: `'${SHEET_NAME}'!K${rowIndex + 1}`,
         valueInputOption: 'RAW',
         requestBody: { values: [['cancelada']] },
       });

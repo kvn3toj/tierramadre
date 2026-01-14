@@ -44,7 +44,7 @@ interface AdminInfo {
 interface UseWhatsAppContactReturn {
   // Actions
   openWhatsAppToInviter: (items: CartItem[]) => Promise<void>;
-  openWhatsAppToAdmin: (items: CartItem[], adminName: string) => Promise<void>;
+  openWhatsAppToAdmin: (items: CartItem[], adminName: string) => Promise<boolean>;
   checkGuestHistory: () => Promise<GuestHistoryResult>;
   fetchAdmins: () => Promise<AdminInfo[]>;
   // State
@@ -59,26 +59,87 @@ interface UseWhatsAppContactReturn {
 /**
  * Format phone number for WhatsApp API
  * Removes +, spaces, dashes, parentheses
+ * Adds Colombia country code (57) if not present
  */
 function formatPhoneNumber(phone: string): string {
-  return phone.replace(/[\s\-+()]/g, '');
+  // Remove all non-digit characters
+  let cleaned = phone.replace(/\D/g, '');
+
+  // If it's a 10-digit Colombian number (starts with 3), add country code
+  if (cleaned.length === 10 && cleaned.startsWith('3')) {
+    cleaned = '57' + cleaned;
+  }
+
+  return cleaned;
+}
+
+/**
+ * Format a single cart item with details
+ */
+function formatProductDetails(item: CartItem, index: number): string {
+  const lines: string[] = [];
+
+  // Product header with name
+  lines.push(`${index + 1}. 💎 *${item.nombre}*`);
+  lines.push(`   Ref: #${item.item}`);
+
+  // Type: Jewelry or Gem
+  if (item.isJewelry) {
+    lines.push(`   Tipo: Joyeria (${item.metalType || 'Plata'})`);
+    if (item.talla && item.talla !== '-') {
+      lines.push(`   Talla: ${item.talla}`);
+    }
+  } else {
+    // Gem details
+    if (item.peso && item.peso !== '-') {
+      lines.push(`   Peso: ${item.peso} ct`);
+    }
+    if (item.talla && item.talla !== '-') {
+      lines.push(`   Corte: ${item.talla}`);
+    }
+  }
+
+  // Color and quality
+  if (item.color) {
+    lines.push(`   Color: ${item.color}`);
+  }
+  if (item.calidad) {
+    lines.push(`   Calidad: ${item.calidad}`);
+  }
+
+  return lines.join('\n');
 }
 
 /**
  * Format cart items into WhatsApp message
+ * Professional, elegant format for Tierra Madre
  */
 function formatCartMessage(items: CartItem[], senderName?: string): string {
+  const greeting = 'Buen dia,';
+  const intro = items.length === 1
+    ? 'Me gustaria solicitar informacion sobre la siguiente pieza de la coleccion *Tierra Madre*:'
+    : `Me gustaria solicitar informacion sobre las siguientes *${items.length} piezas* de la coleccion *Tierra Madre*:`;
+
+  // Format each product with details
   const productLines = items
-    .map((item) => `- Item #${item.item}: ${item.nombre}`)
-    .join('\n');
+    .map((item, index) => formatProductDetails(item, index))
+    .join('\n\n');
 
-  let message = `Hola! Estoy interesado/a en los siguientes productos de Tierra Madre:\n\n${productLines}\n\nMe gustaria recibir mas informacion.`;
+  // Build the message
+  let message = `${greeting}\n\n${intro}\n\n${productLines}`;
 
+  // Closing
+  message += '\n\n---';
+  message += '\nAgradezco su pronta respuesta con disponibilidad y condiciones.';
+
+  // Sender info
   if (senderName) {
-    message += `\n\n[Enviado por: ${senderName}]`;
+    message += `\n\nAtentamente,\n${senderName}`;
   }
 
-  message += '\n\n[Enviado desde Tierra Madre Studio]';
+  // Footer
+  message += '\n\n_Enviado desde Tierra Madre Studio_';
+  message += '\n_🇨🇴 Esmeraldas Colombianas de Origen_';
 
   return message;
 }
@@ -122,12 +183,6 @@ export function useWhatsAppContact(): UseWhatsAppContactReturn {
   const inviterWhatsApp = sessionStorage.getItem(INVITATION_STORAGE_KEYS.INVITER_WHATSAPP);
   const hasInviter = Boolean(inviterName && inviterWhatsApp);
 
-  // Fetch admin contacts on mount
-  useEffect(() => {
-    fetchAdmins();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   /**
    * Fetch admin contacts from asesores API
    */
@@ -160,6 +215,11 @@ export function useWhatsAppContact(): UseWhatsAppContactReturn {
       return [];
     }
   }, []);
+
+  // Fetch admin contacts on mount
+  useEffect(() => {
+    fetchAdmins();
+  }, [fetchAdmins]);
 
   /**
    * Check if guest has been invited by multiple users
@@ -249,9 +309,10 @@ export function useWhatsAppContact(): UseWhatsAppContactReturn {
 
   /**
    * Open WhatsApp to selected admin (for staff)
+   * Returns true if WhatsApp was opened successfully, false otherwise
    */
   const openWhatsAppToAdmin = useCallback(
-    async (items: CartItem[], adminName: string): Promise<void> => {
+    async (items: CartItem[], adminName: string): Promise<boolean> => {
       setIsLoading(true);
       setError(null);
 
@@ -275,14 +336,16 @@ export function useWhatsAppContact(): UseWhatsAppContactReturn {
 
         if (!admin?.whatsapp) {
           setError(`No se encontro el WhatsApp de ${adminName}`);
-          return;
+          return false;
         }
 
         const message = formatCartMessage(items);
         openWhatsApp(admin.whatsapp, message);
+        return true;
       } catch (err) {
         console.error('Error opening WhatsApp to admin:', err);
         setError('Error al abrir WhatsApp');
+        return false;
       } finally {
         setIsLoading(false);
       }

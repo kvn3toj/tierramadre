@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { useWhatsAppContact } from '../hooks/useWhatsAppContact';
-import { useIsGuest } from '../hooks/useAuth';
+import { useIsGuest, useGuestCanSeePrices } from '../hooks/useAuth';
 import { useThemeMode } from '../contexts/ThemeContext';
 import AdminSelectDialog from '../components/cart/AdminSelectDialog';
 import { emeraldCore, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
@@ -40,6 +40,7 @@ export default function CartPage() {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const isGuest = useIsGuest();
+  const canSeePrices = useGuestCanSeePrices();
 
   const {
     cartItems,
@@ -79,8 +80,8 @@ export default function CartPage() {
         return;
       }
       await openWhatsAppToInviter(cartItems);
-      // Clear cart after sending
-      clearCart();
+      // Don't clear cart - let user keep their selection
+      // They can manually clear or the cart persists for future reference
     } else {
       // Staff flow - open admin selection dialog
       setAdminDialogOpen(true);
@@ -88,9 +89,13 @@ export default function CartPage() {
   };
 
   const handleAdminSelected = async (adminName: string) => {
-    await openWhatsAppToAdmin(cartItems, adminName);
-    // Clear cart after sending
-    clearCart();
+    const success = await openWhatsAppToAdmin(cartItems, adminName);
+    if (!success) {
+      // Show error - the hook already set the error state
+      // Keep the dialog closed but cart items remain
+      setSendError(`No se pudo enviar a ${adminName}. Verifica que tenga WhatsApp configurado.`);
+    }
+    // Don't clear cart - let user keep their selection
   };
 
   // iOS HIG colors
@@ -228,12 +233,14 @@ export default function CartPage() {
                     <Typography variant="caption" color="text.secondary">
                       Item #{item.item}
                     </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ fontWeight: 600, color: emeraldCore.dark, mt: 0.5 }}
-                    >
-                      {formatCurrency(item.precioCOP)}
-                    </Typography>
+                    {canSeePrices && (
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 600, color: emeraldCore.dark, mt: 0.5 }}
+                      >
+                        {formatCurrency(item.precioCOP)}
+                      </Typography>
+                    )}
                   </Box>
 
                   <IconButton
@@ -257,32 +264,34 @@ export default function CartPage() {
             ))}
           </Paper>
 
-          {/* Totals */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2,
-              borderRadius: 3,
-              border: '1px solid',
-              borderColor: separatorColor,
-              mb: 3,
-            }}
-          >
-            <Box
+          {/* Totals - Only show if guest can see prices */}
+          {canSeePrices && (
+            <Paper
+              elevation={0}
               sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                p: 2,
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: separatorColor,
+                mb: 3,
               }}
             >
-              <Typography variant="body2" color="text.secondary">
-                Total
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                {formatCurrency(totals.cop)}
-              </Typography>
-            </Box>
-          </Paper>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  Total
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  {formatCurrency(totals.cop)}
+                </Typography>
+              </Box>
+            </Paper>
+          )}
 
           {/* Guest info banner */}
           {isGuest && inviterName && (

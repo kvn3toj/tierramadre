@@ -29,6 +29,7 @@ export interface QuotationRequest {
   colorPreference: string;     // Verde Vivido, Verde Muzo, etc.
   qualityPreference: string;   // Fina, Comercial Fina, etc.
   budgetMax: number;           // COP
+  quantity: number;            // How many pieces needed
   notes: string;
   status: RequestStatus;
   assignedProvider?: string;   // Provider email (optional)
@@ -85,6 +86,7 @@ export interface QuotationRequestFormData {
   colorPreference: string;
   qualityPreference: string;
   budgetMax: number;
+  quantity: number;            // How many pieces needed
   notes: string;
   assignedProvider?: string;
   referencePhotoUrls?: string[]; // Reference images/videos from admin
@@ -127,4 +129,91 @@ export const QUOTATION_STATUS_LABELS: Record<QuotationStatus, string> = {
   disponible: 'Disponible',
   reservado: 'Reservado',
   vendido: 'Vendido',
+};
+
+// ============================================
+// Product Requests (Asesor/Embajador → Admin)
+// ============================================
+
+// Status for product requests from asesores to admin
+export type ProductRequestStatus = 'pendiente' | 'aprobada' | 'enviada_proveedor' | 'rechazada' | 'completada';
+
+// Priority levels for requests
+export type RequestPriority = 'normal' | 'urgente' | 'muy_urgente';
+
+/**
+ * Product Request (Asesor/Embajador to Admin)
+ * Asesores and embajadores request products they need for their clients.
+ * Admin reviews and decides if provider needs to be contacted.
+ */
+export interface ProductRequest {
+  id: string;
+  createdAt: string;
+  // Requester info
+  requesterEmail: string;
+  requesterName: string;
+  requesterRole: 'asesor' | 'embajador';
+  // Product details
+  productType: ProductType;
+  description: string;
+  weightMin: number;           // Min carats
+  weightMax: number;           // Max carats
+  colorPreference: string;     // Verde Vivido, etc.
+  qualityPreference: string;   // Fina, Comercial Fina, etc.
+  budgetMin?: number;          // COP - optional min budget
+  budgetMax: number;           // COP
+  quantity: number;            // How many pieces needed
+  // Client info (optional)
+  clientName?: string;
+  clientNotes?: string;
+  // Request metadata
+  priority: RequestPriority;
+  neededBy?: string;           // ISO date when needed
+  notes: string;
+  referencePhotoUrls?: string[]; // Reference images
+  // Status tracking
+  status: ProductRequestStatus;
+  // Admin response
+  adminResponse?: string;
+  respondedBy?: string;        // Admin email who responded
+  respondedAt?: string;        // ISO date
+  // Link to quotation request if forwarded to provider
+  linkedQuotationId?: string;
+}
+
+/**
+ * Form data for creating product requests
+ */
+export interface ProductRequestFormData {
+  productType: ProductType;
+  description: string;
+  weightMin: number;
+  weightMax: number;
+  colorPreference: string;
+  qualityPreference: string;
+  budgetMin?: number;
+  budgetMax: number;
+  quantity: number;
+  clientName?: string;
+  clientNotes?: string;
+  priority: RequestPriority;
+  neededBy?: string;
+  notes: string;
+  referencePhotoUrls?: string[];
+}
+
+// Product request status labels for UI
+export const PRODUCT_REQUEST_STATUS_LABELS: Record<ProductRequestStatus, string> = {
+  pendiente: 'Pendiente',
+  aprobada: 'Aprobada',
+  enviada_proveedor: 'Enviada a Proveedor',
+  rechazada: 'Rechazada',
+  completada: 'Completada',
+};
+
+// Priority labels for UI
+export const PRIORITY_LABELS: Record<RequestPriority, string> = {
+  normal: 'Normal',
+  urgente: 'Urgente',
+  muy_urgente: 'Muy Urgente',
 };

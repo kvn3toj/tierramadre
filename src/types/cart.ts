@@ -8,7 +8,7 @@
 import type { TreasureItem } from './index';
 
 /**
- * Item stored in cart (minimal data for sessionStorage efficiency)
+ * Item stored in cart (includes key product details for WhatsApp messages)
  */
 export interface CartItem {
   itemId: number;
@@ -18,6 +18,13 @@ export interface CartItem {
   precioInternacional?: number;
   thumbnailUrl?: string;
   addedAt: string;
+  // Additional details for professional WhatsApp messages
+  peso?: string | number;
+  color?: string;
+  calidad?: string;
+  talla?: string;
+  isJewelry?: boolean;
+  metalType?: string;
 }
 
 /**
@@ -46,5 +53,12 @@ export function treasureToCartItem(treasure: TreasureItem): CartItem {
     precioInternacional: treasure.precioInternacional,
     thumbnailUrl: treasure.imagen || treasure.thumbnailUrl,
     addedAt: new Date().toISOString(),
+    // Additional details for professional WhatsApp messages
+    peso: treasure.peso,
+    color: treasure.color,
+    calidad: treasure.calidad,
+    talla: treasure.talla,
+    isJewelry: treasure.isJewelry,
+    metalType: treasure.metalType,
   };
 }

@@ -23,6 +23,19 @@ import {
   InputAdornment,
   useTheme,
 } from '@mui/material';
+
+// Helper to format number with Colombian thousands separator (dots)
+const formatPriceCOP = (value: number): string => {
+  if (!value) return '';
+  return value.toLocaleString('es-CO');
+};
+
+// Helper to parse formatted price string back to number
+const parsePriceCOP = (value: string): number => {
+  // Remove all dots and other non-numeric characters except digits
+  const numericString = value.replace(/\./g, '').replace(/[^\d]/g, '');
+  return parseInt(numericString, 10) || 0;
+};
 import { Send, ArrowLeft, CheckCircle, ImagePlus } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
@@ -85,6 +98,8 @@ export default function ProviderQuotationForm() {
   const [success, setSuccess] = useState(false);
   // Temporary ID for media uploads (generated once per form session)
   const [tempQuotationId] = useState<string>(() => generateTempQuotationId());
+  // Display value for price input (formatted with dots)
+  const [priceDisplay, setPriceDisplay] = useState('');
 
   // iOS HIG semantic colors
   const isDark = theme.palette.mode === 'dark';
@@ -127,6 +142,17 @@ export default function ProviderQuotationForm() {
 
   const handleChange = (field: keyof ProviderQuotationFormData, value: unknown) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setError(null);
+  };
+
+  // Handle price input with thousands formatting
+  const handlePriceChange = (inputValue: string) => {
+    // Parse the numeric value
+    const numericValue = parsePriceCOP(inputValue);
+    // Update the form data with the numeric value
+    setFormData(prev => ({ ...prev, priceCOP: numericValue }));
+    // Update display with formatted value
+    setPriceDisplay(formatPriceCOP(numericValue));
     setError(null);
   };
 
@@ -421,14 +447,14 @@ export default function ProviderQuotationForm() {
         {/* Price */}
         <TextField
           label="Precio COP"
-          type="number"
-          value={formData.priceCOP || ''}
-          onChange={(e) => handleChange('priceCOP', parseFloat(e.target.value) || 0)}
+          value={priceDisplay}
+          onChange={(e) => handlePriceChange(e.target.value)}
           fullWidth
+          placeholder="10.000.000"
           InputProps={{
             startAdornment: <InputAdornment position="start">$</InputAdornment>,
           }}
-          inputProps={{ min: 0 }}
+          inputProps={{ inputMode: 'numeric' }}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: radius.md,
@@ -444,6 +470,7 @@ export default function ProviderQuotationForm() {
           onChange={(e) => handleChange('availability', parseInt(e.target.value) || 0)}
           fullWidth
           inputProps={{ min: 1 }}
+          helperText="Numero de piezas disponibles (gemas, anillos, etc.)"
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: radius.md,

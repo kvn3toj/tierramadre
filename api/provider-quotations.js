@@ -77,11 +77,13 @@ async function uploadFileToDrive(drive, folderId, file, index) {
       body: fs.createReadStream(file.filepath),
     },
     fields: 'id, webViewLink, webContentLink',
+    supportsAllDrives: true,
   });
 
   await drive.permissions.create({
     fileId: uploadedFile.data.id,
     requestBody: { role: 'reader', type: 'anyone' },
+    supportsAllDrives: true,
   });
 
   return {
