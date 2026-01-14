@@ -16,6 +16,7 @@ import {
   IconButton,
   Typography,
   Chip,
+  CircularProgress,
   alpha,
   useTheme,
   useMediaQuery,
@@ -50,6 +51,7 @@ export default function MediaGallery({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [videoLoading, setVideoLoading] = useState(false);
 
   // Touch handling for swipe
   const touchStartX = useRef(0);
@@ -59,15 +61,26 @@ export default function MediaGallery({
   const currentMedia = media[currentIndex];
   const hasMedia = media.length > 0;
 
-  // Preload all images when media changes to prevent blink on navigation
+  // Preload all images and video posters when media changes to prevent blink on navigation
   useEffect(() => {
     media.forEach((item) => {
       if (item.type === 'image' && item.url) {
         const img = new Image();
         img.src = item.url;
+      } else if (item.type === 'video' && item.thumbnailUrl) {
+        // Preload video poster for smoother transition
+        const img = new Image();
+        img.src = item.thumbnailUrl;
       }
     });
   }, [media]);
+
+  // Set video loading state when switching to a video slide
+  useEffect(() => {
+    if (currentMedia?.type === 'video') {
+      setVideoLoading(true);
+    }
+  }, [currentIndex, currentMedia?.type]);
 
   const handlePrevious = useCallback(() => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : media.length - 1));
@@ -195,20 +208,44 @@ export default function MediaGallery({
             }}
           >
             {currentMedia?.type === 'video' ? (
-              <video
-                src={currentMedia.url}
-                poster={currentMedia.thumbnailUrl}
-                autoPlay
-                muted
-                loop
-                playsInline
-                controls={false}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }}
-              />
+              <>
+                {/* Loading spinner while video buffers */}
+                {videoLoading && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      bgcolor: darkTokens.background.app,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 1,
+                    }}
+                  >
+                    <CircularProgress size={32} sx={{ color: 'white', opacity: 0.5 }} />
+                  </Box>
+                )}
+                <video
+                  src={`${currentMedia.url}#t=0.001`}
+                  poster={currentMedia.thumbnailUrl || logoPlaceholder}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  controls={false}
+                  preload="metadata"
+                  onLoadedData={() => setVideoLoading(false)}
+                  onCanPlay={() => setVideoLoading(false)}
+                  onError={() => setVideoLoading(false)}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    opacity: videoLoading ? 0 : 1,
+                    transition: 'opacity 0.3s ease',
+                  }}
+                />
+              </>
             ) : (
               <img
                 key={currentMedia?.url}
