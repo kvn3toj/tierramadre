@@ -116,7 +116,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
         <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: studioColors.border }} />
         <Chip
           icon={<Layers size={12} />}
-          label="Multi-seleccion"
+          label="Multi-selección"
           size="small"
           onClick={toggleMultiSelectMode}
           sx={{
@@ -171,7 +171,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
     {selectedEmerald && !multiSelectMode && (
       <SelectedBadge
         type="gallery"
-        label="Seleccionado de galeria"
+        label="Seleccionado de galería"
         imageUrl={selectedEmerald.imageUrl}
         onClear={() => {
           handleEmeraldSelect(null);
@@ -318,7 +318,7 @@ const GalleryAutocomplete: React.FC<GalleryAutocompleteProps> = ({
       <TextField
         {...params}
         size="small"
-        placeholder={emeralds.length > 0 ? "Escribe o selecciona de la galeria..." : "Ej: Anillo Esmeralda Colombiana 2.5ct"}
+        placeholder={emeralds.length > 0 ? "Escribe o selecciona de la galería..." : "Ej: Anillo Esmeralda Colombiana 2.5ct"}
         sx={{
           '& .MuiOutlinedInput-root': {
             bgcolor: studioColors.surface,

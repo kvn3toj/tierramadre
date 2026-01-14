@@ -373,13 +373,13 @@ export default function ProviderQuotationForm() {
 
         {/* Description */}
         <TextField
-          label="Descripcion del Producto"
+          label="Descripción del Producto"
           value={formData.description}
           onChange={(e) => handleChange('description', e.target.value)}
           fullWidth
           multiline
           rows={3}
-          placeholder="Describe las caracteristicas de la esmeralda..."
+          placeholder="Describe las características de la esmeralda..."
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: radius.md,

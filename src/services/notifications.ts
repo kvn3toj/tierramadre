@@ -344,7 +344,7 @@ export function setLastQuotationCheck(): void {
  */
 export function showNewRequestNotification(count: number): void {
   showNotification({
-    title: 'Nueva Solicitud de Cotizacion',
+    title: 'Nueva Solicitud de Cotización',
     body: `Tienes ${count} nueva${count > 1 ? 's' : ''} solicitud${count > 1 ? 'es' : ''} de Tierra Madre`,
     tag: 'provider-request',
     onClick: () => {
@@ -360,7 +360,7 @@ export function showNewRequestNotification(count: number): void {
 export function showProviderResponseNotification(providerName: string): void {
   showNotification({
     title: 'Respuesta de Proveedor',
-    body: `${providerName} ha respondido a tu solicitud de cotizacion`,
+    body: `${providerName} ha respondido a tu solicitud de cotización`,
     tag: 'admin-response',
     onClick: () => {
       window.focus();
@@ -374,11 +374,11 @@ export function showProviderResponseNotification(providerName: string): void {
  */
 export function showNewProviderQuotationNotification(count: number, providerName?: string): void {
   const body = providerName
-    ? `${providerName} ha enviado ${count > 1 ? count : 'una'} nueva${count > 1 ? 's' : ''} cotizacion${count > 1 ? 'es' : ''}`
-    : `Tienes ${count} nueva${count > 1 ? 's' : ''} cotizacion${count > 1 ? 'es' : ''} de proveedores`;
+    ? `${providerName} ha enviado ${count > 1 ? count : 'una'} nueva${count > 1 ? 's' : ''} cotización${count > 1 ? 'es' : ''}`
+    : `Tienes ${count} nueva${count > 1 ? 's' : ''} cotización${count > 1 ? 'es' : ''} de proveedores`;
 
   showNotification({
-    title: 'Nueva Cotizacion de Proveedor',
+    title: 'Nueva Cotización de Proveedor',
     body,
     tag: 'admin-quotation',
     onClick: () => {

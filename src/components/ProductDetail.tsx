@@ -300,7 +300,7 @@ export default function ProductDetail() {
 
     addToCart(product);
     triggerHaptic('success');
-    setSnackbarMessage('Producto agregado a tu seleccion');
+    setSnackbarMessage('Producto agregado a tu selección');
     setSnackbarOpen(true);
   }, [product, isInCart, addToCart, triggerHaptic, navigate]);
 
@@ -934,8 +934,8 @@ export default function ProductDetail() {
                   {!isAvailable
                     ? 'Vendido'
                     : product && isInCart(product.item)
-                      ? 'Ver Seleccion'
-                      : 'Agregar a Seleccion'}
+                      ? 'Ver Selección'
+                      : 'Agregar a Selección'}
                 </Button>
 
                 {/* Secondary CTAs - Horizontal layout */}

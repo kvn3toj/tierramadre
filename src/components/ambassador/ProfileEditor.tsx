@@ -459,7 +459,7 @@ function BasicInfoTab({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <MapPin size={18} color={brand.emerald[500]} />
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                Ubicacion
+                Ubicación
               </Typography>
             </Box>
 
@@ -871,9 +871,9 @@ function TemplateTab({
 
             <Grid container spacing={2}>
               {[
-                { key: 'aboutMe', label: 'Acerca de Mi', desc: 'Muestra tu biografia' },
-                { key: 'portfolio', label: 'Portafolio', desc: 'Galeria de trabajos' },
-                { key: 'testimonials', label: 'Testimonios', desc: 'Resenas de clientes' },
+                { key: 'aboutMe', label: 'Acerca de Mí', desc: 'Muestra tu biografía' },
+                { key: 'portfolio', label: 'Portafolio', desc: 'Galería de trabajos' },
+                { key: 'testimonials', label: 'Testimonios', desc: 'Reseñas de clientes' },
                 { key: 'certifications', label: 'Certificaciones', desc: 'Tus credenciales' },
                 { key: 'featuredProducts', label: 'Productos Destacados', desc: 'Esmeraldas destacadas' },
                 { key: 'trustBadges', label: 'Insignias', desc: 'Badges de confianza' },
@@ -980,10 +980,10 @@ function SpecialtiesTab({
                   <TextField
                     fullWidth
                     size="small"
-                    label="Descripcion"
+                    label="Descripción"
                     value={specialty.description}
                     onChange={(e) => updateSpecialty(index, 'description', e.target.value)}
-                    placeholder="Breve descripcion..."
+                    placeholder="Breve descripción..."
                   />
                 </Grid>
                 <Grid item xs={8} sm={2}>

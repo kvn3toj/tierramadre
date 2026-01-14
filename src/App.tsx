@@ -126,7 +126,7 @@ function AppContent() {
 
           {/* Cart / Selection */}
           <Route path="/cart" element={
-            <Suspense fallback={<LoadingFallback message="Cargando seleccion..." />}>
+            <Suspense fallback={<LoadingFallback message="Cargando selección..." />}>
               <CartPage />
             </Suspense>
           } />

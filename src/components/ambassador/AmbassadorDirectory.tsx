@@ -285,7 +285,7 @@ export default function AmbassadorDirectory({
             No se encontraron asesores
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-            {hasActiveFilters ? 'Intenta con otros criterios de busqueda' : 'No hay asesores registrados en Google Sheets'}
+            {hasActiveFilters ? 'Intenta con otros criterios de búsqueda' : 'No hay asesores registrados en Google Sheets'}
           </Typography>
           {hasActiveFilters && (
             <Button

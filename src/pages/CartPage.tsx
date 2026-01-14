@@ -123,7 +123,7 @@ export default function CartPage() {
         </IconButton>
         <Box sx={{ flex: 1 }}>
           <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            Mi Seleccion
+            Mi Selección
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {cartCount} {cartCount === 1 ? 'producto' : 'productos'}
@@ -166,10 +166,10 @@ export default function CartPage() {
             style={{ marginBottom: 16, opacity: 0.5 }}
           />
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-            Tu seleccion esta vacia
+            Tu selección está vacía
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Explora nuestra coleccion y agrega productos que te interesen
+            Explora nuestra colección y agrega productos que te interesen
           </Typography>
           <Button
             variant="contained"
