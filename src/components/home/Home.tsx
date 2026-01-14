@@ -80,8 +80,8 @@ const Home: React.FC = () => {
     analytics.trackPageView('home');
   }, [analytics]);
 
-  // Check for new products and notify
-  useNewProductNotification({ productCount: treasure.length });
+  // Check for new products and notify (uses product IDs for accurate detection)
+  useNewProductNotification({ products: treasure });
 
 
   // ==========================================================================

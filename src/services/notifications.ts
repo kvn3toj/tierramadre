@@ -15,6 +15,7 @@ const log = createLogger('Notifications');
 const NOTIFICATION_PERMISSION_KEY = 'tierramadre-notification-permission';
 const MEDITATION_REMINDER_KEY = 'tierramadre-meditation-reminder';
 const LAST_PRODUCT_COUNT_KEY = 'tierramadre-last-product-count';
+const KNOWN_PRODUCT_IDS_KEY = 'tierramadre-known-product-ids';
 
 // =============================================================================
 // PERMISSION MANAGEMENT
@@ -83,8 +84,8 @@ export function showNotification(options: NotificationOptions): Notification | n
 
   const notification = new Notification(options.title, {
     body: options.body,
-    icon: options.icon || '/pwa-192x192.png',
-    badge: options.badge || '/pwa-192x192.png',
+    icon: options.icon || '/logo-symbol.png',
+    badge: options.badge || '/logo-symbol.png',
     tag: options.tag,
     data: options.data,
   });
@@ -197,7 +198,7 @@ export function showMeditationReminder(): void {
 // =============================================================================
 
 /**
- * Get last known product count
+ * Get last known product count (legacy - kept for backwards compatibility)
  */
 export function getLastProductCount(): number {
   const stored = localStorage.getItem(LAST_PRODUCT_COUNT_KEY);
@@ -205,14 +206,80 @@ export function getLastProductCount(): number {
 }
 
 /**
- * Update last known product count
+ * Update last known product count (legacy - kept for backwards compatibility)
  */
 export function setLastProductCount(count: number): void {
   localStorage.setItem(LAST_PRODUCT_COUNT_KEY, count.toString());
 }
 
 /**
- * Check for new products and notify if found
+ * Get known product IDs from localStorage
+ */
+export function getKnownProductIds(): Set<number> {
+  try {
+    const stored = localStorage.getItem(KNOWN_PRODUCT_IDS_KEY);
+    if (!stored) return new Set();
+    const ids = JSON.parse(stored) as number[];
+    return new Set(ids);
+  } catch {
+    return new Set();
+  }
+}
+
+/**
+ * Save known product IDs to localStorage
+ */
+export function setKnownProductIds(ids: Set<number>): void {
+  try {
+    const idsArray = Array.from(ids);
+    localStorage.setItem(KNOWN_PRODUCT_IDS_KEY, JSON.stringify(idsArray));
+  } catch (error) {
+    log.warn('Error saving known product IDs:', error);
+  }
+}
+
+/**
+ * Check for new products by comparing item IDs and notify if found
+ * This properly detects only truly new products, not all products on first load
+ */
+export function checkNewProductsByIds(currentProductIds: number[]): number {
+  const knownIds = getKnownProductIds();
+  const currentIdsSet = new Set(currentProductIds);
+
+  // Find products that are in current but not in known
+  const newProductIds = currentProductIds.filter(id => !knownIds.has(id));
+  const newProductsCount = newProductIds.length;
+
+  // Only notify if:
+  // 1. There are new products
+  // 2. We have previously seen products (not first time loading)
+  // 3. The new count is reasonable (not all products being "new")
+  const hasSeenProductsBefore = knownIds.size > 0;
+  const isReasonableNewCount = newProductsCount < currentProductIds.length * 0.5; // Less than 50% are new
+
+  if (newProductsCount > 0 && hasSeenProductsBefore && isReasonableNewCount) {
+    showNotification({
+      title: 'Nuevos Productos',
+      body: `${newProductsCount} nueva${newProductsCount > 1 ? 's' : ''} esmeralda${newProductsCount > 1 ? 's' : ''} disponible${newProductsCount > 1 ? 's' : ''}`,
+      tag: 'new-products',
+      icon: '/logo-symbol.png',
+      badge: '/logo-symbol.png',
+      onClick: () => {
+        window.focus();
+        window.location.href = '/treasure';
+      },
+    });
+  }
+
+  // Update known IDs with all current IDs
+  setKnownProductIds(currentIdsSet);
+
+  return hasSeenProductsBefore && isReasonableNewCount ? newProductsCount : 0;
+}
+
+/**
+ * Check for new products and notify if found (legacy - uses count comparison)
+ * @deprecated Use checkNewProductsByIds for accurate new product detection
  */
 export function checkNewProducts(currentCount: number): number {
   const lastCount = getLastProductCount();
@@ -224,6 +291,8 @@ export function checkNewProducts(currentCount: number): number {
       title: 'Nuevos Productos',
       body: `${newProductsCount} nueva${newProductsCount > 1 ? 's' : ''} esmeralda${newProductsCount > 1 ? 's' : ''} disponible${newProductsCount > 1 ? 's' : ''}`,
       tag: 'new-products',
+      icon: '/logo-symbol.png',
+      badge: '/logo-symbol.png',
       onClick: () => {
         window.focus();
         window.location.href = '/treasure';

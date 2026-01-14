@@ -2,22 +2,25 @@
  * useNewProductNotification Hook
  *
  * Detects new products in treasure and shows notification.
- * Compares current count with stored count on each load.
+ * Uses product IDs to accurately detect only truly new products.
  */
 
 import { useEffect, useRef } from 'react';
 import {
-  checkNewProducts,
+  checkNewProductsByIds,
   isNotificationEnabled,
 } from '../services/notifications';
+import { TreasureItem } from '../types';
 
 interface UseNewProductNotificationOptions {
-  productCount: number;
+  /** All products loaded */
+  products: TreasureItem[];
+  /** Whether notifications are enabled */
   enabled?: boolean;
 }
 
 export function useNewProductNotification({
-  productCount,
+  products,
   enabled = true,
 }: UseNewProductNotificationOptions) {
   const hasChecked = useRef(false);
@@ -27,20 +30,21 @@ export function useNewProductNotification({
     if (hasChecked.current) return;
 
     // Wait for products to load
-    if (productCount === 0) return;
+    if (products.length === 0) return;
 
     // Check if notifications are enabled
     if (!enabled || !isNotificationEnabled()) return;
 
-    // Check for new products
-    const newCount = checkNewProducts(productCount);
+    // Extract product IDs and check for new products
+    const productIds = products.map(p => p.item);
+    const newCount = checkNewProductsByIds(productIds);
 
     if (newCount > 0) {
       console.log(`[NewProductNotification] Found ${newCount} new products`);
     }
 
     hasChecked.current = true;
-  }, [productCount, enabled]);
+  }, [products, enabled]);
 
   return null;
 }
