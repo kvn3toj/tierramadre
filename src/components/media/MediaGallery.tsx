@@ -26,7 +26,6 @@ import {
   ZoomIn,
   Maximize2,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { MediaItem, CATEGORY_LABELS } from './types';
 import { brand, darkTokens, lightTokens } from '../../design-system';
 import ImageLightbox from './ImageLightbox';
@@ -60,32 +59,15 @@ export default function MediaGallery({
   const currentMedia = media[currentIndex];
   const hasMedia = media.length > 0;
 
-  // Track loaded images to prevent blink on navigation
-  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
-  const previousUrlRef = useRef<string | null>(null);
-
-  // Preload all images when media changes
+  // Preload all images when media changes to prevent blink on navigation
   useEffect(() => {
     media.forEach((item) => {
       if (item.type === 'image' && item.url) {
         const img = new Image();
-        img.onload = () => {
-          setLoadedImages((prev) => new Set(prev).add(item.url));
-        };
         img.src = item.url;
       }
     });
   }, [media]);
-
-  // Track the previous image URL to show while new one loads
-  useEffect(() => {
-    if (currentMedia?.url && loadedImages.has(currentMedia.url)) {
-      previousUrlRef.current = currentMedia.url;
-    }
-  }, [currentMedia?.url, loadedImages]);
-
-  const isCurrentImageLoaded = currentMedia?.type === 'video' || loadedImages.has(currentMedia?.url || '');
-  const displayUrl = isCurrentImageLoaded ? currentMedia?.url : previousUrlRef.current;
 
   const handlePrevious = useCallback(() => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : media.length - 1));
@@ -204,14 +186,13 @@ export default function MediaGallery({
           onTouchEnd={handleTouchEnd}
           onClick={handleMainClick}
         >
-        <AnimatePresence initial={false} mode="popLayout">
-          <motion.div
-            key={displayUrl || currentMedia?.id || currentIndex}
-            initial={{ opacity: 0.85 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0.85 }}
-            transition={{ duration: 0.1, ease: 'easeOut' }}
-            style={{ width: '100%', height: '100%' }}
+          {/* No AnimatePresence - simple crossfade with CSS transitions */}
+          <Box
+            sx={{
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+            }}
           >
             {currentMedia?.type === 'video' ? (
               <video
@@ -230,15 +211,11 @@ export default function MediaGallery({
               />
             ) : (
               <img
-                src={displayUrl || currentMedia?.url}
+                key={currentMedia?.url}
+                src={currentMedia?.url}
                 alt={currentMedia?.alt || productName}
                 draggable={false}
                 onContextMenu={(e) => e.preventDefault()}
-                onLoad={() => {
-                  if (currentMedia?.url) {
-                    setLoadedImages((prev) => new Set(prev).add(currentMedia.url));
-                  }
-                }}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -246,13 +223,10 @@ export default function MediaGallery({
                   userSelect: 'none',
                   WebkitUserDrag: 'none',
                   pointerEvents: 'none',
-                  opacity: isCurrentImageLoaded ? 1 : 0.7,
-                  transition: 'opacity 0.15s ease-out',
                 } as React.CSSProperties}
               />
             )}
-          </motion.div>
-        </AnimatePresence>
+          </Box>
 
         {/* Category Label */}
         {currentMedia?.category && (
