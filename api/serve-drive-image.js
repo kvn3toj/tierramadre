@@ -61,11 +61,14 @@ export default async function handler(req, res) {
     const { mimeType, name, size } = metadataResponse.data;
     const etag = generateETag(fileId, size, mimeType);
 
+    // Use optimized image caching (stale-while-revalidate for instant display)
+    const imageCache = CACHE.IMAGES || CACHE.LONG;
+
     // Check If-None-Match for conditional requests (304 Not Modified)
     const ifNoneMatch = req.headers['if-none-match'];
     if (ifNoneMatch === etag) {
       res.setHeader('ETag', etag);
-      res.setHeader('Cache-Control', CACHE.LONG);
+      res.setHeader('Cache-Control', imageCache);
       return res.status(304).end();
     }
 
@@ -85,13 +88,15 @@ export default async function handler(req, res) {
           if (thumbFetch.ok) {
             const thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
 
-            // Chrome-optimized headers for thumbnails
+            // Chrome-optimized headers for thumbnails (stale-while-revalidate for instant display)
             res.setHeader('Content-Type', 'image/jpeg');
             res.setHeader('Content-Length', thumbBuffer.length);
-            res.setHeader('Cache-Control', CACHE.LONG);
+            res.setHeader('Cache-Control', imageCache);
             res.setHeader('ETag', `"thumb-${fileId}"`);
             res.setHeader('Vary', 'Accept-Encoding');
             res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, ETag');
+            // CDN-specific caching for Vercel edge
+            res.setHeader('CDN-Cache-Control', 'public, max-age=604800');
 
             // HEAD request - return headers only
             if (req.method === 'HEAD') {
@@ -119,7 +124,7 @@ export default async function handler(req, res) {
     const commonHeaders = () => {
       res.setHeader('Content-Type', mimeType);
       res.setHeader('Content-Length', size || 0);
-      res.setHeader('Cache-Control', CACHE.LONG);
+      res.setHeader('Cache-Control', imageCache);
       res.setHeader('ETag', etag);
       res.setHeader('Vary', 'Accept-Encoding');
       res.setHeader('Accept-Ranges', 'bytes');
@@ -129,6 +134,8 @@ export default async function handler(req, res) {
       // Cross-Origin headers for Chrome image handling
       res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
       res.setHeader('Timing-Allow-Origin', '*');
+      // CDN-specific caching for Vercel edge (7 days)
+      res.setHeader('CDN-Cache-Control', 'public, max-age=604800');
     };
 
     // HEAD request - return headers without body

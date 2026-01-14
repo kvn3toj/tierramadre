@@ -27,12 +27,14 @@ export const DRIVE_FOLDERS = {
   COTIZACIONES: 'cotizaciones',
 };
 
-// Cache Durations (in seconds)
+// Cache Durations (optimized for Chrome/Safari compatibility)
 export const CACHE = {
   NONE: 'no-store, no-cache, must-revalidate, proxy-revalidate',
   SHORT: 's-maxage=60, stale-while-revalidate=30',
   MEDIUM: 's-maxage=300, max-age=60, stale-while-revalidate=600',
-  LONG: 'public, max-age=86400', // 24 hours
+  LONG: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400', // 24h browser, 7d CDN, 24h stale
+  // Optimized for images: immutable hint for CDN, long stale-while-revalidate for instant display
+  IMAGES: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400, immutable',
 };
 
 // Invitation Settings
