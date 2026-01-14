@@ -204,9 +204,15 @@ export default function VirtualGrid({
     // Image height with 1:1 aspect ratio
     const imageHeight = Math.round(cardWidth);
 
-    // Content area: name (15pt) + specs (12pt) + price + padding
-    // iOS HIG: 12px padding top/bottom = 24px + 20px name + 16px specs + 20px price = ~80px
-    const contentHeight = isXs ? 80 : 88;
+    // Content area breakdown for 2-line name support:
+    // - Padding: 12px top + 12px bottom = 24px
+    // - Header row (color dot + quality chip): ~20px
+    // - Name (2 lines @ 0.85rem × 1.3 lineHeight): ~36px
+    // - Specs: ~16px
+    // - Price: ~18px
+    // Total: ~114px (use 100 mobile, 110 tablet/desktop for breathing room)
+    // 4 columns = narrower cards = more wrapping = need full height
+    const contentHeight = isXs ? 100 : isSm ? 100 : isMd ? 108 : 114;
 
     return imageHeight + contentHeight;
   }, [viewportWidth, columnCount, isXs, isSm, isMd]);

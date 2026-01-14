@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-14T15:50:42.619Z
+ * Generated at: 2026-01-14T16:07:33.130Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-14T15:50:42.619Z",
+  "generatedAt": "2026-01-14T16:07:33.130Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "15 Dic, 2025",
@@ -56,28 +56,28 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "25d98bc",
-    "lastCommitDate": "2026-01-14 10:50:39 -0500"
+    "lastCommitHash": "3cb0e1d",
+    "lastCommitDate": "2026-01-14 11:07:28 -0500"
   },
   "stats": {
-    "totalCommits": 221,
-    "totalAdditions": 85102,
-    "totalDeletions": 58681,
-    "totalFilesChanged": 1433,
-    "netLines": 26421
+    "totalCommits": 224,
+    "totalAdditions": 89037,
+    "totalDeletions": 61051,
+    "totalFilesChanged": 1446,
+    "netLines": 27986
   },
   "categoryStats": {
+    "bugfix": 49,
+    "cleanup": 18,
+    "ux": 42,
     "other": 78,
-    "bugfix": 48,
     "analytics": 10,
-    "ux": 41,
     "performance": 13,
-    "cleanup": 17,
     "auth": 14
   },
   "typeStats": {
-    "feat": 93,
-    "fix": 82,
+    "fix": 84,
+    "feat": 94,
     "refactor": 25,
     "chore": 12,
     "other": 6,
@@ -87,18 +87,18 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "index.html",
-      "count": 35
+      "count": 36
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 31
-    },
-    {
-      "file": "src/App.tsx",
-      "count": 26
+      "count": 32
     },
     {
       "file": "public/version.json",
+      "count": 27
+    },
+    {
+      "file": "src/App.tsx",
       "count": 26
     },
     {
@@ -118,18 +118,18 @@ export const changelogData: ChangelogData = {
       "count": 15
     },
     {
-      "file": "src/components/home/Home.tsx",
+      "file": "src/components/media/MediaGallery.tsx",
       "count": 14
     },
     {
-      "file": "src/components/media/MediaGallery.tsx",
-      "count": 13
+      "file": "src/components/home/Home.tsx",
+      "count": 14
     }
   ],
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 213
+      "commits": 216
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,50 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "3cb0e1d",
+      "message": "Allow product names to wrap to two lines in grid view",
+      "fullMessage": "fix: Allow product names to wrap to two lines in grid view",
+      "author": "Kvn3Toj",
+      "relativeTime": "1 second ago",
+      "date": "2026-01-14",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 6,
+      "deletions": 4,
+      "filesChanged": 1
+    },
+    {
+      "hash": "69f662c",
+      "message": "Remove AnimatePresence transition to eliminate gallery blink",
+      "fullMessage": "fix: Remove AnimatePresence transition to eliminate gallery blink",
+      "author": "Kvn3Toj",
+      "relativeTime": "5 minutes ago",
+      "date": "2026-01-14",
+      "type": "fix",
+      "category": "cleanup",
+      "additions": 11,
+      "deletions": 37,
+      "filesChanged": 1
+    },
+    {
+      "hash": "e7e7876",
+      "message": "Add analytics components and design system updates",
+      "fullMessage": "feat: Add analytics components and design system updates",
+      "author": "Kvn3Toj",
+      "relativeTime": "16 minutes ago",
+      "date": "2026-01-14",
+      "type": "feat",
+      "category": "ux",
+      "additions": 3918,
+      "deletions": 2329,
+      "filesChanged": 11
+    },
+    {
       "hash": "25d98bc",
       "message": "Add product request system for asesores/embajadores",
       "fullMessage": "feat: Add product request system for asesores/embajadores",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "17 minutes ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -155,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Add price formatting and quantity fields to quotation forms",
       "fullMessage": "feat: Add price formatting and quantity fields to quotation forms",
       "author": "Kvn3Toj",
-      "relativeTime": "6 minutes ago",
+      "relativeTime": "23 minutes ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -168,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image preloading to eliminate gallery blink",
       "fullMessage": "fix: Add image preloading to eliminate gallery blink",
       "author": "Kvn3Toj",
-      "relativeTime": "52 minutes ago",
+      "relativeTime": "69 minutes ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -597,7 +636,7 @@ export const changelogData: ChangelogData = {
       "message": "Bump version to force cache refresh for asesor roles",
       "fullMessage": "chore: Bump version to force cache refresh for asesor roles",
       "author": "Kvn3Toj",
-      "relativeTime": "2 days ago",
+      "relativeTime": "3 days ago",
       "date": "2026-01-11",
       "type": "chore",
       "category": "performance",
@@ -610,7 +649,7 @@ export const changelogData: ChangelogData = {
       "message": "Use thumbnail images instead of autoplay videos in grid cards",
       "fullMessage": "fix: Use thumbnail images instead of autoplay videos in grid cards",
       "author": "Kvn3Toj",
-      "relativeTime": "2 days ago",
+      "relativeTime": "3 days ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -1234,7 +1273,7 @@ export const changelogData: ChangelogData = {
       "message": "Centralize UI design system with new token files",
       "fullMessage": "feat: Centralize UI design system with new token files",
       "author": "Kvn3Toj",
-      "relativeTime": "4 days ago",
+      "relativeTime": "5 days ago",
       "date": "2026-01-09",
       "type": "feat",
       "category": "ux",
@@ -1455,7 +1494,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Provider Portal with quotation request system",
       "fullMessage": "feat: Add Provider Portal with quotation request system",
       "author": "Kvn3Toj",
-      "relativeTime": "5 days ago",
+      "relativeTime": "6 days ago",
       "date": "2026-01-08",
       "type": "feat",
       "category": "other",
@@ -1520,7 +1559,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Tierra Madre branded PWA icons",
       "fullMessage": "feat: Add Tierra Madre branded PWA icons",
       "author": "Kvn3Toj",
-      "relativeTime": "6 days ago",
+      "relativeTime": "7 days ago",
       "date": "2026-01-07",
       "type": "feat",
       "category": "other",
@@ -1533,7 +1572,7 @@ export const changelogData: ChangelogData = {
       "message": "Add photo analysis to Name Generator for AI-powered suggestions",
       "fullMessage": "feat: Add photo analysis to Name Generator for AI-powered suggestions",
       "author": "Kvn3Toj",
-      "relativeTime": "6 days ago",
+      "relativeTime": "7 days ago",
       "date": "2026-01-07",
       "type": "feat",
       "category": "other",
@@ -1624,7 +1663,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image retry logic and remove Cloudinary upload dependencies",
       "fullMessage": "feat: Add image retry logic and remove Cloudinary upload dependencies",
       "author": "Kvn3Toj",
-      "relativeTime": "7 days ago",
+      "relativeTime": "8 days ago",
       "date": "2026-01-06",
       "type": "feat",
       "category": "cleanup",
