@@ -301,11 +301,13 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
             fontWeight: 600,
             color: theme.palette.text.primary,
             mb: 0.25,
-            lineHeight: 1.2,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            lineHeight: 1.3,
             fontSize: '0.85rem',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            minHeight: '2.2em',
           }}
         >
           {displayName}
