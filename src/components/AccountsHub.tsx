@@ -10,7 +10,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Card, CardContent, CardActionArea, Grid, alpha } from '@mui/material';
-import { Calculator, Receipt, FileText, TrendingUp, Send } from 'lucide-react';
+import { Calculator, Receipt, FileText, TrendingUp, Send, Users } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useIsAdmin } from '../hooks/usePermissions';
@@ -78,6 +78,15 @@ const AccountsHub: React.FC = () => {
       route: '/cuentas/solicitudes',
       color: orangeColor,
       bgColor: alpha(orangeColor, 0.1),
+    },
+    {
+      id: 'asesor-requests',
+      title: 'Solicitudes de Asesores',
+      description: 'Ver solicitudes de asesores y embajadores',
+      icon: Users,
+      route: '/cuentas/solicitudes-asesores',
+      color: emeraldCore.primary,
+      bgColor: alpha(emeraldCore.primary, 0.1),
     }] : []),
   ];
 
