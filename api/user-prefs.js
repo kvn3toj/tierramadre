@@ -74,6 +74,12 @@ function detectOS(userAgent) {
 }
 
 // =============================================================================
+// USER PREFERENCES CONFIGURATION
+// =============================================================================
+
+const USER_PREFERENCES_HEADERS = ['userId', 'preferences'];
+
+// =============================================================================
 // USER PREFERENCES HANDLERS
 // =============================================================================
 
@@ -82,9 +88,12 @@ async function getPreferences(sheets, userId) {
     return { success: false, error: 'userId required' };
   }
 
+  // Ensure sheet exists before reading
+  await ensureSheet(sheets, SHEETS.USER_PREFERENCES, USER_PREFERENCES_HEADERS);
+
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.USER_PREFERENCES}!A:B`,
+    range: `'${SHEETS.USER_PREFERENCES}'!A:B`,
   });
 
   const rows = response.data.values || [];
@@ -107,9 +116,12 @@ async function setPreferences(sheets, userId, preferences) {
     return { success: false, error: 'userId and preferences required' };
   }
 
+  // Ensure sheet exists before writing
+  await ensureSheet(sheets, SHEETS.USER_PREFERENCES, USER_PREFERENCES_HEADERS);
+
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.USER_PREFERENCES}!A:B`,
+    range: `'${SHEETS.USER_PREFERENCES}'!A:B`,
   });
 
   const rows = response.data.values || [];
@@ -119,14 +131,14 @@ async function setPreferences(sheets, userId, preferences) {
   if (rowIndex >= 0) {
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEETS.USER_PREFERENCES}!A${rowIndex + 1}:B${rowIndex + 1}`,
+      range: `'${SHEETS.USER_PREFERENCES}'!A${rowIndex + 1}:B${rowIndex + 1}`,
       valueInputOption: 'RAW',
       requestBody: { values: [[userId, prefsJson]] },
     });
   } else {
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEETS.USER_PREFERENCES}!A:B`,
+      range: `'${SHEETS.USER_PREFERENCES}'!A:B`,
       valueInputOption: 'RAW',
       requestBody: { values: [[userId, prefsJson]] },
     });
