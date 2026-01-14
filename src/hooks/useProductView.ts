@@ -45,7 +45,7 @@ function markAsViewed(itemId: number): void {
 interface UserInfo {
   name?: string;
   email?: string;
-  accessLevel?: string;
+  role?: string;
 }
 
 /**
@@ -68,7 +68,7 @@ async function trackView(
         sessionId: sessionStorage.getItem('tm_session_id') || crypto.randomUUID(),
         userName: userInfo?.name,
         userEmail: userInfo?.email,
-        userRole: userInfo?.accessLevel || 'guest',
+        userRole: userInfo?.role || 'Invitado',
       }),
     });
   } catch {
@@ -125,7 +125,7 @@ export function useProductView({
     const userInfo: UserInfo | undefined = user ? {
       name: user.name,
       email: user.email,
-      accessLevel: user.accessLevel,
+      role: user.role,
     } : undefined;
 
     // Track the view (fire and forget)
