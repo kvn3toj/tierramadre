@@ -324,11 +324,11 @@ export const FilterContent = memo(function FilterContent({
                 },
               }}
             >
-              <MenuItem value="price-desc">Precio ↓</MenuItem>
-              <MenuItem value="price-asc">Precio ↑</MenuItem>
+              <MenuItem value="newest">Recientes</MenuItem>
+              {!hidePriceFilter && <MenuItem value="price-desc">Precio ↓</MenuItem>}
+              {!hidePriceFilter && <MenuItem value="price-asc">Precio ↑</MenuItem>}
               <MenuItem value="name-asc">A-Z</MenuItem>
               <MenuItem value="quality-premium">Calidad</MenuItem>
-              <MenuItem value="newest">Recientes</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -556,13 +556,13 @@ export const FilterContent = memo(function FilterContent({
               '& .MuiSelect-select': { fontWeight: 500 },
             }}
           >
-            <MenuItem value="price-desc">Precio: Mayor a Menor</MenuItem>
-            <MenuItem value="price-asc">Precio: Menor a Mayor</MenuItem>
+            <MenuItem value="newest">Más Recientes</MenuItem>
+            {!hidePriceFilter && <MenuItem value="price-desc">Precio: Mayor a Menor</MenuItem>}
+            {!hidePriceFilter && <MenuItem value="price-asc">Precio: Menor a Mayor</MenuItem>}
             <MenuItem value="name-asc">Nombre A-Z</MenuItem>
             <MenuItem value="name-desc">Nombre Z-A</MenuItem>
             <MenuItem value="quality-premium">Mejor Calidad</MenuItem>
             <MenuItem value="item-number">Número de Ítem</MenuItem>
-            <MenuItem value="newest">Más Recientes</MenuItem>
             <MenuItem value="most-searched">Más Buscados</MenuItem>
           </Select>
         </FormControl>
@@ -575,7 +575,7 @@ export const FilterContent = memo(function FilterContent({
             displayEmpty
             sx={{ borderRadius: 2 }}
           >
-            <MenuItem value="all">Tipo</MenuItem>
+            <MenuItem value="all">Categoría</MenuItem>
             <MenuItem value="loose">Gemas</MenuItem>
             <MenuItem value="jewelry">Joyería</MenuItem>
           </Select>

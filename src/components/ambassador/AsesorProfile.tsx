@@ -484,10 +484,10 @@ export default function AsesorProfilePage() {
 
             {/* Type Filter */}
             <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>Tipo</InputLabel>
+              <InputLabel>Categoría</InputLabel>
               <Select
                 value={typeFilter}
-                label="Tipo"
+                label="Categoría"
                 onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
               >
                 <MenuItem value="all">Todos</MenuItem>

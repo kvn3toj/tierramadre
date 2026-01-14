@@ -398,7 +398,7 @@ const TreasureAutocomplete: React.FC<TreasureAutocompleteProps> = ({
     </FilterSection>
 
     {/* Product Type Filter */}
-    <FilterSection label="Tipo">
+    <FilterSection label="Categoría">
       {PRODUCT_TYPE_FILTERS.map((type: { value: string; label: string }) => (
         <FilterChip
           key={type.value}

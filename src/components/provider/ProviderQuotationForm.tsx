@@ -327,7 +327,7 @@ export default function ProviderQuotationForm() {
                 color: secondaryLabelColor,
               }}
             >
-              <strong>Tipo:</strong> {PRODUCT_TYPE_LABELS[linkedRequest.productType]}
+              <strong>Categoría:</strong> {PRODUCT_TYPE_LABELS[linkedRequest.productType]}
               {' | '}
               <strong>Peso:</strong> {linkedRequest.weightMin}-{linkedRequest.weightMax} ct
               {' | '}
@@ -353,7 +353,7 @@ export default function ProviderQuotationForm() {
         {/* Product Type */}
         <TextField
           select
-          label="Tipo de Producto"
+          label="Categoría de Producto"
           value={formData.productType}
           onChange={(e) => handleChange('productType', e.target.value)}
           fullWidth

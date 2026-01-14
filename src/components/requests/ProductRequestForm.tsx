@@ -240,7 +240,7 @@ export default function ProductRequestForm() {
         {/* Product Type */}
         <TextField
           select
-          label="Tipo de Producto"
+          label="Categoría de Producto"
           value={formData.productType}
           onChange={(e) => handleChange('productType', e.target.value)}
           fullWidth

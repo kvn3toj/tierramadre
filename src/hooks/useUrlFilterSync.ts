@@ -117,7 +117,7 @@ export function useUrlFilterSync({
     if (filters.coleccionFilter && filters.coleccionFilter !== 'all') {
       params.set('coleccion', filters.coleccionFilter);
     }
-    if (filters.sortBy !== 'price-desc') params.set('sort', filters.sortBy);
+    if (filters.sortBy !== 'newest') params.set('sort', filters.sortBy);
 
     // Price range - only if modified from defaults
     if (filters.priceRange[0] > 0) {

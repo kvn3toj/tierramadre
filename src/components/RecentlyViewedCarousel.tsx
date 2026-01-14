@@ -33,6 +33,8 @@ interface RecentlyViewedCarouselProps {
   title?: string;
   /** Maximum items to display */
   maxItems?: number;
+  /** Hide price information (for provider mode) */
+  hidePrice?: boolean;
 }
 
 const CARD_WIDTH = 80;
@@ -44,6 +46,7 @@ export default function RecentlyViewedCarousel({
   onClear,
   title = 'Visto recientemente',
   maxItems = 10,
+  hidePrice = false,
 }: RecentlyViewedCarouselProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -193,6 +196,7 @@ export default function RecentlyViewedCarousel({
             item={item}
             onClick={() => onItemClick(item)}
             isLight={isLight}
+            hidePrice={hidePrice}
           />
         ))}
       </Box>
@@ -205,10 +209,12 @@ function RecentItemCard({
   item,
   onClick,
   isLight,
+  hidePrice = false,
 }: {
   item: TreasureItem;
   onClick: () => void;
   isLight: boolean;
+  hidePrice?: boolean;
 }) {
   const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const weight = typeof item.peso === 'number' ? `${item.peso} ct` : item.metalType || '';
@@ -285,33 +291,35 @@ function RecentItemCard({
           )}
 
           {/* iOS HIG: Subtle price chip overlay - low visual weight for recently viewed items */}
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 3,
-              right: 3,
-              bgcolor: 'rgba(0, 0, 0, 0.5)', // More transparent (was 0.75)
-              backdropFilter: 'blur(4px)', // Less blur (was 8px)
-              borderRadius: '4px',
-              px: 0.4,
-              py: 0.15,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Typography
-              variant="caption"
+          {!hidePrice && (
+            <Box
               sx={{
-                fontSize: '0.55rem', // Smaller (was 0.6rem)
-                color: 'rgba(255, 255, 255, 0.85)', // Softer white (not emerald)
-                fontWeight: 500, // Medium weight (was 700)
-                letterSpacing: '0.01em',
+                position: 'absolute',
+                bottom: 3,
+                right: 3,
+                bgcolor: 'rgba(0, 0, 0, 0.5)', // More transparent (was 0.75)
+                backdropFilter: 'blur(4px)', // Less blur (was 8px)
+                borderRadius: '4px',
+                px: 0.4,
+                py: 0.15,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              {formatCurrency(item.precioCOP)}
-            </Typography>
-          </Box>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontSize: '0.55rem', // Smaller (was 0.6rem)
+                  color: 'rgba(255, 255, 255, 0.85)', // Softer white (not emerald)
+                  fontWeight: 500, // Medium weight (was 700)
+                  letterSpacing: '0.01em',
+                }}
+              >
+                {formatCurrency(item.precioCOP)}
+              </Typography>
+            </Box>
+          )}
         </Box>
 
         {/* Name only */}

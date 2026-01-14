@@ -174,7 +174,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
       'item-number': '# Item',
       'most-searched': 'Popular',
     };
-    return labels[sortBy] || 'Mayor precio';
+    return labels[sortBy] || 'Recientes';
   };
 
   const getTypeLabel = () => {
@@ -249,15 +249,17 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
           label="Ordenar"
           value={getSortLabel()}
           section="sort"
-          isActive={sortBy !== 'price-desc'}
+          isActive={sortBy !== 'newest'}
         />
         <Collapse in={expandedSection === 'sort'}>
           <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
             {[
-              { value: 'price-desc' as SortOption, label: 'Mayor precio' },
-              { value: 'price-asc' as SortOption, label: 'Menor precio' },
-              { value: 'name-asc' as SortOption, label: 'A-Z' },
               { value: 'newest' as SortOption, label: 'Recientes' },
+              ...(!hidePriceFilter ? [
+                { value: 'price-desc' as SortOption, label: 'Mayor precio' },
+                { value: 'price-asc' as SortOption, label: 'Menor precio' },
+              ] : []),
+              { value: 'name-asc' as SortOption, label: 'A-Z' },
               { value: 'quality-premium' as SortOption, label: 'Mejor calidad' },
             ].map((option) => (
               <Chip
@@ -275,7 +277,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
 
         {/* Type filter */}
         <FilterRow
-          label="Tipo"
+          label="Categoría"
           value={getTypeLabel()}
           section="type"
           isActive={typeFilter !== 'all'}

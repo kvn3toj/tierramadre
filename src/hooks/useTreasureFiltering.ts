@@ -145,7 +145,7 @@ export function useTreasureFiltering({
   const [priceRange, setPriceRange] = useState<[number, number]>(
     initialFilters.priceRange || [0, Number.MAX_SAFE_INTEGER]
   );
-  const [sortBy, setSortBy] = useState<SortOption>(initialFilters.sortBy || 'price-desc');
+  const [sortBy, setSortBy] = useState<SortOption>(initialFilters.sortBy || 'newest');
   const [cantidadFilter, setCantidadFilter] = useState(initialFilters.cantidadFilter || 'all');
   const [cityFilter, setCityFilter] = useState<CityFilter>(initialFilters.cityFilter || 'all');
   const [coleccionFilter, setColeccionFilter] = useState(initialFilters.coleccionFilter || 'all');
