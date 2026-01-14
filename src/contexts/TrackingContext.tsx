@@ -26,8 +26,8 @@ const SESSION_KEY = 'tierra-madre-session';
 const MAX_STORED_EVENTS = 500;
 const DEBUG_MODE = import.meta.env.DEV;
 
-// Feature flag: Only enable tracking for admins during testing phase
-const ADMIN_ONLY_MODE = true;
+// Feature flag: Track all authenticated users (guests, asesores, embajadores, admins)
+const ADMIN_ONLY_MODE = false;
 
 // =============================================================================
 // ACHIEVEMENT DEFINITIONS
