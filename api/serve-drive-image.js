@@ -7,8 +7,10 @@
  * - ETag support for conditional requests
  * - Vary header for proper CDN caching
  * - Accept-Ranges for partial content support
+ * - Responsive image sizing via ?size= parameter
  */
 
+import sharp from 'sharp';
 import {
   getDriveClient,
   isGoogleConfigured,
@@ -16,6 +18,22 @@ import {
   sendError,
   CACHE,
 } from './_lib/index.js';
+
+/**
+ * Supported image sizes for responsive loading
+ * - thumb: 200px - for small grid thumbnails
+ * - small: 400px - for grid cards
+ * - medium: 800px - for detail view previews
+ * - large: 1200px - for full detail view
+ * - original: no resize - full quality
+ */
+const IMAGE_SIZES = {
+  thumb: 200,
+  small: 400,
+  medium: 800,
+  large: 1200,
+  original: null,
+};
 
 /**
  * Encode filename for Content-Disposition header (RFC 5987)
@@ -43,11 +61,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { fileId, thumbnail } = req.query;
+    const { fileId, thumbnail, size: sizeParam = 'original' } = req.query;
 
     if (!fileId) {
       return sendError(res, 400, 'fileId is required');
     }
+
+    // Validate size parameter for responsive images
+    const targetWidth = IMAGE_SIZES[sizeParam] ?? IMAGE_SIZES.original;
 
     const drive = getDriveClient();
 
@@ -150,9 +171,43 @@ export default async function handler(req, res) {
       { responseType: 'arraybuffer' }
     );
 
-    const buffer = Buffer.from(response.data);
+    let buffer = Buffer.from(response.data);
 
-    // Set all headers
+    // Resize image if size parameter provided and it's an image
+    if (targetWidth && mimeType.startsWith('image/') && !mimeType.includes('svg')) {
+      try {
+        const resizedBuffer = await sharp(buffer)
+          .resize(targetWidth, null, {
+            fit: 'inside',
+            withoutEnlargement: true, // Don't upscale small images
+          })
+          .jpeg({ quality: 85, progressive: true }) // Convert to optimized JPEG
+          .toBuffer();
+
+        buffer = resizedBuffer;
+
+        // Update headers for resized image
+        res.setHeader('Content-Type', 'image/jpeg');
+        res.setHeader('Content-Length', buffer.length);
+        res.setHeader('Cache-Control', imageCache);
+        // Update ETag to include size for proper caching
+        res.setHeader('ETag', `"${generateETag(fileId, buffer.length, 'image/jpeg')}-${sizeParam}"`);
+        res.setHeader('Vary', 'Accept-Encoding');
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(name.replace(/\.[^.]+$/, '.jpg'))}"`);
+        res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        res.setHeader('Timing-Allow-Origin', '*');
+        res.setHeader('CDN-Cache-Control', 'public, max-age=604800');
+
+        return res.status(200).send(buffer);
+      } catch (resizeError) {
+        console.warn('Image resize failed, serving original:', resizeError.message);
+        // Fall through to serve original
+      }
+    }
+
+    // Set all headers for original image
     commonHeaders();
     // Update Content-Length with actual buffer size (may differ from metadata)
     res.setHeader('Content-Length', buffer.length);

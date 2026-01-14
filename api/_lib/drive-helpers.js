@@ -198,10 +198,14 @@ export function getViewableUrl(fileId, mimeType) {
  * Generate proxy URL for serving file through our API
  * @param {string} fileId - File ID
  * @param {boolean} isVideo - Whether file is a video (to request thumbnail)
+ * @param {string} size - Image size: 'thumb', 'small', 'medium', 'large', 'original'
  * @returns {string} Proxy URL
  */
-export function getProxyUrl(fileId, isVideo = false) {
-  return `/api/serve-drive-image?fileId=${fileId}${isVideo ? '&thumbnail=true' : ''}`;
+export function getProxyUrl(fileId, isVideo = false, size = 'original') {
+  const params = [`fileId=${fileId}`];
+  if (isVideo) params.push('thumbnail=true');
+  if (size && size !== 'original') params.push(`size=${size}`);
+  return `/api/serve-drive-image?${params.join('&')}`;
 }
 
 /**

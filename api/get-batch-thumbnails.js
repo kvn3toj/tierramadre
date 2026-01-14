@@ -66,7 +66,8 @@ export default async function handler(req, res) {
               return {
                 itemNumber,
                 fileId: file.id,
-                proxyUrl: getProxyUrl(file.id, isVideo),
+                // Use 'small' size (400px) for grid thumbnails - faster loading, less bandwidth
+                proxyUrl: getProxyUrl(file.id, isVideo, 'small'),
                 isVideo,
               };
             }

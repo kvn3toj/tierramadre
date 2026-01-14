@@ -73,13 +73,16 @@ export default async function handler(req, res) {
         id: file.id,
         name: file.name,
         url: getViewableUrl(file.id, file.mimeType),
-        thumbnailUrl: getProxyUrl(file.id, isVideo),
+        // Responsive image URLs for different contexts
+        thumbnailUrl: getProxyUrl(file.id, isVideo, 'small'),    // 400px - for gallery grid
+        previewUrl: getProxyUrl(file.id, isVideo, 'medium'),     // 800px - for detail preview
+        fullUrl: getProxyUrl(file.id, isVideo, 'original'),      // Original - for full view
         type: isVideo ? 'video' : 'image',
         mimeType: file.mimeType,
         size: parseInt(file.size || '0'),
         createdTime: file.createdTime,
         order: index,
-        proxyUrl: getProxyUrl(file.id),
+        proxyUrl: getProxyUrl(file.id, false, 'original'),       // Default to original
       };
     });
 
