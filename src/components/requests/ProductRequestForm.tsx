@@ -46,24 +46,25 @@ import {
 } from '../../types/provider';
 import QuotationMediaUpload from '../provider/QuotationMediaUpload';
 
-// Color options
+// Color options - from Google Sheet inventory
 const COLOR_OPTIONS = [
   'Verde Vivido',
   'Verde Muzo',
-  'Verde Gota de Aceite',
-  'Verde Claro',
-  'Verde Azulado',
-  'Verde Amarillento',
+  'Verde Limón',
+  'Verde Menta',
+  'Verde Natural',
   'Cualquiera',
 ];
 
-// Quality options
+// Quality options - from Google Sheet inventory
 const QUALITY_OPTIONS = [
   'Fina',
-  'Comercial Fina',
   'Comercial SuperFina',
+  'Comercial Superior',
+  'Comercial Fina',
+  'Comercial Estandar',
   'Comercial',
-  'Media',
+  'Estandar',
   'Cualquiera',
 ];
 
@@ -251,6 +252,17 @@ export default function ProductRequestForm() {
           ))}
         </TextField>
 
+        {/* Quantity */}
+        <TextField
+          label="Cantidad"
+          type="number"
+          value={formData.quantity || 1}
+          onChange={(e) => handleChange('quantity', parseInt(e.target.value) || 1)}
+          fullWidth
+          inputProps={{ min: 1 }}
+          helperText="Numero de piezas que necesitas"
+        />
+
         {/* Description */}
         <TextField
           label="Descripcion del Producto"
@@ -318,17 +330,6 @@ export default function ProductRequestForm() {
             </MenuItem>
           ))}
         </TextField>
-
-        {/* Quantity */}
-        <TextField
-          label="Cantidad"
-          type="number"
-          value={formData.quantity || 1}
-          onChange={(e) => handleChange('quantity', parseInt(e.target.value) || 1)}
-          fullWidth
-          inputProps={{ min: 1 }}
-          helperText="Numero de piezas que necesitas"
-        />
 
         {/* Budget Range */}
         <Stack direction="row" spacing={2}>

@@ -48,23 +48,24 @@ import {
 } from '../../types/provider';
 import QuotationMediaUpload from './QuotationMediaUpload';
 
-// Color options
+// Color options - from Google Sheet inventory
 const COLOR_OPTIONS = [
   'Verde Vivido',
   'Verde Muzo',
-  'Verde Gota de Aceite',
-  'Verde Claro',
-  'Verde Azulado',
-  'Verde Amarillento',
+  'Verde Limón',
+  'Verde Menta',
+  'Verde Natural',
 ];
 
-// Quality options
+// Quality options - from Google Sheet inventory
 const QUALITY_OPTIONS = [
   'Fina',
-  'Comercial Fina',
   'Comercial SuperFina',
+  'Comercial Superior',
+  'Comercial Fina',
+  'Comercial Estandar',
   'Comercial',
-  'Media',
+  'Estandar',
 ];
 
 const initialFormData: ProviderQuotationFormData = {
