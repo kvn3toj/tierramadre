@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-14T16:07:33.130Z
+ * Generated at: 2026-01-14T18:02:09.888Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-14T16:07:33.130Z",
+  "generatedAt": "2026-01-14T18:02:09.888Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "15 Dic, 2025",
@@ -56,28 +56,28 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "3cb0e1d",
-    "lastCommitDate": "2026-01-14 11:07:28 -0500"
+    "lastCommitHash": "c3f03cb",
+    "lastCommitDate": "2026-01-14 13:02:06 -0500"
   },
   "stats": {
-    "totalCommits": 224,
-    "totalAdditions": 89037,
-    "totalDeletions": 61051,
-    "totalFilesChanged": 1446,
-    "netLines": 27986
+    "totalCommits": 231,
+    "totalAdditions": 89621,
+    "totalDeletions": 61736,
+    "totalFilesChanged": 1485,
+    "netLines": 27885
   },
   "categoryStats": {
-    "bugfix": 49,
+    "bugfix": 54,
+    "other": 79,
+    "analytics": 11,
     "cleanup": 18,
     "ux": 42,
-    "other": 78,
-    "analytics": 10,
     "performance": 13,
     "auth": 14
   },
   "typeStats": {
-    "fix": 84,
-    "feat": 94,
+    "fix": 89,
+    "feat": 96,
     "refactor": 25,
     "chore": 12,
     "other": 6,
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "index.html",
-      "count": 36
+      "count": 38
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 32
+      "count": 33
     },
     {
       "file": "public/version.json",
-      "count": 27
+      "count": 29
     },
     {
       "file": "src/App.tsx",
@@ -103,7 +103,7 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "src/components/ProductDetail.tsx",
-      "count": 21
+      "count": 22
     },
     {
       "file": ".claude/settings.local.json",
@@ -114,22 +114,22 @@ export const changelogData: ChangelogData = {
       "count": 19
     },
     {
+      "file": "src/components/home/Home.tsx",
+      "count": 15
+    },
+    {
       "file": "src/components/ios/IOSMoreSheet.tsx",
       "count": 15
     },
     {
-      "file": "src/components/media/MediaGallery.tsx",
-      "count": 14
-    },
-    {
-      "file": "src/components/home/Home.tsx",
+      "file": "src/components/TreasureBrowser.tsx",
       "count": 14
     }
   ],
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 216
+      "commits": 223
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,102 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "c3f03cb",
+      "message": "Add Spanish accent marks and improve date sorting",
+      "fullMessage": "fix: Add Spanish accent marks and improve date sorting",
+      "author": "Kvn3Toj",
+      "relativeTime": "1 second ago",
+      "date": "2026-01-14",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 102,
+      "deletions": 45,
+      "filesChanged": 17
+    },
+    {
+      "hash": "940c0b9",
+      "message": "Add restricted inventory view for provider portal",
+      "fullMessage": "feat: Add restricted inventory view for provider portal",
+      "author": "Kvn3Toj",
+      "relativeTime": "18 minutes ago",
+      "date": "2026-01-14",
+      "type": "feat",
+      "category": "other",
+      "additions": 193,
+      "deletions": 505,
+      "filesChanged": 4
+    },
+    {
+      "hash": "d166897",
+      "message": "Improve new products notification accuracy and add logo",
+      "fullMessage": "fix: Improve new products notification accuracy and add logo",
+      "author": "Kvn3Toj",
+      "relativeTime": "18 minutes ago",
+      "date": "2026-01-14",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 88,
+      "deletions": 15,
+      "filesChanged": 3
+    },
+    {
+      "hash": "c7869e2",
+      "message": "Correct role display and enable view counts in grid cards",
+      "fullMessage": "fix: Correct role display and enable view counts in grid cards",
+      "author": "Kvn3Toj",
+      "relativeTime": "28 minutes ago",
+      "date": "2026-01-14",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 77,
+      "deletions": 44,
+      "filesChanged": 7
+    },
+    {
+      "hash": "68bf075",
+      "message": "Update quotation forms with inventory color/quality options",
+      "fullMessage": "fix: Update quotation forms with inventory color/quality options",
+      "author": "Kvn3Toj",
+      "relativeTime": "56 minutes ago",
+      "date": "2026-01-14",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 38,
+      "deletions": 35,
+      "filesChanged": 3
+    },
+    {
+      "hash": "4d84cef",
+      "message": "Enable analytics tracking for all user roles",
+      "fullMessage": "feat: Enable analytics tracking for all user roles",
+      "author": "Kvn3Toj",
+      "relativeTime": "66 minutes ago",
+      "date": "2026-01-14",
+      "type": "feat",
+      "category": "analytics",
+      "additions": 2,
+      "deletions": 2,
+      "filesChanged": 1
+    },
+    {
+      "hash": "3581306",
+      "message": "Increase grid card content height for 2-line product names",
+      "fullMessage": "fix: Increase grid card content height for 2-line product names",
+      "author": "Kvn3Toj",
+      "relativeTime": "2 hours ago",
+      "date": "2026-01-14",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 84,
+      "deletions": 39,
+      "filesChanged": 4
+    },
+    {
       "hash": "3cb0e1d",
       "message": "Allow product names to wrap to two lines in grid view",
       "fullMessage": "fix: Allow product names to wrap to two lines in grid view",
       "author": "Kvn3Toj",
-      "relativeTime": "1 second ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -155,7 +246,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove AnimatePresence transition to eliminate gallery blink",
       "fullMessage": "fix: Remove AnimatePresence transition to eliminate gallery blink",
       "author": "Kvn3Toj",
-      "relativeTime": "5 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "cleanup",
@@ -168,7 +259,7 @@ export const changelogData: ChangelogData = {
       "message": "Add analytics components and design system updates",
       "fullMessage": "feat: Add analytics components and design system updates",
       "author": "Kvn3Toj",
-      "relativeTime": "16 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "ux",
@@ -181,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product request system for asesores/embajadores",
       "fullMessage": "feat: Add product request system for asesores/embajadores",
       "author": "Kvn3Toj",
-      "relativeTime": "17 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -194,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Add price formatting and quantity fields to quotation forms",
       "fullMessage": "feat: Add price formatting and quantity fields to quotation forms",
       "author": "Kvn3Toj",
-      "relativeTime": "23 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -207,7 +298,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image preloading to eliminate gallery blink",
       "fullMessage": "fix: Add image preloading to eliminate gallery blink",
       "author": "Kvn3Toj",
-      "relativeTime": "69 minutes ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -220,7 +311,7 @@ export const changelogData: ChangelogData = {
       "message": "Redirect providers to provider dashboard on login",
       "fullMessage": "feat: Redirect providers to provider dashboard on login",
       "author": "Kvn3Toj",
-      "relativeTime": "17 hours ago",
+      "relativeTime": "19 hours ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
@@ -233,7 +324,7 @@ export const changelogData: ChangelogData = {
       "message": "Support provider role in Asesores sheet",
       "fullMessage": "feat: Support provider role in Asesores sheet",
       "author": "Kvn3Toj",
-      "relativeTime": "17 hours ago",
+      "relativeTime": "19 hours ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
@@ -246,7 +337,7 @@ export const changelogData: ChangelogData = {
       "message": "Enable invitation links for asesores",
       "fullMessage": "feat: Enable invitation links for asesores",
       "author": "Kvn3Toj",
-      "relativeTime": "22 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
@@ -259,7 +350,7 @@ export const changelogData: ChangelogData = {
       "message": "Enable accounts/cuentas for asesores and embajadores",
       "fullMessage": "feat: Enable accounts/cuentas for asesores and embajadores",
       "author": "Kvn3Toj",
-      "relativeTime": "22 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
@@ -272,7 +363,7 @@ export const changelogData: ChangelogData = {
       "message": "Show feedback option in menu for asesores and embajadores",
       "fullMessage": "feat: Show feedback option in menu for asesores and embajadores",
       "author": "Kvn3Toj",
-      "relativeTime": "22 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
@@ -285,7 +376,7 @@ export const changelogData: ChangelogData = {
       "message": "Eliminate image blinking in product detail gallery",
       "fullMessage": "fix: Eliminate image blinking in product detail gallery",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2026-01-13",
       "type": "fix",
       "category": "bugfix",
@@ -298,7 +389,7 @@ export const changelogData: ChangelogData = {
       "message": "Enable feedback system for asesores and embajadores",
       "fullMessage": "feat: Enable feedback system for asesores and embajadores",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
@@ -311,7 +402,7 @@ export const changelogData: ChangelogData = {
       "message": "Use production URL and correct path for invitation links",
       "fullMessage": "fix: Use production URL and correct path for invitation links",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2026-01-13",
       "type": "fix",
       "category": "bugfix",
@@ -532,7 +623,7 @@ export const changelogData: ChangelogData = {
       "message": "Cart page price display and notification positioning",
       "fullMessage": "fix: Cart page price display and notification positioning",
       "author": "Kvn3Toj",
-      "relativeTime": "2 days ago",
+      "relativeTime": "3 days ago",
       "date": "2026-01-12",
       "type": "fix",
       "category": "bugfix",
@@ -545,7 +636,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product views tracking and consolidated validation API",
       "fullMessage": "feat: Add product views tracking and consolidated validation API",
       "author": "Kvn3Toj",
-      "relativeTime": "2 days ago",
+      "relativeTime": "3 days ago",
       "date": "2026-01-12",
       "type": "feat",
       "category": "analytics",
@@ -558,7 +649,7 @@ export const changelogData: ChangelogData = {
       "message": "Extract TreasureBrowser into reusable hooks and components",
       "fullMessage": "refactor: Extract TreasureBrowser into reusable hooks and components",
       "author": "Kvn3Toj",
-      "relativeTime": "2 days ago",
+      "relativeTime": "3 days ago",
       "date": "2026-01-12",
       "type": "refactor",
       "category": "other",
@@ -571,7 +662,7 @@ export const changelogData: ChangelogData = {
       "message": "Add cart and WhatsApp contact system for product inquiries",
       "fullMessage": "feat: Add cart and WhatsApp contact system for product inquiries",
       "author": "Kvn3Toj",
-      "relativeTime": "2 days ago",
+      "relativeTime": "3 days ago",
       "date": "2026-01-12",
       "type": "feat",
       "category": "ux",
@@ -584,7 +675,7 @@ export const changelogData: ChangelogData = {
       "message": "Enable compare button in GridCard for product comparison",
       "fullMessage": "feat: Enable compare button in GridCard for product comparison",
       "author": "Kvn3Toj",
-      "relativeTime": "2 days ago",
+      "relativeTime": "3 days ago",
       "date": "2026-01-12",
       "type": "feat",
       "category": "other",
@@ -597,7 +688,7 @@ export const changelogData: ChangelogData = {
       "message": "Disable all references to removed API endpoints",
       "fullMessage": "fix: Disable all references to removed API endpoints",
       "author": "Kvn3Toj",
-      "relativeTime": "2 days ago",
+      "relativeTime": "3 days ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "cleanup",
@@ -610,7 +701,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove deleted API refs from vercel.json",
       "fullMessage": "fix: Remove deleted API refs from vercel.json",
       "author": "Kvn3Toj",
-      "relativeTime": "2 days ago",
+      "relativeTime": "3 days ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "cleanup",
@@ -623,7 +714,7 @@ export const changelogData: ChangelogData = {
       "message": "Reduce API endpoints from 44 to 12 for Vercel Hobby limit",
       "fullMessage": "fix: Reduce API endpoints from 44 to 12 for Vercel Hobby limit",
       "author": "Kvn3Toj",
-      "relativeTime": "2 days ago",
+      "relativeTime": "3 days ago",
       "date": "2026-01-11",
       "type": "fix",
       "category": "bugfix",
@@ -1195,7 +1286,7 @@ export const changelogData: ChangelogData = {
       "message": "Fix new products sorting and add iOS HIG contrast tokens",
       "fullMessage": "feat: Fix new products sorting and add iOS HIG contrast tokens",
       "author": "Kvn3Toj",
-      "relativeTime": "4 days ago",
+      "relativeTime": "5 days ago",
       "date": "2026-01-10",
       "type": "feat",
       "category": "ux",
@@ -1208,7 +1299,7 @@ export const changelogData: ChangelogData = {
       "message": "perf: Replace googleapis with individual packages for faster builds",
       "fullMessage": "perf: Replace googleapis with individual packages for faster builds",
       "author": "Kvn3Toj",
-      "relativeTime": "4 days ago",
+      "relativeTime": "5 days ago",
       "date": "2026-01-10",
       "type": "other",
       "category": "ux",
@@ -1221,7 +1312,7 @@ export const changelogData: ChangelogData = {
       "message": "Fix new products sorting and add iOS HIG contrast tokens",
       "fullMessage": "feat: Fix new products sorting and add iOS HIG contrast tokens",
       "author": "Kvn3Toj",
-      "relativeTime": "4 days ago",
+      "relativeTime": "5 days ago",
       "date": "2026-01-10",
       "type": "feat",
       "category": "ux",
@@ -1234,7 +1325,7 @@ export const changelogData: ChangelogData = {
       "message": "Move active filter chips inline with favorites and item count on mobile",
       "fullMessage": "fix: Move active filter chips inline with favorites and item count on mobile",
       "author": "Kvn3Toj",
-      "relativeTime": "4 days ago",
+      "relativeTime": "5 days ago",
       "date": "2026-01-10",
       "type": "fix",
       "category": "bugfix",
@@ -1247,7 +1338,7 @@ export const changelogData: ChangelogData = {
       "message": "Show splash screen only on fresh session or after inactivity",
       "fullMessage": "feat: Show splash screen only on fresh session or after inactivity",
       "author": "Kvn3Toj",
-      "relativeTime": "4 days ago",
+      "relativeTime": "5 days ago",
       "date": "2026-01-10",
       "type": "feat",
       "category": "other",
@@ -1260,7 +1351,7 @@ export const changelogData: ChangelogData = {
       "message": "Rename 'Gemas sueltas' to 'Gemas' and improve filter UX",
       "fullMessage": "refactor: Rename 'Gemas sueltas' to 'Gemas' and improve filter UX",
       "author": "Kvn3Toj",
-      "relativeTime": "4 days ago",
+      "relativeTime": "5 days ago",
       "date": "2026-01-10",
       "type": "refactor",
       "category": "ux",
@@ -1429,7 +1520,7 @@ export const changelogData: ChangelogData = {
       "message": "Refactor user-prefs API to use GOOGLE_SERVICE_ACCOUNT_KEY",
       "fullMessage": "fix: Refactor user-prefs API to use GOOGLE_SERVICE_ACCOUNT_KEY",
       "author": "Kvn3Toj",
-      "relativeTime": "5 days ago",
+      "relativeTime": "6 days ago",
       "date": "2026-01-09",
       "type": "fix",
       "category": "bugfix",
@@ -1442,7 +1533,7 @@ export const changelogData: ChangelogData = {
       "message": "Use crypto.randomUUID instead of uuid package in API",
       "fullMessage": "fix: Use crypto.randomUUID instead of uuid package in API",
       "author": "Kvn3Toj",
-      "relativeTime": "5 days ago",
+      "relativeTime": "6 days ago",
       "date": "2026-01-09",
       "type": "fix",
       "category": "ux",
@@ -1455,7 +1546,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog and version metadata",
       "fullMessage": "chore: Update changelog and version metadata",
       "author": "Kvn3Toj",
-      "relativeTime": "5 days ago",
+      "relativeTime": "6 days ago",
       "date": "2026-01-08",
       "type": "chore",
       "category": "other",
@@ -1468,7 +1559,7 @@ export const changelogData: ChangelogData = {
       "message": "Apply iOS HIG design system to Provider Portal",
       "fullMessage": "refactor: Apply iOS HIG design system to Provider Portal",
       "author": "Kvn3Toj",
-      "relativeTime": "5 days ago",
+      "relativeTime": "6 days ago",
       "date": "2026-01-08",
       "type": "refactor",
       "category": "ux",
@@ -1481,7 +1572,7 @@ export const changelogData: ChangelogData = {
       "message": "Add invitation link system for Embajadores/Admins",
       "fullMessage": "feat: Add invitation link system for Embajadores/Admins",
       "author": "Kvn3Toj",
-      "relativeTime": "5 days ago",
+      "relativeTime": "6 days ago",
       "date": "2026-01-08",
       "type": "feat",
       "category": "auth",
@@ -1520,7 +1611,7 @@ export const changelogData: ChangelogData = {
       "message": "Update version and misc changes",
       "fullMessage": "chore: Update version and misc changes",
       "author": "Kvn3Toj",
-      "relativeTime": "6 days ago",
+      "relativeTime": "7 days ago",
       "date": "2026-01-08",
       "type": "chore",
       "category": "other",
@@ -1533,7 +1624,7 @@ export const changelogData: ChangelogData = {
       "message": "Update icon-inicio-gris PWA icons with new versions",
       "fullMessage": "feat: Update icon-inicio-gris PWA icons with new versions",
       "author": "Kvn3Toj",
-      "relativeTime": "6 days ago",
+      "relativeTime": "7 days ago",
       "date": "2026-01-08",
       "type": "feat",
       "category": "other",
@@ -1546,7 +1637,7 @@ export const changelogData: ChangelogData = {
       "message": "Switch to icon-inicio-gris PWA icons",
       "fullMessage": "feat: Switch to icon-inicio-gris PWA icons",
       "author": "Kvn3Toj",
-      "relativeTime": "6 days ago",
+      "relativeTime": "7 days ago",
       "date": "2026-01-07",
       "type": "feat",
       "category": "other",
@@ -1650,7 +1741,7 @@ export const changelogData: ChangelogData = {
       "message": "Add theme-aware background images for home page",
       "fullMessage": "feat: Add theme-aware background images for home page",
       "author": "Kvn3Toj",
-      "relativeTime": "7 days ago",
+      "relativeTime": "8 days ago",
       "date": "2026-01-07",
       "type": "feat",
       "category": "other",
