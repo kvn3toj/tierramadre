@@ -213,14 +213,16 @@ export function getProxyUrl(fileId, isVideo = false, size = 'original') {
  * @param {object} drive - Google Drive client (with write access)
  * @param {string} parentFolderId - Parent folder ID
  * @param {string} folderName - Name of folder to find or create
+ * @param {string} [sharedDriveId] - Optional Shared Drive ID (required for creating in Shared Drives)
  * @returns {Promise<string>} Folder ID
  */
-export async function getOrCreateFolder(drive, parentFolderId, folderName) {
+export async function getOrCreateFolder(drive, parentFolderId, folderName, sharedDriveId = null) {
   const searchResponse = await drive.files.list({
     q: `name='${folderName}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: 'files(id, name)',
     supportsAllDrives: true,
     includeItemsFromAllDrives: true,
+    ...(sharedDriveId && { driveId: sharedDriveId, corpora: 'drive' }),
   });
 
   if (searchResponse.data.files && searchResponse.data.files.length > 0) {
@@ -228,7 +230,7 @@ export async function getOrCreateFolder(drive, parentFolderId, folderName) {
   }
 
   const folder = await drive.files.create({
-    resource: {
+    requestBody: {
       name: folderName,
       mimeType: 'application/vnd.google-apps.folder',
       parents: [parentFolderId],

@@ -68,7 +68,7 @@ async function uploadFileToDrive(drive, folderId, file, index) {
   const fileName = `media-${index + 1}-${Date.now()}.${fileExtension}`;
 
   const uploadedFile = await drive.files.create({
-    resource: {
+    requestBody: {
       name: fileName,
       parents: [folderId],
     },
@@ -131,8 +131,8 @@ async function handleMediaUpload(req, res) {
   const drive = getDriveClient(false);
   const parentFolderId = sharedDriveId;
 
-  const cotizacionesFolderId = await getOrCreateFolder(drive, parentFolderId, DRIVE_FOLDERS.COTIZACIONES);
-  const quotationFolderId = await getOrCreateFolder(drive, cotizacionesFolderId, quotationId);
+  const cotizacionesFolderId = await getOrCreateFolder(drive, parentFolderId, DRIVE_FOLDERS.COTIZACIONES, sharedDriveId);
+  const quotationFolderId = await getOrCreateFolder(drive, cotizacionesFolderId, quotationId, sharedDriveId);
 
   const uploadedFiles = [];
   const errors = [];
