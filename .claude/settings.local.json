@@ -70,7 +70,8 @@
       "Bash(__NEW_LINE_b10ae6779644c78a__ echo \"📋 SUMMARY OF VARIABLES:\")",
       "Bash(__NEW_LINE_b10ae6779644c78a__ echo \"🔴 POTENTIAL DUPLICATES/CONFLICTS:\")",
       "Bash(__NEW_LINE_b10ae6779644c78a__ echo \"🟡 POTENTIAL OBSOLETE VARIABLES:\")",
-      "Bash(__NEW_LINE_b10ae6779644c78a__ echo \"🟢 PROPERLY CONFIGURED:\")"
+      "Bash(__NEW_LINE_b10ae6779644c78a__ echo \"🟢 PROPERLY CONFIGURED:\")",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "ask": []

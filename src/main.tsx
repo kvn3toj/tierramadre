@@ -1,7 +1,6 @@
 import React, { ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { Analytics } from '@vercel/analytics/react';
 import App from './App';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -68,7 +67,6 @@ waitForVersionReady().then(() => {
           <GoogleWrapper>
             <AuthProvider>
               <App />
-              <Analytics />
             </AuthProvider>
           </GoogleWrapper>
         </ThemeProvider>
