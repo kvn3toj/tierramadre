@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-15T05:50:46.960Z
+ * Generated at: 2026-01-15T06:02:08.803Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-15T05:50:46.960Z",
+  "generatedAt": "2026-01-15T06:02:08.803Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,19 +56,19 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "a36f80d",
-    "lastCommitDate": "2026-01-15 00:50:43 -0500"
+    "lastCommitHash": "696ca7a",
+    "lastCommitDate": "2026-01-15 01:02:05 -0500"
   },
   "stats": {
-    "totalCommits": 238,
-    "totalAdditions": 90567,
-    "totalDeletions": 55084,
-    "totalFilesChanged": 1484,
-    "netLines": 35483
+    "totalCommits": 239,
+    "totalAdditions": 90766,
+    "totalDeletions": 55180,
+    "totalFilesChanged": 1491,
+    "netLines": 35586
   },
   "categoryStats": {
+    "other": 80,
     "bugfix": 61,
-    "other": 79,
     "ux": 43,
     "performance": 14,
     "cleanup": 16,
@@ -76,8 +76,8 @@ export const changelogData: ChangelogData = {
     "auth": 14
   },
   "typeStats": {
+    "feat": 98,
     "fix": 101,
-    "feat": 97,
     "chore": 13,
     "refactor": 18,
     "other": 6,
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "index.html",
-      "count": 44
+      "count": 45
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 37
+      "count": 38
     },
     {
       "file": "public/version.json",
-      "count": 34
+      "count": 35
     },
     {
       "file": "src/App.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 230
+      "commits": 231
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "696ca7a",
+      "message": "Add video upload support for manual product entries",
+      "fullMessage": "feat: Add video upload support for manual product entries",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-15",
+      "type": "feat",
+      "category": "other",
+      "additions": 199,
+      "deletions": 96,
+      "filesChanged": 7
+    },
+    {
       "hash": "a36f80d",
       "message": "Improve Shared Drive handling for image uploads",
       "fullMessage": "fix: Improve Shared Drive handling for image uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "11 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image upload for manual product entries in quotation generator",
       "fullMessage": "feat: Add image upload for manual product entries in quotation generator",
       "author": "Kvn3Toj",
-      "relativeTime": "5 minutes ago",
+      "relativeTime": "16 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product images and links to quotation PDF export",
       "fullMessage": "feat: Add product images and links to quotation PDF export",
       "author": "Kvn3Toj",
-      "relativeTime": "41 minutes ago",
+      "relativeTime": "52 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Use requestBody for Shared Drive file uploads",
       "fullMessage": "fix: Use requestBody for Shared Drive file uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "66 minutes ago",
+      "relativeTime": "78 minutes ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -194,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Use full Drive scope for Shared Drive uploads",
       "fullMessage": "fix: Use full Drive scope for Shared Drive uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "70 minutes ago",
+      "relativeTime": "81 minutes ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -272,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Add ensureSheet for UserPreferences to prevent 500 errors",
       "fullMessage": "fix: Add ensureSheet for UserPreferences to prevent 500 errors",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -363,7 +376,7 @@ export const changelogData: ChangelogData = {
       "message": "Track actual user role instead of accessLevel in product views",
       "fullMessage": "fix: Track actual user role instead of accessLevel in product views",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -480,7 +493,7 @@ export const changelogData: ChangelogData = {
       "message": "Increase grid card content height for 2-line product names",
       "fullMessage": "fix: Increase grid card content height for 2-line product names",
       "author": "Kvn3Toj",
-      "relativeTime": "13 hours ago",
+      "relativeTime": "14 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",

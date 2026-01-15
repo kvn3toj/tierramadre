@@ -86,7 +86,7 @@ export default function TreasureBrowser({
 
   // URL sync hook - provides initial filters from URL
   const { initialFilters } = useUrlFilterSync({
-    filters: { search: '', colorFilter: 'all', qualityFilter: 'all', typeFilter: 'all', statusFilter: 'available', shapeFilter: 'all', priceRange: [0, Number.MAX_SAFE_INTEGER], sortBy: 'newest', cantidadFilter: 'all', cityFilter: 'all', coleccionFilter: 'all' },
+    filters: { search: '', colorFilter: 'all', qualityFilter: 'all', typeFilter: 'all', statusFilter: 'available', shapeFilter: 'all', priceRange: [0, Number.MAX_SAFE_INTEGER], sortBy: 'newest', cantidadFilter: 'all', cityFilter: 'all', coleccionFilter: 'all', itemsFilter: [] },
     priceMinMax: { min: 0, max: 100000000 },
     clearFilters: () => {},
   });

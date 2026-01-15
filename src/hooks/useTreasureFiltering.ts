@@ -34,6 +34,7 @@ export interface TreasureFilters {
   cantidadFilter: string; // 'all' | '1' | '2+'
   cityFilter: CityFilter;
   coleccionFilter: string; // 'all' | specific collection name
+  itemsFilter: number[]; // Filter by specific item numbers (for QR/quotation links)
 }
 
 export interface UseTreasureFilteringOptions {
@@ -149,6 +150,7 @@ export function useTreasureFiltering({
   const [cantidadFilter, setCantidadFilter] = useState(initialFilters.cantidadFilter || 'all');
   const [cityFilter, setCityFilter] = useState<CityFilter>(initialFilters.cityFilter || 'all');
   const [coleccionFilter, setColeccionFilter] = useState(initialFilters.coleccionFilter || 'all');
+  const [itemsFilter, setItemsFilter] = useState<number[]>(initialFilters.itemsFilter || []);
 
   // Track if priceRange has been initialized to prevent re-syncing
   const priceRangeInitialized = useRef(!!initialFilters.priceRange);
@@ -225,10 +227,12 @@ export function useTreasureFiltering({
         (cantidadFilter === '2+' && item.cantidad > 1);
       const matchesCity = cityFilter === 'all' || item.city === cityFilter;
       const matchesColeccion = coleccionFilter === 'all' || item.coleccion === coleccionFilter;
+      // Items filter - only show specific items if itemsFilter is set (used for QR/quotation links)
+      const matchesItems = itemsFilter.length === 0 || itemsFilter.includes(item.item);
 
-      return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice && matchesCantidad && matchesCity && matchesColeccion;
+      return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice && matchesCantidad && matchesCity && matchesColeccion && matchesItems;
     });
-  }, [treasure, search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, cantidadFilter, cityFilter, coleccionFilter]);
+  }, [treasure, search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, cantidadFilter, cityFilter, coleccionFilter, itemsFilter]);
 
   // Sort treasure based on selected option, with image priority
   const sortedTreasure = useMemo(() => {
@@ -321,6 +325,7 @@ export function useTreasureFiltering({
     setCantidadFilter('all');
     setCityFilter('all');
     setColeccionFilter('all');
+    setItemsFilter([]);
     setPriceRange([priceMinMax.min, priceMinMax.max]);
   }, [priceMinMax]);
 
@@ -508,7 +513,8 @@ export function useTreasureFiltering({
     cantidadFilter,
     cityFilter,
     coleccionFilter,
-  }), [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, cityFilter, coleccionFilter]);
+    itemsFilter,
+  }), [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, cityFilter, coleccionFilter, itemsFilter]);
 
   return {
     filters,

@@ -66,6 +66,17 @@ function parseUrlFilters(): Partial<TreasureFilters> {
   const coleccion = params.get('coleccion');
   if (coleccion) filters.coleccionFilter = coleccion;
 
+  // Parse items filter (comma-separated item numbers for QR/quotation links)
+  const items = params.get('items');
+  if (items) {
+    const itemNumbers = items.split(',')
+      .map(s => parseInt(s.trim(), 10))
+      .filter(n => !isNaN(n) && n > 0);
+    if (itemNumbers.length > 0) {
+      filters.itemsFilter = itemNumbers;
+    }
+  }
+
   return filters;
 }
 

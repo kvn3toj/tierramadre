@@ -855,29 +855,36 @@ const FooterSection: React.FC<{
 
 /**
  * QRCodeBox - iOS-style QR code container
+ * Links to Treasure Browser with all quoted products pre-filtered
  */
-const QRCodeBox: React.FC<{ products: CotizacionProduct[] }> = ({ products }) => (
-  <Box
-    sx={{
-      width: 56,
-      height: 56,
-      p: 0.5,
-      bgcolor: '#FFFFFF',
-      border: `1px solid ${quotationStyles.borderLight}`,
-      borderRadius: 1.5,
-      flexShrink: 0,
-    }}
-  >
-    {products.length > 0 ? (
-      <QRCodeSVG
-        value={`https://www.tierramadre.co/products/${generateProductSlug(products[0].name)}`}
-        size={48}
-        level="L"
-        fgColor={primitiveColors.emerald[700]}
-        bgColor="#FFFFFF"
-        style={{ width: '100%', height: '100%', display: 'block' }}
-      />
-    ) : (
+const QRCodeBox: React.FC<{ products: CotizacionProduct[] }> = ({ products }) => {
+  // Generate URL with item numbers for filtering in Treasure Browser
+  const qrUrl = products.length > 0
+    ? `https://tierra-madre-studio.vercel.app/tesoro?items=${products.map(p => p.itemNumber).join(',')}&status=all`
+    : 'https://tierra-madre-studio.vercel.app/tesoro';
+
+  return (
+    <Box
+      sx={{
+        width: 56,
+        height: 56,
+        p: 0.5,
+        bgcolor: '#FFFFFF',
+        border: `1px solid ${quotationStyles.borderLight}`,
+        borderRadius: 1.5,
+        flexShrink: 0,
+      }}
+    >
+      {products.length > 0 ? (
+        <QRCodeSVG
+          value={qrUrl}
+          size={48}
+          level="L"
+          fgColor={primitiveColors.emerald[700]}
+          bgColor="#FFFFFF"
+          style={{ width: '100%', height: '100%', display: 'block' }}
+        />
+      ) : (
       <Box
         sx={{
           width: '100%',
@@ -897,9 +904,10 @@ const QRCodeBox: React.FC<{ products: CotizacionProduct[] }> = ({ products }) =>
           />
         ))}
       </Box>
-    )}
-  </Box>
-);
+      )}
+    </Box>
+  );
+};
 
 /**
  * AuthenticityBadge - iOS-style authenticity seal with logo
