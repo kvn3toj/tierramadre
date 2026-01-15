@@ -49,7 +49,7 @@ export const config = {
 
 // ============ MEDIA UPLOAD HELPERS ============
 
-async function uploadFileToDrive(drive, folderId, file, index) {
+async function uploadFileToDrive(drive, folderId, file, index, sharedDriveId = null) {
   const originalName = file.originalFilename || file.newFilename || 'upload';
   const mimeToExt = {
     'image/jpeg': 'jpg',
@@ -80,11 +80,15 @@ async function uploadFileToDrive(drive, folderId, file, index) {
     supportsAllDrives: true,
   });
 
-  await drive.permissions.create({
-    fileId: uploadedFile.data.id,
-    requestBody: { role: 'reader', type: 'anyone' },
-    supportsAllDrives: true,
-  });
+  // Only set public permissions for non-Shared Drive files
+  // Shared Drive files inherit permissions from the drive
+  if (!sharedDriveId) {
+    await drive.permissions.create({
+      fileId: uploadedFile.data.id,
+      requestBody: { role: 'reader', type: 'anyone' },
+      supportsAllDrives: true,
+    });
+  }
 
   return {
     id: uploadedFile.data.id,
@@ -99,17 +103,23 @@ async function handleMediaUpload(req, res) {
     return sendError(res, 500, 'Google Drive folder not configured');
   }
 
-  const form = formidable({
-    multiples: true,
-    maxFileSize: 100 * 1024 * 1024, // 100MB max
-  });
-
-  const [fields, files] = await new Promise((resolve, reject) => {
-    form.parse(req, (err, fields, files) => {
-      if (err) reject(err);
-      resolve([fields, files]);
+  let fields, files;
+  try {
+    const form = formidable({
+      multiples: true,
+      maxFileSize: 100 * 1024 * 1024, // 100MB max
     });
-  });
+
+    [fields, files] = await new Promise((resolve, reject) => {
+      form.parse(req, (err, parsedFields, parsedFiles) => {
+        if (err) reject(err);
+        resolve([parsedFields, parsedFiles]);
+      });
+    });
+  } catch (formError) {
+    console.error('Formidable parse error:', formError);
+    return sendError(res, 400, 'Failed to parse form data', formError.message);
+  }
 
   const quotationId = Array.isArray(fields.quotationId)
     ? fields.quotationId[0]
@@ -131,15 +141,21 @@ async function handleMediaUpload(req, res) {
   const drive = getDriveClient(false);
   const parentFolderId = sharedDriveId;
 
-  const cotizacionesFolderId = await getOrCreateFolder(drive, parentFolderId, DRIVE_FOLDERS.COTIZACIONES, sharedDriveId);
-  const quotationFolderId = await getOrCreateFolder(drive, cotizacionesFolderId, quotationId, sharedDriveId);
+  let cotizacionesFolderId, quotationFolderId;
+  try {
+    cotizacionesFolderId = await getOrCreateFolder(drive, parentFolderId, DRIVE_FOLDERS.COTIZACIONES, sharedDriveId);
+    quotationFolderId = await getOrCreateFolder(drive, cotizacionesFolderId, quotationId, sharedDriveId);
+  } catch (folderError) {
+    console.error('Folder creation error:', folderError);
+    return sendError(res, 500, 'Failed to create upload folder', folderError.message);
+  }
 
   const uploadedFiles = [];
   const errors = [];
   for (let i = 0; i < fileList.length; i++) {
     const file = fileList[i];
     try {
-      const result = await uploadFileToDrive(drive, quotationFolderId, file, i);
+      const result = await uploadFileToDrive(drive, quotationFolderId, file, i, sharedDriveId);
       uploadedFiles.push(result);
     } catch (uploadError) {
       console.error(`Error uploading file ${i}:`, uploadError.message);

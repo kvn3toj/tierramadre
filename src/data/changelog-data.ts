@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-15T05:09:40.969Z
+ * Generated at: 2026-01-15T05:45:44.382Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-15T05:09:40.969Z",
+  "generatedAt": "2026-01-15T05:45:44.382Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,18 +56,18 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "3967331",
-    "lastCommitDate": "2026-01-15 00:09:36 -0500"
+    "lastCommitHash": "1c090f3",
+    "lastCommitDate": "2026-01-15 00:45:41 -0500"
   },
   "stats": {
-    "totalCommits": 236,
-    "totalAdditions": 89460,
-    "totalDeletions": 54441,
-    "totalFilesChanged": 1473,
-    "netLines": 35019
+    "totalCommits": 237,
+    "totalAdditions": 90459,
+    "totalDeletions": 55015,
+    "totalFilesChanged": 1481,
+    "netLines": 35444
   },
   "categoryStats": {
-    "other": 78,
+    "other": 79,
     "bugfix": 60,
     "ux": 43,
     "performance": 14,
@@ -76,7 +76,7 @@ export const changelogData: ChangelogData = {
     "auth": 14
   },
   "typeStats": {
-    "feat": 96,
+    "feat": 97,
     "fix": 100,
     "chore": 13,
     "refactor": 18,
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "index.html",
-      "count": 43
+      "count": 44
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 35
+      "count": 36
     },
     {
       "file": "public/version.json",
-      "count": 33
+      "count": 34
     },
     {
       "file": "src/App.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 228
+      "commits": 229
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "1c090f3",
+      "message": "Add image upload for manual product entries in quotation generator",
+      "fullMessage": "feat: Add image upload for manual product entries in quotation generator",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-15",
+      "type": "feat",
+      "category": "other",
+      "additions": 999,
+      "deletions": 574,
+      "filesChanged": 8
+    },
+    {
       "hash": "3967331",
       "message": "Add product images and links to quotation PDF export",
       "fullMessage": "feat: Add product images and links to quotation PDF export",
       "author": "Kvn3Toj",
-      "relativeTime": "1 second ago",
+      "relativeTime": "36 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Use requestBody for Shared Drive file uploads",
       "fullMessage": "fix: Use requestBody for Shared Drive file uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "25 minutes ago",
+      "relativeTime": "61 minutes ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Use full Drive scope for Shared Drive uploads",
       "fullMessage": "fix: Use full Drive scope for Shared Drive uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "29 minutes ago",
+      "relativeTime": "65 minutes ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Prevent wrong images showing in grid cards during progressive loading",
       "fullMessage": "fix: Prevent wrong images showing in grid cards during progressive loading",
       "author": "Kvn3Toj",
-      "relativeTime": "5 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -194,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "HEIC image fallback using Google Drive thumbnails",
       "fullMessage": "fix: HEIC image fallback using Google Drive thumbnails",
       "author": "Kvn3Toj",
-      "relativeTime": "5 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -272,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Optimize API endpoints for Chrome browser compatibility",
       "fullMessage": "fix: Optimize API endpoints for Chrome browser compatibility",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "performance",
@@ -285,7 +298,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove legacy image gallery editing UI from product page",
       "fullMessage": "fix: Remove legacy image gallery editing UI from product page",
       "author": "Kvn3Toj",
-      "relativeTime": "8 hours ago",
+      "relativeTime": "9 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "ux",
@@ -298,7 +311,7 @@ export const changelogData: ChangelogData = {
       "message": "Show regular price in grid cards for all user roles",
       "fullMessage": "fix: Show regular price in grid cards for all user roles",
       "author": "Kvn3Toj",
-      "relativeTime": "10 hours ago",
+      "relativeTime": "11 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -311,7 +324,7 @@ export const changelogData: ChangelogData = {
       "message": "Provider portal inventory improvements and UI refinements",
       "fullMessage": "feat: Provider portal inventory improvements and UI refinements",
       "author": "Kvn3Toj",
-      "relativeTime": "10 hours ago",
+      "relativeTime": "11 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "ux",
@@ -350,7 +363,7 @@ export const changelogData: ChangelogData = {
       "message": "Additional Spanish accent mark corrections across UI",
       "fullMessage": "fix: Additional Spanish accent mark corrections across UI",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "ux",
@@ -363,7 +376,7 @@ export const changelogData: ChangelogData = {
       "message": "Update version and add quotation coherence documentation",
       "fullMessage": "chore: Update version and add quotation coherence documentation",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-14",
       "type": "chore",
       "category": "other",
@@ -376,7 +389,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Spanish accent marks and improve date sorting",
       "fullMessage": "fix: Add Spanish accent marks and improve date sorting",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -389,7 +402,7 @@ export const changelogData: ChangelogData = {
       "message": "Add restricted inventory view for provider portal",
       "fullMessage": "feat: Add restricted inventory view for provider portal",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -402,7 +415,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve new products notification accuracy and add logo",
       "fullMessage": "fix: Improve new products notification accuracy and add logo",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -428,7 +441,7 @@ export const changelogData: ChangelogData = {
       "message": "Update quotation forms with inventory color/quality options",
       "fullMessage": "fix: Update quotation forms with inventory color/quality options",
       "author": "Kvn3Toj",
-      "relativeTime": "12 hours ago",
+      "relativeTime": "13 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -441,7 +454,7 @@ export const changelogData: ChangelogData = {
       "message": "Enable analytics tracking for all user roles",
       "fullMessage": "feat: Enable analytics tracking for all user roles",
       "author": "Kvn3Toj",
-      "relativeTime": "12 hours ago",
+      "relativeTime": "13 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "analytics",
@@ -467,7 +480,7 @@ export const changelogData: ChangelogData = {
       "message": "Allow product names to wrap to two lines in grid view",
       "fullMessage": "fix: Allow product names to wrap to two lines in grid view",
       "author": "Kvn3Toj",
-      "relativeTime": "13 hours ago",
+      "relativeTime": "14 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -480,7 +493,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove AnimatePresence transition to eliminate gallery blink",
       "fullMessage": "fix: Remove AnimatePresence transition to eliminate gallery blink",
       "author": "Kvn3Toj",
-      "relativeTime": "13 hours ago",
+      "relativeTime": "14 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "cleanup",
@@ -493,7 +506,7 @@ export const changelogData: ChangelogData = {
       "message": "Add analytics components and design system updates",
       "fullMessage": "feat: Add analytics components and design system updates",
       "author": "Kvn3Toj",
-      "relativeTime": "13 hours ago",
+      "relativeTime": "14 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "ux",
@@ -506,7 +519,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product request system for asesores/embajadores",
       "fullMessage": "feat: Add product request system for asesores/embajadores",
       "author": "Kvn3Toj",
-      "relativeTime": "13 hours ago",
+      "relativeTime": "14 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -519,7 +532,7 @@ export const changelogData: ChangelogData = {
       "message": "Add price formatting and quantity fields to quotation forms",
       "fullMessage": "feat: Add price formatting and quantity fields to quotation forms",
       "author": "Kvn3Toj",
-      "relativeTime": "13 hours ago",
+      "relativeTime": "14 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -532,7 +545,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image preloading to eliminate gallery blink",
       "fullMessage": "fix: Add image preloading to eliminate gallery blink",
       "author": "Kvn3Toj",
-      "relativeTime": "14 hours ago",
+      "relativeTime": "15 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -545,7 +558,7 @@ export const changelogData: ChangelogData = {
       "message": "Redirect providers to provider dashboard on login",
       "fullMessage": "feat: Redirect providers to provider dashboard on login",
       "author": "Kvn3Toj",
-      "relativeTime": "30 hours ago",
+      "relativeTime": "31 hours ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
@@ -558,7 +571,7 @@ export const changelogData: ChangelogData = {
       "message": "Support provider role in Asesores sheet",
       "fullMessage": "feat: Support provider role in Asesores sheet",
       "author": "Kvn3Toj",
-      "relativeTime": "30 hours ago",
+      "relativeTime": "31 hours ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
@@ -571,7 +584,7 @@ export const changelogData: ChangelogData = {
       "message": "Enable invitation links for asesores",
       "fullMessage": "feat: Enable invitation links for asesores",
       "author": "Kvn3Toj",
-      "relativeTime": "35 hours ago",
+      "relativeTime": "2 days ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
@@ -584,7 +597,7 @@ export const changelogData: ChangelogData = {
       "message": "Enable accounts/cuentas for asesores and embajadores",
       "fullMessage": "feat: Enable accounts/cuentas for asesores and embajadores",
       "author": "Kvn3Toj",
-      "relativeTime": "35 hours ago",
+      "relativeTime": "2 days ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
@@ -597,7 +610,7 @@ export const changelogData: ChangelogData = {
       "message": "Show feedback option in menu for asesores and embajadores",
       "fullMessage": "feat: Show feedback option in menu for asesores and embajadores",
       "author": "Kvn3Toj",
-      "relativeTime": "35 hours ago",
+      "relativeTime": "2 days ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",

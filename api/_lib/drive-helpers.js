@@ -217,8 +217,11 @@ export function getProxyUrl(fileId, isVideo = false, size = 'original') {
  * @returns {Promise<string>} Folder ID
  */
 export async function getOrCreateFolder(drive, parentFolderId, folderName, sharedDriveId = null) {
+  // Escape single quotes in folder name for query
+  const escapedFolderName = folderName.replace(/'/g, "\\'");
+
   const searchResponse = await drive.files.list({
-    q: `name='${folderName}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    q: `name='${escapedFolderName}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: 'files(id, name)',
     supportsAllDrives: true,
     includeItemsFromAllDrives: true,
@@ -229,7 +232,8 @@ export async function getOrCreateFolder(drive, parentFolderId, folderName, share
     return searchResponse.data.files[0].id;
   }
 
-  const folder = await drive.files.create({
+  // Create folder - for Shared Drives, we need supportsAllDrives
+  const createParams = {
     requestBody: {
       name: folderName,
       mimeType: 'application/vnd.google-apps.folder',
@@ -237,13 +241,19 @@ export async function getOrCreateFolder(drive, parentFolderId, folderName, share
     },
     fields: 'id',
     supportsAllDrives: true,
-  });
+  };
 
-  await drive.permissions.create({
-    fileId: folder.data.id,
-    requestBody: { role: 'reader', type: 'anyone' },
-    supportsAllDrives: true,
-  });
+  const folder = await drive.files.create(createParams);
+
+  // Only set public permissions for non-Shared Drive folders
+  // Shared Drive folders inherit permissions from the drive
+  if (!sharedDriveId) {
+    await drive.permissions.create({
+      fileId: folder.data.id,
+      requestBody: { role: 'reader', type: 'anyone' },
+      supportsAllDrives: true,
+    });
+  }
 
   return folder.data.id;
 }
