@@ -32,25 +32,35 @@ export function isOAuthConfigured() {
 }
 
 /**
+ * Clean environment variable value (remove quotes, newlines, whitespace)
+ */
+function cleanEnvValue(value) {
+  if (!value) return value;
+  return value
+    .replace(/^["']|["']$/g, '')  // Remove surrounding quotes
+    .replace(/\\n/g, '')          // Remove literal \n
+    .replace(/[\r\n]/g, '')       // Remove actual newlines
+    .trim();
+}
+
+/**
  * Get OAuth2 client with fresh access token
  * @returns {Promise<OAuth2Client>}
  */
 async function getOAuthClient() {
-  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
-  const refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN;
+  const clientId = cleanEnvValue(process.env.GOOGLE_OAUTH_CLIENT_ID);
+  const clientSecret = cleanEnvValue(process.env.GOOGLE_OAUTH_CLIENT_SECRET);
+  const refreshToken = cleanEnvValue(process.env.GOOGLE_OAUTH_REFRESH_TOKEN);
 
   if (!clientId || !clientSecret || !refreshToken) {
     throw new Error('OAuth credentials not configured. Missing GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, or GOOGLE_OAUTH_REFRESH_TOKEN');
   }
 
-  // Create OAuth client if not cached
-  if (!cachedOAuthClient) {
-    cachedOAuthClient = new OAuth2Client(clientId, clientSecret);
-    cachedOAuthClient.setCredentials({
-      refresh_token: refreshToken,
-    });
-  }
+  // Create OAuth client if not cached (always recreate to pick up env changes)
+  cachedOAuthClient = new OAuth2Client(clientId, clientSecret);
+  cachedOAuthClient.setCredentials({
+    refresh_token: refreshToken,
+  });
 
   // Check if we need to refresh the access token
   const now = Date.now();

@@ -176,9 +176,42 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    // Delete empty folders
-    const { folderIds, confirm } = req.body || {};
+    const { action, folderIds, confirm, parentFolderId: parentId, folderName } = req.body || {};
 
+    // Action: create folder
+    if (action === 'create') {
+      if (!parentId || !folderName) {
+        return sendError(res, 400, 'parentFolderId and folderName required for create action');
+      }
+
+      try {
+        const folder = await drive.files.create({
+          requestBody: {
+            name: folderName,
+            mimeType: 'application/vnd.google-apps.folder',
+            parents: [parentId],
+          },
+          fields: 'id, name',
+        });
+
+        // Set public permissions
+        await drive.permissions.create({
+          fileId: folder.data.id,
+          requestBody: { role: 'reader', type: 'anyone' },
+        });
+
+        console.log(`[DriveCleanup] Created folder "${folderName}": ${folder.data.id}`);
+        return sendSuccess(res, {
+          created: true,
+          folderId: folder.data.id,
+          folderName: folder.data.name
+        });
+      } catch (error) {
+        return sendError(res, 500, `Failed to create folder: ${error.message}`);
+      }
+    }
+
+    // Action: delete folders
     if (!confirm) {
       return sendError(res, 400, 'Please add "confirm": true to delete folders');
     }
