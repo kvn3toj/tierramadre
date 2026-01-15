@@ -183,12 +183,23 @@ async function handleMediaUpload(req, res) {
   const drive = getDriveClient(false);
   const parentFolderId = sharedDriveId;
 
+  console.log(`[Upload] Starting upload for quotation: ${quotationId}`);
+  console.log(`[Upload] Shared Drive ID: ${sharedDriveId}`);
+
   let cotizacionesFolderId, quotationFolderId;
   try {
+    console.log(`[Upload] Looking for/creating cotizaciones folder in: ${parentFolderId}`);
     cotizacionesFolderId = await getOrCreateFolder(drive, parentFolderId, DRIVE_FOLDERS.COTIZACIONES, sharedDriveId);
+    console.log(`[Upload] Cotizaciones folder ID: ${cotizacionesFolderId}`);
+
+    console.log(`[Upload] Looking for/creating quotation folder: ${quotationId}`);
     quotationFolderId = await getOrCreateFolder(drive, cotizacionesFolderId, quotationId, sharedDriveId);
+    console.log(`[Upload] Quotation folder ID: ${quotationFolderId}`);
   } catch (folderError) {
-    console.error('Folder creation error:', folderError);
+    console.error('[Upload] Folder creation error:', folderError.message);
+    if (folderError.response?.data) {
+      console.error('[Upload] API error details:', JSON.stringify(folderError.response.data, null, 2));
+    }
     return sendError(res, 500, 'Failed to create upload folder', folderError.message);
   }
 
