@@ -263,7 +263,7 @@ export default function CotizacionGenerator() {
 
       // Parse error message for user-friendly display
       let errorMessage = 'Error al subir el archivo';
-      if (error.message) {
+      if (error instanceof Error && error.message) {
         if (error.message.includes('storage quota') || error.message.includes('Service Accounts')) {
           errorMessage = 'El archivo es muy grande. Por favor intenta con un video más pequeño (máx 50MB recomendado).';
         } else if (error.message.includes('Failed to create upload folder')) {
