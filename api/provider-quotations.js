@@ -161,6 +161,11 @@ async function handleMediaUpload(req, res) {
     return sendError(res, 500, 'Google Drive folder not configured');
   }
 
+  // Note: sharedDriveId can be either:
+  // 1. A Shared Drive ID (recommended)
+  // 2. A regular folder ID that's been shared with the Service Account (works if owner has quota)
+  // The folder creation and uploads will work as long as the Service Account has write permissions
+
   let fields, files;
   try {
     const form = formidable({

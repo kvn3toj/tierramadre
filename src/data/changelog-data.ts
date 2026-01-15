@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-15T07:19:49.837Z
+ * Generated at: 2026-01-15T07:32:53.474Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-15T07:19:49.837Z",
+  "generatedAt": "2026-01-15T07:32:53.474Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,19 +56,19 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "708ba3e",
-    "lastCommitDate": "2026-01-15 02:19:46 -0500"
+    "lastCommitHash": "8545009",
+    "lastCommitDate": "2026-01-15 02:32:49 -0500"
   },
   "stats": {
-    "totalCommits": 248,
-    "totalAdditions": 91322,
-    "totalDeletions": 55470,
-    "totalFilesChanged": 1513,
-    "netLines": 35852
+    "totalCommits": 253,
+    "totalAdditions": 91459,
+    "totalDeletions": 55541,
+    "totalFilesChanged": 1520,
+    "netLines": 35918
   },
   "categoryStats": {
-    "bugfix": 68,
-    "other": 82,
+    "bugfix": 72,
+    "other": 83,
     "ux": 43,
     "performance": 14,
     "cleanup": 16,
@@ -76,26 +76,26 @@ export const changelogData: ChangelogData = {
     "auth": 14
   },
   "typeStats": {
-    "fix": 108,
+    "other": 9,
+    "fix": 109,
+    "chore": 14,
     "feat": 100,
-    "chore": 13,
     "refactor": 18,
-    "other": 6,
     "docs": 2,
     "style": 1
   },
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 46
+      "count": 47
     },
     {
       "file": "index.html",
-      "count": 45
+      "count": 46
     },
     {
       "file": "public/version.json",
-      "count": 35
+      "count": 36
     },
     {
       "file": "src/App.tsx",
@@ -110,16 +110,16 @@ export const changelogData: ChangelogData = {
       "count": 19
     },
     {
+      "file": "api/provider-quotations.js",
+      "count": 17
+    },
+    {
       "file": "src/components/TreasureBrowser.tsx",
       "count": 16
     },
     {
       "file": "src/components/media/MediaGallery.tsx",
       "count": 15
-    },
-    {
-      "file": "api/provider-quotations.js",
-      "count": 14
     },
     {
       "file": "src/components/home/Home.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 240
+      "commits": 245
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,76 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "8545009",
+      "message": "debug: Add folder verification after creation",
+      "fullMessage": "debug: Add folder verification after creation",
+      "author": "Kvn3Toj",
+      "relativeTime": "1 second ago",
+      "date": "2026-01-15",
+      "type": "other",
+      "category": "bugfix",
+      "additions": 8,
+      "deletions": 0,
+      "filesChanged": 1
+    },
+    {
+      "hash": "15009a9",
+      "message": "debug: Add detailed logging to uploadFileToDrive function",
+      "fullMessage": "debug: Add detailed logging to uploadFileToDrive function",
+      "author": "Kvn3Toj",
+      "relativeTime": "3 minutes ago",
+      "date": "2026-01-15",
+      "type": "other",
+      "category": "bugfix",
+      "additions": 28,
+      "deletions": 12,
+      "filesChanged": 1
+    },
+    {
+      "hash": "ddc12cc",
+      "message": "debug: Add API response logging for upload debugging",
+      "fullMessage": "debug: Add API response logging for upload debugging",
+      "author": "Kvn3Toj",
+      "relativeTime": "4 minutes ago",
+      "date": "2026-01-15",
+      "type": "other",
+      "category": "bugfix",
+      "additions": 3,
+      "deletions": 0,
+      "filesChanged": 1
+    },
+    {
+      "hash": "0850810",
+      "message": "Properly detect Shared Drive root vs folder",
+      "fullMessage": "fix: Properly detect Shared Drive root vs folder",
+      "author": "Kvn3Toj",
+      "relativeTime": "8 minutes ago",
+      "date": "2026-01-15",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 26,
+      "deletions": 13,
+      "filesChanged": 1
+    },
+    {
+      "hash": "29f5732",
+      "message": "Update app version to 2026.01.15.139",
+      "fullMessage": "chore: Update app version to 2026.01.15.139",
+      "author": "Kvn3Toj",
+      "relativeTime": "12 minutes ago",
+      "date": "2026-01-15",
+      "type": "chore",
+      "category": "other",
+      "additions": 72,
+      "deletions": 46,
+      "filesChanged": 3
+    },
+    {
       "hash": "708ba3e",
       "message": "TypeScript error in video upload error handler",
       "fullMessage": "fix: TypeScript error in video upload error handler",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "13 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -155,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Resolve video upload quota error for manual products",
       "fullMessage": "fix: Resolve video upload quota error for manual products",
       "author": "Kvn3Toj",
-      "relativeTime": "2 minutes ago",
+      "relativeTime": "15 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -168,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Add provider-quotations to vercel.json with 60s maxDuration",
       "fullMessage": "fix: Add provider-quotations to vercel.json with 60s maxDuration",
       "author": "Kvn3Toj",
-      "relativeTime": "35 minutes ago",
+      "relativeTime": "48 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -181,7 +246,7 @@ export const changelogData: ChangelogData = {
       "message": "Handle regular Drive folders vs Shared Drives for uploads",
       "fullMessage": "fix: Handle regular Drive folders vs Shared Drives for uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "48 minutes ago",
+      "relativeTime": "61 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -194,7 +259,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve Drive check to handle both Shared Drives and regular folders",
       "fullMessage": "fix: Improve Drive check to handle both Shared Drives and regular folders",
       "author": "Kvn3Toj",
-      "relativeTime": "51 minutes ago",
+      "relativeTime": "64 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -207,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Add diagnostic endpoint for Drive configuration check",
       "fullMessage": "feat: Add diagnostic endpoint for Drive configuration check",
       "author": "Kvn3Toj",
-      "relativeTime": "53 minutes ago",
+      "relativeTime": "66 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -220,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Add better error logging for Drive folder creation",
       "fullMessage": "fix: Add better error logging for Drive folder creation",
       "author": "Kvn3Toj",
-      "relativeTime": "60 minutes ago",
+      "relativeTime": "73 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -233,7 +298,7 @@ export const changelogData: ChangelogData = {
       "message": "Position snackbar above bottom tab bar in CotizacionGenerator",
       "fullMessage": "fix: Position snackbar above bottom tab bar in CotizacionGenerator",
       "author": "Kvn3Toj",
-      "relativeTime": "64 minutes ago",
+      "relativeTime": "77 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -246,7 +311,7 @@ export const changelogData: ChangelogData = {
       "message": "QR code links to Treasure Browser with quoted products filtered",
       "fullMessage": "feat: QR code links to Treasure Browser with quoted products filtered",
       "author": "Kvn3Toj",
-      "relativeTime": "71 minutes ago",
+      "relativeTime": "84 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -259,7 +324,7 @@ export const changelogData: ChangelogData = {
       "message": "Add video upload support for manual product entries",
       "fullMessage": "feat: Add video upload support for manual product entries",
       "author": "Kvn3Toj",
-      "relativeTime": "78 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -272,7 +337,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve Shared Drive handling for image uploads",
       "fullMessage": "fix: Improve Shared Drive handling for image uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "89 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -350,7 +415,7 @@ export const changelogData: ChangelogData = {
       "message": "HEIC image fallback using Google Drive thumbnails",
       "fullMessage": "fix: HEIC image fallback using Google Drive thumbnails",
       "author": "Kvn3Toj",
-      "relativeTime": "7 hours ago",
+      "relativeTime": "8 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -441,7 +506,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove legacy image gallery editing UI from product page",
       "fullMessage": "fix: Remove legacy image gallery editing UI from product page",
       "author": "Kvn3Toj",
-      "relativeTime": "10 hours ago",
+      "relativeTime": "11 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "ux",
@@ -467,7 +532,7 @@ export const changelogData: ChangelogData = {
       "message": "Provider portal inventory improvements and UI refinements",
       "fullMessage": "feat: Provider portal inventory improvements and UI refinements",
       "author": "Kvn3Toj",
-      "relativeTime": "12 hours ago",
+      "relativeTime": "13 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "ux",
@@ -532,7 +597,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Spanish accent marks and improve date sorting",
       "fullMessage": "fix: Add Spanish accent marks and improve date sorting",
       "author": "Kvn3Toj",
-      "relativeTime": "13 hours ago",
+      "relativeTime": "14 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -597,7 +662,7 @@ export const changelogData: ChangelogData = {
       "message": "Enable analytics tracking for all user roles",
       "fullMessage": "feat: Enable analytics tracking for all user roles",
       "author": "Kvn3Toj",
-      "relativeTime": "14 hours ago",
+      "relativeTime": "15 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "analytics",
@@ -636,7 +701,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove AnimatePresence transition to eliminate gallery blink",
       "fullMessage": "fix: Remove AnimatePresence transition to eliminate gallery blink",
       "author": "Kvn3Toj",
-      "relativeTime": "15 hours ago",
+      "relativeTime": "16 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "cleanup",
@@ -649,7 +714,7 @@ export const changelogData: ChangelogData = {
       "message": "Add analytics components and design system updates",
       "fullMessage": "feat: Add analytics components and design system updates",
       "author": "Kvn3Toj",
-      "relativeTime": "15 hours ago",
+      "relativeTime": "16 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "ux",
@@ -662,7 +727,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product request system for asesores/embajadores",
       "fullMessage": "feat: Add product request system for asesores/embajadores",
       "author": "Kvn3Toj",
-      "relativeTime": "15 hours ago",
+      "relativeTime": "16 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -688,7 +753,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image preloading to eliminate gallery blink",
       "fullMessage": "fix: Add image preloading to eliminate gallery blink",
       "author": "Kvn3Toj",
-      "relativeTime": "16 hours ago",
+      "relativeTime": "17 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -701,7 +766,7 @@ export const changelogData: ChangelogData = {
       "message": "Redirect providers to provider dashboard on login",
       "fullMessage": "feat: Redirect providers to provider dashboard on login",
       "author": "Kvn3Toj",
-      "relativeTime": "32 hours ago",
+      "relativeTime": "33 hours ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
