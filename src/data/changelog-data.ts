@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-15T19:25:24.635Z
+ * Generated at: 2026-01-15T19:27:09.146Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-15T19:25:24.635Z",
+  "generatedAt": "2026-01-15T19:27:09.146Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,18 +56,18 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "2e1b19b",
-    "lastCommitDate": "2026-01-15 14:25:21 -0500"
+    "lastCommitHash": "65795b7",
+    "lastCommitDate": "2026-01-15 14:27:05 -0500"
   },
   "stats": {
-    "totalCommits": 257,
-    "totalAdditions": 95076,
-    "totalDeletions": 56884,
-    "totalFilesChanged": 1560,
-    "netLines": 38192
+    "totalCommits": 258,
+    "totalAdditions": 95107,
+    "totalDeletions": 56902,
+    "totalFilesChanged": 1563,
+    "netLines": 38205
   },
   "categoryStats": {
-    "other": 85,
+    "other": 86,
     "auth": 15,
     "bugfix": 73,
     "ux": 43,
@@ -76,9 +76,9 @@ export const changelogData: ChangelogData = {
     "analytics": 11
   },
   "typeStats": {
+    "feat": 102,
     "chore": 15,
     "fix": 111,
-    "feat": 101,
     "other": 9,
     "refactor": 18,
     "docs": 2,
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 51
+      "count": 52
     },
     {
       "file": "index.html",
-      "count": 48
+      "count": 49
     },
     {
       "file": "public/version.json",
-      "count": 38
+      "count": 39
     },
     {
       "file": "src/App.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 249
+      "commits": 250
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "65795b7",
+      "message": "Add email notification system for quotations",
+      "fullMessage": "feat: Add email notification system for quotations",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-15",
+      "type": "feat",
+      "category": "other",
+      "additions": 31,
+      "deletions": 18,
+      "filesChanged": 3
+    },
+    {
       "hash": "2e1b19b",
       "message": "Update changelog data",
       "fullMessage": "chore: Update changelog data",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "2 minutes ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Use OAuth instead of Service Account for cotización uploads",
       "fullMessage": "fix: Use OAuth instead of Service Account for cotización uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "3 minutes ago",
+      "relativeTime": "5 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Split merged APIs and add Cloudinary processing for uploads",
       "fullMessage": "feat: Split merged APIs and add Cloudinary processing for uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "29 minutes ago",
+      "relativeTime": "31 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -714,7 +727,7 @@ export const changelogData: ChangelogData = {
       "message": "Enable analytics tracking for all user roles",
       "fullMessage": "feat: Enable analytics tracking for all user roles",
       "author": "Kvn3Toj",
-      "relativeTime": "26 hours ago",
+      "relativeTime": "27 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "analytics",

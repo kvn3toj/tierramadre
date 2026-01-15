@@ -24,7 +24,12 @@ export const SHEETS = {
 // Google Drive Folder Names
 export const DRIVE_FOLDERS = {
   PRODUCTS: 'products',
+  // Parent folder for all quotation media
   COTIZACIONES: 'cotizaciones',
+  // Subfolder for manual entries (Entrada Manual in CotizacionGenerator)
+  COTIZACIONES_MANUALES: 'manuales',
+  // Subfolder for provider quotations (QuotationMediaUpload)
+  COTIZACIONES_PROVEEDORES: 'proveedores',
 };
 
 // Cache Durations (optimized for Chrome/Safari compatibility)

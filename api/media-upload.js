@@ -254,21 +254,26 @@ export default async function handler(req, res) {
   // Determine if we're using a Shared Drive
   const driveIdParam = await detectDriveType(drive, parentFolderId);
 
-  // Create folder structure
+  // Create folder structure: cotizaciones/proveedores/{quotationId}
+  // This separates provider quotations from manual entries
   let targetFolderId;
   try {
     if (customFolderId) {
       // Use custom folder directly
       targetFolderId = customFolderId;
     } else {
-      // Create cotizaciones/quotationId structure
+      // Create cotizaciones/proveedores/quotationId structure
       const baseFolderName = targetFolder || DRIVE_FOLDERS.COTIZACIONES;
       console.log(`[Upload] Looking for/creating ${baseFolderName} folder in: ${parentFolderId}`);
-      const baseFolderId = await getOrCreateFolder(drive, parentFolderId, baseFolderName, driveIdParam);
-      console.log(`[Upload] Base folder ID: ${baseFolderId}`);
+      const cotizacionesFolderId = await getOrCreateFolder(drive, parentFolderId, baseFolderName, driveIdParam);
+      console.log(`[Upload] Cotizaciones folder ID: ${cotizacionesFolderId}`);
+
+      console.log(`[Upload] Looking for/creating proveedores folder`);
+      const proveedoresFolderId = await getOrCreateFolder(drive, cotizacionesFolderId, DRIVE_FOLDERS.COTIZACIONES_PROVEEDORES, driveIdParam);
+      console.log(`[Upload] Proveedores folder ID: ${proveedoresFolderId}`);
 
       console.log(`[Upload] Looking for/creating folder: ${quotationId}`);
-      targetFolderId = await getOrCreateFolder(drive, baseFolderId, quotationId, driveIdParam);
+      targetFolderId = await getOrCreateFolder(drive, proveedoresFolderId, quotationId, driveIdParam);
       console.log(`[Upload] Target folder ID: ${targetFolderId}`);
     }
 

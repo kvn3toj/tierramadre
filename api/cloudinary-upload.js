@@ -351,11 +351,13 @@ export default async function handler(req, res) {
     return sendError(res, 500, `OAuth authentication failed: ${oauthError.message}`);
   }
 
-  // Create folder structure: cotizaciones/{quotationId}
+  // Create folder structure: cotizaciones/manuales/{quotationId}
+  // This separates manual entries from provider quotations
   let targetFolderId;
   try {
-    const baseFolderId = await getOrCreateFolderOAuth(drive, parentFolderId, DRIVE_FOLDERS.COTIZACIONES);
-    targetFolderId = await getOrCreateFolderOAuth(drive, baseFolderId, quotationId);
+    const cotizacionesFolderId = await getOrCreateFolderOAuth(drive, parentFolderId, DRIVE_FOLDERS.COTIZACIONES);
+    const manualesFolderId = await getOrCreateFolderOAuth(drive, cotizacionesFolderId, DRIVE_FOLDERS.COTIZACIONES_MANUALES);
+    targetFolderId = await getOrCreateFolderOAuth(drive, manualesFolderId, quotationId);
     console.log(`[CloudinaryToOAuth] Target Drive folder: ${targetFolderId}`);
   } catch (folderError) {
     console.error('[CloudinaryToOAuth] Folder creation error:', folderError.message);
