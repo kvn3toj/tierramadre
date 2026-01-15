@@ -91,18 +91,34 @@ async function uploadFileToDrive(drive, folderId, file, index, sharedDriveId = n
   const fileName = `${prefix}-${index + 1}-${Date.now()}.${fileExtension}`;
 
   // Upload file to Drive - request thumbnailLink for videos
-  const uploadedFile = await drive.files.create({
-    requestBody: {
-      name: fileName,
-      parents: [folderId],
-    },
-    media: {
-      mimeType: file.mimetype,
-      body: fs.createReadStream(file.filepath),
-    },
-    fields: 'id, webViewLink, webContentLink, thumbnailLink',
-    supportsAllDrives: true,
-  });
+  console.log(`[uploadFileToDrive] Uploading ${isVideo ? 'video' : 'image'}: ${fileName}`);
+  console.log(`[uploadFileToDrive] Target folder: ${folderId}`);
+  console.log(`[uploadFileToDrive] Shared Drive ID: ${sharedDriveId || 'none (My Drive)'}`);
+  console.log(`[uploadFileToDrive] File size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+
+  let uploadedFile;
+  try {
+    uploadedFile = await drive.files.create({
+      requestBody: {
+        name: fileName,
+        parents: [folderId],
+      },
+      media: {
+        mimeType: file.mimetype,
+        body: fs.createReadStream(file.filepath),
+      },
+      fields: 'id, webViewLink, webContentLink, thumbnailLink',
+      supportsAllDrives: true,
+    });
+
+    console.log(`[uploadFileToDrive] ✓ Upload successful. File ID: ${uploadedFile.data.id}`);
+  } catch (uploadError) {
+    console.error(`[uploadFileToDrive] ✗ Upload failed:`, uploadError.message);
+    if (uploadError.response?.data?.error) {
+      console.error(`[uploadFileToDrive] API Error Details:`, JSON.stringify(uploadError.response.data.error, null, 2));
+    }
+    throw uploadError;
+  }
 
   // Only set public permissions for non-Shared Drive files
   // Shared Drive files inherit permissions from the drive
