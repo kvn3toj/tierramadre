@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-15T20:24:27.027Z
+ * Generated at: 2026-01-15T20:39:53.830Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-15T20:24:27.027Z",
+  "generatedAt": "2026-01-15T20:39:53.830Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,30 +56,30 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "b5028a2",
-    "lastCommitDate": "2026-01-15 15:24:23 -0500"
+    "lastCommitHash": "2d468c0",
+    "lastCommitDate": "2026-01-15 15:39:50 -0500"
   },
   "stats": {
-    "totalCommits": 261,
-    "totalAdditions": 95609,
-    "totalDeletions": 57044,
-    "totalFilesChanged": 1577,
-    "netLines": 38565
+    "totalCommits": 263,
+    "totalAdditions": 95935,
+    "totalDeletions": 57109,
+    "totalFilesChanged": 1581,
+    "netLines": 38826
   },
   "categoryStats": {
+    "other": 88,
+    "auth": 17,
     "cleanup": 17,
-    "auth": 16,
-    "other": 87,
     "bugfix": 73,
     "ux": 43,
     "performance": 14,
     "analytics": 11
   },
   "typeStats": {
+    "feat": 103,
+    "fix": 113,
     "chore": 16,
-    "fix": 112,
     "refactor": 19,
-    "feat": 102,
     "other": 9,
     "docs": 2,
     "style": 1
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 253
+      "commits": 255
     },
     {
       "name": "kvn3toj",
@@ -138,16 +138,42 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
-      "hash": "b5028a2",
-      "message": "Update changelog data and add drive cleanup utility",
-      "fullMessage": "chore: Update changelog data and add drive cleanup utility",
+      "hash": "2d468c0",
+      "message": "Store feedback screenshots in Google Drive and use dedicated sheet",
+      "fullMessage": "feat: Store feedback screenshots in Google Drive and use dedicated sheet",
       "author": "Kvn3Toj",
       "relativeTime": "0 seconds ago",
       "date": "2026-01-15",
+      "type": "feat",
+      "category": "other",
+      "additions": 222,
+      "deletions": 23,
+      "filesChanged": 2
+    },
+    {
+      "hash": "b3f9ac4",
+      "message": "Sanitize OAuth env vars and add folder management API",
+      "fullMessage": "fix: Sanitize OAuth env vars and add folder management API",
+      "author": "Kvn3Toj",
+      "relativeTime": "3 minutes ago",
+      "date": "2026-01-15",
+      "type": "fix",
+      "category": "auth",
+      "additions": 55,
+      "deletions": 12,
+      "filesChanged": 2
+    },
+    {
+      "hash": "fa5ddca",
+      "message": "Update changelog data and add drive cleanup utility",
+      "fullMessage": "chore: Update changelog data and add drive cleanup utility",
+      "author": "Kvn3Toj",
+      "relativeTime": "14 minutes ago",
+      "date": "2026-01-15",
       "type": "chore",
       "category": "cleanup",
-      "additions": 366,
-      "deletions": 52,
+      "additions": 415,
+      "deletions": 82,
       "filesChanged": 7
     },
     {
@@ -155,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Use OAuth instead of Service Account for media uploads",
       "fullMessage": "fix: Use OAuth instead of Service Account for media uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "23 minutes ago",
+      "relativeTime": "39 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",
@@ -168,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Reorganize cotizaciones folder structure",
       "fullMessage": "refactor: Reorganize cotizaciones folder structure",
       "author": "Kvn3Toj",
-      "relativeTime": "40 minutes ago",
+      "relativeTime": "56 minutes ago",
       "date": "2026-01-15",
       "type": "refactor",
       "category": "other",
@@ -181,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Add email notification system for quotations",
       "fullMessage": "feat: Add email notification system for quotations",
       "author": "Kvn3Toj",
-      "relativeTime": "57 minutes ago",
+      "relativeTime": "73 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -194,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog data",
       "fullMessage": "chore: Update changelog data",
       "author": "Kvn3Toj",
-      "relativeTime": "59 minutes ago",
+      "relativeTime": "74 minutes ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -207,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Use OAuth instead of Service Account for cotización uploads",
       "fullMessage": "fix: Use OAuth instead of Service Account for cotización uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "62 minutes ago",
+      "relativeTime": "78 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",
@@ -220,7 +246,7 @@ export const changelogData: ChangelogData = {
       "message": "Split merged APIs and add Cloudinary processing for uploads",
       "fullMessage": "feat: Split merged APIs and add Cloudinary processing for uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "88 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -415,7 +441,7 @@ export const changelogData: ChangelogData = {
       "message": "QR code links to Treasure Browser with quoted products filtered",
       "fullMessage": "feat: QR code links to Treasure Browser with quoted products filtered",
       "author": "Kvn3Toj",
-      "relativeTime": "14 hours ago",
+      "relativeTime": "15 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -428,7 +454,7 @@ export const changelogData: ChangelogData = {
       "message": "Add video upload support for manual product entries",
       "fullMessage": "feat: Add video upload support for manual product entries",
       "author": "Kvn3Toj",
-      "relativeTime": "14 hours ago",
+      "relativeTime": "15 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -467,7 +493,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product images and links to quotation PDF export",
       "fullMessage": "feat: Add product images and links to quotation PDF export",
       "author": "Kvn3Toj",
-      "relativeTime": "15 hours ago",
+      "relativeTime": "16 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -688,7 +714,7 @@ export const changelogData: ChangelogData = {
       "message": "Update version and add quotation coherence documentation",
       "fullMessage": "chore: Update version and add quotation coherence documentation",
       "author": "Kvn3Toj",
-      "relativeTime": "26 hours ago",
+      "relativeTime": "27 hours ago",
       "date": "2026-01-14",
       "type": "chore",
       "category": "other",
@@ -701,7 +727,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Spanish accent marks and improve date sorting",
       "fullMessage": "fix: Add Spanish accent marks and improve date sorting",
       "author": "Kvn3Toj",
-      "relativeTime": "26 hours ago",
+      "relativeTime": "27 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -753,7 +779,7 @@ export const changelogData: ChangelogData = {
       "message": "Update quotation forms with inventory color/quality options",
       "fullMessage": "fix: Update quotation forms with inventory color/quality options",
       "author": "Kvn3Toj",
-      "relativeTime": "27 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -766,7 +792,7 @@ export const changelogData: ChangelogData = {
       "message": "Enable analytics tracking for all user roles",
       "fullMessage": "feat: Enable analytics tracking for all user roles",
       "author": "Kvn3Toj",
-      "relativeTime": "27 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "analytics",
@@ -792,7 +818,7 @@ export const changelogData: ChangelogData = {
       "message": "Allow product names to wrap to two lines in grid view",
       "fullMessage": "fix: Allow product names to wrap to two lines in grid view",
       "author": "Kvn3Toj",
-      "relativeTime": "28 hours ago",
+      "relativeTime": "29 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -805,7 +831,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove AnimatePresence transition to eliminate gallery blink",
       "fullMessage": "fix: Remove AnimatePresence transition to eliminate gallery blink",
       "author": "Kvn3Toj",
-      "relativeTime": "28 hours ago",
+      "relativeTime": "29 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "cleanup",
@@ -857,7 +883,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image preloading to eliminate gallery blink",
       "fullMessage": "fix: Add image preloading to eliminate gallery blink",
       "author": "Kvn3Toj",
-      "relativeTime": "29 hours ago",
+      "relativeTime": "30 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",

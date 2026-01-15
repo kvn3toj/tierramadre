@@ -66,7 +66,11 @@
       "Bash(git checkout:*)",
       "Bash(npm ls:*)",
       "Bash(GOOGLE_OAUTH_CLIENT_ID=* GOOGLE_OAUTH_CLIENT_SECRET=* node:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(__NEW_LINE_b10ae6779644c78a__ echo \"📋 SUMMARY OF VARIABLES:\")",
+      "Bash(__NEW_LINE_b10ae6779644c78a__ echo \"🔴 POTENTIAL DUPLICATES/CONFLICTS:\")",
+      "Bash(__NEW_LINE_b10ae6779644c78a__ echo \"🟡 POTENTIAL OBSOLETE VARIABLES:\")",
+      "Bash(__NEW_LINE_b10ae6779644c78a__ echo \"🟢 PROPERLY CONFIGURED:\")"
     ],
     "deny": [],
     "ask": []
