@@ -186,18 +186,26 @@ async function handleMediaUpload(req, res) {
   console.log(`[Upload] Starting upload for quotation: ${quotationId}`);
   console.log(`[Upload] Parent folder ID: ${parentFolderId}`);
 
-  // Check if this is a Shared Drive or a regular folder
-  let isActualSharedDrive = false;
+  // Check if parent folder is inside a Shared Drive
+  let driveIdParam = null;
   try {
-    await drive.drives.get({ driveId: sharedDriveId });
-    isActualSharedDrive = true;
-    console.log(`[Upload] Confirmed: Using Shared Drive`);
-  } catch {
-    console.log(`[Upload] Using regular folder (not a Shared Drive)`);
-  }
+    const folderResponse = await drive.files.get({
+      fileId: parentFolderId,
+      fields: 'driveId, parents',
+      supportsAllDrives: true,
+    });
 
-  // Only pass sharedDriveId if it's actually a Shared Drive
-  const driveIdParam = isActualSharedDrive ? sharedDriveId : null;
+    driveIdParam = folderResponse.data.driveId || null;
+
+    if (driveIdParam) {
+      console.log(`[Upload] Detected Shared Drive: ${driveIdParam}`);
+    } else {
+      console.log(`[Upload] Using regular folder (My Drive)`);
+    }
+  } catch (driveCheckError) {
+    console.error(`[Upload] Could not determine Drive type:`, driveCheckError.message);
+    // Continue with null driveIdParam - will work for regular folders
+  }
 
   let cotizacionesFolderId, quotationFolderId;
   try {
@@ -218,16 +226,30 @@ async function handleMediaUpload(req, res) {
 
   const uploadedFiles = [];
   const errors = [];
+
   for (let i = 0; i < fileList.length; i++) {
     const file = fileList[i];
+    const isVideo = VIDEO_MIME_TYPES.includes(file.mimetype);
+    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+
+    console.log(`[Upload] File ${i + 1}/${fileList.length}: "${file.originalFilename}" (${fileSizeMB}MB, ${isVideo ? 'VIDEO' : 'IMAGE'})`);
+
     try {
       const result = await uploadFileToDrive(drive, quotationFolderId, file, i, driveIdParam);
+      console.log(`[Upload] ✓ Upload successful: ${result.fileName}`);
       uploadedFiles.push(result);
     } catch (uploadError) {
-      console.error(`Error uploading file ${i}:`, uploadError.message);
-      console.error('Full error:', JSON.stringify(uploadError, null, 2));
-      errors.push({ file: file.originalFilename || file.newFilename, error: uploadError.message });
+      console.error(`[Upload] ✗ Upload failed for "${file.originalFilename}":`, uploadError.message);
+      if (uploadError.response?.data) {
+        console.error('[Upload] API error details:', JSON.stringify(uploadError.response.data, null, 2));
+      }
+      errors.push({
+        file: file.originalFilename || file.newFilename,
+        error: uploadError.message,
+        size: fileSizeMB
+      });
     } finally {
+      // Clean up temp file
       if (file.filepath && fs.existsSync(file.filepath)) {
         fs.unlinkSync(file.filepath);
       }

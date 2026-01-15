@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-15T06:32:04.809Z
+ * Generated at: 2026-01-15T06:45:14.207Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-15T06:32:04.809Z",
+  "generatedAt": "2026-01-15T06:45:14.207Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,18 +56,18 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "3b4b647",
-    "lastCommitDate": "2026-01-15 01:32:01 -0500"
+    "lastCommitHash": "c29d639",
+    "lastCommitDate": "2026-01-15 01:45:10 -0500"
   },
   "stats": {
-    "totalCommits": 245,
-    "totalAdditions": 91183,
-    "totalDeletions": 55398,
-    "totalFilesChanged": 1507,
-    "netLines": 35785
+    "totalCommits": 246,
+    "totalAdditions": 91223,
+    "totalDeletions": 55422,
+    "totalFilesChanged": 1509,
+    "netLines": 35801
   },
   "categoryStats": {
-    "bugfix": 65,
+    "bugfix": 66,
     "other": 82,
     "ux": 43,
     "performance": 14,
@@ -76,7 +76,7 @@ export const changelogData: ChangelogData = {
     "auth": 14
   },
   "typeStats": {
-    "fix": 105,
+    "fix": 106,
     "feat": 100,
     "chore": 13,
     "refactor": 18,
@@ -86,12 +86,12 @@ export const changelogData: ChangelogData = {
   },
   "mostChangedFiles": [
     {
-      "file": "index.html",
+      "file": "src/data/changelog-data.ts",
       "count": 45
     },
     {
-      "file": "src/data/changelog-data.ts",
-      "count": 44
+      "file": "index.html",
+      "count": 45
     },
     {
       "file": "public/version.json",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 237
+      "commits": 238
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "c29d639",
+      "message": "Add provider-quotations to vercel.json with 60s maxDuration",
+      "fullMessage": "fix: Add provider-quotations to vercel.json with 60s maxDuration",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-15",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 40,
+      "deletions": 24,
+      "filesChanged": 2
+    },
+    {
       "hash": "3b4b647",
       "message": "Handle regular Drive folders vs Shared Drives for uploads",
       "fullMessage": "fix: Handle regular Drive folders vs Shared Drives for uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "13 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve Drive check to handle both Shared Drives and regular folders",
       "fullMessage": "fix: Improve Drive check to handle both Shared Drives and regular folders",
       "author": "Kvn3Toj",
-      "relativeTime": "3 minutes ago",
+      "relativeTime": "17 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Add diagnostic endpoint for Drive configuration check",
       "fullMessage": "feat: Add diagnostic endpoint for Drive configuration check",
       "author": "Kvn3Toj",
-      "relativeTime": "5 minutes ago",
+      "relativeTime": "18 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Add better error logging for Drive folder creation",
       "fullMessage": "fix: Add better error logging for Drive folder creation",
       "author": "Kvn3Toj",
-      "relativeTime": "12 minutes ago",
+      "relativeTime": "25 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -194,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Position snackbar above bottom tab bar in CotizacionGenerator",
       "fullMessage": "fix: Position snackbar above bottom tab bar in CotizacionGenerator",
       "author": "Kvn3Toj",
-      "relativeTime": "17 minutes ago",
+      "relativeTime": "30 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -207,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "QR code links to Treasure Browser with quoted products filtered",
       "fullMessage": "feat: QR code links to Treasure Browser with quoted products filtered",
       "author": "Kvn3Toj",
-      "relativeTime": "23 minutes ago",
+      "relativeTime": "36 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -220,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Add video upload support for manual product entries",
       "fullMessage": "feat: Add video upload support for manual product entries",
       "author": "Kvn3Toj",
-      "relativeTime": "30 minutes ago",
+      "relativeTime": "43 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -233,7 +246,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve Shared Drive handling for image uploads",
       "fullMessage": "fix: Improve Shared Drive handling for image uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "41 minutes ago",
+      "relativeTime": "54 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -246,7 +259,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image upload for manual product entries in quotation generator",
       "fullMessage": "feat: Add image upload for manual product entries in quotation generator",
       "author": "Kvn3Toj",
-      "relativeTime": "46 minutes ago",
+      "relativeTime": "59 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -259,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product images and links to quotation PDF export",
       "fullMessage": "feat: Add product images and links to quotation PDF export",
       "author": "Kvn3Toj",
-      "relativeTime": "82 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -298,7 +311,7 @@ export const changelogData: ChangelogData = {
       "message": "Prevent wrong images showing in grid cards during progressive loading",
       "fullMessage": "fix: Prevent wrong images showing in grid cards during progressive loading",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -415,7 +428,7 @@ export const changelogData: ChangelogData = {
       "message": "Show regular price in grid cards for all user roles",
       "fullMessage": "fix: Show regular price in grid cards for all user roles",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -467,7 +480,7 @@ export const changelogData: ChangelogData = {
       "message": "Additional Spanish accent mark corrections across UI",
       "fullMessage": "fix: Additional Spanish accent mark corrections across UI",
       "author": "Kvn3Toj",
-      "relativeTime": "12 hours ago",
+      "relativeTime": "13 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "ux",
@@ -480,7 +493,7 @@ export const changelogData: ChangelogData = {
       "message": "Update version and add quotation coherence documentation",
       "fullMessage": "chore: Update version and add quotation coherence documentation",
       "author": "Kvn3Toj",
-      "relativeTime": "12 hours ago",
+      "relativeTime": "13 hours ago",
       "date": "2026-01-14",
       "type": "chore",
       "category": "other",
@@ -545,7 +558,7 @@ export const changelogData: ChangelogData = {
       "message": "Update quotation forms with inventory color/quality options",
       "fullMessage": "fix: Update quotation forms with inventory color/quality options",
       "author": "Kvn3Toj",
-      "relativeTime": "13 hours ago",
+      "relativeTime": "14 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -584,7 +597,7 @@ export const changelogData: ChangelogData = {
       "message": "Allow product names to wrap to two lines in grid view",
       "fullMessage": "fix: Allow product names to wrap to two lines in grid view",
       "author": "Kvn3Toj",
-      "relativeTime": "14 hours ago",
+      "relativeTime": "15 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -597,7 +610,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove AnimatePresence transition to eliminate gallery blink",
       "fullMessage": "fix: Remove AnimatePresence transition to eliminate gallery blink",
       "author": "Kvn3Toj",
-      "relativeTime": "14 hours ago",
+      "relativeTime": "15 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "cleanup",
@@ -2989,7 +3002,7 @@ export const changelogData: ChangelogData = {
       "message": "Simplify Vercel rewrites for SPA routing",
       "fullMessage": "fix: Simplify Vercel rewrites for SPA routing",
       "author": "kvn3toj",
-      "relativeTime": "2 weeks ago",
+      "relativeTime": "3 weeks ago",
       "date": "2025-12-28",
       "type": "fix",
       "category": "bugfix",
