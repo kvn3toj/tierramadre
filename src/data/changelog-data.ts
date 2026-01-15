@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-15T06:02:08.803Z
+ * Generated at: 2026-01-15T06:09:09.320Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-15T06:02:08.803Z",
+  "generatedAt": "2026-01-15T06:09:09.320Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,18 +56,18 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "696ca7a",
-    "lastCommitDate": "2026-01-15 01:02:05 -0500"
+    "lastCommitHash": "6ea0b10",
+    "lastCommitDate": "2026-01-15 01:09:06 -0500"
   },
   "stats": {
-    "totalCommits": 239,
-    "totalAdditions": 90766,
-    "totalDeletions": 55180,
-    "totalFilesChanged": 1491,
-    "netLines": 35586
+    "totalCommits": 240,
+    "totalAdditions": 90856,
+    "totalDeletions": 55232,
+    "totalFilesChanged": 1496,
+    "netLines": 35624
   },
   "categoryStats": {
-    "other": 80,
+    "other": 81,
     "bugfix": 61,
     "ux": 43,
     "performance": 14,
@@ -76,7 +76,7 @@ export const changelogData: ChangelogData = {
     "auth": 14
   },
   "typeStats": {
-    "feat": 98,
+    "feat": 99,
     "fix": 101,
     "chore": 13,
     "refactor": 18,
@@ -91,7 +91,7 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 38
+      "count": 39
     },
     {
       "file": "public/version.json",
@@ -110,11 +110,11 @@ export const changelogData: ChangelogData = {
       "count": 19
     },
     {
-      "file": "src/components/media/MediaGallery.tsx",
-      "count": 15
+      "file": "src/components/TreasureBrowser.tsx",
+      "count": 16
     },
     {
-      "file": "src/components/TreasureBrowser.tsx",
+      "file": "src/components/media/MediaGallery.tsx",
       "count": 15
     },
     {
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 231
+      "commits": 232
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "6ea0b10",
+      "message": "QR code links to Treasure Browser with quoted products filtered",
+      "fullMessage": "feat: QR code links to Treasure Browser with quoted products filtered",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-15",
+      "type": "feat",
+      "category": "other",
+      "additions": 90,
+      "deletions": 52,
+      "filesChanged": 5
+    },
+    {
       "hash": "696ca7a",
       "message": "Add video upload support for manual product entries",
       "fullMessage": "feat: Add video upload support for manual product entries",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "7 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve Shared Drive handling for image uploads",
       "fullMessage": "fix: Improve Shared Drive handling for image uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "11 minutes ago",
+      "relativeTime": "18 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image upload for manual product entries in quotation generator",
       "fullMessage": "feat: Add image upload for manual product entries in quotation generator",
       "author": "Kvn3Toj",
-      "relativeTime": "16 minutes ago",
+      "relativeTime": "23 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product images and links to quotation PDF export",
       "fullMessage": "feat: Add product images and links to quotation PDF export",
       "author": "Kvn3Toj",
-      "relativeTime": "52 minutes ago",
+      "relativeTime": "60 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -194,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Use requestBody for Shared Drive file uploads",
       "fullMessage": "fix: Use requestBody for Shared Drive file uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "78 minutes ago",
+      "relativeTime": "85 minutes ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -207,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Use full Drive scope for Shared Drive uploads",
       "fullMessage": "fix: Use full Drive scope for Shared Drive uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "81 minutes ago",
+      "relativeTime": "88 minutes ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -246,7 +259,7 @@ export const changelogData: ChangelogData = {
       "message": "Provider portal improvements and staff route enhancements",
       "fullMessage": "feat: Provider portal improvements and staff route enhancements",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -259,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Prevent video carousel blinking with loading state and iOS fix",
       "fullMessage": "fix: Prevent video carousel blinking with loading state and iOS fix",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "ux",
@@ -272,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Add responsive image sizing for faster grid loading",
       "fullMessage": "feat: Add responsive image sizing for faster grid loading",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -363,7 +376,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove WhatsApp floating action button from home page",
       "fullMessage": "fix: Remove WhatsApp floating action button from home page",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "cleanup",
@@ -454,7 +467,7 @@ export const changelogData: ChangelogData = {
       "message": "Correct role display and enable view counts in grid cards",
       "fullMessage": "fix: Correct role display and enable view counts in grid cards",
       "author": "Kvn3Toj",
-      "relativeTime": "12 hours ago",
+      "relativeTime": "13 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",

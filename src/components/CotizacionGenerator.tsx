@@ -590,12 +590,16 @@ export default function CotizacionGenerator() {
         </Box>
       </Box>
 
-      {/* Snackbar */}
+      {/* Snackbar - positioned above bottom tab bar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        sx={{
+          zIndex: 1400, // Above IOSTabBar (1000)
+          mb: 'calc(env(safe-area-inset-bottom, 0px) + 72px)', // Above tab bar
+        }}
       >
         <Alert
           onClose={handleCloseSnackbar}
