@@ -61,7 +61,7 @@ export function getDriveClient(readonly = true) {
     scopes: [
       readonly
         ? 'https://www.googleapis.com/auth/drive.readonly'
-        : 'https://www.googleapis.com/auth/drive.file'
+        : 'https://www.googleapis.com/auth/drive'  // Full drive scope needed for Shared Drive uploads
     ],
   });
 

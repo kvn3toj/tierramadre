@@ -135,13 +135,16 @@ async function handleMediaUpload(req, res) {
   const quotationFolderId = await getOrCreateFolder(drive, cotizacionesFolderId, quotationId);
 
   const uploadedFiles = [];
+  const errors = [];
   for (let i = 0; i < fileList.length; i++) {
     const file = fileList[i];
     try {
       const result = await uploadFileToDrive(drive, quotationFolderId, file, i);
       uploadedFiles.push(result);
     } catch (uploadError) {
-      console.error(`Error uploading file ${i}:`, uploadError);
+      console.error(`Error uploading file ${i}:`, uploadError.message);
+      console.error('Full error:', JSON.stringify(uploadError, null, 2));
+      errors.push({ file: file.originalFilename || file.newFilename, error: uploadError.message });
     } finally {
       if (file.filepath && fs.existsSync(file.filepath)) {
         fs.unlinkSync(file.filepath);
@@ -150,7 +153,10 @@ async function handleMediaUpload(req, res) {
   }
 
   if (uploadedFiles.length === 0) {
-    return sendError(res, 500, 'No files were uploaded successfully');
+    const errorMsg = errors.length > 0
+      ? `Upload failed: ${errors.map(e => e.error).join(', ')}`
+      : 'No files were uploaded successfully';
+    return sendError(res, 500, errorMsg);
   }
 
   return sendSuccess(res, {
