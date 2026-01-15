@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-15T06:26:52.952Z
+ * Generated at: 2026-01-15T06:28:39.907Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-15T06:26:52.952Z",
+  "generatedAt": "2026-01-15T06:28:39.907Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,19 +56,19 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "23e99ad",
-    "lastCommitDate": "2026-01-15 01:26:49 -0500"
+    "lastCommitHash": "a807fea",
+    "lastCommitDate": "2026-01-15 01:28:36 -0500"
   },
   "stats": {
-    "totalCommits": 243,
-    "totalAdditions": 91063,
-    "totalDeletions": 55337,
-    "totalFilesChanged": 1503,
-    "netLines": 35726
+    "totalCommits": 244,
+    "totalAdditions": 91131,
+    "totalDeletions": 55372,
+    "totalFilesChanged": 1505,
+    "netLines": 35759
   },
   "categoryStats": {
+    "bugfix": 64,
     "other": 82,
-    "bugfix": 63,
     "ux": 43,
     "performance": 14,
     "cleanup": 16,
@@ -76,8 +76,8 @@ export const changelogData: ChangelogData = {
     "auth": 14
   },
   "typeStats": {
+    "fix": 104,
     "feat": 100,
-    "fix": 103,
     "chore": 13,
     "refactor": 18,
     "other": 6,
@@ -91,7 +91,7 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 42
+      "count": 43
     },
     {
       "file": "public/version.json",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 235
+      "commits": 236
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "a807fea",
+      "message": "Improve Drive check to handle both Shared Drives and regular folders",
+      "fullMessage": "fix: Improve Drive check to handle both Shared Drives and regular folders",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-15",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 68,
+      "deletions": 35,
+      "filesChanged": 2
+    },
+    {
       "hash": "23e99ad",
       "message": "Add diagnostic endpoint for Drive configuration check",
       "fullMessage": "feat: Add diagnostic endpoint for Drive configuration check",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "2 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Add better error logging for Drive folder creation",
       "fullMessage": "fix: Add better error logging for Drive folder creation",
       "author": "Kvn3Toj",
-      "relativeTime": "7 minutes ago",
+      "relativeTime": "9 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Position snackbar above bottom tab bar in CotizacionGenerator",
       "fullMessage": "fix: Position snackbar above bottom tab bar in CotizacionGenerator",
       "author": "Kvn3Toj",
-      "relativeTime": "11 minutes ago",
+      "relativeTime": "13 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "QR code links to Treasure Browser with quoted products filtered",
       "fullMessage": "feat: QR code links to Treasure Browser with quoted products filtered",
       "author": "Kvn3Toj",
-      "relativeTime": "18 minutes ago",
+      "relativeTime": "20 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -194,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Add video upload support for manual product entries",
       "fullMessage": "feat: Add video upload support for manual product entries",
       "author": "Kvn3Toj",
-      "relativeTime": "25 minutes ago",
+      "relativeTime": "27 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -207,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve Shared Drive handling for image uploads",
       "fullMessage": "fix: Improve Shared Drive handling for image uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "36 minutes ago",
+      "relativeTime": "38 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -220,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image upload for manual product entries in quotation generator",
       "fullMessage": "feat: Add image upload for manual product entries in quotation generator",
       "author": "Kvn3Toj",
-      "relativeTime": "41 minutes ago",
+      "relativeTime": "43 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -233,7 +246,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product images and links to quotation PDF export",
       "fullMessage": "feat: Add product images and links to quotation PDF export",
       "author": "Kvn3Toj",
-      "relativeTime": "77 minutes ago",
+      "relativeTime": "79 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -623,7 +636,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image preloading to eliminate gallery blink",
       "fullMessage": "fix: Add image preloading to eliminate gallery blink",
       "author": "Kvn3Toj",
-      "relativeTime": "15 hours ago",
+      "relativeTime": "16 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",

@@ -184,16 +184,29 @@ async function handleMediaUpload(req, res) {
   const parentFolderId = sharedDriveId;
 
   console.log(`[Upload] Starting upload for quotation: ${quotationId}`);
-  console.log(`[Upload] Shared Drive ID: ${sharedDriveId}`);
+  console.log(`[Upload] Parent folder ID: ${parentFolderId}`);
+
+  // Check if this is a Shared Drive or a regular folder
+  let isActualSharedDrive = false;
+  try {
+    await drive.drives.get({ driveId: sharedDriveId });
+    isActualSharedDrive = true;
+    console.log(`[Upload] Confirmed: Using Shared Drive`);
+  } catch {
+    console.log(`[Upload] Using regular folder (not a Shared Drive)`);
+  }
+
+  // Only pass sharedDriveId if it's actually a Shared Drive
+  const driveIdParam = isActualSharedDrive ? sharedDriveId : null;
 
   let cotizacionesFolderId, quotationFolderId;
   try {
     console.log(`[Upload] Looking for/creating cotizaciones folder in: ${parentFolderId}`);
-    cotizacionesFolderId = await getOrCreateFolder(drive, parentFolderId, DRIVE_FOLDERS.COTIZACIONES, sharedDriveId);
+    cotizacionesFolderId = await getOrCreateFolder(drive, parentFolderId, DRIVE_FOLDERS.COTIZACIONES, driveIdParam);
     console.log(`[Upload] Cotizaciones folder ID: ${cotizacionesFolderId}`);
 
     console.log(`[Upload] Looking for/creating quotation folder: ${quotationId}`);
-    quotationFolderId = await getOrCreateFolder(drive, cotizacionesFolderId, quotationId, sharedDriveId);
+    quotationFolderId = await getOrCreateFolder(drive, cotizacionesFolderId, quotationId, driveIdParam);
     console.log(`[Upload] Quotation folder ID: ${quotationFolderId}`);
   } catch (folderError) {
     console.error('[Upload] Folder creation error:', folderError.message);
@@ -208,7 +221,7 @@ async function handleMediaUpload(req, res) {
   for (let i = 0; i < fileList.length; i++) {
     const file = fileList[i];
     try {
-      const result = await uploadFileToDrive(drive, quotationFolderId, file, i, sharedDriveId);
+      const result = await uploadFileToDrive(drive, quotationFolderId, file, i, driveIdParam);
       uploadedFiles.push(result);
     } catch (uploadError) {
       console.error(`Error uploading file ${i}:`, uploadError.message);
