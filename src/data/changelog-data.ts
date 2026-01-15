@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-15T19:22:18.790Z
+ * Generated at: 2026-01-15T19:25:24.635Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-15T19:22:18.790Z",
+  "generatedAt": "2026-01-15T19:25:24.635Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,19 +56,19 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "3acd7ca",
-    "lastCommitDate": "2026-01-15 14:22:13 -0500"
+    "lastCommitHash": "2e1b19b",
+    "lastCommitDate": "2026-01-15 14:25:21 -0500"
   },
   "stats": {
-    "totalCommits": 256,
-    "totalAdditions": 95016,
-    "totalDeletions": 56837,
-    "totalFilesChanged": 1559,
-    "netLines": 38179
+    "totalCommits": 257,
+    "totalAdditions": 95076,
+    "totalDeletions": 56884,
+    "totalFilesChanged": 1560,
+    "netLines": 38192
   },
   "categoryStats": {
+    "other": 85,
     "auth": 15,
-    "other": 84,
     "bugfix": 73,
     "ux": 43,
     "performance": 14,
@@ -76,10 +76,10 @@ export const changelogData: ChangelogData = {
     "analytics": 11
   },
   "typeStats": {
+    "chore": 15,
     "fix": 111,
     "feat": 101,
     "other": 9,
-    "chore": 14,
     "refactor": 18,
     "docs": 2,
     "style": 1
@@ -87,7 +87,7 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 50
+      "count": 51
     },
     {
       "file": "index.html",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 248
+      "commits": 249
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "2e1b19b",
+      "message": "Update changelog data",
+      "fullMessage": "chore: Update changelog data",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-15",
+      "type": "chore",
+      "category": "other",
+      "additions": 60,
+      "deletions": 47,
+      "filesChanged": 1
+    },
+    {
       "hash": "3acd7ca",
       "message": "Use OAuth instead of Service Account for cotización uploads",
       "fullMessage": "fix: Use OAuth instead of Service Account for cotización uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "3 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Split merged APIs and add Cloudinary processing for uploads",
       "fullMessage": "feat: Split merged APIs and add Cloudinary processing for uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "26 minutes ago",
+      "relativeTime": "29 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
