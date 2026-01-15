@@ -23,12 +23,15 @@ const UNSUPPORTED_BROWSER_FORMATS = [
   'image/avif', // Some browsers don't support AVIF yet
 ];
 import {
-  getDriveClient,
-  isGoogleConfigured,
   initApi,
   sendError,
   CACHE,
 } from './_lib/index.js';
+
+import {
+  isOAuthConfigured,
+  getOAuthDriveClient,
+} from './_lib/oauth-drive-client.js';
 
 /**
  * Supported image sizes for responsive loading
@@ -67,8 +70,8 @@ function generateETag(fileId, size, mimeType) {
 export default async function handler(req, res) {
   if (initApi(req, res, { methods: ['GET', 'HEAD', 'OPTIONS'] })) return;
 
-  if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google Service Account not configured');
+  if (!isOAuthConfigured()) {
+    return sendError(res, 500, 'Google OAuth not configured');
   }
 
   try {
@@ -81,7 +84,7 @@ export default async function handler(req, res) {
     // Validate size parameter for responsive images
     const targetWidth = IMAGE_SIZES[sizeParam] ?? IMAGE_SIZES.original;
 
-    const drive = getDriveClient();
+    const drive = await getOAuthDriveClient();
 
     // Get file metadata first (needed for all request types)
     const metadataResponse = await drive.files.get({

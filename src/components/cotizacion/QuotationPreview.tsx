@@ -20,7 +20,6 @@ import {
   CustomCost,
   BusinessSettings,
   formatCotizacionCurrency,
-  generateProductSlug,
   getPesoDisplay,
 } from '../../hooks/useCotizacion';
 
@@ -505,7 +504,7 @@ const ProductsSection: React.FC<{ products: CotizacionProduct[] }> = ({ products
         overflow: 'hidden',
       }}>
         {products.map((product, index) => {
-          const productUrl = `https://www.tierramadre.co/products/${generateProductSlug(product.name)}`;
+          const productUrl = `https://tierra-madre-studio.vercel.app/tesoro?items=${product.itemNumber}&status=all`;
           return (
             <Box
               key={product.id}
@@ -562,7 +561,7 @@ const ProductsSection: React.FC<{ products: CotizacionProduct[] }> = ({ products
                       maxWidth: '180px',
                     }}
                   >
-                    tierramadre.co/products/{generateProductSlug(product.name)}
+                    tierra-madre-studio.vercel.app/tesoro?items={product.itemNumber}
                   </Typography>
                 </Box>
               </Box>

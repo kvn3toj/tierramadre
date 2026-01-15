@@ -179,8 +179,10 @@ async function listProductRequests(sheets, status, email) {
   }));
 
   // Filter by email if provided (for "my requests")
+  // Use case-insensitive comparison since email casing can vary
   if (email) {
-    requests = requests.filter(r => r.requesterEmail === email);
+    const emailLower = email.toLowerCase();
+    requests = requests.filter(r => r.requesterEmail.toLowerCase() === emailLower);
   }
 
   // Filter by status if provided
