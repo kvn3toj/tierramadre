@@ -504,7 +504,15 @@ const ProductsSection: React.FC<{ products: CotizacionProduct[] }> = ({ products
         overflow: 'hidden',
       }}>
         {products.map((product, index) => {
-          const productUrl = `https://tierra-madre-studio.vercel.app/tesoro?items=${product.itemNumber}&status=all`;
+          // Generate clean product slug for display URL
+          const productSlug = product.name
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-');
+
           return (
             <Box
               key={product.id}
@@ -542,26 +550,20 @@ const ProductsSection: React.FC<{ products: CotizacionProduct[] }> = ({ products
                 }}>
                   Ref. #{product.itemNumber} • {getPesoDisplay(product)} • {product.color}
                 </Typography>
-                {/* Product Link */}
+                {/* Product Link - shown as text since PDF can't have clickable links */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
                   <ExternalLink size={9} color={brandColors.emerald} />
                   <Typography
-                    component="a"
-                    href={productUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     sx={{
                       fontSize: '0.45rem',
                       color: brandColors.emerald,
-                      textDecoration: 'none',
-                      '&:hover': { textDecoration: 'underline' },
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
                       maxWidth: '180px',
                     }}
                   >
-                    tierra-madre-studio.vercel.app/tesoro?items={product.itemNumber}
+                    tierramadre.co/products/{productSlug}
                   </Typography>
                 </Box>
               </Box>
@@ -913,13 +915,49 @@ const FooterSection: React.FC<{
 
 /**
  * QRCodeBox - iOS-style QR code container
- * Links to Treasure Browser with all quoted products pre-filtered
+ * - For inventory products: Links to Treasure Browser with filtered items
+ * - For manual products with media: Links directly to the uploaded file in Drive
  */
 const QRCodeBox: React.FC<{ products: CotizacionProduct[] }> = ({ products }) => {
-  // Generate URL with item numbers for filtering in Treasure Browser
-  const qrUrl = products.length > 0
-    ? `https://tierra-madre-studio.vercel.app/tesoro?items=${products.map(p => p.itemNumber).join(',')}&status=all`
-    : 'https://tierra-madre-studio.vercel.app/tesoro';
+  // Determine QR URL based on product types
+  const getQrUrl = () => {
+    if (products.length === 0) {
+      return 'https://tierra-madre-studio.vercel.app/tesoro';
+    }
+
+    // Check if we have manual products with media
+    const manualProducts = products.filter(p => p.isManual);
+    const inventoryProducts = products.filter(p => !p.isManual);
+
+    // If only manual products with video/image, link to the first media file
+    if (manualProducts.length > 0 && inventoryProducts.length === 0) {
+      const productWithMedia = manualProducts.find(p => p.videoUrl || p.imagen);
+      if (productWithMedia) {
+        // Prefer video URL, fallback to image
+        const mediaUrl = productWithMedia.videoUrl || productWithMedia.imagen;
+        // If it's a Drive proxy URL, convert to direct Drive view
+        if (mediaUrl?.includes('/api/serve-drive-image?fileId=')) {
+          const fileId = mediaUrl.split('fileId=')[1]?.split('&')[0];
+          if (fileId) {
+            return `https://drive.google.com/file/d/${fileId}/view`;
+          }
+        }
+        // If it's already a Drive URL, use it
+        if (mediaUrl?.includes('drive.google.com')) {
+          return mediaUrl;
+        }
+        // For other URLs (like Cloudinary), use directly
+        if (mediaUrl) {
+          return mediaUrl;
+        }
+      }
+    }
+
+    // Default: link to Treasure Browser with all item numbers
+    return `https://tierra-madre-studio.vercel.app/tesoro?items=${products.map(p => p.itemNumber).join(',')}&status=all`;
+  };
+
+  const qrUrl = getQrUrl();
 
   return (
     <Box

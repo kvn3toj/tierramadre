@@ -18,8 +18,10 @@ export interface CotizacionProduct {
   precioCOP: number;
   imagen?: string;
   gifUrl?: string; // Animated GIF for PDF export (from video)
+  videoUrl?: string; // Direct video URL for QR code linking
   isJewelry: boolean;
   metalType?: string;
+  isManual?: boolean; // Flag to identify manually added products
 }
 
 // Business settings interface
@@ -316,6 +318,8 @@ export function useCotizacion(): UseCotizacionReturn {
       metalType: product.metalType,
       imagen: product.imagen,
       gifUrl: product.gifUrl, // For PDF export when product has video
+      videoUrl: product.videoUrl, // Direct video URL for QR linking
+      isManual: true, // Flag to identify manually added products
     };
 
     setProducts(prev => [...prev, newProduct]);

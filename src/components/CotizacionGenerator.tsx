@@ -74,7 +74,7 @@ import {
   CustomCost,
 } from '../hooks/useCotizacion';
 import { TreasureItem } from '../types';
-import { SAMPLE_AMBASSADORS } from '../data/ambassadors';
+import { useAsesores, Asesor } from '../hooks/useAsesores';
 import { CotizacionHeader, QuotationPreview, brandColors } from './cotizacion';
 import { createLogger } from '../utils/logger';
 import { useTracking } from '../contexts/TrackingContext';
@@ -112,6 +112,7 @@ export default function CotizacionGenerator() {
   const recentClients = useRecentClients();
   const cotizacionHistory = useCotizacionHistory();
   const { user: googleUser } = useGoogleAuth();
+  const { asesores, isLoading: isLoadingAsesores } = useAsesores();
 
   // Track cotización start time for funnel metrics
   const startTimeRef = useRef<number>(Date.now());
@@ -156,7 +157,6 @@ export default function CotizacionGenerator() {
     severity: 'success' | 'error';
   }>({ open: false, message: '', severity: 'success' });
 
-  const asesorOptions = SAMPLE_AMBASSADORS.map(amb => amb.displayName);
   const [selectedItem, setSelectedItem] = useState<TreasureItem | null>(null);
   const [productEntryMode, setProductEntryMode] = useState<'treasure' | 'manual'>('treasure');
   const [newCustomLabel, setNewCustomLabel] = useState('');
@@ -360,14 +360,21 @@ export default function CotizacionGenerator() {
     if (!quotationRef.current) return;
 
     try {
+      // Get the actual width of the content
+      const contentElement = quotationRef.current;
+      const contentWidth = contentElement.offsetWidth;
+      const contentHeight = contentElement.offsetHeight;
+
       // Capture at high quality with optimal scale for A4 dimensions
-      const canvas = await html2canvas(quotationRef.current, {
+      const canvas = await html2canvas(contentElement, {
         scale: 2.5, // Balanced quality without excessive file size
-        backgroundColor: brandColors.background,
+        backgroundColor: '#FFFFFF',
         useCORS: true,
         logging: false,
-        windowWidth: quotationRef.current.scrollWidth,
-        windowHeight: quotationRef.current.scrollHeight,
+        width: contentWidth,
+        height: contentHeight,
+        windowWidth: contentWidth,
+        windowHeight: contentHeight,
       });
 
       const imgData = canvas.toDataURL('image/png', 0.95); // High quality PNG
@@ -384,24 +391,26 @@ export default function CotizacionGenerator() {
 
       // Use smaller margins for better space utilization
       const margin = 8; // 8mm margins
-      const imgWidth = pageWidth - (margin * 2);
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const maxWidth = pageWidth - (margin * 2);
+      const maxHeight = pageHeight - (margin * 2);
 
-      // Center horizontally, align near top
-      const xOffset = margin;
-      const yOffset = margin;
+      // Calculate dimensions preserving aspect ratio
+      const aspectRatio = canvas.width / canvas.height;
+      let imgWidth = maxWidth;
+      let imgHeight = imgWidth / aspectRatio;
 
-      // Add image - if too tall, it will overflow to next page automatically
-      if (imgHeight > pageHeight - (margin * 2)) {
-        // Content is taller than one page - fit to full height
-        const scaledHeight = pageHeight - (margin * 2);
-        const scaledWidth = (canvas.width * scaledHeight) / canvas.height;
-        pdf.addImage(imgData, 'PNG', xOffset, yOffset, scaledWidth, scaledHeight);
-      } else {
-        // Content fits in one page - center vertically
-        const centeredY = (pageHeight - imgHeight) / 2;
-        pdf.addImage(imgData, 'PNG', xOffset, centeredY, imgWidth, imgHeight);
+      // If too tall, scale down to fit height
+      if (imgHeight > maxHeight) {
+        imgHeight = maxHeight;
+        imgWidth = imgHeight * aspectRatio;
       }
+
+      // Center both horizontally and vertically
+      const xOffset = (pageWidth - imgWidth) / 2;
+      const yOffset = (pageHeight - imgHeight) / 2;
+
+      // Add the image centered on the page
+      pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight);
 
       pdf.save(`Cotizacion_${quotationNumber}.pdf`);
 
@@ -560,7 +569,8 @@ export default function CotizacionGenerator() {
             setClientDocument={setClientDocument}
             asesorName={asesorName}
             setAsesorName={setAsesorName}
-            asesorOptions={asesorOptions}
+            asesores={asesores}
+            isLoadingAsesores={isLoadingAsesores}
             recentClients={recentClients.clients}
             onSelectClient={(client) => {
               setClientName(client.name);
@@ -760,16 +770,22 @@ interface ClientInfoSectionProps {
   clientEmail: string; setClientEmail: (v: string) => void;
   clientDocument: string; setClientDocument: (v: string) => void;
   asesorName: string; setAsesorName: (v: string) => void;
-  asesorOptions: string[];
+  asesores: Asesor[];
+  isLoadingAsesores?: boolean;
   recentClients?: RecentClient[];
   onSelectClient?: (client: RecentClient) => void;
 }
 
 const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
   clientName, setClientName, clientPhone, setClientPhone, clientEmail, setClientEmail,
-  clientDocument, setClientDocument, asesorName, setAsesorName, asesorOptions,
-  recentClients = [], onSelectClient,
-}) => (
+  clientDocument, setClientDocument, asesorName, setAsesorName, asesores,
+  isLoadingAsesores = false, recentClients = [], onSelectClient,
+}) => {
+  // Find the selected asesor to get their role for the label
+  const selectedAsesor = asesores.find(a => a.name === asesorName);
+  const asesorLabel = selectedAsesor?.role || 'Asesor';
+
+  return (
   <>
     <Typography variant="subtitle2" sx={{
       color: brandColors.textPrimary,
@@ -859,27 +875,58 @@ const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
       </Grid>
       <Grid item xs={12}>
         <Autocomplete
-          freeSolo size="small" options={asesorOptions} value={asesorName}
-          onChange={(_, value) => setAsesorName(value || '')}
+          freeSolo
+          size="small"
+          options={asesores}
+          getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
+          value={asesorName}
+          loading={isLoadingAsesores}
+          onChange={(_, value) => {
+            if (typeof value === 'string') {
+              setAsesorName(value);
+            } else if (value) {
+              setAsesorName(value.name);
+            } else {
+              setAsesorName('');
+            }
+          }}
           onInputChange={(_, value) => setAsesorName(value)}
+          isOptionEqualToValue={(option, value) => {
+            if (typeof value === 'string') return option.name === value;
+            return option.name === value.name;
+          }}
           renderOption={(props, option) => (
             <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Avatar sx={{ width: 32, height: 32, bgcolor: alpha(brandColors.emerald, 0.15) }}>
                 <User size={16} color={brandColors.emerald} />
               </Avatar>
-              <Typography variant="body2" fontWeight={500}>{option}</Typography>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="body2" fontWeight={500}>{option.name}</Typography>
+                {option.role && (
+                  <Typography variant="caption" sx={{ color: brandColors.textMuted }}>
+                    {option.role}
+                  </Typography>
+                )}
+              </Box>
             </Box>
           )}
           renderInput={(params) => (
-            <TextField {...params} label="Asesor" placeholder="Seleccionar o escribir nombre del asesor"
-              InputProps={{ ...params.InputProps, startAdornment: <InputAdornment position="start"><User size={16} color={brandColors.gray} /></InputAdornment> }}
+            <TextField
+              {...params}
+              label={asesorLabel}
+              placeholder={`Seleccionar o escribir nombre del ${asesorLabel.toLowerCase()}`}
+              InputProps={{
+                ...params.InputProps,
+                startAdornment: <InputAdornment position="start"><User size={16} color={brandColors.gray} /></InputAdornment>
+              }}
             />
           )}
         />
       </Grid>
     </Grid>
   </>
-);
+  );
+};
 
 interface ProductEntrySectionProps {
   productEntryMode: 'treasure' | 'manual';
