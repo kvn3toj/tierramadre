@@ -3,7 +3,7 @@
  * Lazy-loading image with Cloudinary optimization, LQIP blur-up, and responsive srcset.
  * Uses Intersection Observer for viewport-aware loading.
  */
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useId } from 'react';
 import { Box, Skeleton, CircularProgress } from '@mui/material';
 import { useInView } from 'react-intersection-observer';
 import { surfacesLight, surfacesDark } from '../design-system/tokens/colors';
@@ -61,6 +61,8 @@ export default function ProgressiveImage({
 }: ProgressiveImageProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  // Unique ID per component instance to prevent DOM node reuse across different cards
+  const instanceId = useId();
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
   const [lqipLoaded, setLqipLoaded] = useState(false);
@@ -294,7 +296,7 @@ export default function ProgressiveImage({
               ? `${optimizedSrc}${optimizedSrc.includes('?') ? '&' : '?'}retry=${retryCount}&t=${Date.now()}`
               : optimizedSrc
           }
-          key={`img-${imageKey}`}
+          key={`img-${instanceId}-${imageKey}`}
           srcSet={srcSet || undefined}
           sizes={sizes || undefined}
           alt={alt}
