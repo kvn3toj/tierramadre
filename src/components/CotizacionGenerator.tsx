@@ -57,6 +57,7 @@ import {
   X,
   Image as ImageIcon,
   Loader2,
+  Video,
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -157,9 +158,10 @@ export default function CotizacionGenerator() {
   const [newCustomLabel, setNewCustomLabel] = useState('');
   const [newCustomValue, setNewCustomValue] = useState<number>(0);
 
-  // Image upload state for manual product entry
+  // Media upload state for manual product entry
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isVideoPreview, setIsVideoPreview] = useState(false);
 
   // ==========================================================================
   // HANDLERS
@@ -197,15 +199,19 @@ export default function CotizacionGenerator() {
     setImagePreview(null);
   };
 
-  // Handle image upload for manual product entry
-  const handleManualProductImageUpload = async (file: File) => {
+  // Handle media upload for manual product entry (images and videos)
+  const handleManualProductMediaUpload = async (file: File) => {
     if (!file) return;
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
+    const isVideo = file.type.startsWith('video/');
+    const maxSize = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024; // 100MB for video, 10MB for images
+    const maxSizeLabel = isVideo ? '100MB' : '10MB';
+
+    // Validate file size
+    if (file.size > maxSize) {
       setSnackbar({
         open: true,
-        message: 'La imagen es muy grande. Maximo 10MB.',
+        message: `El archivo es muy grande. Maximo ${maxSizeLabel}.`,
         severity: 'error',
       });
       return;
@@ -214,6 +220,7 @@ export default function CotizacionGenerator() {
     // Show local preview immediately
     const localPreview = URL.createObjectURL(file);
     setImagePreview(localPreview);
+    setIsVideoPreview(isVideo);
     setIsUploadingImage(true);
 
     try {
@@ -229,27 +236,39 @@ export default function CotizacionGenerator() {
 
       const data = await response.json();
 
-      if (data.success && data.urls && data.urls.length > 0) {
-        // Update manual product with uploaded URL
-        setManualProduct(prev => ({ ...prev, imagen: data.urls[0] }));
+      if (data.success && data.files && data.files.length > 0) {
+        const uploadedFile = data.files[0];
+        // Update manual product with uploaded URL (use thumbnail for videos in product card)
+        const displayUrl = uploadedFile.isVideo
+          ? (uploadedFile.thumbnailUrl || uploadedFile.url)
+          : uploadedFile.url;
+
+        setManualProduct(prev => ({
+          ...prev,
+          imagen: displayUrl,
+          // Store video URL separately if it's a video
+          ...(uploadedFile.isVideo && { videoUrl: uploadedFile.videoUrl }),
+        }));
+
         setSnackbar({
           open: true,
-          message: 'Imagen subida exitosamente',
+          message: isVideo ? 'Video subido exitosamente' : 'Imagen subida exitosamente',
           severity: 'success',
         });
       } else {
-        throw new Error(data.error || 'Error al subir la imagen');
+        throw new Error(data.error || 'Error al subir el archivo');
       }
     } catch (error) {
-      log.error('Image upload error:', error);
+      log.error('Media upload error:', error);
       setSnackbar({
         open: true,
-        message: 'Error al subir la imagen. Intenta de nuevo.',
+        message: 'Error al subir el archivo. Intenta de nuevo.',
         severity: 'error',
       });
       // Revert preview on error
       setImagePreview(null);
-      setManualProduct(prev => ({ ...prev, imagen: undefined }));
+      setIsVideoPreview(false);
+      setManualProduct(prev => ({ ...prev, imagen: undefined, videoUrl: undefined }));
     } finally {
       setIsUploadingImage(false);
     }
@@ -498,7 +517,9 @@ export default function CotizacionGenerator() {
             setIsUploadingImage={setIsUploadingImage}
             imagePreview={imagePreview}
             setImagePreview={setImagePreview}
-            onImageUpload={handleManualProductImageUpload}
+            isVideoPreview={isVideoPreview}
+            setIsVideoPreview={setIsVideoPreview}
+            onImageUpload={handleManualProductMediaUpload}
           />
 
           {/* Product List */}
@@ -800,13 +821,15 @@ interface ProductEntrySectionProps {
   setIsUploadingImage: (v: boolean) => void;
   imagePreview: string | null;
   setImagePreview: (v: string | null) => void;
+  isVideoPreview: boolean;
+  setIsVideoPreview: (v: boolean) => void;
   onImageUpload: (file: File) => Promise<void>;
 }
 
 const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
   productEntryMode, setProductEntryMode, availableTreasure, selectedItem, setSelectedItem,
   handleAddProduct, manualProduct, setManualProduct, handleAddManualProduct,
-  isUploadingImage, imagePreview, setImagePreview, onImageUpload,
+  isUploadingImage, imagePreview, setImagePreview, isVideoPreview, setIsVideoPreview, onImageUpload,
 }) => (
   <Box sx={{ mb: 2 }}>
     <Typography variant="subtitle2" sx={{
@@ -923,7 +946,7 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
                 <input
                   id="manual-product-image"
                   type="file"
-                  accept="image/*,.gif"
+                  accept="image/*,video/*,.gif,.mp4,.mov,.webm"
                   hidden
                   disabled={isUploadingImage}
                   onChange={(e) => {
@@ -937,30 +960,44 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
                 {isUploadingImage ? (
                   <Loader2 size={24} color={brandColors.emerald} style={{ animation: 'spin 1s linear infinite' }} />
                 ) : imagePreview ? (
-                  <Box
-                    component="img"
-                    src={imagePreview}
-                    alt="Preview"
-                    sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
+                  isVideoPreview ? (
+                    <Box
+                      component="video"
+                      src={imagePreview}
+                      muted
+                      playsInline
+                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <Box
+                      component="img"
+                      src={imagePreview}
+                      alt="Preview"
+                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  )
                 ) : (
                   <Box sx={{ textAlign: 'center' }}>
                     <Upload size={20} color={brandColors.gray} />
                     <Typography sx={{ fontSize: '0.6rem', color: brandColors.gray, mt: 0.5 }}>
-                      Subir
+                      Foto/Video
                     </Typography>
                   </Box>
                 )}
               </Box>
 
-              {/* Image Info / Actions */}
+              {/* Media Info / Actions */}
               <Box sx={{ flex: 1 }}>
                 {imagePreview ? (
                   <Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                      <ImageIcon size={14} color={brandColors.emerald} />
+                      {isVideoPreview ? (
+                        <Video size={14} color={brandColors.emerald} />
+                      ) : (
+                        <ImageIcon size={14} color={brandColors.emerald} />
+                      )}
                       <Typography sx={{ fontSize: '0.75rem', color: brandColors.emerald, fontWeight: 600 }}>
-                        Imagen cargada
+                        {isVideoPreview ? 'Video cargado' : 'Imagen cargada'}
                       </Typography>
                     </Box>
                     <Button
@@ -968,7 +1005,8 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
                       startIcon={<X size={14} />}
                       onClick={() => {
                         setImagePreview(null);
-                        setManualProduct({ ...manualProduct, imagen: undefined });
+                        setIsVideoPreview(false);
+                        setManualProduct({ ...manualProduct, imagen: undefined, videoUrl: undefined });
                       }}
                       sx={{
                         fontSize: '0.7rem',

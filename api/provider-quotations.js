@@ -49,24 +49,48 @@ export const config = {
 
 // ============ MEDIA UPLOAD HELPERS ============
 
+// Supported media types
+const SUPPORTED_MIME_TYPES = {
+  // Images
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+  'image/heic': 'heic',
+  'image/heif': 'heif',
+  'image/avif': 'avif',
+  // Videos
+  'video/mp4': 'mp4',
+  'video/quicktime': 'mov',
+  'video/webm': 'webm',
+  'video/x-msvideo': 'avi',
+  'video/x-matroska': 'mkv',
+  'video/3gpp': '3gp',
+  'video/x-m4v': 'm4v',
+};
+
+const VIDEO_MIME_TYPES = [
+  'video/mp4',
+  'video/quicktime',
+  'video/webm',
+  'video/x-msvideo',
+  'video/x-matroska',
+  'video/3gpp',
+  'video/x-m4v',
+];
+
 async function uploadFileToDrive(drive, folderId, file, index, sharedDriveId = null) {
   const originalName = file.originalFilename || file.newFilename || 'upload';
-  const mimeToExt = {
-    'image/jpeg': 'jpg',
-    'image/png': 'png',
-    'image/webp': 'webp',
-    'image/gif': 'gif',
-    'video/mp4': 'mp4',
-    'video/quicktime': 'mov',
-    'video/webm': 'webm',
-  };
 
   const fileExtension = originalName.includes('.')
     ? originalName.split('.').pop()
-    : (mimeToExt[file.mimetype] || 'bin');
+    : (SUPPORTED_MIME_TYPES[file.mimetype] || 'bin');
 
-  const fileName = `media-${index + 1}-${Date.now()}.${fileExtension}`;
+  const isVideo = VIDEO_MIME_TYPES.includes(file.mimetype);
+  const prefix = isVideo ? 'video' : 'image';
+  const fileName = `${prefix}-${index + 1}-${Date.now()}.${fileExtension}`;
 
+  // Upload file to Drive - request thumbnailLink for videos
   const uploadedFile = await drive.files.create({
     requestBody: {
       name: fileName,
@@ -76,7 +100,7 @@ async function uploadFileToDrive(drive, folderId, file, index, sharedDriveId = n
       mimeType: file.mimetype,
       body: fs.createReadStream(file.filepath),
     },
-    fields: 'id, webViewLink, webContentLink',
+    fields: 'id, webViewLink, webContentLink, thumbnailLink',
     supportsAllDrives: true,
   });
 
@@ -90,11 +114,29 @@ async function uploadFileToDrive(drive, folderId, file, index, sharedDriveId = n
     });
   }
 
-  return {
-    id: uploadedFile.data.id,
-    url: `https://drive.google.com/uc?export=view&id=${uploadedFile.data.id}`,
+  const fileId = uploadedFile.data.id;
+
+  // Build response with appropriate URLs
+  const result = {
+    id: fileId,
     mimeType: file.mimetype,
+    isVideo,
+    fileName,
   };
+
+  if (isVideo) {
+    // For videos: provide preview URL and thumbnail
+    result.url = `https://drive.google.com/file/d/${fileId}/preview`;
+    result.videoUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+    // Use Drive's auto-generated thumbnail for video poster
+    result.thumbnailUrl = uploadedFile.data.thumbnailLink ||
+      `/api/serve-drive-image?fileId=${fileId}&thumbnail=true`;
+  } else {
+    // For images: provide direct view URL
+    result.url = `https://drive.google.com/uc?export=view&id=${fileId}`;
+  }
+
+  return result;
 }
 
 async function handleMediaUpload(req, res) {

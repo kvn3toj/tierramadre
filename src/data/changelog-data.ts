@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-15T05:45:44.382Z
+ * Generated at: 2026-01-15T05:50:46.960Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-15T05:45:44.382Z",
+  "generatedAt": "2026-01-15T05:50:46.960Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,19 +56,19 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "1c090f3",
-    "lastCommitDate": "2026-01-15 00:45:41 -0500"
+    "lastCommitHash": "a36f80d",
+    "lastCommitDate": "2026-01-15 00:50:43 -0500"
   },
   "stats": {
-    "totalCommits": 237,
-    "totalAdditions": 90459,
-    "totalDeletions": 55015,
-    "totalFilesChanged": 1481,
-    "netLines": 35444
+    "totalCommits": 238,
+    "totalAdditions": 90567,
+    "totalDeletions": 55084,
+    "totalFilesChanged": 1484,
+    "netLines": 35483
   },
   "categoryStats": {
+    "bugfix": 61,
     "other": 79,
-    "bugfix": 60,
     "ux": 43,
     "performance": 14,
     "cleanup": 16,
@@ -76,8 +76,8 @@ export const changelogData: ChangelogData = {
     "auth": 14
   },
   "typeStats": {
+    "fix": 101,
     "feat": 97,
-    "fix": 100,
     "chore": 13,
     "refactor": 18,
     "other": 6,
@@ -91,7 +91,7 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 36
+      "count": 37
     },
     {
       "file": "public/version.json",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 229
+      "commits": 230
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "a36f80d",
+      "message": "Improve Shared Drive handling for image uploads",
+      "fullMessage": "fix: Improve Shared Drive handling for image uploads",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-15",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 108,
+      "deletions": 69,
+      "filesChanged": 3
+    },
+    {
       "hash": "1c090f3",
       "message": "Add image upload for manual product entries in quotation generator",
       "fullMessage": "feat: Add image upload for manual product entries in quotation generator",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "5 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product images and links to quotation PDF export",
       "fullMessage": "feat: Add product images and links to quotation PDF export",
       "author": "Kvn3Toj",
-      "relativeTime": "36 minutes ago",
+      "relativeTime": "41 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Use requestBody for Shared Drive file uploads",
       "fullMessage": "fix: Use requestBody for Shared Drive file uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "61 minutes ago",
+      "relativeTime": "66 minutes ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Use full Drive scope for Shared Drive uploads",
       "fullMessage": "fix: Use full Drive scope for Shared Drive uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "65 minutes ago",
+      "relativeTime": "70 minutes ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -272,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve image loading performance for Chrome/Comet browsers",
       "fullMessage": "fix: Improve image loading performance for Chrome/Comet browsers",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "performance",

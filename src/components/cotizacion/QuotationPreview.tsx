@@ -837,20 +837,6 @@ const FooterSection: React.FC<{
 
     {/* Contact Info - Center */}
     <Box sx={{ textAlign: 'center', flex: 1 }}>
-      {/* Logo small */}
-      <img
-        src="/logo-horizontal-dark.png"
-        alt="Tierra Madre"
-        style={{
-          height: 24,
-          width: 'auto',
-          marginBottom: 8,
-          opacity: 0.8,
-        }}
-        onError={(e) => {
-          (e.target as HTMLImageElement).style.display = 'none';
-        }}
-      />
       <Typography sx={{ fontSize: '0.6rem', color: brandColors.textPrimary, fontWeight: 500 }}>
         {businessSettings.contactPhone}
       </Typography>
@@ -916,34 +902,57 @@ const QRCodeBox: React.FC<{ products: CotizacionProduct[] }> = ({ products }) =>
 );
 
 /**
- * AuthenticityBadge - iOS-style authenticity seal
+ * AuthenticityBadge - iOS-style authenticity seal with logo
  */
 const AuthenticityBadge: React.FC = () => (
   <Box
     sx={{
-      width: 56,
-      height: 56,
-      borderRadius: '50%',
-      bgcolor: quotationStyles.accentTint,
-      border: `2px solid ${brandColors.emerald}`,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center',
+      gap: 0.5,
       flexShrink: 0,
     }}
   >
-    <Shield size={18} color={brandColors.emerald} />
-    <Typography sx={{
-      fontSize: '0.4rem',
-      fontWeight: 600,
-      color: brandColors.emerald,
-      mt: 0.25,
-      textTransform: 'uppercase',
-      letterSpacing: '0.05em',
-    }}>
-      Auténtico
-    </Typography>
+    {/* Logo Symbol */}
+    <img
+      src="/logosymbol-dark.png"
+      alt="Tierra Madre"
+      style={{
+        height: 20,
+        width: 'auto',
+        opacity: 0.8,
+      }}
+      onError={(e) => {
+        (e.target as HTMLImageElement).style.display = 'none';
+      }}
+    />
+    {/* Authenticity Circle */}
+    <Box
+      sx={{
+        width: 56,
+        height: 56,
+        borderRadius: '50%',
+        bgcolor: quotationStyles.accentTint,
+        border: `2px solid ${brandColors.emerald}`,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Shield size={18} color={brandColors.emerald} />
+      <Typography sx={{
+        fontSize: '0.4rem',
+        fontWeight: 600,
+        color: brandColors.emerald,
+        mt: 0.25,
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+      }}>
+        Auténtico
+      </Typography>
+    </Box>
   </Box>
 );
 

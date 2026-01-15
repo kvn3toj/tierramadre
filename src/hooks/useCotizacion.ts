@@ -56,6 +56,7 @@ export interface ManualProductState {
   isJewelry: boolean;
   metalType: string;
   imagen?: string;
+  videoUrl?: string;
 }
 
 // Default investments
