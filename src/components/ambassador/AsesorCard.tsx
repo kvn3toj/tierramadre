@@ -47,14 +47,20 @@ export default function AsesorCard({
   const productsWithImages = getProductsWithImages(asesor, 4);
   const remainingCount = (asesor.productCount || 0) - productsWithImages.length;
 
+  const handleCardClick = () => {
+    onViewProducts?.(asesor);
+  };
+
   return (
     <Card
+      onClick={handleCardClick}
       sx={{
         bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
         borderRadius: 3,
         border: '1px solid',
         borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
         transition: 'all 0.2s ease',
+        cursor: 'pointer',
         '&:hover': {
           borderColor: brand.emerald[500],
           boxShadow: `0 4px 20px ${alpha(brand.emerald[500], 0.15)}`,
@@ -223,41 +229,31 @@ export default function AsesorCard({
 
         {/* Actions */}
         <Box sx={{ display: 'flex', gap: 1 }}>
-          {asesor.productCount && asesor.productCount > 0 ? (
-            <Button
-              variant="contained"
-              size="small"
-              endIcon={<ChevronRight size={16} />}
-              onClick={() => onViewProducts?.(asesor)}
-              sx={{
-                flex: 1,
-                bgcolor: brand.emerald[500],
-                '&:hover': { bgcolor: brand.emerald[600] },
-                textTransform: 'none',
-                fontWeight: 600,
-              }}
-            >
-              Ver Productos
-            </Button>
-          ) : (
-            <Button
-              variant="outlined"
-              size="small"
-              disabled
-              sx={{
-                flex: 1,
-                textTransform: 'none',
-              }}
-            >
-              Sin productos
-            </Button>
-          )}
+          <Button
+            variant="contained"
+            size="small"
+            endIcon={<ChevronRight size={16} />}
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewProducts?.(asesor);
+            }}
+            sx={{
+              flex: 1,
+              bgcolor: brand.emerald[500],
+              '&:hover': { bgcolor: brand.emerald[600] },
+              textTransform: 'none',
+              fontWeight: 600,
+            }}
+          >
+            {asesor.productCount && asesor.productCount > 0 ? 'Ver Productos' : 'Ver Perfil'}
+          </Button>
           {asesor.whatsapp ? (
             <Button
               variant="outlined"
               size="small"
               startIcon={<MessageCircle size={14} />}
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 window.open(formatWhatsAppLink(asesor.whatsapp!), '_blank');
                 onContact?.(asesor);
               }}
@@ -279,6 +275,7 @@ export default function AsesorCard({
               variant="outlined"
               size="small"
               disabled
+              onClick={(e) => e.stopPropagation()}
               sx={{
                 borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
                 color: 'text.secondary',
