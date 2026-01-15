@@ -244,6 +244,41 @@ export default async function handler(req, res) {
     return sendError(res, 500, 'Google Service Account not configured');
   }
 
+  // Diagnostic endpoint: GET /api/provider-quotations?action=check-drive
+  if (req.method === 'GET' && req.query.action === 'check-drive') {
+    try {
+      const sharedDriveId = getSharedDriveId();
+      const drive = getDriveClient(false);
+
+      // Check if we can access the Shared Drive
+      const driveInfo = await drive.drives.get({
+        driveId: sharedDriveId,
+        fields: 'id, name, capabilities',
+      });
+
+      // Check if cotizaciones folder exists
+      const cotizacionesSearch = await drive.files.list({
+        q: `name='${DRIVE_FOLDERS.COTIZACIONES}' and '${sharedDriveId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+        fields: 'files(id, name)',
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
+        driveId: sharedDriveId,
+        corpora: 'drive',
+      });
+
+      return sendSuccess(res, {
+        sharedDriveId,
+        driveName: driveInfo.data.name,
+        capabilities: driveInfo.data.capabilities,
+        cotizacionesFolder: cotizacionesSearch.data.files?.[0] || null,
+        folderNameExpected: DRIVE_FOLDERS.COTIZACIONES,
+      });
+    } catch (error) {
+      console.error('Drive check error:', error);
+      return sendError(res, 500, 'Drive check failed', error.message);
+    }
+  }
+
   // Handle media upload: POST /api/provider-quotations?action=upload
   if (req.method === 'POST' && req.query.action === 'upload') {
     try {

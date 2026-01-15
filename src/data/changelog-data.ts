@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-15T06:15:27.685Z
+ * Generated at: 2026-01-15T06:19:57.464Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-15T06:15:27.685Z",
+  "generatedAt": "2026-01-15T06:19:57.464Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,18 +56,18 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "9c3be01",
-    "lastCommitDate": "2026-01-15 01:15:24 -0500"
+    "lastCommitHash": "3e36c61",
+    "lastCommitDate": "2026-01-15 01:19:53 -0500"
   },
   "stats": {
-    "totalCommits": 241,
-    "totalAdditions": 90901,
-    "totalDeletions": 55260,
-    "totalFilesChanged": 1498,
-    "netLines": 35641
+    "totalCommits": 242,
+    "totalAdditions": 90992,
+    "totalDeletions": 55314,
+    "totalFilesChanged": 1501,
+    "netLines": 35678
   },
   "categoryStats": {
-    "bugfix": 62,
+    "bugfix": 63,
     "other": 81,
     "ux": 43,
     "performance": 14,
@@ -76,7 +76,7 @@ export const changelogData: ChangelogData = {
     "auth": 14
   },
   "typeStats": {
-    "fix": 102,
+    "fix": 103,
     "feat": 99,
     "chore": 13,
     "refactor": 18,
@@ -91,7 +91,7 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 40
+      "count": 41
     },
     {
       "file": "public/version.json",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 233
+      "commits": 234
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "3e36c61",
+      "message": "Add better error logging for Drive folder creation",
+      "fullMessage": "fix: Add better error logging for Drive folder creation",
+      "author": "Kvn3Toj",
+      "relativeTime": "1 second ago",
+      "date": "2026-01-15",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 91,
+      "deletions": 54,
+      "filesChanged": 3
+    },
+    {
       "hash": "9c3be01",
       "message": "Position snackbar above bottom tab bar in CotizacionGenerator",
       "fullMessage": "fix: Position snackbar above bottom tab bar in CotizacionGenerator",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "5 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "QR code links to Treasure Browser with quoted products filtered",
       "fullMessage": "feat: QR code links to Treasure Browser with quoted products filtered",
       "author": "Kvn3Toj",
-      "relativeTime": "6 minutes ago",
+      "relativeTime": "11 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Add video upload support for manual product entries",
       "fullMessage": "feat: Add video upload support for manual product entries",
       "author": "Kvn3Toj",
-      "relativeTime": "13 minutes ago",
+      "relativeTime": "18 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve Shared Drive handling for image uploads",
       "fullMessage": "fix: Improve Shared Drive handling for image uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "25 minutes ago",
+      "relativeTime": "29 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -194,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image upload for manual product entries in quotation generator",
       "fullMessage": "feat: Add image upload for manual product entries in quotation generator",
       "author": "Kvn3Toj",
-      "relativeTime": "30 minutes ago",
+      "relativeTime": "34 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -207,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product images and links to quotation PDF export",
       "fullMessage": "feat: Add product images and links to quotation PDF export",
       "author": "Kvn3Toj",
-      "relativeTime": "66 minutes ago",
+      "relativeTime": "70 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -259,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "HEIC image fallback using Google Drive thumbnails",
       "fullMessage": "fix: HEIC image fallback using Google Drive thumbnails",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -337,7 +350,7 @@ export const changelogData: ChangelogData = {
       "message": "Optimize API endpoints for Chrome browser compatibility",
       "fullMessage": "fix: Optimize API endpoints for Chrome browser compatibility",
       "author": "Kvn3Toj",
-      "relativeTime": "7 hours ago",
+      "relativeTime": "8 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "performance",
@@ -376,7 +389,7 @@ export const changelogData: ChangelogData = {
       "message": "Provider portal inventory improvements and UI refinements",
       "fullMessage": "feat: Provider portal inventory improvements and UI refinements",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "ux",
@@ -623,7 +636,7 @@ export const changelogData: ChangelogData = {
       "message": "Support provider role in Asesores sheet",
       "fullMessage": "feat: Support provider role in Asesores sheet",
       "author": "Kvn3Toj",
-      "relativeTime": "31 hours ago",
+      "relativeTime": "32 hours ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
