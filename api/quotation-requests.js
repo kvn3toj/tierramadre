@@ -21,7 +21,7 @@ import {
   ensureSheet,
   generateId,
 } from './_lib/index.js';
-import { sendNotificationEmail, EMAIL_TYPES } from './send-email.js';
+import { sendNotificationEmail, EMAIL_TYPES, getProviderFromSheet } from './send-email.js';
 
 const SHEET_NAME = SHEETS.QUOTATION_REQUESTS;
 const HEADERS = [
@@ -99,6 +99,19 @@ export default async function handler(req, res) {
         createdBy, referencePhotoUrls,
       } = req.body;
 
+      // Auto-lookup provider from Asesores sheet if not specified
+      let providerEmail = assignedProvider;
+      let providerName = assignedProvider ? assignedProvider.split('@')[0] : '';
+
+      if (!providerEmail) {
+        const provider = await getProviderFromSheet();
+        if (provider) {
+          providerEmail = provider.email;
+          providerName = provider.name || provider.email.split('@')[0];
+          console.log('[QuotationRequests] Auto-assigned provider:', providerEmail);
+        }
+      }
+
       const newRequest = [
         generateId('REQ'),
         new Date().toISOString(),
@@ -111,7 +124,7 @@ export default async function handler(req, res) {
         quantity || 1,
         notes || '',
         'pendiente',
-        assignedProvider || '',
+        providerEmail || '',
         '',
         createdBy || '',
         (referencePhotoUrls || []).join(','),
@@ -124,12 +137,12 @@ export default async function handler(req, res) {
         requestBody: { values: [newRequest] },
       });
 
-      // Send email notification to assigned provider
-      if (assignedProvider) {
+      // Send email notification to provider
+      if (providerEmail) {
         sendNotificationEmail(
           EMAIL_TYPES.NEW_QUOTATION_REQUEST,
           {
-            providerName: assignedProvider.split('@')[0],
+            providerName,
             productType,
             weightMin,
             weightMax,
@@ -140,7 +153,7 @@ export default async function handler(req, res) {
             notes,
             requestId: newRequest[0],
           },
-          assignedProvider
+          providerEmail
         ).catch(err => console.error('[Email] Failed to send new request notification:', err));
       }
 
@@ -151,7 +164,7 @@ export default async function handler(req, res) {
           productType, weightMin, weightMax, colorPreference,
           qualityPreference, budgetMax, quantity: quantity || 1, notes,
           status: 'pendiente',
-          assignedProvider, createdBy,
+          assignedProvider: providerEmail, createdBy,
           referencePhotoUrls: referencePhotoUrls || [],
         },
       });
