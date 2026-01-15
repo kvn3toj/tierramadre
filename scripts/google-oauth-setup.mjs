@@ -17,7 +17,7 @@ import open from 'open';
 
 const CLIENT_ID = process.env.GOOGLE_OAUTH_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
-const PORT = process.env.PORT || 3333;
+const PORT = process.env.PORT || 3000;
 const REDIRECT_URI = `http://localhost:${PORT}/oauth-callback`;
 
 if (!CLIENT_ID || !CLIENT_SECRET) {
