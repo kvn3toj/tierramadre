@@ -6,7 +6,7 @@
  * to separate components for better maintainability.
  */
 
-import { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -79,6 +79,8 @@ import { CotizacionHeader, QuotationPreview, brandColors } from './cotizacion';
 import { createLogger } from '../utils/logger';
 import { useTracking } from '../contexts/TrackingContext';
 import { useRecentClients, RecentClient } from '../hooks/useRecentClients';
+import { useCotizacionHistory } from '../hooks/useCotizacionHistory';
+import { useGoogleAuth } from '../contexts/GoogleAuthContext';
 
 const log = createLogger('Cotizacion');
 const formatCurrency = formatCotizacionCurrency;
@@ -108,6 +110,8 @@ export default function CotizacionGenerator() {
   const { treasure } = useTreasure();
   const { track, checkAchievements } = useTracking();
   const recentClients = useRecentClients();
+  const cotizacionHistory = useCotizacionHistory();
+  const { user: googleUser } = useGoogleAuth();
 
   // Track cotización start time for funnel metrics
   const startTimeRef = useRef<number>(Date.now());
@@ -363,7 +367,7 @@ export default function CotizacionGenerator() {
         windowHeight: quotationRef.current.scrollHeight,
       });
 
-      const imgData = canvas.toDataURL('image/png', 0.95); // High quality JPEG compression
+      const imgData = canvas.toDataURL('image/png', 0.95); // High quality PNG
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -420,6 +424,31 @@ export default function CotizacionGenerator() {
 
       // Check for achievements after export
       checkAchievements();
+
+      // Save cotización to history (if user is authenticated)
+      if (googleUser?.email && asesorName) {
+        // Calculate expiry date
+        const expiryDate = new Date(date);
+        expiryDate.setDate(expiryDate.getDate() + validDays);
+
+        cotizacionHistory.saveCotizacion({
+          quotationNumber,
+          asesorEmail: googleUser.email,
+          asesorName,
+          clientName: clientName || undefined,
+          clientPhone: clientPhone || undefined,
+          productsCount: products.length,
+          total,
+          expiryDate: expiryDate.toISOString(),
+          imageBase64: imgData,
+        }).then((saved) => {
+          if (saved) {
+            log.info(`Cotización ${quotationNumber} saved to history`);
+          }
+        }).catch((err) => {
+          log.warn('Failed to save cotización to history:', err);
+        });
+      }
 
       setSnackbar({
         open: true,
@@ -1212,6 +1241,78 @@ interface ProductListSectionProps {
   handleRemoveProduct: (id: string) => void;
 }
 
+/**
+ * ProductThumbnail - Improved product image with proper loading states
+ */
+const ProductThumbnail: React.FC<{
+  src?: string;
+  isJewelry: boolean;
+  size?: number;
+}> = ({ src, isJewelry, size = 48 }) => {
+  const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  // Reset states when src changes
+  useEffect(() => {
+    setImgError(false);
+    setImgLoaded(false);
+  }, [src]);
+
+  const hasValidSrc = src && !imgError;
+
+  return (
+    <Box
+      sx={{
+        width: size,
+        height: size,
+        borderRadius: 1.5,
+        bgcolor: isJewelry ? alpha(brandColors.gold, 0.1) : alpha(brandColors.emerald, 0.1),
+        border: `1px solid ${brandColors.borderSubtle}`,
+        flexShrink: 0,
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+      }}
+    >
+      {hasValidSrc && (
+        <Box
+          component="img"
+          src={src}
+          alt="Product"
+          onError={() => setImgError(true)}
+          onLoad={() => setImgLoaded(true)}
+          sx={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            opacity: imgLoaded ? 1 : 0,
+            transition: 'opacity 0.2s ease',
+          }}
+        />
+      )}
+      {/* Fallback icon */}
+      {(!hasValidSrc || !imgLoaded) && (
+        <Box
+          sx={{
+            position: hasValidSrc ? 'absolute' : 'static',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {isJewelry ? (
+            <ShoppingBag size={size * 0.4} color={brandColors.gold} />
+          ) : (
+            <Gem size={size * 0.4} color={brandColors.emerald} />
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+};
+
 const ProductListSection: React.FC<ProductListSectionProps> = ({ products, handleRemoveProduct }) => {
   if (products.length === 0) return null;
 
@@ -1228,9 +1329,11 @@ const ProductListSection: React.FC<ProductListSectionProps> = ({ products, handl
       {products.map((product) => (
         <Box key={product.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, px: 1.5, mb: 1, bgcolor: brandColors.surfaceElevated, borderRadius: 1.5, border: `1px solid ${brandColors.borderSubtle}` }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Avatar src={product.imagen} variant="rounded" sx={{ width: 40, height: 40, bgcolor: brandColors.lightGray }}>
-              {product.isJewelry ? <ShoppingBag size={16} /> : <Gem size={16} />}
-            </Avatar>
+            <ProductThumbnail
+              src={product.imagen}
+              isJewelry={product.isJewelry}
+              size={48}
+            />
             <Box>
               <Typography variant="body2" fontWeight={600}>#{product.itemNumber} - {product.name}</Typography>
               <Typography variant="caption" color="grey.500">{getPesoDisplay(product)} • {product.color}</Typography>

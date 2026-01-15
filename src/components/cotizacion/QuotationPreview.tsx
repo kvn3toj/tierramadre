@@ -5,7 +5,7 @@
  */
 
 import React, { forwardRef } from 'react';
-import { Box, Typography, Paper, Avatar } from '@mui/material';
+import { Box, Typography, Paper } from '@mui/material';
 import { Package, DollarSign, Gem, ShoppingBag, ExternalLink, Calendar, User, FileText, Shield } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
@@ -363,6 +363,78 @@ const QuotationInfoCard: React.FC<{
 /**
  * ProductsSection - iOS-style product list
  */
+/**
+ * ProductImage - Reusable product image component with proper loading states
+ */
+const ProductImage: React.FC<{
+  src?: string;
+  isJewelry: boolean;
+  size?: number;
+}> = ({ src, isJewelry, size = 56 }) => {
+  const [imgError, setImgError] = React.useState(false);
+  const [imgLoaded, setImgLoaded] = React.useState(false);
+
+  // Reset error state when src changes
+  React.useEffect(() => {
+    setImgError(false);
+    setImgLoaded(false);
+  }, [src]);
+
+  const hasValidSrc = src && !imgError;
+
+  return (
+    <Box
+      sx={{
+        width: size,
+        height: size,
+        borderRadius: 2,
+        bgcolor: isJewelry ? 'rgba(212,175,55,0.08)' : quotationStyles.accentTint,
+        border: `1px solid ${quotationStyles.borderLight}`,
+        flexShrink: 0,
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+      }}
+    >
+      {hasValidSrc && (
+        <Box
+          component="img"
+          src={src}
+          alt="Product"
+          onError={() => setImgError(true)}
+          onLoad={() => setImgLoaded(true)}
+          sx={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            opacity: imgLoaded ? 1 : 0,
+            transition: 'opacity 0.2s ease',
+          }}
+        />
+      )}
+      {/* Fallback icon when no image or error */}
+      {(!hasValidSrc || !imgLoaded) && (
+        <Box
+          sx={{
+            position: hasValidSrc ? 'absolute' : 'static',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {isJewelry ? (
+            <ShoppingBag size={size * 0.4} color={brandColors.gold} />
+          ) : (
+            <Gem size={size * 0.4} color={brandColors.emerald} />
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+};
+
 const ProductsSection: React.FC<{ products: CotizacionProduct[] }> = ({ products }) => {
   if (products.length === 0) {
     return (
@@ -447,25 +519,12 @@ const ProductsSection: React.FC<{ products: CotizacionProduct[] }> = ({ products
                 borderBottom: index < products.length - 1 ? `1px solid ${quotationStyles.borderLight}` : 'none',
               }}
             >
-              {/* Product Image */}
-              <Avatar
+              {/* Product Image - Now larger with better loading */}
+              <ProductImage
                 src={product.imagen}
-                variant="rounded"
-                sx={{
-                  width: 48,
-                  height: 48,
-                  bgcolor: product.isJewelry ? 'rgba(212,175,55,0.08)' : quotationStyles.accentTint,
-                  border: `1px solid ${quotationStyles.borderLight}`,
-                  flexShrink: 0,
-                  borderRadius: 1.5,
-                }}
-              >
-                {product.isJewelry ? (
-                  <ShoppingBag size={20} color={brandColors.gold} />
-                ) : (
-                  <Gem size={20} color={brandColors.emerald} />
-                )}
-              </Avatar>
+                isJewelry={product.isJewelry}
+                size={56}
+              />
 
               {/* Product Info */}
               <Box sx={{ flex: 1, minWidth: 0 }}>

@@ -3,7 +3,7 @@
  * Shows asesor details and their treasure products with filtering
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -26,6 +26,9 @@ import {
   InputLabel,
   IconButton,
   Tooltip,
+  Dialog,
+  DialogContent,
+  Skeleton,
 } from '@mui/material';
 import {
   ArrowLeft,
@@ -42,9 +45,17 @@ import {
   CheckCircle,
   XCircle,
   Crown,
+  FileText,
+  Calendar,
+  User,
+  Trash2,
+  X,
+  Eye,
 } from 'lucide-react';
 import { useAsesores } from '../../hooks/useAsesores';
 import { useTreasure } from '../../hooks/useTreasure';
+import { useCotizacionHistory, SavedCotizacion } from '../../hooks/useCotizacionHistory';
+import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { TreasureItem } from '../../types';
 import { TreasureCard } from '../treasure/TreasureCard';
 import { brand, lightTokens, darkTokens, accentColors } from '../../design-system';
@@ -80,14 +91,35 @@ export default function AsesorProfilePage() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [showFilters, setShowFilters] = useState(false);
 
+  // Cotizaciones state
+  const [selectedCotizacion, setSelectedCotizacion] = useState<SavedCotizacion | null>(null);
+
   const { treasure } = useTreasure();
   const { asesores, isLoading } = useAsesores(treasure);
+  const { user: googleUser } = useGoogleAuth();
+  const cotizacionHistory = useCotizacionHistory();
 
   // Find the asesor by slug
   const asesor = useMemo(() => {
     if (!slug || !asesores.length) return null;
     return asesores.find(a => a.slug === slug) || null;
   }, [slug, asesores]);
+
+  // Check if current user owns this profile
+  const isProfileOwner = useMemo(() => {
+    if (!googleUser?.email || !asesor) return false;
+    // Match by normalized name (since we may not have email in asesor data)
+    const userNormalized = normalizeName(googleUser.name || '');
+    const asesorNormalized = normalizeName(asesor.name);
+    return userNormalized === asesorNormalized;
+  }, [googleUser, asesor]);
+
+  // Fetch cotizaciones when viewing own profile
+  useEffect(() => {
+    if (isProfileOwner && googleUser?.email) {
+      cotizacionHistory.fetchCotizaciones(googleUser.email);
+    }
+  }, [isProfileOwner, googleUser?.email]);
 
   // Get products for this asesor
   const allProducts = useMemo(() => {
@@ -380,6 +412,170 @@ export default function AsesorProfilePage() {
         </Box>
       </Paper>
 
+      {/* My Cotizaciones Section - Only visible to profile owner */}
+      {isProfileOwner && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            mb: 3,
+            borderRadius: 3,
+            bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
+            border: '1px solid',
+            borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 2,
+                  bgcolor: alpha(brand.emerald[500], 0.1),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FileText size={20} color={brand.emerald[500]} />
+              </Box>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1rem' }}>
+                  Mis Cotizaciones
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Solo tú puedes ver esta sección
+                </Typography>
+              </Box>
+            </Box>
+            {cotizacionHistory.cotizaciones.length > 0 && (
+              <Chip
+                size="small"
+                label={`${cotizacionHistory.cotizaciones.length} cotizaciones`}
+                sx={{
+                  bgcolor: alpha(brand.emerald[500], 0.1),
+                  color: brand.emerald[500],
+                  fontWeight: 600,
+                }}
+              />
+            )}
+          </Box>
+
+          {/* Cotizaciones Loading */}
+          {cotizacionHistory.isLoading && (
+            <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 1 }}>
+              {[1, 2, 3].map((i) => (
+                <Skeleton
+                  key={i}
+                  variant="rounded"
+                  width={200}
+                  height={280}
+                  sx={{ borderRadius: 2, flexShrink: 0 }}
+                />
+              ))}
+            </Box>
+          )}
+
+          {/* Cotizaciones Empty State */}
+          {!cotizacionHistory.isLoading && cotizacionHistory.cotizaciones.length === 0 && (
+            <Box
+              sx={{
+                textAlign: 'center',
+                py: 4,
+                bgcolor: alpha(brand.emerald[500], 0.02),
+                borderRadius: 2,
+                border: `1px dashed ${alpha(brand.emerald[500], 0.3)}`,
+              }}
+            >
+              <FileText size={40} color={lightTokens.text.muted} style={{ marginBottom: 12 }} />
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                Aún no tienes cotizaciones guardadas
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.muted' }}>
+                Las cotizaciones que exportes aparecerán aquí
+              </Typography>
+            </Box>
+          )}
+
+          {/* Cotizaciones Gallery */}
+          {!cotizacionHistory.isLoading && cotizacionHistory.cotizaciones.length > 0 && (
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                overflowX: 'auto',
+                pb: 1,
+                mx: -1,
+                px: 1,
+                '&::-webkit-scrollbar': { height: 6 },
+                '&::-webkit-scrollbar-thumb': {
+                  bgcolor: alpha(brand.emerald[500], 0.3),
+                  borderRadius: 3,
+                },
+              }}
+            >
+              {cotizacionHistory.cotizaciones.map((cot) => (
+                <CotizacionCard
+                  key={cot.id}
+                  cotizacion={cot}
+                  onView={() => setSelectedCotizacion(cot)}
+                  onDelete={() => {
+                    if (googleUser?.email && confirm('¿Eliminar esta cotización?')) {
+                      cotizacionHistory.deleteCotizacion(cot.id, googleUser.email);
+                    }
+                  }}
+                  isLight={isLight}
+                />
+              ))}
+            </Box>
+          )}
+        </Paper>
+      )}
+
+      {/* Cotización Preview Dialog */}
+      <Dialog
+        open={!!selectedCotizacion}
+        onClose={() => setSelectedCotizacion(null)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
+          },
+        }}
+      >
+        <DialogContent sx={{ p: 0, position: 'relative' }}>
+          <IconButton
+            onClick={() => setSelectedCotizacion(null)}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              zIndex: 1,
+              bgcolor: 'rgba(0,0,0,0.5)',
+              color: '#fff',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+            }}
+          >
+            <X size={20} />
+          </IconButton>
+          {selectedCotizacion && (
+            <Box
+              component="img"
+              src={selectedCotizacion.imageUrl}
+              alt={`Cotización ${selectedCotizacion.quotationNumber}`}
+              sx={{
+                width: '100%',
+                height: 'auto',
+                display: 'block',
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Search and Filters */}
       <Paper
         elevation={0}
@@ -651,4 +847,185 @@ function formatCurrency(value: number): string {
     return `$${Math.round(value / 1000)}K`;
   }
   return `$${value.toLocaleString('es-CO')}`;
+}
+
+// Cotización Card Component
+function CotizacionCard({
+  cotizacion,
+  onView,
+  onDelete,
+  isLight,
+}: {
+  cotizacion: SavedCotizacion;
+  onView: () => void;
+  onDelete: () => void;
+  isLight: boolean;
+}) {
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  const createdDate = new Date(cotizacion.createdAt);
+  const formattedDate = createdDate.toLocaleDateString('es-CO', {
+    day: 'numeric',
+    month: 'short',
+    year: '2-digit',
+  });
+
+  return (
+    <Box
+      sx={{
+        width: 200,
+        flexShrink: 0,
+        borderRadius: 2,
+        overflow: 'hidden',
+        bgcolor: isLight ? '#fff' : darkTokens.background.elevated,
+        border: '1px solid',
+        borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        cursor: 'pointer',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: `0 8px 24px ${alpha(brand.emerald[500], 0.15)}`,
+        },
+      }}
+      onClick={onView}
+    >
+      {/* Image Preview */}
+      <Box
+        sx={{
+          position: 'relative',
+          width: '100%',
+          height: 160,
+          bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
+          overflow: 'hidden',
+        }}
+      >
+        {!imgLoaded && (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <CircularProgress size={24} sx={{ color: brand.emerald[500] }} />
+          </Box>
+        )}
+        <Box
+          component="img"
+          src={cotizacion.imageUrl}
+          alt={cotizacion.quotationNumber}
+          onLoad={() => setImgLoaded(true)}
+          sx={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'top',
+            opacity: imgLoaded ? 1 : 0,
+            transition: 'opacity 0.3s',
+          }}
+        />
+
+        {/* View Overlay */}
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            bgcolor: 'rgba(0,0,0,0)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: 0,
+            transition: 'all 0.2s',
+            '&:hover': {
+              bgcolor: 'rgba(0,0,0,0.4)',
+              opacity: 1,
+            },
+          }}
+        >
+          <Eye size={28} color="#fff" />
+        </Box>
+      </Box>
+
+      {/* Card Info */}
+      <Box sx={{ p: 1.5 }}>
+        {/* Quotation Number */}
+        <Typography
+          variant="caption"
+          sx={{
+            fontFamily: 'monospace',
+            color: brand.emerald[500],
+            fontWeight: 600,
+            fontSize: '0.65rem',
+          }}
+        >
+          {cotizacion.quotationNumber}
+        </Typography>
+
+        {/* Client Name */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+          <User size={12} color={lightTokens.text.muted} />
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {cotizacion.clientName || 'Sin cliente'}
+          </Typography>
+        </Box>
+
+        {/* Date and Total */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Calendar size={11} color={lightTokens.text.muted} />
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+              {formattedDate}
+            </Typography>
+          </Box>
+          <Typography
+            variant="caption"
+            sx={{ fontWeight: 700, color: brand.emerald[500], fontSize: '0.7rem' }}
+          >
+            {formatCurrency(cotizacion.total)}
+          </Typography>
+        </Box>
+
+        {/* Products Count */}
+        <Chip
+          size="small"
+          label={`${cotizacion.productsCount} producto${cotizacion.productsCount !== 1 ? 's' : ''}`}
+          sx={{
+            mt: 1,
+            height: 20,
+            fontSize: '0.6rem',
+            bgcolor: alpha(brand.emerald[500], 0.1),
+            color: brand.emerald[600],
+          }}
+        />
+
+        {/* Delete Button */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            sx={{
+              color: lightTokens.text.muted,
+              '&:hover': { color: accentColors.error.light, bgcolor: alpha(accentColors.error.light, 0.1) },
+            }}
+          >
+            <Trash2 size={14} />
+          </IconButton>
+        </Box>
+      </Box>
+    </Box>
+  );
 }
