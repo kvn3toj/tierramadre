@@ -186,25 +186,38 @@ async function handleMediaUpload(req, res) {
   console.log(`[Upload] Starting upload for quotation: ${quotationId}`);
   console.log(`[Upload] Parent folder ID: ${parentFolderId}`);
 
-  // Check if parent folder is inside a Shared Drive
+  // Determine if we're using a Shared Drive
   let driveIdParam = null;
+
+  // First, try to check if the parentFolderId IS a Shared Drive (not a folder inside one)
   try {
-    const folderResponse = await drive.files.get({
-      fileId: parentFolderId,
-      fields: 'driveId, parents',
-      supportsAllDrives: true,
+    await drive.drives.get({
+      driveId: parentFolderId,
+      fields: 'id, name'
     });
+    // If this succeeds, parentFolderId is a Shared Drive ID
+    driveIdParam = parentFolderId;
+    console.log(`[Upload] Parent is a Shared Drive root: ${driveIdParam}`);
+  } catch (driveRootCheckError) {
+    // Not a Shared Drive root, check if it's a folder inside a Shared Drive
+    try {
+      const folderResponse = await drive.files.get({
+        fileId: parentFolderId,
+        fields: 'driveId, parents',
+        supportsAllDrives: true,
+      });
 
-    driveIdParam = folderResponse.data.driveId || null;
+      driveIdParam = folderResponse.data.driveId || null;
 
-    if (driveIdParam) {
-      console.log(`[Upload] Detected Shared Drive: ${driveIdParam}`);
-    } else {
-      console.log(`[Upload] Using regular folder (My Drive)`);
+      if (driveIdParam) {
+        console.log(`[Upload] Parent folder is inside Shared Drive: ${driveIdParam}`);
+      } else {
+        console.log(`[Upload] WARNING: Using regular My Drive folder - large uploads may fail due to Service Account quota!`);
+      }
+    } catch (folderCheckError) {
+      console.error(`[Upload] Could not determine Drive type:`, folderCheckError.message);
+      console.log(`[Upload] WARNING: Proceeding without Shared Drive context - uploads may fail!`);
     }
-  } catch (driveCheckError) {
-    console.error(`[Upload] Could not determine Drive type:`, driveCheckError.message);
-    // Continue with null driveIdParam - will work for regular folders
   }
 
   let cotizacionesFolderId, quotationFolderId;
