@@ -236,6 +236,9 @@ export default function CotizacionGenerator() {
 
       const data = await response.json();
 
+      // Log the full response for debugging
+      console.log('[Upload] API Response:', { status: response.status, data });
+
       if (data.success && data.files && data.files.length > 0) {
         const uploadedFile = data.files[0];
         // Update manual product with uploaded URL (use thumbnail for videos in product card)
