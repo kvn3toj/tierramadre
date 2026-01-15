@@ -1,7 +1,8 @@
 /**
- * Media Upload API
+ * Media Upload API (OAuth Version)
  *
- * Handles file uploads to Google Drive for quotations and products.
+ * Handles file uploads to Google Drive using OAuth (personal account).
+ * Uses YOUR Google account's storage quota, not a Service Account.
  * Supports images and videos up to 100MB.
  *
  * Endpoints:
@@ -12,22 +13,28 @@
  * Supported formats:
  * - Images: JPEG, PNG, WebP, GIF, HEIC, HEIF, AVIF
  * - Videos: MP4, MOV, WebM, AVI, MKV, 3GP, M4V
+ *
+ * Environment Variables Required:
+ * - GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_REFRESH_TOKEN
+ * - GOOGLE_SHARED_DRIVE_ID (folder ID in your Drive)
  */
 
 import formidable from 'formidable';
 import fs from 'fs';
 
 import {
-  getDriveClient,
-  isGoogleConfigured,
   getSharedDriveId,
   setCorsHeaders,
   handleOptions,
   sendError,
   sendSuccess,
   DRIVE_FOLDERS,
-  getOrCreateFolder,
 } from './_lib/index.js';
+
+import {
+  isOAuthConfigured,
+  getOAuthDriveClient,
+} from './_lib/oauth-drive-client.js';
 
 // Disable body parsing for file uploads
 export const config = {
@@ -73,7 +80,7 @@ const VIDEO_MIME_TYPES = [
 // HELPERS
 // =============================================================================
 
-async function uploadFileToDrive(drive, folderId, file, index, sharedDriveId = null) {
+async function uploadFileToDrive(drive, folderId, file, index) {
   const originalName = file.originalFilename || file.newFilename || 'upload';
 
   const fileExtension = originalName.includes('.')
@@ -84,10 +91,9 @@ async function uploadFileToDrive(drive, folderId, file, index, sharedDriveId = n
   const prefix = isVideo ? 'video' : 'image';
   const fileName = `${prefix}-${index + 1}-${Date.now()}.${fileExtension}`;
 
-  console.log(`[uploadFileToDrive] Uploading ${isVideo ? 'video' : 'image'}: ${fileName}`);
-  console.log(`[uploadFileToDrive] Target folder: ${folderId}`);
-  console.log(`[uploadFileToDrive] Shared Drive ID: ${sharedDriveId || 'none (My Drive)'}`);
-  console.log(`[uploadFileToDrive] File size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+  console.log(`[Upload] Uploading ${isVideo ? 'video' : 'image'}: ${fileName}`);
+  console.log(`[Upload] Target folder: ${folderId}`);
+  console.log(`[Upload] File size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
 
   let uploadedFile;
   try {
@@ -101,26 +107,24 @@ async function uploadFileToDrive(drive, folderId, file, index, sharedDriveId = n
         body: fs.createReadStream(file.filepath),
       },
       fields: 'id, webViewLink, webContentLink, thumbnailLink',
-      supportsAllDrives: true,
     });
 
-    console.log(`[uploadFileToDrive] Upload successful. File ID: ${uploadedFile.data.id}`);
+    console.log(`[Upload] Upload successful. File ID: ${uploadedFile.data.id}`);
   } catch (uploadError) {
-    console.error(`[uploadFileToDrive] Upload failed:`, uploadError.message);
+    console.error(`[Upload] Upload failed:`, uploadError.message);
     if (uploadError.response?.data?.error) {
-      console.error(`[uploadFileToDrive] API Error Details:`, JSON.stringify(uploadError.response.data.error, null, 2));
+      console.error(`[Upload] API Error Details:`, JSON.stringify(uploadError.response.data.error, null, 2));
     }
     throw uploadError;
   }
 
-  // Only set public permissions for non-Shared Drive files
-  if (!sharedDriveId) {
-    await drive.permissions.create({
-      fileId: uploadedFile.data.id,
-      requestBody: { role: 'reader', type: 'anyone' },
-      supportsAllDrives: true,
-    });
-  }
+  // Set public permissions so anyone can view
+  await drive.permissions.create({
+    fileId: uploadedFile.data.id,
+    requestBody: { role: 'reader', type: 'anyone' },
+  });
+
+  console.log(`[Upload] Public permission set for file ${uploadedFile.data.id}`);
 
   const fileId = uploadedFile.data.id;
 
@@ -143,39 +147,51 @@ async function uploadFileToDrive(drive, folderId, file, index, sharedDriveId = n
   return result;
 }
 
-async function detectDriveType(drive, parentFolderId) {
-  let driveIdParam = null;
+/**
+ * Find or create a folder using OAuth Drive client
+ */
+async function getOrCreateFolderOAuth(drive, parentFolderId, folderName) {
+  const escapedFolderName = folderName.replace(/'/g, "\\'");
 
-  // First, try to check if the parentFolderId IS a Shared Drive
+  // Search for existing folder
   try {
-    await drive.drives.get({
-      driveId: parentFolderId,
-      fields: 'id, name'
+    const searchResponse = await drive.files.list({
+      q: `name='${escapedFolderName}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      fields: 'files(id, name)',
     });
-    driveIdParam = parentFolderId;
-    console.log(`[Upload] Parent is a Shared Drive root: ${driveIdParam}`);
-  } catch {
-    // Not a Shared Drive root, check if it's a folder inside a Shared Drive
-    try {
-      const folderResponse = await drive.files.get({
-        fileId: parentFolderId,
-        fields: 'driveId, parents',
-        supportsAllDrives: true,
-      });
 
-      driveIdParam = folderResponse.data.driveId || null;
-
-      if (driveIdParam) {
-        console.log(`[Upload] Parent folder is inside Shared Drive: ${driveIdParam}`);
-      } else {
-        console.log(`[Upload] WARNING: Using regular My Drive folder - large uploads may fail!`);
-      }
-    } catch (folderCheckError) {
-      console.error(`[Upload] Could not determine Drive type:`, folderCheckError.message);
+    if (searchResponse.data.files && searchResponse.data.files.length > 0) {
+      console.log(`[Upload] Found existing folder "${folderName}": ${searchResponse.data.files[0].id}`);
+      return searchResponse.data.files[0].id;
     }
+  } catch (searchError) {
+    console.error(`[Upload] Error searching for folder "${folderName}":`, searchError.message);
   }
 
-  return driveIdParam;
+  // Create folder
+  try {
+    console.log(`[Upload] Creating folder "${folderName}" in parent ${parentFolderId}`);
+    const folder = await drive.files.create({
+      requestBody: {
+        name: folderName,
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: [parentFolderId],
+      },
+      fields: 'id',
+    });
+
+    // Set public permissions for folder
+    await drive.permissions.create({
+      fileId: folder.data.id,
+      requestBody: { role: 'reader', type: 'anyone' },
+    });
+
+    console.log(`[Upload] Created folder "${folderName}": ${folder.data.id}`);
+    return folder.data.id;
+  } catch (createError) {
+    console.error(`[Upload] Error creating folder "${folderName}":`, createError.message);
+    throw createError;
+  }
 }
 
 // =============================================================================
@@ -191,8 +207,8 @@ export default async function handler(req, res) {
     return sendError(res, 405, 'Method not allowed');
   }
 
-  if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google Service Account not configured');
+  if (!isOAuthConfigured()) {
+    return sendError(res, 500, 'Google OAuth not configured. Missing GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, or GOOGLE_OAUTH_REFRESH_TOKEN.');
   }
 
   const sharedDriveId = getSharedDriveId();
@@ -245,14 +261,20 @@ export default async function handler(req, res) {
     fileList = [fileList];
   }
 
-  const drive = getDriveClient(false);
+  // Get OAuth Drive client (uses personal account, not Service Account)
+  let drive;
+  try {
+    drive = await getOAuthDriveClient();
+    console.log(`[Upload] OAuth Drive client initialized`);
+  } catch (oauthError) {
+    console.error('[Upload] OAuth error:', oauthError.message);
+    return sendError(res, 500, `OAuth authentication failed: ${oauthError.message}`);
+  }
+
   const parentFolderId = sharedDriveId;
 
   console.log(`[Upload] Starting upload for: ${quotationId || customFolderId}`);
   console.log(`[Upload] Parent folder ID: ${parentFolderId}`);
-
-  // Determine if we're using a Shared Drive
-  const driveIdParam = await detectDriveType(drive, parentFolderId);
 
   // Create folder structure: cotizaciones/proveedores/{quotationId}
   // This separates provider quotations from manual entries
@@ -265,23 +287,22 @@ export default async function handler(req, res) {
       // Create cotizaciones/proveedores/quotationId structure
       const baseFolderName = targetFolder || DRIVE_FOLDERS.COTIZACIONES;
       console.log(`[Upload] Looking for/creating ${baseFolderName} folder in: ${parentFolderId}`);
-      const cotizacionesFolderId = await getOrCreateFolder(drive, parentFolderId, baseFolderName, driveIdParam);
+      const cotizacionesFolderId = await getOrCreateFolderOAuth(drive, parentFolderId, baseFolderName);
       console.log(`[Upload] Cotizaciones folder ID: ${cotizacionesFolderId}`);
 
       console.log(`[Upload] Looking for/creating proveedores folder`);
-      const proveedoresFolderId = await getOrCreateFolder(drive, cotizacionesFolderId, DRIVE_FOLDERS.COTIZACIONES_PROVEEDORES, driveIdParam);
+      const proveedoresFolderId = await getOrCreateFolderOAuth(drive, cotizacionesFolderId, DRIVE_FOLDERS.COTIZACIONES_PROVEEDORES);
       console.log(`[Upload] Proveedores folder ID: ${proveedoresFolderId}`);
 
       console.log(`[Upload] Looking for/creating folder: ${quotationId}`);
-      targetFolderId = await getOrCreateFolder(drive, proveedoresFolderId, quotationId, driveIdParam);
+      targetFolderId = await getOrCreateFolderOAuth(drive, proveedoresFolderId, quotationId);
       console.log(`[Upload] Target folder ID: ${targetFolderId}`);
     }
 
     // Verify the folder
     const folderCheck = await drive.files.get({
       fileId: targetFolderId,
-      fields: 'id, name, driveId, parents',
-      supportsAllDrives: true,
+      fields: 'id, name, parents',
     });
     console.log(`[Upload] Folder verification:`, JSON.stringify(folderCheck.data, null, 2));
   } catch (folderError) {
@@ -304,7 +325,7 @@ export default async function handler(req, res) {
     console.log(`[Upload] File ${i + 1}/${fileList.length}: "${file.originalFilename}" (${fileSizeMB}MB, ${isVideo ? 'VIDEO' : 'IMAGE'})`);
 
     try {
-      const result = await uploadFileToDrive(drive, targetFolderId, file, i, driveIdParam);
+      const result = await uploadFileToDrive(drive, targetFolderId, file, i);
       console.log(`[Upload] Upload successful: ${result.fileName}`);
       uploadedFiles.push(result);
     } catch (uploadError) {
