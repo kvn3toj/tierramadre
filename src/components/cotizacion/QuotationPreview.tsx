@@ -4,8 +4,8 @@
  */
 
 import React, { forwardRef } from 'react';
-import { Box, Typography, Paper } from '@mui/material';
-import { Package, DollarSign, Shield } from 'lucide-react';
+import { Box, Typography, Paper, Avatar } from '@mui/material';
+import { Package, DollarSign, Shield, Gem, ShoppingBag, ExternalLink } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   documentShadows,
@@ -392,32 +392,79 @@ const ProductsSection: React.FC<{ products: CotizacionProduct[] }> = ({ products
         </Typography>
       </Box>
       <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-        {products.map((product, index) => (
-          <Box
-            key={product.id}
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              py: 1,
-              px: 1.25,
-              bgcolor: index % 2 === 0 ? 'rgba(27, 94, 32, 0.03)' : 'transparent',
-              borderBottom: `1px solid rgba(0,0,0,0.06)`,
-            }}
-          >
-            <Box>
-              <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: brandColors.textPrimary }}>
-                #{product.itemNumber} - {product.name}
-              </Typography>
-              <Typography sx={{ fontSize: '0.6rem', color: brandColors.gray, mt: 0.25 }}>
-                {getPesoDisplay(product)} • {product.color} • {product.talla}
+        {products.map((product, index) => {
+          const productUrl = `https://www.tierramadre.co/products/${generateProductSlug(product.name)}`;
+          return (
+            <Box
+              key={product.id}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                py: 1.25,
+                px: 1.25,
+                bgcolor: index % 2 === 0 ? 'rgba(27, 94, 32, 0.03)' : 'transparent',
+                borderBottom: `1px solid rgba(0,0,0,0.06)`,
+              }}
+            >
+              {/* Product Image */}
+              <Avatar
+                src={product.imagen}
+                variant="rounded"
+                sx={{
+                  width: 48,
+                  height: 48,
+                  bgcolor: 'rgba(0,174,122,0.08)',
+                  border: `1px solid rgba(0,0,0,0.06)`,
+                  flexShrink: 0,
+                }}
+              >
+                {product.isJewelry ? (
+                  <ShoppingBag size={20} color={brandColors.gold} />
+                ) : (
+                  <Gem size={20} color={brandColors.emerald} />
+                )}
+              </Avatar>
+
+              {/* Product Info */}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: brandColors.textPrimary }}>
+                  #{product.itemNumber} - {product.name}
+                </Typography>
+                <Typography sx={{ fontSize: '0.6rem', color: brandColors.gray, mt: 0.25 }}>
+                  {getPesoDisplay(product)} • {product.color} • {product.talla}
+                </Typography>
+                {/* Product Link */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                  <ExternalLink size={10} color={brandColors.emerald} />
+                  <Typography
+                    component="a"
+                    href={productUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      fontSize: '0.5rem',
+                      color: brandColors.emerald,
+                      textDecoration: 'none',
+                      '&:hover': { textDecoration: 'underline' },
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '200px',
+                    }}
+                  >
+                    {productUrl}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Price */}
+              <Typography sx={{ fontSize: '0.8rem', fontWeight: 600, color: brandColors.emerald, fontFamily: 'monospace', flexShrink: 0 }}>
+                {formatCurrency(product.precioCOP)}
               </Typography>
             </Box>
-            <Typography sx={{ fontSize: '0.8rem', fontWeight: 600, color: brandColors.emerald, fontFamily: 'monospace' }}>
-              {formatCurrency(product.precioCOP)}
-            </Typography>
-          </Box>
-        ))}
+          );
+        })}
       </Box>
     </Box>
   );
