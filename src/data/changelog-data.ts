@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-15T18:56:27.827Z
+ * Generated at: 2026-01-15T19:22:18.790Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-15T18:56:27.827Z",
+  "generatedAt": "2026-01-15T19:22:18.790Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,28 +56,28 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "2fcec47",
-    "lastCommitDate": "2026-01-15 13:56:24 -0500"
+    "lastCommitHash": "3acd7ca",
+    "lastCommitDate": "2026-01-15 14:22:13 -0500"
   },
   "stats": {
-    "totalCommits": 255,
-    "totalAdditions": 93650,
-    "totalDeletions": 56591,
-    "totalFilesChanged": 1547,
-    "netLines": 37059
+    "totalCommits": 256,
+    "totalAdditions": 95016,
+    "totalDeletions": 56837,
+    "totalFilesChanged": 1559,
+    "netLines": 38179
   },
   "categoryStats": {
+    "auth": 15,
     "other": 84,
     "bugfix": 73,
     "ux": 43,
     "performance": 14,
     "cleanup": 16,
-    "analytics": 11,
-    "auth": 14
+    "analytics": 11
   },
   "typeStats": {
+    "fix": 111,
     "feat": 101,
-    "fix": 110,
     "other": 9,
     "chore": 14,
     "refactor": 18,
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 49
+      "count": 50
     },
     {
       "file": "index.html",
-      "count": 47
+      "count": 48
     },
     {
       "file": "public/version.json",
-      "count": 37
+      "count": 38
     },
     {
       "file": "src/App.tsx",
@@ -106,12 +106,12 @@ export const changelogData: ChangelogData = {
       "count": 23
     },
     {
-      "file": ".claude/settings.local.json",
+      "file": "api/provider-quotations.js",
       "count": 20
     },
     {
-      "file": "api/provider-quotations.js",
-      "count": 19
+      "file": ".claude/settings.local.json",
+      "count": 20
     },
     {
       "file": "src/components/TreasureBrowser.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 247
+      "commits": 248
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "3acd7ca",
+      "message": "Use OAuth instead of Service Account for cotización uploads",
+      "fullMessage": "fix: Use OAuth instead of Service Account for cotización uploads",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-15",
+      "type": "fix",
+      "category": "auth",
+      "additions": 1366,
+      "deletions": 246,
+      "filesChanged": 12
+    },
+    {
       "hash": "2fcec47",
       "message": "Split merged APIs and add Cloudinary processing for uploads",
       "fullMessage": "feat: Split merged APIs and add Cloudinary processing for uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "26 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Allow uploads to shared folders with Service Accounts",
       "fullMessage": "fix: Allow uploads to shared folders with Service Accounts",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "debug: Add folder verification after creation",
       "fullMessage": "debug: Add folder verification after creation",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-15",
       "type": "other",
       "category": "bugfix",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "debug: Add detailed logging to uploadFileToDrive function",
       "fullMessage": "debug: Add detailed logging to uploadFileToDrive function",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-15",
       "type": "other",
       "category": "bugfix",
@@ -194,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "debug: Add API response logging for upload debugging",
       "fullMessage": "debug: Add API response logging for upload debugging",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-15",
       "type": "other",
       "category": "bugfix",
@@ -259,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Add provider-quotations to vercel.json with 60s maxDuration",
       "fullMessage": "fix: Add provider-quotations to vercel.json with 60s maxDuration",
       "author": "Kvn3Toj",
-      "relativeTime": "12 hours ago",
+      "relativeTime": "13 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -272,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Handle regular Drive folders vs Shared Drives for uploads",
       "fullMessage": "fix: Handle regular Drive folders vs Shared Drives for uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "12 hours ago",
+      "relativeTime": "13 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -285,7 +298,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve Drive check to handle both Shared Drives and regular folders",
       "fullMessage": "fix: Improve Drive check to handle both Shared Drives and regular folders",
       "author": "Kvn3Toj",
-      "relativeTime": "12 hours ago",
+      "relativeTime": "13 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -363,7 +376,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve Shared Drive handling for image uploads",
       "fullMessage": "fix: Improve Shared Drive handling for image uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "13 hours ago",
+      "relativeTime": "14 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -376,7 +389,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image upload for manual product entries in quotation generator",
       "fullMessage": "feat: Add image upload for manual product entries in quotation generator",
       "author": "Kvn3Toj",
-      "relativeTime": "13 hours ago",
+      "relativeTime": "14 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -402,7 +415,7 @@ export const changelogData: ChangelogData = {
       "message": "Use requestBody for Shared Drive file uploads",
       "fullMessage": "fix: Use requestBody for Shared Drive file uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "14 hours ago",
+      "relativeTime": "15 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -415,7 +428,7 @@ export const changelogData: ChangelogData = {
       "message": "Use full Drive scope for Shared Drive uploads",
       "fullMessage": "fix: Use full Drive scope for Shared Drive uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "14 hours ago",
+      "relativeTime": "15 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -441,7 +454,7 @@ export const changelogData: ChangelogData = {
       "message": "HEIC image fallback using Google Drive thumbnails",
       "fullMessage": "fix: HEIC image fallback using Google Drive thumbnails",
       "author": "Kvn3Toj",
-      "relativeTime": "19 hours ago",
+      "relativeTime": "20 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -454,7 +467,7 @@ export const changelogData: ChangelogData = {
       "message": "Provider portal improvements and staff route enhancements",
       "fullMessage": "feat: Provider portal improvements and staff route enhancements",
       "author": "Kvn3Toj",
-      "relativeTime": "19 hours ago",
+      "relativeTime": "20 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -467,7 +480,7 @@ export const changelogData: ChangelogData = {
       "message": "Prevent video carousel blinking with loading state and iOS fix",
       "fullMessage": "fix: Prevent video carousel blinking with loading state and iOS fix",
       "author": "Kvn3Toj",
-      "relativeTime": "19 hours ago",
+      "relativeTime": "20 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "ux",
@@ -480,7 +493,7 @@ export const changelogData: ChangelogData = {
       "message": "Add responsive image sizing for faster grid loading",
       "fullMessage": "feat: Add responsive image sizing for faster grid loading",
       "author": "Kvn3Toj",
-      "relativeTime": "19 hours ago",
+      "relativeTime": "20 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -519,7 +532,7 @@ export const changelogData: ChangelogData = {
       "message": "Optimize API endpoints for Chrome browser compatibility",
       "fullMessage": "fix: Optimize API endpoints for Chrome browser compatibility",
       "author": "Kvn3Toj",
-      "relativeTime": "20 hours ago",
+      "relativeTime": "21 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "performance",
@@ -532,7 +545,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove legacy image gallery editing UI from product page",
       "fullMessage": "fix: Remove legacy image gallery editing UI from product page",
       "author": "Kvn3Toj",
-      "relativeTime": "22 hours ago",
+      "relativeTime": "23 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "ux",
@@ -558,7 +571,7 @@ export const changelogData: ChangelogData = {
       "message": "Provider portal inventory improvements and UI refinements",
       "fullMessage": "feat: Provider portal inventory improvements and UI refinements",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "ux",
@@ -571,7 +584,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove WhatsApp floating action button from home page",
       "fullMessage": "fix: Remove WhatsApp floating action button from home page",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "cleanup",
@@ -584,7 +597,7 @@ export const changelogData: ChangelogData = {
       "message": "Track actual user role instead of accessLevel in product views",
       "fullMessage": "fix: Track actual user role instead of accessLevel in product views",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -636,7 +649,7 @@ export const changelogData: ChangelogData = {
       "message": "Add restricted inventory view for provider portal",
       "fullMessage": "feat: Add restricted inventory view for provider portal",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -649,7 +662,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve new products notification accuracy and add logo",
       "fullMessage": "fix: Improve new products notification accuracy and add logo",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -662,7 +675,7 @@ export const changelogData: ChangelogData = {
       "message": "Correct role display and enable view counts in grid cards",
       "fullMessage": "fix: Correct role display and enable view counts in grid cards",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -740,7 +753,7 @@ export const changelogData: ChangelogData = {
       "message": "Add analytics components and design system updates",
       "fullMessage": "feat: Add analytics components and design system updates",
       "author": "Kvn3Toj",
-      "relativeTime": "27 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "ux",
@@ -753,7 +766,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product request system for asesores/embajadores",
       "fullMessage": "feat: Add product request system for asesores/embajadores",
       "author": "Kvn3Toj",
-      "relativeTime": "27 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -766,7 +779,7 @@ export const changelogData: ChangelogData = {
       "message": "Add price formatting and quantity fields to quotation forms",
       "fullMessage": "feat: Add price formatting and quantity fields to quotation forms",
       "author": "Kvn3Toj",
-      "relativeTime": "27 hours ago",
+      "relativeTime": "28 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -1754,7 +1767,7 @@ export const changelogData: ChangelogData = {
       "message": "perf: Optimize new products image loading with early termination",
       "fullMessage": "perf: Optimize new products image loading with early termination",
       "author": "Kvn3Toj",
-      "relativeTime": "5 days ago",
+      "relativeTime": "6 days ago",
       "date": "2026-01-10",
       "type": "other",
       "category": "performance",
