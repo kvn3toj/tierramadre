@@ -55,6 +55,7 @@ export interface ManualProductState {
   precioCOP: number;
   isJewelry: boolean;
   metalType: string;
+  imagen?: string;
 }
 
 // Default investments
@@ -310,6 +311,7 @@ export function useCotizacion(): UseCotizacionReturn {
       precioCOP: product.precioCOP,
       isJewelry: product.isJewelry,
       metalType: product.metalType,
+      imagen: product.imagen,
     };
 
     setProducts(prev => [...prev, newProduct]);

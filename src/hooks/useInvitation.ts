@@ -20,6 +20,7 @@ interface UseInvitationReturn {
   generateInvitation: (options?: GenerateInvitationOptions) => Promise<InvitationData | null>;
   validateInvitation: (shortCode: string) => Promise<ValidationResult>;
   registerGuest: (registration: GuestRegistration) => Promise<boolean>;
+  clearLastInvitation: () => void;
   isGenerating: boolean;
   isValidating: boolean;
   isRegistering: boolean;
@@ -107,6 +108,11 @@ export const useInvitation = (): UseInvitationReturn => {
     }
   }, []);
 
+  const clearLastInvitation = useCallback(() => {
+    setLastInvitation(null);
+    setError(null);
+  }, []);
+
   const registerGuest = useCallback(async (
     registration: GuestRegistration
   ): Promise<boolean> => {
@@ -141,6 +147,7 @@ export const useInvitation = (): UseInvitationReturn => {
     generateInvitation,
     validateInvitation,
     registerGuest,
+    clearLastInvitation,
     isGenerating,
     isValidating,
     isRegistering,

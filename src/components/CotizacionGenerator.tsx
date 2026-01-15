@@ -30,8 +30,6 @@ import {
   Tooltip,
   ToggleButton,
   ToggleButtonGroup,
-  FormControlLabel,
-  Switch,
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import {
@@ -55,6 +53,10 @@ import {
   RotateCcw,
   User,
   FileText,
+  Upload,
+  X,
+  Image as ImageIcon,
+  Loader2,
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -155,6 +157,10 @@ export default function CotizacionGenerator() {
   const [newCustomLabel, setNewCustomLabel] = useState('');
   const [newCustomValue, setNewCustomValue] = useState<number>(0);
 
+  // Image upload state for manual product entry
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
   // ==========================================================================
   // HANDLERS
   // ==========================================================================
@@ -186,6 +192,67 @@ export default function CotizacionGenerator() {
       entry_mode: 'manual',
       products_count: products.length + 1,
     });
+
+    // Reset image preview after adding
+    setImagePreview(null);
+  };
+
+  // Handle image upload for manual product entry
+  const handleManualProductImageUpload = async (file: File) => {
+    if (!file) return;
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setSnackbar({
+        open: true,
+        message: 'La imagen es muy grande. Maximo 10MB.',
+        severity: 'error',
+      });
+      return;
+    }
+
+    // Show local preview immediately
+    const localPreview = URL.createObjectURL(file);
+    setImagePreview(localPreview);
+    setIsUploadingImage(true);
+
+    try {
+      // Upload to Google Drive via the quotation upload API
+      const formData = new FormData();
+      formData.append('quotationId', `manual-${quotationNumber}`);
+      formData.append('file', file);
+
+      const response = await fetch('/api/provider-quotations?action=upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.urls && data.urls.length > 0) {
+        // Update manual product with uploaded URL
+        setManualProduct(prev => ({ ...prev, imagen: data.urls[0] }));
+        setSnackbar({
+          open: true,
+          message: 'Imagen subida exitosamente',
+          severity: 'success',
+        });
+      } else {
+        throw new Error(data.error || 'Error al subir la imagen');
+      }
+    } catch (error) {
+      log.error('Image upload error:', error);
+      setSnackbar({
+        open: true,
+        message: 'Error al subir la imagen. Intenta de nuevo.',
+        severity: 'error',
+      });
+      // Revert preview on error
+      setImagePreview(null);
+      setManualProduct(prev => ({ ...prev, imagen: undefined }));
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   const handleRemoveProduct = (productId: string) => {
@@ -426,6 +493,12 @@ export default function CotizacionGenerator() {
             manualProduct={manualProduct}
             setManualProduct={setManualProduct}
             handleAddManualProduct={handleAddManualProduct}
+            quotationNumber={quotationNumber}
+            isUploadingImage={isUploadingImage}
+            setIsUploadingImage={setIsUploadingImage}
+            imagePreview={imagePreview}
+            setImagePreview={setImagePreview}
+            onImageUpload={handleManualProductImageUpload}
           />
 
           {/* Product List */}
@@ -513,12 +586,16 @@ export default function CotizacionGenerator() {
         </Alert>
       </Snackbar>
 
-      {/* Print Styles */}
+      {/* Print Styles & Animations */}
       <style>{`
         @media print {
           body * { visibility: hidden; }
           .quotation-preview, .quotation-preview * { visibility: visible; }
           .quotation-preview { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </Box>
@@ -718,11 +795,18 @@ interface ProductEntrySectionProps {
   manualProduct: ManualProductState;
   setManualProduct: React.Dispatch<React.SetStateAction<ManualProductState>>;
   handleAddManualProduct: () => void;
+  quotationNumber: string;
+  isUploadingImage: boolean;
+  setIsUploadingImage: (v: boolean) => void;
+  imagePreview: string | null;
+  setImagePreview: (v: string | null) => void;
+  onImageUpload: (file: File) => Promise<void>;
 }
 
 const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
   productEntryMode, setProductEntryMode, availableTreasure, selectedItem, setSelectedItem,
   handleAddProduct, manualProduct, setManualProduct, handleAddManualProduct,
+  isUploadingImage, imagePreview, setImagePreview, onImageUpload,
 }) => (
   <Box sx={{ mb: 2 }}>
     <Typography variant="subtitle2" sx={{
@@ -806,15 +890,216 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
     {productEntryMode === 'manual' && (
       <Box sx={{ bgcolor: brandColors.surfaceElevated, p: 2, borderRadius: 2, mb: 3 }}>
         <Grid container spacing={1.5}>
+          {/* Image Upload Section */}
           <Grid item xs={12}>
-            <TextField fullWidth label="Nombre del producto *" value={manualProduct.name} onChange={(e) => setManualProduct({ ...manualProduct, name: e.target.value })} size="small" placeholder="Ej: Esmeralda Corazón Verde" />
+            <Typography variant="caption" sx={{ color: brandColors.gray, display: 'block', mb: 1 }}>
+              Imagen del producto (opcional)
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+              {/* Image Preview / Upload Zone */}
+              <Box
+                component="label"
+                htmlFor="manual-product-image"
+                sx={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: 2,
+                  border: `2px dashed ${imagePreview ? brandColors.emerald : brandColors.borderSubtle}`,
+                  bgcolor: imagePreview ? 'transparent' : alpha(brandColors.emerald, 0.02),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: isUploadingImage ? 'wait' : 'pointer',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  transition: 'all 0.2s ease',
+                  flexShrink: 0,
+                  '&:hover': {
+                    borderColor: brandColors.emerald,
+                    bgcolor: alpha(brandColors.emerald, 0.05),
+                  },
+                }}
+              >
+                <input
+                  id="manual-product-image"
+                  type="file"
+                  accept="image/*,.gif"
+                  hidden
+                  disabled={isUploadingImage}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      onImageUpload(file);
+                    }
+                    e.target.value = '';
+                  }}
+                />
+                {isUploadingImage ? (
+                  <Loader2 size={24} color={brandColors.emerald} style={{ animation: 'spin 1s linear infinite' }} />
+                ) : imagePreview ? (
+                  <Box
+                    component="img"
+                    src={imagePreview}
+                    alt="Preview"
+                    sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Upload size={20} color={brandColors.gray} />
+                    <Typography sx={{ fontSize: '0.6rem', color: brandColors.gray, mt: 0.5 }}>
+                      Subir
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+
+              {/* Image Info / Actions */}
+              <Box sx={{ flex: 1 }}>
+                {imagePreview ? (
+                  <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                      <ImageIcon size={14} color={brandColors.emerald} />
+                      <Typography sx={{ fontSize: '0.75rem', color: brandColors.emerald, fontWeight: 600 }}>
+                        Imagen cargada
+                      </Typography>
+                    </Box>
+                    <Button
+                      size="small"
+                      startIcon={<X size={14} />}
+                      onClick={() => {
+                        setImagePreview(null);
+                        setManualProduct({ ...manualProduct, imagen: undefined });
+                      }}
+                      sx={{
+                        fontSize: '0.7rem',
+                        color: brandColors.error,
+                        textTransform: 'none',
+                        p: 0.5,
+                        minWidth: 'auto',
+                        '&:hover': { bgcolor: alpha(brandColors.error, 0.1) },
+                      }}
+                    >
+                      Eliminar
+                    </Button>
+                  </Box>
+                ) : (
+                  <Box>
+                    <Typography sx={{ fontSize: '0.7rem', color: brandColors.textSecondary }}>
+                      Arrastra o haz clic para subir
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.65rem', color: brandColors.textMuted, mt: 0.25 }}>
+                      JPG, PNG, GIF (max 10MB)
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Box>
           </Grid>
+
+          {/* Product Type Toggle - Gem vs Jewelry */}
           <Grid item xs={12}>
-            <FormControlLabel
-              control={<Switch checked={manualProduct.isJewelry} onChange={(e) => setManualProduct({ ...manualProduct, isJewelry: e.target.checked })} size="small" sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: brandColors.gold }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: brandColors.gold } }} />}
-              label={<Typography variant="body2" sx={{ fontSize: '0.8rem', color: brandColors.gray }}>Es joya (no esmeralda suelta)</Typography>}
-            />
+            <Typography variant="caption" sx={{ color: brandColors.gray, display: 'block', mb: 1 }}>
+              Tipo de producto
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Box
+                onClick={() => setManualProduct({ ...manualProduct, isJewelry: false })}
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 0.75,
+                  py: 1.5,
+                  px: 2,
+                  borderRadius: 2,
+                  cursor: 'pointer',
+                  border: `2px solid ${!manualProduct.isJewelry ? brandColors.emerald : brandColors.borderSubtle}`,
+                  bgcolor: !manualProduct.isJewelry ? alpha(brandColors.emerald, 0.08) : 'transparent',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    borderColor: brandColors.emerald,
+                    bgcolor: alpha(brandColors.emerald, 0.05),
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: !manualProduct.isJewelry ? alpha(brandColors.emerald, 0.15) : alpha(brandColors.gray, 0.1),
+                  }}
+                >
+                  <Gem size={22} color={!manualProduct.isJewelry ? brandColors.emerald : brandColors.gray} />
+                </Box>
+                <Typography sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: !manualProduct.isJewelry ? 700 : 500,
+                  color: !manualProduct.isJewelry ? brandColors.emerald : brandColors.gray,
+                }}>
+                  Esmeralda
+                </Typography>
+                <Typography sx={{ fontSize: '0.6rem', color: brandColors.textMuted, textAlign: 'center' }}>
+                  Gema suelta
+                </Typography>
+              </Box>
+
+              <Box
+                onClick={() => setManualProduct({ ...manualProduct, isJewelry: true })}
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 0.75,
+                  py: 1.5,
+                  px: 2,
+                  borderRadius: 2,
+                  cursor: 'pointer',
+                  border: `2px solid ${manualProduct.isJewelry ? brandColors.gold : brandColors.borderSubtle}`,
+                  bgcolor: manualProduct.isJewelry ? alpha(brandColors.gold, 0.08) : 'transparent',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    borderColor: brandColors.gold,
+                    bgcolor: alpha(brandColors.gold, 0.05),
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: manualProduct.isJewelry ? alpha(brandColors.gold, 0.15) : alpha(brandColors.gray, 0.1),
+                  }}
+                >
+                  <ShoppingBag size={22} color={manualProduct.isJewelry ? brandColors.gold : brandColors.gray} />
+                </Box>
+                <Typography sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: manualProduct.isJewelry ? 700 : 500,
+                  color: manualProduct.isJewelry ? brandColors.gold : brandColors.gray,
+                }}>
+                  Joya
+                </Typography>
+                <Typography sx={{ fontSize: '0.6rem', color: brandColors.textMuted, textAlign: 'center' }}>
+                  Con metal
+                </Typography>
+              </Box>
+            </Box>
           </Grid>
+
+          <Grid item xs={12}>
+            <TextField fullWidth label="Nombre del producto *" value={manualProduct.name} onChange={(e) => setManualProduct({ ...manualProduct, name: e.target.value })} size="small" placeholder={manualProduct.isJewelry ? "Ej: Anillo Esperanza Oro 18k" : "Ej: Esmeralda Corazón Verde"} />
+          </Grid>
+
           {manualProduct.isJewelry ? (
             <Grid item xs={12}>
               <TextField fullWidth label="Tipo de metal" value={manualProduct.metalType} onChange={(e) => setManualProduct({ ...manualProduct, metalType: e.target.value })} size="small" placeholder="Ej: Oro 18k, Plata 925" />
@@ -831,10 +1116,10 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
             <TextField fullWidth label="Precio COP *" type="number" value={manualProduct.precioCOP || ''} onChange={(e) => setManualProduct({ ...manualProduct, precioCOP: parseFloat(e.target.value) || 0 })} size="small" InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }} />
           </Grid>
         </Grid>
-        <Button fullWidth variant="contained" startIcon={<Plus size={18} />} onClick={handleAddManualProduct} disabled={!manualProduct.name || manualProduct.precioCOP <= 0}
+        <Button fullWidth variant="contained" startIcon={isUploadingImage ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Plus size={18} />} onClick={handleAddManualProduct} disabled={!manualProduct.name || manualProduct.precioCOP <= 0 || isUploadingImage}
           sx={{ mt: 2, bgcolor: brandColors.gold, color: brandColors.white, textTransform: 'none', fontWeight: 600, py: 1.25, borderRadius: 2, '&:hover': { bgcolor: brandColors.goldDark }, '&.Mui-disabled': { bgcolor: alpha(brandColors.gold, 0.3), color: 'rgba(255,255,255,0.6)' } }}
         >
-          Agregar Producto Manual
+          {isUploadingImage ? 'Subiendo imagen...' : 'Agregar Producto Manual'}
         </Button>
       </Box>
     )}

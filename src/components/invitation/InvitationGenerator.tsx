@@ -47,7 +47,7 @@ interface InvitationGeneratorProps {
 }
 
 export default function InvitationGenerator({ open, onClose }: InvitationGeneratorProps) {
-  const { generateInvitation, isGenerating, error, lastInvitation } = useInvitation();
+  const { generateInvitation, clearLastInvitation, isGenerating, error, lastInvitation } = useInvitation();
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -90,11 +90,14 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
   };
 
   const handleGenerateNew = () => {
+    // Clear the last invitation from hook state (this shows the form again)
+    clearLastInvitation();
     // Reset form state
     setGuestName('');
     setGuestEmail('');
     setGuestPhone('');
     setShowPrices(true);
+    setShowQR(false);
     setFormError('');
   };
 
