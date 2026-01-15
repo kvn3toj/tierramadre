@@ -16,6 +16,24 @@
       "maxDuration": 30
     },
     "api/provider-quotations.js": {
+      "maxDuration": 30
+    },
+    "api/media-upload.js": {
+      "maxDuration": 60
+    },
+    "api/feedback.js": {
+      "maxDuration": 30
+    },
+    "api/product-requests.js": {
+      "maxDuration": 30
+    },
+    "api/drive-diagnostics.js": {
+      "maxDuration": 30
+    },
+    "api/health.js": {
+      "maxDuration": 10
+    },
+    "api/cloudinary-upload.js": {
       "maxDuration": 60
     }
   },

@@ -202,7 +202,7 @@ export default function FeedbackWizard({ open, onClose, onCaptureStart }: Feedba
     setState((prev) => ({ ...prev, isSubmitting: true, error: null }));
 
     try {
-      const response = await fetch('/api/user-prefs?action=feedback.submit', {
+      const response = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

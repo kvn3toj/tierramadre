@@ -200,10 +200,12 @@ export default function CotizacionGenerator() {
   };
 
   // Handle media upload for manual product entry (images and videos)
+  // Uses Cloudinary for optimized uploads with automatic format conversion
   const handleManualProductMediaUpload = async (file: File) => {
     if (!file) return;
 
     const isVideo = file.type.startsWith('video/');
+    const isGif = file.type === 'image/gif';
     const maxSize = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024; // 100MB for video, 10MB for images
     const maxSizeLabel = isVideo ? '100MB' : '10MB';
 
@@ -224,17 +226,32 @@ export default function CotizacionGenerator() {
     setIsUploadingImage(true);
 
     try {
-      // Upload to Google Drive via the quotation upload API
+      // Upload to Cloudinary for optimized delivery
       const formData = new FormData();
       formData.append('quotationId', `manual-${quotationNumber}`);
       formData.append('file', file);
 
-      const response = await fetch('/api/provider-quotations?action=upload', {
+      // Try Cloudinary first (better optimization and CDN)
+      let response = await fetch('/api/cloudinary-upload', {
         method: 'POST',
         body: formData,
       });
 
-      const data = await response.json();
+      let data = await response.json();
+
+      // Fallback to Google Drive if Cloudinary fails
+      if (!data.success) {
+        console.log('[Upload] Cloudinary failed, trying Google Drive fallback...');
+        const driveFormData = new FormData();
+        driveFormData.append('quotationId', `manual-${quotationNumber}`);
+        driveFormData.append('file', file);
+
+        response = await fetch('/api/media-upload', {
+          method: 'POST',
+          body: driveFormData,
+        });
+        data = await response.json();
+      }
 
       // Log the full response for debugging
       console.log('[Upload] API Response:', { status: response.status, data });
@@ -253,9 +270,10 @@ export default function CotizacionGenerator() {
           ...(uploadedFile.isVideo && { videoUrl: uploadedFile.videoUrl }),
         }));
 
+        const mediaType = isVideo ? 'Video' : isGif ? 'GIF' : 'Imagen';
         setSnackbar({
           open: true,
-          message: isVideo ? 'Video subido exitosamente' : 'Imagen subida exitosamente',
+          message: `${mediaType} subido exitosamente`,
           severity: 'success',
         });
       } else {
@@ -268,11 +286,13 @@ export default function CotizacionGenerator() {
       let errorMessage = 'Error al subir el archivo';
       if (error instanceof Error && error.message) {
         if (error.message.includes('storage quota') || error.message.includes('Service Accounts')) {
-          errorMessage = 'El archivo es muy grande. Por favor intenta con un video más pequeño (máx 50MB recomendado).';
+          errorMessage = 'El archivo es muy grande. Por favor intenta con un archivo más pequeño.';
         } else if (error.message.includes('Failed to create upload folder')) {
           errorMessage = 'Error de configuración. Contacta al administrador.';
         } else if (error.message.includes('maxFileSize')) {
           errorMessage = 'El archivo excede el tamaño máximo permitido (100MB).';
+        } else if (error.message.includes('Cloudinary not configured')) {
+          errorMessage = 'Servicio de subida no configurado. Contacta al administrador.';
         } else {
           errorMessage = error.message;
         }

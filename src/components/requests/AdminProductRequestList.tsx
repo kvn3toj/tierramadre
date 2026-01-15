@@ -63,7 +63,7 @@ export default function AdminProductRequestList() {
 
   const fetchRequests = async () => {
     try {
-      const response = await fetch('/api/user-prefs?action=product-request.list');
+      const response = await fetch('/api/product-requests');
       const data = await response.json();
 
       if (data.success) {
@@ -139,8 +139,8 @@ export default function AdminProductRequestList() {
 
     setUpdating(true);
     try {
-      const response = await fetch('/api/user-prefs?action=product-request.update', {
-        method: 'POST',
+      const response = await fetch('/api/product-requests', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: selectedRequest.id,

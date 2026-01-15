@@ -53,7 +53,7 @@ export default function MyProductRequests() {
 
   const fetchMyRequests = async () => {
     try {
-      const response = await fetch(`/api/user-prefs?action=product-request.my&email=${encodeURIComponent(user?.email || '')}`);
+      const response = await fetch(`/api/product-requests?email=${encodeURIComponent(user?.email || '')}`);
       const data = await response.json();
 
       if (data.success) {

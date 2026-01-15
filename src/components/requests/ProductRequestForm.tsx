@@ -158,7 +158,7 @@ export default function ProductRequestForm() {
     setError(null);
 
     try {
-      const response = await fetch('/api/user-prefs?action=product-request.create', {
+      const response = await fetch('/api/product-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

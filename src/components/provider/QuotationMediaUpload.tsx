@@ -68,7 +68,7 @@ export default function QuotationMediaUpload({
     });
 
     try {
-      const response = await fetch('/api/provider-quotations?action=upload', {
+      const response = await fetch('/api/media-upload', {
         method: 'POST',
         body: formData,
       });

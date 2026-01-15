@@ -88,8 +88,8 @@ export default function FeedbackDashboard() {
 
     try {
       const url = statusFilter === 'all'
-        ? '/api/user-prefs?action=feedback.list'
-        : `/api/user-prefs?action=feedback.list&status=${statusFilter}`;
+        ? '/api/feedback'
+        : `/api/feedback?status=${statusFilter}`;
 
       const response = await fetch(url);
       const data = await response.json();
@@ -131,8 +131,8 @@ export default function FeedbackDashboard() {
 
     setIsSaving(true);
     try {
-      const response = await fetch('/api/user-prefs?action=feedback.update', {
-        method: 'POST',
+      const response = await fetch('/api/feedback', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: selectedFeedback.id,

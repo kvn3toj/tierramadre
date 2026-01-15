@@ -66,7 +66,8 @@
       "Bash(for i in 150 151 152 153 154 155)",
       "Bash(do)",
       "Bash(done)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(npm ls:*)"
     ],
     "deny": [],
     "ask": []
