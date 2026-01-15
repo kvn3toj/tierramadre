@@ -22,6 +22,7 @@ import {
   CACHE,
   ensureSheet,
 } from './_lib/index.js';
+import { sendNotificationEmail, EMAIL_TYPES, getAdminEmails } from './send-email.js';
 
 // =============================================================================
 // CONFIGURATION
@@ -99,6 +100,28 @@ async function createProductRequest(sheets, body) {
     valueInputOption: 'RAW',
     requestBody: { values: [row] },
   });
+
+  // Notify admins about new product request
+  const adminEmails = getAdminEmails();
+  if (adminEmails.length > 0) {
+    sendNotificationEmail(
+      EMAIL_TYPES.PROVIDER_SUBMITTED_QUOTATION, // Reuse this template as generic "new request" notification
+      {
+        adminName: '',
+        providerName: requesterName || requesterEmail.split('@')[0],
+        providerEmail: requesterEmail,
+        productType,
+        description,
+        weightCarats: `${weightMin || '?'} - ${weightMax || '?'}`,
+        color: colorPreference || 'Flexible',
+        quality: qualityPreference || 'Flexible',
+        priceCOP: budgetMax || 0,
+        quotationId: id,
+        requestId: '',
+      },
+      adminEmails
+    ).catch(err => console.error('[Email] Failed to send product request notification:', err));
+  }
 
   return {
     success: true,
@@ -193,6 +216,25 @@ async function updateProductRequest(sheets, id, updates) {
 
   const currentRow = rows[rowIndex + 1];
   const updatedRow = [...currentRow];
+  const oldStatus = currentRow[20] || 'pendiente';
+
+  // Extract request data for emails
+  const requesterEmail = currentRow[2];
+  const requesterName = currentRow[3] || requesterEmail?.split('@')[0] || 'Usuario';
+  const requesterRole = currentRow[4] || 'asesor';
+  const productType = currentRow[5] || 'Esmeralda';
+  const description = currentRow[6] || '';
+  const weightMin = currentRow[7];
+  const weightMax = currentRow[8];
+  const colorPreference = currentRow[9];
+  const qualityPreference = currentRow[10];
+  const budgetMin = currentRow[11];
+  const budgetMax = currentRow[12];
+  const quantity = currentRow[13];
+  const clientName = currentRow[14];
+  const priority = currentRow[16];
+  const neededBy = currentRow[17];
+  const notes = currentRow[18];
 
   // Ensure row has enough columns
   while (updatedRow.length < 25) {
@@ -220,6 +262,52 @@ async function updateProductRequest(sheets, id, updates) {
     valueInputOption: 'RAW',
     requestBody: { values: [updatedRow] },
   });
+
+  // Send email notifications based on status change
+  if (updates.status && updates.status !== oldStatus) {
+    // Notify the requester about their request status change
+    if (requesterEmail) {
+      sendNotificationEmail(
+        EMAIL_TYPES.PRODUCT_REQUEST_STATUS_UPDATE,
+        {
+          requesterName,
+          requestId: id,
+          productType,
+          status: updates.status,
+          adminResponse: updates.adminResponse || '',
+          respondedBy: updates.respondedBy || '',
+        },
+        requesterEmail
+      ).catch(err => console.error('[Email] Failed to send status update to requester:', err));
+    }
+
+    // If forwarded to provider, send email to provider
+    if (updates.status === 'enviada_proveedor' && updates.providerEmail) {
+      sendNotificationEmail(
+        EMAIL_TYPES.PRODUCT_REQUEST_FORWARDED,
+        {
+          providerName: updates.providerEmail.split('@')[0],
+          requesterName,
+          requesterRole,
+          productType,
+          description,
+          weightMin,
+          weightMax,
+          colorPreference,
+          qualityPreference,
+          budgetMin,
+          budgetMax,
+          quantity,
+          clientName,
+          priority,
+          neededBy,
+          notes,
+          requestId: id,
+        },
+        updates.providerEmail
+      ).catch(err => console.error('[Email] Failed to send forwarded notification to provider:', err));
+    }
+  }
 
   return { success: true, id, updated: true };
 }

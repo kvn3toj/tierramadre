@@ -21,6 +21,7 @@ import {
   ensureSheet,
   generateId,
 } from './_lib/index.js';
+import { sendNotificationEmail, EMAIL_TYPES } from './send-email.js';
 
 const SHEET_NAME = SHEETS.QUOTATION_REQUESTS;
 const HEADERS = [
@@ -123,6 +124,26 @@ export default async function handler(req, res) {
         requestBody: { values: [newRequest] },
       });
 
+      // Send email notification to assigned provider
+      if (assignedProvider) {
+        sendNotificationEmail(
+          EMAIL_TYPES.NEW_QUOTATION_REQUEST,
+          {
+            providerName: assignedProvider.split('@')[0],
+            productType,
+            weightMin,
+            weightMax,
+            colorPreference,
+            qualityPreference,
+            budgetMax,
+            quantity: quantity || 1,
+            notes,
+            requestId: newRequest[0],
+          },
+          assignedProvider
+        ).catch(err => console.error('[Email] Failed to send new request notification:', err));
+      }
+
       return sendSuccess(res, {
         request: {
           id: newRequest[0],
@@ -175,9 +196,9 @@ export default async function handler(req, res) {
       return sendSuccess(res, {});
     }
 
-    // DELETE - Delete request
+    // DELETE - Delete request (marks as cancelled)
     if (req.method === 'DELETE') {
-      const { id } = req.query;
+      const { id, reason } = req.query;
 
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
@@ -191,6 +212,10 @@ export default async function handler(req, res) {
         return sendError(res, 404, 'Request not found');
       }
 
+      const row = rows[rowIndex];
+      const assignedProvider = row[11];
+      const productType = row[2];
+
       // K column = Estado (status)
       await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
@@ -198,6 +223,20 @@ export default async function handler(req, res) {
         valueInputOption: 'RAW',
         requestBody: { values: [['cancelada']] },
       });
+
+      // Send cancellation email to provider if one was assigned
+      if (assignedProvider) {
+        sendNotificationEmail(
+          EMAIL_TYPES.QUOTATION_REQUEST_CANCELLED,
+          {
+            providerName: assignedProvider.split('@')[0],
+            requestId: id,
+            productType,
+            reason: reason || '',
+          },
+          assignedProvider
+        ).catch(err => console.error('[Email] Failed to send cancellation notification:', err));
+      }
 
       return sendSuccess(res, {});
     }

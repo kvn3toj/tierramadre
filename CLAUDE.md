@@ -55,6 +55,14 @@ Required in `.env`:
 VITE_GROQ_API_KEY=your_groq_api_key
 ```
 
+For email notifications (Vercel environment variables):
+```
+RESEND_API_KEY=re_xxxxxxxxxxxx          # Resend API key
+ADMIN_EMAILS=admin1@email.com,admin2@email.com  # Comma-separated admin emails
+EMAIL_FROM=Tierra Madre <noti@domain.com>  # Optional: custom sender
+APP_URL=https://tierra-madre-studio.vercel.app  # Optional: override app URL
+```
+
 ### Port Management
 Always clean ports before running dev server if conflicts occur.
 

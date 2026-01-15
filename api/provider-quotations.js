@@ -25,6 +25,7 @@ import {
   ensureSheet,
   generateId,
 } from './_lib/index.js';
+import { sendNotificationEmail, EMAIL_TYPES, getAdminEmails } from './send-email.js';
 
 const SHEET_NAME = SHEETS.PROVIDER_QUOTATIONS;
 const HEADERS = [
@@ -160,6 +161,27 @@ export default async function handler(req, res) {
         }
       }
 
+      // Send email notification to all admins
+      const adminEmails = getAdminEmails();
+      if (adminEmails.length > 0) {
+        sendNotificationEmail(
+          EMAIL_TYPES.PROVIDER_SUBMITTED_QUOTATION,
+          {
+            providerName: providerName || providerEmail.split('@')[0],
+            providerEmail,
+            productType,
+            weightCarats,
+            color,
+            quality,
+            priceCOP,
+            description,
+            quotationId,
+            requestId,
+          },
+          adminEmails
+        ).catch(err => console.error('[Email] Failed to send quotation notification to admins:', err));
+      }
+
       return sendSuccess(res, {
         quotation: {
           id: quotationId,
@@ -176,7 +198,7 @@ export default async function handler(req, res) {
 
     // PATCH - Update quotation
     if (req.method === 'PATCH') {
-      const { id, status, viewedByAdmin } = req.body;
+      const { id, status, viewedByAdmin, adminNotes } = req.body;
 
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
@@ -190,6 +212,12 @@ export default async function handler(req, res) {
         return sendError(res, 404, 'Quotation not found');
       }
 
+      const row = rows[rowIndex];
+      const providerEmail = row[1];
+      const providerName = row[15] || providerEmail.split('@')[0];
+      const productType = row[3];
+      const oldStatus = row[12] || 'disponible';
+
       if (status) {
         await sheets.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
@@ -197,6 +225,22 @@ export default async function handler(req, res) {
           valueInputOption: 'RAW',
           requestBody: { values: [[status]] },
         });
+
+        // Send email to provider about status change (only for meaningful changes)
+        if (status !== oldStatus && providerEmail) {
+          sendNotificationEmail(
+            EMAIL_TYPES.QUOTATION_STATUS_CHANGED,
+            {
+              providerName,
+              quotationId: id,
+              productType,
+              oldStatus,
+              newStatus: status,
+              adminNotes: adminNotes || '',
+            },
+            providerEmail
+          ).catch(err => console.error('[Email] Failed to send status change notification:', err));
+        }
       }
 
       if (viewedByAdmin !== undefined) {
@@ -227,6 +271,12 @@ export default async function handler(req, res) {
         return sendError(res, 404, 'Quotation not found');
       }
 
+      const row = rows[rowIndex];
+      const providerEmail = row[1];
+      const providerName = row[15] || providerEmail.split('@')[0];
+      const productType = row[3];
+      const oldStatus = row[12] || 'disponible';
+
       // Mark as sold/unavailable instead of deleting
       await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
@@ -234,6 +284,22 @@ export default async function handler(req, res) {
         valueInputOption: 'RAW',
         requestBody: { values: [['vendido']] },
       });
+
+      // Notify provider that their product was sold
+      if (providerEmail) {
+        sendNotificationEmail(
+          EMAIL_TYPES.QUOTATION_STATUS_CHANGED,
+          {
+            providerName,
+            quotationId: id,
+            productType,
+            oldStatus,
+            newStatus: 'vendido',
+            adminNotes: '',
+          },
+          providerEmail
+        ).catch(err => console.error('[Email] Failed to send sold notification:', err));
+      }
 
       return sendSuccess(res, { deleted: true });
     }

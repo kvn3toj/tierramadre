@@ -1,15 +1,19 @@
 /**
- * Cloudinary Process & Drive Upload API
+ * Cloudinary Process & Drive Upload API (OAuth Version)
  *
  * Receives files, processes them through Cloudinary for optimization,
- * then uploads the optimized result to Google Drive cotizaciones folder.
+ * then uploads the optimized result to Google Drive using OAuth.
+ *
+ * This uses YOUR personal Google account (via OAuth refresh token),
+ * not a Service Account. This allows uploads to personal Google Drive
+ * using your storage quota (15GB free, expandable with Google One).
  *
  * Flow:
  * 1. Receive file upload
  * 2. Upload to Cloudinary (temporary) for processing
  * 3. Download optimized version from Cloudinary
- * 4. Upload to Google Drive cotizaciones folder
- * 5. Delete from Cloudinary (optional cleanup)
+ * 4. Upload to Google Drive via OAuth (your account)
+ * 5. Delete from Cloudinary (cleanup)
  *
  * Endpoints:
  * - POST /api/cloudinary-upload - Upload files (multipart/form-data)
@@ -21,7 +25,12 @@
  * - Image optimization (quality, format)
  * - Video transcoding to MP4
  * - GIF optimization
- * - Final storage in Google Drive
+ * - Final storage in Google Drive (your account)
+ *
+ * Environment Variables Required:
+ * - CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
+ * - GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_REFRESH_TOKEN
+ * - GOOGLE_SHARED_DRIVE_ID (folder ID in your Drive)
  */
 
 import { v2 as cloudinary } from 'cloudinary';
@@ -31,16 +40,18 @@ import { Readable } from 'stream';
 import https from 'https';
 
 import {
-  getDriveClient,
-  isGoogleConfigured,
   getSharedDriveId,
   setCorsHeaders,
   handleOptions,
   sendError,
   sendSuccess,
   DRIVE_FOLDERS,
-  getOrCreateFolder,
 } from './_lib/index.js';
+
+import {
+  isOAuthConfigured,
+  getOAuthDriveClient,
+} from './_lib/oauth-drive-client.js';
 
 // Disable body parsing for file uploads
 export const config = {
@@ -167,10 +178,11 @@ function downloadFromUrl(url) {
 }
 
 /**
- * Upload buffer to Google Drive
+ * Upload buffer to Google Drive using OAuth
+ * This uses YOUR personal account, not Service Account
  */
-async function uploadToDrive(drive, folderId, buffer, fileName, mimeType, sharedDriveId) {
-  console.log(`[Drive] Uploading ${fileName} (${(buffer.length / 1024 / 1024).toFixed(2)}MB) to folder ${folderId}`);
+async function uploadToDriveOAuth(drive, folderId, buffer, fileName, mimeType) {
+  console.log(`[DriveOAuth] Uploading ${fileName} (${(buffer.length / 1024 / 1024).toFixed(2)}MB) to folder ${folderId}`);
 
   const readable = new Readable();
   readable.push(buffer);
@@ -186,19 +198,17 @@ async function uploadToDrive(drive, folderId, buffer, fileName, mimeType, shared
       body: readable,
     },
     fields: 'id, webViewLink, webContentLink, thumbnailLink',
-    supportsAllDrives: true,
   });
 
-  console.log(`[Drive] Upload successful. File ID: ${uploadedFile.data.id}`);
+  console.log(`[DriveOAuth] Upload successful. File ID: ${uploadedFile.data.id}`);
 
-  // Only set public permissions for non-Shared Drive files
-  if (!sharedDriveId) {
-    await drive.permissions.create({
-      fileId: uploadedFile.data.id,
-      requestBody: { role: 'reader', type: 'anyone' },
-      supportsAllDrives: true,
-    });
-  }
+  // Set public permissions so anyone can view
+  await drive.permissions.create({
+    fileId: uploadedFile.data.id,
+    requestBody: { role: 'reader', type: 'anyone' },
+  });
+
+  console.log(`[DriveOAuth] Public permission set for file ${uploadedFile.data.id}`);
 
   return uploadedFile.data;
 }
@@ -216,23 +226,49 @@ async function deleteFromCloudinary(publicId, resourceType) {
 }
 
 /**
- * Detect if folder is in a Shared Drive
+ * Find or create a folder using OAuth Drive client
  */
-async function detectDriveType(drive, parentFolderId) {
+async function getOrCreateFolderOAuth(drive, parentFolderId, folderName) {
+  const escapedFolderName = folderName.replace(/'/g, "\\'");
+
+  // Search for existing folder
   try {
-    await drive.drives.get({ driveId: parentFolderId, fields: 'id, name' });
-    return parentFolderId;
-  } catch {
-    try {
-      const folderResponse = await drive.files.get({
-        fileId: parentFolderId,
-        fields: 'driveId',
-        supportsAllDrives: true,
-      });
-      return folderResponse.data.driveId || null;
-    } catch {
-      return null;
+    const searchResponse = await drive.files.list({
+      q: `name='${escapedFolderName}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      fields: 'files(id, name)',
+    });
+
+    if (searchResponse.data.files && searchResponse.data.files.length > 0) {
+      console.log(`[DriveOAuth] Found existing folder "${folderName}": ${searchResponse.data.files[0].id}`);
+      return searchResponse.data.files[0].id;
     }
+  } catch (searchError) {
+    console.error(`[DriveOAuth] Error searching for folder "${folderName}":`, searchError.message);
+  }
+
+  // Create folder
+  try {
+    console.log(`[DriveOAuth] Creating folder "${folderName}" in parent ${parentFolderId}`);
+    const folder = await drive.files.create({
+      requestBody: {
+        name: folderName,
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: [parentFolderId],
+      },
+      fields: 'id',
+    });
+
+    // Set public permissions for folder
+    await drive.permissions.create({
+      fileId: folder.data.id,
+      requestBody: { role: 'reader', type: 'anyone' },
+    });
+
+    console.log(`[DriveOAuth] Created folder "${folderName}": ${folder.data.id}`);
+    return folder.data.id;
+  } catch (createError) {
+    console.error(`[DriveOAuth] Error creating folder "${folderName}":`, createError.message);
+    throw createError;
   }
 }
 
@@ -249,18 +285,19 @@ export default async function handler(req, res) {
     return sendError(res, 405, 'Method not allowed');
   }
 
-  // Check configurations
+  // Check Cloudinary configuration
   if (!isCloudinaryConfigured()) {
     return sendError(res, 500, 'Cloudinary not configured. Missing API credentials.');
   }
 
-  if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google Service Account not configured');
+  // Check OAuth configuration (required for Drive upload)
+  if (!isOAuthConfigured()) {
+    return sendError(res, 500, 'Google OAuth not configured. Missing GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, or GOOGLE_OAUTH_REFRESH_TOKEN.');
   }
 
-  const sharedDriveId = getSharedDriveId();
-  if (!sharedDriveId) {
-    return sendError(res, 500, 'Google Drive folder not configured');
+  const parentFolderId = getSharedDriveId();
+  if (!parentFolderId) {
+    return sendError(res, 500, 'Google Drive folder not configured. Missing GOOGLE_SHARED_DRIVE_ID.');
   }
 
   // Parse form data
@@ -301,22 +338,27 @@ export default async function handler(req, res) {
     fileList = [fileList];
   }
 
-  console.log(`[CloudinaryToDrive] Starting process for quotation: ${quotationId}`);
-  console.log(`[CloudinaryToDrive] Files to process: ${fileList.length}`);
+  console.log(`[CloudinaryToOAuth] Starting process for quotation: ${quotationId}`);
+  console.log(`[CloudinaryToOAuth] Files to process: ${fileList.length}`);
 
-  // Initialize Drive
-  const drive = getDriveClient(false);
-  const parentFolderId = sharedDriveId;
-  const driveIdParam = await detectDriveType(drive, parentFolderId);
+  // Get OAuth Drive client (uses YOUR personal account)
+  let drive;
+  try {
+    drive = await getOAuthDriveClient();
+    console.log(`[CloudinaryToOAuth] OAuth Drive client initialized`);
+  } catch (oauthError) {
+    console.error('[CloudinaryToOAuth] OAuth error:', oauthError.message);
+    return sendError(res, 500, `OAuth authentication failed: ${oauthError.message}`);
+  }
 
   // Create folder structure: cotizaciones/{quotationId}
   let targetFolderId;
   try {
-    const baseFolderId = await getOrCreateFolder(drive, parentFolderId, DRIVE_FOLDERS.COTIZACIONES, driveIdParam);
-    targetFolderId = await getOrCreateFolder(drive, baseFolderId, quotationId, driveIdParam);
-    console.log(`[CloudinaryToDrive] Target Drive folder: ${targetFolderId}`);
+    const baseFolderId = await getOrCreateFolderOAuth(drive, parentFolderId, DRIVE_FOLDERS.COTIZACIONES);
+    targetFolderId = await getOrCreateFolderOAuth(drive, baseFolderId, quotationId);
+    console.log(`[CloudinaryToOAuth] Target Drive folder: ${targetFolderId}`);
   } catch (folderError) {
-    console.error('[CloudinaryToDrive] Folder creation error:', folderError.message);
+    console.error('[CloudinaryToOAuth] Folder creation error:', folderError.message);
     return sendError(res, 500, 'Failed to create upload folder', folderError.message);
   }
 
@@ -340,40 +382,39 @@ export default async function handler(req, res) {
     const isVideo = typeInfo.type === 'video';
     const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
 
-    console.log(`[CloudinaryToDrive] Processing ${i + 1}/${fileList.length}: "${file.originalFilename}" (${fileSizeMB}MB, ${typeInfo.type})`);
+    console.log(`[CloudinaryToOAuth] Processing ${i + 1}/${fileList.length}: "${file.originalFilename}" (${fileSizeMB}MB, ${typeInfo.type})`);
 
     let cloudinaryResult = null;
 
     try {
       // Step 1: Upload to Cloudinary for processing
-      console.log(`[CloudinaryToDrive] Step 1: Uploading to Cloudinary for processing...`);
+      console.log(`[CloudinaryToOAuth] Step 1: Uploading to Cloudinary for processing...`);
       cloudinaryResult = await processWithCloudinary(file.filepath, {
         resourceType: typeInfo.type,
         originalFilename: file.originalFilename,
       });
-      console.log(`[CloudinaryToDrive] Cloudinary upload done: ${cloudinaryResult.public_id}`);
+      console.log(`[CloudinaryToOAuth] Cloudinary upload done: ${cloudinaryResult.public_id}`);
 
       // Step 2: Get optimized URL
       const optimizedUrl = getOptimizedUrl(cloudinaryResult, typeInfo.outputFormat, isVideo);
-      console.log(`[CloudinaryToDrive] Step 2: Optimized URL: ${optimizedUrl}`);
+      console.log(`[CloudinaryToOAuth] Step 2: Optimized URL: ${optimizedUrl}`);
 
       // Step 3: Download optimized file
-      console.log(`[CloudinaryToDrive] Step 3: Downloading optimized file...`);
+      console.log(`[CloudinaryToOAuth] Step 3: Downloading optimized file...`);
       const optimizedBuffer = await downloadFromUrl(optimizedUrl);
-      console.log(`[CloudinaryToDrive] Downloaded: ${(optimizedBuffer.length / 1024 / 1024).toFixed(2)}MB`);
+      console.log(`[CloudinaryToOAuth] Downloaded: ${(optimizedBuffer.length / 1024 / 1024).toFixed(2)}MB`);
 
-      // Step 4: Upload to Google Drive
+      // Step 4: Upload to Google Drive via OAuth
       const prefix = isVideo ? 'video' : 'image';
       const fileName = `${prefix}-${i + 1}-${Date.now()}.${typeInfo.outputFormat}`;
 
-      console.log(`[CloudinaryToDrive] Step 4: Uploading to Google Drive as ${fileName}...`);
-      const driveFile = await uploadToDrive(
+      console.log(`[CloudinaryToOAuth] Step 4: Uploading to Google Drive (OAuth) as ${fileName}...`);
+      const driveFile = await uploadToDriveOAuth(
         drive,
         targetFolderId,
         optimizedBuffer,
         fileName,
-        typeInfo.outputMime,
-        driveIdParam
+        typeInfo.outputMime
       );
 
       // Build result
@@ -396,13 +437,13 @@ export default async function handler(req, res) {
       }
 
       uploadedFiles.push(result);
-      console.log(`[CloudinaryToDrive] Success: ${fileName} -> Drive ID ${fileId}`);
+      console.log(`[CloudinaryToOAuth] Success: ${fileName} -> Drive ID ${fileId}`);
 
       // Step 5: Cleanup Cloudinary (async, don't wait)
       deleteFromCloudinary(cloudinaryResult.public_id, typeInfo.type);
 
     } catch (error) {
-      console.error(`[CloudinaryToDrive] Error processing "${file.originalFilename}":`, error.message);
+      console.error(`[CloudinaryToOAuth] Error processing "${file.originalFilename}":`, error.message);
       errors.push({
         file: file.originalFilename || file.newFilename,
         error: error.message,
