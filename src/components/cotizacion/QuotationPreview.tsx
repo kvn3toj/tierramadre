@@ -518,9 +518,9 @@ const ProductsSection: React.FC<{ products: CotizacionProduct[] }> = ({ products
                 borderBottom: index < products.length - 1 ? `1px solid ${quotationStyles.borderLight}` : 'none',
               }}
             >
-              {/* Product Image - Now larger with better loading */}
+              {/* Product Image - Use GIF for videos (better PDF display), fallback to imagen */}
               <ProductImage
-                src={product.imagen}
+                src={product.gifUrl || product.imagen}
                 isJewelry={product.isJewelry}
                 size={56}
               />

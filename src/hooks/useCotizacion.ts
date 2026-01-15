@@ -17,6 +17,7 @@ export interface CotizacionProduct {
   talla: string;
   precioCOP: number;
   imagen?: string;
+  gifUrl?: string; // Animated GIF for PDF export (from video)
   isJewelry: boolean;
   metalType?: string;
 }
@@ -57,6 +58,7 @@ export interface ManualProductState {
   metalType: string;
   imagen?: string;
   videoUrl?: string;
+  gifUrl?: string; // Animated GIF for PDF export (generated from video)
 }
 
 // Default investments
@@ -313,6 +315,7 @@ export function useCotizacion(): UseCotizacionReturn {
       isJewelry: product.isJewelry,
       metalType: product.metalType,
       imagen: product.imagen,
+      gifUrl: product.gifUrl, // For PDF export when product has video
     };
 
     setProducts(prev => [...prev, newProduct]);

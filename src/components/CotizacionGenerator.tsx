@@ -270,8 +270,11 @@ export default function CotizacionGenerator() {
         setManualProduct(prev => ({
           ...prev,
           imagen: displayUrl,
-          // Store video URL separately if it's a video
-          ...(uploadedFile.isVideo && { videoUrl: uploadedFile.videoUrl }),
+          // Store video URL and GIF URL for videos (GIF used in PDF export)
+          ...(uploadedFile.isVideo && {
+            videoUrl: uploadedFile.videoUrl,
+            gifUrl: uploadedFile.gifUrl, // Animated GIF for PDF display
+          }),
         }));
 
         const mediaType = isVideo ? 'Video' : isGif ? 'GIF' : 'Imagen';

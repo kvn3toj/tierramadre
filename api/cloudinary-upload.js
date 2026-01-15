@@ -154,6 +154,23 @@ function getOptimizedUrl(uploadResult, outputFormat, isVideo) {
 }
 
 /**
+ * Get animated GIF URL from video for PDF display
+ * Creates a short animated preview from the first few seconds
+ */
+function getVideoGifUrl(uploadResult) {
+  return cloudinary.url(uploadResult.public_id, {
+    resource_type: 'video',
+    format: 'gif',
+    transformation: [
+      { width: 400, crop: 'scale' },  // Reasonable size for PDF
+      { start_offset: 0, end_offset: 3 },  // First 3 seconds
+      { fps: 10 },  // Lower framerate for smaller file
+      { quality: 'auto:low' },  // Optimize for size
+    ],
+  });
+}
+
+/**
  * Download file from URL to buffer
  */
 function downloadFromUrl(url) {
@@ -434,6 +451,32 @@ export default async function handler(req, res) {
         result.url = `https://drive.google.com/file/d/${fileId}/preview`;
         result.videoUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
         result.thumbnailUrl = `/api/serve-drive-image?fileId=${fileId}&thumbnail=true`;
+
+        // Step 5: Generate and upload GIF for PDF display
+        try {
+          console.log(`[CloudinaryToOAuth] Step 5: Generating GIF preview for video...`);
+          const gifUrl = getVideoGifUrl(cloudinaryResult);
+          console.log(`[CloudinaryToOAuth] GIF URL: ${gifUrl}`);
+
+          const gifBuffer = await downloadFromUrl(gifUrl);
+          console.log(`[CloudinaryToOAuth] GIF downloaded: ${(gifBuffer.length / 1024).toFixed(0)}KB`);
+
+          const gifFileName = `gif-${i + 1}-${Date.now()}.gif`;
+          const gifDriveFile = await uploadToDriveOAuth(
+            drive,
+            targetFolderId,
+            gifBuffer,
+            gifFileName,
+            'image/gif'
+          );
+
+          result.gifUrl = `/api/serve-drive-image?fileId=${gifDriveFile.id}`;
+          result.gifId = gifDriveFile.id;
+          console.log(`[CloudinaryToOAuth] GIF uploaded: ${gifDriveFile.id}`);
+        } catch (gifError) {
+          console.warn(`[CloudinaryToOAuth] GIF generation failed (non-fatal):`, gifError.message);
+          // Continue without GIF - thumbnail will be used as fallback
+        }
       } else {
         result.url = `https://drive.google.com/uc?export=view&id=${fileId}`;
       }
@@ -441,7 +484,7 @@ export default async function handler(req, res) {
       uploadedFiles.push(result);
       console.log(`[CloudinaryToOAuth] Success: ${fileName} -> Drive ID ${fileId}`);
 
-      // Step 5: Cleanup Cloudinary (async, don't wait)
+      // Step 6: Cleanup Cloudinary (async, don't wait)
       deleteFromCloudinary(cloudinaryResult.public_id, typeInfo.type);
 
     } catch (error) {
