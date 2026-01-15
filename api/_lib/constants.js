@@ -7,6 +7,9 @@
 // Google Sheets Configuration
 export const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
 
+// Dedicated Feedback Spreadsheet (separate from inventory to avoid overload)
+export const FEEDBACK_SPREADSHEET_ID = process.env.FEEDBACK_SPREADSHEET_ID?.trim() || '1Nl2gxfZzWy4lUv_C-9xTt90MzFDIgHLvWtWtDRNzJaU';
+
 // Sheet Names
 export const SHEETS = {
   INVENTORY: 'Inventario',
@@ -30,6 +33,10 @@ export const DRIVE_FOLDERS = {
   COTIZACIONES_MANUALES: 'manuales',
   // Subfolder for provider quotations (QuotationMediaUpload)
   COTIZACIONES_PROVEEDORES: 'proveedores',
+  // Feedback app folder (inside TM-Studio/feedback-app)
+  FEEDBACK_APP: 'feedback-app',
+  // Screenshots subfolder inside feedback-app
+  FEEDBACK_SCREENSHOTS: 'screenshots',
 };
 
 // Cache Durations (optimized for Chrome/Safari compatibility)
