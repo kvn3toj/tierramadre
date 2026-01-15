@@ -245,6 +245,14 @@ async function handleMediaUpload(req, res) {
     console.log(`[Upload] Looking for/creating quotation folder: ${quotationId}`);
     quotationFolderId = await getOrCreateFolder(drive, cotizacionesFolderId, quotationId, driveIdParam);
     console.log(`[Upload] Quotation folder ID: ${quotationFolderId}`);
+
+    // Verify the created folder is in the Shared Drive
+    const folderCheck = await drive.files.get({
+      fileId: quotationFolderId,
+      fields: 'id, name, driveId, parents',
+      supportsAllDrives: true,
+    });
+    console.log(`[Upload] Folder verification:`, JSON.stringify(folderCheck.data, null, 2));
   } catch (folderError) {
     console.error('[Upload] Folder creation error:', folderError.message);
     if (folderError.response?.data) {
