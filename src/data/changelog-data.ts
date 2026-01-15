@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-15T06:19:57.464Z
+ * Generated at: 2026-01-15T06:26:52.952Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-15T06:19:57.464Z",
+  "generatedAt": "2026-01-15T06:26:52.952Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,19 +56,19 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "3e36c61",
-    "lastCommitDate": "2026-01-15 01:19:53 -0500"
+    "lastCommitHash": "23e99ad",
+    "lastCommitDate": "2026-01-15 01:26:49 -0500"
   },
   "stats": {
-    "totalCommits": 242,
-    "totalAdditions": 90992,
-    "totalDeletions": 55314,
-    "totalFilesChanged": 1501,
-    "netLines": 35678
+    "totalCommits": 243,
+    "totalAdditions": 91063,
+    "totalDeletions": 55337,
+    "totalFilesChanged": 1503,
+    "netLines": 35726
   },
   "categoryStats": {
+    "other": 82,
     "bugfix": 63,
-    "other": 81,
     "ux": 43,
     "performance": 14,
     "cleanup": 16,
@@ -76,8 +76,8 @@ export const changelogData: ChangelogData = {
     "auth": 14
   },
   "typeStats": {
+    "feat": 100,
     "fix": 103,
-    "feat": 99,
     "chore": 13,
     "refactor": 18,
     "other": 6,
@@ -91,7 +91,7 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "src/data/changelog-data.ts",
-      "count": 41
+      "count": 42
     },
     {
       "file": "public/version.json",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 234
+      "commits": 235
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "23e99ad",
+      "message": "Add diagnostic endpoint for Drive configuration check",
+      "fullMessage": "feat: Add diagnostic endpoint for Drive configuration check",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-15",
+      "type": "feat",
+      "category": "other",
+      "additions": 71,
+      "deletions": 23,
+      "filesChanged": 2
+    },
+    {
       "hash": "3e36c61",
       "message": "Add better error logging for Drive folder creation",
       "fullMessage": "fix: Add better error logging for Drive folder creation",
       "author": "Kvn3Toj",
-      "relativeTime": "1 second ago",
+      "relativeTime": "7 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Position snackbar above bottom tab bar in CotizacionGenerator",
       "fullMessage": "fix: Position snackbar above bottom tab bar in CotizacionGenerator",
       "author": "Kvn3Toj",
-      "relativeTime": "5 minutes ago",
+      "relativeTime": "11 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "QR code links to Treasure Browser with quoted products filtered",
       "fullMessage": "feat: QR code links to Treasure Browser with quoted products filtered",
       "author": "Kvn3Toj",
-      "relativeTime": "11 minutes ago",
+      "relativeTime": "18 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Add video upload support for manual product entries",
       "fullMessage": "feat: Add video upload support for manual product entries",
       "author": "Kvn3Toj",
-      "relativeTime": "18 minutes ago",
+      "relativeTime": "25 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -194,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve Shared Drive handling for image uploads",
       "fullMessage": "fix: Improve Shared Drive handling for image uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "29 minutes ago",
+      "relativeTime": "36 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -207,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image upload for manual product entries in quotation generator",
       "fullMessage": "feat: Add image upload for manual product entries in quotation generator",
       "author": "Kvn3Toj",
-      "relativeTime": "34 minutes ago",
+      "relativeTime": "41 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -220,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product images and links to quotation PDF export",
       "fullMessage": "feat: Add product images and links to quotation PDF export",
       "author": "Kvn3Toj",
-      "relativeTime": "70 minutes ago",
+      "relativeTime": "77 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -363,7 +376,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove legacy image gallery editing UI from product page",
       "fullMessage": "fix: Remove legacy image gallery editing UI from product page",
       "author": "Kvn3Toj",
-      "relativeTime": "9 hours ago",
+      "relativeTime": "10 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "ux",
@@ -519,7 +532,7 @@ export const changelogData: ChangelogData = {
       "message": "Enable analytics tracking for all user roles",
       "fullMessage": "feat: Enable analytics tracking for all user roles",
       "author": "Kvn3Toj",
-      "relativeTime": "13 hours ago",
+      "relativeTime": "14 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "analytics",
@@ -571,7 +584,7 @@ export const changelogData: ChangelogData = {
       "message": "Add analytics components and design system updates",
       "fullMessage": "feat: Add analytics components and design system updates",
       "author": "Kvn3Toj",
-      "relativeTime": "14 hours ago",
+      "relativeTime": "15 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "ux",
@@ -584,7 +597,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product request system for asesores/embajadores",
       "fullMessage": "feat: Add product request system for asesores/embajadores",
       "author": "Kvn3Toj",
-      "relativeTime": "14 hours ago",
+      "relativeTime": "15 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -623,7 +636,7 @@ export const changelogData: ChangelogData = {
       "message": "Redirect providers to provider dashboard on login",
       "fullMessage": "feat: Redirect providers to provider dashboard on login",
       "author": "Kvn3Toj",
-      "relativeTime": "31 hours ago",
+      "relativeTime": "32 hours ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",

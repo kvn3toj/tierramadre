@@ -250,11 +250,31 @@ export default async function handler(req, res) {
       const sharedDriveId = getSharedDriveId();
       const drive = getDriveClient(false);
 
-      // Check if we can access the Shared Drive
-      const driveInfo = await drive.drives.get({
-        driveId: sharedDriveId,
-        fields: 'id, name, capabilities',
-      });
+      let driveInfo = null;
+      let isSharedDrive = false;
+      let folderInfo = null;
+
+      // First, try to access as a Shared Drive
+      try {
+        const driveResponse = await drive.drives.get({
+          driveId: sharedDriveId,
+          fields: 'id, name, capabilities',
+        });
+        driveInfo = driveResponse.data;
+        isSharedDrive = true;
+      } catch {
+        // Not a Shared Drive, try as a regular folder
+        try {
+          const folderResponse = await drive.files.get({
+            fileId: sharedDriveId,
+            fields: 'id, name, mimeType, capabilities, parents',
+            supportsAllDrives: true,
+          });
+          folderInfo = folderResponse.data;
+        } catch (folderErr) {
+          return sendError(res, 500, 'Cannot access Drive ID', `ID ${sharedDriveId} is neither a Shared Drive nor an accessible folder: ${folderErr.message}`);
+        }
+      }
 
       // Check if cotizaciones folder exists
       const cotizacionesSearch = await drive.files.list({
@@ -262,14 +282,14 @@ export default async function handler(req, res) {
         fields: 'files(id, name)',
         supportsAllDrives: true,
         includeItemsFromAllDrives: true,
-        driveId: sharedDriveId,
-        corpora: 'drive',
+        ...(isSharedDrive && { driveId: sharedDriveId, corpora: 'drive' }),
       });
 
       return sendSuccess(res, {
-        sharedDriveId,
-        driveName: driveInfo.data.name,
-        capabilities: driveInfo.data.capabilities,
+        configuredId: sharedDriveId,
+        isSharedDrive,
+        driveInfo,
+        folderInfo,
         cotizacionesFolder: cotizacionesSearch.data.files?.[0] || null,
         folderNameExpected: DRIVE_FOLDERS.COTIZACIONES,
       });
