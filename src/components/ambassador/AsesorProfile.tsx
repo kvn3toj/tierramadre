@@ -105,13 +105,13 @@ export default function AsesorProfilePage() {
     return asesores.find(a => a.slug === slug) || null;
   }, [slug, asesores]);
 
-  // Check if current user owns this profile
+  // Check if current user owns this profile (email must match Asesores sheet)
   const isProfileOwner = useMemo(() => {
-    if (!googleUser?.email || !asesor) return false;
-    // Match by normalized name (since we may not have email in asesor data)
-    const userNormalized = normalizeName(googleUser.name || '');
-    const asesorNormalized = normalizeName(asesor.name);
-    return userNormalized === asesorNormalized;
+    if (!googleUser?.email || !asesor?.email) return false;
+
+    const userEmail = googleUser.email.toLowerCase().trim();
+    const asesorEmail = asesor.email.toLowerCase().trim();
+    return userEmail === asesorEmail;
   }, [googleUser, asesor]);
 
   // Fetch cotizaciones when viewing own profile
