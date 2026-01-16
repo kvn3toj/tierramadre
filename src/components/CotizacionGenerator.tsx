@@ -575,6 +575,7 @@ export default function CotizacionGenerator() {
             setAsesorName={setAsesorName}
             asesores={asesores}
             isLoadingAsesores={isLoadingAsesores}
+            googleUser={googleUser}
             recentClients={recentClients.clients}
             onSelectClient={(client) => {
               setClientName(client.name);
@@ -776,6 +777,7 @@ interface ClientInfoSectionProps {
   asesorName: string; setAsesorName: (v: string) => void;
   asesores: Asesor[];
   isLoadingAsesores?: boolean;
+  googleUser?: { email: string; name: string } | null;
   recentClients?: RecentClient[];
   onSelectClient?: (client: RecentClient) => void;
 }
@@ -783,11 +785,26 @@ interface ClientInfoSectionProps {
 const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
   clientName, setClientName, clientPhone, setClientPhone, clientEmail, setClientEmail,
   clientDocument, setClientDocument, asesorName, setAsesorName, asesores,
-  isLoadingAsesores = false, recentClients = [], onSelectClient,
+  isLoadingAsesores = false, googleUser, recentClients = [], onSelectClient,
 }) => {
-  // Find the selected asesor to get their role for the label
-  const selectedAsesor = asesores.find(a => a.name === asesorName);
-  const asesorLabel = selectedAsesor?.role || 'Asesor';
+  // Auto-detect asesor by matching Google user's email with asesores email/instagram field
+  const matchedAsesor = React.useMemo(() => {
+    if (!googleUser?.email || asesores.length === 0) return null;
+    const userEmailLower = googleUser.email.toLowerCase();
+    return asesores.find(a =>
+      a.email?.toLowerCase() === userEmailLower
+    );
+  }, [googleUser?.email, asesores]);
+
+  // Auto-set asesor name when match is found (only once)
+  React.useEffect(() => {
+    if (matchedAsesor && !asesorName) {
+      setAsesorName(matchedAsesor.name);
+    }
+  }, [matchedAsesor, asesorName, setAsesorName]);
+
+  // Get role label from matched asesor
+  const asesorLabel = matchedAsesor?.role || 'Asesor';
 
   return (
   <>
@@ -878,54 +895,55 @@ const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
         />
       </Grid>
       <Grid item xs={12}>
-        <Autocomplete
-          freeSolo
-          size="small"
-          options={asesores}
-          getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
-          value={asesorName}
-          loading={isLoadingAsesores}
-          onChange={(_, value) => {
-            if (typeof value === 'string') {
-              setAsesorName(value);
-            } else if (value) {
-              setAsesorName(value.name);
-            } else {
-              setAsesorName('');
-            }
+        {/* Asesor field - Auto-detected from Google account, read-only */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            p: 1.5,
+            bgcolor: alpha(brandColors.emerald, 0.06),
+            borderRadius: 2,
+            border: `1px solid ${alpha(brandColors.emerald, 0.2)}`,
           }}
-          onInputChange={(_, value) => setAsesorName(value)}
-          isOptionEqualToValue={(option, value) => {
-            if (typeof value === 'string') return option.name === value;
-            return option.name === value.name;
-          }}
-          renderOption={(props, option) => (
-            <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: alpha(brandColors.emerald, 0.15) }}>
-                <User size={16} color={brandColors.emerald} />
-              </Avatar>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="body2" fontWeight={500}>{option.name}</Typography>
-                {option.role && (
-                  <Typography variant="caption" sx={{ color: brandColors.textMuted }}>
-                    {option.role}
-                  </Typography>
-                )}
-              </Box>
-            </Box>
-          )}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label={asesorLabel}
-              placeholder={`Seleccionar o escribir nombre del ${asesorLabel.toLowerCase()}`}
-              InputProps={{
-                ...params.InputProps,
-                startAdornment: <InputAdornment position="start"><User size={16} color={brandColors.gray} /></InputAdornment>
+        >
+          <Avatar
+            src={googleUser ? `https://ui-avatars.com/api/?name=${encodeURIComponent(asesorName || googleUser.name)}&background=00AE7A&color=fff` : undefined}
+            sx={{ width: 40, height: 40, bgcolor: alpha(brandColors.emerald, 0.15) }}
+          >
+            <User size={20} color={brandColors.emerald} />
+          </Avatar>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="caption" sx={{ color: brandColors.textMuted, display: 'block', mb: 0.25 }}>
+              {asesorLabel}
+            </Typography>
+            {isLoadingAsesores ? (
+              <Typography variant="body2" sx={{ color: brandColors.textMuted }}>
+                Verificando...
+              </Typography>
+            ) : asesorName ? (
+              <Typography variant="body2" sx={{ fontWeight: 600, color: brandColors.textPrimary }}>
+                {asesorName}
+              </Typography>
+            ) : (
+              <Typography variant="body2" sx={{ color: brandColors.error }}>
+                No verificado - Contacta al administrador
+              </Typography>
+            )}
+          </Box>
+          {matchedAsesor && (
+            <Chip
+              label="Verificado"
+              size="small"
+              sx={{
+                bgcolor: alpha(brandColors.emerald, 0.15),
+                color: brandColors.emerald,
+                fontWeight: 600,
+                fontSize: '0.7rem',
               }}
             />
           )}
-        />
+        </Box>
       </Grid>
     </Grid>
   </>

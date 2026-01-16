@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-16T05:20:54.719Z
+ * Generated at: 2026-01-16T05:33:34.144Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-16T05:20:54.719Z",
+  "generatedAt": "2026-01-16T05:33:34.144Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,27 +56,27 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "63a0789",
-    "lastCommitDate": "2026-01-16 00:20:50 -0500"
+    "lastCommitHash": "bee61a9",
+    "lastCommitDate": "2026-01-16 00:33:30 -0500"
   },
   "stats": {
-    "totalCommits": 285,
-    "totalAdditions": 100176,
-    "totalDeletions": 58747,
-    "totalFilesChanged": 1669,
-    "netLines": 41429
+    "totalCommits": 286,
+    "totalAdditions": 100276,
+    "totalDeletions": 58807,
+    "totalFilesChanged": 1674,
+    "netLines": 41469
   },
   "categoryStats": {
+    "other": 102,
     "ux": 45,
     "bugfix": 78,
-    "other": 101,
     "performance": 15,
     "auth": 18,
     "cleanup": 17,
     "analytics": 11
   },
   "typeStats": {
-    "feat": 111,
+    "feat": 112,
     "fix": 119,
     "refactor": 20,
     "chore": 23,
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 65
+      "count": 66
     },
     {
       "file": "index.html",
-      "count": 64
+      "count": 65
     },
     {
       "file": "public/version.json",
-      "count": 54
+      "count": 55
     },
     {
       "file": "src/App.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 277
+      "commits": 278
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "bee61a9",
+      "message": "Unify product card link with QR code URL",
+      "fullMessage": "feat(cotizacion): Unify product card link with QR code URL",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-16",
+      "type": "feat",
+      "category": "other",
+      "additions": 100,
+      "deletions": 60,
+      "filesChanged": 5
+    },
+    {
       "hash": "63a0789",
       "message": "Convert videos to high-quality GIF only (Telegram/WhatsApp style)",
       "fullMessage": "feat(cotizacion): Convert videos to high-quality GIF only (Telegram/WhatsApp style)",
       "author": "Kvn3Toj",
-      "relativeTime": "1 second ago",
+      "relativeTime": "13 minutes ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "ux",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Use Vercel production URL instead of tierramadre.co",
       "fullMessage": "fix(cotizacion): Use Vercel production URL instead of tierramadre.co",
       "author": "Kvn3Toj",
-      "relativeTime": "12 minutes ago",
+      "relativeTime": "25 minutes ago",
       "date": "2026-01-16",
       "type": "fix",
       "category": "bugfix",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Extract shared styles and utilities from QuotationPreview",
       "fullMessage": "refactor(cotizacion): Extract shared styles and utilities from QuotationPreview",
       "author": "Kvn3Toj",
-      "relativeTime": "25 minutes ago",
+      "relativeTime": "38 minutes ago",
       "date": "2026-01-15",
       "type": "refactor",
       "category": "other",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Show actual video URL for manual products in quotation",
       "fullMessage": "fix(cotizacion): Show actual video URL for manual products in quotation",
       "author": "Kvn3Toj",
-      "relativeTime": "29 minutes ago",
+      "relativeTime": "41 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -194,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Medida, Diseño, and Precio por CT fields to manual entry",
       "fullMessage": "feat(cotizacion): Add Medida, Diseño, and Precio por CT fields to manual entry",
       "author": "Kvn3Toj",
-      "relativeTime": "46 minutes ago",
+      "relativeTime": "58 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -207,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog and version",
       "fullMessage": "chore: Update changelog and version",
       "author": "Kvn3Toj",
-      "relativeTime": "60 minutes ago",
+      "relativeTime": "72 minutes ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -220,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Fix video upload preview and QR code URL generation",
       "fullMessage": "fix(cotizacion): Fix video upload preview and QR code URL generation",
       "author": "Kvn3Toj",
-      "relativeTime": "77 minutes ago",
+      "relativeTime": "2 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -272,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Correct sendError parameter order and improve API error handling",
       "fullMessage": "fix: Correct sendError parameter order and improve API error handling",
       "author": "Kvn3Toj",
-      "relativeTime": "5 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -324,7 +337,7 @@ export const changelogData: ChangelogData = {
       "message": "Use email matching for asesor profile ownership detection",
       "fullMessage": "fix: Use email matching for asesor profile ownership detection",
       "author": "Kvn3Toj",
-      "relativeTime": "7 hours ago",
+      "relativeTime": "8 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -402,7 +415,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product thumbnails to cotización and save history to Drive",
       "fullMessage": "feat: Add product thumbnails to cotización and save history to Drive",
       "author": "Kvn3Toj",
-      "relativeTime": "8 hours ago",
+      "relativeTime": "9 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -467,7 +480,7 @@ export const changelogData: ChangelogData = {
       "message": "Use OAuth instead of Service Account for media uploads",
       "fullMessage": "fix: Use OAuth instead of Service Account for media uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "9 hours ago",
+      "relativeTime": "10 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",
@@ -532,7 +545,7 @@ export const changelogData: ChangelogData = {
       "message": "Split merged APIs and add Cloudinary processing for uploads",
       "fullMessage": "feat: Split merged APIs and add Cloudinary processing for uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "10 hours ago",
+      "relativeTime": "11 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -740,7 +753,7 @@ export const changelogData: ChangelogData = {
       "message": "Add video upload support for manual product entries",
       "fullMessage": "feat: Add video upload support for manual product entries",
       "author": "Kvn3Toj",
-      "relativeTime": "23 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -922,7 +935,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove legacy image gallery editing UI from product page",
       "fullMessage": "fix: Remove legacy image gallery editing UI from product page",
       "author": "Kvn3Toj",
-      "relativeTime": "32 hours ago",
+      "relativeTime": "33 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "ux",
@@ -1013,7 +1026,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Spanish accent marks and improve date sorting",
       "fullMessage": "fix: Add Spanish accent marks and improve date sorting",
       "author": "Kvn3Toj",
-      "relativeTime": "35 hours ago",
+      "relativeTime": "2 days ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -1208,7 +1221,7 @@ export const changelogData: ChangelogData = {
       "message": "Enable invitation links for asesores",
       "fullMessage": "feat: Enable invitation links for asesores",
       "author": "Kvn3Toj",
-      "relativeTime": "2 days ago",
+      "relativeTime": "3 days ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
@@ -1221,7 +1234,7 @@ export const changelogData: ChangelogData = {
       "message": "Enable accounts/cuentas for asesores and embajadores",
       "fullMessage": "feat: Enable accounts/cuentas for asesores and embajadores",
       "author": "Kvn3Toj",
-      "relativeTime": "2 days ago",
+      "relativeTime": "3 days ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
@@ -1234,7 +1247,7 @@ export const changelogData: ChangelogData = {
       "message": "Show feedback option in menu for asesores and embajadores",
       "fullMessage": "feat: Show feedback option in menu for asesores and embajadores",
       "author": "Kvn3Toj",
-      "relativeTime": "2 days ago",
+      "relativeTime": "3 days ago",
       "date": "2026-01-13",
       "type": "feat",
       "category": "other",
