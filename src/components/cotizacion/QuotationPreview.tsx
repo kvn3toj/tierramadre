@@ -6,7 +6,7 @@
 
 import React, { forwardRef } from 'react';
 import { Box, Typography, Paper } from '@mui/material';
-import { Package, DollarSign, Gem, ShoppingBag, ExternalLink, Calendar, User, FileText, Shield } from 'lucide-react';
+import { Package, DollarSign, Gem, ShoppingBag, ExternalLink, Calendar, User, FileText } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   documentShadows,
@@ -236,7 +236,7 @@ export const QuotationPreview = forwardRef<HTMLDivElement, QuotationPreviewProps
               {notes && <NotesSection notes={notes} />}
               <ValiditySection expiryStr={expiryStr} footerNote={businessSettings.footerNote} />
               <CertificationLogosSection />
-              <FooterSection products={products} businessSettings={businessSettings} />
+              <FooterSection businessSettings={businessSettings} />
             </Box>
           </Box>
         </Box>
@@ -253,11 +253,11 @@ QuotationPreview.displayName = 'QuotationPreview';
 
 const LogoSection: React.FC = () => (
   <Box sx={{ textAlign: 'center', mb: 3 }}>
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <img
-        src="/logo-horizontal-dark.png"
+        src="/logo-quotation.png"
         alt="Tierra Madre"
-        style={{ height: 48, width: 'auto', objectFit: 'contain' }}
+        style={{ height: 72, width: 'auto', objectFit: 'contain' }}
         onError={(e) => {
           const target = e.target as HTMLImageElement;
           target.style.display = 'none';
@@ -272,16 +272,17 @@ const LogoSection: React.FC = () => (
       />
     </Box>
     <Typography sx={{
-      fontSize: '0.6rem',
-      color: brandColors.emerald,
-      letterSpacing: '0.2em',
+      fontSize: '0.55rem',
+      color: brandColors.textPrimary,
+      letterSpacing: '0.15em',
       fontWeight: 500,
       textTransform: 'uppercase',
+      mt: 0.5,
     }}>
       Colombian Emeralds
     </Typography>
     <Box sx={{
-      mt: 2,
+      mt: 1.5,
       mx: 'auto',
       width: 40,
       height: 2,
@@ -637,6 +638,7 @@ const TotalsSection: React.FC<TotalsSectionProps> = ({
   total,
 }) => {
   const showBreakdown = products.length > 0 && totalInvestment > 0;
+  const qrUrl = getQrCodeUrl(products);
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -671,34 +673,113 @@ const TotalsSection: React.FC<TotalsSectionProps> = ({
         )}
       </Box>
 
-      {/* Total Card */}
+      {/* Total Card - iOS HIG Hero Card with QR */}
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${brandColors.emerald} 0%, ${primitiveColors.emerald[600]} 100%)`,
-          borderRadius: 2,
-          p: 2,
-          textAlign: 'center',
-          boxShadow: '0 4px 12px rgba(0,174,122,0.25)',
+          background: `linear-gradient(145deg, ${brandColors.emerald} 0%, ${primitiveColors.emerald[600]} 50%, ${primitiveColors.emerald[700]} 100%)`,
+          borderRadius: 3,
+          p: 2.5,
+          boxShadow: '0 8px 24px rgba(0,174,122,0.3), 0 2px 8px rgba(0,0,0,0.1)',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <Typography sx={{
-          fontSize: '0.6rem',
-          color: 'rgba(255,255,255,0.8)',
-          letterSpacing: '0.15em',
-          textTransform: 'uppercase',
-          mb: 0.5,
+        {/* Subtle glass effect overlay */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '50%',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 100%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'relative',
+          zIndex: 1,
         }}>
-          Precio Total
-        </Typography>
-        <Typography sx={{
-          fontSize: '1.75rem',
-          fontWeight: 700,
-          color: quotationStyles.surface,
-          letterSpacing: '-0.02em',
-          ...quotationTypography.monospace,
-        }}>
-          {formatCurrency(total)}
-        </Typography>
+          {/* Price Content - Left aligned for visual hierarchy */}
+          <Box sx={{ flex: 1 }}>
+            <Typography sx={{
+              fontSize: '0.55rem',
+              color: 'rgba(255,255,255,0.75)',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              fontWeight: 500,
+              mb: 0.5,
+            }}>
+              Precio Total
+            </Typography>
+            <Typography sx={{
+              fontSize: '1.6rem',
+              fontWeight: 700,
+              color: quotationStyles.surface,
+              letterSpacing: '-0.02em',
+              lineHeight: 1,
+              ...quotationTypography.monospace,
+            }}>
+              {formatCurrency(total)}
+            </Typography>
+            <Typography sx={{
+              fontSize: '0.45rem',
+              color: 'rgba(255,255,255,0.6)',
+              mt: 0.75,
+              letterSpacing: '0.02em',
+            }}>
+              Escanea para ver productos
+            </Typography>
+          </Box>
+
+          {/* QR Code - Right side */}
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              p: 0.75,
+              bgcolor: quotationStyles.surface,
+              borderRadius: 2,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              flexShrink: 0,
+            }}
+          >
+            {products.length > 0 ? (
+              <QRCodeSVG
+                value={qrUrl}
+                size={52}
+                level="L"
+                fgColor={primitiveColors.emerald[700]}
+                bgColor={quotationStyles.surface}
+                style={{ width: '100%', height: '100%', display: 'block' }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(5, 1fr)',
+                  gap: '1px',
+                }}
+              >
+                {Array(25).fill(0).map((_, i) => (
+                  <Box
+                    key={i}
+                    sx={{
+                      bgcolor: (i + Math.floor(i / 5)) % 2 === 0 ? '#E5E7EB' : 'transparent',
+                      borderRadius: '0.5px',
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
+          </Box>
+        </Box>
       </Box>
     </Box>
   );
@@ -822,121 +903,26 @@ const CertificationLogosSection: React.FC = () => (
 // =============================================================================
 
 interface FooterSectionProps {
-  products: CotizacionProduct[];
   businessSettings: BusinessSettings;
 }
 
-const FooterSection: React.FC<FooterSectionProps> = ({ products, businessSettings }) => (
+const FooterSection: React.FC<FooterSectionProps> = ({ businessSettings }) => (
   <Box
     sx={{
       borderTop: `1px solid ${quotationStyles.borderLight}`,
       pt: 2,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: 2,
+      textAlign: 'center',
     }}
   >
-    <QRCodeBox products={products} />
-    <Box sx={{ textAlign: 'center', flex: 1 }}>
-      <Typography sx={{ fontSize: '0.6rem', color: brandColors.textPrimary, fontWeight: 500 }}>
-        {businessSettings.contactPhone}
-      </Typography>
-      <Typography sx={{ fontSize: '0.5rem', color: brandColors.gray, mt: 0.25, letterSpacing: '0.02em' }}>
-        {businessSettings.appUrl}
-      </Typography>
-      <Typography sx={{ fontSize: '0.55rem', color: brandColors.emerald, mt: 0.25, letterSpacing: '0.02em' }}>
-        {businessSettings.contactEmail}
-      </Typography>
-    </Box>
-    <AuthenticityBadge />
-  </Box>
-);
-
-const QRCodeBox: React.FC<{ products: CotizacionProduct[] }> = ({ products }) => {
-  const qrUrl = getQrCodeUrl(products);
-
-  return (
-    <Box
-      sx={{
-        width: 56,
-        height: 56,
-        p: 0.5,
-        bgcolor: quotationStyles.surface,
-        border: `1px solid ${quotationStyles.borderLight}`,
-        borderRadius: 1.5,
-        flexShrink: 0,
-      }}
-    >
-      {products.length > 0 ? (
-        <QRCodeSVG
-          value={qrUrl}
-          size={48}
-          level="L"
-          fgColor={primitiveColors.emerald[700]}
-          bgColor={quotationStyles.surface}
-          style={{ width: '100%', height: '100%', display: 'block' }}
-        />
-      ) : (
-        <Box
-          sx={{
-            width: '100%',
-            height: '100%',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(5, 1fr)',
-            gap: '1px',
-          }}
-        >
-          {Array(25).fill(0).map((_, i) => (
-            <Box
-              key={i}
-              sx={{
-                bgcolor: (i + Math.floor(i / 5)) % 2 === 0 ? '#E5E7EB' : 'transparent',
-                borderRadius: '0.5px',
-              }}
-            />
-          ))}
-        </Box>
-      )}
-    </Box>
-  );
-};
-
-const AuthenticityBadge: React.FC = () => (
-  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-    <img
-      src="/logosymbol-dark.png"
-      alt="Tierra Madre"
-      style={{ height: 20, width: 'auto', opacity: 0.8 }}
-      onError={(e) => {
-        (e.target as HTMLImageElement).style.display = 'none';
-      }}
-    />
-    <Box
-      sx={{
-        width: 56,
-        height: 56,
-        borderRadius: '50%',
-        bgcolor: quotationStyles.accentTint,
-        border: `2px solid ${brandColors.emerald}`,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Shield size={18} color={brandColors.emerald} />
-      <Typography sx={{
-        fontSize: '0.4rem',
-        fontWeight: 600,
-        color: brandColors.emerald,
-        mt: 0.25,
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-      }}>
-        Auténtico
-      </Typography>
-    </Box>
+    <Typography sx={{ fontSize: '0.6rem', color: brandColors.textPrimary, fontWeight: 500 }}>
+      {businessSettings.contactPhone}
+    </Typography>
+    <Typography sx={{ fontSize: '0.5rem', color: brandColors.gray, mt: 0.25, letterSpacing: '0.02em' }}>
+      {businessSettings.appUrl}
+    </Typography>
+    <Typography sx={{ fontSize: '0.55rem', color: brandColors.emerald, mt: 0.25, letterSpacing: '0.02em' }}>
+      {businessSettings.contactEmail}
+    </Typography>
   </Box>
 );
 
