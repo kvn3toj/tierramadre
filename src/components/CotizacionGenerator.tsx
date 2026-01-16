@@ -1290,6 +1290,9 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
               <Grid item xs={6}><TextField fullWidth label="Color" value={manualProduct.color} onChange={(e) => setManualProduct({ ...manualProduct, color: e.target.value })} size="small" placeholder="Ej: Verde Intenso" /></Grid>
               <Grid item xs={6}><TextField fullWidth label="Calidad" value={manualProduct.calidad} onChange={(e) => setManualProduct({ ...manualProduct, calidad: e.target.value })} size="small" placeholder="Ej: AAA" /></Grid>
               <Grid item xs={6}><TextField fullWidth label="Talla" value={manualProduct.talla} onChange={(e) => setManualProduct({ ...manualProduct, talla: e.target.value })} size="small" placeholder="Ej: Óvalo" /></Grid>
+              <Grid item xs={6}><TextField fullWidth label="Medida" value={manualProduct.medida} onChange={(e) => setManualProduct({ ...manualProduct, medida: e.target.value })} size="small" placeholder="Ej: Talla 7, 45cm" /></Grid>
+              <Grid item xs={6}><TextField fullWidth label="Diseño" value={manualProduct.diseno} onChange={(e) => setManualProduct({ ...manualProduct, diseno: e.target.value })} size="small" placeholder="Ej: Clásico, Moderno" /></Grid>
+              <Grid item xs={12}><TextField fullWidth label="Precio por CT" value={manualProduct.precioPorCt} onChange={(e) => setManualProduct({ ...manualProduct, precioPorCt: e.target.value })} size="small" placeholder="Ej: $500,000" InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }} /></Grid>
             </>
           ) : (
             <>
@@ -1297,6 +1300,9 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
               <Grid item xs={6}><TextField fullWidth label="Color" value={manualProduct.color} onChange={(e) => setManualProduct({ ...manualProduct, color: e.target.value })} size="small" placeholder="Ej: Verde Intenso" /></Grid>
               <Grid item xs={6}><TextField fullWidth label="Calidad" value={manualProduct.calidad} onChange={(e) => setManualProduct({ ...manualProduct, calidad: e.target.value })} size="small" placeholder="Ej: AAA" /></Grid>
               <Grid item xs={6}><TextField fullWidth label="Talla" value={manualProduct.talla} onChange={(e) => setManualProduct({ ...manualProduct, talla: e.target.value })} size="small" placeholder="Ej: Óvalo" /></Grid>
+              <Grid item xs={6}><TextField fullWidth label="Medida" value={manualProduct.medida} onChange={(e) => setManualProduct({ ...manualProduct, medida: e.target.value })} size="small" placeholder="Ej: 8x6mm" /></Grid>
+              <Grid item xs={6}><TextField fullWidth label="Diseño" value={manualProduct.diseno} onChange={(e) => setManualProduct({ ...manualProduct, diseno: e.target.value })} size="small" placeholder="Ej: Facetado" /></Grid>
+              <Grid item xs={12}><TextField fullWidth label="Precio por CT" value={manualProduct.precioPorCt} onChange={(e) => setManualProduct({ ...manualProduct, precioPorCt: e.target.value })} size="small" placeholder="Ej: $500,000" InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }} /></Grid>
             </>
           )}
           <Grid item xs={12}>

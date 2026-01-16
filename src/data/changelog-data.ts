@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-16T04:03:42.486Z
+ * Generated at: 2026-01-16T04:21:06.721Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-16T04:03:42.486Z",
+  "generatedAt": "2026-01-16T04:21:06.721Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,19 +56,19 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "5eeb52f",
-    "lastCommitDate": "2026-01-15 23:03:38 -0500"
+    "lastCommitHash": "f70eb34",
+    "lastCommitDate": "2026-01-15 23:21:03 -0500"
   },
   "stats": {
-    "totalCommits": 279,
-    "totalAdditions": 99071,
-    "totalDeletions": 57715,
-    "totalFilesChanged": 1639,
-    "netLines": 41356
+    "totalCommits": 280,
+    "totalAdditions": 99178,
+    "totalDeletions": 57809,
+    "totalFilesChanged": 1642,
+    "netLines": 41369
   },
   "categoryStats": {
+    "other": 99,
     "bugfix": 76,
-    "other": 98,
     "ux": 44,
     "performance": 15,
     "auth": 18,
@@ -76,8 +76,8 @@ export const changelogData: ChangelogData = {
     "analytics": 11
   },
   "typeStats": {
+    "chore": 23,
     "fix": 117,
-    "chore": 22,
     "feat": 109,
     "refactor": 19,
     "other": 9,
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 59
+      "count": 60
     },
     {
       "file": "index.html",
-      "count": 58
+      "count": 59
     },
     {
       "file": "public/version.json",
-      "count": 48
+      "count": 49
     },
     {
       "file": "src/App.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 271
+      "commits": 272
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "f70eb34",
+      "message": "Update changelog and version",
+      "fullMessage": "chore: Update changelog and version",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-15",
+      "type": "chore",
+      "category": "other",
+      "additions": 107,
+      "deletions": 94,
+      "filesChanged": 3
+    },
+    {
       "hash": "5eeb52f",
       "message": "Fix video upload preview and QR code URL generation",
       "fullMessage": "fix(cotizacion): Fix video upload preview and QR code URL generation",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "17 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -207,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog and misc improvements",
       "fullMessage": "chore: Update changelog and misc improvements",
       "author": "Kvn3Toj",
-      "relativeTime": "4 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -220,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Make asesor card fully clickable and always show profile button",
       "fullMessage": "feat: Make asesor card fully clickable and always show profile button",
       "author": "Kvn3Toj",
-      "relativeTime": "4 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -259,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Sync Safari cache version to 2026.01.15.1006",
       "fullMessage": "chore: Sync Safari cache version to 2026.01.15.1006",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "performance",
@@ -272,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Auto-lookup provider email from Asesores sheet",
       "fullMessage": "feat: Auto-lookup provider email from Asesores sheet",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -285,7 +298,7 @@ export const changelogData: ChangelogData = {
       "message": "Generate animated GIF from video for PDF cotización display",
       "fullMessage": "feat: Generate animated GIF from video for PDF cotización display",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -298,7 +311,7 @@ export const changelogData: ChangelogData = {
       "message": "Use OAuth for serve-drive-image and update cotización URLs",
       "fullMessage": "fix: Use OAuth for serve-drive-image and update cotización URLs",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",
@@ -337,7 +350,7 @@ export const changelogData: ChangelogData = {
       "message": "Update version and changelog",
       "fullMessage": "chore: Update version and changelog",
       "author": "Kvn3Toj",
-      "relativeTime": "7 hours ago",
+      "relativeTime": "8 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -350,7 +363,7 @@ export const changelogData: ChangelogData = {
       "message": "Store feedback screenshots in Google Drive and use dedicated sheet",
       "fullMessage": "feat: Store feedback screenshots in Google Drive and use dedicated sheet",
       "author": "Kvn3Toj",
-      "relativeTime": "7 hours ago",
+      "relativeTime": "8 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -363,7 +376,7 @@ export const changelogData: ChangelogData = {
       "message": "Sanitize OAuth env vars and add folder management API",
       "fullMessage": "fix: Sanitize OAuth env vars and add folder management API",
       "author": "Kvn3Toj",
-      "relativeTime": "7 hours ago",
+      "relativeTime": "8 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",
@@ -402,7 +415,7 @@ export const changelogData: ChangelogData = {
       "message": "Reorganize cotizaciones folder structure",
       "fullMessage": "refactor: Reorganize cotizaciones folder structure",
       "author": "Kvn3Toj",
-      "relativeTime": "8 hours ago",
+      "relativeTime": "9 hours ago",
       "date": "2026-01-15",
       "type": "refactor",
       "category": "other",
@@ -467,7 +480,7 @@ export const changelogData: ChangelogData = {
       "message": "Allow uploads to shared folders with Service Accounts",
       "fullMessage": "fix: Allow uploads to shared folders with Service Accounts",
       "author": "Kvn3Toj",
-      "relativeTime": "20 hours ago",
+      "relativeTime": "21 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -571,7 +584,7 @@ export const changelogData: ChangelogData = {
       "message": "Add provider-quotations to vercel.json with 60s maxDuration",
       "fullMessage": "fix: Add provider-quotations to vercel.json with 60s maxDuration",
       "author": "Kvn3Toj",
-      "relativeTime": "21 hours ago",
+      "relativeTime": "22 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -675,7 +688,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve Shared Drive handling for image uploads",
       "fullMessage": "fix: Improve Shared Drive handling for image uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "22 hours ago",
+      "relativeTime": "23 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -688,7 +701,7 @@ export const changelogData: ChangelogData = {
       "message": "Add image upload for manual product entries in quotation generator",
       "fullMessage": "feat: Add image upload for manual product entries in quotation generator",
       "author": "Kvn3Toj",
-      "relativeTime": "22 hours ago",
+      "relativeTime": "23 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -714,7 +727,7 @@ export const changelogData: ChangelogData = {
       "message": "Use requestBody for Shared Drive file uploads",
       "fullMessage": "fix: Use requestBody for Shared Drive file uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "23 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -727,7 +740,7 @@ export const changelogData: ChangelogData = {
       "message": "Use full Drive scope for Shared Drive uploads",
       "fullMessage": "fix: Use full Drive scope for Shared Drive uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "23 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -753,7 +766,7 @@ export const changelogData: ChangelogData = {
       "message": "HEIC image fallback using Google Drive thumbnails",
       "fullMessage": "fix: HEIC image fallback using Google Drive thumbnails",
       "author": "Kvn3Toj",
-      "relativeTime": "28 hours ago",
+      "relativeTime": "29 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -766,7 +779,7 @@ export const changelogData: ChangelogData = {
       "message": "Provider portal improvements and staff route enhancements",
       "fullMessage": "feat: Provider portal improvements and staff route enhancements",
       "author": "Kvn3Toj",
-      "relativeTime": "28 hours ago",
+      "relativeTime": "29 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -779,7 +792,7 @@ export const changelogData: ChangelogData = {
       "message": "Prevent video carousel blinking with loading state and iOS fix",
       "fullMessage": "fix: Prevent video carousel blinking with loading state and iOS fix",
       "author": "Kvn3Toj",
-      "relativeTime": "28 hours ago",
+      "relativeTime": "29 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "ux",
@@ -831,7 +844,7 @@ export const changelogData: ChangelogData = {
       "message": "Optimize API endpoints for Chrome browser compatibility",
       "fullMessage": "fix: Optimize API endpoints for Chrome browser compatibility",
       "author": "Kvn3Toj",
-      "relativeTime": "29 hours ago",
+      "relativeTime": "30 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "performance",
@@ -870,7 +883,7 @@ export const changelogData: ChangelogData = {
       "message": "Provider portal inventory improvements and UI refinements",
       "fullMessage": "feat: Provider portal inventory improvements and UI refinements",
       "author": "Kvn3Toj",
-      "relativeTime": "33 hours ago",
+      "relativeTime": "34 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "ux",
@@ -948,7 +961,7 @@ export const changelogData: ChangelogData = {
       "message": "Add restricted inventory view for provider portal",
       "fullMessage": "feat: Add restricted inventory view for provider portal",
       "author": "Kvn3Toj",
-      "relativeTime": "34 hours ago",
+      "relativeTime": "35 hours ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "other",
@@ -961,7 +974,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve new products notification accuracy and add logo",
       "fullMessage": "fix: Improve new products notification accuracy and add logo",
       "author": "Kvn3Toj",
-      "relativeTime": "34 hours ago",
+      "relativeTime": "35 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",

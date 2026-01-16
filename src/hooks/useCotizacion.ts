@@ -60,6 +60,9 @@ export interface ManualProductState {
   metalType: string;
   pesoTotal: string;      // Total weight in carats
   cantidadGemas: string;  // Number of gems
+  medida: string;         // Size/measurement (e.g., ring size, necklace length)
+  diseno: string;         // Design/style description
+  precioPorCt: string;    // Price per carat
   imagen?: string;
   videoUrl?: string;
   gifUrl?: string; // Animated GIF for PDF export (generated from video)
@@ -214,6 +217,9 @@ const initialManualProduct: ManualProductState = {
   metalType: '',
   pesoTotal: '',
   cantidadGemas: '',
+  medida: '',
+  diseno: '',
+  precioPorCt: '',
 };
 
 export function useCotizacion(): UseCotizacionReturn {
