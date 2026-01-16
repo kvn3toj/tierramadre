@@ -1,6 +1,6 @@
 /**
  * PriceDisplay Component
- * Muestra precios: Price y Comunidad TM (solo para embajadores autenticados)
+ * Muestra el precio regular de los productos.
  * Supports guest pricing mode: hides prices for guests with 'no_prices' mode
  *
  * Diseñado por Aria - Capitana del Concilio de Creación
@@ -9,14 +9,14 @@
 import { Box, Stack, Typography, useTheme } from '@mui/material';
 // Design System Tokens
 import { brand, iosSemanticColors, iosTypographyScale, typography } from '../../design-system';
-import { useCanSeeComunidadPrice, useIsGuest } from '../../hooks/useAuth';
+import { useIsGuest } from '../../hooks/useAuth';
 import { useCanViewPrices } from '../../hooks/usePermissions';
 import { INVITATION_STORAGE_KEYS } from '../../types/invitation';
 
 export interface PriceDisplayProps {
-  /** Precio Comunidad TM (con descuento) */
+  /** Precio COP del producto (precio regular/público) */
   price: number;
-  /** Precio regular (Price) */
+  /** Precio internacional (deprecated, solo fallback) */
   precioInternacional?: number;
   /** Moneda (default: COP) */
   currency?: 'COP' | 'USD';
@@ -50,17 +50,16 @@ const formatCompact = (value: number): string => {
 };
 
 export const PriceDisplay = ({
-  price, // Precio Comunidad TM
-  precioInternacional, // Precio regular (Price)
+  price,
+  precioInternacional,
   currency = 'COP',
   compact = false,
 }: PriceDisplayProps) => {
   const theme = useTheme();
-  const canSeeComunidadPrice = useCanSeeComunidadPrice();
   const canViewPrices = useCanViewPrices();
   const isGuest = useIsGuest();
-  const comunidadPrice = price;
-  const regularPrice = precioInternacional;
+  // Use precioCOP (regular price) as primary, precioInternacional only as fallback
+  const displayPrice = price || precioInternacional || 0;
 
   // If provider, don't show any prices
   if (!canViewPrices) {
@@ -77,10 +76,7 @@ export const PriceDisplay = ({
   }
 
   // Modo compacto para tarjetas - iOS HIG body typography (17px)
-  // Always show regular price (precioInternacional) to all users in compact mode
   if (compact) {
-    // Always display the regular (internacional) price for all user roles
-    const displayPrice = regularPrice || comunidadPrice;
     return (
       <Typography
         variant="body2"
@@ -105,12 +101,11 @@ export const PriceDisplay = ({
   // iOS semantic colors from design system
   const labelColor = iosSemanticColors.secondaryLabel[mode];
   const primaryTextColor = iosSemanticColors.label[mode];
-  const secondaryTextColor = iosSemanticColors.secondaryLabel[mode];
 
   return (
     <Stack spacing={0.5} sx={{ width: '100%' }}>
       {/* Price - Primary (iOS Title style: 28pt bold for compact density) */}
-      {regularPrice && regularPrice > 0 && (
+      {displayPrice > 0 && (
         <Box>
           <Typography
             sx={{
@@ -133,36 +128,7 @@ export const PriceDisplay = ({
               fontFeatureSettings: '"tnum"',
             }}
           >
-            {formatCurrency(regularPrice, currency)}
-          </Typography>
-        </Box>
-      )}
-
-      {/* Comunidad TM - Secondary (iOS 15pt, 60% opacity) - Solo para Embajadores y Admins */}
-      {canSeeComunidadPrice && (
-        <Box>
-          <Typography
-            component="span"
-            sx={{
-              fontSize: '14px',
-              fontWeight: typography.weight.normal,
-              color: secondaryTextColor,
-              letterSpacing: typography.letterSpacing.tight,
-            }}
-          >
-            Comunidad TM{' '}
-          </Typography>
-          <Typography
-            component="span"
-            sx={{
-              fontSize: '14px',
-              fontWeight: typography.weight.semibold,
-              color: brand.emerald[600],
-              letterSpacing: typography.letterSpacing.tight,
-              fontFeatureSettings: '"tnum"',
-            }}
-          >
-            {formatCurrency(comunidadPrice, currency)}
+            {formatCurrency(displayPrice, currency)}
           </Typography>
         </Box>
       )}

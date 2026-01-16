@@ -94,6 +94,10 @@ export default async function handler(req, res) {
 
       const displayName = formatDisplayName(name);
 
+      // Clean email by trimming whitespace (common issue from spreadsheet copy/paste)
+      const rawEmail = instagramIndex !== -1 ? row[instagramIndex] : null;
+      const cleanEmail = rawEmail ? String(rawEmail).trim().toLowerCase() : null;
+
       asesoresData.push({
         id: `asesor_${index + 1}`,
         name: displayName,
@@ -101,7 +105,7 @@ export default async function handler(req, res) {
         role: roleIndex !== -1 ? (row[roleIndex] || 'Asesor').trim() : 'Asesor',
         whatsapp: whatsappIndex !== -1 ? row[whatsappIndex] || null : null,
         especialidad: especialidadIndex !== -1 ? row[especialidadIndex] || null : null,
-        email: instagramIndex !== -1 ? row[instagramIndex] || null : null,
+        email: cleanEmail,
       });
     });
 

@@ -316,7 +316,7 @@ function RecentItemCard({
                   letterSpacing: '0.01em',
                 }}
               >
-                {formatCurrency(item.precioInternacional || item.precioCOP)}
+                {formatCurrency(item.precioCOP)}
               </Typography>
             </Box>
           )}

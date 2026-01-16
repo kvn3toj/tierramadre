@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-16T20:46:48.442Z
+ * Generated at: 2026-01-16T21:18:56.953Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-16T20:46:48.442Z",
+  "generatedAt": "2026-01-16T21:18:56.953Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,27 +56,27 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "3975be1",
-    "lastCommitDate": "2026-01-16 15:46:42 -0500"
+    "lastCommitHash": "154bc31",
+    "lastCommitDate": "2026-01-16 16:18:50 -0500"
   },
   "stats": {
-    "totalCommits": 298,
-    "totalAdditions": 103334,
-    "totalDeletions": 63479,
-    "totalFilesChanged": 1791,
-    "netLines": 39855
+    "totalCommits": 299,
+    "totalAdditions": 103482,
+    "totalDeletions": 63559,
+    "totalFilesChanged": 1796,
+    "netLines": 39923
   },
   "categoryStats": {
+    "bugfix": 79,
     "auth": 21,
     "other": 109,
     "ux": 47,
-    "bugfix": 78,
     "performance": 15,
     "cleanup": 17,
     "analytics": 11
   },
   "typeStats": {
-    "fix": 120,
+    "fix": 121,
     "refactor": 24,
     "chore": 24,
     "feat": 118,
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 76
+      "count": 77
     },
     {
       "file": "index.html",
-      "count": 73
+      "count": 74
     },
     {
       "file": "public/version.json",
-      "count": 63
+      "count": 64
     },
     {
       "file": "src/App.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 290
+      "commits": 291
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "154bc31",
+      "message": "prevent false positive update toast for browser users",
+      "fullMessage": "fix(pwa): prevent false positive update toast for browser users",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-16",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 148,
+      "deletions": 80,
+      "filesChanged": 5
+    },
+    {
       "hash": "3975be1",
       "message": "allow embajadores to access cotizacion page",
       "fullMessage": "fix(auth): allow embajadores to access cotizacion page",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "32 minutes ago",
       "date": "2026-01-16",
       "type": "fix",
       "category": "auth",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "unify product request views into single hub",
       "fullMessage": "refactor(requests): unify product request views into single hub",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-16",
       "type": "refactor",
       "category": "other",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "add missing API function configs",
       "fullMessage": "chore(vercel): add missing API function configs",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-16",
       "type": "chore",
       "category": "other",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "differentiate Asesor and Embajador roles with distinct permissions",
       "fullMessage": "feat(auth): differentiate Asesor and Embajador roles with distinct permissions",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "auth",
@@ -233,7 +246,7 @@ export const changelogData: ChangelogData = {
       "message": "Make total price subtle, compact header layout",
       "fullMessage": "refactor(quotation): Make total price subtle, compact header layout",
       "author": "Kvn3Toj",
-      "relativeTime": "14 hours ago",
+      "relativeTime": "15 hours ago",
       "date": "2026-01-16",
       "type": "refactor",
       "category": "ux",
@@ -246,7 +259,7 @@ export const changelogData: ChangelogData = {
       "message": "Update logo and optimize layout",
       "fullMessage": "feat(cotizacion): Update logo and optimize layout",
       "author": "Kvn3Toj",
-      "relativeTime": "14 hours ago",
+      "relativeTime": "15 hours ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "ux",
@@ -285,7 +298,7 @@ export const changelogData: ChangelogData = {
       "message": "Auto-detect asesor from Google OAuth account",
       "fullMessage": "feat(cotizacion): Auto-detect asesor from Google OAuth account",
       "author": "Kvn3Toj",
-      "relativeTime": "15 hours ago",
+      "relativeTime": "16 hours ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "auth",
@@ -298,7 +311,7 @@ export const changelogData: ChangelogData = {
       "message": "Unify product card link with QR code URL",
       "fullMessage": "feat(cotizacion): Unify product card link with QR code URL",
       "author": "Kvn3Toj",
-      "relativeTime": "15 hours ago",
+      "relativeTime": "16 hours ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "other",
@@ -311,7 +324,7 @@ export const changelogData: ChangelogData = {
       "message": "Convert videos to high-quality GIF only (Telegram/WhatsApp style)",
       "fullMessage": "feat(cotizacion): Convert videos to high-quality GIF only (Telegram/WhatsApp style)",
       "author": "Kvn3Toj",
-      "relativeTime": "15 hours ago",
+      "relativeTime": "16 hours ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "ux",
@@ -363,7 +376,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Medida, Diseño, and Precio por CT fields to manual entry",
       "fullMessage": "feat(cotizacion): Add Medida, Diseño, and Precio por CT fields to manual entry",
       "author": "Kvn3Toj",
-      "relativeTime": "16 hours ago",
+      "relativeTime": "17 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -376,7 +389,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog and version",
       "fullMessage": "chore: Update changelog and version",
       "author": "Kvn3Toj",
-      "relativeTime": "16 hours ago",
+      "relativeTime": "17 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -454,7 +467,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog and misc improvements",
       "fullMessage": "chore: Update changelog and misc improvements",
       "author": "Kvn3Toj",
-      "relativeTime": "21 hours ago",
+      "relativeTime": "22 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -467,7 +480,7 @@ export const changelogData: ChangelogData = {
       "message": "Make asesor card fully clickable and always show profile button",
       "fullMessage": "feat: Make asesor card fully clickable and always show profile button",
       "author": "Kvn3Toj",
-      "relativeTime": "21 hours ago",
+      "relativeTime": "22 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -506,7 +519,7 @@ export const changelogData: ChangelogData = {
       "message": "Sync Safari cache version to 2026.01.15.1006",
       "fullMessage": "chore: Sync Safari cache version to 2026.01.15.1006",
       "author": "Kvn3Toj",
-      "relativeTime": "23 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "performance",
@@ -519,7 +532,7 @@ export const changelogData: ChangelogData = {
       "message": "Auto-lookup provider email from Asesores sheet",
       "fullMessage": "feat: Auto-lookup provider email from Asesores sheet",
       "author": "Kvn3Toj",
-      "relativeTime": "23 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -532,7 +545,7 @@ export const changelogData: ChangelogData = {
       "message": "Generate animated GIF from video for PDF cotización display",
       "fullMessage": "feat: Generate animated GIF from video for PDF cotización display",
       "author": "Kvn3Toj",
-      "relativeTime": "23 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -545,7 +558,7 @@ export const changelogData: ChangelogData = {
       "message": "Use OAuth for serve-drive-image and update cotización URLs",
       "fullMessage": "fix: Use OAuth for serve-drive-image and update cotización URLs",
       "author": "Kvn3Toj",
-      "relativeTime": "23 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",
@@ -584,7 +597,7 @@ export const changelogData: ChangelogData = {
       "message": "Update version and changelog",
       "fullMessage": "chore: Update version and changelog",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -597,7 +610,7 @@ export const changelogData: ChangelogData = {
       "message": "Store feedback screenshots in Google Drive and use dedicated sheet",
       "fullMessage": "feat: Store feedback screenshots in Google Drive and use dedicated sheet",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -610,7 +623,7 @@ export const changelogData: ChangelogData = {
       "message": "Sanitize OAuth env vars and add folder management API",
       "fullMessage": "fix: Sanitize OAuth env vars and add folder management API",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",
@@ -623,7 +636,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog data and add drive cleanup utility",
       "fullMessage": "chore: Update changelog data and add drive cleanup utility",
       "author": "Kvn3Toj",
-      "relativeTime": "24 hours ago",
+      "relativeTime": "25 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "cleanup",
@@ -649,7 +662,7 @@ export const changelogData: ChangelogData = {
       "message": "Reorganize cotizaciones folder structure",
       "fullMessage": "refactor: Reorganize cotizaciones folder structure",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2026-01-15",
       "type": "refactor",
       "category": "other",
@@ -662,7 +675,7 @@ export const changelogData: ChangelogData = {
       "message": "Add email notification system for quotations",
       "fullMessage": "feat: Add email notification system for quotations",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -675,7 +688,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog data",
       "fullMessage": "chore: Update changelog data",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -688,7 +701,7 @@ export const changelogData: ChangelogData = {
       "message": "Use OAuth instead of Service Account for cotización uploads",
       "fullMessage": "fix: Use OAuth instead of Service Account for cotización uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "25 hours ago",
+      "relativeTime": "26 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",

@@ -829,11 +829,15 @@ const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
 }) => {
   // Auto-detect asesor by matching Google user's email with asesores email/instagram field
   const matchedAsesor = React.useMemo(() => {
-    if (!googleUser?.email || asesores.length === 0) return null;
-    const userEmailLower = googleUser.email.toLowerCase();
-    return asesores.find(a =>
-      a.email?.toLowerCase() === userEmailLower
+    if (!googleUser?.email || asesores.length === 0) {
+      return null;
+    }
+    const userEmailLower = googleUser.email.toLowerCase().trim();
+    // Find match, trimming whitespace from both sides
+    const match = asesores.find(a =>
+      a.email?.toLowerCase().trim() === userEmailLower
     );
+    return match;
   }, [googleUser?.email, asesores]);
 
   // Auto-set asesor name when match is found (only once)
