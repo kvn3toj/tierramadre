@@ -8,6 +8,7 @@
  * - validate: Validate an invitation code (GET ?code=X)
  * - register: Register a guest with an invitation (POST)
  * - check-guest: Check if guest contact has previous invitations (GET ?guestContact=X)
+ * - list-by-creator: List active/pending invitations by creator email (GET ?creatorEmail=X)
  */
 
 import {
@@ -257,6 +258,60 @@ async function checkGuestHistory(sheets, guestContact) {
 }
 
 /**
+ * List invitations by creator email
+ * Returns active/pending invitations for cotizacion client validation
+ */
+async function listByCreator(sheets, creatorEmail) {
+  if (!creatorEmail) {
+    return { success: false, error: 'creatorEmail is required' };
+  }
+
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `'${SHEET_NAME}'!A:N`,
+  });
+
+  const rows = response.data.values || [];
+  if (rows.length <= 1) {
+    return { success: true, invitations: [], total: 0 };
+  }
+
+  const normalizedEmail = creatorEmail.toLowerCase().trim();
+  const invitations = [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const rowCreatorEmail = (row[2] || '').toLowerCase().trim();
+    const status = row[13] || 'pending';
+
+    // Only include invitations from this creator that are active or pending
+    if (rowCreatorEmail === normalizedEmail && (status === 'active' || status === 'pending')) {
+      invitations.push({
+        invitationId: row[0],
+        shortCode: row[1],
+        guestName: row[5] || null,
+        guestContact: row[6] || null,
+        contactType: row[7] || null,
+        status,
+        createdAt: row[8],
+        activatedAt: row[9] || null,
+        expiresAt: row[10] || null,
+        pricingMode: row[11] || 'with_prices',
+      });
+    }
+  }
+
+  // Sort by createdAt descending (newest first)
+  invitations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  return {
+    success: true,
+    invitations,
+    total: invitations.length,
+  };
+}
+
+/**
  * Register a guest with an invitation (POST)
  */
 async function registerGuest(sheets, body) {
@@ -339,6 +394,16 @@ export default async function handler(req, res) {
         return sendError(res, 400, 'guestContact is required');
       }
       const result = await checkGuestHistory(sheets, guestContact);
+      return res.status(200).json(result);
+    }
+
+    // GET - List invitations by creator
+    if (req.method === 'GET' && action === 'list-by-creator') {
+      const creatorEmail = req.query.creatorEmail;
+      if (!creatorEmail) {
+        return sendError(res, 400, 'creatorEmail is required');
+      }
+      const result = await listByCreator(sheets, creatorEmail);
       return res.status(200).json(result);
     }
 

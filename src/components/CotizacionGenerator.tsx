@@ -58,6 +58,7 @@ import {
   Image as ImageIcon,
   Loader2,
   Video,
+  AlertTriangle,
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -81,6 +82,10 @@ import { useTracking } from '../contexts/TrackingContext';
 import { useRecentClients, RecentClient } from '../hooks/useRecentClients';
 import { useCotizacionHistory } from '../hooks/useCotizacionHistory';
 import { useGoogleAuth } from '../contexts/GoogleAuthContext';
+import { useCreatorInvitations } from '../hooks/useCreatorInvitations';
+import type { CreatorInvitation, ClientOption, GuestValidationStatus } from '../types/creatorInvitations';
+import { useIsAdmin } from '../hooks/usePermissions';
+import { useIsEmbajador } from '../hooks/useAuth';
 
 const log = createLogger('Cotizacion');
 const formatCurrency = formatCotizacionCurrency;
@@ -113,6 +118,16 @@ export default function CotizacionGenerator() {
   const cotizacionHistory = useCotizacionHistory();
   const { user: googleUser } = useGoogleAuth();
   const { asesores, isLoading: isLoadingAsesores } = useAsesores();
+  const {
+    invitations: invitedGuests,
+    isLoading: isLoadingInvitations,
+    isInvitedGuest,
+  } = useCreatorInvitations(googleUser?.email);
+
+  // Check if user can use manual product entry (admins and ambassadors only)
+  const isAdmin = useIsAdmin();
+  const isEmbajador = useIsEmbajador();
+  const canUseManualEntry = isAdmin || isEmbajador;
 
   // Track cotización start time for funnel metrics
   const startTimeRef = useRef<number>(Date.now());
@@ -437,6 +452,27 @@ export default function CotizacionGenerator() {
         });
       }
 
+      // Log mismatch report if client is not in invited guests
+      if (clientName && clientName.length >= 3 && !isInvitedGuest(clientName) && invitedGuests.length > 0) {
+        fetch('/api/cotizacion-reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            asesorEmail: googleUser?.email || '',
+            asesorName,
+            clientNameEntered: clientName,
+            clientPhone: clientPhone || undefined,
+            clientEmail: clientEmail || undefined,
+            expectedGuests: invitedGuests
+              .filter(g => g.guestName)
+              .map(g => g.guestName),
+            quotationNumber,
+          }),
+        }).catch(err => {
+          log.warn('Failed to log mismatch report:', err);
+        });
+      }
+
       // Check for achievements after export
       checkAchievements();
 
@@ -580,6 +616,18 @@ export default function CotizacionGenerator() {
               if (client.email) setClientEmail(client.email);
               if (client.document) setClientDocument(client.document);
             }}
+            invitedGuests={invitedGuests}
+            isLoadingInvitations={isLoadingInvitations}
+            onSelectInvitedGuest={(guest) => {
+              setClientName(guest.guestName || '');
+              if (guest.guestContact) {
+                if (guest.contactType === 'email' || guest.guestContact.includes('@')) {
+                  setClientEmail(guest.guestContact);
+                } else {
+                  setClientPhone(guest.guestContact);
+                }
+              }
+            }}
           />
 
           <Divider sx={{ my: 3 }} />
@@ -603,6 +651,7 @@ export default function CotizacionGenerator() {
             isVideoPreview={isVideoPreview}
             setIsVideoPreview={setIsVideoPreview}
             onImageUpload={handleManualProductMediaUpload}
+            canUseManualEntry={canUseManualEntry}
           />
 
           {/* Product List */}
@@ -767,12 +816,16 @@ interface ClientInfoSectionProps {
   googleUser?: { email: string; name: string } | null;
   recentClients?: RecentClient[];
   onSelectClient?: (client: RecentClient) => void;
+  invitedGuests?: CreatorInvitation[];
+  isLoadingInvitations?: boolean;
+  onSelectInvitedGuest?: (guest: CreatorInvitation) => void;
 }
 
 const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
   clientName, setClientName, clientPhone, setClientPhone, clientEmail, setClientEmail,
   clientDocument, setClientDocument, asesorName, setAsesorName, asesores,
   isLoadingAsesores = false, googleUser, recentClients = [], onSelectClient,
+  invitedGuests = [], isLoadingInvitations = false, onSelectInvitedGuest,
 }) => {
   // Auto-detect asesor by matching Google user's email with asesores email/instagram field
   const matchedAsesor = React.useMemo(() => {
@@ -793,6 +846,56 @@ const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
   // Get role label from matched asesor
   const asesorLabel = matchedAsesor?.role || 'Asesor';
 
+  // Combine invited guests and recent clients into grouped options
+  const combinedOptions = React.useMemo((): ClientOption[] => {
+    const options: ClientOption[] = [];
+
+    // Add invited guests first (priority) - only those with names
+    invitedGuests?.forEach(guest => {
+      if (guest.guestName) {
+        options.push({
+          name: guest.guestName,
+          phone: guest.contactType === 'phone' ? (guest.guestContact || undefined) : undefined,
+          email: guest.contactType === 'email' ? (guest.guestContact || undefined) : undefined,
+          source: 'invited',
+          shortCode: guest.shortCode,
+          invitationStatus: guest.status,
+        });
+      }
+    });
+
+    // Add recent clients (excluding duplicates by name)
+    recentClients?.forEach(client => {
+      const alreadyExists = options.some(
+        o => o.name.toLowerCase() === client.name.toLowerCase()
+      );
+      if (!alreadyExists) {
+        options.push({
+          ...client,
+          source: 'recent',
+        });
+      }
+    });
+
+    return options;
+  }, [invitedGuests, recentClients]);
+
+  // Check if current client name matches any invited guest
+  const validationStatus = React.useMemo((): GuestValidationStatus => {
+    if (!clientName || clientName.length < 3) return 'none';
+    if (!invitedGuests || invitedGuests.length === 0) return 'none';
+
+    const normalizedName = clientName.toLowerCase().trim();
+    const isMatch = invitedGuests.some(
+      guest => guest.guestName?.toLowerCase().trim() === normalizedName
+    );
+
+    return isMatch ? 'valid' : 'warning';
+  }, [clientName, invitedGuests]);
+
+  // Warning color
+  const warningColor = '#F59E0B';
+
   return (
   <>
     <Typography variant="subtitle2" sx={{
@@ -803,14 +906,17 @@ const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
       fontWeight: 700,
       fontSize: '0.875rem',
     }}>
-      Información del Cliente
+      Informacion del Cliente
     </Typography>
     <Grid container spacing={1.5} sx={{ mb: 3 }}>
       <Grid item xs={12}>
         <Autocomplete
           freeSolo
           size="small"
-          options={recentClients}
+          options={combinedOptions}
+          groupBy={(option) =>
+            option.source === 'invited' ? 'Invitaciones Activas' : 'Clientes Recientes'
+          }
           getOptionLabel={(option) =>
             typeof option === 'string' ? option : option.name
           }
@@ -818,17 +924,62 @@ const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
           onChange={(_, value) => {
             if (typeof value === 'string') {
               setClientName(value);
-            } else if (value && onSelectClient) {
-              onSelectClient(value);
+            } else if (value) {
+              if (value.source === 'invited' && onSelectInvitedGuest) {
+                const invitation = invitedGuests?.find(g => g.shortCode === value.shortCode);
+                if (invitation) onSelectInvitedGuest(invitation);
+              } else if (value.source === 'recent' && onSelectClient) {
+                onSelectClient(value as RecentClient);
+              }
             }
           }}
           onInputChange={(_, value) => setClientName(value)}
+          loading={isLoadingInvitations}
+          renderGroup={(params) => (
+            <li key={params.key}>
+              <Typography
+                variant="caption"
+                sx={{
+                  px: 2,
+                  py: 0.5,
+                  display: 'block',
+                  bgcolor: alpha(brandColors.emerald, 0.05),
+                  color: brandColors.textMuted,
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  fontSize: '0.65rem',
+                }}
+              >
+                {params.group}
+              </Typography>
+              <ul style={{ padding: 0, margin: 0 }}>{params.children}</ul>
+            </li>
+          )}
           renderOption={(props, option) => (
             <li {...props}>
-              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {option.name}
-                </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {option.name}
+                  </Typography>
+                  {option.source === 'invited' && (
+                    <Chip
+                      label={option.invitationStatus === 'active' ? 'Activa' : 'Pendiente'}
+                      size="small"
+                      sx={{
+                        height: 18,
+                        fontSize: '0.6rem',
+                        bgcolor: option.invitationStatus === 'active'
+                          ? alpha(brandColors.emerald, 0.15)
+                          : alpha(brandColors.gold, 0.15),
+                        color: option.invitationStatus === 'active'
+                          ? brandColors.emerald
+                          : brandColors.gold,
+                      }}
+                    />
+                  )}
+                </Box>
                 {(option.phone || option.email) && (
                   <Typography variant="caption" sx={{ color: brandColors.textMuted }}>
                     {option.phone}{option.phone && option.email ? ' · ' : ''}{option.email}
@@ -841,9 +992,42 @@ const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
             <TextField
               {...params}
               label="Nombre del Cliente"
-              placeholder="Ej: Juan Pérez (o selecciona uno reciente)"
-              helperText={clientName && clientName.length < 3 ? "El nombre debe tener al menos 3 caracteres" : recentClients.length > 0 ? "Clientes frecuentes disponibles" : ""}
+              placeholder="Ej: Juan Perez (o selecciona de la lista)"
+              helperText={
+                validationStatus === 'warning'
+                  ? "Este cliente no tiene una invitacion activa"
+                  : clientName && clientName.length < 3
+                    ? "El nombre debe tener al menos 3 caracteres"
+                    : combinedOptions.length > 0
+                      ? "Invitaciones y clientes frecuentes disponibles"
+                      : ""
+              }
               error={clientName !== '' && clientName.length < 3}
+              FormHelperTextProps={{
+                sx: validationStatus === 'warning' ? {
+                  color: warningColor,
+                  fontWeight: 500,
+                } : {},
+              }}
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {validationStatus === 'warning' && (
+                      <Tooltip title="El cliente ingresado no tiene una invitacion activa creada por ti. La cotizacion se generara pero quedara registrado el desajuste.">
+                        <AlertTriangle size={18} color={warningColor} style={{ marginRight: 8 }} />
+                      </Tooltip>
+                    )}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': validationStatus === 'warning' ? {
+                  '& fieldset': { borderColor: warningColor },
+                  '&:hover fieldset': { borderColor: warningColor },
+                } : {},
+              }}
             />
           )}
         />
@@ -955,12 +1139,14 @@ interface ProductEntrySectionProps {
   isVideoPreview: boolean;
   setIsVideoPreview: (v: boolean) => void;
   onImageUpload: (file: File) => Promise<void>;
+  canUseManualEntry?: boolean;
 }
 
 const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
   productEntryMode, setProductEntryMode, availableTreasure, selectedItem, setSelectedItem,
   handleAddProduct, manualProduct, setManualProduct, handleAddManualProduct,
   isUploadingImage, imagePreview, setImagePreview, isVideoPreview, setIsVideoPreview, onImageUpload,
+  canUseManualEntry = false,
 }) => (
   <Box sx={{ mb: 2 }}>
     <Typography variant="subtitle2" sx={{
@@ -974,14 +1160,16 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
       Agregar Producto
     </Typography>
 
-    <ToggleButtonGroup value={productEntryMode} exclusive onChange={(_, value) => value && setProductEntryMode(value)} size="small" sx={{ mb: 2, width: '100%' }}>
-      <ToggleButton value="treasure" sx={{ flex: 1, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', '&.Mui-selected': { bgcolor: alpha(brandColors.emerald, 0.1), color: brandColors.emerald } }}>
-        <Package size={14} style={{ marginRight: 6 }} />Desde Tesoros
-      </ToggleButton>
-      <ToggleButton value="manual" sx={{ flex: 1, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', '&.Mui-selected': { bgcolor: alpha(brandColors.gold, 0.15), color: brandColors.gold } }}>
-        <FileText size={14} style={{ marginRight: 6 }} />Entrada Manual
-      </ToggleButton>
-    </ToggleButtonGroup>
+    {canUseManualEntry ? (
+      <ToggleButtonGroup value={productEntryMode} exclusive onChange={(_, value) => value && setProductEntryMode(value)} size="small" sx={{ mb: 2, width: '100%' }}>
+        <ToggleButton value="treasure" sx={{ flex: 1, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', '&.Mui-selected': { bgcolor: alpha(brandColors.emerald, 0.1), color: brandColors.emerald } }}>
+          <Package size={14} style={{ marginRight: 6 }} />Desde Tesoros
+        </ToggleButton>
+        <ToggleButton value="manual" sx={{ flex: 1, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', '&.Mui-selected': { bgcolor: alpha(brandColors.gold, 0.15), color: brandColors.gold } }}>
+          <FileText size={14} style={{ marginRight: 6 }} />Entrada Manual
+        </ToggleButton>
+      </ToggleButtonGroup>
+    ) : null}
 
     {productEntryMode === 'treasure' && (
       <>
@@ -1041,7 +1229,7 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
       </>
     )}
 
-    {productEntryMode === 'manual' && (
+    {productEntryMode === 'manual' && canUseManualEntry && (
       <Box sx={{ bgcolor: brandColors.surfaceElevated, p: 2, borderRadius: 2, mb: 3 }}>
         <Grid container spacing={1.5}>
           {/* Image Upload Section */}

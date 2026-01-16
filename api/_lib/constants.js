@@ -22,6 +22,7 @@ export const SHEETS = {
   PRODUCT_REQUESTS: 'SolicitudesProducto',
   USER_PREFERENCES: 'UserPreferences',
   FEEDBACK: 'Feedback',
+  COTIZACION_REPORTS: 'CotizacionReports',
 };
 
 // Google Drive Folder Names
