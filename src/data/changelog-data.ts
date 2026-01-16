@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-16T18:23:12.968Z
+ * Generated at: 2026-01-16T18:32:27.389Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-16T18:23:12.968Z",
+  "generatedAt": "2026-01-16T18:32:27.389Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,19 +56,19 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "288dc48",
-    "lastCommitDate": "2026-01-16 13:23:08 -0500"
+    "lastCommitHash": "4ed7dc4",
+    "lastCommitDate": "2026-01-16 13:32:22 -0500"
   },
   "stats": {
-    "totalCommits": 295,
-    "totalAdditions": 102112,
-    "totalDeletions": 63183,
-    "totalFilesChanged": 1779,
-    "netLines": 38929
+    "totalCommits": 296,
+    "totalAdditions": 102375,
+    "totalDeletions": 63400,
+    "totalFilesChanged": 1781,
+    "netLines": 38975
   },
   "categoryStats": {
+    "other": 108,
     "auth": 20,
-    "other": 107,
     "ux": 47,
     "bugfix": 78,
     "performance": 15,
@@ -76,10 +76,10 @@ export const changelogData: ChangelogData = {
     "analytics": 11
   },
   "typeStats": {
+    "chore": 24,
     "feat": 118,
     "refactor": 23,
     "fix": 119,
-    "chore": 23,
     "other": 9,
     "docs": 2,
     "style": 1
@@ -87,7 +87,7 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 73
+      "count": 74
     },
     {
       "file": "index.html",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 287
+      "commits": 288
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "4ed7dc4",
+      "message": "add missing API function configs",
+      "fullMessage": "chore(vercel): add missing API function configs",
+      "author": "Kvn3Toj",
+      "relativeTime": "1 second ago",
+      "date": "2026-01-16",
+      "type": "chore",
+      "category": "other",
+      "additions": 263,
+      "deletions": 217,
+      "filesChanged": 2
+    },
+    {
       "hash": "288dc48",
       "message": "differentiate Asesor and Embajador roles with distinct permissions",
       "fullMessage": "feat(auth): differentiate Asesor and Embajador roles with distinct permissions",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "9 minutes ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "auth",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Add guest validation from invitations",
       "fullMessage": "feat(cotizacion): Add guest validation from invitations",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "other",
@@ -298,7 +311,7 @@ export const changelogData: ChangelogData = {
       "message": "Extract shared styles and utilities from QuotationPreview",
       "fullMessage": "refactor(cotizacion): Extract shared styles and utilities from QuotationPreview",
       "author": "Kvn3Toj",
-      "relativeTime": "13 hours ago",
+      "relativeTime": "14 hours ago",
       "date": "2026-01-15",
       "type": "refactor",
       "category": "other",
@@ -402,7 +415,7 @@ export const changelogData: ChangelogData = {
       "message": "Correct sendError parameter order and improve API error handling",
       "fullMessage": "fix: Correct sendError parameter order and improve API error handling",
       "author": "Kvn3Toj",
-      "relativeTime": "18 hours ago",
+      "relativeTime": "19 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -454,7 +467,7 @@ export const changelogData: ChangelogData = {
       "message": "Use email matching for asesor profile ownership detection",
       "fullMessage": "fix: Use email matching for asesor profile ownership detection",
       "author": "Kvn3Toj",
-      "relativeTime": "20 hours ago",
+      "relativeTime": "21 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -532,7 +545,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product thumbnails to cotización and save history to Drive",
       "fullMessage": "feat: Add product thumbnails to cotización and save history to Drive",
       "author": "Kvn3Toj",
-      "relativeTime": "21 hours ago",
+      "relativeTime": "22 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -597,7 +610,7 @@ export const changelogData: ChangelogData = {
       "message": "Use OAuth instead of Service Account for media uploads",
       "fullMessage": "fix: Use OAuth instead of Service Account for media uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "22 hours ago",
+      "relativeTime": "23 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",
@@ -662,7 +675,7 @@ export const changelogData: ChangelogData = {
       "message": "Split merged APIs and add Cloudinary processing for uploads",
       "fullMessage": "feat: Split merged APIs and add Cloudinary processing for uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "23 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -2508,7 +2521,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Provider Portal PIN access and admin quotation requests UI",
       "fullMessage": "feat: Add Provider Portal PIN access and admin quotation requests UI",
       "author": "Kvn3Toj",
-      "relativeTime": "7 days ago",
+      "relativeTime": "8 days ago",
       "date": "2026-01-09",
       "type": "feat",
       "category": "ux",

@@ -49,9 +49,8 @@ const QuotationRequestList = lazyWithRetry(() => import('./components/admin/Quot
 const ProviderQuotationsList = lazyWithRetry(() => import('./components/admin/ProviderQuotationsList'), 'ProviderQuotationsList');
 
 // Product Requests (Asesor/Embajador -> Admin)
-const ProductRequestForm = lazyWithRetry(() => import('./components/requests/ProductRequestForm'), 'ProductRequestForm');
+const ProductRequestsHub = lazyWithRetry(() => import('./components/requests/ProductRequestsHub'), 'ProductRequestsHub');
 const AdminProductRequestList = lazyWithRetry(() => import('./components/requests/AdminProductRequestList'), 'AdminProductRequestList');
-const MyProductRequests = lazyWithRetry(() => import('./components/requests/MyProductRequests'), 'MyProductRequests');
 
 // Invitation Pages (public routes - accessible without auth)
 const InvitationPage = lazyWithRetry(() => import('./pages/InvitationPage'), 'InvitationPage');
@@ -258,20 +257,16 @@ function AppContent() {
           } />
 
           {/* Product Requests (Asesor/Embajador -> Admin) - Staff only */}
-          <Route path="/solicitar-producto" element={
-            <StaffRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando formulario..." />}>
-                <ProductRequestForm />
-              </Suspense>
-            </StaffRoute>
-          } />
-          <Route path="/mis-solicitudes" element={
+          <Route path="/solicitudes" element={
             <StaffRoute>
               <Suspense fallback={<LoadingFallback message="Cargando solicitudes..." />}>
-                <MyProductRequests />
+                <ProductRequestsHub />
               </Suspense>
             </StaffRoute>
           } />
+          {/* Legacy routes - redirect to unified view */}
+          <Route path="/solicitar-producto" element={<Navigate to="/solicitudes?tab=nueva" replace />} />
+          <Route path="/mis-solicitudes" element={<Navigate to="/solicitudes" replace />} />
           <Route path="/cuentas/solicitudes-asesores" element={
             <AdminRoute>
               <Suspense fallback={<LoadingFallback message="Cargando solicitudes..." />}>
