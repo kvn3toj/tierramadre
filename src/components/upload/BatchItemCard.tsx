@@ -27,7 +27,7 @@ import {
 } from '@mui/icons-material';
 import { EmeraldCategory } from '../../types';
 import { brand, darkTokens } from '../../design-system';
-import MediaPreview from '../MediaPreview';
+import MediaPreview from '../shared/MediaPreview';
 import { BatchItem } from '../../hooks/useEmeraldUpload';
 
 export interface BatchItemCardProps {

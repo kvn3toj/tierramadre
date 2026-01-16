@@ -17,7 +17,7 @@ import { Heart, Scale } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { TreasureItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
-import { PriceDisplay } from '../PriceDisplay';
+import { PriceDisplay } from '../price-simulator/PriceDisplay';
 import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
 import { errorAlpha } from '../../design-system';
 

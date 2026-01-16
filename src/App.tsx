@@ -6,8 +6,7 @@ import { useAuth } from './hooks/useAuth';
 import { useIsProvider } from './hooks/usePermissions';
 import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
-import LoadingFallback from './components/LoadingFallback';
-import SplashScreen from './components/SplashScreen';
+import { LoadingFallback, SplashScreen, ChunkErrorBoundary } from './components/shared';
 // PWA update toast (version check on visibility change)
 import UpdateToast from './components/pwa/UpdateToast';
 import { usePWAUpdate } from './hooks/usePWAUpdate';
@@ -16,23 +15,22 @@ import { TrackingProvider } from './contexts/TrackingContext';
 import { ScreenProtectionProvider } from './contexts/ScreenProtectionContext';
 import { AchievementToast } from './components/gamification';
 import { useViewportHeight } from './hooks/useViewportHeight';
-import { ChunkErrorBoundary } from './components/ChunkErrorBoundary';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 
 // All routes lazy loaded with retry for optimal bundle splitting
 const Home = lazyWithRetry(() => import('./components/home'), 'Home');
-const TreasureBrowser = lazyWithRetry(() => import('./components/TreasureBrowser'), 'TreasureBrowser');
-const ProductDetail = lazyWithRetry(() => import('./components/ProductDetail'), 'ProductDetail');
+const TreasureBrowser = lazyWithRetry(() => import('./components/treasure/TreasureBrowser'), 'TreasureBrowser');
+const ProductDetail = lazyWithRetry(() => import('./components/product/ProductDetail'), 'ProductDetail');
 const AmbassadorsPage = lazyWithRetry(() => import('./pages/AmbassadorsPage'), 'AmbassadorsPage');
 const AsesorProfilePage = lazyWithRetry(() => import('./components/ambassador/AsesorProfile'), 'AsesorProfilePage');
-const AccountsHub = lazyWithRetry(() => import('./components/AccountsHub'), 'AccountsHub');
+const AccountsHub = lazyWithRetry(() => import('./components/accounts/AccountsHub'), 'AccountsHub');
 const VaultPage = lazyWithRetry(() => import('./pages/VaultPage'), 'VaultPage');
 
 // Cuentas sub-pages (accessed from AccountsHub)
-const PriceSimulator = lazyWithRetry(() => import('./components/PriceSimulator'), 'PriceSimulator');
-const ReceiptGenerator = lazyWithRetry(() => import('./components/ReceiptGenerator'), 'ReceiptGenerator');
-const CotizacionGenerator = lazyWithRetry(() => import('./components/CotizacionGenerator'), 'CotizacionGenerator');
-const QuotationPreview = lazyWithRetry(() => import('./components/QuotationPreview'), 'QuotationPreview');
+const PriceSimulator = lazyWithRetry(() => import('./components/price-simulator/PriceSimulator'), 'PriceSimulator');
+const ReceiptGenerator = lazyWithRetry(() => import('./components/accounts/ReceiptGenerator'), 'ReceiptGenerator');
+const CotizacionGenerator = lazyWithRetry(() => import('./components/cotizacion/CotizacionGenerator'), 'CotizacionGenerator');
+const QuotationPreview = lazyWithRetry(() => import('./components/cotizacion/QuotationPreviewPage'), 'QuotationPreview');
 const AdminAnalyticsPage = lazyWithRetry(() => import('./pages/AdminAnalyticsPage'), 'AdminAnalyticsPage');
 const ProductViewersPage = lazyWithRetry(() => import('./pages/ProductViewersPage'), 'ProductViewersPage');
 const UserViewsPage = lazyWithRetry(() => import('./pages/UserViewsPage'), 'UserViewsPage');

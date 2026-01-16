@@ -14,7 +14,7 @@ import { goldAccent } from '../../../design-system/tokens/colors';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useStreakTracking } from '../hooks/useStreakTracking';
 import { cardVariants, fadeInUp, spring } from '../../../design-system/tokens/motion';
-import { StreakBadge, ProgressRing, useGamification } from '../gamification';
+import { StreakBadge, ProgressRingAnimated as ProgressRing, useGamification } from '../../gamification';
 
 // =============================================================================
 // COMPONENT

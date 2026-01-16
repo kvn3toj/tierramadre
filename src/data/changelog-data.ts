@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-16T06:50:59.334Z
+ * Generated at: 2026-01-16T06:54:42.304Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-16T06:50:59.334Z",
+  "generatedAt": "2026-01-16T06:54:42.304Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,18 +56,18 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "55a4619",
-    "lastCommitDate": "2026-01-16 01:50:55 -0500"
+    "lastCommitHash": "ea3ba57",
+    "lastCommitDate": "2026-01-16 01:54:38 -0500"
   },
   "stats": {
-    "totalCommits": 292,
-    "totalAdditions": 101005,
-    "totalDeletions": 59390,
-    "totalFilesChanged": 1696,
-    "netLines": 41615
+    "totalCommits": 293,
+    "totalAdditions": 101691,
+    "totalDeletions": 59484,
+    "totalFilesChanged": 1705,
+    "netLines": 42207
   },
   "categoryStats": {
-    "other": 105,
+    "other": 106,
     "ux": 47,
     "auth": 19,
     "bugfix": 78,
@@ -76,8 +76,8 @@ export const changelogData: ChangelogData = {
     "analytics": 11
   },
   "typeStats": {
+    "feat": 117,
     "refactor": 22,
-    "feat": 116,
     "fix": 119,
     "chore": 23,
     "other": 9,
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 70
+      "count": 71
     },
     {
       "file": "index.html",
-      "count": 68
+      "count": 69
     },
     {
       "file": "public/version.json",
-      "count": 58
+      "count": 59
     },
     {
       "file": "src/App.tsx",
@@ -111,7 +111,7 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "src/components/CotizacionGenerator.tsx",
-      "count": 21
+      "count": 22
     },
     {
       "file": "api/provider-quotations.js",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 284
+      "commits": 285
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "ea3ba57",
+      "message": "Add guest validation from invitations",
+      "fullMessage": "feat(cotizacion): Add guest validation from invitations",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-16",
+      "type": "feat",
+      "category": "other",
+      "additions": 686,
+      "deletions": 94,
+      "filesChanged": 9
+    },
+    {
       "hash": "55a4619",
       "message": "Move client/asesor to header corners beside logo",
       "fullMessage": "refactor(quotation): Move client/asesor to header corners beside logo",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "4 minutes ago",
       "date": "2026-01-16",
       "type": "refactor",
       "category": "other",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Make total price subtle, compact header layout",
       "fullMessage": "refactor(quotation): Make total price subtle, compact header layout",
       "author": "Kvn3Toj",
-      "relativeTime": "11 minutes ago",
+      "relativeTime": "15 minutes ago",
       "date": "2026-01-16",
       "type": "refactor",
       "category": "ux",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Update logo and optimize layout",
       "fullMessage": "feat(cotizacion): Update logo and optimize layout",
       "author": "Kvn3Toj",
-      "relativeTime": "31 minutes ago",
+      "relativeTime": "35 minutes ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "ux",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Add certification logos before footer",
       "fullMessage": "feat(cotizacion): Add certification logos before footer",
       "author": "Kvn3Toj",
-      "relativeTime": "42 minutes ago",
+      "relativeTime": "46 minutes ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "other",
@@ -194,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve quotation settings and footer",
       "fullMessage": "feat(cotizacion): Improve quotation settings and footer",
       "author": "Kvn3Toj",
-      "relativeTime": "58 minutes ago",
+      "relativeTime": "61 minutes ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "other",
@@ -207,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Auto-detect asesor from Google OAuth account",
       "fullMessage": "feat(cotizacion): Auto-detect asesor from Google OAuth account",
       "author": "Kvn3Toj",
-      "relativeTime": "72 minutes ago",
+      "relativeTime": "76 minutes ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "auth",
@@ -220,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Unify product card link with QR code URL",
       "fullMessage": "feat(cotizacion): Unify product card link with QR code URL",
       "author": "Kvn3Toj",
-      "relativeTime": "77 minutes ago",
+      "relativeTime": "81 minutes ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "other",
@@ -610,7 +623,7 @@ export const changelogData: ChangelogData = {
       "message": "Use OAuth instead of Service Account for cotización uploads",
       "fullMessage": "fix: Use OAuth instead of Service Account for cotización uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "11 hours ago",
+      "relativeTime": "12 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",
@@ -974,7 +987,7 @@ export const changelogData: ChangelogData = {
       "message": "Add ensureSheet for UserPreferences to prevent 500 errors",
       "fullMessage": "fix: Add ensureSheet for UserPreferences to prevent 500 errors",
       "author": "Kvn3Toj",
-      "relativeTime": "31 hours ago",
+      "relativeTime": "32 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",

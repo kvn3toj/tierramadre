@@ -21,7 +21,7 @@ import { X, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 import { motion, AnimatePresence, PanInfo, useAnimation } from 'framer-motion';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import { lightTokens, darkTokens } from '../../design-system';
-import ProtectedContent from '../ProtectedContent';
+import ProtectedContent from '../shared/ProtectedContent';
 
 interface ImageLightboxProps {
   images: Array<{

@@ -9,7 +9,7 @@
 
 import { Box, Typography, useTheme } from '@mui/material';
 import { iosSemanticColors, iosTypographyScale, typography } from '../../design-system';
-import TreasureBrowser from '../TreasureBrowser';
+import TreasureBrowser from '../treasure/TreasureBrowser';
 
 export default function ProviderInventory() {
   const theme = useTheme();

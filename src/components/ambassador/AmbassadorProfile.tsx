@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import { AmbassadorProfile as AmbassadorProfileType, Testimonial, AmbassadorBadge } from '../../types/ambassador';
 import { loadTestimonials } from '../../data/ambassadors';
-import PriceSimulator from '../PriceSimulator';
+import PriceSimulator from '../price-simulator/PriceSimulator';
 import { brand, lightTokens, darkTokens, accentColors } from '../../design-system';
 
 interface AmbassadorProfileProps {

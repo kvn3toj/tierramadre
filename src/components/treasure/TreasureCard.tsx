@@ -29,7 +29,7 @@ import logoPlaceholder from '../../assets/logo-symbol.png';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { TreasureItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
-import { PriceDisplay } from '../PriceDisplay';
+import { PriceDisplay } from '../price-simulator/PriceDisplay';
 // Design System Tokens
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 

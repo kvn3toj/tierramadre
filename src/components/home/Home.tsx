@@ -20,7 +20,7 @@ import { useTheme as useMuiTheme } from '@mui/material/styles';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useTreasure } from '../../hooks/useTreasure';
 import { useNewestProducts } from '../../hooks/useNewestProducts';
-import { useGamification, AchievementToast } from './gamification';
+import { useGamification, AchievementToastAnimated as AchievementToast } from '../gamification';
 import { useAnalytics } from './hooks';
 import { SectionSkeleton, ErrorFallback } from './common';
 import { NotificationPermission } from '../pwa';

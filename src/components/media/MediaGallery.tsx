@@ -31,7 +31,7 @@ import { MediaItem, CATEGORY_LABELS } from './types';
 import { brand, darkTokens, lightTokens } from '../../design-system';
 import ImageLightbox from './ImageLightbox';
 import { triggerHaptic } from '../../hooks/useHaptics';
-import ProtectedContent from '../ProtectedContent';
+import ProtectedContent from '../shared/ProtectedContent';
 import logoPlaceholder from '../../assets/logo-symbol.png';
 
 interface MediaGalleryProps {

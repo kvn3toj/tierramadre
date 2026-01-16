@@ -26,8 +26,8 @@ import {
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { TreasureItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
-import { PriceDisplay } from '../PriceDisplay';
-import ProgressiveImage from '../ProgressiveImage';
+import { PriceDisplay } from '../price-simulator/PriceDisplay';
+import ProgressiveImage from '../shared/ProgressiveImage';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 import {
   animation,
