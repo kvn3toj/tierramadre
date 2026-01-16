@@ -5,5 +5,6 @@
 
 export { CotizacionHeader } from './CotizacionHeader';
 export { QuotationPreview } from './QuotationPreview';
-export { brandColors } from './constants';
+export { brandColors, quotationStyles, quotationTypography } from './constants';
 export type { BrandColors } from './constants';
+export { extractDriveFileId, getProductDisplayUrl, getQrCodeUrl } from './utils';

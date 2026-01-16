@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-16T04:35:21.377Z
+ * Generated at: 2026-01-16T04:52:13.008Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-16T04:35:21.377Z",
+  "generatedAt": "2026-01-16T04:52:13.008Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,19 +56,19 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "cdd7465",
-    "lastCommitDate": "2026-01-15 23:35:17 -0500"
+    "lastCommitHash": "9ee04df",
+    "lastCommitDate": "2026-01-15 23:52:08 -0500"
   },
   "stats": {
-    "totalCommits": 281,
-    "totalAdditions": 99245,
-    "totalDeletions": 57851,
-    "totalFilesChanged": 1647,
-    "netLines": 41394
+    "totalCommits": 282,
+    "totalAdditions": 99313,
+    "totalDeletions": 57885,
+    "totalFilesChanged": 1651,
+    "netLines": 41428
   },
   "categoryStats": {
+    "bugfix": 77,
     "other": 100,
-    "bugfix": 76,
     "ux": 44,
     "performance": 15,
     "auth": 18,
@@ -76,9 +76,9 @@ export const changelogData: ChangelogData = {
     "analytics": 11
   },
   "typeStats": {
+    "fix": 118,
     "feat": 110,
     "chore": 23,
-    "fix": 117,
     "refactor": 19,
     "other": 9,
     "docs": 2,
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 61
+      "count": 62
     },
     {
       "file": "index.html",
-      "count": 60
+      "count": 61
     },
     {
       "file": "public/version.json",
-      "count": 50
+      "count": 51
     },
     {
       "file": "src/App.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 273
+      "commits": 274
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "9ee04df",
+      "message": "Show actual video URL for manual products in quotation",
+      "fullMessage": "fix(cotizacion): Show actual video URL for manual products in quotation",
+      "author": "Kvn3Toj",
+      "relativeTime": "1 second ago",
+      "date": "2026-01-15",
+      "type": "fix",
+      "category": "bugfix",
+      "additions": 68,
+      "deletions": 34,
+      "filesChanged": 4
+    },
+    {
       "hash": "cdd7465",
       "message": "Add Medida, Diseño, and Precio por CT fields to manual entry",
       "fullMessage": "feat(cotizacion): Add Medida, Diseño, and Precio por CT fields to manual entry",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "17 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog and version",
       "fullMessage": "chore: Update changelog and version",
       "author": "Kvn3Toj",
-      "relativeTime": "14 minutes ago",
+      "relativeTime": "31 minutes ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Fix video upload preview and QR code URL generation",
       "fullMessage": "fix(cotizacion): Fix video upload preview and QR code URL generation",
       "author": "Kvn3Toj",
-      "relativeTime": "32 minutes ago",
+      "relativeTime": "49 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Update git commit rules to include all modified files",
       "fullMessage": "chore: Update git commit rules to include all modified files",
       "author": "Kvn3Toj",
-      "relativeTime": "4 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -194,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve UI with iOS HIG and add new form fields",
       "fullMessage": "feat(cotizacion): Improve UI with iOS HIG and add new form fields",
       "author": "Kvn3Toj",
-      "relativeTime": "4 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "ux",
@@ -207,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Add git commit rules and sync version files",
       "fullMessage": "chore: Add git commit rules and sync version files",
       "author": "Kvn3Toj",
-      "relativeTime": "4 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -259,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Dynamic asesores from Sheets, improved PDF export, QR media links",
       "fullMessage": "feat: Dynamic asesores from Sheets, improved PDF export, QR media links",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -337,7 +350,7 @@ export const changelogData: ChangelogData = {
       "message": "Update version and changelog",
       "fullMessage": "chore: Update version and changelog",
       "author": "Kvn3Toj",
-      "relativeTime": "7 hours ago",
+      "relativeTime": "8 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -467,7 +480,7 @@ export const changelogData: ChangelogData = {
       "message": "Use OAuth instead of Service Account for cotización uploads",
       "fullMessage": "fix: Use OAuth instead of Service Account for cotización uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "9 hours ago",
+      "relativeTime": "10 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",
@@ -558,7 +571,7 @@ export const changelogData: ChangelogData = {
       "message": "Update app version to 2026.01.15.139",
       "fullMessage": "chore: Update app version to 2026.01.15.139",
       "author": "Kvn3Toj",
-      "relativeTime": "21 hours ago",
+      "relativeTime": "22 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -571,7 +584,7 @@ export const changelogData: ChangelogData = {
       "message": "TypeScript error in video upload error handler",
       "fullMessage": "fix: TypeScript error in video upload error handler",
       "author": "Kvn3Toj",
-      "relativeTime": "21 hours ago",
+      "relativeTime": "22 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -584,7 +597,7 @@ export const changelogData: ChangelogData = {
       "message": "Resolve video upload quota error for manual products",
       "fullMessage": "fix: Resolve video upload quota error for manual products",
       "author": "Kvn3Toj",
-      "relativeTime": "21 hours ago",
+      "relativeTime": "22 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -649,7 +662,7 @@ export const changelogData: ChangelogData = {
       "message": "Add better error logging for Drive folder creation",
       "fullMessage": "fix: Add better error logging for Drive folder creation",
       "author": "Kvn3Toj",
-      "relativeTime": "22 hours ago",
+      "relativeTime": "23 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -662,7 +675,7 @@ export const changelogData: ChangelogData = {
       "message": "Position snackbar above bottom tab bar in CotizacionGenerator",
       "fullMessage": "fix: Position snackbar above bottom tab bar in CotizacionGenerator",
       "author": "Kvn3Toj",
-      "relativeTime": "22 hours ago",
+      "relativeTime": "23 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -675,7 +688,7 @@ export const changelogData: ChangelogData = {
       "message": "QR code links to Treasure Browser with quoted products filtered",
       "fullMessage": "feat: QR code links to Treasure Browser with quoted products filtered",
       "author": "Kvn3Toj",
-      "relativeTime": "22 hours ago",
+      "relativeTime": "23 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -727,7 +740,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product images and links to quotation PDF export",
       "fullMessage": "feat: Add product images and links to quotation PDF export",
       "author": "Kvn3Toj",
-      "relativeTime": "23 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -766,7 +779,7 @@ export const changelogData: ChangelogData = {
       "message": "Prevent wrong images showing in grid cards during progressive loading",
       "fullMessage": "fix: Prevent wrong images showing in grid cards during progressive loading",
       "author": "Kvn3Toj",
-      "relativeTime": "28 hours ago",
+      "relativeTime": "29 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -844,7 +857,7 @@ export const changelogData: ChangelogData = {
       "message": "Improve image loading performance for Chrome/Comet browsers",
       "fullMessage": "fix: Improve image loading performance for Chrome/Comet browsers",
       "author": "Kvn3Toj",
-      "relativeTime": "29 hours ago",
+      "relativeTime": "30 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "performance",
@@ -883,7 +896,7 @@ export const changelogData: ChangelogData = {
       "message": "Show regular price in grid cards for all user roles",
       "fullMessage": "fix: Show regular price in grid cards for all user roles",
       "author": "Kvn3Toj",
-      "relativeTime": "33 hours ago",
+      "relativeTime": "34 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -935,7 +948,7 @@ export const changelogData: ChangelogData = {
       "message": "Additional Spanish accent mark corrections across UI",
       "fullMessage": "fix: Additional Spanish accent mark corrections across UI",
       "author": "Kvn3Toj",
-      "relativeTime": "34 hours ago",
+      "relativeTime": "35 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "ux",

@@ -13,7 +13,8 @@ import {
   primitiveColors,
 } from '../../design-system/tokens';
 import { accentColors } from '../../design-system';
-import { brandColors } from './constants';
+import { brandColors, quotationStyles, quotationTypography } from './constants';
+import { getProductDisplayUrl, getQrCodeUrl } from './utils';
 import {
   CotizacionProduct,
   CotizacionInvestment,
@@ -23,52 +24,128 @@ import {
   getPesoDisplay,
 } from '../../hooks/useCotizacion';
 
-// iOS-style design constants for the quotation
-const quotationStyles = {
-  // Soft shadows for iOS feel
-  cardShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-  sectionShadow: '0 2px 8px rgba(0,0,0,0.06)',
-  // Subtle borders
-  borderLight: 'rgba(0,0,0,0.06)',
-  borderMedium: 'rgba(0,0,0,0.1)',
-  // Background tints
-  surfaceTint: 'rgba(0,174,122,0.02)',
-  accentTint: 'rgba(0,174,122,0.06)',
-};
-
 export interface QuotationPreviewProps {
-  // Basic info
   quotationNumber: string;
   clientName: string;
   asesorName: string;
   date: string;
   expiryStr: string;
   notes: string;
-
-  // Products
   products: CotizacionProduct[];
-
-  // Investments
   investments: CotizacionInvestment[];
   customCosts: CustomCost[];
   totalInvestment: number;
-
-  // Totals
   productSubtotal: number;
   discountPercent: number;
   subtotal: number;
   discount: number;
   total: number;
-
-  // Settings
   businessSettings: BusinessSettings;
 }
 
 const formatCurrency = formatCotizacionCurrency;
 
+// =============================================================================
+// REUSABLE SUB-COMPONENTS
+// =============================================================================
+
+/**
+ * InfoField - Reusable label + value display
+ */
+interface InfoFieldProps {
+  label: string;
+  value: React.ReactNode;
+  icon?: React.ReactNode;
+  valueStyle?: object;
+}
+
+const InfoField: React.FC<InfoFieldProps> = ({ label, value, icon, valueStyle }) => (
+  <Box>
+    <Typography sx={quotationTypography.label}>{label}</Typography>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+      {icon}
+      <Typography sx={{ ...quotationTypography.value, ...valueStyle }}>{value}</Typography>
+    </Box>
+  </Box>
+);
+
+/**
+ * SectionHeader - Reusable section header with icon and optional count
+ */
+interface SectionHeaderProps {
+  icon: React.ReactNode;
+  title: string;
+  count?: number;
+  iconBgColor?: string;
+}
+
+const SectionHeader: React.FC<SectionHeaderProps> = ({ icon, title, count, iconBgColor = quotationStyles.accentTint }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1.5 }}>
+    <Box sx={{
+      width: 24,
+      height: 24,
+      borderRadius: 1,
+      bgcolor: iconBgColor,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+      {icon}
+    </Box>
+    <Typography sx={quotationTypography.sectionHeader}>{title}</Typography>
+    {count !== undefined && (
+      <Box sx={{ ml: 'auto', px: 1, py: 0.25, bgcolor: quotationStyles.accentTint, borderRadius: 1 }}>
+        <Typography sx={{ fontSize: '0.6rem', fontWeight: 600, color: brandColors.emerald }}>
+          {count} {count === 1 ? 'item' : 'items'}
+        </Typography>
+      </Box>
+    )}
+  </Box>
+);
+
+/**
+ * LineItem - Reusable row for lists (investments, subtotals)
+ */
+interface LineItemProps {
+  label: string;
+  value: string;
+  isLast?: boolean;
+  labelColor?: string;
+  valueColor?: string;
+  bgColor?: string;
+}
+
+const LineItem: React.FC<LineItemProps> = ({
+  label,
+  value,
+  isLast = false,
+  labelColor = brandColors.gray,
+  valueColor = brandColors.textPrimary,
+  bgColor,
+}) => (
+  <Box sx={{
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    py: 1,
+    px: 1.5,
+    bgcolor: bgColor,
+    borderBottom: isLast ? 'none' : `1px solid ${quotationStyles.borderLight}`,
+  }}>
+    <Typography sx={{ fontSize: '0.6rem', color: labelColor }}>{label}</Typography>
+    <Typography sx={{ fontSize: '0.65rem', fontWeight: 600, color: valueColor, ...quotationTypography.monospace }}>
+      {value}
+    </Typography>
+  </Box>
+);
+
+// =============================================================================
+// MAIN COMPONENT
+// =============================================================================
+
 export const QuotationPreview = forwardRef<HTMLDivElement, QuotationPreviewProps>(
-  (
-    {
+  (props, ref) => {
+    const {
       quotationNumber,
       clientName,
       asesorName,
@@ -85,16 +162,15 @@ export const QuotationPreview = forwardRef<HTMLDivElement, QuotationPreviewProps
       discount,
       total,
       businessSettings,
-    },
-    ref
-  ) => {
+    } = props;
+
     return (
       <Paper
         elevation={0}
         sx={{
           p: 2,
           borderRadius: 3,
-          bgcolor: '#FAFAFA',
+          bgcolor: quotationStyles.surfaceMuted,
           border: `1px solid ${quotationStyles.borderLight}`,
           boxShadow: documentShadows.paper,
           minHeight: 700,
@@ -104,22 +180,21 @@ export const QuotationPreview = forwardRef<HTMLDivElement, QuotationPreviewProps
           ref={ref}
           className="quotation-preview"
           sx={{
-            bgcolor: '#FFFFFF',
+            bgcolor: quotationStyles.surface,
             borderRadius: 2,
             overflow: 'hidden',
           }}
         >
-          {/* iOS-style Clean Container */}
           <Box
             sx={{
               position: 'relative',
               borderRadius: 2,
               border: `1px solid ${quotationStyles.borderLight}`,
-              bgcolor: '#FFFFFF',
+              bgcolor: quotationStyles.surface,
               boxShadow: quotationStyles.cardShadow,
             }}
           >
-            {/* Subtle emerald accent line at top */}
+            {/* Emerald accent line */}
             <Box
               sx={{
                 position: 'absolute',
@@ -133,30 +208,16 @@ export const QuotationPreview = forwardRef<HTMLDivElement, QuotationPreviewProps
               }}
             />
 
-            {/* Clean Paper Content */}
-            <Box
-              sx={{
-                p: 3,
-                pt: 4,
-                minHeight: 650,
-                bgcolor: '#FFFFFF',
-              }}
-            >
-              {/* Logo & Header Section */}
+            {/* Content */}
+            <Box sx={{ p: 3, pt: 4, minHeight: 650, bgcolor: quotationStyles.surface }}>
               <LogoSection />
-
-              {/* Quotation Info Card */}
               <QuotationInfoCard
                 quotationNumber={quotationNumber}
                 clientName={clientName}
                 asesorName={asesorName}
                 date={date}
               />
-
-              {/* Products List */}
               <ProductsSection products={products} />
-
-              {/* Investment Breakdown */}
               {totalInvestment > 0 && (
                 <InvestmentSection
                   investments={investments}
@@ -164,8 +225,6 @@ export const QuotationPreview = forwardRef<HTMLDivElement, QuotationPreviewProps
                   totalInvestment={totalInvestment}
                 />
               )}
-
-              {/* Totals */}
               {(products.length > 0 || totalInvestment > 0) && (
                 <TotalsSection
                   products={products}
@@ -177,18 +236,9 @@ export const QuotationPreview = forwardRef<HTMLDivElement, QuotationPreviewProps
                   total={total}
                 />
               )}
-
-              {/* Notes */}
               {notes && <NotesSection notes={notes} />}
-
-              {/* Validity */}
               <ValiditySection expiryStr={expiryStr} footerNote={businessSettings.footerNote} />
-
-              {/* Footer */}
-              <FooterSection
-                products={products}
-                businessSettings={businessSettings}
-              />
+              <FooterSection products={products} businessSettings={businessSettings} />
             </Box>
           </Box>
         </Box>
@@ -200,33 +250,17 @@ export const QuotationPreview = forwardRef<HTMLDivElement, QuotationPreviewProps
 QuotationPreview.displayName = 'QuotationPreview';
 
 // =============================================================================
-// SUB-COMPONENTS
+// SECTION COMPONENTS
 // =============================================================================
 
-/**
- * LogoSection - Clean iOS-style header with actual logo
- */
 const LogoSection: React.FC = () => (
   <Box sx={{ textAlign: 'center', mb: 3 }}>
-    {/* Logo */}
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        mb: 1,
-      }}
-    >
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
       <img
         src="/logo-horizontal-dark.png"
         alt="Tierra Madre"
-        style={{
-          height: 48,
-          width: 'auto',
-          objectFit: 'contain',
-        }}
+        style={{ height: 48, width: 'auto', objectFit: 'contain' }}
         onError={(e) => {
-          // Fallback to text if logo fails to load
           const target = e.target as HTMLImageElement;
           target.style.display = 'none';
           const parent = target.parentElement;
@@ -239,8 +273,6 @@ const LogoSection: React.FC = () => (
         }}
       />
     </Box>
-
-    {/* Tagline */}
     <Typography sx={{
       fontSize: '0.6rem',
       color: brandColors.emerald,
@@ -250,8 +282,6 @@ const LogoSection: React.FC = () => (
     }}>
       Colombian Emeralds
     </Typography>
-
-    {/* Simple divider */}
     <Box sx={{
       mt: 2,
       mx: 'auto',
@@ -264,116 +294,98 @@ const LogoSection: React.FC = () => (
   </Box>
 );
 
-/**
- * QuotationInfoCard - iOS-style info card with quotation details
- */
-const QuotationInfoCard: React.FC<{
+interface QuotationInfoCardProps {
   quotationNumber: string;
   clientName: string;
   asesorName: string;
   date: string;
-}> = ({ quotationNumber, clientName, asesorName, date }) => (
-  <Box
-    sx={{
-      bgcolor: quotationStyles.surfaceTint,
-      borderRadius: 2,
-      p: 2,
-      mb: 3,
-      border: `1px solid ${quotationStyles.borderLight}`,
-    }}
-  >
-    {/* Title */}
-    <Box sx={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 1,
-      mb: 2,
-      pb: 1.5,
-      borderBottom: `1px solid ${quotationStyles.borderLight}`,
-    }}>
-      <FileText size={14} color={brandColors.emerald} />
-      <Typography sx={{
-        fontSize: '0.7rem',
-        fontWeight: 600,
-        color: brandColors.emeraldDark,
-        letterSpacing: '0.15em',
-        textTransform: 'uppercase',
+}
+
+const QuotationInfoCard: React.FC<QuotationInfoCardProps> = ({ quotationNumber, clientName, asesorName, date }) => {
+  const formattedDate = new Date(date).toLocaleDateString('es-CO', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+
+  return (
+    <Box
+      sx={{
+        bgcolor: quotationStyles.surfaceTint,
+        borderRadius: 2,
+        p: 2,
+        mb: 3,
+        border: `1px solid ${quotationStyles.borderLight}`,
+      }}
+    >
+      {/* Title */}
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 1,
+        mb: 2,
+        pb: 1.5,
+        borderBottom: `1px solid ${quotationStyles.borderLight}`,
       }}>
-        Cotización de Venta
-      </Typography>
-    </Box>
-
-    {/* Info Grid */}
-    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
-      {/* Quotation Number */}
-      <Box>
-        <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.25 }}>
-          No. Cotización
-        </Typography>
-        <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: brandColors.textPrimary, fontFamily: 'monospace' }}>
-          {quotationNumber}
+        <FileText size={14} color={brandColors.emerald} />
+        <Typography sx={{
+          fontSize: '0.7rem',
+          fontWeight: 600,
+          color: brandColors.emeraldDark,
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+        }}>
+          Cotización de Venta
         </Typography>
       </Box>
 
-      {/* Date */}
-      <Box>
-        <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.25 }}>
-          Fecha de Emisión
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Calendar size={11} color={brandColors.gray} />
-          <Typography sx={{ fontSize: '0.7rem', fontWeight: 500, color: brandColors.textPrimary }}>
-            {new Date(date).toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })}
-          </Typography>
-        </Box>
+      {/* Info Grid */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+        <InfoField
+          label="No. Cotización"
+          value={quotationNumber}
+          valueStyle={{ fontSize: '0.75rem', fontWeight: 700, ...quotationTypography.monospace }}
+        />
+        <InfoField
+          label="Fecha de Emisión"
+          value={formattedDate}
+          icon={<Calendar size={11} color={brandColors.gray} />}
+          valueStyle={{ fontWeight: 500 }}
+        />
+        {clientName && (
+          <InfoField
+            label="Cliente"
+            value={clientName}
+            icon={<User size={11} color={brandColors.emerald} />}
+          />
+        )}
+        {asesorName && (
+          <InfoField
+            label="Asesor"
+            value={asesorName}
+            valueStyle={{ fontWeight: 500, color: brandColors.emerald }}
+          />
+        )}
       </Box>
-
-      {/* Client */}
-      {clientName && (
-        <Box>
-          <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.25 }}>
-            Cliente
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <User size={11} color={brandColors.emerald} />
-            <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: brandColors.textPrimary }}>
-              {clientName}
-            </Typography>
-          </Box>
-        </Box>
-      )}
-
-      {/* Asesor */}
-      {asesorName && (
-        <Box>
-          <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.25 }}>
-            Asesor
-          </Typography>
-          <Typography sx={{ fontSize: '0.7rem', fontWeight: 500, color: brandColors.emerald }}>
-            {asesorName}
-          </Typography>
-        </Box>
-      )}
     </Box>
-  </Box>
-);
+  );
+};
 
-/**
- * ProductsSection - iOS-style product list
- */
-/**
- * ProductImage - Reusable product image component with proper loading states
- */
-const ProductImage: React.FC<{
+// =============================================================================
+// PRODUCT COMPONENTS
+// =============================================================================
+
+interface ProductImageProps {
   src?: string;
   isJewelry: boolean;
   size?: number;
-}> = ({ src, isJewelry, size = 56 }) => {
+}
+
+const ProductImage: React.FC<ProductImageProps> = ({ src, isJewelry, size = 56 }) => {
   const [imgError, setImgError] = React.useState(false);
   const [imgLoaded, setImgLoaded] = React.useState(false);
 
-  // Reset error state when src changes
   React.useEffect(() => {
     setImgError(false);
     setImgLoaded(false);
@@ -413,7 +425,6 @@ const ProductImage: React.FC<{
           }}
         />
       )}
-      {/* Fallback icon when no image or error */}
       {(!hasValidSrc || !imgLoaded) && (
         <Box
           sx={{
@@ -430,6 +441,67 @@ const ProductImage: React.FC<{
           )}
         </Box>
       )}
+    </Box>
+  );
+};
+
+interface ProductRowProps {
+  product: CotizacionProduct;
+  isEven: boolean;
+  isLast: boolean;
+}
+
+const ProductRow: React.FC<ProductRowProps> = ({ product, isEven, isLast }) => {
+  const displayUrl = getProductDisplayUrl(product);
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        py: 1.25,
+        px: 1.5,
+        bgcolor: isEven ? quotationStyles.surfaceMuted : quotationStyles.surface,
+        borderBottom: isLast ? 'none' : `1px solid ${quotationStyles.borderLight}`,
+      }}
+    >
+      <ProductImage
+        src={product.gifUrl || product.imagen}
+        isJewelry={product.isJewelry}
+        size={56}
+      />
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: brandColors.textPrimary, lineHeight: 1.3 }}>
+          {product.name}
+        </Typography>
+        <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray, mt: 0.25 }}>
+          Ref. #{product.itemNumber} • {getPesoDisplay(product)} • {product.color}
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+          <ExternalLink size={9} color={brandColors.emerald} />
+          <Typography sx={{
+            fontSize: '0.45rem',
+            color: brandColors.emerald,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            maxWidth: '180px',
+          }}>
+            {displayUrl}
+          </Typography>
+        </Box>
+      </Box>
+      <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+        <Typography sx={{
+          fontSize: '0.8rem',
+          fontWeight: 700,
+          color: brandColors.emerald,
+          ...quotationTypography.monospace,
+        }}>
+          {formatCurrency(product.precioCOP)}
+        </Typography>
+      </Box>
     </Box>
   );
 };
@@ -455,243 +527,68 @@ const ProductsSection: React.FC<{ products: CotizacionProduct[] }> = ({ products
 
   return (
     <Box sx={{ mb: 3 }}>
-      {/* Section Header */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 0.75,
-          mb: 1.5,
-        }}
-      >
-        <Box sx={{
-          width: 24,
-          height: 24,
-          borderRadius: 1,
-          bgcolor: quotationStyles.accentTint,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <Package size={13} color={brandColors.emerald} />
-        </Box>
-        <Typography sx={{
-          fontSize: '0.65rem',
-          fontWeight: 600,
-          color: brandColors.textPrimary,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-        }}>
-          Productos
-        </Typography>
-        <Box sx={{
-          ml: 'auto',
-          px: 1,
-          py: 0.25,
-          bgcolor: quotationStyles.accentTint,
-          borderRadius: 1,
-        }}>
-          <Typography sx={{ fontSize: '0.6rem', fontWeight: 600, color: brandColors.emerald }}>
-            {products.length} {products.length === 1 ? 'item' : 'items'}
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* Product List */}
+      <SectionHeader
+        icon={<Package size={13} color={brandColors.emerald} />}
+        title="Productos"
+        count={products.length}
+      />
       <Box sx={{
         border: `1px solid ${quotationStyles.borderLight}`,
         borderRadius: 2,
         overflow: 'hidden',
       }}>
-        {products.map((product, index) => {
-          // Generate clean product slug for display URL (fallback)
-          const productSlug = product.name
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9\s-]/g, '')
-            .trim()
-            .replace(/\s+/g, '-');
-
-          // Determine display URL:
-          // 1. For manual products with video: show shortened Drive link
-          // 2. For inventory products: show website URL with slug
-          // 3. Fallback: show website base URL
-          const getDisplayUrl = () => {
-            // Manual product with video URL - show shortened Drive link
-            if (product.isManual && product.videoUrl) {
-              const fileId = extractDriveFileId(product.videoUrl);
-              if (fileId) {
-                // Show shortened version for display
-                return `drive.google.com/file/d/${fileId.substring(0, 8)}...`;
-              }
-            }
-            // Inventory products or fallback: show website URL
-            if (!product.isManual) {
-              return `tierramadre.co/products/${productSlug}`;
-            }
-            // Manual products without video: show base website
-            return 'tierramadre.co';
-          };
-
-          return (
-            <Box
-              key={product.id}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.5,
-                py: 1.25,
-                px: 1.5,
-                bgcolor: index % 2 === 0 ? '#FAFAFA' : '#FFFFFF',
-                borderBottom: index < products.length - 1 ? `1px solid ${quotationStyles.borderLight}` : 'none',
-              }}
-            >
-              {/* Product Image - Use GIF for videos (better PDF display), fallback to imagen */}
-              <ProductImage
-                src={product.gifUrl || product.imagen}
-                isJewelry={product.isJewelry}
-                size={56}
-              />
-
-              {/* Product Info */}
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{
-                  fontSize: '0.7rem',
-                  fontWeight: 600,
-                  color: brandColors.textPrimary,
-                  lineHeight: 1.3,
-                }}>
-                  {product.name}
-                </Typography>
-                <Typography sx={{
-                  fontSize: '0.55rem',
-                  color: brandColors.gray,
-                  mt: 0.25,
-                }}>
-                  Ref. #{product.itemNumber} • {getPesoDisplay(product)} • {product.color}
-                </Typography>
-                {/* Product Link - shown as text since PDF can't have clickable links */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-                  <ExternalLink size={9} color={brandColors.emerald} />
-                  <Typography
-                    sx={{
-                      fontSize: '0.45rem',
-                      color: brandColors.emerald,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      maxWidth: '180px',
-                    }}
-                  >
-                    {getDisplayUrl()}
-                  </Typography>
-                </Box>
-              </Box>
-
-              {/* Price */}
-              <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-                <Typography sx={{
-                  fontSize: '0.8rem',
-                  fontWeight: 700,
-                  color: brandColors.emerald,
-                  fontFamily: 'monospace',
-                }}>
-                  {formatCurrency(product.precioCOP)}
-                </Typography>
-              </Box>
-            </Box>
-          );
-        })}
+        {products.map((product, index) => (
+          <ProductRow
+            key={product.id}
+            product={product}
+            isEven={index % 2 === 0}
+            isLast={index === products.length - 1}
+          />
+        ))}
       </Box>
     </Box>
   );
 };
 
-/**
- * InvestmentSection - iOS-style investment breakdown
- */
-const InvestmentSection: React.FC<{
+// =============================================================================
+// INVESTMENT & TOTALS
+// =============================================================================
+
+interface InvestmentSectionProps {
   investments: CotizacionInvestment[];
   customCosts: CustomCost[];
   totalInvestment: number;
-}> = ({ investments, customCosts, totalInvestment }) => (
-  <Box sx={{ mb: 3 }}>
-    {/* Section Header */}
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1.5 }}>
+}
+
+const InvestmentSection: React.FC<InvestmentSectionProps> = ({ investments, customCosts, totalInvestment }) => {
+  const activeInvestments = investments.filter(inv => inv.value > 0);
+  const allItems = [
+    ...activeInvestments.map(inv => ({ id: inv.id, label: inv.label, value: inv.value })),
+    ...customCosts.map(cost => ({ id: cost.id, label: cost.label, value: cost.value })),
+  ];
+
+  return (
+    <Box sx={{ mb: 3 }}>
+      <SectionHeader
+        icon={<DollarSign size={13} color={brandColors.gold} />}
+        title="Inversión Adicional"
+        iconBgColor="rgba(212,175,55,0.1)"
+      />
       <Box sx={{
-        width: 24,
-        height: 24,
-        borderRadius: 1,
-        bgcolor: 'rgba(212,175,55,0.1)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        bgcolor: quotationStyles.surfaceMuted,
+        borderRadius: 2,
+        border: `1px solid ${quotationStyles.borderLight}`,
+        overflow: 'hidden',
       }}>
-        <DollarSign size={13} color={brandColors.gold} />
-      </Box>
-      <Typography sx={{
-        fontSize: '0.65rem',
-        fontWeight: 600,
-        color: brandColors.textPrimary,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-      }}>
-        Inversión Adicional
-      </Typography>
-    </Box>
-
-    {/* Investment List */}
-    <Box sx={{
-      bgcolor: '#FAFAFA',
-      borderRadius: 2,
-      border: `1px solid ${quotationStyles.borderLight}`,
-      overflow: 'hidden',
-    }}>
-      {investments.filter(inv => inv.value > 0).map((inv, index, filtered) => (
-        <Box
-          key={inv.id}
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            py: 1,
-            px: 1.5,
-            borderBottom: index < filtered.length - 1 || customCosts.length > 0 ? `1px solid ${quotationStyles.borderLight}` : 'none',
-          }}
-        >
-          <Typography sx={{ fontSize: '0.6rem', color: brandColors.gray }}>
-            {inv.label}
-          </Typography>
-          <Typography sx={{ fontSize: '0.65rem', fontWeight: 600, color: brandColors.textPrimary, fontFamily: 'monospace' }}>
-            {formatCurrency(inv.value)}
-          </Typography>
-        </Box>
-      ))}
-      {customCosts.map((cost, index) => (
-        <Box
-          key={cost.id}
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            py: 1,
-            px: 1.5,
-            borderBottom: index < customCosts.length - 1 ? `1px solid ${quotationStyles.borderLight}` : 'none',
-          }}
-        >
-          <Typography sx={{ fontSize: '0.6rem', color: brandColors.gray }}>
-            {cost.label}
-          </Typography>
-          <Typography sx={{ fontSize: '0.65rem', fontWeight: 600, color: brandColors.textPrimary, fontFamily: 'monospace' }}>
-            {formatCurrency(cost.value)}
-          </Typography>
-        </Box>
-      ))}
-
-      {/* Total */}
-      <Box
-        sx={{
+        {allItems.map((item, index) => (
+          <LineItem
+            key={item.id}
+            label={item.label}
+            value={formatCurrency(item.value)}
+            isLast={index === allItems.length - 1}
+          />
+        ))}
+        <Box sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -699,23 +596,20 @@ const InvestmentSection: React.FC<{
           px: 1.5,
           bgcolor: 'rgba(212,175,55,0.06)',
           borderTop: `1px solid ${quotationStyles.borderLight}`,
-        }}
-      >
-        <Typography sx={{ fontSize: '0.6rem', fontWeight: 600, color: brandColors.textPrimary }}>
-          Total Inversión
-        </Typography>
-        <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: brandColors.gold, fontFamily: 'monospace' }}>
-          {formatCurrency(totalInvestment)}
-        </Typography>
+        }}>
+          <Typography sx={{ fontSize: '0.6rem', fontWeight: 600, color: brandColors.textPrimary }}>
+            Total Inversión
+          </Typography>
+          <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: brandColors.gold, ...quotationTypography.monospace }}>
+            {formatCurrency(totalInvestment)}
+          </Typography>
+        </Box>
       </Box>
     </Box>
-  </Box>
-);
+  );
+};
 
-/**
- * TotalsSection - iOS-style totals card
- */
-const TotalsSection: React.FC<{
+interface TotalsSectionProps {
   products: CotizacionProduct[];
   totalInvestment: number;
   productSubtotal: number;
@@ -723,118 +617,89 @@ const TotalsSection: React.FC<{
   subtotal: number;
   discount: number;
   total: number;
-}> = ({ products, totalInvestment, productSubtotal, discountPercent, subtotal, discount, total }) => (
-  <Box sx={{ mb: 3 }}>
-    {/* Subtotals Card */}
-    <Box sx={{
-      bgcolor: '#FAFAFA',
-      borderRadius: 2,
-      border: `1px solid ${quotationStyles.borderLight}`,
-      overflow: 'hidden',
-      mb: 2,
-    }}>
-      {products.length > 0 && totalInvestment > 0 && (
-        <Box sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          py: 1,
-          px: 1.5,
-          borderBottom: `1px solid ${quotationStyles.borderLight}`,
-        }}>
-          <Typography sx={{ fontSize: '0.6rem', color: brandColors.gray }}>
-            Subtotal Productos
-          </Typography>
-          <Typography sx={{ fontSize: '0.65rem', fontWeight: 600, color: brandColors.textPrimary, fontFamily: 'monospace' }}>
-            {formatCurrency(productSubtotal)}
-          </Typography>
-        </Box>
-      )}
+}
 
-      {products.length > 0 && totalInvestment > 0 && (
-        <Box sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          py: 1,
-          px: 1.5,
-          borderBottom: `1px solid ${quotationStyles.borderLight}`,
-        }}>
-          <Typography sx={{ fontSize: '0.6rem', color: brandColors.gray }}>
-            Inversión
-          </Typography>
-          <Typography sx={{ fontSize: '0.65rem', fontWeight: 600, color: brandColors.textPrimary, fontFamily: 'monospace' }}>
-            {formatCurrency(totalInvestment)}
-          </Typography>
-        </Box>
-      )}
+const TotalsSection: React.FC<TotalsSectionProps> = ({
+  products,
+  totalInvestment,
+  productSubtotal,
+  discountPercent,
+  subtotal,
+  discount,
+  total,
+}) => {
+  const showBreakdown = products.length > 0 && totalInvestment > 0;
 
+  return (
+    <Box sx={{ mb: 3 }}>
+      {/* Subtotals Card */}
       <Box sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        py: 1,
-        px: 1.5,
-        borderBottom: discountPercent > 0 ? `1px solid ${quotationStyles.borderLight}` : 'none',
+        bgcolor: quotationStyles.surfaceMuted,
+        borderRadius: 2,
+        border: `1px solid ${quotationStyles.borderLight}`,
+        overflow: 'hidden',
+        mb: 2,
       }}>
-        <Typography sx={{ fontSize: '0.6rem', color: brandColors.gray }}>
-          Subtotal
-        </Typography>
-        <Typography sx={{ fontSize: '0.65rem', fontWeight: 600, color: brandColors.textPrimary, fontFamily: 'monospace' }}>
-          {formatCurrency(subtotal)}
-        </Typography>
+        {showBreakdown && (
+          <>
+            <LineItem label="Subtotal Productos" value={formatCurrency(productSubtotal)} />
+            <LineItem label="Inversión" value={formatCurrency(totalInvestment)} />
+          </>
+        )}
+        <LineItem
+          label="Subtotal"
+          value={formatCurrency(subtotal)}
+          isLast={discountPercent <= 0}
+        />
+        {discountPercent > 0 && (
+          <LineItem
+            label={`Descuento (${discountPercent}%)`}
+            value={`-${formatCurrency(discount)}`}
+            isLast
+            labelColor={accentColors.error.light}
+            valueColor={accentColors.error.light}
+            bgColor="rgba(239,68,68,0.04)"
+          />
+        )}
       </Box>
 
-      {discountPercent > 0 && (
-        <Box sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          py: 1,
-          px: 1.5,
-          bgcolor: 'rgba(239,68,68,0.04)',
+      {/* Total Card */}
+      <Box
+        sx={{
+          background: `linear-gradient(135deg, ${brandColors.emerald} 0%, ${primitiveColors.emerald[600]} 100%)`,
+          borderRadius: 2,
+          p: 2,
+          textAlign: 'center',
+          boxShadow: '0 4px 12px rgba(0,174,122,0.25)',
+        }}
+      >
+        <Typography sx={{
+          fontSize: '0.6rem',
+          color: 'rgba(255,255,255,0.8)',
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+          mb: 0.5,
         }}>
-          <Typography sx={{ fontSize: '0.6rem', color: accentColors.error.light }}>
-            Descuento ({discountPercent}%)
-          </Typography>
-          <Typography sx={{ fontSize: '0.65rem', fontWeight: 600, color: accentColors.error.light, fontFamily: 'monospace' }}>
-            -{formatCurrency(discount)}
-          </Typography>
-        </Box>
-      )}
+          Precio Total
+        </Typography>
+        <Typography sx={{
+          fontSize: '1.75rem',
+          fontWeight: 700,
+          color: quotationStyles.surface,
+          letterSpacing: '-0.02em',
+          ...quotationTypography.monospace,
+        }}>
+          {formatCurrency(total)}
+        </Typography>
+      </Box>
     </Box>
+  );
+};
 
-    {/* Total Card */}
-    <Box
-      sx={{
-        background: `linear-gradient(135deg, ${brandColors.emerald} 0%, ${primitiveColors.emerald[600]} 100%)`,
-        borderRadius: 2,
-        p: 2,
-        textAlign: 'center',
-        boxShadow: '0 4px 12px rgba(0,174,122,0.25)',
-      }}
-    >
-      <Typography sx={{
-        fontSize: '0.6rem',
-        color: 'rgba(255,255,255,0.8)',
-        letterSpacing: '0.15em',
-        textTransform: 'uppercase',
-        mb: 0.5,
-      }}>
-        Precio Total
-      </Typography>
-      <Typography sx={{
-        fontSize: '1.75rem',
-        fontWeight: 700,
-        color: '#FFFFFF',
-        fontFamily: 'monospace',
-        letterSpacing: '-0.02em',
-      }}>
-        {formatCurrency(total)}
-      </Typography>
-    </Box>
-  </Box>
-);
+// =============================================================================
+// NOTES & VALIDITY
+// =============================================================================
 
-/**
- * NotesSection - iOS-style notes card
- */
 const NotesSection: React.FC<{ notes: string }> = ({ notes }) => (
   <Box sx={{
     mb: 3,
@@ -859,28 +724,25 @@ const NotesSection: React.FC<{ notes: string }> = ({ notes }) => (
   </Box>
 );
 
-/**
- * ValiditySection - iOS-style validity notice
- */
-const ValiditySection: React.FC<{ expiryStr: string; footerNote: string }> = ({ expiryStr, footerNote }) => (
+interface ValiditySectionProps {
+  expiryStr: string;
+  footerNote: string;
+}
+
+const ValiditySection: React.FC<ValiditySectionProps> = ({ expiryStr, footerNote }) => (
   <Box sx={{
     textAlign: 'center',
     mb: 3,
     py: 1.5,
     px: 2,
-    bgcolor: '#FAFAFA',
+    bgcolor: quotationStyles.surfaceMuted,
     borderRadius: 2,
     border: `1px solid ${quotationStyles.borderLight}`,
   }}>
     <Typography sx={{ fontSize: '0.6rem', color: brandColors.gray }}>
       Esta cotización es válida hasta
     </Typography>
-    <Typography sx={{
-      fontSize: '0.7rem',
-      fontWeight: 600,
-      color: brandColors.textPrimary,
-      mt: 0.25,
-    }}>
+    <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: brandColors.textPrimary, mt: 0.25 }}>
       {expiryStr}
     </Typography>
     <Typography sx={{
@@ -896,13 +758,16 @@ const ValiditySection: React.FC<{ expiryStr: string; footerNote: string }> = ({ 
   </Box>
 );
 
-/**
- * FooterSection - iOS-style clean footer
- */
-const FooterSection: React.FC<{
+// =============================================================================
+// FOOTER
+// =============================================================================
+
+interface FooterSectionProps {
   products: CotizacionProduct[];
   businessSettings: BusinessSettings;
-}> = ({ products, businessSettings }) => (
+}
+
+const FooterSection: React.FC<FooterSectionProps> = ({ products, businessSettings }) => (
   <Box
     sx={{
       borderTop: `1px solid ${quotationStyles.borderLight}`,
@@ -913,10 +778,7 @@ const FooterSection: React.FC<{
       gap: 2,
     }}
   >
-    {/* QR Code */}
     <QRCodeBox products={products} />
-
-    {/* Contact Info - Center */}
     <Box sx={{ textAlign: 'center', flex: 1 }}>
       <Typography sx={{ fontSize: '0.6rem', color: brandColors.textPrimary, fontWeight: 500 }}>
         {businessSettings.contactPhone}
@@ -928,94 +790,12 @@ const FooterSection: React.FC<{
         {businessSettings.nit}
       </Typography>
     </Box>
-
-    {/* Authenticity Seal */}
     <AuthenticityBadge />
   </Box>
 );
 
-/**
- * Extract Google Drive file ID from various URL formats
- * Handles:
- * - /api/serve-drive-image?fileId={id}
- * - https://drive.google.com/uc?export=download&id={id}
- * - https://drive.google.com/file/d/{id}/view
- * - https://drive.google.com/file/d/{id}/preview
- */
-const extractDriveFileId = (url: string | undefined): string | null => {
-  if (!url) return null;
-
-  // Handle proxy URL: /api/serve-drive-image?fileId={id}
-  if (url.includes('/api/serve-drive-image?fileId=')) {
-    return url.split('fileId=')[1]?.split('&')[0] || null;
-  }
-
-  // Handle download URL: https://drive.google.com/uc?export=download&id={id}
-  const downloadMatch = url.match(/[?&]id=([^&]+)/);
-  if (downloadMatch) {
-    return downloadMatch[1];
-  }
-
-  // Handle view/preview URL: https://drive.google.com/file/d/{id}/...
-  const viewMatch = url.match(/\/file\/d\/([^/]+)/);
-  if (viewMatch) {
-    return viewMatch[1];
-  }
-
-  return null;
-};
-
-/**
- * QRCodeBox - iOS-style QR code container
- * - For inventory products: Links to Treasure Browser with filtered items
- * - For manual products with media: Links directly to the uploaded video in Drive
- */
 const QRCodeBox: React.FC<{ products: CotizacionProduct[] }> = ({ products }) => {
-  // Determine QR URL based on product types
-  const getQrUrl = () => {
-    if (products.length === 0) {
-      return 'https://tierra-madre-studio.vercel.app/tesoro';
-    }
-
-    // Check if we have manual products with media
-    const manualProducts = products.filter(p => p.isManual);
-    const inventoryProducts = products.filter(p => !p.isManual);
-
-    // If only manual products with video/image, link to the first media file
-    if (manualProducts.length > 0 && inventoryProducts.length === 0) {
-      const productWithMedia = manualProducts.find(p => p.videoUrl || p.imagen);
-      if (productWithMedia) {
-        // PRIORITY 1: Use videoUrl if available (direct link to video)
-        if (productWithMedia.videoUrl) {
-          const fileId = extractDriveFileId(productWithMedia.videoUrl);
-          if (fileId) {
-            return `https://drive.google.com/file/d/${fileId}/view`;
-          }
-          // If no fileId extracted but it's a Drive URL, use directly
-          if (productWithMedia.videoUrl.includes('drive.google.com')) {
-            return productWithMedia.videoUrl;
-          }
-        }
-
-        // PRIORITY 2: Use imagen if it's a Drive URL
-        const mediaUrl = productWithMedia.imagen;
-        const imageFileId = extractDriveFileId(mediaUrl);
-        if (imageFileId) {
-          return `https://drive.google.com/file/d/${imageFileId}/view`;
-        }
-
-        // For other URLs (like Cloudinary), use directly
-        if (mediaUrl) {
-          return mediaUrl;
-        }
-      }
-    }
-
-    // Default: link to Treasure Browser with all item numbers
-    return `https://tierra-madre-studio.vercel.app/tesoro?items=${products.map(p => p.itemNumber).join(',')}&status=all`;
-  };
-
-  const qrUrl = getQrUrl();
+  const qrUrl = getQrCodeUrl(products);
 
   return (
     <Box
@@ -1023,7 +803,7 @@ const QRCodeBox: React.FC<{ products: CotizacionProduct[] }> = ({ products }) =>
         width: 56,
         height: 56,
         p: 0.5,
-        bgcolor: '#FFFFFF',
+        bgcolor: quotationStyles.surface,
         border: `1px solid ${quotationStyles.borderLight}`,
         borderRadius: 1.5,
         flexShrink: 0,
@@ -1035,61 +815,44 @@ const QRCodeBox: React.FC<{ products: CotizacionProduct[] }> = ({ products }) =>
           size={48}
           level="L"
           fgColor={primitiveColors.emerald[700]}
-          bgColor="#FFFFFF"
+          bgColor={quotationStyles.surface}
           style={{ width: '100%', height: '100%', display: 'block' }}
         />
       ) : (
-      <Box
-        sx={{
-          width: '100%',
-          height: '100%',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(5, 1fr)',
-          gap: '1px',
-        }}
-      >
-        {Array(25).fill(0).map((_, i) => (
-          <Box
-            key={i}
-            sx={{
-              bgcolor: (i + Math.floor(i / 5)) % 2 === 0 ? '#E5E7EB' : 'transparent',
-              borderRadius: '0.5px',
-            }}
-          />
-        ))}
-      </Box>
+        <Box
+          sx={{
+            width: '100%',
+            height: '100%',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(5, 1fr)',
+            gap: '1px',
+          }}
+        >
+          {Array(25).fill(0).map((_, i) => (
+            <Box
+              key={i}
+              sx={{
+                bgcolor: (i + Math.floor(i / 5)) % 2 === 0 ? '#E5E7EB' : 'transparent',
+                borderRadius: '0.5px',
+              }}
+            />
+          ))}
+        </Box>
       )}
     </Box>
   );
 };
 
-/**
- * AuthenticityBadge - iOS-style authenticity seal with logo
- */
 const AuthenticityBadge: React.FC = () => (
-  <Box
-    sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: 0.5,
-      flexShrink: 0,
-    }}
-  >
-    {/* Logo Symbol */}
+  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
     <img
       src="/logosymbol-dark.png"
       alt="Tierra Madre"
-      style={{
-        height: 20,
-        width: 'auto',
-        opacity: 0.8,
-      }}
+      style={{ height: 20, width: 'auto', opacity: 0.8 }}
       onError={(e) => {
         (e.target as HTMLImageElement).style.display = 'none';
       }}
     />
-    {/* Authenticity Circle */}
     <Box
       sx={{
         width: 56,

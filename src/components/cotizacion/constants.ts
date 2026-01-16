@@ -71,3 +71,53 @@ export const darkBrandColors = {
 };
 
 export type BrandColors = typeof brandColors;
+
+// =============================================================================
+// QUOTATION PREVIEW STYLES
+// =============================================================================
+
+/**
+ * iOS-style design constants for the quotation preview
+ */
+export const quotationStyles = {
+  // Soft shadows for iOS feel
+  cardShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
+  sectionShadow: '0 2px 8px rgba(0,0,0,0.06)',
+  // Subtle borders
+  borderLight: 'rgba(0,0,0,0.06)',
+  borderMedium: 'rgba(0,0,0,0.1)',
+  // Background tints
+  surfaceTint: 'rgba(0,174,122,0.02)',
+  accentTint: 'rgba(0,174,122,0.06)',
+  // Surface colors
+  surface: '#FFFFFF',
+  surfaceMuted: '#FAFAFA',
+};
+
+/**
+ * Shared typography styles for quotation components
+ */
+export const quotationTypography = {
+  label: {
+    fontSize: '0.55rem',
+    color: brandColors.gray,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.05em',
+    mb: 0.25,
+  },
+  value: {
+    fontSize: '0.7rem',
+    fontWeight: 600,
+    color: brandColors.textPrimary,
+  },
+  sectionHeader: {
+    fontSize: '0.65rem',
+    fontWeight: 600,
+    color: brandColors.textPrimary,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+  },
+  monospace: {
+    fontFamily: 'monospace',
+  },
+};

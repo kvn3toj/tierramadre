@@ -1,0 +1,121 @@
+/**
+ * Cotizacion Utilities
+ * Helper functions for quotation generation and URL handling.
+ */
+import { CotizacionProduct } from '../../hooks/useCotizacion';
+
+/**
+ * Extract Google Drive file ID from various URL formats
+ * Handles:
+ * - /api/serve-drive-image?fileId={id}
+ * - https://drive.google.com/uc?export=download&id={id}
+ * - https://drive.google.com/file/d/{id}/view
+ * - https://drive.google.com/file/d/{id}/preview
+ */
+export const extractDriveFileId = (url: string | undefined): string | null => {
+  if (!url) return null;
+
+  // Handle proxy URL: /api/serve-drive-image?fileId={id}
+  if (url.includes('/api/serve-drive-image?fileId=')) {
+    return url.split('fileId=')[1]?.split('&')[0] || null;
+  }
+
+  // Handle download URL: https://drive.google.com/uc?export=download&id={id}
+  const downloadMatch = url.match(/[?&]id=([^&]+)/);
+  if (downloadMatch) {
+    return downloadMatch[1];
+  }
+
+  // Handle view/preview URL: https://drive.google.com/file/d/{id}/...
+  const viewMatch = url.match(/\/file\/d\/([^/]+)/);
+  if (viewMatch) {
+    return viewMatch[1];
+  }
+
+  return null;
+};
+
+/**
+ * Generate a URL-safe slug from product name
+ */
+export const generateProductSlug = (name: string): string => {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+};
+
+/**
+ * Get the display URL for a product
+ * - For manual products with video: shortened Drive link
+ * - For inventory products: website URL with slug
+ * - Fallback: website base URL
+ */
+export const getProductDisplayUrl = (product: CotizacionProduct): string => {
+  // Manual product with video URL - show shortened Drive link
+  if (product.isManual && product.videoUrl) {
+    const fileId = extractDriveFileId(product.videoUrl);
+    if (fileId) {
+      return `drive.google.com/file/d/${fileId.substring(0, 8)}...`;
+    }
+  }
+
+  // Inventory products: show website URL with slug
+  if (!product.isManual) {
+    const productSlug = generateProductSlug(product.name);
+    return `tierramadre.co/products/${productSlug}`;
+  }
+
+  // Manual products without video: show base website
+  return 'tierramadre.co';
+};
+
+/**
+ * Get the QR code URL based on product types
+ * - For manual products with media: links to Drive file
+ * - For inventory products: links to Treasure Browser with filtered items
+ */
+export const getQrCodeUrl = (products: CotizacionProduct[]): string => {
+  if (products.length === 0) {
+    return 'https://tierra-madre-studio.vercel.app/tesoro';
+  }
+
+  const manualProducts = products.filter(p => p.isManual);
+  const inventoryProducts = products.filter(p => !p.isManual);
+
+  // If only manual products with video/image, link to the first media file
+  if (manualProducts.length > 0 && inventoryProducts.length === 0) {
+    const productWithMedia = manualProducts.find(p => p.videoUrl || p.imagen);
+    if (productWithMedia) {
+      // PRIORITY 1: Use videoUrl if available
+      if (productWithMedia.videoUrl) {
+        const fileId = extractDriveFileId(productWithMedia.videoUrl);
+        if (fileId) {
+          return `https://drive.google.com/file/d/${fileId}/view`;
+        }
+        if (productWithMedia.videoUrl.includes('drive.google.com')) {
+          return productWithMedia.videoUrl;
+        }
+      }
+
+      // PRIORITY 2: Use imagen if it's a Drive URL
+      const mediaUrl = productWithMedia.imagen;
+      const imageFileId = extractDriveFileId(mediaUrl);
+      if (imageFileId) {
+        return `https://drive.google.com/file/d/${imageFileId}/view`;
+      }
+
+      // For other URLs (like Cloudinary), use directly
+      if (mediaUrl) {
+        return mediaUrl;
+      }
+    }
+  }
+
+  // Default: link to Treasure Browser with all item numbers
+  const itemNumbers = products.map(p => p.itemNumber).join(',');
+  return `https://tierra-madre-studio.vercel.app/tesoro?items=${itemNumbers}&status=all`;
+};
