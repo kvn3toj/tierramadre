@@ -208,8 +208,7 @@ export const QuotationPreview = forwardRef<HTMLDivElement, QuotationPreviewProps
 
             {/* Content */}
             <Box sx={{ p: 3, pt: 4, minHeight: 650, bgcolor: quotationStyles.surface }}>
-              <LogoSection />
-              <QuotationInfoCard
+              <HeaderSection
                 quotationNumber={quotationNumber}
                 clientName={clientName}
                 asesorName={asesorName}
@@ -251,55 +250,13 @@ QuotationPreview.displayName = 'QuotationPreview';
 // SECTION COMPONENTS
 // =============================================================================
 
-const LogoSection: React.FC = () => (
-  <Box sx={{ textAlign: 'center', mb: 3 }}>
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <img
-        src="/logo-quotation.png"
-        alt="Tierra Madre"
-        style={{ height: 72, width: 'auto', objectFit: 'contain' }}
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.style.display = 'none';
-          const parent = target.parentElement;
-          if (parent) {
-            const fallback = document.createElement('span');
-            fallback.textContent = 'TIERRA MADRE';
-            fallback.style.cssText = 'font-size: 1.5rem; font-weight: 700; letter-spacing: 0.1em; color: #111827;';
-            parent.appendChild(fallback);
-          }
-        }}
-      />
-    </Box>
-    <Typography sx={{
-      fontSize: '0.55rem',
-      color: brandColors.textPrimary,
-      letterSpacing: '0.15em',
-      fontWeight: 500,
-      textTransform: 'uppercase',
-      mt: 0.5,
-    }}>
-      Colombian Emeralds
-    </Typography>
-    <Box sx={{
-      mt: 1.5,
-      mx: 'auto',
-      width: 40,
-      height: 2,
-      bgcolor: brandColors.emerald,
-      borderRadius: 1,
-      opacity: 0.6,
-    }} />
-  </Box>
-);
-
-interface QuotationInfoCardProps {
+interface HeaderSectionProps {
   quotationNumber: string;
   clientName: string;
   asesorName: string;
 }
 
-const QuotationInfoCard: React.FC<QuotationInfoCardProps> = ({ quotationNumber, clientName, asesorName }) => {
+const HeaderSection: React.FC<HeaderSectionProps> = ({ quotationNumber, clientName, asesorName }) => {
   // Always use today's date (date of export/preview)
   const formattedDate = new Date().toLocaleDateString('es-CO', {
     year: 'numeric',
@@ -308,74 +265,150 @@ const QuotationInfoCard: React.FC<QuotationInfoCardProps> = ({ quotationNumber, 
   });
 
   return (
-    <Box
-      sx={{
-        bgcolor: quotationStyles.surfaceTint,
-        borderRadius: 2,
-        p: 1.5,
-        mb: 2.5,
-        border: `1px solid ${quotationStyles.borderLight}`,
-      }}
-    >
-      {/* Title with client/asesor on sides */}
+    <Box sx={{ mb: 2.5 }}>
+      {/* Top Row: Client info | Logo | Asesor info */}
       <Box sx={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'space-between',
-        gap: 1,
-        mb: 1.5,
-        pb: 1,
-        borderBottom: `1px solid ${quotationStyles.borderLight}`,
+        mb: 2,
       }}>
-        {/* Client - Left side */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        {/* Left Column - Client Info */}
+        <Box sx={{ flex: '0 0 120px', minWidth: 0 }}>
           {clientName && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <User size={10} color={brandColors.emerald} />
-              <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {clientName}
+            <Box>
+              <Typography sx={{
+                fontSize: '0.45rem',
+                color: brandColors.gray,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                mb: 0.25,
+              }}>
+                Cliente
               </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <User size={10} color={brandColors.emerald} />
+                <Typography sx={{
+                  fontSize: '0.6rem',
+                  color: brandColors.textPrimary,
+                  fontWeight: 600,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: 100,
+                }}>
+                  {clientName}
+                </Typography>
+              </Box>
             </Box>
           )}
         </Box>
 
-        {/* Title - Center */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
+        {/* Center - Logo */}
+        <Box sx={{ flex: 1, textAlign: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img
+              src="/logo-quotation.png"
+              alt="Tierra Madre"
+              style={{ height: 56, width: 'auto', objectFit: 'contain' }}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent) {
+                  const fallback = document.createElement('span');
+                  fallback.textContent = 'TIERRA MADRE';
+                  fallback.style.cssText = 'font-size: 1.2rem; font-weight: 700; letter-spacing: 0.1em; color: #111827;';
+                  parent.appendChild(fallback);
+                }
+              }}
+            />
+          </Box>
+          <Typography sx={{
+            fontSize: '0.45rem',
+            color: brandColors.textPrimary,
+            letterSpacing: '0.12em',
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            mt: 0.25,
+          }}>
+            Colombian Emeralds
+          </Typography>
+        </Box>
+
+        {/* Right Column - Asesor Info */}
+        <Box sx={{ flex: '0 0 120px', minWidth: 0, textAlign: 'right' }}>
+          {asesorName && (
+            <Box>
+              <Typography sx={{
+                fontSize: '0.45rem',
+                color: brandColors.gray,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                mb: 0.25,
+              }}>
+                Asesor
+              </Typography>
+              <Typography sx={{
+                fontSize: '0.6rem',
+                color: brandColors.emerald,
+                fontWeight: 600,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {asesorName}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Box>
+
+      {/* Quotation Info Card - Compact */}
+      <Box
+        sx={{
+          bgcolor: quotationStyles.surfaceTint,
+          borderRadius: 2,
+          p: 1.25,
+          border: `1px solid ${quotationStyles.borderLight}`,
+        }}
+      >
+        {/* Title Row */}
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 0.75,
+          mb: 1,
+          pb: 0.75,
+          borderBottom: `1px solid ${quotationStyles.borderLight}`,
+        }}>
           <FileText size={12} color={brandColors.emerald} />
           <Typography sx={{
-            fontSize: '0.6rem',
+            fontSize: '0.55rem',
             fontWeight: 600,
             color: brandColors.emeraldDark,
-            letterSpacing: '0.12em',
+            letterSpacing: '0.1em',
             textTransform: 'uppercase',
           }}>
             Cotización de Venta
           </Typography>
         </Box>
 
-        {/* Asesor - Right side */}
-        <Box sx={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
-          {asesorName && (
-            <Typography sx={{ fontSize: '0.55rem', color: brandColors.emerald, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {asesorName}
-            </Typography>
-          )}
+        {/* Info Row */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <InfoField
+            label="No. Cotización"
+            value={quotationNumber}
+            valueStyle={{ fontSize: '0.65rem', fontWeight: 700, ...quotationTypography.monospace }}
+          />
+          <InfoField
+            label="Fecha de Emisión"
+            value={formattedDate}
+            icon={<Calendar size={10} color={brandColors.gray} />}
+            valueStyle={{ fontWeight: 500, fontSize: '0.6rem' }}
+          />
         </Box>
-      </Box>
-
-      {/* Info Row - Compact */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <InfoField
-          label="No. Cotización"
-          value={quotationNumber}
-          valueStyle={{ fontSize: '0.7rem', fontWeight: 700, ...quotationTypography.monospace }}
-        />
-        <InfoField
-          label="Fecha de Emisión"
-          value={formattedDate}
-          icon={<Calendar size={10} color={brandColors.gray} />}
-          valueStyle={{ fontWeight: 500, fontSize: '0.65rem' }}
-        />
       </Box>
     </Box>
   );
