@@ -312,60 +312,70 @@ const QuotationInfoCard: React.FC<QuotationInfoCardProps> = ({ quotationNumber, 
       sx={{
         bgcolor: quotationStyles.surfaceTint,
         borderRadius: 2,
-        p: 2,
-        mb: 3,
+        p: 1.5,
+        mb: 2.5,
         border: `1px solid ${quotationStyles.borderLight}`,
       }}
     >
-      {/* Title */}
+      {/* Title with client/asesor on sides */}
       <Box sx={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         gap: 1,
-        mb: 2,
-        pb: 1.5,
+        mb: 1.5,
+        pb: 1,
         borderBottom: `1px solid ${quotationStyles.borderLight}`,
       }}>
-        <FileText size={14} color={brandColors.emerald} />
-        <Typography sx={{
-          fontSize: '0.7rem',
-          fontWeight: 600,
-          color: brandColors.emeraldDark,
-          letterSpacing: '0.15em',
-          textTransform: 'uppercase',
-        }}>
-          Cotización de Venta
-        </Typography>
+        {/* Client - Left side */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          {clientName && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <User size={10} color={brandColors.emerald} />
+              <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {clientName}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+
+        {/* Title - Center */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
+          <FileText size={12} color={brandColors.emerald} />
+          <Typography sx={{
+            fontSize: '0.6rem',
+            fontWeight: 600,
+            color: brandColors.emeraldDark,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+          }}>
+            Cotización de Venta
+          </Typography>
+        </Box>
+
+        {/* Asesor - Right side */}
+        <Box sx={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
+          {asesorName && (
+            <Typography sx={{ fontSize: '0.55rem', color: brandColors.emerald, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {asesorName}
+            </Typography>
+          )}
+        </Box>
       </Box>
 
-      {/* Info Grid */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+      {/* Info Row - Compact */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <InfoField
           label="No. Cotización"
           value={quotationNumber}
-          valueStyle={{ fontSize: '0.75rem', fontWeight: 700, ...quotationTypography.monospace }}
+          valueStyle={{ fontSize: '0.7rem', fontWeight: 700, ...quotationTypography.monospace }}
         />
         <InfoField
           label="Fecha de Emisión"
           value={formattedDate}
-          icon={<Calendar size={11} color={brandColors.gray} />}
-          valueStyle={{ fontWeight: 500 }}
+          icon={<Calendar size={10} color={brandColors.gray} />}
+          valueStyle={{ fontWeight: 500, fontSize: '0.65rem' }}
         />
-        {clientName && (
-          <InfoField
-            label="Cliente"
-            value={clientName}
-            icon={<User size={11} color={brandColors.emerald} />}
-          />
-        )}
-        {asesorName && (
-          <InfoField
-            label="Asesor"
-            value={asesorName}
-            valueStyle={{ fontWeight: 500, color: brandColors.emerald }}
-          />
-        )}
       </Box>
     </Box>
   );
@@ -673,87 +683,67 @@ const TotalsSection: React.FC<TotalsSectionProps> = ({
         )}
       </Box>
 
-      {/* Total Card - iOS HIG Hero Card with QR */}
+      {/* Total Card - Subtle inline style with QR */}
       <Box
         sx={{
-          background: `linear-gradient(145deg, ${brandColors.emerald} 0%, ${primitiveColors.emerald[600]} 50%, ${primitiveColors.emerald[700]} 100%)`,
-          borderRadius: 3,
-          p: 2.5,
-          boxShadow: '0 8px 24px rgba(0,174,122,0.3), 0 2px 8px rgba(0,0,0,0.1)',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Subtle glass effect overlay */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '50%',
-            background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 100%)',
-            pointerEvents: 'none',
-          }}
-        />
-
-        <Box sx={{
+          bgcolor: quotationStyles.accentTint,
+          border: `1px solid ${brandColors.emerald}`,
+          borderRadius: 2,
+          p: 1.5,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          position: 'relative',
-          zIndex: 1,
-        }}>
-          {/* Price Content - Left aligned for visual hierarchy */}
-          <Box sx={{ flex: 1 }}>
-            <Typography sx={{
-              fontSize: '0.55rem',
-              color: 'rgba(255,255,255,0.75)',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              fontWeight: 500,
-              mb: 0.5,
-            }}>
-              Precio Total
-            </Typography>
-            <Typography sx={{
-              fontSize: '1.6rem',
-              fontWeight: 700,
-              color: quotationStyles.surface,
-              letterSpacing: '-0.02em',
-              lineHeight: 1,
-              ...quotationTypography.monospace,
-            }}>
-              {formatCurrency(total)}
-            </Typography>
-            <Typography sx={{
-              fontSize: '0.45rem',
-              color: 'rgba(255,255,255,0.6)',
-              mt: 0.75,
-              letterSpacing: '0.02em',
-            }}>
-              Escanea para ver productos
-            </Typography>
-          </Box>
+        }}
+      >
+        {/* Price Content - Subtle, inline */}
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+          <Typography sx={{
+            fontSize: '0.55rem',
+            color: brandColors.gray,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            fontWeight: 500,
+          }}>
+            Total
+          </Typography>
+          <Typography sx={{
+            fontSize: '1rem',
+            fontWeight: 700,
+            color: brandColors.emerald,
+            letterSpacing: '-0.01em',
+            lineHeight: 1,
+            ...quotationTypography.monospace,
+          }}>
+            {formatCurrency(total)}
+          </Typography>
+        </Box>
 
-          {/* QR Code - Right side */}
+        {/* QR Code - Compact */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography sx={{
+            fontSize: '0.4rem',
+            color: brandColors.gray,
+            letterSpacing: '0.02em',
+          }}>
+            Escanea
+          </Typography>
           <Box
             sx={{
-              width: 64,
-              height: 64,
-              p: 0.75,
+              width: 44,
+              height: 44,
+              p: 0.5,
               bgcolor: quotationStyles.surface,
-              borderRadius: 2,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              borderRadius: 1.5,
+              border: `1px solid ${quotationStyles.borderLight}`,
               flexShrink: 0,
             }}
           >
             {products.length > 0 ? (
               <QRCodeSVG
                 value={qrUrl}
-                size={52}
+                size={36}
                 level="L"
-                fgColor={primitiveColors.emerald[700]}
+                fgColor={brandColors.emerald}
                 bgColor={quotationStyles.surface}
                 style={{ width: '100%', height: '100%', display: 'block' }}
               />
@@ -763,15 +753,15 @@ const TotalsSection: React.FC<TotalsSectionProps> = ({
                   width: '100%',
                   height: '100%',
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(5, 1fr)',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
                   gap: '1px',
                 }}
               >
-                {Array(25).fill(0).map((_, i) => (
+                {Array(16).fill(0).map((_, i) => (
                   <Box
                     key={i}
                     sx={{
-                      bgcolor: (i + Math.floor(i / 5)) % 2 === 0 ? '#E5E7EB' : 'transparent',
+                      bgcolor: (i + Math.floor(i / 4)) % 2 === 0 ? '#E5E7EB' : 'transparent',
                       borderRadius: '0.5px',
                     }}
                   />
@@ -821,25 +811,25 @@ interface ValiditySectionProps {
 const ValiditySection: React.FC<ValiditySectionProps> = ({ expiryStr, footerNote }) => (
   <Box sx={{
     textAlign: 'center',
-    mb: 3,
-    py: 1.5,
-    px: 2,
+    mb: 1.5,
+    py: 1,
+    px: 1.5,
     bgcolor: quotationStyles.surfaceMuted,
     borderRadius: 2,
     border: `1px solid ${quotationStyles.borderLight}`,
   }}>
-    <Typography sx={{ fontSize: '0.6rem', color: brandColors.gray }}>
+    <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray }}>
       Esta cotización es válida hasta
     </Typography>
-    <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: brandColors.textPrimary, mt: 0.25 }}>
+    <Typography sx={{ fontSize: '0.65rem', fontWeight: 600, color: brandColors.textPrimary, mt: 0.25 }}>
       {expiryStr}
     </Typography>
     <Typography sx={{
-      fontSize: '0.45rem',
+      fontSize: '0.4rem',
       color: brandColors.gray,
-      mt: 1,
-      lineHeight: 1.5,
-      maxWidth: 320,
+      mt: 0.75,
+      lineHeight: 1.4,
+      maxWidth: 300,
       mx: 'auto',
     }}>
       {footerNote}
@@ -857,9 +847,9 @@ const CertificationLogosSection: React.FC = () => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: '30px',
-      mb: 3,
-      py: 2,
+      gap: '20px',
+      mb: 1.5,
+      py: 1,
     }}
   >
     <Box
@@ -867,8 +857,8 @@ const CertificationLogosSection: React.FC = () => (
       src="/certification-logo-1.png"
       alt="Certification 1"
       sx={{
-        width: 56,
-        height: 56,
+        width: 44,
+        height: 44,
         borderRadius: '50%',
         objectFit: 'cover',
       }}
@@ -878,8 +868,8 @@ const CertificationLogosSection: React.FC = () => (
       src="/certification-logo-2.png"
       alt="Certification 2"
       sx={{
-        width: 56,
-        height: 56,
+        width: 44,
+        height: 44,
         borderRadius: '50%',
         objectFit: 'cover',
       }}
@@ -889,8 +879,8 @@ const CertificationLogosSection: React.FC = () => (
       src="/certification-logo-3.png"
       alt="Certification 3"
       sx={{
-        width: 56,
-        height: 56,
+        width: 44,
+        height: 44,
         borderRadius: '50%',
         objectFit: 'cover',
       }}
@@ -910,17 +900,17 @@ const FooterSection: React.FC<FooterSectionProps> = ({ businessSettings }) => (
   <Box
     sx={{
       borderTop: `1px solid ${quotationStyles.borderLight}`,
-      pt: 2,
+      pt: 1.5,
       textAlign: 'center',
     }}
   >
-    <Typography sx={{ fontSize: '0.6rem', color: brandColors.textPrimary, fontWeight: 500 }}>
+    <Typography sx={{ fontSize: '0.55rem', color: brandColors.textPrimary, fontWeight: 500 }}>
       {businessSettings.contactPhone}
     </Typography>
-    <Typography sx={{ fontSize: '0.5rem', color: brandColors.gray, mt: 0.25, letterSpacing: '0.02em' }}>
+    <Typography sx={{ fontSize: '0.45rem', color: brandColors.gray, mt: 0.25, letterSpacing: '0.02em' }}>
       {businessSettings.appUrl}
     </Typography>
-    <Typography sx={{ fontSize: '0.55rem', color: brandColors.emerald, mt: 0.25, letterSpacing: '0.02em' }}>
+    <Typography sx={{ fontSize: '0.5rem', color: brandColors.emerald, mt: 0.25, letterSpacing: '0.02em' }}>
       {businessSettings.contactEmail}
     </Typography>
   </Box>
