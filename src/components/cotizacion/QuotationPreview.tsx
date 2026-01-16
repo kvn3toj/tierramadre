@@ -28,7 +28,6 @@ export interface QuotationPreviewProps {
   quotationNumber: string;
   clientName: string;
   asesorName: string;
-  date: string;
   expiryStr: string;
   notes: string;
   products: CotizacionProduct[];
@@ -149,7 +148,6 @@ export const QuotationPreview = forwardRef<HTMLDivElement, QuotationPreviewProps
       quotationNumber,
       clientName,
       asesorName,
-      date,
       expiryStr,
       notes,
       products,
@@ -215,7 +213,6 @@ export const QuotationPreview = forwardRef<HTMLDivElement, QuotationPreviewProps
                 quotationNumber={quotationNumber}
                 clientName={clientName}
                 asesorName={asesorName}
-                date={date}
               />
               <ProductsSection products={products} />
               {totalInvestment > 0 && (
@@ -298,11 +295,11 @@ interface QuotationInfoCardProps {
   quotationNumber: string;
   clientName: string;
   asesorName: string;
-  date: string;
 }
 
-const QuotationInfoCard: React.FC<QuotationInfoCardProps> = ({ quotationNumber, clientName, asesorName, date }) => {
-  const formattedDate = new Date(date).toLocaleDateString('es-CO', {
+const QuotationInfoCard: React.FC<QuotationInfoCardProps> = ({ quotationNumber, clientName, asesorName }) => {
+  // Always use today's date (date of export/preview)
+  const formattedDate = new Date().toLocaleDateString('es-CO', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -793,11 +790,11 @@ const FooterSection: React.FC<FooterSectionProps> = ({ products, businessSetting
       <Typography sx={{ fontSize: '0.6rem', color: brandColors.textPrimary, fontWeight: 500 }}>
         {businessSettings.contactPhone}
       </Typography>
-      <Typography sx={{ fontSize: '0.55rem', color: brandColors.emerald, letterSpacing: '0.02em' }}>
-        {businessSettings.contactEmail}
+      <Typography sx={{ fontSize: '0.5rem', color: brandColors.gray, mt: 0.25, letterSpacing: '0.02em' }}>
+        {businessSettings.appUrl}
       </Typography>
-      <Typography sx={{ fontSize: '0.45rem', color: brandColors.gray, mt: 0.5 }}>
-        {businessSettings.nit}
+      <Typography sx={{ fontSize: '0.55rem', color: brandColors.emerald, mt: 0.25, letterSpacing: '0.02em' }}>
+        {businessSettings.contactEmail}
       </Typography>
     </Box>
     <AuthenticityBadge />

@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-16T05:33:34.144Z
+ * Generated at: 2026-01-16T05:38:59.748Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-16T05:33:34.144Z",
+  "generatedAt": "2026-01-16T05:38:59.748Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,27 +56,27 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "bee61a9",
-    "lastCommitDate": "2026-01-16 00:33:30 -0500"
+    "lastCommitHash": "05674a5",
+    "lastCommitDate": "2026-01-16 00:38:55 -0500"
   },
   "stats": {
-    "totalCommits": 286,
-    "totalAdditions": 100276,
-    "totalDeletions": 58807,
-    "totalFilesChanged": 1674,
-    "netLines": 41469
+    "totalCommits": 287,
+    "totalAdditions": 100391,
+    "totalDeletions": 58891,
+    "totalFilesChanged": 1678,
+    "netLines": 41500
   },
   "categoryStats": {
+    "auth": 19,
     "other": 102,
     "ux": 45,
     "bugfix": 78,
     "performance": 15,
-    "auth": 18,
     "cleanup": 17,
     "analytics": 11
   },
   "typeStats": {
-    "feat": 112,
+    "feat": 113,
     "fix": 119,
     "refactor": 20,
     "chore": 23,
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 66
+      "count": 67
     },
     {
       "file": "index.html",
-      "count": 65
+      "count": 66
     },
     {
       "file": "public/version.json",
-      "count": 55
+      "count": 56
     },
     {
       "file": "src/App.tsx",
@@ -110,12 +110,12 @@ export const changelogData: ChangelogData = {
       "count": 23
     },
     {
-      "file": "api/provider-quotations.js",
+      "file": "src/components/CotizacionGenerator.tsx",
       "count": 20
     },
     {
-      "file": "src/components/CotizacionGenerator.tsx",
-      "count": 19
+      "file": "api/provider-quotations.js",
+      "count": 20
     },
     {
       "file": "src/components/TreasureBrowser.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 278
+      "commits": 279
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "05674a5",
+      "message": "Auto-detect asesor from Google OAuth account",
+      "fullMessage": "feat(cotizacion): Auto-detect asesor from Google OAuth account",
+      "author": "Kvn3Toj",
+      "relativeTime": "1 second ago",
+      "date": "2026-01-16",
+      "type": "feat",
+      "category": "auth",
+      "additions": 115,
+      "deletions": 84,
+      "filesChanged": 4
+    },
+    {
       "hash": "bee61a9",
       "message": "Unify product card link with QR code URL",
       "fullMessage": "feat(cotizacion): Unify product card link with QR code URL",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "5 minutes ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "other",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Convert videos to high-quality GIF only (Telegram/WhatsApp style)",
       "fullMessage": "feat(cotizacion): Convert videos to high-quality GIF only (Telegram/WhatsApp style)",
       "author": "Kvn3Toj",
-      "relativeTime": "13 minutes ago",
+      "relativeTime": "18 minutes ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "ux",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Use Vercel production URL instead of tierramadre.co",
       "fullMessage": "fix(cotizacion): Use Vercel production URL instead of tierramadre.co",
       "author": "Kvn3Toj",
-      "relativeTime": "25 minutes ago",
+      "relativeTime": "31 minutes ago",
       "date": "2026-01-16",
       "type": "fix",
       "category": "bugfix",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Extract shared styles and utilities from QuotationPreview",
       "fullMessage": "refactor(cotizacion): Extract shared styles and utilities from QuotationPreview",
       "author": "Kvn3Toj",
-      "relativeTime": "38 minutes ago",
+      "relativeTime": "43 minutes ago",
       "date": "2026-01-15",
       "type": "refactor",
       "category": "other",
@@ -194,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Show actual video URL for manual products in quotation",
       "fullMessage": "fix(cotizacion): Show actual video URL for manual products in quotation",
       "author": "Kvn3Toj",
-      "relativeTime": "41 minutes ago",
+      "relativeTime": "47 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -207,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Medida, Diseño, and Precio por CT fields to manual entry",
       "fullMessage": "feat(cotizacion): Add Medida, Diseño, and Precio por CT fields to manual entry",
       "author": "Kvn3Toj",
-      "relativeTime": "58 minutes ago",
+      "relativeTime": "64 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -220,7 +233,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog and version",
       "fullMessage": "chore: Update changelog and version",
       "author": "Kvn3Toj",
-      "relativeTime": "72 minutes ago",
+      "relativeTime": "78 minutes ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -272,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Add git commit rules and sync version files",
       "fullMessage": "chore: Add git commit rules and sync version files",
       "author": "Kvn3Toj",
-      "relativeTime": "5 hours ago",
+      "relativeTime": "6 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -740,7 +753,7 @@ export const changelogData: ChangelogData = {
       "message": "QR code links to Treasure Browser with quoted products filtered",
       "fullMessage": "feat: QR code links to Treasure Browser with quoted products filtered",
       "author": "Kvn3Toj",
-      "relativeTime": "23 hours ago",
+      "relativeTime": "24 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -1013,7 +1026,7 @@ export const changelogData: ChangelogData = {
       "message": "Update version and add quotation coherence documentation",
       "fullMessage": "chore: Update version and add quotation coherence documentation",
       "author": "Kvn3Toj",
-      "relativeTime": "35 hours ago",
+      "relativeTime": "2 days ago",
       "date": "2026-01-14",
       "type": "chore",
       "category": "other",

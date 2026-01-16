@@ -126,7 +126,6 @@ export default function CotizacionGenerator() {
     clientEmail, setClientEmail,
     clientDocument, setClientDocument,
     asesorName, setAsesorName,
-    date, setDate,
     validDays, setValidDays,
     expiryStr,
     notes, setNotes,
@@ -443,8 +442,8 @@ export default function CotizacionGenerator() {
 
       // Save cotización to history (if user is authenticated)
       if (googleUser?.email && asesorName) {
-        // Calculate expiry date
-        const expiryDate = new Date(date);
+        // Calculate expiry date from today
+        const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + validDays);
 
         cotizacionHistory.saveCotizacion({
@@ -555,8 +554,6 @@ export default function CotizacionGenerator() {
             quotationNumber={quotationNumber}
             setQuotationNumber={setQuotationNumber}
             regenerateQuotationNumber={regenerateQuotationNumber}
-            date={date}
-            setDate={setDate}
             businessSettings={businessSettings}
             setBusinessSettings={setBusinessSettings}
           />
@@ -659,7 +656,6 @@ export default function CotizacionGenerator() {
             quotationNumber={quotationNumber}
             clientName={clientName}
             asesorName={asesorName}
-            date={date}
             expiryStr={expiryStr}
             notes={notes}
             products={products}
@@ -721,15 +717,12 @@ interface SettingsAccordionProps {
   quotationNumber: string;
   setQuotationNumber: (num: string) => void;
   regenerateQuotationNumber: () => void;
-  date: string;
-  setDate: (date: string) => void;
   businessSettings: BusinessSettings;
   setBusinessSettings: React.Dispatch<React.SetStateAction<BusinessSettings>>;
 }
 
 const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
   quotationNumber, setQuotationNumber, regenerateQuotationNumber,
-  date, setDate,
   businessSettings, setBusinessSettings,
 }) => (
   <Accordion defaultExpanded={false} sx={{ bgcolor: 'transparent', boxShadow: 'none', '&:before': { display: 'none' }, mb: 2 }}>
@@ -746,23 +739,17 @@ const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
     </AccordionSummary>
     <AccordionDetails sx={{ bgcolor: brandColors.surfaceElevated, borderRadius: 1, mt: 0.5, p: 2 }}>
       <Grid container spacing={1.5}>
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12}>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <TextField fullWidth label="No. Cotización" value={quotationNumber} onChange={(e) => setQuotationNumber(e.target.value)} size="small" />
             <IconButton onClick={regenerateQuotationNumber} sx={{ color: brandColors.emerald }}><RefreshCw size={18} /></IconButton>
           </Box>
         </Grid>
         <Grid item xs={12} sm={6}>
-          <TextField fullWidth label="Fecha" type="date" value={date} onChange={(e) => setDate(e.target.value)} size="small" InputLabelProps={{ shrink: true }} />
-        </Grid>
-        <Grid item xs={12} sm={6}>
           <TextField fullWidth label="Teléfono de Contacto" value={businessSettings.contactPhone} onChange={(e) => setBusinessSettings({ ...businessSettings, contactPhone: e.target.value })} size="small" />
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField fullWidth label="Email de Contacto" value={businessSettings.contactEmail} onChange={(e) => setBusinessSettings({ ...businessSettings, contactEmail: e.target.value })} size="small" />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField fullWidth label="NIT" value={businessSettings.nit} onChange={(e) => setBusinessSettings({ ...businessSettings, nit: e.target.value })} size="small" />
         </Grid>
       </Grid>
     </AccordionDetails>

@@ -28,7 +28,7 @@ export interface CotizacionProduct {
 export interface BusinessSettings {
   contactPhone: string;
   contactEmail: string;
-  nit: string;
+  appUrl: string;
   footerMessage: string;
   footerNote: string;
 }
@@ -81,20 +81,51 @@ export const DEFAULT_COTIZACION_INVESTMENTS: CotizacionInvestment[] = [
 // Default business settings
 export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   contactPhone: '+57 310 XXX XXXX',
-  contactEmail: 'info@tierramadre.co',
-  nit: 'NIT: 900.XXX.XXX-X',
+  contactEmail: 'tierramadre.co@gmail.com',
+  appUrl: 'tierra-madre-studio.vercel.app',
   footerMessage: 'Gracias por su preferencia',
   footerNote: 'Esta cotizacion es valida por el tiempo indicado. Los precios estan sujetos a disponibilidad. Las esmeraldas Tierra Madre cuentan con certificado de origen y autenticidad.',
 };
 
-// Generate quotation number
+// Storage key for quotation counter
+const COTIZACION_COUNTER_KEY = 'tierramadre-cotizacion-counter';
+
+// Generate quotation number with sequential counter to avoid duplicates
 export const generateQuotationNumber = (): string => {
   const date = new Date();
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-  const random = String(Date.now()).slice(-5);
-  return `COT-${year}${month}${day}-${random}`;
+  const datePrefix = `${year}${month}${day}`;
+
+  // Get counter from localStorage
+  let counterData: { date: string; count: number } = { date: datePrefix, count: 0 };
+  try {
+    const stored = localStorage.getItem(COTIZACION_COUNTER_KEY);
+    if (stored) {
+      counterData = JSON.parse(stored);
+      // Reset counter if it's a new day
+      if (counterData.date !== datePrefix) {
+        counterData = { date: datePrefix, count: 0 };
+      }
+    }
+  } catch {
+    // Ignore parse errors, use default
+  }
+
+  // Increment counter
+  counterData.count += 1;
+
+  // Save updated counter
+  try {
+    localStorage.setItem(COTIZACION_COUNTER_KEY, JSON.stringify(counterData));
+  } catch {
+    // Ignore storage errors
+  }
+
+  // Format: COT-YYYYMMDD-XXX (3-digit sequential number)
+  const sequence = String(counterData.count).padStart(3, '0');
+  return `COT-${datePrefix}-${sequence}`;
 };
 
 // Generate product URL slug
