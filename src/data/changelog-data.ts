@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-16T04:21:06.721Z
+ * Generated at: 2026-01-16T04:35:21.377Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-16T04:21:06.721Z",
+  "generatedAt": "2026-01-16T04:35:21.377Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,18 +56,18 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "f70eb34",
-    "lastCommitDate": "2026-01-15 23:21:03 -0500"
+    "lastCommitHash": "cdd7465",
+    "lastCommitDate": "2026-01-15 23:35:17 -0500"
   },
   "stats": {
-    "totalCommits": 280,
-    "totalAdditions": 99178,
-    "totalDeletions": 57809,
-    "totalFilesChanged": 1642,
-    "netLines": 41369
+    "totalCommits": 281,
+    "totalAdditions": 99245,
+    "totalDeletions": 57851,
+    "totalFilesChanged": 1647,
+    "netLines": 41394
   },
   "categoryStats": {
-    "other": 99,
+    "other": 100,
     "bugfix": 76,
     "ux": 44,
     "performance": 15,
@@ -76,9 +76,9 @@ export const changelogData: ChangelogData = {
     "analytics": 11
   },
   "typeStats": {
+    "feat": 110,
     "chore": 23,
     "fix": 117,
-    "feat": 109,
     "refactor": 19,
     "other": 9,
     "docs": 2,
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 60
+      "count": 61
     },
     {
       "file": "index.html",
-      "count": 59
+      "count": 60
     },
     {
       "file": "public/version.json",
-      "count": 49
+      "count": 50
     },
     {
       "file": "src/App.tsx",
@@ -115,7 +115,7 @@ export const changelogData: ChangelogData = {
     },
     {
       "file": "src/components/CotizacionGenerator.tsx",
-      "count": 18
+      "count": 19
     },
     {
       "file": "src/components/TreasureBrowser.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 272
+      "commits": 273
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "cdd7465",
+      "message": "Add Medida, Diseño, and Precio por CT fields to manual entry",
+      "fullMessage": "feat(cotizacion): Add Medida, Diseño, and Precio por CT fields to manual entry",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-15",
+      "type": "feat",
+      "category": "other",
+      "additions": 67,
+      "deletions": 42,
+      "filesChanged": 5
+    },
+    {
       "hash": "f70eb34",
       "message": "Update changelog and version",
       "fullMessage": "chore: Update changelog and version",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "14 minutes ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Fix video upload preview and QR code URL generation",
       "fullMessage": "fix(cotizacion): Fix video upload preview and QR code URL generation",
       "author": "Kvn3Toj",
-      "relativeTime": "17 minutes ago",
+      "relativeTime": "32 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -207,7 +220,7 @@ export const changelogData: ChangelogData = {
       "message": "Correct sendError parameter order and improve API error handling",
       "fullMessage": "fix: Correct sendError parameter order and improve API error handling",
       "author": "Kvn3Toj",
-      "relativeTime": "4 hours ago",
+      "relativeTime": "5 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -259,7 +272,7 @@ export const changelogData: ChangelogData = {
       "message": "Use email matching for asesor profile ownership detection",
       "fullMessage": "fix: Use email matching for asesor profile ownership detection",
       "author": "Kvn3Toj",
-      "relativeTime": "6 hours ago",
+      "relativeTime": "7 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -337,7 +350,7 @@ export const changelogData: ChangelogData = {
       "message": "Add product thumbnails to cotización and save history to Drive",
       "fullMessage": "feat: Add product thumbnails to cotización and save history to Drive",
       "author": "Kvn3Toj",
-      "relativeTime": "7 hours ago",
+      "relativeTime": "8 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -402,7 +415,7 @@ export const changelogData: ChangelogData = {
       "message": "Use OAuth instead of Service Account for media uploads",
       "fullMessage": "fix: Use OAuth instead of Service Account for media uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "8 hours ago",
+      "relativeTime": "9 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",
@@ -467,7 +480,7 @@ export const changelogData: ChangelogData = {
       "message": "Split merged APIs and add Cloudinary processing for uploads",
       "fullMessage": "feat: Split merged APIs and add Cloudinary processing for uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "9 hours ago",
+      "relativeTime": "10 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -675,7 +688,7 @@ export const changelogData: ChangelogData = {
       "message": "Add video upload support for manual product entries",
       "fullMessage": "feat: Add video upload support for manual product entries",
       "author": "Kvn3Toj",
-      "relativeTime": "22 hours ago",
+      "relativeTime": "23 hours ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -857,7 +870,7 @@ export const changelogData: ChangelogData = {
       "message": "Remove legacy image gallery editing UI from product page",
       "fullMessage": "fix: Remove legacy image gallery editing UI from product page",
       "author": "Kvn3Toj",
-      "relativeTime": "31 hours ago",
+      "relativeTime": "32 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "ux",
@@ -935,7 +948,7 @@ export const changelogData: ChangelogData = {
       "message": "Update version and add quotation coherence documentation",
       "fullMessage": "chore: Update version and add quotation coherence documentation",
       "author": "Kvn3Toj",
-      "relativeTime": "34 hours ago",
+      "relativeTime": "35 hours ago",
       "date": "2026-01-14",
       "type": "chore",
       "category": "other",
@@ -948,7 +961,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Spanish accent marks and improve date sorting",
       "fullMessage": "fix: Add Spanish accent marks and improve date sorting",
       "author": "Kvn3Toj",
-      "relativeTime": "34 hours ago",
+      "relativeTime": "35 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -1000,7 +1013,7 @@ export const changelogData: ChangelogData = {
       "message": "Update quotation forms with inventory color/quality options",
       "fullMessage": "fix: Update quotation forms with inventory color/quality options",
       "author": "Kvn3Toj",
-      "relativeTime": "35 hours ago",
+      "relativeTime": "2 days ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
@@ -1013,7 +1026,7 @@ export const changelogData: ChangelogData = {
       "message": "Enable analytics tracking for all user roles",
       "fullMessage": "feat: Enable analytics tracking for all user roles",
       "author": "Kvn3Toj",
-      "relativeTime": "35 hours ago",
+      "relativeTime": "2 days ago",
       "date": "2026-01-14",
       "type": "feat",
       "category": "analytics",

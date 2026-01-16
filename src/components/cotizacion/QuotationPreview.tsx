@@ -504,7 +504,7 @@ const ProductsSection: React.FC<{ products: CotizacionProduct[] }> = ({ products
         overflow: 'hidden',
       }}>
         {products.map((product, index) => {
-          // Generate clean product slug for display URL
+          // Generate clean product slug for display URL (fallback)
           const productSlug = product.name
             .toLowerCase()
             .normalize('NFD')
@@ -512,6 +512,27 @@ const ProductsSection: React.FC<{ products: CotizacionProduct[] }> = ({ products
             .replace(/[^a-z0-9\s-]/g, '')
             .trim()
             .replace(/\s+/g, '-');
+
+          // Determine display URL:
+          // 1. For manual products with video: show shortened Drive link
+          // 2. For inventory products: show website URL with slug
+          // 3. Fallback: show website base URL
+          const getDisplayUrl = () => {
+            // Manual product with video URL - show shortened Drive link
+            if (product.isManual && product.videoUrl) {
+              const fileId = extractDriveFileId(product.videoUrl);
+              if (fileId) {
+                // Show shortened version for display
+                return `drive.google.com/file/d/${fileId.substring(0, 8)}...`;
+              }
+            }
+            // Inventory products or fallback: show website URL
+            if (!product.isManual) {
+              return `tierramadre.co/products/${productSlug}`;
+            }
+            // Manual products without video: show base website
+            return 'tierramadre.co';
+          };
 
           return (
             <Box
@@ -563,7 +584,7 @@ const ProductsSection: React.FC<{ products: CotizacionProduct[] }> = ({ products
                       maxWidth: '180px',
                     }}
                   >
-                    tierramadre.co/products/{productSlug}
+                    {getDisplayUrl()}
                   </Typography>
                 </Box>
               </Box>
