@@ -1,6 +1,12 @@
 /**
  * Cotizacion Constants
  * Shared colors and configuration for quotation components.
+ *
+ * NOTE: For theme-aware text colors in components, prefer using MUI palette strings:
+ * - 'text.primary' instead of brandColors.textPrimary
+ * - 'text.secondary' instead of brandColors.textSecondary / gray
+ * - 'text.disabled' instead of brandColors.textMuted
+ * These automatically adapt to light/dark mode.
  */
 
 import {
@@ -8,7 +14,7 @@ import {
   goldColors,
   primitiveColors,
 } from '../../design-system/tokens';
-import { brand, lightTokens, accentColors } from '../../design-system';
+import { brand, lightTokens, darkTokens, accentColors } from '../../design-system';
 
 export const brandColors = {
   // Primary emerald colors
@@ -26,7 +32,7 @@ export const brandColors = {
   cream: documentColors.background.paper,
   surfaceElevated: lightTokens.background.muted,
 
-  // Text colors
+  // Text colors (light mode defaults - use 'text.secondary' for theme-aware)
   textPrimary: documentColors.text.primary,
   textSecondary: lightTokens.text.secondary,
   textMuted: lightTokens.text.muted,
@@ -51,6 +57,17 @@ export const brandColors = {
   emeraldPalette: brand.emerald,
   goldPalette: brand.gold,
   slatePalette: brand.slate,
+};
+
+// Dark mode variants for explicit dark mode usage
+export const darkBrandColors = {
+  textPrimary: darkTokens.text.primary,
+  textSecondary: darkTokens.text.secondary,
+  textMuted: darkTokens.text.muted,
+  background: darkTokens.background.app,
+  surfaceElevated: darkTokens.background.elevated,
+  border: darkTokens.border.default,
+  borderSubtle: darkTokens.border.light,
 };
 
 export type BrandColors = typeof brandColors;

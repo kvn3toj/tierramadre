@@ -22,22 +22,23 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
     <Paper
       elevation={0}
       sx={{
-        mb: 4,
-        p: 3,
-        borderRadius: 4,
+        mb: 2,
+        p: 2,
+        borderRadius: 3,
         background: `linear-gradient(135deg, ${brandColors.emeraldDark} 0%, ${brandColors.textPrimary} 100%)`,
         position: 'relative',
         overflow: 'hidden',
       }}
     >
       <Box sx={{ position: 'relative', zIndex: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
+          {/* Title section - compact */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
-                width: 56,
-                height: 56,
-                borderRadius: 3,
+                width: 36,
+                height: 36,
+                borderRadius: 2,
                 bgcolor: 'rgba(255,255,255,0.15)',
                 backdropFilter: 'blur(10px)',
                 display: 'flex',
@@ -45,80 +46,67 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
                 justifyContent: 'center',
               }}
             >
-              <FileText size={28} color="#FFFFFF" />
+              <FileText size={18} color="#FFFFFF" />
             </Box>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 800, color: '#FFFFFF' }}>
-                Cotización de Venta
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
-                Selecciona productos del inventario
-              </Typography>
-            </Box>
+            <Typography sx={{
+              fontSize: iosTypographyScale.title3,
+              fontWeight: 700,
+              color: '#FFFFFF',
+              letterSpacing: '-0.01em',
+            }}>
+              Cotización de Venta
+            </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          {/* Stats as compact chips */}
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <Box
               sx={{
-                px: 3,
-                py: 2,
-                borderRadius: 3,
-                bgcolor: 'rgba(255,255,255,0.25)',
+                px: 1.5,
+                py: 0.75,
+                borderRadius: 2,
+                bgcolor: 'rgba(255,255,255,0.2)',
                 backdropFilter: 'blur(10px)',
-                textAlign: 'center',
-                minWidth: 100,
-                border: '2px solid rgba(255,255,255,0.3)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.75,
               }}
             >
               <Typography sx={{
-                fontSize: iosTypographyScale.title1,
-                fontWeight: 800,
+                fontSize: iosTypographyScale.subhead,
+                fontWeight: 700,
                 color: '#FFFFFF',
                 lineHeight: 1,
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
               }}>
                 {productCount}
               </Typography>
               <Typography sx={{
-                fontSize: iosTypographyScale.caption1,
-                color: 'rgba(255,255,255,0.95)',
-                fontWeight: 600,
-                mt: 0.5,
-                textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                fontSize: iosTypographyScale.caption2,
+                color: 'rgba(255,255,255,0.85)',
+                fontWeight: 500,
               }}>
-                Productos
+                {productCount === 1 ? 'producto' : 'productos'}
               </Typography>
             </Box>
             <Box
               sx={{
-                px: 3,
-                py: 2,
-                borderRadius: 3,
-                bgcolor: 'rgba(255,255,255,0.35)',
+                px: 1.5,
+                py: 0.75,
+                borderRadius: 2,
+                bgcolor: 'rgba(255,255,255,0.3)',
                 backdropFilter: 'blur(10px)',
-                textAlign: 'center',
-                minWidth: 140,
-                border: '2px solid rgba(255,255,255,0.4)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
               }}
             >
               <Typography sx={{
-                fontSize: iosTypographyScale.headline,
-                fontWeight: 800,
+                fontSize: iosTypographyScale.subhead,
+                fontWeight: 700,
                 color: '#FFFFFF',
-                lineHeight: 1.2,
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                lineHeight: 1,
               }}>
                 {formatCotizacionCurrency(total)}
-              </Typography>
-              <Typography sx={{
-                fontSize: iosTypographyScale.caption1,
-                color: 'rgba(255,255,255,0.95)',
-                fontWeight: 600,
-                textShadow: '0 1px 2px rgba(0,0,0,0.2)',
-              }}>
-                Total
               </Typography>
             </Box>
           </Box>

@@ -58,6 +58,8 @@ export interface ManualProductState {
   precioCOP: number;
   isJewelry: boolean;
   metalType: string;
+  pesoTotal: string;      // Total weight in carats
+  cantidadGemas: string;  // Number of gems
   imagen?: string;
   videoUrl?: string;
   gifUrl?: string; // Animated GIF for PDF export (generated from video)
@@ -210,6 +212,8 @@ const initialManualProduct: ManualProductState = {
   precioCOP: 0,
   isJewelry: false,
   metalType: '',
+  pesoTotal: '',
+  cantidadGemas: '',
 };
 
 export function useCotizacion(): UseCotizacionReturn {

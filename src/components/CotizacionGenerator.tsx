@@ -1041,7 +1041,7 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
         <Grid container spacing={1.5}>
           {/* Image Upload Section */}
           <Grid item xs={12}>
-            <Typography variant="caption" sx={{ color: brandColors.gray, display: 'block', mb: 1 }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1 }}>
               Imagen del producto (opcional)
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
@@ -1160,10 +1160,10 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
                   </Box>
                 ) : (
                   <Box>
-                    <Typography sx={{ fontSize: '0.7rem', color: brandColors.textSecondary }}>
+                    <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
                       Arrastra o haz clic para subir
                     </Typography>
-                    <Typography sx={{ fontSize: '0.65rem', color: brandColors.textMuted, mt: 0.25 }}>
+                    <Typography sx={{ fontSize: '0.65rem', color: 'text.disabled', mt: 0.25 }}>
                       JPG, PNG, GIF, MP4 (max 100MB)
                     </Typography>
                   </Box>
@@ -1174,7 +1174,7 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
 
           {/* Product Type Toggle - Gem vs Jewelry */}
           <Grid item xs={12}>
-            <Typography variant="caption" sx={{ color: brandColors.gray, display: 'block', mb: 1 }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1 }}>
               Tipo de producto
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -1183,10 +1183,11 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
                 sx={{
                   flex: 1,
                   display: 'flex',
-                  flexDirection: 'column',
+                  flexDirection: 'row',
                   alignItems: 'center',
-                  gap: 0.75,
-                  py: 1.5,
+                  justifyContent: 'center',
+                  gap: 1,
+                  py: 1.25,
                   px: 2,
                   borderRadius: 2,
                   cursor: 'pointer',
@@ -1201,8 +1202,8 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
               >
                 <Box
                   sx={{
-                    width: 40,
-                    height: 40,
+                    width: 32,
+                    height: 32,
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
@@ -1210,17 +1211,14 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
                     bgcolor: !manualProduct.isJewelry ? alpha(brandColors.emerald, 0.15) : alpha(brandColors.gray, 0.1),
                   }}
                 >
-                  <Gem size={22} color={!manualProduct.isJewelry ? brandColors.emerald : brandColors.gray} />
+                  <Gem size={18} color={!manualProduct.isJewelry ? brandColors.emerald : brandColors.gray} />
                 </Box>
                 <Typography sx={{
-                  fontSize: '0.75rem',
-                  fontWeight: !manualProduct.isJewelry ? 700 : 500,
-                  color: !manualProduct.isJewelry ? brandColors.emerald : brandColors.gray,
+                  fontSize: '0.8125rem',
+                  fontWeight: !manualProduct.isJewelry ? 600 : 500,
+                  color: !manualProduct.isJewelry ? brandColors.emerald : 'text.secondary',
                 }}>
                   Esmeralda
-                </Typography>
-                <Typography sx={{ fontSize: '0.6rem', color: brandColors.textMuted, textAlign: 'center' }}>
-                  Gema suelta
                 </Typography>
               </Box>
 
@@ -1229,10 +1227,11 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
                 sx={{
                   flex: 1,
                   display: 'flex',
-                  flexDirection: 'column',
+                  flexDirection: 'row',
                   alignItems: 'center',
-                  gap: 0.75,
-                  py: 1.5,
+                  justifyContent: 'center',
+                  gap: 1,
+                  py: 1.25,
                   px: 2,
                   borderRadius: 2,
                   cursor: 'pointer',
@@ -1247,8 +1246,8 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
               >
                 <Box
                   sx={{
-                    width: 40,
-                    height: 40,
+                    width: 32,
+                    height: 32,
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
@@ -1256,17 +1255,14 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
                     bgcolor: manualProduct.isJewelry ? alpha(brandColors.gold, 0.15) : alpha(brandColors.gray, 0.1),
                   }}
                 >
-                  <ShoppingBag size={22} color={manualProduct.isJewelry ? brandColors.gold : brandColors.gray} />
+                  <ShoppingBag size={18} color={manualProduct.isJewelry ? brandColors.gold : brandColors.gray} />
                 </Box>
                 <Typography sx={{
-                  fontSize: '0.75rem',
-                  fontWeight: manualProduct.isJewelry ? 700 : 500,
-                  color: manualProduct.isJewelry ? brandColors.gold : brandColors.gray,
+                  fontSize: '0.8125rem',
+                  fontWeight: manualProduct.isJewelry ? 600 : 500,
+                  color: manualProduct.isJewelry ? brandColors.gold : 'text.secondary',
                 }}>
                   Joya
-                </Typography>
-                <Typography sx={{ fontSize: '0.6rem', color: brandColors.textMuted, textAlign: 'center' }}>
-                  Con metal
                 </Typography>
               </Box>
             </Box>
@@ -1276,10 +1272,25 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
             <TextField fullWidth label="Nombre del producto *" value={manualProduct.name} onChange={(e) => setManualProduct({ ...manualProduct, name: e.target.value })} size="small" placeholder={manualProduct.isJewelry ? "Ej: Anillo Esperanza Oro 18k" : "Ej: Esmeralda Corazón Verde"} />
           </Grid>
 
+          {/* New fields for both modes */}
+          <Grid item xs={6}>
+            <TextField fullWidth label="Peso total (ct)" value={manualProduct.pesoTotal} onChange={(e) => setManualProduct({ ...manualProduct, pesoTotal: e.target.value })} size="small" placeholder="Ej: 3.5" />
+          </Grid>
+          <Grid item xs={6}>
+            <TextField fullWidth label="Cantidad de gemas" type="number" value={manualProduct.cantidadGemas} onChange={(e) => setManualProduct({ ...manualProduct, cantidadGemas: e.target.value })} size="small" placeholder="Ej: 1" inputProps={{ min: 1 }} />
+          </Grid>
+
           {manualProduct.isJewelry ? (
-            <Grid item xs={12}>
-              <TextField fullWidth label="Tipo de metal" value={manualProduct.metalType} onChange={(e) => setManualProduct({ ...manualProduct, metalType: e.target.value })} size="small" placeholder="Ej: Oro 18k, Plata 925" />
-            </Grid>
+            <>
+              <Grid item xs={12}>
+                <TextField fullWidth label="Tipo de metal" value={manualProduct.metalType} onChange={(e) => setManualProduct({ ...manualProduct, metalType: e.target.value })} size="small" placeholder="Ej: Oro 18k, Plata 925" />
+              </Grid>
+              {/* Emerald fields for the gem in the jewel */}
+              <Grid item xs={6}><TextField fullWidth label="Peso (ct)" value={manualProduct.peso} onChange={(e) => setManualProduct({ ...manualProduct, peso: e.target.value })} size="small" placeholder="Ej: 2.5" /></Grid>
+              <Grid item xs={6}><TextField fullWidth label="Color" value={manualProduct.color} onChange={(e) => setManualProduct({ ...manualProduct, color: e.target.value })} size="small" placeholder="Ej: Verde Intenso" /></Grid>
+              <Grid item xs={6}><TextField fullWidth label="Calidad" value={manualProduct.calidad} onChange={(e) => setManualProduct({ ...manualProduct, calidad: e.target.value })} size="small" placeholder="Ej: AAA" /></Grid>
+              <Grid item xs={6}><TextField fullWidth label="Talla" value={manualProduct.talla} onChange={(e) => setManualProduct({ ...manualProduct, talla: e.target.value })} size="small" placeholder="Ej: Óvalo" /></Grid>
+            </>
           ) : (
             <>
               <Grid item xs={6}><TextField fullWidth label="Peso (ct)" value={manualProduct.peso} onChange={(e) => setManualProduct({ ...manualProduct, peso: e.target.value })} size="small" placeholder="Ej: 2.5" /></Grid>
@@ -1541,12 +1552,12 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ handleExportPDF, handlePr
       Exportar PDF
     </Button>
     <Tooltip title="Imprimir">
-      <IconButton onClick={handlePrint} sx={{ border: `1px solid ${brandColors.borderSubtle}`, borderRadius: 2, color: brandColors.textSecondary, '&:hover': { bgcolor: alpha(brandColors.emerald, 0.1), color: brandColors.emerald } }}>
+      <IconButton onClick={handlePrint} sx={{ border: (theme) => `1px solid ${theme.palette.divider}`, borderRadius: 2, color: 'text.secondary', '&:hover': { bgcolor: alpha(brandColors.emerald, 0.1), color: brandColors.emerald } }}>
         <Printer size={20} />
       </IconButton>
     </Tooltip>
     <Tooltip title="Nueva Cotización">
-      <IconButton onClick={handleNewQuotation} sx={{ border: `1px solid ${brandColors.borderSubtle}`, borderRadius: 2, color: brandColors.textSecondary, '&:hover': { bgcolor: alpha(brandColors.emerald, 0.1), color: brandColors.emerald } }}>
+      <IconButton onClick={handleNewQuotation} sx={{ border: (theme) => `1px solid ${theme.palette.divider}`, borderRadius: 2, color: 'text.secondary', '&:hover': { bgcolor: alpha(brandColors.emerald, 0.1), color: brandColors.emerald } }}>
         <Copy size={20} />
       </IconButton>
     </Tooltip>
