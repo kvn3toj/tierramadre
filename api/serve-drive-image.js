@@ -145,12 +145,27 @@ export default async function handler(req, res) {
         }
       }
 
-      // If thumbnail fetch fails for a video, return a 404
+      // If thumbnail fetch fails for a video, return a placeholder SVG
       if (mimeType.startsWith('video/')) {
-        return res.status(404).json({
-          error: 'Thumbnail not available',
-          message: 'No thumbnail available for this video',
-        });
+        // Generate a simple video placeholder SVG
+        const placeholderSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+          <rect width="400" height="300" fill="#1a1a2e"/>
+          <rect x="150" y="100" width="100" height="100" rx="10" fill="#16213e"/>
+          <polygon points="185,125 185,175 220,150" fill="#0f9b6e"/>
+          <text x="200" y="240" text-anchor="middle" fill="#4a5568" font-family="system-ui" font-size="14">Video procesando...</text>
+        </svg>`;
+
+        const svgBuffer = Buffer.from(placeholderSvg);
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Content-Length', svgBuffer.length);
+        res.setHeader('Cache-Control', 'public, max-age=5'); // Short cache - thumbnail may become available soon
+        res.setHeader('ETag', `"video-placeholder-${fileId}"`);
+
+        if (req.method === 'HEAD') {
+          return res.status(200).end();
+        }
+
+        return res.status(200).send(svgBuffer);
       }
       // For images, fall through to serve the original file
     }

@@ -914,9 +914,40 @@ const FooterSection: React.FC<{
 );
 
 /**
+ * Extract Google Drive file ID from various URL formats
+ * Handles:
+ * - /api/serve-drive-image?fileId={id}
+ * - https://drive.google.com/uc?export=download&id={id}
+ * - https://drive.google.com/file/d/{id}/view
+ * - https://drive.google.com/file/d/{id}/preview
+ */
+const extractDriveFileId = (url: string | undefined): string | null => {
+  if (!url) return null;
+
+  // Handle proxy URL: /api/serve-drive-image?fileId={id}
+  if (url.includes('/api/serve-drive-image?fileId=')) {
+    return url.split('fileId=')[1]?.split('&')[0] || null;
+  }
+
+  // Handle download URL: https://drive.google.com/uc?export=download&id={id}
+  const downloadMatch = url.match(/[?&]id=([^&]+)/);
+  if (downloadMatch) {
+    return downloadMatch[1];
+  }
+
+  // Handle view/preview URL: https://drive.google.com/file/d/{id}/...
+  const viewMatch = url.match(/\/file\/d\/([^/]+)/);
+  if (viewMatch) {
+    return viewMatch[1];
+  }
+
+  return null;
+};
+
+/**
  * QRCodeBox - iOS-style QR code container
  * - For inventory products: Links to Treasure Browser with filtered items
- * - For manual products with media: Links directly to the uploaded file in Drive
+ * - For manual products with media: Links directly to the uploaded video in Drive
  */
 const QRCodeBox: React.FC<{ products: CotizacionProduct[] }> = ({ products }) => {
   // Determine QR URL based on product types
@@ -933,19 +964,25 @@ const QRCodeBox: React.FC<{ products: CotizacionProduct[] }> = ({ products }) =>
     if (manualProducts.length > 0 && inventoryProducts.length === 0) {
       const productWithMedia = manualProducts.find(p => p.videoUrl || p.imagen);
       if (productWithMedia) {
-        // Prefer video URL, fallback to image
-        const mediaUrl = productWithMedia.videoUrl || productWithMedia.imagen;
-        // If it's a Drive proxy URL, convert to direct Drive view
-        if (mediaUrl?.includes('/api/serve-drive-image?fileId=')) {
-          const fileId = mediaUrl.split('fileId=')[1]?.split('&')[0];
+        // PRIORITY 1: Use videoUrl if available (direct link to video)
+        if (productWithMedia.videoUrl) {
+          const fileId = extractDriveFileId(productWithMedia.videoUrl);
           if (fileId) {
             return `https://drive.google.com/file/d/${fileId}/view`;
           }
+          // If no fileId extracted but it's a Drive URL, use directly
+          if (productWithMedia.videoUrl.includes('drive.google.com')) {
+            return productWithMedia.videoUrl;
+          }
         }
-        // If it's already a Drive URL, use it
-        if (mediaUrl?.includes('drive.google.com')) {
-          return mediaUrl;
+
+        // PRIORITY 2: Use imagen if it's a Drive URL
+        const mediaUrl = productWithMedia.imagen;
+        const imageFileId = extractDriveFileId(mediaUrl);
+        if (imageFileId) {
+          return `https://drive.google.com/file/d/${imageFileId}/view`;
         }
+
         // For other URLs (like Cloudinary), use directly
         if (mediaUrl) {
           return mediaUrl;

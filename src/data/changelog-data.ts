@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-16T00:10:13.669Z
+ * Generated at: 2026-01-16T00:11:41.426Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-16T00:10:13.669Z",
+  "generatedAt": "2026-01-16T00:11:41.426Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,19 +56,19 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "3e5e8af",
-    "lastCommitDate": "2026-01-15 19:10:09 -0500"
+    "lastCommitHash": "265841a",
+    "lastCommitDate": "2026-01-15 19:11:37 -0500"
   },
   "stats": {
-    "totalCommits": 277,
-    "totalAdditions": 98678,
-    "totalDeletions": 57604,
-    "totalFilesChanged": 1629,
-    "netLines": 41074
+    "totalCommits": 278,
+    "totalAdditions": 98788,
+    "totalDeletions": 57661,
+    "totalFilesChanged": 1633,
+    "netLines": 41127
   },
   "categoryStats": {
+    "other": 98,
     "ux": 44,
-    "other": 97,
     "bugfix": 75,
     "performance": 15,
     "auth": 18,
@@ -76,8 +76,8 @@ export const changelogData: ChangelogData = {
     "analytics": 11
   },
   "typeStats": {
+    "chore": 22,
     "feat": 109,
-    "chore": 21,
     "fix": 116,
     "refactor": 19,
     "other": 9,
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 57
+      "count": 58
     },
     {
       "file": "index.html",
-      "count": 56
+      "count": 57
     },
     {
       "file": "public/version.json",
-      "count": 46
+      "count": 47
     },
     {
       "file": "src/App.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 269
+      "commits": 270
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "265841a",
+      "message": "Update git commit rules to include all modified files",
+      "fullMessage": "chore: Update git commit rules to include all modified files",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-15",
+      "type": "chore",
+      "category": "other",
+      "additions": 110,
+      "deletions": 57,
+      "filesChanged": 4
+    },
+    {
       "hash": "3e5e8af",
       "message": "Improve UI with iOS HIG and add new form fields",
       "fullMessage": "feat(cotizacion): Improve UI with iOS HIG and add new form fields",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "88 seconds ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "ux",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Add git commit rules and sync version files",
       "fullMessage": "chore: Add git commit rules and sync version files",
       "author": "Kvn3Toj",
-      "relativeTime": "4 minutes ago",
+      "relativeTime": "5 minutes ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Correct sendError parameter order and improve API error handling",
       "fullMessage": "fix: Correct sendError parameter order and improve API error handling",
       "author": "Kvn3Toj",
-      "relativeTime": "8 minutes ago",
+      "relativeTime": "10 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog and misc improvements",
       "fullMessage": "chore: Update changelog and misc improvements",
       "author": "Kvn3Toj",
-      "relativeTime": "23 minutes ago",
+      "relativeTime": "24 minutes ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -194,7 +207,7 @@ export const changelogData: ChangelogData = {
       "message": "Make asesor card fully clickable and always show profile button",
       "fullMessage": "feat: Make asesor card fully clickable and always show profile button",
       "author": "Kvn3Toj",
-      "relativeTime": "24 minutes ago",
+      "relativeTime": "26 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -272,7 +285,7 @@ export const changelogData: ChangelogData = {
       "message": "Use OAuth for serve-drive-image and update cotización URLs",
       "fullMessage": "fix: Use OAuth for serve-drive-image and update cotización URLs",
       "author": "Kvn3Toj",
-      "relativeTime": "2 hours ago",
+      "relativeTime": "3 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "auth",
@@ -701,7 +714,7 @@ export const changelogData: ChangelogData = {
       "message": "Use full Drive scope for Shared Drive uploads",
       "fullMessage": "fix: Use full Drive scope for Shared Drive uploads",
       "author": "Kvn3Toj",
-      "relativeTime": "19 hours ago",
+      "relativeTime": "20 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",

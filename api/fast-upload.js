@@ -1,21 +1,19 @@
 /**
- * Fast Upload API - Optimized for Speed
+ * Fast Upload API - With Video GIF Generation
  *
- * This endpoint prioritizes upload speed over optimization:
- * 1. Uploads directly to Google Drive (skips Cloudinary processing)
- * 2. For videos, generates thumbnail asynchronously (doesn't block response)
- * 3. Minimal processing = faster uploads
+ * This endpoint uploads files to Google Drive with video GIF support:
+ * 1. Uploads directly to Google Drive
+ * 2. For videos, generates animated GIF via Cloudinary for preview
+ * 3. Returns both video URL and GIF URL for display
  *
- * Use this for manual product entries where speed matters most.
- * For product catalog where optimization matters, use /api/cloudinary-upload
- *
- * Performance improvement:
- * - Before: 30-40s for 1.6MB video (5-7 network hops)
- * - After: 5-8s for 1.6MB video (1-2 network hops)
+ * Use this for manual product entries in cotizaciones.
  */
 
 import formidable from 'formidable';
 import fs from 'fs';
+import https from 'https';
+import { Readable } from 'stream';
+import { v2 as cloudinary } from 'cloudinary';
 
 import {
   getSharedDriveId,
@@ -30,6 +28,28 @@ import {
   isOAuthConfigured,
   getOAuthDriveClient,
 } from './_lib/oauth-drive-client.js';
+
+// =============================================================================
+// CLOUDINARY CONFIGURATION
+// =============================================================================
+
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || 'dyam6g2os';
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
+
+// Configure Cloudinary (only if credentials available)
+if (CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
+  cloudinary.config({
+    cloud_name: CLOUDINARY_CLOUD_NAME,
+    api_key: CLOUDINARY_API_KEY,
+    api_secret: CLOUDINARY_API_SECRET,
+    secure: true,
+  });
+}
+
+function isCloudinaryConfigured() {
+  return CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET;
+}
 
 // Disable body parsing for file uploads
 export const config = {
@@ -72,11 +92,109 @@ const SUPPORTED_MIME_TYPES = {
 };
 
 // =============================================================================
-// HELPERS
+// CLOUDINARY HELPERS (for GIF generation)
 // =============================================================================
 
 /**
- * Upload file to Google Drive directly (no processing)
+ * Upload video to Cloudinary temporarily for GIF generation
+ */
+async function uploadVideoToCloudinary(filePath, originalFilename) {
+  return cloudinary.uploader.upload(filePath, {
+    folder: 'tierramadre/_processing',
+    resource_type: 'video',
+    public_id: `${Date.now()}_${originalFilename
+      .replace(/\.[^/.]+$/, '')
+      .replace(/[^a-zA-Z0-9-_]/g, '_')
+      .substring(0, 50)}`,
+  });
+}
+
+/**
+ * Get animated GIF URL from video (first 3 seconds)
+ */
+function getVideoGifUrl(uploadResult) {
+  return cloudinary.url(uploadResult.public_id, {
+    resource_type: 'video',
+    format: 'gif',
+    transformation: [
+      { width: 400, crop: 'scale' },  // Reasonable size for preview
+      { start_offset: 0, end_offset: 3 },  // First 3 seconds
+      { fps: 10 },  // Lower framerate for smaller file
+      { quality: 'auto:low' },  // Optimize for size
+    ],
+  });
+}
+
+/**
+ * Download file from URL to buffer
+ */
+function downloadFromUrl(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (response) => {
+      if (response.statusCode === 301 || response.statusCode === 302) {
+        return downloadFromUrl(response.headers.location).then(resolve).catch(reject);
+      }
+
+      if (response.statusCode !== 200) {
+        reject(new Error(`Failed to download: ${response.statusCode}`));
+        return;
+      }
+
+      const chunks = [];
+      response.on('data', (chunk) => chunks.push(chunk));
+      response.on('end', () => resolve(Buffer.concat(chunks)));
+      response.on('error', reject);
+    }).on('error', reject);
+  });
+}
+
+/**
+ * Upload buffer to Google Drive
+ */
+async function uploadBufferToDrive(drive, folderId, buffer, fileName, mimeType) {
+  const readable = new Readable();
+  readable.push(buffer);
+  readable.push(null);
+
+  const uploadedFile = await drive.files.create({
+    requestBody: {
+      name: fileName,
+      parents: [folderId],
+    },
+    media: {
+      mimeType,
+      body: readable,
+    },
+    fields: 'id',
+  });
+
+  // Set public permissions
+  await drive.permissions.create({
+    fileId: uploadedFile.data.id,
+    requestBody: { role: 'reader', type: 'anyone' },
+  });
+
+  return uploadedFile.data;
+}
+
+/**
+ * Delete file from Cloudinary (cleanup)
+ */
+async function deleteFromCloudinary(publicId, resourceType) {
+  try {
+    await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+    console.log(`[FastUpload] Cloudinary cleanup: ${publicId}`);
+  } catch (e) {
+    console.warn(`[FastUpload] Cloudinary cleanup failed: ${e.message}`);
+  }
+}
+
+// =============================================================================
+// DRIVE HELPERS
+// =============================================================================
+
+/**
+ * Upload file to Google Drive with optional GIF generation for videos
  */
 async function uploadFileToDrive(drive, folderId, file, index) {
   const originalName = file.originalFilename || file.newFilename || 'upload';
@@ -90,10 +208,11 @@ async function uploadFileToDrive(drive, folderId, file, index) {
   const fileName = `${prefix}-${index + 1}-${Date.now()}.${fileExtension}`;
 
   const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-  console.log(`[FastUpload] Uploading ${fileName} (${fileSizeMB}MB) directly to Drive...`);
+  console.log(`[FastUpload] Uploading ${fileName} (${fileSizeMB}MB) to Drive...`);
 
   const startTime = Date.now();
 
+  // Upload main file to Drive
   const uploadedFile = await drive.files.create({
     requestBody: {
       name: fileName,
@@ -128,8 +247,53 @@ async function uploadFileToDrive(drive, folderId, file, index) {
   if (isVideo) {
     result.url = `https://drive.google.com/file/d/${fileId}/preview`;
     result.videoUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-    // Use Drive's auto-generated thumbnail
+    // Fallback thumbnail (may not be immediately available)
     result.thumbnailUrl = `/api/serve-drive-image?fileId=${fileId}&thumbnail=true`;
+
+    // Generate GIF via Cloudinary if configured
+    if (isCloudinaryConfigured()) {
+      let cloudinaryResult = null;
+      try {
+        console.log(`[FastUpload] Generating GIF preview via Cloudinary...`);
+
+        // Upload video to Cloudinary temporarily
+        cloudinaryResult = await uploadVideoToCloudinary(file.filepath, originalName);
+        console.log(`[FastUpload] Cloudinary upload done: ${cloudinaryResult.public_id}`);
+
+        // Get GIF URL and download it
+        const gifUrl = getVideoGifUrl(cloudinaryResult);
+        console.log(`[FastUpload] GIF URL: ${gifUrl}`);
+
+        const gifBuffer = await downloadFromUrl(gifUrl);
+        console.log(`[FastUpload] GIF downloaded: ${(gifBuffer.length / 1024).toFixed(0)}KB`);
+
+        // Upload GIF to Drive
+        const gifFileName = `gif-${index + 1}-${Date.now()}.gif`;
+        const gifDriveFile = await uploadBufferToDrive(
+          drive,
+          folderId,
+          gifBuffer,
+          gifFileName,
+          'image/gif'
+        );
+
+        result.gifUrl = `/api/serve-drive-image?fileId=${gifDriveFile.id}`;
+        result.gifId = gifDriveFile.id;
+        console.log(`[FastUpload] GIF uploaded to Drive: ${gifDriveFile.id}`);
+
+        // Cleanup Cloudinary (async, don't wait)
+        deleteFromCloudinary(cloudinaryResult.public_id, 'video');
+
+      } catch (gifError) {
+        console.warn(`[FastUpload] GIF generation failed (non-fatal):`, gifError.message);
+        // Continue without GIF - Drive thumbnail will be used as fallback
+        if (cloudinaryResult?.public_id) {
+          deleteFromCloudinary(cloudinaryResult.public_id, 'video');
+        }
+      }
+    } else {
+      console.log(`[FastUpload] Cloudinary not configured, skipping GIF generation`);
+    }
   } else {
     result.url = `/api/serve-drive-image?fileId=${fileId}`;
   }
