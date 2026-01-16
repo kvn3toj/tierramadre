@@ -51,27 +51,44 @@ export const generateProductSlug = (name: string): string => {
 
 /**
  * Get the display URL for a product
- * - For manual products with media (GIF/image): shortened Drive link
+ * - For manual products with media (GIF/image): full Drive link (same as QR code)
  * - For inventory products: product detail page URL
  * - Fallback: website base URL
  */
 export const getProductDisplayUrl = (product: CotizacionProduct): string => {
-  // Manual product with media URL (GIF converted from video, or image) - show shortened Drive link
-  if (product.isManual && (product.videoUrl || product.gifUrl)) {
-    const mediaUrl = product.videoUrl || product.gifUrl;
-    const fileId = extractDriveFileId(mediaUrl);
-    if (fileId) {
-      return `drive.google.com/file/d/${fileId.substring(0, 8)}...`;
+  // Manual product with media URL (GIF converted from video, or image) - return full Drive link
+  if (product.isManual && (product.videoUrl || product.gifUrl || product.imagen)) {
+    // PRIORITY 1: Use videoUrl/gifUrl if available
+    const gifOrVideoUrl = product.videoUrl || product.gifUrl;
+    if (gifOrVideoUrl) {
+      const fileId = extractDriveFileId(gifOrVideoUrl);
+      if (fileId) {
+        return `https://drive.google.com/file/d/${fileId}/view`;
+      }
+      if (gifOrVideoUrl.includes('drive.google.com')) {
+        return gifOrVideoUrl;
+      }
+    }
+
+    // PRIORITY 2: Use imagen if it's a Drive URL
+    const imageFileId = extractDriveFileId(product.imagen);
+    if (imageFileId) {
+      return `https://drive.google.com/file/d/${imageFileId}/view`;
+    }
+
+    // For other URLs (like Cloudinary), use directly
+    if (product.imagen) {
+      return product.imagen;
     }
   }
 
   // Inventory products: show product detail page URL
   if (!product.isManual) {
-    return `${PRODUCTION_URL}/product/${product.itemNumber}`;
+    return `https://${PRODUCTION_URL}/product/${product.itemNumber}`;
   }
 
-  // Manual products without video: show base Vercel URL
-  return PRODUCTION_URL;
+  // Manual products without media: show base Vercel URL
+  return `https://${PRODUCTION_URL}`;
 };
 
 /**

@@ -478,17 +478,27 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, isEven, isLast }) => {
         <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray, mt: 0.25 }}>
           Ref. #{product.itemNumber} • {getPesoDisplay(product)} • {product.color}
         </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+        <Box
+          component="a"
+          href={displayUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            mt: 0.5,
+            textDecoration: 'none',
+            '&:hover': { textDecoration: 'underline' },
+          }}
+        >
           <ExternalLink size={9} color={brandColors.emerald} />
           <Typography sx={{
             fontSize: '0.45rem',
             color: brandColors.emerald,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            maxWidth: '180px',
+            fontWeight: 500,
           }}>
-            {displayUrl}
+            Expandir visión
           </Typography>
         </Box>
       </Box>
