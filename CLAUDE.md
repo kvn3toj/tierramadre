@@ -94,12 +94,13 @@ var APP_VERSION = 'YYYY.MM.DD.N';  // e.g., 2026.01.01.1
 This forces Safari to refresh its aggressive cache on version mismatch.
 
 ### Git Commit Rules
-**IMPORTANT**: Always include version files in every commit to avoid multiple deployments:
+**IMPORTANT**: Always include ALL modified files in every commit to avoid multiple deployments:
 1. Run `npm run build` before committing (this auto-updates version files)
-2. Always stage and commit these files together with your changes:
+2. Run `git status` and include ALL modified files in the commit, not just files changed in the current chat
+3. Always include these version files:
    - `index.html` (contains APP_VERSION)
    - `public/version.json` (contains version metadata)
-3. This ensures one commit = one Vercel deployment
+4. This ensures one commit = one Vercel deployment
 
 ## Media Storage Architecture
 
