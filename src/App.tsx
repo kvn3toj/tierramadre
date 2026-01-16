@@ -153,7 +153,7 @@ function AppContent() {
             </Suspense>
           } />
 
-          {/* Cuentas Hub and sub-pages - Admin only */}
+          {/* Cuentas Hub - Admin only */}
           <Route path="/cuentas" element={
             <AdminRoute>
               <Suspense fallback={<LoadingFallback message="Cargando cuentas..." />}>
@@ -175,19 +175,20 @@ function AppContent() {
               </Suspense>
             </AdminRoute>
           } />
+          {/* Cotizaciones - Staff access (Admin, Embajador, Asesor) */}
           <Route path="/cuentas/cotizaciones" element={
-            <AdminRoute>
+            <StaffRoute>
               <Suspense fallback={<LoadingFallback message="Cargando cotizaciones..." />}>
                 <CotizacionGenerator />
               </Suspense>
-            </AdminRoute>
+            </StaffRoute>
           } />
           <Route path="/cuentas/cotizaciones/preview" element={
-            <AdminRoute>
+            <StaffRoute>
               <Suspense fallback={<LoadingFallback message="Cargando cotización..." />}>
                 <QuotationPreview />
               </Suspense>
-            </AdminRoute>
+            </StaffRoute>
           } />
 
           {/* Bóveda Secreta */}

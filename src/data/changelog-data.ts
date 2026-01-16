@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-16T18:32:27.389Z
+ * Generated at: 2026-01-16T18:37:15.446Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-16T18:32:27.389Z",
+  "generatedAt": "2026-01-16T18:37:15.446Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,18 +56,18 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "4ed7dc4",
-    "lastCommitDate": "2026-01-16 13:32:22 -0500"
+    "lastCommitHash": "548e0f2",
+    "lastCommitDate": "2026-01-16 13:37:10 -0500"
   },
   "stats": {
-    "totalCommits": 296,
-    "totalAdditions": 102375,
-    "totalDeletions": 63400,
-    "totalFilesChanged": 1781,
-    "netLines": 38975
+    "totalCommits": 297,
+    "totalAdditions": 103292,
+    "totalDeletions": 63451,
+    "totalFilesChanged": 1787,
+    "netLines": 39841
   },
   "categoryStats": {
-    "other": 108,
+    "other": 109,
     "auth": 20,
     "ux": 47,
     "bugfix": 78,
@@ -76,9 +76,9 @@ export const changelogData: ChangelogData = {
     "analytics": 11
   },
   "typeStats": {
+    "refactor": 24,
     "chore": 24,
     "feat": 118,
-    "refactor": 23,
     "fix": 119,
     "other": 9,
     "docs": 2,
@@ -87,19 +87,19 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 74
+      "count": 75
     },
     {
       "file": "index.html",
-      "count": 71
+      "count": 72
     },
     {
       "file": "public/version.json",
-      "count": 61
+      "count": 62
     },
     {
       "file": "src/App.tsx",
-      "count": 27
+      "count": 28
     },
     {
       "file": ".claude/settings.local.json",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 288
+      "commits": 289
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "548e0f2",
+      "message": "unify product request views into single hub",
+      "fullMessage": "refactor(requests): unify product request views into single hub",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-16",
+      "type": "refactor",
+      "category": "other",
+      "additions": 917,
+      "deletions": 51,
+      "filesChanged": 6
+    },
+    {
       "hash": "4ed7dc4",
       "message": "add missing API function configs",
       "fullMessage": "chore(vercel): add missing API function configs",
       "author": "Kvn3Toj",
-      "relativeTime": "1 second ago",
+      "relativeTime": "5 minutes ago",
       "date": "2026-01-16",
       "type": "chore",
       "category": "other",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "differentiate Asesor and Embajador roles with distinct permissions",
       "fullMessage": "feat(auth): differentiate Asesor and Embajador roles with distinct permissions",
       "author": "Kvn3Toj",
-      "relativeTime": "9 minutes ago",
+      "relativeTime": "14 minutes ago",
       "date": "2026-01-16",
       "type": "feat",
       "category": "auth",
@@ -363,7 +376,7 @@ export const changelogData: ChangelogData = {
       "message": "Fix video upload preview and QR code URL generation",
       "fullMessage": "fix(cotizacion): Fix video upload preview and QR code URL generation",
       "author": "Kvn3Toj",
-      "relativeTime": "14 hours ago",
+      "relativeTime": "15 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -402,7 +415,7 @@ export const changelogData: ChangelogData = {
       "message": "Add git commit rules and sync version files",
       "fullMessage": "chore: Add git commit rules and sync version files",
       "author": "Kvn3Toj",
-      "relativeTime": "18 hours ago",
+      "relativeTime": "19 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
