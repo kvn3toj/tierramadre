@@ -79,6 +79,12 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
 
     try {
       const response = await fetch(`/api/cotizacion-save?email=${encodeURIComponent(email)}`);
+
+      // Check if response is ok before parsing JSON
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
       const data = await response.json();
 
       if (data.success) {
@@ -110,6 +116,17 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
         },
         body: JSON.stringify(params),
       });
+
+      // Check if response is ok before parsing JSON
+      if (!response.ok) {
+        // Try to get error message from response
+        try {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Server error: ${response.status}`);
+        } catch {
+          throw new Error(`Server error: ${response.status}`);
+        }
+      }
 
       const data = await response.json();
 
@@ -158,6 +175,16 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
         `/api/cotizacion-save?id=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}`,
         { method: 'DELETE' }
       );
+
+      // Check if response is ok before parsing JSON
+      if (!response.ok) {
+        try {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Server error: ${response.status}`);
+        } catch {
+          throw new Error(`Server error: ${response.status}`);
+        }
+      }
 
       const data = await response.json();
 

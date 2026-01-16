@@ -75,11 +75,12 @@ export function sendError(res, status, error, message = null) {
  * Send standardized success response
  * @param {object} res - Vercel response object
  * @param {object} data - Response data
+ * @param {number} [status=200] - HTTP status code (default: 200)
  */
-export function sendSuccess(res, data) {
+export function sendSuccess(res, data, status = 200) {
   // Explicit charset for Chrome
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  return res.status(200).json({ success: true, ...data });
+  return res.status(status).json({ success: true, ...data });
 }
 
 /**

@@ -361,7 +361,7 @@ export default async function handler(req, res) {
 
   // Check OAuth configuration
   if (!isOAuthConfigured()) {
-    return sendError(res, 'OAuth not configured', 500);
+    return sendError(res, 500, 'OAuth not configured');
   }
 
   try {
@@ -379,7 +379,7 @@ export default async function handler(req, res) {
       const { email } = req.query;
 
       if (!email) {
-        return sendError(res, 'Email parameter required', 400);
+        return sendError(res, 400, 'Email parameter required');
       }
 
       const cotizaciones = await getCotizacionesByAsesor(sheets, email);
@@ -408,7 +408,7 @@ export default async function handler(req, res) {
 
       // Validate required fields
       if (!quotationNumber || !asesorEmail || !asesorName || !imageBase64) {
-        return sendError(res, 'Missing required fields: quotationNumber, asesorEmail, asesorName, imageBase64', 400);
+        return sendError(res, 400, 'Missing required fields: quotationNumber, asesorEmail, asesorName, imageBase64');
       }
 
       // Get or create asesor's folder
@@ -446,7 +446,7 @@ export default async function handler(req, res) {
       const { id, email } = req.query;
 
       if (!id || !email) {
-        return sendError(res, 'ID and email parameters required', 400);
+        return sendError(res, 400, 'ID and email parameters required');
       }
 
       await deleteCotizacion(drive, sheets, id, email);
@@ -454,10 +454,10 @@ export default async function handler(req, res) {
       return sendSuccess(res, { deleted: true });
     }
 
-    return sendError(res, 'Method not allowed', 405);
+    return sendError(res, 405, 'Method not allowed');
 
   } catch (error) {
     console.error('[CotizacionSave] Error:', error);
-    return sendError(res, error.message || 'Internal server error', 500);
+    return sendError(res, 500, error.message || 'Internal server error');
   }
 }
