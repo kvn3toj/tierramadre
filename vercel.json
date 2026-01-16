@@ -15,10 +15,16 @@
     "api/get-batch-thumbnails.js": {
       "maxDuration": 30
     },
+    "api/get-newest-products.js": {
+      "maxDuration": 30
+    },
     "api/provider-quotations.js": {
       "maxDuration": 30
     },
     "api/media-upload.js": {
+      "maxDuration": 60
+    },
+    "api/fast-upload.js": {
       "maxDuration": 60
     },
     "api/feedback.js": {
@@ -27,14 +33,41 @@
     "api/product-requests.js": {
       "maxDuration": 30
     },
+    "api/product-views.js": {
+      "maxDuration": 30
+    },
     "api/drive-diagnostics.js": {
       "maxDuration": 30
+    },
+    "api/drive-cleanup.js": {
+      "maxDuration": 60
     },
     "api/health.js": {
       "maxDuration": 10
     },
     "api/cloudinary-upload.js": {
       "maxDuration": 60
+    },
+    "api/cotizacion-save.js": {
+      "maxDuration": 30
+    },
+    "api/cotizacion-reports.js": {
+      "maxDuration": 30
+    },
+    "api/quotation-requests.js": {
+      "maxDuration": 30
+    },
+    "api/invitations.js": {
+      "maxDuration": 30
+    },
+    "api/validate.js": {
+      "maxDuration": 30
+    },
+    "api/send-email.js": {
+      "maxDuration": 30
+    },
+    "api/user-prefs.js": {
+      "maxDuration": 15
     }
   },
   "headers": [
