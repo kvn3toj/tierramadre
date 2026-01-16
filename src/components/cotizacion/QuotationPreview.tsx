@@ -235,6 +235,7 @@ export const QuotationPreview = forwardRef<HTMLDivElement, QuotationPreviewProps
               )}
               {notes && <NotesSection notes={notes} />}
               <ValiditySection expiryStr={expiryStr} footerNote={businessSettings.footerNote} />
+              <CertificationLogosSection />
               <FooterSection products={products} businessSettings={businessSettings} />
             </Box>
           </Box>
@@ -762,6 +763,57 @@ const ValiditySection: React.FC<ValiditySectionProps> = ({ expiryStr, footerNote
     }}>
       {footerNote}
     </Typography>
+  </Box>
+);
+
+// =============================================================================
+// CERTIFICATION LOGOS
+// =============================================================================
+
+const CertificationLogosSection: React.FC = () => (
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '30px',
+      mb: 3,
+      py: 2,
+    }}
+  >
+    <Box
+      component="img"
+      src="/certification-logo-1.png"
+      alt="Certification 1"
+      sx={{
+        width: 56,
+        height: 56,
+        borderRadius: '50%',
+        objectFit: 'cover',
+      }}
+    />
+    <Box
+      component="img"
+      src="/certification-logo-2.png"
+      alt="Certification 2"
+      sx={{
+        width: 56,
+        height: 56,
+        borderRadius: '50%',
+        objectFit: 'cover',
+      }}
+    />
+    <Box
+      component="img"
+      src="/certification-logo-3.png"
+      alt="Certification 3"
+      sx={{
+        width: 56,
+        height: 56,
+        borderRadius: '50%',
+        objectFit: 'cover',
+      }}
+    />
   </Box>
 );
 
