@@ -17,8 +17,8 @@ export default function FeedbackFAB() {
   const { accessLevel } = useAuthContext();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Render for admins and full access users (asesores/embajadores)
-  const canAccessFeedback = accessLevel === 'admin' || accessLevel === 'full';
+  // Render for admins and staff (asesores/embajadores)
+  const canAccessFeedback = accessLevel === 'admin' || accessLevel === 'embajador' || accessLevel === 'asesor';
   if (!canAccessFeedback) {
     return null;
   }

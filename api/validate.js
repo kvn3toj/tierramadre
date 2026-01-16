@@ -59,14 +59,17 @@ async function validateUser(sheets, normalizedEmail, sheetNames) {
       const name = nameColumnIndex !== -1 ? row[nameColumnIndex] : '';
       const role = roleIndex !== -1 ? (row[roleIndex] || 'Asesor').trim() : 'Asesor';
 
-      let accessLevel = 'full';
+      let accessLevel = 'asesor'; // Default to asesor (lowest staff level)
       const roleLower = role.toLowerCase();
 
       if (roleLower.includes('admin') || roleLower.includes('administrador')) {
         accessLevel = 'admin';
       } else if (roleLower.includes('proveedor') || roleLower.includes('provider')) {
         accessLevel = 'provider';
+      } else if (roleLower.includes('embajador') || roleLower.includes('ambassador')) {
+        accessLevel = 'embajador';
       }
+      // 'asesor' remains as default for any other role
 
       return {
         name: name || normalizedEmail.split('@')[0],

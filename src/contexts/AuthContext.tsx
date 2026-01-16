@@ -41,10 +41,15 @@ const getStoredAuth = (): StoredAuthState | null => {
 
     // Handle legacy format (just 'true' string)
     if (stored === 'true') {
-      return { isAuthenticated: true, accessLevel: 'full' };
+      return { isAuthenticated: true, accessLevel: 'asesor' };
     }
 
-    return JSON.parse(stored) as StoredAuthState;
+    const parsed = JSON.parse(stored) as StoredAuthState;
+    // Handle legacy 'full' value - treat as asesor for backward compatibility
+    if (parsed.accessLevel === 'full' as AccessLevel) {
+      parsed.accessLevel = 'asesor';
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -122,9 +127,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setStoredAuth(newState);
       return true;
     }
-    // Then check for full access PINs (assessors or ambassadors)
-    if (pin === ASSESSOR_PIN || pin === AMBASSADOR_PIN) {
-      const newState: AuthState = { isAuthenticated: true, accessLevel: 'full' };
+    // Check for embajador PIN
+    if (pin === AMBASSADOR_PIN) {
+      const newState: AuthState = { isAuthenticated: true, accessLevel: 'embajador' };
+      setAuthState(newState);
+      setStoredAuth(newState);
+      return true;
+    }
+    // Check for asesor PIN
+    if (pin === ASSESSOR_PIN) {
+      const newState: AuthState = { isAuthenticated: true, accessLevel: 'asesor' };
       setAuthState(newState);
       setStoredAuth(newState);
       return true;
@@ -140,9 +152,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setStoredAuth(newState);
       return true;
     }
-    // Then check for full access PINs (assessors or ambassadors)
-    if (pin === ASSESSOR_PIN || pin === AMBASSADOR_PIN) {
-      const newState: AuthState = { isAuthenticated: true, accessLevel: 'full' };
+    // Check for embajador PIN
+    if (pin === AMBASSADOR_PIN) {
+      const newState: AuthState = { isAuthenticated: true, accessLevel: 'embajador' };
+      setAuthState(newState);
+      setStoredAuth(newState);
+      return true;
+    }
+    // Check for asesor PIN
+    if (pin === ASSESSOR_PIN) {
+      const newState: AuthState = { isAuthenticated: true, accessLevel: 'asesor' };
       setAuthState(newState);
       setStoredAuth(newState);
       return true;

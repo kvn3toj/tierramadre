@@ -864,7 +864,7 @@ const AdminAnalyticsPage: React.FC = () => {
                 data={topViewers.map(v => ({
                   id: v.email || v.name,
                   label: v.name,
-                  sublabel: v.role === 'admin' ? 'Admin' : v.role === 'full' ? 'Asesor' : 'Usuario',
+                  sublabel: v.role === 'admin' ? 'Admin' : v.role === 'embajador' ? 'Embajador' : (v.role === 'full' || v.role === 'asesor') ? 'Asesor' : 'Usuario',
                   value: v.views,
                 }))}
                 color="#8B5CF6"

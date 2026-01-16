@@ -3,7 +3,6 @@
  */
 
 import { useAuthContext } from '../contexts/AuthContext';
-import { useGoogleAuth } from '../contexts/GoogleAuthContext';
 
 export const useAuth = () => {
   return useAuthContext();
@@ -27,17 +26,25 @@ export const useIsGuest = () => {
 
 export const useHasFullAccess = () => {
   const { accessLevel } = useAuthContext();
-  return accessLevel === 'full';
+  // Full access = asesor or embajador (staff members)
+  return accessLevel === 'asesor' || accessLevel === 'embajador';
 };
 
 /**
  * Check if the current user is an Embajador (Ambassador)
- * Only Embajadores can see Comunidad TM prices and create invitation links
+ * Embajadores have higher permissions than Asesores
  */
 export const useIsEmbajador = () => {
-  const { user } = useGoogleAuth();
-  const role = user?.role?.toLowerCase() || '';
-  return role.includes('embajador') || role.includes('ambassador');
+  const { accessLevel } = useAuthContext();
+  return accessLevel === 'embajador';
+};
+
+/**
+ * Check if the current user is an Asesor
+ */
+export const useIsAsesor = () => {
+  const { accessLevel } = useAuthContext();
+  return accessLevel === 'asesor';
 };
 
 /**
@@ -46,24 +53,16 @@ export const useIsEmbajador = () => {
  */
 export const useCanSeeComunidadPrice = () => {
   const { accessLevel } = useAuthContext();
-  const isEmbajador = useIsEmbajador();
-  return isEmbajador || accessLevel === 'admin';
+  return accessLevel === 'embajador' || accessLevel === 'admin';
 };
 
 /**
  * Check if user can create invitation links
  * Admins, Embajadores, and Asesores can create invitations
- * Admins with PIN access can also create invitations (even without Google sign-in)
  */
 export const useCanCreateInvitations = () => {
   const { accessLevel } = useAuthContext();
-
-  // Admin or full access (asesores/embajadores) with PIN can create invitations
-  if (accessLevel === 'admin' || accessLevel === 'full') {
-    return true;
-  }
-
-  return false;
+  return accessLevel === 'admin' || accessLevel === 'embajador' || accessLevel === 'asesor';
 };
 
 /**

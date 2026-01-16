@@ -13,6 +13,8 @@ export const usePermissions = (): Permission => {
     const isGuest = accessLevel === 'guest';
     const isAdmin = accessLevel === 'admin';
     const isProvider = accessLevel === 'provider';
+    const isEmbajador = accessLevel === 'embajador';
+    const isAsesor = accessLevel === 'asesor';
 
     return {
       canEdit: !isGuest && !isProvider,
@@ -20,7 +22,10 @@ export const usePermissions = (): Permission => {
       canDownload: !isGuest && !isProvider,
       isAdmin,
       isProvider,
+      isEmbajador,
+      isAsesor,
       canViewPrices: !isProvider,  // Providers cannot see prices
+      canUseManualProduct: isAdmin || isEmbajador,  // Only admin and embajador can use manual products
     };
   }, [accessLevel]);
 };
@@ -57,10 +62,34 @@ export const useCanViewPrices = (): boolean => {
 };
 
 /**
- * Check if user is staff (admin, full access - asesores/embajadores)
+ * Check if user is staff (admin, embajador, asesor)
  * Staff can access features like product requests, not available to guests
  */
 export const useIsStaff = (): boolean => {
   const { accessLevel } = useAuthContext();
-  return accessLevel === 'admin' || accessLevel === 'full';
+  return accessLevel === 'admin' || accessLevel === 'embajador' || accessLevel === 'asesor';
+};
+
+/**
+ * Hook for canUseManualProduct permission
+ */
+export const useCanUseManualProduct = (): boolean => {
+  const { canUseManualProduct } = usePermissions();
+  return canUseManualProduct;
+};
+
+/**
+ * Hook for isEmbajador check
+ */
+export const useIsEmbajador = (): boolean => {
+  const { isEmbajador } = usePermissions();
+  return isEmbajador;
+};
+
+/**
+ * Hook for isAsesor check
+ */
+export const useIsAsesor = (): boolean => {
+  const { isAsesor } = usePermissions();
+  return isAsesor;
 };
