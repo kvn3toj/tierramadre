@@ -170,9 +170,20 @@ export const initPWA = (): void => {
  * Check if a new version is available
  * Compares version.json on server with current app version
  * @returns Promise<boolean> - true if update available
+ *
+ * IMPORTANT: Only returns true if:
+ * 1. Both versions are valid strings
+ * 2. Versions actually differ (not just undefined/null mismatch)
+ * 3. Remote version appears to be newer (higher number suffix)
  */
 export const checkForUpdates = async (): Promise<boolean> => {
   try {
+    // Don't check if we don't have a current version
+    const currentVersion = window.__TM_VERSION__;
+    if (!currentVersion || typeof currentVersion !== 'string') {
+      return false;
+    }
+
     const response = await fetch('/version.json?_t=' + Date.now(), {
       cache: 'no-store',
       headers: {
@@ -186,13 +197,38 @@ export const checkForUpdates = async (): Promise<boolean> => {
     }
 
     const data = await response.json();
-    const currentVersion = window.__TM_VERSION__;
 
-    if (!currentVersion || !data.version) {
+    // Validate remote version
+    if (!data.version || typeof data.version !== 'string') {
       return false;
     }
 
-    return data.version !== currentVersion;
+    // Exact match - no update needed
+    if (data.version === currentVersion) {
+      return false;
+    }
+
+    // Additional validation: ensure remote version looks newer
+    // Version format: YYYY.MM.DD.N (e.g., 2026.01.16.901)
+    // Only show update if remote version is actually higher
+    const currentParts = currentVersion.split('.').map(Number);
+    const remoteParts = data.version.split('.').map(Number);
+
+    // Compare each part: year, month, day, build number
+    for (let i = 0; i < Math.max(currentParts.length, remoteParts.length); i++) {
+      const currentPart = currentParts[i] || 0;
+      const remotePart = remoteParts[i] || 0;
+
+      if (remotePart > currentPart) {
+        return true; // Remote is newer
+      }
+      if (remotePart < currentPart) {
+        return false; // Current is newer (shouldn't happen, but safeguard)
+      }
+    }
+
+    // Versions are equal (shouldn't reach here due to exact match check above)
+    return false;
   } catch {
     // Network error or offline - no update available
     return false;
