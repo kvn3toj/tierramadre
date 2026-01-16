@@ -110,17 +110,19 @@ async function uploadVideoToCloudinary(filePath, originalFilename) {
 }
 
 /**
- * Get animated GIF URL from video (first 3 seconds)
+ * Get animated GIF URL from video (Telegram/WhatsApp quality)
+ * High quality settings for product display and QR sharing
  */
 function getVideoGifUrl(uploadResult) {
   return cloudinary.url(uploadResult.public_id, {
     resource_type: 'video',
     format: 'gif',
     transformation: [
-      { width: 400, crop: 'scale' },  // Reasonable size for preview
-      { start_offset: 0, end_offset: 3 },  // First 3 seconds
-      { fps: 10 },  // Lower framerate for smaller file
-      { quality: 'auto:low' },  // Optimize for size
+      { width: 480, crop: 'scale' },              // 480px width, maintain aspect ratio
+      { start_offset: 0, end_offset: 8 },         // Up to 8 seconds of video
+      { fps: 15 },                                 // Smooth 15fps animation
+      { quality: 90 },                             // High quality like Telegram/WhatsApp
+      { flags: ['lossy', 'animated', 'loop'] },   // Optimized looping GIF
     ],
   });
 }
@@ -194,25 +196,88 @@ async function deleteFromCloudinary(publicId, resourceType) {
 // =============================================================================
 
 /**
- * Upload file to Google Drive with optional GIF generation for videos
+ * Upload file to Google Drive
+ * - For images: Upload directly to Drive
+ * - For videos: Convert to high-quality GIF via Cloudinary, upload ONLY the GIF
+ *   (saves storage, faster uploads, Telegram/WhatsApp quality)
  */
 async function uploadFileToDrive(drive, folderId, file, index) {
   const originalName = file.originalFilename || file.newFilename || 'upload';
   const mimeType = file.mimetype || 'application/octet-stream';
-
-  const fileExtension = SUPPORTED_MIME_TYPES[mimeType] ||
-    (originalName.includes('.') ? originalName.split('.').pop() : 'bin');
-
   const isVideo = VIDEO_MIME_TYPES.includes(mimeType);
-  const prefix = isVideo ? 'video' : 'image';
-  const fileName = `${prefix}-${index + 1}-${Date.now()}.${fileExtension}`;
 
   const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-  console.log(`[FastUpload] Uploading ${fileName} (${fileSizeMB}MB) to Drive...`);
-
   const startTime = Date.now();
 
-  // Upload main file to Drive
+  // For videos: Convert to GIF only (don't store original video)
+  if (isVideo) {
+    if (!isCloudinaryConfigured()) {
+      throw new Error('Cloudinary not configured - required for video to GIF conversion');
+    }
+
+    console.log(`[FastUpload] Converting video to GIF: ${originalName} (${fileSizeMB}MB)`);
+
+    let cloudinaryResult = null;
+    try {
+      // Upload video to Cloudinary temporarily for GIF conversion
+      cloudinaryResult = await uploadVideoToCloudinary(file.filepath, originalName);
+      console.log(`[FastUpload] Cloudinary upload done: ${cloudinaryResult.public_id}`);
+
+      // Generate high-quality GIF (Telegram/WhatsApp style)
+      const gifUrl = getVideoGifUrl(cloudinaryResult);
+      console.log(`[FastUpload] GIF URL: ${gifUrl}`);
+
+      const gifBuffer = await downloadFromUrl(gifUrl);
+      const gifSizeKB = (gifBuffer.length / 1024).toFixed(0);
+      console.log(`[FastUpload] GIF generated: ${gifSizeKB}KB`);
+
+      // Upload ONLY the GIF to Drive (no video file)
+      const gifFileName = `product-${index + 1}-${Date.now()}.gif`;
+      const gifDriveFile = await uploadBufferToDrive(
+        drive,
+        folderId,
+        gifBuffer,
+        gifFileName,
+        'image/gif'
+      );
+
+      const uploadTime = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(`[FastUpload] GIF uploaded to Drive in ${uploadTime}s: ${gifDriveFile.id}`);
+
+      // Cleanup Cloudinary (async, don't wait)
+      deleteFromCloudinary(cloudinaryResult.public_id, 'video');
+
+      // Return GIF as the primary file (videoUrl points to GIF for QR code compatibility)
+      return {
+        id: gifDriveFile.id,
+        mimeType: 'image/gif',
+        isVideo: false, // It's now a GIF, not a video
+        isConvertedFromVideo: true,
+        fileName: gifFileName,
+        uploadTime: parseFloat(uploadTime),
+        url: `/api/serve-drive-image?fileId=${gifDriveFile.id}`,
+        gifUrl: `/api/serve-drive-image?fileId=${gifDriveFile.id}`,
+        videoUrl: `https://drive.google.com/file/d/${gifDriveFile.id}/view`, // QR links to GIF
+        thumbnailUrl: `/api/serve-drive-image?fileId=${gifDriveFile.id}`,
+      };
+
+    } catch (gifError) {
+      console.error(`[FastUpload] GIF generation failed:`, gifError.message);
+      // Cleanup Cloudinary on error
+      if (cloudinaryResult?.public_id) {
+        deleteFromCloudinary(cloudinaryResult.public_id, 'video');
+      }
+      throw new Error(`Video to GIF conversion failed: ${gifError.message}`);
+    }
+  }
+
+  // For images: Upload directly to Drive
+  const fileExtension = SUPPORTED_MIME_TYPES[mimeType] ||
+    (originalName.includes('.') ? originalName.split('.').pop() : 'bin');
+  const fileName = `image-${index + 1}-${Date.now()}.${fileExtension}`;
+
+  console.log(`[FastUpload] Uploading image ${fileName} (${fileSizeMB}MB) to Drive...`);
+
   const uploadedFile = await drive.files.create({
     requestBody: {
       name: fileName,
@@ -226,7 +291,7 @@ async function uploadFileToDrive(drive, folderId, file, index) {
   });
 
   const uploadTime = ((Date.now() - startTime) / 1000).toFixed(1);
-  console.log(`[FastUpload] Upload complete in ${uploadTime}s. File ID: ${uploadedFile.data.id}`);
+  console.log(`[FastUpload] Image uploaded in ${uploadTime}s. File ID: ${uploadedFile.data.id}`);
 
   // Set public permissions
   await drive.permissions.create({
@@ -234,71 +299,14 @@ async function uploadFileToDrive(drive, folderId, file, index) {
     requestBody: { role: 'reader', type: 'anyone' },
   });
 
-  const fileId = uploadedFile.data.id;
-
-  const result = {
-    id: fileId,
+  return {
+    id: uploadedFile.data.id,
     mimeType,
-    isVideo,
+    isVideo: false,
     fileName,
     uploadTime: parseFloat(uploadTime),
+    url: `/api/serve-drive-image?fileId=${uploadedFile.data.id}`,
   };
-
-  if (isVideo) {
-    result.url = `https://drive.google.com/file/d/${fileId}/preview`;
-    result.videoUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-    // Fallback thumbnail (may not be immediately available)
-    result.thumbnailUrl = `/api/serve-drive-image?fileId=${fileId}&thumbnail=true`;
-
-    // Generate GIF via Cloudinary if configured
-    if (isCloudinaryConfigured()) {
-      let cloudinaryResult = null;
-      try {
-        console.log(`[FastUpload] Generating GIF preview via Cloudinary...`);
-
-        // Upload video to Cloudinary temporarily
-        cloudinaryResult = await uploadVideoToCloudinary(file.filepath, originalName);
-        console.log(`[FastUpload] Cloudinary upload done: ${cloudinaryResult.public_id}`);
-
-        // Get GIF URL and download it
-        const gifUrl = getVideoGifUrl(cloudinaryResult);
-        console.log(`[FastUpload] GIF URL: ${gifUrl}`);
-
-        const gifBuffer = await downloadFromUrl(gifUrl);
-        console.log(`[FastUpload] GIF downloaded: ${(gifBuffer.length / 1024).toFixed(0)}KB`);
-
-        // Upload GIF to Drive
-        const gifFileName = `gif-${index + 1}-${Date.now()}.gif`;
-        const gifDriveFile = await uploadBufferToDrive(
-          drive,
-          folderId,
-          gifBuffer,
-          gifFileName,
-          'image/gif'
-        );
-
-        result.gifUrl = `/api/serve-drive-image?fileId=${gifDriveFile.id}`;
-        result.gifId = gifDriveFile.id;
-        console.log(`[FastUpload] GIF uploaded to Drive: ${gifDriveFile.id}`);
-
-        // Cleanup Cloudinary (async, don't wait)
-        deleteFromCloudinary(cloudinaryResult.public_id, 'video');
-
-      } catch (gifError) {
-        console.warn(`[FastUpload] GIF generation failed (non-fatal):`, gifError.message);
-        // Continue without GIF - Drive thumbnail will be used as fallback
-        if (cloudinaryResult?.public_id) {
-          deleteFromCloudinary(cloudinaryResult.public_id, 'video');
-        }
-      }
-    } else {
-      console.log(`[FastUpload] Cloudinary not configured, skipping GIF generation`);
-    }
-  } else {
-    result.url = `/api/serve-drive-image?fileId=${fileId}`;
-  }
-
-  return result;
 }
 
 /**

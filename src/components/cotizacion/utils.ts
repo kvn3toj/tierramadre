@@ -51,14 +51,15 @@ export const generateProductSlug = (name: string): string => {
 
 /**
  * Get the display URL for a product
- * - For manual products with video: shortened Drive link
+ * - For manual products with media (GIF/image): shortened Drive link
  * - For inventory products: product detail page URL
  * - Fallback: website base URL
  */
 export const getProductDisplayUrl = (product: CotizacionProduct): string => {
-  // Manual product with video URL - show shortened Drive link
-  if (product.isManual && product.videoUrl) {
-    const fileId = extractDriveFileId(product.videoUrl);
+  // Manual product with media URL (GIF converted from video, or image) - show shortened Drive link
+  if (product.isManual && (product.videoUrl || product.gifUrl)) {
+    const mediaUrl = product.videoUrl || product.gifUrl;
+    const fileId = extractDriveFileId(mediaUrl);
     if (fileId) {
       return `drive.google.com/file/d/${fileId.substring(0, 8)}...`;
     }
@@ -75,7 +76,7 @@ export const getProductDisplayUrl = (product: CotizacionProduct): string => {
 
 /**
  * Get the QR code URL based on product types
- * - For manual products with media: links to Drive file
+ * - For manual products with media (GIF/image): links to Drive file
  * - For single inventory product: links to product detail page
  * - For multiple inventory products: links to Treasure Browser with filtered items
  */
@@ -87,18 +88,19 @@ export const getQrCodeUrl = (products: CotizacionProduct[]): string => {
   const manualProducts = products.filter(p => p.isManual);
   const inventoryProducts = products.filter(p => !p.isManual);
 
-  // If only manual products with video/image, link to the first media file
+  // If only manual products with media, link to the first media file (GIF or image)
   if (manualProducts.length > 0 && inventoryProducts.length === 0) {
-    const productWithMedia = manualProducts.find(p => p.videoUrl || p.imagen);
+    const productWithMedia = manualProducts.find(p => p.videoUrl || p.gifUrl || p.imagen);
     if (productWithMedia) {
-      // PRIORITY 1: Use videoUrl if available
-      if (productWithMedia.videoUrl) {
-        const fileId = extractDriveFileId(productWithMedia.videoUrl);
+      // PRIORITY 1: Use videoUrl/gifUrl if available (both point to GIF file now)
+      const gifOrVideoUrl = productWithMedia.videoUrl || productWithMedia.gifUrl;
+      if (gifOrVideoUrl) {
+        const fileId = extractDriveFileId(gifOrVideoUrl);
         if (fileId) {
           return `https://drive.google.com/file/d/${fileId}/view`;
         }
-        if (productWithMedia.videoUrl.includes('drive.google.com')) {
-          return productWithMedia.videoUrl;
+        if (gifOrVideoUrl.includes('drive.google.com')) {
+          return gifOrVideoUrl;
         }
       }
 
