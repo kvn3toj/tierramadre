@@ -3,6 +3,7 @@
  * Helper functions for quotation generation and URL handling.
  */
 import { CotizacionProduct } from '../../hooks/useCotizacion';
+import { PRODUCTION_URL } from './constants';
 
 /**
  * Extract Google Drive file ID from various URL formats
@@ -51,7 +52,7 @@ export const generateProductSlug = (name: string): string => {
 /**
  * Get the display URL for a product
  * - For manual products with video: shortened Drive link
- * - For inventory products: website URL with slug
+ * - For inventory products: product detail page URL
  * - Fallback: website base URL
  */
 export const getProductDisplayUrl = (product: CotizacionProduct): string => {
@@ -63,24 +64,24 @@ export const getProductDisplayUrl = (product: CotizacionProduct): string => {
     }
   }
 
-  // Inventory products: show website URL with slug
+  // Inventory products: show product detail page URL
   if (!product.isManual) {
-    const productSlug = generateProductSlug(product.name);
-    return `tierramadre.co/products/${productSlug}`;
+    return `${PRODUCTION_URL}/product/${product.itemNumber}`;
   }
 
-  // Manual products without video: show base website
-  return 'tierramadre.co';
+  // Manual products without video: show base Vercel URL
+  return PRODUCTION_URL;
 };
 
 /**
  * Get the QR code URL based on product types
  * - For manual products with media: links to Drive file
- * - For inventory products: links to Treasure Browser with filtered items
+ * - For single inventory product: links to product detail page
+ * - For multiple inventory products: links to Treasure Browser with filtered items
  */
 export const getQrCodeUrl = (products: CotizacionProduct[]): string => {
   if (products.length === 0) {
-    return 'https://tierra-madre-studio.vercel.app/tesoro';
+    return `https://${PRODUCTION_URL}/tesoro`;
   }
 
   const manualProducts = products.filter(p => p.isManual);
@@ -115,7 +116,13 @@ export const getQrCodeUrl = (products: CotizacionProduct[]): string => {
     }
   }
 
-  // Default: link to Treasure Browser with all item numbers
+  // For inventory products, check if single or multiple
+  if (inventoryProducts.length === 1 && manualProducts.length === 0) {
+    // Single inventory product: link directly to product detail page
+    return `https://${PRODUCTION_URL}/product/${inventoryProducts[0].itemNumber}`;
+  }
+
+  // Multiple products: link to Treasure Browser with all item numbers
   const itemNumbers = products.map(p => p.itemNumber).join(',');
-  return `https://tierra-madre-studio.vercel.app/tesoro?items=${itemNumbers}&status=all`;
+  return `https://${PRODUCTION_URL}/tesoro?items=${itemNumbers}&status=all`;
 };

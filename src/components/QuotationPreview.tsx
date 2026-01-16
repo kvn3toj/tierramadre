@@ -45,7 +45,7 @@ import {
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { documentShadows } from '../design-system/tokens';
-import { brandColors } from './cotizacion/constants';
+import { brandColors, PRODUCTION_URL } from './cotizacion/constants';
 import { formatFullCurrency as formatCurrency } from '../utils/formatting';
 import { createLogger } from '../utils/logger';
 
@@ -1014,7 +1014,7 @@ export default function QuotationPreview() {
                       {/* Contact */}
                       <Box sx={{ textAlign: 'center', flex: 1 }}>
                         <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray }}>
-                          www.tierramadre.co • contacto@tierramadre.co • +57 (1) 234 5678
+                          {PRODUCTION_URL} • contacto@tierramadre.co • +57 (1) 234 5678
                         </Typography>
                         <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: brandColors.emeraldDark, mt: 0.5 }}>
                           TIERRA MADRE

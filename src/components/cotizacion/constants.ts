@@ -73,6 +73,16 @@ export const darkBrandColors = {
 export type BrandColors = typeof brandColors;
 
 // =============================================================================
+// APPLICATION URLs
+// =============================================================================
+
+/**
+ * Production URL for the application
+ * Used for QR codes, product links, and sharing
+ */
+export const PRODUCTION_URL = 'tierra-madre-studio.vercel.app';
+
+// =============================================================================
 // QUOTATION PREVIEW STYLES
 // =============================================================================
 

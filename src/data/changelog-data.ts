@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-16T04:52:13.008Z
+ * Generated at: 2026-01-16T04:55:57.367Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-16T04:52:13.008Z",
+  "generatedAt": "2026-01-16T04:55:57.367Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,19 +56,19 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "9ee04df",
-    "lastCommitDate": "2026-01-15 23:52:08 -0500"
+    "lastCommitHash": "605b85c",
+    "lastCommitDate": "2026-01-15 23:55:53 -0500"
   },
   "stats": {
-    "totalCommits": 282,
-    "totalAdditions": 99313,
-    "totalDeletions": 57885,
-    "totalFilesChanged": 1651,
-    "netLines": 41428
+    "totalCommits": 283,
+    "totalAdditions": 99958,
+    "totalDeletions": 58582,
+    "totalFilesChanged": 1658,
+    "netLines": 41376
   },
   "categoryStats": {
+    "other": 101,
     "bugfix": 77,
-    "other": 100,
     "ux": 44,
     "performance": 15,
     "auth": 18,
@@ -76,10 +76,10 @@ export const changelogData: ChangelogData = {
     "analytics": 11
   },
   "typeStats": {
+    "refactor": 20,
     "fix": 118,
     "feat": 110,
     "chore": 23,
-    "refactor": 19,
     "other": 9,
     "docs": 2,
     "style": 1
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 62
+      "count": 63
     },
     {
       "file": "index.html",
-      "count": 61
+      "count": 62
     },
     {
       "file": "public/version.json",
-      "count": 51
+      "count": 52
     },
     {
       "file": "src/App.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 274
+      "commits": 275
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "605b85c",
+      "message": "Extract shared styles and utilities from QuotationPreview",
+      "fullMessage": "refactor(cotizacion): Extract shared styles and utilities from QuotationPreview",
+      "author": "Kvn3Toj",
+      "relativeTime": "0 seconds ago",
+      "date": "2026-01-15",
+      "type": "refactor",
+      "category": "other",
+      "additions": 645,
+      "deletions": 697,
+      "filesChanged": 7
+    },
+    {
       "hash": "9ee04df",
       "message": "Show actual video URL for manual products in quotation",
       "fullMessage": "fix(cotizacion): Show actual video URL for manual products in quotation",
       "author": "Kvn3Toj",
-      "relativeTime": "1 second ago",
+      "relativeTime": "4 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -155,7 +168,7 @@ export const changelogData: ChangelogData = {
       "message": "Add Medida, Diseño, and Precio por CT fields to manual entry",
       "fullMessage": "feat(cotizacion): Add Medida, Diseño, and Precio por CT fields to manual entry",
       "author": "Kvn3Toj",
-      "relativeTime": "17 minutes ago",
+      "relativeTime": "21 minutes ago",
       "date": "2026-01-15",
       "type": "feat",
       "category": "other",
@@ -168,7 +181,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog and version",
       "fullMessage": "chore: Update changelog and version",
       "author": "Kvn3Toj",
-      "relativeTime": "31 minutes ago",
+      "relativeTime": "35 minutes ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -181,7 +194,7 @@ export const changelogData: ChangelogData = {
       "message": "Fix video upload preview and QR code URL generation",
       "fullMessage": "fix(cotizacion): Fix video upload preview and QR code URL generation",
       "author": "Kvn3Toj",
-      "relativeTime": "49 minutes ago",
+      "relativeTime": "52 minutes ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -415,7 +428,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog data and add drive cleanup utility",
       "fullMessage": "chore: Update changelog data and add drive cleanup utility",
       "author": "Kvn3Toj",
-      "relativeTime": "8 hours ago",
+      "relativeTime": "9 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "cleanup",
@@ -467,7 +480,7 @@ export const changelogData: ChangelogData = {
       "message": "Update changelog data",
       "fullMessage": "chore: Update changelog data",
       "author": "Kvn3Toj",
-      "relativeTime": "9 hours ago",
+      "relativeTime": "10 hours ago",
       "date": "2026-01-15",
       "type": "chore",
       "category": "other",
@@ -558,7 +571,7 @@ export const changelogData: ChangelogData = {
       "message": "Properly detect Shared Drive root vs folder",
       "fullMessage": "fix: Properly detect Shared Drive root vs folder",
       "author": "Kvn3Toj",
-      "relativeTime": "21 hours ago",
+      "relativeTime": "22 hours ago",
       "date": "2026-01-15",
       "type": "fix",
       "category": "bugfix",
@@ -844,7 +857,7 @@ export const changelogData: ChangelogData = {
       "message": "Add ensureSheet for UserPreferences to prevent 500 errors",
       "fullMessage": "fix: Add ensureSheet for UserPreferences to prevent 500 errors",
       "author": "Kvn3Toj",
-      "relativeTime": "29 hours ago",
+      "relativeTime": "30 hours ago",
       "date": "2026-01-14",
       "type": "fix",
       "category": "bugfix",
