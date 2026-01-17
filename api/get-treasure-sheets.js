@@ -40,65 +40,97 @@ function parsePeso(peso) {
 }
 
 /**
- * Map row data to treasure item
+ * Inventario Sheet Column Headers (EXACT MATCH)
+ * Source: Google Sheets Inventario - Row 1
  *
- * Column structure:
- * A = Item (0), B = FECHA INGRESO (1), C = Nombre (2), D = Peso (ct) (3),
- * E = Color (4), F = Calidad (5), G = Cant. (6), H = Talla (7),
- * I = Medidas tipo (8), J = Medidas valores (9), K = Imagen (10) - DEPRECATED,
- * L = Precio COP (11), M = UBICACION (12), N = ASESOR (13), O = ESTADO (14),
- * P = QR (15), Q = Coleccion (16), R = CAJA (17)
- *
- * NOTE: imageUrl from column K is FALLBACK. Primary images come from Google Drive.
+ * A = Item (0)
+ * B = FECHA INGRESO INVENTARIO (1)
+ * C = Nombre (2)
+ * D = Peso (ct) (3)
+ * E = Color (4)
+ * F = Calidad (5)
+ * G = Cant. (6)
+ * H = Talla (7)
+ * I = Medidas (8)
+ * J = Medidas (9) - valores
+ * K = Imagen (10) - DEPRECATED, primary images from Google Drive
+ * L = Precio COP (11)
+ * M = UBICACIÓN (12)
+ * N = ASESOR (13)
+ * O = ESTADO (14)
+ * P = QR (15)
+ * Q = Colección (16)
+ * R = CAJA (17)
+ */
+const INVENTARIO_HEADERS = {
+  ITEM: 'item',
+  FECHA_INGRESO: 'fecha ingreso inventario',
+  NOMBRE: 'nombre',
+  PESO: 'peso (ct)',
+  COLOR: 'color',
+  CALIDAD: 'calidad',
+  CANTIDAD: 'cant.',
+  TALLA: 'talla',
+  MEDIDAS: 'medidas',
+  IMAGEN: 'imagen',
+  PRECIO_COP: 'precio cop',
+  UBICACION: 'ubicación',
+  ASESOR: 'asesor',
+  ESTADO: 'estado',
+  QR: 'qr',
+  COLECCION: 'colección',
+  CAJA: 'caja',
+};
+
+/**
+ * Map row data to treasure item using exact header matching
  */
 function mapRowToTreasureItem(row, headers) {
   const normalizedHeaders = headers.map(normalizeHeader);
 
-  const getValue = (...columnNames) => {
-    for (const columnName of columnNames) {
-      const search = columnName.toLowerCase().trim();
-      const index = normalizedHeaders.findIndex(header => {
-        if (!header) return false;
-        if (header === search) return true;
-        if (search.includes(' ')) {
-          return header.includes(search) || header === search;
-        }
-        return header.includes(search) || search.includes(header);
-      });
-      if (index >= 0 && row[index] !== undefined && row[index] !== '') {
-        return row[index];
-      }
+  // Find column index by exact header match (case-insensitive)
+  const getColumnIndex = (headerName) => {
+    const search = headerName.toLowerCase().trim();
+    return normalizedHeaders.findIndex(h => h === search);
+  };
+
+  // Get value by header name (exact match)
+  const getValue = (headerName) => {
+    const index = getColumnIndex(headerName);
+    if (index >= 0 && row[index] !== undefined && row[index] !== '') {
+      return row[index];
     }
     return null;
   };
 
+  // Fallback to index if header not found
   const getByIndex = (index) => {
     return row[index] !== undefined && row[index] !== '' ? row[index] : null;
   };
 
-  const peso = getValue('peso', 'peso ct', 'peso (ct)', 'weight', 'quilates', 'ct') || getByIndex(3);
+  const peso = getValue(INVENTARIO_HEADERS.PESO) || getByIndex(3);
   const pesoData = parsePeso(peso);
-  const imageUrl = getValue('imagen', 'image', 'foto', 'photo', 'url imagen') || getByIndex(10) || '';
+  const imageUrl = getValue(INVENTARIO_HEADERS.IMAGEN) || getByIndex(10) || '';
 
   return {
-    item: parseInt(getValue('item', '#', 'numero', 'no.') || getByIndex(0) || 0),
-    fechaIngreso: getValue('fecha ingreso', 'fechaingreso', 'fecha', 'date') || getByIndex(1) || '',
-    nombre: getValue('nombre', 'name', 'descripcion', 'producto') || getByIndex(2) || '',
+    item: parseInt(getValue(INVENTARIO_HEADERS.ITEM) || getByIndex(0) || 0),
+    fechaIngreso: getValue(INVENTARIO_HEADERS.FECHA_INGRESO) || getByIndex(1) || '',
+    nombre: getValue(INVENTARIO_HEADERS.NOMBRE) || getByIndex(2) || '',
     peso: typeof pesoData.value === 'number' ? pesoData.value : parseDecimal(peso),
-    color: getValue('color') || getByIndex(4) || '',
-    calidad: getValue('calidad', 'quality') || getByIndex(5) || '',
-    cantidad: parseInt(getValue('cant', 'cant.', 'cantidad', 'qty') || getByIndex(6) || 1),
-    talla: getValue('talla', 'cut', 'corte', 'shape') || getByIndex(7) || '',
-    medidas: getValue('medidas', 'medida', 'dimensions', 'dimensiones', 'size') || getByIndex(8) || '',
+    color: getValue(INVENTARIO_HEADERS.COLOR) || getByIndex(4) || '',
+    calidad: getValue(INVENTARIO_HEADERS.CALIDAD) || getByIndex(5) || '',
+    cantidad: parseInt(getValue(INVENTARIO_HEADERS.CANTIDAD) || getByIndex(6) || 1),
+    talla: getValue(INVENTARIO_HEADERS.TALLA) || getByIndex(7) || '',
+    medidas: getValue(INVENTARIO_HEADERS.MEDIDAS) || getByIndex(8) || '',
     medidasValores: getByIndex(9) || '',
-    precioCOP: 0, // Populated from CUALIFICACION-PRECIO sheet only
+    precioCOP: parsePrice(getValue(INVENTARIO_HEADERS.PRECIO_COP) || getByIndex(11)),
     precioInternacional: 0,
-    ubicacion: getValue('ubicacion', 'ubicacion', 'location', 'lugar') || getByIndex(12) || '',
-    asesor: getValue('asesor', 'advisor', 'vendedor', 'seller') || getByIndex(13) || '',
-    estado: (getValue('estado', 'status', 'disponibilidad') || getByIndex(14) || 'DISPONIBLE').toUpperCase(),
-    qr: getValue('qr') || getByIndex(15) || '',
-    coleccion: getValue('coleccion', 'coleccion', 'collection', 'catalogo', 'catalogo') || getByIndex(16) || '',
-    caja: getValue('caja', 'box') || getByIndex(17) || '',
+    ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || getByIndex(12) || '',
+    asesor: getValue(INVENTARIO_HEADERS.ASESOR) || getByIndex(13) || '',
+    estado: (getValue(INVENTARIO_HEADERS.ESTADO) || getByIndex(14) || 'DISPONIBLE').toUpperCase(),
+    qr: getValue(INVENTARIO_HEADERS.QR) || getByIndex(15) || '',
+    coleccion: getValue(INVENTARIO_HEADERS.COLECCION) || getByIndex(16) || '',
+    caja: getValue(INVENTARIO_HEADERS.CAJA) || getByIndex(17) || '',
     imageUrl: imageUrl,
     isJewelry: pesoData.isJewelry,
     metalType: pesoData.metalType,
@@ -182,9 +214,9 @@ export default async function handler(req, res) {
       .filter(row => row.length > 0 && row.some(cell => cell))
       .map(row => {
         const item = mapRowToTreasureItem(row, headers);
+        // Only add precioInternacional from CUALIFICACION sheet (precioCOP comes from Inventario column L)
         const pricing = pricingMap[item.item];
         if (pricing) {
-          item.precioCOP = pricing.precioCOP;
           item.precioInternacional = pricing.precioInternacional;
         }
         return item;
