@@ -43,12 +43,12 @@ export default function ComparisonBar({
         elevation={4}
         sx={{
           position: 'fixed',
-          bottom: 'calc(64px + env(safe-area-inset-bottom))',
-          left: 8,
-          right: 8,
+          bottom: 'calc(72px + env(safe-area-inset-bottom))',
+          left: 12,
+          right: 12,
           zIndex: 1100,
-          py: 1,
-          px: 1.5,
+          py: 1.5,
+          px: 2,
           borderRadius: 3,
           bgcolor: isLight
             ? alpha(surfacesLight.background.primary, 0.95)
@@ -81,9 +81,9 @@ export default function ComparisonBar({
               flexShrink: 0,
             }}
           >
-            <Scale size={18} color={emeraldCore.primary} />
+            <Scale size={20} color={emeraldCore.primary} />
             <Typography
-              variant="caption"
+              variant="body2"
               sx={{
                 fontWeight: 600,
                 color: 'text.secondary',
@@ -108,8 +108,8 @@ export default function ComparisonBar({
                 <Avatar
                   src={item.thumbnailUrl || item.imagen}
                   sx={{
-                    width: 32,
-                    height: 32,
+                    width: 40,
+                    height: 40,
                     border: '2px solid',
                     borderColor: emeraldCore.primary,
                     cursor: 'pointer',
@@ -131,7 +131,7 @@ export default function ComparisonBar({
             onClick={onClear}
             size="small"
             sx={{
-              p: 0.5,
+              p: 0.75,
               color: 'text.secondary',
               '&:hover': {
                 color: 'error.main',
@@ -140,7 +140,7 @@ export default function ComparisonBar({
             }}
             aria-label="Limpiar selección"
           >
-            <Trash2 size={16} />
+            <Trash2 size={18} />
           </IconButton>
 
           {/* Compare Button */}
@@ -148,17 +148,17 @@ export default function ComparisonBar({
             variant="contained"
             onClick={onCompare}
             disabled={!canCompare}
-            size="small"
+            size="medium"
             sx={{
               bgcolor: emeraldCore.primary,
               color: 'white',
               textTransform: 'none',
               fontWeight: 600,
-              px: 2,
-              py: 0.75,
+              px: 2.5,
+              py: 1,
               minWidth: 'auto',
               borderRadius: 2,
-              fontSize: '0.8rem',
+              fontSize: '0.875rem',
               '&:hover': { bgcolor: emeraldCore.dark },
               '&:disabled': {
                 bgcolor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
