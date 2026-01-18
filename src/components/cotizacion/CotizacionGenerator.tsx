@@ -281,15 +281,17 @@ export default function CotizacionGenerator() {
       if (data.success && data.files && data.files.length > 0) {
         const uploadedFile = data.files[0];
         // Update manual product with uploaded URL (use thumbnail for videos in product card)
-        const displayUrl = uploadedFile.isVideo
+        // Note: Videos are now converted to GIFs, so isConvertedFromVideo indicates a video upload
+        const isVideoUpload = uploadedFile.isVideo || uploadedFile.isConvertedFromVideo;
+        const displayUrl = isVideoUpload
           ? (uploadedFile.thumbnailUrl || uploadedFile.url)
           : uploadedFile.url;
 
         setManualProduct(prev => ({
           ...prev,
           imagen: displayUrl,
-          // Store video URL and GIF URL for videos (GIF used in PDF export)
-          ...(uploadedFile.isVideo && {
+          // Store video URL and GIF URL for videos/GIF conversions (used in PDF export and QR links)
+          ...(isVideoUpload && {
             videoUrl: uploadedFile.videoUrl,
             gifUrl: uploadedFile.gifUrl, // Animated GIF for PDF display
           }),

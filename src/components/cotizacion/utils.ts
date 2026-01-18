@@ -141,7 +141,13 @@ export const getQrCodeUrl = (products: CotizacionProduct[]): string => {
     return `https://${PRODUCTION_URL}/product/${inventoryProducts[0].itemNumber}`;
   }
 
-  // Multiple products: link to Treasure Browser with all item numbers
-  const itemNumbers = products.map(p => p.itemNumber).join(',');
-  return `https://${PRODUCTION_URL}/tesoro?items=${itemNumbers}&status=all`;
+  // Multiple inventory products (with or without manual products)
+  // Only include inventory product item numbers (manual products have fake timestamp-based IDs)
+  if (inventoryProducts.length > 0) {
+    const itemNumbers = inventoryProducts.map(p => p.itemNumber).join(',');
+    return `https://${PRODUCTION_URL}/tesoro?items=${itemNumbers}&status=all`;
+  }
+
+  // Fallback: no inventory products, no manual products with media
+  return `https://${PRODUCTION_URL}/tesoro`;
 };
