@@ -63,6 +63,8 @@ export interface ManualProductState {
   medida: string;         // Size/measurement (e.g., ring size, necklace length)
   diseno: string;         // Design/style description
   precioPorCt: string;    // Price per carat
+  calidadMetal: string;   // Metal quality (e.g., 18k, 14k, 925)
+  gramaje: string;        // Metal weight in grams
   imagen?: string;
   videoUrl?: string;
   gifUrl?: string; // Animated GIF for PDF export (generated from video)
@@ -251,6 +253,8 @@ const initialManualProduct: ManualProductState = {
   medida: '',
   diseno: '',
   precioPorCt: '',
+  calidadMetal: '',
+  gramaje: '',
 };
 
 export function useCotizacion(): UseCotizacionReturn {

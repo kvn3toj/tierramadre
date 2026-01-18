@@ -1,6 +1,6 @@
 /**
  * Auto-generated changelog data
- * Generated at: 2026-01-17T21:32:56.140Z
+ * Generated at: 2026-01-17T21:44:55.270Z
  *
  * DO NOT EDIT MANUALLY - Run 'npm run changelog' to regenerate
  */
@@ -48,7 +48,7 @@ export interface ChangelogData {
 }
 
 export const changelogData: ChangelogData = {
-  "generatedAt": "2026-01-17T21:32:56.140Z",
+  "generatedAt": "2026-01-17T21:44:55.270Z",
   "daysIncluded": 30,
   "dateRange": {
     "start": "18 Dic, 2025",
@@ -56,27 +56,27 @@ export const changelogData: ChangelogData = {
   },
   "branchInfo": {
     "currentBranch": "main",
-    "lastCommitHash": "afc8c0d",
-    "lastCommitDate": "2026-01-17 16:32:52 -0500"
+    "lastCommitHash": "3399e7c",
+    "lastCommitDate": "2026-01-17 16:44:49 -0500"
   },
   "stats": {
-    "totalCommits": 301,
-    "totalAdditions": 103711,
-    "totalDeletions": 63756,
-    "totalFilesChanged": 1807,
-    "netLines": 39955
+    "totalCommits": 302,
+    "totalAdditions": 103992,
+    "totalDeletions": 64024,
+    "totalFilesChanged": 1811,
+    "netLines": 39968
   },
   "categoryStats": {
+    "ux": 48,
     "bugfix": 81,
     "auth": 21,
     "other": 109,
-    "ux": 47,
     "performance": 15,
     "cleanup": 17,
     "analytics": 11
   },
   "typeStats": {
-    "fix": 123,
+    "fix": 124,
     "refactor": 24,
     "chore": 24,
     "feat": 118,
@@ -87,15 +87,15 @@ export const changelogData: ChangelogData = {
   "mostChangedFiles": [
     {
       "file": "src/data/changelog-data.ts",
-      "count": 79
+      "count": 80
     },
     {
       "file": "index.html",
-      "count": 76
+      "count": 77
     },
     {
       "file": "public/version.json",
-      "count": 66
+      "count": 67
     },
     {
       "file": "src/App.tsx",
@@ -129,7 +129,7 @@ export const changelogData: ChangelogData = {
   "contributors": [
     {
       "name": "Kvn3Toj",
-      "commits": 293
+      "commits": 294
     },
     {
       "name": "kvn3toj",
@@ -138,11 +138,24 @@ export const changelogData: ChangelogData = {
   ],
   "commits": [
     {
+      "hash": "3399e7c",
+      "message": "adjust ComparisonBar position above bottom nav",
+      "fullMessage": "fix(ui): adjust ComparisonBar position above bottom nav",
+      "author": "Kvn3Toj",
+      "relativeTime": "1 second ago",
+      "date": "2026-01-17",
+      "type": "fix",
+      "category": "ux",
+      "additions": 281,
+      "deletions": 268,
+      "filesChanged": 4
+    },
+    {
       "hash": "afc8c0d",
       "message": "restore precioCOP from Inventario column L",
       "fullMessage": "fix(api): restore precioCOP from Inventario column L",
       "author": "Kvn3Toj",
-      "relativeTime": "0 seconds ago",
+      "relativeTime": "12 minutes ago",
       "date": "2026-01-17",
       "type": "fix",
       "category": "bugfix",

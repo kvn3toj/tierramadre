@@ -1482,8 +1482,10 @@ const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
               <Grid item xs={12}>
                 <TextField fullWidth label="Tipo de metal" value={manualProduct.metalType} onChange={(e) => setManualProduct({ ...manualProduct, metalType: e.target.value })} size="small" placeholder="Ej: Oro 18k, Plata 925" />
               </Grid>
+              <Grid item xs={6}><TextField fullWidth label="Calidad del metal" value={manualProduct.calidadMetal} onChange={(e) => setManualProduct({ ...manualProduct, calidadMetal: e.target.value })} size="small" placeholder="Ej: 18k, 14k, 925" /></Grid>
+              <Grid item xs={6}><TextField fullWidth label="Gramaje" value={manualProduct.gramaje} onChange={(e) => setManualProduct({ ...manualProduct, gramaje: e.target.value })} size="small" placeholder="Ej: 5.2" /></Grid>
               {/* Emerald fields for the gem in the jewel */}
-              <Grid item xs={6}><TextField fullWidth label="Peso (ct)" value={manualProduct.peso} onChange={(e) => setManualProduct({ ...manualProduct, peso: e.target.value })} size="small" placeholder="Ej: 2.5" /></Grid>
+              <Grid item xs={6}><TextField fullWidth label="Peso Metal (gr)" value={manualProduct.peso} onChange={(e) => setManualProduct({ ...manualProduct, peso: e.target.value })} size="small" placeholder="Ej: 2.5" /></Grid>
               <Grid item xs={6}><TextField fullWidth label="Color" value={manualProduct.color} onChange={(e) => setManualProduct({ ...manualProduct, color: e.target.value })} size="small" placeholder="Ej: Verde Intenso" /></Grid>
               <Grid item xs={6}><TextField fullWidth label="Calidad" value={manualProduct.calidad} onChange={(e) => setManualProduct({ ...manualProduct, calidad: e.target.value })} size="small" placeholder="Ej: AAA" /></Grid>
               <Grid item xs={6}><TextField fullWidth label="Talla" value={manualProduct.talla} onChange={(e) => setManualProduct({ ...manualProduct, talla: e.target.value })} size="small" placeholder="Ej: Óvalo" /></Grid>
