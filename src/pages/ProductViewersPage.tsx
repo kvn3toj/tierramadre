@@ -31,6 +31,8 @@ import {
   RefreshCw,
   TrendingUp,
   Users,
+  FileText,
+  DollarSign,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useTreasure } from '../hooks/useTreasure';
@@ -64,6 +66,33 @@ interface RecentView {
   browser: string;
   country: string;
   referrer: string | null;
+}
+
+interface QuotedByAsesor {
+  email: string;
+  name: string;
+  count: number;
+  totalValue: number;
+  firstQuote: string;
+  lastQuote: string;
+}
+
+interface RecentQuote {
+  cotizacionId: string;
+  asesorEmail: string;
+  price: number;
+  createdAt: string;
+}
+
+interface ProductCotizaciones {
+  success: boolean;
+  itemNumber: number;
+  productName: string | null;
+  totalCotizaciones: number;
+  totalValue: number;
+  uniqueAsesores: number;
+  quotedBy: QuotedByAsesor[];
+  recentQuotes: RecentQuote[];
 }
 
 interface ProductDetailViews {
@@ -154,7 +183,9 @@ const ProductViewersPage: React.FC = () => {
   const { treasure } = useTreasure();
 
   const [data, setData] = useState<ProductDetailViews | null>(null);
+  const [cotizacionData, setCotizacionData] = useState<ProductCotizaciones | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCotizacionLoading, setIsCotizacionLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Get product info from treasure items
@@ -187,9 +218,30 @@ const ProductViewersPage: React.FC = () => {
     }
   }, [itemId]);
 
+  // Fetch cotización data - who quoted this product
+  const fetchCotizacionData = useCallback(async () => {
+    if (!itemId) return;
+
+    setIsCotizacionLoading(true);
+
+    try {
+      const response = await fetch(`/api/cotizacion-save?action=productCotizaciones&itemId=${itemId}`);
+      const result = await response.json();
+
+      if (result.success) {
+        setCotizacionData(result);
+      }
+    } catch (err) {
+      console.error('ProductViewersPage cotización error:', err);
+    } finally {
+      setIsCotizacionLoading(false);
+    }
+  }, [itemId]);
+
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    fetchCotizacionData();
+  }, [fetchData, fetchCotizacionData]);
 
   // Get display name
   const productName = data?.productName || product?.nombre || `Item #${itemId}`;
@@ -250,15 +302,15 @@ const ProductViewersPage: React.FC = () => {
               {productName}
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Item #{itemId} - Analytics de vistas
+              Item #{itemId} - Analytics de vistas y cotizaciones
             </Typography>
           </Box>
           <IconButton
-            onClick={fetchData}
-            disabled={isLoading}
+            onClick={() => { fetchData(); fetchCotizacionData(); }}
+            disabled={isLoading || isCotizacionLoading}
             sx={{ color: emeraldCore.primary }}
           >
-            <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
+            <RefreshCw size={18} className={(isLoading || isCotizacionLoading) ? 'animate-spin' : ''} />
           </IconButton>
         </Box>
       </Box>
@@ -458,6 +510,125 @@ const ProductViewersPage: React.FC = () => {
                     </Box>
                   </Box>
                 ))}
+              </Paper>
+            )}
+
+            {/* Cotización Export Section */}
+            {cotizacionData && cotizacionData.totalCotizaciones > 0 && (
+              <Paper
+                elevation={0}
+                sx={{
+                  borderRadius: 3,
+                  bgcolor: isLight ? 'background.paper' : alpha('#000', 0.2),
+                  border: `1px solid ${alpha(goldAccent.primary, 0.2)}`,
+                  overflow: 'hidden',
+                  mb: 3,
+                }}
+              >
+                <Box sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${alpha(goldAccent.primary, 0.15)}`, bgcolor: alpha(goldAccent.primary, 0.05) }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1, color: goldAccent.primary }}>
+                      <FileText size={16} />
+                      Quién cotizó este producto ({cotizacionData.quotedBy.length} asesores)
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <DollarSign size={14} color={emeraldCore.primary} />
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: emeraldCore.primary }}>
+                        ${(cotizacionData.totalValue / 1000000).toFixed(1)}M total
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+                {cotizacionData.quotedBy.map((asesor, idx) => (
+                  <Box
+                    key={asesor.email}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      px: 2.5,
+                      py: 1.5,
+                      borderBottom: idx < cotizacionData.quotedBy.length - 1 ? `1px solid ${alpha('#000', 0.06)}` : 'none',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: '50%',
+                        bgcolor: alpha(goldAccent.primary, 0.12),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <FileText size={18} color={goldAccent.primary} />
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 500,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {asesor.name}
+                        </Typography>
+                        <Chip
+                          label="Asesor"
+                          size="small"
+                          sx={{
+                            height: 18,
+                            fontSize: '0.65rem',
+                            bgcolor: alpha(goldAccent.primary, 0.15),
+                            color: goldAccent.primary,
+                          }}
+                        />
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          {asesor.count} {asesor.count === 1 ? 'cotización' : 'cotizaciones'}
+                        </Typography>
+                        <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.disabled' }} />
+                        <Typography variant="caption" sx={{ color: emeraldCore.primary, fontWeight: 500 }}>
+                          ${(asesor.totalValue / 1000000).toFixed(2)}M
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Clock size={12} />
+                        {formatTimeAgo(asesor.lastQuote)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Paper>
+            )}
+
+            {/* No Cotizaciones State - show only if we have view data but no cotizaciones */}
+            {cotizacionData && cotizacionData.totalCotizaciones === 0 && data && data.totalViews > 0 && (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2.5,
+                  mb: 3,
+                  borderRadius: 3,
+                  bgcolor: alpha(goldAccent.primary, 0.05),
+                  border: `1px dashed ${alpha(goldAccent.primary, 0.3)}`,
+                  textAlign: 'center',
+                }}
+              >
+                <FileText size={28} color={alpha(goldAccent.primary, 0.4)} />
+                <Typography variant="body2" sx={{ mt: 1, fontWeight: 500, color: 'text.secondary' }}>
+                  Sin cotizaciones registradas
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                  Este producto aún no ha sido incluido en ninguna cotización
+                </Typography>
               </Paper>
             )}
 

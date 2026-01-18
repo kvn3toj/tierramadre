@@ -475,6 +475,133 @@ async function getProductStats(sheets) {
 }
 
 /**
+ * Get cotización data for a specific product (by itemNumber)
+ * Returns who quoted this product and when
+ */
+async function getProductCotizaciones(sheets, itemNumber) {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${PRODUCTS_SHEET}!A:F`,
+    });
+
+    const rows = response.data.values || [];
+    if (rows.length <= 1) {
+      return {
+        itemNumber,
+        productName: null,
+        totalCotizaciones: 0,
+        totalValue: 0,
+        quotedBy: [],
+        recentQuotes: [],
+      };
+    }
+
+    // Filter rows by itemNumber
+    const targetItemNumber = parseInt(itemNumber);
+    const dataRows = rows.slice(1).filter(row => parseInt(row[1]) === targetItemNumber);
+
+    if (dataRows.length === 0) {
+      return {
+        itemNumber: targetItemNumber,
+        productName: null,
+        totalCotizaciones: 0,
+        totalValue: 0,
+        quotedBy: [],
+        recentQuotes: [],
+      };
+    }
+
+    // Get product name from first row
+    const productName = dataRows[0][2] || null;
+
+    // Aggregate by asesor
+    const asesorStats = {};
+    const allQuotes = [];
+
+    for (const row of dataRows) {
+      const cotizacionId = row[0];
+      const price = parseFloat(row[3]) || 0;
+      const asesorEmail = row[4] || '';
+      const createdAt = row[5] || '';
+
+      // Add to all quotes for recent activity
+      allQuotes.push({
+        cotizacionId,
+        asesorEmail,
+        price,
+        createdAt,
+      });
+
+      // Aggregate by asesor
+      if (asesorEmail) {
+        if (!asesorStats[asesorEmail]) {
+          asesorStats[asesorEmail] = {
+            email: asesorEmail,
+            name: asesorEmail.split('@')[0],
+            count: 0,
+            totalValue: 0,
+            firstQuote: createdAt,
+            lastQuote: createdAt,
+          };
+        }
+        asesorStats[asesorEmail].count += 1;
+        asesorStats[asesorEmail].totalValue += price;
+
+        // Track first and last quote dates
+        if (createdAt) {
+          const createdTime = new Date(createdAt).getTime();
+          const firstTime = new Date(asesorStats[asesorEmail].firstQuote).getTime();
+          const lastTime = new Date(asesorStats[asesorEmail].lastQuote).getTime();
+
+          if (createdTime < firstTime || !asesorStats[asesorEmail].firstQuote) {
+            asesorStats[asesorEmail].firstQuote = createdAt;
+          }
+          if (createdTime > lastTime || !asesorStats[asesorEmail].lastQuote) {
+            asesorStats[asesorEmail].lastQuote = createdAt;
+          }
+        }
+      }
+    }
+
+    // Sort asesors by count (descending)
+    const quotedBy = Object.values(asesorStats)
+      .sort((a, b) => b.count - a.count);
+
+    // Sort all quotes by date (most recent first)
+    const recentQuotes = allQuotes
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 20);
+
+    // Calculate totals
+    const totalValue = quotedBy.reduce((sum, a) => sum + a.totalValue, 0);
+
+    return {
+      itemNumber: targetItemNumber,
+      productName,
+      totalCotizaciones: dataRows.length,
+      totalValue,
+      uniqueAsesores: quotedBy.length,
+      quotedBy,
+      recentQuotes,
+    };
+  } catch (error) {
+    // Sheet might not exist yet
+    if (error.code === 400 || error.message?.includes('Unable to parse range')) {
+      return {
+        itemNumber: parseInt(itemNumber),
+        productName: null,
+        totalCotizaciones: 0,
+        totalValue: 0,
+        quotedBy: [],
+        recentQuotes: [],
+      };
+    }
+    throw error;
+  }
+}
+
+/**
  * Get aggregate cotización statistics
  */
 async function getCotizacionStats(sheets) {
@@ -669,12 +796,18 @@ export default async function handler(req, res) {
     // GET - Fetch cotizaciones for an asesor or aggregate stats
     // ==========================================================================
     if (req.method === 'GET') {
-      const { email, action } = req.query;
+      const { email, action, itemId } = req.query;
 
       // Stats endpoint for analytics dashboard
       if (action === 'stats') {
         const stats = await getCotizacionStats(sheets);
         return sendSuccess(res, stats);
+      }
+
+      // Product cotizaciones endpoint - who quoted a specific product
+      if (action === 'productCotizaciones' && itemId) {
+        const productData = await getProductCotizaciones(sheets, itemId);
+        return sendSuccess(res, productData);
       }
 
       // Asesor-specific cotizaciones

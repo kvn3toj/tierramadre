@@ -106,6 +106,7 @@ interface MetricCardProps {
   comparison?: { value: number; label: string };
   subtitle?: string;
   compact?: boolean;
+  onClick?: () => void;
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({
@@ -117,6 +118,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
   comparison,
   subtitle,
   compact = false,
+  onClick,
 }) => {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -124,6 +126,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <Paper
       elevation={0}
+      onClick={onClick}
       sx={{
         p: compact ? 2 : 2.5,
         borderRadius: iosDimensions.borderRadiusLarge,
@@ -134,6 +137,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
         flexDirection: 'column',
         gap: compact ? 1 : 1.5,
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        cursor: onClick ? 'pointer' : 'default',
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow: `0 8px 24px ${alpha(color, 0.12)}`,
@@ -607,6 +611,7 @@ const AdminAnalyticsPage: React.FC = () => {
             trend={{ data: generateTrendData(totalCotizaciones) }}
             subtitle={weekCotizaciones > 0 ? `${weekCotizaciones} esta semana` : 'Exportadas'}
             compact
+            onClick={() => navigate('/admin/cotizacion-products')}
           />
           <MetricCard
             label="Esta Semana"
