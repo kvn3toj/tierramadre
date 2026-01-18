@@ -57,23 +57,24 @@ export const generateProductSlug = (name: string): string => {
  */
 export const getProductDisplayUrl = (product: CotizacionProduct): string => {
   // Manual product with media URL (GIF converted from video, or image) - return full Drive link
+  // Use /preview instead of /view for better browser compatibility in PDFs
   if (product.isManual && (product.videoUrl || product.gifUrl || product.imagen)) {
     // PRIORITY 1: Use videoUrl/gifUrl if available
     const gifOrVideoUrl = product.videoUrl || product.gifUrl;
     if (gifOrVideoUrl) {
       const fileId = extractDriveFileId(gifOrVideoUrl);
       if (fileId) {
-        return `https://drive.google.com/file/d/${fileId}/view`;
+        return `https://drive.google.com/file/d/${fileId}/preview`;
       }
       if (gifOrVideoUrl.includes('drive.google.com')) {
-        return gifOrVideoUrl;
+        return gifOrVideoUrl.replace('/view', '/preview');
       }
     }
 
     // PRIORITY 2: Use imagen if it's a Drive URL
     const imageFileId = extractDriveFileId(product.imagen);
     if (imageFileId) {
-      return `https://drive.google.com/file/d/${imageFileId}/view`;
+      return `https://drive.google.com/file/d/${imageFileId}/preview`;
     }
 
     // For other URLs (like Cloudinary), use directly

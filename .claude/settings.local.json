@@ -72,7 +72,8 @@
       "Bash(__NEW_LINE_b10ae6779644c78a__ echo \"🟡 POTENTIAL OBSOLETE VARIABLES:\")",
       "Bash(__NEW_LINE_b10ae6779644c78a__ echo \"🟢 PROPERLY CONFIGURED:\")",
       "Bash(npm uninstall:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(allow unregistered callers\".\n\nNow uses getSheetsClient\\(\\) \\(Service Account\\) for Sheets operations\nwhile keeping OAuth only for Drive file uploads.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ],
     "deny": [],
     "ask": []

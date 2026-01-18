@@ -880,9 +880,9 @@ const CertificationLogosSection: React.FC = () => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: '20px',
+      gap: 2.5,
       mb: 1.5,
-      py: 1,
+      py: 1.5,
     }}
   >
     <Box
@@ -890,8 +890,8 @@ const CertificationLogosSection: React.FC = () => (
       src="/certification-logo-1.png"
       alt="Certification 1"
       sx={{
-        width: 44,
-        height: 44,
+        width: 56,
+        height: 56,
         borderRadius: '50%',
         objectFit: 'cover',
       }}
@@ -901,8 +901,8 @@ const CertificationLogosSection: React.FC = () => (
       src="/certification-logo-2.png"
       alt="Certification 2"
       sx={{
-        width: 44,
-        height: 44,
+        width: 56,
+        height: 56,
         borderRadius: '50%',
         objectFit: 'cover',
       }}
@@ -912,8 +912,8 @@ const CertificationLogosSection: React.FC = () => (
       src="/certification-logo-3.png"
       alt="Certification 3"
       sx={{
-        width: 44,
-        height: 44,
+        width: 56,
+        height: 56,
         borderRadius: '50%',
         objectFit: 'cover',
       }}
