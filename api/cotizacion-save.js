@@ -18,14 +18,13 @@ import {
   sendError,
   sendSuccess,
   getSharedDriveId,
+  getSheetsClient,
 } from './_lib/index.js';
 
 import {
   isOAuthConfigured,
   getOAuthDriveClient,
 } from './_lib/oauth-drive-client.js';
-
-import { google } from 'googleapis';
 
 // Sheet name for cotización metadata
 const COTIZACIONES_SHEET = 'CotizacionesAsesores';
@@ -473,9 +472,8 @@ export default async function handler(req, res) {
     const drive = await getOAuthDriveClient();
     const sharedDriveId = getSharedDriveId();
 
-    // Get sheets client
-    const auth = drive.context._options.auth;
-    const sheets = google.sheets({ version: 'v4', auth });
+    // Get sheets client using Service Account (OAuth is only for Drive)
+    const sheets = getSheetsClient(false); // false = read-write access
 
     // ==========================================================================
     // GET - Fetch cotizaciones for an asesor or aggregate stats
