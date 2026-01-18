@@ -252,30 +252,163 @@ async function getProductViews(sheets, itemId) {
   });
 
   const rows = response.data.values || [];
+  const emptyResponse = {
+    success: true,
+    itemId: parseInt(itemId),
+    productName: null,
+    totalViews: 0,
+    uniqueViewers: 0,
+    loggedInViewers: 0,
+    guestViewers: 0,
+    viewers: [],
+    viewsByDate: [],
+    viewsByDevice: {},
+    viewsByBrowser: {},
+    viewsByCountry: {},
+    recentViews: [],
+  };
+
   if (rows.length <= 1) {
-    return { success: true, itemId, totalViews: 0, views: [] };
+    return emptyResponse;
   }
 
-  const views = rows.slice(1)
-    .filter(row => row[1] === String(itemId))
+  // Filter rows for this product
+  const productRows = rows.slice(1).filter(row => row[1] === String(itemId));
+
+  if (productRows.length === 0) {
+    return emptyResponse;
+  }
+
+  // Get product name from first matching row
+  const productName = productRows[0][2] || null;
+
+  // Aggregation maps
+  const viewerMap = new Map(); // key: email || name || sessionId
+  const deviceCounts = {};
+  const browserCounts = {};
+  const countryCounts = {};
+  const dateCounts = {};
+  let loggedInViewers = 0;
+  let guestViewers = 0;
+  const loggedInViewerSet = new Set();
+  const guestViewerSet = new Set();
+
+  // Process each view
+  for (const row of productRows) {
+    const timestamp = row[0];
+    const sessionId = row[3] || '';
+    const referrer = row[4] || '';
+    const deviceType = row[5] || 'unknown';
+    const browser = row[6] || 'unknown';
+    const country = row[7] || 'unknown';
+    const userName = row[8] || '';
+    const userEmail = row[9] || '';
+    const userRole = row[10] || 'guest';
+
+    // Determine viewer key and logged-in status
+    const isLoggedIn = !!(userName || userEmail);
+    const viewerKey = userEmail || userName || sessionId || `anon-${timestamp}`;
+
+    // Count device/browser/country
+    deviceCounts[deviceType] = (deviceCounts[deviceType] || 0) + 1;
+    browserCounts[browser] = (browserCounts[browser] || 0) + 1;
+    if (country) {
+      countryCounts[country] = (countryCounts[country] || 0) + 1;
+    }
+
+    // Count by date
+    const dateKey = timestamp.split('T')[0]; // YYYY-MM-DD
+    dateCounts[dateKey] = (dateCounts[dateKey] || 0) + 1;
+
+    // Track unique logged-in vs guest viewers
+    if (isLoggedIn) {
+      loggedInViewerSet.add(viewerKey);
+    } else {
+      guestViewerSet.add(viewerKey);
+    }
+
+    // Build viewer aggregation
+    if (!viewerMap.has(viewerKey)) {
+      viewerMap.set(viewerKey, {
+        name: userName || (userEmail ? userEmail.split('@')[0] : 'Invitado'),
+        email: userEmail || null,
+        role: userRole,
+        isLoggedIn,
+        views: 0,
+        firstView: timestamp,
+        lastView: timestamp,
+        devices: new Set(),
+        browsers: new Set(),
+        countries: new Set(),
+      });
+    }
+
+    const viewer = viewerMap.get(viewerKey);
+    viewer.views++;
+    viewer.devices.add(deviceType);
+    viewer.browsers.add(browser);
+    if (country) viewer.countries.add(country);
+
+    const viewTime = new Date(timestamp).getTime();
+    if (viewTime < new Date(viewer.firstView).getTime()) {
+      viewer.firstView = timestamp;
+    }
+    if (viewTime > new Date(viewer.lastView).getTime()) {
+      viewer.lastView = timestamp;
+    }
+  }
+
+  // Convert viewer map to array
+  const viewers = Array.from(viewerMap.values())
+    .map(v => ({
+      name: v.name,
+      email: v.email,
+      role: v.role,
+      isLoggedIn: v.isLoggedIn,
+      views: v.views,
+      firstView: v.firstView,
+      lastView: v.lastView,
+      devices: Array.from(v.devices),
+      browsers: Array.from(v.browsers),
+      countries: Array.from(v.countries),
+    }))
+    .sort((a, b) => b.views - a.views);
+
+  // Convert date counts to sorted array
+  const viewsByDate = Object.entries(dateCounts)
+    .map(([date, views]) => ({ date, views }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  // Build recent views array
+  const recentViews = productRows
     .map(row => ({
       timestamp: row[0],
-      sessionId: row[3],
-      referrer: row[4],
-      deviceType: row[5],
-      browser: row[6],
-      country: row[7],
-      userName: row[8],
-      userEmail: row[9],
-      userRole: row[10],
+      userName: row[8] || 'Invitado',
+      userEmail: row[9] || null,
+      userRole: row[10] || 'guest',
+      isLoggedIn: !!(row[8] || row[9]),
+      deviceType: row[5] || 'unknown',
+      browser: row[6] || 'unknown',
+      country: row[7] || '',
+      referrer: row[4] || null,
     }))
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 50);
 
   return {
     success: true,
-    itemId,
-    totalViews: views.length,
-    views: views.slice(0, 100),
+    itemId: parseInt(itemId),
+    productName,
+    totalViews: productRows.length,
+    uniqueViewers: viewerMap.size,
+    loggedInViewers: loggedInViewerSet.size,
+    guestViewers: guestViewerSet.size,
+    viewers,
+    viewsByDate,
+    viewsByDevice: deviceCounts,
+    viewsByBrowser: browserCounts,
+    viewsByCountry: countryCounts,
+    recentViews,
   };
 }
 
