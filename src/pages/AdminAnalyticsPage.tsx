@@ -48,6 +48,7 @@ import {
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useTracking } from '../contexts/TrackingContext';
 import { useProductViews } from '../hooks/useProductViews';
+import { useCotizacionStats } from '../hooks/useCotizacionStats';
 import { emeraldCore, goldAccent, semanticColors } from '../design-system/tokens/colors';
 import { spacing, iosDimensions } from '../design-system/tokens/primitives/spacing';
 import { SparklineChart } from '../components/analytics/SparklineChart';
@@ -356,6 +357,11 @@ const AdminAnalyticsPage: React.FC = () => {
     isLoading: viewsLoading,
     refetch: refetchViews,
   } = useProductViews();
+  const {
+    stats: cotizacionStats,
+    isLoading: cotizacionLoading,
+    refetch: refetchCotizaciones,
+  } = useCotizacionStats();
   const isLight = mode === 'light';
 
   // Generate mock trend data (in real app, this would come from API)
@@ -369,10 +375,14 @@ const AdminAnalyticsPage: React.FC = () => {
     return data;
   }, []);
 
-  // Calculate Health Scores (real calculations, not hardcoded)
+  // Use server-side cotización count (fallback to local metrics if not loaded)
+  const totalCotizaciones = cotizacionStats?.totalCotizaciones ?? metrics.totalCotizaciones;
+  const weekCotizaciones = cotizacionStats?.weekCotizaciones ?? 0;
+
+  // Calculate Health Scores (real calculations using server-side data)
   const healthScores: HealthScores = useMemo(() => {
     // Cotizacion Score (target: 10 cotizaciones = 100%)
-    const cotizacion = Math.min(100, Math.round((metrics.totalCotizaciones / 10) * 100));
+    const cotizacion = Math.min(100, Math.round((totalCotizaciones / 10) * 100));
 
     // Engagement Score (based on views and unique products)
     const weeklyViewsScore = viewStats ? Math.min(100, Math.round((viewStats.weekViews / 50) * 100)) : 0;
@@ -386,7 +396,7 @@ const AdminAnalyticsPage: React.FC = () => {
 
     // Conversion Score (cotizaciones per view)
     const viewToCotizacion = viewStats && viewStats.totalViews > 0
-      ? (metrics.totalCotizaciones / viewStats.totalViews) * 100
+      ? (totalCotizaciones / viewStats.totalViews) * 100
       : 0;
     const conversionTarget = 5; // 5% target
     const conversion = Math.min(100, Math.round((viewToCotizacion / conversionTarget) * 100));
@@ -394,7 +404,7 @@ const AdminAnalyticsPage: React.FC = () => {
     const overall = Math.round((cotizacion + engagement + retention + conversion) / 4);
 
     return { overall, cotizacion, engagement, retention, conversion };
-  }, [metrics, viewStats]);
+  }, [totalCotizaciones, metrics, viewStats]);
 
   const healthColor = useMemo(() => {
     if (healthScores.overall >= 80) return semanticColors.success.main;
@@ -513,12 +523,12 @@ const AdminAnalyticsPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Tooltip title="Actualizar">
             <IconButton
-              onClick={() => refetchViews()}
+              onClick={() => { refetchViews(); refetchCotizaciones(); }}
               size="small"
-              disabled={viewsLoading}
+              disabled={viewsLoading || cotizacionLoading}
               sx={{ color: emeraldCore.primary }}
             >
-              <RefreshCw size={18} className={viewsLoading ? 'animate-spin' : ''} />
+              <RefreshCw size={18} className={(viewsLoading || cotizacionLoading) ? 'animate-spin' : ''} />
             </IconButton>
           </Tooltip>
           <Tooltip title="Exportar">
@@ -591,11 +601,11 @@ const AdminAnalyticsPage: React.FC = () => {
           />
           <MetricCard
             label="Cotizaciones"
-            value={metrics.totalCotizaciones}
+            value={totalCotizaciones}
             icon={FileText}
             color={goldAccent.primary}
-            trend={{ data: generateTrendData(metrics.totalCotizaciones) }}
-            subtitle="Exportadas"
+            trend={{ data: generateTrendData(totalCotizaciones) }}
+            subtitle={weekCotizaciones > 0 ? `${weekCotizaciones} esta semana` : 'Exportadas'}
             compact
           />
           <MetricCard

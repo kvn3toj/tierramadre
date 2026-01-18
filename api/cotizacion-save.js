@@ -7,6 +7,7 @@
  * Endpoints:
  * - POST /api/cotizacion-save - Save cotización image + metadata
  * - GET /api/cotizacion-save?email={email} - Get cotizaciones for an asesor
+ * - GET /api/cotizacion-save?action=stats - Get aggregate cotización statistics
  * - DELETE /api/cotizacion-save?id={id}&email={email} - Delete a cotización
  */
 
@@ -301,6 +302,110 @@ async function getCotizacionesByAsesor(sheets, asesorEmail) {
 }
 
 /**
+ * Get aggregate cotización statistics
+ */
+async function getCotizacionStats(sheets) {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${COTIZACIONES_SHEET}!A:L`,
+    });
+
+    const rows = response.data.values || [];
+    if (rows.length <= 1) {
+      return {
+        totalCotizaciones: 0,
+        totalValue: 0,
+        todayCotizaciones: 0,
+        weekCotizaciones: 0,
+        uniqueAsesores: 0,
+        uniqueClients: 0,
+        topAsesores: [],
+        recentCotizaciones: [],
+      };
+    }
+
+    const dataRows = rows.slice(1).filter(row => row[0]); // Skip header, filter empty rows
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const weekStart = todayStart - (7 * 24 * 60 * 60 * 1000);
+
+    let totalValue = 0;
+    let todayCotizaciones = 0;
+    let weekCotizaciones = 0;
+    const asesorCounts = {};
+    const clientSet = new Set();
+
+    for (const row of dataRows) {
+      const asesorEmail = row[2] || '';
+      const clientName = row[4] || '';
+      const total = parseFloat(row[7]) || 0;
+      const createdAt = row[10] ? new Date(row[10]).getTime() : 0;
+
+      totalValue += total;
+
+      if (createdAt >= todayStart) todayCotizaciones++;
+      if (createdAt >= weekStart) weekCotizaciones++;
+
+      if (asesorEmail) {
+        asesorCounts[asesorEmail] = (asesorCounts[asesorEmail] || 0) + 1;
+      }
+
+      if (clientName) {
+        clientSet.add(clientName.toLowerCase().trim());
+      }
+    }
+
+    // Top asesores by count
+    const topAsesores = Object.entries(asesorCounts)
+      .map(([email, count]) => ({ email, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    // Recent cotizaciones
+    const recentCotizaciones = dataRows
+      .map(row => ({
+        id: row[0],
+        quotationNumber: row[1],
+        asesorEmail: row[2],
+        asesorName: row[3],
+        clientName: row[4],
+        productsCount: parseInt(row[6]) || 0,
+        total: parseFloat(row[7]) || 0,
+        createdAt: row[10],
+      }))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 20);
+
+    return {
+      totalCotizaciones: dataRows.length,
+      totalValue,
+      todayCotizaciones,
+      weekCotizaciones,
+      uniqueAsesores: Object.keys(asesorCounts).length,
+      uniqueClients: clientSet.size,
+      topAsesores,
+      recentCotizaciones,
+    };
+  } catch (error) {
+    // Sheet might not exist yet
+    if (error.code === 400 || error.message?.includes('Unable to parse range')) {
+      return {
+        totalCotizaciones: 0,
+        totalValue: 0,
+        todayCotizaciones: 0,
+        weekCotizaciones: 0,
+        uniqueAsesores: 0,
+        uniqueClients: 0,
+        topAsesores: [],
+        recentCotizaciones: [],
+      };
+    }
+    throw error;
+  }
+}
+
+/**
  * Delete a cotización
  */
 async function deleteCotizacion(drive, sheets, cotizacionId, asesorEmail) {
@@ -373,11 +478,18 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: 'v4', auth });
 
     // ==========================================================================
-    // GET - Fetch cotizaciones for an asesor
+    // GET - Fetch cotizaciones for an asesor or aggregate stats
     // ==========================================================================
     if (req.method === 'GET') {
-      const { email } = req.query;
+      const { email, action } = req.query;
 
+      // Stats endpoint for analytics dashboard
+      if (action === 'stats') {
+        const stats = await getCotizacionStats(sheets);
+        return sendSuccess(res, stats);
+      }
+
+      // Asesor-specific cotizaciones
       if (!email) {
         return sendError(res, 400, 'Email parameter required');
       }

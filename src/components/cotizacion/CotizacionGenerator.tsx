@@ -479,7 +479,9 @@ export default function CotizacionGenerator() {
       checkAchievements();
 
       // Save cotización to history (if user is authenticated)
-      if (googleUser?.email && asesorName) {
+      // Use asesorName if set, otherwise fallback to Google user's name
+      const effectiveAsesorName = asesorName || googleUser?.name || '';
+      if (googleUser?.email && effectiveAsesorName) {
         // Calculate expiry date from today
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + validDays);
@@ -487,7 +489,7 @@ export default function CotizacionGenerator() {
         cotizacionHistory.saveCotizacion({
           quotationNumber,
           asesorEmail: googleUser.email,
-          asesorName,
+          asesorName: effectiveAsesorName,
           clientName: clientName || undefined,
           clientPhone: clientPhone || undefined,
           productsCount: products.length,
