@@ -44,6 +44,7 @@ import {
   Heart,
   Sparkles,
   TrendingUp as TrendUp,
+  ChevronRight,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useTracking } from '../contexts/TrackingContext';
@@ -436,28 +437,53 @@ const AdminAnalyticsPage: React.FC = () => {
     return `${Math.floor(diff / 86400000)}d`;
   }, []);
 
-  // Recent activity from tracking
-  const analyticsData = useMemo(() => exportAnalytics(), [exportAnalytics]);
-  const recentActivity = useMemo(() => {
-    const eventConfig: Record<string, { icon: string; label: string }> = {
-      'session_start': { icon: '\ud83d\udfe2', label: 'Sesión iniciada' },
-      'page_view': { icon: '\ud83d\udcc4', label: 'Página vista' },
-      'treasure_view': { icon: '\ud83d\udc8e', label: 'Exploró tesoros' },
-      'product_clicked': { icon: '\ud83d\udc46', label: 'Producto seleccionado' },
-      'product_engaged': { icon: '\ud83d\udc41\ufe0f', label: 'Producto visualizado' },
-      'cotizacion_exported': { icon: '\ud83d\udccb', label: 'Cotización exportada' },
-      'treasure_filter_applied': { icon: '\ud83d\udd0d', label: 'Filtro aplicado' },
-      'simulator_factors_adjusted': { icon: '\ud83e\uddee', label: 'Simulación' },
-    };
-    return analyticsData.events
-      .slice(-10)
-      .reverse()
-      .map(event => ({
-        event: event.event,
-        timestamp: event.timestamp,
-        ...eventConfig[event.event] || { icon: '\ud83d\udcca', label: event.event },
-      }));
-  }, [analyticsData.events]);
+  // Combined recent activity from all users (server-side data)
+  const combinedActivity = useMemo(() => {
+    const activities: Array<{
+      id: string;
+      type: 'view' | 'cotizacion';
+      timestamp: string;
+      userName?: string | null;
+      productName?: string;
+      itemId?: number;
+      asesorName?: string;
+      clientName?: string;
+      productsCount?: number;
+    }> = [];
+
+    // Add product views from all users
+    if (recentProductViews && recentProductViews.length > 0) {
+      for (const view of recentProductViews) {
+        activities.push({
+          id: `view-${view.timestamp}-${view.itemId}`,
+          type: 'view',
+          timestamp: view.timestamp,
+          userName: view.userName,
+          productName: view.productName,
+          itemId: view.itemId,
+        });
+      }
+    }
+
+    // Add cotizaciones from all users
+    if (cotizacionStats?.recentCotizaciones && cotizacionStats.recentCotizaciones.length > 0) {
+      for (const cot of cotizacionStats.recentCotizaciones) {
+        activities.push({
+          id: `cot-${cot.quotationNumber}`,
+          type: 'cotizacion',
+          timestamp: cot.createdAt,
+          asesorName: cot.asesorName,
+          clientName: cot.clientName,
+          productsCount: cot.productsCount,
+        });
+      }
+    }
+
+    // Sort by timestamp descending and take top 5
+    return activities
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 5);
+  }, [recentProductViews, cotizacionStats?.recentCotizaciones]);
 
   // AI Insights
   const analyticsDataForInsights: AnalyticsData = useMemo(() => ({
@@ -723,18 +749,86 @@ const AdminAnalyticsPage: React.FC = () => {
           </Box>
         )}
 
-        {/* Recent Activity (Compact) */}
+        {/* Recent Activity (Compact) - All Users */}
         <Box>
-          <SectionHeader title="Actividad Reciente" icon={Activity} />
+          <SectionHeader
+            title="Actividad Reciente"
+            icon={Activity}
+            action={
+              <Box
+                onClick={() => navigate('/admin/analytics/activity')}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  cursor: 'pointer',
+                  color: emeraldCore.primary,
+                  '&:hover': { opacity: 0.8 },
+                }}
+              >
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                  Ver Todas
+                </Typography>
+                <ChevronRight size={14} />
+              </Box>
+            }
+          />
           <GlassCard noPadding>
-            {recentActivity.length > 0 ? (
-              recentActivity.slice(0, 3).map((item, idx) => (
+            {combinedActivity.length > 0 ? (
+              combinedActivity.map((item, idx) => (
                 <ActivityItem
-                  key={idx}
-                  icon={<Typography sx={{ fontSize: '1.1rem' }}>{item.icon}</Typography>}
-                  primary={item.label}
+                  key={item.id}
+                  icon={
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        bgcolor: item.type === 'view'
+                          ? alpha(emeraldCore.primary, 0.12)
+                          : alpha(goldAccent.primary, 0.12),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {item.type === 'view' ? (
+                        item.userName ? (
+                          <UserCheck size={14} color={emeraldCore.primary} />
+                        ) : (
+                          <User size={14} color={isLight ? '#666' : '#999'} />
+                        )
+                      ) : (
+                        <FileText size={14} color={goldAccent.primary} />
+                      )}
+                    </Box>
+                  }
+                  primary={
+                    item.type === 'view' ? (
+                      <>
+                        {item.userName || 'Invitado'} vio{' '}
+                        <Typography
+                          component="span"
+                          sx={{ color: emeraldCore.primary, fontWeight: 600, fontSize: 'inherit' }}
+                        >
+                          {item.productName}
+                        </Typography>
+                      </>
+                    ) : (
+                      <>
+                        {item.asesorName} cotizo{' '}
+                        <Typography
+                          component="span"
+                          sx={{ color: goldAccent.primary, fontWeight: 600, fontSize: 'inherit' }}
+                        >
+                          {item.productsCount} producto{item.productsCount !== 1 ? 's' : ''}
+                        </Typography>
+                      </>
+                    )
+                  }
+                  secondary={item.type === 'cotizacion' ? `Cliente: ${item.clientName}` : undefined}
                   time={formatTimeAgo(item.timestamp)}
-                  isLast={idx === Math.min(recentActivity.length, 3) - 1}
+                  isLast={idx === combinedActivity.length - 1}
                 />
               ))
             ) : (

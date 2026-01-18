@@ -32,6 +32,7 @@ const ReceiptGenerator = lazyWithRetry(() => import('./components/accounts/Recei
 const CotizacionGenerator = lazyWithRetry(() => import('./components/cotizacion/CotizacionGenerator'), 'CotizacionGenerator');
 const QuotationPreview = lazyWithRetry(() => import('./components/cotizacion/QuotationPreviewPage'), 'QuotationPreview');
 const AdminAnalyticsPage = lazyWithRetry(() => import('./pages/AdminAnalyticsPage'), 'AdminAnalyticsPage');
+const ActivityPage = lazyWithRetry(() => import('./pages/ActivityPage'), 'ActivityPage');
 const ProductViewersPage = lazyWithRetry(() => import('./pages/ProductViewersPage'), 'ProductViewersPage');
 const UserViewsPage = lazyWithRetry(() => import('./pages/UserViewsPage'), 'UserViewsPage');
 const CotizacionProductsPage = lazyWithRetry(() => import('./pages/CotizacionProductsPage'), 'CotizacionProductsPage');
@@ -222,6 +223,15 @@ function AppContent() {
             <AdminRoute>
               <Suspense fallback={<LoadingFallback message="Cargando historial..." />}>
                 <UserViewsPage />
+              </Suspense>
+            </AdminRoute>
+          } />
+
+          {/* All Users Activity Feed */}
+          <Route path="/admin/analytics/activity" element={
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando actividad..." />}>
+                <ActivityPage />
               </Suspense>
             </AdminRoute>
           } />
