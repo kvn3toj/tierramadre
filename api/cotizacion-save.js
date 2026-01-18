@@ -11,6 +11,7 @@
  * - DELETE /api/cotizacion-save?id={id}&email={email} - Delete a cotización
  */
 
+import { Readable } from 'stream';
 import {
   SPREADSHEET_ID,
   setCorsHeaders,
@@ -134,7 +135,7 @@ async function uploadImageToDrive(drive, folderId, imageBase64, quotationNumber)
     },
     media: {
       mimeType: 'image/png',
-      body: require('stream').Readable.from(buffer),
+      body: Readable.from(buffer),
     },
     fields: 'id, name, webViewLink, webContentLink',
     supportsAllDrives: true,
