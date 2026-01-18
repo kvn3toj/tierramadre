@@ -697,6 +697,27 @@ const AdminAnalyticsPage: React.FC = () => {
           </GlassCard>
         </Box>
 
+        {/* Top Products in Cotizaciones */}
+        {cotizacionStats?.topProducts && cotizacionStats.topProducts.length > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <SectionHeader title="Top Productos Cotizados" icon={FileText} />
+            <GlassCard noPadding>
+              <HorizontalBarChart
+                data={cotizacionStats.topProducts.slice(0, 5).map(p => ({
+                  id: p.itemNumber,
+                  label: p.name,
+                  sublabel: `Item #${p.itemNumber}`,
+                  value: p.count,
+                }))}
+                color={goldAccent.primary}
+                showMedals={true}
+                unit="cotizaciones"
+                onItemClick={(item) => navigate(`/admin/analytics/item/${item.id}`)}
+              />
+            </GlassCard>
+          </Box>
+        )}
+
         {/* Recent Activity (Compact) */}
         <Box>
           <SectionHeader title="Actividad Reciente" icon={Activity} />
@@ -1022,6 +1043,39 @@ const AdminAnalyticsPage: React.FC = () => {
             />
           </GlassCard>
         </Box>
+
+        {/* Top Products in Cotizaciones - Value Drivers */}
+        {cotizacionStats?.topProducts && cotizacionStats.topProducts.length > 0 && (
+          <Box sx={{ mt: 3 }}>
+            <SectionHeader title="Productos que Generan Valor" icon={Package} />
+            <GlassCard noPadding>
+              <HorizontalBarChart
+                data={cotizacionStats.topProducts.slice(0, 5).map(p => ({
+                  id: p.itemNumber,
+                  label: p.name,
+                  sublabel: `$${(p.totalValue / 1000000).toFixed(1)}M valor total`,
+                  value: p.count,
+                }))}
+                color={goldAccent.primary}
+                showMedals={true}
+                unit="cotizaciones"
+                onItemClick={(item) => navigate(`/admin/analytics/item/${item.id}`)}
+              />
+            </GlassCard>
+            {cotizacionStats.topProducts.length > 0 && (
+              <InsightCard
+                type="success"
+                title="Productos Estrella"
+                description={`"${cotizacionStats.topProducts[0]?.name}" lidera con ${cotizacionStats.topProducts[0]?.count} cotizaciones. Considera destacarlo en tu portafolio.`}
+                metric={{
+                  value: `$${((cotizacionStats.topProducts[0]?.totalValue || 0) / 1000000).toFixed(1)}M`,
+                  label: 'Valor generado',
+                }}
+                compact
+              />
+            )}
+          </Box>
+        )}
 
         {/* Achievements Progress */}
         <Box sx={{ mt: 3 }}>

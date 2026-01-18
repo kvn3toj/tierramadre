@@ -7,6 +7,18 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
+export interface TopProduct {
+  itemNumber: number;
+  name: string;
+  count: number;
+  totalValue: number;
+}
+
+export interface AsesorProductStats {
+  email: string;
+  topProducts: TopProduct[];
+}
+
 export interface CotizacionStats {
   totalCotizaciones: number;
   totalValue: number;
@@ -14,7 +26,7 @@ export interface CotizacionStats {
   weekCotizaciones: number;
   uniqueAsesores: number;
   uniqueClients: number;
-  topAsesores: Array<{ email: string; count: number }>;
+  topAsesores: Array<{ email: string; count: number; name?: string }>;
   recentCotizaciones: Array<{
     id: string;
     quotationNumber: string;
@@ -25,6 +37,8 @@ export interface CotizacionStats {
     total: number;
     createdAt: string;
   }>;
+  topProducts: TopProduct[];
+  productsByAsesor: AsesorProductStats[];
 }
 
 export interface UseCotizacionStatsReturn {
@@ -43,6 +57,8 @@ const defaultStats: CotizacionStats = {
   uniqueClients: 0,
   topAsesores: [],
   recentCotizaciones: [],
+  topProducts: [],
+  productsByAsesor: [],
 };
 
 export function useCotizacionStats(): UseCotizacionStatsReturn {

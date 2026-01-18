@@ -34,6 +34,7 @@ const QuotationPreview = lazyWithRetry(() => import('./components/cotizacion/Quo
 const AdminAnalyticsPage = lazyWithRetry(() => import('./pages/AdminAnalyticsPage'), 'AdminAnalyticsPage');
 const ProductViewersPage = lazyWithRetry(() => import('./pages/ProductViewersPage'), 'ProductViewersPage');
 const UserViewsPage = lazyWithRetry(() => import('./pages/UserViewsPage'), 'UserViewsPage');
+const CotizacionProductsPage = lazyWithRetry(() => import('./pages/CotizacionProductsPage'), 'CotizacionProductsPage');
 const FeedbackDashboard = lazyWithRetry(() => import('./pages/admin/FeedbackDashboard'), 'FeedbackDashboard');
 const ValuationPage = lazyWithRetry(() => import('./pages/ValuationPage'), 'ValuationPage');
 
@@ -221,6 +222,15 @@ function AppContent() {
             <AdminRoute>
               <Suspense fallback={<LoadingFallback message="Cargando historial..." />}>
                 <UserViewsPage />
+              </Suspense>
+            </AdminRoute>
+          } />
+
+          {/* Cotización Products Analytics */}
+          <Route path="/admin/cotizacion-products" element={
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando productos..." />}>
+                <CotizacionProductsPage />
               </Suspense>
             </AdminRoute>
           } />

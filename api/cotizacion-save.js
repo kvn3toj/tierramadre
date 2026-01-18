@@ -27,8 +27,9 @@ import {
   getOAuthDriveClient,
 } from './_lib/oauth-drive-client.js';
 
-// Sheet name for cotización metadata
+// Sheet names for cotización data
 const COTIZACIONES_SHEET = 'CotizacionesAsesores';
+const PRODUCTS_SHEET = 'CotizacionProducts';
 
 // =============================================================================
 // HELPERS
@@ -223,6 +224,59 @@ async function ensureCotizacionesSheet(sheets) {
 }
 
 /**
+ * Ensure the products sheet exists with headers
+ */
+async function ensureProductsSheet(sheets) {
+  try {
+    const spreadsheet = await sheets.spreadsheets.get({
+      spreadsheetId: SPREADSHEET_ID,
+    });
+
+    const sheetExists = spreadsheet.data.sheets?.some(
+      s => s.properties?.title === PRODUCTS_SHEET
+    );
+
+    if (!sheetExists) {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        requestBody: {
+          requests: [{
+            addSheet: {
+              properties: {
+                title: PRODUCTS_SHEET,
+              },
+            },
+          }],
+        },
+      });
+
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${PRODUCTS_SHEET}!A1:F1`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[
+            'CotizacionId',
+            'ItemNumber',
+            'ProductName',
+            'Price',
+            'AsesorEmail',
+            'CreatedAt',
+          ]],
+        },
+      });
+
+      console.log('[CotizacionSave] Created CotizacionProducts sheet');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('[CotizacionSave] Error ensuring products sheet:', error);
+    throw error;
+  }
+}
+
+/**
  * Save cotización metadata to sheet
  */
 async function saveCotizacionToSheet(sheets, data) {
@@ -255,6 +309,37 @@ async function saveCotizacionToSheet(sheets, data) {
   });
 
   return id;
+}
+
+/**
+ * Save cotización products to sheet
+ */
+async function saveCotizacionProducts(sheets, cotizacionId, products, asesorEmail) {
+  if (!products || products.length === 0) return;
+
+  await ensureProductsSheet(sheets);
+
+  const createdAt = new Date().toISOString();
+  const rows = products.map(product => [
+    cotizacionId,
+    product.itemNumber || 0,
+    product.name || '',
+    product.precioCOP || 0,
+    asesorEmail,
+    createdAt,
+  ]);
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${PRODUCTS_SHEET}!A:F`,
+    valueInputOption: 'RAW',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: {
+      values: rows,
+    },
+  });
+
+  console.log(`[CotizacionSave] Saved ${products.length} products for ${cotizacionId}`);
 }
 
 /**
@@ -302,6 +387,94 @@ async function getCotizacionesByAsesor(sheets, asesorEmail) {
 }
 
 /**
+ * Get product statistics from CotizacionProducts sheet
+ */
+async function getProductStats(sheets) {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${PRODUCTS_SHEET}!A:F`,
+    });
+
+    const rows = response.data.values || [];
+    if (rows.length <= 1) {
+      return { topProducts: [], productsByAsesor: [] };
+    }
+
+    const dataRows = rows.slice(1).filter(row => row[0]); // Skip header
+
+    // Aggregate products
+    const productStats = {};
+    const asesorProducts = {};
+
+    for (const row of dataRows) {
+      const itemNumber = parseInt(row[1]) || 0;
+      const productName = row[2] || '';
+      const price = parseFloat(row[3]) || 0;
+      const asesorEmail = row[4] || '';
+
+      // Global product stats
+      const productKey = `${itemNumber}-${productName}`;
+      if (!productStats[productKey]) {
+        productStats[productKey] = {
+          itemNumber,
+          name: productName,
+          count: 0,
+          totalValue: 0,
+        };
+      }
+      productStats[productKey].count += 1;
+      productStats[productKey].totalValue += price;
+
+      // Per-asesor stats
+      if (asesorEmail) {
+        if (!asesorProducts[asesorEmail]) {
+          asesorProducts[asesorEmail] = {};
+        }
+        if (!asesorProducts[asesorEmail][productKey]) {
+          asesorProducts[asesorEmail][productKey] = {
+            itemNumber,
+            name: productName,
+            count: 0,
+            totalValue: 0,
+          };
+        }
+        asesorProducts[asesorEmail][productKey].count += 1;
+        asesorProducts[asesorEmail][productKey].totalValue += price;
+      }
+    }
+
+    // Top products globally
+    const topProducts = Object.values(productStats)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 20);
+
+    // Products by asesor (top 5 per asesor)
+    const productsByAsesor = Object.entries(asesorProducts)
+      .map(([email, products]) => ({
+        email,
+        topProducts: Object.values(products)
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5),
+      }))
+      .sort((a, b) => {
+        const aTotal = a.topProducts.reduce((sum, p) => sum + p.count, 0);
+        const bTotal = b.topProducts.reduce((sum, p) => sum + p.count, 0);
+        return bTotal - aTotal;
+      })
+      .slice(0, 10);
+
+    return { topProducts, productsByAsesor };
+  } catch (error) {
+    // Sheet might not exist yet
+    if (error.code === 400 || error.message?.includes('Unable to parse range')) {
+      return { topProducts: [], productsByAsesor: [] };
+    }
+    throw error;
+  }
+}
+
+/**
  * Get aggregate cotización statistics
  */
 async function getCotizacionStats(sheets) {
@@ -322,6 +495,8 @@ async function getCotizacionStats(sheets) {
         uniqueClients: 0,
         topAsesores: [],
         recentCotizaciones: [],
+        topProducts: [],
+        productsByAsesor: [],
       };
     }
 
@@ -334,10 +509,12 @@ async function getCotizacionStats(sheets) {
     let todayCotizaciones = 0;
     let weekCotizaciones = 0;
     const asesorCounts = {};
+    const asesorNames = {};
     const clientSet = new Set();
 
     for (const row of dataRows) {
       const asesorEmail = row[2] || '';
+      const asesorName = row[3] || '';
       const clientName = row[4] || '';
       const total = parseFloat(row[7]) || 0;
       const createdAt = row[10] ? new Date(row[10]).getTime() : 0;
@@ -349,6 +526,7 @@ async function getCotizacionStats(sheets) {
 
       if (asesorEmail) {
         asesorCounts[asesorEmail] = (asesorCounts[asesorEmail] || 0) + 1;
+        if (asesorName) asesorNames[asesorEmail] = asesorName;
       }
 
       if (clientName) {
@@ -356,9 +534,13 @@ async function getCotizacionStats(sheets) {
       }
     }
 
-    // Top asesores by count
+    // Top asesores by count (include name)
     const topAsesores = Object.entries(asesorCounts)
-      .map(([email, count]) => ({ email, count }))
+      .map(([email, count]) => ({
+        email,
+        count,
+        name: asesorNames[email] || email.split('@')[0],
+      }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
@@ -377,6 +559,9 @@ async function getCotizacionStats(sheets) {
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 20);
 
+    // Get product stats
+    const { topProducts, productsByAsesor } = await getProductStats(sheets);
+
     return {
       totalCotizaciones: dataRows.length,
       totalValue,
@@ -386,6 +571,8 @@ async function getCotizacionStats(sheets) {
       uniqueClients: clientSet.size,
       topAsesores,
       recentCotizaciones,
+      topProducts,
+      productsByAsesor,
     };
   } catch (error) {
     // Sheet might not exist yet
@@ -399,6 +586,8 @@ async function getCotizacionStats(sheets) {
         uniqueClients: 0,
         topAsesores: [],
         recentCotizaciones: [],
+        topProducts: [],
+        productsByAsesor: [],
       };
     }
     throw error;
@@ -515,6 +704,7 @@ export default async function handler(req, res) {
         total,
         expiryDate,
         imageBase64,
+        products, // Array of { itemNumber, name, precioCOP }
       } = req.body;
 
       // Validate required fields
@@ -535,12 +725,17 @@ export default async function handler(req, res) {
         asesorName,
         clientName: clientName || '',
         clientPhone: clientPhone || '',
-        productsCount: productsCount || 0,
+        productsCount: productsCount || (products?.length || 0),
         total: total || 0,
         expiryDate: expiryDate || '',
         imageUrl: uploadResult.proxyUrl,
         driveFileId: uploadResult.fileId,
       });
+
+      // Save products to separate sheet for analytics
+      if (products && Array.isArray(products) && products.length > 0) {
+        await saveCotizacionProducts(sheets, cotizacionId, products, asesorEmail);
+      }
 
       return sendSuccess(res, {
         id: cotizacionId,

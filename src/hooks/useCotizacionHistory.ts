@@ -26,6 +26,12 @@ export interface SavedCotizacion {
   expiryDate?: string;     // ISO date string
 }
 
+export interface CotizacionProductData {
+  itemNumber: number;
+  name: string;
+  precioCOP: number;
+}
+
 export interface SaveCotizacionParams {
   quotationNumber: string;
   asesorEmail: string;
@@ -36,6 +42,7 @@ export interface SaveCotizacionParams {
   total: number;
   expiryDate?: string;
   imageBase64: string;     // Base64 encoded PNG image
+  products?: CotizacionProductData[];  // Product details for analytics
 }
 
 export interface UseCotizacionHistoryReturn {

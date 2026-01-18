@@ -410,6 +410,12 @@ export default function CotizacionGenerator() {
           total,
           expiryDate: expiryDate.toISOString(),
           imageBase64: imgData,
+          // Include product details for analytics tracking
+          products: products.map(p => ({
+            itemNumber: p.itemNumber,
+            name: p.name,
+            precioCOP: p.precioCOP,
+          })),
         }).then((saved) => {
           if (saved) {
             log.info(`Cotizacion ${quotationNumber} saved to history`);
