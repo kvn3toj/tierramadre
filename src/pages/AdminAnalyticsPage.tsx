@@ -45,6 +45,9 @@ import {
   Sparkles,
   TrendingUp as TrendUp,
   ChevronRight,
+  ChevronDown,
+  Lock,
+  CheckCircle2,
 } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useTracking } from '../contexts/TrackingContext';
@@ -353,7 +356,8 @@ const AdminAnalyticsPage: React.FC = () => {
   const { mode } = useThemeMode();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
-  const { metrics, achievements, levelInfo, unlockedAchievements, ACHIEVEMENTS, exportAnalytics } = useTracking();
+  const [achievementsExpanded, setAchievementsExpanded] = useState(false);
+  const { metrics, achievements, levelInfo, unlockedAchievements, ACHIEVEMENTS, getAchievementProgress, exportAnalytics } = useTracking();
   const {
     stats: viewStats,
     topProducts,
@@ -1176,55 +1180,258 @@ const AdminAnalyticsPage: React.FC = () => {
           </Box>
         )}
 
-        {/* Achievements Progress */}
+        {/* Achievements Progress - Expandable */}
         <Box sx={{ mt: 3 }}>
-          <GlassCard>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <GlassCard noPadding>
+            {/* Header - Clickable to expand */}
+            <Box
+              onClick={() => setAchievementsExpanded(!achievementsExpanded)}
+              sx={{
+                p: 2.5,
+                cursor: 'pointer',
+                '&:hover': { bgcolor: alpha(goldAccent.primary, 0.04) },
+                transition: 'background-color 0.2s ease',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: iosDimensions.borderRadiusStandard,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: alpha(goldAccent.primary, 0.12),
+                    }}
+                  >
+                    <Target size={18} color={goldAccent.primary} />
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      Logros
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      {unlockedAchievements.length} de {ACHIEVEMENTS.length} desbloqueados
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: goldAccent.primary, lineHeight: 1 }}>
+                      {Math.round((unlockedAchievements.length / ACHIEVEMENTS.length) * 100)}%
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      {achievements.totalXp} XP
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      transform: achievementsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s ease',
+                      color: 'text.secondary',
+                    }}
+                  >
+                    <ChevronDown size={20} />
+                  </Box>
+                </Box>
+              </Box>
+              <LinearProgress
+                variant="determinate"
+                value={(unlockedAchievements.length / ACHIEVEMENTS.length) * 100}
+                sx={{
+                  height: 6,
+                  borderRadius: 3,
+                  bgcolor: alpha(goldAccent.primary, 0.1),
+                  '& .MuiLinearProgress-bar': {
+                    bgcolor: goldAccent.primary,
+                    borderRadius: 3,
+                  },
+                }}
+              />
+            </Box>
+
+            {/* Expanded Achievements List */}
+            <Box
+              sx={{
+                maxHeight: achievementsExpanded ? 600 : 0,
+                overflow: 'hidden',
+                transition: 'max-height 0.3s ease-in-out',
+              }}
+            >
+              <Box
+                sx={{
+                  borderTop: `1px solid ${alpha(isLight ? '#000' : '#fff', 0.08)}`,
+                  p: 2,
+                }}
+              >
+                {/* Level Info */}
                 <Box
                   sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: iosDimensions.borderRadiusStandard,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    bgcolor: alpha(goldAccent.primary, 0.12),
+                    gap: 2,
+                    mb: 2,
+                    p: 1.5,
+                    borderRadius: iosDimensions.borderRadiusStandard,
+                    bgcolor: alpha(emeraldCore.primary, 0.08),
                   }}
                 >
-                  <Target size={18} color={goldAccent.primary} />
-                </Box>
-                <Box>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    Logros
+                  <Typography variant="h5" sx={{ fontSize: '1.5rem' }}>
+                    {levelInfo.level <= 2 ? '🌱' : levelInfo.level <= 4 ? '💎' : '👑'}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    {unlockedAchievements.length} de {ACHIEVEMENTS.length} desbloqueados
-                  </Typography>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: emeraldCore.primary }}>
+                      Nivel {levelInfo.level}: {levelInfo.name}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      {achievements.totalXp} / {levelInfo.nextLevelXp} XP para siguiente nivel
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-              <Box sx={{ textAlign: 'right' }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: goldAccent.primary, lineHeight: 1 }}>
-                  {Math.round((unlockedAchievements.length / ACHIEVEMENTS.length) * 100)}%
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {achievements.totalXp} XP
-                </Typography>
+
+                {/* Achievements Grid */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {ACHIEVEMENTS.map((achievement) => {
+                    const isUnlocked = unlockedAchievements.some(a => a.id === achievement.id);
+                    const progress = getAchievementProgress(achievement.id);
+
+                    return (
+                      <Box
+                        key={achievement.id}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1.5,
+                          p: 1.5,
+                          borderRadius: iosDimensions.borderRadiusStandard,
+                          bgcolor: isUnlocked
+                            ? alpha(semanticColors.success.main, 0.08)
+                            : alpha(isLight ? '#000' : '#fff', 0.03),
+                          border: `1px solid ${isUnlocked
+                            ? alpha(semanticColors.success.main, 0.2)
+                            : alpha(isLight ? '#000' : '#fff', 0.06)}`,
+                          opacity: isUnlocked ? 1 : 0.7,
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {/* Icon */}
+                        <Box
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: isUnlocked
+                              ? alpha(goldAccent.primary, 0.15)
+                              : alpha(isLight ? '#000' : '#fff', 0.08),
+                            fontSize: '1.2rem',
+                            position: 'relative',
+                          }}
+                        >
+                          {isUnlocked ? (
+                            achievement.icon
+                          ) : (
+                            <Lock size={16} color={isLight ? '#999' : '#666'} />
+                          )}
+                          {isUnlocked && (
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                bottom: -2,
+                                right: -2,
+                                width: 16,
+                                height: 16,
+                                borderRadius: '50%',
+                                bgcolor: semanticColors.success.main,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <CheckCircle2 size={12} color="#fff" />
+                            </Box>
+                          )}
+                        </Box>
+
+                        {/* Info */}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: 600,
+                                color: isUnlocked ? 'text.primary' : 'text.secondary',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {achievement.name}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                px: 0.75,
+                                py: 0.25,
+                                borderRadius: 1,
+                                bgcolor: alpha(goldAccent.primary, 0.12),
+                                color: goldAccent.primary,
+                                fontWeight: 600,
+                                fontSize: '0.65rem',
+                                flexShrink: 0,
+                              }}
+                            >
+                              +{achievement.xp} XP
+                            </Typography>
+                          </Box>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'text.secondary',
+                              display: 'block',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {achievement.description}
+                          </Typography>
+                          {/* Progress bar for locked achievements */}
+                          {!isUnlocked && progress > 0 && (
+                            <Box sx={{ mt: 0.5 }}>
+                              <LinearProgress
+                                variant="determinate"
+                                value={progress}
+                                sx={{
+                                  height: 4,
+                                  borderRadius: 2,
+                                  bgcolor: alpha(emeraldCore.primary, 0.1),
+                                  '& .MuiLinearProgress-bar': {
+                                    bgcolor: emeraldCore.primary,
+                                    borderRadius: 2,
+                                  },
+                                }}
+                              />
+                              <Typography
+                                variant="caption"
+                                sx={{ color: emeraldCore.primary, fontSize: '0.6rem', fontWeight: 600 }}
+                              >
+                                {Math.round(progress)}% completado
+                              </Typography>
+                            </Box>
+                          )}
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Box>
               </Box>
             </Box>
-            <LinearProgress
-              variant="determinate"
-              value={(unlockedAchievements.length / ACHIEVEMENTS.length) * 100}
-              sx={{
-                height: 6,
-                borderRadius: 3,
-                bgcolor: alpha(goldAccent.primary, 0.1),
-                '& .MuiLinearProgress-bar': {
-                  bgcolor: goldAccent.primary,
-                  borderRadius: 3,
-                },
-              }}
-            />
           </GlassCard>
         </Box>
       </TabPanel>
