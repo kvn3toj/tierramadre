@@ -20,6 +20,9 @@ import {
   sendSuccess,
   getSharedDriveId,
   getSheetsClient,
+  getSheetNames,
+  findColumnIndex,
+  formatDisplayName,
 } from './_lib/index.js';
 
 import {
@@ -30,6 +33,54 @@ import {
 // Sheet names for cotización data
 const COTIZACIONES_SHEET = 'CotizacionesAsesores';
 const PRODUCTS_SHEET = 'CotizacionProducts';
+
+/**
+ * Get asesor names from the Asesores sheet, indexed by email
+ * Returns a map of { email: name }
+ */
+async function getAsesorNamesByEmail(sheets) {
+  try {
+    const sheetNames = await getSheetNames(sheets);
+
+    // Find asesores sheet (index 2 or by name)
+    let asesoresSheet = sheetNames[2];
+    if (!asesoresSheet) {
+      asesoresSheet = sheetNames.find(name =>
+        name.toLowerCase().includes('asesor') ||
+        name.toLowerCase().includes('embajador')
+      ) || sheetNames[0];
+    }
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `'${asesoresSheet}'!A:Z`,
+    });
+
+    const rows = response.data.values || [];
+    if (rows.length <= 1) return {};
+
+    const headers = rows[0];
+    const nameIndex = findColumnIndex(headers, ['nombre', 'name', 'asesor', 'vendedor']);
+    const emailIndex = findColumnIndex(headers, ['instagram', 'ig', 'email']);
+
+    if (nameIndex === -1 || emailIndex === -1) return {};
+
+    const namesByEmail = {};
+    for (const row of rows.slice(1)) {
+      const name = row[nameIndex];
+      const email = row[emailIndex];
+      if (name && email) {
+        const cleanEmail = String(email).trim().toLowerCase();
+        namesByEmail[cleanEmail] = formatDisplayName(name);
+      }
+    }
+
+    return namesByEmail;
+  } catch (error) {
+    console.error('[CotizacionSave] Error fetching asesor names:', error);
+    return {};
+  }
+}
 
 // =============================================================================
 // HELPERS
@@ -606,6 +657,9 @@ async function getProductCotizaciones(sheets, itemNumber) {
  */
 async function getCotizacionStats(sheets) {
   try {
+    // Fetch asesor names from Asesores sheet (lookup by email)
+    const asesorNameLookup = await getAsesorNamesByEmail(sheets);
+
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${COTIZACIONES_SHEET}!A:L`,
@@ -636,12 +690,10 @@ async function getCotizacionStats(sheets) {
     let todayCotizaciones = 0;
     let weekCotizaciones = 0;
     const asesorCounts = {};
-    const asesorNames = {};
     const clientSet = new Set();
 
     for (const row of dataRows) {
       const asesorEmail = row[2] || '';
-      const asesorName = row[3] || '';
       const clientName = row[4] || '';
       const total = parseFloat(row[7]) || 0;
       const createdAt = row[10] ? new Date(row[10]).getTime() : 0;
@@ -653,7 +705,6 @@ async function getCotizacionStats(sheets) {
 
       if (asesorEmail) {
         asesorCounts[asesorEmail] = (asesorCounts[asesorEmail] || 0) + 1;
-        if (asesorName) asesorNames[asesorEmail] = asesorName;
       }
 
       if (clientName) {
@@ -661,23 +712,29 @@ async function getCotizacionStats(sheets) {
       }
     }
 
-    // Top asesores by count (include name)
+    // Helper to get asesor display name (lookup from Asesores sheet, fallback to email)
+    const getAsesorDisplayName = (email) => {
+      const normalizedEmail = (email || '').toLowerCase().trim();
+      return asesorNameLookup[normalizedEmail] || email.split('@')[0] || 'Asesor';
+    };
+
+    // Top asesores by count (use name from Asesores sheet)
     const topAsesores = Object.entries(asesorCounts)
       .map(([email, count]) => ({
         email,
         count,
-        name: asesorNames[email] || email.split('@')[0],
+        name: getAsesorDisplayName(email),
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    // Recent cotizaciones
+    // Recent cotizaciones (use name from Asesores sheet instead of stored name)
     const recentCotizaciones = dataRows
       .map(row => ({
         id: row[0],
         quotationNumber: row[1],
         asesorEmail: row[2],
-        asesorName: row[3],
+        asesorName: getAsesorDisplayName(row[2]), // Lookup from Asesores sheet
         clientName: row[4],
         productsCount: parseInt(row[6]) || 0,
         total: parseFloat(row[7]) || 0,
