@@ -26,8 +26,8 @@ import crypto from 'crypto';
 export default async function handler(req, res) {
   if (initApi(req, res, { methods: ['GET', 'OPTIONS'] })) return;
 
-  // Cache for 5 minutes on CDN, 1 minute in browser
-  setCacheHeaders(res, CACHE.MEDIUM);
+  // Cache for 1 minute on CDN, 30s stale-while-revalidate (faster updates when images change)
+  setCacheHeaders(res, CACHE.SHORT);
 
   if (!isGoogleConfigured()) {
     return sendError(res, 500, 'Google Service Account not configured');
@@ -90,10 +90,15 @@ export default async function handler(req, res) {
 
     console.log(`Generated ${Object.keys(thumbnails).length} thumbnails`);
 
-    // Generate ETag from thumbnail count for conditional requests
+    // Generate ETag from actual fileIds for proper cache invalidation
+    // When images are deleted/added, the fileIds change, invalidating the cache
     const count = Object.keys(thumbnails).length;
+    const fileIds = Object.entries(thumbnails)
+      .map(([item, data]) => `${item}:${data.url}`)
+      .sort()
+      .join('|');
     const dataHash = crypto.createHash('md5')
-      .update(JSON.stringify({ count, keys: Object.keys(thumbnails).sort().join(',') }))
+      .update(fileIds)
       .digest('hex')
       .slice(0, 16);
     const etag = `"batch-${dataHash}"`;
