@@ -155,13 +155,13 @@ function AppContent() {
             </Suspense>
           } />
 
-          {/* Cuentas Hub - Admin only */}
+          {/* Cuentas Hub - Staff access (Admin, Embajador, Asesor) */}
           <Route path="/cuentas" element={
-            <AdminRoute>
+            <StaffRoute>
               <Suspense fallback={<LoadingFallback message="Cargando cuentas..." />}>
                 <AccountsHub />
               </Suspense>
-            </AdminRoute>
+            </StaffRoute>
           } />
           <Route path="/cuentas/simulador" element={
             <AdminRoute>

@@ -13,7 +13,7 @@ import { Box, Typography, Card, CardContent, CardActionArea, Grid, alpha } from 
 import { Calculator, Receipt, FileText, TrendingUp, Send, Users } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { useIsAdmin } from '../../hooks/usePermissions';
+import { useIsAdmin, useIsStaff } from '../../hooks/usePermissions';
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { accentColors, iosTypographyScale } from '../../design-system';
@@ -33,6 +33,7 @@ const AccountsHub: React.FC = () => {
   const { t } = useLanguage();
   const { mode } = useThemeMode();
   const isAdmin = useIsAdmin();
+  const isStaff = useIsStaff();
   const isLight = mode === 'light';
 
   // Get theme-aware accent colors from design system
@@ -41,26 +42,33 @@ const AccountsHub: React.FC = () => {
   const purpleColor = isLight ? accentColors.purple.light : accentColors.purple.dark;
   const orangeColor = isLight ? accentColors.warning.light : accentColors.warning.dark;
 
+  // Build tools list based on permissions
+  // - Cotizaciones: All staff (admin, embajador, asesor)
+  // - Simulator, Receipts, Provider tools: Admin only
   const tools: AccountTool[] = [
-    {
-      id: 'simulator',
-      title: t.tools.simulator.label,
-      description: t.tools.simulator.subtitle,
-      icon: Calculator,
-      route: '/cuentas/simulador',
-      color: indigoColor,
-      bgColor: alpha(indigoColor, 0.1),
-    },
-    {
-      id: 'receipts',
-      title: t.tools.receipts.label,
-      description: t.tools.receipts.subtitle,
-      icon: Receipt,
-      route: '/cuentas/recibos',
-      color: cyanColor,
-      bgColor: alpha(cyanColor, 0.1),
-    },
-    {
+    // Admin-only tools
+    ...(isAdmin ? [
+      {
+        id: 'simulator',
+        title: t.tools.simulator.label,
+        description: t.tools.simulator.subtitle,
+        icon: Calculator,
+        route: '/cuentas/simulador',
+        color: indigoColor,
+        bgColor: alpha(indigoColor, 0.1),
+      },
+      {
+        id: 'receipts',
+        title: t.tools.receipts.label,
+        description: t.tools.receipts.subtitle,
+        icon: Receipt,
+        route: '/cuentas/recibos',
+        color: cyanColor,
+        bgColor: alpha(cyanColor, 0.1),
+      },
+    ] : []),
+    // Staff tools (admin, embajador, asesor)
+    ...(isStaff ? [{
       id: 'quotation',
       title: t.tools.cotizacion.label,
       description: t.tools.cotizacion.subtitle,
@@ -68,7 +76,7 @@ const AccountsHub: React.FC = () => {
       route: '/cuentas/cotizaciones',
       color: purpleColor,
       bgColor: alpha(purpleColor, 0.1),
-    },
+    }] : []),
     // Admin-only: Provider quotation requests
     ...(isAdmin ? [{
       id: 'provider-requests',

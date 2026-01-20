@@ -27,7 +27,7 @@ import { brand, radius, iosTypographyScale } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsGuest, useCanCreateInvitations } from '../../hooks/useAuth';
-import { useIsAdmin } from '../../hooks/usePermissions';
+import { useIsAdmin, useIsStaff } from '../../hooks/usePermissions';
 import UnlockPrompt from '../auth/UnlockPrompt';
 
 export interface MoreToolConfig {
@@ -123,6 +123,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   const { mode, toggleTheme } = useTheme();
   const isGuest = useIsGuest();
   const isAdmin = useIsAdmin();
+  const isStaff = useIsStaff();
   const canCreateInvitations = useCanCreateInvitations();
   const { effectiveConfig } = useLiquidGlassSafe();
   const [unlockOpen, setUnlockOpen] = useState(false);
@@ -135,7 +136,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
     const allTools = getMoreTools(t);
     const adminOnlyTools = ['analytics', 'name-generator'];
     const invitationTools = ['invitation']; // Embajadores and Admins only
-    const fullAccessTools = ['solicitudes', 'feedback', 'accounts']; // Asesores, Embajadores and Admins
+    const staffTools = ['solicitudes', 'feedback', 'accounts']; // Asesores, Embajadores and Admins only
 
     return allTools.filter(tool => {
       // Admin-only tools
@@ -146,13 +147,13 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
       if (invitationTools.includes(tool.id)) {
         return canCreateInvitations;
       }
-      // Full access tools - Asesores, Embajadores, Admins (not guests)
-      if (fullAccessTools.includes(tool.id)) {
-        return !isGuest;
+      // Staff tools - Asesores, Embajadores, Admins (not guests or providers)
+      if (staffTools.includes(tool.id)) {
+        return isStaff;
       }
       return true;
     });
-  }, [t, isAdmin, canCreateInvitations, isGuest]);
+  }, [t, isAdmin, canCreateInvitations, isStaff]);
 
   // Liquid Glass styles for the sheet
   const sheetStyles = useMemo(() => {
