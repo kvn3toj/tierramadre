@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { X } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
+import { usePriceShare } from '../../contexts/PriceShareContext';
 import {
   type StatusFilter,
   type TypeFilter,
@@ -65,8 +66,6 @@ export interface IOSFilterSheetProps {
   // Actions
   hasFilters: boolean;
   onClearFilters: () => void;
-  // Price visibility
-  hidePriceFilter?: boolean;
 }
 
 const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
@@ -94,11 +93,12 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
   priceMinMax,
   hasFilters,
   onClearFilters,
-  hidePriceFilter = false,
 }) => {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const secondaryLabelColor = iosSemanticColors.secondaryLabel[mode];
+  const { shouldShowPrices } = usePriceShare();
+  const hidePriceFilter = !shouldShowPrices;
 
   // Track which section is expanded
   const [expandedSection, setExpandedSection] = useState<string | null>(null);

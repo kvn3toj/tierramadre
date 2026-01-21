@@ -39,6 +39,7 @@ import { treasureToCartItem } from '../../types/cart';
 import AdminSelectDialog from '../cart/AdminSelectDialog';
 import { QRCodeSVG } from 'qrcode.react';
 import { useThemeMode } from '../../contexts/ThemeContext';
+import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useIsAdmin, useIsProvider } from '../../hooks/usePermissions';
 import { useIsGuest } from '../../hooks/useAuth';
 import { useTreasure } from '../../hooks/useTreasure';
@@ -68,6 +69,7 @@ export default function ProductDetail() {
   const isAdmin = useIsAdmin();
   const isGuest = useIsGuest();
   const isProvider = useIsProvider();
+  const { shouldShowPrices } = usePriceShare();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -442,8 +444,10 @@ export default function ProductDetail() {
                 )}
               </Box>
 
-              {/* Price - Dual display (International + National) */}
-              <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />
+              {/* Price - Dual display (International + National) - Hidden when prices not shared */}
+              {shouldShowPrices && (
+                <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />
+              )}
             </Box>
 
             {/* iOS Hairline Separator */}

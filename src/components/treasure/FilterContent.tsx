@@ -40,6 +40,7 @@ import {
   type TreasureFilters,
 } from '../../hooks/useTreasureFiltering';
 import { useTreasureAnalytics } from '../../hooks/useTreasureAnalytics';
+import { usePriceShare } from '../../contexts/PriceShareContext';
 import { TreasureItem } from '../../types';
 import { formatCurrency, getColorDot, formatCollectionName } from '../../utils/formatting';
 import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
@@ -131,8 +132,6 @@ export interface FilterContentProps {
   theme: Theme;
   /** Hide search field (when parent already has one) */
   compact?: boolean;
-  /** Hide price filter (for guests with no_prices mode) */
-  hidePriceFilter?: boolean;
 }
 
 export const FilterContent = memo(function FilterContent({
@@ -171,8 +170,11 @@ export const FilterContent = memo(function FilterContent({
   isLight,
   theme,
   compact = false,
-  hidePriceFilter = false,
 }: FilterContentProps) {
+  // Use context to determine if prices should be shown
+  const { shouldShowPrices } = usePriceShare();
+  const hidePriceFilter = !shouldShowPrices;
+
   // Compact mode: Beautiful modern pill-based filters (mobile)
   if (compact) {
     // Common pill styles

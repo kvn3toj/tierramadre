@@ -38,7 +38,6 @@ import { useTreasure } from '../../hooks/useTreasure';
 import { useTreasureFiltering, type StatusFilter, type TypeFilter, type SortOption } from '../../hooks/useTreasureFiltering';
 import { useUrlFilterSync } from '../../hooks/useUrlFilterSync';
 import { useFilterTracking } from '../../hooks/useFilterTracking';
-import { useGuestCanSeePrices } from '../../hooks/useAuth';
 import { useFavorites } from '../../hooks/useFavorites';
 import { usePagination } from '../../hooks/usePagination';
 import { useRecentlyViewed } from '../../hooks/useRecentlyViewed';
@@ -151,9 +150,6 @@ export default function TreasureBrowser({
 
   // Analytics hook
   const analyticsHook = useTreasureAnalytics();
-
-  // Guest pricing hook
-  const guestCanSeePrices = useGuestCanSeePrices();
 
   // Product view counts for badges
   const { getViewCount } = useProductViews();
@@ -291,7 +287,7 @@ export default function TreasureBrowser({
     priceMinMax,
     isLight,
     theme,
-    hidePriceFilter: !guestCanSeePrices || isProviderMode,
+    // Note: hidePriceFilter is now handled internally by FilterContent via usePriceShare
   };
 
   return (
@@ -424,7 +420,6 @@ export default function TreasureBrowser({
             priceMinMax={priceMinMax}
             hasFilters={hasFilters}
             onClearFilters={urlSync.handleClearFilters}
-            hidePriceFilter={!guestCanSeePrices || isProviderMode}
           />
 
           {/* Quick info row with active filters */}
@@ -666,7 +661,6 @@ export default function TreasureBrowser({
           items={recentlyViewedItems}
           onItemClick={handleItemClick}
           onClear={clearRecent}
-          hidePrice={isProviderMode || !guestCanSeePrices}
         />
       )}
 
@@ -687,9 +681,8 @@ export default function TreasureBrowser({
               viewCount={getViewCount(props.item.item)}
               isAdmin={isAdmin}
               isSelectedForComparison={comparison.isSelected(props.item.item)}
-              onToggleComparison={isProviderMode ? undefined : () => comparison.toggleComparison(props.item)}
+              onToggleComparison={() => comparison.toggleComparison(props.item)}
               canAddToComparison={comparison.canAddMore}
-              isProviderMode={isProviderMode}
             />
           )}
         />
@@ -703,7 +696,6 @@ export default function TreasureBrowser({
               onCertClick={() => handleCertClick(item)}
               onItemClick={() => handleItemClick(item)}
               onToggleFavorite={() => toggleFavorite(item.item)}
-              isProviderMode={isProviderMode}
             />
           ))}
         </Box>

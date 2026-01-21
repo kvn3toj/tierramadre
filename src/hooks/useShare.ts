@@ -16,6 +16,8 @@
 import { useCallback, useMemo } from 'react';
 import { TreasureItem } from '../types';
 import { triggerHaptic } from './useHaptics';
+import { usePriceShare } from '../contexts/PriceShareContext';
+import { formatCurrency } from '../utils/formatting';
 import { createLogger } from '../utils/logger';
 
 const log = createLogger('useShare');
@@ -84,13 +86,13 @@ function checkShareSupport(): boolean {
 
 /**
  * Format product details for sharing
- * Never includes prices - sharing is for external audiences
+ * Includes prices only when shouldShowPrices is true (user has share prices enabled)
  */
-function formatProductShareText(product: TreasureItem, productUrl: string): string {
+function formatProductShareText(product: TreasureItem, productUrl: string, includePrice: boolean): string {
   const displayName = product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const weight = typeof product.peso === 'number' ? `${product.peso} ct` : '';
 
-  // Build share text with emoji for visual appeal - NO PRICES for external sharing
+  // Build share text with emoji for visual appeal
   const lines = [
     `💎 ${displayName}`,
     ``,
@@ -99,6 +101,11 @@ function formatProductShareText(product: TreasureItem, productUrl: string): stri
 
   if (weight) {
     lines.push(`⚖️ ${weight}`);
+  }
+
+  // Include price only when user has price sharing enabled
+  if (includePrice && product.precioCOP) {
+    lines.push(`💰 ${formatCurrency(product.precioCOP)}`);
   }
 
   lines.push(``);
@@ -124,6 +131,7 @@ function formatProductShareText(product: TreasureItem, productUrl: string): stri
  */
 export function useShare(options: UseShareOptions = {}): UseShareReturn {
   const { hapticFeedback = true } = options;
+  const { shouldShowPrices } = usePriceShare();
 
   const isNativeShareSupported = useMemo(() => checkShareSupport(), []);
 
@@ -136,11 +144,12 @@ export function useShare(options: UseShareOptions = {}): UseShareReturn {
 
   /**
    * Generate formatted share text
+   * Includes price when user has price sharing enabled
    */
   const getProductShareText = useCallback((product: TreasureItem): string => {
     const url = getProductUrl(product);
-    return formatProductShareText(product, url);
-  }, [getProductUrl]);
+    return formatProductShareText(product, url, shouldShowPrices);
+  }, [getProductUrl, shouldShowPrices]);
 
   /**
    * Copy text to clipboard

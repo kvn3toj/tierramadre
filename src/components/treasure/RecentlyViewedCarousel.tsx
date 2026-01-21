@@ -18,6 +18,7 @@ import { ChevronLeft, ChevronRight, Clock, X } from 'lucide-react';
 // Logo placeholder for products without images - use Vite asset import
 import logoPlaceholder from '../../assets/logo-symbol.png';
 import { useThemeMode } from '../../contexts/ThemeContext';
+import { usePriceShare } from '../../contexts/PriceShareContext';
 import { TreasureItem } from '../../types';
 import { formatCurrency } from '../../utils/formatting';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
@@ -33,8 +34,6 @@ interface RecentlyViewedCarouselProps {
   title?: string;
   /** Maximum items to display */
   maxItems?: number;
-  /** Hide price information (for provider mode) */
-  hidePrice?: boolean;
 }
 
 const CARD_WIDTH = 80;
@@ -46,11 +45,11 @@ export default function RecentlyViewedCarousel({
   onClear,
   title = 'Visto recientemente',
   maxItems = 10,
-  hidePrice = false,
 }: RecentlyViewedCarouselProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { shouldShowPrices } = usePriceShare();
 
   // Limit items to maxItems
   const displayItems = items.slice(0, maxItems);
@@ -196,7 +195,7 @@ export default function RecentlyViewedCarousel({
             item={item}
             onClick={() => onItemClick(item)}
             isLight={isLight}
-            hidePrice={hidePrice}
+            hidePrice={!shouldShowPrices}
           />
         ))}
       </Box>

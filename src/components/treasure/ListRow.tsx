@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { Heart, Scale } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
+import { usePriceShare } from '../../contexts/PriceShareContext';
 import { TreasureItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
@@ -31,8 +32,6 @@ interface ListRowProps {
   isSelectedForComparison?: boolean;
   onToggleComparison?: () => void;
   canAddToComparison?: boolean;
-  /** Provider mode - hides prices and action buttons */
-  isProviderMode?: boolean;
 }
 
 function ListRow({
@@ -43,11 +42,11 @@ function ListRow({
   isSelectedForComparison = false,
   onToggleComparison,
   canAddToComparison = true,
-  isProviderMode = false,
 }: ListRowProps) {
   const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const { shouldShowPrices } = usePriceShare();
 
   const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const quality = getQualityBadge(item.calidad);
@@ -136,15 +135,15 @@ function ListRow({
         }}
       />
 
-      {/* Price (hidden in provider mode) */}
-      {!isProviderMode && (
+      {/* Price (hidden when prices not shown) */}
+      {shouldShowPrices && (
         <Box sx={{ minWidth: 100, textAlign: 'right' }}>
           <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
         </Box>
       )}
 
-      {/* Action buttons (hidden in provider mode) */}
-      {!isProviderMode && (
+      {/* Action buttons (hidden when prices not shown - comparison requires prices) */}
+      {shouldShowPrices && (
         <Box sx={{ display: 'flex', gap: 0.5 }}>
           {/* Comparison button */}
           {onToggleComparison && (
@@ -193,6 +192,8 @@ function ListRow({
   );
 }
 
+// Note: Memoization can't track shouldShowPrices from context, but that's fine
+// since context changes will trigger re-render anyway
 export default React.memo(ListRow, (prevProps, nextProps) => {
   return (
     prevProps.item.item === nextProps.item.item &&
@@ -201,7 +202,6 @@ export default React.memo(ListRow, (prevProps, nextProps) => {
     prevProps.item.estado === nextProps.item.estado &&
     prevProps.isFavorite === nextProps.isFavorite &&
     prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
-    prevProps.canAddToComparison === nextProps.canAddToComparison &&
-    prevProps.isProviderMode === nextProps.isProviderMode
+    prevProps.canAddToComparison === nextProps.canAddToComparison
   );
 });

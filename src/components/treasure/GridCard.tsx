@@ -24,6 +24,7 @@ import {
   Scale,
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
+import { usePriceShare } from '../../contexts/PriceShareContext';
 import { TreasureItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
@@ -48,8 +49,6 @@ interface GridCardProps {
   viewCount?: number;
   /** Whether the current user is an admin (required to see view counts) */
   isAdmin?: boolean;
-  /** Provider mode - hides prices and comparison features */
-  isProviderMode?: boolean;
 }
 
 function GridCard({
@@ -61,10 +60,10 @@ function GridCard({
   isSelectedForComparison = false,
   onToggleComparison,
   canAddToComparison = true,
-  isProviderMode = false,
 }: GridCardProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const { shouldShowPrices } = usePriceShare();
 
   const labelColor = iosSemanticColors.label[mode];
   const secondaryLabelColor = iosSemanticColors.secondaryLabel[mode];
@@ -211,8 +210,8 @@ function GridCard({
               />
             )}
 
-            {/* Compare button - top right (hidden in provider mode) */}
-            {onToggleComparison && !isProviderMode && (
+            {/* Compare button - top right (hidden when prices not shown) */}
+            {onToggleComparison && shouldShowPrices && (
               <IconButton
                 onClick={handleCompareClick}
                 aria-label={isSelectedForComparison ? 'Quitar de comparación' : 'Agregar a comparación'}
@@ -313,8 +312,8 @@ function GridCard({
           </Typography>
         </Box>
 
-        {/* Price - Compact (hidden in provider mode) */}
-        {!isProviderMode && (
+        {/* Price - Compact (hidden when shouldShowPrices is false) */}
+        {shouldShowPrices && (
           <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
         )}
       </CardContent>
@@ -322,6 +321,8 @@ function GridCard({
   );
 }
 
+// Note: Memoization can't track shouldShowPrices from context, but that's fine
+// since context changes will trigger re-render anyway
 export default React.memo(GridCard, (prevProps, nextProps) => {
   return (
     prevProps.item.item === nextProps.item.item &&
@@ -332,7 +333,6 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.viewCount === nextProps.viewCount &&
     prevProps.isAdmin === nextProps.isAdmin &&
     prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
-    prevProps.canAddToComparison === nextProps.canAddToComparison &&
-    prevProps.isProviderMode === nextProps.isProviderMode
+    prevProps.canAddToComparison === nextProps.canAddToComparison
   );
 });
