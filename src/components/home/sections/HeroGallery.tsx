@@ -18,7 +18,7 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { ExpandMore } from '@mui/icons-material';
 import {
   overlays,
@@ -26,6 +26,8 @@ import {
   whiteAlpha,
   blackAlpha,
   opacity,
+  lightTokens,
+  darkTokens,
 } from '../../../design-system';
 import { TreasureItem } from '../../../types';
 
@@ -139,6 +141,8 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
   const [heroImage, setHeroImage] = useState<GalleryImage>(FALLBACK_IMAGES[0]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
   // Filter products that are available and have images from Drive
   // The `imagen` field is populated by useTreasure from Google Drive batch thumbnails
@@ -553,9 +557,14 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
                 flexWrap: 'wrap',
                 px: 2,
                 py: 1.5,
-                bgcolor: 'rgba(0,0,0,0.3)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
+                // iOS HIG: Theme-aware background
+                bgcolor: isDarkMode
+                  ? darkTokens.background.surface
+                  : lightTokens.background.muted,
+                // iOS HIG: Subtle border for elevation hint
+                borderBottom: `1px solid ${isDarkMode
+                  ? darkTokens.border.light
+                  : lightTokens.border.light}`,
               }}
             >
               {currentSubcategories.map((sub, index) => {
@@ -577,14 +586,29 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
                         py: 0.75,
                         borderRadius: 2,
                         cursor: 'pointer',
+                        // iOS HIG: Theme-aware pill backgrounds
                         bgcolor: isSelected
-                          ? 'rgba(255,255,255,0.2)'
-                          : 'rgba(255,255,255,0.08)',
-                        border: `1px solid ${isSelected ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.12)'}`,
+                          ? isDarkMode
+                            ? 'rgba(255,255,255,0.15)'
+                            : 'rgba(0,0,0,0.08)'
+                          : isDarkMode
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.04)',
+                        border: `1px solid ${isSelected
+                          ? isDarkMode
+                            ? 'rgba(255,255,255,0.2)'
+                            : 'rgba(0,0,0,0.12)'
+                          : isDarkMode
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.06)'}`,
                         transition: 'all 0.2s ease',
                         '&:hover': {
-                          bgcolor: 'rgba(255,255,255,0.15)',
-                          borderColor: 'rgba(255,255,255,0.2)',
+                          bgcolor: isDarkMode
+                            ? 'rgba(255,255,255,0.12)'
+                            : 'rgba(0,0,0,0.06)',
+                          borderColor: isDarkMode
+                            ? 'rgba(255,255,255,0.15)'
+                            : 'rgba(0,0,0,0.1)',
                         },
                         '&:active': {
                           transform: 'scale(0.97)',
@@ -594,7 +618,14 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
                       <Typography
                         variant="body2"
                         sx={{
-                          color: isSelected ? 'white' : 'rgba(255,255,255,0.75)',
+                          // iOS HIG: Theme-aware text colors
+                          color: isSelected
+                            ? isDarkMode
+                              ? 'rgba(255,255,255,0.95)'
+                              : lightTokens.text.primary
+                            : isDarkMode
+                              ? 'rgba(255,255,255,0.7)'
+                              : lightTokens.text.secondary,
                           fontWeight: isSelected ? 600 : 400,
                           fontSize: '0.8rem',
                         }}
