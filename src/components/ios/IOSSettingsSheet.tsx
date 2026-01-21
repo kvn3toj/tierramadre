@@ -13,7 +13,7 @@ import React from 'react';
 import { Box, Typography, IconButton, Backdrop, Switch, SxProps, Theme } from '@mui/material';
 import { Close, DarkMode, LightMode, Language, Visibility, VisibilityOff } from '@mui/icons-material';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
-import { radius, layoutConstants } from '../../design-system';
+import { radius, layoutConstants, iosTypographyScale } from '../../design-system';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
@@ -105,7 +105,7 @@ const SettingToggleItem: React.FC<SettingToggleItemProps> = ({
         <Typography
           variant="body1"
           sx={{
-            fontSize: size === 'small' ? '15px' : '17px',
+            fontSize: size === 'small' ? iosTypographyScale.subhead : iosTypographyScale.headline,
             fontWeight: size === 'small' ? 400 : 600,
             color: 'var(--text-primary)',
           }}
@@ -115,7 +115,7 @@ const SettingToggleItem: React.FC<SettingToggleItemProps> = ({
         {subtitle && (
           <Typography
             variant="body2"
-            sx={{ fontSize: '13px', color: 'var(--text-secondary)' }}
+            sx={{ fontSize: iosTypographyScale.footnote, color: 'var(--text-secondary)' }}
           >
             {subtitle}
           </Typography>
@@ -203,7 +203,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography
               variant="h2"
-              sx={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)' }}
+              sx={{ fontSize: iosTypographyScale.title2, fontWeight: 700, color: 'var(--text-primary)' }}
             >
               {t.settings.theme}
             </Typography>

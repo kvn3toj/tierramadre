@@ -14,6 +14,7 @@ import { Box, Typography, Paper, alpha } from '@mui/material';
 import { Lock, Sparkles, Crown, Shield, Upload } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { emeraldCore, goldAccent } from '../design-system/tokens/colors';
+import { iosTypographyScale } from '../design-system';
 
 const VaultPage: React.FC = () => {
   const { mode } = useThemeMode();
@@ -44,6 +45,7 @@ const VaultPage: React.FC = () => {
               variant="h4"
               sx={{
                 fontFamily: '"Playfair Display", serif',
+                fontSize: iosTypographyScale.title1,
                 fontWeight: 600,
                 color: goldAccent.primary,
                 mb: 1,
@@ -53,7 +55,7 @@ const VaultPage: React.FC = () => {
             </Typography>
             <Typography
               variant="body1"
-              sx={{ color: 'text.secondary', maxWidth: 400, mx: 'auto' }}
+              sx={{ fontSize: iosTypographyScale.subhead, color: 'text.secondary', maxWidth: 400, mx: 'auto' }}
             >
               Espacio exclusivo para gemas únicas y excepcionales
             </Typography>

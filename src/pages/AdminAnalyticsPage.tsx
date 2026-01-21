@@ -55,6 +55,7 @@ import { useProductViews } from '../hooks/useProductViews';
 import { useCotizacionStats } from '../hooks/useCotizacionStats';
 import { emeraldCore, goldAccent, semanticColors } from '../design-system/tokens/colors';
 import { spacing, iosDimensions } from '../design-system/tokens/primitives/spacing';
+import { iosTypographyScale } from '../design-system';
 import { SparklineChart } from '../components/analytics/SparklineChart';
 import { HorizontalBarChart } from '../components/analytics/HorizontalBarChart';
 import { DonutChart } from '../components/analytics/DonutChart';
@@ -547,10 +548,10 @@ const AdminAnalyticsPage: React.FC = () => {
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          <Typography variant="h5" sx={{ fontSize: iosTypographyScale.title2, fontWeight: 700 }}>
             Analytics
           </Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          <Typography variant="caption" sx={{ fontSize: iosTypographyScale.caption1, color: 'text.secondary' }}>
             Dashboard de negocio
           </Typography>
         </Box>

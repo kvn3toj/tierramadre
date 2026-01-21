@@ -41,6 +41,7 @@ import {
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { emeraldCore } from '../../design-system/tokens/colors';
+import { iosTypographyScale } from '../../design-system';
 import {
   PRODUCT_TYPE_LABELS,
   PRIORITY_LABELS,
@@ -353,10 +354,10 @@ export default function ProductRequestsHub() {
             <ArrowLeft size={20} />
           </Button>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+            <Typography variant="h5" sx={{ fontSize: iosTypographyScale.title2, fontWeight: 700, mb: 0.5 }}>
               Solicitudes
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            <Typography variant="body2" sx={{ fontSize: iosTypographyScale.subhead, color: 'text.secondary' }}>
               Solicita productos para tus clientes
             </Typography>
           </Box>

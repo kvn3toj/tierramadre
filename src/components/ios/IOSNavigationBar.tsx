@@ -16,6 +16,7 @@ import { easingCurves, durations } from '../../design-system/tokens/primitives/m
 import { dynamicBlur, liquidSaturation, specularHighlights } from '../../design-system/tokens/liquid-glass';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsScrolled } from '../../hooks/useScrollShrink';
+import { iosTypographyScale } from '../../design-system';
 
 export type NavigationBarMode = 'compact' | 'large';
 
@@ -192,7 +193,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
               <Typography
                 variant="h6"
                 sx={{
-                  fontSize: '17px',
+                  fontSize: iosTypographyScale.headline,
                   fontWeight: 600,
                   color: 'var(--text-primary)',
                   textAlign: 'center',
@@ -233,7 +234,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
           <Typography
             variant="h1"
             sx={{
-              fontSize: '34px',
+              fontSize: iosTypographyScale.largeTitle,
               fontWeight: 700,
               color: 'var(--text-primary)',
               letterSpacing: '-0.5px',
@@ -247,7 +248,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
             <Typography
               variant="body2"
               sx={{
-                fontSize: '15px',
+                fontSize: iosTypographyScale.subhead,
                 color: 'var(--text-secondary)',
                 marginTop: spacing.xxs,
               }}
