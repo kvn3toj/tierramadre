@@ -11,7 +11,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton, Backdrop, Chip } from '@mui/material';
-import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport, AutoAwesome, PersonAdd } from '@mui/icons-material';
+import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport, AutoAwesome, PersonAdd, Visibility, VisibilityOff } from '@mui/icons-material';
 import { Vault, BarChart3, ShoppingBag } from 'lucide-react';
 import FeedbackWizard from '../feedback/FeedbackWizard';
 import NameGeneratorSheet from './NameGeneratorSheet';
@@ -28,6 +28,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsGuest, useCanCreateInvitations } from '../../hooks/useAuth';
 import { useIsAdmin, useIsStaff } from '../../hooks/usePermissions';
+import { usePriceShare } from '../../contexts/PriceShareContext';
 
 export interface MoreToolConfig {
   id: string;
@@ -125,6 +126,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   const isStaff = useIsStaff();
   const canCreateInvitations = useCanCreateInvitations();
   const { effectiveConfig } = useLiquidGlassSafe();
+  const { showPrices, togglePriceShare, canToggle } = usePriceShare();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [nameGeneratorOpen, setNameGeneratorOpen] = useState(false);
   const [invitationOpen, setInvitationOpen] = useState(false);
@@ -247,6 +249,13 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
     toggleTheme();
   };
 
+  const handlePriceToggle = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+    togglePriceShare();
+  };
+
   return (
     <>
       <Backdrop
@@ -332,6 +341,21 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {/* Price Share Toggle - Only for staff */}
+              {canToggle && (
+                <IconButton
+                  onClick={handlePriceToggle}
+                  aria-label={showPrices ? t.settings.pricesShared : t.settings.pricesPrivate}
+                  sx={{
+                    color: showPrices ? '#34C759' : '#8E8E93',
+                    backgroundColor: showPrices ? '#34C75915' : '#8E8E9315',
+                    '&:hover': { backgroundColor: showPrices ? '#34C75925' : '#8E8E9325' },
+                  }}
+                >
+                  {showPrices ? <Visibility /> : <VisibilityOff />}
+                </IconButton>
+              )}
+
               {/* Theme Toggle */}
               <IconButton
                 onClick={handleThemeToggle}
