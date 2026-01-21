@@ -10,8 +10,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, IconButton, Backdrop, Chip } from '@mui/material';
-import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport, AutoAwesome, PersonAdd, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Box, Typography, IconButton, Backdrop, Chip, Switch } from '@mui/material';
+import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport, AutoAwesome, PersonAdd } from '@mui/icons-material';
 import { Vault, BarChart3, ShoppingBag } from 'lucide-react';
 import FeedbackWizard from '../feedback/FeedbackWizard';
 import NameGeneratorSheet from './NameGeneratorSheet';
@@ -341,21 +341,6 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {/* Price Share Toggle - Only for staff */}
-              {canToggle && (
-                <IconButton
-                  onClick={handlePriceToggle}
-                  aria-label={showPrices ? t.settings.pricesShared : t.settings.pricesPrivate}
-                  sx={{
-                    color: showPrices ? '#34C759' : '#8E8E93',
-                    backgroundColor: showPrices ? '#34C75915' : '#8E8E9315',
-                    '&:hover': { backgroundColor: showPrices ? '#34C75925' : '#8E8E9325' },
-                  }}
-                >
-                  {showPrices ? <Visibility /> : <VisibilityOff />}
-                </IconButton>
-              )}
-
               {/* Theme Toggle */}
               <IconButton
                 onClick={handleThemeToggle}
@@ -383,6 +368,55 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
           </Box>
 
         </Box>
+
+        {/* Price Share Toggle Row - Only for staff */}
+        {canToggle && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingX: spacing.md,
+              paddingY: spacing.sm,
+              borderBottom: '0.5px solid var(--border-default)',
+            }}
+          >
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: iosTypographyScale.body,
+                  fontWeight: 500,
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {t.settings.viewPrices}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: iosTypographyScale.caption1,
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                {showPrices ? t.settings.pricesShared : t.settings.pricesPrivate}
+              </Typography>
+            </Box>
+            <Switch
+              checked={showPrices}
+              onChange={handlePriceToggle}
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': {
+                  color: '#34C759',
+                  '&:hover': {
+                    backgroundColor: 'rgba(52, 199, 89, 0.08)',
+                  },
+                },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                  backgroundColor: '#34C759',
+                },
+              }}
+            />
+          </Box>
+        )}
 
         {/* Tools Grid */}
         <Box sx={{ position: 'relative', padding: spacing.md }}>

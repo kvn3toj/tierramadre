@@ -182,6 +182,7 @@ export const en = {
     spanish: 'Español',
     english: 'English',
     sharePrices: 'Share Prices',
+    viewPrices: 'Show Prices',
     pricesShared: 'Visible',
     pricesPrivate: 'Private',
   },
