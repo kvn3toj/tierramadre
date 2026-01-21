@@ -6,6 +6,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { GoogleAuthProvider } from './contexts/GoogleAuthContext';
+import { PriceShareProvider } from './contexts/PriceShareContext';
 import { checkAndInvalidateCaches } from './utils/cacheInvalidation';
 import './design-system/tokens/css-variables.css';
 
@@ -66,8 +67,10 @@ waitForVersionReady().then(() => {
         <ThemeProvider>
           <GoogleWrapper>
             <AuthProvider>
-              <App />
-            </AuthProvider>
+                <PriceShareProvider>
+                  <App />
+                </PriceShareProvider>
+              </AuthProvider>
           </GoogleWrapper>
         </ThemeProvider>
       </LanguageProvider>

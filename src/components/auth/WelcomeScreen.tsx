@@ -1,19 +1,17 @@
 /**
- * WelcomeScreen - Multi Access Entry Point
+ * WelcomeScreen - Entry Point
  * Offers: Google Sign-In (validated against Asesores sheet)
- *         PIN Access (legacy)
- *         Guest Mode (no auth required)
+ *         Guest Mode (invitation-only)
  * Smooth fade-in transition from splash screen
  */
 
 import { useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Box, Typography, Button, IconButton, Fade, Stack, alpha, Divider, Alert } from '@mui/material';
+import { Box, Typography, Button, Fade, Stack, alpha, Divider, Alert } from '@mui/material';
 import { motion } from 'framer-motion';
-import { Backspace as BackspaceIcon, VisibilityOutlined, LockOpenOutlined, OpenInNew, ContentCopy, CheckCircleOutline } from '@mui/icons-material';
+import { VisibilityOutlined, OpenInNew, ContentCopy, CheckCircleOutline } from '@mui/icons-material';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { emeraldCore, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
-import { useAuth } from '../../hooks/useAuth';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getCachedBrowserInfo } from '../../utils/deviceTier';
@@ -22,17 +20,10 @@ import { getCachedBrowserInfo } from '../../utils/deviceTier';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 const isGoogleConfigured = Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length > 10);
 
-type ViewMode = 'choice' | 'pin' | 'google';
-
 export default function WelcomeScreen() {
-  const { loginWithPin } = useAuth();
   const { signIn, authError, clearError } = useGoogleAuth();
   const { t } = useLanguage();
   const location = useLocation();
-  const [viewMode, setViewMode] = useState<ViewMode>('choice');
-  const [pin, setPin] = useState('');
-  const [error, setError] = useState(false);
-  const [shake, setShake] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
   const [showInvitationMessage, setShowInvitationMessage] = useState(false);
   const [googleLoginKey, setGoogleLoginKey] = useState(0);
@@ -124,59 +115,9 @@ export default function WelcomeScreen() {
     }
   };
 
-  const handleDigit = (digit: string) => {
-    if (pin.length >= 4) return;
-
-    const newPin = pin + digit;
-    setPin(newPin);
-    setError(false);
-
-    if (newPin.length === 4) {
-      const success = loginWithPin(newPin);
-      if (!success) {
-        setError(true);
-        setShake(true);
-        setTimeout(() => {
-          setPin('');
-          setShake(false);
-        }, 500);
-      }
-    }
-  };
-
-  const handleBackspace = () => {
-    setPin(pin.slice(0, -1));
-    setError(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key >= '0' && e.key <= '9') {
-      handleDigit(e.key);
-    } else if (e.key === 'Backspace') {
-      handleBackspace();
-    } else if (e.key === 'Escape') {
-      setViewMode('choice');
-      setPin('');
-      setError(false);
-    }
-  };
-
   const handleGuestAccess = () => {
     // Guest mode is now invitation-only - show message instead of logging in
     setShowInvitationMessage(true);
-  };
-
-  const handleFullAccessClick = () => {
-    setViewMode('pin');
-    setPin('');
-    setError(false);
-  };
-
-  const handleBackToChoice = () => {
-    setViewMode('choice');
-    setPin('');
-    setError(false);
-    setGoogleError(null);
   };
 
   const handleGoogleSuccess = async (response: CredentialResponse) => {
@@ -202,8 +143,6 @@ export default function WelcomeScreen() {
     setGoogleLoginKey(prev => prev + 1);
   };
 
-  const digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'back'];
-
   return (
     <Box
       component={motion.div}
@@ -221,8 +160,6 @@ export default function WelcomeScreen() {
         position: 'relative',
         overflow: 'hidden',
       }}
-      onKeyDown={viewMode === 'pin' ? handleKeyDown : undefined}
-      tabIndex={0}
     >
       {/* Subtle ambient glow - top */}
       <Box
@@ -265,10 +202,9 @@ export default function WelcomeScreen() {
         />
       </Fade>
 
-      {/* Choice View */}
-      {viewMode === 'choice' && (
-        <Fade in timeout={800}>
-          <Stack spacing={2} sx={{ width: { xs: '80vw', sm: 340 }, maxWidth: 400, mt: 1.5 }}>
+      {/* Main Content */}
+      <Fade in timeout={800}>
+        <Stack spacing={2} sx={{ width: { xs: '80vw', sm: 340 }, maxWidth: 400, mt: 1.5 }}>
             {/* Product URL Access Alert - Show when arriving from shared link */}
             {isProductUrl && (
               <Alert
@@ -430,36 +366,6 @@ export default function WelcomeScreen() {
               </>
             )}
 
-            {/* PIN Access Button - Primary when Google not configured */}
-            <Button
-              variant={isGoogleConfigured ? 'outlined' : 'contained'}
-              size="large"
-              startIcon={<LockOpenOutlined />}
-              onClick={handleFullAccessClick}
-              fullWidth
-              sx={{
-                py: 1.5,
-                fontSize: isGoogleConfigured ? '0.9rem' : '1rem',
-                textTransform: 'none',
-                ...(isGoogleConfigured
-                  ? {
-                      borderColor: alpha('#FFFFFF', 0.25),
-                      color: surfacesDark.text.secondary,
-                    }
-                  : {
-                      bgcolor: emeraldCore.primary,
-                      color: surfacesDark.text.primary,
-                    }),
-                borderRadius: 2,
-                '&:hover': {
-                  borderColor: emeraldCore.primary,
-                  bgcolor: isGoogleConfigured ? alpha('#FFFFFF', 0.03) : alpha(emeraldCore.primary, 0.87),
-                },
-              }}
-            >
-              {isGoogleConfigured ? 'Acceso con PIN' : t.auth.fullAccess}
-            </Button>
-
             {/* Invitation-only message */}
             {showInvitationMessage && (
               <Alert
@@ -499,147 +405,7 @@ export default function WelcomeScreen() {
             </Button>
 
           </Stack>
-        </Fade>
-      )}
-
-      {/* PIN Entry View */}
-      {viewMode === 'pin' && (
-        <>
-          {/* PIN Dots */}
-          <Fade in timeout={400}>
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 2,
-                mb: 4,
-                animation: shake ? 'shake 0.5s ease-in-out' : 'none',
-                '@keyframes shake': {
-                  '0%, 100%': { transform: 'translateX(0)' },
-                  '20%, 60%': { transform: 'translateX(-10px)' },
-                  '40%, 80%': { transform: 'translateX(10px)' },
-                },
-              }}
-            >
-              {[0, 1, 2, 3].map((i) => (
-                <Box
-                  key={i}
-                  sx={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    border: `2px solid ${error ? semanticColors.error.main : emeraldCore.primary}`,
-                    bgcolor: pin.length > i
-                      ? (error ? semanticColors.error.main : emeraldCore.primary)
-                      : 'transparent',
-                    transition: 'all 0.2s ease',
-                    boxShadow: pin.length > i
-                      ? `0 0 10px ${alpha(error ? semanticColors.error.main : emeraldCore.primary, 0.3)}`
-                      : 'none',
-                  }}
-                />
-              ))}
-            </Box>
-          </Fade>
-
-          {/* Error message - with ARIA live region for accessibility */}
-          <Fade in={error}>
-            <Typography
-              variant="caption"
-              role="alert"
-              aria-live="assertive"
-              aria-atomic="true"
-              sx={{
-                color: semanticColors.error.main,
-                mb: 2,
-                minHeight: 20,
-              }}
-            >
-              {error ? t.auth.incorrectPin : ''}
-            </Typography>
-          </Fade>
-
-          {/* Keypad */}
-          <Fade in timeout={600}>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 1.5,
-                maxWidth: 280,
-              }}
-            >
-              {digits.map((digit, index) => {
-                if (digit === '') {
-                  return <Box key={index} />;
-                }
-                if (digit === 'back') {
-                  return (
-                    <IconButton
-                      key={index}
-                      onClick={handleBackspace}
-                      sx={{
-                        width: 72,
-                        height: 72,
-                        color: surfacesDark.text.secondary,
-                        '&:hover': {
-                          bgcolor: alpha('#FFFFFF', 0.03),
-                        },
-                      }}
-                    >
-                      <BackspaceIcon />
-                    </IconButton>
-                  );
-                }
-                return (
-                  <IconButton
-                    key={index}
-                    onClick={() => handleDigit(digit)}
-                    sx={{
-                      width: 72,
-                      height: 72,
-                      fontSize: '1.75rem',
-                      fontWeight: 300,
-                      color: surfacesDark.text.primary,
-                      bgcolor: alpha('#FFFFFF', 0.03),
-                      border: `1px solid ${alpha('#FFFFFF', 0.06)}`,
-                      borderRadius: '50%',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        bgcolor: alpha('#FFFFFF', 0.08),
-                        borderColor: alpha(emeraldCore.primary, 0.25),
-                      },
-                      '&:active': {
-                        bgcolor: alpha(emeraldCore.primary, 0.12),
-                        transform: 'scale(0.95)',
-                      },
-                    }}
-                  >
-                    {digit}
-                  </IconButton>
-                );
-              })}
-            </Box>
-          </Fade>
-
-          {/* Back Button */}
-          <Fade in timeout={800}>
-            <Button
-              onClick={handleBackToChoice}
-              sx={{
-                mt: 3,
-                color: surfacesDark.text.secondary,
-                textTransform: 'none',
-                '&:hover': {
-                  color: surfacesDark.text.tertiary,
-                  bgcolor: 'transparent',
-                },
-              }}
-            >
-              {t.auth.back}
-            </Button>
-          </Fade>
-        </>
-      )}
+      </Fade>
 
       {/* Footer */}
       <Typography

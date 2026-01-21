@@ -9,9 +9,7 @@
 import { Box, Stack, Typography, useTheme } from '@mui/material';
 // Design System Tokens
 import { brand, iosSemanticColors, iosTypographyScale, typography } from '../../design-system';
-import { useIsGuest } from '../../hooks/useAuth';
-import { useCanViewPrices } from '../../hooks/usePermissions';
-import { INVITATION_STORAGE_KEYS } from '../../types/invitation';
+import { usePriceShare } from '../../contexts/PriceShareContext';
 
 export interface PriceDisplayProps {
   /** Precio COP del producto (precio regular/público) */
@@ -56,23 +54,13 @@ export const PriceDisplay = ({
   compact = false,
 }: PriceDisplayProps) => {
   const theme = useTheme();
-  const canViewPrices = useCanViewPrices();
-  const isGuest = useIsGuest();
+  const { shouldShowPrices } = usePriceShare();
   // Use precioCOP (regular price) as primary, precioInternacional only as fallback
   const displayPrice = price || precioInternacional || 0;
 
-  // If provider, don't show any prices
-  if (!canViewPrices) {
+  // Single check: context handles all logic (provider, guest invitation, user preference)
+  if (!shouldShowPrices) {
     return null;
-  }
-
-  // Check guest pricing mode from sessionStorage
-  // If guest was invited with 'no_prices' mode, hide all prices
-  if (isGuest) {
-    const guestPricingMode = sessionStorage.getItem(INVITATION_STORAGE_KEYS.PRICING_MODE);
-    if (guestPricingMode === 'no_prices') {
-      return null;
-    }
   }
 
   // Modo compacto para tarjetas - iOS HIG body typography (17px)

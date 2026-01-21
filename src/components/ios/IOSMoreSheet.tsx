@@ -10,7 +10,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, IconButton, Backdrop, Button, Chip } from '@mui/material';
+import { Box, Typography, IconButton, Backdrop, Chip } from '@mui/material';
 import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport, AutoAwesome, PersonAdd } from '@mui/icons-material';
 import { Vault, BarChart3, ShoppingBag } from 'lucide-react';
 import FeedbackWizard from '../feedback/FeedbackWizard';
@@ -28,7 +28,6 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsGuest, useCanCreateInvitations } from '../../hooks/useAuth';
 import { useIsAdmin, useIsStaff } from '../../hooks/usePermissions';
-import UnlockPrompt from '../auth/UnlockPrompt';
 
 export interface MoreToolConfig {
   id: string;
@@ -126,7 +125,6 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   const isStaff = useIsStaff();
   const canCreateInvitations = useCanCreateInvitations();
   const { effectiveConfig } = useLiquidGlassSafe();
-  const [unlockOpen, setUnlockOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [nameGeneratorOpen, setNameGeneratorOpen] = useState(false);
   const [invitationOpen, setInvitationOpen] = useState(false);
@@ -240,15 +238,6 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   const handleInvitationClose = () => {
     setInvitationOpen(false);
     onClose();
-  };
-
-  const handleUnlockClose = () => {
-    setUnlockOpen(false);
-    // Check if user is still guest - if not, they upgraded successfully
-    // Close the sheet on next tick to allow state to update
-    setTimeout(() => {
-      onClose();
-    }, 100);
   };
 
   const handleThemeToggle = () => {
@@ -402,32 +391,12 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                 variant="body2"
                 sx={{
                   color: 'var(--text-secondary)',
-                  mb: 2,
                   textAlign: 'center',
                   px: 3,
                 }}
               >
-                {t.auth.unlockFeature}
+                {t.auth.invitationOnly}
               </Typography>
-              <Button
-                variant="contained"
-                onClick={() => setUnlockOpen(true)}
-                startIcon={<Lock />}
-                sx={{
-                  backgroundColor: brand.emerald[500],
-                  color: 'white',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: radius.md,
-                  '&:hover': {
-                    backgroundColor: brand.emerald[600],
-                  },
-                }}
-              >
-                {t.auth.accessRequired}
-              </Button>
             </Box>
           )}
 
@@ -560,12 +529,6 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
         </Box>
 
       </Box>
-
-      {/* Unlock Prompt */}
-      <UnlockPrompt
-        open={unlockOpen}
-        onClose={handleUnlockClose}
-      />
 
       {/* Feedback Wizard - Admin only */}
       <FeedbackWizard

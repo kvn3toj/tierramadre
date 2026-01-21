@@ -11,11 +11,12 @@
 
 import React from 'react';
 import { Box, Typography, IconButton, Backdrop, Switch, SxProps, Theme } from '@mui/material';
-import { Close, DarkMode, LightMode, Language } from '@mui/icons-material';
+import { Close, DarkMode, LightMode, Language, Visibility, VisibilityOff } from '@mui/icons-material';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { radius, layoutConstants } from '../../design-system';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { usePriceShare } from '../../contexts/PriceShareContext';
 import MeditationReminderSetting from '../settings/MeditationReminderSetting';
 import { UserProfileCard } from '../auth';
 
@@ -138,6 +139,7 @@ const SettingToggleItem: React.FC<SettingToggleItemProps> = ({
 const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) => {
   const { mode, toggleTheme } = useTheme();
   const { language, t, toggleLanguage } = useLanguage();
+  const { showPrices, togglePriceShare, canToggle } = usePriceShare();
 
   const isDarkMode = mode === 'dark';
   const isEnglish = language === 'en';
@@ -249,6 +251,23 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
             onChange={toggleLanguage}
             accentColor="#007AFF"
           />
+
+          {/* Price Share Toggle - Only for staff */}
+          {canToggle && (
+            <SettingToggleItem
+              icon={
+                showPrices
+                  ? <Visibility sx={{ fontSize: '24px', color: '#34C759' }} />
+                  : <VisibilityOff sx={{ fontSize: '24px', color: '#8E8E93' }} />
+              }
+              iconBgColor={showPrices ? '#34C75915' : '#8E8E9315'}
+              title={t.settings.sharePrices}
+              subtitle={showPrices ? t.settings.pricesShared : t.settings.pricesPrivate}
+              checked={showPrices}
+              onChange={togglePriceShare}
+              accentColor="#34C759"
+            />
+          )}
 
           {/* Meditation Reminder */}
           <MeditationReminderSetting />

@@ -1,18 +1,14 @@
 /**
  * Authentication Context - Tiered Access System
- * Guest Mode: View-only access (no PIN required)
- * Full Mode: Complete access (PIN 7777 asesores, PIN 3333 embajadores, or Google auth)
- * Admin Mode: Full access + Drive folder management (PIN 3011 or Google auth with admin role)
+ * Guest Mode: View-only access (invitation link)
+ * Staff Mode: Google OAuth with role validation (asesor, embajador, admin)
+ * Provider Mode: Google OAuth with provider validation
  */
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import type { AuthState, AuthContextType, AccessLevel } from '../types/auth';
 import { useGoogleAuth } from './GoogleAuthContext';
 
-const ASSESSOR_PIN = '7777';    // Asesores
-const AMBASSADOR_PIN = '3333';  // Embajadores
-const ADMIN_PIN = '3011';
-const PROVIDER_PIN = '1234';    // Proveedores (dev testing only)
 const STORAGE_KEY = 'tierra-madre-auth';
 
 interface StoredAuthState {
@@ -112,63 +108,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setStoredAuth(newState);
   }, []);
 
-  const loginWithPin = useCallback((pin: string): boolean => {
-    // Check for admin PIN first
-    if (pin === ADMIN_PIN) {
-      const newState: AuthState = { isAuthenticated: true, accessLevel: 'admin' };
-      setAuthState(newState);
-      setStoredAuth(newState);
-      return true;
-    }
-    // Check for provider PIN (dev testing)
-    if (pin === PROVIDER_PIN) {
-      const newState: AuthState = { isAuthenticated: true, accessLevel: 'provider' };
-      setAuthState(newState);
-      setStoredAuth(newState);
-      return true;
-    }
-    // Check for embajador PIN
-    if (pin === AMBASSADOR_PIN) {
-      const newState: AuthState = { isAuthenticated: true, accessLevel: 'embajador' };
-      setAuthState(newState);
-      setStoredAuth(newState);
-      return true;
-    }
-    // Check for asesor PIN
-    if (pin === ASSESSOR_PIN) {
-      const newState: AuthState = { isAuthenticated: true, accessLevel: 'asesor' };
-      setAuthState(newState);
-      setStoredAuth(newState);
-      return true;
-    }
-    return false;
-  }, []);
-
-  const upgradeToFull = useCallback((pin: string): boolean => {
-    // Check for admin PIN first
-    if (pin === ADMIN_PIN) {
-      const newState: AuthState = { isAuthenticated: true, accessLevel: 'admin' };
-      setAuthState(newState);
-      setStoredAuth(newState);
-      return true;
-    }
-    // Check for embajador PIN
-    if (pin === AMBASSADOR_PIN) {
-      const newState: AuthState = { isAuthenticated: true, accessLevel: 'embajador' };
-      setAuthState(newState);
-      setStoredAuth(newState);
-      return true;
-    }
-    // Check for asesor PIN
-    if (pin === ASSESSOR_PIN) {
-      const newState: AuthState = { isAuthenticated: true, accessLevel: 'asesor' };
-      setAuthState(newState);
-      setStoredAuth(newState);
-      return true;
-    }
-    return false;
-  }, []);
-
   const logout = useCallback(() => {
     setAuthState({ isAuthenticated: false, accessLevel: 'guest' });
     clearStoredAuth();
@@ -177,8 +116,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value: AuthContextType = {
     ...authState,
     loginAsGuest,
-    loginWithPin,
-    upgradeToFull,
     logout,
   };
 
