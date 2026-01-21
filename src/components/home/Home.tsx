@@ -101,7 +101,7 @@ const Home: React.FC = () => {
     >
       {/* Hero + Gallery - Merged with interactive thumbnails */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <HeroGallery />
+        <HeroGallery treasure={treasure} />
       </ErrorBoundary>
 
       {/* Products Section - Latest arrivals */}

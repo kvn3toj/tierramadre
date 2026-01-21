@@ -2,15 +2,24 @@
  * HeroGallery Component
  *
  * Liquid Glass Design - Hero + Gallery merged
- * Clicking thumbnails changes the hero background
+ * Clicking thumbnails navigates to product page
+ * Auto-transition carousel with category filtering
  * Inspired by Apple iOS 26 design language
+ *
+ * Categories: Nuevo, Joyería, Lotes, Gemas
+ * With expandable sub-categories for Joyería, Lotes, and Gemas
+ *
+ * IMAGE SOURCE: Google Drive product folders via useTreasure hook
+ * The `imagen` field is already merged from batch thumbnails
  *
  * Designed by: Aria + Eunoia + Moksart
  */
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
+import { ExpandMore } from '@mui/icons-material';
 import {
   overlays,
   thumbnailStates,
@@ -18,101 +27,287 @@ import {
   blackAlpha,
   opacity,
 } from '../../../design-system';
+import { TreasureItem } from '../../../types';
 
 // Auto-transition interval (ms)
 const AUTO_TRANSITION_INTERVAL = 6000;
 
 // =============================================================================
-// GALLERY DATA
+// TYPES & CONSTANTS
 // =============================================================================
 
 interface GalleryImage {
   id: string;
   src: string;
   alt: string;
+  item?: number;
 }
 
-type CategoryType = 'rings' | 'gems' | 'all';
+type MainCategory = 'nuevo' | 'joyeria' | 'lotes' | 'gemas';
 
-const RINGS_IMAGES: GalleryImage[] = [
-  { id: 'ring-1', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621934/tierramadre/gallery/rings/e3qpw4wsyzcakmmsujny.jpg', alt: 'Anillo de esmeralda en oro' },
-  { id: 'ring-2', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621937/tierramadre/gallery/rings/srwbqwvnqropetlnxics.jpg', alt: 'Anillo de compromiso esmeralda' },
-  { id: 'ring-3', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621941/tierramadre/gallery/rings/wkzofxy8mm1sbhhxaomr.jpg', alt: 'Joya de esmeralda colombiana' },
-  { id: 'ring-4', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621944/tierramadre/gallery/rings/esgn24ccuncy6ioj8dxs.jpg', alt: 'Anillo elegante con esmeralda' },
-  { id: 'ring-5', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621955/tierramadre/gallery/rings/gdpu0dzc5r6la7phhpqq.jpg', alt: 'Diseño exclusivo esmeralda' },
-  { id: 'ring-6', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621959/tierramadre/gallery/rings/sl1qmwz8p6qdkhpygbl4.jpg', alt: 'Anillo artesanal esmeralda' },
+interface Subcategory {
+  id: string;
+  label: string;
+}
+
+interface Category {
+  id: MainCategory;
+  label: string;
+  subcategories?: Subcategory[];
+}
+
+// Quality mapping for filtering Lotes and Gemas
+// These are exact match patterns (case-insensitive)
+const QUALITY_FILTERS: Record<string, string[]> = {
+  'comercial': ['Comercial', 'Comercial Estándar', 'Comercial Estandar', 'Estandar', 'Estándar', 'Plata - comercial'],
+  'finas': ['Comercial Fina', 'Comercial Superior', 'Fina'],
+  'extra-finas': ['Comercial SuperFina', 'SuperFina', 'Extra Fina'],
+};
+
+// Helper to check if quality matches filter
+const matchesQuality = (itemQuality: string | undefined, filterQualities: string[]): boolean => {
+  if (!itemQuality) return false;
+  const normalizedQuality = itemQuality.trim().toLowerCase();
+  return filterQualities.some((q) => normalizedQuality === q.toLowerCase());
+};
+
+// Jewelry type mapping (based on medidas field)
+const JEWELRY_TYPES: Record<string, string[]> = {
+  'topitos': ['Topito', 'Topitos'],
+  'aretes': ['Arete', 'Aretes'],
+  'anillos': ['Anillo', 'Anillos'],
+  'pulseras': ['Pulsera', 'Pulseras'],
+  'dijes': ['Dije', 'Dijes'],
+};
+
+const ALL_CATEGORIES: Category[] = [
+  { id: 'nuevo', label: 'Nuevo' },
+  {
+    id: 'joyeria',
+    label: 'Joyería',
+    subcategories: [
+      { id: 'topitos', label: 'Topitos' },
+      { id: 'aretes', label: 'Aretes' },
+      { id: 'anillos', label: 'Anillos' },
+      { id: 'pulseras', label: 'Pulseras' },
+      { id: 'dijes', label: 'Dijes' },
+    ],
+  },
+  {
+    id: 'lotes',
+    label: 'Lotes',
+    subcategories: [
+      { id: 'comercial', label: 'Comercial' },
+      { id: 'finas', label: 'Finas' },
+      { id: 'extra-finas', label: 'Extra finas' },
+    ],
+  },
+  {
+    id: 'gemas',
+    label: 'Gemas',
+    subcategories: [
+      { id: 'comercial', label: 'Comercial' },
+      { id: 'finas', label: 'Finas' },
+      { id: 'extra-finas', label: 'Extra finas' },
+    ],
+  },
 ];
 
-const GEMS_IMAGES: GalleryImage[] = [
-  { id: 'gem-1', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621976/tierramadre/gallery/gems/koso3gazzgfiakzg867r.jpg', alt: 'Esmeraldas colombianas talladas' },
+// Fallback images when no products available
+const FALLBACK_IMAGES: GalleryImage[] = [
+  { id: 'gem-1', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621976/tierramadre/gallery/gems/koso3gazzgfiakzg867r.jpg', alt: 'Esmeraldas colombianas' },
   { id: 'gem-2', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621979/tierramadre/gallery/gems/nf72nnwamaeaydlvekjn.jpg', alt: 'Esmeralda colombiana natural' },
   { id: 'gem-3', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621983/tierramadre/gallery/gems/vlcterrk9pswpq7wjvul.jpg', alt: 'Gema esmeralda de Muzo' },
-  { id: 'gem-4', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621985/tierramadre/gallery/gems/ipbvodghinx8pvj2tkqd.jpg', alt: 'Esmeralda en bruto' },
-  { id: 'gem-5', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621993/tierramadre/gallery/gems/dts274s0djtlg927nlpx.jpg', alt: 'Esmeralda colombiana certificada' },
-  { id: 'gem-6', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621994/tierramadre/gallery/gems/nehgse3q1l7ue2brj3qe.jpg', alt: 'Cristal de esmeralda' },
 ];
 
-const ALL_IMAGES = [...GEMS_IMAGES.slice(0, 3), ...RINGS_IMAGES.slice(0, 3)];
+// =============================================================================
+// PROPS
+// =============================================================================
 
-const CATEGORIES = [
-  { id: 'all' as CategoryType, label: 'Todo' },
-  { id: 'rings' as CategoryType, label: 'Anillos' },
-  { id: 'gems' as CategoryType, label: 'Gemas' },
-];
+interface HeroGalleryProps {
+  treasure?: TreasureItem[];
+}
 
 // =============================================================================
 // COMPONENT - Hero + Gallery merged
 // =============================================================================
 
-export const HeroGallery: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState<CategoryType>('all');
-  const [heroImage, setHeroImage] = useState<GalleryImage>(GEMS_IMAGES[0]);
-  const [isPaused, setIsPaused] = useState(false);
+export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
+  const [activeCategory, setActiveCategory] = useState<MainCategory>('nuevo');
+  const [activeSubcategory, setActiveSubcategory] = useState<string | null>(null);
+  const [expandedCategory, setExpandedCategory] = useState<MainCategory | null>(null);
+  const [heroImage, setHeroImage] = useState<GalleryImage>(FALLBACK_IMAGES[0]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
-  // Get images based on active category
-  const getImages = useCallback((): GalleryImage[] => {
-    switch (activeCategory) {
-      case 'rings':
-        return RINGS_IMAGES;
-      case 'gems':
-        return GEMS_IMAGES;
-      default:
-        return ALL_IMAGES;
+  // Filter products that are available and have images from Drive
+  // The `imagen` field is populated by useTreasure from Google Drive batch thumbnails
+  const availableProducts = useMemo(() => {
+    return treasure.filter(
+      (item) => item.estado === 'DISPONIBLE' && item.imagen
+    );
+  }, [treasure]);
+
+  // Convert TreasureItem to GalleryImage
+  // Uses `imagen` which is already set from Google Drive via useTreasure
+  const itemToGalleryImage = useCallback((item: TreasureItem): GalleryImage => ({
+    id: `product-${item.item}`,
+    src: item.imagen || '',
+    alt: item.nombre,
+    item: item.item,
+  }), []);
+
+  // Get filtered products based on category/subcategory
+  const getFilteredProducts = useCallback((): TreasureItem[] => {
+    if (activeCategory === 'nuevo') {
+      // Return newest products sorted by item number (highest = newest)
+      // Item numbers are sequential, so higher numbers are more recent additions
+      return [...availableProducts].sort((a, b) => b.item - a.item);
     }
-  }, [activeCategory]);
 
-  const images = getImages();
+    if (activeCategory === 'joyeria') {
+      // Filter jewelry items
+      let filtered = availableProducts.filter((item) => item.isJewelry);
 
-  // Auto-transition effect
+      if (activeSubcategory) {
+        const types = JEWELRY_TYPES[activeSubcategory] || [];
+        filtered = filtered.filter((item) =>
+          types.some((type) => item.medidas?.toLowerCase().includes(type.toLowerCase()))
+        );
+      }
+      return filtered;
+    }
+
+    if (activeCategory === 'lotes') {
+      // Filter lotes (multiple stones)
+      let filtered = availableProducts.filter((item) => !item.isJewelry && item.cantidad > 1);
+
+      if (activeSubcategory) {
+        const qualities = QUALITY_FILTERS[activeSubcategory] || [];
+        filtered = filtered.filter((item) => matchesQuality(item.calidad, qualities));
+      }
+      return filtered;
+    }
+
+    if (activeCategory === 'gemas') {
+      // Filter single gems
+      let filtered = availableProducts.filter((item) => !item.isJewelry && item.cantidad === 1);
+
+      if (activeSubcategory) {
+        const qualities = QUALITY_FILTERS[activeSubcategory] || [];
+        filtered = filtered.filter((item) => matchesQuality(item.calidad, qualities));
+      }
+      return filtered;
+    }
+
+    return availableProducts;
+  }, [activeCategory, activeSubcategory, availableProducts]);
+
+  // Get images for current selection
+  const images = useMemo((): GalleryImage[] => {
+    const filtered = getFilteredProducts();
+    if (filtered.length === 0) {
+      return FALLBACK_IMAGES;
+    }
+    return filtered.slice(0, 12).map(itemToGalleryImage);
+  }, [getFilteredProducts, itemToGalleryImage]);
+
+  // Get available subcategories (only those with products)
+  const getAvailableSubcategories = useCallback((categoryId: MainCategory): Subcategory[] => {
+    const category = ALL_CATEGORIES.find((c) => c.id === categoryId);
+    if (!category?.subcategories) return [];
+
+    return category.subcategories.filter((sub) => {
+      if (categoryId === 'joyeria') {
+        const types = JEWELRY_TYPES[sub.id] || [];
+        return availableProducts.some((item) =>
+          item.isJewelry && types.some((type) => item.medidas?.toLowerCase().includes(type.toLowerCase()))
+        );
+      }
+
+      if (categoryId === 'lotes') {
+        const qualities = QUALITY_FILTERS[sub.id] || [];
+        return availableProducts.some((item) =>
+          !item.isJewelry && item.cantidad > 1 && matchesQuality(item.calidad, qualities)
+        );
+      }
+
+      if (categoryId === 'gemas') {
+        const qualities = QUALITY_FILTERS[sub.id] || [];
+        return availableProducts.some((item) =>
+          !item.isJewelry && item.cantidad === 1 && matchesQuality(item.calidad, qualities)
+        );
+      }
+
+      return false;
+    });
+  }, [availableProducts]);
+
+  // Auto-transition effect for hero image carousel
   useEffect(() => {
-    if (isPaused) return;
+    if (images.length === 0) return;
 
     const interval = setInterval(() => {
-      const currentImages = getImages();
-      const currentIndex = currentImages.findIndex(img => img.id === heroImage.id);
-      const nextIndex = (currentIndex + 1) % currentImages.length;
-      setHeroImage(currentImages[nextIndex]);
+      const currentIndex = images.findIndex((img) => img.id === heroImage.id);
+      const nextIndex = (currentIndex + 1) % images.length;
+      setHeroImage(images[nextIndex]);
     }, AUTO_TRANSITION_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [heroImage.id, isPaused, getImages]);
+  }, [heroImage.id, images]);
 
-  // Pause auto-transition when user interacts
-  const handleImageClick = (image: GalleryImage) => {
-    setHeroImage(image);
-    setIsPaused(true);
-    // Resume after 10 seconds of no interaction
-    setTimeout(() => setIsPaused(false), 10000);
+  // Navigate to product page when thumbnail is clicked
+  const handleThumbnailClick = (image: GalleryImage) => {
+    if (image.item) {
+      navigate(`/product/${image.item}`);
+    }
   };
 
-  // Reset hero image when category changes
-  useEffect(() => {
-    const newImages = getImages();
-    if (!newImages.find(img => img.id === heroImage.id)) {
-      setHeroImage(newImages[0]);
+  // Handle hero image click - also navigate to product
+  const handleHeroClick = () => {
+    if (heroImage.item) {
+      navigate(`/product/${heroImage.item}`);
     }
-  }, [activeCategory, getImages, heroImage.id]);
+  };
+
+  // Handle category click
+  const handleCategoryClick = (categoryId: MainCategory) => {
+    const category = ALL_CATEGORIES.find((c) => c.id === categoryId);
+    const hasSubcategories = category?.subcategories && getAvailableSubcategories(categoryId).length > 0;
+
+    if (hasSubcategories) {
+      // Toggle expansion
+      if (expandedCategory === categoryId) {
+        setExpandedCategory(null);
+        setActiveSubcategory(null);
+      } else {
+        setExpandedCategory(categoryId);
+        setActiveSubcategory(null);
+      }
+    } else {
+      setExpandedCategory(null);
+      setActiveSubcategory(null);
+    }
+    setActiveCategory(categoryId);
+  };
+
+  // Handle subcategory click
+  const handleSubcategoryClick = (subcategoryId: string) => {
+    setActiveSubcategory(activeSubcategory === subcategoryId ? null : subcategoryId);
+  };
+
+  // Reset hero image when images change
+  useEffect(() => {
+    if (images.length > 0 && !images.find((img) => img.id === heroImage.id)) {
+      setHeroImage(images[0]);
+    }
+  }, [images, heroImage.id]);
+
+  // Get available subcategories for the expanded category
+  const currentSubcategories = expandedCategory ? getAvailableSubcategories(expandedCategory) : [];
+
+  // Get product count for current selection (for display purposes)
+  const currentProductCount = getFilteredProducts().length;
 
   return (
     <Box component="section" aria-label="Galeria">
@@ -143,11 +338,13 @@ export const HeroGallery: React.FC = () => {
               component="img"
               src={heroImage.src}
               alt={heroImage.alt}
+              onClick={handleHeroClick}
               sx={{
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
                 objectPosition: 'center',
+                cursor: heroImage.item ? 'pointer' : 'default',
               }}
             />
           </motion.div>
@@ -163,7 +360,7 @@ export const HeroGallery: React.FC = () => {
           }}
         />
 
-        {/* Bottom section: Tabs + Thumbnails */}
+        {/* Bottom section: Tabs + Subcategories + Thumbnails */}
         <Box
           sx={{
             position: 'absolute',
@@ -173,12 +370,12 @@ export const HeroGallery: React.FC = () => {
             pb: 2,
           }}
         >
-          {/* Category Pill Tabs */}
+          {/* Main Category Pill Tabs */}
           <Box
             sx={{
               display: 'flex',
               justifyContent: 'center',
-              mb: 2,
+              mb: 1.5,
               px: 2,
             }}
           >
@@ -194,43 +391,82 @@ export const HeroGallery: React.FC = () => {
                 border: `1px solid ${whiteAlpha(opacity.soft)}`,
               }}
             >
-              {CATEGORIES.map((cat) => (
-                <Box
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && setActiveCategory(cat.id)}
-                  sx={{
-                    px: 2,
-                    py: 0.75,
-                    borderRadius: 2,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    ...(activeCategory === cat.id && {
-                      bgcolor: overlays.pill.active.bg,
-                    }),
-                  }}
-                >
-                  <Typography
-                    variant="body2"
+              {ALL_CATEGORIES.map((cat) => {
+                const hasAvailableSubcategories = getAvailableSubcategories(cat.id).length > 0;
+                const isExpanded = expandedCategory === cat.id;
+                const isActive = activeCategory === cat.id;
+
+                return (
+                  <Box
+                    key={cat.id}
+                    onClick={() => handleCategoryClick(cat.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCategoryClick(cat.id)}
                     sx={{
-                      color: activeCategory === cat.id ? 'white' : whiteAlpha(opacity.muted),
-                      fontWeight: activeCategory === cat.id ? 600 : 400,
-                      fontSize: '0.8rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      px: 2,
+                      py: 0.75,
+                      borderRadius: 2,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      ...(isActive && {
+                        bgcolor: overlays.pill.active.bg,
+                      }),
                     }}
                   >
-                    {cat.label}
-                  </Typography>
-                </Box>
-              ))}
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: isActive ? 'white' : whiteAlpha(opacity.muted),
+                        fontWeight: isActive ? 600 : 400,
+                        fontSize: '0.8rem',
+                      }}
+                    >
+                      {cat.label}
+                    </Typography>
+                    {/* Show count badge when active */}
+                    {isActive && currentProductCount > 0 && !expandedCategory && (
+                      <Box
+                        component="span"
+                        sx={{
+                          ml: 0.5,
+                          px: 0.75,
+                          py: 0.25,
+                          borderRadius: 1,
+                          bgcolor: whiteAlpha(0.2),
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
+                          color: 'white',
+                          minWidth: 18,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {currentProductCount}
+                      </Box>
+                    )}
+                    {hasAvailableSubcategories && (
+                      <ExpandMore
+                        sx={{
+                          fontSize: '1rem',
+                          color: isActive ? 'white' : whiteAlpha(opacity.muted),
+                          transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                          transition: 'transform 0.2s ease',
+                        }}
+                      />
+                    )}
+                  </Box>
+                );
+              })}
             </Box>
           </Box>
 
           {/* Thumbnail Carousel - Centered */}
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeCategory}
+              key={`${activeCategory}-${activeSubcategory || 'all'}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -260,7 +496,7 @@ export const HeroGallery: React.FC = () => {
                       style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
                     >
                       <Box
-                        onClick={() => handleImageClick(image)}
+                        onClick={() => handleThumbnailClick(image)}
                         sx={{
                           width: 56,
                           height: 56,
@@ -299,6 +535,80 @@ export const HeroGallery: React.FC = () => {
           </AnimatePresence>
         </Box>
       </Box>
+
+      {/* Subcategory Pills - Below Hero for cleaner visual */}
+      <AnimatePresence>
+        {expandedCategory && currentSubcategories.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 1,
+                flexWrap: 'wrap',
+                px: 2,
+                py: 1.5,
+                bgcolor: 'rgba(0,0,0,0.3)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+              }}
+            >
+              {currentSubcategories.map((sub, index) => {
+                const isSelected = activeSubcategory === sub.id;
+                return (
+                  <motion.div
+                    key={sub.id}
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.04 }}
+                  >
+                    <Box
+                      onClick={() => handleSubcategoryClick(sub.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSubcategoryClick(sub.id)}
+                      sx={{
+                        px: 2,
+                        py: 0.75,
+                        borderRadius: 2,
+                        cursor: 'pointer',
+                        bgcolor: isSelected
+                          ? 'rgba(255,255,255,0.2)'
+                          : 'rgba(255,255,255,0.08)',
+                        border: `1px solid ${isSelected ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.12)'}`,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          bgcolor: 'rgba(255,255,255,0.15)',
+                          borderColor: 'rgba(255,255,255,0.2)',
+                        },
+                        '&:active': {
+                          transform: 'scale(0.97)',
+                        },
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: isSelected ? 'white' : 'rgba(255,255,255,0.75)',
+                          fontWeight: isSelected ? 600 : 400,
+                          fontSize: '0.8rem',
+                        }}
+                      >
+                        {sub.label}
+                      </Typography>
+                    </Box>
+                  </motion.div>
+                );
+              })}
+            </Box>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Box>
   );
 };
