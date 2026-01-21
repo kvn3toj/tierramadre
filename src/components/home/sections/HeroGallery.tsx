@@ -18,8 +18,8 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Box, Typography, useTheme } from '@mui/material';
-import { ExpandMore } from '@mui/icons-material';
+import { Box, Typography, useTheme, Button } from '@mui/material';
+import { ExpandMore, ArrowForward } from '@mui/icons-material';
 import {
   overlays,
   thumbnailStates,
@@ -86,7 +86,7 @@ const ALL_CATEGORIES: Category[] = [
   { id: 'nuevo', label: 'Nuevo' },
   {
     id: 'joyeria',
-    label: 'Joyería',
+    label: 'Joyas',
     subcategories: [
       { id: 'topitos', label: 'Topitos' },
       { id: 'aretes', label: 'Aretes' },
@@ -260,11 +260,9 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
     return () => clearInterval(interval);
   }, [heroImage.id, images]);
 
-  // Navigate to product page when thumbnail is clicked
+  // Show clicked thumbnail in hero image (instead of navigating)
   const handleThumbnailClick = (image: GalleryImage) => {
-    if (image.item) {
-      navigate(`/product/${image.item}`);
-    }
+    setHeroImage(image);
   };
 
   // Handle hero image click - also navigate to product
@@ -364,6 +362,49 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
           }}
         />
 
+        {/* Action Button - Show when a product is selected */}
+        <AnimatePresence>
+          {heroImage.item && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.2 }}
+              style={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                zIndex: 10,
+              }}
+            >
+              <Button
+                variant="contained"
+                size="small"
+                endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
+                onClick={handleHeroClick}
+                sx={{
+                  bgcolor: 'rgba(255,255,255,0.95)',
+                  color: '#1a1a1a',
+                  fontWeight: 600,
+                  fontSize: '0.8rem',
+                  px: 2,
+                  py: 0.75,
+                  borderRadius: 2,
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                  textTransform: 'none',
+                  '&:hover': {
+                    bgcolor: 'white',
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
+                  },
+                }}
+              >
+                Ver producto
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Bottom section: Tabs + Subcategories + Thumbnails */}
         <Box
           sx={{
@@ -431,8 +472,8 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
                     >
                       {cat.label}
                     </Typography>
-                    {/* Show count badge when active */}
-                    {isActive && currentProductCount > 0 && !expandedCategory && (
+                    {/* Show count badge when active (except for Nuevo tab) */}
+                    {isActive && currentProductCount > 0 && !expandedCategory && cat.id !== 'nuevo' && (
                       <Box
                         component="span"
                         sx={{
@@ -502,9 +543,9 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
                       <Box
                         onClick={() => handleThumbnailClick(image)}
                         sx={{
-                          width: 56,
-                          height: 56,
-                          borderRadius: 2,
+                          width: 72,
+                          height: 72,
+                          borderRadius: 2.5,
                           overflow: 'hidden',
                           cursor: 'pointer',
                           position: 'relative',
@@ -513,9 +554,11 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
                             : '2px solid transparent',
                           opacity: isActive ? 1 : 0.7,
                           transition: 'all 0.2s ease',
+                          boxShadow: isActive ? '0 4px 12px rgba(0,0,0,0.3)' : 'none',
                           '&:hover': {
                             opacity: 1,
                             border: thumbnailStates.hover.border,
+                            transform: 'scale(1.05)',
                           },
                         }}
                       >

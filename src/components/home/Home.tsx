@@ -104,20 +104,6 @@ const Home: React.FC = () => {
         <HeroGallery treasure={treasure} />
       </ErrorBoundary>
 
-      {/* Products Section - Latest arrivals */}
-      {/* Show skeleton while loading, then show products if found */}
-      {(isLoadingNewProducts || newProducts.length > 0) && (
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
-          <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.products} />}>
-            {isLoadingNewProducts ? (
-              <SectionSkeleton height={SKELETON_HEIGHTS.products} />
-            ) : (
-              <ProductsSection products={newProducts} />
-            )}
-          </Suspense>
-        </ErrorBoundary>
-      )}
-
       {/* Oracle - Animated random quote */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <OracleSection />
@@ -154,6 +140,22 @@ const Home: React.FC = () => {
             </Suspense>
           </ErrorBoundary>
         </Box>
+
+        {/* Products Section - Latest arrivals (beside chart section) */}
+        {/* Show skeleton while loading, then show products if found */}
+        {(isLoadingNewProducts || newProducts.length > 0) && (
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.products} />}>
+                {isLoadingNewProducts ? (
+                  <SectionSkeleton height={SKELETON_HEIGHTS.products} />
+                ) : (
+                  <ProductsSection products={newProducts} />
+                )}
+              </Suspense>
+            </ErrorBoundary>
+          </Box>
+        )}
 
         {/* Footer - Social links and contact */}
         <Box sx={{ position: 'relative', zIndex: 1 }}>
