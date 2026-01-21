@@ -262,7 +262,7 @@ function GridCard({
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-start', // Pack content at top (no empty space when prices hidden)
           minHeight: 0,
         }}
       >

@@ -19,6 +19,7 @@ import { Grid } from 'react-window';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import { TreasureItem } from '../../types';
 import { vhCalc } from '../../hooks/useViewportHeight';
+import { usePriceShare } from '../../contexts/PriceShareContext';
 
 interface VirtualGridProps {
   items: TreasureItem[];
@@ -150,6 +151,7 @@ export default function VirtualGrid({
   onScrollDirectionChange,
 }: VirtualGridProps) {
   const theme = useTheme();
+  const { shouldShowPrices } = usePriceShare();
 
   // Track viewport width for dynamic height calculation
   const [viewportWidth, setViewportWidth] = useState(
@@ -209,13 +211,15 @@ export default function VirtualGrid({
     // - Header row (color dot + quality chip): ~20px
     // - Name (2 lines @ 0.85rem × 1.3 lineHeight): ~36px
     // - Specs: ~16px
-    // - Price: ~18px
-    // Total: ~114px (use 100 mobile, 110 tablet/desktop for breathing room)
+    // - Price: ~18px (only when visible)
+    // Total: ~114px with price, ~96px without (use reduced values for breathing room)
     // 4 columns = narrower cards = more wrapping = need full height
-    const contentHeight = isXs ? 100 : isSm ? 100 : isMd ? 108 : 114;
+    const priceHeight = shouldShowPrices ? 18 : 0;
+    const baseHeight = isXs ? 82 : isSm ? 82 : isMd ? 90 : 96;
+    const contentHeight = baseHeight + priceHeight;
 
     return imageHeight + contentHeight;
-  }, [viewportWidth, columnCount, isXs, isSm, isMd]);
+  }, [viewportWidth, columnCount, isXs, isSm, isMd, shouldShowPrices]);
 
   // Gap based on device - larger gaps for bigger screens
   const gap = isXs ? MOBILE_GAP : isSm ? MOBILE_GAP : isMd ? TABLET_GAP : DESKTOP_GAP;
