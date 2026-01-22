@@ -6,14 +6,7 @@
  * - useTreasureMedia: Legacy and gallery media management (localStorage)
  * - useBatchThumbnails: Grid thumbnails from Google Drive product folders (PRIMARY IMAGE SOURCE)
  *
- * IMAGE SOURCE PRIORITY (highest to lowest):
- * 1. Gallery (first item) - Manual gallery uploads from localStorage
- * 2. Legacy media - Legacy localStorage entries
- * 3. Batch thumbnails - First image from Google Drive product folders (PRIMARY)
- * 4. Sheets imageUrl - Fallback from Google Sheets column K (DEPRECATED)
- * 5. Original imagen - Static data fallback
- *
- * PRIMARY IMAGE SOURCE: Google Drive product folders
+ * IMAGE SOURCE: Google Drive `products/` folder
  * Folder naming convention: "{item} - {name}/" (e.g., "32 - Venus/")
  * The first image (alphabetically) in each folder is used as the thumbnail.
  *
@@ -45,27 +38,6 @@ function extractDriveFileId(url: string): string | null {
   }
 
   return null;
-}
-
-/**
- * Check if a string looks like a valid image URL
- * Filters out text content accidentally placed in image URL fields
- */
-function isValidImageUrl(url: string | undefined): boolean {
-  if (!url || typeof url !== 'string') return false;
-  const trimmed = url.trim();
-  if (trimmed.length === 0) return false;
-
-  // Valid patterns for image URLs
-  return (
-    trimmed.startsWith('http://') ||
-    trimmed.startsWith('https://') ||
-    trimmed.startsWith('/api/') ||
-    trimmed.startsWith('data:image/') ||
-    trimmed.includes('cloudinary.com') ||
-    trimmed.includes('drive.google.com') ||
-    trimmed.includes('googleusercontent.com')
-  );
 }
 
 /**
@@ -134,13 +106,9 @@ export function useTreasure() {
       // Count gallery items (includes legacy media if no gallery)
       const galleryCount = gallery.length || (itemMedia ? 1 : 0);
 
-      // Image Priority: gallery → legacy → batch thumbnail (PRIMARY) → Sheets imageUrl (fallback) → imagen
-      // Batch thumbnails from Google Drive product folders are the PRIMARY source for most products
+      // Image Source: Google Drive `products/` folder via batch thumbnails
       // Convert any Google Drive URLs to proxy URLs for reliable loading
-      // Validate fallback URLs to filter out text accidentally placed in image fields (e.g., "Vendido en primicia")
-      const validatedImageUrl = isValidImageUrl(item.imageUrl) ? item.imageUrl : undefined;
-      const validatedImagen = isValidImageUrl(item.imagen) ? item.imagen : undefined;
-      const rawImageUrl = mainMedia?.url || itemMedia?.url || batchThumb?.url || validatedImageUrl || validatedImagen;
+      const rawImageUrl = mainMedia?.url || itemMedia?.url || batchThumb?.url;
       const rawThumbnailUrl = mainMedia?.thumbnailUrl || itemMedia?.thumbnailUrl || item.thumbnailUrl;
 
       // Determine media type: check if batch thumbnail is from a video-only product

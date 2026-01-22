@@ -53,7 +53,7 @@ function parsePeso(peso) {
  * H = Talla (7)
  * I = Medidas (8)
  * J = Medidas (9) - valores
- * K = Imagen (10) - DEPRECATED, primary images from Google Drive
+ * K = Imagen (10) - unused, images from Google Drive products/ folder
  * L = Precio COP (11)
  * M = UBICACIÓN (12)
  * N = ASESOR (13)

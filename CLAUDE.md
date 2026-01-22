@@ -1,147 +1,257 @@
 # Tierra Madre Studio
 
 ## Project Overview
-Internal Advertising Agency Tool for Colombian Emeralds - "Esencia y Poder"
+Colombian Emeralds Catalog & Sales Platform - "Esencia y Poder"
 
-**Purpose**: Create professional marketing materials for Tierra Madre's Colombian emerald collection, including name generation, catalog creation, and Instagram planning.
+**Purpose**: Internal tool for Tierra Madre's Colombian emerald business - product catalog, quotations, analytics, and ambassador management.
 
 ## Tech Stack
-- **Frontend**: React 18 + TypeScript
-- **Build Tool**: Vite 5
+- **Frontend**: React 18.3 + TypeScript 5.6
+- **Build Tool**: Vite 5.4
 - **UI Framework**: Material-UI v6
+- **Routing**: React Router 7.9
+- **Animations**: Framer Motion 12
 - **PDF Generation**: jsPDF + html2canvas
-- **Storage**: Google Drive (media), LocalStorage (app state)
-- **PWA**: vite-plugin-pwa
-- **AI Integration**: Groq API (GROQ_API_KEY in .env)
+- **Storage**: Google Drive (media), Google Sheets (data), LocalStorage (cache)
+- **AI Integration**: Groq API
+- **Email**: Resend
+- **Deployment**: Vercel (serverless)
 
 ## Project Structure
 ```
 src/
-├── components/     # React components
-├── data/          # Static data (emerald names, etc.)
-├── hooks/         # Custom React hooks
-├── types/         # TypeScript interfaces
-├── utils/         # Utility functions
-├── App.tsx        # Main application
-├── main.tsx       # Entry point
-└── theme.ts       # MUI theme configuration
+├── components/       # 27 feature modules
+├── contexts/         # 8 context providers
+├── hooks/           # 48 custom hooks
+├── pages/           # 14 page components
+├── data/            # Static data files
+├── design-system/   # MUI theme tokens
+├── types/           # TypeScript interfaces
+├── utils/           # Utility modules
+├── locales/         # i18n (ES/EN)
+└── assets/          # Static assets
+
+api/                 # 23 Vercel serverless functions
+├── _lib/            # Shared API utilities
+└── [endpoint].js    # API endpoints
 ```
 
 ## Commands
 ```bash
-npm run dev      # Start development server
-npm run build    # Build for production (tsc + vite)
-npm run preview  # Preview production build
+npm run dev           # Development server (localhost:3000)
+npm run dev:api       # Dev + Vercel Functions locally
+npm run build         # Production build (auto-updates version)
+npm run preview       # Preview production build
 ```
 
 ## Key Features
-1. **AI-Powered Name Generator**: Smart suggestions from 80+ curated names
-2. **Google Drive Media Storage**: All product photos and videos stored in organized Drive folders
-3. **Product Gallery**: Multiple images per product with automatic retry on load failures
-4. **PDF Catalog Export**: Professional catalogs with jsPDF
-5. **Instagram Planner**: Visual 3x3 grid preview
-6. **AI Slide Generator**: Create presentations with Groq AI
+
+### Product Catalog (Treasure Browser)
+- Browse emeralds from Google Sheets inventory
+- Filter by price, weight, color, quality
+- Grid/List views with progressive image loading
+- Product detail with gallery and analytics
+
+### Quotations (Cotizaciones)
+- Create professional quotations with product images
+- Save to Google Drive + Sheets
+- PDF export
+- Provider quotation management
+
+### Ambassadors (Asesores)
+- Profile pages with agent info
+- Product recommendations
+- Guest invitation system
+
+### Analytics Dashboard
+- Product view tracking
+- User activity feed
+- Quotation analytics
+- Health monitoring
+
+### Media Management
+- Upload to Google Drive
+- Batch thumbnail generation
+- Image proxy with auto-retry
+- Video GIF preview generation
+
+## API Endpoints (23)
+
+**Core Data:**
+- `get-treasure-sheets` - Product inventory
+- `get-batch-thumbnails` - Product thumbnails
+- `get-asesores` - Ambassador list
+- `get-newest-products` - New products
+
+**Media:**
+- `serve-drive-image` - Proxy image delivery
+- `get-drive-images` - Product media list
+- `media-upload` - Upload to Drive
+- `fast-upload` - Fast upload with GIF generation
+- `cloudinary-upload` - Image processing for manual uploads only
+
+**Quotations:**
+- `cotizacion-save` - Save quotations
+- `cotizacion-reports` - Client validation reports
+- `provider-quotations` - Provider CRUD
+- `quotation-requests` - Admin requests
+
+**Users & Analytics:**
+- `validate` - User validation
+- `invitations` - Guest invitations
+- `user-prefs` - User preferences
+- `product-views` - View tracking
+- `product-requests` - Asesor requests
+- `feedback` - Feedback management
+
+**System:**
+- `health` - Health check
+- `send-email` - Email notifications
+- `drive-diagnostics` - Drive troubleshooting
+- `drive-cleanup` - Folder cleanup
+
+## Environment Variables
+
+**Frontend (.env):**
+```
+VITE_GOOGLE_CLIENT_ID=xxx
+VITE_GROQ_API_KEY=xxx
+```
+
+**Backend (Vercel):**
+```
+GOOGLE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}
+GOOGLE_OAUTH_CLIENT_ID=xxx
+GOOGLE_OAUTH_CLIENT_SECRET=xxx
+GOOGLE_OAUTH_REFRESH_TOKEN=xxx
+GOOGLE_SHARED_DRIVE_ID=xxx
+FEEDBACK_SPREADSHEET_ID=xxx
+RESEND_API_KEY=re_xxx
+ADMIN_EMAILS=admin1@email.com,admin2@email.com
+EMAIL_FROM=Tierra Madre <noti@domain.com>
+APP_URL=https://tierra-madre-studio.vercel.app
+```
 
 ## Development Guidelines
 
-### Material-UI v6 Notes
+### Material-UI v6
 - Use `ListItemButton` instead of `ListItem button`
-- Use `alpha()` function from `@mui/material/styles` for transparency
-- Grid uses new API (no `item` prop needed)
-
-### Environment Variables
-Required in `.env`:
-```
-VITE_GROQ_API_KEY=your_groq_api_key
-```
-
-For email notifications (Vercel environment variables):
-```
-RESEND_API_KEY=re_xxxxxxxxxxxx          # Resend API key
-ADMIN_EMAILS=admin1@email.com,admin2@email.com  # Comma-separated admin emails
-EMAIL_FROM=Tierra Madre <noti@domain.com>  # Optional: custom sender
-APP_URL=https://tierra-madre-studio.vercel.app  # Optional: override app URL
-```
+- Use `alpha()` from `@mui/material/styles`
+- Grid uses new API (no `item` prop)
 
 ### Port Management
-Always clean ports before running dev server if conflicts occur.
+Clean ports before dev server if conflicts occur.
 
 ## Vercel Deployment
 
-**IMPORTANT**: This project deploys ONLY to `tierra-madre-studio` on Vercel.
+**Project**: `tierra-madre-studio`
+**URL**: https://tierra-madre-studio.vercel.app
+**Auto-deploy**: Push to `main` branch
 
 ### Rules
 - **NEVER** create new Vercel projects
-- **NEVER** run `vercel` without specifying the project
-- Deployments are automatic on push to `main` branch
-- The project is linked via `.vercel/project.json`
+- **NEVER** run `vercel` without project link
+- Deployments are automatic on push to `main`
 
-### Project Details
-- **Project Name**: `tierra-madre-studio`
-- **Production URL**: https://tierra-madre-studio.vercel.app
-- **Organization**: kvn3tojgames
-
-### Manual Deploy (if needed)
-```bash
-vercel --prod  # Uses existing project link
-```
-
-### Safari Cache Busting (Required on Deploy)
-Before each deployment, update the `APP_VERSION` in `index.html`:
+### Safari Cache Busting
+`npm run build` auto-updates `APP_VERSION` in `index.html`:
 ```javascript
-var APP_VERSION = 'YYYY.MM.DD.N';  // e.g., 2026.01.01.1
+var APP_VERSION = 'YYYY.MM.DD.N';
 ```
-This forces Safari to refresh its aggressive cache on version mismatch.
 
 ### Git Commit Rules
-**IMPORTANT**: Always include ALL modified files in every commit to avoid multiple deployments:
-1. Run `npm run build` before committing (this auto-updates version files)
-2. Run `git status` and include ALL modified files in the commit, not just files changed in the current chat
-3. Always include these version files:
-   - `index.html` (contains APP_VERSION)
-   - `public/version.json` (contains version metadata)
-4. This ensures one commit = one Vercel deployment
+1. Run `npm run build` before committing
+2. Include ALL modified files (check `git status`)
+3. Always include version files: `index.html`, `public/version.json`
 
 ## Media Storage Architecture
 
-### Primary Image Source: Google Drive Product Folders
-Product images are sourced from **Google Drive product folders** (NOT from Google Sheets columns).
-
-Folder naming convention: `{item} - {name}/` (e.g., `32 - Venus/`)
+### Image Source: Google Drive `products/` folder
+All product media stored in tm-studio Drive:
 ```
 products/
-  ├── 32 - Venus/
-  │   ├── hero.jpg        <- First image used as thumbnail
-  │   ├── detail-1.jpg
-  │   └── video.mp4
-  ├── 45 - Esperanza/
-  │   └── hero.jpg
-  ...
+├── 32 - Venus/
+│   ├── hero.jpg     <- First image = thumbnail
+│   ├── detail-1.jpg
+│   └── video.mp4
+├── 45 - Esperanza/
+│   └── hero.jpg
 ```
 
-### Image Priority Order (in `useTreasure.ts`)
-1. **Gallery** - Manual gallery uploads (localStorage)
-2. **Legacy media** - localStorage legacy entries
-3. **Batch thumbnails** - First image from Google Drive product folders (PRIMARY)
-4. **Sheets imageUrl** - Fallback from Google Sheets column K (DEPRECATED)
-5. **Original imagen** - Static data fallback
-
-### How It Works
-- `/api/get-batch-thumbnails` scans Drive `products/` folder
+**How it works:**
+- `get-batch-thumbnails` API scans Drive `products/` folder
 - Extracts item number from folder name (e.g., `32` from `32 - Venus`)
-- Returns first image from each folder as the product thumbnail
+- First image (alphabetically) becomes the product thumbnail
 - Images served via `/api/serve-drive-image?fileId={id}` proxy
 
 ### Image Loading with Auto-Retry
-Images served from Google Drive proxy API with automatic retry logic:
 - Retries failed images up to 3 times
-- Exponential backoff (1s, 2s, 4s delays)
+- Exponential backoff (1s, 2s, 4s)
 - Cache-busting on retries
-- Logging for debugging
 
-### Legacy Support
-- **Cloudinary URLs**: Maintained for backward compatibility with legacy image URLs
-- **Sheets imageUrl column**: Kept as fallback but NOT the primary source
+## Anti-Blinking Best Practices (CRITICAL)
+
+When working with images, follow these rules to prevent flickering:
+
+**1. Always use synchronous cache loading:**
+```typescript
+// ✅ CORRECT - Initialize state synchronously
+const [data, setData] = useState(() => {
+  const cached = localStorage.getItem('key');
+  return cached ? JSON.parse(cached) : defaultValue;
+});
+
+// ❌ WRONG - Async loading causes re-render blink
+useEffect(() => {
+  const cached = localStorage.getItem('key');
+  if (cached) setData(JSON.parse(cached));
+}, []);
+```
+
+**2. Reserve image space with aspect-ratio:**
+```tsx
+<Box sx={{ aspectRatio: '1/1', width: '100%', overflow: 'hidden' }}>
+  <img style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+</Box>
+```
+
+**3. Use unique instance keys (prevent DOM reuse):**
+```tsx
+const instanceId = useId();
+<img key={`img-${instanceId}-${src}`} src={src} />
+```
+
+**4. Preload images before displaying galleries:**
+```typescript
+useEffect(() => {
+  mediaItems.forEach(item => {
+    const img = new Image();
+    img.src = item.url;
+  });
+}, [mediaItems]);
+```
+
+**5. Avoid complex animations** - prefer instant swaps over fades
+
+**6. For videos, use iOS Safari hack:**
+```tsx
+<video src={`${url}#t=0.001`} poster={posterUrl} preload="metadata" />
+```
+
+**Reference implementations:**
+- `useBatchThumbnails.ts` - Synchronous cache loading
+- `ProgressiveImage.tsx` - Retry logic, unique keys, LQIP
+- `MediaGallery.tsx` - Image preloading
+
+## Context Providers (8)
+1. **AuthContext** - Authentication & roles
+2. **GoogleAuthContext** - Google OAuth
+3. **ThemeContext** - Light/dark theme
+4. **LanguageContext** - i18n (ES/EN)
+5. **PriceShareContext** - Price visibility
+6. **TrackingContext** - Analytics events
+7. **LiquidGlassContext** - Visual effects
+8. **ScreenProtectionContext** - Screenshot detection
 
 ## Part of CoomUnity Universe
 Built with the CoomUnity agent ecosystem:
@@ -149,4 +259,4 @@ Built with the CoomUnity agent ecosystem:
 - **KIRA**: Narrative design and copywriting
 
 ---
-Made with emerald-green love in Colombia.
+Made with emerald-green love in Colombia 💚
