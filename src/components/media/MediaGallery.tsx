@@ -65,12 +65,20 @@ export default function MediaGallery({
   useEffect(() => {
     media.forEach((item) => {
       if (item.type === 'image' && item.url) {
+        // Add size=medium parameter for faster preloading (800px instead of original)
+        const optimizedUrl = item.url.includes('serve-drive-image')
+          ? `${item.url}${item.url.includes('?') ? '&' : '?'}size=medium`
+          : item.url;
+
         const img = new Image();
-        img.src = item.url;
+        img.src = optimizedUrl;
+        // Silently handle preload errors to prevent cascade failures
+        img.onerror = () => console.warn('Gallery preload failed:', optimizedUrl);
       } else if (item.type === 'video' && item.thumbnailUrl) {
         // Preload video poster for smoother transition
         const img = new Image();
         img.src = item.thumbnailUrl;
+        img.onerror = () => console.warn('Video poster preload failed:', item.thumbnailUrl);
       }
     });
   }, [media]);

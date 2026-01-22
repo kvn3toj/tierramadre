@@ -4,7 +4,7 @@
  * Uses Intersection Observer for viewport-aware loading.
  */
 import { useState, useEffect, useMemo, useCallback, useId } from 'react';
-import { Box, Skeleton, CircularProgress } from '@mui/material';
+import { Box, Skeleton } from '@mui/material';
 import { useInView } from 'react-intersection-observer';
 import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 // Logo placeholder for products without images - use Vite asset import
@@ -22,9 +22,9 @@ import ImageWatermark from './ImageWatermark';
 
 const log = createLogger('ProgressiveImage');
 
-// Retry configuration for failed image loads
-const MAX_RETRY_ATTEMPTS = 3;
-const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff in ms
+// Retry configuration for failed image loads (reduced to minimize blinking)
+const MAX_RETRY_ATTEMPTS = 2; // Reduced from 3 to 2 for faster failure
+const RETRY_DELAYS = [1000, 3000]; // Reduced from [1000, 2000, 4000] for faster recovery
 
 interface ProgressiveImageProps {
   src: string | undefined;
@@ -67,7 +67,6 @@ export default function ProgressiveImage({
   const [error, setError] = useState(false);
   const [lqipLoaded, setLqipLoaded] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [isRetrying, setIsRetrying] = useState(false);
   const [imageKey, setImageKey] = useState(0); // Force re-render on retry
 
   const { ref, inView } = useInView({
@@ -114,7 +113,6 @@ export default function ProgressiveImage({
     if (currentRetry >= MAX_RETRY_ATTEMPTS) {
       log.error('Image load failed after max retries', { src: optimizedSrc });
       setError(true);
-      setIsRetrying(false);
       return;
     }
 
@@ -124,11 +122,9 @@ export default function ProgressiveImage({
       delay: `${delay}ms`
     });
 
-    setIsRetrying(true);
     setTimeout(() => {
       setRetryCount(currentRetry + 1);
       setImageKey(prev => prev + 1);
-      setIsRetrying(false);
     }, delay);
   }, [optimizedSrc]);
 
@@ -138,7 +134,6 @@ export default function ProgressiveImage({
     setError(false);
     setLqipLoaded(false);
     setRetryCount(0);
-    setIsRetrying(false);
     setImageKey(0);
   }, [src]);
 
@@ -253,7 +248,7 @@ export default function ProgressiveImage({
         />
       )}
 
-      {/* Skeleton loading state (fallback when no LQIP, skip for eco mode) */}
+      {/* Skeleton loading state (remains visible during retries to prevent blinking) */}
       {!loaded && !error && !lqipLoaded && quality !== 'eco' && (
         <Skeleton
           variant="rectangular"
@@ -269,23 +264,7 @@ export default function ProgressiveImage({
         />
       )}
 
-      {/* Retry loading indicator */}
-      {isRetrying && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 10,
-          }}
-        >
-          <CircularProgress
-            size={24}
-            sx={{ color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary }}
-          />
-        </Box>
-      )}
+      {/* Retry loading indicator - REMOVED to prevent blinking, skeleton stays visible instead */}
 
       {/* Actual image with fade-in effect */}
       {shouldLoad && !error && (

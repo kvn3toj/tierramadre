@@ -67,6 +67,18 @@ function generateETag(fileId, size, mimeType) {
   return `"${hash}"`;
 }
 
+/**
+ * Helper to add timeout to promises (prevents 504 Gateway Timeout)
+ */
+function withTimeout(promise, timeoutMs, operation) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`${operation} timeout after ${timeoutMs}ms`)), timeoutMs)
+    ),
+  ]);
+}
+
 export default async function handler(req, res) {
   if (initApi(req, res, { methods: ['GET', 'HEAD', 'OPTIONS'] })) return;
 
@@ -86,12 +98,16 @@ export default async function handler(req, res) {
 
     const drive = await getOAuthDriveClient();
 
-    // Get file metadata first (needed for all request types)
-    const metadataResponse = await drive.files.get({
-      fileId,
-      fields: 'id,name,mimeType,size',
-      supportsAllDrives: true,
-    });
+    // Get file metadata first (with timeout to prevent 504)
+    const metadataResponse = await withTimeout(
+      drive.files.get({
+        fileId,
+        fields: 'id,name,mimeType,size',
+        supportsAllDrives: true,
+      }),
+      8000,
+      'Metadata fetch'
+    );
 
     const { mimeType, name, size } = metadataResponse.data;
     const etag = generateETag(fileId, size, mimeType);
@@ -107,18 +123,78 @@ export default async function handler(req, res) {
       return res.status(304).end();
     }
 
+    // HEIC Fast Path: Use Drive thumbnail immediately (skip expensive download + conversion)
+    if (UNSUPPORTED_BROWSER_FORMATS.includes(mimeType) && thumbnail !== 'true') {
+      console.log(`HEIC Fast Path for ${mimeType}: ${name}`);
+      try {
+        const thumbResponse = await withTimeout(
+          drive.files.get({
+            fileId,
+            fields: 'thumbnailLink',
+            supportsAllDrives: true,
+          }),
+          5000,
+          'HEIC thumbnail fetch'
+        );
+
+        if (thumbResponse.data.thumbnailLink) {
+          const thumbSize = targetWidth || 1600;
+          const thumbnailUrl = thumbResponse.data.thumbnailLink.replace(/=s\d+/, `=s${thumbSize}`);
+
+          const thumbFetch = await withTimeout(
+            fetch(thumbnailUrl),
+            8000,
+            'HEIC thumbnail download'
+          );
+
+          if (thumbFetch.ok) {
+            const thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
+
+            res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Content-Length', thumbBuffer.length);
+            res.setHeader('Cache-Control', imageCache);
+            res.setHeader('ETag', `"heic-fast-${fileId}-${sizeParam}"`);
+            res.setHeader('Vary', 'Accept-Encoding');
+            res.setHeader('Accept-Ranges', 'bytes');
+            res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(name.replace(/\.[^.]+$/, '.jpg'))}"`);
+            res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
+            res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+            res.setHeader('Timing-Allow-Origin', '*');
+            res.setHeader('CDN-Cache-Control', 'public, max-age=604800');
+
+            if (req.method === 'HEAD') {
+              return res.status(200).end();
+            }
+
+            return res.status(200).send(thumbBuffer);
+          }
+        }
+      } catch (heicError) {
+        console.warn('HEIC fast path failed, falling through:', heicError.message);
+        // Fall through to regular flow
+      }
+    }
+
     // For thumbnail requests (videos), fetch and proxy the thumbnail
     if (thumbnail === 'true') {
-      const thumbResponse = await drive.files.get({
-        fileId,
-        fields: 'thumbnailLink',
-        supportsAllDrives: true,
-      });
+      const thumbResponse = await withTimeout(
+        drive.files.get({
+          fileId,
+          fields: 'thumbnailLink',
+          supportsAllDrives: true,
+        }),
+        5000,
+        'Video thumbnail metadata'
+      );
 
       if (thumbResponse.data.thumbnailLink) {
         const thumbnailUrl = thumbResponse.data.thumbnailLink.replace(/=s\d+/, '=s800');
         try {
-          const thumbFetch = await fetch(thumbnailUrl);
+          const thumbFetch = await withTimeout(
+            fetch(thumbnailUrl),
+            8000,
+            'Video thumbnail download'
+          );
 
           if (thumbFetch.ok) {
             const thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
@@ -194,10 +270,14 @@ export default async function handler(req, res) {
       return res.status(200).end();
     }
 
-    // Download the file for GET requests
-    const response = await drive.files.get(
-      { fileId, alt: 'media', supportsAllDrives: true },
-      { responseType: 'arraybuffer' }
+    // Download the file for GET requests (with timeout to prevent 504)
+    const response = await withTimeout(
+      drive.files.get(
+        { fileId, alt: 'media', supportsAllDrives: true },
+        { responseType: 'arraybuffer' }
+      ),
+      15000,
+      'File download'
     );
 
     let buffer = Buffer.from(response.data);
@@ -205,6 +285,30 @@ export default async function handler(req, res) {
     // Resize image if size parameter provided and it's an image
     if (targetWidth && mimeType.startsWith('image/') && !mimeType.includes('svg')) {
       try {
+        // Check image dimensions first - skip Sharp if already small enough
+        const metadata = await sharp(buffer).metadata();
+        const imageWidth = metadata.width;
+
+        // Skip resize if image is already smaller than target (with 20% tolerance)
+        if (imageWidth && imageWidth <= targetWidth * 1.2) {
+          console.log(`Skipping resize for ${name}: ${imageWidth}px <= ${targetWidth * 1.2}px`);
+          // Return original buffer (already optimized)
+          res.setHeader('Content-Type', mimeType);
+          res.setHeader('Content-Length', buffer.length);
+          res.setHeader('Cache-Control', imageCache);
+          res.setHeader('ETag', `"${generateETag(fileId, buffer.length, mimeType)}-${sizeParam}"`);
+          res.setHeader('Vary', 'Accept-Encoding');
+          res.setHeader('Accept-Ranges', 'bytes');
+          res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(name)}"`);
+          res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
+          res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+          res.setHeader('Timing-Allow-Origin', '*');
+          res.setHeader('CDN-Cache-Control', 'public, max-age=604800');
+
+          return res.status(200).send(buffer);
+        }
+
+        // Proceed with resize for larger images
         const resizedBuffer = await sharp(buffer)
           .resize(targetWidth, null, {
             fit: 'inside',
