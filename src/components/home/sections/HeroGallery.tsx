@@ -83,16 +83,14 @@ const JEWELRY_TYPES: Record<string, string[]> = {
 };
 
 const ALL_CATEGORIES: Category[] = [
-  { id: 'nuevo', label: 'Nuevo' },
+  { id: 'nuevo', label: 'Estrenos' },
   {
-    id: 'joyeria',
-    label: 'Joyas',
+    id: 'gemas',
+    label: 'Gemas',
     subcategories: [
-      { id: 'topitos', label: 'Topitos' },
-      { id: 'aretes', label: 'Aretes' },
-      { id: 'anillos', label: 'Anillos' },
-      { id: 'pulseras', label: 'Pulseras' },
-      { id: 'dijes', label: 'Dijes' },
+      { id: 'comercial', label: 'Comercial' },
+      { id: 'finas', label: 'Finas' },
+      { id: 'extra-finas', label: 'Extra finas' },
     ],
   },
   {
@@ -105,12 +103,14 @@ const ALL_CATEGORIES: Category[] = [
     ],
   },
   {
-    id: 'gemas',
-    label: 'Gemas',
+    id: 'joyeria',
+    label: 'Joyas',
     subcategories: [
-      { id: 'comercial', label: 'Comercial' },
-      { id: 'finas', label: 'Finas' },
-      { id: 'extra-finas', label: 'Extra finas' },
+      { id: 'topitos', label: 'Topitos' },
+      { id: 'aretes', label: 'Aretes' },
+      { id: 'anillos', label: 'Anillos' },
+      { id: 'pulseras', label: 'Pulseras' },
+      { id: 'dijes', label: 'Dijes' },
     ],
   },
 ];
@@ -308,9 +308,6 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
   // Get available subcategories for the expanded category
   const currentSubcategories = expandedCategory ? getAvailableSubcategories(expandedCategory) : [];
 
-  // Get product count for current selection (for display purposes)
-  const currentProductCount = getFilteredProducts().length;
-
   return (
     <Box component="section" aria-label="Galeria">
       {/* Hero Image - Compact */}
@@ -380,22 +377,23 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
               <Button
                 variant="contained"
                 size="small"
-                endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
+                endIcon={<ArrowForward sx={{ fontSize: 14 }} />}
                 onClick={handleHeroClick}
                 sx={{
-                  bgcolor: 'rgba(255,255,255,0.95)',
+                  bgcolor: 'rgba(255,255,255,0.75)',
                   color: '#1a1a1a',
-                  fontWeight: 600,
-                  fontSize: '0.8rem',
-                  px: 2,
-                  py: 0.75,
-                  borderRadius: 2,
+                  fontWeight: 500,
+                  fontSize: '0.7rem',
+                  px: 1.5,
+                  py: 0.5,
+                  minHeight: 'auto',
+                  borderRadius: 1.5,
                   backdropFilter: 'blur(10px)',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                   textTransform: 'none',
                   '&:hover': {
-                    bgcolor: 'white',
-                    boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
+                    bgcolor: 'rgba(255,255,255,0.85)',
+                    boxShadow: '0 3px 12px rgba(0,0,0,0.2)',
                   },
                 }}
               >
@@ -472,26 +470,6 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
                     >
                       {cat.label}
                     </Typography>
-                    {/* Show count badge when active (except for Nuevo tab) */}
-                    {isActive && currentProductCount > 0 && !expandedCategory && cat.id !== 'nuevo' && (
-                      <Box
-                        component="span"
-                        sx={{
-                          ml: 0.5,
-                          px: 0.75,
-                          py: 0.25,
-                          borderRadius: 1,
-                          bgcolor: whiteAlpha(0.2),
-                          fontSize: '0.65rem',
-                          fontWeight: 600,
-                          color: 'white',
-                          minWidth: 18,
-                          textAlign: 'center',
-                        }}
-                      >
-                        {currentProductCount}
-                      </Box>
-                    )}
                     {hasAvailableSubcategories && (
                       <ExpandMore
                         sx={{

@@ -56,7 +56,7 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/treasure': {
     title: t.pages.treasure.title,
     mode: 'compact',
-    logoUrl: '/logo-horizontal-white.png',
+    logoUrl: '/images/logo-horizontal-white.png',
   },
   '/ambassadors': {
     title: t.pages.ambassadors.title,
@@ -66,7 +66,7 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/home': {
     title: 'Tierra Mädre',
     mode: 'compact',
-    logoUrl: '/logo-horizontal-white.png',
+    logoUrl: '/images/logo-horizontal-white.png',
   },
   '/catalog': {
     title: t.pages.catalog.title,
@@ -185,7 +185,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         mode={pageConfig.mode}
         title={pageConfig.title}
         subtitle={pageConfig.subtitle}
-        logoUrl={pageConfig.logoUrl ? (isLight ? '/logo-horizontal-dark.png' : '/logo-horizontal-white.png') : undefined}
+        logoUrl={pageConfig.logoUrl ? (isLight ? '/images/logo-horizontal-dark.png' : '/images/logo-horizontal-white.png') : undefined}
         showBackButton={pageConfig.showBackButton}
         leadingActions={pageConfig.leadingActions}
         trailingActions={pageConfig.trailingActions}
