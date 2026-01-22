@@ -1,16 +1,16 @@
 /**
- * SplashScreen - Premium breathing animation with symbol logo
- * Option A: Quick & Premium (2.5s total)
+ * SplashScreen - Premium breathing animation with symbol logo and quote
+ * Extended timing (3.5s total) to preload hero images
  * - 0-1.5s: Symbol fades in with subtle scale
- * - 1.5-2.2s: Breathing glow (1 pulse)
- * - 2.2-2.5s: Smooth fade out
+ * - 1.5-3.2s: Breathing glow (1.5 pulses) + Quote appears
+ * - 3.2-3.5s: Smooth fade out
  *
  * Respects prefers-reduced-motion for accessibility
  */
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Box, useMediaQuery } from '@mui/material';
+import { Box, Typography, useMediaQuery } from '@mui/material';
 import { brandColors } from '../../theme';
 
 interface SplashScreenProps {
@@ -22,9 +22,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
   useEffect(() => {
-    // Option A timing: 2.2s breathing then 0.3s fade out (2.5s total)
-    const fadeTimer = setTimeout(() => setFadeOut(true), 2200);
-    const completeTimer = setTimeout(() => onComplete?.(), 2500);
+    // Extended timing: 3.2s breathing then 0.3s fade out (3.5s total)
+    // Extra time allows preloading hero carousel high-quality images
+    const fadeTimer = setTimeout(() => setFadeOut(true), 3200);
+    const completeTimer = setTimeout(() => onComplete?.(), 3500);
 
     return () => {
       clearTimeout(fadeTimer);
@@ -54,12 +55,12 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         component={motion.div}
         initial={{ opacity: 0, scale: 0.9 }}
         animate={prefersReducedMotion ? { opacity: 0.5, scale: 1 } : {
-          opacity: [0, 0.5, 0.7, 0.5],
-          scale: [0.9, 1, 1.1, 1],
+          opacity: [0, 0.5, 0.7, 0.5, 0.7, 0.5],
+          scale: [0.9, 1, 1.1, 1, 1.1, 1],
         }}
         transition={{
-          duration: 2.2,
-          times: [0, 0.3, 0.7, 1],
+          duration: 3.2,
+          times: [0, 0.2, 0.45, 0.65, 0.85, 1],
           ease: 'easeInOut',
         }}
         sx={{
@@ -78,12 +79,12 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           component={motion.div}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{
-            opacity: [0, 0.4, 0.6, 0.4],
-            scale: [0.95, 1, 1.05, 1],
+            opacity: [0, 0.4, 0.6, 0.4, 0.6, 0.4],
+            scale: [0.95, 1, 1.05, 1, 1.05, 1],
           }}
           transition={{
-            duration: 2.2,
-            times: [0, 0.3, 0.7, 1],
+            duration: 3.2,
+            times: [0, 0.2, 0.45, 0.65, 0.85, 1],
             ease: 'easeInOut',
             delay: 0.15,
           }}
@@ -98,30 +99,74 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         />
       )}
 
-      {/* Symbol Logo - fade in with subtle scale - 77% of original size */}
+      {/* Logo and Quote Container */}
       <Box
-        component={motion.img}
-        src="/logo-symbol.png"
-        alt="Tierra Madre - Esmeraldas Colombianas"
-        initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.92 }}
-        animate={prefersReducedMotion ? { opacity: 1 } : {
-          opacity: [0, 1, 1, 1],
-          scale: [0.92, 1, 1.03, 1],
-        }}
-        transition={{
-          duration: 2.2,
-          times: [0, 0.5, 0.75, 1],
-          ease: [0.4, 0, 0.2, 1], // Custom ease for premium feel
-        }}
         sx={{
-          width: { xs: 'calc(42vw * 0.77)', sm: 170 },
-          maxWidth: 185,
-          height: 'auto',
-          filter: 'drop-shadow(0 0 35px rgba(80, 200, 120, 0.35))',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 2.5,
           position: 'relative',
           zIndex: 1,
         }}
-      />
+      >
+        {/* Symbol Logo - fade in with subtle scale - 77% of original size */}
+        <Box
+          component={motion.img}
+          src="/logo-symbol.png"
+          alt="Tierra Madre - Esmeraldas Colombianas"
+          initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.92 }}
+          animate={prefersReducedMotion ? { opacity: 1 } : {
+            opacity: [0, 1, 1, 1, 1, 1],
+            scale: [0.92, 1, 1.03, 1, 1.03, 1],
+          }}
+          transition={{
+            duration: 3.2,
+            times: [0, 0.35, 0.55, 0.7, 0.85, 1],
+            ease: [0.4, 0, 0.2, 1], // Custom ease for premium feel
+          }}
+          sx={{
+            width: { xs: 'calc(42vw * 0.77)', sm: 170 },
+            maxWidth: 185,
+            height: 'auto',
+            filter: 'drop-shadow(0 0 35px rgba(80, 200, 120, 0.35))',
+          }}
+        />
+
+        {/* Inspirational Quote - appears after logo */}
+        <Box
+          component={motion.div}
+          initial={{ opacity: 0, y: 10 }}
+          animate={prefersReducedMotion ? { opacity: 1, y: 0 } : {
+            opacity: [0, 0, 1],
+            y: [10, 10, 0],
+          }}
+          transition={{
+            duration: 3.2,
+            times: [0, 0.4, 1],
+            ease: 'easeOut',
+          }}
+          sx={{
+            textAlign: 'center',
+            maxWidth: { xs: 280, sm: 320 },
+            px: 2,
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'rgba(255, 255, 255, 0.85)',
+              fontSize: { xs: '0.85rem', sm: '0.9rem' },
+              fontWeight: 300,
+              lineHeight: 1.6,
+              fontStyle: 'italic',
+              letterSpacing: 0.3,
+            }}
+          >
+            "La belleza de una esmeralda radica en su autenticidad"
+          </Typography>
+        </Box>
+      </Box>
     </Box>
   );
 }

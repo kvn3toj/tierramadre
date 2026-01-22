@@ -153,13 +153,22 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
   }, [treasure]);
 
   // Convert TreasureItem to GalleryImage
-  // Uses `imagen` which is already set from Google Drive via useTreasure
-  const itemToGalleryImage = useCallback((item: TreasureItem): GalleryImage => ({
-    id: `product-${item.item}`,
-    src: item.imagen || '',
-    alt: item.nombre,
-    item: item.item,
-  }), []);
+  // Uses high-quality images (size=large) for hero display
+  const itemToGalleryImage = useCallback((item: TreasureItem): GalleryImage => {
+    let src = item.imagen || '';
+
+    // Add size=large parameter for high-quality display
+    if (src && src.includes('serve-drive-image')) {
+      src = `${src}${src.includes('?') ? '&' : '?'}size=large`;
+    }
+
+    return {
+      id: `product-${item.item}`,
+      src,
+      alt: item.nombre,
+      item: item.item,
+    };
+  }, []);
 
   // Get filtered products based on category/subcategory
   const getFilteredProducts = useCallback((): TreasureItem[] => {
@@ -304,6 +313,21 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
       setHeroImage(images[0]);
     }
   }, [images, heroImage.id]);
+
+  // Preload first 3 hero images for instant display (uses extended splash screen time)
+  useEffect(() => {
+    if (images.length === 0) return;
+
+    const imagesToPreload = images.slice(0, 3);
+    imagesToPreload.forEach((image) => {
+      if (image.src) {
+        const img = new Image();
+        img.src = image.src;
+        // Silently handle preload errors
+        img.onerror = () => console.warn('Hero preload failed:', image.src);
+      }
+    });
+  }, [images]);
 
   // Get available subcategories for the expanded category
   const currentSubcategories = expandedCategory ? getAvailableSubcategories(expandedCategory) : [];
@@ -542,7 +566,12 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
                       >
                         <Box
                           component="img"
-                          src={image.src}
+                          src={
+                            // Use small size for thumbnails (optimized for 72x72 display)
+                            image.src.includes('serve-drive-image')
+                              ? image.src.replace('size=large', 'size=small')
+                              : image.src
+                          }
                           alt={image.alt}
                           loading="lazy"
                           sx={{
