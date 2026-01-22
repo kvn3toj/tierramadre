@@ -30,6 +30,7 @@ import {
   darkTokens,
 } from '../../../design-system';
 import { TreasureItem } from '../../../types';
+import ProgressiveImage from '../../shared/ProgressiveImage';
 
 // Auto-transition interval (ms)
 const AUTO_TRANSITION_INTERVAL = 6000;
@@ -358,18 +359,22 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
             }}
           >
             <Box
-              component="img"
-              src={heroImage.src}
-              alt={heroImage.alt}
               onClick={handleHeroClick}
               sx={{
                 width: '100%',
                 height: '100%',
-                objectFit: 'cover',
-                objectPosition: 'center',
                 cursor: heroImage.item ? 'pointer' : 'default',
               }}
-            />
+            >
+              <ProgressiveImage
+                src={heroImage.src}
+                alt={heroImage.alt}
+                objectFit="cover"
+                priority
+                quality="best"
+                layout="full"
+              />
+            </Box>
           </motion.div>
         </AnimatePresence>
 
@@ -564,8 +569,7 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
                           },
                         }}
                       >
-                        <Box
-                          component="img"
+                        <ProgressiveImage
                           src={
                             // Use small size for thumbnails (optimized for 72x72 display)
                             image.src.includes('serve-drive-image')
@@ -573,12 +577,10 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
                               : image.src
                           }
                           alt={image.alt}
-                          loading="lazy"
-                          sx={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                          }}
+                          objectFit="cover"
+                          width={72}
+                          quality="eco"
+                          layout="thumbnail"
                         />
                       </Box>
                     </motion.div>
