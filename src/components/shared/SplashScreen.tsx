@@ -1,17 +1,29 @@
 /**
- * SplashScreen - Premium breathing animation with symbol logo and quote
- * Extended timing (3.5s total) to preload hero images
+ * SplashScreen - Premium breathing animation with symbol logo and random quote
+ * Extended timing (4s total) to preload hero images
  * - 0-1.5s: Symbol fades in with subtle scale
- * - 1.5-3.2s: Breathing glow (1.5 pulses) + Quote appears
- * - 3.2-3.5s: Smooth fade out
+ * - 1.5-3.7s: Breathing glow (1.5 pulses) + Random quote appears
+ * - 3.7-4.0s: Smooth fade out
  *
  * Respects prefers-reduced-motion for accessibility
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography, useMediaQuery } from '@mui/material';
 import { brandColors } from '../../theme';
+
+// Splash screen quotes - different from Oracle quotes
+const SPLASH_QUOTES = [
+  "La belleza de una esmeralda radica en su autenticidad",
+  "Cada esmeralda cuenta la historia de millones de años",
+  "El verde de Colombia brilla en cada faceta",
+  "Tesoros de la tierra, joyas del corazón",
+  "La esencia de Colombia en cada piedra",
+  "Donde la naturaleza crea obras maestras",
+  "Esmeraldas que capturan la luz del alma",
+  "El poder de la tierra en tu mano",
+];
 
 interface SplashScreenProps {
   onComplete?: () => void;
@@ -21,11 +33,17 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [fadeOut, setFadeOut] = useState(false);
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
+  // Select random quote on each splash screen display
+  const randomQuote = useMemo(() => {
+    const randomIndex = Math.floor(Math.random() * SPLASH_QUOTES.length);
+    return SPLASH_QUOTES[randomIndex];
+  }, []);
+
   useEffect(() => {
-    // Extended timing: 3.2s breathing then 0.3s fade out (3.5s total)
+    // Extended timing: 3.7s breathing then 0.3s fade out (4s total)
     // Extra time allows preloading hero carousel high-quality images
-    const fadeTimer = setTimeout(() => setFadeOut(true), 3200);
-    const completeTimer = setTimeout(() => onComplete?.(), 3500);
+    const fadeTimer = setTimeout(() => setFadeOut(true), 3700);
+    const completeTimer = setTimeout(() => onComplete?.(), 4000);
 
     return () => {
       clearTimeout(fadeTimer);
@@ -59,7 +77,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           scale: [0.9, 1, 1.1, 1, 1.1, 1],
         }}
         transition={{
-          duration: 3.2,
+          duration: 3.7,
           times: [0, 0.2, 0.45, 0.65, 0.85, 1],
           ease: 'easeInOut',
         }}
@@ -83,7 +101,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             scale: [0.95, 1, 1.05, 1, 1.05, 1],
           }}
           transition={{
-            duration: 3.2,
+            duration: 3.7,
             times: [0, 0.2, 0.45, 0.65, 0.85, 1],
             ease: 'easeInOut',
             delay: 0.15,
@@ -121,7 +139,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             scale: [0.92, 1, 1.03, 1, 1.03, 1],
           }}
           transition={{
-            duration: 3.2,
+            duration: 3.7,
             times: [0, 0.35, 0.55, 0.7, 0.85, 1],
             ease: [0.4, 0, 0.2, 1], // Custom ease for premium feel
           }}
@@ -133,7 +151,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           }}
         />
 
-        {/* Inspirational Quote - appears after logo */}
+        {/* Random Inspirational Quote - appears after logo */}
         <Box
           component={motion.div}
           initial={{ opacity: 0, y: 10 }}
@@ -142,7 +160,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             y: [10, 10, 0],
           }}
           transition={{
-            duration: 3.2,
+            duration: 3.7,
             times: [0, 0.4, 1],
             ease: 'easeOut',
           }}
@@ -163,7 +181,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               letterSpacing: 0.3,
             }}
           >
-            "La belleza de una esmeralda radica en su autenticidad"
+            "{randomQuote}"
           </Typography>
         </Box>
       </Box>
