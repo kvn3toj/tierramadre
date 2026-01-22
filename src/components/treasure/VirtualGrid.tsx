@@ -108,6 +108,7 @@ function CellRenderer({
 
   return (
     <div
+      key={`cell-${item.item}`}
       style={{
         ...style,
         // iOS HIG: 8pt grid spacing between cards

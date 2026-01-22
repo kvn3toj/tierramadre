@@ -19,6 +19,7 @@ import { treasureData as defaultTreasureData } from '../data/treasure';
 import { useSheetsTreasure } from './useSheetsTreasure';
 import { useTreasureMedia } from './useTreasureMedia';
 import { useBatchThumbnails } from './useBatchThumbnails';
+import { usePrevious } from './usePrevious';
 
 /**
  * Extract Google Drive file ID from various URL formats
@@ -125,8 +126,39 @@ export function useTreasure() {
     });
   }, [sheetsTreasure, legacyMedia, galleries, batchThumbnails]);
 
+  // Track previous treasure array for URL stability check
+  const prevTreasure = usePrevious(treasure);
+
+  // Apply URL stability check: reuse previous item objects if URLs haven't changed
+  // This prevents false-positive re-renders in memoized components like GridCard
+  const stableTreasure = useMemo((): TreasureItem[] => {
+    if (!prevTreasure || prevTreasure.length !== treasure.length) {
+      return treasure;
+    }
+
+    return treasure.map((item, index) => {
+      const prevItem = prevTreasure[index];
+
+      // Only reuse previous object if item number matches AND URLs are identical
+      if (
+        prevItem?.item === item.item &&
+        prevItem.imagen === item.imagen &&
+        prevItem.thumbnailUrl === item.thumbnailUrl &&
+        prevItem.mediaType === item.mediaType &&
+        prevItem.galleryCount === item.galleryCount
+      ) {
+        // URLs unchanged - reuse previous object reference
+        // This prevents GridCard re-render due to memo comparison
+        return prevItem;
+      }
+
+      // URL or other property changed - use new object
+      return item;
+    });
+  }, [treasure, prevTreasure]);
+
   // Legacy getter for backwards compatibility
-  const getTreasureWithMedia = (): TreasureItem[] => treasure;
+  const getTreasureWithMedia = (): TreasureItem[] => stableTreasure;
 
   return {
     // Treasure data with media merged
