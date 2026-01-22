@@ -261,60 +261,67 @@ function GridCard({
           '&:last-child': { pb: isMobile ? 1.5 : 2 },
           flex: 1,
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-start', // Pack content at top (no empty space when prices hidden)
+          flexDirection: 'row', // Horizontal layout to place price on right
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 1,
           minHeight: 0,
         }}
       >
-        {/* Name - iOS HIG Subheadline (15pt mobile, 16pt desktop) */}
-        <Typography
-          variant="body2"
-          sx={{
-            fontWeight: 600,
-            color: labelColor,
-            lineHeight: 1.3,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            fontSize: isMobile ? 15 : 16, // iOS HIG subheadline
-            letterSpacing: '-0.24px', // iOS HIG subheadline tracking
-            mb: 0.5,
-          }}
-        >
-          {displayName}
-        </Typography>
-
-        {/* Specs with color dot - iOS HIG Caption1 (12pt mobile, 13pt desktop) */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75 }}>
-          <Box
-            sx={{
-              width: isMobile ? 8 : 10, // Slightly larger for visibility
-              height: isMobile ? 8 : 10,
-              borderRadius: '50%',
-              bgcolor: colorDot,
-              flexShrink: 0,
-            }}
-          />
+        {/* Left Section: Name and Specs */}
+        <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          {/* Name - iOS HIG Subheadline (15pt mobile, 16pt desktop) */}
           <Typography
-            variant="caption"
+            variant="body2"
             sx={{
-              color: secondaryLabelColor,
-              fontSize: isMobile ? 12 : 13, // iOS HIG caption1
-              letterSpacing: 0, // iOS HIG caption1 tracking
+              fontWeight: 600,
+              color: labelColor,
+              lineHeight: 1.3,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
+              fontSize: isMobile ? 15 : 16, // iOS HIG subheadline
+              letterSpacing: '-0.24px', // iOS HIG subheadline tracking
+              mb: 0.5,
             }}
           >
-            {item.color}
-            {isLoose && typeof item.peso === 'number' && ` • ${item.peso} ct`}
-            {item.isJewelry && item.metalType && ` • ${item.metalType}`}
+            {displayName}
           </Typography>
+
+          {/* Specs with color dot - iOS HIG Caption1 (12pt mobile, 13pt desktop) */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box
+              sx={{
+                width: isMobile ? 8 : 10, // Slightly larger for visibility
+                height: isMobile ? 8 : 10,
+                borderRadius: '50%',
+                bgcolor: colorDot,
+                flexShrink: 0,
+              }}
+            />
+            <Typography
+              variant="caption"
+              sx={{
+                color: secondaryLabelColor,
+                fontSize: isMobile ? 12 : 13, // iOS HIG caption1
+                letterSpacing: 0, // iOS HIG caption1 tracking
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {item.color}
+              {isLoose && typeof item.peso === 'number' && ` • ${item.peso} ct`}
+              {item.isJewelry && item.metalType && ` • ${item.metalType}`}
+            </Typography>
+          </Box>
         </Box>
 
-        {/* Price - Compact (hidden when shouldShowPrices is false) */}
+        {/* Right Section: Price - Compact (hidden when shouldShowPrices is false) */}
         {shouldShowPrices && (
-          <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
+          <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'flex-start' }}>
+            <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
+          </Box>
         )}
       </CardContent>
     </Card>

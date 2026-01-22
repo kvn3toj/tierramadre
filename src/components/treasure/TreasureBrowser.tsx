@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useTreasure } from '../../hooks/useTreasure';
 import { useTreasureFiltering, type StatusFilter, type TypeFilter, type SortOption } from '../../hooks/useTreasureFiltering';
 import { useUrlFilterSync } from '../../hooks/useUrlFilterSync';
@@ -73,6 +74,7 @@ export default function TreasureBrowser({
   const theme = useTheme();
   const { mode } = useThemeMode();
   const { accessLevel } = useAuthContext();
+  const { shouldShowPrices } = usePriceShare();
   const isAdmin = accessLevel === 'admin';
   const isLight = mode === 'light';
   const navigate = useNavigate();
@@ -509,35 +511,37 @@ export default function TreasureBrowser({
             <FilterContent {...filterContentProps} />
             {/* View toggle, stats and keyboard shortcuts */}
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 2, pt: 2, borderTop: '1px solid', borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default }}>
-              {/* Compact Stats */}
-              <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-                <Chip
-                  size="small"
-                  icon={<Gem size={12} />}
-                  label={stats.looseStones}
-                  sx={{
-                    bgcolor: alpha(emeraldCore.primary, 0.1),
-                    color: emeraldCore.primary,
-                    fontWeight: 600,
-                    fontSize: '0.7rem',
-                    height: 24,
-                    '& .MuiChip-icon': { color: emeraldCore.primary },
-                  }}
-                />
-                <Chip
-                  size="small"
-                  icon={<Crown size={12} />}
-                  label={stats.jewelry}
-                  sx={{
-                    bgcolor: alpha(goldAccent.primary, 0.15),
-                    color: goldAccent.dark,
-                    fontWeight: 600,
-                    fontSize: '0.7rem',
-                    height: 24,
-                    '& .MuiChip-icon': { color: goldAccent.dark },
-                  }}
-                />
-              </Box>
+              {/* Compact Stats - Hidden when prices not shown */}
+              {shouldShowPrices && (
+                <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                  <Chip
+                    size="small"
+                    icon={<Gem size={12} />}
+                    label={stats.looseStones}
+                    sx={{
+                      bgcolor: alpha(emeraldCore.primary, 0.1),
+                      color: emeraldCore.primary,
+                      fontWeight: 600,
+                      fontSize: '0.7rem',
+                      height: 24,
+                      '& .MuiChip-icon': { color: emeraldCore.primary },
+                    }}
+                  />
+                  <Chip
+                    size="small"
+                    icon={<Crown size={12} />}
+                    label={stats.jewelry}
+                    sx={{
+                      bgcolor: alpha(goldAccent.primary, 0.15),
+                      color: goldAccent.dark,
+                      fontWeight: 600,
+                      fontSize: '0.7rem',
+                      height: 24,
+                      '& .MuiChip-icon': { color: goldAccent.dark },
+                    }}
+                  />
+                </Box>
+              )}
               <SavedFiltersDropdown
                 presets={savedFilters.presets}
                 onSavePreset={(name) => savedFilters.savePreset(name, {
@@ -646,8 +650,8 @@ export default function TreasureBrowser({
               />
             )}
           </Box>
-          {/* Total value (hidden in provider mode) */}
-          {!isProviderMode && (
+          {/* Total value (hidden in provider mode or when prices not shown) */}
+          {!isProviderMode && shouldShowPrices && (
             <Typography variant="body2" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
               {formatFullCurrency(filteredStats.totalValue)} total
             </Typography>
