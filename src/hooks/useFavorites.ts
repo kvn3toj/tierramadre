@@ -86,7 +86,8 @@ export function useFavorites(): UseFavoritesReturn {
   // Count of favorites
   const favoritesCount = useMemo(() => favorites.length, [favorites]);
 
-  return {
+  // Memoize return object to ensure stable reference across renders
+  return useMemo(() => ({
     favorites,
     isFavorite,
     toggleFavorite,
@@ -94,7 +95,7 @@ export function useFavorites(): UseFavoritesReturn {
     removeFavorite,
     clearFavorites,
     favoritesCount,
-  };
+  }), [favorites, isFavorite, toggleFavorite, addFavorite, removeFavorite, clearFavorites, favoritesCount]);
 }
 
 export default useFavorites;

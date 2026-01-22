@@ -3,7 +3,7 @@
  * React hook wrapper for treasure analytics.
  * Provides convenient tracking methods for components.
  */
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useMemo } from 'react';
 import { analytics, getAggregates, trackSearchHits, getSearchHits, type AnalyticsAggregates } from '../lib/analytics/treasureAnalytics';
 
 interface UseTreasureAnalyticsReturn {
@@ -101,7 +101,9 @@ export function useTreasureAnalytics(): UseTreasureAnalyticsReturn {
     analytics.trackLoadMore(currentCount, totalCount);
   }, []);
 
-  return {
+  // Memoize return object to ensure stable reference across renders
+  // This prevents dependent callbacks from recreating unnecessarily
+  return useMemo(() => ({
     trackItemView,
     trackFavorite,
     trackCompareAdd,
@@ -117,7 +119,21 @@ export function useTreasureAnalytics(): UseTreasureAnalyticsReturn {
     trackLoadMore,
     getAggregates,
     getSearchHits,
-  };
+  }), [
+    trackItemView,
+    trackFavorite,
+    trackCompareAdd,
+    trackCompareRemove,
+    trackComparisonOpen,
+    trackFilterApply,
+    trackFilterClear,
+    trackPresetSave,
+    trackPresetApply,
+    trackSearch,
+    trackSearchHitsCallback,
+    trackViewModeChange,
+    trackLoadMore,
+  ]);
 }
 
 export default useTreasureAnalytics;

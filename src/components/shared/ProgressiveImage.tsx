@@ -68,6 +68,7 @@ export default function ProgressiveImage({
   const [lqipLoaded, setLqipLoaded] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [imageKey, setImageKey] = useState(0); // Force re-render on retry
+  const [fullyLoaded, setFullyLoaded] = useState(false); // Image 100% downloaded
 
   const { ref, inView } = useInView({
     triggerOnce: true,
@@ -133,6 +134,7 @@ export default function ProgressiveImage({
     setLoaded(false);
     setError(false);
     setLqipLoaded(false);
+    setFullyLoaded(false); // Reset fully loaded state
     setRetryCount(0);
     setImageKey(0);
   }, [src]);
@@ -226,8 +228,8 @@ export default function ProgressiveImage({
 
   return (
     <Box ref={ref} sx={containerStyles}>
-      {/* LQIP blur-up placeholder */}
-      {enableLQIP && lqipSrc && lqipLoaded && !loaded && (
+      {/* LQIP blur-up placeholder (visible until image fully loaded) */}
+      {enableLQIP && lqipSrc && lqipLoaded && !fullyLoaded && (
         <Box
           component="img"
           src={lqipSrc}
@@ -248,8 +250,8 @@ export default function ProgressiveImage({
         />
       )}
 
-      {/* Skeleton loading state (remains visible during retries to prevent blinking) */}
-      {!loaded && !error && !lqipLoaded && quality !== 'eco' && (
+      {/* Skeleton loading state (remains visible until image fully loaded) */}
+      {!fullyLoaded && !error && !lqipLoaded && (
         <Skeleton
           variant="rectangular"
           width="100%"
@@ -285,6 +287,7 @@ export default function ProgressiveImage({
           onLoad={() => {
             log.info('Image render success', { src: optimizedSrc, attempts: retryCount + 1 });
             setLoaded(true);
+            setFullyLoaded(true); // Mark as fully loaded to display
             setError(false);
             setRetryCount(0);
           }}
@@ -296,9 +299,10 @@ export default function ProgressiveImage({
             width: '100%',
             height: '100%',
             objectFit,
-            // For eco mode, show immediately; for others, fade in after JS preload
-            opacity: quality === 'eco' || loaded ? 1 : 0,
-            transition: quality === 'eco' ? 'none' : 'opacity 0.3s ease-in-out',
+            // Hide image until 100% loaded to prevent partial render/progressive JPEG blinking
+            // USER REQUIREMENT: Don't show images until fully downloaded
+            opacity: fullyLoaded ? 1 : 0,
+            transition: 'opacity 0.3s ease-in-out',
           }}
         />
       )}

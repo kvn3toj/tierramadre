@@ -100,6 +100,13 @@ export function buildMimeTypeQuery(mimeTypes) {
 
 /**
  * Get first image from a folder (or video thumbnail if no images)
+ *
+ * IMPORTANT: Uses orderBy='name' for consistent file selection across API calls.
+ * This ensures the same file is returned as "first image" even when folder contents change.
+ *
+ * Note: 'name' uses alphabetical sort (1, 12, 2, 22). For natural sort (1, 2, 12, 22),
+ * use 'name_natural'. See: https://developers.google.com/drive/api/v3/reference/files/list
+ *
  * @param {object} drive - Google Drive client
  * @param {string} folderId - Folder ID
  * @returns {Promise<{file: object, isVideo: boolean}|null>}
@@ -108,10 +115,11 @@ export async function getFirstImageOrVideoThumbnail(drive, folderId) {
   const imageMimeTypeQuery = buildMimeTypeQuery(IMAGE_MIME_TYPES.slice(0, 6)); // Main image types
 
   // First, try to get an image
+  // orderBy='name' ensures consistent "first image" selection across API calls
   const imageResponse = await drive.files.list({
     q: `'${folderId}' in parents and (${imageMimeTypeQuery}) and trashed=false`,
     fields: 'files(id, name, mimeType)',
-    orderBy: 'name',
+    orderBy: 'name', // Alphabetical ordering for stability
     pageSize: 1,
     supportsAllDrives: true,
     includeItemsFromAllDrives: true,
@@ -124,10 +132,11 @@ export async function getFirstImageOrVideoThumbnail(drive, folderId) {
   // If no images, try to get a video
   const videoMimeTypeQuery = buildMimeTypeQuery(VIDEO_MIME_TYPES);
 
+  // Same orderBy='name' for video fallback to maintain stability
   const videoResponse = await drive.files.list({
     q: `'${folderId}' in parents and (${videoMimeTypeQuery}) and trashed=false`,
     fields: 'files(id, name, mimeType, thumbnailLink)',
-    orderBy: 'name',
+    orderBy: 'name', // Alphabetical ordering for stability
     pageSize: 1,
     supportsAllDrives: true,
     includeItemsFromAllDrives: true,

@@ -336,10 +336,16 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.item.imagen === nextProps.item.imagen &&
     prevProps.item.precioCOP === nextProps.item.precioCOP &&
     prevProps.item.estado === nextProps.item.estado &&
+    prevProps.isFavorite === nextProps.isFavorite &&
     prevProps.isMobile === nextProps.isMobile &&
     prevProps.viewCount === nextProps.viewCount &&
     prevProps.isAdmin === nextProps.isAdmin &&
     prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
-    prevProps.canAddToComparison === nextProps.canAddToComparison
+    prevProps.canAddToComparison === nextProps.canAddToComparison &&
+    // Callback props - compare by reference stability (must be memoized in parent)
+    prevProps.onItemClick === nextProps.onItemClick &&
+    prevProps.onCertClick === nextProps.onCertClick &&
+    prevProps.onToggleFavorite === nextProps.onToggleFavorite &&
+    prevProps.onToggleComparison === nextProps.onToggleComparison
   );
 });

@@ -106,7 +106,8 @@ export function useComparison(): UseComparisonReturn {
     setShowComparisonModal(false);
   }, []);
 
-  return {
+  // Memoize return object to ensure stable reference across renders
+  return useMemo(() => ({
     selectedItems,
     selectedIds,
     isComparing,
@@ -121,7 +122,22 @@ export function useComparison(): UseComparisonReturn {
     showComparisonModal,
     openComparisonModal,
     closeComparisonModal,
-  };
+  }), [
+    selectedItems,
+    selectedIds,
+    isComparing,
+    addToComparison,
+    removeFromComparison,
+    toggleComparison,
+    clearComparison,
+    isSelected,
+    canAddMore,
+    comparisonCount,
+    showComparisonBar,
+    showComparisonModal,
+    openComparisonModal,
+    closeComparisonModal,
+  ]);
 }
 
 export default useComparison;
