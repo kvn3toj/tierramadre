@@ -53,18 +53,7 @@ import {
   type ProductRequestStatus,
 } from '../../types/provider';
 import QuotationMediaUpload from '../provider/QuotationMediaUpload';
-
-// Helper to format number with Colombian thousands separator (dots)
-const formatPriceCOP = (value: number | undefined): string => {
-  if (!value) return '';
-  return value.toLocaleString('es-CO');
-};
-
-// Helper to parse formatted price string back to number
-const parsePriceCOP = (value: string): number => {
-  const numericString = value.replace(/\./g, '').replace(/[^\d]/g, '');
-  return parseInt(numericString, 10) || 0;
-};
+import { formatPriceCOP, parsePriceCOP } from '../../utils/priceFormatters';
 
 // Color options - from Google Sheet inventory
 const COLOR_OPTIONS = [

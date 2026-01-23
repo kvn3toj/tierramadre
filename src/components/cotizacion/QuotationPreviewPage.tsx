@@ -42,9 +42,8 @@ import {
   ShoppingBag,
   Image,
 } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import { documentShadows } from '../../design-system/tokens';
+import { exportQuotationToPdf } from '../../utils/pdf';
 import { brandColors, PRODUCTION_URL } from './constants';
 import { formatFullCurrency as formatCurrency } from '../../utils/formatting';
 import { createLogger } from '../../utils/logger';
@@ -168,70 +167,28 @@ export default function QuotationPreview() {
     day: 'numeric',
   });
 
-  // Export to PDF
+  // Export to PDF using shared utility
   const handleExportPDF = async () => {
     if (!quotationRef.current) return;
 
-    try {
-      // Capture at high quality with optimal scale for A4 dimensions
-      const canvas = await html2canvas(quotationRef.current, {
-        scale: 2.5, // Balanced quality without excessive file size
-        backgroundColor: brandColors.background,
-        useCORS: true,
-        logging: false,
-        windowWidth: quotationRef.current.scrollWidth,
-        windowHeight: quotationRef.current.scrollHeight,
-      });
+    const result = await exportQuotationToPdf(
+      quotationRef.current,
+      quotationData.quotationNumber
+    );
 
-      const imgData = canvas.toDataURL('image/png', 0.95); // High quality compression
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true, // Enable PDF compression
-      });
-
-      // A4 dimensions: 210mm x 297mm
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      // Use smaller margins for better space utilization
-      const margin = 8; // 8mm margins
-      const imgWidth = pageWidth - (margin * 2);
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      // Center horizontally, align near top
-      const xOffset = margin;
-      const yOffset = margin;
-
-      // Add image - if too tall, it will overflow to next page automatically
-      if (imgHeight > pageHeight - (margin * 2)) {
-        // Content is taller than one page - fit to full height
-        const scaledHeight = pageHeight - (margin * 2);
-        const scaledWidth = (canvas.width * scaledHeight) / canvas.height;
-        pdf.addImage(imgData, 'PNG', xOffset, yOffset, scaledWidth, scaledHeight);
-      } else {
-        // Content fits in one page - center vertically
-        const centeredY = (pageHeight - imgHeight) / 2;
-        pdf.addImage(imgData, 'PNG', xOffset, centeredY, imgWidth, imgHeight);
-      }
-
-      pdf.save(`Cotizacion_${quotationData.quotationNumber}.pdf`);
-
-      // Show success toast
+    if (result.success) {
       setSnackbar({
         open: true,
         message: `✅ Cotización ${quotationData.quotationNumber} exportada exitosamente`,
         severity: 'success',
       });
-    } catch (error) {
-      // Show error toast
+    } else {
       setSnackbar({
         open: true,
         message: '❌ Error al exportar la cotización. Intenta de nuevo.',
         severity: 'error',
       });
-      log.error('PDF export error:', error);
+      log.error('PDF export error:', result.error);
     }
   };
 

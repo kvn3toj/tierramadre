@@ -247,84 +247,16 @@ export default function ReceiptGenerator() {
   // Get current theme
   const theme = receiptThemes[receiptTheme];
 
-  // Export to PDF with high quality and margins
+  // Export to PDF using shared utility
   const handleExportPDF = async () => {
     if (!receiptRef.current) return;
 
-    // Wait for any pending renders
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    // Get the receipt element dimensions
-    const receiptElement = receiptRef.current;
-    const rect = receiptElement.getBoundingClientRect();
-
-    const canvas = await html2canvas(receiptElement, {
-      scale: 4, // High quality for crisp PDF export
-      backgroundColor: theme.bg,
-      useCORS: true,
-      logging: false,
-      allowTaint: true,
-      width: rect.width,
-      height: rect.height,
-      x: 0,
-      y: 0,
-    });
-
-    const imgData = canvas.toDataURL('image/png', 1.0); // PNG for best quality
-
-    // A4 dimensions: 210 x 297 mm
-    const pageWidth = 210;
-    const pageHeight = 297;
-    const margin = 20; // 20mm margin for elegant spacing
-
-    // Calculate dimensions to fit receipt nicely
-    const receiptAspectRatio = canvas.height / canvas.width;
-
-    // Target width: use most of available width for a nice presentation
-    const targetWidth = pageWidth - (margin * 2);
-    let imgWidth = targetWidth;
-    let imgHeight = imgWidth * receiptAspectRatio;
-
-    // If too tall, scale down to fit
-    const maxHeight = pageHeight - (margin * 2);
-    if (imgHeight > maxHeight) {
-      imgHeight = maxHeight;
-      imgWidth = imgHeight / receiptAspectRatio;
-    }
-
-    // Center both horizontally and vertically
-    const xOffset = (pageWidth - imgWidth) / 2;
-    const yOffset = (pageHeight - imgHeight) / 2;
-
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
-
-    // Add elegant background
-    const bgColor = receiptTheme === 'dark' ? '#1a1a1a' : '#f0f0f0';
-    pdf.setFillColor(bgColor);
-    pdf.rect(0, 0, pageWidth, pageHeight, 'F');
-
-    // Add subtle shadow effect behind receipt
-    pdf.setFillColor(receiptTheme === 'dark' ? '#0a0a0a' : '#c8c8c8');
-    pdf.rect(xOffset + 1.5, yOffset + 1.5, imgWidth, imgHeight, 'F');
-
-    // Add the receipt image centered
-    pdf.addImage(imgData, 'JPEG', xOffset, yOffset, imgWidth, imgHeight);
-
-    // Add elegant border around receipt
-    pdf.setDrawColor(receiptTheme === 'dark' ? '#444444' : '#b0b0b0');
-    pdf.setLineWidth(0.3);
-    pdf.rect(xOffset, yOffset, imgWidth, imgHeight, 'S');
-
-    // Use custom label for filename, sanitize for filesystem
-    const sanitizedLabel = businessSettings.documentTypeLabels[documentType]
-      .replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s-]/g, '')
-      .replace(/\s+/g, '-');
-    const filename = `${sanitizedLabel}-${receipt.receiptNumber}.pdf`;
-    pdf.save(filename);
+    await exportReceiptToPdf(
+      receiptRef.current,
+      receipt.receiptNumber || 'Receipt',
+      businessSettings.documentTypeLabels[documentType],
+      receiptTheme
+    );
   };
 
   // Print receipt

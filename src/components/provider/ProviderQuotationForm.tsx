@@ -35,18 +35,7 @@ import {
   type ProviderQuotationFormData,
 } from '../../types/provider';
 import QuotationMediaUpload from './QuotationMediaUpload';
-
-// Helper to format number with Colombian thousands separator (dots)
-const formatPriceCOP = (value: number): string => {
-  if (!value) return '';
-  return value.toLocaleString('es-CO');
-};
-
-// Helper to parse formatted price string back to number
-const parsePriceCOP = (value: string): number => {
-  const numericString = value.replace(/\./g, '').replace(/[^\d]/g, '');
-  return parseInt(numericString, 10) || 0;
-};
+import { formatPriceCOP, parsePriceCOP } from '../../utils/priceFormatters';
 
 // Product type options for chips
 const PRODUCT_TYPE_OPTIONS: { value: ProductType; label: string }[] = [
