@@ -161,7 +161,7 @@ export function useImageVerification() {
   const getItemsNeedingVerification = useCallback((treasure: TreasureItem[]): TreasureItem[] => {
     return treasure.filter(item => {
       // Items without images
-      if (!item.imageUrl && !item.imagen) return true;
+      if (!item.imagen) return true;
 
       // Items with unverified images (not in cache)
       const cached = verificationResults.get(item.item);
@@ -181,14 +181,13 @@ export function useImageVerification() {
     const issues: TreasureItem[] = [];
 
     for (const item of treasure) {
-      const imageUrl = item.imageUrl || item.imagen;
-      if (!imageUrl) {
+      if (!item.imagen) {
         issues.push(item);
         continue;
       }
 
       // Quick check if URL is valid
-      const result = await verifyImageUrl(imageUrl);
+      const result = await verifyImageUrl(item.imagen);
       if (!result.success) {
         issues.push(item);
       }

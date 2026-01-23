@@ -294,9 +294,7 @@ export function useTreasureFiltering({
       }
     };
 
-    // Helper to check if item has a valid image from verified sources
-    // Only trust 'imagen' field (comes from batch thumbnails, gallery, or legacy media)
-    // Don't trust 'imageUrl' from Google Sheets as it may be empty or contain broken URLs
+    // Check if item has a valid image (from batch thumbnails, gallery, or legacy media)
     const hasValidImage = (item: TreasureItem): boolean => {
       return typeof item.imagen === 'string' && item.imagen.trim().length > 0;
     };

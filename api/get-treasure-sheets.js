@@ -110,7 +110,6 @@ function mapRowToTreasureItem(row, headers) {
 
   const peso = getValue(INVENTARIO_HEADERS.PESO) || getByIndex(3);
   const pesoData = parsePeso(peso);
-  const imageUrl = getValue(INVENTARIO_HEADERS.IMAGEN) || getByIndex(10) || '';
 
   return {
     item: parseInt(getValue(INVENTARIO_HEADERS.ITEM) || getByIndex(0) || 0),
@@ -131,7 +130,6 @@ function mapRowToTreasureItem(row, headers) {
     qr: getValue(INVENTARIO_HEADERS.QR) || getByIndex(15) || '',
     coleccion: getValue(INVENTARIO_HEADERS.COLECCION) || getByIndex(16) || '',
     caja: getValue(INVENTARIO_HEADERS.CAJA) || getByIndex(17) || '',
-    imageUrl: imageUrl,
     isJewelry: pesoData.isJewelry,
     metalType: pesoData.metalType,
   };
