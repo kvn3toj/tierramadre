@@ -101,7 +101,7 @@ export default function EmeraldCard({
         {emerald.mediaType === 'video' ? (
           <Box sx={{ height: 200, overflow: 'hidden', bgcolor: '#000', position: 'relative' }}>
             <MediaPreview
-              mediaUrl={emerald.imageUrl}
+              mediaUrl={emerald.mediaData}
               mediaType="video"
               thumbnailUrl={emerald.thumbnailUrl}
               alt={emerald.name}
@@ -126,7 +126,7 @@ export default function EmeraldCard({
           <CardMedia
             component="img"
             height="200"
-            image={emerald.imageUrl}
+            image={emerald.mediaData}
             alt={emerald.name}
             draggable={false}
             onContextMenu={(e) => e.preventDefault()}

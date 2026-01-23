@@ -17,3 +17,11 @@ export { default as MediaPreview } from './MediaPreview';
 
 // Protection
 export { default as ProtectedContent } from './ProtectedContent';
+
+// Analytics & Dashboard Components
+export { default as TabPanel, type TabPanelProps } from './TabPanel';
+export { default as MetricCard, type MetricCardProps } from './MetricCard';
+export { default as StatBox, type StatBoxProps } from './StatBox';
+export { default as GlassCard, type GlassCardProps } from './GlassCard';
+export { default as SectionHeader, type SectionHeaderProps } from './SectionHeader';
+export { default as ActivityItem, type ActivityItemProps } from './ActivityItem';

@@ -31,9 +31,8 @@ import {
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import { Receipt, Plus, Trash2, Download, Printer, Copy, Moon, Sun, Settings } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import { ReceiptData, ReceiptProduct, Emerald } from '../../types';
+import { exportReceiptToPdf } from '../../utils/pdf';
 import { useEmeralds } from '../../hooks/useEmeralds';
 
 // Design System Imports
@@ -687,7 +686,7 @@ export default function ReceiptGenerator() {
             renderOption={(props, option) => (
               <Box component="li" {...props} sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
                 <Avatar
-                  src={option.imageUrl}
+                  src={option.mediaData}
                   variant="rounded"
                   sx={{ width: 40, height: 40 }}
                 />

@@ -50,7 +50,7 @@ export function BatchItemCard({
       <Box sx={{ height: 160, overflow: 'hidden', bgcolor: darkTokens.background.app }}>
         {item.mediaType === 'video' ? (
           <MediaPreview
-            mediaUrl={item.imageUrl}
+            mediaUrl={item.mediaData}
             mediaType="video"
             thumbnailUrl={item.thumbnailUrl}
             alt="Video"
@@ -61,7 +61,7 @@ export function BatchItemCard({
           />
         ) : (
           <img
-            src={item.imageUrl}
+            src={item.mediaData}
             alt="Emerald"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />

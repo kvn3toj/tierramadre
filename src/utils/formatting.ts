@@ -96,6 +96,65 @@ export const formatCollectionName = (name: string): string => {
     .trim();
 };
 
+// =============================================================================
+// TIME FORMATTING
+// =============================================================================
+
+/**
+ * Format a timestamp as relative time ago (e.g., "5m", "2h", "3d").
+ * Used across analytics pages.
+ * @param timestamp - ISO string or Unix timestamp
+ * @returns Localized relative time string
+ */
+export const formatTimeAgo = (timestamp: string | number): string => {
+  const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp);
+  const diff = Date.now() - date.getTime();
+
+  if (diff < 60000) return 'Ahora';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`;
+  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d`;
+
+  return date.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' });
+};
+
+// =============================================================================
+// ROLE FORMATTING
+// =============================================================================
+
+/**
+ * Get display label for user role.
+ * Handles both accessLevel codes and role text.
+ * @param role - The role string (admin, embajador, full, provider, etc.)
+ * @returns Spanish label for the role
+ */
+export const getRoleLabel = (role: string): string => {
+  const r = role.toLowerCase();
+  if (r === 'admin' || r.includes('admin')) return 'Admin';
+  if (r === 'embajador' || r === 'ambassador') return 'Embajador';
+  if (r === 'full' || r === 'asesor') return 'Asesor';
+  if (r === 'provider' || r === 'proveedor') return 'Proveedor';
+  return 'Usuario';
+};
+
+/**
+ * Get color for user role display.
+ * @param role - The role string
+ * @returns Hex color for the role
+ */
+export const getRoleColor = (role: string): string => {
+  const r = role.toLowerCase();
+  if (r === 'admin' || r.includes('admin')) return '#C69C6D'; // goldAccent.primary
+  if (r === 'embajador' || r === 'ambassador') return '#8B5CF6'; // Purple
+  if (r === 'full' || r === 'asesor') return '#00AE7A'; // emeraldCore.primary
+  if (r === 'provider' || r === 'proveedor') return '#3B82F6'; // Blue
+  return '#6B7280'; // Gray
+};
+
+// =============================================================================
+// QUALITY BADGES
+// =============================================================================
+
 export const getQualityBadge = (calidad: string): QualityBadgeStyle => {
   if (calidad.includes('SuperFina') || calidad === 'Fina') {
     return {

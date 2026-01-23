@@ -77,7 +77,10 @@
       "Bash(pgrep:*)",
       "Bash(git rm:*)",
       "Bash(git -C /Users/kevinp/Movies/coomunity-universe/TierraMadre log --oneline -20)",
-      "Bash(git -C /Users/kevinp/Movies/coomunity-universe/TierraMadre diff --name-only)"
+      "Bash(git -C /Users/kevinp/Movies/coomunity-universe/TierraMadre diff --name-only)",
+      "Bash(npx puppeteer:*)",
+      "Bash(wait)",
+      "Bash(__NEW_LINE_8f1c5cd39a0578b6__ echo \"\")"
     ],
     "deny": [],
     "ask": []

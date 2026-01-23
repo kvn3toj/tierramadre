@@ -368,12 +368,12 @@ async function addHorizontalCarouselLayout(
     pdf.setLineWidth(0.2);
     pdf.roundedRect(imageX, imageY, imageWidth, imageHeight, BORDER_RADIUS_MM.md, BORDER_RADIUS_MM.md);
 
-    if (emerald.imageUrl) {
+    if (emerald.mediaData) {
       try {
         // Clip image inside rounded rect (approximate with inset)
         const imgInset = 2;
         pdf.addImage(
-          emerald.imageUrl,
+          emerald.mediaData,
           'JPEG',
           imageX + imgInset,
           imageY + imgInset,
@@ -664,10 +664,10 @@ async function addGridLayout(
 
     // Image area with rounded top corners
     const imageAreaHeight = imageHeight;
-    if (emerald.imageUrl) {
+    if (emerald.mediaData) {
       try {
         // Load image and fit within card
-        const imgDimensions = await getImageDimensions(emerald.imageUrl);
+        const imgDimensions = await getImageDimensions(emerald.mediaData);
         const fitDimensions = calculateAspectRatioFit(
           imgDimensions.width,
           imgDimensions.height,
@@ -680,7 +680,7 @@ async function addGridLayout(
         const centeredY = currentY + (imageAreaHeight - fitDimensions.height) / 2;
 
         pdf.addImage(
-          emerald.imageUrl,
+          emerald.mediaData,
           'JPEG',
           centeredX,
           centeredY,
@@ -921,9 +921,9 @@ async function addListLayout(
     setFillColor(pdf, iosColors.backgroundSecondary);
     pdf.roundedRect(imageX, imageY, imageSize, imageSize, BORDER_RADIUS_MM.sm, BORDER_RADIUS_MM.sm, 'F');
 
-    if (emerald.imageUrl) {
+    if (emerald.mediaData) {
       try {
-        const imgDimensions = await getImageDimensions(emerald.imageUrl);
+        const imgDimensions = await getImageDimensions(emerald.mediaData);
         const fitDimensions = calculateAspectRatioFit(
           imgDimensions.width,
           imgDimensions.height,
@@ -935,7 +935,7 @@ async function addListLayout(
         const centeredY = imageY + (imageSize - fitDimensions.height) / 2;
 
         pdf.addImage(
-          emerald.imageUrl,
+          emerald.mediaData,
           'JPEG',
           centeredX,
           centeredY,

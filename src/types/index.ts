@@ -5,7 +5,7 @@ export type MediaType = 'image' | 'video';
 export interface Emerald {
   id: string;
   name: string;
-  imageUrl: string;              // Base64 data URI for images, indexeddb:// reference for videos
+  mediaData: string;             // Base64 data URI for images, indexeddb:// reference for videos
   mediaType?: MediaType;         // Type of media (defaults to 'image' for backwards compatibility)
   thumbnailUrl?: string;         // Thumbnail for videos (base64 data URI)
   aiSuggestedNames: string[];

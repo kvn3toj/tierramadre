@@ -97,3 +97,14 @@ export {
   type HeaderStyle,
   type HeaderOptions,
 } from './components/headers';
+
+// ===== HTML TO PDF EXPORT =====
+
+// High-level export functions for capturing DOM elements
+export {
+  exportToPdf,
+  exportQuotationToPdf,
+  exportReceiptToPdf,
+  type PdfExportOptions,
+  type PdfExportResult,
+} from './pdfExport';

@@ -13,7 +13,7 @@ import { isVideoFile, isMediaFile } from '../utils/fileTypeDetection';
 
 export interface BatchItem {
   id: string;
-  imageUrl: string;
+  mediaData: string;
   mediaType: MediaType;
   thumbnailUrl?: string;
   suggestedNames: string[];
@@ -30,7 +30,7 @@ export interface BatchItem {
 }
 
 export interface SingleUploadState {
-  imageUrl: string | null;
+  mediaData: string | null;
   mediaType: MediaType;
   thumbnailUrl: string | null;
   suggestedNames: string[];
@@ -85,7 +85,7 @@ export interface UseEmeraldUploadReturn {
 }
 
 const initialSingleState: SingleUploadState = {
-  imageUrl: null,
+  mediaData: null,
   mediaType: 'image',
   thumbnailUrl: null,
   suggestedNames: [],
@@ -125,7 +125,7 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
 
         setSingleState(prev => ({
           ...prev,
-          imageUrl: videoRef,
+          mediaData: videoRef,
           mediaType: 'video',
           thumbnailUrl: thumbnail,
           suggestedNames: result?.names || [],
@@ -144,7 +144,7 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
 
         setSingleState(prev => ({
           ...prev,
-          imageUrl: compressed,
+          mediaData: compressed,
           mediaType: 'image',
           thumbnailUrl: null,
           suggestedNames: result?.names || [],
@@ -170,7 +170,7 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
 
           const newItem: BatchItem = {
             id: `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            imageUrl: videoRef,
+            mediaData: videoRef,
             mediaType: 'video',
             thumbnailUrl: thumbnail,
             suggestedNames: result?.names || getRandomSuggestions(),
@@ -202,7 +202,7 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
 
         const newItem: BatchItem = {
           id: `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          imageUrl: compressed,
+          mediaData: compressed,
           mediaType: 'image',
           suggestedNames: result?.names || getRandomSuggestions(),
           selectedName: '',
@@ -268,24 +268,24 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
   }, []);
 
   const handleRefreshSuggestions = useCallback(async () => {
-    if (singleState.imageUrl) {
-      const result = await analyzeEmerald(singleState.imageUrl);
+    if (singleState.mediaData) {
+      const result = await analyzeEmerald(singleState.mediaData);
       if (result) {
         setSingleState(prev => ({ ...prev, suggestedNames: result.names }));
       }
     } else {
       setSingleState(prev => ({ ...prev, suggestedNames: getRandomSuggestions() }));
     }
-  }, [singleState.imageUrl, analyzeEmerald, getRandomSuggestions]);
+  }, [singleState.mediaData, analyzeEmerald, getRandomSuggestions]);
 
   const resetSingleForm = useCallback(() => {
     setSingleState(initialSingleState);
   }, []);
 
   const handleSave = useCallback((onComplete?: () => void) => {
-    const { imageUrl, mediaType, thumbnailUrl, suggestedNames, selectedName, customName, description, weightCarats, priceCOP, lotCode, category, ringSize, color, quality } = singleState;
+    const { mediaData, mediaType, thumbnailUrl, suggestedNames, selectedName, customName, description, weightCarats, priceCOP, lotCode, category, ringSize, color, quality } = singleState;
 
-    if (!imageUrl) {
+    if (!mediaData) {
       alert('Por favor sube una imagen o video primero');
       return;
     }
@@ -299,7 +299,7 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
     try {
       addEmerald({
         name: finalName,
-        imageUrl,
+        mediaData,
         mediaType,
         thumbnailUrl: thumbnailUrl || undefined,
         aiSuggestedNames: suggestedNames,
@@ -346,7 +346,7 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
     const item = batchItems.find(i => i.id === id);
     if (!item) return;
 
-    const result = await analyzeEmerald(item.imageUrl);
+    const result = await analyzeEmerald(item.mediaData);
     if (result) {
       updateBatchItem(id, { suggestedNames: result.names });
     }
@@ -361,7 +361,7 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
 
     addEmerald({
       name: finalName,
-      imageUrl: item.imageUrl,
+      mediaData: item.mediaData,
       mediaType: item.mediaType,
       thumbnailUrl: item.thumbnailUrl,
       aiSuggestedNames: item.suggestedNames,
@@ -388,7 +388,7 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
       const finalName = item.customName || item.selectedName;
       addEmerald({
         name: finalName,
-        imageUrl: item.imageUrl,
+        mediaData: item.mediaData,
         mediaType: item.mediaType,
         thumbnailUrl: item.thumbnailUrl,
         aiSuggestedNames: item.suggestedNames,

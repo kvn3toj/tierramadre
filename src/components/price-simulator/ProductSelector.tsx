@@ -172,7 +172,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
       <SelectedBadge
         type="gallery"
         label="Seleccionado de galería"
-        imageUrl={selectedEmerald.imageUrl}
+        imageUrl={selectedEmerald.mediaData}
         onClear={() => {
           handleEmeraldSelect(null);
           setProductName('');
@@ -277,7 +277,7 @@ const GalleryAutocomplete: React.FC<GalleryAutocompleteProps> = ({
         }}
       >
         <Avatar
-          src={option.imageUrl}
+          src={option.mediaData}
           variant="rounded"
           sx={{ width: 40, height: 40, borderRadius: 1.5 }}
         >

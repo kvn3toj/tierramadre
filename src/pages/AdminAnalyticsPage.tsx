@@ -24,8 +24,6 @@ import {
   Tab,
 } from '@mui/material';
 import {
-  TrendingUp,
-  TrendingDown,
   Eye,
   FileText,
   Download,
@@ -56,7 +54,6 @@ import { useCotizacionStats } from '../hooks/useCotizacionStats';
 import { emeraldCore, goldAccent, semanticColors } from '../design-system/tokens/colors';
 import { spacing, iosDimensions } from '../design-system/tokens/primitives/spacing';
 import { iosTypographyScale } from '../design-system';
-import { SparklineChart } from '../components/analytics/SparklineChart';
 import { HorizontalBarChart } from '../components/analytics/HorizontalBarChart';
 import { DonutChart } from '../components/analytics/DonutChart';
 import { AreaChart } from '../components/analytics/AreaChart';
@@ -70,284 +67,14 @@ import {
   type AnalyticsData,
   type HealthScores,
 } from '../utils/insightGenerator';
-
-// =============================================================================
-// iOS HIG STYLED TAB COMPONENT
-// =============================================================================
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
-  <Box
-    role="tabpanel"
-    hidden={value !== index}
-    sx={{
-      pt: 2,
-      animation: value === index ? 'fadeIn 0.2s ease-out' : undefined,
-      '@keyframes fadeIn': {
-        from: { opacity: 0, transform: 'translateY(4px)' },
-        to: { opacity: 1, transform: 'translateY(0)' },
-      },
-    }}
-  >
-    {value === index && children}
-  </Box>
-);
-
-// =============================================================================
-// METRIC CARD WITH SPARKLINE
-// =============================================================================
-
-interface MetricCardProps {
-  label: string;
-  value: string | number;
-  icon: React.ElementType;
-  color: string;
-  trend?: { data: number[]; label?: string };
-  comparison?: { value: number; label: string };
-  subtitle?: string;
-  compact?: boolean;
-  onClick?: () => void;
-}
-
-const MetricCard: React.FC<MetricCardProps> = ({
-  label,
-  value,
-  icon: Icon,
-  color,
-  trend,
-  comparison,
-  subtitle,
-  compact = false,
-  onClick,
-}) => {
-  const { mode } = useThemeMode();
-  const isLight = mode === 'light';
-
-  return (
-    <Paper
-      elevation={0}
-      onClick={onClick}
-      sx={{
-        p: compact ? 2 : 2.5,
-        borderRadius: iosDimensions.borderRadiusLarge,
-        bgcolor: isLight ? 'background.paper' : alpha('#000', 0.2),
-        border: `1px solid ${alpha(color, 0.15)}`,
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: compact ? 1 : 1.5,
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-        cursor: onClick ? 'pointer' : 'default',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: `0 8px 24px ${alpha(color, 0.12)}`,
-        },
-      }}
-    >
-      {/* Header row */}
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <Box
-          sx={{
-            width: compact ? 36 : 44,
-            height: compact ? 36 : 44,
-            borderRadius: iosDimensions.borderRadiusStandard,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            bgcolor: alpha(color, 0.12),
-          }}
-        >
-          <Icon size={compact ? 18 : 22} color={color} />
-        </Box>
-
-        {/* Sparkline or comparison */}
-        {trend && (
-          <SparklineChart
-            data={trend.data.map(v => ({ value: v }))}
-            width={80}
-            height={32}
-            color={color}
-            showArea={true}
-            showTrend={false}
-            animated={true}
-          />
-        )}
-      </Box>
-
-      {/* Value */}
-      <Typography
-        variant={compact ? 'h5' : 'h4'}
-        sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.1 }}
-      >
-        {typeof value === 'number' ? value.toLocaleString() : value}
-      </Typography>
-
-      {/* Label and comparison */}
-      <Box>
-        <Typography
-          variant="body2"
-          sx={{ fontWeight: 600, color: 'text.primary', fontSize: compact ? '0.8rem' : '0.875rem' }}
-        >
-          {label}
-        </Typography>
-        {subtitle && (
-          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-            {subtitle}
-          </Typography>
-        )}
-        {comparison && comparison.value !== 0 && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-            {comparison.value > 0 ? (
-              <TrendingUp size={12} color={semanticColors.success.main} />
-            ) : (
-              <TrendingDown size={12} color={semanticColors.error.main} />
-            )}
-            <Typography
-              variant="caption"
-              sx={{
-                fontWeight: 600,
-                color: comparison.value > 0 ? semanticColors.success.main : semanticColors.error.main,
-              }}
-            >
-              {comparison.value > 0 ? '+' : ''}{comparison.value}%
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-              {comparison.label}
-            </Typography>
-          </Box>
-        )}
-      </Box>
-    </Paper>
-  );
-};
-
-// =============================================================================
-// SECTION HEADER
-// =============================================================================
-
-interface SectionHeaderProps {
-  title: string;
-  icon?: React.ElementType;
-  action?: React.ReactNode;
-}
-
-const SectionHeader: React.FC<SectionHeaderProps> = ({ title, icon: Icon, action }) => {
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        mb: 2,
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        {Icon && <Icon size={16} color={emeraldCore.primary} />}
-        <Typography
-          variant="subtitle2"
-          sx={{
-            fontWeight: 700,
-            color: 'text.secondary',
-            textTransform: 'uppercase',
-            letterSpacing: 0.5,
-            fontSize: '0.7rem',
-          }}
-        >
-          {title}
-        </Typography>
-      </Box>
-      {action}
-    </Box>
-  );
-};
-
-// =============================================================================
-// GLASS CARD WRAPPER
-// =============================================================================
-
-interface GlassCardProps {
-  children: React.ReactNode;
-  noPadding?: boolean;
-}
-
-const GlassCard: React.FC<GlassCardProps> = ({ children, noPadding = false }) => {
-  const { mode } = useThemeMode();
-  const isLight = mode === 'light';
-
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: iosDimensions.borderRadiusLarge,
-        bgcolor: isLight ? 'background.paper' : alpha('#000', 0.2),
-        border: `1px solid ${isLight ? alpha('#000', 0.08) : alpha('#fff', 0.1)}`,
-        overflow: 'hidden',
-        ...(noPadding ? {} : { p: 2.5 }),
-      }}
-    >
-      {children}
-    </Paper>
-  );
-};
-
-// =============================================================================
-// ACTIVITY ITEM
-// =============================================================================
-
-interface ActivityItemProps {
-  icon: React.ReactNode;
-  primary: React.ReactNode;
-  secondary?: string;
-  time: string;
-  isLast?: boolean;
-}
-
-const ActivityItem: React.FC<ActivityItemProps> = ({ icon, primary, secondary, time, isLast }) => {
-  const { mode } = useThemeMode();
-  const isLight = mode === 'light';
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1.5,
-        py: 1.5,
-        px: 2,
-        borderBottom: isLast ? 'none' : `1px solid ${alpha(isLight ? '#000' : '#fff', 0.06)}`,
-      }}
-    >
-      {icon}
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography
-          variant="body2"
-          sx={{
-            fontWeight: 500,
-            fontSize: '0.8rem',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {primary}
-        </Typography>
-        {secondary && (
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            {secondary}
-          </Typography>
-        )}
-      </Box>
-      <Typography variant="caption" sx={{ color: 'text.disabled', flexShrink: 0 }}>
-        {time}
-      </Typography>
-    </Box>
-  );
-};
+import { formatTimeAgo } from '../utils/formatting';
+import {
+  TabPanel,
+  MetricCard,
+  SectionHeader,
+  GlassCard,
+  ActivityItem,
+} from '../components/shared';
 
 // =============================================================================
 // MAIN COMPONENT
@@ -431,16 +158,6 @@ const AdminAnalyticsPage: React.FC = () => {
       { id: 'guest', label: 'Invitados', value: viewStats.guestViews, color: alpha(emeraldCore.primary, 0.4) },
     ];
   }, [viewStats]);
-
-  // Format time ago
-  const formatTimeAgo = useCallback((ts: string | number): string => {
-    const date = typeof ts === 'string' ? new Date(ts) : new Date(ts);
-    const diff = Date.now() - date.getTime();
-    if (diff < 60000) return 'Ahora';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`;
-    return `${Math.floor(diff / 86400000)}d`;
-  }, []);
 
   // Combined recent activity from all users (server-side data)
   const combinedActivity = useMemo(() => {

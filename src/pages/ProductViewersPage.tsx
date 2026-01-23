@@ -38,6 +38,8 @@ import { useThemeMode } from '../contexts/ThemeContext';
 import { useTreasure } from '../hooks/useTreasure';
 import { emeraldCore, goldAccent, semanticColors } from '../design-system/tokens/colors';
 import { spacing } from '../design-system/tokens/primitives/spacing';
+import { formatTimeAgo, getRoleLabel, getRoleColor } from '../utils/formatting';
+import { StatBox } from '../components/shared';
 
 // =============================================================================
 // TYPES
@@ -112,42 +114,6 @@ interface ProductDetailViews {
 }
 
 // =============================================================================
-// STAT CARD COMPONENT
-// =============================================================================
-
-interface StatCardProps {
-  label: string;
-  value: string | number;
-  icon: React.ElementType;
-  color: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ label, value, icon: Icon, color }) => {
-  const { mode } = useThemeMode();
-  const isLight = mode === 'light';
-
-  return (
-    <Box
-      sx={{
-        p: 2,
-        borderRadius: 2,
-        bgcolor: alpha(color, isLight ? 0.08 : 0.15),
-        border: `1px solid ${alpha(color, 0.2)}`,
-        textAlign: 'center',
-      }}
-    >
-      <Icon size={20} color={color} style={{ marginBottom: 4 }} />
-      <Typography variant="h5" sx={{ fontWeight: 700, color }}>
-        {value}
-      </Typography>
-      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-        {label}
-      </Typography>
-    </Box>
-  );
-};
-
-// =============================================================================
 // DEVICE ICON HELPER
 // =============================================================================
 
@@ -156,19 +122,6 @@ const DeviceIcon: React.FC<{ device: string; size?: number }> = ({ device, size 
   if (deviceLower === 'mobile') return <Smartphone size={size} />;
   if (deviceLower === 'tablet') return <Tablet size={size} />;
   return <Monitor size={size} />;
-};
-
-// =============================================================================
-// TIME AGO HELPER
-// =============================================================================
-
-const formatTimeAgo = (timestamp: string): string => {
-  const diff = Date.now() - new Date(timestamp).getTime();
-  if (diff < 60000) return 'Ahora';
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`;
-  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d`;
-  return new Date(timestamp).toLocaleDateString('es-CO', { month: 'short', day: 'numeric' });
 };
 
 // =============================================================================
@@ -245,25 +198,6 @@ const ProductViewersPage: React.FC = () => {
 
   // Get display name
   const productName = data?.productName || product?.nombre || `Item #${itemId}`;
-
-  // Role display helper - handles both accessLevel and actual role text
-  const getRoleLabel = (role: string): string => {
-    const r = role.toLowerCase();
-    if (r === 'admin' || r.includes('admin')) return 'Admin';
-    if (r === 'embajador' || r === 'ambassador') return 'Embajador';
-    if (r === 'full' || r === 'asesor') return 'Asesor';
-    if (r === 'provider' || r === 'proveedor') return 'Proveedor';
-    return 'Usuario';
-  };
-
-  const getRoleColor = (role: string): string => {
-    const r = role.toLowerCase();
-    if (r === 'admin' || r.includes('admin')) return goldAccent.primary;
-    if (r === 'embajador' || r === 'ambassador') return '#8B5CF6'; // Purple for ambassadors
-    if (r === 'full' || r === 'asesor') return emeraldCore.primary;
-    if (r === 'provider' || r === 'proveedor') return '#3B82F6';
-    return '#6B7280';
-  };
 
   return (
     <Box sx={{ minHeight: '100%', bgcolor: 'background.default' }}>
@@ -352,25 +286,25 @@ const ProductViewersPage: React.FC = () => {
                 mb: 3,
               }}
             >
-              <StatCard
+              <StatBox
                 label="Total Vistas"
                 value={data.totalViews}
                 icon={Eye}
                 color="#3B82F6"
               />
-              <StatCard
+              <StatBox
                 label="Viewers Únicos"
                 value={data.uniqueViewers}
                 icon={Users}
                 color={emeraldCore.primary}
               />
-              <StatCard
+              <StatBox
                 label="Registrados"
                 value={data.loggedInViewers}
                 icon={UserCheck}
                 color={goldAccent.primary}
               />
-              <StatCard
+              <StatBox
                 label="Invitados"
                 value={data.guestViewers}
                 icon={User}
