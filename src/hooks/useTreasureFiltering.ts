@@ -294,11 +294,11 @@ export function useTreasureFiltering({
       }
     };
 
-    // Helper to check if item has a valid image URL (not empty/placeholder)
+    // Helper to check if item has a valid image from verified sources
+    // Only trust 'imagen' field (comes from batch thumbnails, gallery, or legacy media)
+    // Don't trust 'imageUrl' from Google Sheets as it may be empty or contain broken URLs
     const hasValidImage = (item: TreasureItem): boolean => {
-      const url = item.imagen || item.imageUrl;
-      // Must be a non-empty string with actual content (not just whitespace)
-      return typeof url === 'string' && url.trim().length > 0;
+      return typeof item.imagen === 'string' && item.imagen.trim().length > 0;
     };
 
     // Sort with image priority: items WITH images come first
