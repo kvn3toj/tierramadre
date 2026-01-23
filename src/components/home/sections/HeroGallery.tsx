@@ -365,6 +365,7 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
                   src={heroImage.src}
                   alt={heroImage.alt}
                   objectFit="cover"
+                  height="100%"
                   priority
                   quality="best"
                   layout="full"

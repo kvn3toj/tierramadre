@@ -36,6 +36,8 @@ interface ProgressiveImageProps {
   priority?: boolean;
   showPlaceholderIcon?: boolean;
   objectFit?: 'cover' | 'contain' | 'fill';
+  /** Position of image within container when using objectFit */
+  objectPosition?: string;
   borderRadius?: number;
   /** Layout type for responsive sizes */
   layout?: 'grid' | 'full' | 'thumbnail';
@@ -54,6 +56,7 @@ export default function ProgressiveImage({
   priority = false,
   showPlaceholderIcon = true,
   objectFit = 'cover',
+  objectPosition = 'center',
   borderRadius = 0,
   layout = 'grid',
   enableLQIP = true,
@@ -242,6 +245,7 @@ export default function ProgressiveImage({
             width: '100%',
             height: '100%',
             objectFit,
+            objectPosition,
             filter: 'blur(20px)',
             transform: 'scale(1.1)', // Prevent blur edge artifacts
             opacity: 1,
@@ -299,6 +303,7 @@ export default function ProgressiveImage({
             width: '100%',
             height: '100%',
             objectFit,
+            objectPosition,
             // Hide image until 100% loaded to prevent partial render/progressive JPEG blinking
             // USER REQUIREMENT: Don't show images until fully downloaded
             opacity: fullyLoaded ? 1 : 0,
