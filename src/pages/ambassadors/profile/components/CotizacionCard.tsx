@@ -1,0 +1,212 @@
+/**
+ * CotizacionCard Component
+ * Card displaying a saved cotizacion with image preview.
+ */
+
+import React, { useState } from 'react';
+import {
+  Box,
+  Typography,
+  Chip,
+  IconButton,
+  CircularProgress,
+  alpha,
+} from '@mui/material';
+import { User, Calendar, Trash2, Eye } from 'lucide-react';
+import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
+import { brand, lightTokens, darkTokens, accentColors } from '../../../../design-system';
+
+// Format currency helper
+function formatCurrency(value: number): string {
+  if (value >= 1000000) {
+    return `$${(value / 1000000).toFixed(1)}M`;
+  }
+  if (value >= 1000) {
+    return `$${Math.round(value / 1000)}K`;
+  }
+  return `$${value.toLocaleString('es-CO')}`;
+}
+
+interface CotizacionCardProps {
+  cotizacion: SavedCotizacion;
+  onView: () => void;
+  onDelete: () => void;
+  isLight: boolean;
+}
+
+export const CotizacionCard: React.FC<CotizacionCardProps> = ({
+  cotizacion,
+  onView,
+  onDelete,
+  isLight,
+}) => {
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  const createdDate = new Date(cotizacion.createdAt);
+  const formattedDate = createdDate.toLocaleDateString('es-CO', {
+    day: 'numeric',
+    month: 'short',
+    year: '2-digit',
+  });
+
+  return (
+    <Box
+      sx={{
+        width: 200,
+        flexShrink: 0,
+        borderRadius: 2,
+        overflow: 'hidden',
+        bgcolor: isLight ? '#fff' : darkTokens.background.elevated,
+        border: '1px solid',
+        borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        cursor: 'pointer',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: `0 8px 24px ${alpha(brand.emerald[500], 0.15)}`,
+        },
+      }}
+      onClick={onView}
+    >
+      {/* Image Preview */}
+      <Box
+        sx={{
+          position: 'relative',
+          width: '100%',
+          height: 160,
+          bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
+          overflow: 'hidden',
+        }}
+      >
+        {!imgLoaded && (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <CircularProgress size={24} sx={{ color: brand.emerald[500] }} />
+          </Box>
+        )}
+        <Box
+          component="img"
+          src={cotizacion.imageUrl}
+          alt={cotizacion.quotationNumber}
+          onLoad={() => setImgLoaded(true)}
+          sx={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'top',
+            opacity: imgLoaded ? 1 : 0,
+            transition: 'opacity 0.3s',
+          }}
+        />
+
+        {/* View Overlay */}
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            bgcolor: 'rgba(0,0,0,0)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: 0,
+            transition: 'all 0.2s',
+            '&:hover': {
+              bgcolor: 'rgba(0,0,0,0.4)',
+              opacity: 1,
+            },
+          }}
+        >
+          <Eye size={28} color="#fff" />
+        </Box>
+      </Box>
+
+      {/* Card Info */}
+      <Box sx={{ p: 1.5 }}>
+        {/* Quotation Number */}
+        <Typography
+          variant="caption"
+          sx={{
+            fontFamily: 'monospace',
+            color: brand.emerald[500],
+            fontWeight: 600,
+            fontSize: '0.65rem',
+          }}
+        >
+          {cotizacion.quotationNumber}
+        </Typography>
+
+        {/* Client Name */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+          <User size={12} color={lightTokens.text.muted} />
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {cotizacion.clientName || 'Sin cliente'}
+          </Typography>
+        </Box>
+
+        {/* Date and Total */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Calendar size={11} color={lightTokens.text.muted} />
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+              {formattedDate}
+            </Typography>
+          </Box>
+          <Typography
+            variant="caption"
+            sx={{ fontWeight: 700, color: brand.emerald[500], fontSize: '0.7rem' }}
+          >
+            {formatCurrency(cotizacion.total)}
+          </Typography>
+        </Box>
+
+        {/* Products Count */}
+        <Chip
+          size="small"
+          label={`${cotizacion.productsCount} producto${cotizacion.productsCount !== 1 ? 's' : ''}`}
+          sx={{
+            mt: 1,
+            height: 20,
+            fontSize: '0.6rem',
+            bgcolor: alpha(brand.emerald[500], 0.1),
+            color: brand.emerald[600],
+          }}
+        />
+
+        {/* Delete Button */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            sx={{
+              color: lightTokens.text.muted,
+              '&:hover': { color: accentColors.error.light, bgcolor: alpha(accentColors.error.light, 0.1) },
+            }}
+          >
+            <Trash2 size={14} />
+          </IconButton>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+export default CotizacionCard;

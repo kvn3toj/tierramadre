@@ -20,24 +20,24 @@ import { lazyWithRetry } from './utils/lazyWithRetry';
 // All routes lazy loaded with retry for optimal bundle splitting
 const Home = lazyWithRetry(() => import('./components/home'), 'Home');
 const TreasureBrowser = lazyWithRetry(() => import('./components/treasure/TreasureBrowser'), 'TreasureBrowser');
-const ProductDetail = lazyWithRetry(() => import('./components/product/ProductDetail'), 'ProductDetail');
-const AmbassadorsPage = lazyWithRetry(() => import('./pages/AmbassadorsPage'), 'AmbassadorsPage');
-const AsesorProfilePage = lazyWithRetry(() => import('./components/ambassador/AsesorProfile'), 'AsesorProfilePage');
+const ProductDetail = lazyWithRetry(() => import('./pages/treasure/ProductDetail/ProductDetailPage'), 'ProductDetail');
+const AmbassadorsPage = lazyWithRetry(() => import('./pages/ambassadors/AmbassadorsPage'), 'AmbassadorsPage');
+const AsesorProfilePage = lazyWithRetry(() => import('./pages/ambassadors/profile/AsesorProfilePage'), 'AsesorProfilePage');
 const AccountsHub = lazyWithRetry(() => import('./components/accounts/AccountsHub'), 'AccountsHub');
 const VaultPage = lazyWithRetry(() => import('./pages/VaultPage'), 'VaultPage');
 
 // Cuentas sub-pages (accessed from AccountsHub)
 const PriceSimulator = lazyWithRetry(() => import('./components/price-simulator/PriceSimulator'), 'PriceSimulator');
-const ReceiptGenerator = lazyWithRetry(() => import('./components/accounts/ReceiptGenerator'), 'ReceiptGenerator');
+const ReceiptGenerator = lazyWithRetry(() => import('./pages/cuentas/recibos/ReceiptGenerator'), 'ReceiptGenerator');
 const CotizacionGenerator = lazyWithRetry(() => import('./components/cotizacion/CotizacionGenerator'), 'CotizacionGenerator');
-const QuotationPreview = lazyWithRetry(() => import('./components/cotizacion/QuotationPreviewPage'), 'QuotationPreview');
-const AdminAnalyticsPage = lazyWithRetry(() => import('./pages/AdminAnalyticsPage'), 'AdminAnalyticsPage');
-const ActivityPage = lazyWithRetry(() => import('./pages/ActivityPage'), 'ActivityPage');
-const ProductViewersPage = lazyWithRetry(() => import('./pages/ProductViewersPage'), 'ProductViewersPage');
-const UserViewsPage = lazyWithRetry(() => import('./pages/UserViewsPage'), 'UserViewsPage');
-const CotizacionProductsPage = lazyWithRetry(() => import('./pages/CotizacionProductsPage'), 'CotizacionProductsPage');
+const QuotationPreview = lazyWithRetry(() => import('./pages/cuentas/cotizaciones/QuotationPreviewPage'), 'QuotationPreview');
+const AdminAnalyticsPage = lazyWithRetry(() => import('./pages/admin/analytics/AdminAnalyticsPage'), 'AdminAnalyticsPage');
+const ActivityPage = lazyWithRetry(() => import('./pages/admin/ActivityPage'), 'ActivityPage');
+const ProductViewersPage = lazyWithRetry(() => import('./pages/admin/ProductViewers'), 'ProductViewersPage');
+const UserViewsPage = lazyWithRetry(() => import('./pages/admin/UserViewsPage'), 'UserViewsPage');
+const CotizacionProductsPage = lazyWithRetry(() => import('./pages/admin/CotizacionProductsPage'), 'CotizacionProductsPage');
 const FeedbackDashboard = lazyWithRetry(() => import('./pages/admin/FeedbackDashboard'), 'FeedbackDashboard');
-const ValuationPage = lazyWithRetry(() => import('./pages/ValuationPage'), 'ValuationPage');
+const ValuationPage = lazyWithRetry(() => import('./pages/valuation/ValuationPage'), 'ValuationPage');
 
 // Provider Portal pages
 const ProviderDashboard = lazyWithRetry(() => import('./components/provider/ProviderDashboard'), 'ProviderDashboard');
@@ -51,12 +51,11 @@ const QuotationRequestList = lazyWithRetry(() => import('./components/admin/Quot
 const ProviderQuotationsList = lazyWithRetry(() => import('./components/admin/ProviderQuotationsList'), 'ProviderQuotationsList');
 
 // Product Requests (Asesor/Embajador -> Admin)
-const ProductRequestsHub = lazyWithRetry(() => import('./components/requests/ProductRequestsHub'), 'ProductRequestsHub');
+const ProductRequestsHub = lazyWithRetry(() => import('./pages/staff/requests/ProductRequestsHub'), 'ProductRequestsHub');
 const AdminProductRequestList = lazyWithRetry(() => import('./components/requests/AdminProductRequestList'), 'AdminProductRequestList');
 
-// Invitation Pages (public routes - accessible without auth)
+// Invitation Page (public route - accessible without auth)
 const InvitationPage = lazyWithRetry(() => import('./pages/InvitationPage'), 'InvitationPage');
-const ShortLinkRedirect = lazyWithRetry(() => import('./pages/ShortLinkRedirect'), 'ShortLinkRedirect');
 
 // Cart Page
 const CartPage = lazyWithRetry(() => import('./pages/CartPage'), 'CartPage');
@@ -344,12 +343,12 @@ function InvitationRouter() {
           </Suspense>
         }
       />
-      {/* Short link alias (e.g., /g/ABC123) - redirects to /invite/:shortCode */}
+      {/* Short link alias (e.g., /g/ABC123) - same as /invite/:shortCode */}
       <Route
         path="/g/:shortCode"
         element={
           <Suspense fallback={<LoadingFallback message="Cargando..." />}>
-            <ShortLinkRedirect />
+            <InvitationPage />
           </Suspense>
         }
       />

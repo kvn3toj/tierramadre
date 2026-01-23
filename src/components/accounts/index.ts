@@ -4,4 +4,4 @@
  */
 
 export { default as AccountsHub } from './AccountsHub';
-export { default as ReceiptGenerator } from './ReceiptGenerator';
+// ReceiptGenerator moved to src/pages/cuentas/recibos/

@@ -3,6 +3,6 @@
  * Product detail views and related modals.
  */
 
-export { default as ProductDetail } from './ProductDetail';
+// ProductDetail moved to src/pages/treasure/ProductDetail/
 export { default as GalleryPreview } from './GalleryPreview';
 export { default as AddToTreasureModal } from './AddToTreasureModal';

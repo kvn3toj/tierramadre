@@ -5,7 +5,7 @@
 
 // Main entry components
 export { default as CotizacionGenerator } from './CotizacionGenerator';
-export { default as QuotationPreviewPage } from './QuotationPreviewPage';
+// QuotationPreviewPage moved to src/pages/cuentas/cotizaciones/
 
 // Sub-components
 export { CotizacionHeader } from './CotizacionHeader';
