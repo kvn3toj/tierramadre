@@ -34,6 +34,11 @@ import { triggerHaptic } from '../../hooks/useHaptics';
 import ProtectedContent from '../shared/ProtectedContent';
 import logoPlaceholder from '../../assets/logo-symbol.png';
 
+// Retry configuration for failed image loads
+const MAX_RETRY_ATTEMPTS = 2;
+const RETRY_DELAYS = [1000, 2000];
+const IMAGE_LOAD_TIMEOUT = 15000; // 15 seconds
+
 interface MediaGalleryProps {
   media: MediaItem[];
   productName: string;
@@ -53,11 +58,18 @@ export default function MediaGallery({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [imageRetryCount, setImageRetryCount] = useState(0);
+  const [imageError, setImageError] = useState(false);
+  const [imageKey, setImageKey] = useState(0); // Force re-render on retry
+  const [retryTimestamp, setRetryTimestamp] = useState(0); // Stable timestamp for cache busting
 
   // Touch handling for swipe
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
   const minSwipeDistance = 50;
+
+  // Prevent multiple video ready events from causing re-renders
+  const videoReadyRef = useRef(false);
 
   const currentMedia = media[currentIndex];
   const hasMedia = media.length > 0;
@@ -98,10 +110,44 @@ export default function MediaGallery({
   useEffect(() => {
     if (currentMedia?.type === 'video') {
       setVideoLoading(true);
+      videoReadyRef.current = false; // Reset for new video
     } else if (currentMedia?.type === 'image') {
       setImageLoading(true);
+      setImageError(false);
+      setImageRetryCount(0);
+      setImageKey(0);
+      setRetryTimestamp(0);
     }
   }, [currentIndex, currentMedia?.type]);
+
+  // Retry image loading with exponential backoff
+  const retryImageLoad = useCallback((currentRetry: number) => {
+    if (currentRetry >= MAX_RETRY_ATTEMPTS) {
+      setImageError(true);
+      setImageLoading(false);
+      return;
+    }
+
+    setTimeout(() => {
+      setImageRetryCount(currentRetry + 1);
+      setImageKey(prev => prev + 1);
+      setRetryTimestamp(Date.now()); // Capture timestamp once per retry
+    }, RETRY_DELAYS[currentRetry]);
+  }, []);
+
+  // Timeout effect for stuck image requests
+  useEffect(() => {
+    if (!imageLoading || currentMedia?.type !== 'image' || imageError) return;
+
+    const timeoutId = setTimeout(() => {
+      if (imageLoading && !imageError) {
+        console.warn('MediaGallery: Image load timeout, retrying...', currentMedia?.url);
+        retryImageLoad(imageRetryCount);
+      }
+    }, IMAGE_LOAD_TIMEOUT);
+
+    return () => clearTimeout(timeoutId);
+  }, [imageLoading, imageRetryCount, currentMedia, imageError, retryImageLoad]);
 
   const handlePrevious = useCallback(() => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : media.length - 1));
@@ -275,9 +321,22 @@ export default function MediaGallery({
                   playsInline
                   controls={false}
                   preload="metadata"
-                  onLoadedData={() => setVideoLoading(false)}
-                  onCanPlay={() => setVideoLoading(false)}
-                  onError={() => setVideoLoading(false)}
+                  onLoadedData={() => {
+                    if (!videoReadyRef.current) {
+                      videoReadyRef.current = true;
+                      setVideoLoading(false);
+                    }
+                  }}
+                  onCanPlay={() => {
+                    if (!videoReadyRef.current) {
+                      videoReadyRef.current = true;
+                      setVideoLoading(false);
+                    }
+                  }}
+                  onError={() => {
+                    videoReadyRef.current = true;
+                    setVideoLoading(false);
+                  }}
                   style={{
                     width: '100%',
                     height: '100%',
@@ -290,7 +349,7 @@ export default function MediaGallery({
             ) : (
               <>
                 {/* Loading spinner while image loads */}
-                {imageLoading && (
+                {imageLoading && !imageError && (
                   <Box
                     sx={{
                       position: 'absolute',
@@ -305,25 +364,61 @@ export default function MediaGallery({
                     <CircularProgress size={32} sx={{ color: 'white', opacity: 0.5 }} />
                   </Box>
                 )}
-                <img
-                  key={currentMedia?.url}
-                  src={currentMedia?.url}
-                  alt={currentMedia?.alt || productName}
-                  draggable={false}
-                  onContextMenu={(e) => e.preventDefault()}
-                  onLoad={() => setImageLoading(false)}
-                  onError={() => setImageLoading(false)}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    userSelect: 'none',
-                    WebkitUserDrag: 'none',
-                    pointerEvents: 'none',
-                    opacity: imageLoading ? 0 : 1,
-                    transition: 'opacity 0.3s ease',
-                  } as React.CSSProperties}
-                />
+                {imageError ? (
+                  // Error fallback - show logo placeholder
+                  <Box
+                    sx={{
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: darkTokens.background.app,
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={logoPlaceholder}
+                      alt=""
+                      sx={{
+                        width: '30%',
+                        maxWidth: 80,
+                        height: 'auto',
+                        opacity: 0.4,
+                      }}
+                    />
+                  </Box>
+                ) : (
+                  <img
+                    key={`main-${currentIndex}-${imageKey}`}
+                    src={imageRetryCount > 0 && retryTimestamp > 0
+                      ? `${currentMedia?.url}${currentMedia?.url?.includes('?') ? '&' : '?'}retry=${imageRetryCount}&t=${retryTimestamp}`
+                      : currentMedia?.url
+                    }
+                    alt={currentMedia?.alt || productName}
+                    draggable={false}
+                    onContextMenu={(e) => e.preventDefault()}
+                    onLoad={() => {
+                      setImageLoading(false);
+                      setImageError(false);
+                      setImageRetryCount(0);
+                    }}
+                    onError={() => {
+                      console.warn('MediaGallery: Image load error, attempt', imageRetryCount + 1);
+                      retryImageLoad(imageRetryCount);
+                    }}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      userSelect: 'none',
+                      WebkitUserDrag: 'none',
+                      pointerEvents: 'none',
+                      opacity: imageLoading ? 0 : 1,
+                      transition: 'opacity 0.3s ease',
+                    } as React.CSSProperties}
+                  />
+                )}
               </>
             )}
           </Box>
