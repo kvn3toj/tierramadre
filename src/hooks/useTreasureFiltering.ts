@@ -294,10 +294,17 @@ export function useTreasureFiltering({
       }
     };
 
+    // Helper to check if item has a valid image URL (not empty/placeholder)
+    const hasValidImage = (item: TreasureItem): boolean => {
+      const url = item.imagen || item.imageUrl;
+      // Must be a non-empty string with actual content (not just whitespace)
+      return typeof url === 'string' && url.trim().length > 0;
+    };
+
     // Sort with image priority: items WITH images come first
     return sorted.sort((a, b) => {
-      const aHasImage = Boolean(a.imagen || a.imageUrl);
-      const bHasImage = Boolean(b.imagen || b.imageUrl);
+      const aHasImage = hasValidImage(a);
+      const bHasImage = hasValidImage(b);
 
       // If one has image and other doesn't, prioritize the one with image
       if (aHasImage && !bHasImage) return -1;
