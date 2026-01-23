@@ -4,7 +4,7 @@
  * Export all home page sections for lazy loading.
  */
 
-export { default as HeroSection } from './HeroSection';
+export { default as HeroGallery } from './HeroGallery';
 export { default as CategoryCarousels } from './CategoryCarousels';
 export { default as OracleSection } from './OracleSection';
 export { default as InstagramSection } from './InstagramSection';

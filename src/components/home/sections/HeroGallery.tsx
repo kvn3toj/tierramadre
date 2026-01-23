@@ -46,7 +46,7 @@ interface GalleryImage {
   item?: number;
 }
 
-type MainCategory = 'nuevo' | 'joyeria' | 'lotes' | 'gemas';
+type MainCategory = 'estrenos' | 'joyas' | 'lotes' | 'gemas';
 
 interface Subcategory {
   id: string;
@@ -84,7 +84,7 @@ const JEWELRY_TYPES: Record<string, string[]> = {
 };
 
 const ALL_CATEGORIES: Category[] = [
-  { id: 'nuevo', label: 'Estrenos' },
+  { id: 'estrenos', label: 'Estrenos' },
   {
     id: 'gemas',
     label: 'Gemas',
@@ -104,7 +104,7 @@ const ALL_CATEGORIES: Category[] = [
     ],
   },
   {
-    id: 'joyeria',
+    id: 'joyas',
     label: 'Joyas',
     subcategories: [
       { id: 'topitos', label: 'Topitos' },
@@ -116,12 +116,6 @@ const ALL_CATEGORIES: Category[] = [
   },
 ];
 
-// Fallback images when no products available
-const FALLBACK_IMAGES: GalleryImage[] = [
-  { id: 'gem-1', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621976/tierramadre/gallery/gems/koso3gazzgfiakzg867r.jpg', alt: 'Esmeraldas colombianas' },
-  { id: 'gem-2', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621979/tierramadre/gallery/gems/nf72nnwamaeaydlvekjn.jpg', alt: 'Esmeralda colombiana natural' },
-  { id: 'gem-3', src: 'https://res.cloudinary.com/dyam6g2os/image/upload/v1765621983/tierramadre/gallery/gems/vlcterrk9pswpq7wjvul.jpg', alt: 'Gema esmeralda de Muzo' },
-];
 
 // =============================================================================
 // PROPS
@@ -136,10 +130,10 @@ interface HeroGalleryProps {
 // =============================================================================
 
 export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
-  const [activeCategory, setActiveCategory] = useState<MainCategory>('nuevo');
+  const [activeCategory, setActiveCategory] = useState<MainCategory>('estrenos');
   const [activeSubcategory, setActiveSubcategory] = useState<string | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<MainCategory | null>(null);
-  const [heroImage, setHeroImage] = useState<GalleryImage>(FALLBACK_IMAGES[0]);
+  const [heroImage, setHeroImage] = useState<GalleryImage | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const theme = useTheme();
@@ -173,13 +167,13 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
 
   // Get filtered products based on category/subcategory
   const getFilteredProducts = useCallback((): TreasureItem[] => {
-    if (activeCategory === 'nuevo') {
+    if (activeCategory === 'estrenos') {
       // Return newest products sorted by item number (highest = newest)
       // Item numbers are sequential, so higher numbers are more recent additions
       return [...availableProducts].sort((a, b) => b.item - a.item);
     }
 
-    if (activeCategory === 'joyeria') {
+    if (activeCategory === 'joyas') {
       // Filter jewelry items
       let filtered = availableProducts.filter((item) => item.isJewelry);
 
@@ -221,7 +215,7 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
   const images = useMemo((): GalleryImage[] => {
     const filtered = getFilteredProducts();
     if (filtered.length === 0) {
-      return FALLBACK_IMAGES;
+      return [];
     }
     return filtered.slice(0, 12).map(itemToGalleryImage);
   }, [getFilteredProducts, itemToGalleryImage]);
@@ -232,7 +226,7 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
     if (!category?.subcategories) return [];
 
     return category.subcategories.filter((sub) => {
-      if (categoryId === 'joyeria') {
+      if (categoryId === 'joyas') {
         const types = JEWELRY_TYPES[sub.id] || [];
         return availableProducts.some((item) =>
           item.isJewelry && types.some((type) => item.medidas?.toLowerCase().includes(type.toLowerCase()))
@@ -259,7 +253,7 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
 
   // Auto-transition effect for hero image carousel
   useEffect(() => {
-    if (images.length === 0) return;
+    if (images.length === 0 || !heroImage) return;
 
     const interval = setInterval(() => {
       const currentIndex = images.findIndex((img) => img.id === heroImage.id);
@@ -268,7 +262,7 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
     }, AUTO_TRANSITION_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [heroImage.id, images]);
+  }, [heroImage, images]);
 
   // Show clicked thumbnail in hero image (instead of navigating)
   const handleThumbnailClick = (image: GalleryImage) => {
@@ -277,7 +271,7 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
 
   // Handle hero image click - also navigate to product
   const handleHeroClick = () => {
-    if (heroImage.item) {
+    if (heroImage?.item) {
       navigate(`/product/${heroImage.item}`);
     }
   };
@@ -308,12 +302,12 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
     setActiveSubcategory(activeSubcategory === subcategoryId ? null : subcategoryId);
   };
 
-  // Reset hero image when images change
+  // Initialize or reset hero image when images change
   useEffect(() => {
-    if (images.length > 0 && !images.find((img) => img.id === heroImage.id)) {
+    if (images.length > 0 && (!heroImage || !images.find((img) => img.id === heroImage.id))) {
       setHeroImage(images[0]);
     }
-  }, [images, heroImage.id]);
+  }, [images, heroImage]);
 
   // Preload first 3 hero images for instant display (uses extended splash screen time)
   useEffect(() => {
@@ -347,35 +341,37 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
       >
         {/* Background image with smooth crossfade */}
         <AnimatePresence mode="popLayout">
-          <motion.div
-            key={heroImage.id}
-            initial={{ opacity: 0, scale: 1.02 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: 'easeInOut' }}
-            style={{
-              position: 'absolute',
-              inset: 0,
-            }}
-          >
-            <Box
-              onClick={handleHeroClick}
-              sx={{
-                width: '100%',
-                height: '100%',
-                cursor: heroImage.item ? 'pointer' : 'default',
+          {heroImage && (
+            <motion.div
+              key={heroImage.id}
+              initial={{ opacity: 0, scale: 1.02 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8, ease: 'easeInOut' }}
+              style={{
+                position: 'absolute',
+                inset: 0,
               }}
             >
-              <ProgressiveImage
-                src={heroImage.src}
-                alt={heroImage.alt}
-                objectFit="cover"
-                priority
-                quality="best"
-                layout="full"
-              />
-            </Box>
-          </motion.div>
+              <Box
+                onClick={handleHeroClick}
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  cursor: heroImage.item ? 'pointer' : 'default',
+                }}
+              >
+                <ProgressiveImage
+                  src={heroImage.src}
+                  alt={heroImage.alt}
+                  objectFit="cover"
+                  priority
+                  quality="best"
+                  layout="full"
+                />
+              </Box>
+            </motion.div>
+          )}
         </AnimatePresence>
 
         {/* Gradient overlay - using design system tokens */}
@@ -390,7 +386,7 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
 
         {/* Action Button - Show when a product is selected */}
         <AnimatePresence>
-          {heroImage.item && (
+          {heroImage?.item && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -538,7 +534,7 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
                 }}
               >
                 {images.map((image, index) => {
-                  const isActive = heroImage.id === image.id;
+                  const isActive = heroImage?.id === image.id;
                   return (
                     <motion.div
                       key={image.id}
