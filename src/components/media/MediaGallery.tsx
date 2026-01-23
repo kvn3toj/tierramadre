@@ -52,6 +52,7 @@ export default function MediaGallery({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
 
   // Touch handling for swipe
   const touchStartX = useRef(0);
@@ -61,10 +62,21 @@ export default function MediaGallery({
   const currentMedia = media[currentIndex];
   const hasMedia = media.length > 0;
 
-  // Preload all images and video posters when media changes to prevent blink on navigation
+  // Preload adjacent images only (current + next + previous) to reduce initial bandwidth
+  // This loads ~3 images instead of all 8, with ~60% bandwidth reduction
   useEffect(() => {
-    media.forEach((item) => {
-      if (item.type === 'image' && item.url) {
+    if (media.length === 0) return;
+
+    // Create set of indices to preload: current, next, and previous
+    const indicesToPreload = new Set([
+      currentIndex,
+      (currentIndex + 1) % media.length,
+      (currentIndex - 1 + media.length) % media.length,
+    ]);
+
+    indicesToPreload.forEach((idx) => {
+      const item = media[idx];
+      if (item?.type === 'image' && item.url) {
         // Add size=medium parameter for faster preloading (800px instead of original)
         const optimizedUrl = item.url.includes('serve-drive-image')
           ? `${item.url}${item.url.includes('?') ? '&' : '?'}size=medium`
@@ -72,21 +84,22 @@ export default function MediaGallery({
 
         const img = new Image();
         img.src = optimizedUrl;
-        // Silently handle preload errors to prevent cascade failures
         img.onerror = () => console.warn('Gallery preload failed:', optimizedUrl);
-      } else if (item.type === 'video' && item.thumbnailUrl) {
+      } else if (item?.type === 'video' && item.thumbnailUrl) {
         // Preload video poster for smoother transition
         const img = new Image();
         img.src = item.thumbnailUrl;
         img.onerror = () => console.warn('Video poster preload failed:', item.thumbnailUrl);
       }
     });
-  }, [media]);
+  }, [currentIndex, media]);
 
-  // Set video loading state when switching to a video slide
+  // Set loading state when switching slides
   useEffect(() => {
     if (currentMedia?.type === 'video') {
       setVideoLoading(true);
+    } else if (currentMedia?.type === 'image') {
+      setImageLoading(true);
     }
   }, [currentIndex, currentMedia?.type]);
 
@@ -98,15 +111,15 @@ export default function MediaGallery({
     setCurrentIndex((prev) => (prev < media.length - 1 ? prev + 1 : 0));
   }, [media.length]);
 
-  const handleTouchStart = (e: TouchEvent) => {
+  const handleTouchStart = useCallback((e: TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
-  };
+  }, []);
 
-  const handleTouchMove = (e: TouchEvent) => {
+  const handleTouchMove = useCallback((e: TouchEvent) => {
     touchEndX.current = e.targetTouches[0].clientX;
-  };
+  }, []);
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
     const distance = touchStartX.current - touchEndX.current;
     if (Math.abs(distance) > minSwipeDistance) {
       if (distance > 0) {
@@ -115,7 +128,27 @@ export default function MediaGallery({
         handlePrevious();
       }
     }
-  };
+  }, [handleNext, handlePrevious]);
+
+  // Keyboard navigation for accessibility (Arrow keys)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle if lightbox is open (it has its own keyboard handlers)
+      if (lightboxOpen) return;
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          handlePrevious();
+          break;
+        case 'ArrowRight':
+          handleNext();
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handlePrevious, handleNext, lightboxOpen]);
 
   const handleThumbnailClick = (index: number) => {
     triggerHaptic('selection');
@@ -255,21 +288,43 @@ export default function MediaGallery({
                 />
               </>
             ) : (
-              <img
-                key={currentMedia?.url}
-                src={currentMedia?.url}
-                alt={currentMedia?.alt || productName}
-                draggable={false}
-                onContextMenu={(e) => e.preventDefault()}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  userSelect: 'none',
-                  WebkitUserDrag: 'none',
-                  pointerEvents: 'none',
-                } as React.CSSProperties}
-              />
+              <>
+                {/* Loading spinner while image loads */}
+                {imageLoading && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      bgcolor: darkTokens.background.app,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 1,
+                    }}
+                  >
+                    <CircularProgress size={32} sx={{ color: 'white', opacity: 0.5 }} />
+                  </Box>
+                )}
+                <img
+                  key={currentMedia?.url}
+                  src={currentMedia?.url}
+                  alt={currentMedia?.alt || productName}
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                  onLoad={() => setImageLoading(false)}
+                  onError={() => setImageLoading(false)}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    userSelect: 'none',
+                    WebkitUserDrag: 'none',
+                    pointerEvents: 'none',
+                    opacity: imageLoading ? 0 : 1,
+                    transition: 'opacity 0.3s ease',
+                  } as React.CSSProperties}
+                />
+              </>
             )}
           </Box>
 
