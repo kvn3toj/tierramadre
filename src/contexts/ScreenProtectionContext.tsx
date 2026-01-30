@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { useScreenshotDetection } from '../hooks/useScreenshotDetection';
 
 interface ScreenProtectionContextType {
@@ -44,13 +44,6 @@ export function ScreenProtectionProvider({
     detectVisibilityChange: enabled,
     detectWindowBlur: enabled,
   });
-
-  // Debug logging in development
-  useEffect(() => {
-    if (isProtectionActive && import.meta.env.DEV) {
-      console.log('[ScreenProtection] Protection triggered - content blurred for 1 second');
-    }
-  }, [isProtectionActive]);
 
   return (
     <ScreenProtectionContext.Provider value={{ isProtectionActive, triggerProtection }}>

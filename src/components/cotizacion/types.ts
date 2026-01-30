@@ -77,6 +77,25 @@ export interface ProductEntrySectionProps {
   canUseManualEntry?: boolean;
 }
 
+export interface TreasureProductSelectorProps {
+  availableTreasure: TreasureItem[];
+  selectedItem: TreasureItem | null;
+  setSelectedItem: (item: TreasureItem | null) => void;
+  handleAddProduct: () => void;
+}
+
+export interface ManualProductFormProps {
+  manualProduct: ManualProductState;
+  setManualProduct: React.Dispatch<React.SetStateAction<ManualProductState>>;
+  handleAddManualProduct: () => void;
+  isUploadingImage: boolean;
+  imagePreview: string | null;
+  setImagePreview: (v: string | null) => void;
+  isVideoPreview: boolean;
+  setIsVideoPreview: (v: boolean) => void;
+  onImageUpload: (file: File) => Promise<void>;
+}
+
 // =============================================================================
 // PRODUCT LIST
 // =============================================================================

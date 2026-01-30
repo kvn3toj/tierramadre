@@ -108,3 +108,34 @@ export {
   type PdfExportOptions,
   type PdfExportResult,
 } from './pdfExport';
+
+// ===== PDF COMMON UTILITIES =====
+
+// Shared constants, helpers, and interfaces for catalog PDF generation
+export {
+  BRAND,
+  LOGO_ASPECT_RATIO,
+  hexToRgb as hexToRgbLocal,
+  setFillFromHex,
+  setTextFromHex,
+  getImageDimensions,
+  calculateAspectRatioFit,
+  loadLogoBase64,
+  downloadPDF,
+  type CatalogOptions,
+} from './pdfCommon';
+
+// ===== PDF SLIDE / CAROUSEL =====
+
+// Horizontal cover page and carousel layout for slide-style PDFs
+export {
+  addHorizontalCoverPage,
+  addHorizontalCarouselLayout,
+} from './pdfSlide';
+
+// ===== PDF CATALOG =====
+
+// Main catalog generator with grid and list layouts
+export {
+  generateCatalog,
+} from './pdfCatalog';

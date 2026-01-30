@@ -1,10 +1,12 @@
 /**
  * useCotizacion Hook
- * Manages quotation state, products, investments, and calculations.
- * Extracted from CotizacionGenerator.tsx for better modularity.
+ * Composition hook that combines form state and data management for quotations.
+ * Delegates to useCotizacionForm and useCotizacionData for better modularity.
  */
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { TreasureItem } from '../types';
+import { useCotizacionForm } from './useCotizacionForm';
+import { useCotizacionData } from './useCotizacionData';
 
 // Cotizacion product interface
 export interface CotizacionProduct {
@@ -239,239 +241,74 @@ export interface UseCotizacionReturn {
   resetAll: () => void;
 }
 
-const initialManualProduct: ManualProductState = {
-  name: '',
-  peso: '',
-  color: '',
-  calidad: '',
-  talla: '',
-  precioCOP: 0,
-  isJewelry: false,
-  metalType: '',
-  pesoTotal: '',
-  cantidadGemas: '',
-  medida: '',
-  diseno: '',
-  precioPorCt: '',
-  calidadMetal: '',
-  gramaje: '',
-};
-
 export function useCotizacion(): UseCotizacionReturn {
-  // Quotation info
-  const [quotationNumber, setQuotationNumber] = useState(generateQuotationNumber);
+  const form = useCotizacionForm();
+  const data = useCotizacionData();
 
-  // Client info
-  const [clientName, setClientName] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
-  const [clientEmail, setClientEmail] = useState('');
-  const [clientDocument, setClientDocument] = useState('');
-  const [asesorName, setAsesorName] = useState('');
-
-  // Date and validity
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [validDays, setValidDays] = useState(15);
-
-  // Notes and discount
-  const [notes, setNotes] = useState('');
-  const [discountPercent, setDiscountPercent] = useState(0);
-
-  // Products
-  const [products, setProducts] = useState<CotizacionProduct[]>([]);
-
-  // Manual product entry
-  const [manualProduct, setManualProduct] = useState<ManualProductState>(initialManualProduct);
-
-  // Investments
-  const [investments, setInvestments] = useState<CotizacionInvestment[]>(DEFAULT_COTIZACION_INVESTMENTS);
-  const [customCosts, setCustomCosts] = useState<CustomCost[]>([]);
-
-  // Business settings
-  const [businessSettings, setBusinessSettings] = useState<BusinessSettings>(DEFAULT_BUSINESS_SETTINGS);
-
-  // Calculate expiry date
-  const expiryDate = useMemo(() => {
-    const expiry = new Date(date);
-    expiry.setDate(expiry.getDate() + validDays);
-    return expiry;
-  }, [date, validDays]);
-
-  const expiryStr = useMemo(() => {
-    return expiryDate.toLocaleDateString('es-CO', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  }, [expiryDate]);
-
-  // Calculate totals
-  const investmentTotal = useMemo(() => {
-    return investments.reduce((sum, inv) => sum + inv.value, 0);
-  }, [investments]);
-
-  const customCostsTotal = useMemo(() => {
-    return customCosts.reduce((sum, cost) => sum + cost.value, 0);
-  }, [customCosts]);
-
-  const totalInvestment = investmentTotal + customCostsTotal;
-
-  const productSubtotal = useMemo(() => {
-    return products.reduce((sum, p) => sum + p.precioCOP, 0);
-  }, [products]);
-
-  const subtotal = productSubtotal + totalInvestment;
-  const discount = subtotal * (discountPercent / 100);
+  // Derived totals that combine form (discount) and data (products, investments)
+  const subtotal = data.productSubtotal + data.totalInvestment;
+  const discount = subtotal * (form.discountPercent / 100);
   const total = subtotal - discount;
 
-  // Regenerate quotation number
-  const regenerateQuotationNumber = useCallback(() => {
-    setQuotationNumber(generateQuotationNumber());
-  }, []);
-
-  // Add product from treasure
-  const addProductFromTreasure = useCallback((item: TreasureItem) => {
-    const product: CotizacionProduct = {
-      id: crypto.randomUUID(),
-      itemNumber: item.item,
-      name: item.nombre,
-      peso: item.peso,
-      color: item.color,
-      calidad: item.calidad,
-      talla: item.talla,
-      precioCOP: item.precioCOP,
-      imagen: item.imagen,
-      isJewelry: item.isJewelry,
-      metalType: item.metalType,
-    };
-    setProducts(prev => [...prev, product]);
-  }, []);
-
-  // Add manual product
-  const addManualProduct = useCallback((product: ManualProductState) => {
-    if (!product.name || product.precioCOP <= 0) return;
-
-    const newProduct: CotizacionProduct = {
-      id: crypto.randomUUID(),
-      itemNumber: Date.now() % 10000,
-      name: product.name,
-      peso: product.peso || '-',
-      color: product.color || '-',
-      calidad: product.calidad || '-',
-      talla: product.talla || '-',
-      precioCOP: product.precioCOP,
-      isJewelry: product.isJewelry,
-      metalType: product.metalType,
-      imagen: product.imagen,
-      gifUrl: product.gifUrl, // For PDF export when product has video
-      videoUrl: product.videoUrl, // Direct video URL for QR linking
-      isManual: true, // Flag to identify manually added products
-    };
-
-    setProducts(prev => [...prev, newProduct]);
-    setManualProduct(initialManualProduct);
-  }, []);
-
-  // Remove product
-  const removeProduct = useCallback((productId: string) => {
-    setProducts(prev => prev.filter(p => p.id !== productId));
-  }, []);
-
-  // Reset manual product
-  const resetManualProduct = useCallback(() => {
-    setManualProduct(initialManualProduct);
-  }, []);
-
-  // Update investment
-  const updateInvestment = useCallback((id: string, value: number) => {
-    setInvestments(prev => prev.map(inv =>
-      inv.id === id ? { ...inv, value } : inv
-    ));
-  }, []);
-
-  // Reset investments
-  const resetInvestments = useCallback(() => {
-    setInvestments(DEFAULT_COTIZACION_INVESTMENTS);
-    setCustomCosts([]);
-  }, []);
-
-  // Add custom cost
-  const addCustomCost = useCallback((label: string, value: number) => {
-    if (!label || value <= 0) return;
-    setCustomCosts(prev => [
-      ...prev,
-      { id: crypto.randomUUID(), label, value }
-    ]);
-  }, []);
-
-  // Remove custom cost
-  const removeCustomCost = useCallback((id: string) => {
-    setCustomCosts(prev => prev.filter(c => c.id !== id));
-  }, []);
-
-  // Reset all
+  // Reset all combines both sub-hook resets
   const resetAll = useCallback(() => {
-    setQuotationNumber(generateQuotationNumber());
-    setClientName('');
-    setClientPhone('');
-    setClientEmail('');
-    setClientDocument('');
-    setAsesorName('');
-    setDate(new Date().toISOString().split('T')[0]);
-    setValidDays(15);
-    setNotes('');
-    setDiscountPercent(0);
-    setProducts([]);
-    setManualProduct(initialManualProduct);
-    setInvestments(DEFAULT_COTIZACION_INVESTMENTS);
-    setCustomCosts([]);
-  }, []);
+    form.resetForm();
+    data.resetData();
+  }, [form, data]);
 
   return {
-    quotationNumber,
-    setQuotationNumber,
-    regenerateQuotationNumber,
-    clientName,
-    setClientName,
-    clientPhone,
-    setClientPhone,
-    clientEmail,
-    setClientEmail,
-    clientDocument,
-    setClientDocument,
-    asesorName,
-    setAsesorName,
-    date,
-    setDate,
-    validDays,
-    setValidDays,
-    expiryDate,
-    expiryStr,
-    notes,
-    setNotes,
-    discountPercent,
-    setDiscountPercent,
-    products,
-    addProductFromTreasure,
-    addManualProduct,
-    removeProduct,
-    manualProduct,
-    setManualProduct,
-    resetManualProduct,
-    investments,
-    updateInvestment,
-    resetInvestments,
-    customCosts,
-    addCustomCost,
-    removeCustomCost,
-    businessSettings,
-    setBusinessSettings,
-    investmentTotal,
-    customCostsTotal,
-    totalInvestment,
-    productSubtotal,
+    // Form state
+    quotationNumber: form.quotationNumber,
+    setQuotationNumber: form.setQuotationNumber,
+    regenerateQuotationNumber: form.regenerateQuotationNumber,
+    clientName: form.clientName,
+    setClientName: form.setClientName,
+    clientPhone: form.clientPhone,
+    setClientPhone: form.setClientPhone,
+    clientEmail: form.clientEmail,
+    setClientEmail: form.setClientEmail,
+    clientDocument: form.clientDocument,
+    setClientDocument: form.setClientDocument,
+    asesorName: form.asesorName,
+    setAsesorName: form.setAsesorName,
+    date: form.date,
+    setDate: form.setDate,
+    validDays: form.validDays,
+    setValidDays: form.setValidDays,
+    expiryDate: form.expiryDate,
+    expiryStr: form.expiryStr,
+    notes: form.notes,
+    setNotes: form.setNotes,
+    discountPercent: form.discountPercent,
+    setDiscountPercent: form.setDiscountPercent,
+    businessSettings: form.businessSettings,
+    setBusinessSettings: form.setBusinessSettings,
+
+    // Data state
+    products: data.products,
+    addProductFromTreasure: data.addProductFromTreasure,
+    addManualProduct: data.addManualProduct,
+    removeProduct: data.removeProduct,
+    manualProduct: data.manualProduct,
+    setManualProduct: data.setManualProduct,
+    resetManualProduct: data.resetManualProduct,
+    investments: data.investments,
+    updateInvestment: data.updateInvestment,
+    resetInvestments: data.resetInvestments,
+    customCosts: data.customCosts,
+    addCustomCost: data.addCustomCost,
+    removeCustomCost: data.removeCustomCost,
+    investmentTotal: data.investmentTotal,
+    customCostsTotal: data.customCostsTotal,
+    totalInvestment: data.totalInvestment,
+    productSubtotal: data.productSubtotal,
+
+    // Combined totals
     subtotal,
     discount,
     total,
+
+    // Combined actions
     resetAll,
   };
 }

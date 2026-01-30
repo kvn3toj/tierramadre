@@ -140,7 +140,6 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
         });
       } catch {
         // User cancelled or share failed
-        console.log('Share cancelled or failed');
       }
     } else {
       // Fallback to copy

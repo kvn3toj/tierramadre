@@ -1,6 +1,15 @@
 import { useState, useCallback } from 'react';
 import { AIAnalysisResult } from '../types';
 import nameData from '../data/existingNames.json';
+import {
+  NAMING_PROMPT,
+  CAPTION_PROMPT,
+  FALLBACK_CAPTION_TEMPLATE,
+  FALLBACK_DESCRIPTION,
+  FALLBACK_CHARACTERISTICS,
+  SMART_DESCRIPTIONS,
+  SMART_CHARACTERISTICS,
+} from './ai-prompts';
 
 // LocalStorage key for used names
 const USED_NAMES_KEY = 'tierra-madre-used-names';
@@ -40,48 +49,6 @@ export function getUsedNamesCount(): number {
 export function clearUsedNames(): void {
   localStorage.removeItem(USED_NAMES_KEY);
 }
-
-const NAMING_PROMPT = `Eres poeta experto en nombrar esmeraldas colombianas para Tierra Madre.
-Tagline: "Esencia y Poder"
-
-ANALIZA la imagen cuidadosamente y crea 3 nombres ÚNICOS basados en:
-
-LO QUE VES EN LA PIEDRA:
-- Forma: ¿es redonda, ovalada, rectangular, irregular, gota?
-- Color: ¿verde intenso, claro, azulado, amarillento?
-- Brillo: ¿muy brillante, satinado, opaco?
-- Inclusiones: ¿tiene jardín interno, vetas, puntos?
-- Tamaño aparente: ¿grande, mediana, pequeña?
-
-INSPÍRATE EN:
-- Lo que la piedra te EVOCA visualmente
-- Mitología (griega, egipcia, colombiana)
-- Naturaleza colombiana (fauna, flora, lugares)
-- Cosmos y estrellas
-- Emociones y sentimientos
-- Realeza y nobleza
-
-REGLAS:
-1. Cada nombre debe ser DIFERENTE en estilo
-2. Máximo 3 palabras por nombre
-3. Español elegante y poético
-4. Nombres que nadie haya usado antes
-
-Responde SOLO JSON válido:
-{"names":["Nombre1","Nombre2","Nombre3"],"description":"2 oraciones describiendo lo que VES en la piedra","characteristics":["característica visual 1","característica visual 2","característica visual 3"]}`;
-
-const CAPTION_PROMPT = `Escribe un caption para Instagram de Tierra Madre (@tierramadre.co).
-Voz de marca: Elegante, místico, orgulloso patrimonio colombiano.
-Mensajes clave: "100% Naturales", "ADN de paz", origen ético.
-
-Estructura:
-- Gancho emocional
-- 2-3 oraciones describiendo la piedra
-- Llamado a la acción sutil
-- 5-8 hashtags (#TierraMadre #EsmeraldasColombianas)
-
-Máximo 150 palabras, español.
-Responde SOLO el caption, sin formato adicional.`;
 
 interface AIHookReturn {
   analyzing: boolean;
@@ -191,8 +158,8 @@ export function useAI(): AIHookReturn {
           setAnalyzing(false);
           return {
             names: availableNames.slice(0, 3),
-            description: 'Esmeralda colombiana de belleza excepcional.',
-            characteristics: ['Verde natural', 'Origen colombiano', 'Calidad premium'],
+            description: FALLBACK_DESCRIPTION,
+            characteristics: FALLBACK_CHARACTERISTICS,
           };
         }
 
@@ -211,7 +178,7 @@ export function useAI(): AIHookReturn {
     const groqKey = import.meta.env.VITE_GROQ_API_KEY;
 
     if (!groqKey) {
-      return `${emeraldName} ✨\n\n${description}\n\nDescubre la magia de las esmeraldas colombianas en tierramadre.co\n\n#TierraMadre #EsmeraldasColombianas #Esmeraldas #LujoConAlma #EsenciaYPoder`;
+      return FALLBACK_CAPTION_TEMPLATE(emeraldName, description);
     }
 
     try {
@@ -374,43 +341,9 @@ function generatePoetic(): string {
 function generateSmartSuggestions(): AIAnalysisResult {
   const names = generateUniqueNames(3);
 
-  const descriptions = [
-    'Una gema de verde profundo que captura la esencia de las montañas colombianas.',
-    'Esmeralda de brillo excepcional, nacida en las entrañas de la tierra madre.',
-    'Verde vibrante que evoca los bosques ancestrales del corazón de Colombia.',
-    'Piedra de claridad sublime, un tesoro de la naturaleza colombiana.',
-    'Gema de tonalidades únicas, portadora del espíritu de la tierra.',
-    'Esmeralda de belleza incomparable, herencia de las minas de Muzo.',
-    'Verde intenso que refleja la pureza de las aguas del Pacífico.',
-    'Joya de luz interior, guardiana de secretos milenarios.',
-    'Cristal de poder ancestral, forjado en las profundidades de Boyacá.',
-    'Piedra mística que susurra historias de civilizaciones perdidas.',
-    'Gema sagrada que brilla con la luz de mil amaneceres tropicales.',
-    'Esmeralda regia, digna de coronas y sueños eternos.',
-    'Verde que danza entre la luz y la sombra, revelando su alma.',
-    'Tesoro colombiano que guarda el ADN de la paz y la prosperidad.',
-    'Joya celestial caída del firmamento, atrapada en forma terrenal.',
-    'Piedra de transformación, símbolo de renacimiento y esperanza.',
-  ];
-
-  const characteristics = [
-    ['Verde intenso', 'Brillo excepcional', 'Claridad notable'],
-    ['Tonalidad profunda', 'Inclusiones naturales', 'Corte elegante'],
-    ['Verde vibrante', 'Alta transparencia', 'Forma armoniosa'],
-    ['Color saturado', 'Jardín interno característico', 'Talla precisa'],
-    ['Verde azulado', 'Pureza notable', 'Proporciones ideales'],
-    ['Saturación perfecta', 'Luz interna brillante', 'Simetría exquisita'],
-    ['Verde bosque', 'Cristalización única', 'Peso excepcional'],
-    ['Tono sublime', 'Facetas perfectas', 'Origen certificado'],
-    ['Verde hierba', 'Transparencia cristalina', 'Forma oval elegante'],
-    ['Color musgo', 'Inclusiones tipo jardín', 'Corte esmeralda clásico'],
-    ['Verde primavera', 'Brillo sedoso', 'Proporciones áureas'],
-    ['Tono selva', 'Fluorescencia sutil', 'Calidad museo'],
-  ];
-
   return {
     names,
-    description: descriptions[Math.floor(Math.random() * descriptions.length)],
-    characteristics: characteristics[Math.floor(Math.random() * characteristics.length)],
+    description: SMART_DESCRIPTIONS[Math.floor(Math.random() * SMART_DESCRIPTIONS.length)],
+    characteristics: SMART_CHARACTERISTICS[Math.floor(Math.random() * SMART_CHARACTERISTICS.length)],
   };
 }

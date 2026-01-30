@@ -15,7 +15,7 @@
  * Designed by: Aria + Eunoia + Moksart
  */
 
-import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography, useTheme, Button } from '@mui/material';
@@ -31,91 +31,12 @@ import {
 } from '../../../design-system';
 import { TreasureItem } from '../../../types';
 import ProgressiveImage from '../../shared/ProgressiveImage';
-
-// Auto-transition interval (ms)
-const AUTO_TRANSITION_INTERVAL = 6000;
-
-// =============================================================================
-// TYPES & CONSTANTS
-// =============================================================================
-
-interface GalleryImage {
-  id: string;
-  src: string;
-  alt: string;
-  item?: number;
-}
-
-type MainCategory = 'estrenos' | 'joyas' | 'lotes' | 'gemas';
-
-interface Subcategory {
-  id: string;
-  label: string;
-}
-
-interface Category {
-  id: MainCategory;
-  label: string;
-  subcategories?: Subcategory[];
-}
-
-// Quality mapping for filtering Lotes and Gemas
-// These are exact match patterns (case-insensitive)
-const QUALITY_FILTERS: Record<string, string[]> = {
-  'comercial': ['Comercial', 'Comercial Estándar', 'Comercial Estandar', 'Estandar', 'Estándar', 'Plata - comercial'],
-  'finas': ['Comercial Fina', 'Comercial Superior', 'Fina'],
-  'extra-finas': ['Comercial SuperFina', 'SuperFina', 'Extra Fina'],
-};
-
-// Helper to check if quality matches filter
-const matchesQuality = (itemQuality: string | undefined, filterQualities: string[]): boolean => {
-  if (!itemQuality) return false;
-  const normalizedQuality = itemQuality.trim().toLowerCase();
-  return filterQualities.some((q) => normalizedQuality === q.toLowerCase());
-};
-
-// Jewelry type mapping (based on medidas field)
-const JEWELRY_TYPES: Record<string, string[]> = {
-  'topitos': ['Topito', 'Topitos'],
-  'aretes': ['Arete', 'Aretes'],
-  'anillos': ['Anillo', 'Anillos'],
-  'pulseras': ['Pulsera', 'Pulseras'],
-  'dijes': ['Dije', 'Dijes'],
-};
-
-const ALL_CATEGORIES: Category[] = [
-  { id: 'estrenos', label: 'Estrenos' },
-  {
-    id: 'gemas',
-    label: 'Gemas',
-    subcategories: [
-      { id: 'comercial', label: 'Comercial' },
-      { id: 'finas', label: 'Finas' },
-      { id: 'extra-finas', label: 'Extra finas' },
-    ],
-  },
-  {
-    id: 'lotes',
-    label: 'Lotes',
-    subcategories: [
-      { id: 'comercial', label: 'Comercial' },
-      { id: 'finas', label: 'Finas' },
-      { id: 'extra-finas', label: 'Extra finas' },
-    ],
-  },
-  {
-    id: 'joyas',
-    label: 'Joyas',
-    subcategories: [
-      { id: 'topitos', label: 'Topitos' },
-      { id: 'aretes', label: 'Aretes' },
-      { id: 'anillos', label: 'Anillos' },
-      { id: 'pulseras', label: 'Pulseras' },
-      { id: 'dijes', label: 'Dijes' },
-    ],
-  },
-];
-
+import {
+  GalleryImage,
+  ALL_CATEGORIES,
+  AUTO_TRANSITION_INTERVAL,
+} from './gallery-constants';
+import { useGalleryFiltering } from './useGalleryFiltering';
 
 // =============================================================================
 // PROPS
@@ -130,22 +51,11 @@ interface HeroGalleryProps {
 // =============================================================================
 
 export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
-  const [activeCategory, setActiveCategory] = useState<MainCategory>('estrenos');
-  const [activeSubcategory, setActiveSubcategory] = useState<string | null>(null);
-  const [expandedCategory, setExpandedCategory] = useState<MainCategory | null>(null);
   const [heroImage, setHeroImage] = useState<GalleryImage | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
-
-  // Filter products that are available and have images from Drive
-  // The `imagen` field is populated by useTreasure from Google Drive batch thumbnails
-  const availableProducts = useMemo(() => {
-    return treasure.filter(
-      (item) => item.estado === 'DISPONIBLE' && item.imagen
-    );
-  }, [treasure]);
 
   // Helper: set size param on serve-drive-image URLs (replaces existing if present)
   const setImageSize = useCallback((url: string, size: string): string => {
@@ -155,107 +65,17 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
     return parsed.pathname + '?' + parsed.searchParams.toString();
   }, []);
 
-  // Convert TreasureItem to GalleryImage
-  // Uses high-quality images (size=large) for hero display
-  const itemToGalleryImage = useCallback((item: TreasureItem): GalleryImage => {
-    let src = item.imagen || '';
-
-    // Set size=large parameter for high-quality display
-    src = setImageSize(src, 'large');
-
-    return {
-      id: `product-${item.item}`,
-      src,
-      alt: item.nombre,
-      item: item.item,
-    };
-  }, [setImageSize]);
-
-  // Get filtered products based on category/subcategory
-  const getFilteredProducts = useCallback((): TreasureItem[] => {
-    if (activeCategory === 'estrenos') {
-      // Return newest products sorted by item number (highest = newest)
-      // Item numbers are sequential, so higher numbers are more recent additions
-      return [...availableProducts].sort((a, b) => b.item - a.item);
-    }
-
-    if (activeCategory === 'joyas') {
-      // Filter jewelry items
-      let filtered = availableProducts.filter((item) => item.isJewelry);
-
-      if (activeSubcategory) {
-        const types = JEWELRY_TYPES[activeSubcategory] || [];
-        filtered = filtered.filter((item) =>
-          types.some((type) => item.medidas?.toLowerCase().includes(type.toLowerCase()))
-        );
-      }
-      return filtered;
-    }
-
-    if (activeCategory === 'lotes') {
-      // Filter lotes (multiple stones)
-      let filtered = availableProducts.filter((item) => !item.isJewelry && item.cantidad > 1);
-
-      if (activeSubcategory) {
-        const qualities = QUALITY_FILTERS[activeSubcategory] || [];
-        filtered = filtered.filter((item) => matchesQuality(item.calidad, qualities));
-      }
-      return filtered;
-    }
-
-    if (activeCategory === 'gemas') {
-      // Filter single gems
-      let filtered = availableProducts.filter((item) => !item.isJewelry && item.cantidad === 1);
-
-      if (activeSubcategory) {
-        const qualities = QUALITY_FILTERS[activeSubcategory] || [];
-        filtered = filtered.filter((item) => matchesQuality(item.calidad, qualities));
-      }
-      return filtered;
-    }
-
-    return availableProducts;
-  }, [activeCategory, activeSubcategory, availableProducts]);
-
-  // Get images for current selection
-  const images = useMemo((): GalleryImage[] => {
-    const filtered = getFilteredProducts();
-    if (filtered.length === 0) {
-      return [];
-    }
-    return filtered.slice(0, 12).map(itemToGalleryImage);
-  }, [getFilteredProducts, itemToGalleryImage]);
-
-  // Get available subcategories (only those with products)
-  const getAvailableSubcategories = useCallback((categoryId: MainCategory): Subcategory[] => {
-    const category = ALL_CATEGORIES.find((c) => c.id === categoryId);
-    if (!category?.subcategories) return [];
-
-    return category.subcategories.filter((sub) => {
-      if (categoryId === 'joyas') {
-        const types = JEWELRY_TYPES[sub.id] || [];
-        return availableProducts.some((item) =>
-          item.isJewelry && types.some((type) => item.medidas?.toLowerCase().includes(type.toLowerCase()))
-        );
-      }
-
-      if (categoryId === 'lotes') {
-        const qualities = QUALITY_FILTERS[sub.id] || [];
-        return availableProducts.some((item) =>
-          !item.isJewelry && item.cantidad > 1 && matchesQuality(item.calidad, qualities)
-        );
-      }
-
-      if (categoryId === 'gemas') {
-        const qualities = QUALITY_FILTERS[sub.id] || [];
-        return availableProducts.some((item) =>
-          !item.isJewelry && item.cantidad === 1 && matchesQuality(item.calidad, qualities)
-        );
-      }
-
-      return false;
-    });
-  }, [availableProducts]);
+  // Category/subcategory filtering logic (extracted hook)
+  const {
+    activeCategory,
+    activeSubcategory,
+    expandedCategory,
+    images,
+    currentSubcategories,
+    getAvailableSubcategories,
+    handleCategoryClick,
+    handleSubcategoryClick,
+  } = useGalleryFiltering({ treasure, setImageSize });
 
   // Auto-transition effect for hero image carousel
   useEffect(() => {
@@ -282,32 +102,6 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
     }
   };
 
-  // Handle category click
-  const handleCategoryClick = (categoryId: MainCategory) => {
-    const category = ALL_CATEGORIES.find((c) => c.id === categoryId);
-    const hasSubcategories = category?.subcategories && getAvailableSubcategories(categoryId).length > 0;
-
-    if (hasSubcategories) {
-      // Toggle expansion
-      if (expandedCategory === categoryId) {
-        setExpandedCategory(null);
-        setActiveSubcategory(null);
-      } else {
-        setExpandedCategory(categoryId);
-        setActiveSubcategory(null);
-      }
-    } else {
-      setExpandedCategory(null);
-      setActiveSubcategory(null);
-    }
-    setActiveCategory(categoryId);
-  };
-
-  // Handle subcategory click
-  const handleSubcategoryClick = (subcategoryId: string) => {
-    setActiveSubcategory(activeSubcategory === subcategoryId ? null : subcategoryId);
-  };
-
   // Initialize or reset hero image when images change
   useEffect(() => {
     if (images.length > 0 && (!heroImage || !images.find((img) => img.id === heroImage.id))) {
@@ -329,9 +123,6 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
       }
     });
   }, [images]);
-
-  // Get available subcategories for the expanded category
-  const currentSubcategories = expandedCategory ? getAvailableSubcategories(expandedCategory) : [];
 
   return (
     <Box component="section" aria-label="Galeria">
