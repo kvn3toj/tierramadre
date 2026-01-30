@@ -13,6 +13,7 @@
 
 import { OAuth2Client } from 'google-auth-library';
 import { drive_v3 } from '@googleapis/drive';
+import { sheets_v4 } from '@googleapis/sheets';
 
 // Cache the OAuth client to avoid recreating on every request
 let cachedOAuthClient = null;
@@ -102,6 +103,15 @@ async function getOAuthClient() {
 export async function getOAuthDriveClient() {
   const auth = await getOAuthClient();
   return new drive_v3.Drive({ auth });
+}
+
+/**
+ * Get Google Sheets client authenticated via OAuth
+ * @returns {Promise<sheets_v4.Sheets>}
+ */
+export async function getOAuthSheetsClient() {
+  const auth = await getOAuthClient();
+  return new sheets_v4.Sheets({ auth });
 }
 
 /**

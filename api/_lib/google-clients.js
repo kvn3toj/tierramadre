@@ -2,82 +2,76 @@
  * Google API Client Factories
  *
  * Centralized initialization for Google Sheets and Drive clients.
- * Reduces duplication across API files.
+ * Uses OAuth2 (personal account) for authentication.
+ *
+ * Required Environment Variables:
+ * - GOOGLE_OAUTH_CLIENT_ID
+ * - GOOGLE_OAUTH_CLIENT_SECRET
+ * - GOOGLE_OAUTH_REFRESH_TOKEN
  */
 
-import { GoogleAuth } from 'google-auth-library';
+import { OAuth2Client } from 'google-auth-library';
 import { sheets_v4 } from '@googleapis/sheets';
 import { drive_v3 } from '@googleapis/drive';
 
 /**
- * Parse and return Google Service Account credentials from environment
- * @returns {object} Parsed credentials object
- * @throws {Error} If credentials are missing or invalid
+ * Clean environment variable value (remove quotes, newlines, whitespace)
  */
-export function getCredentials() {
-  if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-    throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY environment variable not configured');
-  }
+function cleanEnvValue(value) {
+  if (!value) return value;
+  return value
+    .replace(/^["']|["']$/g, '')
+    .replace(/\\n/g, '')
+    .replace(/[\r\n]/g, '')
+    .trim();
+}
 
-  try {
-    const cleanKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY.replace(/[\s"]+/g, '');
-    return JSON.parse(Buffer.from(cleanKey, 'base64').toString());
-  } catch (error) {
-    console.error('Error parsing Google credentials:', error);
-    throw new Error('Failed to parse Google Service Account credentials');
-  }
+/**
+ * Create OAuth2 client with refresh token credentials.
+ * The OAuth2Client auto-refreshes the access token when API calls are made.
+ * @returns {OAuth2Client}
+ */
+function getAuth() {
+  const clientId = cleanEnvValue(process.env.GOOGLE_OAUTH_CLIENT_ID);
+  const clientSecret = cleanEnvValue(process.env.GOOGLE_OAUTH_CLIENT_SECRET);
+  const refreshToken = cleanEnvValue(process.env.GOOGLE_OAUTH_REFRESH_TOKEN);
+
+  const auth = new OAuth2Client(clientId, clientSecret);
+  auth.setCredentials({ refresh_token: refreshToken });
+  return auth;
 }
 
 /**
  * Initialize Google Sheets API client
- * @param {boolean} readonly - If true, use readonly scope (default: false)
  * @returns {sheets_v4.Sheets} Sheets client instance
  */
-export function getSheetsClient(readonly = false) {
-  const credentials = getCredentials();
-
-  const auth = new GoogleAuth({
-    credentials,
-    scopes: [
-      readonly
-        ? 'https://www.googleapis.com/auth/spreadsheets.readonly'
-        : 'https://www.googleapis.com/auth/spreadsheets'
-    ],
-  });
-
-  return new sheets_v4.Sheets({ auth });
+export function getSheetsClient() {
+  return new sheets_v4.Sheets({ auth: getAuth() });
 }
 
 /**
  * Initialize Google Drive API client
- * @param {boolean} readonly - If true, use readonly scope (default: true)
  * @returns {drive_v3.Drive} Drive client instance
  */
-export function getDriveClient(readonly = true) {
-  const credentials = getCredentials();
-
-  const auth = new GoogleAuth({
-    credentials,
-    scopes: [
-      readonly
-        ? 'https://www.googleapis.com/auth/drive.readonly'
-        : 'https://www.googleapis.com/auth/drive'  // Full drive scope needed for Shared Drive uploads
-    ],
-  });
-
-  return new drive_v3.Drive({ auth });
+export function getDriveClient() {
+  return new drive_v3.Drive({ auth: getAuth() });
 }
 
 /**
- * Check if Google Service Account is configured
+ * Check if Google OAuth is configured
  * @returns {boolean}
  */
 export function isGoogleConfigured() {
-  return !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  return !!(
+    process.env.GOOGLE_OAUTH_CLIENT_ID &&
+    process.env.GOOGLE_OAUTH_CLIENT_SECRET &&
+    process.env.GOOGLE_OAUTH_REFRESH_TOKEN
+  );
 }
 
 /**
- * Get Shared Drive ID from environment
+ * Get Drive parent folder ID from environment
+ * For personal Drive: the folder ID containing the 'products' folder
  * @returns {string|null}
  */
 export function getSharedDriveId() {

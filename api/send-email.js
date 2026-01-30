@@ -108,7 +108,7 @@ async function getProviderFromSheet() {
   }
 
   try {
-    const sheets = getSheetsClient(true);
+    const sheets = getSheetsClient();
     const sheetNames = await getSheetNames(sheets);
 
     // Use sheet 3 (index 2) for asesores data

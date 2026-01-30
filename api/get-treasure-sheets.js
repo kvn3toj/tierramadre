@@ -179,11 +179,11 @@ export default async function handler(req, res) {
   setCacheHeaders(res, CACHE.NONE);
 
   if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google Service Account not configured');
+    return sendError(res, 500, 'Google OAuth not configured');
   }
 
   try {
-    const sheets = getSheetsClient(true);
+    const sheets = getSheetsClient();
     const sheetNames = await getSheetNames(sheets);
     const targetSheet = findSheetByPattern(sheetNames, ['inventario', 'inventory']) || sheetNames[0];
 

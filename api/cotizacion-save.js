@@ -846,8 +846,7 @@ export default async function handler(req, res) {
     const drive = await getOAuthDriveClient();
     const sharedDriveId = getSharedDriveId();
 
-    // Get sheets client using Service Account (OAuth is only for Drive)
-    const sheets = getSheetsClient(false); // false = read-write access
+    const sheets = getSheetsClient();
 
     // ==========================================================================
     // GET - Fetch cotizaciones for an asesor or aggregate stats

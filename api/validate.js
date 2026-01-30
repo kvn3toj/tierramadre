@@ -188,7 +188,7 @@ export default async function handler(req, res) {
   // List providers action - no email required
   if (action === 'list-providers') {
     try {
-      const sheets = getSheetsClient(true);
+      const sheets = getSheetsClient();
       const sheetNames = await getSheetNames(sheets);
       const providers = await listProviders(sheets, sheetNames);
       return sendSuccess(res, { providers });
@@ -204,11 +204,11 @@ export default async function handler(req, res) {
   }
 
   if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google Service Account not configured');
+    return sendError(res, 500, 'Google OAuth not configured');
   }
 
   try {
-    const sheets = getSheetsClient(true);
+    const sheets = getSheetsClient();
     const sheetNames = await getSheetNames(sheets);
     const normalizedEmail = email.toLowerCase().trim();
 

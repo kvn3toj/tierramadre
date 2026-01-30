@@ -62,7 +62,7 @@ async function checkFolderInfo(drive, folderId) {
     }
   } else {
     result.status = 'warning';
-    result.recommendation = 'This folder is in My Drive (personal). Service Accounts cannot upload large files here. Move to a Shared Drive for reliable uploads.';
+    result.recommendation = 'This folder is in My Drive (personal). Using OAuth personal account for access.';
   }
 
   return result;
@@ -124,13 +124,13 @@ async function checkUploadCapability(drive, parentFolderId) {
       result.checks.push({
         name: 'Create Folder Permission',
         status: 'passed',
-        details: 'Service Account can create folders here',
+        details: 'OAuth account can create folders here',
       });
     } else {
       result.checks.push({
         name: 'Create Folder Permission',
         status: 'failed',
-        details: 'Service Account cannot create folders here',
+        details: 'OAuth account cannot create folders here',
       });
     }
   } catch (accessError) {
@@ -186,7 +186,7 @@ async function checkUploadCapability(drive, parentFolderId) {
 
   if (failedChecks.length > 0) {
     result.status = 'error';
-    result.recommendation = 'There are permission issues. Check Service Account access.';
+    result.recommendation = 'There are permission issues. Check OAuth account access.';
   } else if (warningChecks.length > 0) {
     result.status = 'warning';
     result.recommendation = 'Configuration may work but has potential issues.';
@@ -206,13 +206,13 @@ export default async function handler(req, res) {
   if (initApi(req, res, { methods: ['GET', 'OPTIONS'] })) return;
 
   if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google Service Account not configured');
+    return sendError(res, 500, 'Google OAuth not configured');
   }
 
   const { folderId, action } = req.query;
   const configuredId = getSharedDriveId();
 
-  const drive = getDriveClient(true);
+  const drive = getDriveClient();
 
   try {
     // If no specific action or folderId, show configuration status

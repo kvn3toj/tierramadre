@@ -356,7 +356,7 @@ export default async function handler(req, res) {
   if (initApi(req, res, { methods: ['GET', 'POST', 'OPTIONS'] })) return;
 
   if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google Service Account not configured');
+    return sendError(res, 500, 'Google OAuth not configured');
   }
 
   const action = req.query.action || req.body?.action || 'validate';

@@ -594,7 +594,7 @@ export default async function handler(req, res) {
   setCacheHeaders(res, CACHE.SHORT);
 
   if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google Service Account not configured');
+    return sendError(res, 500, 'Google OAuth not configured');
   }
 
   const action = req.query.action || req.body?.action || 'stats';

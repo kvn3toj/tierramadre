@@ -38,7 +38,7 @@ const APP_VERSION = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ||
 
 async function checkSheetsConnection() {
   try {
-    const sheets = getSheetsClient(true);
+    const sheets = getSheetsClient();
     const response = await sheets.spreadsheets.get({
       spreadsheetId: SPREADSHEET_ID,
       fields: 'properties.title',
@@ -57,7 +57,7 @@ async function checkSheetsConnection() {
 
 async function checkDriveConnection() {
   try {
-    const drive = getDriveClient(true);
+    const drive = getDriveClient();
     const sharedDriveId = getSharedDriveId();
 
     if (!sharedDriveId) {
@@ -120,7 +120,7 @@ export default async function handler(req, res) {
     // Just verify Google is configured
     if (!isGoogleConfigured()) {
       response.status = 'degraded';
-      response.warning = 'Google Service Account not configured';
+      response.warning = 'Google OAuth not configured';
     }
     return sendSuccess(res, response);
   }
