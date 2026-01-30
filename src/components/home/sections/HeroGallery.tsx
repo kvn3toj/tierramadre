@@ -147,15 +147,21 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
     );
   }, [treasure]);
 
+  // Helper: set size param on serve-drive-image URLs (replaces existing if present)
+  const setImageSize = useCallback((url: string, size: string): string => {
+    if (!url || !url.includes('serve-drive-image')) return url;
+    const parsed = new URL(url, window.location.origin);
+    parsed.searchParams.set('size', size);
+    return parsed.pathname + '?' + parsed.searchParams.toString();
+  }, []);
+
   // Convert TreasureItem to GalleryImage
   // Uses high-quality images (size=large) for hero display
   const itemToGalleryImage = useCallback((item: TreasureItem): GalleryImage => {
     let src = item.imagen || '';
 
-    // Add size=large parameter for high-quality display
-    if (src && src.includes('serve-drive-image')) {
-      src = `${src}${src.includes('?') ? '&' : '?'}size=large`;
-    }
+    // Set size=large parameter for high-quality display
+    src = setImageSize(src, 'large');
 
     return {
       id: `product-${item.item}`,
@@ -163,7 +169,7 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
       alt: item.nombre,
       item: item.item,
     };
-  }, []);
+  }, [setImageSize]);
 
   // Get filtered products based on category/subcategory
   const getFilteredProducts = useCallback((): TreasureItem[] => {
@@ -569,9 +575,7 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({ treasure = [] }) => {
                         <ProgressiveImage
                           src={
                             // Use small size for thumbnails (optimized for 72x72 display)
-                            image.src.includes('serve-drive-image')
-                              ? image.src.replace('size=large', 'size=small')
-                              : image.src
+                            setImageSize(image.src, 'small')
                           }
                           alt={image.alt}
                           objectFit="cover"

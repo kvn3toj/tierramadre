@@ -87,7 +87,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { fileId, thumbnail, size: sizeParam = 'original' } = req.query;
+    let { fileId, thumbnail, size: sizeParam = 'original' } = req.query;
+    if (Array.isArray(sizeParam)) sizeParam = sizeParam[sizeParam.length - 1];
 
     if (!fileId) {
       return sendError(res, 400, 'fileId is required');
