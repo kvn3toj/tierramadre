@@ -23,18 +23,11 @@ import formidable from 'formidable';
 import fs from 'fs';
 
 import {
-  getSharedDriveId,
-  setCorsHeaders,
-  handleOptions,
+  withApiHandler,
   sendError,
   sendSuccess,
   DRIVE_FOLDERS,
 } from './_lib/index.js';
-
-import {
-  isOAuthConfigured,
-  getOAuthDriveClient,
-} from './_lib/oauth-drive-client.js';
 
 // Disable body parsing for file uploads
 export const config = {
@@ -198,24 +191,7 @@ async function getOrCreateFolderOAuth(drive, parentFolderId, folderName) {
 // MAIN HANDLER
 // =============================================================================
 
-export default async function handler(req, res) {
-  setCorsHeaders(res, ['POST', 'OPTIONS']);
-
-  if (handleOptions(req, res)) return;
-
-  if (req.method !== 'POST') {
-    return sendError(res, 405, 'Method not allowed');
-  }
-
-  if (!isOAuthConfigured()) {
-    return sendError(res, 500, 'Google OAuth not configured. Missing GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, or GOOGLE_OAUTH_REFRESH_TOKEN.');
-  }
-
-  const sharedDriveId = getSharedDriveId();
-  if (!sharedDriveId) {
-    return sendError(res, 500, 'Google Drive folder not configured');
-  }
-
+export default withApiHandler(async (req, res, { oauthDrive, sharedDriveId }) => {
   // Parse form data
   let fields, files;
   try {
@@ -261,15 +237,8 @@ export default async function handler(req, res) {
     fileList = [fileList];
   }
 
-  // Get OAuth Drive client (uses personal account, not Service Account)
-  let drive;
-  try {
-    drive = await getOAuthDriveClient();
-    console.log(`[Upload] OAuth Drive client initialized`);
-  } catch (oauthError) {
-    console.error('[Upload] OAuth error:', oauthError.message);
-    return sendError(res, 500, `OAuth authentication failed: ${oauthError.message}`);
-  }
+  const drive = oauthDrive;
+  console.log(`[Upload] OAuth Drive client initialized`);
 
   const parentFolderId = sharedDriveId;
 
@@ -360,4 +329,4 @@ export default async function handler(req, res) {
     urls: uploadedFiles.map(f => f.url),
     errors: errors.length > 0 ? errors : undefined,
   });
-}
+}, { methods: ['POST', 'OPTIONS'], provideOAuthDrive: true, errorPrefix: 'MediaUpload' });

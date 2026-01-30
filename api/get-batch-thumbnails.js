@@ -6,13 +6,9 @@
  */
 
 import {
-  getDriveClient,
-  isGoogleConfigured,
-  getSharedDriveId,
-  initApi,
+  withApiHandler,
   sendError,
   sendSuccess,
-  setCacheHeaders,
   CACHE,
   BATCH_SIZE,
   getProductsFolderId,
@@ -23,103 +19,82 @@ import {
 } from './_lib/index.js';
 import crypto from 'crypto';
 
-export default async function handler(req, res) {
-  if (initApi(req, res, { methods: ['GET', 'OPTIONS'] })) return;
+export default withApiHandler(async (req, res, { drive, sharedDriveId }) => {
+  console.log('Fetching batch thumbnails...');
 
-  // Cache for 1 minute on CDN, 30s stale-while-revalidate (faster updates when images change)
-  setCacheHeaders(res, CACHE.SHORT);
+  const productsFolderId = await getProductsFolderId(drive, sharedDriveId);
+  console.log('Products folder ID:', productsFolderId);
 
-  if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google OAuth not configured');
-  }
+  const folders = await listProductFolders(drive, productsFolderId);
+  console.log(`Found ${folders.length} product folders`);
 
-  const sharedDriveId = getSharedDriveId();
-  if (!sharedDriveId) {
-    return sendError(res, 500, 'GOOGLE_SHARED_DRIVE_ID not configured');
-  }
+  // Fetch first image from each folder in parallel (with concurrency limit)
+  const thumbnails = {};
 
-  try {
-    console.log('Fetching batch thumbnails...');
-    const drive = getDriveClient();
+  for (let i = 0; i < folders.length; i += BATCH_SIZE) {
+    const batch = folders.slice(i, i + BATCH_SIZE);
 
-    const productsFolderId = await getProductsFolderId(drive, sharedDriveId);
-    console.log('Products folder ID:', productsFolderId);
+    const results = await Promise.all(
+      batch.map(async (folder) => {
+        const itemNumber = extractItemNumber(folder.name);
+        if (!itemNumber) return null;
 
-    const folders = await listProductFolders(drive, productsFolderId);
-    console.log(`Found ${folders.length} product folders`);
-
-    // Fetch first image from each folder in parallel (with concurrency limit)
-    const thumbnails = {};
-
-    for (let i = 0; i < folders.length; i += BATCH_SIZE) {
-      const batch = folders.slice(i, i + BATCH_SIZE);
-
-      const results = await Promise.all(
-        batch.map(async (folder) => {
-          const itemNumber = extractItemNumber(folder.name);
-          if (!itemNumber) return null;
-
-          try {
-            const result = await getFirstImageOrVideoThumbnail(drive, folder.id);
-            if (result) {
-              const { file, isVideo } = result;
-              return {
-                itemNumber,
-                fileId: file.id,
-                // Use 'small' size (400px) for grid thumbnails - faster loading, less bandwidth
-                proxyUrl: getProxyUrl(file.id, isVideo, 'small'),
-                isVideo,
-              };
-            }
-          } catch (error) {
-            console.warn(`Error fetching thumbnail for ${folder.name}:`, error.message);
+        try {
+          const result = await getFirstImageOrVideoThumbnail(drive, folder.id);
+          if (result) {
+            const { file, isVideo } = result;
+            return {
+              itemNumber,
+              fileId: file.id,
+              // Use 'small' size (400px) for grid thumbnails - faster loading, less bandwidth
+              proxyUrl: getProxyUrl(file.id, isVideo, 'small'),
+              isVideo,
+            };
           }
-          return null;
-        })
-      );
-
-      results.forEach((result) => {
-        if (result) {
-          thumbnails[result.itemNumber] = {
-            url: result.proxyUrl,
-            isVideoThumbnail: result.isVideo,
-          };
+        } catch (error) {
+          console.warn(`Error fetching thumbnail for ${folder.name}:`, error.message);
         }
-      });
-    }
+        return null;
+      })
+    );
 
-    console.log(`Generated ${Object.keys(thumbnails).length} thumbnails`);
-
-    // Generate ETag from actual fileIds for proper cache invalidation
-    // When images are deleted/added, the fileIds change, invalidating the cache
-    const count = Object.keys(thumbnails).length;
-    const fileIds = Object.entries(thumbnails)
-      .map(([item, data]) => `${item}:${data.url}`)
-      .sort()
-      .join('|');
-    const dataHash = crypto.createHash('md5')
-      .update(fileIds)
-      .digest('hex')
-      .slice(0, 16);
-    const etag = `"batch-${dataHash}"`;
-
-    // Check If-None-Match for 304 response
-    const ifNoneMatch = req.headers['if-none-match'];
-    if (ifNoneMatch === etag) {
-      res.setHeader('ETag', etag);
-      return res.status(304).end();
-    }
-
-    res.setHeader('ETag', etag);
-
-    return sendSuccess(res, {
-      thumbnails,
-      count,
-      lastUpdated: new Date().toISOString(),
+    results.forEach((result) => {
+      if (result) {
+        thumbnails[result.itemNumber] = {
+          url: result.proxyUrl,
+          isVideoThumbnail: result.isVideo,
+        };
+      }
     });
-
-  } catch (error) {
-    console.error('Error fetching batch thumbnails:', error);
-    return sendError(res, 500, 'Failed to fetch thumbnails', error.message);
   }
-}
+
+  console.log(`Generated ${Object.keys(thumbnails).length} thumbnails`);
+
+  // Generate ETag from actual fileIds for proper cache invalidation
+  // When images are deleted/added, the fileIds change, invalidating the cache
+  const count = Object.keys(thumbnails).length;
+  const fileIds = Object.entries(thumbnails)
+    .map(([item, data]) => `${item}:${data.url}`)
+    .sort()
+    .join('|');
+  const dataHash = crypto.createHash('md5')
+    .update(fileIds)
+    .digest('hex')
+    .slice(0, 16);
+  const etag = `"batch-${dataHash}"`;
+
+  // Check If-None-Match for 304 response
+  const ifNoneMatch = req.headers['if-none-match'];
+  if (ifNoneMatch === etag) {
+    res.setHeader('ETag', etag);
+    return res.status(304).end();
+  }
+
+  res.setHeader('ETag', etag);
+
+  return sendSuccess(res, {
+    thumbnails,
+    count,
+    lastUpdated: new Date().toISOString(),
+  });
+}, { methods: ['GET', 'OPTIONS'], cache: CACHE.SHORT, provideDrive: true, requireDriveId: true, errorPrefix: 'GetBatchThumbnails' });

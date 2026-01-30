@@ -12,6 +12,7 @@
 
 import emailTemplates from './_lib/email-templates.js';
 import {
+  withApiHandler,
   getSheetsClient,
   isGoogleConfigured,
   SPREADSHEET_ID,
@@ -197,12 +198,7 @@ export async function sendNotificationEmail(type, data, to) {
  * API Handler for direct email sending
  * Can be called internally by other API routes
  */
-export default async function handler(req, res) {
-  // Only allow POST
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+export default withApiHandler(async (req, res) => {
   const { type, data, to, toAdmins } = req.body;
 
   // Validate required fields
@@ -237,7 +233,7 @@ export default async function handler(req, res) {
   } else {
     return res.status(500).json({ success: false, error: result.error });
   }
-}
+}, { methods: ['POST', 'OPTIONS'], requireGoogle: false, errorPrefix: 'SendEmail' });
 
 // Export helper for other API files to use
 export { sendWithResend, getAdminEmails, getAppUrl, getProviderEmail, getProviderFromSheet };

@@ -12,9 +12,7 @@
  */
 
 import {
-  getSheetsClient,
-  isGoogleConfigured,
-  initApi,
+  withApiHandler,
   sendError,
   SPREADSHEET_ID,
   SHEETS,
@@ -352,65 +350,56 @@ async function registerGuest(sheets, body) {
   return { success: true, message: 'Guest registered successfully', guestName };
 }
 
-export default async function handler(req, res) {
-  if (initApi(req, res, { methods: ['GET', 'POST', 'OPTIONS'] })) return;
-
-  if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google OAuth not configured');
-  }
-
+export default withApiHandler(async (req, res, { sheets }) => {
   const action = req.query.action || req.body?.action || 'validate';
 
-  try {
-    const sheets = getSheetsClient();
-    await ensureSheet(sheets, SHEET_NAME, HEADERS);
+  await ensureSheet(sheets, SHEET_NAME, HEADERS);
 
-    // POST - Generate invitation
-    if (req.method === 'POST' && action === 'generate') {
-      const result = await generateInvitation(sheets, req.body);
-      return res.status(200).json(result);
-    }
-
-    // POST - Register guest
-    if (req.method === 'POST' && action === 'register') {
-      const result = await registerGuest(sheets, req.body);
-      return res.status(200).json(result);
-    }
-
-    // GET - Validate invitation
-    if (req.method === 'GET' && (action === 'validate' || req.query.code)) {
-      const code = req.query.code || req.query.shortCode;
-      if (!code) {
-        return sendError(res, 400, 'Code is required');
-      }
-      const result = await validateInvitation(sheets, code);
-      return res.status(200).json(result);
-    }
-
-    // GET - Check guest history
-    if (req.method === 'GET' && action === 'check-guest') {
-      const guestContact = req.query.guestContact;
-      if (!guestContact) {
-        return sendError(res, 400, 'guestContact is required');
-      }
-      const result = await checkGuestHistory(sheets, guestContact);
-      return res.status(200).json(result);
-    }
-
-    // GET - List invitations by creator
-    if (req.method === 'GET' && action === 'list-by-creator') {
-      const creatorEmail = req.query.creatorEmail;
-      if (!creatorEmail) {
-        return sendError(res, 400, 'creatorEmail is required');
-      }
-      const result = await listByCreator(sheets, creatorEmail);
-      return res.status(200).json(result);
-    }
-
-    return sendError(res, 405, 'Method not allowed');
-
-  } catch (error) {
-    console.error('Error in invitations:', error);
-    return sendError(res, 500, 'Failed to process request', error.message);
+  // POST - Generate invitation
+  if (req.method === 'POST' && action === 'generate') {
+    const result = await generateInvitation(sheets, req.body);
+    return res.status(200).json(result);
   }
-}
+
+  // POST - Register guest
+  if (req.method === 'POST' && action === 'register') {
+    const result = await registerGuest(sheets, req.body);
+    return res.status(200).json(result);
+  }
+
+  // GET - Validate invitation
+  if (req.method === 'GET' && (action === 'validate' || req.query.code)) {
+    const code = req.query.code || req.query.shortCode;
+    if (!code) {
+      return sendError(res, 400, 'Code is required');
+    }
+    const result = await validateInvitation(sheets, code);
+    return res.status(200).json(result);
+  }
+
+  // GET - Check guest history
+  if (req.method === 'GET' && action === 'check-guest') {
+    const guestContact = req.query.guestContact;
+    if (!guestContact) {
+      return sendError(res, 400, 'guestContact is required');
+    }
+    const result = await checkGuestHistory(sheets, guestContact);
+    return res.status(200).json(result);
+  }
+
+  // GET - List invitations by creator
+  if (req.method === 'GET' && action === 'list-by-creator') {
+    const creatorEmail = req.query.creatorEmail;
+    if (!creatorEmail) {
+      return sendError(res, 400, 'creatorEmail is required');
+    }
+    const result = await listByCreator(sheets, creatorEmail);
+    return res.status(200).json(result);
+  }
+
+  return sendError(res, 405, 'Method not allowed');
+}, {
+  methods: ['GET', 'POST', 'OPTIONS'],
+  provideSheets: true,
+  errorPrefix: 'Invitations',
+});

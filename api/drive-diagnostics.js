@@ -15,10 +15,7 @@
  */
 
 import {
-  getDriveClient,
-  isGoogleConfigured,
-  getSharedDriveId,
-  initApi,
+  withApiHandler,
   sendError,
   sendSuccess,
   DRIVE_FOLDERS,
@@ -202,67 +199,54 @@ async function checkUploadCapability(drive, parentFolderId) {
 // MAIN HANDLER
 // =============================================================================
 
-export default async function handler(req, res) {
-  if (initApi(req, res, { methods: ['GET', 'OPTIONS'] })) return;
-
-  if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google OAuth not configured');
-  }
-
+export default withApiHandler(async (req, res, { drive, oauthDrive, sharedDriveId }) => {
   const { folderId, action } = req.query;
-  const configuredId = getSharedDriveId();
+  const configuredId = sharedDriveId;
 
-  const drive = getDriveClient();
-
-  try {
-    // If no specific action or folderId, show configuration status
-    if (!folderId && !action) {
-      if (!configuredId) {
-        return sendSuccess(res, {
-          status: 'error',
-          configured: false,
-          recommendation: 'GOOGLE_SHARED_DRIVE_ID environment variable is not set',
-        });
-      }
-
-      // First try to access as Shared Drive root
-      try {
-        const driveResult = await checkDriveRoot(drive, configuredId);
-        return sendSuccess(res, {
-          ...driveResult,
-          configuredId,
-          configurationType: 'shared_drive_root',
-        });
-      } catch {
-        // Not a Shared Drive root, try as folder
-        const folderResult = await checkFolderInfo(drive, configuredId);
-        return sendSuccess(res, {
-          ...folderResult,
-          configuredId,
-          configurationType: 'folder',
-        });
-      }
+  // If no specific action or folderId, show configuration status
+  if (!folderId && !action) {
+    if (!configuredId) {
+      return sendSuccess(res, {
+        status: 'error',
+        configured: false,
+        recommendation: 'GOOGLE_SHARED_DRIVE_ID environment variable is not set',
+      });
     }
 
-    // Check specific folder
-    if (folderId) {
-      const folderResult = await checkFolderInfo(drive, folderId);
-      return sendSuccess(res, folderResult);
+    // First try to access as Shared Drive root
+    try {
+      const driveResult = await checkDriveRoot(drive, configuredId);
+      return sendSuccess(res, {
+        ...driveResult,
+        configuredId,
+        configurationType: 'shared_drive_root',
+      });
+    } catch {
+      // Not a Shared Drive root, try as folder
+      const folderResult = await checkFolderInfo(drive, configuredId);
+      return sendSuccess(res, {
+        ...folderResult,
+        configuredId,
+        configurationType: 'folder',
+      });
     }
-
-    // Check upload capability
-    if (action === 'check-upload') {
-      const targetId = configuredId;
-      if (!targetId) {
-        return sendError(res, 400, 'No drive ID configured');
-      }
-      const uploadResult = await checkUploadCapability(drive, targetId);
-      return sendSuccess(res, uploadResult);
-    }
-
-    return sendError(res, 400, 'Invalid action');
-  } catch (error) {
-    console.error('Drive diagnostics error:', error);
-    return sendError(res, 500, 'Diagnostic check failed', error.message);
   }
-}
+
+  // Check specific folder
+  if (folderId) {
+    const folderResult = await checkFolderInfo(drive, folderId);
+    return sendSuccess(res, folderResult);
+  }
+
+  // Check upload capability
+  if (action === 'check-upload') {
+    const targetId = configuredId;
+    if (!targetId) {
+      return sendError(res, 400, 'No drive ID configured');
+    }
+    const uploadResult = await checkUploadCapability(drive, targetId);
+    return sendSuccess(res, uploadResult);
+  }
+
+  return sendError(res, 400, 'Invalid action');
+}, { methods: ['GET', 'OPTIONS'], provideDrive: true, provideOAuthDrive: true, errorPrefix: 'DriveDiagnostics' });

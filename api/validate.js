@@ -11,9 +11,7 @@
  */
 
 import {
-  getSheetsClient,
-  isGoogleConfigured,
-  initApi,
+  withApiHandler,
   sendError,
   sendSuccess,
   SPREADSHEET_ID,
@@ -178,24 +176,16 @@ async function validateProvider(sheets, normalizedEmail, sheetNames) {
   return null;
 }
 
-export default async function handler(req, res) {
-  if (initApi(req, res, { methods: ['GET', 'POST', 'OPTIONS'] })) return;
-
+export default withApiHandler(async (req, res, { sheets }) => {
   const action = req.query.action || req.body?.action || 'validate';
   const email = req.method === 'GET' ? req.query.email : req.body?.email;
   const type = req.query.type || req.body?.type || 'both';
 
   // List providers action - no email required
   if (action === 'list-providers') {
-    try {
-      const sheets = getSheetsClient();
-      const sheetNames = await getSheetNames(sheets);
-      const providers = await listProviders(sheets, sheetNames);
-      return sendSuccess(res, { providers });
-    } catch (error) {
-      console.error('Error listing providers:', error);
-      return sendError(res, 500, 'Failed to fetch providers');
-    }
+    const sheetNames = await getSheetNames(sheets);
+    const providers = await listProviders(sheets, sheetNames);
+    return sendSuccess(res, { providers });
   }
 
   // Validation actions require email
@@ -203,60 +193,53 @@ export default async function handler(req, res) {
     return sendError(res, 400, 'Email is required');
   }
 
-  if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google OAuth not configured');
-  }
+  const sheetNames = await getSheetNames(sheets);
+  const normalizedEmail = email.toLowerCase().trim();
 
-  try {
-    const sheets = getSheetsClient();
-    const sheetNames = await getSheetNames(sheets);
-    const normalizedEmail = email.toLowerCase().trim();
-
-    if (type === 'user') {
-      const user = await validateUser(sheets, normalizedEmail, sheetNames);
-      return sendSuccess(res, {
-        isAuthorized: !!user,
-        user: user || undefined,
-        error: user ? undefined : 'Email not found in authorized users list',
-      });
-    }
-
-    if (type === 'provider') {
-      const provider = await validateProvider(sheets, normalizedEmail, sheetNames);
-      return sendSuccess(res, {
-        isProvider: !!provider,
-        provider: provider || undefined,
-        error: provider ? undefined : 'Email not found in providers list',
-      });
-    }
-
-    // Default: check both (user first, then provider)
+  if (type === 'user') {
     const user = await validateUser(sheets, normalizedEmail, sheetNames);
-    if (user) {
-      return sendSuccess(res, {
-        isAuthorized: true,
-        user,
-        accountType: 'user',
-      });
-    }
-
-    const provider = await validateProvider(sheets, normalizedEmail, sheetNames);
-    if (provider) {
-      return sendSuccess(res, {
-        isProvider: true,
-        provider,
-        accountType: 'provider',
-      });
-    }
-
     return sendSuccess(res, {
-      isAuthorized: false,
-      isProvider: false,
-      error: 'Email not found in any authorized list',
+      isAuthorized: !!user,
+      user: user || undefined,
+      error: user ? undefined : 'Email not found in authorized users list',
     });
-
-  } catch (error) {
-    console.error('Error validating:', error);
-    return sendError(res, 500, 'Failed to validate', error.message);
   }
-}
+
+  if (type === 'provider') {
+    const provider = await validateProvider(sheets, normalizedEmail, sheetNames);
+    return sendSuccess(res, {
+      isProvider: !!provider,
+      provider: provider || undefined,
+      error: provider ? undefined : 'Email not found in providers list',
+    });
+  }
+
+  // Default: check both (user first, then provider)
+  const user = await validateUser(sheets, normalizedEmail, sheetNames);
+  if (user) {
+    return sendSuccess(res, {
+      isAuthorized: true,
+      user,
+      accountType: 'user',
+    });
+  }
+
+  const provider = await validateProvider(sheets, normalizedEmail, sheetNames);
+  if (provider) {
+    return sendSuccess(res, {
+      isProvider: true,
+      provider,
+      accountType: 'provider',
+    });
+  }
+
+  return sendSuccess(res, {
+    isAuthorized: false,
+    isProvider: false,
+    error: 'Email not found in any authorized list',
+  });
+}, {
+  methods: ['GET', 'POST', 'OPTIONS'],
+  provideSheets: true,
+  errorPrefix: 'Validate',
+});

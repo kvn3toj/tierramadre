@@ -23,7 +23,7 @@ const UNSUPPORTED_BROWSER_FORMATS = [
   'image/avif', // Some browsers don't support AVIF yet
 ];
 import {
-  initApi,
+  withApiHandler,
   sendError,
   CACHE,
 } from './_lib/index.js';
@@ -79,15 +79,12 @@ function withTimeout(promise, timeoutMs, operation) {
   ]);
 }
 
-export default async function handler(req, res) {
-  if (initApi(req, res, { methods: ['GET', 'HEAD', 'OPTIONS'] })) return;
-
+export default withApiHandler(async (req, res) => {
   if (!isOAuthConfigured()) {
     return sendError(res, 500, 'Google OAuth not configured');
   }
 
-  try {
-    let { fileId, thumbnail, size: sizeParam = 'original' } = req.query;
+  let { fileId, thumbnail, size: sizeParam = 'original' } = req.query;
     if (Array.isArray(sizeParam)) sizeParam = sizeParam[sizeParam.length - 1];
 
     if (!fileId) {
@@ -425,24 +422,4 @@ export default async function handler(req, res) {
     res.setHeader('Content-Length', buffer.length);
 
     return res.status(200).send(buffer);
-
-  } catch (error) {
-    console.error('Error serving Drive image:', error);
-
-    if (error.code === 404) {
-      return res.status(404).json({
-        error: 'File not found',
-        message: 'The requested file was not found or is not accessible',
-      });
-    }
-
-    if (error.code === 403) {
-      return res.status(403).json({
-        error: 'Access denied',
-        message: 'The service account does not have permission to access this file',
-      });
-    }
-
-    return sendError(res, 500, 'Failed to serve image', error.message);
-  }
-}
+}, { methods: ['GET', 'HEAD', 'OPTIONS'], requireGoogle: false, errorPrefix: 'ServeDriveImage' });

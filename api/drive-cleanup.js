@@ -8,17 +8,10 @@
  */
 
 import {
-  getSharedDriveId,
-  setCorsHeaders,
-  handleOptions,
+  withApiHandler,
   sendError,
   sendSuccess,
 } from './_lib/index.js';
-
-import {
-  isOAuthConfigured,
-  getOAuthDriveClient,
-} from './_lib/oauth-drive-client.js';
 
 /**
  * List all folders and files in a folder
@@ -109,70 +102,48 @@ function findFoldersByPattern(items, pattern, path = '') {
   return matches;
 }
 
-export default async function handler(req, res) {
-  setCorsHeaders(res, ['GET', 'POST', 'OPTIONS']);
-
-  if (handleOptions(req, res)) return;
-
-  if (!isOAuthConfigured()) {
-    return sendError(res, 500, 'OAuth not configured');
-  }
-
-  const parentFolderId = getSharedDriveId();
-  if (!parentFolderId) {
-    return sendError(res, 500, 'GOOGLE_SHARED_DRIVE_ID not configured');
-  }
-
-  let drive;
-  try {
-    drive = await getOAuthDriveClient();
-  } catch (error) {
-    return sendError(res, 500, `OAuth error: ${error.message}`);
-  }
+export default withApiHandler(async (req, res, { oauthDrive, sharedDriveId }) => {
+  const drive = oauthDrive;
+  const parentFolderId = sharedDriveId;
 
   if (req.method === 'GET') {
-    // List folder structure
-    try {
-      console.log('[DriveCleanup] Listing folder structure...');
-      const contents = await listFolderContents(drive, parentFolderId);
+    console.log('[DriveCleanup] Listing folder structure...');
+    const contents = await listFolderContents(drive, parentFolderId);
 
-      // Find issues
-      const emptyFolders = findEmptyFolders(contents);
-      const cotizacionesFolders = findFoldersByPattern(contents, /^cotizaciones$/i);
-      const manualFolders = findFoldersByPattern(contents, /^manual-/);
+    // Find issues
+    const emptyFolders = findEmptyFolders(contents);
+    const cotizacionesFolders = findFoldersByPattern(contents, /^cotizaciones$/i);
+    const manualFolders = findFoldersByPattern(contents, /^manual-/);
 
-      // Build tree representation
-      function buildTree(items, indent = '') {
-        let tree = '';
-        for (const item of items) {
-          const icon = item.isFolder ? '📁' : '📄';
-          const sizeStr = item.size > 0 ? ` (${(item.size / 1024).toFixed(1)}KB)` : '';
-          const emptyStr = item.isEmpty ? ' [EMPTY]' : '';
-          tree += `${indent}${icon} ${item.name}${sizeStr}${emptyStr}\n`;
-          if (item.children) {
-            tree += buildTree(item.children, indent + '  ');
-          }
+    // Build tree representation
+    function buildTree(items, indent = '') {
+      let tree = '';
+      for (const item of items) {
+        const icon = item.isFolder ? '\u{1F4C1}' : '\u{1F4C4}';
+        const sizeStr = item.size > 0 ? ` (${(item.size / 1024).toFixed(1)}KB)` : '';
+        const emptyStr = item.isEmpty ? ' [EMPTY]' : '';
+        tree += `${indent}${icon} ${item.name}${sizeStr}${emptyStr}\n`;
+        if (item.children) {
+          tree += buildTree(item.children, indent + '  ');
         }
-        return tree;
       }
-
-      const treeView = buildTree(contents);
-
-      return sendSuccess(res, {
-        parentFolder: parentFolderId,
-        tree: treeView,
-        cotizacionesFolders,
-        manualFolders,
-        emptyFolders,
-        summary: {
-          totalCotizacionesFolders: cotizacionesFolders.length,
-          totalManualFolders: manualFolders.length,
-          totalEmptyFolders: emptyFolders.length,
-        },
-      });
-    } catch (error) {
-      return sendError(res, 500, `Failed to list folders: ${error.message}`);
+      return tree;
     }
+
+    const treeView = buildTree(contents);
+
+    return sendSuccess(res, {
+      parentFolder: parentFolderId,
+      tree: treeView,
+      cotizacionesFolders,
+      manualFolders,
+      emptyFolders,
+      summary: {
+        totalCotizacionesFolders: cotizacionesFolders.length,
+        totalManualFolders: manualFolders.length,
+        totalEmptyFolders: emptyFolders.length,
+      },
+    });
   }
 
   if (req.method === 'POST') {
@@ -184,31 +155,27 @@ export default async function handler(req, res) {
         return sendError(res, 400, 'parentFolderId and folderName required for create action');
       }
 
-      try {
-        const folder = await drive.files.create({
-          requestBody: {
-            name: folderName,
-            mimeType: 'application/vnd.google-apps.folder',
-            parents: [parentId],
-          },
-          fields: 'id, name',
-        });
+      const folder = await drive.files.create({
+        requestBody: {
+          name: folderName,
+          mimeType: 'application/vnd.google-apps.folder',
+          parents: [parentId],
+        },
+        fields: 'id, name',
+      });
 
-        // Set public permissions
-        await drive.permissions.create({
-          fileId: folder.data.id,
-          requestBody: { role: 'reader', type: 'anyone' },
-        });
+      // Set public permissions
+      await drive.permissions.create({
+        fileId: folder.data.id,
+        requestBody: { role: 'reader', type: 'anyone' },
+      });
 
-        console.log(`[DriveCleanup] Created folder "${folderName}": ${folder.data.id}`);
-        return sendSuccess(res, {
-          created: true,
-          folderId: folder.data.id,
-          folderName: folder.data.name
-        });
-      } catch (error) {
-        return sendError(res, 500, `Failed to create folder: ${error.message}`);
-      }
+      console.log(`[DriveCleanup] Created folder "${folderName}": ${folder.data.id}`);
+      return sendSuccess(res, {
+        created: true,
+        folderId: folder.data.id,
+        folderName: folder.data.name
+      });
     }
 
     // Action: delete folders
@@ -236,4 +203,4 @@ export default async function handler(req, res) {
   }
 
   return sendError(res, 405, 'Method not allowed');
-}
+}, { methods: ['GET', 'POST', 'OPTIONS'], provideOAuthDrive: true, errorPrefix: 'DriveCleanup' });

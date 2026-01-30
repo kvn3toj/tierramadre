@@ -14,9 +14,7 @@
  */
 
 import {
-  getSheetsClient,
-  isGoogleConfigured,
-  initApi,
+  withApiHandler,
   sendError,
   sendSuccess,
   SPREADSHEET_ID,
@@ -102,35 +100,22 @@ async function setPreferences(sheets, userId, preferences) {
 // MAIN HANDLER
 // =============================================================================
 
-export default async function handler(req, res) {
-  if (initApi(req, res, { methods: ['GET', 'POST', 'OPTIONS'] })) return;
-
-  if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google OAuth not configured');
+export default withApiHandler(async (req, res, { sheets }) => {
+  // GET - Get preferences
+  if (req.method === 'GET') {
+    const result = await getPreferences(sheets, req.query.userId);
+    return result.success
+      ? sendSuccess(res, result)
+      : sendError(res, 400, result.error);
   }
 
-  try {
-    const sheets = getSheetsClient();
-
-    // GET - Get preferences
-    if (req.method === 'GET') {
-      const result = await getPreferences(sheets, req.query.userId);
-      return result.success
-        ? sendSuccess(res, result)
-        : sendError(res, 400, result.error);
-    }
-
-    // POST - Set preferences
-    if (req.method === 'POST') {
-      const result = await setPreferences(sheets, req.body.userId, req.body.preferences);
-      return result.success
-        ? sendSuccess(res, result)
-        : sendError(res, 400, result.error);
-    }
-
-    return sendError(res, 405, 'Method not allowed');
-  } catch (error) {
-    console.error('User prefs API error:', error);
-    return sendError(res, 500, error.message);
+  // POST - Set preferences
+  if (req.method === 'POST') {
+    const result = await setPreferences(sheets, req.body.userId, req.body.preferences);
+    return result.success
+      ? sendSuccess(res, result)
+      : sendError(res, 400, result.error);
   }
-}
+
+  return sendError(res, 405, 'Method not allowed');
+}, { methods: ['GET', 'POST', 'OPTIONS'], provideSheets: true, errorPrefix: 'UserPrefs' });

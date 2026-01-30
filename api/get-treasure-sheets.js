@@ -6,12 +6,9 @@
  */
 
 import {
-  getSheetsClient,
-  isGoogleConfigured,
-  initApi,
+  withApiHandler,
   sendError,
   sendSuccess,
-  setCacheHeaders,
   CACHE,
   SPREADSHEET_ID,
   getSheetNames,
@@ -172,72 +169,56 @@ async function fetchPricingData(sheets) {
   }
 }
 
-export default async function handler(req, res) {
-  if (initApi(req, res, { methods: ['GET', 'OPTIONS'] })) return;
+export default withApiHandler(async (req, res, { sheets }) => {
+  const sheetNames = await getSheetNames(sheets);
+  const targetSheet = findSheetByPattern(sheetNames, ['inventario', 'inventory']) || sheetNames[0];
 
-  // NO cache for sheets data - prices and inventory must always be fresh
-  setCacheHeaders(res, CACHE.NONE);
+  // Fetch treasure and pricing data in parallel
+  const [treasureResponse, pricingMap] = await Promise.all([
+    sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${targetSheet}!A:Z`,
+    }),
+    fetchPricingData(sheets),
+  ]);
 
-  if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google OAuth not configured');
-  }
+  const rows = treasureResponse.data.values;
 
-  try {
-    const sheets = getSheetsClient();
-    const sheetNames = await getSheetNames(sheets);
-    const targetSheet = findSheetByPattern(sheetNames, ['inventario', 'inventory']) || sheetNames[0];
-
-    // Fetch treasure and pricing data in parallel
-    const [treasureResponse, pricingMap] = await Promise.all([
-      sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${targetSheet}!A:Z`,
-      }),
-      fetchPricingData(sheets),
-    ]);
-
-    const rows = treasureResponse.data.values;
-
-    if (!rows || rows.length === 0) {
-      return sendSuccess(res, {
-        treasure: [],
-        message: 'No data found in spreadsheet',
-      });
-    }
-
-    const headers = rows[0];
-    const dataRows = rows.slice(1);
-
-    const treasure = dataRows
-      .filter(row => row.length > 0 && row.some(cell => cell))
-      .map(row => {
-        const item = mapRowToTreasureItem(row, headers);
-        // Only add precioInternacional from CUALIFICACION sheet (precioCOP comes from Inventario column L)
-        const pricing = pricingMap[item.item];
-        if (pricing) {
-          item.precioInternacional = pricing.precioInternacional;
-        }
-        return item;
-      })
-      .filter(item => item.item > 0);
-
-    const sampleRow = dataRows[0] || [];
-    const pricingCount = Object.keys(pricingMap).length;
-
+  if (!rows || rows.length === 0) {
     return sendSuccess(res, {
-      treasure,
-      count: treasure.length,
-      sheetName: targetSheet,
-      lastUpdated: new Date().toISOString(),
-      _debug: {
-        headers: headers.map((h, i) => `${String.fromCharCode(65 + i)}: ${h}`),
-        sampleValues: sampleRow.slice(0, 16).map((v, i) => `${String.fromCharCode(65 + i)}: ${v}`),
-        pricingItemsFound: pricingCount,
-      },
+      treasure: [],
+      message: 'No data found in spreadsheet',
     });
-
-  } catch (error) {
-    console.error('Error reading from Google Sheets:', error);
-    return sendError(res, 500, 'Failed to read treasure', error.message);
   }
-}
+
+  const headers = rows[0];
+  const dataRows = rows.slice(1);
+
+  const treasure = dataRows
+    .filter(row => row.length > 0 && row.some(cell => cell))
+    .map(row => {
+      const item = mapRowToTreasureItem(row, headers);
+      // Only add precioInternacional from CUALIFICACION sheet (precioCOP comes from Inventario column L)
+      const pricing = pricingMap[item.item];
+      if (pricing) {
+        item.precioInternacional = pricing.precioInternacional;
+      }
+      return item;
+    })
+    .filter(item => item.item > 0);
+
+  const sampleRow = dataRows[0] || [];
+  const pricingCount = Object.keys(pricingMap).length;
+
+  return sendSuccess(res, {
+    treasure,
+    count: treasure.length,
+    sheetName: targetSheet,
+    lastUpdated: new Date().toISOString(),
+    _debug: {
+      headers: headers.map((h, i) => `${String.fromCharCode(65 + i)}: ${h}`),
+      sampleValues: sampleRow.slice(0, 16).map((v, i) => `${String.fromCharCode(65 + i)}: ${v}`),
+      pricingItemsFound: pricingCount,
+    },
+  });
+}, { methods: ['GET', 'OPTIONS'], cache: CACHE.NONE, provideSheets: true, errorPrefix: 'GetTreasureSheets' });

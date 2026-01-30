@@ -11,9 +11,7 @@
  */
 
 import {
-  getSheetsClient,
-  isGoogleConfigured,
-  initApi,
+  withApiHandler,
   sendError,
   sendSuccess,
   setCacheHeaders,
@@ -318,46 +316,33 @@ async function updateProductRequest(sheets, id, updates) {
 // MAIN HANDLER
 // =============================================================================
 
-export default async function handler(req, res) {
-  if (initApi(req, res, { methods: ['GET', 'POST', 'PATCH', 'OPTIONS'] })) return;
+export default withApiHandler(async (req, res, { sheets }) => {
+  // Ensure product requests sheet exists
+  await ensureSheet(sheets, SHEETS.PRODUCT_REQUESTS, PRODUCT_REQUEST_HEADERS);
 
-  if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google OAuth not configured');
+  // POST - Create new product request
+  if (req.method === 'POST') {
+    const result = await createProductRequest(sheets, req.body);
+    return result.success
+      ? sendSuccess(res, result)
+      : sendError(res, 400, result.error);
   }
 
-  try {
-    const sheets = getSheetsClient();
-
-    // Ensure product requests sheet exists
-    await ensureSheet(sheets, SHEETS.PRODUCT_REQUESTS, PRODUCT_REQUEST_HEADERS);
-
-    // POST - Create new product request
-    if (req.method === 'POST') {
-      const result = await createProductRequest(sheets, req.body);
-      return result.success
-        ? sendSuccess(res, result)
-        : sendError(res, 400, result.error);
-    }
-
-    // GET - List product requests
-    if (req.method === 'GET') {
-      setCacheHeaders(res, CACHE.SHORT);
-      const { status, email } = req.query;
-      const result = await listProductRequests(sheets, status, email);
-      return sendSuccess(res, result);
-    }
-
-    // PATCH - Update product request
-    if (req.method === 'PATCH') {
-      const result = await updateProductRequest(sheets, req.body.id, req.body);
-      return result.success
-        ? sendSuccess(res, result)
-        : sendError(res, 400, result.error);
-    }
-
-    return sendError(res, 405, 'Method not allowed');
-  } catch (error) {
-    console.error('Product Requests API error:', error);
-    return sendError(res, 500, error.message);
+  // GET - List product requests
+  if (req.method === 'GET') {
+    setCacheHeaders(res, CACHE.SHORT);
+    const { status, email } = req.query;
+    const result = await listProductRequests(sheets, status, email);
+    return sendSuccess(res, result);
   }
-}
+
+  // PATCH - Update product request
+  if (req.method === 'PATCH') {
+    const result = await updateProductRequest(sheets, req.body.id, req.body);
+    return result.success
+      ? sendSuccess(res, result)
+      : sendError(res, 400, result.error);
+  }
+
+  return sendError(res, 405, 'Method not allowed');
+}, { methods: ['GET', 'POST', 'PATCH', 'OPTIONS'], provideSheets: true, errorPrefix: 'ProductRequests' });

@@ -13,22 +13,14 @@
 
 import { Readable } from 'stream';
 import {
+  withApiHandler,
   SPREADSHEET_ID,
-  setCorsHeaders,
-  handleOptions,
   sendError,
   sendSuccess,
-  getSharedDriveId,
-  getSheetsClient,
   getSheetNames,
   findColumnIndex,
   formatDisplayName,
 } from './_lib/index.js';
-
-import {
-  isOAuthConfigured,
-  getOAuthDriveClient,
-} from './_lib/oauth-drive-client.js';
 
 // Sheet names for cotización data
 const COTIZACIONES_SHEET = 'CotizacionesAsesores';
@@ -832,26 +824,13 @@ async function deleteCotizacion(drive, sheets, cotizacionId, asesorEmail) {
 // MAIN HANDLER
 // =============================================================================
 
-export default async function handler(req, res) {
-  setCorsHeaders(res);
+export default withApiHandler(async (req, res, { sheets, oauthDrive, sharedDriveId }) => {
+  const drive = oauthDrive;
 
-  if (handleOptions(req, res)) return;
-
-  // Check OAuth configuration
-  if (!isOAuthConfigured()) {
-    return sendError(res, 500, 'OAuth not configured');
-  }
-
-  try {
-    const drive = await getOAuthDriveClient();
-    const sharedDriveId = getSharedDriveId();
-
-    const sheets = getSheetsClient();
-
-    // ==========================================================================
-    // GET - Fetch cotizaciones for an asesor or aggregate stats
-    // ==========================================================================
-    if (req.method === 'GET') {
+  // ==========================================================================
+  // GET - Fetch cotizaciones for an asesor or aggregate stats
+  // ==========================================================================
+  if (req.method === 'GET') {
       const { email, action, itemId } = req.query;
 
       // Stats endpoint for analytics dashboard
@@ -949,10 +928,5 @@ export default async function handler(req, res) {
       return sendSuccess(res, { deleted: true });
     }
 
-    return sendError(res, 405, 'Method not allowed');
-
-  } catch (error) {
-    console.error('[CotizacionSave] Error:', error);
-    return sendError(res, 500, error.message || 'Internal server error');
-  }
-}
+  return sendError(res, 405, 'Method not allowed');
+}, { methods: ['GET', 'POST', 'DELETE', 'OPTIONS'], provideSheets: true, provideOAuthDrive: true, errorPrefix: 'CotizacionSave' });

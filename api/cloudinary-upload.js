@@ -40,18 +40,11 @@ import { Readable } from 'stream';
 import https from 'https';
 
 import {
-  getSharedDriveId,
-  setCorsHeaders,
-  handleOptions,
+  withApiHandler,
   sendError,
   sendSuccess,
   DRIVE_FOLDERS,
 } from './_lib/index.js';
-
-import {
-  isOAuthConfigured,
-  getOAuthDriveClient,
-} from './_lib/oauth-drive-client.js';
 
 // Disable body parsing for file uploads
 export const config = {
@@ -293,29 +286,13 @@ async function getOrCreateFolderOAuth(drive, parentFolderId, folderName) {
 // MAIN HANDLER
 // =============================================================================
 
-export default async function handler(req, res) {
-  setCorsHeaders(res, ['POST', 'OPTIONS']);
-
-  if (handleOptions(req, res)) return;
-
-  if (req.method !== 'POST') {
-    return sendError(res, 405, 'Method not allowed');
-  }
-
+export default withApiHandler(async (req, res, { oauthDrive, sharedDriveId }) => {
   // Check Cloudinary configuration
   if (!isCloudinaryConfigured()) {
     return sendError(res, 500, 'Cloudinary not configured. Missing API credentials.');
   }
 
-  // Check OAuth configuration (required for Drive upload)
-  if (!isOAuthConfigured()) {
-    return sendError(res, 500, 'Google OAuth not configured. Missing GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, or GOOGLE_OAUTH_REFRESH_TOKEN.');
-  }
-
-  const parentFolderId = getSharedDriveId();
-  if (!parentFolderId) {
-    return sendError(res, 500, 'Google Drive folder not configured. Missing GOOGLE_SHARED_DRIVE_ID.');
-  }
+  const parentFolderId = sharedDriveId;
 
   // Parse form data
   let fields, files;
@@ -358,15 +335,8 @@ export default async function handler(req, res) {
   console.log(`[CloudinaryToOAuth] Starting process for quotation: ${quotationId}`);
   console.log(`[CloudinaryToOAuth] Files to process: ${fileList.length}`);
 
-  // Get OAuth Drive client (uses YOUR personal account)
-  let drive;
-  try {
-    drive = await getOAuthDriveClient();
-    console.log(`[CloudinaryToOAuth] OAuth Drive client initialized`);
-  } catch (oauthError) {
-    console.error('[CloudinaryToOAuth] OAuth error:', oauthError.message);
-    return sendError(res, 500, `OAuth authentication failed: ${oauthError.message}`);
-  }
+  const drive = oauthDrive;
+  console.log(`[CloudinaryToOAuth] OAuth Drive client initialized`);
 
   // Create folder structure: cotizaciones/manuales/{quotationId}
   // This separates manual entries from provider quotations
@@ -525,4 +495,4 @@ export default async function handler(req, res) {
     urls: uploadedFiles.map(f => f.url),
     errors: errors.length > 0 ? errors : undefined,
   });
-}
+}, { methods: ['POST', 'OPTIONS'], provideOAuthDrive: true, errorPrefix: 'CloudinaryUpload' });

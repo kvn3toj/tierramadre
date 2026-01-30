@@ -19,10 +19,11 @@ import {
   getDriveClient,
   isGoogleConfigured,
   getSharedDriveId,
-  initApi,
   sendSuccess,
   SPREADSHEET_ID,
 } from './_lib/index.js';
+
+import { withApiHandler } from './_lib/with-api-handler.js';
 
 // =============================================================================
 // VERSION INFO
@@ -103,9 +104,7 @@ async function checkDriveConnection() {
 // MAIN HANDLER
 // =============================================================================
 
-export default async function handler(req, res) {
-  if (initApi(req, res, { methods: ['GET', 'OPTIONS'] })) return;
-
+export default withApiHandler(async (req, res) => {
   const detailed = req.query.detailed === 'true';
 
   const response = {
@@ -158,4 +157,8 @@ export default async function handler(req, res) {
   }
 
   return sendSuccess(res, response);
-}
+}, {
+  methods: ['GET', 'OPTIONS'],
+  requireGoogle: false,
+  errorPrefix: 'Health',
+});

@@ -10,9 +10,7 @@
  */
 
 import {
-  getSheetsClient,
-  isGoogleConfigured,
-  initApi,
+  withApiHandler,
   sendError,
   SPREADSHEET_ID,
   SHEETS,
@@ -81,58 +79,46 @@ async function logMismatchReport(sheets, body) {
   };
 }
 
-export default async function handler(req, res) {
-  if (initApi(req, res, { methods: ['GET', 'POST', 'OPTIONS'] })) return;
+export default withApiHandler(async (req, res, { sheets }) => {
+  await ensureSheet(sheets, SHEET_NAME, HEADERS);
 
-  if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google OAuth not configured');
+  // POST - Log mismatch report
+  if (req.method === 'POST') {
+    const result = await logMismatchReport(sheets, req.body);
+    return res.status(200).json(result);
   }
 
-  try {
-    const sheets = getSheetsClient();
-    await ensureSheet(sheets, SHEET_NAME, HEADERS);
+  // GET - List reports (for admin dashboard later)
+  if (req.method === 'GET') {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `'${SHEET_NAME}'!A:J`,
+    });
 
-    // POST - Log mismatch report
-    if (req.method === 'POST') {
-      const result = await logMismatchReport(sheets, req.body);
-      return res.status(200).json(result);
+    const rows = response.data.values || [];
+    if (rows.length <= 1) {
+      return res.status(200).json({ success: true, reports: [], total: 0 });
     }
 
-    // GET - List reports (for admin dashboard later)
-    if (req.method === 'GET') {
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A:J`,
-      });
+    const reports = rows.slice(1).map((row) => ({
+      id: row[0],
+      timestamp: row[1],
+      asesorEmail: row[2],
+      asesorName: row[3],
+      clientNameEntered: row[4],
+      clientPhone: row[5],
+      clientEmail: row[6],
+      expectedGuests: JSON.parse(row[7] || '[]'),
+      quotationNumber: row[8],
+      actionTaken: row[9],
+    }));
 
-      const rows = response.data.values || [];
-      if (rows.length <= 1) {
-        return res.status(200).json({ success: true, reports: [], total: 0 });
-      }
-
-      const reports = rows.slice(1).map((row) => ({
-        id: row[0],
-        timestamp: row[1],
-        asesorEmail: row[2],
-        asesorName: row[3],
-        clientNameEntered: row[4],
-        clientPhone: row[5],
-        clientEmail: row[6],
-        expectedGuests: JSON.parse(row[7] || '[]'),
-        quotationNumber: row[8],
-        actionTaken: row[9],
-      }));
-
-      return res.status(200).json({
-        success: true,
-        reports,
-        total: reports.length,
-      });
-    }
-
-    return sendError(res, 405, 'Method not allowed');
-  } catch (error) {
-    console.error('Error in cotizacion-reports:', error);
-    return sendError(res, 500, 'Failed to process request', error.message);
+    return res.status(200).json({
+      success: true,
+      reports,
+      total: reports.length,
+    });
   }
-}
+
+  return sendError(res, 405, 'Method not allowed');
+}, { methods: ['GET', 'POST', 'OPTIONS'], provideSheets: true, errorPrefix: 'CotizacionReports' });

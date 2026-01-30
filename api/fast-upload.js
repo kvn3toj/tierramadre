@@ -16,18 +16,11 @@ import { Readable } from 'stream';
 import { v2 as cloudinary } from 'cloudinary';
 
 import {
-  getSharedDriveId,
-  setCorsHeaders,
-  handleOptions,
+  withApiHandler,
   sendError,
   sendSuccess,
   DRIVE_FOLDERS,
 } from './_lib/index.js';
-
-import {
-  isOAuthConfigured,
-  getOAuthDriveClient,
-} from './_lib/oauth-drive-client.js';
 
 // =============================================================================
 // CLOUDINARY CONFIGURATION
@@ -348,24 +341,7 @@ async function getOrCreateFolder(drive, parentFolderId, folderName) {
 // MAIN HANDLER
 // =============================================================================
 
-export default async function handler(req, res) {
-  setCorsHeaders(res, ['POST', 'OPTIONS']);
-
-  if (handleOptions(req, res)) return;
-
-  if (req.method !== 'POST') {
-    return sendError(res, 405, 'Method not allowed');
-  }
-
-  if (!isOAuthConfigured()) {
-    return sendError(res, 500, 'Google OAuth not configured');
-  }
-
-  const sharedDriveId = getSharedDriveId();
-  if (!sharedDriveId) {
-    return sendError(res, 500, 'Google Drive folder not configured');
-  }
-
+export default withApiHandler(async (req, res, { oauthDrive, sharedDriveId }) => {
   const totalStartTime = Date.now();
 
   // Parse form data
@@ -408,14 +384,7 @@ export default async function handler(req, res) {
     fileList = [fileList];
   }
 
-  // Get OAuth Drive client
-  let drive;
-  try {
-    drive = await getOAuthDriveClient();
-  } catch (oauthError) {
-    console.error('[FastUpload] OAuth error:', oauthError.message);
-    return sendError(res, 500, `OAuth failed: ${oauthError.message}`);
-  }
+  const drive = oauthDrive;
 
   // Create folder structure: cotizaciones/manuales/{quotationId}
   let targetFolderId;
@@ -467,4 +436,4 @@ export default async function handler(req, res) {
     totalTime: parseFloat(totalTime),
     errors: errors.length > 0 ? errors : undefined,
   });
-}
+}, { methods: ['POST', 'OPTIONS'], provideOAuthDrive: true, errorPrefix: 'FastUpload' });

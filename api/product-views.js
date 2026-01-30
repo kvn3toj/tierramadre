@@ -12,15 +12,12 @@
  */
 
 import {
-  getSheetsClient,
-  isGoogleConfigured,
-  initApi,
   sendError,
-  setCacheHeaders,
   SPREADSHEET_ID,
   SHEETS,
   CACHE,
   ensureSheet,
+  withApiHandler,
 } from './_lib/index.js';
 
 const SHEET_NAME = SHEETS.PRODUCT_VIEWS;
@@ -587,57 +584,46 @@ async function getRecentActivity(sheets, limit = 50) {
   };
 }
 
-export default async function handler(req, res) {
-  if (initApi(req, res, { methods: ['GET', 'POST', 'OPTIONS'] })) return;
-
-  // Very short cache for analytics data to ensure freshness
-  setCacheHeaders(res, CACHE.SHORT);
-
-  if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google OAuth not configured');
-  }
-
+export default withApiHandler(async (req, res, { sheets }) => {
   const action = req.query.action || req.body?.action || 'stats';
 
-  try {
-    const sheets = getSheetsClient(req.method === 'GET');
-    await ensureSheet(sheets, SHEET_NAME, HEADERS);
+  await ensureSheet(sheets, SHEET_NAME, HEADERS);
 
-    // POST - Track view
-    if (req.method === 'POST' && action === 'track') {
-      const result = await trackView(sheets, req.body, req.headers);
-      return res.status(200).json(result);
-    }
-
-    // GET - Stats
-    if (req.method === 'GET' && action === 'stats') {
-      const result = await getStats(sheets);
-      return res.status(200).json(result);
-    }
-
-    // GET - Product views
-    if (req.method === 'GET' && (action === 'product' || req.query.itemId)) {
-      const result = await getProductViews(sheets, req.query.itemId);
-      return res.status(200).json(result);
-    }
-
-    // GET - User views
-    if (req.method === 'GET' && (action === 'user' || req.query.email || req.query.name)) {
-      const result = await getUserViews(sheets, req.query.email, req.query.name);
-      return res.status(200).json(result);
-    }
-
-    // GET - Recent activity
-    if (req.method === 'GET' && action === 'recent') {
-      const limit = parseInt(req.query.limit) || 50;
-      const result = await getRecentActivity(sheets, limit);
-      return res.status(200).json(result);
-    }
-
-    return sendError(res, 405, 'Method not allowed');
-
-  } catch (error) {
-    console.error('Error in product-views:', error);
-    return sendError(res, 500, 'Failed to process request', error.message);
+  // POST - Track view
+  if (req.method === 'POST' && action === 'track') {
+    const result = await trackView(sheets, req.body, req.headers);
+    return res.status(200).json(result);
   }
-}
+
+  // GET - Stats
+  if (req.method === 'GET' && action === 'stats') {
+    const result = await getStats(sheets);
+    return res.status(200).json(result);
+  }
+
+  // GET - Product views
+  if (req.method === 'GET' && (action === 'product' || req.query.itemId)) {
+    const result = await getProductViews(sheets, req.query.itemId);
+    return res.status(200).json(result);
+  }
+
+  // GET - User views
+  if (req.method === 'GET' && (action === 'user' || req.query.email || req.query.name)) {
+    const result = await getUserViews(sheets, req.query.email, req.query.name);
+    return res.status(200).json(result);
+  }
+
+  // GET - Recent activity
+  if (req.method === 'GET' && action === 'recent') {
+    const limit = parseInt(req.query.limit) || 50;
+    const result = await getRecentActivity(sheets, limit);
+    return res.status(200).json(result);
+  }
+
+  return sendError(res, 405, 'Method not allowed');
+}, {
+  methods: ['GET', 'POST', 'OPTIONS'],
+  cache: CACHE.SHORT,
+  provideSheets: true,
+  errorPrefix: 'ProductViews',
+});

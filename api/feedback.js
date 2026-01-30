@@ -12,10 +12,7 @@
  */
 
 import {
-  getSheetsClient,
-  isGoogleConfigured,
-  getSharedDriveId,
-  initApi,
+  withApiHandler,
   sendError,
   sendSuccess,
   setCacheHeaders,
@@ -24,11 +21,6 @@ import {
   CACHE,
   DRIVE_FOLDERS,
 } from './_lib/index.js';
-
-import {
-  isOAuthConfigured,
-  getOAuthDriveClient,
-} from './_lib/oauth-drive-client.js';
 
 // =============================================================================
 // CONFIGURATION
@@ -403,57 +395,37 @@ async function updateFeedback(sheets, id, updates) {
 // MAIN HANDLER
 // =============================================================================
 
-export default async function handler(req, res) {
-  if (initApi(req, res, { methods: ['GET', 'POST', 'PATCH', 'OPTIONS'] })) return;
+export default withApiHandler(async (req, res, { sheets, oauthDrive, sharedDriveId }) => {
+  // Ensure feedback sheet exists in dedicated spreadsheet
+  await ensureFeedbackSheet(sheets);
 
-  if (!isGoogleConfigured()) {
-    return sendError(res, 500, 'Google OAuth not configured');
+  // POST - Submit new feedback
+  if (req.method === 'POST') {
+    const result = await submitFeedback(sheets, oauthDrive, sharedDriveId, req.body, req.headers);
+    return result.success
+      ? sendSuccess(res, result)
+      : sendError(res, 400, result.error);
   }
 
-  try {
-    const sheets = getSheetsClient();
-
-    // Ensure feedback sheet exists in dedicated spreadsheet
-    await ensureFeedbackSheet(sheets);
-
-    // Get OAuth Drive client for screenshot uploads (optional)
-    let drive = null;
-    let sharedDriveId = null;
-    if (isOAuthConfigured()) {
-      try {
-        drive = await getOAuthDriveClient();
-        sharedDriveId = getSharedDriveId();
-      } catch (oauthError) {
-        console.warn('[Feedback] OAuth not available, screenshots will not be uploaded:', oauthError.message);
-      }
-    }
-
-    // POST - Submit new feedback
-    if (req.method === 'POST') {
-      const result = await submitFeedback(sheets, drive, sharedDriveId, req.body, req.headers);
-      return result.success
-        ? sendSuccess(res, result)
-        : sendError(res, 400, result.error);
-    }
-
-    // GET - List feedback
-    if (req.method === 'GET') {
-      setCacheHeaders(res, CACHE.SHORT);
-      const result = await listFeedback(sheets, req.query.status);
-      return sendSuccess(res, result);
-    }
-
-    // PATCH - Update feedback
-    if (req.method === 'PATCH') {
-      const result = await updateFeedback(sheets, req.body.id, req.body);
-      return result.success
-        ? sendSuccess(res, result)
-        : sendError(res, 400, result.error);
-    }
-
-    return sendError(res, 405, 'Method not allowed');
-  } catch (error) {
-    console.error('Feedback API error:', error);
-    return sendError(res, 500, error.message);
+  // GET - List feedback
+  if (req.method === 'GET') {
+    setCacheHeaders(res, CACHE.SHORT);
+    const result = await listFeedback(sheets, req.query.status);
+    return sendSuccess(res, result);
   }
-}
+
+  // PATCH - Update feedback
+  if (req.method === 'PATCH') {
+    const result = await updateFeedback(sheets, req.body.id, req.body);
+    return result.success
+      ? sendSuccess(res, result)
+      : sendError(res, 400, result.error);
+  }
+
+  return sendError(res, 405, 'Method not allowed');
+}, {
+  methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+  provideSheets: true,
+  provideOAuthDrive: true,
+  errorPrefix: 'Feedback',
+});
