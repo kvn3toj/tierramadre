@@ -86,7 +86,7 @@ function migrateStorageKey(oldKey: string, newKey: string): void {
     if (oldData && !localStorage.getItem(newKey)) {
       localStorage.setItem(newKey, oldData);
       localStorage.removeItem(oldKey);
-      console.log(`Migrated storage: ${oldKey} → ${newKey}`);
+      // Migration complete
     }
   } catch (error) {
     console.warn('Storage migration error:', error);

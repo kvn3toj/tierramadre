@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App';
@@ -8,6 +8,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { GoogleAuthProvider } from './contexts/GoogleAuthContext';
 import { PriceShareProvider } from './contexts/PriceShareContext';
 import { checkAndInvalidateCaches } from './utils/cacheInvalidation';
+import { STORAGE_KEYS } from './constants/storage-keys';
 import './design-system/tokens/css-variables.css';
 
 // Invalidate transient caches on new deploy (before any data fetching)
@@ -25,16 +26,39 @@ declare global {
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 const isGoogleConfigured = Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length > 10);
 
+// Check if user is already stored (skip GSI script load to avoid 403 on localhost)
+function hasStoredUser(): boolean {
+  try {
+    return !!localStorage.getItem(STORAGE_KEYS.GOOGLE_USER);
+  } catch {
+    return false;
+  }
+}
+
 // Conditional wrapper for Google OAuth
+// Defers loading GoogleOAuthProvider (GSI script) until needed
 function GoogleWrapper({ children }: { children: ReactNode }) {
-  if (isGoogleConfigured) {
+  const [needsGSI, setNeedsGSI] = useState(!hasStoredUser());
+
+  if (!isGoogleConfigured) {
+    return <>{children}</>;
+  }
+
+  // User already authenticated — skip GSI script, just provide the context
+  if (!needsGSI) {
     return (
-      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <GoogleAuthProvider>{children}</GoogleAuthProvider>
-      </GoogleOAuthProvider>
+      <GoogleAuthProvider onSignedOut={() => setNeedsGSI(true)}>
+        {children}
+      </GoogleAuthProvider>
     );
   }
-  return <>{children}</>;
+
+  // Not authenticated — load full GSI for sign-in button
+  return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <GoogleAuthProvider>{children}</GoogleAuthProvider>
+    </GoogleOAuthProvider>
+  );
 }
 
 // Wait for version check to complete before rendering

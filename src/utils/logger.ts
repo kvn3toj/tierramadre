@@ -42,7 +42,7 @@ class Logger {
   constructor(config: LoggerConfig = {}) {
     this.config = {
       forceEnable: false,
-      minLevel: 'debug',
+      minLevel: 'warn',
       appPrefix: 'TM',
       ...config,
     };

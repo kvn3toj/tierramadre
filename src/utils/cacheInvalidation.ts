@@ -94,7 +94,7 @@ export function clearTransientCaches(): number {
       clearedCount++;
     });
 
-    if (clearedCount > 0) {
+    if (clearedCount > 0 && import.meta.env.VITE_DEBUG_CACHE) {
       console.log(`[CacheInvalidation] Cleared ${clearedCount} transient caches:`, keysToRemove);
     }
   } catch (error) {
@@ -115,7 +115,9 @@ export function checkAndInvalidateCaches(): boolean {
 
     // If version changed, clear transient caches
     if (cachedVersion && cachedVersion !== currentVersion) {
-      console.log(`[CacheInvalidation] Version changed: ${cachedVersion} → ${currentVersion}`);
+      if (import.meta.env.VITE_DEBUG_CACHE) {
+        console.log(`[CacheInvalidation] Version changed: ${cachedVersion} → ${currentVersion}`);
+      }
       const cleared = clearTransientCaches();
       localStorage.setItem(CACHE_VERSION_KEY, currentVersion);
       return cleared > 0;
@@ -140,5 +142,7 @@ export function forceInvalidateAllCaches(): void {
   clearTransientCaches();
   const currentVersion = getCurrentVersion();
   localStorage.setItem(CACHE_VERSION_KEY, currentVersion);
-  console.log('[CacheInvalidation] Force invalidated all transient caches');
+  if (import.meta.env.VITE_DEBUG_CACHE) {
+    console.log('[CacheInvalidation] Force invalidated all transient caches');
+  }
 }

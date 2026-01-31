@@ -287,7 +287,7 @@ export default function ProgressiveImage({
           alt={alt}
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
-          fetchPriority={priority ? 'high' : 'auto'}
+          {...{ fetchpriority: priority ? 'high' : 'auto' } as any}
           onLoad={() => {
             log.info('Image render success', { src: optimizedSrc, attempts: retryCount + 1 });
             setLoaded(true);

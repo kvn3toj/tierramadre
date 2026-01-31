@@ -8,7 +8,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import type { AuthState, AuthContextType, AccessLevel } from '../types/auth';
 import { useGoogleAuth } from './GoogleAuthContext';
-import { SESSION_KEYS } from '../constants/storage-keys';
+import { SESSION_KEYS, STORAGE_KEYS } from '../constants/storage-keys';
 
 const STORAGE_KEY = SESSION_KEYS.AUTH;
 
@@ -68,6 +68,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (stored) {
       return stored;
     }
+
+    // Fallback: check if Google user exists in localStorage (persists across tabs)
+    // This prevents WelcomeScreen flash while GoogleAuthContext re-validates
+    try {
+      const googleUser = localStorage.getItem(STORAGE_KEYS.GOOGLE_USER);
+      if (googleUser) {
+        const parsed = JSON.parse(googleUser);
+        return {
+          isAuthenticated: true,
+          accessLevel: parsed.accessLevel || 'asesor',
+        };
+      }
+    } catch { /* ignore parse errors */ }
+
     return { isAuthenticated: false, accessLevel: 'guest' };
   });
 

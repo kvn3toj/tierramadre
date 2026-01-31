@@ -37,11 +37,7 @@ export function useNewProductNotification({
 
     // Extract product IDs and check for new products
     const productIds = products.map(p => p.item);
-    const newCount = checkNewProductsByIds(productIds);
-
-    if (newCount > 0) {
-      console.log(`[NewProductNotification] Found ${newCount} new products`);
-    }
+    checkNewProductsByIds(productIds);
 
     hasChecked.current = true;
   }, [products, enabled]);

@@ -171,16 +171,7 @@ if (typeof window !== 'undefined') {
     reset: clearFeatureFlags,
   };
 
-  // Log available commands on first load
-  console.log(
-    '%c🎛️ Feature Flags Available',
-    'background: #00AE7A; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;'
-  );
-  console.log('Use window.featureFlags to control features:');
-  console.log('  • window.featureFlags.list()         - Show all flags');
-  console.log('  • window.featureFlags.enable("IOS_UPLOAD")  - Enable a flag');
-  console.log('  • window.featureFlags.disable("IOS_UPLOAD") - Disable a flag');
-  console.log('  • window.featureFlags.reset()        - Reset to defaults');
+  // Available via window.featureFlags.list() in console
 }
 
 /**

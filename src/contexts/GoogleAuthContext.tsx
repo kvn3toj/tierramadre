@@ -73,9 +73,11 @@ const GoogleAuthContext = createContext<GoogleAuthContextType | undefined>(undef
 
 interface GoogleAuthProviderProps {
   children: ReactNode;
+  /** Called after sign-out to trigger GSI reload */
+  onSignedOut?: () => void;
 }
 
-export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
+export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProviderProps) {
   const [user, setUser] = useState<GoogleUserProfile | null>(null);
   const [preferences, setPreferences] = useState<UserPreferences>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -131,6 +133,7 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
               setUser(null);
               setPreferences({});
               setIsAuthorized(false);
+              onSignedOut?.();
               // No error message - just redirect to login screen
             }
           } catch (validationError) {
@@ -266,7 +269,8 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
     localStorage.removeItem(GOOGLE_USER_KEY);
     localStorage.removeItem(GOOGLE_PREFS_KEY);
     localStorage.removeItem(GOOGLE_TOKEN_KEY);
-  }, []);
+    onSignedOut?.();
+  }, [onSignedOut]);
 
   // Clear auth error (for retry with different account)
   const clearError = useCallback(() => {
