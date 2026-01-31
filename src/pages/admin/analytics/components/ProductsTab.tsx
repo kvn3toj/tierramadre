@@ -42,6 +42,7 @@ interface ProductsTabProps {
     itemId: number;
     productName: string;
     userName?: string | null;
+    inviterName?: string | null;
   }>;
   generateTrendData: (current: number, variance?: number) => number[];
 }
@@ -148,6 +149,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                     </Typography>
                   </>
                 }
+                secondary={activity.inviterName ? `inv. por ${activity.inviterName}` : undefined}
                 time={formatTimeAgo(activity.timestamp)}
                 isLast={idx === Math.min(recentProductViews.length, 8) - 1}
               />

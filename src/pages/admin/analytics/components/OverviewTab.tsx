@@ -285,7 +285,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     </>
                   )
                 }
-                secondary={item.type === 'cotizacion' ? `Cliente: ${item.clientName}` : undefined}
+                secondary={
+                  item.type === 'cotizacion'
+                    ? `Cliente: ${item.clientName}`
+                    : item.inviterName
+                      ? `inv. por ${item.inviterName}`
+                      : undefined
+                }
                 time={formatTimeAgo(item.timestamp)}
                 isLast={idx === combinedActivity.length - 1}
               />

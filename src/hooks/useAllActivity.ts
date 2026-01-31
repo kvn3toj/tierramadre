@@ -25,6 +25,7 @@ export interface Activity {
   userName?: string | null;
   userEmail?: string | null;
   userRole?: string;
+  inviterName?: string | null;
   // For cotizaciones
   quotationNumber?: string;
   asesorName?: string;
@@ -108,6 +109,7 @@ export function useAllActivity(): UseAllActivityReturn {
               userName: view.userName || null,
               userEmail: view.userEmail || null,
               userRole: view.userRole || 'guest',
+              inviterName: view.inviterName || null,
             });
           }
         }

@@ -22,6 +22,7 @@ export interface CombinedActivity {
   type: 'view' | 'cotizacion';
   timestamp: string;
   userName?: string | null;
+  inviterName?: string | null;
   productName?: string;
   itemId?: number;
   asesorName?: string;
@@ -114,6 +115,7 @@ export function useAnalyticsData() {
           type: 'view',
           timestamp: view.timestamp,
           userName: view.userName,
+          inviterName: view.inviterName,
           productName: view.productName,
           itemId: view.itemId,
         });

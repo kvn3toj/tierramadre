@@ -23,7 +23,7 @@ import {
 const SHEET_NAME = SHEETS.PRODUCT_VIEWS;
 const HEADERS = [
   'timestamp', 'itemId', 'productName', 'sessionId', 'referrer',
-  'deviceType', 'browser', 'country', 'userName', 'userEmail', 'userRole'
+  'deviceType', 'browser', 'country', 'userName', 'userEmail', 'userRole', 'inviterName'
 ];
 
 /**
@@ -55,7 +55,7 @@ function detectBrowser(userAgent) {
 async function trackView(sheets, body, headers) {
   const {
     itemId, productName, sessionId, referrer,
-    userName, userEmail, userRole, country,
+    userName, userEmail, userRole, country, inviterName,
   } = body;
 
   if (!itemId) {
@@ -75,11 +75,12 @@ async function trackView(sheets, body, headers) {
     userName || '',
     userEmail || '',
     userRole || '',
+    inviterName || '',
   ];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:K`,
+    range: `'${SHEET_NAME}'!A:L`,
     valueInputOption: 'RAW',
     requestBody: { values: [row] },
   });
@@ -93,7 +94,7 @@ async function trackView(sheets, body, headers) {
 async function getStats(sheets) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:K`,
+    range: `'${SHEET_NAME}'!A:L`,
   });
 
   const rows = response.data.values || [];
@@ -180,6 +181,7 @@ async function getStats(sheets) {
     }
 
     // Collect for recent activity
+    const inviterName = row[11] || null;
     allActivity.push({
       timestamp,
       itemId: parseInt(itemId),
@@ -187,6 +189,7 @@ async function getStats(sheets) {
       userName: userName || null,
       userEmail: userEmail || null,
       userRole,
+      inviterName,
     });
   }
 
@@ -245,7 +248,7 @@ async function getProductViews(sheets, itemId) {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:K`,
+    range: `'${SHEET_NAME}'!A:L`,
   });
 
   const rows = response.data.values || [];
@@ -383,6 +386,7 @@ async function getProductViews(sheets, itemId) {
       userName: row[8] || 'Invitado',
       userEmail: row[9] || null,
       userRole: row[10] || 'guest',
+      inviterName: row[11] || null,
       isLoggedIn: !!(row[8] || row[9]),
       deviceType: row[5] || 'unknown',
       browser: row[6] || 'unknown',
@@ -419,7 +423,7 @@ async function getUserViews(sheets, email, name) {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:K`,
+    range: `'${SHEET_NAME}'!A:L`,
   });
 
   const rows = response.data.values || [];
@@ -550,7 +554,7 @@ async function getUserViews(sheets, email, name) {
 async function getRecentActivity(sheets, limit = 50) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:K`,
+    range: `'${SHEET_NAME}'!A:L`,
   });
 
   const rows = response.data.values || [];
@@ -572,6 +576,7 @@ async function getRecentActivity(sheets, limit = 50) {
       userName: row[8],
       userEmail: row[9],
       userRole: row[10],
+      inviterName: row[11] || null,
     }))
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, limit);

@@ -10,6 +10,7 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useGoogleAuth } from '../contexts/GoogleAuthContext';
 import { STORAGE_KEYS, SESSION_KEYS } from '../constants/storage-keys';
+import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 
 const VIEWS_STORAGE_KEY = STORAGE_KEYS.PRODUCT_VIEWS;
 
@@ -47,6 +48,7 @@ interface UserInfo {
   name?: string;
   email?: string;
   role?: string;
+  inviterName?: string;
 }
 
 /**
@@ -70,6 +72,7 @@ async function trackView(
         userName: userInfo?.name,
         userEmail: userInfo?.email,
         userRole: userInfo?.role || 'Invitado',
+        inviterName: userInfo?.inviterName,
       }),
     });
   } catch {
@@ -122,12 +125,17 @@ export function useProductView({
     const referrer = location.state?.from || document.referrer || 'direct';
     const cleanReferrer = referrer.replace(window.location.origin, '');
 
-    // Get user info if available
-    const userInfo: UserInfo | undefined = user ? {
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    } : undefined;
+    // Get user info if available (check sessionStorage for guest identity)
+    const userInfo: UserInfo | undefined = user
+      ? { name: user.name, email: user.email, role: user.role }
+      : (() => {
+          const guestName = sessionStorage.getItem(INVITATION_STORAGE_KEYS.GUEST_NAME);
+          const inviterName = sessionStorage.getItem(INVITATION_STORAGE_KEYS.INVITER_NAME);
+          if (guestName) {
+            return { name: guestName, role: 'Invitado', inviterName: inviterName || undefined };
+          }
+          return undefined;
+        })();
 
     // Track the view (fire and forget)
     trackView(itemId, productName, cleanReferrer || 'direct', userInfo);

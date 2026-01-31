@@ -183,19 +183,25 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
                 {activity.productName}
               </Typography>
             </Typography>
-            {activity.userRole && activity.userRole !== 'guest' && (
-              <Chip
-                label={getRoleLabel(activity.userRole)}
-                size="small"
-                sx={{
-                  height: 18,
-                  fontSize: '0.65rem',
-                  mt: 0.5,
-                  bgcolor: alpha(emeraldCore.primary, 0.1),
-                  color: emeraldCore.primary,
-                }}
-              />
-            )}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
+              {activity.inviterName && (
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+                  inv. por {activity.inviterName}
+                </Typography>
+              )}
+              {activity.userRole && activity.userRole !== 'guest' && (
+                <Chip
+                  label={getRoleLabel(activity.userRole)}
+                  size="small"
+                  sx={{
+                    height: 18,
+                    fontSize: '0.65rem',
+                    bgcolor: alpha(emeraldCore.primary, 0.1),
+                    color: emeraldCore.primary,
+                  }}
+                />
+              )}
+            </Box>
           </>
         ) : (
           <>

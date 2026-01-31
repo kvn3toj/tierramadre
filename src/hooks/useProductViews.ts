@@ -22,6 +22,7 @@ interface RecentActivity {
   userName: string | null;
   userEmail: string | null;
   userRole: string;
+  inviterName?: string | null;
 }
 
 interface ViewStats {
