@@ -25,10 +25,11 @@ if (!CLIENT_ID || !CLIENT_SECRET) {
 
 const oauth2Client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 
-// Scopes needed for Drive file operations
+// Scopes needed for Drive + Sheets operations
 const SCOPES = [
   'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/spreadsheets',
   'https://www.googleapis.com/auth/userinfo.email',
 ];
 
