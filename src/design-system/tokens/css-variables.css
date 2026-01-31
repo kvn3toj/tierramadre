@@ -114,6 +114,11 @@
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.3);
 
+  /* Liquid Glass */
+  --liquid-glass-bg: rgba(255, 255, 255, 0.6);
+  --liquid-glass-border: rgba(255, 255, 255, 0.3);
+  --liquid-glass-highlight: rgba(255, 255, 255, 0.15);
+
   /* Overlay */
   --overlay-modal: rgba(0, 0, 0, 0.5);
   --overlay-sheet: rgba(0, 0, 0, 0.3);
@@ -181,6 +186,11 @@
   /* Glass */
   --glass-bg: rgba(0, 0, 0, 0.5);
   --glass-border: rgba(255, 255, 255, 0.1);
+
+  /* Liquid Glass */
+  --liquid-glass-bg: rgba(0, 0, 0, 0.4);
+  --liquid-glass-border: rgba(255, 255, 255, 0.08);
+  --liquid-glass-highlight: rgba(255, 255, 255, 0.06);
 
   /* Overlay */
   --overlay-modal: rgba(0, 0, 0, 0.75);
@@ -276,6 +286,11 @@ body {
     --card-bg: #1C1C1E;
     --input-bg: #121821;
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+    --glass-bg: rgba(0, 0, 0, 0.5);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --liquid-glass-bg: rgba(0, 0, 0, 0.4);
+    --liquid-glass-border: rgba(255, 255, 255, 0.08);
+    --liquid-glass-highlight: rgba(255, 255, 255, 0.06);
   }
 }
 

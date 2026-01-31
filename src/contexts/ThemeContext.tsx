@@ -142,6 +142,47 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       borderRadius: iosBorderRadius.sm,
     },
     spacing: iosSpacing.xs,
+    components: {
+      MuiCard: {
+        styleOverrides: {
+          root: {
+            borderRadius: iosBorderRadius.md,
+            backgroundColor: mode === 'dark' ? brandColors.darkSurface : '#FFFFFF',
+            backgroundImage: 'none',
+            boxShadow: mode === 'dark'
+              ? '0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2)'
+              : '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)',
+            border: `1px solid ${mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB'}`,
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              boxShadow: mode === 'dark'
+                ? '0 4px 12px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3)'
+                : '0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06)',
+              borderColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : '#D1D5DB',
+            },
+          },
+        },
+      },
+      MuiTooltip: {
+        styleOverrides: {
+          tooltip: {
+            borderRadius: iosBorderRadius.xs,
+            backgroundColor: mode === 'dark' ? '#E5E7EB' : '#1F2937',
+            color: mode === 'dark' ? '#1F2937' : '#FFFFFF',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          },
+        },
+      },
+      MuiSwitch: {
+        styleOverrides: {
+          track: {
+            borderRadius: 31 / 2,
+            opacity: 1,
+            backgroundColor: mode === 'dark' ? '#48484A' : '#D1D5DB',
+          },
+        },
+      },
+    },
   });
 
   return (

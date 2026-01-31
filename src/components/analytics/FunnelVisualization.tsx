@@ -185,9 +185,6 @@ const FunnelVisualization: React.FC<FunnelVisualizationProps> = ({
   analysis,
   compact = false,
 }) => {
-  const { mode } = useThemeMode();
-  const isLight = mode === 'light';
-
   const maxCount = Math.max(...analysis.steps.map(s => s.count), 1);
 
   return (
@@ -196,8 +193,8 @@ const FunnelVisualization: React.FC<FunnelVisualizationProps> = ({
       sx={{
         p: compact ? 2 : 3,
         borderRadius: 3,
-        bgcolor: isLight ? 'background.paper' : alpha('#000', 0.2),
-        border: `1px solid ${isLight ? alpha('#000', 0.08) : alpha('#fff', 0.1)}`,
+        bgcolor: 'var(--card-bg)',
+        border: '1px solid var(--card-border)',
       }}
     >
       {/* Header */}

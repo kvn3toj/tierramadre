@@ -97,7 +97,7 @@ const Section: React.FC<{
 
 const DesignSystemPage: React.FC = () => {
   return (
-    <Box sx={{ bgcolor: '#F9FAFB', minHeight: '100vh', py: 4 }}>
+    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
         {/* Header */}
         <Box sx={{ mb: 6, textAlign: 'center' }}>
@@ -309,7 +309,7 @@ const DesignSystemPage: React.FC = () => {
                   sx={{
                     width: 80,
                     height: 80,
-                    bgcolor: 'white',
+                    bgcolor: 'background.paper',
                     borderRadius: 2,
                     boxShadow: shadows.default[size as keyof typeof shadows.default],
                   }}
@@ -329,7 +329,7 @@ const DesignSystemPage: React.FC = () => {
                   sx={{
                     width: 80,
                     height: 80,
-                    bgcolor: 'white',
+                    bgcolor: 'background.paper',
                     borderRadius: 2,
                     boxShadow: shadows.emerald[size as keyof typeof shadows.emerald],
                   }}

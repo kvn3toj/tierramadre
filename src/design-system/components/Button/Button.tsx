@@ -126,7 +126,7 @@ const StyledButton = styled(MuiButton, {
     },
     tertiary: {
       background: 'transparent',
-      color: '#00AE7A',
+      color: 'var(--brand-primary)',
       border: 'none',
       boxShadow: 'none',
       '&:hover': {

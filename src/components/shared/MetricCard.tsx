@@ -7,7 +7,6 @@
 import React from 'react';
 import { Box, Paper, Typography, alpha } from '@mui/material';
 import { TrendingUp, TrendingDown } from 'lucide-react';
-import { useThemeMode } from '../../contexts/ThemeContext';
 import { iosDimensions } from '../../design-system/tokens/primitives/spacing';
 import { semanticColors } from '../../design-system/tokens/colors';
 import { SparklineChart } from '../analytics/SparklineChart';
@@ -40,9 +39,6 @@ const MetricCard: React.FC<MetricCardProps> = ({
   compact = false,
   onClick,
 }) => {
-  const { mode } = useThemeMode();
-  const isLight = mode === 'light';
-
   return (
     <Paper
       elevation={0}
@@ -50,7 +46,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
       sx={{
         p: compact ? 2 : 2.5,
         borderRadius: iosDimensions.borderRadiusLarge,
-        bgcolor: isLight ? 'background.paper' : alpha('#000', 0.2),
+        bgcolor: 'var(--card-bg)',
         border: `1px solid ${alpha(color, 0.15)}`,
         height: '100%',
         display: 'flex',

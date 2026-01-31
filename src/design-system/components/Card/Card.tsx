@@ -86,7 +86,7 @@ const StyledCard = styled(MuiCard, {
 
   const variantStyles = {
     elevated: {
-      backgroundColor: '#FFFFFF',
+      backgroundColor: 'var(--card-bg)',
       boxShadow: shadows.card.resting,
       border: 'none',
       ...(interactive && {
@@ -101,29 +101,29 @@ const StyledCard = styled(MuiCard, {
       }),
     },
     outlined: {
-      backgroundColor: '#FFFFFF',
+      backgroundColor: 'var(--card-bg)',
       boxShadow: 'none',
-      border: '1px solid #E5E7EB',
+      border: '1px solid var(--card-border)',
       ...(interactive && {
         '&:hover': {
-          borderColor: '#00AE7A',
+          borderColor: 'var(--brand-primary)',
           boxShadow: shadows.emerald.sm,
         },
         '&:active': {
-          borderColor: '#008C61',
+          borderColor: 'var(--brand-primary-hover)',
         },
       }),
     },
     filled: {
-      backgroundColor: '#F3F4F6',
+      backgroundColor: 'var(--surface-secondary)',
       boxShadow: 'none',
       border: 'none',
       ...(interactive && {
         '&:hover': {
-          backgroundColor: '#E5E7EB',
+          backgroundColor: 'var(--border-default)',
         },
         '&:active': {
-          backgroundColor: '#D1D5DB',
+          backgroundColor: 'var(--border-strong)',
         },
       }),
     },

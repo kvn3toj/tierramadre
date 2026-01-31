@@ -29,7 +29,7 @@ import { X, Scale, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { formatFullCurrency, getColorDot, getQualityBadge } from '../../utils/formatting';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
 import { ComparisonMobileView } from './';
 
 interface ComparisonModalProps {
@@ -76,14 +76,14 @@ function ComparisonCell({
     indicator === 'best'
       ? alpha(emeraldCore.primary, 0.15)
       : indicator === 'worst'
-        ? alpha('#ef4444', 0.1)
+        ? alpha(semanticColors.error.main, 0.1)
         : 'transparent';
 
   const iconColor =
     indicator === 'best'
       ? emeraldCore.primary
       : indicator === 'worst'
-        ? '#ef4444'
+        ? semanticColors.error.main
         : isLight
           ? surfacesLight.text.tertiary
           : surfacesDark.text.tertiary;
@@ -349,7 +349,7 @@ export default function ComparisonModal({
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <TrendingDown size={14} color="#ef4444" />
+              <TrendingDown size={14} color={semanticColors.error.main} />
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Valor más bajo
               </Typography>

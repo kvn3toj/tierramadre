@@ -99,7 +99,7 @@ export default function EmeraldCard({
     >
       <Box sx={{ position: 'relative' }}>
         {emerald.mediaType === 'video' ? (
-          <Box sx={{ height: 200, overflow: 'hidden', bgcolor: '#000', position: 'relative' }}>
+          <Box sx={{ height: 200, overflow: 'hidden', bgcolor: 'background.default', position: 'relative' }}>
             <MediaPreview
               mediaUrl={emerald.mediaData}
               mediaType="video"

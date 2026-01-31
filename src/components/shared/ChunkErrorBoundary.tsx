@@ -92,11 +92,11 @@ export class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, Chunk
             alignItems: 'center',
             justifyContent: 'center',
             height: '100vh',
-            bgcolor: '#0a0a0a',
-            color: 'white',
+            bgcolor: 'background.default',
+            color: 'text.primary',
             gap: 2,
           }}>
-            <CircularProgress sx={{ color: '#00AE7A' }} />
+            <CircularProgress sx={{ color: 'primary.main' }} />
             <Typography>Actualizando aplicación...</Typography>
           </Box>
         );
@@ -109,20 +109,20 @@ export class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, Chunk
           alignItems: 'center',
           justifyContent: 'center',
           height: '100vh',
-          bgcolor: '#0a0a0a',
-          color: 'white',
+          bgcolor: 'background.default',
+          color: 'text.primary',
           gap: 3,
           p: 3,
           textAlign: 'center',
         }}>
           <Typography variant="h5">Nueva versión disponible</Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Hay una actualización disponible. Por favor recarga la página.
           </Typography>
           <Button
             variant="contained"
             onClick={this.handleManualReload}
-            sx={{ bgcolor: '#00AE7A', '&:hover': { bgcolor: '#008f64' } }}
+            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
           >
             Recargar Ahora
           </Button>

@@ -37,8 +37,9 @@ export const QuotationConfig: React.FC<QuotationConfigProps> = ({
         maxWidth: { xs: '100%', md: 400 },
         p: 3,
         borderRadius: 3,
-        border: '1px solid #E5E7EB',
-        bgcolor: '#FFFFFF',
+        border: '1px solid',
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
         maxHeight: 'calc(100vh - 250px)',
         overflowY: 'auto',
       }}

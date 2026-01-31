@@ -322,19 +322,19 @@ export const theme = createTheme({
         },
       },
     },
-    // Card with iOS elevation - Light Mode
+    // Card with iOS elevation - uses CSS vars for dark/light
     MuiCard: {
       styleOverrides: {
         root: {
           borderRadius: iosBorderRadius.md,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--card-bg)',
           backgroundImage: 'none',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)',
-          border: '1px solid #E5E7EB',
+          boxShadow: 'var(--shadow-sm)',
+          border: '1px solid var(--card-border)',
           transition: 'all 0.2s ease',
           '&:hover': {
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06)',
-            borderColor: '#D1D5DB',
+            boxShadow: 'var(--shadow-md)',
+            borderColor: 'var(--border-strong)',
           },
         },
       },
@@ -468,13 +468,11 @@ export const theme = createTheme({
         },
       },
     },
-    // Tooltip with iOS styling - Light Mode
+    // Tooltip with iOS styling
     MuiTooltip: {
       styleOverrides: {
         tooltip: {
           borderRadius: iosBorderRadius.xs,
-          backgroundColor: '#1F2937',
-          color: '#FFFFFF',
           boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
           fontSize: iosTypography.footnote.fontSize,
         },
@@ -526,7 +524,7 @@ export const theme = createTheme({
         },
       },
     },
-    // Switch with iOS toggle styling - Light Mode
+    // Switch with iOS toggle styling
     MuiSwitch: {
       styleOverrides: {
         root: {
@@ -548,7 +546,7 @@ export const theme = createTheme({
         track: {
           borderRadius: 31 / 2,
           opacity: 1,
-          backgroundColor: '#D1D5DB',
+          backgroundColor: 'var(--border-default)',
         },
       },
     },

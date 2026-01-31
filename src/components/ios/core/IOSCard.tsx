@@ -145,13 +145,13 @@ export const IOSCard: React.FC<IOSCardProps> = ({
       case 'liquidGlass':
         // iOS 26 Liquid Glass with dynamic effects
         return {
-          backgroundColor: 'rgba(255, 255, 255, 0.6)',
-          border: '1px solid rgba(255, 255, 255, 0.3)',
+          backgroundColor: 'var(--liquid-glass-bg)',
+          border: '1px solid var(--liquid-glass-border)',
           backdropFilter: 'blur(16px) saturate(200%)',
           WebkitBackdropFilter: 'blur(16px) saturate(200%)',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12), inset 0 1px 1px var(--liquid-glass-highlight)',
           // Specular highlight gradient overlay
-          backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%)',
+          backgroundImage: 'linear-gradient(135deg, var(--liquid-glass-highlight) 0%, transparent 50%)',
         };
 
       case 'flat':
@@ -177,7 +177,7 @@ export const IOSCard: React.FC<IOSCardProps> = ({
           boxShadow: variant === 'elevated'
             ? 'var(--shadow-md)'
             : variant === 'liquidGlass'
-              ? '0 12px 32px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.2)'
+              ? '0 12px 32px rgba(0, 0, 0, 0.15), inset 0 1px 1px var(--liquid-glass-highlight)'
               : variantStyles.boxShadow,
           borderColor: 'var(--card-hover-border)',
           // Liquid Glass: reduce blur on hover for more clarity
@@ -191,7 +191,7 @@ export const IOSCard: React.FC<IOSCardProps> = ({
           boxShadow: variant === 'elevated'
             ? 'var(--shadow-xs)'
             : variant === 'liquidGlass'
-              ? '0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.1)'
+              ? '0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 1px var(--liquid-glass-highlight)'
               : variantStyles.boxShadow,
           // Liquid Glass: minimum blur on active for maximum clarity
           ...(variant === 'liquidGlass' && {

@@ -5,19 +5,20 @@
 import { alpha, SxProps, Theme } from '@mui/material';
 
 // Card background and border colors based on theme mode
+// These now reference CSS variables for automatic dark/light switching
 export const CARD_COLORS = {
   light: {
-    bg: '#FFFFFF',
-    border: '#E5E7EB',
+    bg: 'var(--card-bg)',
+    border: 'var(--card-border)',
   },
   dark: {
-    bg: '#1C1C1E',
-    border: '#2C2C2E',
+    bg: 'var(--card-bg)',
+    border: 'var(--card-border)',
   },
 } as const;
 
 // Generate Card sx styles
-export const getCardSx = (isLight: boolean, options?: {
+export const getCardSx = (_isLight: boolean, options?: {
   borderRadius?: number;
   withHover?: boolean;
   hoverColor?: string;
@@ -25,10 +26,10 @@ export const getCardSx = (isLight: boolean, options?: {
   const { borderRadius = 3, withHover = true, hoverColor = '#059669' } = options || {};
 
   const baseStyles: SxProps<Theme> = {
-    bgcolor: isLight ? CARD_COLORS.light.bg : CARD_COLORS.dark.bg,
+    bgcolor: 'var(--card-bg)',
     borderRadius,
     border: '1px solid',
-    borderColor: isLight ? CARD_COLORS.light.border : CARD_COLORS.dark.border,
+    borderColor: 'var(--card-border)',
     transition: 'all 0.2s ease',
   };
 
