@@ -6,6 +6,7 @@
  */
 
 import type { TreasureItem } from './index';
+import { SESSION_KEYS } from '../constants/storage-keys';
 
 /**
  * Item stored in cart (includes key product details for WhatsApp messages)
@@ -39,7 +40,7 @@ export interface CartState {
  * Session storage key for cart data
  * Using sessionStorage so cart clears when browser closes
  */
-export const CART_STORAGE_KEY = 'tierramadre-cart';
+export const CART_STORAGE_KEY = SESSION_KEYS.CART;
 
 /**
  * Convert TreasureItem to CartItem for storage

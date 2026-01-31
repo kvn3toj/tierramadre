@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { STORAGE_KEYS } from '../../../constants/storage-keys';
 
 // =============================================================================
 // TYPES
@@ -34,7 +35,7 @@ export interface StreakMilestone {
 // CONSTANTS
 // =============================================================================
 
-const STORAGE_KEY = 'tierra-madre-streak';
+const STORAGE_KEY = STORAGE_KEYS.STREAK;
 
 const MILESTONES = [7, 14, 30, 60, 100, 365];
 

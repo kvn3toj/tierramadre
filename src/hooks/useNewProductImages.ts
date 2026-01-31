@@ -11,11 +11,12 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { TreasureItem } from '../types';
 import { createLogger } from '../utils/logger';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 const log = createLogger('NewProductImages');
 
 // Cache configuration
-const DRIVE_IMAGES_CACHE_KEY = 'tierramadre-drive-images-cache-v2';
+const DRIVE_IMAGES_CACHE_KEY = STORAGE_KEYS.DRIVE_IMAGES_CACHE;
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 interface DriveImage {

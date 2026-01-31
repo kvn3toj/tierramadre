@@ -1,7 +1,8 @@
 import { AppState, Emerald, InstagramPost } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
-const STORAGE_KEY = 'tierra-madre-data';
+const STORAGE_KEY = STORAGE_KEYS.APP_DATA;
 
 const defaultState: AppState = {
   emeralds: [],

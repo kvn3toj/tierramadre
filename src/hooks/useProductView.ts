@@ -9,8 +9,9 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useGoogleAuth } from '../contexts/GoogleAuthContext';
+import { STORAGE_KEYS, SESSION_KEYS } from '../constants/storage-keys';
 
-const VIEWS_STORAGE_KEY = 'tm_product_views';
+const VIEWS_STORAGE_KEY = STORAGE_KEYS.PRODUCT_VIEWS;
 
 /**
  * Check if this product was already viewed this session
@@ -65,7 +66,7 @@ async function trackView(
         itemId,
         productName,
         referrer,
-        sessionId: sessionStorage.getItem('tm_session_id') || crypto.randomUUID(),
+        sessionId: sessionStorage.getItem(SESSION_KEYS.SESSION_ID) || crypto.randomUUID(),
         userName: userInfo?.name,
         userEmail: userInfo?.email,
         userRole: userInfo?.role || 'Invitado',

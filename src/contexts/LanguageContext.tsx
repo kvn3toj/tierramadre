@@ -5,6 +5,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { es } from '../locales/es';
 import { en } from '../locales/en';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 export type Language = 'es' | 'en';
 
@@ -35,12 +36,12 @@ const translations = { es, en };
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('tierra-madre-language');
+    const saved = localStorage.getItem(STORAGE_KEYS.LANGUAGE);
     return (saved as Language) || 'es'; // Default: Spanish
   });
 
   useEffect(() => {
-    localStorage.setItem('tierra-madre-language', language);
+    localStorage.setItem(STORAGE_KEYS.LANGUAGE, language);
   }, [language]);
 
   const setLanguage = (lang: Language) => {

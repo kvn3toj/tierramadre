@@ -4,8 +4,9 @@
  * Part of the engagement features for Tierra Madre treasure browser.
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
-const STORAGE_KEY = 'tierramadre-favorites';
+const STORAGE_KEY = STORAGE_KEYS.FAVORITES;
 
 interface FavoritesData {
   items: number[]; // Item IDs

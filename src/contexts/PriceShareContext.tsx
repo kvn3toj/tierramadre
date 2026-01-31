@@ -10,6 +10,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useIsGuest } from '../hooks/useAuth';
 import { useIsProvider } from '../hooks/usePermissions';
 import { INVITATION_STORAGE_KEYS } from '../types/invitation';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 interface PriceShareContextType {
   /** User preference to share/show prices */
@@ -24,7 +25,7 @@ interface PriceShareContextType {
   shouldShowPrices: boolean;
 }
 
-const STORAGE_KEY = 'tierra-madre-share-prices';
+const STORAGE_KEY = STORAGE_KEYS.SHARE_PRICES;
 
 const PriceShareContext = createContext<PriceShareContextType | undefined>(undefined);
 

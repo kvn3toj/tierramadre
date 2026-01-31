@@ -3,16 +3,17 @@
  * Tracks user interactions with the treasure browser.
  * Stores analytics locally and can be extended for remote reporting.
  */
+import { STORAGE_KEYS, SESSION_KEYS, LEGACY_KEYS } from '../../constants/storage-keys';
 
 // Storage keys (new treasure namespace)
-const STORAGE_KEY = 'tierramadre-treasure-analytics';
-const SESSION_KEY = 'tierramadre-session-id';
-const SEARCH_HITS_KEY = 'tierramadre-treasure-search-hits';
+const STORAGE_KEY = STORAGE_KEYS.TREASURE_ANALYTICS;
+const SESSION_KEY = SESSION_KEYS.SESSION_ID;
+const SEARCH_HITS_KEY = STORAGE_KEYS.SEARCH_HITS;
 const MAX_EVENTS = 1000;
 
 // Old storage keys for migration
-const OLD_STORAGE_KEY = 'tierramadre-inventory-analytics';
-const OLD_SEARCH_HITS_KEY = 'tierramadre-search-hits';
+const OLD_STORAGE_KEY = LEGACY_KEYS.INVENTORY_ANALYTICS;
+const OLD_SEARCH_HITS_KEY = STORAGE_KEYS.SEARCH_HITS_LEGACY;
 
 // Event types
 export type AnalyticsEventType =

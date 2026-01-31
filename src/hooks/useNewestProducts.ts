@@ -10,11 +10,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TreasureItem } from '../types';
 import { createLogger } from '../utils/logger';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 const log = createLogger('NewestProducts');
 
 // Cache configuration
-const NEWEST_PRODUCTS_CACHE_KEY = 'tierramadre-newest-products-cache-v5';
+const NEWEST_PRODUCTS_CACHE_KEY = STORAGE_KEYS.NEWEST_PRODUCTS_CACHE;
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes - show cached data longer
 const STALE_REVALIDATE_TTL = 5 * 60 * 1000; // After 5 min, refresh in background
 

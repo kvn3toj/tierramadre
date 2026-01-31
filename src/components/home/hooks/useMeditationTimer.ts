@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { STORAGE_KEYS } from '../../../constants/storage-keys';
 
 // =============================================================================
 // TYPES
@@ -45,7 +46,7 @@ export interface MeditationTimerActions {
 // CONSTANTS
 // =============================================================================
 
-const STORAGE_KEY = 'tierra-madre-meditations';
+const STORAGE_KEY = STORAGE_KEYS.MEDITATIONS;
 
 // =============================================================================
 // HELPERS

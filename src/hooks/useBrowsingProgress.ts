@@ -4,8 +4,9 @@
  * Inspired by Moksart's Octalysis framework (Core Drive 2: Accomplishment).
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
-const STORAGE_KEY = 'tierramadre-browsing-progress';
+const STORAGE_KEY = STORAGE_KEYS.BROWSING_PROGRESS;
 
 // Level thresholds based on percentage explored
 const LEVEL_THRESHOLDS = {

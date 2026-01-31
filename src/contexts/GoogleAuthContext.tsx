@@ -10,6 +10,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { googleLogout } from '@react-oauth/google';
 import { createLogger } from '../utils/logger';
 import type { AccessLevel } from '../types/auth';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 const log = createLogger('Auth');
 
@@ -56,9 +57,9 @@ interface GoogleAuthContextType {
 // STORAGE KEYS
 // =============================================================================
 
-const GOOGLE_USER_KEY = 'tierramadre-google-user';
-const GOOGLE_PREFS_KEY = 'tierramadre-google-prefs';
-const GOOGLE_TOKEN_KEY = 'tierramadre-google-token';
+const GOOGLE_USER_KEY = STORAGE_KEYS.GOOGLE_USER;
+const GOOGLE_PREFS_KEY = STORAGE_KEYS.GOOGLE_PREFS;
+const GOOGLE_TOKEN_KEY = STORAGE_KEYS.GOOGLE_TOKEN;
 
 // =============================================================================
 // CONTEXT

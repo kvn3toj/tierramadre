@@ -6,9 +6,10 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 // Cache configuration
-const CACHE_KEY = 'tierramadre-batch-thumbnails-v2'; // v2 for new format
+const CACHE_KEY = STORAGE_KEYS.BATCH_THUMBNAILS;
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 export interface ThumbnailInfo {

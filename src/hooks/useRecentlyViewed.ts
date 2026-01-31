@@ -4,8 +4,9 @@
  * Provides a "recently viewed" section for quick access.
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
-const STORAGE_KEY = 'tierramadre-recently-viewed';
+const STORAGE_KEY = STORAGE_KEYS.RECENTLY_VIEWED;
 const MAX_RECENT_ITEMS = 10;
 
 interface RecentlyViewedData {

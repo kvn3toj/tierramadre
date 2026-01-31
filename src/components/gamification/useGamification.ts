@@ -10,6 +10,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Achievement } from './AchievementToastAnimated';
 import { createLogger } from '../../utils/logger';
+import { STORAGE_KEYS } from '../../constants/storage-keys';
 
 const log = createLogger('Gamification');
 
@@ -61,7 +62,7 @@ export interface GamificationActions {
 // CONSTANTS
 // =============================================================================
 
-const STORAGE_KEY = 'tierra-madre-gamification';
+const STORAGE_KEY = STORAGE_KEYS.GAMIFICATION;
 
 // Level progression (XP required for each level)
 const LEVEL_THRESHOLDS = [

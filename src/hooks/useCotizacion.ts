@@ -7,6 +7,7 @@ import { useCallback } from 'react';
 import { TreasureItem } from '../types';
 import { useCotizacionForm } from './useCotizacionForm';
 import { useCotizacionData } from './useCotizacionData';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 // Cotizacion product interface
 export interface CotizacionProduct {
@@ -92,7 +93,7 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
 };
 
 // Storage key for quotation counter
-const COTIZACION_COUNTER_KEY = 'tierramadre-cotizacion-counter';
+const COTIZACION_COUNTER_KEY = STORAGE_KEYS.COTIZACION_COUNTER;
 
 // Generate quotation number with sequential counter to avoid duplicates
 export const generateQuotationNumber = (): string => {

@@ -8,8 +8,9 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import type { AuthState, AuthContextType, AccessLevel } from '../types/auth';
 import { useGoogleAuth } from './GoogleAuthContext';
+import { SESSION_KEYS } from '../constants/storage-keys';
 
-const STORAGE_KEY = 'tierra-madre-auth';
+const STORAGE_KEY = SESSION_KEYS.AUTH;
 
 interface StoredAuthState {
   isAuthenticated: boolean;

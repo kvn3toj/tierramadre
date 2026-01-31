@@ -15,6 +15,7 @@ import {
   getPermissionStatus,
   requestPermission,
 } from '../../services/notifications';
+import { STORAGE_KEYS } from '../../constants/storage-keys';
 
 interface NotificationPermissionProps {
   variant?: 'card' | 'compact' | 'tooltip';
@@ -33,7 +34,7 @@ export default function NotificationPermission({
     setPermission(getPermissionStatus());
 
     // Check if already dismissed
-    const dismissedAt = localStorage.getItem('tierramadre-notification-dismissed');
+    const dismissedAt = localStorage.getItem(STORAGE_KEYS.NOTIFICATION_DISMISSED);
     if (dismissedAt) {
       const daysSinceDismiss = (Date.now() - parseInt(dismissedAt, 10)) / (1000 * 60 * 60 * 24);
       // Show again after 14 days
@@ -56,7 +57,7 @@ export default function NotificationPermission({
   const handleDismiss = () => {
     setDismissed(true);
     setShowSnackbar(false);
-    localStorage.setItem('tierramadre-notification-dismissed', Date.now().toString());
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATION_DISMISSED, Date.now().toString());
     onDismiss?.();
   };
 

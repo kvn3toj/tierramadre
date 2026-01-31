@@ -8,6 +8,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import type { DeviceTier } from '../design-system/tokens/liquid-glass';
 import { tierConfigs, detectDeviceTier, type TierConfig } from '../utils/deviceTier';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 // =============================================================================
 // TYPES
@@ -56,7 +57,7 @@ export interface LiquidGlassContextValue extends LiquidGlassSettings {
 // CONSTANTS
 // =============================================================================
 
-const STORAGE_KEY = 'tierra-madre-liquid-glass';
+const STORAGE_KEY = STORAGE_KEYS.LIQUID_GLASS;
 
 const DEFAULT_SETTINGS: LiquidGlassSettings = {
   enabled: true,

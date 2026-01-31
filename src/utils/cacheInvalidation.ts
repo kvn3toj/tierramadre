@@ -8,40 +8,43 @@
  * localStorage to see API changes after a deploy.
  */
 
+import { STORAGE_KEYS, LEGACY_KEYS } from '../constants/storage-keys';
+
 // Keys that should be cleared on new deploy (API caches, temporary data)
 const TRANSIENT_CACHE_PATTERNS = [
-  'tierramadre-batch-thumbnails',
-  'tierramadre-treasure-sheets-cache',
-  'tierramadre-inventory-sheets-cache', // legacy
-  'tierramadre-new-product-images',
-  'tm_last_version_check',
+  STORAGE_KEYS.BATCH_THUMBNAILS,
+  STORAGE_KEYS.TREASURE_SHEETS_CACHE,
+  LEGACY_KEYS.INVENTORY_SHEETS_CACHE,
+  STORAGE_KEYS.NEW_PRODUCT_IMAGES,
+  STORAGE_KEYS.LAST_VERSION_CHECK,
 ];
 
 // Keys that should NEVER be cleared (user data, preferences)
+// Uses .includes() pattern matching, so partial prefixes work
 const PRESERVED_KEY_PATTERNS = [
-  'tm_app_version',
-  'tm_reload_pending',
-  'tierramadre-favorites',
-  'tierramadre-recently-viewed',
-  'tierramadre-saved-filters',
-  'tierramadre-browsing-progress',
-  'tierramadre-recent-clients',
-  'tierramadre-gamification',
-  'tierramadre-streak',
-  'tierramadre-saved-facts',
-  'tierramadre-meditation',
-  'tierramadre-language',
-  'tierramadre-theme',
-  'tierra-madre-data', // Main app state (emeralds, posts)
-  'tierramadre-analytics',
-  'tierramadre-tracking',
-  'tierramadre-vault',
-  'tierramadre-google-auth',
-  'tierramadre-liquid-glass',
-  'tierramadre-notifications',
+  STORAGE_KEYS.APP_VERSION,
+  STORAGE_KEYS.RELOAD_PENDING,
+  STORAGE_KEYS.FAVORITES,
+  STORAGE_KEYS.RECENTLY_VIEWED,
+  STORAGE_KEYS.SAVED_FILTERS,
+  STORAGE_KEYS.BROWSING_PROGRESS,
+  STORAGE_KEYS.RECENT_CLIENTS,
+  STORAGE_KEYS.GAMIFICATION,
+  STORAGE_KEYS.STREAK,
+  STORAGE_KEYS.SAVED_FACTS,
+  STORAGE_KEYS.MEDITATIONS,
+  STORAGE_KEYS.LANGUAGE,
+  STORAGE_KEYS.THEME,
+  STORAGE_KEYS.APP_DATA,
+  STORAGE_KEYS.ANALYTICS,
+  STORAGE_KEYS.TREASURE_ANALYTICS,
+  STORAGE_KEYS.VAULT_UNLOCKED,
+  STORAGE_KEYS.GOOGLE_USER,
+  STORAGE_KEYS.LIQUID_GLASS,
+  STORAGE_KEYS.NOTIFICATION_PERMISSION,
 ];
 
-const CACHE_VERSION_KEY = 'tm_cache_version';
+const CACHE_VERSION_KEY = STORAGE_KEYS.CACHE_VERSION;
 
 /**
  * Get the current app version from window or localStorage
@@ -52,7 +55,7 @@ function getCurrentVersion(): string {
     return (window as unknown as { __TM_VERSION__: string }).__TM_VERSION__;
   }
   // Fallback to localStorage
-  return localStorage.getItem('tm_app_version') || 'unknown';
+  return localStorage.getItem(STORAGE_KEYS.APP_VERSION) || 'unknown';
 }
 
 /**

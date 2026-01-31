@@ -9,6 +9,7 @@
 
 import { useState, useCallback } from 'react';
 import { createLogger } from '../../../utils/logger';
+import { STORAGE_KEYS } from '../../../constants/storage-keys';
 
 const log = createLogger('SavedFacts');
 
@@ -16,7 +17,7 @@ const log = createLogger('SavedFacts');
 // CONSTANTS
 // =============================================================================
 
-const STORAGE_KEY = 'tierra-madre-saved-facts';
+const STORAGE_KEY = STORAGE_KEYS.SAVED_FACTS;
 
 // =============================================================================
 // TYPES

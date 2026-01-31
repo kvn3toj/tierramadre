@@ -5,6 +5,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import { brandColors, iosSpacing, iosBorderRadius } from '../theme';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -43,7 +44,7 @@ const getSystemPreference = (): ThemeMode => {
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [mode, setMode] = useState<ThemeMode>(() => {
     // Check localStorage first for user preference
-    const saved = localStorage.getItem('tierra-madre-theme');
+    const saved = localStorage.getItem(STORAGE_KEYS.THEME);
     if (saved === 'light' || saved === 'dark') {
       return saved;
     }
@@ -58,7 +59,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
     const handleSystemThemeChange = (e: MediaQueryListEvent) => {
       // Only follow system preference if user hasn't set a manual preference
-      const hasManualPreference = localStorage.getItem('tierra-madre-theme');
+      const hasManualPreference = localStorage.getItem(STORAGE_KEYS.THEME);
       if (!hasManualPreference) {
         setMode(e.matches ? 'dark' : 'light');
       }
@@ -69,7 +70,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('tierra-madre-theme', mode);
+    localStorage.setItem(STORAGE_KEYS.THEME, mode);
 
     // Set data-theme attribute for CSS cascade
     const root = document.documentElement;

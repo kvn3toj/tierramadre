@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 export interface RecentClient {
   name: string;
@@ -18,7 +19,7 @@ export interface RecentClient {
   useCount: number;
 }
 
-const STORAGE_KEY = 'tierra-madre-recent-clients';
+const STORAGE_KEY = STORAGE_KEYS.RECENT_CLIENTS;
 const MAX_CLIENTS = 20;
 
 export function useRecentClients() {

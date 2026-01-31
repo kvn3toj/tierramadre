@@ -10,9 +10,10 @@ import {
   SMART_DESCRIPTIONS,
   SMART_CHARACTERISTICS,
 } from './ai-prompts';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 // LocalStorage key for used names
-const USED_NAMES_KEY = 'tierra-madre-used-names';
+const USED_NAMES_KEY = STORAGE_KEYS.AI_USED_NAMES;
 
 // Get used names from localStorage
 function getUsedNames(): Set<string> {

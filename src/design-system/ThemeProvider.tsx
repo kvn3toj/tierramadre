@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { tokens } from './tokens';
 import type { Tokens } from './tokens';
 import './tokens/css-variables.css';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 /**
  * Theme Mode
@@ -50,7 +51,7 @@ interface ThemeProviderProps {
 /**
  * Local Storage Key
  */
-const DEFAULT_STORAGE_KEY = 'tierra-madre-theme';
+const DEFAULT_STORAGE_KEY = STORAGE_KEYS.THEME;
 
 /**
  * Get System Theme Preference

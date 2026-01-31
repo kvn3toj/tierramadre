@@ -8,14 +8,15 @@
  */
 
 import { createLogger } from '../utils/logger';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 const log = createLogger('Notifications');
 
 // Storage keys
-const NOTIFICATION_PERMISSION_KEY = 'tierramadre-notification-permission';
-const MEDITATION_REMINDER_KEY = 'tierramadre-meditation-reminder';
-const LAST_PRODUCT_COUNT_KEY = 'tierramadre-last-product-count';
-const KNOWN_PRODUCT_IDS_KEY = 'tierramadre-known-product-ids';
+const NOTIFICATION_PERMISSION_KEY = STORAGE_KEYS.NOTIFICATION_PERMISSION;
+const MEDITATION_REMINDER_KEY = STORAGE_KEYS.MEDITATION_REMINDER;
+const LAST_PRODUCT_COUNT_KEY = STORAGE_KEYS.LAST_PRODUCT_COUNT;
+const KNOWN_PRODUCT_IDS_KEY = STORAGE_KEYS.KNOWN_PRODUCT_IDS;
 
 // =============================================================================
 // PERMISSION MANAGEMENT
@@ -308,8 +309,8 @@ export function checkNewProducts(currentCount: number): number {
 // QUOTATION NOTIFICATIONS
 // =============================================================================
 
-const LAST_REQUEST_CHECK_KEY = 'tierramadre-last-request-check';
-const LAST_QUOTATION_CHECK_KEY = 'tierramadre-last-quotation-check';
+const LAST_REQUEST_CHECK_KEY = STORAGE_KEYS.LAST_REQUEST_CHECK;
+const LAST_QUOTATION_CHECK_KEY = STORAGE_KEYS.LAST_QUOTATION_CHECK;
 
 /**
  * Get last request check timestamp

@@ -7,13 +7,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { TreasureItem } from '../types';
+import { STORAGE_KEYS, LEGACY_KEYS } from '../constants/storage-keys';
 
 // Cache configuration (new treasure namespace)
-const SHEETS_CACHE_KEY = 'tierramadre-treasure-sheets-cache';
+const SHEETS_CACHE_KEY = STORAGE_KEYS.TREASURE_SHEETS_CACHE;
 const SHEETS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 // Old cache key for migration
-const OLD_SHEETS_CACHE_KEY = 'tierramadre-inventory-sheets-cache';
+const OLD_SHEETS_CACHE_KEY = LEGACY_KEYS.INVENTORY_SHEETS_CACHE;
 
 interface SheetsCache {
   data: TreasureItem[];

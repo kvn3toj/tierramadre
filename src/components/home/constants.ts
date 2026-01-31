@@ -34,18 +34,6 @@ export const SKELETON_HEIGHTS = {
 } as const;
 
 // =============================================================================
-// STORAGE KEYS
-// =============================================================================
-
-export const STORAGE_KEYS = {
-  savedFacts: 'tierra-madre-saved-facts',
-  analytics: 'tierra-madre-analytics',
-  streak: 'tierra-madre-streak',
-  gamification: 'tierra-madre-gamification',
-  meditation: 'tierra-madre-meditation-count',
-} as const;
-
-// =============================================================================
 // SHARE CONFIGURATION
 // =============================================================================
 

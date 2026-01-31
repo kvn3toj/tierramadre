@@ -11,16 +11,17 @@ import { useState, useCallback } from 'react';
 import { MediaType } from '../types';
 import { MediaItem } from '../components/media/types';
 import { createLogger } from '../utils/logger';
+import { STORAGE_KEYS, LEGACY_KEYS } from '../constants/storage-keys';
 
 const log = createLogger('TreasureMedia');
 
 // Storage keys (new treasure namespace)
-const LEGACY_STORAGE_KEY = 'tierramadre-treasure-media';
-const GALLERY_STORAGE_KEY = 'tierramadre-treasure-gallery';
+const LEGACY_STORAGE_KEY = STORAGE_KEYS.TREASURE_MEDIA;
+const GALLERY_STORAGE_KEY = STORAGE_KEYS.TREASURE_GALLERY;
 
 // Old storage keys for migration
-const OLD_LEGACY_STORAGE_KEY = 'tierramadre-inventory-media';
-const OLD_GALLERY_STORAGE_KEY = 'tierramadre-inventory-gallery';
+const OLD_LEGACY_STORAGE_KEY = LEGACY_KEYS.INVENTORY_MEDIA;
+const OLD_GALLERY_STORAGE_KEY = LEGACY_KEYS.INVENTORY_GALLERY;
 
 // =============================================================================
 // STORAGE MIGRATION

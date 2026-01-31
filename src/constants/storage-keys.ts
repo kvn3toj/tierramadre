@@ -54,6 +54,8 @@ export const STORAGE_KEYS = {
   TREASURE_GALLERY: 'tierramadre-treasure-gallery',
   DRIVE_IMAGES_CACHE: 'tierramadre-drive-images-cache-v2',
   NEWEST_PRODUCTS_CACHE: 'tierramadre-newest-products-cache-v5',
+  TREASURE_SHEETS_CACHE: 'tierramadre-treasure-sheets-cache',
+  NEW_PRODUCT_IMAGES: 'tierramadre-new-product-images',
 
   // =============================================================================
   // QUOTATIONS
@@ -66,6 +68,7 @@ export const STORAGE_KEYS = {
   // =============================================================================
 
   NOTIFICATION_PERMISSION: 'tierramadre-notification-permission',
+  NOTIFICATION_DISMISSED: 'tierramadre-notification-dismissed',
   MEDITATION_REMINDER: 'tierramadre-meditation-reminder',
   LAST_PRODUCT_COUNT: 'tierramadre-last-product-count',
   KNOWN_PRODUCT_IDS: 'tierramadre-known-product-ids',
@@ -106,6 +109,7 @@ export const STORAGE_KEYS = {
   APP_VERSION: 'tm_app_version',
   CACHE_VERSION: 'tm_cache_version',
   RELOAD_PENDING: 'tm_reload_pending',
+  LAST_VERSION_CHECK: 'tm_last_version_check',
 } as const;
 
 // =============================================================================
@@ -114,9 +118,11 @@ export const STORAGE_KEYS = {
 
 export const SESSION_KEYS = {
   SESSION_ID: 'tierramadre-session-id',
+  SESSION: 'tierra-madre-session',
   FILTER_ACTIVITY: 'treasure-filter-activity',
   CART: 'tierramadre-cart',
   AUTH: 'tierra-madre-auth',
+  CHUNK_RELOAD: 'tm_chunk_reload',
 } as const;
 
 // =============================================================================

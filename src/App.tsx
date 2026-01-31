@@ -16,6 +16,7 @@ import { ScreenProtectionProvider } from './contexts/ScreenProtectionContext';
 import { AchievementToast } from './components/gamification';
 import { useViewportHeight } from './hooks/useViewportHeight';
 import { lazyWithRetry } from './utils/lazyWithRetry';
+import { STORAGE_KEYS } from './constants/storage-keys';
 
 // All routes lazy loaded with retry for optimal bundle splitting
 const Home = lazyWithRetry(() => import('./components/home'), 'Home');
@@ -377,8 +378,8 @@ function AuthenticatedApp() {
 }
 
 // Session storage key for splash screen
-const SPLASH_SESSION_KEY = 'tm_session_active';
-const LAST_ACTIVITY_KEY = 'tm_last_activity';
+const SPLASH_SESSION_KEY = STORAGE_KEYS.SESSION_ACTIVE;
+const LAST_ACTIVITY_KEY = STORAGE_KEYS.LAST_ACTIVITY;
 const INACTIVITY_THRESHOLD = 30 * 60 * 1000; // 30 minutes
 
 function shouldShowSplash(): boolean {

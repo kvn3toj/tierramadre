@@ -1,5 +1,6 @@
 import { Component, ReactNode } from 'react';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
+import { STORAGE_KEYS, SESSION_KEYS } from '../../constants/storage-keys';
 
 interface ChunkErrorBoundaryProps {
   children: ReactNode;
@@ -48,7 +49,7 @@ export class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, Chunk
   }
 
   handleChunkError = () => {
-    const RELOAD_KEY = 'tm_chunk_reload';
+    const RELOAD_KEY = SESSION_KEYS.CHUNK_RELOAD;
     const lastReload = sessionStorage.getItem(RELOAD_KEY);
     const now = Date.now();
 
@@ -69,7 +70,7 @@ export class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, Chunk
     }
 
     // Clear version storage to force re-fetch
-    localStorage.removeItem('tm_app_version');
+    localStorage.removeItem(STORAGE_KEYS.APP_VERSION);
 
     // Reload with cache bust
     const url = window.location.pathname + '?_refresh=' + now;
@@ -77,7 +78,7 @@ export class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, Chunk
   };
 
   handleManualReload = () => {
-    sessionStorage.removeItem('tm_chunk_reload');
+    sessionStorage.removeItem(SESSION_KEYS.CHUNK_RELOAD);
     this.handleChunkError();
   };
 

@@ -5,8 +5,9 @@
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
-const STORAGE_KEY = 'tierramadre-saved-filters';
+const STORAGE_KEY = STORAGE_KEYS.SAVED_FILTERS;
 const MAX_PRESETS = 10;
 
 // Filter state type (matches useTreasureFiltering)

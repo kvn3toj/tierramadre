@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { createLogger } from '../../../utils/logger';
+import { STORAGE_KEYS, SESSION_KEYS } from '../../../constants/storage-keys';
 
 const log = createLogger('Analytics');
 
@@ -82,8 +83,8 @@ export interface AnalyticsActions {
 // CONSTANTS
 // =============================================================================
 
-const STORAGE_KEY = 'tierra-madre-analytics';
-const SESSION_KEY = 'tierra-madre-session';
+const STORAGE_KEY = STORAGE_KEYS.ANALYTICS;
+const SESSION_KEY = SESSION_KEYS.SESSION;
 const MAX_EVENTS = 1000;
 
 // Engagement weights

@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 /** A/B Test Variant for Grid Layout */
 export type ABGridVariant = 'control' | 'ios-hig' | 'premium';
@@ -55,7 +56,7 @@ export const FEATURES: FeatureFlags = {
  * Local Storage Key for Feature Overrides
  * Developers can enable features manually via localStorage
  */
-const FEATURE_OVERRIDE_KEY = 'tierra-madre-feature-flags';
+const FEATURE_OVERRIDE_KEY = STORAGE_KEYS.FEATURE_FLAGS;
 
 /**
  * Get Feature Flag Value
