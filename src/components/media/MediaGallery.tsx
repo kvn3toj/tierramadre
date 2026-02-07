@@ -178,6 +178,40 @@ export default function MediaGallery({
     });
   }, [media, getDisplayUrl]);
 
+  // Called when a rendered <img> confirms it has loaded and painted
+  const handleSlideImgLoad = useCallback((index: number) => {
+    preloadCache.current.set(index, true);
+    setLoadingIndices(prev => {
+      if (!prev.has(index)) return prev;
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
+    // Only swap if this is still the desired slide
+    if (currentIndexRef.current === index) {
+      setVisibleIndex(index);
+    }
+  }, []);
+
+  // Called when a rendered <img> fails to load
+  const handleSlideImgError = useCallback((index: number) => {
+    setErrorIndices(prev => {
+      const next = new Set(prev);
+      next.add(index);
+      return next;
+    });
+    setLoadingIndices(prev => {
+      if (!prev.has(index)) return prev;
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
+    // Still transition to show error state
+    if (currentIndexRef.current === index) {
+      setVisibleIndex(index);
+    }
+  }, []);
+
   // When currentIndex changes, orchestrate the double-buffer transition
   useEffect(() => {
     if (media.length === 0) return;
@@ -193,32 +227,19 @@ export default function MediaGallery({
       return;
     }
 
-    // Images: check cache first
-    if (preloadCache.current.get(currentIndex)) {
-      // Already decoded - instant swap
-      setVisibleIndex(currentIndex);
-    } else {
-      // Not cached - keep old slide visible, start loading
+    // Images: warm browser cache via preload; the actual swap happens
+    // in handleSlideImgLoad when the rendered <img> fires onLoad.
+    if (!preloadCache.current.get(currentIndex)) {
       setLoadingIndices(prev => {
         const next = new Set(prev);
         next.add(currentIndex);
         return next;
       });
-
-      preloadAndDecode(currentIndex)
-        .then(() => {
-          // Only update if this is still the desired slide
-          if (currentIndexRef.current === currentIndex) {
-            setVisibleIndex(currentIndex);
-          }
-        })
-        .catch(() => {
-          // On error, still transition to show error state
-          if (currentIndexRef.current === currentIndex) {
-            setVisibleIndex(currentIndex);
-          }
-        });
+      preloadAndDecode(currentIndex).catch(() => { /* error handled by rendered img onError */ });
     }
+    // If already in preloadCache, the rendered <img> will load from
+    // browser cache and fire onLoad almost instantly — no need to
+    // setVisibleIndex here (that caused the blink).
 
     // Fire-and-forget preload for adjacent slides
     const nextIdx = (currentIndex + 1) % media.length;
@@ -413,7 +434,6 @@ export default function MediaGallery({
               const isVisible = index === visibleIndex;
               const isIncoming = index === currentIndex && currentIndex !== visibleIndex;
               const isError = errorIndices.has(index);
-              const isLoading = loadingIndices.has(index);
 
               if (item.type === 'video') {
                 return (
@@ -508,22 +528,6 @@ export default function MediaGallery({
                     WebkitBackfaceVisibility: 'hidden',
                   }}
                 >
-                  {/* Loading spinner (only on incoming not-yet-loaded slide) */}
-                  {isLoading && isIncoming && (
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        inset: 0,
-                        bgcolor: darkTokens.background.app,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 3,
-                      }}
-                    >
-                      <CircularProgress size={32} sx={{ color: 'white', opacity: 0.5 }} />
-                    </Box>
-                  )}
                   {isError ? (
                     <Box
                       sx={{
@@ -550,8 +554,11 @@ export default function MediaGallery({
                   ) : (
                     <img
                       src={getDisplayUrl(index)}
+                      crossOrigin="anonymous"
                       alt={item.alt || productName}
                       draggable={false}
+                      onLoad={() => handleSlideImgLoad(index)}
+                      onError={() => handleSlideImgError(index)}
                       onContextMenu={(e) => e.preventDefault()}
                       style={{
                         width: '100%',
@@ -567,6 +574,26 @@ export default function MediaGallery({
               );
             })}
           </Box>
+
+          {/* Loading indicator — overlays visible slide while next image loads */}
+          {currentIndex !== visibleIndex && loadingIndices.has(currentIndex) && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 12,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 10,
+                bgcolor: alpha(darkTokens.background.app, 0.6),
+                borderRadius: 2,
+                px: 1.5,
+                py: 0.75,
+                backdropFilter: 'blur(4px)',
+              }}
+            >
+              <CircularProgress size={20} sx={{ color: 'white', opacity: 0.7 }} />
+            </Box>
+          )}
 
         {/* Category Label */}
         {currentMedia?.category && (
