@@ -153,6 +153,19 @@ Clean ports before dev server if conflicts occur.
 - **NEVER** run `vercel` without project link
 - Deployments are automatic on push to `main`
 
+### Google OAuth Token Refresh (every 6 days)
+The OAuth app is in "Testing" mode — refresh tokens expire every 7 days.
+Refresh proactively every **6 days** to avoid downtime:
+```bash
+node scripts/generate-refresh-token.mjs
+# Then update Vercel:
+vercel env rm GOOGLE_OAUTH_REFRESH_TOKEN production -y
+echo "NEW_TOKEN" | vercel env add GOOGLE_OAUTH_REFRESH_TOKEN production
+vercel --prod
+```
+**Last refreshed**: 2026-02-07
+**Next refresh by**: 2026-02-13
+
 ### Safari Cache Busting
 `npm run build` auto-updates `APP_VERSION` in `index.html`:
 ```javascript
