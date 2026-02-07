@@ -7,7 +7,7 @@
 
 import { Box, Card, CardContent, Typography, Avatar, Button, Chip } from '@mui/material';
 import { Person } from '@mui/icons-material';
-import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
+import { GoogleOAuthProvider, GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { alpha } from '@mui/material/styles';
 import { createLogger } from '../../utils/logger';
@@ -17,7 +17,7 @@ const log = createLogger('Auth');
 const emerald = primitiveColors.emerald;
 
 // Check if Google Client ID is configured
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 const isGoogleConfigured = Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length > 10);
 
 export default function UserProfileCard() {
@@ -154,14 +154,16 @@ export default function UserProfileCard() {
         </Typography>
 
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <GoogleLogin
-            onSuccess={handleSuccess}
-            onError={() => log.error('Login failed')}
-            theme="filled_black"
-            shape="pill"
-            text="signin_with"
-            locale="es"
-          />
+          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            <GoogleLogin
+              onSuccess={handleSuccess}
+              onError={() => log.error('Login failed')}
+              theme="filled_black"
+              shape="pill"
+              text="signin_with"
+              locale="es"
+            />
+          </GoogleOAuthProvider>
         </Box>
       </CardContent>
     </Card>

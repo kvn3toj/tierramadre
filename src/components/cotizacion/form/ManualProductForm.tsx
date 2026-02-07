@@ -338,6 +338,14 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               ? 'Ej: Anillo Esperanza Oro 18k'
               : 'Ej: Esmeralda Corazon Verde'
           }
+          error={manualProduct.name !== '' && manualProduct.name.length < 2}
+          helperText={
+            manualProduct.name !== '' && manualProduct.name.length < 2
+              ? 'El nombre debe tener al menos 2 caracteres'
+              : !manualProduct.name
+                ? 'Requerido para agregar el producto'
+                : ''
+          }
         />
       </Grid>
 
@@ -600,6 +608,12 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
             })
           }
           size="small"
+          error={manualProduct.precioCOP !== undefined && manualProduct.precioCOP <= 0 && manualProduct.name !== ''}
+          helperText={
+            manualProduct.precioCOP !== undefined && manualProduct.precioCOP <= 0 && manualProduct.name !== ''
+              ? 'Ingresa un precio mayor a 0'
+              : ''
+          }
           InputProps={{
             startAdornment: <InputAdornment position="start">$</InputAdornment>,
           }}

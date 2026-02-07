@@ -14,6 +14,7 @@ import { LiquidGlassProvider } from './contexts/LiquidGlassContext';
 import { TrackingProvider } from './contexts/TrackingContext';
 import { ScreenProtectionProvider } from './contexts/ScreenProtectionContext';
 import { LiveRegionProvider } from './components/shared/LiveRegion';
+import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 import { AchievementToast } from './components/gamification';
 import { useViewportHeight } from './hooks/useViewportHeight';
 import { lazyWithRetry } from './utils/lazyWithRetry';
@@ -91,6 +92,7 @@ function HomeOrProviderRedirect() {
 // Inner component that uses routing hooks
 function AppContent() {
   const navigate = useNavigate();
+  const { notify } = useNotification();
 
   // Navigate to asesor profile page
   const handleViewAsesorProducts = useCallback((asesor: Asesor) => {
@@ -99,8 +101,8 @@ function AppContent() {
 
   // Contact asesor (placeholder - can be enhanced later)
   const handleContactAsesor = useCallback((asesor: Asesor) => {
-    alert(`Contactar a ${asesor.name}\n\nEsta funcionalidad se habilitará próximamente con datos de contacto del Google Sheet.`);
-  }, []);
+    notify(`Contacto con ${asesor.name} estará disponible próximamente`, 'info');
+  }, [notify]);
 
   return (
     <>
@@ -463,12 +465,14 @@ function App() {
         <TrackingProvider>
           <ScreenProtectionProvider>
             <LiveRegionProvider>
-              <BrowserRouter>
-                <InvitationRouter />
-                {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
-                {/* PWA disabled - service worker not generating correctly */}
-                {/* <UpdatePrompt /> */}
-              </BrowserRouter>
+              <NotificationProvider>
+                <BrowserRouter>
+                  <InvitationRouter />
+                  {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
+                  {/* PWA disabled - service worker not generating correctly */}
+                  {/* <UpdatePrompt /> */}
+                </BrowserRouter>
+              </NotificationProvider>
             </LiveRegionProvider>
           </ScreenProtectionProvider>
         </TrackingProvider>

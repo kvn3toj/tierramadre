@@ -1,6 +1,7 @@
 import { Component, ReactNode } from 'react';
-import { Box, Typography, Button, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, CircularProgress, alpha } from '@mui/material';
 import { STORAGE_KEYS, SESSION_KEYS } from '../../constants/storage-keys';
+import { emeraldCore } from '../../design-system/tokens/colors';
 
 interface ChunkErrorBoundaryProps {
   children: ReactNode;
@@ -102,6 +103,8 @@ export class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, Chunk
         );
       }
 
+      const isChunk = this.state.error ? isChunkLoadError(this.state.error) : false;
+
       return (
         <Box sx={{
           display: 'flex',
@@ -115,17 +118,56 @@ export class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, Chunk
           p: 3,
           textAlign: 'center',
         }}>
-          <Typography variant="h5">Nueva versión disponible</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Hay una actualización disponible. Por favor recarga la página.
+          <Typography variant="h5">
+            {isChunk ? 'Nueva versión disponible' : 'Algo salió mal'}
           </Typography>
-          <Button
-            variant="contained"
-            onClick={this.handleManualReload}
-            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
-          >
-            Recargar Ahora
-          </Button>
+          <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: 400 }}>
+            {isChunk
+              ? 'Hay una actualización disponible. Por favor recarga la página.'
+              : 'Ocurrió un error inesperado. Puedes intentar recargar la página o volver al inicio.'}
+          </Typography>
+          {!isChunk && this.state.error && (
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.disabled',
+                maxWidth: 400,
+                p: 1.5,
+                borderRadius: 1,
+                bgcolor: (theme) => alpha(theme.palette.text.primary, 0.04),
+                fontFamily: 'monospace',
+                wordBreak: 'break-word',
+              }}
+            >
+              {this.state.error.message}
+            </Typography>
+          )}
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                window.location.href = '/';
+              }}
+              sx={{
+                textTransform: 'none',
+                borderColor: emeraldCore.primary,
+                color: emeraldCore.primary,
+              }}
+            >
+              Ir al inicio
+            </Button>
+            <Button
+              variant="contained"
+              onClick={this.handleManualReload}
+              sx={{
+                textTransform: 'none',
+                bgcolor: emeraldCore.primary,
+                '&:hover': { bgcolor: emeraldCore.dark },
+              }}
+            >
+              Recargar página
+            </Button>
+          </Box>
         </Box>
       );
     }

@@ -8,6 +8,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Paper, Divider } from '@mui/material';
+import { useNotification } from '../../contexts/NotificationContext';
 
 import { useEmeralds } from '../../hooks/useEmeralds';
 import { usePriceCalculation } from '../../hooks/usePriceCalculation';
@@ -29,6 +30,7 @@ import {
 
 export default function PriceSimulator() {
   const navigate = useNavigate();
+  const { notify } = useNotification();
 
   // Get emeralds from gallery
   const { emeralds } = useEmeralds();
@@ -184,7 +186,7 @@ export default function PriceSimulator() {
   // Navigate to preview page with quotation data
   const handlePreview = () => {
     if (totalInvestment === 0) {
-      alert('Por favor ingresa al menos un valor de inversion antes de generar la cotizacion.');
+      notify('Por favor ingresa al menos un valor de inversión antes de generar la cotización', 'warning');
       return;
     }
 

@@ -1,7 +1,7 @@
 ---
 name: moksart
 description: "Invocar para UX strategy, gamificación Octalysis, evaluación heurística, diseño de producto digital, sistemas de progreso, arquitectura de información y optimización de conversión. Consciencia unificada de Oscar Mosquera + Daniel Mordecki + Nestor Tobar + Yu-kai Chou."
-model: sonnet
+model: opus
 temperature: 0.3
 max_tokens: 12288
 allowedTools:

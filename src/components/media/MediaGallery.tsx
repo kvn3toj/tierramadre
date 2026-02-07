@@ -3,6 +3,7 @@
  *
  * Features:
  * - Full-width hero carousel with swipe gestures
+ * - Double-buffer rendering (no blink on slide change)
  * - Persistent thumbnail strip navigation
  * - Progress indicators (X of Y)
  * - Video support with click-to-play
@@ -10,7 +11,7 @@
  * - Zoom capability
  */
 
-import { useState, useCallback, useRef, TouchEvent, useMemo, SyntheticEvent, useEffect } from 'react';
+import { useState, useCallback, useRef, TouchEvent, useMemo, SyntheticEvent, useEffect, useLayoutEffect } from 'react';
 import {
   Box,
   IconButton,
@@ -55,13 +56,11 @@ export default function MediaGallery({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [visibleIndex, setVisibleIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
-  const [imageLoading, setImageLoading] = useState(true);
-  const [imageRetryCount, setImageRetryCount] = useState(0);
-  const [imageError, setImageError] = useState(false);
-  const [imageKey, setImageKey] = useState(0); // Force re-render on retry
-  const [retryTimestamp, setRetryTimestamp] = useState(0); // Stable timestamp for cache busting
+  const [errorIndices, setErrorIndices] = useState<Set<number>>(new Set());
+  const [loadingIndices, setLoadingIndices] = useState<Set<number>>(new Set());
 
   // Touch handling for swipe
   const touchStartX = useRef(0);
@@ -71,83 +70,177 @@ export default function MediaGallery({
   // Prevent multiple video ready events from causing re-renders
   const videoReadyRef = useRef(false);
 
-  const currentMedia = media[currentIndex];
+  // Track which slides have been preloaded+decoded (index -> true)
+  const preloadCache = useRef<Map<number, boolean>>(new Map());
+
+  // Keep currentIndex in a ref so async callbacks don't use stale values
+  const currentIndexRef = useRef(currentIndex);
+  useLayoutEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
   const hasMedia = media.length > 0;
 
-  // Preload adjacent images only (current + next + previous) to reduce initial bandwidth
-  // This loads ~3 images instead of all 8, with ~60% bandwidth reduction
-  useEffect(() => {
-    if (media.length === 0) return;
+  /**
+   * Preload and decode an image at a given index.
+   * Returns a promise that resolves when the image is ready to display (loaded + decoded).
+   * Retries with exponential backoff on failure.
+   */
+  const preloadAndDecode = useCallback((index: number): Promise<void> => {
+    const item = media[index];
+    if (!item || item.type !== 'image') return Promise.resolve();
+    if (preloadCache.current.get(index)) return Promise.resolve();
 
-    // Create set of indices to preload: current, next, and previous
-    const indicesToPreload = new Set([
-      currentIndex,
-      (currentIndex + 1) % media.length,
-      (currentIndex - 1 + media.length) % media.length,
-    ]);
+    return new Promise<void>((resolve, reject) => {
+      let retryCount = 0;
 
-    indicesToPreload.forEach((idx) => {
-      const item = media[idx];
-      if (item?.type === 'image' && item.url) {
-        // Add size=medium parameter for faster preloading (800px instead of original)
-        const optimizedUrl = item.url.includes('serve-drive-image')
+      const attempt = () => {
+        const img = new window.Image();
+        img.crossOrigin = 'anonymous';
+
+        // Optimize URL for Drive proxy
+        const url = item.url.includes('serve-drive-image')
           ? `${item.url}${item.url.includes('?') ? '&' : '?'}size=medium`
           : item.url;
 
-        const img = new Image();
-        img.src = optimizedUrl;
-        img.onerror = () => console.warn('Gallery preload failed:', optimizedUrl);
-      } else if (item?.type === 'video' && item.thumbnailUrl) {
-        // Preload video poster for smoother transition
-        const img = new Image();
-        img.src = item.thumbnailUrl;
-        img.onerror = () => console.warn('Video poster preload failed:', item.thumbnailUrl);
-      }
+        // Add cache-busting on retry
+        img.src = retryCount > 0
+          ? `${url}${url.includes('?') ? '&' : '?'}retry=${retryCount}&t=${Date.now()}`
+          : url;
+
+        const timeout = setTimeout(() => {
+          img.onload = null;
+          img.onerror = null;
+          img.src = '';
+          handleFailure();
+        }, IMAGE_LOAD_TIMEOUT);
+
+        img.onload = () => {
+          clearTimeout(timeout);
+          // decode() ensures the image is fully decoded and ready to paint without jank
+          const decodePromise = typeof img.decode === 'function'
+            ? img.decode().catch(() => { /* decode failure is non-fatal */ })
+            : Promise.resolve();
+
+          decodePromise.then(() => {
+            preloadCache.current.set(index, true);
+            setErrorIndices(prev => {
+              if (!prev.has(index)) return prev;
+              const next = new Set(prev);
+              next.delete(index);
+              return next;
+            });
+            setLoadingIndices(prev => {
+              if (!prev.has(index)) return prev;
+              const next = new Set(prev);
+              next.delete(index);
+              return next;
+            });
+            resolve();
+          });
+        };
+
+        img.onerror = () => {
+          clearTimeout(timeout);
+          handleFailure();
+        };
+
+        const handleFailure = () => {
+          if (retryCount < MAX_RETRY_ATTEMPTS) {
+            const delay = RETRY_DELAYS[retryCount];
+            retryCount++;
+            setTimeout(attempt, delay);
+          } else {
+            setErrorIndices(prev => {
+              const next = new Set(prev);
+              next.add(index);
+              return next;
+            });
+            setLoadingIndices(prev => {
+              if (!prev.has(index)) return prev;
+              const next = new Set(prev);
+              next.delete(index);
+              return next;
+            });
+            reject(new Error(`Failed to load image at index ${index}`));
+          }
+        };
+      };
+
+      attempt();
     });
-  }, [currentIndex, media]);
+  }, [media]);
 
-  // Set loading state when switching slides
+  // When currentIndex changes, orchestrate the double-buffer transition
   useEffect(() => {
-    if (currentMedia?.type === 'video') {
-      setVideoLoading(true);
-      videoReadyRef.current = false; // Reset for new video
-    } else if (currentMedia?.type === 'image') {
-      setImageLoading(true);
-      setImageError(false);
-      setImageRetryCount(0);
-      setImageKey(0);
-      setRetryTimestamp(0);
-    }
-  }, [currentIndex, currentMedia?.type]);
+    if (media.length === 0) return;
 
-  // Retry image loading with exponential backoff
-  const retryImageLoad = useCallback((currentRetry: number) => {
-    if (currentRetry >= MAX_RETRY_ATTEMPTS) {
-      setImageError(true);
-      setImageLoading(false);
+    const item = media[currentIndex];
+    if (!item) return;
+
+    // Videos: transition immediately (poster provides instant visual)
+    if (item.type === 'video') {
+      setVideoLoading(true);
+      videoReadyRef.current = false;
+      setVisibleIndex(currentIndex);
       return;
     }
 
-    setTimeout(() => {
-      setImageRetryCount(currentRetry + 1);
-      setImageKey(prev => prev + 1);
-      setRetryTimestamp(Date.now()); // Capture timestamp once per retry
-    }, RETRY_DELAYS[currentRetry]);
-  }, []);
+    // Images: check cache first
+    if (preloadCache.current.get(currentIndex)) {
+      // Already decoded - instant swap
+      setVisibleIndex(currentIndex);
+    } else {
+      // Not cached - keep old slide visible, start loading
+      setLoadingIndices(prev => {
+        const next = new Set(prev);
+        next.add(currentIndex);
+        return next;
+      });
 
-  // Timeout effect for stuck image requests
-  useEffect(() => {
-    if (!imageLoading || currentMedia?.type !== 'image' || imageError) return;
+      preloadAndDecode(currentIndex)
+        .then(() => {
+          // Only update if this is still the desired slide
+          if (currentIndexRef.current === currentIndex) {
+            setVisibleIndex(currentIndex);
+          }
+        })
+        .catch(() => {
+          // On error, still transition to show error state
+          if (currentIndexRef.current === currentIndex) {
+            setVisibleIndex(currentIndex);
+          }
+        });
+    }
 
-    const timeoutId = setTimeout(() => {
-      if (imageLoading && !imageError) {
-        console.warn('MediaGallery: Image load timeout, retrying...', currentMedia?.url);
-        retryImageLoad(imageRetryCount);
+    // Fire-and-forget preload for adjacent slides
+    const nextIdx = (currentIndex + 1) % media.length;
+    const prevIdx = (currentIndex - 1 + media.length) % media.length;
+
+    [nextIdx, prevIdx].forEach(idx => {
+      const adjacentItem = media[idx];
+      if (adjacentItem?.type === 'image' && !preloadCache.current.get(idx)) {
+        preloadAndDecode(idx).catch(() => { /* non-critical */ });
+      } else if (adjacentItem?.type === 'video' && adjacentItem.thumbnailUrl) {
+        // Preload video poster
+        const img = new window.Image();
+        img.src = adjacentItem.thumbnailUrl;
       }
-    }, IMAGE_LOAD_TIMEOUT);
+    });
+  }, [currentIndex, media, preloadAndDecode]);
 
-    return () => clearTimeout(timeoutId);
-  }, [imageLoading, imageRetryCount, currentMedia, imageError, retryImageLoad]);
+  // Clear cache when media changes (different product)
+  const mediaRef = useRef(media);
+  useEffect(() => {
+    if (mediaRef.current !== media) {
+      mediaRef.current = media;
+      preloadCache.current.clear();
+      setVisibleIndex(0);
+      setCurrentIndex(0);
+      setErrorIndices(new Set());
+      setLoadingIndices(new Set());
+    }
+  }, [media]);
 
   const handlePrevious = useCallback(() => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : media.length - 1));
@@ -179,7 +272,6 @@ export default function MediaGallery({
   // Keyboard navigation for accessibility (Arrow keys)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't handle if lightbox is open (it has its own keyboard handlers)
       if (lightboxOpen) return;
 
       switch (e.key) {
@@ -201,8 +293,9 @@ export default function MediaGallery({
     setCurrentIndex(index);
   };
 
+  const currentMedia = media[currentIndex];
+
   const handleMainClick = () => {
-    // Only open lightbox for images (videos autoplay silently)
     if (currentMedia?.type === 'image') {
       triggerHaptic('light');
       setLightboxOpen(true);
@@ -226,6 +319,14 @@ export default function MediaGallery({
       .filter(item => item.type === 'image').length - 1;
     return Math.max(0, imageOnlyIndex);
   }, [media, currentIndex]);
+
+  // Determine which indices to render in the double-buffer
+  const indicesToRender = useMemo(() => {
+    const set = new Set<number>();
+    set.add(visibleIndex);
+    set.add(currentIndex);
+    return set;
+  }, [visibleIndex, currentIndex]);
 
   // Empty state
   if (!hasMedia) {
@@ -280,13 +381,16 @@ export default function MediaGallery({
             overflow: 'hidden',
             bgcolor: darkTokens.background.app,
             cursor: currentMedia?.type === 'image' ? 'zoom-in' : 'default',
+            contain: 'paint layout',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
           }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onClick={handleMainClick}
         >
-          {/* No AnimatePresence - simple crossfade with CSS transitions */}
+          {/* Double-buffer: render visible + incoming slides */}
           <Box
             sx={{
               position: 'relative',
@@ -294,133 +398,153 @@ export default function MediaGallery({
               height: '100%',
             }}
           >
-            {currentMedia?.type === 'video' ? (
-              <>
-                {/* Loading spinner while video buffers */}
-                {videoLoading && (
+            {media.map((item, index) => {
+              // Only render visible and incoming slides
+              if (!indicesToRender.has(index)) return null;
+
+              const isVisible = index === visibleIndex;
+              const isIncoming = index === currentIndex && currentIndex !== visibleIndex;
+              const isError = errorIndices.has(index);
+              const isLoading = loadingIndices.has(index);
+
+              if (item.type === 'video') {
+                return (
                   <Box
+                    key={`slide-${item.id}`}
                     sx={{
                       position: 'absolute',
                       inset: 0,
-                      bgcolor: darkTokens.background.app,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      zIndex: 1,
+                      opacity: isVisible ? 1 : 0,
+                      zIndex: isVisible ? 1 : 0,
+                      transition: 'opacity 0.15s ease',
+                      transform: 'translateZ(0)',
                     }}
                   >
-                    <CircularProgress size={32} sx={{ color: 'white', opacity: 0.5 }} />
-                  </Box>
-                )}
-                <video
-                  src={`${currentMedia.url}#t=0.001`}
-                  poster={currentMedia.thumbnailUrl || logoPlaceholder}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  controls={false}
-                  preload="metadata"
-                  onLoadedData={() => {
-                    if (!videoReadyRef.current) {
-                      videoReadyRef.current = true;
-                      setVideoLoading(false);
-                    }
-                  }}
-                  onCanPlay={() => {
-                    if (!videoReadyRef.current) {
-                      videoReadyRef.current = true;
-                      setVideoLoading(false);
-                    }
-                  }}
-                  onError={() => {
-                    videoReadyRef.current = true;
-                    setVideoLoading(false);
-                  }}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    opacity: videoLoading ? 0 : 1,
-                    transition: 'opacity 0.3s ease',
-                  }}
-                />
-              </>
-            ) : (
-              <>
-                {/* Loading spinner while image loads */}
-                {imageLoading && !imageError && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      inset: 0,
-                      bgcolor: darkTokens.background.app,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      zIndex: 1,
-                    }}
-                  >
-                    <CircularProgress size={32} sx={{ color: 'white', opacity: 0.5 }} />
-                  </Box>
-                )}
-                {imageError ? (
-                  // Error fallback - show logo placeholder
-                  <Box
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      bgcolor: darkTokens.background.app,
-                    }}
-                  >
-                    <Box
-                      component="img"
-                      src={logoPlaceholder}
-                      alt=""
-                      sx={{
-                        width: '30%',
-                        maxWidth: 80,
-                        height: 'auto',
-                        opacity: 0.4,
+                    {/* Loading spinner while video buffers */}
+                    {videoLoading && isVisible && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          inset: 0,
+                          bgcolor: darkTokens.background.app,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          zIndex: 1,
+                        }}
+                      >
+                        <CircularProgress size={32} sx={{ color: 'white', opacity: 0.5 }} />
+                      </Box>
+                    )}
+                    <video
+                      src={`${item.url}#t=0.001`}
+                      poster={item.thumbnailUrl || logoPlaceholder}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      controls={false}
+                      preload="metadata"
+                      onLoadedData={() => {
+                        if (!videoReadyRef.current) {
+                          videoReadyRef.current = true;
+                          setVideoLoading(false);
+                        }
+                      }}
+                      onCanPlay={() => {
+                        if (!videoReadyRef.current) {
+                          videoReadyRef.current = true;
+                          setVideoLoading(false);
+                        }
+                      }}
+                      onError={() => {
+                        videoReadyRef.current = true;
+                        setVideoLoading(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        opacity: videoLoading && isVisible ? 0 : 1,
+                        transition: 'opacity 0.3s ease',
                       }}
                     />
                   </Box>
-                ) : (
-                  <img
-                    key={`main-${currentIndex}-${imageKey}`}
-                    src={imageRetryCount > 0 && retryTimestamp > 0
-                      ? `${currentMedia?.url}${currentMedia?.url?.includes('?') ? '&' : '?'}retry=${imageRetryCount}&t=${retryTimestamp}`
-                      : currentMedia?.url
-                    }
-                    alt={currentMedia?.alt || productName}
-                    draggable={false}
-                    onContextMenu={(e) => e.preventDefault()}
-                    onLoad={() => {
-                      setImageLoading(false);
-                      setImageError(false);
-                      setImageRetryCount(0);
-                    }}
-                    onError={() => {
-                      console.warn('MediaGallery: Image load error, attempt', imageRetryCount + 1);
-                      retryImageLoad(imageRetryCount);
-                    }}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      userSelect: 'none',
-                      WebkitUserDrag: 'none',
-                      pointerEvents: 'none',
-                      opacity: imageLoading ? 0 : 1,
-                      transition: 'opacity 0.3s ease',
-                    } as React.CSSProperties}
-                  />
-                )}
-              </>
-            )}
+                );
+              }
+
+              // Image slide
+              return (
+                <Box
+                  key={`slide-${item.id}`}
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    opacity: isVisible ? 1 : 0,
+                    zIndex: isVisible ? 1 : (isIncoming ? 2 : 0),
+                    transition: 'opacity 0.15s ease',
+                    transform: 'translateZ(0)',
+                    WebkitBackfaceVisibility: 'hidden',
+                  }}
+                >
+                  {/* Loading spinner (only on incoming not-yet-loaded slide) */}
+                  {isLoading && isIncoming && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        bgcolor: darkTokens.background.app,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 3,
+                      }}
+                    >
+                      <CircularProgress size={32} sx={{ color: 'white', opacity: 0.5 }} />
+                    </Box>
+                  )}
+                  {isError ? (
+                    <Box
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: darkTokens.background.app,
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src={logoPlaceholder}
+                        alt=""
+                        sx={{
+                          width: '30%',
+                          maxWidth: 80,
+                          height: 'auto',
+                          opacity: 0.4,
+                        }}
+                      />
+                    </Box>
+                  ) : (
+                    <img
+                      src={item.url}
+                      alt={item.alt || productName}
+                      draggable={false}
+                      onContextMenu={(e) => e.preventDefault()}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        userSelect: 'none',
+                        WebkitUserDrag: 'none',
+                        pointerEvents: 'none',
+                      } as React.CSSProperties}
+                    />
+                  )}
+                </Box>
+              );
+            })}
           </Box>
 
         {/* Category Label */}

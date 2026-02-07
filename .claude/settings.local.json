@@ -80,7 +80,16 @@
       "Bash(git -C /Users/kevinp/Movies/coomunity-universe/TierraMadre diff --name-only)",
       "Bash(npx puppeteer:*)",
       "Bash(wait)",
-      "Bash(__NEW_LINE_8f1c5cd39a0578b6__ echo \"\")"
+      "Bash(__NEW_LINE_8f1c5cd39a0578b6__ echo \"\")",
+      "Bash(git mv:*)",
+      "Bash(__NEW_LINE_0b8f5a67d17748bf__ echo \"=== LARGEST HOOKS \\(potential candidates for extraction\\) ===\" find /Users/kevinp/Movies/coomunity-universe/TierraMadre/src/hooks -type f)",
+      "WebSearch",
+      "Bash(git -C /Users/kevinp/Movies/coomunity-universe/TierraMadre diff CLAUDE.md)",
+      "WebFetch(domain:www.nngroup.com)",
+      "WebFetch(domain:www.interaction-design.org)",
+      "WebFetch(domain:www.heurio.co)",
+      "WebFetch(domain:asktog.com)",
+      "WebFetch(domain:swizec.com)"
     ],
     "deny": [],
     "ask": []

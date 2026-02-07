@@ -17,6 +17,7 @@
 
 import { useState, useCallback, useRef, TouchEvent, useEffect } from 'react';
 import { Box, IconButton, Typography, alpha, Portal } from '@mui/material';
+import FocusTrap from '@mui/material/Unstable_TrapFocus';
 import { X, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 import { motion, AnimatePresence, PanInfo, useAnimation } from 'framer-motion';
 import { triggerHaptic } from '../../hooks/useHaptics';
@@ -56,6 +57,7 @@ export default function ImageLightbox({
   const touchStartY = useRef(0);
   const initialDistance = useRef(0);
   const initialScale = useRef(1);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   // Reset state when opening
   useEffect(() => {
@@ -202,7 +204,13 @@ export default function ImageLightbox({
     <Portal>
       <AnimatePresence>
         {isOpen && (
+          <FocusTrap open={isOpen}>
           <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Visor de imágenes - ${currentIndex + 1} de ${images.length}`}
+            tabIndex={-1}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -214,6 +222,7 @@ export default function ImageLightbox({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              outline: 'none',
             }}
           >
             {/* Backdrop */}
@@ -441,6 +450,7 @@ export default function ImageLightbox({
               )}
             </Box>
           </motion.div>
+          </FocusTrap>
         )}
       </AnimatePresence>
     </Portal>

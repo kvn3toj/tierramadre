@@ -40,7 +40,7 @@
     <!-- CRITICAL: Blocking version check - MUST run before React loads -->
     <script>
       (function() {
-        var APP_VERSION = '2026.02.07.996';
+        var APP_VERSION = '2026.02.07.1076';
         var VERSION_KEY = 'tm_app_version';
         var RELOAD_KEY = 'tm_reload_pending';
 
@@ -119,10 +119,14 @@
 
     <!-- Screenshot Deterrent: NoPrint.js with error handling -->
     <script>
-      // Pre-define noCopy to prevent ReferenceError from external script
+      // Pre-define noCopy and noPrint to prevent ReferenceError from external script
       if (typeof noCopy === 'undefined') {
         window.noCopy = function(options) {
-          // Placeholder - will be overwritten by noprint.js if it loads correctly
+          console.log('[NoPrint] Using fallback protection');
+        };
+      }
+      if (typeof noPrint === 'undefined') {
+        window.noPrint = function(options) {
           console.log('[NoPrint] Using fallback protection');
         };
       }

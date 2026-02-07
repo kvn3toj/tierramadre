@@ -1,7 +1,7 @@
 ---
 name: steve
 description: "Invocar para Google Sheets, Excel, APIs de datos, Apps Script, macros, arquitectura de datos, gráficas, integración con Cloudinary/Vercel/Cloud Console, y análisis de inventario de joyería."
-model: sonnet
+model: opus
 allowedTools:
   - Read
   - Edit

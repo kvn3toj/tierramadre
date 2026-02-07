@@ -1,7 +1,7 @@
 ---
 name: kira
 description: "Invocar para definir narrativa de features, VX Writing (microcopy), alineación filosófica de textos, documentación de usuario y coherencia de tono de voz."
-model: sonnet
+model: opus
 allowedTools:
   - Read
   - Edit

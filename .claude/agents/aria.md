@@ -1,7 +1,7 @@
 ---
 name: aria
 description: "Capitana del Concilio de Creación. Invocar para UX/UI implementation, React components, accesibilidad, performance web y materialización de diseño en experiencia."
-model: sonnet
+model: opus
 allowedTools:
   - Read
   - Edit

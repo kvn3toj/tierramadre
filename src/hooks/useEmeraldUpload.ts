@@ -46,6 +46,8 @@ export interface SingleUploadState {
   quality: string;
 }
 
+export type NotifyFn = (message: string, severity?: 'info' | 'success' | 'warning' | 'error') => void;
+
 export interface UseEmeraldUploadReturn {
   // Single upload state
   singleState: SingleUploadState;
@@ -101,7 +103,8 @@ const initialSingleState: SingleUploadState = {
   quality: '',
 };
 
-export function useEmeraldUpload(): UseEmeraldUploadReturn {
+export function useEmeraldUpload(notify?: NotifyFn): UseEmeraldUploadReturn {
+  const showMessage: NotifyFn = notify || ((msg) => console.warn('[useEmeraldUpload]', msg));
   const { addEmerald } = useEmeralds();
   const { analyzing, analyzeEmerald, getRandomSuggestions, error: aiError } = useAI();
 
@@ -133,7 +136,7 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
         }));
       } catch (error) {
         console.error('Error processing video:', error);
-        alert('Error al procesar el video. Por favor intenta de nuevo.');
+        showMessage('Error al procesar el video. Por favor intenta de nuevo.', 'error');
       }
     } else {
       const reader = new FileReader();
@@ -286,13 +289,13 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
     const { mediaData, mediaType, thumbnailUrl, suggestedNames, selectedName, customName, description, weightCarats, priceCOP, lotCode, category, ringSize, color, quality } = singleState;
 
     if (!mediaData) {
-      alert('Por favor sube una imagen o video primero');
+      showMessage('Por favor sube una imagen o video primero', 'warning');
       return;
     }
 
     const finalName = customName || selectedName;
     if (!finalName) {
-      alert('Por favor selecciona o escribe un nombre');
+      showMessage('Por favor selecciona o escribe un nombre', 'warning');
       return;
     }
 
@@ -316,7 +319,7 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
 
       markNameAsUsed(finalName);
       const mediaLabel = mediaType === 'video' ? 'video' : 'esmeralda';
-      alert(`"${finalName}" ${mediaLabel} guardada exitosamente!`);
+      showMessage(`"${finalName}" ${mediaLabel} guardada exitosamente`, 'success');
       resetSingleForm();
       onComplete?.();
     } catch (error) {
@@ -324,9 +327,9 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
       const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
 
       if (errorMsg.includes('STORAGE_FULL')) {
-        alert('El almacenamiento está lleno. Por favor ve a la Galería y elimina algunas esmeraldas antiguas para liberar espacio.');
+        showMessage('El almacenamiento está lleno. Ve a la Galería y elimina esmeraldas antiguas para liberar espacio.', 'error');
       } else {
-        alert(`Error al guardar: ${errorMsg}`);
+        showMessage(`Error al guardar: ${errorMsg}`, 'error');
       }
     }
   }, [singleState, addEmerald, resetSingleForm]);
@@ -355,7 +358,7 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
   const saveBatchItem = useCallback((item: BatchItem) => {
     const finalName = item.customName || item.selectedName;
     if (!finalName) {
-      alert('Por favor selecciona o escribe un nombre para este item');
+      showMessage('Por favor selecciona o escribe un nombre para este item', 'warning');
       return;
     }
 
@@ -380,7 +383,7 @@ export function useEmeraldUpload(): UseEmeraldUploadReturn {
   const saveAllBatch = useCallback((onComplete?: () => void) => {
     const itemsToSave = batchItems.filter(item => item.customName || item.selectedName);
     if (itemsToSave.length === 0) {
-      alert('Por favor asigna nombres a al menos un item');
+      showMessage('Por favor asigna nombres a al menos un item', 'warning');
       return;
     }
 

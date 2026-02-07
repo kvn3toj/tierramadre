@@ -22,11 +22,13 @@ import {
 import { FileText, Plus, Clock, CheckCircle, XCircle, Trash2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { emeraldCore } from '../../design-system/tokens/colors';
+import { useNotification } from '../../contexts/NotificationContext';
 import { PRODUCT_TYPE_LABELS, REQUEST_STATUS_LABELS } from '../../types/provider';
 import type { QuotationRequest, RequestStatus } from '../../types/provider';
 
 export default function QuotationRequestList() {
   const navigate = useNavigate();
+  const { confirmAction } = useNotification();
   const [requests, setRequests] = useState<QuotationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | RequestStatus>('all');
@@ -89,7 +91,8 @@ export default function QuotationRequestList() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Seguro que deseas eliminar esta solicitud?')) return;
+    const confirmed = await confirmAction('¿Seguro que deseas eliminar esta solicitud?');
+    if (!confirmed) return;
 
     try {
       const response = await fetch(`/api/quotation-requests?id=${id}`, {

@@ -19,6 +19,7 @@ import { useAsesores } from '../../../hooks/useAsesores';
 import { useTreasure } from '../../../hooks/useTreasure';
 import { useCotizacionHistory, SavedCotizacion } from '../../../hooks/useCotizacionHistory';
 import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
+import { useNotification } from '../../../contexts/NotificationContext';
 import { TreasureItem } from '../../../types';
 import { TreasureCard } from '../../../components/treasure/TreasureCard';
 import { brand, lightTokens, darkTokens } from '../../../design-system';
@@ -69,6 +70,7 @@ export default function AsesorProfilePage() {
   const { asesores, isLoading } = useAsesores(treasure);
   const { user: googleUser } = useGoogleAuth();
   const cotizacionHistory = useCotizacionHistory();
+  const { notify, confirmAction } = useNotification();
 
   // Find the asesor by slug
   const asesor = useMemo(() => {
@@ -186,7 +188,7 @@ export default function AsesorProfilePage() {
 
   const handleContact = () => {
     if (asesor) {
-      alert(`Contactar a ${asesor.name}\n\nEsta funcionalidad se habilitara proximamente con WhatsApp.`);
+      notify(`Contacto con ${asesor.name} estará disponible próximamente`, 'info');
     }
   };
 
@@ -203,7 +205,7 @@ export default function AsesorProfilePage() {
         }
       } else {
         await navigator.clipboard.writeText(url);
-        alert('Enlace copiado al portapapeles');
+        notify('Enlace copiado al portapapeles', 'success');
       }
     }
   };
@@ -234,8 +236,10 @@ export default function AsesorProfilePage() {
 
   const hasActiveFilters = Boolean(searchQuery || statusFilter !== 'all' || typeFilter !== 'all');
 
-  const handleDeleteCotizacion = (cot: SavedCotizacion) => {
-    if (googleUser?.email && confirm('Eliminar esta cotizacion?')) {
+  const handleDeleteCotizacion = async (cot: SavedCotizacion) => {
+    if (!googleUser?.email) return;
+    const confirmed = await confirmAction('¿Eliminar esta cotización?');
+    if (confirmed) {
       cotizacionHistory.deleteCotizacion(cot.id, googleUser.email);
     }
   };

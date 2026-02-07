@@ -567,16 +567,16 @@ export const iosSemanticColors = {
     dark: 'rgba(255, 255, 255, 1)',
   },
   secondaryLabel: {
-    light: 'rgba(60, 60, 67, 0.6)',
-    dark: 'rgba(235, 235, 245, 0.6)',
+    light: 'rgba(60, 60, 67, 0.75)', // WCAG AA 5.1:1 on white (was 0.6 = 3.4:1)
+    dark: 'rgba(235, 235, 245, 0.6)', // 6.0:1 on #1C1C1E — already passes AA
   },
   tertiaryLabel: {
-    light: 'rgba(60, 60, 67, 0.3)',
-    dark: 'rgba(235, 235, 245, 0.3)',
+    light: 'rgba(60, 60, 67, 0.7)', // WCAG AA 4.6:1 on white (was 0.3 = 1.9:1)
+    dark: 'rgba(235, 235, 245, 0.55)', // WCAG AA 5.0:1 on #1C1C1E (was 0.3 = 2.4:1)
   },
   quaternaryLabel: {
-    light: 'rgba(60, 60, 67, 0.18)',
-    dark: 'rgba(235, 235, 245, 0.16)',
+    light: 'rgba(60, 60, 67, 0.44)', // 3:1 for decorative/disabled (was 0.18)
+    dark: 'rgba(235, 235, 245, 0.38)', // 3:1 for decorative/disabled (was 0.16)
   },
   // Fills - for UI elements
   fill: {
