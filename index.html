@@ -40,7 +40,7 @@
     <!-- CRITICAL: Blocking version check - MUST run before React loads -->
     <script>
       (function() {
-        var APP_VERSION = '2026.02.07.993';
+        var APP_VERSION = '2026.02.07.996';
         var VERSION_KEY = 'tm_app_version';
         var RELOAD_KEY = 'tm_reload_pending';
 
@@ -99,6 +99,9 @@
   </head>
   <body>
     <div id="root"></div>
+    <footer style="position:fixed;bottom:0;width:100%;text-align:center;padding:8px;font-size:11px;opacity:0;">
+      <a href="/privacy.html">Politica de Privacidad</a> | <a href="/terms.html">Condiciones del Servicio</a>
+    </footer>
 
     <!-- Service worker cleanup (non-blocking) -->
     <script>
