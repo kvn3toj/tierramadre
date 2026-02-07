@@ -147,7 +147,13 @@ export default function ProductDetail() {
             });
 
             if (!isCancelled) {
-              setMediaItems(sortedItems);
+              setMediaItems(prev => {
+                if (prev.length === sortedItems.length &&
+                    prev.every((p, i) => p.url === sortedItems[i].url)) {
+                  return prev; // Same content = same reference = no re-render
+                }
+                return sortedItems;
+              });
               if (updateMediaItems) {
                 updateMediaItems(product.item, driveItems);
               }

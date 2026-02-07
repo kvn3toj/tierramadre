@@ -173,9 +173,18 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
     }
   }, []);
 
-  // Delete a cotización
+  // Delete a cotización (optimistic — remove from UI immediately, rollback on failure)
   const deleteCotizacion = useCallback(async (id: string, email: string): Promise<boolean> => {
     setError(null);
+
+    // Optimistic: remove from UI immediately
+    let removedItem: SavedCotizacion | undefined;
+    let removedIndex = -1;
+    setCotizaciones(prev => {
+      removedIndex = prev.findIndex(c => c.id === id);
+      if (removedIndex >= 0) removedItem = prev[removedIndex];
+      return prev.filter(c => c.id !== id);
+    });
 
     try {
       const response = await fetch(
@@ -183,7 +192,6 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
         { method: 'DELETE' }
       );
 
-      // Check if response is ok before parsing JSON
       if (!response.ok) {
         try {
           const errorData = await response.json();
@@ -197,8 +205,6 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
 
       if (data.success) {
         log.info(`Deleted cotización ${id}`);
-        // Remove from local state
-        setCotizaciones(prev => prev.filter(c => c.id !== id));
         return true;
       } else {
         throw new Error(data.error || 'Failed to delete cotización');
@@ -207,6 +213,16 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
       const message = err instanceof Error ? err.message : 'Error deleting cotización';
       log.error('Delete error:', err);
       setError(message);
+      // Rollback: restore the removed item at its original position
+      if (removedItem) {
+        const item = removedItem;
+        const idx = removedIndex;
+        setCotizaciones(prev => {
+          const restored = [...prev];
+          restored.splice(Math.min(idx, restored.length), 0, item);
+          return restored;
+        });
+      }
       return false;
     }
   }, []);

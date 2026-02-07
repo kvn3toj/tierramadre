@@ -81,6 +81,16 @@ export default function MediaGallery({
 
   const hasMedia = media.length > 0;
 
+  // Compute the final display URL for a given index (Drive proxy gets size=medium)
+  const getDisplayUrl = useCallback((index: number): string => {
+    const item = media[index];
+    if (!item) return '';
+    if (item.url.includes('serve-drive-image')) {
+      return `${item.url}${item.url.includes('?') ? '&' : '?'}size=medium`;
+    }
+    return item.url;
+  }, [media]);
+
   /**
    * Preload and decode an image at a given index.
    * Returns a promise that resolves when the image is ready to display (loaded + decoded).
@@ -98,10 +108,7 @@ export default function MediaGallery({
         const img = new window.Image();
         img.crossOrigin = 'anonymous';
 
-        // Optimize URL for Drive proxy
-        const url = item.url.includes('serve-drive-image')
-          ? `${item.url}${item.url.includes('?') ? '&' : '?'}size=medium`
-          : item.url;
+        const url = getDisplayUrl(index);
 
         // Add cache-busting on retry
         img.src = retryCount > 0
@@ -169,7 +176,7 @@ export default function MediaGallery({
 
       attempt();
     });
-  }, [media]);
+  }, [media, getDisplayUrl]);
 
   // When currentIndex changes, orchestrate the double-buffer transition
   useEffect(() => {
@@ -229,11 +236,12 @@ export default function MediaGallery({
     });
   }, [currentIndex, media, preloadAndDecode]);
 
-  // Clear cache when media changes (different product)
-  const mediaRef = useRef(media);
+  // Clear cache when media content actually changes (different product)
+  const prevMediaKey = useRef(media.map(m => m.id).join(','));
   useEffect(() => {
-    if (mediaRef.current !== media) {
-      mediaRef.current = media;
+    const newKey = media.map(m => m.id).join(',');
+    if (prevMediaKey.current !== newKey) {
+      prevMediaKey.current = newKey;
       preloadCache.current.clear();
       setVisibleIndex(0);
       setCurrentIndex(0);
@@ -420,20 +428,35 @@ export default function MediaGallery({
                       transform: 'translateZ(0)',
                     }}
                   >
-                    {/* Loading spinner while video buffers */}
+                    {/* Poster overlay while video buffers — avoids dark flash */}
                     {videoLoading && isVisible && (
                       <Box
                         sx={{
                           position: 'absolute',
                           inset: 0,
-                          bgcolor: darkTokens.background.app,
+                          zIndex: 1,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          zIndex: 1,
                         }}
                       >
-                        <CircularProgress size={32} sx={{ color: 'white', opacity: 0.5 }} />
+                        <img
+                          src={item.thumbnailUrl || logoPlaceholder}
+                          alt=""
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                        <CircularProgress
+                          size={32}
+                          sx={{
+                            position: 'absolute',
+                            color: 'white',
+                            opacity: 0.5,
+                          }}
+                        />
                       </Box>
                     )}
                     <video
@@ -465,8 +488,6 @@ export default function MediaGallery({
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        opacity: videoLoading && isVisible ? 0 : 1,
-                        transition: 'opacity 0.3s ease',
                       }}
                     />
                   </Box>
@@ -528,7 +549,7 @@ export default function MediaGallery({
                     </Box>
                   ) : (
                     <img
-                      src={item.url}
+                      src={getDisplayUrl(index)}
                       alt={item.alt || productName}
                       draggable={false}
                       onContextMenu={(e) => e.preventDefault()}
