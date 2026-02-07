@@ -231,7 +231,7 @@
       "destination": "/api/:path*"
     },
     {
-      "source": "/((?!api|assets|images|@|src|node_modules|\\.).*)",
+      "source": "/((?!api|assets|images|@|src|node_modules|\\.)[^.]*)",
       "destination": "/index.html"
     }
   ]
