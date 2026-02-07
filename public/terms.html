@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Condiciones del Servicio — Tierra Madre Studio</title>
+  <meta name="description" content="Condiciones del servicio de Tierra Madre Studio, plataforma interna de catalogo y ventas de esmeraldas colombianas." />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-inicio-gris-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --emerald: #00695c;
+      --emerald-light: #e0f2f1;
+      --emerald-subtle: #f0faf9;
+      --charcoal: #2C2C2C;
+      --text-secondary: #4A4A4A;
+      --text-muted: #6B6B6B;
+      --bg-white: #FDFDFB;
+      --border-light: #E8E8E4;
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans: 'Montserrat', 'Helvetica Neue', system-ui, sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--charcoal);
+      background-color: var(--bg-white);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--emerald);
+      color: #fff;
+      padding: 48px 24px 40px;
+      text-align: center;
+    }
+
+    .header__brand {
+      font-family: var(--font-serif);
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0.85;
+      margin-bottom: 12px;
+    }
+
+    .header__title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+    }
+
+    .header__date {
+      font-size: 0.8125rem;
+      font-weight: 300;
+      margin-top: 16px;
+      opacity: 0.75;
+    }
+
+    /* ── Main Content ── */
+    .content {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    .intro {
+      font-size: 1.0625rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    /* ── Sections ── */
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section__number {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--emerald);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .section__title {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--charcoal);
+      margin-bottom: 16px;
+      line-height: 1.3;
+    }
+
+    .section p {
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+    }
+
+    .section ul {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0 16px;
+    }
+
+    .section ul li {
+      position: relative;
+      padding-left: 20px;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+
+    .section ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--emerald);
+      opacity: 0.5;
+    }
+
+    /* ── Highlight Box ── */
+    .highlight {
+      background: var(--emerald-subtle);
+      border-left: 3px solid var(--emerald);
+      padding: 20px 24px;
+      margin: 20px 0;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .highlight p {
+      color: var(--charcoal);
+      font-weight: 500;
+      margin-bottom: 0;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--border-light);
+      margin: 40px 0;
+      border: none;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding: 32px 24px 48px;
+      border-top: 1px solid var(--border-light);
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .footer__brand {
+      font-family: var(--font-serif);
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--emerald);
+      margin-bottom: 8px;
+    }
+
+    .footer__tagline {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      font-weight: 300;
+      letter-spacing: 0.05em;
+    }
+
+    .footer__link {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 0.875rem;
+      color: var(--emerald);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .footer__link:hover {
+      text-decoration: underline;
+    }
+
+    /* ── Links ── */
+    a {
+      color: var(--emerald);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .header {
+        padding: 36px 20px 32px;
+      }
+
+      .content {
+        padding: 32px 20px 64px;
+      }
+
+      .section__title {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header__brand">Tierra Madre Studio</div>
+    <h1 class="header__title">Condiciones del Servicio</h1>
+    <div class="header__date">Ultima actualizacion: 7 de febrero de 2026</div>
+  </header>
+
+  <main class="content">
+
+    <div class="intro">
+      Las presentes Condiciones del Servicio regulan el acceso y uso de Tierra Madre Studio (<a href="https://tierra-madre-studio.vercel.app">tierra-madre-studio.vercel.app</a>), una herramienta interna de negocio desarrollada para la gestion de catalogo, cotizaciones y ventas de esmeraldas colombianas. Al acceder o utilizar la plataforma, usted acepta estas condiciones en su totalidad.
+    </div>
+
+    <!-- 1. Aceptacion de los terminos -->
+    <section class="section">
+      <div class="section__number">Seccion 01</div>
+      <h2 class="section__title">Aceptacion de los terminos</h2>
+      <p>Al acceder a Tierra Madre Studio, ya sea mediante inicio de sesion con Google o como usuario invitado, usted declara que ha leido, comprendido y aceptado estas Condiciones del Servicio, asi como nuestra <a href="/privacy.html">Politica de Privacidad</a>.</p>
+      <p>Si no esta de acuerdo con alguna de estas condiciones, le solicitamos que se abstenga de utilizar la plataforma. El uso continuado del servicio constituye la aceptacion de las condiciones vigentes en cada momento.</p>
+    </section>
+
+    <!-- 2. Descripcion del servicio -->
+    <section class="section">
+      <div class="section__number">Seccion 02</div>
+      <h2 class="section__title">Descripcion del servicio</h2>
+      <p>Tierra Madre Studio es una plataforma interna de uso comercial que ofrece las siguientes funcionalidades:</p>
+      <ul>
+        <li><strong>Catalogo de productos:</strong> navegacion y consulta del inventario de esmeraldas colombianas, con imagenes, especificaciones y precios.</li>
+        <li><strong>Generacion de cotizaciones:</strong> creacion, almacenamiento y exportacion de documentos de cotizacion profesionales para clientes.</li>
+        <li><strong>Gestion de asesores:</strong> perfiles de asesores comerciales, asignacion de productos y seguimiento de actividad.</li>
+        <li><strong>Sistema de invitaciones:</strong> invitacion de usuarios externos para visualizar productos seleccionados.</li>
+        <li><strong>Analitica interna:</strong> paneles de seguimiento de visualizaciones, cotizaciones y actividad general de la plataforma.</li>
+      </ul>
+      <div class="highlight">
+        <p>Tierra Madre Studio es una herramienta interna de negocio. No es una tienda en linea ni una plataforma de comercio electronico abierta al publico general.</p>
+      </div>
+    </section>
+
+    <!-- 3. Cuentas de usuario y acceso -->
+    <section class="section">
+      <div class="section__number">Seccion 03</div>
+      <h2 class="section__title">Cuentas de usuario y acceso</h2>
+      <p>El acceso a Tierra Madre Studio requiere autenticacion mediante Google Sign-In. Al iniciar sesion, usted autoriza a la plataforma a acceder a su informacion basica de perfil (nombre, correo electronico y foto) de acuerdo con nuestra <a href="/privacy.html">Politica de Privacidad</a>.</p>
+      <p>Existen tres niveles de acceso:</p>
+      <ul>
+        <li><strong>Administrador:</strong> acceso completo a todas las funcionalidades, gestion de usuarios y configuracion del sistema.</li>
+        <li><strong>Asesor:</strong> acceso al catalogo, generacion de cotizaciones, gestion de clientes y funcionalidades de venta.</li>
+        <li><strong>Invitado:</strong> acceso limitado a la visualizacion de productos compartidos por un asesor.</li>
+      </ul>
+      <p>Los roles son asignados exclusivamente por los administradores de la plataforma. Cada usuario es responsable de mantener la seguridad de su cuenta de Google y de notificar cualquier acceso no autorizado.</p>
+    </section>
+
+    <!-- 4. Uso permitido -->
+    <section class="section">
+      <div class="section__number">Seccion 04</div>
+      <h2 class="section__title">Uso permitido</h2>
+      <p>Tierra Madre Studio debe utilizarse exclusivamente para fines comerciales legitimos relacionados con el negocio de esmeraldas de Tierra Madre. Al utilizar la plataforma, usted se compromete a:</p>
+      <ul>
+        <li>Utilizar la plataforma unicamente para los fines comerciales para los cuales fue disenada.</li>
+        <li>Proporcionar informacion veraz y actualizada en cotizaciones y comunicaciones con clientes.</li>
+        <li>Respetar la confidencialidad de los datos de productos, precios, clientes y proveedores.</li>
+        <li>No compartir sus credenciales de acceso ni permitir el uso de su cuenta por terceros no autorizados.</li>
+        <li>No intentar acceder a funcionalidades o datos fuera de su nivel de autorizacion.</li>
+        <li>No realizar ingenieria inversa, modificar ni interferir con el funcionamiento de la plataforma.</li>
+        <li>No extraer, copiar ni distribuir de forma masiva los datos del catalogo sin autorizacion expresa.</li>
+      </ul>
+    </section>
+
+    <!-- 5. Propiedad intelectual -->
+    <section class="section">
+      <div class="section__number">Seccion 05</div>
+      <h2 class="section__title">Propiedad intelectual</h2>
+      <p>Todos los elementos que componen Tierra Madre Studio son propiedad de Tierra Madre o se utilizan bajo licencia. Esto incluye, sin limitacion:</p>
+      <ul>
+        <li>El diseno, codigo fuente, interfaz de usuario y arquitectura de la plataforma.</li>
+        <li>Las fotografias, videos y descripciones de los productos del catalogo.</li>
+        <li>La marca, logotipos e identidad visual de Tierra Madre Studio.</li>
+        <li>Los documentos, plantillas y formatos de cotizacion generados por la plataforma.</li>
+      </ul>
+      <p>El acceso a la plataforma no otorga al usuario ningun derecho de propiedad intelectual sobre los contenidos. Las cotizaciones generadas pueden ser compartidas con clientes en el curso normal del negocio, pero el formato y diseno permanecen como propiedad de Tierra Madre.</p>
+    </section>
+
+    <!-- 6. Confidencialidad -->
+    <section class="section">
+      <div class="section__number">Seccion 06</div>
+      <h2 class="section__title">Confidencialidad</h2>
+      <p>El usuario reconoce que, en el curso de su uso de la plataforma, tendra acceso a informacion confidencial del negocio, incluyendo:</p>
+      <ul>
+        <li>Precios de compra y margenes comerciales de los productos.</li>
+        <li>Datos de contacto y relaciones con proveedores.</li>
+        <li>Informacion de clientes y cotizaciones generadas.</li>
+        <li>Estrategias comerciales y datos de analitica interna.</li>
+      </ul>
+      <p>El usuario se compromete a no divulgar, compartir ni utilizar esta informacion fuera del ambito autorizado por Tierra Madre. Esta obligacion de confidencialidad subsiste incluso despues de que el usuario deje de tener acceso a la plataforma.</p>
+    </section>
+
+    <!-- 7. Limitacion de responsabilidad -->
+    <section class="section">
+      <div class="section__number">Seccion 07</div>
+      <h2 class="section__title">Limitacion de responsabilidad</h2>
+      <p>Tierra Madre Studio se proporciona "tal cual" y "segun disponibilidad". En la medida permitida por la legislacion colombiana aplicable:</p>
+      <ul>
+        <li>No garantizamos que la plataforma funcione de manera ininterrumpida, libre de errores o completamente segura en todo momento.</li>
+        <li>No nos responsabilizamos por perdidas derivadas de interrupciones del servicio, fallos tecnicos o errores en los datos mostrados.</li>
+        <li>No somos responsables por decisiones comerciales tomadas con base en la informacion presentada en la plataforma.</li>
+        <li>La responsabilidad total se limita al valor de los servicios directamente proporcionados por la plataforma.</li>
+      </ul>
+      <div class="highlight">
+        <p>Nos esforzamos por mantener la informacion del catalogo precisa y actualizada, pero los precios, disponibilidad y especificaciones de los productos estan sujetos a cambio sin previo aviso.</p>
+      </div>
+    </section>
+
+    <!-- 8. Modificaciones al servicio -->
+    <section class="section">
+      <div class="section__number">Seccion 08</div>
+      <h2 class="section__title">Modificaciones al servicio</h2>
+      <p>Tierra Madre se reserva el derecho de modificar, actualizar, suspender o descontinuar cualquier aspecto de la plataforma en cualquier momento y sin previo aviso. Esto incluye:</p>
+      <ul>
+        <li>Agregar, modificar o eliminar funcionalidades.</li>
+        <li>Actualizar la interfaz de usuario y la experiencia de navegacion.</li>
+        <li>Modificar los requisitos tecnicos de acceso.</li>
+        <li>Realizar mantenimientos programados o de emergencia.</li>
+      </ul>
+      <p>Haremos esfuerzos razonables por comunicar los cambios significativos a traves de la propia plataforma o por correo electronico.</p>
+    </section>
+
+    <!-- 9. Terminacion -->
+    <section class="section">
+      <div class="section__number">Seccion 09</div>
+      <h2 class="section__title">Terminacion del acceso</h2>
+      <p>Tierra Madre se reserva el derecho de suspender o revocar el acceso de cualquier usuario a la plataforma, con o sin previo aviso, en los siguientes casos:</p>
+      <ul>
+        <li>Incumplimiento de cualquiera de estas Condiciones del Servicio.</li>
+        <li>Uso indebido de la plataforma o de la informacion contenida en ella.</li>
+        <li>Finalizacion de la relacion comercial entre el usuario y Tierra Madre.</li>
+        <li>Solicitud expresa del usuario de eliminar su acceso.</li>
+        <li>Cualquier otra razon que Tierra Madre considere justificada para proteger los intereses del negocio.</li>
+      </ul>
+      <p>El usuario puede revocar el acceso de la plataforma a su cuenta de Google en cualquier momento desde la <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">configuracion de seguridad de su cuenta de Google</a>.</p>
+    </section>
+
+    <!-- 10. Legislacion aplicable -->
+    <section class="section">
+      <div class="section__number">Seccion 10</div>
+      <h2 class="section__title">Legislacion aplicable y jurisdiccion</h2>
+      <p>Estas Condiciones del Servicio se rigen e interpretan de acuerdo con las leyes de la Republica de Colombia, en particular:</p>
+      <ul>
+        <li>La Ley 1581 de 2012 (Proteccion de Datos Personales) y su Decreto Reglamentario 1377 de 2013.</li>
+        <li>La Ley 527 de 1999 (Comercio Electronico).</li>
+        <li>Las demas normas concordantes y complementarias vigentes.</li>
+      </ul>
+      <p>Cualquier controversia derivada de estas condiciones sera sometida a la jurisdiccion de los tribunales competentes de la ciudad de Bogota D.C., Colombia, salvo que las partes acuerden un mecanismo alternativo de resolucion de conflictos.</p>
+    </section>
+
+    <!-- 11. Contacto -->
+    <section class="section">
+      <div class="section__number">Seccion 11</div>
+      <h2 class="section__title">Contacto</h2>
+      <p>Si tiene preguntas, comentarios o inquietudes sobre estas Condiciones del Servicio, puede comunicarse con nosotros a traves de los siguientes canales:</p>
+      <ul>
+        <li><strong>Correo electronico:</strong> <a href="mailto:tierramadrestudio@gmail.com">tierramadrestudio@gmail.com</a></li>
+        <li><strong>Plataforma:</strong> <a href="https://tierra-madre-studio.vercel.app">tierra-madre-studio.vercel.app</a></li>
+      </ul>
+      <p>Tambien puede consultar nuestra <a href="/privacy.html">Politica de Privacidad</a> para obtener informacion detallada sobre el manejo de sus datos personales.</p>
+    </section>
+
+    <hr class="divider" />
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer__brand">Tierra Madre Studio</div>
+    <div class="footer__tagline">Esmeraldas colombianas &mdash; Esencia y Poder</div>
+    <a href="https://tierra-madre-studio.vercel.app" class="footer__link">Volver a la plataforma</a>
+  </footer>
+
+</body>
+</html>
