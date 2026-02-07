@@ -8,6 +8,7 @@
 
 import { useState, useCallback } from 'react';
 import { createLogger } from '../utils/logger';
+import { useGlobalLoading } from '../contexts/GlobalLoadingContext';
 
 const log = createLogger('CotizacionHistory');
 
@@ -73,6 +74,7 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { startLoading, stopLoading } = useGlobalLoading();
 
   // Fetch cotizaciones for an asesor
   const fetchCotizaciones = useCallback(async (email: string): Promise<void> => {
@@ -114,6 +116,7 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
   const saveCotizacion = useCallback(async (params: SaveCotizacionParams): Promise<SavedCotizacion | null> => {
     setIsSaving(true);
     setError(null);
+    startLoading();
 
     try {
       const response = await fetch('/api/cotizacion-save', {
@@ -170,8 +173,9 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
       return null;
     } finally {
       setIsSaving(false);
+      stopLoading();
     }
-  }, []);
+  }, [startLoading, stopLoading]);
 
   // Delete a cotización (optimistic — remove from UI immediately, rollback on failure)
   const deleteCotizacion = useCallback(async (id: string, email: string): Promise<boolean> => {

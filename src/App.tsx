@@ -15,6 +15,7 @@ import { TrackingProvider } from './contexts/TrackingContext';
 import { ScreenProtectionProvider } from './contexts/ScreenProtectionContext';
 import { LiveRegionProvider } from './components/shared/LiveRegion';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
+import { GlobalLoadingProvider } from './contexts/GlobalLoadingContext';
 import { AchievementToast } from './components/gamification';
 import { useViewportHeight } from './hooks/useViewportHeight';
 import { lazyWithRetry } from './utils/lazyWithRetry';
@@ -466,12 +467,14 @@ function App() {
           <ScreenProtectionProvider>
             <LiveRegionProvider>
               <NotificationProvider>
-                <BrowserRouter>
-                  <InvitationRouter />
-                  {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
-                  {/* PWA disabled - service worker not generating correctly */}
-                  {/* <UpdatePrompt /> */}
-                </BrowserRouter>
+                <GlobalLoadingProvider>
+                  <BrowserRouter>
+                    <InvitationRouter />
+                    {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
+                    {/* PWA disabled - service worker not generating correctly */}
+                    {/* <UpdatePrompt /> */}
+                  </BrowserRouter>
+                </GlobalLoadingProvider>
               </NotificationProvider>
             </LiveRegionProvider>
           </ScreenProtectionProvider>

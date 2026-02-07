@@ -15,6 +15,7 @@ import IOSTabBar from './IOSTabBar';
 import IOSNavigationBar, { NavigationBarMode, NavigationAction } from './IOSNavigationBar';
 import IOSMoreSheet from './IOSMoreSheet';
 import IOSSettingsSheet from './IOSSettingsSheet';
+import KeyboardShortcutsHelp from '../shared/KeyboardShortcutsHelp';
 import { InvitationBanner } from '../invitation';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -251,6 +252,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         onOpenSettings={() => setSettingsSheetOpen(true)}
       />
       <IOSSettingsSheet open={settingsSheetOpen} onClose={() => setSettingsSheetOpen(false)} />
+      <KeyboardShortcutsHelp />
     </Box>
   );
 };
