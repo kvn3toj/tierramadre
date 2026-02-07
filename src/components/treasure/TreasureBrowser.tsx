@@ -44,6 +44,7 @@ import RecentlyViewedCarousel from './RecentlyViewedCarousel';
 import IOSFilterSheet from '../ios/IOSFilterSheet';
 import { MobileSearchBar, TreasureEmptyState, DesktopFilterToolbar } from './browser';
 import { useLiveRegion } from '../shared/LiveRegion';
+import ScrollToTop from '../shared/ScrollToTop';
 
 const log = createLogger('Treasure');
 
@@ -529,6 +530,10 @@ export default function TreasureBrowser({
           hasFilters={hasFilters}
           activeFilterCount={activeFilterCount}
           onClearFilters={urlSync.handleClearFilters}
+          onSuggestionClick={(term) => {
+            urlSync.handleClearFilters();
+            setSearch(term);
+          }}
         />
       )}
 
@@ -563,6 +568,8 @@ export default function TreasureBrowser({
           items={comparison.selectedItems}
         />
       )}
+
+      <ScrollToTop />
     </Box>
   );
 }

@@ -22,6 +22,7 @@ import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { TreasureItem } from '../../../types';
 import { TreasureCard } from '../../../components/treasure/TreasureCard';
+import ScrollToTop from '../../../components/shared/ScrollToTop';
 import { brand, lightTokens, darkTokens } from '../../../design-system';
 import {
   ProfileHeader,
@@ -414,6 +415,8 @@ export default function AsesorProfilePage() {
           ))}
         </Grid>
       )}
+
+      <ScrollToTop />
     </Box>
   );
 }

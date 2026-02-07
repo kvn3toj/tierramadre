@@ -111,9 +111,18 @@ export const formatTimeAgo = (timestamp: string | number): string => {
   const diff = Date.now() - date.getTime();
 
   if (diff < 60000) return 'Ahora';
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`;
-  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d`;
+  if (diff < 3600000) {
+    const mins = Math.floor(diff / 60000);
+    return `hace ${mins} min`;
+  }
+  if (diff < 86400000) {
+    const hours = Math.floor(diff / 3600000);
+    return `hace ${hours} h`;
+  }
+  if (diff < 604800000) {
+    const days = Math.floor(diff / 86400000);
+    return `hace ${days} d`;
+  }
 
   return date.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' });
 };

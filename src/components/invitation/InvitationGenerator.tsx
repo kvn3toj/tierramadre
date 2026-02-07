@@ -237,6 +237,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   onChange={(e) => setGuestName(e.target.value)}
                   required
                   size="small"
+                  inputProps={{ autoComplete: 'name' }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -261,6 +262,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                     value={guestEmail}
                     onChange={(e) => setGuestEmail(e.target.value)}
                     size="small"
+                    inputProps={{ autoComplete: 'email' }}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -282,6 +284,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                     value={guestPhone}
                     onChange={(e) => setGuestPhone(e.target.value)}
                     size="small"
+                    inputProps={{ autoComplete: 'tel' }}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">

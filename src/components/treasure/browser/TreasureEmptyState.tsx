@@ -1,12 +1,21 @@
-import { Box, Typography, Paper, Button, alpha } from '@mui/material';
+import { Box, Typography, Paper, Button, Chip, alpha } from '@mui/material';
 import { SearchX } from 'lucide-react';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
+
+const SUGGESTIONS = [
+  { label: 'Verde Muzo', search: 'muzo' },
+  { label: 'Anillos', search: 'anillo' },
+  { label: 'Gota', search: 'gota' },
+  { label: 'Fina', search: 'fina' },
+  { label: 'Collares', search: 'collar' },
+];
 
 interface TreasureEmptyStateProps {
   isLight: boolean;
   hasFilters: boolean;
   activeFilterCount: number;
   onClearFilters: () => void;
+  onSuggestionClick?: (search: string) => void;
 }
 
 export default function TreasureEmptyState({
@@ -14,6 +23,7 @@ export default function TreasureEmptyState({
   hasFilters,
   activeFilterCount,
   onClearFilters,
+  onSuggestionClick,
 }: TreasureEmptyStateProps) {
   return (
     <Paper
@@ -58,6 +68,7 @@ export default function TreasureEmptyState({
             color: emeraldCore.primary,
             textTransform: 'none',
             fontWeight: 600,
+            mb: 2,
             '&:hover': {
               bgcolor: alpha(emeraldCore.primary, 0.08),
               borderColor: emeraldCore.dark,
@@ -66,6 +77,33 @@ export default function TreasureEmptyState({
         >
           Limpiar {activeFilterCount} filtro{activeFilterCount !== 1 ? 's' : ''}
         </Button>
+      )}
+      {onSuggestionClick && (
+        <Box sx={{ mt: hasFilters ? 0 : 1 }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1 }}>
+            Búsquedas populares
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
+            {SUGGESTIONS.map((s) => (
+              <Chip
+                key={s.search}
+                label={s.label}
+                size="small"
+                variant="outlined"
+                onClick={() => onSuggestionClick(s.search)}
+                sx={{
+                  borderColor: isLight ? alpha(emeraldCore.primary, 0.3) : alpha(emeraldCore.primary, 0.4),
+                  color: emeraldCore.primary,
+                  fontWeight: 500,
+                  '&:hover': {
+                    bgcolor: alpha(emeraldCore.primary, 0.08),
+                    borderColor: emeraldCore.primary,
+                  },
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
       )}
     </Paper>
   );

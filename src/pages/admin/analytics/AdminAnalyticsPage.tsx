@@ -81,7 +81,7 @@ const AdminAnalyticsPage: React.FC = () => {
       const diffMin = Math.floor(diffMs / 60000);
       if (diffMin < 1) setRelativeTime('ahora');
       else if (diffMin < 60) setRelativeTime(`hace ${diffMin} min`);
-      else setRelativeTime(`hace ${Math.floor(diffMin / 60)}h`);
+      else setRelativeTime(`hace ${Math.floor(diffMin / 60)} h`);
     };
     updateRelativeTime();
     const interval = setInterval(updateRelativeTime, 30000);

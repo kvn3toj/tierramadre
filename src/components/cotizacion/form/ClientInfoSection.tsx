@@ -289,10 +289,12 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
           <TextField
             fullWidth
             label="Telefono"
+            type="tel"
             value={clientPhone}
             onChange={(e) => setClientPhone(e.target.value)}
             size="small"
             placeholder="+57 300 123 4567"
+            inputProps={{ autoComplete: 'tel' }}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -304,6 +306,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
             onChange={(e) => setClientEmail(e.target.value)}
             size="small"
             placeholder="cliente@ejemplo.com"
+            inputProps={{ autoComplete: 'email' }}
             error={clientEmail !== '' && !clientEmail.includes('@')}
             helperText={
               clientEmail !== '' && !clientEmail.includes('@')
