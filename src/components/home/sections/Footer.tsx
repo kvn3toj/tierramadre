@@ -105,6 +105,26 @@ export const Footer: React.FC = () => {
           >
             © {new Date().getFullYear()} Tierra Mädre. Todos los derechos reservados.
           </Typography>
+
+          {/* Legal Links */}
+          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', gap: 2 }}>
+            <Link
+              href="/privacy.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.65rem', textDecoration: 'none', '&:hover': { color: 'rgba(255,255,255,0.6)' } }}
+            >
+              Privacidad
+            </Link>
+            <Link
+              href="/terms.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.65rem', textDecoration: 'none', '&:hover': { color: 'rgba(255,255,255,0.6)' } }}
+            >
+              Condiciones
+            </Link>
+          </Box>
         </Box>
       </motion.div>
     </Box>
