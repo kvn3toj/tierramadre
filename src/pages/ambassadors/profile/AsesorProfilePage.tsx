@@ -11,7 +11,7 @@ import {
   Button,
   Grid,
   Paper,
-  CircularProgress,
+  Skeleton,
   useTheme,
 } from '@mui/material';
 import { ArrowLeft, Package } from 'lucide-react';
@@ -246,8 +246,38 @@ export default function AsesorProfilePage() {
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <CircularProgress sx={{ color: brand.emerald[500] }} />
+      <Box sx={{ pb: 4 }}>
+        {/* Back button skeleton */}
+        <Skeleton width={140} height={36} sx={{ mb: 2, borderRadius: 1 }} />
+        {/* Profile header skeleton */}
+        <Paper elevation={0} sx={{ p: 3, borderRadius: 3, mb: 3 }}>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+            <Skeleton variant="circular" width={64} height={64} />
+            <Box sx={{ flex: 1 }}>
+              <Skeleton width="60%" height={28} />
+              <Skeleton width="40%" height={20} sx={{ mt: 0.5 }} />
+            </Box>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} variant="rounded" width={80} height={56} sx={{ borderRadius: 2, flex: 1 }} />
+            ))}
+          </Box>
+        </Paper>
+        {/* Search bar skeleton */}
+        <Skeleton variant="rounded" height={44} sx={{ borderRadius: 3, mb: 2 }} />
+        {/* Product grid skeleton */}
+        <Grid container spacing={2}>
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <Grid item xs={12} sm={6} md={4} key={i}>
+              <Skeleton variant="rounded" sx={{ width: '100%', aspectRatio: '1/1', borderRadius: 3 }} />
+              <Box sx={{ px: 1, mt: 1 }}>
+                <Skeleton width="70%" height={20} />
+                <Skeleton width="40%" height={16} sx={{ mt: 0.5 }} />
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
       </Box>
     );
   }

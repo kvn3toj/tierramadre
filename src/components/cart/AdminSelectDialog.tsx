@@ -126,7 +126,7 @@ export default function AdminSelectDialog({
                       bgcolor: alpha(emeraldCore.primary, 0.08),
                     },
                     '&.Mui-disabled': {
-                      opacity: 0.5,
+                      opacity: 0.45,
                     },
                   }}
                 >

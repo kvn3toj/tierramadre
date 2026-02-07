@@ -161,8 +161,7 @@ export default function ComparisonBar({
               fontSize: '0.875rem',
               '&:hover': { bgcolor: emeraldCore.dark },
               '&:disabled': {
-                bgcolor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-                color: 'text.disabled',
+                opacity: 0.45,
               },
             }}
           >

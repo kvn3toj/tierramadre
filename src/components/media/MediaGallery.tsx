@@ -643,7 +643,17 @@ export default function MediaGallery({
             {media.map((_, index) => (
               <Box
                 key={index}
+                role="button"
+                tabIndex={0}
+                aria-label={`Imagen ${index + 1} de ${media.length}`}
+                aria-current={index === currentIndex ? 'true' : undefined}
                 onClick={() => handleThumbnailClick(index)}
+                onKeyDown={(e: React.KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleThumbnailClick(index);
+                  }
+                }}
                 sx={{
                   width: index === currentIndex ? 20 : 8,
                   height: 8,
@@ -653,6 +663,10 @@ export default function MediaGallery({
                   cursor: 'pointer',
                   '&:hover': {
                     bgcolor: index === currentIndex ? brand.emerald[500] : alpha(brand.emerald[500], 0.5),
+                  },
+                  '&:focus-visible': {
+                    outline: `2px solid ${brand.emerald[500]}`,
+                    outlineOffset: 2,
                   },
                 }}
               />
@@ -680,7 +694,17 @@ export default function MediaGallery({
           {media.map((item, index) => (
             <Box
               key={item.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`Miniatura ${index + 1} de ${media.length}`}
+              aria-current={index === currentIndex ? 'true' : undefined}
               onClick={() => handleThumbnailClick(index)}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleThumbnailClick(index);
+                }
+              }}
               sx={{
                 minWidth: 64,
                 height: 64,
@@ -695,6 +719,11 @@ export default function MediaGallery({
                 '&:hover': {
                   opacity: 1,
                   transform: 'scale(1.05)',
+                },
+                '&:focus-visible': {
+                  outline: `2px solid ${brand.emerald[500]}`,
+                  outlineOffset: 2,
+                  opacity: 1,
                 },
               }}
             >
@@ -723,7 +752,16 @@ export default function MediaGallery({
           {/* Add more button (when editing) */}
           {isEditing && media.length < 8 && (
             <Box
+              role="button"
+              tabIndex={0}
+              aria-label="Agregar más imágenes"
               onClick={onAddMedia}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onAddMedia?.();
+                }
+              }}
               sx={{
                 minWidth: 64,
                 height: 64,
@@ -738,6 +776,10 @@ export default function MediaGallery({
                 '&:hover': {
                   borderColor: brand.emerald[500],
                   bgcolor: alpha(brand.emerald[500], 0.1),
+                },
+                '&:focus-visible': {
+                  outline: `2px solid ${brand.emerald[500]}`,
+                  outlineOffset: 2,
                 },
               }}
             >

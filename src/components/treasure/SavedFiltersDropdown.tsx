@@ -195,7 +195,7 @@ export default function SavedFiltersDropdown({
               bgcolor: alpha(emeraldCore.primary, 0.1),
             },
             '&.Mui-disabled': {
-              opacity: 0.5,
+              opacity: 0.45,
             },
           }}
         >

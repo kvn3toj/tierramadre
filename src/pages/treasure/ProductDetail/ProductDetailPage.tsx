@@ -14,6 +14,7 @@ import {
   alpha,
   useTheme,
   Snackbar,
+  Skeleton,
 } from '@mui/material';
 import { ChevronLeft, Package, Crown } from 'lucide-react';
 import logoPlaceholder from '../../../assets/logo-symbol.png';
@@ -223,25 +224,46 @@ export default function ProductDetail() {
     await openWhatsAppToAdmin([cartItem], adminName);
   }, [product, openWhatsAppToAdmin]);
 
-  // Show loading state while inventory is loading
+  // Show skeleton loading state matching actual layout
   if (isLoadingSheets && !product) {
     return (
-      <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3 }, py: 8, textAlign: 'center' }}>
-        <Box
-          component="img"
-          src={logoPlaceholder}
-          alt=""
-          sx={{
-            width: 64,
-            height: 'auto',
-            mb: 2,
-            opacity: 0.28,
-            filter: 'brightness(0.7)',
-          }}
-        />
-        <Typography variant="h5" sx={{ fontWeight: 600, mb: 2, color: theme.palette.text.secondary }}>
-          Cargando producto...
-        </Typography>
+      <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 0, sm: 3, md: 4 }, pb: 3 }}>
+        <Box sx={{ px: { xs: 2, sm: 0 }, mb: 1 }}>
+          <Skeleton width={160} height={20} sx={{ borderRadius: 1 }} />
+        </Box>
+        <Grid container spacing={{ xs: 1.5, md: 3 }}>
+          {/* Image skeleton */}
+          <Grid item xs={12} md={6}>
+            <Skeleton
+              variant="rounded"
+              sx={{ width: '100%', aspectRatio: '1/1', borderRadius: { xs: 0, sm: 3 } }}
+            />
+            {/* Thumbnail strip skeleton */}
+            <Box sx={{ display: 'flex', gap: 1, mt: 1, px: { xs: 2, sm: 0 } }}>
+              {[0, 1, 2, 3].map((i) => (
+                <Skeleton key={i} variant="rounded" width={64} height={64} sx={{ borderRadius: 1.5, flexShrink: 0 }} />
+              ))}
+            </Box>
+          </Grid>
+          {/* Specs skeleton */}
+          <Grid item xs={12} md={6}>
+            <Box sx={{ px: { xs: 2, sm: 0 }, pt: { xs: 1, md: 0 } }}>
+              <Skeleton width="70%" height={32} sx={{ mb: 1 }} />
+              <Skeleton width="40%" height={24} sx={{ mb: 2 }} />
+              <Skeleton width="50%" height={36} sx={{ mb: 3 }} />
+              {[0, 1, 2, 3, 4].map((i) => (
+                <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                  <Skeleton width="30%" height={20} />
+                  <Skeleton width="40%" height={20} />
+                </Box>
+              ))}
+              <Box sx={{ display: 'flex', gap: 1.5, mt: 3 }}>
+                <Skeleton variant="rounded" width="50%" height={48} sx={{ borderRadius: 3 }} />
+                <Skeleton variant="rounded" width="50%" height={48} sx={{ borderRadius: 3 }} />
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
       </Box>
     );
   }

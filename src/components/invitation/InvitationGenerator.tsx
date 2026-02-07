@@ -358,7 +358,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                 sx={{
                   bgcolor: brand.emerald[600],
                   '&:hover': { bgcolor: brand.emerald[700] },
-                  '&:disabled': { bgcolor: 'action.disabledBackground' },
+                  '&:disabled': { opacity: 0.45 },
                   py: 1.5,
                   borderRadius: 2,
                 }}

@@ -404,6 +404,23 @@ export const buttonStyles = {
   },
 } as const;
 
+/**
+ * Standardized disabled button styles (Shneiderman #1: Consistency)
+ * Use via sx spread: `'&:disabled': disabledButton.contained` or `'&.Mui-disabled': disabledButton.contained`
+ */
+export const disabledButton = {
+  /** For filled/contained buttons */
+  contained: {
+    opacity: 0.45,
+    pointerEvents: 'none' as const,
+  },
+  /** For outlined/text buttons */
+  outlined: {
+    opacity: 0.4,
+    pointerEvents: 'none' as const,
+  },
+} as const;
+
 // Header styles
 export const headerStyles = {
   light: {

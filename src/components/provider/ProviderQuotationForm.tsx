@@ -703,8 +703,7 @@ export default function ProviderQuotationForm() {
             bgcolor: brand.emerald[500],
             '&:hover': { bgcolor: alpha(brand.emerald[500], 0.87) },
             '&:disabled': {
-              bgcolor: alpha(brand.emerald[500], 0.3),
-              color: alpha('#fff', 0.6),
+              opacity: 0.45,
             },
             py: 1.75,
             borderRadius: radius.md,

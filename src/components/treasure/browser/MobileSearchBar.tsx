@@ -96,7 +96,12 @@ export default function MobileSearchBar({
             ),
             endAdornment: search && (
               <InputAdornment position="end">
-                <IconButton size="small" onClick={() => setSearch('')}>
+                <IconButton
+                  size="small"
+                  onClick={() => setSearch('')}
+                  aria-label="Limpiar búsqueda"
+                  sx={{ width: 44, height: 44 }}
+                >
                   <X size={16} />
                 </IconButton>
               </InputAdornment>
@@ -171,15 +176,30 @@ export default function MobileSearchBar({
           {/* Favorites toggle (hidden in provider mode) */}
           {!isProviderMode && (
             <Box
+              role="button"
+              tabIndex={0}
+              aria-label={showFavoritesOnly ? 'Mostrar todos los productos' : `Mostrar solo favoritos (${favoritesCount})`}
+              aria-pressed={showFavoritesOnly}
               onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setShowFavoritesOnly(!showFavoritesOnly);
+                }
+              }}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0.5,
                 cursor: 'pointer',
                 px: 1.5,
-                py: 0.5,
+                py: 1,
+                minHeight: 44,
                 borderRadius: '16px',
+                '&:focus-visible': {
+                  outline: `2px solid ${emeraldCore.primary}`,
+                  outlineOffset: 2,
+                },
                 bgcolor: showFavoritesOnly
                   ? alpha('#ef4444', 0.15)
                   : isLight

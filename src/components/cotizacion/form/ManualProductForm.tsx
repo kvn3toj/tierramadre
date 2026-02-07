@@ -642,8 +642,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
         borderRadius: 2,
         '&:hover': { bgcolor: brandColors.goldDark },
         '&.Mui-disabled': {
-          bgcolor: alpha(brandColors.gold, 0.3),
-          color: 'rgba(255,255,255,0.6)',
+          opacity: 0.45,
         },
       }}
     >
