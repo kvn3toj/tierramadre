@@ -3,7 +3,7 @@
  * Aggregates data from multiple sources for the Analytics Dashboard.
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { useTracking } from '../../../../contexts/TrackingContext';
 import { useProductViews } from '../../../../hooks/useProductViews';
 import { useCotizacionStats } from '../../../../hooks/useCotizacionStats';
@@ -38,6 +38,7 @@ export interface UserBreakdownSegment {
 }
 
 export function useAnalyticsData() {
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date>(new Date());
   const { metrics, achievements, levelInfo, unlockedAchievements, ACHIEVEMENTS, getAchievementProgress, exportAnalytics } = useTracking();
 
   const {
@@ -192,6 +193,7 @@ export function useAnalyticsData() {
   const handleRefresh = useCallback(() => {
     refetchViews();
     refetchCotizaciones();
+    setLastRefreshedAt(new Date());
   }, [refetchViews, refetchCotizaciones]);
 
   return {
@@ -230,5 +232,6 @@ export function useAnalyticsData() {
     isLoading: viewsLoading || cotizacionLoading,
     viewsLoading,
     cotizacionLoading,
+    lastRefreshedAt,
   };
 }

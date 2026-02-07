@@ -2,13 +2,62 @@
  * useCotizacionForm Hook
  * Manages quotation form state: client info, quotation number, dates, notes, discount, and business settings.
  * Extracted from useCotizacion for better modularity.
+ *
+ * Features:
+ * - Auto-saves draft to sessionStorage (debounced 500ms)
+ * - Hydrates from sessionStorage on mount if draft exists
+ * - Exposes isDirty flag for unsaved changes warning
  */
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   BusinessSettings,
   DEFAULT_BUSINESS_SETTINGS,
   generateQuotationNumber,
 } from './useCotizacion';
+
+const DRAFT_KEY = 'cotizacion_draft';
+const DRAFT_DEBOUNCE_MS = 500;
+
+interface DraftState {
+  quotationNumber: string;
+  clientName: string;
+  clientPhone: string;
+  clientEmail: string;
+  clientDocument: string;
+  asesorName: string;
+  date: string;
+  validDays: number;
+  notes: string;
+  discountPercent: number;
+  businessSettings: BusinessSettings;
+  savedAt: number;
+}
+
+function loadDraft(): DraftState | null {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function saveDraft(state: DraftState): void {
+  try {
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+  } catch {
+    // sessionStorage full or unavailable
+  }
+}
+
+function clearDraft(): void {
+  try {
+    sessionStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 export interface UseCotizacionFormReturn {
   // Quotation info
@@ -48,9 +97,19 @@ export interface UseCotizacionFormReturn {
 
   // Reset
   resetForm: () => void;
+
+  // Draft management
+  isDirty: boolean;
+  hasDraft: boolean;
+  restoreDraft: () => void;
+  discardDraft: () => void;
 }
 
 export function useCotizacionForm(): UseCotizacionFormReturn {
+  // Check for existing draft on mount
+  const existingDraft = useRef(loadDraft());
+  const [hasDraft, setHasDraft] = useState(!!existingDraft.current);
+
   // Quotation info
   const [quotationNumber, setQuotationNumber] = useState(generateQuotationNumber);
 
@@ -72,6 +131,65 @@ export function useCotizacionForm(): UseCotizacionFormReturn {
   // Business settings
   const [businessSettings, setBusinessSettings] = useState<BusinessSettings>(DEFAULT_BUSINESS_SETTINGS);
 
+  // Track dirty state (any field has been modified)
+  const isDirty = clientName !== '' || clientPhone !== '' || clientEmail !== '' ||
+    clientDocument !== '' || notes !== '' || discountPercent !== 0;
+
+  // Debounced auto-save to sessionStorage
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => {
+    if (!isDirty) return;
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      saveDraft({
+        quotationNumber,
+        clientName,
+        clientPhone,
+        clientEmail,
+        clientDocument,
+        asesorName,
+        date,
+        validDays,
+        notes,
+        discountPercent,
+        businessSettings,
+        savedAt: Date.now(),
+      });
+    }, DRAFT_DEBOUNCE_MS);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [quotationNumber, clientName, clientPhone, clientEmail, clientDocument,
+      asesorName, date, validDays, notes, discountPercent, businessSettings, isDirty]);
+
+  // Restore draft from sessionStorage
+  const restoreDraft = useCallback(() => {
+    const draft = existingDraft.current;
+    if (!draft) return;
+
+    setQuotationNumber(draft.quotationNumber);
+    setClientName(draft.clientName);
+    setClientPhone(draft.clientPhone);
+    setClientEmail(draft.clientEmail);
+    setClientDocument(draft.clientDocument);
+    setAsesorName(draft.asesorName);
+    setDate(draft.date);
+    setValidDays(draft.validDays);
+    setNotes(draft.notes);
+    setDiscountPercent(draft.discountPercent);
+    setBusinessSettings(draft.businessSettings);
+    setHasDraft(false);
+  }, []);
+
+  // Discard draft
+  const discardDraft = useCallback(() => {
+    clearDraft();
+    existingDraft.current = null;
+    setHasDraft(false);
+  }, []);
+
   // Calculate expiry date
   const expiryDate = useMemo(() => {
     const expiry = new Date(date);
@@ -92,7 +210,7 @@ export function useCotizacionForm(): UseCotizacionFormReturn {
     setQuotationNumber(generateQuotationNumber());
   }, []);
 
-  // Reset form fields
+  // Reset form fields and clear draft
   const resetForm = useCallback(() => {
     setQuotationNumber(generateQuotationNumber());
     setClientName('');
@@ -105,6 +223,8 @@ export function useCotizacionForm(): UseCotizacionFormReturn {
     setNotes('');
     setDiscountPercent(0);
     setBusinessSettings(DEFAULT_BUSINESS_SETTINGS);
+    clearDraft();
+    setHasDraft(false);
   }, []);
 
   return {
@@ -134,5 +254,9 @@ export function useCotizacionForm(): UseCotizacionFormReturn {
     businessSettings,
     setBusinessSettings,
     resetForm,
+    isDirty,
+    hasDraft,
+    restoreDraft,
+    discardDraft,
   };
 }

@@ -178,6 +178,35 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         backgroundColor: 'var(--surface-primary)',
       }}
     >
+      {/* Skip to content link - WCAG 2.4.1 Bypass Blocks */}
+      <Box
+        component="a"
+        href="#main-content"
+        sx={{
+          position: 'absolute',
+          top: -9999,
+          left: 0,
+          zIndex: 9999,
+          bgcolor: 'var(--surface-primary)',
+          color: 'text.primary',
+          px: 3,
+          py: 1.5,
+          fontWeight: 600,
+          fontSize: '0.875rem',
+          textDecoration: 'none',
+          borderRadius: '0 0 8px 0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          '&:focus-visible': {
+            top: 0,
+            outline: '2px solid',
+            outlineColor: 'primary.main',
+            outlineOffset: -2,
+          },
+        }}
+      >
+        Saltar al contenido principal
+      </Box>
+
       {/* Invitation countdown banner - shows for invited guests */}
       <InvitationBanner />
 
@@ -194,6 +223,8 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
 
       <Box
         component="main"
+        id="main-content"
+        tabIndex={-1}
         sx={{
           flex: 1,
           paddingBottom: `calc(65px + env(safe-area-inset-bottom) + ${spacing.md})`,

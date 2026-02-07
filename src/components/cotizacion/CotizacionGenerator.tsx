@@ -5,13 +5,14 @@
  * Refactored: Form components extracted to ./form folder for maintainability.
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Paper,
   Divider,
   Snackbar,
   Alert,
+  Button,
 } from '@mui/material';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -96,6 +97,10 @@ export default function CotizacionGenerator() {
     discount,
     total,
     resetAll,
+    isDirty,
+    hasDraft,
+    restoreDraft,
+    discardDraft,
   } = cotizacion;
 
   // Filter available treasure
@@ -117,6 +122,20 @@ export default function CotizacionGenerator() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isVideoPreview, setIsVideoPreview] = useState(false);
+
+  // ==========================================================================
+  // DRAFT AUTO-SAVE: beforeunload warning when form is dirty
+  // ==========================================================================
+  useEffect(() => {
+    if (!isDirty && products.length === 0) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty, products.length]);
 
   // ==========================================================================
   // HANDLERS
@@ -459,6 +478,41 @@ export default function CotizacionGenerator() {
     <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
       {/* Header */}
       <CotizacionHeader productCount={products.length} total={total} />
+
+      {/* Draft restore banner */}
+      {hasDraft && (
+        <Alert
+          severity="info"
+          variant="outlined"
+          sx={{ mb: 2, borderRadius: 2 }}
+          action={
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                size="small"
+                variant="contained"
+                onClick={restoreDraft}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  bgcolor: brandColors.emerald,
+                  '&:hover': { bgcolor: brandColors.emeraldDark },
+                }}
+              >
+                Restaurar
+              </Button>
+              <Button
+                size="small"
+                onClick={discardDraft}
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              >
+                Descartar
+              </Button>
+            </Box>
+          }
+        >
+          Tienes un borrador guardado. ¿Deseas restaurarlo?
+        </Alert>
+      )}
 
       <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         {/* Form Section */}

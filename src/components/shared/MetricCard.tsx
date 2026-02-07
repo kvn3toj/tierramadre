@@ -5,7 +5,8 @@
  */
 
 import React from 'react';
-import { Box, Paper, Typography, alpha } from '@mui/material';
+import { Box, Paper, Typography, alpha, Tooltip } from '@mui/material';
+import { Info } from 'lucide-react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { iosDimensions } from '../../design-system/tokens/primitives/spacing';
 import { semanticColors } from '../../design-system/tokens/colors';
@@ -26,6 +27,8 @@ export interface MetricCardProps {
   compact?: boolean;
   /** Optional click handler */
   onClick?: () => void;
+  /** Tooltip explaining what this metric measures */
+  tooltip?: string;
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({
@@ -38,6 +41,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
   subtitle,
   compact = false,
   onClick,
+  tooltip,
 }) => {
   return (
     <Paper
@@ -100,12 +104,21 @@ const MetricCard: React.FC<MetricCardProps> = ({
 
       {/* Label and comparison */}
       <Box>
-        <Typography
-          variant="body2"
-          sx={{ fontWeight: 600, color: 'text.primary', fontSize: compact ? '0.8rem' : '0.875rem' }}
-        >
-          {label}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: 600, color: 'text.primary', fontSize: compact ? '0.8rem' : '0.875rem' }}
+          >
+            {label}
+          </Typography>
+          {tooltip && (
+            <Tooltip title={tooltip} arrow placement="top">
+              <Box component="span" sx={{ display: 'inline-flex', cursor: 'help', color: 'text.disabled' }}>
+                <Info size={12} />
+              </Box>
+            </Tooltip>
+          )}
+        </Box>
         {subtitle && (
           <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
             {subtitle}

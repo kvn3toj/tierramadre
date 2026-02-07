@@ -80,6 +80,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           value={viewStats?.todayViews || 0}
           icon={Eye}
           color={emeraldCore.primary}
+          tooltip="Vistas totales de productos hoy por todos los usuarios"
           comparison={
             viewStats && viewStats.todayViews > 0
               ? { value: Math.round((viewStats.todayViews / Math.max(viewStats.weekViews / 7, 1)) * 100 - 100), label: 'vs promedio' }
@@ -93,6 +94,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           value={totalCotizaciones}
           icon={FileText}
           color={goldAccent.primary}
+          tooltip="Total de cotizaciones PDF exportadas por asesores"
           trend={{ data: generateTrendData(totalCotizaciones) }}
           subtitle={weekCotizaciones > 0 ? `${weekCotizaciones} esta semana` : 'Exportadas'}
           compact
@@ -103,6 +105,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           value={viewStats?.weekViews || 0}
           icon={Calendar}
           color="#8B5CF6"
+          tooltip="Vistas acumuladas de los últimos 7 días"
           trend={{ data: generateTrendData(viewStats?.weekViews || 0) }}
           subtitle="Últimos 7 días"
           compact
@@ -112,6 +115,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           value={`${metrics.streak} días`}
           icon={Zap}
           color="#F59E0B"
+          tooltip="Días consecutivos con al menos una actividad registrada"
           subtitle="Días consecutivos"
           compact
         />

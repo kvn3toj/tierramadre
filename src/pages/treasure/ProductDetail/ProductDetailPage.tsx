@@ -39,6 +39,7 @@ import { surfacesLight, surfacesDark, goldAccent, emeraldCore } from '../../../d
 import { buttonGradients } from '../../../design-system/tokens/gradients';
 import { accentColors, lightTokens } from '../../../design-system';
 import { SpecificationsList, AdditionalInfo, ProductActions } from './components';
+import Breadcrumbs from '../../../components/shared/Breadcrumbs';
 
 const log = createLogger('ProductDetail');
 
@@ -282,6 +283,14 @@ export default function ProductDetail() {
       px: { xs: 0, sm: 3, md: 4 },
       pb: { xs: 'calc(12px + env(safe-area-inset-bottom))', sm: 3 }
     }}>
+      {/* Breadcrumb navigation */}
+      <Breadcrumbs
+        items={[
+          { label: 'Tesoros', path: '/treasure' },
+          { label: displayName || `Producto ${itemId}` },
+        ]}
+      />
+
       <Grid container spacing={{ xs: 1.5, md: 3 }}>
         {/* Left Column - Image & Gallery */}
         <Grid item xs={12} md={6}>

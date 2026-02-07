@@ -240,6 +240,12 @@ export interface UseCotizacionReturn {
 
   // Actions
   resetAll: () => void;
+
+  // Draft management
+  isDirty: boolean;
+  hasDraft: boolean;
+  restoreDraft: () => void;
+  discardDraft: () => void;
 }
 
 export function useCotizacion(): UseCotizacionReturn {
@@ -311,6 +317,12 @@ export function useCotizacion(): UseCotizacionReturn {
 
     // Combined actions
     resetAll,
+
+    // Draft management
+    isDirty: form.isDirty,
+    hasDraft: form.hasDraft,
+    restoreDraft: form.restoreDraft,
+    discardDraft: form.discardDraft,
   };
 }
 

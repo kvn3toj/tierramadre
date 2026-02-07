@@ -13,6 +13,7 @@ import { usePWAUpdate } from './hooks/usePWAUpdate';
 import { LiquidGlassProvider } from './contexts/LiquidGlassContext';
 import { TrackingProvider } from './contexts/TrackingContext';
 import { ScreenProtectionProvider } from './contexts/ScreenProtectionContext';
+import { LiveRegionProvider } from './components/shared/LiveRegion';
 import { AchievementToast } from './components/gamification';
 import { useViewportHeight } from './hooks/useViewportHeight';
 import { lazyWithRetry } from './utils/lazyWithRetry';
@@ -461,12 +462,14 @@ function App() {
       <LiquidGlassProvider>
         <TrackingProvider>
           <ScreenProtectionProvider>
-            <BrowserRouter>
-              <InvitationRouter />
-              {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
-              {/* PWA disabled - service worker not generating correctly */}
-              {/* <UpdatePrompt /> */}
-            </BrowserRouter>
+            <LiveRegionProvider>
+              <BrowserRouter>
+                <InvitationRouter />
+                {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
+                {/* PWA disabled - service worker not generating correctly */}
+                {/* <UpdatePrompt /> */}
+              </BrowserRouter>
+            </LiveRegionProvider>
           </ScreenProtectionProvider>
         </TrackingProvider>
       </LiquidGlassProvider>

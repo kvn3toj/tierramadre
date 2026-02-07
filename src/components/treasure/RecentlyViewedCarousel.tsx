@@ -19,6 +19,7 @@ import { ChevronLeft, ChevronRight, Clock, X } from 'lucide-react';
 import logoPlaceholder from '../../assets/logo-symbol.png';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { TreasureItem } from '../../types';
 import { formatCurrency } from '../../utils/formatting';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
@@ -50,6 +51,7 @@ export default function RecentlyViewedCarousel({
   const isLight = mode === 'light';
   const scrollRef = useRef<HTMLDivElement>(null);
   const { shouldShowPrices } = usePriceShare();
+  const prefersReducedMotion = useReducedMotion();
 
   // Limit items to maxItems
   const displayItems = items.slice(0, maxItems);
@@ -65,7 +67,7 @@ export default function RecentlyViewedCarousel({
       const scrollAmount = (CARD_WIDTH + CARD_GAP) * 2;
       scrollRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth',
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
       });
     }
   };
@@ -196,6 +198,7 @@ export default function RecentlyViewedCarousel({
             onClick={() => onItemClick(item)}
             isLight={isLight}
             hidePrice={!shouldShowPrices}
+            reducedMotion={prefersReducedMotion}
           />
         ))}
       </Box>
@@ -209,11 +212,13 @@ function RecentItemCard({
   onClick,
   isLight,
   hidePrice = false,
+  reducedMotion = false,
 }: {
   item: TreasureItem;
   onClick: () => void;
   isLight: boolean;
   hidePrice?: boolean;
+  reducedMotion?: boolean;
 }) {
   const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const weight = typeof item.peso === 'number' ? `${item.peso} ct` : item.metalType || '';
@@ -243,10 +248,10 @@ function RecentItemCard({
           bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
           cursor: 'pointer',
           overflow: 'hidden',
-          transition: 'all 0.2s ease',
+          transition: reducedMotion ? 'none' : 'all 0.2s ease',
           '&:hover': {
             borderColor: emeraldCore.primary,
-            transform: 'translateY(-2px)',
+            transform: reducedMotion ? 'none' : 'translateY(-2px)',
             boxShadow: isLight
               ? '0 4px 12px rgba(0, 0, 0, 0.1)'
               : '0 4px 12px rgba(0, 0, 0, 0.3)',

@@ -10,6 +10,7 @@ import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 // Logo placeholder for products without images - use Vite asset import
 import logoPlaceholder from '../../assets/logo-symbol.png';
 import { useThemeMode } from '../../contexts/ThemeContext';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import {
   getCloudinaryUrl,
   getResponsiveSrcSet,
@@ -64,6 +65,7 @@ export default function ProgressiveImage({
 }: ProgressiveImageProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const prefersReducedMotion = useReducedMotion();
   // Unique ID per component instance to prevent DOM node reuse across different cards
   const instanceId = useId();
   const [loaded, setLoaded] = useState(false);
@@ -249,7 +251,7 @@ export default function ProgressiveImage({
             filter: 'blur(20px)',
             transform: 'scale(1.1)', // Prevent blur edge artifacts
             opacity: 1,
-            transition: 'opacity 0.3s ease-in-out',
+            transition: prefersReducedMotion ? 'none' : 'opacity 0.3s ease-in-out',
           }}
         />
       )}
@@ -307,20 +309,22 @@ export default function ProgressiveImage({
             // Hide image until 100% loaded to prevent partial render/progressive JPEG blinking
             // USER REQUIREMENT: Don't show images until fully downloaded
             opacity: fullyLoaded ? 1 : 0,
-            transition: 'opacity 0.3s ease-in-out',
+            transition: prefersReducedMotion ? 'none' : 'opacity 0.3s ease-in-out',
           }}
         />
       )}
 
-      {/* Error fallback */}
+      {/* Error fallback with retry button */}
       {error && showPlaceholderIcon && (
         <Box
           sx={{
             width: '100%',
             height: '100%',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
+            gap: 1,
           }}
         >
           <Box
@@ -335,6 +339,33 @@ export default function ProgressiveImage({
               filter: isLight ? 'brightness(0.7)' : 'brightness(0.5)',
             }}
           />
+          <Box
+            component="button"
+            onClick={() => {
+              setError(false);
+              setRetryCount(0);
+              setImageKey(prev => prev + 1);
+            }}
+            aria-label="Reintentar carga de imagen"
+            sx={{
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              color: isLight ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.45)',
+              fontSize: '0.65rem',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              p: 0.5,
+              borderRadius: 1,
+              '&:hover': {
+                color: isLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)',
+              },
+            }}
+          >
+            Reintentar
+          </Box>
         </Box>
       )}
 

@@ -87,6 +87,7 @@ export default function MobileSearchBar({
           placeholder="Buscar esmeraldas..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          inputProps={{ 'aria-label': 'Buscar productos' }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">

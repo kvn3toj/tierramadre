@@ -5,7 +5,7 @@
  * Refactored to extract URL sync, filter tracking, active chips, mobile search,
  * empty state, and desktop filter toolbar into separate components.
  */
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect, } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -43,6 +43,7 @@ import { GridCard, ListRow, VirtualGrid, FilterContent, ActiveFilterChips, type 
 import RecentlyViewedCarousel from './RecentlyViewedCarousel';
 import IOSFilterSheet from '../ios/IOSFilterSheet';
 import { MobileSearchBar, TreasureEmptyState, DesktopFilterToolbar } from './browser';
+import { useLiveRegion } from '../shared/LiveRegion';
 
 const log = createLogger('Treasure');
 
@@ -144,6 +145,16 @@ export default function TreasureBrowser({
 
   // Comparison hook
   const comparison = useComparison();
+
+  // Aria-live announcements for filter results (WCAG 4.1.3)
+  const { announce } = useLiveRegion();
+  const prevFilteredCount = useRef(filteredTreasure.length);
+  useEffect(() => {
+    if (prevFilteredCount.current !== filteredTreasure.length && hasFilters) {
+      announce(`${filteredTreasure.length} productos encontrados`);
+    }
+    prevFilteredCount.current = filteredTreasure.length;
+  }, [filteredTreasure.length, hasFilters, announce]);
 
   // Track treasure view on mount
   useEffect(() => {

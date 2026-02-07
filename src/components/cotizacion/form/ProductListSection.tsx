@@ -1,11 +1,12 @@
 /**
  * ProductListSection Component
  * Displays the list of selected products with thumbnails.
+ * Includes undo-based deletion (Gerhardt-Powals forgiveness pattern).
  */
 
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, IconButton, alpha } from '@mui/material';
-import { Layers, Trash2, Gem, ShoppingBag } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Box, Typography, IconButton, alpha, Snackbar, Button } from '@mui/material';
+import { Layers, Trash2, Gem, ShoppingBag, Undo2 } from 'lucide-react';
 import { brandColors } from '../constants';
 import { formatCotizacionCurrency, getPesoDisplay } from '../../../hooks/useCotizacion';
 import type { ProductListSectionProps, ProductThumbnailProps } from '../types';
@@ -86,10 +87,52 @@ export const ProductThumbnail: React.FC<ProductThumbnailProps> = ({
   );
 };
 
+const UNDO_TIMEOUT_MS = 5000;
+
 export const ProductListSection: React.FC<ProductListSectionProps> = ({
   products,
   handleRemoveProduct,
 }) => {
+  // Undo-based deletion state
+  const [pendingRemoval, setPendingRemoval] = useState<{ id: string; name: string } | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleDelete = useCallback((productId: string, productName: string) => {
+    // If there's a pending removal, commit it first
+    if (pendingRemoval) {
+      handleRemoveProduct(pendingRemoval.id);
+    }
+
+    setPendingRemoval({ id: productId, name: productName });
+
+    // Auto-commit after timeout
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = setTimeout(() => {
+      handleRemoveProduct(productId);
+      setPendingRemoval(null);
+    }, UNDO_TIMEOUT_MS);
+  }, [handleRemoveProduct, pendingRemoval]);
+
+  const handleUndo = useCallback(() => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setPendingRemoval(null);
+  }, []);
+
+  const handleSnackbarClose = useCallback(() => {
+    // When snackbar closes naturally, commit the removal
+    if (pendingRemoval) {
+      handleRemoveProduct(pendingRemoval.id);
+      setPendingRemoval(null);
+    }
+  }, [pendingRemoval, handleRemoveProduct]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    };
+  }, []);
+
   if (products.length === 0) return null;
 
   return (
@@ -120,6 +163,9 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
             bgcolor: brandColors.surfaceElevated,
             borderRadius: 1.5,
             border: `1px solid ${brandColors.borderSubtle}`,
+            // Fade out item pending removal
+            opacity: pendingRemoval?.id === product.id ? 0.4 : 1,
+            transition: 'opacity 0.2s ease',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -146,7 +192,9 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
             </Typography>
             <IconButton
               size="small"
-              onClick={() => handleRemoveProduct(product.id)}
+              onClick={() => handleDelete(product.id, product.name)}
+              aria-label={`Eliminar ${product.name}`}
+              disabled={pendingRemoval?.id === product.id}
               sx={{
                 color: brandColors.textMuted,
                 '&:hover': {
@@ -160,6 +208,32 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
           </Box>
         </Box>
       ))}
+
+      {/* Undo snackbar */}
+      <Snackbar
+        open={!!pendingRemoval}
+        autoHideDuration={UNDO_TIMEOUT_MS}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        message={`${pendingRemoval?.name || 'Producto'} eliminado`}
+        action={
+          <Button
+            size="small"
+            onClick={handleUndo}
+            sx={{
+              color: brandColors.emerald,
+              fontWeight: 700,
+              textTransform: 'none',
+            }}
+            startIcon={<Undo2 size={14} />}
+          >
+            Deshacer
+          </Button>
+        }
+        sx={{
+          mb: 'calc(env(safe-area-inset-bottom, 0px) + 72px)',
+        }}
+      />
     </Box>
   );
 };

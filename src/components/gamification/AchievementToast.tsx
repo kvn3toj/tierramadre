@@ -10,6 +10,7 @@ import { Box, Typography, Slide, alpha } from '@mui/material';
 import { useTracking } from '../../contexts/TrackingContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { useAuth } from '../../hooks/useAuth';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
 
 const AUTO_DISMISS_MS = 4000;
@@ -21,6 +22,7 @@ const AchievementToast: React.FC = () => {
   const { recentAchievement, dismissAchievement } = useTracking();
   const { mode } = useThemeMode();
   const { accessLevel } = useAuth();
+  const prefersReducedMotion = useReducedMotion();
   const isLight = mode === 'light';
 
   // Only show for admins during testing phase
@@ -66,7 +68,7 @@ const AchievementToast: React.FC = () => {
               : `linear-gradient(135deg, ${alpha(goldAccent.dark, 0.95)} 0%, ${alpha(emeraldCore.dark, 0.9)} 100%)`,
             boxShadow: `0 8px 32px ${alpha('#000', 0.25)}, 0 0 0 1px ${alpha(goldAccent.primary, 0.3)}`,
             backdropFilter: 'blur(12px)',
-            animation: 'achievement-pop 0.4s ease-out',
+            animation: prefersReducedMotion ? 'none' : 'achievement-pop 0.4s ease-out',
             '@keyframes achievement-pop': {
               '0%': {
                 transform: 'scale(0.8)',
@@ -151,7 +153,7 @@ const AchievementToast: React.FC = () => {
               justifyContent: 'center',
               fontSize: 14,
               boxShadow: `0 2px 8px ${alpha(goldAccent.primary, 0.5)}`,
-              animation: 'sparkle 1s ease-in-out infinite',
+              animation: prefersReducedMotion ? 'none' : 'sparkle 1s ease-in-out infinite',
               '@keyframes sparkle': {
                 '0%, 100%': {
                   transform: 'scale(1) rotate(0deg)',

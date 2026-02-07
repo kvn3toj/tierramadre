@@ -24,6 +24,8 @@ import {
   Share2,
   CheckCircle,
   Crown,
+  Link2,
+  MessageCircle,
 } from 'lucide-react';
 import { Asesor } from '../../../../hooks/useAsesores';
 import { brand, lightTokens, darkTokens } from '../../../../design-system';
@@ -99,6 +101,8 @@ interface ProfileHeaderProps {
   totalProducts: number;
   onContact: () => void;
   onShare: () => void;
+  onShareWhatsApp?: () => void;
+  onCopyLink?: () => void;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -107,6 +111,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   totalProducts,
   onContact,
   onShare,
+  onShareWhatsApp,
+  onCopyLink,
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -172,6 +178,26 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
         {/* Action Buttons */}
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          {onShareWhatsApp && (
+            <Tooltip title="Compartir por WhatsApp">
+              <IconButton
+                onClick={onShareWhatsApp}
+                sx={{
+                  color: '#25D366',
+                  '&:hover': { bgcolor: alpha('#25D366', 0.1) },
+                }}
+              >
+                <MessageCircle size={20} />
+              </IconButton>
+            </Tooltip>
+          )}
+          {onCopyLink && (
+            <Tooltip title="Copiar enlace">
+              <IconButton onClick={onCopyLink} sx={{ color: 'text.secondary' }}>
+                <Link2 size={20} />
+              </IconButton>
+            </Tooltip>
+          )}
           <Tooltip title="Compartir perfil">
             <IconButton onClick={onShare} sx={{ color: 'text.secondary' }}>
               <Share2 size={20} />

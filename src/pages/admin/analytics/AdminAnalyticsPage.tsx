@@ -10,7 +10,7 @@
  * Designed by ARIA - Capitana del Concilio de Creacion
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -37,10 +37,12 @@ import { emeraldCore } from '../../../design-system/tokens/colors';
 // Tab components
 import { OverviewTab, ProductsTab, UsersTab, HealthTab } from './components';
 import { useAnalyticsData } from './hooks';
+import Breadcrumbs from '../../../components/shared/Breadcrumbs';
 
 const AdminAnalyticsPage: React.FC = () => {
   const { mode } = useThemeMode();
   const [activeTab, setActiveTab] = useState(0);
+  const [relativeTime, setRelativeTime] = useState('ahora');
   const isLight = mode === 'light';
 
   // Get all analytics data from the hook
@@ -69,7 +71,22 @@ const AdminAnalyticsPage: React.FC = () => {
     handleExport,
     handleRefresh,
     isLoading,
+    lastRefreshedAt,
   } = useAnalyticsData();
+
+  // Auto-update relative time display
+  useEffect(() => {
+    const updateRelativeTime = () => {
+      const diffMs = Date.now() - lastRefreshedAt.getTime();
+      const diffMin = Math.floor(diffMs / 60000);
+      if (diffMin < 1) setRelativeTime('ahora');
+      else if (diffMin < 60) setRelativeTime(`hace ${diffMin} min`);
+      else setRelativeTime(`hace ${Math.floor(diffMin / 60)}h`);
+    };
+    updateRelativeTime();
+    const interval = setInterval(updateRelativeTime, 30000);
+    return () => clearInterval(interval);
+  }, [lastRefreshedAt]);
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -77,6 +94,14 @@ const AdminAnalyticsPage: React.FC = () => {
 
   return (
     <Box sx={{ p: spacing.md, pb: 12, maxWidth: 600, mx: 'auto' }}>
+      {/* Breadcrumb navigation */}
+      <Breadcrumbs
+        items={[
+          { label: 'Cuentas', path: '/cuentas' },
+          { label: 'Analytics' },
+        ]}
+      />
+
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Box>
@@ -84,7 +109,7 @@ const AdminAnalyticsPage: React.FC = () => {
             Analytics
           </Typography>
           <Typography variant="caption" sx={{ fontSize: iosTypographyScale.caption1, color: 'text.secondary' }}>
-            Dashboard de negocio
+            Dashboard de negocio · Actualizado {relativeTime}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>

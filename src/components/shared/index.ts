@@ -18,6 +18,11 @@ export { default as MediaPreview } from './MediaPreview';
 // Protection
 export { default as ProtectedContent } from './ProtectedContent';
 
+// Accessibility & Navigation
+export { default as ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';
+export { LiveRegionProvider, useLiveRegion } from './LiveRegion';
+export { default as Breadcrumbs, type BreadcrumbItem, type BreadcrumbsProps } from './Breadcrumbs';
+
 // Analytics & Dashboard Components
 export { default as TabPanel, type TabPanelProps } from './TabPanel';
 export { default as MetricCard, type MetricCardProps } from './MetricCard';

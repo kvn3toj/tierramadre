@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { prefetchRoute } from '../../utils/routePrefetch';
 import { TreasureItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
@@ -64,6 +66,7 @@ function GridCard({
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const { shouldShowPrices } = usePriceShare();
+  const prefersReducedMotion = useReducedMotion();
 
   const labelColor = iosSemanticColors.label[mode];
   const secondaryLabelColor = iosSemanticColors.secondaryLabel[mode];
@@ -78,10 +81,16 @@ function GridCard({
     onToggleComparison?.();
   }, [onToggleComparison]);
 
+  const handlePrefetch = useCallback(() => {
+    prefetchRoute('product');
+  }, []);
+
   return (
     <Card
       elevation={0}
       onClick={onItemClick}
+      onMouseEnter={handlePrefetch}
+      onFocus={handlePrefetch}
       role="article"
       aria-label={`${item.nombre} - ${item.color}`}
       tabIndex={0}
@@ -94,18 +103,18 @@ function GridCard({
         borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
         overflow: 'hidden',
-        transition: animation.transition.spring,
+        transition: prefersReducedMotion ? 'none' : animation.transition.spring,
         cursor: 'pointer',
         '&:hover': {
           borderColor: emeraldCore.primary,
-          transform: isMobile ? 'none' : 'translateY(-2px)',
+          transform: prefersReducedMotion || isMobile ? 'none' : 'translateY(-2px)',
           boxShadow: isLight
             ? '0 8px 20px rgba(0, 0, 0, 0.08)'
             : '0 8px 20px rgba(0, 0, 0, 0.25)',
         },
         '&:active': {
-          transform: 'scale(0.98)',
-          transition: animation.transition.fast,
+          transform: prefersReducedMotion ? 'none' : 'scale(0.98)',
+          transition: prefersReducedMotion ? 'none' : animation.transition.fast,
         },
         '&:focus-visible': {
           outline: `2px solid ${emeraldCore.primary}`,

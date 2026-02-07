@@ -208,6 +208,23 @@ export default function AsesorProfilePage() {
     }
   };
 
+  const handleShareWhatsApp = () => {
+    if (asesor) {
+      const url = window.location.href;
+      const text = `Mira el catalogo de ${asesor.name} en Tierra Madre - ${stats.disponibleCount} esmeraldas disponibles: ${url}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      // Could use a snackbar here in the future
+    } catch {
+      // Clipboard not available
+    }
+  };
+
   const clearFilters = () => {
     setSearchQuery('');
     setStatusFilter('all');
@@ -271,6 +288,8 @@ export default function AsesorProfilePage() {
         totalProducts={allProducts.length}
         onContact={handleContact}
         onShare={handleShare}
+        onShareWhatsApp={handleShareWhatsApp}
+        onCopyLink={handleCopyLink}
       />
 
       {/* My Cotizaciones Section - Only visible to profile owner */}
