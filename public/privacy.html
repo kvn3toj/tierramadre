@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Politica de Privacidad — Tierra Madre Studio</title>
+  <meta name="description" content="Politica de privacidad de Tierra Madre Studio, plataforma interna de catalogo y ventas de esmeraldas colombianas." />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-inicio-gris-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --emerald: #00695c;
+      --emerald-light: #e0f2f1;
+      --emerald-subtle: #f0faf9;
+      --charcoal: #2C2C2C;
+      --text-secondary: #4A4A4A;
+      --text-muted: #6B6B6B;
+      --bg-white: #FDFDFB;
+      --border-light: #E8E8E4;
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans: 'Montserrat', 'Helvetica Neue', system-ui, sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--charcoal);
+      background-color: var(--bg-white);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--emerald);
+      color: #fff;
+      padding: 48px 24px 40px;
+      text-align: center;
+    }
+
+    .header__brand {
+      font-family: var(--font-serif);
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0.85;
+      margin-bottom: 12px;
+    }
+
+    .header__title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+    }
+
+    .header__date {
+      font-size: 0.8125rem;
+      font-weight: 300;
+      margin-top: 16px;
+      opacity: 0.75;
+    }
+
+    /* ── Main Content ── */
+    .content {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    .intro {
+      font-size: 1.0625rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    /* ── Sections ── */
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section__number {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--emerald);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .section__title {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--charcoal);
+      margin-bottom: 16px;
+      line-height: 1.3;
+    }
+
+    .section p {
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+    }
+
+    .section ul {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0 16px;
+    }
+
+    .section ul li {
+      position: relative;
+      padding-left: 20px;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+
+    .section ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--emerald);
+      opacity: 0.5;
+    }
+
+    /* ── Highlight Box ── */
+    .highlight {
+      background: var(--emerald-subtle);
+      border-left: 3px solid var(--emerald);
+      padding: 20px 24px;
+      margin: 20px 0;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .highlight p {
+      color: var(--charcoal);
+      font-weight: 500;
+      margin-bottom: 0;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--border-light);
+      margin: 40px 0;
+      border: none;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding: 32px 24px 48px;
+      border-top: 1px solid var(--border-light);
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .footer__brand {
+      font-family: var(--font-serif);
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--emerald);
+      margin-bottom: 8px;
+    }
+
+    .footer__tagline {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      font-weight: 300;
+      letter-spacing: 0.05em;
+    }
+
+    .footer__link {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 0.875rem;
+      color: var(--emerald);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .footer__link:hover {
+      text-decoration: underline;
+    }
+
+    /* ── Links ── */
+    a {
+      color: var(--emerald);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .header {
+        padding: 36px 20px 32px;
+      }
+
+      .content {
+        padding: 32px 20px 64px;
+      }
+
+      .section__title {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header__brand">Tierra Madre Studio</div>
+    <h1 class="header__title">Politica de Privacidad</h1>
+    <div class="header__date">Ultima actualizacion: 7 de febrero de 2026</div>
+  </header>
+
+  <main class="content">
+
+    <div class="intro">
+      Tierra Madre Studio (<a href="https://tierra-madre-studio.vercel.app">tierra-madre-studio.vercel.app</a>) es una herramienta interna de negocio desarrollada para la gestion de catalogo, cotizaciones y ventas de esmeraldas colombianas. Nos comprometemos a proteger la privacidad de nuestros usuarios y a manejar sus datos de forma responsable y transparente.
+    </div>
+
+    <!-- 1. Datos que recopilamos -->
+    <section class="section">
+      <div class="section__number">Seccion 01</div>
+      <h2 class="section__title">Datos que recopilamos</h2>
+      <p>Recopilamos unicamente la informacion minima necesaria para el funcionamiento de la plataforma:</p>
+      <ul>
+        <li><strong>Informacion de cuenta de Google:</strong> nombre completo, direccion de correo electronico y foto de perfil, obtenidos a traves de Google Sign-In.</li>
+        <li><strong>Rol de usuario:</strong> asignacion interna (administrador, asesor o invitado) para control de acceso.</li>
+        <li><strong>Datos de actividad:</strong> registros de productos visualizados, cotizaciones generadas y acciones dentro de la plataforma con fines de analitica interna.</li>
+        <li><strong>Preferencias de usuario:</strong> configuraciones de idioma, tema visual y otras preferencias de la interfaz.</li>
+      </ul>
+      <div class="highlight">
+        <p>No recopilamos datos financieros, informacion sensible, ni datos personales mas alla de lo descrito anteriormente.</p>
+      </div>
+    </section>
+
+    <!-- 2. Como usamos los datos -->
+    <section class="section">
+      <div class="section__number">Seccion 02</div>
+      <h2 class="section__title">Como utilizamos sus datos</h2>
+      <p>Los datos recopilados se utilizan exclusivamente para:</p>
+      <ul>
+        <li><strong>Autenticacion y control de acceso:</strong> verificar la identidad del usuario y asignar permisos segun su rol.</li>
+        <li><strong>Gestion del catalogo:</strong> mostrar el inventario de productos y sus imagenes asociadas.</li>
+        <li><strong>Generacion de cotizaciones:</strong> crear y almacenar documentos de cotizacion para clientes.</li>
+        <li><strong>Analitica interna:</strong> comprender el uso de la plataforma para mejorar la experiencia.</li>
+        <li><strong>Comunicaciones operativas:</strong> enviar notificaciones relacionadas con cotizaciones y actividad del negocio.</li>
+      </ul>
+      <div class="highlight">
+        <p>Nunca vendemos, compartimos ni transferimos datos personales a terceros con fines comerciales, publicitarios ni de ninguna otra indole.</p>
+      </div>
+    </section>
+
+    <!-- 3. Uso de las APIs de Google -->
+    <section class="section">
+      <div class="section__number">Seccion 03</div>
+      <h2 class="section__title">Uso de las APIs de Google</h2>
+      <p>Tierra Madre Studio utiliza las APIs de Google para funciones esenciales de la plataforma. A continuacion, detallamos cada servicio y su proposito:</p>
+
+      <p><strong>Google Sign-In (OAuth 2.0)</strong></p>
+      <ul>
+        <li>Se utiliza exclusivamente para autenticar a los usuarios de la plataforma.</li>
+        <li>Solicitamos acceso al perfil basico (nombre, correo electronico y foto).</li>
+        <li>No accedemos a contactos, calendario ni otros servicios de Google del usuario.</li>
+      </ul>
+
+      <p><strong>Google Drive API</strong></p>
+      <ul>
+        <li>Se utiliza para almacenar y servir las fotografias y videos de los productos del catalogo.</li>
+        <li>El acceso se limita a una carpeta compartida especifica del negocio.</li>
+        <li>No accedemos a archivos personales del usuario en Google Drive.</li>
+      </ul>
+
+      <p><strong>Google Sheets API</strong></p>
+      <ul>
+        <li>Se utiliza como base de datos para el inventario de productos, cotizaciones, registros de actividad y datos de asesores.</li>
+        <li>El acceso se limita a hojas de calculo especificas del negocio.</li>
+        <li>No accedemos a hojas de calculo personales del usuario.</li>
+      </ul>
+
+      <div class="highlight">
+        <p>El uso de datos recibidos de las APIs de Google se adhiere a la <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">Politica de Datos de Usuario de los Servicios de API de Google</a>, incluyendo los requisitos de Uso Limitado. No transferimos datos de Google a terceros, no los usamos para publicidad, y limitamos su uso a las funciones descritas en esta politica.</p>
+      </div>
+    </section>
+
+    <!-- 4. Almacenamiento de datos -->
+    <section class="section">
+      <div class="section__number">Seccion 04</div>
+      <h2 class="section__title">Almacenamiento de datos</h2>
+      <p>Los datos se almacenan en los siguientes servicios:</p>
+      <ul>
+        <li><strong>Google Sheets:</strong> datos de inventario, cotizaciones, preferencias de usuario y registros de actividad. Protegidos por los controles de acceso de Google Workspace.</li>
+        <li><strong>Google Drive:</strong> imagenes y videos de productos. Acceso restringido a cuentas autorizadas del negocio.</li>
+        <li><strong>Vercel:</strong> la aplicacion se despliega en la infraestructura de Vercel. Las funciones serverless procesan solicitudes pero no almacenan datos de forma persistente.</li>
+      </ul>
+      <p>No operamos servidores de bases de datos propios. Toda la informacion reside en la infraestructura segura de Google y Vercel.</p>
+    </section>
+
+    <!-- 5. Cookies y almacenamiento local -->
+    <section class="section">
+      <div class="section__number">Seccion 05</div>
+      <h2 class="section__title">Cookies y almacenamiento local</h2>
+      <p>Tierra Madre Studio utiliza almacenamiento local del navegador (localStorage) para:</p>
+      <ul>
+        <li><strong>Sesion de usuario:</strong> mantener la sesion iniciada entre visitas.</li>
+        <li><strong>Cache de datos:</strong> almacenar temporalmente datos del catalogo para mejorar el rendimiento y permitir funcionalidad parcial sin conexion.</li>
+        <li><strong>Preferencias:</strong> guardar ajustes de idioma, tema visual y otras configuraciones de la interfaz.</li>
+        <li><strong>Version de la aplicacion:</strong> controlar actualizaciones del sistema.</li>
+      </ul>
+      <p>No utilizamos cookies de terceros ni tecnologias de rastreo con fines publicitarios. Los unicos scripts externos son los necesarios para la autenticacion con Google.</p>
+    </section>
+
+    <!-- 6. Seguridad -->
+    <section class="section">
+      <div class="section__number">Seccion 06</div>
+      <h2 class="section__title">Seguridad de los datos</h2>
+      <p>Implementamos las siguientes medidas de seguridad:</p>
+      <ul>
+        <li>Todas las comunicaciones se realizan a traves de HTTPS con cifrado TLS.</li>
+        <li>La autenticacion se gestiona mediante OAuth 2.0 de Google, un estandar de la industria.</li>
+        <li>El acceso a la plataforma esta restringido a usuarios autorizados por rol.</li>
+        <li>Las credenciales de servicio se almacenan de forma segura como variables de entorno en Vercel, nunca en el codigo fuente.</li>
+        <li>No almacenamos contrasenas de usuarios en ningun momento.</li>
+      </ul>
+    </section>
+
+    <!-- 7. Derechos del usuario -->
+    <section class="section">
+      <div class="section__number">Seccion 07</div>
+      <h2 class="section__title">Derechos del usuario</h2>
+      <p>Como usuario de Tierra Madre Studio, usted tiene derecho a:</p>
+      <ul>
+        <li><strong>Acceso:</strong> solicitar informacion sobre los datos que almacenamos sobre usted.</li>
+        <li><strong>Rectificacion:</strong> solicitar la correccion de datos inexactos.</li>
+        <li><strong>Eliminacion:</strong> solicitar la eliminacion de sus datos personales de nuestros registros.</li>
+        <li><strong>Revocacion:</strong> revocar el acceso de la aplicacion a su cuenta de Google en cualquier momento desde la <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">configuracion de seguridad de su cuenta de Google</a>.</li>
+        <li><strong>Portabilidad:</strong> solicitar una copia de sus datos en un formato legible.</li>
+      </ul>
+      <p>Para ejercer cualquiera de estos derechos, contactenos a traves de los canales indicados en la siguiente seccion.</p>
+    </section>
+
+    <!-- 8. Contacto -->
+    <section class="section">
+      <div class="section__number">Seccion 08</div>
+      <h2 class="section__title">Contacto</h2>
+      <p>Si tiene preguntas, inquietudes o solicitudes relacionadas con esta politica de privacidad o el manejo de sus datos, puede comunicarse con nosotros:</p>
+      <ul>
+        <li><strong>Correo electronico:</strong> <a href="mailto:tierramadrestudio@gmail.com">tierramadrestudio@gmail.com</a></li>
+        <li><strong>Plataforma:</strong> <a href="https://tierra-madre-studio.vercel.app">tierra-madre-studio.vercel.app</a></li>
+      </ul>
+      <p>Nos comprometemos a responder a todas las solicitudes en un plazo maximo de 30 dias habiles.</p>
+    </section>
+
+    <!-- 9. Cambios a esta politica -->
+    <section class="section">
+      <div class="section__number">Seccion 09</div>
+      <h2 class="section__title">Cambios a esta politica</h2>
+      <p>Nos reservamos el derecho de actualizar esta politica de privacidad en cualquier momento. Cualquier modificacion sera publicada en esta misma pagina con la fecha de actualizacion correspondiente. Recomendamos revisar esta politica periodicamente.</p>
+      <p>El uso continuado de la plataforma despues de cualquier cambio constituye la aceptacion de la politica actualizada.</p>
+    </section>
+
+    <hr class="divider" />
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer__brand">Tierra Madre Studio</div>
+    <div class="footer__tagline">Esmeraldas colombianas &mdash; Esencia y Poder</div>
+    <a href="https://tierra-madre-studio.vercel.app" class="footer__link">Volver a la plataforma</a>
+  </footer>
+
+</body>
+</html>
