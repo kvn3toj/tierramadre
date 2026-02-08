@@ -4,7 +4,7 @@
  */
 
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -93,13 +93,22 @@ export default function ProductDetail() {
     enabled: !!product && !isLoadingSheets,
   });
 
+  // Stable refs for treasure functions whose identity changes on every
+  // galleries update — avoids infinite fetch loop in the effect below.
+  const getMediaItemsRef = useRef(getMediaItems);
+  const updateMediaItemsRef = useRef(updateMediaItems);
+  useEffect(() => {
+    getMediaItemsRef.current = getMediaItems;
+    updateMediaItemsRef.current = updateMediaItems;
+  }, [getMediaItems, updateMediaItems]);
+
   // Load media items for the product from Google Drive folder
   useEffect(() => {
     if (product) {
       let isCancelled = false;
 
       const loadMedia = async () => {
-        const localItems = getMediaItems ? getMediaItems(product.item) : [];
+        const localItems = getMediaItemsRef.current ? getMediaItemsRef.current(product.item) : [];
 
         const legacyItem: MediaItem | null = product.imagen ? {
           id: `legacy-${product.item}`,
@@ -150,12 +159,12 @@ export default function ProductDetail() {
               setMediaItems(prev => {
                 if (prev.length === sortedItems.length &&
                     prev.every((p, i) => p.url === sortedItems[i].url)) {
-                  return prev; // Same content = same reference = no re-render
+                  return prev;
                 }
                 return sortedItems;
               });
-              if (updateMediaItems) {
-                updateMediaItems(product.item, driveItems);
+              if (updateMediaItemsRef.current) {
+                updateMediaItemsRef.current(product.item, driveItems);
               }
             }
           }
@@ -172,7 +181,7 @@ export default function ProductDetail() {
         isCancelled = true;
       };
     }
-  }, [product, getMediaItems, updateMediaItems, displayName]);
+  }, [product, displayName]);
 
   // Handle share product
   const handleShareProduct = useCallback(async () => {
