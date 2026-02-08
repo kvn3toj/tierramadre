@@ -108,21 +108,12 @@ export default function ProductDetail() {
       let isCancelled = false;
 
       const loadMedia = async () => {
+        // Only show cached Drive items immediately — these have the same
+        // IDs/URLs the API will return, so no gallery reset on arrival.
+        // Legacy item is reserved as a fallback if the API fails.
         const localItems = getMediaItemsRef.current ? getMediaItemsRef.current(product.item) : [];
-
-        const legacyItem: MediaItem | null = product.imagen ? {
-          id: `legacy-${product.item}`,
-          url: product.imagen,
-          type: product.mediaType === 'video' ? 'video' : 'image',
-          thumbnailUrl: product.thumbnailUrl,
-          category: 'hero',
-          alt: displayName || `Producto ${product.item}`,
-          order: 0,
-        } : null;
-
-        const initialItems = localItems.length > 0 ? localItems : (legacyItem ? [legacyItem] : []);
-        if (initialItems.length > 0) {
-          setMediaItems(initialItems);
+        if (localItems.length > 0) {
+          setMediaItems(localItems);
         }
 
         try {
@@ -167,10 +158,35 @@ export default function ProductDetail() {
                 updateMediaItemsRef.current(product.item, driveItems);
               }
             }
+          } else if (!isCancelled && localItems.length === 0) {
+            // API returned nothing and no cache — fall back to legacy image
+            if (product.imagen) {
+              setMediaItems([{
+                id: `legacy-${product.item}`,
+                url: product.imagen,
+                type: product.mediaType === 'video' ? 'video' : 'image',
+                thumbnailUrl: product.thumbnailUrl,
+                category: 'hero',
+                alt: displayName || `Producto ${product.item}`,
+                order: 0,
+              }]);
+            }
           }
         } catch (error) {
           if (!isCancelled) {
             log.error('Error fetching Drive images:', error);
+            // On error with no cache, fall back to legacy image
+            if (localItems.length === 0 && product.imagen) {
+              setMediaItems([{
+                id: `legacy-${product.item}`,
+                url: product.imagen,
+                type: product.mediaType === 'video' ? 'video' : 'image',
+                thumbnailUrl: product.thumbnailUrl,
+                category: 'hero',
+                alt: displayName || `Producto ${product.item}`,
+                order: 0,
+              }]);
+            }
           }
         }
       };

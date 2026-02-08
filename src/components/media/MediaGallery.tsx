@@ -257,17 +257,20 @@ export default function MediaGallery({
     });
   }, [currentIndex, media, preloadAndDecode]);
 
-  // Clear cache when media content actually changes (different product)
+  // Clear cache when media content actually changes (different product or API data arrived)
   const prevMediaKey = useRef(media.map(m => m.id).join(','));
   useEffect(() => {
     const newKey = media.map(m => m.id).join(',');
     if (prevMediaKey.current !== newKey) {
       prevMediaKey.current = newKey;
       preloadCache.current.clear();
-      setVisibleIndex(0);
-      setCurrentIndex(0);
       setErrorIndices(new Set());
       setLoadingIndices(new Set());
+      // Clamp indices to valid range instead of resetting to 0.
+      // This avoids a visible jump when media updates for the same product.
+      const maxIdx = Math.max(0, media.length - 1);
+      setCurrentIndex(prev => Math.min(prev, maxIdx));
+      setVisibleIndex(prev => Math.min(prev, maxIdx));
     }
   }, [media]);
 
