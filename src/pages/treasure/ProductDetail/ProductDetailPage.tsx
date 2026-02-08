@@ -55,6 +55,7 @@ export default function ProductDetail() {
   const isProvider = useIsProvider();
   const { shouldShowPrices } = usePriceShare();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+  const [mediaLoaded, setMediaLoaded] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
@@ -114,6 +115,7 @@ export default function ProductDetail() {
         const localItems = getMediaItemsRef.current ? getMediaItemsRef.current(product.item) : [];
         if (localItems.length > 0) {
           setMediaItems(localItems);
+          setMediaLoaded(true);
         }
 
         try {
@@ -172,9 +174,11 @@ export default function ProductDetail() {
               }]);
             }
           }
+          if (!isCancelled) setMediaLoaded(true);
         } catch (error) {
           if (!isCancelled) {
             log.error('Error fetching Drive images:', error);
+            setMediaLoaded(true);
             // On error with no cache, fall back to legacy image
             if (localItems.length === 0 && product.imagen) {
               setMediaItems([{
@@ -363,11 +367,17 @@ export default function ProductDetail() {
                 media={mediaItems}
                 productName={displayName}
               />
+            ) : !mediaLoaded ? (
+              // Skeleton matches gallery aspect ratio to prevent layout jump
+              <Skeleton
+                variant="rounded"
+                sx={{ width: '100%', aspectRatio: '4/3' }}
+              />
             ) : (
               <Box
                 sx={{
                   width: '100%',
-                  height: { xs: 300, sm: 400, md: 500 },
+                  aspectRatio: '4/3',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
