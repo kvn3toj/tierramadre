@@ -112,7 +112,18 @@ export default function ProductDetail() {
         const localItems = getMediaItemsRef.current ? getMediaItemsRef.current(product.item) : [];
         if (localItems.length > 0) {
           setMediaItems(localItems);
-
+        } else if (product.imagen) {
+          // Show legacy image immediately as placeholder while API loads.
+          // This ensures the gallery never starts empty (no empty→populated jump).
+          setMediaItems([{
+            id: `legacy-${product.item}`,
+            url: product.imagen,
+            type: product.mediaType === 'video' ? 'video' : 'image',
+            thumbnailUrl: product.thumbnailUrl,
+            category: 'hero' as const,
+            alt: displayName || `Producto ${product.item}`,
+            order: 0,
+          }]);
         }
 
         try {

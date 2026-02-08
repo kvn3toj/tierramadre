@@ -450,7 +450,7 @@ export default function MediaGallery({
               if (item.type === 'video') {
                 return (
                   <Box
-                    key={`slide-${item.id}`}
+                    key={`slide-${index}`}
                     sx={{
                       position: 'absolute',
                       inset: 0,
@@ -528,7 +528,7 @@ export default function MediaGallery({
               // Image slide
               return (
                 <Box
-                  key={`slide-${item.id}`}
+                  key={`slide-${index}`}
                   sx={{
                     position: 'absolute',
                     inset: 0,
