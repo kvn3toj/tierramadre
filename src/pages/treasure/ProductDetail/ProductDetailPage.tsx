@@ -11,13 +11,12 @@ import {
   Button,
   Paper,
   Grid,
-  alpha,
   useTheme,
   Snackbar,
   Skeleton,
 } from '@mui/material';
 import { ChevronLeft, Package, Crown } from 'lucide-react';
-import logoPlaceholder from '../../../assets/logo-symbol.png';
+
 import { useShare } from '../../../hooks/useShare';
 import { useHaptics } from '../../../hooks/useHaptics';
 import { useProductView } from '../../../hooks/useProductView';
@@ -34,7 +33,6 @@ import { MemberBenefitsTeaser } from '../../../components/guest';
 import { MediaGallery } from '../../../components/media';
 import type { MediaItem } from '../../../components/media/types';
 import { PriceDisplay } from '../../../components/price-simulator/PriceDisplay';
-import { getColorDot } from '../../../utils/formatting';
 import { createLogger } from '../../../utils/logger';
 import { surfacesLight, surfacesDark, goldAccent, emeraldCore } from '../../../design-system/tokens/colors';
 import { buttonGradients } from '../../../design-system/tokens/gradients';
@@ -55,7 +53,6 @@ export default function ProductDetail() {
   const isProvider = useIsProvider();
   const { shouldShowPrices } = usePriceShare();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
-  const [mediaLoaded, setMediaLoaded] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
@@ -115,7 +112,7 @@ export default function ProductDetail() {
         const localItems = getMediaItemsRef.current ? getMediaItemsRef.current(product.item) : [];
         if (localItems.length > 0) {
           setMediaItems(localItems);
-          setMediaLoaded(true);
+
         }
 
         try {
@@ -174,11 +171,10 @@ export default function ProductDetail() {
               }]);
             }
           }
-          if (!isCancelled) setMediaLoaded(true);
         } catch (error) {
           if (!isCancelled) {
             log.error('Error fetching Drive images:', error);
-            setMediaLoaded(true);
+  
             // On error with no cache, fall back to legacy image
             if (localItems.length === 0 && product.imagen) {
               setMediaItems([{
@@ -328,7 +324,6 @@ export default function ProductDetail() {
     );
   }
 
-  const colorDot = getColorDot(product.color);
   const isAvailable = product.estado === 'DISPONIBLE';
   const separatorColor = isLight ? 'rgba(60, 60, 67, 0.12)' : 'rgba(235, 235, 245, 0.12)';
   const secondaryTextColor = isLight ? 'rgba(60, 60, 67, 0.6)' : 'rgba(235, 235, 245, 0.6)';
@@ -362,49 +357,10 @@ export default function ProductDetail() {
               position: 'relative',
             }}
           >
-            {mediaItems.length > 0 ? (
-              <MediaGallery
-                media={mediaItems}
-                productName={displayName}
-              />
-            ) : !mediaLoaded ? (
-              // Skeleton matches gallery aspect ratio to prevent layout jump
-              <Skeleton
-                variant="rounded"
-                sx={{ width: '100%', aspectRatio: '4/3' }}
-              />
-            ) : (
-              <Box
-                sx={{
-                  width: '100%',
-                  aspectRatio: '4/3',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  bgcolor: alpha(colorDot, 0.1),
-                  position: 'relative',
-                }}
-              >
-                <Box
-                  component="img"
-                  src={logoPlaceholder}
-                  alt=""
-                  sx={{
-                    width: 120,
-                    height: 'auto',
-                    opacity: 0.28,
-                    filter: isLight ? 'brightness(0.7)' : 'brightness(0.5)',
-                  }}
-                />
-                <Typography
-                  variant="body2"
-                  sx={{ mt: 2, color: theme.palette.text.secondary }}
-                >
-                  Sin imagenes
-                </Typography>
-              </Box>
-            )}
+            <MediaGallery
+              media={mediaItems}
+              productName={displayName}
+            />
           </Paper>
         </Grid>
 
