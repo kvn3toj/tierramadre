@@ -349,9 +349,18 @@ export default function MediaGallery({
     return Math.max(0, imageOnlyIndex);
   }, [media, currentIndex]);
 
+  // Track previous visible index so we can keep it in the DOM for one
+  // extra render cycle — prevents the old slide from vanishing before the
+  // new slide has fully painted.
+  const prevVisibleRef = useRef(visibleIndex);
+  useEffect(() => {
+    prevVisibleRef.current = visibleIndex;
+  }, [visibleIndex]);
+
   // Determine which indices to render in the double-buffer
   const indicesToRender = useMemo(() => {
     const set = new Set<number>();
+    set.add(prevVisibleRef.current); // old slide: safety net
     set.add(visibleIndex);
     set.add(currentIndex);
     return set;
@@ -444,7 +453,6 @@ export default function MediaGallery({
                       inset: 0,
                       opacity: isVisible ? 1 : 0,
                       zIndex: isVisible ? 1 : 0,
-                      transition: 'opacity 0.15s ease',
                       transform: 'translateZ(0)',
                     }}
                   >
@@ -523,7 +531,6 @@ export default function MediaGallery({
                     inset: 0,
                     opacity: isVisible ? 1 : 0,
                     zIndex: isVisible ? 1 : (isIncoming ? 2 : 0),
-                    transition: 'opacity 0.15s ease',
                     transform: 'translateZ(0)',
                     WebkitBackfaceVisibility: 'hidden',
                   }}
