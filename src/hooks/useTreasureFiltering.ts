@@ -13,8 +13,11 @@ import { useFilterInactivityTimeout } from './useFilterInactivityTimeout';
 
 // Sequential stock: same product listed multiple times.
 // Only the first non-sold item in each group is shown; the rest are hidden.
-const SEQUENTIAL_STOCK_GROUPS: [number, number][] = [
-  [135, 151], // Same product, show one at a time
+const seq = (start: number, end: number) =>
+  Array.from({ length: end - start + 1 }, (_, i) => start + i);
+
+const SEQUENTIAL_STOCK_GROUPS: number[][] = [
+  [125, ...seq(135, 151)], // Same product, show one at a time
 ];
 
 export type { SortOption } from './useTreasureSort';
@@ -122,9 +125,10 @@ export function useTreasureFiltering({
   // Hide sequential stock duplicates — keep only the first non-sold item per group
   const hiddenItems = useMemo(() => {
     const hidden = new Set<number>();
-    for (const [start, end] of SEQUENTIAL_STOCK_GROUPS) {
+    for (const group of SEQUENTIAL_STOCK_GROUPS) {
+      const groupSet = new Set(group);
       const groupItems = treasure
-        .filter(t => t.item >= start && t.item <= end)
+        .filter(t => groupSet.has(t.item))
         .sort((a, b) => a.item - b.item);
 
       const activeItem = groupItems.find(
