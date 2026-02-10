@@ -11,6 +11,12 @@ import { useFilterOptions } from './useFilterOptions';
 import { useTreasureSort, type SortOption } from './useTreasureSort';
 import { useFilterInactivityTimeout } from './useFilterInactivityTimeout';
 
+// Sequential stock: same product listed multiple times.
+// Only the first non-sold item in each group is shown; the rest are hidden.
+const SEQUENTIAL_STOCK_GROUPS: [number, number][] = [
+  [135, 151], // Same product, show one at a time
+];
+
 export type { SortOption } from './useTreasureSort';
 export type TypeFilter = 'all' | 'loose' | 'jewelry';
 export type StatusFilter = 'all' | 'available' | 'sold';
@@ -113,9 +119,31 @@ export function useTreasureFiltering({
     }
   }, [priceMinMax.min, priceMinMax.max, treasure.length]);
 
+  // Hide sequential stock duplicates — keep only the first non-sold item per group
+  const hiddenItems = useMemo(() => {
+    const hidden = new Set<number>();
+    for (const [start, end] of SEQUENTIAL_STOCK_GROUPS) {
+      const groupItems = treasure
+        .filter(t => t.item >= start && t.item <= end)
+        .sort((a, b) => a.item - b.item);
+
+      const activeItem = groupItems.find(
+        t => (t.estado?.toUpperCase() || '') !== 'VENDIDA'
+      );
+
+      for (const t of groupItems) {
+        if (!activeItem || t.item !== activeItem.item) {
+          hidden.add(t.item);
+        }
+      }
+    }
+    return hidden;
+  }, [treasure]);
+
   // Filter treasure
   const filteredTreasure = useMemo(() => {
     return treasure.filter(item => {
+      if (hiddenItems.has(item.item)) return false;
       const itemEstado = item.estado?.toUpperCase() || '';
       const matchesStatus =
         statusFilter === 'all' ||
@@ -149,7 +177,7 @@ export function useTreasureFiltering({
 
       return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice && matchesCantidad && matchesCity && matchesColeccion && matchesItems;
     });
-  }, [treasure, search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, cantidadFilter, cityFilter, coleccionFilter, itemsFilter]);
+  }, [treasure, hiddenItems, search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, cantidadFilter, cityFilter, coleccionFilter, itemsFilter]);
 
   // Sort using extracted hook
   const sortedTreasure = useTreasureSort(filteredTreasure, sortBy);
