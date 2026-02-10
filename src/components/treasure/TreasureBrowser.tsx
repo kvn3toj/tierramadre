@@ -175,10 +175,8 @@ export default function TreasureBrowser({
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
-  const [hideRecentlyViewed, setHideRecentlyViewed] = useState(false);
-
-  const handleScrollDirectionChange = useCallback((direction: 'up' | 'down') => {
-    setHideRecentlyViewed(direction === 'down');
+  const handleScrollDirectionChange = useCallback((_direction: 'up' | 'down') => {
+    // No-op: recently viewed is always visible now
   }, []);
 
   // Get visible items based on pagination
@@ -449,13 +447,21 @@ export default function TreasureBrowser({
         </Box>
       )}
 
-      {/* Recently Viewed Carousel */}
-      {recentlyViewedItems.length > 0 && !hideRecentlyViewed && (
-        <RecentlyViewedCarousel
-          items={recentlyViewedItems}
-          onItemClick={handleItemClick}
-          onClear={clearRecent}
-        />
+      {/* Recently Viewed Carousel - always visible, sticky at top of grid */}
+      {recentlyViewedItems.length > 0 && (
+        <Box
+          sx={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+          }}
+        >
+          <RecentlyViewedCarousel
+            items={recentlyViewedItems}
+            onItemClick={handleItemClick}
+            onClear={clearRecent}
+          />
+        </Box>
       )}
 
       {/* Treasure Grid/List */}

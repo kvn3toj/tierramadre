@@ -3,7 +3,7 @@
  * Horizontal scroll carousel showing recently viewed items.
  * Displays thumbnails with quick info on hover.
  */
-import { useRef } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -53,6 +53,31 @@ export default function RecentlyViewedCarousel({
   const { shouldShowPrices } = usePriceShare();
   const prefersReducedMotion = useReducedMotion();
 
+  // Scroll edge state for fade indicators
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollEdges = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  }, []);
+
+  // Watch for scroll and resize changes
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    updateScrollEdges();
+    el.addEventListener('scroll', updateScrollEdges, { passive: true });
+    const ro = new ResizeObserver(updateScrollEdges);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener('scroll', updateScrollEdges);
+      ro.disconnect();
+    };
+  }, [updateScrollEdges, items.length]);
+
   // Limit items to maxItems
   const displayItems = items.slice(0, maxItems);
 
@@ -64,7 +89,7 @@ export default function RecentlyViewedCarousel({
   // Scroll handlers
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = (CARD_WIDTH + CARD_GAP) * 2;
+      const scrollAmount = (CARD_WIDTH + CARD_GAP) * 3;
       scrollRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: prefersReducedMotion ? 'auto' : 'smooth',
@@ -163,44 +188,69 @@ export default function RecentlyViewedCarousel({
         </Box>
       </Box>
 
-      {/* Carousel */}
-      <Box
-        ref={scrollRef}
-        sx={{
-          display: 'flex',
-          gap: `${CARD_GAP}px`,
-          overflowX: 'auto',
-          scrollSnapType: 'x mandatory',
-          scrollbarWidth: 'none',
-          '&::-webkit-scrollbar': { display: 'none' },
-          pb: 0.5, // Space for hover effects
-          // iOS HIG: Horizontal padding creates safe zones and prevents edge cutoff
-          px: 2, // 16px padding on both sides
-          // iOS HIG: Content insets for peek effect (show part of next/prev items)
-          '&::before': {
-            content: '""',
-            display: 'block',
-            width: 0,
-            flexShrink: 0,
-          },
-          '&::after': {
-            content: '""',
-            display: 'block',
-            width: 0,
-            flexShrink: 0,
-          },
-        }}
-      >
-        {displayItems.map((item) => (
-          <RecentItemCard
-            key={item.item}
-            item={item}
-            onClick={() => onItemClick(item)}
-            isLight={isLight}
-            hidePrice={!shouldShowPrices}
-            reducedMotion={prefersReducedMotion}
+      {/* Carousel with edge fade indicators */}
+      <Box sx={{ position: 'relative' }}>
+        {/* Left fade */}
+        {canScrollLeft && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: 24,
+              zIndex: 2,
+              pointerEvents: 'none',
+              background: isLight
+                ? `linear-gradient(to right, ${alpha(emeraldCore.lightest, 0.9)}, transparent)`
+                : `linear-gradient(to right, ${alpha(surfacesDark.background.tertiary, 0.95)}, transparent)`,
+            }}
           />
-        ))}
+        )}
+        {/* Right fade */}
+        {canScrollRight && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: 24,
+              zIndex: 2,
+              pointerEvents: 'none',
+              background: isLight
+                ? `linear-gradient(to left, ${alpha(emeraldCore.lightest, 0.9)}, transparent)`
+                : `linear-gradient(to left, ${alpha(surfacesDark.background.tertiary, 0.95)}, transparent)`,
+            }}
+          />
+        )}
+
+        <Box
+          ref={scrollRef}
+          sx={{
+            display: 'flex',
+            gap: `${CARD_GAP}px`,
+            overflowX: 'auto',
+            scrollSnapType: 'x mandatory',
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': { display: 'none' },
+            pb: 0.5,
+            px: 2,
+            // Better touch scrolling on iOS
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {displayItems.map((item) => (
+            <RecentItemCard
+              key={item.item}
+              item={item}
+              onClick={() => onItemClick(item)}
+              isLight={isLight}
+              hidePrice={!shouldShowPrices}
+              reducedMotion={prefersReducedMotion}
+            />
+          ))}
+        </Box>
       </Box>
     </Box>
   );

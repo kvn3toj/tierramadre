@@ -278,8 +278,10 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         opacity: 1,
 
         willChange: 'transform', // Hint to browser to optimize
+        // CRITICAL: Only transition visual properties - never position/transform
+        // Using 'all' caused the bar to animate away during scroll on some devices
         transition: effectiveConfig.animations
-          ? `all ${tabBarConfig.transitionDuration} ${easingCurves.liquidInOut}`
+          ? `background-color ${tabBarConfig.transitionDuration} ${easingCurves.liquidInOut}, backdrop-filter ${tabBarConfig.transitionDuration} ${easingCurves.liquidInOut}, box-shadow ${tabBarConfig.transitionDuration} ${easingCurves.liquidInOut}`
           : 'none',
 
         // Enhanced metallic shimmer effect - more visible

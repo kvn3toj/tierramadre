@@ -174,7 +174,11 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '100vh',
+        minHeight: '100dvh',
+        // Fallback for browsers without dvh support
+        '@supports not (min-height: 100dvh)': {
+          minHeight: '100vh',
+        },
         backgroundColor: 'var(--surface-primary)',
       }}
     >
