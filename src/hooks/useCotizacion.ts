@@ -3,11 +3,12 @@
  * Composition hook that combines form state and data management for quotations.
  * Delegates to useCotizacionForm and useCotizacionData for better modularity.
  */
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { TreasureItem } from '../types';
 import { useCotizacionForm } from './useCotizacionForm';
 import { useCotizacionData } from './useCotizacionData';
 import { STORAGE_KEYS } from '../constants/storage-keys';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 // Cotizacion product interface
 export interface CotizacionProduct {
@@ -171,6 +172,24 @@ export const getPesoDisplay = (item: CotizacionProduct | TreasureItem): string =
   }
   return typeof item.peso === 'number' ? `${item.peso} ct` : String(item.peso);
 };
+
+/**
+ * Hook that returns a currency-aware price formatter for cotizaciones.
+ * When the authorized user has USD mode active, prices are converted and formatted in USD.
+ * For all other users, prices remain in COP (passthrough).
+ */
+export function useCotizacionFormat() {
+  const { currency, convertPrice } = useCurrency();
+
+  const formatPrice = useMemo(
+    () => (amountCOP: number): string => {
+      return formatCotizacionCurrency(convertPrice(amountCOP), currency);
+    },
+    [currency, convertPrice],
+  );
+
+  return { formatPrice, currency, convertPrice };
+}
 
 export interface UseCotizacionReturn {
   // Quotation info

@@ -31,10 +31,8 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { brandColors } from '../constants';
-import { formatCotizacionCurrency } from '../../../hooks/useCotizacion';
+import { useCotizacionFormat } from '../../../hooks/useCotizacion';
 import type { InvestmentFormSectionProps } from '../types';
-
-const formatCurrency = formatCotizacionCurrency;
 
 /**
  * Get icon for investment type
@@ -63,7 +61,9 @@ export const InvestmentFormSection: React.FC<InvestmentFormSectionProps> = ({
   setNewCustomValue,
   handleAddCustomCost,
   totalInvestment,
-}) => (
+}) => {
+  const { formatPrice: formatCurrency } = useCotizacionFormat();
+  return (
   <Box sx={{ mb: 3 }}>
     <Box
       sx={{
@@ -254,6 +254,7 @@ export const InvestmentFormSection: React.FC<InvestmentFormSectionProps> = ({
       </Box>
     )}
   </Box>
-);
+  );
+};
 
 export default InvestmentFormSection;

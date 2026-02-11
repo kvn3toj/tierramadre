@@ -11,12 +11,13 @@
 
 import React from 'react';
 import { Box, Typography, IconButton, Backdrop, Switch, SxProps, Theme } from '@mui/material';
-import { Close, DarkMode, LightMode, Language, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Close, DarkMode, LightMode, Language, Visibility, VisibilityOff, AttachMoney, CurrencyExchange } from '@mui/icons-material';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { radius, layoutConstants, iosTypographyScale } from '../../design-system';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import MeditationReminderSetting from '../settings/MeditationReminderSetting';
 import { UserProfileCard } from '../auth';
 
@@ -140,8 +141,10 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
   const { mode, toggleTheme } = useTheme();
   const { language, t, toggleLanguage } = useLanguage();
   const { showPrices, togglePriceShare, canToggle } = usePriceShare();
+  const { currency, toggleCurrency, canToggleCurrency } = useCurrency();
 
   const isDarkMode = mode === 'dark';
+  const isUSD = currency === 'USD';
   const isEnglish = language === 'en';
 
   return (
@@ -266,6 +269,23 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
               checked={showPrices}
               onChange={togglePriceShare}
               accentColor="#34C759"
+            />
+          )}
+
+          {/* Currency Toggle - Only for authorized user */}
+          {canToggleCurrency && (
+            <SettingToggleItem
+              icon={
+                isUSD
+                  ? <AttachMoney sx={{ fontSize: '24px', color: '#2E7D32' }} />
+                  : <CurrencyExchange sx={{ fontSize: '24px', color: '#2E7D32' }} />
+              }
+              iconBgColor="#2E7D3215"
+              title={t.settings.currencyMode}
+              subtitle={isUSD ? t.settings.currencyUSDActive : t.settings.currencyCOPActive}
+              checked={isUSD}
+              onChange={toggleCurrency}
+              accentColor="#2E7D32"
             />
           )}
 

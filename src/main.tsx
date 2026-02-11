@@ -7,6 +7,7 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { GoogleAuthProvider } from './contexts/GoogleAuthContext';
 import { PriceShareProvider } from './contexts/PriceShareContext';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import { checkAndInvalidateCaches } from './utils/cacheInvalidation';
 import { STORAGE_KEYS } from './constants/storage-keys';
 import './design-system/tokens/css-variables.css';
@@ -92,7 +93,9 @@ waitForVersionReady().then(() => {
           <GoogleWrapper>
             <AuthProvider>
                 <PriceShareProvider>
-                  <App />
+                  <CurrencyProvider>
+                    <App />
+                  </CurrencyProvider>
                 </PriceShareProvider>
               </AuthProvider>
           </GoogleWrapper>

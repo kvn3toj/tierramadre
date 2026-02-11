@@ -185,6 +185,9 @@ export const es = {
     viewPrices: 'Mostrar Precios',
     pricesShared: 'Visibles',
     pricesPrivate: 'Privados',
+    currencyMode: 'Moneda',
+    currencyUSDActive: 'Precios en USD (x4)',
+    currencyCOPActive: 'Precios en COP',
   },
 
   // Common

@@ -310,11 +310,13 @@ async function addGridLayout(
 
     // Price (if enabled) - right side
     if (options.showPrices && emerald.priceCOP) {
-      const price = new Intl.NumberFormat('es-CO', {
+      const displayCurrency = options.currency || 'COP';
+      const priceValue = options.convertPrice ? options.convertPrice(emerald.priceCOP) : emerald.priceCOP;
+      const price = new Intl.NumberFormat(displayCurrency === 'USD' ? 'en-US' : 'es-CO', {
         style: 'currency',
-        currency: 'COP',
+        currency: displayCurrency,
         maximumFractionDigits: 0,
-      }).format(emerald.priceCOP);
+      }).format(priceValue);
 
       applyCustomTextStyle(pdf, 'caption2', iosColors.emeraldPrimary, theme as ThemeMode);
       pdf.setFont('helvetica', 'bold');
@@ -608,11 +610,13 @@ async function addListLayout(
 
       applyIOSTextStyle(pdf, 'callout', iosColors.textPrimary, theme as ThemeMode);
       pdf.setFont('helvetica', 'bold');
-      const price = new Intl.NumberFormat('es-CO', {
+      const displayCurrency = options.currency || 'COP';
+      const priceValue = options.convertPrice ? options.convertPrice(emerald.priceCOP) : emerald.priceCOP;
+      const price = new Intl.NumberFormat(displayCurrency === 'USD' ? 'en-US' : 'es-CO', {
         style: 'currency',
-        currency: 'COP',
+        currency: displayCurrency,
         maximumFractionDigits: 0,
-      }).format(emerald.priceCOP);
+      }).format(priceValue);
       pdf.text(price, rightColX + priceBoxWidth / 2, rightY + 6, { align: 'center' });
     }
 

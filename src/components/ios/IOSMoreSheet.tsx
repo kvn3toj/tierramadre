@@ -29,6 +29,7 @@ import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsGuest, useCanCreateInvitations } from '../../hooks/useAuth';
 import { useIsAdmin, useIsStaff } from '../../hooks/usePermissions';
 import { usePriceShare } from '../../contexts/PriceShareContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 export interface MoreToolConfig {
   id: string;
@@ -127,6 +128,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   const canCreateInvitations = useCanCreateInvitations();
   const { effectiveConfig } = useLiquidGlassSafe();
   const { showPrices, togglePriceShare, canToggle } = usePriceShare();
+  const { currency, toggleCurrency, canToggleCurrency } = useCurrency();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [nameGeneratorOpen, setNameGeneratorOpen] = useState(false);
   const [invitationOpen, setInvitationOpen] = useState(false);
@@ -254,6 +256,13 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
       navigator.vibrate(10);
     }
     togglePriceShare();
+  };
+
+  const handleCurrencyToggle = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+    toggleCurrency();
   };
 
   return (
@@ -412,6 +421,55 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                 },
                 '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
                   backgroundColor: '#34C759',
+                },
+              }}
+            />
+          </Box>
+        )}
+
+        {/* Currency Toggle Row - Only for authorized user */}
+        {canToggleCurrency && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingX: spacing.md,
+              paddingY: spacing.sm,
+              borderBottom: '0.5px solid var(--border-default)',
+            }}
+          >
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: iosTypographyScale.body,
+                  fontWeight: 500,
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {t.settings.currencyMode}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: iosTypographyScale.caption1,
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                {currency === 'USD' ? t.settings.currencyUSDActive : t.settings.currencyCOPActive}
+              </Typography>
+            </Box>
+            <Switch
+              checked={currency === 'USD'}
+              onChange={handleCurrencyToggle}
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': {
+                  color: '#2E7D32',
+                  '&:hover': {
+                    backgroundColor: 'rgba(46, 125, 50, 0.08)',
+                  },
+                },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                  backgroundColor: '#2E7D32',
                 },
               }}
             />

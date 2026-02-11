@@ -2,6 +2,7 @@
  * PriceDisplay Component
  * Muestra el precio regular de los productos.
  * Supports guest pricing mode: hides prices for guests with 'no_prices' mode
+ * Supports COP/USD currency toggle via CurrencyContext
  *
  * Diseñado por Aria - Capitana del Concilio de Creación
  * Refactored: Uses design system tokens for iOS HIG compliance
@@ -10,14 +11,13 @@ import { Box, Stack, Typography, useTheme } from '@mui/material';
 // Design System Tokens
 import { brand, iosSemanticColors, iosTypographyScale, typography } from '../../design-system';
 import { usePriceShare } from '../../contexts/PriceShareContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 export interface PriceDisplayProps {
   /** Precio COP del producto (precio regular/público) */
   price: number;
   /** Precio internacional (deprecated, solo fallback) */
   precioInternacional?: number;
-  /** Moneda (default: COP) */
-  currency?: 'COP' | 'USD';
   /** Modo compacto para listas */
   compact?: boolean;
 }
@@ -25,38 +25,58 @@ export interface PriceDisplayProps {
 /**
  * Formatea un valor numérico como moneda
  */
-const formatCurrency = (value: number, currency: 'COP' | 'USD' = 'COP'): string => {
+const formatCurrencyValue = (value: number, currency: 'COP' | 'USD' = 'COP'): string => {
+  if (currency === 'USD') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  }
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
-    currency,
+    currency: 'COP',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
 };
 
 /**
- * Formatea un valor en formato compacto ($9.6M, $377K)
+ * Formatea un valor en formato compacto ($9.6M, $377K for COP; US$9.5K for USD)
  */
-const formatCompact = (value: number): string => {
+const formatCompact = (value: number, currency: 'COP' | 'USD' = 'COP'): string => {
+  const prefix = currency === 'USD' ? 'US$' : '$';
+  if (currency === 'USD') {
+    if (value >= 1000000) {
+      return `${prefix}${(value / 1000000).toFixed(1)}M`;
+    }
+    if (value >= 1000) {
+      return `${prefix}${(value / 1000).toFixed(1)}K`;
+    }
+    return `${prefix}${value.toLocaleString('en-US')}`;
+  }
   if (value >= 1000000) {
-    return `$${(value / 1000000).toFixed(1)}M`;
+    return `${prefix}${(value / 1000000).toFixed(1)}M`;
   }
   if (value >= 1000) {
-    return `$${Math.round(value / 1000)}K`;
+    return `${prefix}${Math.round(value / 1000)}K`;
   }
-  return `$${value.toLocaleString('es-CO')}`;
+  return `${prefix}${value.toLocaleString('es-CO')}`;
 };
 
 export const PriceDisplay = ({
   price,
   precioInternacional,
-  currency = 'COP',
   compact = false,
 }: PriceDisplayProps) => {
   const theme = useTheme();
   const { shouldShowPrices } = usePriceShare();
+  const { currency, convertPrice, trmRate } = useCurrency();
+
   // Use precioCOP (regular price) as primary, precioInternacional only as fallback
-  const displayPrice = price || precioInternacional || 0;
+  const rawPrice = price || precioInternacional || 0;
+  const displayPrice = convertPrice(rawPrice);
 
   // Single check: context handles all logic (provider, guest invitation, user preference)
   if (!shouldShowPrices) {
@@ -77,7 +97,7 @@ export const PriceDisplay = ({
           fontFeatureSettings: '"tnum"',
         }}
       >
-        {formatCompact(displayPrice)}
+        {formatCompact(displayPrice, currency)}
       </Typography>
     );
   }
@@ -89,6 +109,7 @@ export const PriceDisplay = ({
   // iOS semantic colors from design system
   const labelColor = iosSemanticColors.secondaryLabel[mode];
   const primaryTextColor = iosSemanticColors.label[mode];
+  const isUSD = currency === 'USD';
 
   return (
     <Stack spacing={0.5} sx={{ width: '100%' }}>
@@ -116,8 +137,21 @@ export const PriceDisplay = ({
               fontFeatureSettings: '"tnum"',
             }}
           >
-            {formatCurrency(displayPrice, currency)}
+            {formatCurrencyValue(displayPrice, currency)}
           </Typography>
+          {isUSD && (
+            <Typography
+              sx={{
+                fontSize: '11px',
+                fontWeight: typography.weight.normal,
+                color: labelColor,
+                mt: 0.5,
+                fontFeatureSettings: '"tnum"',
+              }}
+            >
+              TRM: {trmRate.toLocaleString('es-CO')} / x4
+            </Typography>
+          )}
         </Box>
       )}
     </Stack>

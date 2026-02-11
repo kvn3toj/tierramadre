@@ -18,6 +18,8 @@ export const STORAGE_KEYS = {
   APP_DATA: 'tierra-madre-data',
   RECENT_CLIENTS: 'tierra-madre-recent-clients',
   SHARE_PRICES: 'tierra-madre-share-prices',
+  CURRENCY_MODE: 'tierra-madre-currency-mode',
+  TRM_CACHE: 'tierra-madre-trm-cache',
   AI_USED_NAMES: 'tierra-madre-used-names',
 
   // Feature flags

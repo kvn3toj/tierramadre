@@ -20,6 +20,10 @@ export interface CatalogOptions {
   layout: 'grid' | 'list' | 'carousel';
   logoBase64?: string;
   theme?: 'dark' | 'light';
+  /** Currency mode for price display */
+  currency?: 'COP' | 'USD';
+  /** Price conversion function (COP -> target currency) */
+  convertPrice?: (precioCOP: number) => number;
 }
 
 // Re-export Emerald so downstream modules don't need a separate import

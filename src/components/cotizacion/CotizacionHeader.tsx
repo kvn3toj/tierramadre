@@ -6,7 +6,7 @@
 import { Box, Typography, Paper } from '@mui/material';
 import { FileText } from 'lucide-react';
 import { brandColors } from './constants';
-import { formatCotizacionCurrency } from '../../hooks/useCotizacion';
+import { useCotizacionFormat } from '../../hooks/useCotizacion';
 import { iosTypographyScale } from '../../design-system';
 
 export interface CotizacionHeaderProps {
@@ -18,6 +18,7 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
   productCount,
   total,
 }) => {
+  const { formatPrice: formatCurrency } = useCotizacionFormat();
   return (
     <Paper
       elevation={0}
@@ -106,7 +107,7 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
                 color: '#FFFFFF',
                 lineHeight: 1,
               }}>
-                {formatCotizacionCurrency(total)}
+                {formatCurrency(total)}
               </Typography>
             </Box>
           </Box>

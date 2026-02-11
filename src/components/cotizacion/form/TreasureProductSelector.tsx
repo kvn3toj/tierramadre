@@ -16,17 +16,17 @@ import {
 } from '@mui/material';
 import { Plus, Gem, ShoppingBag } from 'lucide-react';
 import { brandColors } from '../constants';
-import { formatCotizacionCurrency, getPesoDisplay } from '../../../hooks/useCotizacion';
+import { useCotizacionFormat, getPesoDisplay } from '../../../hooks/useCotizacion';
 import type { TreasureProductSelectorProps } from '../types';
-
-const formatCurrency = formatCotizacionCurrency;
 
 export const TreasureProductSelector: React.FC<TreasureProductSelectorProps> = ({
   availableTreasure,
   selectedItem,
   setSelectedItem,
   handleAddProduct,
-}) => (
+}) => {
+  const { formatPrice: formatCurrency } = useCotizacionFormat();
+  return (
   <>
     <Autocomplete
       size="small"
@@ -126,6 +126,7 @@ export const TreasureProductSelector: React.FC<TreasureProductSelectorProps> = (
       Agregar del Inventario
     </Button>
   </>
-);
+  );
+};
 
 export default TreasureProductSelector;

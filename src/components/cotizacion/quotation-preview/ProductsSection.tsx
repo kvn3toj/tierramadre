@@ -9,12 +9,10 @@ import { brandColors, quotationStyles, quotationTypography } from '../constants'
 import { getProductDisplayUrl } from '../utils';
 import {
   CotizacionProduct,
-  formatCotizacionCurrency,
+  useCotizacionFormat,
   getPesoDisplay,
 } from '../../../hooks/useCotizacion';
 import { SectionHeader } from './shared';
-
-const formatCurrency = formatCotizacionCurrency;
 
 // =============================================================================
 // ProductImage
@@ -100,6 +98,7 @@ interface ProductRowProps {
 }
 
 const ProductRow: React.FC<ProductRowProps> = ({ product, isEven, isLast }) => {
+  const { formatPrice: formatCurrency } = useCotizacionFormat();
   const displayUrl = getProductDisplayUrl(product);
 
   return (

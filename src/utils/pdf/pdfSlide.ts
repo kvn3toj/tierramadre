@@ -359,11 +359,13 @@ export async function addHorizontalCarouselLayout(
       pdf.roundedRect(priceBoxX, infoY, priceBoxWidth, priceBoxHeight, BORDER_RADIUS_MM.sm, BORDER_RADIUS_MM.sm);
 
       applyIOSTextStyle(pdf, 'headline', iosColors.textPrimary, theme as ThemeMode);
-      const price = new Intl.NumberFormat('es-CO', {
+      const displayCurrency = options.currency || 'COP';
+      const priceValue = options.convertPrice ? options.convertPrice(emerald.priceCOP) : emerald.priceCOP;
+      const price = new Intl.NumberFormat(displayCurrency === 'USD' ? 'en-US' : 'es-CO', {
         style: 'currency',
-        currency: 'COP',
+        currency: displayCurrency,
         maximumFractionDigits: 0,
-      }).format(emerald.priceCOP);
+      }).format(priceValue);
       pdf.text(price, priceBoxX + priceBoxWidth / 2, infoY + 13, { align: 'center' });
       infoY += priceBoxHeight + 8;
     }

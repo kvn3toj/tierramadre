@@ -9,11 +9,9 @@ import { brandColors, quotationStyles, quotationTypography } from '../constants'
 import {
   CotizacionInvestment,
   CustomCost,
-  formatCotizacionCurrency,
+  useCotizacionFormat,
 } from '../../../hooks/useCotizacion';
 import { SectionHeader, LineItem } from './shared';
-
-const formatCurrency = formatCotizacionCurrency;
 
 export interface InvestmentSectionProps {
   investments: CotizacionInvestment[];
@@ -22,6 +20,7 @@ export interface InvestmentSectionProps {
 }
 
 export const InvestmentSection: React.FC<InvestmentSectionProps> = ({ investments, customCosts, totalInvestment }) => {
+  const { formatPrice: formatCurrency } = useCotizacionFormat();
   const activeInvestments = investments.filter(inv => inv.value > 0);
   const allItems = [
     ...activeInvestments.map(inv => ({ id: inv.id, label: inv.label, value: inv.value })),

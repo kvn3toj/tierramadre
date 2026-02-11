@@ -8,10 +8,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Box, Typography, IconButton, alpha, Snackbar, Button } from '@mui/material';
 import { Layers, Trash2, Gem, ShoppingBag, Undo2 } from 'lucide-react';
 import { brandColors } from '../constants';
-import { formatCotizacionCurrency, getPesoDisplay } from '../../../hooks/useCotizacion';
+import { useCotizacionFormat, getPesoDisplay } from '../../../hooks/useCotizacion';
 import type { ProductListSectionProps, ProductThumbnailProps } from '../types';
-
-const formatCurrency = formatCotizacionCurrency;
 
 /**
  * ProductThumbnail - Product image with loading states and fallback
@@ -93,6 +91,7 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
   products,
   handleRemoveProduct,
 }) => {
+  const { formatPrice: formatCurrency } = useCotizacionFormat();
   // Undo-based deletion state
   const [pendingRemoval, setPendingRemoval] = useState<{ id: string; name: string } | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout>>();

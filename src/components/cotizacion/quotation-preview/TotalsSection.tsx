@@ -10,11 +10,9 @@ import { getQrCodeUrl } from '../utils';
 import { accentColors } from '../../../design-system';
 import {
   CotizacionProduct,
-  formatCotizacionCurrency,
+  useCotizacionFormat,
 } from '../../../hooks/useCotizacion';
 import { LineItem } from './shared';
-
-const formatCurrency = formatCotizacionCurrency;
 
 export interface TotalsSectionProps {
   products: CotizacionProduct[];
@@ -35,6 +33,7 @@ export const TotalsSection: React.FC<TotalsSectionProps> = ({
   discount,
   total,
 }) => {
+  const { formatPrice: formatCurrency } = useCotizacionFormat();
   const showBreakdown = products.length > 0 && totalInvestment > 0;
   const qrUrl = getQrCodeUrl(products);
 
