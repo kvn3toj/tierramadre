@@ -43,6 +43,7 @@ import { useTreasureAnalytics } from '../../hooks/useTreasureAnalytics';
 import { usePriceShare } from '../../contexts/PriceShareContext';
 import { TreasureItem } from '../../types';
 import { formatCurrency, getColorDot, formatCollectionName } from '../../utils/formatting';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
 
 // =============================================================================
@@ -173,6 +174,7 @@ export const FilterContent = memo(function FilterContent({
 }: FilterContentProps) {
   // Use context to determine if prices should be shown
   const { shouldShowPrices } = usePriceShare();
+  const { currency, convertPrice } = useCurrency();
   const hidePriceFilter = !shouldShowPrices;
 
   // Compact mode: Beautiful modern pill-based filters (mobile)
@@ -721,7 +723,7 @@ export const FilterContent = memo(function FilterContent({
                 Rango de Precio
               </Typography>
               <Typography variant="caption" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
-                {formatCurrency(priceRange[0])} - {formatCurrency(priceRange[1])}
+                {formatCurrency(convertPrice(priceRange[0]), currency)} - {formatCurrency(convertPrice(priceRange[1]), currency)}
               </Typography>
             </Box>
             <Slider
@@ -731,7 +733,7 @@ export const FilterContent = memo(function FilterContent({
               max={priceMinMax.max}
               step={100000}
               valueLabelDisplay="auto"
-              valueLabelFormat={(value) => formatCurrency(value)}
+              valueLabelFormat={(value) => formatCurrency(convertPrice(value), currency)}
               sx={{
                 color: emeraldCore.dark,
                 '& .MuiSlider-thumb': { width: 20, height: 20 },

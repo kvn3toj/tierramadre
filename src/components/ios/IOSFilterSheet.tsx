@@ -25,7 +25,8 @@ import {
   type TypeFilter,
   type SortOption,
 } from '../../hooks/useTreasureFiltering';
-import { formatCurrency, getColorDot } from '../../utils/formatting';
+import { getColorDot } from '../../utils/formatting';
+import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import {
   emeraldCore,
   surfacesLight,
@@ -94,6 +95,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
   hasFilters,
   onClearFilters,
 }) => {
+  const { formatCurrency } = useCurrencyFormat();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const secondaryLabelColor = iosSemanticColors.secondaryLabel[mode];

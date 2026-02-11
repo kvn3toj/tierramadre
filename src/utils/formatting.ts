@@ -4,16 +4,28 @@
  */
 
 /**
- * Format currency in COP with abbreviated notation for large values.
+ * Format currency with abbreviated notation for large values.
+ * Supports COP and USD modes.
  * @param value - The numeric value to format
- * @returns Formatted string like "$1.5M" or "$300K"
+ * @param currency - Currency mode (default: COP)
+ * @returns Formatted string like "$1.5M", "$300K", "US$9.5K"
  */
-export const formatCurrency = (value: number): string => {
+export const formatCurrency = (value: number, currency: 'COP' | 'USD' = 'COP'): string => {
+  const prefix = currency === 'USD' ? 'US$' : '$';
+  if (currency === 'USD') {
+    if (value >= 1000000) {
+      return `${prefix}${(value / 1000000).toFixed(1)}M`;
+    }
+    if (value >= 1000) {
+      return `${prefix}${(value / 1000).toFixed(1)}K`;
+    }
+    return `${prefix}${value.toLocaleString('en-US')}`;
+  }
   if (value >= 1000000) {
-    return `$${(value / 1000000).toFixed(1)}M`;
+    return `${prefix}${(value / 1000000).toFixed(1)}M`;
   }
   if (value >= 1000) {
-    return `$${(value / 1000).toFixed(0)}K`;
+    return `${prefix}${(value / 1000).toFixed(0)}K`;
   }
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -24,11 +36,20 @@ export const formatCurrency = (value: number): string => {
 };
 
 /**
- * Format currency in full COP without abbreviation.
+ * Format currency in full without abbreviation.
  * @param value - The numeric value to format
- * @returns Formatted string like "$1,500,000"
+ * @param currency - Currency mode (default: COP)
+ * @returns Formatted string like "$1,500,000" or "$9,524"
  */
-export const formatFullCurrency = (value: number): string => {
+export const formatFullCurrency = (value: number, currency: 'COP' | 'USD' = 'COP'): string => {
+  if (currency === 'USD') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  }
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',

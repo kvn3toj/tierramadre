@@ -26,7 +26,7 @@ import {
   Info,
 } from 'lucide-react';
 import { studioColors, studioCardStyles } from '../../design-system';
-import { formatFullCurrency as formatCurrency } from '../../utils/formatting';
+import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { getInvestmentIcon } from './index';
 
 // =============================================================================
@@ -125,7 +125,9 @@ export const InvestmentSection: React.FC<InvestmentSectionProps> = ({
   setShowAdvanced,
   resetValues,
   totalInvestment,
-}) => (
+}) => {
+  const { formatFullCurrency: formatCurrency } = useCurrencyFormat();
+  return (
   <>
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
       <Typography variant="subtitle1" sx={{ ...studioCardStyles.sectionTitle }}>
@@ -287,6 +289,7 @@ export const InvestmentSection: React.FC<InvestmentSectionProps> = ({
       </Typography>
     </Box>
   </>
-);
+  );
+};
 
 export default InvestmentSection;

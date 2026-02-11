@@ -19,9 +19,9 @@ import { ChevronLeft, ChevronRight, Clock, X } from 'lucide-react';
 import logoPlaceholder from '../../assets/logo-symbol.png';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
+import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { TreasureItem } from '../../types';
-import { formatCurrency } from '../../utils/formatting';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 
 interface RecentlyViewedCarouselProps {
@@ -270,6 +270,7 @@ function RecentItemCard({
   hidePrice?: boolean;
   reducedMotion?: boolean;
 }) {
+  const { formatCurrency } = useCurrencyFormat();
   const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const weight = typeof item.peso === 'number' ? `${item.peso} ct` : item.metalType || '';
 

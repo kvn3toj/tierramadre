@@ -35,7 +35,7 @@ import { useTreasure } from '../../hooks/useTreasure';
 import { useTreasureFiltering, TypeFilter } from '../../hooks/useTreasureFiltering';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
-import { formatCurrency } from '../../utils/formatting';
+import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 
 // Helper to generate filter chip styles
 const getFilterChipSx = (isActive: boolean, color: string, hoverColor: string) => ({
@@ -55,6 +55,7 @@ interface MoreSheetSearchProps {
 }
 
 const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
+  const { formatCurrency } = useCurrencyFormat();
   const navigate = useNavigate();
   const { treasure } = useTreasure();
   const searchInputRef = useRef<HTMLInputElement>(null);

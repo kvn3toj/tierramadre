@@ -186,7 +186,7 @@ export const en = {
     pricesShared: 'Visible',
     pricesPrivate: 'Private',
     currencyMode: 'Currency',
-    currencyUSDActive: 'Prices in USD (x4)',
+    currencyUSDActive: 'Prices in USD',
     currencyCOPActive: 'Prices in COP',
   },
 

@@ -149,7 +149,7 @@ export const PriceDisplay = ({
                 fontFeatureSettings: '"tnum"',
               }}
             >
-              TRM: {trmRate.toLocaleString('es-CO')} / x4
+              TRM: {trmRate.toLocaleString('es-CO')}
             </Typography>
           )}
         </Box>

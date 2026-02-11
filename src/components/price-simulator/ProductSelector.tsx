@@ -29,7 +29,7 @@ import {
 import { Emerald, TreasureItem } from '../../types';
 import { studioColors, studioShadows, accentColors } from '../../design-system';
 import { semanticColors, goldAccent, surfacesLight } from '../../design-system/tokens/colors';
-import { formatFullCurrency as formatCurrency } from '../../utils/formatting';
+import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { getCategoryLabel, ProductSource, STATUS_FILTERS, PRODUCT_TYPE_FILTERS } from './index';
 
 // Use design system accent color for purple elements (multi-select, lot badges)
@@ -249,7 +249,9 @@ const GalleryAutocomplete: React.FC<GalleryAutocompleteProps> = ({
   productName,
   setProductName,
   handleEmeraldSelect,
-}) => (
+}) => {
+  const { formatFullCurrency: formatCurrency } = useCurrencyFormat();
+  return (
   <Autocomplete
     freeSolo
     options={emeralds}
@@ -352,7 +354,8 @@ const GalleryAutocomplete: React.FC<GalleryAutocompleteProps> = ({
       </Box>
     }
   />
-);
+  );
+};
 
 // Treasure autocomplete with filters
 interface TreasureAutocompleteProps {
@@ -383,7 +386,9 @@ const TreasureAutocomplete: React.FC<TreasureAutocompleteProps> = ({
   shapeFilter,
   setShapeFilter,
   uniqueShapes,
-}) => (
+}) => {
+  const { formatFullCurrency: formatCurrency } = useCurrencyFormat();
+  return (
   <>
     {/* Status Filter */}
     <FilterSection label="Estado">
@@ -556,7 +561,8 @@ const TreasureAutocomplete: React.FC<TreasureAutocompleteProps> = ({
       }
     />
   </>
-);
+  );
+};
 
 // Filter section wrapper
 const FilterSection: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
@@ -675,7 +681,9 @@ const CollectionDisplay: React.FC<CollectionDisplayProps> = ({
   selectedProducts,
   totalProductsValue,
   removeProduct,
-}) => (
+}) => {
+  const { formatFullCurrency: formatCurrency } = useCurrencyFormat();
+  return (
   <Box
     sx={{
       mt: 2,
@@ -749,6 +757,7 @@ const CollectionDisplay: React.FC<CollectionDisplayProps> = ({
       })}
     </Box>
   </Box>
-);
+  );
+};
 
 export default ProductSelector;

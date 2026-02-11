@@ -6,7 +6,8 @@
 import { Box, Typography, Paper, LinearProgress, alpha } from '@mui/material';
 import { TrendingUp, Gem, Percent, DollarSign, ArrowUpRight } from 'lucide-react';
 import { PricingMetrics } from '../../hooks/usePriceCalculation';
-import { formatFullCurrency as formatCurrency, formatPercent } from '../../utils/formatting';
+import { formatPercent } from '../../utils/formatting';
+import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { studioColors, studioGradients, studioShadows } from '../../design-system';
 
 export interface PricingResultsProps {
@@ -22,6 +23,7 @@ export const PricingResults: React.FC<PricingResultsProps> = ({
   caratWeight,
   marginProgress,
 }) => {
+  const { formatFullCurrency: formatCurrency } = useCurrencyFormat();
   return (
     <Paper
       elevation={0}

@@ -33,9 +33,10 @@ import { useThemeMode } from '../contexts/ThemeContext';
 import AdminSelectDialog from '../components/cart/AdminSelectDialog';
 import { emeraldCore, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 import { buttonGradients } from '../design-system/tokens/gradients';
-import { formatCurrency } from '../utils/formatting';
+import { useCurrencyFormat } from '../contexts/CurrencyContext';
 
 export default function CartPage() {
+  const { formatCurrency } = useCurrencyFormat();
   const navigate = useNavigate();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';

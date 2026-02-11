@@ -7,7 +7,8 @@ import { Box, Typography, Chip, alpha, Collapse } from '@mui/material';
 import { BarChart3, Radar as RadarIcon, TrendingUp, DollarSign, Gem, Award, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { formatCurrency, getColorDot, getQualityBadge } from '../../utils/formatting';
+import { getColorDot, getQualityBadge } from '../../utils/formatting';
+import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { surfacesLight, surfacesDark, emeraldCore } from '../../design-system/tokens/colors';
 import ProductHeader from './ProductHeader';
 import AttributeCard from './AttributeCard';
@@ -66,6 +67,7 @@ const priorityConfig: Record<ComparisonPriority, {
 };
 
 export default function ComparisonMobileView({ items }: ComparisonMobileViewProps) {
+  const { formatCurrency } = useCurrencyFormat();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const [visualMode, setVisualMode] = useState<VisualMode>('radar');

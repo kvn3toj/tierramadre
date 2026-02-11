@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { documentShadows } from '../../../../design-system/tokens';
 import { brandColors, PRODUCTION_URL } from '../../../../components/cotizacion/constants';
-import { formatFullCurrency as formatCurrency } from '../../../../utils/formatting';
+import { useCurrencyFormat } from '../../../../contexts/CurrencyContext';
 
 // Investment item interface
 export interface InvestmentItem {
@@ -71,6 +71,7 @@ export interface QuotationCertificateProps {
 
 export const QuotationCertificate = forwardRef<HTMLDivElement, QuotationCertificateProps>(
   ({ quotationData }, ref) => {
+    const { formatFullCurrency: formatCurrency } = useCurrencyFormat();
     // Calculate expiry date
     const expiryDate = new Date(quotationData.date);
     expiryDate.setDate(expiryDate.getDate() + quotationData.validDays);

@@ -36,7 +36,7 @@ import { useComparison } from '../../hooks/useComparison';
 import { TreasureItem } from '../../types';
 import CertificationUpload from './CertificationUpload';
 import { ComparisonBar, ComparisonModal } from '../comparison';
-import { formatFullCurrency } from '../../utils/formatting';
+import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { createLogger } from '../../utils/logger';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 import { GridCard, ListRow, VirtualGrid, FilterContent, ActiveFilterChips, type FilterContentProps } from './';
@@ -59,6 +59,7 @@ export default function TreasureBrowser({
   isProviderMode = false,
   defaultViewMode,
 }: TreasureBrowserProps = {}) {
+  const { formatFullCurrency } = useCurrencyFormat();
   const theme = useTheme();
   const { mode } = useThemeMode();
   const { accessLevel } = useAuthContext();

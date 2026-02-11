@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { formatCurrency } from '../../utils/formatting';
+import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import {
   ComparisonRecommendation,
   RecommendationCriteria,
@@ -67,6 +67,7 @@ const criteriaConfig: Record<
 export default function RecommendationCard({
   recommendation,
 }: RecommendationCardProps) {
+  const { formatCurrency } = useCurrencyFormat();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
 

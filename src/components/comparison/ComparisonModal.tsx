@@ -28,7 +28,8 @@ import {
 import { X, Scale, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { formatFullCurrency, getColorDot, getQualityBadge } from '../../utils/formatting';
+import { getColorDot, getQualityBadge } from '../../utils/formatting';
+import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
 import { ComparisonMobileView } from './';
 
@@ -112,6 +113,7 @@ export default function ComparisonModal({
   onClose,
   items,
 }: ComparisonModalProps) {
+  const { formatFullCurrency } = useCurrencyFormat();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const theme = useTheme();

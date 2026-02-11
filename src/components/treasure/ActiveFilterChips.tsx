@@ -10,6 +10,7 @@ import { Box, Chip, alpha } from '@mui/material';
 import { X } from 'lucide-react';
 import { TreasureFilters } from '../../hooks/useTreasureFiltering';
 import { formatCurrency, getColorDot } from '../../utils/formatting';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { emeraldCore, goldAccent, semanticColors } from '../../design-system/tokens/colors';
 
 export interface ActiveFilterChipsProps {
@@ -54,6 +55,7 @@ export function ActiveFilterChips({
   onClearPrice,
   compact = false,
 }: ActiveFilterChipsProps) {
+  const { currency, convertPrice } = useCurrency();
   const chipSize = compact ? 'small' : 'small';
   const iconSize = compact ? 12 : 14;
   const fontSize = compact ? '0.7rem' : undefined;
@@ -80,7 +82,7 @@ export function ActiveFilterChips({
   if (hasPriceFilter) {
     chips.push({
       key: 'price',
-      label: `${formatCurrency(filters.priceRange[0])} - ${formatCurrency(filters.priceRange[1])}`,
+      label: `${formatCurrency(convertPrice(filters.priceRange[0]), currency)} - ${formatCurrency(convertPrice(filters.priceRange[1]), currency)}`,
       onDelete: onClearPrice,
       colors: {
         bg: alpha(emeraldCore.primary, 0.1),

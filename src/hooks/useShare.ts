@@ -17,6 +17,7 @@ import { useCallback, useMemo } from 'react';
 import { TreasureItem } from '../types';
 import { triggerHaptic } from './useHaptics';
 import { usePriceShare } from '../contexts/PriceShareContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 import { formatCurrency } from '../utils/formatting';
 import { createLogger } from '../utils/logger';
 
@@ -88,7 +89,7 @@ function checkShareSupport(): boolean {
  * Format product details for sharing
  * Includes prices only when shouldShowPrices is true (user has share prices enabled)
  */
-function formatProductShareText(product: TreasureItem, productUrl: string, includePrice: boolean): string {
+function formatProductShareText(product: TreasureItem, productUrl: string, includePrice: boolean, convertPrice?: (v: number) => number, currency?: 'COP' | 'USD'): string {
   const displayName = product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const weight = typeof product.peso === 'number' ? `${product.peso} ct` : '';
 
@@ -105,7 +106,8 @@ function formatProductShareText(product: TreasureItem, productUrl: string, inclu
 
   // Include price only when user has price sharing enabled
   if (includePrice && product.precioCOP) {
-    lines.push(`💰 ${formatCurrency(product.precioCOP)}`);
+    const price = convertPrice ? convertPrice(product.precioCOP) : product.precioCOP;
+    lines.push(`💰 ${formatCurrency(price, currency || 'COP')}`);
   }
 
   lines.push(``);
@@ -132,6 +134,7 @@ function formatProductShareText(product: TreasureItem, productUrl: string, inclu
 export function useShare(options: UseShareOptions = {}): UseShareReturn {
   const { hapticFeedback = true } = options;
   const { shouldShowPrices } = usePriceShare();
+  const { currency, convertPrice } = useCurrency();
 
   const isNativeShareSupported = useMemo(() => checkShareSupport(), []);
 
@@ -148,8 +151,8 @@ export function useShare(options: UseShareOptions = {}): UseShareReturn {
    */
   const getProductShareText = useCallback((product: TreasureItem): string => {
     const url = getProductUrl(product);
-    return formatProductShareText(product, url, shouldShowPrices);
-  }, [getProductUrl, shouldShowPrices]);
+    return formatProductShareText(product, url, shouldShowPrices, convertPrice, currency);
+  }, [getProductUrl, shouldShowPrices, convertPrice, currency]);
 
   /**
    * Copy text to clipboard
