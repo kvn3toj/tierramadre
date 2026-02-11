@@ -80,11 +80,13 @@ export const useScrollShrink = (options: UseScrollShrinkOptions = {}): UseScroll
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
 
-  // Get scroll position
+  // Get scroll position (fallback to main-content scroll container)
   const getScrollY = useCallback(() => {
     if (scrollContainer) {
       return scrollContainer.scrollTop;
     }
+    const main = document.getElementById('main-content');
+    if (main) return main.scrollTop;
     return window.scrollY || document.documentElement.scrollTop;
   }, [scrollContainer]);
 
@@ -142,7 +144,7 @@ export const useScrollShrink = (options: UseScrollShrinkOptions = {}): UseScroll
   useEffect(() => {
     if (disabled) return;
 
-    const target = scrollContainer || window;
+    const target = scrollContainer || document.getElementById('main-content') || window;
     target.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
@@ -214,14 +216,18 @@ export const useIsScrolled = (threshold: number = 50): boolean => {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
+    const main = document.getElementById('main-content');
+    const target = main || window;
+
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > threshold);
+      const scrollY = main ? main.scrollTop : window.scrollY;
+      setIsScrolled(scrollY > threshold);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    target.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Check initial state
 
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => target.removeEventListener('scroll', handleScroll);
   }, [threshold]);
 
   return isScrolled;

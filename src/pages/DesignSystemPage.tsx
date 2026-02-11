@@ -97,7 +97,7 @@ const Section: React.FC<{
 
 const DesignSystemPage: React.FC = () => {
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
+    <Box sx={{ bgcolor: 'background.default', py: 4 }}>
       <Container maxWidth="lg">
         {/* Header */}
         <Box sx={{ mb: 6, textAlign: 'center' }}>

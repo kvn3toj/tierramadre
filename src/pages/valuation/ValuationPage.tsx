@@ -136,9 +136,7 @@ const ValuationPage: React.FC = () => {
 
   return (
     <Box
-      component="main"
       sx={{
-        minHeight: '100vh',
         pb: 12,
         bgcolor: isDarkMode ? 'background.default' : '#F9FAFB',
       }}

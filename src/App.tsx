@@ -443,15 +443,19 @@ function App() {
 
     window.addEventListener('click', throttledActivity);
     window.addEventListener('keydown', throttledActivity);
-    window.addEventListener('scroll', throttledActivity);
     window.addEventListener('touchstart', throttledActivity);
+
+    // Scroll activity: target main-content container (fixed viewport shell)
+    const mainEl = document.getElementById('main-content');
+    const scrollTarget = mainEl || window;
+    scrollTarget.addEventListener('scroll', throttledActivity);
 
     return () => {
       clearTimeout(activityTimeout);
       window.removeEventListener('click', throttledActivity);
       window.removeEventListener('keydown', throttledActivity);
-      window.removeEventListener('scroll', throttledActivity);
       window.removeEventListener('touchstart', throttledActivity);
+      scrollTarget.removeEventListener('scroll', throttledActivity);
     };
   }, []);
 

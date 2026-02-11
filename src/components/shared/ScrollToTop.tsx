@@ -9,6 +9,7 @@ import { Fab, Zoom } from '@mui/material';
 import { ArrowUp } from 'lucide-react';
 import { emeraldCore } from '../../design-system/tokens/colors';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { getMainScrollY, scrollMainTo, addMainScrollListener } from '../../utils/mainScroll';
 
 const SCROLL_THRESHOLD = 400;
 
@@ -18,14 +19,13 @@ export default function ScrollToTop() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setVisible(window.scrollY > SCROLL_THRESHOLD);
+      setVisible(getMainScrollY() > SCROLL_THRESHOLD);
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return addMainScrollListener(handleScroll, { passive: true });
   }, []);
 
   const handleClick = useCallback(() => {
-    window.scrollTo({
+    scrollMainTo({
       top: 0,
       behavior: prefersReducedMotion ? 'auto' : 'smooth',
     });

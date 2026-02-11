@@ -299,7 +299,7 @@ const ActivityPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ pb: 12, minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ pb: 12, bgcolor: 'background.default' }}>
       {/* Header */}
       <Box
         sx={{

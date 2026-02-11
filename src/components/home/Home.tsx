@@ -28,7 +28,6 @@ import { useNewProductNotification } from '../../hooks/useNewProductNotification
 
 import {
   MAX_PRODUCTS_DISPLAY,
-  TAB_BAR_HEIGHT,
   SKELETON_HEIGHTS,
   ANIMATION_DELAYS,
 } from './constants';
@@ -88,12 +87,8 @@ const Home: React.FC = () => {
 
   return (
     <Box
-      component="main"
-      role="main"
       aria-label="Página principal de Tierra Madre"
       sx={{
-        pb: `calc(env(safe-area-inset-bottom, 0px) + ${TAB_BAR_HEIGHT}px)`,
-        minHeight: '100vh',
         position: 'relative',
         // Prevent overscroll bounce showing black background
         overscrollBehavior: 'contain',
@@ -123,7 +118,7 @@ const Home: React.FC = () => {
             backgroundSize: 'cover',
             backgroundPosition: 'center top',
             backgroundRepeat: 'no-repeat',
-            backgroundAttachment: 'fixed', // Parallax scroll effect
+            backgroundAttachment: 'scroll', // Was 'fixed' but broken on iOS inside scroll containers
             opacity: 0.25,
             // Fade in from top
             maskImage: 'linear-gradient(to bottom, transparent 0%, black 8%)',

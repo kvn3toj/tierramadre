@@ -241,6 +241,9 @@ body {
 
   /* Disable overscroll (iOS bounce) */
   overscroll-behavior: none;
+
+  /* Prevent document-level scroll — only <main> scrolls */
+  overflow: hidden;
 }
 
 /* === SELECTION STYLES === */
@@ -405,59 +408,17 @@ body {
   }
 }
 
-/* === BOTTOM NAVIGATION - ALWAYS VISIBLE === */
-/* These styles ensure the bottom tab bar stays visible on all devices/browsers */
-
-/* Fix for mobile browsers hiding bottom nav on scroll */
-/* Uses fixed positioning relative to viewport, not document */
-.bottom-nav-fixed,
+/* === BOTTOM NAVIGATION === */
+/* Base positioning for bottom tab bar. With the fixed viewport shell */
+/* (body overflow:hidden, only <main> scrolls), document-level scrolling */
+/* no longer occurs, so the nav stays stable without aggressive overrides. */
 nav[aria-label="Primary navigation"] {
-  /* Ensure fixed position is always respected */
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  /* Force GPU layer to prevent disappearing on scroll */
-  transform: translateZ(0) !important;
-  -webkit-transform: translateZ(0) !important;
-  /* High z-index to stay above content */
-  z-index: 1000 !important;
-  /* Prevent any animations that might hide it */
-  visibility: visible !important;
-  opacity: 1 !important;
-  /* Ensure it doesn't get clipped */
-  overflow: visible !important;
-}
-
-/* Mobile Safari specific - prevent address bar from affecting bottom nav */
-@supports (-webkit-touch-callout: none) {
-  nav[aria-label="Primary navigation"] {
-    /* Use safe area for proper spacing */
-    padding-bottom: max(env(safe-area-inset-bottom), 8px) !important;
-    /* Ensure it stays at visual viewport bottom */
-    bottom: 0 !important;
-    /* Force repaint on scroll to maintain position */
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-  }
-}
-
-/* Android Chrome - prevent hiding on scroll */
-@media screen and (max-width: 1024px) {
-  nav[aria-label="Primary navigation"] {
-    /* Force the element to stay visible */
-    position: fixed !important;
-    bottom: 0 !important;
-    /* Hardware acceleration */
-    transform: translate3d(0, 0, 0) !important;
-    -webkit-transform: translate3d(0, 0, 0) !important;
-    /* Prevent any transform that might hide it */
-    transition: none !important;
-  }
-}
-
-/* Ensure content doesn't overlap with fixed bottom nav */
-main {
-  /* Add padding for bottom nav (64px) + safe area */
-  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 16px) !important;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  /* GPU layer for compositing */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }

@@ -174,10 +174,11 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '100dvh',
+        height: '100dvh',
+        overflow: 'hidden',
         // Fallback for browsers without dvh support
-        '@supports not (min-height: 100dvh)': {
-          minHeight: '100vh',
+        '@supports not (height: 100dvh)': {
+          height: '100vh',
         },
         backgroundColor: 'var(--surface-primary)',
       }}
@@ -231,6 +232,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         tabIndex={-1}
         sx={{
           flex: 1,
+          minHeight: 0, // Override flexbox implicit min-height: auto so overflowY works
           paddingBottom: `calc(65px + env(safe-area-inset-bottom) + ${spacing.md})`,
           overflowY: 'auto',
           WebkitOverflowScrolling: 'touch',

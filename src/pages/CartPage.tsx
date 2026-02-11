@@ -108,7 +108,6 @@ export default function CartPage() {
         mx: 'auto',
         px: { xs: 2, sm: 3 },
         py: 3,
-        minHeight: '100vh',
       }}
     >
       {/* Header */}

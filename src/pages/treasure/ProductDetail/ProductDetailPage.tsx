@@ -39,6 +39,7 @@ import { buttonGradients } from '../../../design-system/tokens/gradients';
 import { accentColors, lightTokens } from '../../../design-system';
 import { SpecificationsList, AdditionalInfo, ProductActions } from './components';
 import Breadcrumbs from '../../../components/shared/Breadcrumbs';
+import { scrollMainTo } from '../../../utils/mainScroll';
 
 const log = createLogger('ProductDetail');
 
@@ -70,7 +71,7 @@ export default function ProductDetail() {
 
   // Scroll to top when navigating to this page
   useEffect(() => {
-    window.scrollTo(0, 0);
+    scrollMainTo({ top: 0 });
   }, [itemId]);
 
   // Find the product

@@ -12,6 +12,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { alpha } from '@mui/material/styles';
 import html2canvas from 'html2canvas';
 import { emeraldCore } from '../../design-system/tokens/colors';
+import { getMainScrollY } from '../../utils/mainScroll';
 
 interface FloatingCaptureButtonProps {
   onCapture: (screenshot: string) => void;
@@ -41,7 +42,7 @@ export default function FloatingCaptureButton({ onCapture, onCancel }: FloatingC
         windowWidth: window.innerWidth,
         windowHeight: window.innerHeight,
         x: 0,
-        y: window.scrollY,
+        y: getMainScrollY(),
         width: window.innerWidth,
         height: window.innerHeight,
       });

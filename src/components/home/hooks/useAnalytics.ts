@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { createLogger } from '../../../utils/logger';
 import { STORAGE_KEYS, SESSION_KEYS } from '../../../constants/storage-keys';
+import { getMainScrollY, getMainScrollHeight, addMainScrollListener } from '../../../utils/mainScroll';
 
 const log = createLogger('Analytics');
 
@@ -182,14 +183,14 @@ export const useAnalytics = (): AnalyticsActions => {
     engagementScore: 0,
   });
 
-  // Track scroll depth
+  // Track scroll depth (targets main scroll container)
   useEffect(() => {
     let maxScrollDepth = 0;
 
     const handleScroll = () => {
-      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollHeight = getMainScrollHeight();
       const currentDepth = scrollHeight > 0
-        ? Math.round((window.scrollY / scrollHeight) * 100)
+        ? Math.round((getMainScrollY() / scrollHeight) * 100)
         : 0;
 
       if (currentDepth > maxScrollDepth) {
@@ -198,8 +199,7 @@ export const useAnalytics = (): AnalyticsActions => {
       }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return addMainScrollListener(handleScroll, { passive: true });
   }, []);
 
   // Update time on page

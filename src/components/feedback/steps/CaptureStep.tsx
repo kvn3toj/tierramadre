@@ -12,6 +12,7 @@ import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 import { alpha } from '@mui/material/styles';
 import { emeraldCore } from '../../../design-system/tokens/colors';
+import { getMainScrollY } from '../../../utils/mainScroll';
 
 interface CaptureStepProps {
   onCapture: (screenshot: string) => void;
@@ -54,7 +55,7 @@ export default function CaptureStep({
         windowWidth: window.innerWidth,
         windowHeight: window.innerHeight,
         x: 0,
-        y: window.scrollY,
+        y: getMainScrollY(),
         width: window.innerWidth,
         height: window.innerHeight,
       });
