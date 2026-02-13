@@ -24,6 +24,11 @@ import { CollectionProductDialog } from '../ambassadors/profile/components/Colle
 import { TreasureItem } from '../../types';
 import { brand, lightTokens, darkTokens, typography, gradients } from '../../design-system';
 
+// Map URL slug to actual Drive folder name (when they differ)
+const FOLDER_ALIASES: Record<string, string> = {
+  'ceo-tierra-madre': 'ceo-coomunity',
+};
+
 // Map collection folders to WhatsApp contact info
 const COLLECTION_CONTACTS: Record<string, { name: string; phone: string; title?: string; subtitle?: string }> = {
   'ceo-tierra-madre': {
@@ -230,7 +235,8 @@ export default function CollectionPage() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
 
-  const { products, collectionInfo, isLoading, error } = useAsesorCollection(folder ?? null);
+  const driveFolder = folder ? (FOLDER_ALIASES[folder] || folder) : null;
+  const { products, collectionInfo, isLoading, error } = useAsesorCollection(driveFolder);
   const [selectedProduct, setSelectedProduct] = useState<TreasureItem | null>(null);
 
   const contact = folder ? COLLECTION_CONTACTS[folder] : null;
