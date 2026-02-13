@@ -63,8 +63,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-    // Swipe left (negative deltaX) or swipe down to close
-    if (deltaX < -100 || deltaY > 100) onClose();
+    // Swipe right (positive deltaX) or swipe down to close
+    if (deltaX > 100 || deltaY > 100) onClose();
   }, [onClose]);
 
   return (
