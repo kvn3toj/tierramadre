@@ -4,9 +4,10 @@
  * These items are NOT in the main inventory, so we display them in-place.
  */
 
-import React, { useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   Box,
+  CircularProgress,
   Dialog,
   DialogContent,
   IconButton,
@@ -53,6 +54,12 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
   const isLight = theme.palette.mode === 'light';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoLoading, setVideoLoading] = useState(true);
+
+  // Reset loading state when product changes
+  useEffect(() => {
+    if (product?.mediaType === 'video') setVideoLoading(true);
+  }, [product]);
 
   // Swipe right to close gesture
   const touchStartX = useRef(0);
@@ -115,7 +122,26 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
             {/* Product Media (Video or Image) */}
             {product.imagen && (
               product.mediaType === 'video' ? (
-                <Box sx={{ width: '100%', aspectRatio: '1/1', bgcolor: '#000' }}>
+                <Box sx={{ width: '100%', aspectRatio: '1/1', bgcolor: '#000', position: 'relative' }}>
+                  {videoLoading && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1,
+                        gap: 1.5,
+                      }}
+                    >
+                      <CircularProgress size={40} sx={{ color: brand.emerald[400] }} />
+                      <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                        Loading video...
+                      </Typography>
+                    </Box>
+                  )}
                   <video
                     ref={videoRef}
                     key={product.item}
@@ -128,7 +154,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     preload="auto"
                     webkit-playsinline="true"
                     onLoadedData={(e) => {
-                      // Force play as soon as video data is loaded
+                      setVideoLoading(false);
                       const video = e.target as HTMLVideoElement;
                       video.play().catch(() => {});
                     }}
