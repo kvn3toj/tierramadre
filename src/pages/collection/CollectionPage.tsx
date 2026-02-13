@@ -196,7 +196,9 @@ export default function CollectionPage() {
   return (
     <Box
       sx={{
-        minHeight: 'var(--vh, 100dvh)',
+        height: '100vh',
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
         bgcolor: isLight ? lightTokens.background.page : darkTokens.background.app,
       }}
     >
