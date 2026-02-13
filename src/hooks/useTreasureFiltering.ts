@@ -170,7 +170,7 @@ export function useTreasureFiltering({
         (typeFilter === 'loose' && !item.isJewelry) ||
         (typeFilter === 'jewelry' && item.isJewelry);
       const matchesShape = shapeFilter === 'all' || item.talla === shapeFilter;
-      const matchesPrice = item.precioCOP >= priceRange[0] && item.precioCOP <= priceRange[1];
+      const matchesPrice = item.precioCOP === 0 || (item.precioCOP >= priceRange[0] && item.precioCOP <= priceRange[1]);
       const matchesCantidad =
         cantidadFilter === 'all' ||
         (cantidadFilter === '1' && item.cantidad === 1) ||
