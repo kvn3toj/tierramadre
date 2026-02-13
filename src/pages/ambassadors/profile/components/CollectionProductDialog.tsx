@@ -53,18 +53,14 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
   const isLight = theme.palette.mode === 'light';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Swipe gestures: down or left to close
+  // Swipe right to close gesture
   const touchStartX = useRef(0);
-  const touchStartY = useRef(0);
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
   }, []);
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-    // Swipe right (positive deltaX) or swipe down to close
-    if (deltaX > 100 || deltaY > 100) onClose();
+    if (deltaX > 100) onClose();
   }, [onClose]);
 
   return (
