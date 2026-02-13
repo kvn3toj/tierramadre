@@ -16,17 +16,37 @@ import {
 } from '@mui/material';
 import { X } from 'lucide-react';
 import { TreasureItem } from '../../../../types';
-import { brand, lightTokens, darkTokens } from '../../../../design-system';
+import { brand, lightTokens, darkTokens, typography } from '../../../../design-system';
 import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
+
+/** Extract fileId from proxy URL and return a clean video streaming URL */
+function getVideoUrl(thumbnailUrl: string): string {
+  const match = thumbnailUrl.match(/fileId=([^&]+)/);
+  if (!match) return thumbnailUrl;
+  return `/api/serve-drive-image?fileId=${match[1]}`;
+}
+
+/** Format USD price */
+function formatUSD(value: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
 interface CollectionProductDialogProps {
   product: TreasureItem | null;
   onClose: () => void;
+  /** When true, shows price in USD directly instead of using CurrencyContext */
+  showUSD?: boolean;
 }
 
 export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = ({
   product,
   onClose,
+  showUSD = false,
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -65,17 +85,18 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
             {/* Product Media (Video or Image) */}
             {product.imagen && (
               product.mediaType === 'video' ? (
-                <Box sx={{ width: '100%', aspectRatio: '1/1', bgcolor: '#000', position: 'relative' }}>
+                <Box sx={{ width: '100%', aspectRatio: '1/1', bgcolor: '#000' }}>
                   <video
-                    src={`${product.imagen.replace(/[?&]thumbnail=true/, '').replace(/[?&]size=\w+/, '')}#t=0.001`}
+                    src={`${getVideoUrl(product.imagen)}#t=0.001`}
                     poster={product.imagen}
                     controls
+                    autoPlay
                     playsInline
-                    preload="metadata"
+                    preload="auto"
                     style={{
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover',
+                      objectFit: 'contain',
                       display: 'block',
                     }}
                   />
@@ -146,7 +167,21 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
 
               {/* Price */}
               <Box sx={{ mt: 1 }}>
-                <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />
+                {showUSD && (product.precioInternacional || product.precioCOP) ? (
+                  <Typography
+                    sx={{
+                      fontSize: '1.5rem',
+                      fontWeight: 700,
+                      color: brand.emerald[600],
+                      fontFamily: typography.fontFamily.mono,
+                      fontFeatureSettings: '"tnum"',
+                    }}
+                  >
+                    {formatUSD(product.precioInternacional || product.precioCOP)}
+                  </Typography>
+                ) : (
+                  <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />
+                )}
               </Box>
             </Box>
           </>

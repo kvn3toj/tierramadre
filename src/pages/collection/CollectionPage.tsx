@@ -87,7 +87,7 @@ function ProductCard({
       }}
     >
       {/* Media */}
-      <Box sx={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', bgcolor: '#f0f0f0' }}>
+      <Box sx={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', bgcolor: isVideo ? '#000' : '#f0f0f0' }}>
         {isVideo && item.imagen ? (
           <>
             <video
@@ -99,7 +99,7 @@ function ProductCard({
               loop
               onMouseEnter={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
               onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
             />
             <Box
               sx={{
@@ -210,19 +210,13 @@ export default function CollectionPage() {
           textAlign: 'center',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1 }}>
-          <Gem size={24} style={{ color: brand.emerald[400] }} />
-          <Typography
-            sx={{
-              fontSize: typography.size['2xl'],
-              fontWeight: typography.weight.bold,
-              color: '#fff',
-              fontFamily: typography.fontFamily.display,
-              letterSpacing: typography.letterSpacing.tight,
-            }}
-          >
-            Tierra Madre
-          </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
+          <Box
+            component="img"
+            src="/images/logo-horizontal-white.png"
+            alt="Tierra M\u00e4dre"
+            sx={{ height: 40, objectFit: 'contain' }}
+          />
         </Box>
         <Typography
           sx={{
@@ -331,6 +325,7 @@ export default function CollectionPage() {
       <CollectionProductDialog
         product={selectedProduct}
         onClose={() => setSelectedProduct(null)}
+        showUSD
       />
     </Box>
   );
