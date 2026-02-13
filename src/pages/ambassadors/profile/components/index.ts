@@ -19,3 +19,7 @@ export { CotizacionCard } from './CotizacionCard';
 export { CotizacionesSection } from './CotizacionesSection';
 
 export { CotizacionPreviewDialog } from './CotizacionPreviewDialog';
+
+export { ExclusiveCollectionSection } from './ExclusiveCollectionSection';
+
+export { CollectionProductDialog } from './CollectionProductDialog';

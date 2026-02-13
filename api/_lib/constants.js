@@ -34,6 +34,8 @@ export const DRIVE_FOLDERS = {
   COTIZACIONES_MANUALES: 'manuales',
   // Subfolder for provider quotations (QuotationMediaUpload)
   COTIZACIONES_PROVEEDORES: 'proveedores',
+  // Exclusive collections per asesor
+  COLLECTIONS: 'collections',
   // Feedback app folder (inside TM-Studio/feedback-app)
   FEEDBACK_APP: 'feedback-app',
   // Screenshots subfolder inside feedback-app

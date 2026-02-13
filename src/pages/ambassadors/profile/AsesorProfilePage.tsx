@@ -24,11 +24,14 @@ import { TreasureItem } from '../../../types';
 import { TreasureCard } from '../../../components/treasure/TreasureCard';
 import ScrollToTop from '../../../components/shared/ScrollToTop';
 import { brand, lightTokens, darkTokens } from '../../../design-system';
+import { useAsesorCollection } from '../../../hooks/useAsesorCollection';
 import {
   ProfileHeader,
   ProductFilters,
   CotizacionesSection,
   CotizacionPreviewDialog,
+  ExclusiveCollectionSection,
+  CollectionProductDialog,
 } from './components';
 import type {
   ProfileStats,
@@ -67,6 +70,9 @@ export default function AsesorProfilePage() {
   // Cotizaciones state
   const [selectedCotizacion, setSelectedCotizacion] = useState<SavedCotizacion | null>(null);
 
+  // Exclusive collection state
+  const [selectedCollectionProduct, setSelectedCollectionProduct] = useState<TreasureItem | null>(null);
+
   const { treasure } = useTreasure();
   const { asesores, isLoading } = useAsesores(treasure);
   const { user: googleUser } = useGoogleAuth();
@@ -86,6 +92,16 @@ export default function AsesorProfilePage() {
     const asesorEmail = asesor.email.toLowerCase().trim();
     return userEmail === asesorEmail;
   }, [googleUser, asesor]);
+
+  // Exclusive collection - map asesor email to Drive folder name
+  const COLLECTION_FOLDERS: Record<string, string> = {
+    'ceo@coomunity.co': 'ceo-coomunity',
+  };
+  const collectionFolder = isProfileOwner && asesor?.email
+    ? COLLECTION_FOLDERS[asesor.email.toLowerCase().trim()] ?? null
+    : null;
+  const { products: collectionProducts, collectionInfo, isLoading: collectionLoading } =
+    useAsesorCollection(collectionFolder);
 
   // Fetch cotizaciones when viewing own profile
   useEffect(() => {
@@ -341,6 +357,23 @@ export default function AsesorProfilePage() {
       <CotizacionPreviewDialog
         cotizacion={selectedCotizacion}
         onClose={() => setSelectedCotizacion(null)}
+      />
+
+      {/* Exclusive Collection - Only visible to profile owner */}
+      {isProfileOwner && collectionFolder && (
+        <ExclusiveCollectionSection
+          products={collectionProducts}
+          collectionName={collectionInfo?.name || 'Coleccion Exclusiva'}
+          collectionDescription={collectionInfo?.description}
+          isLoading={collectionLoading}
+          onProductClick={setSelectedCollectionProduct}
+        />
+      )}
+
+      {/* Collection Product Detail Dialog */}
+      <CollectionProductDialog
+        product={selectedCollectionProduct}
+        onClose={() => setSelectedCollectionProduct(null)}
       />
 
       {/* Search and Filters */}

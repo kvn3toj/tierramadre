@@ -7,6 +7,42 @@
 import { DRIVE_FOLDERS, IMAGE_MIME_TYPES, VIDEO_MIME_TYPES, ALL_MEDIA_TYPES, MAX_PAGE_SIZE } from './constants.js';
 
 /**
+ * Find the collections folder ID within a shared drive
+ * @param {object} drive - Google Drive client
+ * @param {string} sharedDriveId - Shared Drive ID
+ * @returns {Promise<string|null>} Collections folder ID or null if not found
+ */
+export async function getCollectionsFolderId(drive, sharedDriveId) {
+  const response = await drive.files.list({
+    q: `name='${DRIVE_FOLDERS.COLLECTIONS}' and mimeType='application/vnd.google-apps.folder' and '${sharedDriveId}' in parents and trashed=false`,
+    fields: 'files(id, name)',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+  });
+
+  return response.data.files?.[0]?.id || null;
+}
+
+/**
+ * Find a specific collection subfolder by name within the collections folder
+ * @param {object} drive - Google Drive client
+ * @param {string} collectionsFolderId - Collections parent folder ID
+ * @param {string} folderName - Collection folder name (e.g., 'ceo-coomunity')
+ * @returns {Promise<string|null>} Collection folder ID or null
+ */
+export async function findCollectionFolder(drive, collectionsFolderId, folderName) {
+  const escapedName = folderName.replace(/'/g, "\\'");
+  const response = await drive.files.list({
+    q: `name='${escapedName}' and mimeType='application/vnd.google-apps.folder' and '${collectionsFolderId}' in parents and trashed=false`,
+    fields: 'files(id, name)',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+  });
+
+  return response.data.files?.[0]?.id || null;
+}
+
+/**
  * Find the products folder ID within a shared drive
  * @param {object} drive - Google Drive client
  * @param {string} sharedDriveId - Shared Drive ID
