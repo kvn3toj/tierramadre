@@ -107,8 +107,6 @@ function ProductCard({
 }) {
   const isVideo = item.mediaType === 'video';
   const [videoError, setVideoError] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
-
   return (
     <Box
       onClick={onClick}
@@ -135,18 +133,15 @@ function ProductCard({
             <video
               src={item.videoUrl ? `${item.videoUrl}#t=0.001` : `${getVideoUrl(item.imagen)}#t=0.001`}
               poster={item.posterUrl || item.imagen}
-              preload={isHovering ? "auto" : "metadata"}
+              preload="none"
               muted
               playsInline
               loop
               webkit-playsinline="true"
               x-webkit-airplay="allow"
               onMouseEnter={(e) => {
-                setIsHovering(true);
                 const video = e.target as HTMLVideoElement;
-                // Preload and play
                 if (video.readyState >= 3) {
-                  // HAVE_FUTURE_DATA: enough data to play
                   video.play().catch(() => {});
                 } else {
                   video.load();
@@ -154,7 +149,6 @@ function ProductCard({
                 }
               }}
               onMouseLeave={(e) => {
-                setIsHovering(false);
                 const v = e.target as HTMLVideoElement;
                 v.pause();
                 v.currentTime = 0;
