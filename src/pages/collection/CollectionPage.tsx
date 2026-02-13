@@ -21,6 +21,7 @@ import {
 import { Gem, MessageCircle, Play } from 'lucide-react';
 import { useAsesorCollection } from '../../hooks/useAsesorCollection';
 import { CollectionProductDialog } from '../ambassadors/profile/components/CollectionProductDialog';
+import CollectionSplashScreen from '../../components/shared/CollectionSplashScreen';
 import { TreasureItem } from '../../types';
 import { brand, lightTokens, darkTokens, typography, gradients } from '../../design-system';
 
@@ -257,6 +258,8 @@ export default function CollectionPage() {
   const driveFolder = folder ? (FOLDER_ALIASES[folder] || folder) : null;
   const { products, collectionInfo, isLoading, error } = useAsesorCollection(driveFolder);
   const [selectedProduct, setSelectedProduct] = useState<TreasureItem | null>(null);
+  const [showSplash, setShowSplash] = useState(true);
+  const [videosPreloaded, setVideosPreloaded] = useState(false);
 
   const contact = folder ? COLLECTION_CONTACTS[folder] : null;
 
@@ -266,6 +269,9 @@ export default function CollectionPage() {
 
     const videoProducts = products.filter(item => item.mediaType === 'video' && (item.videoUrl || item.imagen));
     const videosToPreload = videoProducts; // All videos - only 7 videos total (~14MB)
+
+    let loadedCount = 0;
+    const totalVideos = videosToPreload.length;
 
     videosToPreload.forEach((item) => {
       const videoUrl = item.videoUrl || (item.imagen ? getVideoUrl(item.imagen) : null);
@@ -282,14 +288,30 @@ export default function CollectionPage() {
       // Add to DOM to trigger browser preloading, remove after load
       document.body.appendChild(video);
       video.addEventListener('canplaythrough', () => {
+        loadedCount++;
+        console.log(`Video ${loadedCount}/${totalVideos} loaded`);
+
+        // All videos loaded
+        if (loadedCount === totalVideos) {
+          setVideosPreloaded(true);
+          console.log('All videos preloaded!');
+        }
+
         // Video fully loaded and ready to play
         video.remove();
       }, { once: true });
 
-      // Cleanup if still in DOM after 10 seconds
+      // Cleanup if still in DOM after 15 seconds
       setTimeout(() => {
         if (video.parentNode) video.remove();
-      }, 10000);
+        // Mark as preloaded even if some videos timeout
+        if (loadedCount < totalVideos) {
+          loadedCount++;
+          if (loadedCount === totalVideos) {
+            setVideosPreloaded(true);
+          }
+        }
+      }, 15000);
     });
   }, [products]);
 
@@ -298,6 +320,16 @@ export default function CollectionPage() {
     const text = `Hi ${contact.name}, I saw your exclusive collection on Tierra Madre and I'd like to know more.`;
     window.open(`https://wa.me/${contact.phone}?text=${encodeURIComponent(text)}`, '_blank');
   };
+
+  // Show splash screen while videos preload
+  if (showSplash) {
+    return (
+      <CollectionSplashScreen
+        onComplete={() => setShowSplash(false)}
+        showProgress={!videosPreloaded}
+      />
+    );
+  }
 
   return (
     <Box
