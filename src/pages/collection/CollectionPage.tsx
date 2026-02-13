@@ -106,6 +106,7 @@ function ProductCard({
 }) {
   const isVideo = item.mediaType === 'video';
   const [videoError, setVideoError] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
 
   return (
     <Box
@@ -133,14 +134,30 @@ function ProductCard({
             <video
               src={item.videoUrl ? `${item.videoUrl}#t=0.001` : `${getVideoUrl(item.imagen)}#t=0.001`}
               poster={item.posterUrl || item.imagen}
-              preload="metadata"
+              preload={isHovering ? "auto" : "metadata"}
               muted
               playsInline
               loop
               webkit-playsinline="true"
               x-webkit-airplay="allow"
-              onMouseEnter={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
-              onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
+              onMouseEnter={(e) => {
+                setIsHovering(true);
+                const video = e.target as HTMLVideoElement;
+                // Preload and play
+                if (video.readyState >= 3) {
+                  // HAVE_FUTURE_DATA: enough data to play
+                  video.play().catch(() => {});
+                } else {
+                  video.load();
+                  video.addEventListener('canplay', () => video.play().catch(() => {}), { once: true });
+                }
+              }}
+              onMouseLeave={(e) => {
+                setIsHovering(false);
+                const v = e.target as HTMLVideoElement;
+                v.pause();
+                v.currentTime = 0;
+              }}
               onError={() => setVideoError(true)}
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
@@ -243,16 +260,36 @@ export default function CollectionPage() {
 
   const contact = folder ? COLLECTION_CONTACTS[folder] : null;
 
-  // Preload only first 3 videos to avoid overwhelming bandwidth for international users
+  // Aggressively preload ALL 7 videos for instant playback (CEO collection is small)
   useEffect(() => {
-    const videoProducts = products.filter(item => item.mediaType === 'video' && item.imagen);
-    const videosToPreload = videoProducts.slice(0, 3); // Only first 3 videos
+    if (products.length === 0) return;
+
+    const videoProducts = products.filter(item => item.mediaType === 'video' && (item.videoUrl || item.imagen));
+    const videosToPreload = videoProducts; // All videos - only 7 videos total (~14MB)
 
     videosToPreload.forEach((item) => {
-      if (!item.imagen) return; // Type guard
+      const videoUrl = item.videoUrl || (item.imagen ? getVideoUrl(item.imagen) : null);
+      if (!videoUrl) return;
+
+      // Create hidden video element and fully preload it
       const video = document.createElement('video');
-      video.preload = 'metadata'; // Only metadata, not full video
-      video.src = getVideoUrl(item.imagen);
+      video.preload = 'auto'; // Fully preload the video
+      video.muted = true; // Required for autoplay
+      video.playsInline = true;
+      video.src = videoUrl;
+      video.style.display = 'none';
+
+      // Add to DOM to trigger browser preloading, remove after load
+      document.body.appendChild(video);
+      video.addEventListener('canplaythrough', () => {
+        // Video fully loaded and ready to play
+        video.remove();
+      }, { once: true });
+
+      // Cleanup if still in DOM after 10 seconds
+      setTimeout(() => {
+        if (video.parentNode) video.remove();
+      }, 10000);
     });
   }, [products]);
 
