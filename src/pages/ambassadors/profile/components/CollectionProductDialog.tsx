@@ -62,19 +62,37 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
 
         {product && (
           <>
-            {/* Product Image */}
+            {/* Product Media (Video or Image) */}
             {product.imagen && (
-              <Box
-                component="img"
-                src={product.imagen}
-                alt={product.nombre}
-                sx={{
-                  width: '100%',
-                  aspectRatio: '1/1',
-                  objectFit: 'cover',
-                  display: 'block',
-                }}
-              />
+              product.mediaType === 'video' ? (
+                <Box sx={{ width: '100%', aspectRatio: '1/1', bgcolor: '#000', position: 'relative' }}>
+                  <video
+                    src={`${product.imagen.replace(/[?&]thumbnail=true/, '').replace(/[?&]size=\w+/, '')}#t=0.001`}
+                    poster={product.imagen}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block',
+                    }}
+                  />
+                </Box>
+              ) : (
+                <Box
+                  component="img"
+                  src={product.imagen}
+                  alt={product.nombre}
+                  sx={{
+                    width: '100%',
+                    aspectRatio: '1/1',
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
+              )
             )}
 
             {/* Product Info */}
