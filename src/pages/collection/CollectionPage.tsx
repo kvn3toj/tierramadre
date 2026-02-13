@@ -194,7 +194,7 @@ function ProductCard({
             </Typography>
           )}
           <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
-            &middot; -
+            -
           </Typography>
         </Box>
         {(item.precioInternacional || item.precioCOP) && (
