@@ -7,7 +7,7 @@
  * Prices always shown in USD.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box,
@@ -39,23 +39,6 @@ const COLLECTION_CONTACTS: Record<string, { name: string; phone: string; title?:
     subtitle: "CEO's personal selection of Colombian emeralds",
   },
 };
-
-/** Extract fileId from proxy URL: /api/serve-drive-image?fileId=XXX&... */
-function extractFileId(url: string): string | null {
-  try {
-    const match = url.match(/fileId=([^&]+)/);
-    return match ? match[1] : null;
-  } catch {
-    return null;
-  }
-}
-
-/** Build video streaming URL from fileId */
-function getVideoUrl(thumbnailUrl: string): string {
-  const fileId = extractFileId(thumbnailUrl);
-  if (!fileId) return thumbnailUrl;
-  return `/api/serve-drive-image?fileId=${fileId}`;
-}
 
 /** Format USD price */
 function formatUSD(value: number): string {
@@ -106,7 +89,7 @@ function ProductCard({
   isLight: boolean;
 }) {
   const isVideo = item.mediaType === 'video';
-  const [videoError, setVideoError] = useState(false);
+  const posterSrc = item.posterUrl || item.imagen;
   return (
     <Box
       onClick={onClick}
@@ -126,57 +109,12 @@ function ProductCard({
         },
       }}
     >
-      {/* Media */}
+      {/* Media — poster image only, video plays in dialog on click */}
       <Box sx={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', bgcolor: '#f0f0f0' }}>
-        {isVideo && item.imagen && !videoError ? (
-          <>
-            <video
-              src={item.videoUrl ? `${item.videoUrl}#t=0.001` : `${getVideoUrl(item.imagen)}#t=0.001`}
-              poster={item.posterUrl || item.imagen}
-              preload="none"
-              muted
-              playsInline
-              loop
-              webkit-playsinline="true"
-              x-webkit-airplay="allow"
-              onMouseEnter={(e) => {
-                const video = e.target as HTMLVideoElement;
-                if (video.readyState >= 3) {
-                  video.play().catch(() => {});
-                } else {
-                  video.load();
-                  video.addEventListener('canplay', () => video.play().catch(() => {}), { once: true });
-                }
-              }}
-              onMouseLeave={(e) => {
-                const v = e.target as HTMLVideoElement;
-                v.pause();
-                v.currentTime = 0;
-              }}
-              onError={() => setVideoError(true)}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: 8,
-                right: 8,
-                bgcolor: 'rgba(0,0,0,0.6)',
-                borderRadius: '50%',
-                width: 32,
-                height: 32,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Play size={16} color="#fff" fill="#fff" />
-            </Box>
-          </>
-        ) : item.imagen ? (
+        {posterSrc ? (
           <Box
             component="img"
-            src={item.imagen}
+            src={posterSrc}
             alt={item.nombre}
             loading="lazy"
             sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
@@ -184,6 +122,24 @@ function ProductCard({
         ) : (
           <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Gem size={40} style={{ color: brand.emerald[300] }} />
+          </Box>
+        )}
+        {isVideo && (
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 8,
+              right: 8,
+              bgcolor: 'rgba(0,0,0,0.6)',
+              borderRadius: '50%',
+              width: 32,
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Play size={16} color="#fff" fill="#fff" />
           </Box>
         )}
       </Box>
@@ -253,7 +209,6 @@ export default function CollectionPage() {
   const { products, collectionInfo, isLoading, error } = useAsesorCollection(driveFolder);
   const [selectedProduct, setSelectedProduct] = useState<TreasureItem | null>(null);
   const [showSplash, setShowSplash] = useState(true);
-  const [videosPreloaded, setVideosPreloaded] = useState(false);
 
   const contact = folder ? COLLECTION_CONTACTS[folder] : null;
 
@@ -268,68 +223,18 @@ export default function CollectionPage() {
     return a.item - b.item;
   });
 
-  // Track which videos have already been preloaded to prevent duplicate requests
-  const preloadedUrlsRef = useRef<Set<string>>(new Set());
-
-  // Preload all videos via fetch() to warm the HTTP cache — single request per video,
-  // avoids Safari's range-request storm from hidden <video> elements
-  useEffect(() => {
-    if (products.length === 0) return;
-
-    const videoProducts = products.filter(item => item.mediaType === 'video' && (item.videoUrl || item.imagen));
-
-    // Resolve URLs and filter out already-preloaded ones
-    const newUrls: string[] = [];
-    for (const item of videoProducts) {
-      const videoUrl = item.videoUrl || (item.imagen ? getVideoUrl(item.imagen) : null);
-      if (!videoUrl || preloadedUrlsRef.current.has(videoUrl)) continue;
-      preloadedUrlsRef.current.add(videoUrl);
-      newUrls.push(videoUrl);
-    }
-
-    if (newUrls.length === 0) {
-      if (videoProducts.length > 0) setVideosPreloaded(true);
-      return;
-    }
-
-    let loadedCount = 0;
-    const totalVideos = newUrls.length;
-    const abortController = new AbortController();
-
-    newUrls.forEach((url) => {
-      fetch(url, { signal: abortController.signal })
-        .then(res => res.arrayBuffer()) // consume full response into HTTP cache
-        .then(() => {
-          loadedCount++;
-          if (loadedCount === totalVideos) setVideosPreloaded(true);
-        })
-        .catch(() => {
-          loadedCount++;
-          if (loadedCount === totalVideos) setVideosPreloaded(true);
-        });
-    });
-
-    // Timeout fallback — mark preloaded after 15s even if some fail
-    const timeout = setTimeout(() => setVideosPreloaded(true), 15000);
-
-    return () => {
-      abortController.abort();
-      clearTimeout(timeout);
-    };
-  }, [products]);
-
   const handleWhatsApp = () => {
     if (!contact) return;
     const text = `Hi ${contact.name}, I saw your exclusive collection on Tierra Madre and I'd like to know more.`;
     window.open(`https://wa.me/${contact.phone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  // Show splash screen while videos preload
+  // Show splash screen
   if (showSplash) {
     return (
       <CollectionSplashScreen
         onComplete={() => setShowSplash(false)}
-        showProgress={!videosPreloaded}
+        showProgress={false}
       />
     );
   }
