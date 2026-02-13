@@ -29,7 +29,7 @@ interface UseAsesorCollectionReturn {
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 function getCacheKey(folder: string) {
-  return `collection_${folder}`;
+  return `collection_v2_${folder}`; // v2: Added videoUrl/posterUrl support
 }
 
 function readCache(folder: string): CollectionCache | null {

@@ -133,10 +133,12 @@ function ProductCard({
             <video
               src={item.videoUrl ? `${item.videoUrl}#t=0.001` : `${getVideoUrl(item.imagen)}#t=0.001`}
               poster={item.posterUrl || item.imagen}
-              preload="none"
+              preload="metadata"
               muted
               playsInline
               loop
+              webkit-playsinline="true"
+              x-webkit-airplay="allow"
               onMouseEnter={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
               onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
               onError={() => setVideoError(true)}
