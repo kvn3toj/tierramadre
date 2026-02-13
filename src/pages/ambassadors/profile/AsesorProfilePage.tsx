@@ -95,10 +95,16 @@ export default function AsesorProfilePage() {
 
   // Exclusive collection - map asesor email to Drive folder name
   const COLLECTION_FOLDERS: Record<string, string> = {
-    'ceo@coomunity.co': 'ceo-coomunity',
+    'cvocmnty@gmail.com': 'ceo-coomunity',
   };
-  const collectionFolder = isProfileOwner && asesor?.email
-    ? COLLECTION_FOLDERS[asesor.email.toLowerCase().trim()] ?? null
+  // Dev fallback: match by slug when email isn't available
+  const COLLECTION_SLUGS: Record<string, string> = {
+    'andres-mauricio-escobar-ramirez': 'ceo-coomunity',
+  };
+  const isDev = import.meta.env.DEV;
+  const collectionFolder = (isProfileOwner || isDev) && asesor
+    ? COLLECTION_FOLDERS[asesor.email?.toLowerCase().trim() ?? '']
+      ?? (isDev ? COLLECTION_SLUGS[asesor.slug] ?? null : null)
     : null;
   const { products: collectionProducts, collectionInfo, isLoading: collectionLoading } =
     useAsesorCollection(collectionFolder);
@@ -359,8 +365,8 @@ export default function AsesorProfilePage() {
         onClose={() => setSelectedCotizacion(null)}
       />
 
-      {/* Exclusive Collection - Only visible to profile owner */}
-      {isProfileOwner && collectionFolder && (
+      {/* Exclusive Collection - Only visible to profile owner (dev bypass for testing) */}
+      {(isProfileOwner || isDev) && collectionFolder && (
         <ExclusiveCollectionSection
           products={collectionProducts}
           collectionName={collectionInfo?.name || 'Coleccion Exclusiva'}

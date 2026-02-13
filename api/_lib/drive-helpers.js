@@ -7,9 +7,9 @@
 import { DRIVE_FOLDERS, IMAGE_MIME_TYPES, VIDEO_MIME_TYPES, ALL_MEDIA_TYPES, MAX_PAGE_SIZE } from './constants.js';
 
 /**
- * Find the collections folder ID within a shared drive
+ * Find the collections folder ID (sibling of products inside the drive root)
  * @param {object} drive - Google Drive client
- * @param {string} sharedDriveId - Shared Drive ID
+ * @param {string} sharedDriveId - Root folder ID (TM-Studio)
  * @returns {Promise<string|null>} Collections folder ID or null if not found
  */
 export async function getCollectionsFolderId(drive, sharedDriveId) {

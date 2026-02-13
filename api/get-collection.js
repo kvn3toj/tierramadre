@@ -17,26 +17,26 @@ import {
   findCollectionFolder,
   listProductFolders,
   getFirstImageOrVideoThumbnail,
-  extractItemNumber,
+  listMediaFiles,
   getProxyUrl,
 } from './_lib/index.js';
 
 export default withApiHandler(async (req, res, { drive, sharedDriveId }) => {
   const folder = req.query.folder;
   if (!folder || typeof folder !== 'string') {
-    return sendError(res, 'Missing ?folder= parameter', 400);
+    return sendError(res, 400, 'Missing ?folder= parameter');
   }
 
   // 1. Find collections/ root folder
   const collectionsFolderId = await getCollectionsFolderId(drive, sharedDriveId);
   if (!collectionsFolderId) {
-    return sendError(res, 'Collections folder not found in Drive', 404);
+    return sendError(res, 404, 'Collections folder not found in Drive');
   }
 
   // 2. Find the specific collection subfolder
   const collectionFolderId = await findCollectionFolder(drive, collectionsFolderId, folder);
   if (!collectionFolderId) {
-    return sendError(res, `Collection "${folder}" not found`, 404);
+    return sendError(res, 404, `Collection "${folder}" not found`);
   }
 
   // 3. Read collection.json from the folder
@@ -49,7 +49,7 @@ export default withApiHandler(async (req, res, { drive, sharedDriveId }) => {
 
   const jsonFile = jsonFileResponse.data.files?.[0];
   if (!jsonFile) {
-    return sendError(res, 'collection.json not found in folder', 404);
+    return sendError(res, 404, 'collection.json not found in folder');
   }
 
   const fileContent = await drive.files.get({
@@ -64,48 +64,48 @@ export default withApiHandler(async (req, res, { drive, sharedDriveId }) => {
       ? JSON.parse(fileContent.data)
       : fileContent.data;
   } catch {
-    return sendError(res, 'Invalid collection.json format', 500);
+    return sendError(res, 500, 'Invalid collection.json format');
   }
 
-  // 4. Scan product subfolders for thumbnails (reuse existing helpers)
+  // 4. Scan for media — supports both subfolders and direct files
   const productFolders = await listProductFolders(drive, collectionFolderId);
   const thumbnails = {};
 
-  for (let i = 0; i < productFolders.length; i += BATCH_SIZE) {
-    const batch = productFolders.slice(i, i + BATCH_SIZE);
-
-    const results = await Promise.all(
-      batch.map(async (pFolder) => {
-        // Collection folders may use "901 Name" or "901 - Name" format
-        const match = pFolder.name.match(/^(\d+)\s*/);
-        const itemNumber = match ? parseInt(match[1], 10) : null;
-        if (!itemNumber) return null;
-
-        try {
-          const result = await getFirstImageOrVideoThumbnail(drive, pFolder.id);
-          if (result) {
-            const { file, isVideo } = result;
-            return {
-              itemNumber,
-              proxyUrl: getProxyUrl(file.id, isVideo, 'small'),
-              isVideo,
-            };
+  if (productFolders.length > 0) {
+    // Subfolder mode: each product has its own folder with media inside
+    for (let i = 0; i < productFolders.length; i += BATCH_SIZE) {
+      const batch = productFolders.slice(i, i + BATCH_SIZE);
+      const results = await Promise.all(
+        batch.map(async (pFolder) => {
+          const match = pFolder.name.match(/^(\d+)\s*/);
+          const itemNumber = match ? parseInt(match[1], 10) : null;
+          if (!itemNumber) return null;
+          try {
+            const result = await getFirstImageOrVideoThumbnail(drive, pFolder.id);
+            if (result) {
+              return { itemNumber, proxyUrl: getProxyUrl(result.file.id, result.isVideo, 'small'), isVideo: result.isVideo };
+            }
+          } catch (error) {
+            console.warn(`[Collection] Thumbnail error for ${pFolder.name}:`, error.message);
           }
-        } catch (error) {
-          console.warn(`[Collection] Error fetching thumbnail for ${pFolder.name}:`, error.message);
-        }
-        return null;
-      })
-    );
-
-    results.forEach((r) => {
-      if (r) {
-        thumbnails[r.itemNumber] = {
-          url: r.proxyUrl,
-          isVideoThumbnail: r.isVideo,
-        };
-      }
-    });
+          return null;
+        })
+      );
+      results.forEach((r) => { if (r) thumbnails[r.itemNumber] = { url: r.proxyUrl, isVideoThumbnail: r.isVideo }; });
+    }
+  } else {
+    // Flat mode: media files are directly in the collection folder, named "901 Name.mp4"
+    const mediaFiles = await listMediaFiles(drive, collectionFolderId);
+    for (const file of mediaFiles) {
+      const match = file.name.match(/^(\d+)\s/);
+      if (!match) continue;
+      const itemNumber = parseInt(match[1], 10);
+      const isVideo = file.mimeType.startsWith('video/');
+      thumbnails[itemNumber] = {
+        url: getProxyUrl(file.id, isVideo, 'small'),
+        isVideoThumbnail: isVideo,
+      };
+    }
   }
 
   // 5. Merge thumbnail URLs into product data
