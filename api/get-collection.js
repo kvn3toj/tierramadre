@@ -113,8 +113,11 @@ export default withApiHandler(async (req, res, { drive, sharedDriveId }) => {
     const thumb = thumbnails[product.item];
     return {
       ...product,
-      imagen: thumb?.url || '',
-      mediaType: thumb?.isVideoThumbnail ? 'video' : 'image',
+      // Use static videoUrl/posterUrl if provided in collection.json, otherwise fallback to Drive thumbnails
+      videoUrl: product.videoUrl,
+      posterUrl: product.posterUrl,
+      imagen: product.posterUrl || thumb?.url || '',
+      mediaType: product.videoUrl ? 'video' : (thumb?.isVideoThumbnail ? 'video' : 'image'),
     };
   });
 

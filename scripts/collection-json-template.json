@@ -1,0 +1,84 @@
+{
+  "name": "CEO Collection",
+  "description": "CEO's personal selection of Colombian emeralds",
+  "asesorEmail": "andres@tierramadre.com",
+  "products": [
+    {
+      "item": 901,
+      "nombre": "Reino de Paz",
+      "peso": 2.5,
+      "precioCOP": 15000000,
+      "precioInternacional": 4500,
+      "talla": "Esmeralda",
+      "videoUrl": "/images/901.mp4",
+      "posterUrl": "/images/901-poster.jpg",
+      "mediaType": "video"
+    },
+    {
+      "item": 902,
+      "nombre": "Tierra Sagrada",
+      "peso": 3.2,
+      "precioCOP": 18000000,
+      "precioInternacional": 5400,
+      "talla": "Esmeralda",
+      "videoUrl": "/images/902.mp4",
+      "posterUrl": "/images/902-poster.jpg",
+      "mediaType": "video"
+    },
+    {
+      "item": 903,
+      "nombre": "Eco de Luz",
+      "peso": 1.8,
+      "precioCOP": 12000000,
+      "precioInternacional": 3600,
+      "talla": "Esmeralda",
+      "videoUrl": "/images/903.mp4",
+      "posterUrl": "/images/903-poster.jpg",
+      "mediaType": "video"
+    },
+    {
+      "item": 904,
+      "nombre": "Alma de la Montaña",
+      "peso": 2.1,
+      "precioCOP": 14000000,
+      "precioInternacional": 4200,
+      "talla": "Esmeralda",
+      "videoUrl": "/images/904.mp4",
+      "posterUrl": "/images/904-poster.jpg",
+      "mediaType": "video"
+    },
+    {
+      "item": 905,
+      "nombre": "Canto del Río",
+      "peso": 2.8,
+      "precioCOP": 16000000,
+      "precioInternacional": 4800,
+      "talla": "Esmeralda",
+      "videoUrl": "/images/905.mp4",
+      "posterUrl": "/images/905-poster.jpg",
+      "mediaType": "video"
+    },
+    {
+      "item": 906,
+      "nombre": "Corazón de la Mina",
+      "peso": 2.3,
+      "precioCOP": 13500000,
+      "precioInternacional": 4050,
+      "talla": "Esmeralda",
+      "videoUrl": "/images/906.mp4",
+      "posterUrl": "/images/906-poster.jpg",
+      "mediaType": "video"
+    },
+    {
+      "item": 907,
+      "nombre": "Abrazo del Bosque",
+      "peso": 2.6,
+      "precioCOP": 15500000,
+      "precioInternacional": 4650,
+      "talla": "Esmeralda",
+      "videoUrl": "/images/907.mp4",
+      "posterUrl": "/images/907-poster.jpg",
+      "mediaType": "video"
+    }
+  ]
+}

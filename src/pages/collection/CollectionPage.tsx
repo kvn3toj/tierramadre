@@ -131,8 +131,8 @@ function ProductCard({
         {isVideo && item.imagen && !videoError ? (
           <>
             <video
-              src={`${getVideoUrl(item.imagen)}#t=0.001`}
-              poster={item.imagen}
+              src={item.videoUrl ? `${item.videoUrl}#t=0.001` : `${getVideoUrl(item.imagen)}#t=0.001`}
+              poster={item.posterUrl || item.imagen}
               preload="none"
               muted
               playsInline

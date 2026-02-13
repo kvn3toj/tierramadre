@@ -105,7 +105,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                 <Box sx={{ width: '100%', aspectRatio: '1/1', bgcolor: '#000' }}>
                   <video
                     key={product.item}
-                    src={getVideoUrl(product.imagen)}
+                    src={product.videoUrl || getVideoUrl(product.imagen)}
+                    poster={product.posterUrl}
                     autoPlay
                     muted
                     loop
