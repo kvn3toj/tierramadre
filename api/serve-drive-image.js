@@ -269,12 +269,14 @@ export default withApiHandler(async (req, res) => {
     }
 
     // Download the file for GET requests (with timeout to prevent 504)
+    // Longer timeout for videos to support international users with slower connections
+    const downloadTimeout = mimeType.startsWith('video/') ? 45000 : 20000;
     const response = await withTimeout(
       drive.files.get(
         { fileId, alt: 'media', supportsAllDrives: true },
         { responseType: 'arraybuffer' }
       ),
-      15000,
+      downloadTimeout,
       'File download'
     );
 

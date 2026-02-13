@@ -105,6 +105,7 @@ function ProductCard({
   isLight: boolean;
 }) {
   const isVideo = item.mediaType === 'video';
+  const [videoError, setVideoError] = useState(false);
 
   return (
     <Box
@@ -127,17 +128,18 @@ function ProductCard({
     >
       {/* Media */}
       <Box sx={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', bgcolor: '#f0f0f0' }}>
-        {isVideo && item.imagen ? (
+        {isVideo && item.imagen && !videoError ? (
           <>
             <video
               src={`${getVideoUrl(item.imagen)}#t=0.001`}
               poster={item.imagen}
-              preload="metadata"
+              preload="none"
               muted
               playsInline
               loop
               onMouseEnter={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
               onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
+              onError={() => setVideoError(true)}
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
             <Box
@@ -239,14 +241,16 @@ export default function CollectionPage() {
 
   const contact = folder ? COLLECTION_CONTACTS[folder] : null;
 
-  // Preload video files in background so they play instantly on card tap
+  // Preload only first 3 videos to avoid overwhelming bandwidth for international users
   useEffect(() => {
-    products.forEach((item) => {
-      if (item.mediaType === 'video' && item.imagen) {
-        const video = document.createElement('video');
-        video.preload = 'auto';
-        video.src = getVideoUrl(item.imagen);
-      }
+    const videoProducts = products.filter(item => item.mediaType === 'video' && item.imagen);
+    const videosToPreload = videoProducts.slice(0, 3); // Only first 3 videos
+
+    videosToPreload.forEach((item) => {
+      if (!item.imagen) return; // Type guard
+      const video = document.createElement('video');
+      video.preload = 'metadata'; // Only metadata, not full video
+      video.src = getVideoUrl(item.imagen);
     });
   }, [products]);
 
