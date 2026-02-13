@@ -40,6 +40,9 @@ const COLLECTION_CONTACTS: Record<string, { name: string; phone: string; title?:
   },
 };
 
+// Module-level cache: original video URL → blob URL (survives re-renders)
+const videoBlobCache = new Map<string, string>();
+
 /** Extract fileId from proxy URL: /api/serve-drive-image?fileId=XXX&... */
 function extractFileId(url: string): string | null {
   try {
@@ -107,6 +110,10 @@ function ProductCard({
 }) {
   const isVideo = item.mediaType === 'video';
   const [videoError, setVideoError] = useState(false);
+  // Use preloaded blob URL if available, otherwise fall back to network URL
+  const networkVideoUrl = item.videoUrl || (item.imagen ? getVideoUrl(item.imagen) : '');
+  const cachedBlobUrl = videoBlobCache.get(networkVideoUrl);
+  const videoSrc = cachedBlobUrl || networkVideoUrl;
   return (
     <Box
       onClick={onClick}
@@ -131,9 +138,9 @@ function ProductCard({
         {isVideo && item.imagen && !videoError ? (
           <>
             <video
-              src={item.videoUrl ? `${item.videoUrl}#t=0.001` : `${getVideoUrl(item.imagen)}#t=0.001`}
+              src={`${videoSrc}#t=0.001`}
               poster={item.posterUrl || item.imagen}
-              preload="none"
+              preload={cachedBlobUrl ? "auto" : "none"}
               muted
               playsInline
               loop
@@ -271,64 +278,52 @@ export default function CollectionPage() {
   // Track which videos have already been preloaded to prevent duplicate requests
   const preloadedUrlsRef = useRef<Set<string>>(new Set());
 
-  // Preload all videos for instant playback (CEO collection is small ~7 videos)
+  // Preload all videos via fetch() + blob URLs — single HTTP request per video,
+  // no Safari range-request storm that hidden <video> elements cause
   useEffect(() => {
     if (products.length === 0) return;
 
     const videoProducts = products.filter(item => item.mediaType === 'video' && (item.videoUrl || item.imagen));
 
     // Resolve URLs and filter out already-preloaded ones
-    const newVideos: { item: typeof videoProducts[0]; url: string }[] = [];
+    const newUrls: string[] = [];
     for (const item of videoProducts) {
       const videoUrl = item.videoUrl || (item.imagen ? getVideoUrl(item.imagen) : null);
       if (!videoUrl || preloadedUrlsRef.current.has(videoUrl)) continue;
       preloadedUrlsRef.current.add(videoUrl);
-      newVideos.push({ item, url: videoUrl });
+      newUrls.push(videoUrl);
     }
 
-    if (newVideos.length === 0) {
-      // All videos already preloaded (or none to preload)
+    if (newUrls.length === 0) {
       if (videoProducts.length > 0) setVideosPreloaded(true);
       return;
     }
 
     let loadedCount = 0;
-    const totalVideos = newVideos.length;
-    const videoElements: HTMLVideoElement[] = [];
+    const totalVideos = newUrls.length;
+    const abortController = new AbortController();
 
-    newVideos.forEach(({ url }) => {
-      const video = document.createElement('video');
-      video.preload = 'auto';
-      video.muted = true;
-      video.playsInline = true;
-      video.src = url;
-      video.style.display = 'none';
-      videoElements.push(video);
-
-      document.body.appendChild(video);
-      video.addEventListener('canplaythrough', () => {
-        loadedCount++;
-        if (loadedCount === totalVideos) {
-          setVideosPreloaded(true);
-        }
-        video.remove();
-      }, { once: true });
-
-      // Timeout fallback - remove element after 15s
-      setTimeout(() => {
-        if (video.parentNode) video.remove();
-        if (loadedCount < totalVideos) {
+    newUrls.forEach((url) => {
+      fetch(url, { signal: abortController.signal })
+        .then(res => res.blob())
+        .then(blob => {
+          videoBlobCache.set(url, URL.createObjectURL(blob));
           loadedCount++;
-          if (loadedCount === totalVideos) {
-            setVideosPreloaded(true);
-          }
-        }
-      }, 15000);
+          if (loadedCount === totalVideos) setVideosPreloaded(true);
+        })
+        .catch(() => {
+          // Fetch failed or aborted — still count so we don't block forever
+          loadedCount++;
+          if (loadedCount === totalVideos) setVideosPreloaded(true);
+        });
     });
 
-    // Cleanup on unmount
+    // Timeout fallback — mark preloaded after 15s even if some fail
+    const timeout = setTimeout(() => setVideosPreloaded(true), 15000);
+
     return () => {
-      videoElements.forEach(v => { if (v.parentNode) v.remove(); });
+      abortController.abort();
+      clearTimeout(timeout);
     };
   }, [products]);
 
