@@ -44,7 +44,9 @@ function buildFolderName(item, nombre) {
 }
 
 export default withApiHandler(async (req, res, { sheets, drive, sharedDriveId }) => {
-  const isDryRun = req.method === 'GET';
+  // Auto-apply when called by Vercel cron or with ?sync=auto
+  const isCron = req.headers['x-vercel-cron'] || req.query?.sync === 'auto';
+  const isDryRun = req.method === 'GET' && !isCron;
 
   // Parse optional items filter
   const itemsParam = req.query?.items;

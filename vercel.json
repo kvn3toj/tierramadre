@@ -68,8 +68,17 @@
     },
     "api/user-prefs.js": {
       "maxDuration": 15
+    },
+    "api/create-product-folders.js": {
+      "maxDuration": 60
     }
   },
+  "crons": [
+    {
+      "path": "/api/create-product-folders?sync=auto",
+      "schedule": "0 */6 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/api/serve-drive-image",
