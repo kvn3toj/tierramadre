@@ -154,7 +154,7 @@ export default function CollectionSplashScreen({
         <Box
           component={motion.img}
           src="/logo-symbol.png"
-          alt="Tierra Madre - Colombian Emeralds"
+          alt="Tierra Mädre - Colombian Emeralds"
           initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.92 }}
           animate={prefersReducedMotion ? { opacity: 1 } : {
             opacity: [0, 1, 1, 1, 1, 1, 1, 1],
@@ -172,6 +172,34 @@ export default function CollectionSplashScreen({
             filter: 'drop-shadow(0 0 35px rgba(80, 200, 120, 0.35))',
           }}
         />
+
+        {/* Brand Name */}
+        <Box
+          component={motion.div}
+          initial={{ opacity: 0, y: 10 }}
+          animate={prefersReducedMotion ? { opacity: 1, y: 0 } : {
+            opacity: [0, 0, 1],
+            y: [10, 10, 0],
+          }}
+          transition={{
+            duration: 7.5,
+            times: [0, 0.25, 1],
+            ease: 'easeOut',
+          }}
+          sx={{ textAlign: 'center', mt: 0.5 }}
+        >
+          <Typography
+            sx={{
+              color: 'rgba(255, 255, 255, 0.95)',
+              fontSize: { xs: '1.2rem', sm: '1.4rem' },
+              fontWeight: 300,
+              letterSpacing: 3,
+              textTransform: 'uppercase',
+            }}
+          >
+            Tierra Mädre
+          </Typography>
+        </Box>
 
         {/* Collection Title */}
         <Box
