@@ -144,7 +144,7 @@ export default function CollectionSplashScreen({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 3,
+          gap: 2.5,
           position: 'relative',
           zIndex: 1,
           px: 2,
@@ -214,7 +214,7 @@ export default function CollectionSplashScreen({
             times: [0, 0.3, 1],
             ease: 'easeOut',
           }}
-          sx={{ textAlign: 'center' }}
+          sx={{ textAlign: 'center', mt: -1 }}
         >
           <Typography
             variant="h6"

@@ -7,7 +7,7 @@
  * Prices always shown in USD.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box,
@@ -263,48 +263,55 @@ export default function CollectionPage() {
 
   const contact = folder ? COLLECTION_CONTACTS[folder] : null;
 
-  // Aggressively preload ALL 7 videos for instant playback (CEO collection is small)
+  // Track which videos have already been preloaded to prevent duplicate requests
+  const preloadedUrlsRef = useRef<Set<string>>(new Set());
+
+  // Preload all videos for instant playback (CEO collection is small ~7 videos)
   useEffect(() => {
     if (products.length === 0) return;
 
     const videoProducts = products.filter(item => item.mediaType === 'video' && (item.videoUrl || item.imagen));
-    const videosToPreload = videoProducts; // All videos - only 7 videos total (~14MB)
+
+    // Resolve URLs and filter out already-preloaded ones
+    const newVideos: { item: typeof videoProducts[0]; url: string }[] = [];
+    for (const item of videoProducts) {
+      const videoUrl = item.videoUrl || (item.imagen ? getVideoUrl(item.imagen) : null);
+      if (!videoUrl || preloadedUrlsRef.current.has(videoUrl)) continue;
+      preloadedUrlsRef.current.add(videoUrl);
+      newVideos.push({ item, url: videoUrl });
+    }
+
+    if (newVideos.length === 0) {
+      // All videos already preloaded (or none to preload)
+      if (videoProducts.length > 0) setVideosPreloaded(true);
+      return;
+    }
 
     let loadedCount = 0;
-    const totalVideos = videosToPreload.length;
+    const totalVideos = newVideos.length;
+    const videoElements: HTMLVideoElement[] = [];
 
-    videosToPreload.forEach((item) => {
-      const videoUrl = item.videoUrl || (item.imagen ? getVideoUrl(item.imagen) : null);
-      if (!videoUrl) return;
-
-      // Create hidden video element and fully preload it
+    newVideos.forEach(({ url }) => {
       const video = document.createElement('video');
-      video.preload = 'auto'; // Fully preload the video
-      video.muted = true; // Required for autoplay
+      video.preload = 'auto';
+      video.muted = true;
       video.playsInline = true;
-      video.src = videoUrl;
+      video.src = url;
       video.style.display = 'none';
+      videoElements.push(video);
 
-      // Add to DOM to trigger browser preloading, remove after load
       document.body.appendChild(video);
       video.addEventListener('canplaythrough', () => {
         loadedCount++;
-        console.log(`Video ${loadedCount}/${totalVideos} loaded`);
-
-        // All videos loaded
         if (loadedCount === totalVideos) {
           setVideosPreloaded(true);
-          console.log('All videos preloaded!');
         }
-
-        // Video fully loaded and ready to play
         video.remove();
       }, { once: true });
 
-      // Cleanup if still in DOM after 15 seconds
+      // Timeout fallback - remove element after 15s
       setTimeout(() => {
         if (video.parentNode) video.remove();
-        // Mark as preloaded even if some videos timeout
         if (loadedCount < totalVideos) {
           loadedCount++;
           if (loadedCount === totalVideos) {
@@ -313,6 +320,11 @@ export default function CollectionPage() {
         }
       }, 15000);
     });
+
+    // Cleanup on unmount
+    return () => {
+      videoElements.forEach(v => { if (v.parentNode) v.remove(); });
+    };
   }, [products]);
 
   const handleWhatsApp = () => {
