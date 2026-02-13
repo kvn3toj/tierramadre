@@ -101,6 +101,9 @@ async function fetchFromSheets(): Promise<TreasureItem[]> {
     throw new Error('Invalid response from Google Sheets API');
   }
 
+  // Auto-sync Drive product folders in background (fire-and-forget)
+  fetch('/api/create-product-folders?sync=auto').catch(() => {});
+
   return result.treasure;
 }
 
