@@ -7,7 +7,7 @@
  * Prices always shown in USD.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box,
@@ -238,6 +238,17 @@ export default function CollectionPage() {
   const [selectedProduct, setSelectedProduct] = useState<TreasureItem | null>(null);
 
   const contact = folder ? COLLECTION_CONTACTS[folder] : null;
+
+  // Preload video files in background so they play instantly on card tap
+  useEffect(() => {
+    products.forEach((item) => {
+      if (item.mediaType === 'video' && item.imagen) {
+        const video = document.createElement('video');
+        video.preload = 'auto';
+        video.src = getVideoUrl(item.imagen);
+      }
+    });
+  }, [products]);
 
   const handleWhatsApp = () => {
     if (!contact) return;
