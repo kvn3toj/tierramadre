@@ -61,6 +61,9 @@ const AdminProductRequestList = lazyWithRetry(() => import('./components/request
 // Invitation Page (public route - accessible without auth)
 const InvitationPage = lazyWithRetry(() => import('./pages/InvitationPage'), 'InvitationPage');
 
+// Public Collection Page (shareable without auth)
+const CollectionPage = lazyWithRetry(() => import('./pages/collection/CollectionPage'), 'CollectionPage');
+
 // Cart Page
 const CartPage = lazyWithRetry(() => import('./pages/CartPage'), 'CartPage');
 
@@ -354,6 +357,15 @@ function InvitationRouter() {
         element={
           <Suspense fallback={<LoadingFallback message="Cargando..." />}>
             <InvitationPage />
+          </Suspense>
+        }
+      />
+      {/* Public collection page (e.g., /c/ceo-coomunity) */}
+      <Route
+        path="/c/:folder"
+        element={
+          <Suspense fallback={<LoadingFallback message="Cargando coleccion..." />}>
+            <CollectionPage />
           </Suspense>
         }
       />

@@ -373,6 +373,18 @@ export default function AsesorProfilePage() {
           collectionDescription={collectionInfo?.description}
           isLoading={collectionLoading}
           onProductClick={setSelectedCollectionProduct}
+          onShare={isProfileOwner ? async () => {
+            const url = `${window.location.origin}/c/${collectionFolder}`;
+            const text = `Mira mi coleccion exclusiva de esmeraldas colombianas en Tierra Madre`;
+            if (navigator.share) {
+              try {
+                await navigator.share({ title: 'Coleccion Exclusiva - Tierra Madre', text, url });
+              } catch { /* user cancelled */ }
+            } else {
+              await navigator.clipboard.writeText(url);
+              notify('Enlace de coleccion copiado', 'success');
+            }
+          } : undefined}
         />
       )}
 

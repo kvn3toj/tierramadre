@@ -12,10 +12,11 @@ import {
   Grid,
   Skeleton,
   Chip,
+  IconButton,
   alpha,
   useTheme,
 } from '@mui/material';
-import { Gem } from 'lucide-react';
+import { Gem, Share2 } from 'lucide-react';
 import { TreasureItem } from '../../../../types';
 import { TreasureCard } from '../../../../components/treasure/TreasureCard';
 import { brand, lightTokens, darkTokens } from '../../../../design-system';
@@ -26,6 +27,7 @@ interface ExclusiveCollectionSectionProps {
   collectionDescription?: string;
   isLoading: boolean;
   onProductClick: (product: TreasureItem) => void;
+  onShare?: () => void;
 }
 
 export const ExclusiveCollectionSection: React.FC<ExclusiveCollectionSectionProps> = ({
@@ -34,6 +36,7 @@ export const ExclusiveCollectionSection: React.FC<ExclusiveCollectionSectionProp
   collectionDescription,
   isLoading,
   onProductClick,
+  onShare,
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -74,6 +77,19 @@ export const ExclusiveCollectionSection: React.FC<ExclusiveCollectionSectionProp
             }}
           />
         </Box>
+        {onShare && (
+          <IconButton
+            onClick={onShare}
+            size="small"
+            sx={{
+              color: brand.emerald[500],
+              '&:hover': { bgcolor: alpha(brand.emerald[500], 0.08) },
+            }}
+            aria-label="Compartir coleccion"
+          >
+            <Share2 size={18} />
+          </IconButton>
+        )}
       </Box>
 
       {collectionDescription && (
