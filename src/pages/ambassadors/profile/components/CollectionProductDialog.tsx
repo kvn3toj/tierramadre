@@ -140,17 +140,10 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                 {product.talla && (
                   <SpecItem label="Cut" value={product.talla} isLight={isLight} />
                 )}
-                {product.color && (
-                  <SpecItem label="Color" value={product.color} isLight={isLight} />
-                )}
-                {product.calidad && (
-                  <SpecItem label="Quality" value={product.calidad} isLight={isLight} />
-                )}
+                <SpecItem label="Color" value={product.color || '-'} isLight={isLight} />
+                <SpecItem label="Quality" value={product.calidad || '-'} isLight={isLight} />
                 {product.medidas && (
                   <SpecItem label="Dimensions" value={product.medidas} isLight={isLight} />
-                )}
-                {product.ubicacion && (
-                  <SpecItem label="Location" value={product.ubicacion} isLight={isLight} />
                 )}
               </Box>
 
@@ -166,7 +159,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                       fontFeatureSettings: '"tnum"',
                     }}
                   >
-                    {formatUSD(product.precioInternacional || product.precioCOP)}
+                    {formatUSD(product.precioInternacional || product.precioCOP)} USD
                   </Typography>
                 ) : (
                   <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />

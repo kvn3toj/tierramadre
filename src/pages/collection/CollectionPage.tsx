@@ -25,8 +25,13 @@ import { TreasureItem } from '../../types';
 import { brand, lightTokens, darkTokens, typography, gradients } from '../../design-system';
 
 // Map collection folders to WhatsApp contact info
-const COLLECTION_CONTACTS: Record<string, { name: string; phone: string }> = {
-  'ceo-coomunity': { name: 'Andres', phone: '573183578265' },
+const COLLECTION_CONTACTS: Record<string, { name: string; phone: string; title?: string; subtitle?: string }> = {
+  'ceo-coomunity': {
+    name: 'Andres',
+    phone: '573183578265',
+    title: 'Exclusive Collection',
+    subtitle: "CEO's personal selection of Colombian emeralds",
+  },
 };
 
 /** Extract fileId from proxy URL: /api/serve-drive-image?fileId=XXX&... */
@@ -199,7 +204,7 @@ function ProductCard({
               fontFeatureSettings: '"tnum"',
             }}
           >
-            {formatUSD(item.precioInternacional || item.precioCOP)}
+            {formatUSD(item.precioInternacional || item.precioCOP)} USD
           </Typography>
         )}
       </Box>
@@ -247,7 +252,7 @@ export default function CollectionPage() {
             component="img"
             src="/images/logo-horizontal-white.png"
             alt="Tierra M\u00e4dre"
-            sx={{ height: { xs: 32, sm: 40 }, objectFit: 'contain' }}
+            sx={{ height: { xs: 48, sm: 64 }, objectFit: 'contain' }}
           />
         </Box>
         <Typography
@@ -258,18 +263,18 @@ export default function CollectionPage() {
             textTransform: 'uppercase',
           }}
         >
-          {collectionInfo?.name || 'Exclusive Collection'}
+          {contact?.title || collectionInfo?.name || 'Exclusive Collection'}
         </Typography>
       </Box>
 
       {/* Content */}
       <Box sx={{ maxWidth: { xs: '100%', md: 960, lg: 1200 }, mx: 'auto', px: { xs: 1.5, sm: 2, md: 3 }, py: { xs: 2, sm: 3 } }}>
-        {collectionInfo?.description && (
+        {(contact?.subtitle || collectionInfo?.description) && (
           <Typography
             variant="body2"
             sx={{ color: 'text.secondary', textAlign: 'center', mb: { xs: 2, sm: 3 } }}
           >
-            {collectionInfo.description}
+            {contact?.subtitle || collectionInfo?.description}
           </Typography>
         )}
 
