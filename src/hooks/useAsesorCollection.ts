@@ -62,8 +62,8 @@ export function useAsesorCollection(collectionFolder: string | null): UseAsesorC
       }
       const json = await response.json();
       const cache: CollectionCache = {
-        collection: json.data.collection,
-        products: json.data.products,
+        collection: json.collection,
+        products: json.products,
         timestamp: Date.now(),
       };
       localStorage.setItem(getCacheKey(folder), JSON.stringify(cache));
