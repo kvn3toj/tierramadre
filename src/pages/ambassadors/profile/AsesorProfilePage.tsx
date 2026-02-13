@@ -97,14 +97,14 @@ export default function AsesorProfilePage() {
   const COLLECTION_FOLDERS: Record<string, string> = {
     'cvocmnty@gmail.com': 'ceo-coomunity',
   };
-  // Dev fallback: match by slug when email isn't available
+  // Fallback: match by slug when email lookup fails
   const COLLECTION_SLUGS: Record<string, string> = {
     'andres-mauricio-escobar-ramirez': 'ceo-coomunity',
   };
-  const isDev = import.meta.env.DEV;
-  const collectionFolder = (isProfileOwner || isDev) && asesor
+  const collectionFolder = isProfileOwner && asesor
     ? COLLECTION_FOLDERS[asesor.email?.toLowerCase().trim() ?? '']
-      ?? (isDev ? COLLECTION_SLUGS[asesor.slug] ?? null : null)
+      ?? COLLECTION_SLUGS[asesor.slug]
+      ?? null
     : null;
   const { products: collectionProducts, collectionInfo, isLoading: collectionLoading } =
     useAsesorCollection(collectionFolder);
@@ -365,8 +365,8 @@ export default function AsesorProfilePage() {
         onClose={() => setSelectedCotizacion(null)}
       />
 
-      {/* Exclusive Collection - Only visible to profile owner (dev bypass for testing) */}
-      {(isProfileOwner || isDev) && collectionFolder && (
+      {/* Exclusive Collection - Only visible to profile owner */}
+      {collectionFolder && (
         <ExclusiveCollectionSection
           products={collectionProducts}
           collectionName={collectionInfo?.name || 'Coleccion Exclusiva'}

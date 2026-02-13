@@ -85,7 +85,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     asesoresData.push({
       id: `asesor_${index + 1}`,
       name: displayName,
-      slug: displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+      slug: displayName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
       role: roleIndex !== -1 ? (row[roleIndex] || 'Asesor').trim() : 'Asesor',
       whatsapp: whatsappIndex !== -1 ? row[whatsappIndex] || null : null,
       especialidad: especialidadIndex !== -1 ? row[especialidadIndex] || null : null,
