@@ -4,7 +4,7 @@
  * These items are NOT in the main inventory, so we display them in-place.
  */
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import {
   Box,
   Dialog,
@@ -52,6 +52,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Swipe right to close gesture
   const touchStartX = useRef(0);
@@ -62,6 +63,18 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     if (deltaX > 100) onClose();
   }, [onClose]);
+
+  // Force video to play immediately when dialog opens
+  useEffect(() => {
+    if (product && product.mediaType === 'video' && videoRef.current) {
+      const video = videoRef.current;
+      // Reset and play
+      video.currentTime = 0;
+      video.play().catch((err) => {
+        console.warn('Video autoplay failed:', err);
+      });
+    }
+  }, [product]);
 
   return (
     <Dialog
@@ -104,6 +117,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
               product.mediaType === 'video' ? (
                 <Box sx={{ width: '100%', aspectRatio: '1/1', bgcolor: '#000' }}>
                   <video
+                    ref={videoRef}
                     key={product.item}
                     src={product.videoUrl || getVideoUrl(product.imagen)}
                     poster={product.posterUrl}
@@ -112,6 +126,12 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     loop
                     playsInline
                     preload="auto"
+                    webkit-playsinline="true"
+                    onLoadedData={(e) => {
+                      // Force play as soon as video data is loaded
+                      const video = e.target as HTMLVideoElement;
+                      video.play().catch(() => {});
+                    }}
                     style={{
                       width: '100%',
                       height: '100%',
