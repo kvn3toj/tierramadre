@@ -263,6 +263,17 @@ export default function CollectionPage() {
 
   const contact = folder ? COLLECTION_CONTACTS[folder] : null;
 
+  // Custom display order: 907, 906, then the rest (901, 902, ...)
+  const PRIORITY_ORDER = [907, 906];
+  const sortedProducts = [...products].sort((a, b) => {
+    const aIdx = PRIORITY_ORDER.indexOf(a.item);
+    const bIdx = PRIORITY_ORDER.indexOf(b.item);
+    if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+    if (aIdx !== -1) return -1;
+    if (bIdx !== -1) return 1;
+    return a.item - b.item;
+  });
+
   // Track which videos have already been preloaded to prevent duplicate requests
   const preloadedUrlsRef = useRef<Set<string>>(new Set());
 
@@ -424,7 +435,7 @@ export default function CollectionPage() {
         {/* Products Grid */}
         {!isLoading && !error && products.length > 0 && (
           <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }}>
-            {products.map((item) => (
+            {sortedProducts.map((item) => (
               <Grid item xs={6} sm={4} md={3} key={item.item}>
                 <ProductCard
                   item={item}
