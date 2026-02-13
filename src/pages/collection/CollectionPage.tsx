@@ -40,9 +40,6 @@ const COLLECTION_CONTACTS: Record<string, { name: string; phone: string; title?:
   },
 };
 
-// Module-level cache: original video URL → blob URL (survives re-renders)
-const videoBlobCache = new Map<string, string>();
-
 /** Extract fileId from proxy URL: /api/serve-drive-image?fileId=XXX&... */
 function extractFileId(url: string): string | null {
   try {
@@ -110,10 +107,6 @@ function ProductCard({
 }) {
   const isVideo = item.mediaType === 'video';
   const [videoError, setVideoError] = useState(false);
-  // Use preloaded blob URL if available, otherwise fall back to network URL
-  const networkVideoUrl = item.videoUrl || (item.imagen ? getVideoUrl(item.imagen) : '');
-  const cachedBlobUrl = videoBlobCache.get(networkVideoUrl);
-  const videoSrc = cachedBlobUrl || networkVideoUrl;
   return (
     <Box
       onClick={onClick}
@@ -138,9 +131,9 @@ function ProductCard({
         {isVideo && item.imagen && !videoError ? (
           <>
             <video
-              src={`${videoSrc}#t=0.001`}
+              src={item.videoUrl ? `${item.videoUrl}#t=0.001` : `${getVideoUrl(item.imagen)}#t=0.001`}
               poster={item.posterUrl || item.imagen}
-              preload={cachedBlobUrl ? "auto" : "none"}
+              preload="none"
               muted
               playsInline
               loop
@@ -278,8 +271,8 @@ export default function CollectionPage() {
   // Track which videos have already been preloaded to prevent duplicate requests
   const preloadedUrlsRef = useRef<Set<string>>(new Set());
 
-  // Preload all videos via fetch() + blob URLs — single HTTP request per video,
-  // no Safari range-request storm that hidden <video> elements cause
+  // Preload all videos via fetch() to warm the HTTP cache — single request per video,
+  // avoids Safari's range-request storm from hidden <video> elements
   useEffect(() => {
     if (products.length === 0) return;
 
@@ -305,14 +298,12 @@ export default function CollectionPage() {
 
     newUrls.forEach((url) => {
       fetch(url, { signal: abortController.signal })
-        .then(res => res.blob())
-        .then(blob => {
-          videoBlobCache.set(url, URL.createObjectURL(blob));
+        .then(res => res.arrayBuffer()) // consume full response into HTTP cache
+        .then(() => {
           loadedCount++;
           if (loadedCount === totalVideos) setVideosPreloaded(true);
         })
         .catch(() => {
-          // Fetch failed or aborted — still count so we don't block forever
           loadedCount++;
           if (loadedCount === totalVideos) setVideosPreloaded(true);
         });
