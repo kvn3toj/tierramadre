@@ -4,7 +4,7 @@
  * These items are NOT in the main inventory, so we display them in-place.
  */
 
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import {
   Box,
   Dialog,
@@ -53,6 +53,20 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
   const isLight = theme.palette.mode === 'light';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // Swipe gestures: down or left to close
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }, []);
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    // Swipe left (negative deltaX) or swipe down to close
+    if (deltaX < -100 || deltaY > 100) onClose();
+  }, [onClose]);
+
   return (
     <Dialog
       open={!!product}
@@ -67,7 +81,11 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
         },
       }}
     >
-      <DialogContent sx={{ p: 0, position: 'relative', ...(isMobile && { overflowY: 'auto' }) }}>
+      <DialogContent
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        sx={{ p: 0, position: 'relative', ...(isMobile && { overflowY: 'auto' }) }}
+      >
         <IconButton
           onClick={onClose}
           sx={{
@@ -92,8 +110,9 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                   <video
                     src={`${getVideoUrl(product.imagen)}#t=0.001`}
                     poster={product.imagen}
-                    controls
                     autoPlay
+                    muted
+                    loop
                     playsInline
                     preload="auto"
                     style={{
@@ -140,8 +159,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                 {product.talla && (
                   <SpecItem label="Cut" value={product.talla} isLight={isLight} />
                 )}
-                <SpecItem label="Color" value={product.color || '-'} isLight={isLight} />
-                <SpecItem label="Quality" value={product.calidad || '-'} isLight={isLight} />
+                <SpecItem label="Color" value={showUSD ? '-' : (product.color || '-')} isLight={isLight} />
+                <SpecItem label="Quality" value={showUSD ? '-' : (product.calidad || '-')} isLight={isLight} />
                 {product.medidas && (
                   <SpecItem label="Dimensions" value={product.medidas} isLight={isLight} />
                 )}
@@ -150,17 +169,31 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
               {/* Price */}
               <Box sx={{ mt: 1 }}>
                 {showUSD && (product.precioInternacional || product.precioCOP) ? (
-                  <Typography
-                    sx={{
-                      fontSize: { xs: '1.3rem', sm: '1.5rem' },
-                      fontWeight: 700,
-                      color: brand.emerald[600],
-                      fontFamily: typography.fontFamily.mono,
-                      fontFeatureSettings: '"tnum"',
-                    }}
-                  >
-                    {formatUSD(product.precioInternacional || product.precioCOP)} USD
-                  </Typography>
+                  <>
+                    <Typography
+                      sx={{
+                        fontSize: { xs: '1.3rem', sm: '1.5rem' },
+                        fontWeight: 700,
+                        color: brand.emerald[600],
+                        fontFamily: typography.fontFamily.mono,
+                        fontFeatureSettings: '"tnum"',
+                      }}
+                    >
+                      {formatUSD(product.precioInternacional || product.precioCOP)} USD
+                    </Typography>
+                    {typeof product.peso === 'number' && product.peso > 0 && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          fontFamily: typography.fontFamily.mono,
+                          fontFeatureSettings: '"tnum"',
+                        }}
+                      >
+                        {formatUSD(Math.round((product.precioInternacional || product.precioCOP) / product.peso))}/ct
+                      </Typography>
+                    )}
+                  </>
                 ) : (
                   <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />
                 )}

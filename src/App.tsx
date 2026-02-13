@@ -360,7 +360,7 @@ function InvitationRouter() {
           </Suspense>
         }
       />
-      {/* Public collection page (e.g., /c/ceo-coomunity) */}
+      {/* Public collection page (e.g., /c/ceo-tierra-madre) */}
       <Route
         path="/c/:folder"
         element={

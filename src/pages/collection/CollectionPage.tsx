@@ -1,7 +1,7 @@
 /**
  * CollectionPage - Public shareable collection page
  *
- * Route: /c/:folder (e.g., /c/ceo-coomunity)
+ * Route: /c/:folder (e.g., /c/ceo-tierra-madre)
  * No authentication required. Displays an exclusive product collection
  * with branded header, product grid, and WhatsApp contact CTA.
  * Prices always shown in USD.
@@ -26,7 +26,7 @@ import { brand, lightTokens, darkTokens, typography, gradients } from '../../des
 
 // Map collection folders to WhatsApp contact info
 const COLLECTION_CONTACTS: Record<string, { name: string; phone: string; title?: string; subtitle?: string }> = {
-  'ceo-coomunity': {
+  'ceo-tierra-madre': {
     name: 'Andres',
     phone: '573183578265',
     title: 'Exclusive Collection',
@@ -205,6 +205,19 @@ function ProductCard({
             }}
           >
             {formatUSD(item.precioInternacional || item.precioCOP)} USD
+          </Typography>
+        )}
+        {(item.precioInternacional || item.precioCOP) && typeof item.peso === 'number' && item.peso > 0 && (
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'text.secondary',
+              fontFamily: typography.fontFamily.mono,
+              fontSize: { xs: '0.65rem', sm: '0.75rem' },
+              fontFeatureSettings: '"tnum"',
+            }}
+          >
+            {formatUSD(Math.round((item.precioInternacional || item.precioCOP) / item.peso))}/ct
           </Typography>
         )}
       </Box>

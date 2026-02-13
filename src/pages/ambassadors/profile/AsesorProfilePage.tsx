@@ -95,11 +95,11 @@ export default function AsesorProfilePage() {
 
   // Exclusive collection - map asesor email to Drive folder name
   const COLLECTION_FOLDERS: Record<string, string> = {
-    'cvocmnty@gmail.com': 'ceo-coomunity',
+    'cvocmnty@gmail.com': 'ceo-tierra-madre',
   };
   // Fallback: match by slug when email lookup fails
   const COLLECTION_SLUGS: Record<string, string> = {
-    'andres-mauricio-escobar-ramirez': 'ceo-coomunity',
+    'andres-mauricio-escobar-ramirez': 'ceo-tierra-madre',
   };
   const collectionFolder = isProfileOwner && asesor
     ? COLLECTION_FOLDERS[asesor.email?.toLowerCase().trim() ?? '']
