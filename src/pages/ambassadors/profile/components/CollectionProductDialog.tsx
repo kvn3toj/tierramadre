@@ -11,13 +11,14 @@ import {
   DialogContent,
   IconButton,
   Typography,
-  Chip,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { X } from 'lucide-react';
 import { TreasureItem } from '../../../../types';
 import { brand, lightTokens, darkTokens, typography } from '../../../../design-system';
 import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
+import { accentuate } from '../../../../pages/collection/CollectionPage';
 
 /** Extract fileId from proxy URL and return a clean video streaming URL */
 function getVideoUrl(thumbnailUrl: string): string {
@@ -50,6 +51,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <Dialog
@@ -57,19 +59,20 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
       onClose={onClose}
       maxWidth="sm"
       fullWidth
+      fullScreen={isMobile}
       PaperProps={{
         sx: {
-          borderRadius: 3,
+          borderRadius: isMobile ? 0 : 3,
           bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
         },
       }}
     >
-      <DialogContent sx={{ p: 0, position: 'relative' }}>
+      <DialogContent sx={{ p: 0, position: 'relative', ...(isMobile && { overflowY: 'auto' }) }}>
         <IconButton
           onClick={onClose}
           sx={{
             position: 'absolute',
-            top: 8,
+            top: isMobile ? 'max(env(safe-area-inset-top, 8px), 8px)' : 8,
             right: 8,
             zIndex: 1,
             bgcolor: 'rgba(0,0,0,0.5)',
@@ -117,30 +120,10 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
             )}
 
             {/* Product Info */}
-            <Box sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-                {product.nombre}
+            <Box sx={{ p: { xs: 2.5, sm: 3 } }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1.5 }}>
+                {accentuate(product.nombre)}
               </Typography>
-
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                {product.color && (
-                  <Chip label={product.color} size="small" variant="outlined" />
-                )}
-                {product.calidad && (
-                  <Chip label={product.calidad} size="small" variant="outlined" />
-                )}
-                {product.estado === 'DISPONIBLE' && (
-                  <Chip
-                    label="Disponible"
-                    size="small"
-                    sx={{
-                      bgcolor: brand.emerald[500],
-                      color: '#fff',
-                      fontWeight: 500,
-                    }}
-                  />
-                )}
-              </Box>
 
               {/* Specs Grid */}
               <Box
@@ -152,16 +135,22 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                 }}
               >
                 {typeof product.peso === 'number' && (
-                  <SpecItem label="Peso" value={`${product.peso} ct`} isLight={isLight} />
+                  <SpecItem label="Weight" value={`${product.peso} ct`} isLight={isLight} />
                 )}
                 {product.talla && (
-                  <SpecItem label="Talla" value={product.talla} isLight={isLight} />
+                  <SpecItem label="Cut" value={product.talla} isLight={isLight} />
+                )}
+                {product.color && (
+                  <SpecItem label="Color" value={product.color} isLight={isLight} />
+                )}
+                {product.calidad && (
+                  <SpecItem label="Quality" value={product.calidad} isLight={isLight} />
                 )}
                 {product.medidas && (
-                  <SpecItem label="Medidas" value={product.medidas} isLight={isLight} />
+                  <SpecItem label="Dimensions" value={product.medidas} isLight={isLight} />
                 )}
                 {product.ubicacion && (
-                  <SpecItem label="Ubicacion" value={product.ubicacion} isLight={isLight} />
+                  <SpecItem label="Location" value={product.ubicacion} isLight={isLight} />
                 )}
               </Box>
 
@@ -170,7 +159,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                 {showUSD && (product.precioInternacional || product.precioCOP) ? (
                   <Typography
                     sx={{
-                      fontSize: '1.5rem',
+                      fontSize: { xs: '1.3rem', sm: '1.5rem' },
                       fontWeight: 700,
                       color: brand.emerald[600],
                       fontFamily: typography.fontFamily.mono,

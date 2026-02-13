@@ -56,6 +56,35 @@ function formatUSD(value: number): string {
   }).format(value);
 }
 
+/** Add missing Spanish accent marks to common words in product names */
+const ACCENT_MAP: Record<string, string> = {
+  'Corazon': 'Coraz\u00f3n', 'corazon': 'coraz\u00f3n',
+  'Coleccion': 'Colecci\u00f3n', 'coleccion': 'colecci\u00f3n',
+  'Edicion': 'Edici\u00f3n', 'edicion': 'edici\u00f3n',
+  'Pasion': 'Pasi\u00f3n', 'pasion': 'pasi\u00f3n',
+  'Ilusion': 'Ilusi\u00f3n', 'ilusion': 'ilusi\u00f3n',
+  'Fenix': 'F\u00e9nix', 'fenix': 'f\u00e9nix',
+  'Angel': '\u00c1ngel', 'angel': '\u00e1ngel',
+  'Jardin': 'Jard\u00edn', 'jardin': 'jard\u00edn',
+  'Arbol': '\u00c1rbol', 'arbol': '\u00e1rbol',
+  'Oceano': 'Oc\u00e9ano', 'oceano': 'oc\u00e9ano',
+  'Diamante': 'Diamante',
+  'Aguila': '\u00c1guila', 'aguila': '\u00e1guila',
+  'Unico': '\u00danico', 'unico': '\u00fanico',
+  'Unica': '\u00danica', 'unica': '\u00fanica',
+  'Magico': 'M\u00e1gico', 'magico': 'm\u00e1gico',
+  'Magica': 'M\u00e1gica', 'magica': 'm\u00e1gica',
+  'Raiz': 'Ra\u00edz', 'raiz': 'ra\u00edz',
+  'Genesis': 'G\u00e9nesis', 'genesis': 'g\u00e9nesis',
+  'Espiritu': 'Esp\u00edritu', 'espiritu': 'esp\u00edritu',
+  'Exotico': 'Ex\u00f3tico', 'exotico': 'ex\u00f3tico',
+  'Exotica': 'Ex\u00f3tica', 'exotica': 'ex\u00f3tica',
+  'Avalon': 'Aval\u00f3n', 'avalon': 'aval\u00f3n',
+};
+export function accentuate(name: string): string {
+  return name.replace(/\b\w+\b/g, (word) => ACCENT_MAP[word] || word);
+}
+
 function ProductCard({
   item,
   onClick,
@@ -87,7 +116,7 @@ function ProductCard({
       }}
     >
       {/* Media */}
-      <Box sx={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', bgcolor: isVideo ? '#000' : '#f0f0f0' }}>
+      <Box sx={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', bgcolor: '#f0f0f0' }}>
         {isVideo && item.imagen ? (
           <>
             <video
@@ -99,7 +128,7 @@ function ProductCard({
               loop
               onMouseEnter={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
               onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
             <Box
               sx={{
@@ -134,7 +163,7 @@ function ProductCard({
       </Box>
 
       {/* Info */}
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
         <Typography
           variant="body2"
           sx={{
@@ -143,18 +172,19 @@ function ProductCard({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            fontSize: { xs: '0.8rem', sm: '0.875rem' },
           }}
         >
-          {item.nombre}
+          {accentuate(item.nombre)}
         </Typography>
-        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1 }}>
+        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 0.5 }}>
           {typeof item.peso === 'number' && (
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
               {item.peso} ct
             </Typography>
           )}
           {item.color && (
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
               &middot; {item.color}
             </Typography>
           )}
@@ -165,7 +195,7 @@ function ProductCard({
               fontWeight: 700,
               color: brand.emerald[600],
               fontFamily: typography.fontFamily.mono,
-              fontSize: '0.95rem',
+              fontSize: { xs: '0.85rem', sm: '0.95rem' },
               fontFeatureSettings: '"tnum"',
             }}
           >
@@ -189,7 +219,7 @@ export default function CollectionPage() {
 
   const handleWhatsApp = () => {
     if (!contact) return;
-    const text = `Hola ${contact.name}, vi tu coleccion exclusiva en Tierra Madre y me interesa saber mas.`;
+    const text = `Hi ${contact.name}, I saw your exclusive collection on Tierra Madre and I'd like to know more.`;
     window.open(`https://wa.me/${contact.phone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -206,9 +236,9 @@ export default function CollectionPage() {
       <Box
         sx={{
           background: gradients.header,
-          px: 3,
+          px: { xs: 2, sm: 3 },
           pt: 'max(env(safe-area-inset-top, 16px), 16px)',
-          pb: 3,
+          pb: { xs: 2.5, sm: 3 },
           textAlign: 'center',
         }}
       >
@@ -217,27 +247,27 @@ export default function CollectionPage() {
             component="img"
             src="/images/logo-horizontal-white.png"
             alt="Tierra M\u00e4dre"
-            sx={{ height: 40, objectFit: 'contain' }}
+            sx={{ height: { xs: 32, sm: 40 }, objectFit: 'contain' }}
           />
         </Box>
         <Typography
           sx={{
-            fontSize: typography.size.sm,
+            fontSize: { xs: typography.size.xs, sm: typography.size.sm },
             color: alpha('#fff', 0.7),
             letterSpacing: typography.letterSpacing.wider,
             textTransform: 'uppercase',
           }}
         >
-          {collectionInfo?.name || 'Coleccion Exclusiva'}
+          {collectionInfo?.name || 'Exclusive Collection'}
         </Typography>
       </Box>
 
       {/* Content */}
-      <Box sx={{ maxWidth: 960, mx: 'auto', px: 2, py: 3 }}>
+      <Box sx={{ maxWidth: { xs: '100%', md: 960, lg: 1200 }, mx: 'auto', px: { xs: 1.5, sm: 2, md: 3 }, py: { xs: 2, sm: 3 } }}>
         {collectionInfo?.description && (
           <Typography
             variant="body2"
-            sx={{ color: 'text.secondary', textAlign: 'center', mb: 3 }}
+            sx={{ color: 'text.secondary', textAlign: 'center', mb: { xs: 2, sm: 3 } }}
           >
             {collectionInfo.description}
           </Typography>
@@ -245,9 +275,9 @@ export default function CollectionPage() {
 
         {/* Loading */}
         {isLoading && (
-          <Grid container spacing={2}>
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <Grid item xs={6} sm={4} key={i}>
+          <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }}>
+            {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+              <Grid item xs={6} sm={4} md={3} key={i}>
                 <Skeleton variant="rounded" sx={{ width: '100%', aspectRatio: '1/1', borderRadius: 3 }} />
                 <Box sx={{ mt: 1 }}>
                   <Skeleton width="70%" height={18} />
@@ -263,19 +293,19 @@ export default function CollectionPage() {
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <Gem size={48} style={{ color: brand.emerald[300], marginBottom: 16 }} />
             <Typography variant="h6" sx={{ mb: 1 }}>
-              Coleccion no disponible
+              Collection unavailable
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              No pudimos cargar esta coleccion. Intenta de nuevo mas tarde.
+              We couldn't load this collection. Please try again later.
             </Typography>
           </Box>
         )}
 
         {/* Products Grid */}
         {!isLoading && !error && products.length > 0 && (
-          <Grid container spacing={2}>
+          <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }}>
             {products.map((item) => (
-              <Grid item xs={6} sm={4} key={item.item}>
+              <Grid item xs={6} sm={4} md={3} key={item.item}>
                 <ProductCard
                   item={item}
                   onClick={() => setSelectedProduct(item)}
@@ -291,7 +321,7 @@ export default function CollectionPage() {
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <Gem size={48} style={{ color: brand.emerald[300], marginBottom: 16 }} />
             <Typography variant="h6">
-              No hay productos en esta coleccion
+              No products in this collection
             </Typography>
           </Box>
         )}
