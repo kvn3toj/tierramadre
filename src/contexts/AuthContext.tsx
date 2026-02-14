@@ -7,6 +7,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import type { AuthState, AuthContextType, AccessLevel } from '../types/auth';
+import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import { useGoogleAuth } from './GoogleAuthContext';
 import { SESSION_KEYS, STORAGE_KEYS } from '../constants/storage-keys';
 
@@ -60,6 +61,35 @@ const clearStoredAuth = () => {
   sessionStorage.removeItem(STORAGE_KEY);
 };
 
+/**
+ * Check localStorage for a persisted guest invitation that hasn't expired.
+ * If found, restore all invitation keys into sessionStorage and return true.
+ */
+const GUEST_PERSIST_KEY = 'tm_guest_invitation';
+
+function restoreGuestSession(): boolean {
+  try {
+    const raw = localStorage.getItem(GUEST_PERSIST_KEY);
+    if (!raw) return false;
+
+    const data = JSON.parse(raw) as Record<string, string>;
+    const expires = data[INVITATION_STORAGE_KEYS.EXPIRES];
+    if (!expires || new Date(expires).getTime() < Date.now()) {
+      // Expired — clean up
+      localStorage.removeItem(GUEST_PERSIST_KEY);
+      return false;
+    }
+
+    // Restore every key into sessionStorage so the rest of the app works
+    for (const [key, value] of Object.entries(data)) {
+      sessionStorage.setItem(key, value);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { user: googleUser, isSignedIn: isGoogleSignedIn, isAuthorized: isGoogleAuthorized, isLoading: isGoogleLoading } = useGoogleAuth();
 
@@ -81,6 +111,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
       }
     } catch { /* ignore parse errors */ }
+
+    // Check localStorage for a persisted guest invitation (survives new tabs)
+    if (restoreGuestSession()) {
+      return { isAuthenticated: true, accessLevel: 'guest' };
+    }
 
     return { isAuthenticated: false, accessLevel: 'guest' };
   });
@@ -126,6 +161,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = useCallback(() => {
     setAuthState({ isAuthenticated: false, accessLevel: 'guest' });
     clearStoredAuth();
+    localStorage.removeItem(GUEST_PERSIST_KEY);
   }, []);
 
   const value: AuthContextType = {

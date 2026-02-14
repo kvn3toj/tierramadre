@@ -172,22 +172,28 @@ export default function InvitationPage() {
     loginAsGuest();
 
     // Store invitation data in sessionStorage (fixed 24-hour duration)
-    sessionStorage.setItem(INVITATION_STORAGE_KEYS.EXPIRES, expiresAt);
-    sessionStorage.setItem(INVITATION_STORAGE_KEYS.TOKEN, currentShortCode);
-    sessionStorage.setItem(INVITATION_STORAGE_KEYS.PRICING_MODE, pricingMode);
-    sessionStorage.setItem(INVITATION_STORAGE_KEYS.DURATION_HOURS, '24');
-    sessionStorage.setItem(INVITATION_STORAGE_KEYS.INVITATION_ID, invitationId);
-
-    // Store inviter data for WhatsApp contact functionality
-    sessionStorage.setItem(INVITATION_STORAGE_KEYS.INVITER_NAME, createdBy);
-    sessionStorage.setItem(INVITATION_STORAGE_KEYS.INVITER_EMAIL, creatorEmail);
+    const invitationData: Record<string, string> = {
+      [INVITATION_STORAGE_KEYS.EXPIRES]: expiresAt,
+      [INVITATION_STORAGE_KEYS.TOKEN]: currentShortCode,
+      [INVITATION_STORAGE_KEYS.PRICING_MODE]: pricingMode,
+      [INVITATION_STORAGE_KEYS.DURATION_HOURS]: '24',
+      [INVITATION_STORAGE_KEYS.INVITATION_ID]: invitationId,
+      [INVITATION_STORAGE_KEYS.INVITER_NAME]: createdBy,
+      [INVITATION_STORAGE_KEYS.INVITER_EMAIL]: creatorEmail,
+      [INVITATION_STORAGE_KEYS.GUEST_NAME]: guestName.trim(),
+      [INVITATION_STORAGE_KEYS.GUEST_CONTACT]: guestContact.trim(),
+    };
     if (inviterWhatsApp) {
-      sessionStorage.setItem(INVITATION_STORAGE_KEYS.INVITER_WHATSAPP, inviterWhatsApp);
+      invitationData[INVITATION_STORAGE_KEYS.INVITER_WHATSAPP] = inviterWhatsApp;
     }
 
-    // Store guest contact for duplicate invitation check
-    sessionStorage.setItem(INVITATION_STORAGE_KEYS.GUEST_NAME, guestName.trim());
-    sessionStorage.setItem(INVITATION_STORAGE_KEYS.GUEST_CONTACT, guestContact.trim());
+    // Write to sessionStorage (current tab)
+    for (const [key, value] of Object.entries(invitationData)) {
+      sessionStorage.setItem(key, value);
+    }
+
+    // Persist to localStorage so guest sessions survive new tabs / browser restarts
+    localStorage.setItem('tm_guest_invitation', JSON.stringify(invitationData));
 
     // Clear any stale filter data from previous sessions
     // This ensures guests start with clean filters
