@@ -242,7 +242,7 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": "(?i).*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|TelegramBot|Slackbot|LinkedInBot|Pinterest|Discordbot).*"
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|TelegramBot|Slackbot|LinkedInBot|Pinterest|Discordbot).*"
         }
       ],
       "destination": "/api/og-product?itemNumber=:itemNumber"

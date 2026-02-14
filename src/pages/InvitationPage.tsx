@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -40,6 +40,9 @@ export default function InvitationPage() {
   // Short code from URL (e.g., ABC123)
   const { shortCode } = useParams<{ shortCode: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // If redirected from a product link with ?invite=, return there after access
+  const redirectTo = searchParams.get('redirect');
   const { validateInvitation, registerGuest, isValidating, isRegistering } = useInvitation();
   const { loginAsGuest } = useAuth();
 
@@ -195,8 +198,8 @@ export default function InvitationPage() {
   };
 
   const handleExplore = () => {
-    // Navigate to treasure without any URL params to ensure clean filters
-    navigate('/treasure', { replace: true });
+    // If redirected from a product link, go there; otherwise explore treasure
+    navigate(redirectTo || '/treasure', { replace: true });
   };
 
   const handleGoHome = () => {

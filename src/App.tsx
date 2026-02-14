@@ -378,6 +378,20 @@ function InvitationRouter() {
 function AuthenticatedApp() {
   const { isAuthenticated } = useAuth();
   const { showToast, dismissToast } = usePWAUpdate();
+  const navigate = useNavigate();
+
+  // If not authenticated and URL has ?invite= param, redirect to invitation
+  // flow so the guest can auto-validate and return to the original page.
+  useEffect(() => {
+    if (isAuthenticated) return;
+    const params = new URLSearchParams(window.location.search);
+    const inviteCode = params.get('invite');
+    if (inviteCode) {
+      // Preserve the intended destination (e.g. /product/32)
+      const returnTo = window.location.pathname;
+      navigate(`/invite/${inviteCode}?redirect=${encodeURIComponent(returnTo)}`, { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   // Show welcome screen if not authenticated
   if (!isAuthenticated) {

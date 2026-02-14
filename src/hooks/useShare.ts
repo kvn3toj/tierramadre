@@ -15,6 +15,7 @@
 
 import { useCallback, useMemo } from 'react';
 import { TreasureItem } from '../types';
+import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import { triggerHaptic } from './useHaptics';
 import { usePriceShare } from '../contexts/PriceShareContext';
 import { useCurrency } from '../contexts/CurrencyContext';
@@ -139,10 +140,17 @@ export function useShare(options: UseShareOptions = {}): UseShareReturn {
   const isNativeShareSupported = useMemo(() => checkShareSupport(), []);
 
   /**
-   * Generate product URL
+   * Generate product URL.
+   * Appends ?invite={shortCode} when the current session has an active
+   * invitation token so recipients can auto-validate guest access.
    */
   const getProductUrl = useCallback((product: TreasureItem): string => {
-    return `${STUDIO_BASE_URL}/product/${product.item}`;
+    const base = `${STUDIO_BASE_URL}/product/${product.item}`;
+    const inviteToken = sessionStorage.getItem(INVITATION_STORAGE_KEYS.TOKEN);
+    if (inviteToken) {
+      return `${base}?invite=${encodeURIComponent(inviteToken)}`;
+    }
+    return base;
   }, []);
 
   /**
