@@ -71,6 +71,9 @@
     },
     "api/create-product-folders.js": {
       "maxDuration": 60
+    },
+    "api/og-product.js": {
+      "maxDuration": 15
     }
   },
   "headers": [
@@ -232,6 +235,17 @@
     {
       "source": "/api/:path*",
       "destination": "/api/:path*"
+    },
+    {
+      "source": "/product/:itemNumber",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|TelegramBot|Slackbot|LinkedInBot|Pinterest|Discordbot).*"
+        }
+      ],
+      "destination": "/api/og-product?itemNumber=:itemNumber"
     },
     {
       "source": "/((?!api|assets|images|@|src|node_modules|\\.)[^.]*)",
