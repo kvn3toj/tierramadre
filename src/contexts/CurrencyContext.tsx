@@ -26,6 +26,8 @@ interface CurrencyContextType {
 const AUTHORIZED_EMAILS = [
   'diamanteforbes@gmail.com',
   'juanmanuelescobarco@gmail.com',
+  'ana.pelaezc@gmail.com',
+  'isalavikinga@gmail.com',
 ];
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
