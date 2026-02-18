@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import {
   Box,
   Typography,
@@ -27,6 +28,7 @@ import type { ProviderQuotation, QuotationStatus } from '../../types/provider';
 export default function ProviderQuotationsList() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user } = useGoogleAuth();
   const [quotations, setQuotations] = useState<ProviderQuotation[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | QuotationStatus | 'new'>('all');
@@ -36,7 +38,9 @@ export default function ProviderQuotationsList() {
   useEffect(() => {
     const fetchQuotations = async () => {
       try {
-        const response = await fetch('/api/provider-quotations');
+        const response = await fetch('/api/provider-quotations', {
+          headers: { 'x-requester-email': user?.email ?? '' },
+        });
         const data = await response.json();
 
         if (data.success) {

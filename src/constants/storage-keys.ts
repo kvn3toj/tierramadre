@@ -21,6 +21,7 @@ export const STORAGE_KEYS = {
   CURRENCY_MODE: 'tierra-madre-currency-mode',
   TRM_CACHE: 'tierra-madre-trm-cache',
   AI_USED_NAMES: 'tierra-madre-used-names',
+  AI_TEMPERATURE: 'tierra-madre-ai-temperature',
 
   // Feature flags
   FEATURE_FLAGS: 'tierra-madre-feature-flags',

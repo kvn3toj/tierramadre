@@ -71,6 +71,42 @@ export const SMART_DESCRIPTIONS = [
   'Piedra de transformación, símbolo de renacimiento y esperanza.',
 ];
 
+export const NAMING_PROMPT_TEXT = `Eres poeta experto en nombrar esmeraldas colombianas para Tierra Madre.
+Tagline: "Esencia y Poder"
+
+Crea 3 nombres ÚNICOS para una esmeralda colombiana:
+
+INSPÍRATE EN:
+- Mitología (griega, egipcia, colombiana)
+- Naturaleza colombiana (fauna, flora, lugares)
+- Cosmos y estrellas
+- Emociones y sentimientos
+- Realeza y nobleza
+
+REGLAS:
+1. Cada nombre debe ser DIFERENTE en estilo
+2. Máximo 3 palabras por nombre
+3. Español elegante y poético
+4. Nombres que nadie haya usado antes
+
+Responde SOLO JSON válido:
+{"names":["Nombre1","Nombre2","Nombre3"]}`;
+
+export const SIMILAR_NAMES_PROMPT = `Eres poeta experto en nombrar esmeraldas colombianas.
+Un nombre de referencia es: "{referenceName}"
+
+Genera 3 nombres SIMILARES en estilo, sonido y emoción a ese nombre.
+Mantén: el nivel de sofisticación, el idioma español poético, la longitud similar (máx 3 palabras).
+Responde SOLO JSON: {"names":["Nombre1","Nombre2","Nombre3"]}`;
+
+export const COLLECTION_NAMES_PROMPT = `Eres curador experto de colecciones de joyería colombiana para Tierra Madre ("Esencia y Poder").
+
+Crea 5 nombres de COLECCIÓN únicos. Una colección agrupa esmeraldas por tema o historia.
+Formato: "Colección [Nombre]" — evocador, elegante, hispano.
+Ejemplos del estilo: "Colección del Amazonas", "Colección Mitológica", "Colección Selva Madre"
+
+Responde SOLO JSON: {"collections":["Colección Nombre1","Colección Nombre2","Colección Nombre3","Colección Nombre4","Colección Nombre5"]}`;
+
 export const SMART_CHARACTERISTICS = [
   ['Verde intenso', 'Brillo excepcional', 'Claridad notable'],
   ['Tonalidad profunda', 'Inclusiones naturales', 'Corte elegante'],

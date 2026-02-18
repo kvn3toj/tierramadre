@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import {
   Box,
   Typography,
@@ -69,6 +70,7 @@ const formatDate = (isoString: string) => {
 
 export default function FeedbackDashboard() {
   const navigate = useNavigate();
+  const { user } = useGoogleAuth();
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,7 +93,9 @@ export default function FeedbackDashboard() {
         ? '/api/feedback'
         : `/api/feedback?status=${statusFilter}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: { 'x-requester-email': user?.email ?? '' },
+      });
       const data = await response.json();
 
       if (!response.ok || !data.success) {
@@ -133,7 +137,7 @@ export default function FeedbackDashboard() {
     try {
       const response = await fetch('/api/feedback', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-requester-email': user?.email ?? '' },
         body: JSON.stringify({
           id: selectedFeedback.id,
           status: editStatus,

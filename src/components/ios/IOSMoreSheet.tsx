@@ -14,7 +14,6 @@ import { Box, Typography, IconButton, Backdrop, Chip, Switch } from '@mui/materi
 import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport, AutoAwesome, PersonAdd } from '@mui/icons-material';
 import { Vault, BarChart3, ShoppingBag } from 'lucide-react';
 import FeedbackWizard from '../feedback/FeedbackWizard';
-import NameGeneratorSheet from './NameGeneratorSheet';
 import { InvitationGenerator } from '../invitation';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -37,7 +36,7 @@ export interface MoreToolConfig {
   subtitle: string;
   icon: React.ElementType;
   route?: string;
-  action?: 'feedback' | 'name-generator' | 'invitation' | 'settings'; // Special action types
+  action?: 'feedback' | 'invitation' | 'settings'; // Special action types
   color: string;
   badge?: string; // Optional badge text
 }
@@ -81,7 +80,7 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     label: t.tools.nameGenerator?.label || 'Generador de Nombres',
     subtitle: t.tools.nameGenerator?.subtitle || 'Genera nombres únicos para esmeraldas con IA',
     icon: AutoAwesome,
-    action: 'name-generator',
+    route: '/admin/name-generator',
     color: '#00AE7A', // Emerald green
     badge: 'AI',
   },
@@ -130,7 +129,6 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   const { showPrices, togglePriceShare, canToggle } = usePriceShare();
   const { currency, toggleCurrency, canToggleCurrency } = useCurrency();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [nameGeneratorOpen, setNameGeneratorOpen] = useState(false);
   const [invitationOpen, setInvitationOpen] = useState(false);
 
   // Get tools and filter based on permissions
@@ -206,11 +204,6 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
       return; // Don't close sheet yet - will close when wizard closes
     }
 
-    if (tool.action === 'name-generator') {
-      setNameGeneratorOpen(true);
-      return; // Don't close sheet yet - will close when generator closes
-    }
-
     if (tool.action === 'invitation') {
       setInvitationOpen(true);
       return; // Don't close sheet yet - will close when generator closes
@@ -231,11 +224,6 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
 
   const handleFeedbackClose = () => {
     setFeedbackOpen(false);
-    onClose();
-  };
-
-  const handleNameGeneratorClose = () => {
-    setNameGeneratorOpen(false);
     onClose();
   };
 
@@ -651,12 +639,6 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
         open={feedbackOpen}
         onClose={handleFeedbackClose}
         onCaptureStart={onClose} // Close the More sheet when capture mode starts
-      />
-
-      {/* Name Generator - Admin only */}
-      <NameGeneratorSheet
-        open={nameGeneratorOpen}
-        onClose={handleNameGeneratorClose}
       />
 
       {/* Invitation Generator - Embajadores and Admins */}

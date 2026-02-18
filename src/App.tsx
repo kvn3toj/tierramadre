@@ -36,6 +36,7 @@ const ReceiptGenerator = lazyWithRetry(() => import('./pages/cuentas/recibos/Rec
 const CotizacionGenerator = lazyWithRetry(() => import('./components/cotizacion/CotizacionGenerator'), 'CotizacionGenerator');
 const QuotationPreview = lazyWithRetry(() => import('./pages/cuentas/cotizaciones/QuotationPreviewPage'), 'QuotationPreview');
 const AdminAnalyticsPage = lazyWithRetry(() => import('./pages/admin/analytics/AdminAnalyticsPage'), 'AdminAnalyticsPage');
+const NameGeneratorPage = lazyWithRetry(() => import('./pages/admin/name-generator/NameGeneratorPage'), 'NameGeneratorPage');
 const ActivityPage = lazyWithRetry(() => import('./pages/admin/ActivityPage'), 'ActivityPage');
 const ProductViewersPage = lazyWithRetry(() => import('./pages/admin/ProductViewers'), 'ProductViewersPage');
 const UserViewsPage = lazyWithRetry(() => import('./pages/admin/UserViewsPage'), 'UserViewsPage');
@@ -212,6 +213,15 @@ function AppContent() {
             <AdminRoute>
               <Suspense fallback={<LoadingFallback message="Cargando analytics..." />}>
                 <AdminAnalyticsPage />
+              </Suspense>
+            </AdminRoute>
+          } />
+
+          {/* Admin Name Generator */}
+          <Route path="/admin/name-generator" element={
+            <AdminRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando generador..." />}>
+                <NameGeneratorPage />
               </Suspense>
             </AdminRoute>
           } />

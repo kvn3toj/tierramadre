@@ -16,6 +16,7 @@ import {
   sendError,
   sendSuccess,
   setCacheHeaders,
+  requireAdminEmail,
   FEEDBACK_SPREADSHEET_ID,
   SHEETS,
   CACHE,
@@ -407,8 +408,9 @@ export default withApiHandler(async (req, res, { sheets, oauthDrive, sharedDrive
       : sendError(res, 400, result.error);
   }
 
-  // GET - List feedback
+  // GET - List feedback (admin only)
   if (req.method === 'GET') {
+    if (!requireAdminEmail(req, res)) return;
     setCacheHeaders(res, CACHE.SHORT);
     const result = await listFeedback(sheets, req.query.status);
     return sendSuccess(res, result);

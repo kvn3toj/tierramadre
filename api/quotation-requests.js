@@ -14,6 +14,7 @@ import {
   withApiHandler,
   sendError,
   sendSuccess,
+  requireAdminEmail,
   SPREADSHEET_ID,
   SHEETS,
   ensureSheet,
@@ -31,8 +32,9 @@ const HEADERS = [
 export default withApiHandler(async (req, res, { sheets }) => {
   await ensureSheet(sheets, SHEET_NAME, HEADERS);
 
-  // GET - Fetch requests
+  // GET - Fetch requests (admin only)
   if (req.method === 'GET') {
+    if (!requireAdminEmail(req, res)) return;
     const { id, status, email } = req.query;
 
     const response = await sheets.spreadsheets.values.get({

@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import {
   Box,
   Typography,
@@ -29,6 +30,7 @@ import type { QuotationRequest, RequestStatus } from '../../types/provider';
 export default function QuotationRequestList() {
   const navigate = useNavigate();
   const { confirmAction } = useNotification();
+  const { user } = useGoogleAuth();
   const [requests, setRequests] = useState<QuotationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | RequestStatus>('all');
@@ -36,7 +38,9 @@ export default function QuotationRequestList() {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const response = await fetch('/api/quotation-requests');
+        const response = await fetch('/api/quotation-requests', {
+          headers: { 'x-requester-email': user?.email ?? '' },
+        });
         const data = await response.json();
 
         if (data.success) {
@@ -97,6 +101,7 @@ export default function QuotationRequestList() {
     try {
       const response = await fetch(`/api/quotation-requests?id=${id}`, {
         method: 'DELETE',
+        headers: { 'x-requester-email': user?.email ?? '' },
       });
       const data = await response.json();
 

@@ -63,7 +63,9 @@ export default function AdminProductRequestList() {
 
   const fetchRequests = async () => {
     try {
-      const response = await fetch('/api/product-requests');
+      const response = await fetch('/api/product-requests', {
+        headers: { 'x-requester-email': user?.email ?? '' },
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -141,7 +143,7 @@ export default function AdminProductRequestList() {
     try {
       const response = await fetch('/api/product-requests', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-requester-email': user?.email ?? '' },
         body: JSON.stringify({
           id: selectedRequest.id,
           status: responseData.status,

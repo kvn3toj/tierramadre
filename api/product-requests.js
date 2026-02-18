@@ -15,6 +15,7 @@ import {
   sendError,
   sendSuccess,
   setCacheHeaders,
+  requireAdminEmail,
   SPREADSHEET_ID,
   SHEETS,
   CACHE,
@@ -329,9 +330,11 @@ export default withApiHandler(async (req, res, { sheets }) => {
   }
 
   // GET - List product requests
+  // All-data view requires admin; filtered view (?email=) allows staff to see their own
   if (req.method === 'GET') {
-    setCacheHeaders(res, CACHE.SHORT);
     const { status, email } = req.query;
+    if (!email && !requireAdminEmail(req, res)) return;
+    setCacheHeaders(res, CACHE.SHORT);
     const result = await listProductRequests(sheets, status, email);
     return sendSuccess(res, result);
   }

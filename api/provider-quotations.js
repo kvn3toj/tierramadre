@@ -18,6 +18,7 @@ import {
   withApiHandler,
   sendError,
   sendSuccess,
+  requireAdminEmail,
   SPREADSHEET_ID,
   SHEETS,
   ensureSheet,
@@ -50,8 +51,10 @@ export default withApiHandler(async (req, res, { sheets }) => {
   await ensureSheet(sheets, SHEET_NAME, HEADERS);
 
   // GET - Fetch quotations
+  // All-data view requires admin; filtered view (?email=) allows providers to see their own
   if (req.method === 'GET') {
     const { id, email, status, requestId } = req.query;
+    if (!email && !id && !requireAdminEmail(req, res)) return;
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,

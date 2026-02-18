@@ -135,6 +135,12 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
     subtitle: 'Métricas y Business Health Score',
     showBackButton: true,
   },
+  '/admin/name-generator': {
+    title: 'Generador de Nombres',
+    mode: 'large',
+    subtitle: 'Nombres únicos para esmeraldas con IA',
+    showBackButton: true,
+  },
 });
 
 export interface IOSLayoutProps {

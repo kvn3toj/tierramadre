@@ -17,7 +17,7 @@ import { CACHE } from './constants.js';
 export function setCorsHeaders(res, methods = ['GET', 'OPTIONS']) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', methods.join(', '));
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Cache-Control, If-None-Match');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Cache-Control, If-None-Match, x-requester-email');
   // Chrome caches preflight for up to 2 hours (7200s max)
   res.setHeader('Access-Control-Max-Age', '7200');
 }
@@ -107,6 +107,34 @@ export function checkMethod(req, res, allowedMethods) {
  * @param {string} options.cache - Cache type from CACHE constants
  * @returns {boolean} True if request was handled (caller should return)
  */
+/**
+ * Validate that the requester is an admin based on ADMIN_EMAILS env var.
+ * Reads the requester's email from the `x-requester-email` request header.
+ *
+ * @returns {boolean} true if access is granted, false if 401 was sent
+ */
+export function requireAdminEmail(req, res) {
+  const email = (req.headers['x-requester-email'] || '').trim().toLowerCase();
+
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  // Graceful degradation: if env var is missing, allow with a warning
+  if (adminEmails.length === 0) {
+    console.warn('[Auth] ADMIN_EMAILS not configured — admin check skipped');
+    return true;
+  }
+
+  if (!email || !adminEmails.includes(email)) {
+    sendError(res, 401, 'Unauthorized');
+    return false;
+  }
+
+  return true;
+}
+
 export function initApi(req, res, options = {}) {
   const { methods = ['GET', 'OPTIONS'], cache = null } = options;
 

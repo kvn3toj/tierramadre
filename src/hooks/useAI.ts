@@ -3,6 +3,9 @@ import { AIAnalysisResult } from '../types';
 import nameData from '../data/existingNames.json';
 import {
   NAMING_PROMPT,
+  NAMING_PROMPT_TEXT,
+  SIMILAR_NAMES_PROMPT,
+  COLLECTION_NAMES_PROMPT,
   CAPTION_PROMPT,
   FALLBACK_CAPTION_TEMPLATE,
   FALLBACK_DESCRIPTION,
@@ -217,6 +220,122 @@ export function useAI(): AIHookReturn {
     generateCaption,
     getRandomSuggestions: () => generateSmartSuggestions().names,
   };
+}
+
+// ============================================================================
+// Standalone AI generation functions (exported, not part of the hook)
+// ============================================================================
+
+// Parse a JSON response from Groq and extract a string array from a given key
+function parseGroqStringArray(content: string, key: string): string[] {
+  const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const parsed = JSON.parse(cleaned);
+  return parsed[key] as string[];
+}
+
+// Generate names similar to a reference name
+export async function generateSimilarNames(referenceName: string, temperature: number): Promise<string[]> {
+  const groqKey = import.meta.env.VITE_GROQ_API_KEY;
+  if (!groqKey) return generateLocalNames(3, temperature);
+
+  const prompt = SIMILAR_NAMES_PROMPT.replace('{referenceName}', referenceName);
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
+      body: JSON.stringify({
+        model: 'llama-3.1-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature,
+        max_tokens: 256,
+      }),
+    });
+    if (!response.ok) return generateLocalNames(3, temperature);
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    const names = parseGroqStringArray(content, 'names');
+    const usedNames = getUsedNames();
+    return names.filter(n => !usedNames.has(n)).slice(0, 3);
+  } catch {
+    return generateLocalNames(3, temperature);
+  }
+}
+
+// Generate collection name suggestions
+export async function generateCollectionNames(temperature: number): Promise<string[]> {
+  const groqKey = import.meta.env.VITE_GROQ_API_KEY;
+  const fallback = [
+    'Colección del Amazonas', 'Colección Mitológica', 'Colección Selva Madre',
+    'Colección Imperial', 'Colección del Cosmos',
+  ];
+  if (!groqKey) return fallback;
+
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
+      body: JSON.stringify({
+        model: 'llama-3.1-70b-versatile',
+        messages: [{ role: 'user', content: COLLECTION_NAMES_PROMPT }],
+        temperature,
+        max_tokens: 256,
+      }),
+    });
+    if (!response.ok) return fallback;
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    return parseGroqStringArray(content, 'collections');
+  } catch {
+    return fallback;
+  }
+}
+
+// Generate individual names thematically tied to a collection
+export async function generateNamesForCollection(collectionName: string, temperature: number): Promise<string[]> {
+  const groqKey = import.meta.env.VITE_GROQ_API_KEY;
+  if (!groqKey) return generateLocalNames(3, temperature);
+
+  const prompt = `Esta esmeralda pertenece a la "${collectionName}". Los nombres deben reflejar la temática de esta colección.\n\n${NAMING_PROMPT_TEXT}`;
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
+      body: JSON.stringify({
+        model: 'llama-3.1-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature,
+        max_tokens: 256,
+      }),
+    });
+    if (!response.ok) return generateLocalNames(3, temperature);
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    const names = parseGroqStringArray(content, 'names');
+    const usedNames = getUsedNames();
+    return names.filter(n => !usedNames.has(n)).slice(0, 3);
+  } catch {
+    return generateLocalNames(3, temperature);
+  }
+}
+
+// ============================================================================
+// Local generation helpers
+// ============================================================================
+
+// Generate local names respecting temperature: < 0.5 = focused (category only), >= 0.5 = all strategies
+function generateLocalNames(count: number, temperature: number): string[] {
+  if (temperature < 0.5) {
+    const usedNames = getUsedNames();
+    const names: string[] = [];
+    let attempts = 0;
+    while (names.length < count && attempts < count * 50) {
+      attempts++;
+      const name = generateFromCategory();
+      if (!usedNames.has(name) && !names.includes(name)) names.push(name);
+    }
+    return names;
+  }
+  return generateUniqueNames(count);
 }
 
 // Generate a unique name that hasn't been used
