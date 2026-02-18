@@ -76,15 +76,24 @@ export default function InvitationPage() {
 
       if (result.isValid) {
         // Store invitation info (fixed 24-hour duration)
-        setTimeRemaining(result.timeRemainingMinutes || (24 * 60));
-        setPricingMode(result.pricingMode || 'with_prices');
-        setCreatedBy(result.createdBy || '');
-        setCreatorEmail(result.creatorEmail || '');
-        setInvitationId(result.invitationId || '');
-        setCurrentShortCode(result.shortCode || shortCode);
-        setExpiresAt(result.expiresAt || '');
+        const resolvedTimeRemaining = result.timeRemainingMinutes || (24 * 60);
+        const resolvedPricingMode = result.pricingMode || 'with_prices';
+        const resolvedCreatedBy = result.createdBy || '';
+        const resolvedCreatorEmail = result.creatorEmail || '';
+        const resolvedInvitationId = result.invitationId || '';
+        const resolvedShortCode = result.shortCode || shortCode;
+        const resolvedExpiresAt = result.expiresAt || '';
+
+        setTimeRemaining(resolvedTimeRemaining);
+        setPricingMode(resolvedPricingMode);
+        setCreatedBy(resolvedCreatedBy);
+        setCreatorEmail(resolvedCreatorEmail);
+        setInvitationId(resolvedInvitationId);
+        setCurrentShortCode(resolvedShortCode);
+        setExpiresAt(resolvedExpiresAt);
 
         // Fetch inviter's WhatsApp from asesores if we have their email
+        let resolvedInviterWhatsApp = '';
         if (result.creatorEmail) {
           try {
             const asesoresResponse = await fetch('/api/get-asesores');
@@ -97,6 +106,7 @@ export default function InvitationPage() {
                   (a.email && a.email.toLowerCase() === result.creatorEmail?.toLowerCase())
               );
               if (inviter?.whatsapp) {
+                resolvedInviterWhatsApp = inviter.whatsapp;
                 setInviterWhatsApp(inviter.whatsapp);
               }
             }
@@ -105,7 +115,36 @@ export default function InvitationPage() {
           }
         }
 
-        // Show the guest registration form
+        // If assessor pre-registered the guest, skip the form and grant access immediately
+        if (result.guestName) {
+          loginAsGuest();
+
+          const invitationData: Record<string, string> = {
+            [INVITATION_STORAGE_KEYS.EXPIRES]: resolvedExpiresAt,
+            [INVITATION_STORAGE_KEYS.TOKEN]: resolvedShortCode,
+            [INVITATION_STORAGE_KEYS.PRICING_MODE]: resolvedPricingMode,
+            [INVITATION_STORAGE_KEYS.DURATION_HOURS]: '24',
+            [INVITATION_STORAGE_KEYS.INVITATION_ID]: resolvedInvitationId,
+            [INVITATION_STORAGE_KEYS.INVITER_NAME]: resolvedCreatedBy,
+            [INVITATION_STORAGE_KEYS.INVITER_EMAIL]: resolvedCreatorEmail,
+            [INVITATION_STORAGE_KEYS.GUEST_NAME]: result.guestName,
+            [INVITATION_STORAGE_KEYS.GUEST_CONTACT]: result.guestContact || '',
+          };
+          if (resolvedInviterWhatsApp) {
+            invitationData[INVITATION_STORAGE_KEYS.INVITER_WHATSAPP] = resolvedInviterWhatsApp;
+          }
+
+          for (const [key, value] of Object.entries(invitationData)) {
+            sessionStorage.setItem(key, value);
+          }
+          localStorage.setItem('tm_guest_invitation', JSON.stringify(invitationData));
+          sessionStorage.removeItem('treasure-filters');
+
+          setStatus('valid');
+          return;
+        }
+
+        // No pre-registered guest data — show the registration form
         setStatus('form');
       } else if (result.status === 'expired') {
         setStatus('expired');

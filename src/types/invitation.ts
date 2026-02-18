@@ -58,6 +58,9 @@ export interface ValidationResult {
   creatorEmail?: string;
   shortCode?: string;
   error?: string;
+  guestName?: string | null;
+  guestContact?: string | null;
+  contactType?: ContactType | null;
 }
 
 /**

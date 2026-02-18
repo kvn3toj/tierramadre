@@ -174,6 +174,9 @@ async function validateInvitation(sheets, shortCode) {
       durationHours: data.durationHours, pricingMode: data.pricingMode,
       createdBy: data.creatorName, creatorEmail: data.creatorEmail,
       shortCode: data.shortCode,
+      guestName: data.guestName || null,
+      guestContact: data.guestContact || null,
+      contactType: data.contactType || null,
     };
   }
 
@@ -201,6 +204,9 @@ async function validateInvitation(sheets, shortCode) {
       durationHours: data.durationHours, pricingMode: data.pricingMode,
       createdBy: data.creatorName, creatorEmail: data.creatorEmail,
       shortCode: data.shortCode,
+      guestName: data.guestName || null,
+      guestContact: data.guestContact || null,
+      contactType: data.contactType || null,
     };
   }
 
