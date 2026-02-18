@@ -52,8 +52,8 @@ export const CACHE = {
   IMAGES: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400, immutable',
 };
 
-// Invitation Settings
-export const INVITATION_DURATION_HOURS = 24;
+// Invitation Settings — no time limit on guest access
+export const INVITATION_DURATION_HOURS = 876000; // ~100 years
 
 // Batch Processing
 export const BATCH_SIZE = 10;

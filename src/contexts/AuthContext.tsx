@@ -7,7 +7,6 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import type { AuthState, AuthContextType, AccessLevel } from '../types/auth';
-import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import { useGoogleAuth } from './GoogleAuthContext';
 import { SESSION_KEYS, STORAGE_KEYS } from '../constants/storage-keys';
 
@@ -73,12 +72,6 @@ function restoreGuestSession(): boolean {
     if (!raw) return false;
 
     const data = JSON.parse(raw) as Record<string, string>;
-    const expires = data[INVITATION_STORAGE_KEYS.EXPIRES];
-    if (!expires || new Date(expires).getTime() < Date.now()) {
-      // Expired — clean up
-      localStorage.removeItem(GUEST_PERSIST_KEY);
-      return false;
-    }
 
     // Restore every key into sessionStorage so the rest of the app works
     for (const [key, value] of Object.entries(data)) {

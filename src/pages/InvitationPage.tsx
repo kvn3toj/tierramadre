@@ -25,7 +25,6 @@ import {
 import {
   CheckCircle,
   Error as ErrorIcon,
-  Timer,
   Explore,
   Email as EmailIcon,
   Phone as PhoneIcon,
@@ -47,7 +46,6 @@ export default function InvitationPage() {
   const { loginAsGuest } = useAuth();
 
   const [status, setStatus] = useState<'loading' | 'form' | 'valid' | 'expired' | 'error'>('loading');
-  const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [pricingMode, setPricingMode] = useState<PricingMode>('with_prices');
   const [invitationId, setInvitationId] = useState<string>('');
   const [createdBy, setCreatedBy] = useState<string>('');
@@ -76,7 +74,6 @@ export default function InvitationPage() {
 
       if (result.isValid) {
         // Store invitation info (fixed 24-hour duration)
-        const resolvedTimeRemaining = result.timeRemainingMinutes || (24 * 60);
         const resolvedPricingMode = result.pricingMode || 'with_prices';
         const resolvedCreatedBy = result.createdBy || '';
         const resolvedCreatorEmail = result.creatorEmail || '';
@@ -84,7 +81,6 @@ export default function InvitationPage() {
         const resolvedShortCode = result.shortCode || shortCode;
         const resolvedExpiresAt = result.expiresAt || '';
 
-        setTimeRemaining(resolvedTimeRemaining);
         setPricingMode(resolvedPricingMode);
         setCreatedBy(resolvedCreatedBy);
         setCreatorEmail(resolvedCreatorEmail);
@@ -407,24 +403,6 @@ export default function InvitationPage() {
             sx={{ mb: 3 }}
           />
 
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 1,
-              mb: 3,
-              p: 1.5,
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-            }}
-          >
-            <Timer sx={{ color: brand.gold[600], fontSize: 20 }} />
-            <Typography variant="body2">
-              Tendrás {timeRemaining} minutos para explorar
-            </Typography>
-          </Box>
-
           <Button
             variant="contained"
             size="large"
@@ -479,26 +457,8 @@ export default function InvitationPage() {
           </Typography>
         )}
 
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 1,
-            mb: 3,
-            p: 2,
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-          }}
-        >
-          <Timer sx={{ color: brand.gold[600] }} />
-          <Typography variant="body1" fontWeight={typography.weight.semibold}>
-            {timeRemaining} minutos restantes
-          </Typography>
-        </Box>
-
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Tienes acceso temporal para explorar nuestra coleccion exclusiva de esmeraldas colombianas.
+          Tienes acceso para explorar nuestra coleccion exclusiva de esmeraldas colombianas.
         </Typography>
 
         <Button

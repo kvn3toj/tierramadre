@@ -180,27 +180,13 @@ async function validateInvitation(sheets, shortCode) {
     };
   }
 
-  // If active, check if still valid
-  if (data.status === 'active' && data.expiresAt) {
-    const expiresAt = new Date(data.expiresAt);
-    if (now > expiresAt) {
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!N${rowIndex}`,
-        valueInputOption: 'RAW',
-        requestBody: { values: [['expired']] },
-      });
-
-      return { success: true, isValid: false, status: 'expired', error: 'Esta invitación ha expirado' };
-    }
-
-    const timeRemaining = expiresAt.getTime() - now.getTime();
-
+  // If active, return as valid (no time limit)
+  if (data.status === 'active') {
     return {
       success: true, isValid: true, status: 'active',
       invitationId: data.invitationId,
       activatedAt: data.activatedAt, expiresAt: data.expiresAt,
-      timeRemaining, timeRemainingMinutes: Math.floor(timeRemaining / 60000),
+      timeRemaining: null, timeRemainingMinutes: null,
       durationHours: data.durationHours, pricingMode: data.pricingMode,
       createdBy: data.creatorName, creatorEmail: data.creatorEmail,
       shortCode: data.shortCode,
