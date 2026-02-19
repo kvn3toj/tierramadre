@@ -93,7 +93,7 @@ async function verifyPin(sheets, _req, body) {
 }
 
 /**
- * Ensure pin + boundIp headers exist (auto-migration for existing sheets)
+ * Ensure pin + boundToken headers exist (auto-migration for existing sheets)
  */
 async function ensureHeaders(sheets) {
   const res = await sheets.spreadsheets.values.get({

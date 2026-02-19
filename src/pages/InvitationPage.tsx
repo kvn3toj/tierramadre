@@ -130,7 +130,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
   return (
     <Box
       sx={{
-        minHeight: '100dvh',
+        minHeight: ['100vh', '100dvh'],
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -215,7 +215,7 @@ function PinInput({
   const digits = value.split('');
 
   return (
-    <Box sx={{ position: 'relative', mb: 3.5, mx: 'auto', maxWidth: 280 }}>
+    <Box sx={{ position: 'relative', mb: 3.5, mx: 'auto', maxWidth: { xs: 256, sm: 280 } }}>
       {/* Hidden native input — always mounted, keyboard stays open */}
       <input
         ref={inputRef as React.LegacyRef<HTMLInputElement>}
@@ -257,8 +257,8 @@ function PinInput({
             <Box
               key={i}
               sx={{
-                width: 58,
-                height: 68,
+                width: { xs: 52, sm: 58 },
+                height: { xs: 62, sm: 68 },
                 borderRadius: '14px',
                 display: 'flex',
                 alignItems: 'center',
@@ -482,6 +482,10 @@ export default function InvitationPage() {
       [INVITATION_STORAGE_KEYS.GUEST_CONTACT]: resolvedGuestContact,
       [INVITATION_STORAGE_KEYS.PIN_VERIFIED]: 'true',
     };
+    const deviceToken = localStorage.getItem(INVITATION_STORAGE_KEYS.DEVICE_TOKEN);
+    if (deviceToken) {
+      invitationData[INVITATION_STORAGE_KEYS.DEVICE_TOKEN] = deviceToken;
+    }
     if (inviterWhatsApp) {
       invitationData[INVITATION_STORAGE_KEYS.INVITER_WHATSAPP] = inviterWhatsApp;
     }
@@ -745,7 +749,7 @@ export default function InvitationPage() {
                 </Typography>
               </Box>
 
-              <Button fullWidth onClick={() => navigate('/')} sx={ghostBtnSx}>
+              <Button fullWidth onClick={() => navigate('/home')} sx={ghostBtnSx}>
                 Ir al Inicio
               </Button>
             </Box>
@@ -785,7 +789,7 @@ export default function InvitationPage() {
                 </Typography>
               </Box>
 
-              <Button fullWidth onClick={() => navigate('/')} sx={ghostBtnSx}>
+              <Button fullWidth onClick={() => navigate('/home')} sx={ghostBtnSx}>
                 Ir al Inicio
               </Button>
             </Box>
