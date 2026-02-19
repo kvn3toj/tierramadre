@@ -3,9 +3,9 @@
  */
 
 import { alpha, SxProps, Theme } from '@mui/material';
+import { cardShadows, emeraldCore, emeraldGradients } from '../../design-system/index';
 
 // Card background and border colors based on theme mode
-// These now reference CSS variables for automatic dark/light switching
 export const CARD_COLORS = {
   light: {
     bg: 'var(--card-bg)',
@@ -18,28 +18,47 @@ export const CARD_COLORS = {
 } as const;
 
 // Generate Card sx styles
-export const getCardSx = (_isLight: boolean, options?: {
+export const getCardSx = (isLight: boolean, options?: {
   borderRadius?: number;
   withHover?: boolean;
-  hoverColor?: string;
 }): SxProps<Theme> => {
-  const { borderRadius = 3, withHover = true, hoverColor = '#059669' } = options || {};
+  const { borderRadius = 3, withHover = true } = options || {};
 
   const baseStyles: SxProps<Theme> = {
     bgcolor: 'var(--card-bg)',
     borderRadius,
     border: '1px solid',
-    borderColor: 'var(--card-border)',
-    transition: 'all 0.2s ease',
+    borderColor: isLight
+      ? alpha(emeraldCore.primary, 0.06)
+      : alpha(emeraldCore.primary, 0.1),
+    boxShadow: cardShadows.resting,
+    transition: 'all 0.25s ease',
+    position: 'relative',
+    overflow: 'hidden',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '3px',
+      background: emeraldGradients.deep,
+      opacity: 0,
+      transition: 'opacity 0.25s ease',
+      zIndex: 1,
+    },
   };
 
   if (withHover) {
     return {
       ...baseStyles,
       '&:hover': {
-        borderColor: hoverColor,
-        boxShadow: `0 4px 20px ${alpha(hoverColor, 0.15)}`,
+        borderColor: emeraldCore.primary,
+        boxShadow: cardShadows.emeraldHover,
         transform: 'translateY(-2px)',
+      },
+      '&:hover::before': {
+        opacity: 1,
       },
     };
   }

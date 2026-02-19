@@ -3,10 +3,11 @@
  *
  * Two variants:
  * - inline: Horizontal layout for compact displays (AmbassadorCard)
- * - stacked: Vertical layout with icon coloring (AmbassadorDirectory)
+ * - stacked: Mini glass stat card with icon background (AmbassadorDirectory)
  */
 
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, alpha } from '@mui/material';
+import { fontFamilies } from '../../design-system/index';
 
 interface StatItemProps {
   icon: React.ReactNode;
@@ -23,14 +24,51 @@ export function StatItem({
   color,
   variant = 'inline',
 }: StatItemProps) {
+  const isZero = value === '0' || value === '$0';
+
   if (variant === 'stacked') {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Box sx={{ color }}>{icon}</Box>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          py: 1,
+          px: 1.5,
+          borderRadius: 2,
+          transition: 'background-color 0.2s ease',
+          opacity: isZero ? 0.5 : 1,
+          '&:hover': {
+            bgcolor: color ? alpha(color, 0.06) : 'action.hover',
+          },
+        }}
+      >
+        <Box
+          sx={{
+            width: 36,
+            height: 36,
+            borderRadius: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: color ? alpha(color, 0.1) : 'action.selected',
+            color,
+            flexShrink: 0,
+          }}
+        >
+          {icon}
+        </Box>
         <Box>
           <Typography
             variant="h6"
-            sx={{ fontWeight: 700, fontSize: '1rem', lineHeight: 1, color }}
+            sx={{
+              fontFamily: fontFamilies.mono,
+              fontVariantNumeric: 'tabular-nums',
+              fontWeight: 700,
+              fontSize: '1rem',
+              lineHeight: 1,
+              color,
+            }}
           >
             {value}
           </Typography>

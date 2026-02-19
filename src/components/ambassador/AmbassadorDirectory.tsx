@@ -10,28 +10,35 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   Grid,
-  Paper,
   useTheme,
   Skeleton,
   Button,
   CircularProgress,
   Alert,
-  alpha,
 } from '@mui/material';
 import {
   Search,
   Grid3X3,
   List,
-  Filter,
   Users,
   Package,
   Gem,
   DollarSign,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAsesores, Asesor } from '../../hooks/useAsesores';
 import { useTreasure } from '../../hooks/useTreasure';
 import AsesorCard from './AsesorCard';
 import { StatItem } from './StatItem';
+import {
+  emeraldCore,
+  applyGlass,
+  glassEmerald,
+  glassLight,
+  glassDark,
+  fontFamilies,
+} from '../../design-system/index';
+import { fadeInUp, staggerContainer, staggerItem } from '../../design-system/tokens/motion';
 
 interface AmbassadorDirectoryProps {
   onViewProducts?: (asesor: Asesor) => void;
@@ -49,7 +56,6 @@ export default function AmbassadorDirectory({
   onContact,
   maxVisible,
   showFilters = true,
-  title = 'Nuestros Embajadores',
 }: AmbassadorDirectoryProps) {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -130,7 +136,7 @@ export default function AmbassadorDirectory({
     return (
       <Box>
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <CircularProgress size={24} sx={{ color: '#059669' }} />
+          <CircularProgress size={24} sx={{ color: emeraldCore.primary }} />
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Cargando embajadores...
           </Typography>
@@ -145,7 +151,7 @@ export default function AmbassadorDirectory({
     return (
       <Box>
         <Alert severity="warning" sx={{ mb: 2 }}>
-          No se pudieron cargar los embajadores. Recarga la página para intentar de nuevo.
+          No se pudieron cargar los embajadores. Recarga la p&aacute;gina para intentar de nuevo.
         </Alert>
       </Box>
     );
@@ -153,41 +159,28 @@ export default function AmbassadorDirectory({
 
   return (
     <Box>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography
-          variant="h5"
+      {/* Stats Bar */}
+      <motion.div
+        variants={fadeInUp}
+        initial="initial"
+        animate="animate"
+      >
+        <Box
           sx={{
-            fontWeight: 800,
-            background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            mb: 2,
-          }}
-        >
-          {title}
-        </Typography>
-
-        {/* Stats Bar */}
-        <Paper
-          elevation={0}
-          sx={{
+            mb: 3,
             p: 2,
-            borderRadius: 2,
-            bgcolor: isLight ? '#F0FDF4' : alpha('#059669', 0.08),
-            border: '1px solid',
-            borderColor: isLight ? '#D1FAE5' : alpha('#059669', 0.2),
-            display: 'flex',
-            gap: { xs: 2, md: 4 },
-            flexWrap: 'wrap',
-            justifyContent: 'space-around',
+            borderRadius: 3,
+            ...applyGlass(isLight ? glassEmerald.light : glassEmerald.dark),
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+            gap: { xs: 0.5, md: 1 },
           }}
         >
           <StatItem
             icon={<Users size={18} />}
             value={stats.activeEmbajadores.toString()}
             label="Embajadores activos"
-            color="#059669"
+            color={emeraldCore.primary}
             variant="stacked"
           />
           <StatItem
@@ -211,13 +204,20 @@ export default function AmbassadorDirectory({
             color="#F59E0B"
             variant="stacked"
           />
-        </Paper>
-      </Box>
+        </Box>
+      </motion.div>
 
       {/* Search and View Toggle */}
       {showFilters && (
         <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 2,
+              mb: 2,
+            }}
+          >
             <TextField
               fullWidth
               placeholder="Buscar embajador por nombre..."
@@ -234,99 +234,139 @@ export default function AmbassadorDirectory({
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: emeraldCore.primary,
+                  },
                 },
               }}
             />
 
-            <ToggleButtonGroup
-              value={viewMode}
-              exclusive
-              onChange={(_, value) => value && setViewMode(value)}
-              size="small"
-            >
-              <ToggleButton value="grid">
-                <Grid3X3 size={18} />
-              </ToggleButton>
-              <ToggleButton value="list">
-                <List size={18} />
-              </ToggleButton>
-            </ToggleButtonGroup>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <ToggleButtonGroup
+                value={viewMode}
+                exclusive
+                onChange={(_, value) => value && setViewMode(value)}
+                size="small"
+              >
+                <ToggleButton value="grid">
+                  <Grid3X3 size={18} />
+                </ToggleButton>
+                <ToggleButton value="list">
+                  <List size={18} />
+                </ToggleButton>
+              </ToggleButtonGroup>
 
-            <ToggleButtonGroup
-              value={sortBy}
-              exclusive
-              onChange={(_, value) => value && setSortBy(value)}
-              size="small"
-            >
-              <ToggleButton value="products" sx={{ textTransform: 'none', px: 2 }}>
-                Por Productos
-              </ToggleButton>
-              <ToggleButton value="name" sx={{ textTransform: 'none', px: 2 }}>
-                Por Nombre
-              </ToggleButton>
-            </ToggleButtonGroup>
+              <ToggleButtonGroup
+                value={sortBy}
+                exclusive
+                onChange={(_, value) => value && setSortBy(value)}
+                size="small"
+              >
+                <ToggleButton value="products" sx={{ textTransform: 'none', px: 2 }}>
+                  Por Productos
+                </ToggleButton>
+                <ToggleButton value="name" sx={{ textTransform: 'none', px: 2 }}>
+                  Por Nombre
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
           </Box>
         </Box>
       )}
 
       {/* Results Count */}
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+        <Typography
+          variant="overline"
+          sx={{
+            color: 'text.secondary',
+            letterSpacing: '0.1em',
+            fontSize: '0.7rem',
+          }}
+        >
           {filteredAsesores.length} embajadores encontrados
         </Typography>
       </Box>
 
       {/* Asesor Grid/List */}
       {filteredAsesores.length === 0 ? (
-        <Box
-          sx={{
-            textAlign: 'center',
-            py: 8,
-            px: 4,
-            bgcolor: isLight ? '#F9FAFB' : '#2C2C2E',
-            borderRadius: 3,
-          }}
+        <motion.div
+          variants={fadeInUp}
+          initial="initial"
+          animate="animate"
         >
-          <Filter size={48} style={{ color: '#9CA3AF', marginBottom: 16 }} />
-          <Typography variant="h6" sx={{ mb: 1, color: 'text.secondary' }}>
-            No se encontraron embajadores
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-            {hasActiveFilters ? 'Intenta con otros criterios de búsqueda' : 'No hay embajadores registrados'}
-          </Typography>
-          {hasActiveFilters && (
-            <Button
-              variant="outlined"
-              onClick={clearFilters}
-              sx={{ textTransform: 'none' }}
+          <Box
+            sx={{
+              textAlign: 'center',
+              py: 8,
+              px: 4,
+              borderRadius: 3,
+              ...applyGlass(isLight ? glassLight.ultraThin : glassDark.ultraThin),
+            }}
+          >
+            <Gem size={48} style={{ color: emeraldCore.light, marginBottom: 16 }} />
+            <Typography
+              variant="h6"
+              sx={{ mb: 1, color: 'text.secondary', fontFamily: fontFamilies.brand }}
             >
-              Limpiar filtros
-            </Button>
-          )}
-        </Box>
+              No se encontraron embajadores
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+              {hasActiveFilters ? 'Intenta con otros criterios de b\u00fasqueda' : 'No hay embajadores registrados'}
+            </Typography>
+            {hasActiveFilters && (
+              <Button
+                variant="outlined"
+                onClick={clearFilters}
+                sx={{
+                  textTransform: 'none',
+                  borderColor: emeraldCore.primary,
+                  color: emeraldCore.primary,
+                }}
+              >
+                Limpiar filtros
+              </Button>
+            )}
+          </Box>
+        </motion.div>
       ) : viewMode === 'grid' ? (
-        <Grid container spacing={{ xs: 1.5, md: 2 }}>
-          {filteredAsesores.map((asesor) => (
-            <Grid item xs={12} sm={6} md={4} key={asesor.id}>
-              <AsesorCard
-                asesor={asesor}
-                onViewProducts={onViewProducts}
-                onContact={onContact}
-              />
-            </Grid>
-          ))}
-        </Grid>
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+        >
+          <Grid container spacing={{ xs: 1.5, md: 2 }}>
+            {filteredAsesores.map((asesor) => (
+              <Grid item xs={12} sm={6} md={4} key={asesor.id}>
+                <motion.div variants={staggerItem}>
+                  <AsesorCard
+                    asesor={asesor}
+                    onViewProducts={onViewProducts}
+                    onContact={onContact}
+                  />
+                </motion.div>
+              </Grid>
+            ))}
+          </Grid>
+        </motion.div>
       ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {filteredAsesores.map((asesor) => (
-            <AsesorCard
-              key={asesor.id}
-              asesor={asesor}
-              onViewProducts={onViewProducts}
-              onContact={onContact}
-            />
-          ))}
-        </Box>
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {filteredAsesores.map((asesor) => (
+              <motion.div key={asesor.id} variants={staggerItem}>
+                <AsesorCard
+                  asesor={asesor}
+                  onViewProducts={onViewProducts}
+                  onContact={onContact}
+                />
+              </motion.div>
+            ))}
+          </Box>
+        </motion.div>
       )}
     </Box>
   );
@@ -335,31 +375,47 @@ export default function AmbassadorDirectory({
 // Loading Skeleton
 export function AmbassadorDirectorySkeleton() {
   return (
-    <Grid container spacing={{ xs: 1.5, md: 2 }}>
-      {[1, 2, 3, 4, 5, 6].map((i) => (
-        <Grid item xs={12} sm={6} md={4} key={i}>
-          <Box sx={{ p: 2.5 }}>
-            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-              <Skeleton variant="circular" width={64} height={64} />
-              <Box sx={{ flex: 1 }}>
-                <Skeleton variant="text" width="60%" />
-                <Skeleton variant="text" width="40%" />
-                <Skeleton variant="text" width="30%" />
+    <motion.div
+      variants={staggerContainer}
+      initial="initial"
+      animate="animate"
+    >
+      <Grid container spacing={{ xs: 1.5, md: 2 }}>
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <Grid item xs={12} sm={6} md={4} key={i}>
+            <motion.div variants={staggerItem}>
+              <Box
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  bgcolor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                  <Skeleton variant="circular" width={56} height={56} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="60%" />
+                    <Skeleton variant="text" width="40%" />
+                  </Box>
+                </Box>
+                <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 2 }} />
+                <Box sx={{ display: 'flex', gap: 0.5, mb: 2 }}>
+                  {[1, 2, 3].map(j => (
+                    <Skeleton key={j} variant="rectangular" width={52} height={52} sx={{ borderRadius: 2 }} />
+                  ))}
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Skeleton variant="rectangular" height={36} sx={{ flex: 1, borderRadius: 1 }} />
+                  <Skeleton variant="rectangular" height={36} width={80} sx={{ borderRadius: 1 }} />
+                </Box>
               </Box>
-            </Box>
-            <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 2 }} />
-            <Box sx={{ display: 'flex', gap: 0.5, mb: 2 }}>
-              <Skeleton variant="rectangular" width={80} height={24} sx={{ borderRadius: 2 }} />
-              <Skeleton variant="rectangular" width={80} height={24} sx={{ borderRadius: 2 }} />
-            </Box>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Skeleton variant="rectangular" height={36} sx={{ flex: 1, borderRadius: 1 }} />
-              <Skeleton variant="rectangular" height={36} sx={{ flex: 1, borderRadius: 1 }} />
-            </Box>
-          </Box>
-        </Grid>
-      ))}
-    </Grid>
+            </motion.div>
+          </Grid>
+        ))}
+      </Grid>
+    </motion.div>
   );
 }
 
