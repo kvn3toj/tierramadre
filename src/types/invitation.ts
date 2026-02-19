@@ -30,6 +30,7 @@ export interface InvitationData {
   url: string; // Full URL with short code
   shortCode: string | null;
   shortUrl: string | null;
+  pin: string; // 4-digit PIN shared separately by asesor
   createdAt: string;
   durationHours: number;
   pricingMode: PricingMode;
@@ -61,6 +62,7 @@ export interface ValidationResult {
   guestName?: string | null;
   guestContact?: string | null;
   contactType?: ContactType | null;
+  isPinBound?: boolean;
 }
 
 /**
@@ -92,6 +94,19 @@ export interface GuestInvitation {
 }
 
 /**
+ * Result from PIN verification API
+ */
+export interface PinVerificationResult {
+  success: boolean;
+  pinVerified?: boolean;
+  isPinWrong?: boolean;
+  isIpBlocked?: boolean;
+  guestName?: string | null;
+  guestContact?: string | null;
+  error?: string;
+}
+
+/**
  * Session storage keys for invitation data
  */
 export const INVITATION_STORAGE_KEYS = {
@@ -107,4 +122,6 @@ export const INVITATION_STORAGE_KEYS = {
   // Guest contact for duplicate invitation check
   GUEST_NAME: 'invitation-guest-name',
   GUEST_CONTACT: 'invitation-guest-contact',
+  // PIN verification flag (survives tab refresh)
+  PIN_VERIFIED: 'invitation-pin-verified',
 } as const;

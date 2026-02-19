@@ -50,6 +50,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
   const { generateInvitation, clearLastInvitation, isGenerating, error, lastInvitation } = useInvitation();
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedPin, setCopiedPin] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
@@ -99,6 +100,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
     setShowPrices(true);
     setShowQR(false);
     setFormError('');
+    setCopiedPin(false);
   };
 
   const copyToClipboard = async (text: string) => {
@@ -126,6 +128,25 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
   const handleCopy = async () => {
     if (lastInvitation?.url) {
       await copyToClipboard(lastInvitation.url);
+    }
+  };
+
+  const handleCopyPin = async () => {
+    if (lastInvitation?.pin) {
+      try {
+        await navigator.clipboard.writeText(lastInvitation.pin);
+      } catch {
+        const textArea = document.createElement('textarea');
+        textArea.value = lastInvitation.pin;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopiedPin(true);
+      setTimeout(() => setCopiedPin(false), 2000);
+      setSnackbarMessage('PIN copiado al portapapeles');
+      setSnackbarOpen(true);
     }
   };
 
@@ -423,6 +444,48 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                 }}
                 sx={{ mb: 2 }}
               />
+
+              {/* PIN Display Card */}
+              {lastInvitation.pin && (
+                <Box
+                  sx={{
+                    p: 2,
+                    mb: 2,
+                    borderRadius: 2,
+                    border: '2px solid',
+                    borderColor: brand.emerald[400],
+                    bgcolor: `${brand.emerald[50]}`,
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                    PIN de acceso
+                  </Typography>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontFamily: 'monospace',
+                      fontWeight: 700,
+                      letterSpacing: '0.3em',
+                      color: brand.emerald[800],
+                      mb: 1,
+                    }}
+                  >
+                    {lastInvitation.pin}
+                  </Typography>
+                  <Button
+                    size="small"
+                    startIcon={copiedPin ? <CheckIcon sx={{ color: brand.emerald[600] }} /> : <CopyIcon />}
+                    onClick={handleCopyPin}
+                    sx={{ color: brand.emerald[600], mb: 0.5 }}
+                  >
+                    {copiedPin ? 'Copiado!' : 'Copiar PIN'}
+                  </Button>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    Comparte este PIN por separado (WhatsApp, llamada, etc.)
+                  </Typography>
+                </Box>
+              )}
 
               {/* Summary chips */}
               <Box

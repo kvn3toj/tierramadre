@@ -12,6 +12,7 @@ import { useGoogleAuth } from '../contexts/GoogleAuthContext';
 import type {
   InvitationData,
   ValidationResult,
+  PinVerificationResult,
   GenerateInvitationOptions,
   GuestRegistration,
 } from '../types/invitation';
@@ -19,10 +20,12 @@ import type {
 interface UseInvitationReturn {
   generateInvitation: (options?: GenerateInvitationOptions) => Promise<InvitationData | null>;
   validateInvitation: (shortCode: string) => Promise<ValidationResult>;
+  verifyPin: (shortCode: string, pin: string) => Promise<PinVerificationResult>;
   registerGuest: (registration: GuestRegistration) => Promise<boolean>;
   clearLastInvitation: () => void;
   isGenerating: boolean;
   isValidating: boolean;
+  isVerifyingPin: boolean;
   isRegistering: boolean;
   error: string | null;
   lastInvitation: InvitationData | null;
@@ -33,6 +36,7 @@ export const useInvitation = (): UseInvitationReturn => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isVerifyingPin, setIsVerifyingPin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastInvitation, setLastInvitation] = useState<InvitationData | null>(null);
 
@@ -108,6 +112,39 @@ export const useInvitation = (): UseInvitationReturn => {
     }
   }, []);
 
+  const verifyPin = useCallback(async (
+    shortCode: string, pin: string
+  ): Promise<PinVerificationResult> => {
+    setIsVerifyingPin(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/invitations?action=verify-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shortCode, pin }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        setError(data.error || 'Error al verificar PIN');
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Verify PIN error:', err);
+      const errorResult: PinVerificationResult = {
+        success: false,
+        error: 'Error de conexión. Intenta nuevamente.',
+      };
+      setError(errorResult.error || null);
+      return errorResult;
+    } finally {
+      setIsVerifyingPin(false);
+    }
+  }, []);
+
   const clearLastInvitation = useCallback(() => {
     setLastInvitation(null);
     setError(null);
@@ -146,10 +183,12 @@ export const useInvitation = (): UseInvitationReturn => {
   return {
     generateInvitation,
     validateInvitation,
+    verifyPin,
     registerGuest,
     clearLastInvitation,
     isGenerating,
     isValidating,
+    isVerifyingPin,
     isRegistering,
     error,
     lastInvitation,

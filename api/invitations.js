@@ -25,8 +25,95 @@ const SHEET_NAME = SHEETS.INVITATIONS;
 const HEADERS = [
   'invitationId', 'shortCode', 'creatorEmail', 'creatorName', 'creatorRole',
   'guestName', 'guestContact', 'contactType', 'createdAt', 'activatedAt',
-  'expiresAt', 'pricingMode', 'durationHours', 'status'
+  'expiresAt', 'pricingMode', 'durationHours', 'status', 'pin', 'boundIp'
 ];
+
+/**
+ * Generate a 4-digit PIN code
+ */
+function generatePin() {
+  return String(Math.floor(1000 + Math.random() * 9000));
+}
+
+/**
+ * Extract client IP from request headers (Vercel/proxy-aware)
+ */
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.headers['x-real-ip'] || 'unknown';
+}
+
+/**
+ * Verify PIN and enforce IP binding
+ */
+async function verifyPin(sheets, req, body) {
+  const { shortCode, pin } = body;
+
+  if (!shortCode || !pin) {
+    return { success: false, error: 'shortCode and pin are required' };
+  }
+
+  const invitation = await findInvitationByCode(sheets, shortCode);
+  if (!invitation) {
+    return { success: false, error: 'Invitación no encontrada' };
+  }
+
+  const { data, rowIndex } = invitation;
+
+  // PIN must exist and match
+  if (!data.pin || data.pin !== String(pin)) {
+    return { success: true, isPinWrong: true, error: 'PIN incorrecto' };
+  }
+
+  const clientIp = getClientIp(req);
+
+  // If IP already bound, enforce match
+  if (data.boundIp && data.boundIp !== 'unknown') {
+    if (clientIp !== 'unknown' && clientIp !== data.boundIp) {
+      return { success: true, isIpBlocked: true, error: 'Acceso restringido a otro dispositivo' };
+    }
+  } else if (clientIp !== 'unknown') {
+    // First verification — bind IP
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `'${SHEET_NAME}'!P${rowIndex}`,
+      valueInputOption: 'RAW',
+      requestBody: { values: [[clientIp]] },
+    });
+  }
+
+  return {
+    success: true,
+    pinVerified: true,
+    guestName: data.guestName || null,
+    guestContact: data.guestContact || null,
+  };
+}
+
+/**
+ * Ensure pin + boundIp headers exist (auto-migration for existing sheets)
+ */
+async function ensureHeaders(sheets) {
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `'${SHEET_NAME}'!A1:P1`,
+  });
+
+  const headerRow = (res.data.values && res.data.values[0]) || [];
+
+  // If column O (index 14) is missing or not 'pin', write both headers
+  if (!headerRow[14] || headerRow[14] !== 'pin') {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `'${SHEET_NAME}'!O1:P1`,
+      valueInputOption: 'RAW',
+      requestBody: { values: [['pin', 'boundIp']] },
+    });
+  }
+}
 
 /**
  * Find invitation by short code
@@ -34,7 +121,7 @@ const HEADERS = [
 async function findInvitationByCode(sheets, shortCode) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:N`,
+    range: `'${SHEET_NAME}'!A:P`,
   });
 
   const rows = response.data.values || [];
@@ -60,6 +147,8 @@ async function findInvitationByCode(sheets, shortCode) {
           pricingMode: row[11] || 'with_prices',
           durationHours: parseInt(row[12]) || INVITATION_DURATION_HOURS,
           status: row[13] || 'pending',
+          pin: row[14] || null,
+          boundIp: row[15] || null,
         },
       };
     }
@@ -91,17 +180,18 @@ async function generateInvitation(sheets, body) {
 
   const invitationId = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const createdAt = new Date().toISOString();
+  const pin = generatePin();
 
   const row = [
     invitationId, shortCode, creatorEmail, creatorName,
     creatorRole || 'Asesor', guestName || '', guestContact || '',
     contactType || '', createdAt, '', '',
-    pricingMode, INVITATION_DURATION_HOURS, 'pending',
+    pricingMode, INVITATION_DURATION_HOURS, 'pending', pin, '',
   ];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:N`,
+    range: `'${SHEET_NAME}'!A:P`,
     valueInputOption: 'RAW',
     requestBody: { values: [row] },
   });
@@ -116,6 +206,7 @@ async function generateInvitation(sheets, body) {
       url: `${baseUrl}/invite/${shortCode}`,
       shortCode,
       shortUrl: null,
+      pin,
       createdAt,
       durationHours: INVITATION_DURATION_HOURS,
       pricingMode,
@@ -177,6 +268,7 @@ async function validateInvitation(sheets, shortCode) {
       guestName: data.guestName || null,
       guestContact: data.guestContact || null,
       contactType: data.contactType || null,
+      isPinBound: !!(data.boundIp),
     };
   }
 
@@ -193,6 +285,7 @@ async function validateInvitation(sheets, shortCode) {
       guestName: data.guestName || null,
       guestContact: data.guestContact || null,
       contactType: data.contactType || null,
+      isPinBound: !!(data.boundIp),
     };
   }
 
@@ -209,7 +302,7 @@ async function checkGuestHistory(sheets, guestContact) {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:N`,
+    range: `'${SHEET_NAME}'!A:P`,
   });
 
   const rows = response.data.values || [];
@@ -258,7 +351,7 @@ async function listByCreator(sheets, creatorEmail) {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:N`,
+    range: `'${SHEET_NAME}'!A:P`,
   });
 
   const rows = response.data.values || [];
@@ -313,7 +406,7 @@ async function registerGuest(sheets, body) {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:N`,
+    range: `'${SHEET_NAME}'!A:P`,
   });
 
   const rows = response.data.values || [];
@@ -347,9 +440,18 @@ export default withApiHandler(async (req, res, { sheets }) => {
 
   await ensureSheet(sheets, SHEET_NAME, HEADERS);
 
+  // Auto-migrate: add pin + boundIp headers if missing on existing sheet
+  await ensureHeaders(sheets);
+
   // POST - Generate invitation
   if (req.method === 'POST' && action === 'generate') {
     const result = await generateInvitation(sheets, req.body);
+    return res.status(200).json(result);
+  }
+
+  // POST - Verify PIN + IP binding
+  if (req.method === 'POST' && action === 'verify-pin') {
+    const result = await verifyPin(sheets, req, req.body);
     return res.status(200).json(result);
   }
 
