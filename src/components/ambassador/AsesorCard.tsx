@@ -107,12 +107,12 @@ export default function AsesorCard({
                 fontWeight: 600,
                 bgcolor: asesor.role === 'Administrador'
                   ? alpha(accentColors.purple.light, 0.15)
-                  : asesor.role === 'Embajador'
+                  : (asesor.role || '').toLowerCase().includes('embajador')
                   ? alpha(accentColors.warning.light, 0.15)
                   : alpha(brand.emerald[500], 0.15),
                 color: asesor.role === 'Administrador'
                   ? accentColors.purple.light
-                  : asesor.role === 'Embajador'
+                  : (asesor.role || '').toLowerCase().includes('embajador')
                   ? accentColors.warning.light
                   : brand.emerald[500],
               }}

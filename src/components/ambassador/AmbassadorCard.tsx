@@ -107,7 +107,7 @@ export default function AmbassadorCard({
                 whiteSpace: 'nowrap',
               }}
             >
-              {ambassador.tagline || 'Asesor de Esmeraldas'}
+              {ambassador.tagline || 'Embajador de Esmeraldas'}
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -413,7 +413,7 @@ function FeaturedCard({
               py: 1.25,
             }}
           >
-            Contactar Asesor
+            Contactar Embajador
           </Button>
         </Box>
       </CardContent>

@@ -148,7 +148,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               {asesor.name}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Asesor de Esmeraldas - Tierra Madre
+              Embajador de Esmeraldas - Tierra Madre
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Chip

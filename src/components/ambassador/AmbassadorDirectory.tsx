@@ -1,5 +1,5 @@
 // Ambassador Directory Component
-// Browse and filter asesores from Google Sheets
+// Browse and filter embajadores from Google Sheets (only role=Embajador*)
 
 import { useState, useMemo } from 'react';
 import {
@@ -49,7 +49,7 @@ export default function AmbassadorDirectory({
   onContact,
   maxVisible,
   showFilters = true,
-  title = 'Nuestros Asesores',
+  title = 'Nuestros Embajadores',
 }: AmbassadorDirectoryProps) {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -62,27 +62,34 @@ export default function AmbassadorDirectory({
   const { treasure } = useTreasure();
   const { asesores, isLoading, error } = useAsesores(treasure);
 
+  // Only show people whose role contains "Embajador" on the directory page
+  const embajadores = useMemo(() => {
+    return asesores.filter(a =>
+      (a.role || '').toLowerCase().includes('embajador')
+    );
+  }, [asesores]);
+
   // Calculate aggregate stats
   const stats = useMemo(() => {
-    const totalProducts = asesores.reduce((sum, a) => sum + (a.productCount || 0), 0);
-    const totalValue = asesores.reduce((sum, a) => {
+    const totalProducts = embajadores.reduce((sum, a) => sum + (a.productCount || 0), 0);
+    const totalValue = embajadores.reduce((sum, a) => {
       if (!a.products) return sum;
       return sum + a.products
         .filter(p => p.estado === 'DISPONIBLE')
         .reduce((pSum, p) => pSum + (p.precioCOP || 0), 0);
     }, 0);
-    const activeAsesores = asesores.filter(a => (a.productCount || 0) > 0).length;
-    const looseCount = asesores.reduce((sum, a) => {
+    const activeEmbajadores = embajadores.filter(a => (a.productCount || 0) > 0).length;
+    const looseCount = embajadores.reduce((sum, a) => {
       if (!a.products) return sum;
       return sum + a.products.filter(p => !p.isJewelry).length;
     }, 0);
 
-    return { totalProducts, totalValue, activeAsesores, looseCount };
-  }, [asesores]);
+    return { totalProducts, totalValue, activeEmbajadores, looseCount };
+  }, [embajadores]);
 
-  // Filter and sort asesores
+  // Filter and sort embajadores
   const filteredAsesores = useMemo(() => {
-    let result = [...asesores];
+    let result = [...embajadores];
 
     // Search filter
     if (searchQuery) {
@@ -110,7 +117,7 @@ export default function AmbassadorDirectory({
     }
 
     return result;
-  }, [asesores, searchQuery, sortBy, maxVisible]);
+  }, [embajadores, searchQuery, sortBy, maxVisible]);
 
   const hasActiveFilters = !!searchQuery;
 
@@ -125,7 +132,7 @@ export default function AmbassadorDirectory({
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
           <CircularProgress size={24} sx={{ color: '#059669' }} />
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Cargando asesores desde Google Sheets...
+            Cargando embajadores...
           </Typography>
         </Box>
         <AmbassadorDirectorySkeleton />
@@ -138,7 +145,7 @@ export default function AmbassadorDirectory({
     return (
       <Box>
         <Alert severity="warning" sx={{ mb: 2 }}>
-          No se pudieron cargar los asesores. Recarga la página para intentar de nuevo.
+          No se pudieron cargar los embajadores. Recarga la página para intentar de nuevo.
         </Alert>
       </Box>
     );
@@ -178,8 +185,8 @@ export default function AmbassadorDirectory({
         >
           <StatItem
             icon={<Users size={18} />}
-            value={stats.activeAsesores.toString()}
-            label="Asesores activos"
+            value={stats.activeEmbajadores.toString()}
+            label="Embajadores activos"
             color="#059669"
             variant="stacked"
           />
@@ -213,7 +220,7 @@ export default function AmbassadorDirectory({
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <TextField
               fullWidth
-              placeholder="Buscar asesor por nombre..."
+              placeholder="Buscar embajador por nombre..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               size="small"
@@ -265,7 +272,7 @@ export default function AmbassadorDirectory({
       {/* Results Count */}
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          {filteredAsesores.length} asesores encontrados
+          {filteredAsesores.length} embajadores encontrados
         </Typography>
       </Box>
 
@@ -282,10 +289,10 @@ export default function AmbassadorDirectory({
         >
           <Filter size={48} style={{ color: '#9CA3AF', marginBottom: 16 }} />
           <Typography variant="h6" sx={{ mb: 1, color: 'text.secondary' }}>
-            No se encontraron asesores
+            No se encontraron embajadores
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-            {hasActiveFilters ? 'Intenta con otros criterios de búsqueda' : 'No hay asesores registrados en Google Sheets'}
+            {hasActiveFilters ? 'Intenta con otros criterios de búsqueda' : 'No hay embajadores registrados'}
           </Typography>
           {hasActiveFilters && (
             <Button

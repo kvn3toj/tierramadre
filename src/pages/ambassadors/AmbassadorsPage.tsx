@@ -2,7 +2,7 @@
  * AmbassadorsPage Component
  *
  * Public ambassadors directory - no PIN required.
- * Shows all asesores from Google Sheets.
+ * Shows embajadores from Google Sheets.
  */
 
 import React from 'react';

@@ -309,14 +309,14 @@ export default function AsesorProfilePage() {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Typography variant="h6" sx={{ mb: 2 }}>
-          Asesor no encontrado
+          Embajador no encontrado
         </Typography>
         <Button
           startIcon={<ArrowLeft size={18} />}
           onClick={handleBack}
           sx={{ textTransform: 'none' }}
         >
-          Volver a Asesores
+          Volver a Embajadores
         </Button>
       </Box>
     );
@@ -434,7 +434,7 @@ export default function AsesorProfilePage() {
           <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2 }}>
             {hasActiveFilters
               ? 'No se encontraron productos con los filtros seleccionados'
-              : 'Este asesor no tiene productos asignados actualmente'}
+              : 'Este embajador no tiene productos asignados actualmente'}
           </Typography>
           {hasActiveFilters && (
             <Button
