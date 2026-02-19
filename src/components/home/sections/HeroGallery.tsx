@@ -28,10 +28,20 @@ import {
 // HERO IMAGES — Static brand images
 // =============================================================================
 
+/**
+ * Per-image objectPosition controls the focal point when cropped by object-fit: cover.
+ *
+ * header-1: Team facing camera — people in lower half, mountain peak above.
+ *           Focus at 35% vertical to keep faces + peak visible.
+ * header-2: Team from behind showing branded shirts — people in bottom 60%.
+ *           Focus at 45% vertical to show backs with logo and mountain ridge.
+ * header-3: Pure landscape with dramatic peaks — interest is center-upper.
+ *           Focus at 40% vertical to emphasize the peak.
+ */
 const HERO_IMAGES = [
-  { id: 'brand-1', src: '/images/header-1.jpg', alt: 'Tierra Madre — Esencia y Poder' },
-  { id: 'brand-2', src: '/images/header-2.jpg', alt: 'Tierra Madre — Colombian Emeralds' },
-  { id: 'brand-3', src: '/images/header-3.jpg', alt: 'Tierra Madre — Our Team' },
+  { id: 'brand-1', src: '/images/header-1.jpg', alt: 'Equipo Tierra Madre frente a las montanas esmeraldiferas', objectPosition: 'center 35%' },
+  { id: 'brand-2', src: '/images/header-2.jpg', alt: 'Equipo Tierra Madre contemplando la cordillera colombiana', objectPosition: 'center 45%' },
+  { id: 'brand-3', src: '/images/header-3.jpg', alt: 'Montanas esmeraldiferas de Boyaca, Colombia', objectPosition: 'center 40%' },
 ];
 
 // =============================================================================
@@ -109,6 +119,7 @@ export const HeroGallery: React.FC = () => {
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
+                objectPosition: currentImage.objectPosition,
                 display: 'block',
               }}
             />
@@ -173,6 +184,9 @@ export const HeroGallery: React.FC = () => {
                     transition: 'all 0.2s ease',
                     '&:hover': {
                       bgcolor: overlays.pill.active.bg,
+                      '& .MuiTypography-root': {
+                        color: 'white',
+                      },
                     },
                   }}
                 >
@@ -182,9 +196,7 @@ export const HeroGallery: React.FC = () => {
                       color: whiteAlpha(opacity.muted),
                       fontWeight: 400,
                       fontSize: '0.8rem',
-                      '&:hover': {
-                        color: 'white',
-                      },
+                      transition: 'color 0.2s ease',
                     }}
                   >
                     {cat.label}
