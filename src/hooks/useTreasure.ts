@@ -81,6 +81,7 @@ export function useTreasure() {
     getGallery,
     getMediaItems,
     fetchCloudGallery,
+    invalidateGallery,
     addToGallery,
     removeFromGallery,
     reorderGallery,
@@ -173,6 +174,7 @@ export function useTreasure() {
     // Gallery functions
     getGallery,
     fetchCloudGallery,
+    invalidateGallery,
     addToGallery,
     removeFromGallery,
     reorderGallery,

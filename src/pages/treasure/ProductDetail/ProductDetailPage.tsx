@@ -14,8 +14,10 @@ import {
   useTheme,
   Snackbar,
   Skeleton,
+  IconButton,
+  CircularProgress,
 } from '@mui/material';
-import { ChevronLeft, Package, Crown } from 'lucide-react';
+import { ChevronLeft, Package, Crown, RefreshCw } from 'lucide-react';
 
 import { useShare } from '../../../hooks/useShare';
 import { useHaptics } from '../../../hooks/useHaptics';
@@ -57,8 +59,9 @@ export default function ProductDetail() {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
+  const [refreshingGallery, setRefreshingGallery] = useState(false);
 
-  const { treasure, updateMediaItems, getMediaItems, isLoadingSheets } = useTreasure();
+  const { treasure, updateMediaItems, getMediaItems, invalidateGallery, isLoadingSheets } = useTreasure();
   const { shareProduct, isNativeShareSupported } = useShare();
   const { trigger: triggerHaptic } = useHaptics();
   const { addToCart, isInCart, cartCount } = useCart();
@@ -267,6 +270,40 @@ export default function ProductDetail() {
     await openWhatsAppToAdmin([cartItem], adminName);
   }, [product, openWhatsAppToAdmin]);
 
+  // Refresh gallery from Google Drive (force re-fetch)
+  const refreshGallery = useCallback(async () => {
+    if (!product || refreshingGallery) return;
+    setRefreshingGallery(true);
+    try {
+      invalidateGallery(product.item);
+      const response = await fetch(`/api/get-drive-images?itemNumber=${product.item}`);
+      const data = await response.json();
+      if (data.success && data.images && data.images.length > 0) {
+        const driveItems: MediaItem[] = data.images.map((img: {
+          id: string; name: string; proxyUrl: string;
+          thumbnailUrl: string; type: 'image' | 'video'; order: number;
+        }) => ({
+          id: img.id, url: img.proxyUrl, type: img.type,
+          thumbnailUrl: img.thumbnailUrl, category: 'hero' as const,
+          alt: img.name || `${displayName} - ${img.order + 1}`, order: img.order,
+        }));
+        const sorted = [...driveItems].sort((a, b) => {
+          if (a.type === 'image' && b.type === 'video') return -1;
+          if (a.type === 'video' && b.type === 'image') return 1;
+          return a.order - b.order;
+        });
+        setMediaItems(sorted);
+        updateMediaItemsRef.current?.(product.item, driveItems);
+      } else {
+        setMediaItems([]);
+      }
+    } catch (error) {
+      log.error('Error refreshing gallery:', error);
+    } finally {
+      setRefreshingGallery(false);
+    }
+  }, [product, refreshingGallery, invalidateGallery, displayName]);
+
   // Show skeleton loading state matching actual layout
   if (isLoadingSheets && !product) {
     return (
@@ -373,6 +410,29 @@ export default function ProductDetail() {
               media={mediaItems}
               productName={displayName}
             />
+            {isAdmin && (
+              <IconButton
+                onClick={refreshGallery}
+                disabled={refreshingGallery}
+                size="small"
+                sx={{
+                  position: 'absolute',
+                  top: 8,
+                  left: 8,
+                  bgcolor: 'rgba(0,0,0,0.5)',
+                  color: '#fff',
+                  backdropFilter: 'blur(8px)',
+                  '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                  zIndex: 2,
+                  width: 36,
+                  height: 36,
+                }}
+              >
+                {refreshingGallery
+                  ? <CircularProgress size={18} sx={{ color: '#fff' }} />
+                  : <RefreshCw size={18} />}
+              </IconButton>
+            )}
           </Paper>
         </Grid>
 

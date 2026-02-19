@@ -70,4 +70,4 @@ export default withApiHandler(async (req, res, { drive, sharedDriveId }) => {
     folderId: productFolderId,
     images,
   });
-}, { methods: ['GET', 'OPTIONS'], cache: CACHE.MEDIUM, provideDrive: true, requireDriveId: true, errorPrefix: 'GetDriveImages' });
+}, { methods: ['GET', 'OPTIONS'], cache: CACHE.NONE, provideDrive: true, requireDriveId: true, errorPrefix: 'GetDriveImages' });

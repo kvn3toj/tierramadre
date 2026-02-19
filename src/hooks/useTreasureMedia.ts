@@ -88,6 +88,7 @@ export interface UseTreasureMediaReturn {
   getGallery: (itemNumber: number) => MediaItem[];
   getMediaItems: (itemNumber: number) => MediaItem[];
   fetchCloudGallery: (itemNumber: number) => Promise<MediaItem[]>;
+  invalidateGallery: (itemNumber: number) => void;
   addToGallery: (
     itemNumber: number,
     url: string,
@@ -388,6 +389,15 @@ export function useTreasureMedia(): UseTreasureMediaReturn {
     throw new Error('Cloudinary upload removed. Please upload media to Google Drive manually.');
   }, []);
 
+  const invalidateGallery = useCallback((itemNumber: number) => {
+    setGalleries((prev) => {
+      const next = { ...prev };
+      delete next[itemNumber];
+      saveGalleriesToStorage(next);
+      return next;
+    });
+  }, []);
+
   const updateMediaItems = useCallback((itemNumber: number, items: MediaItem[]) => {
     const reorderedItems = items.map((item, index) => ({
       ...item,
@@ -418,6 +428,7 @@ export function useTreasureMedia(): UseTreasureMediaReturn {
     getGallery,
     getMediaItems,
     fetchCloudGallery,
+    invalidateGallery,
     addToGallery,
     removeFromGallery,
     reorderGallery,
