@@ -24,7 +24,6 @@ import {
   whiteAlpha,
   blackAlpha,
   emeraldAlpha,
-  opacity,
 } from '../../../design-system';
 import { textOnGlass } from '../../../design-system/utils/colorUtils';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -78,41 +77,61 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
   }
 
   return (
-    <Box sx={{ px: 2, mb: 3 }} component="section" aria-labelledby="products-title">
+    <Box sx={{ pt: 2.5, px: 2, mb: 1 }} component="section" aria-labelledby="products-title">
       <motion.div variants={fadeInUp} initial="initial" animate="animate">
-        {/* Section Container - using design system glass tokens */}
+        {/* Section Container - refined glass with emerald tint */}
         <Box
           sx={{
-            bgcolor: whiteAlpha(opacity.light),
-            backdropFilter: 'blur(10px)',
-            borderRadius: 3,
+            bgcolor: whiteAlpha(0.06),
+            backdropFilter: 'blur(16px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+            borderRadius: 4,
             p: 2,
-            border: `1px solid ${whiteAlpha(opacity.soft)}`,
+            border: `1px solid ${whiteAlpha(0.1)}`,
+            boxShadow: `0 4px 24px ${blackAlpha(0.15)}, inset 0 1px 0 ${whiteAlpha(0.06)}`,
           }}
         >
           {/* Section Header */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-            <Typography
-              id="products-title"
-              variant="h6"
-              component="h2"
-              sx={{
-                fontWeight: 600,
-                color: textOnGlass.onDarkGlass.primary, // iOS HIG compliant contrast
-                fontSize: { xs: '1rem', sm: '1.25rem' },
-              }}
-            >
-              {t.pages.home.newProducts}
-            </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {/* Emerald accent bar */}
+              <Box
+                sx={{
+                  width: 3,
+                  height: 20,
+                  borderRadius: 1.5,
+                  background: `linear-gradient(to bottom, ${emeraldCore.primary}, ${emeraldCore.dark})`,
+                }}
+              />
+              <Typography
+                id="products-title"
+                variant="h6"
+                component="h2"
+                sx={{
+                  fontWeight: 600,
+                  color: textOnGlass.onDarkGlass.primary,
+                  fontSize: { xs: '1rem', sm: '1.15rem' },
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                {t.pages.home.newProducts}
+              </Typography>
+            </Box>
             <Button
               size="small"
-              endIcon={<ArrowForward sx={{ fontSize: { xs: 16, sm: 20 } }} />}
+              endIcon={<ArrowForward sx={{ fontSize: { xs: 14, sm: 16 } }} />}
               onClick={() => navigate('/treasure')}
               aria-label="Ver todos los tesoros"
               sx={{
-                color: textOnGlass.emeraldAccent.onDark, // High contrast emerald on dark
+                color: emeraldCore.light,
                 fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                fontWeight: 500,
                 minWidth: 'auto',
+                borderRadius: 2,
+                px: 1.5,
+                '&:hover': {
+                  bgcolor: emeraldAlpha(0.1),
+                },
               }}
             >
               Ver Todo
@@ -128,7 +147,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
           onKeyDown={handleKeyDown}
           sx={{
             display: 'flex',
-            gap: 2,
+            gap: 1.5,
             overflowX: 'auto',
             pb: 1,
             scrollSnapType: 'x mandatory',
@@ -148,7 +167,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
             variants={staggerContainer}
             initial="initial"
             animate="animate"
-            style={{ display: 'flex', gap: 16 }}
+            style={{ display: 'flex', gap: 12 }}
           >
             {products.map((product, index) => (
               <motion.div
@@ -168,40 +187,59 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                     sx={{
                       minWidth: { xs: 140, sm: 160 },
                       maxWidth: { xs: 140, sm: 160 },
-                      bgcolor: blackAlpha(opacity.overlay),
-                      backdropFilter: 'blur(10px)',
+                      bgcolor: blackAlpha(0.3),
+                      backdropFilter: 'blur(12px)',
                       cursor: 'pointer',
                       flexShrink: 0,
-                      transition: 'all 0.2s ease-out',
-                      border: `1px solid ${whiteAlpha(opacity.soft)}`,
+                      transition: 'all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                      border: `1px solid ${whiteAlpha(0.08)}`,
+                      borderRadius: 3,
+                      overflow: 'hidden',
                       '&:focus-visible': {
                         outline: `3px solid ${emeraldCore.primary}`,
                         outlineOffset: 2,
                       },
                       '&:hover': {
-                        boxShadow: `0 8px 24px ${emeraldAlpha(opacity.regular)}`,
-                        bgcolor: blackAlpha(opacity.half),
+                        boxShadow: `0 8px 32px ${emeraldAlpha(0.2)}, 0 0 0 1px ${emeraldAlpha(0.15)}`,
+                        bgcolor: blackAlpha(0.4),
+                        borderColor: emeraldAlpha(0.2),
                       },
                     }}
                   >
-                    <CardMedia
-                      component="img"
-                      sx={{
-                        height: { xs: 100, sm: 120 },
-                        objectFit: 'cover',
-                      }}
-                      image={product.imagen || '/placeholder-emerald.jpg'}
-                      alt={product.nombre || 'Esmeralda colombiana'}
-                      loading="lazy"
-                    />
-                    <CardContent sx={{ p: { xs: 1, sm: 1.5 }, bgcolor: 'transparent' }}>
+                    {/* Image with subtle gradient overlay */}
+                    <Box sx={{ position: 'relative' }}>
+                      <CardMedia
+                        component="img"
+                        sx={{
+                          height: { xs: 110, sm: 130 },
+                          objectFit: 'cover',
+                        }}
+                        image={product.imagen || '/placeholder-emerald.jpg'}
+                        alt={product.nombre || 'Esmeralda colombiana'}
+                        loading="eager"
+                      />
+                      {/* Subtle bottom gradient for text readability */}
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: '40%',
+                          background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 100%)',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    </Box>
+                    <CardContent sx={{ p: { xs: 1.25, sm: 1.5 }, bgcolor: 'transparent' }}>
                       <Typography
                         variant="body2"
                         component="h3"
                         sx={{
                           fontWeight: 600,
-                          color: textOnGlass.onDarkGlass.primary, // WCAG AA: ~18:1 contrast
+                          color: textOnGlass.onDarkGlass.primary,
                           fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                          letterSpacing: '-0.01em',
                         }}
                         noWrap
                       >
@@ -210,8 +248,9 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                       <Typography
                         variant="caption"
                         sx={{
-                          color: textOnGlass.onDarkGlass.secondary, // WCAG AA: ~12:1 contrast
+                          color: emeraldCore.light,
                           fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                          fontWeight: 500,
                         }}
                       >
                         {typeof product.peso === 'number' ? `${product.peso} ct` : product.peso}

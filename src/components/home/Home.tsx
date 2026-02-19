@@ -36,12 +36,12 @@ import {
 // LAZY LOADED SECTIONS
 // =============================================================================
 
-// Critical sections - load immediately
+// Critical sections - load immediately (above the fold)
 import HeroGallery from './sections/HeroGallery';
+import ProductsSection from './sections/ProductsSection';
 import OracleSection from './sections/OracleSection';
 
 // Below-the-fold sections - lazy load
-const ProductsSection = lazy(() => import('./sections/ProductsSection'));
 const ValuationSection = lazy(() => import('./sections/ValuationSection'));
 // KnowledgeSection removed - content consolidated into OracleSection
 const Footer = lazy(() => import('./sections/Footer'));
@@ -99,6 +99,17 @@ const Home: React.FC = () => {
         <HeroGallery />
       </ErrorBoundary>
 
+      {/* Estrenos - New products carousel (above fold, critical) */}
+      {(isLoadingNewProducts || newProducts.length > 0) && (
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
+          {isLoadingNewProducts ? (
+            <SectionSkeleton height={SKELETON_HEIGHTS.products} />
+          ) : (
+            <ProductsSection products={newProducts} />
+          )}
+        </ErrorBoundary>
+      )}
+
       {/* Oracle - Animated random quote */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <OracleSection />
@@ -108,6 +119,7 @@ const Home: React.FC = () => {
       <Box
         sx={{
           position: 'relative',
+          mt: 1,
           '&::before': {
             content: '""',
             position: 'absolute',
@@ -118,11 +130,10 @@ const Home: React.FC = () => {
             backgroundSize: 'cover',
             backgroundPosition: 'center top',
             backgroundRepeat: 'no-repeat',
-            backgroundAttachment: 'scroll', // Was 'fixed' but broken on iOS inside scroll containers
-            opacity: 0.25,
-            // Fade in from top
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 8%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 8%)',
+            backgroundAttachment: 'scroll',
+            opacity: isDarkMode ? 0.2 : 0.15,
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%)',
             zIndex: 0,
           },
         }}
@@ -136,24 +147,8 @@ const Home: React.FC = () => {
           </ErrorBoundary>
         </Box>
 
-        {/* Products Section - Latest arrivals (beside chart section) */}
-        {/* Show skeleton while loading, then show products if found */}
-        {(isLoadingNewProducts || newProducts.length > 0) && (
-          <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <ErrorBoundary FallbackComponent={ErrorFallback}>
-              <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.products} />}>
-                {isLoadingNewProducts ? (
-                  <SectionSkeleton height={SKELETON_HEIGHTS.products} />
-                ) : (
-                  <ProductsSection products={newProducts} />
-                )}
-              </Suspense>
-            </ErrorBoundary>
-          </Box>
-        )}
-
         {/* Footer - Social links and contact */}
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
+        <Box sx={{ position: 'relative', zIndex: 1, mt: 0.5 }}>
           <ErrorBoundary FallbackComponent={ErrorFallback}>
             <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.footer} />}>
               <Footer />

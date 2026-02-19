@@ -8,7 +8,7 @@
 // TYPES
 // =============================================================================
 
-export type MainCategory = 'estrenos' | 'joyas' | 'lotes' | 'gemas';
+export type MainCategory = 'piedras' | 'joyas' | 'lotes' | 'gemas';
 
 export interface Category {
   id: MainCategory;
@@ -22,10 +22,18 @@ export interface Category {
 /** Auto-transition interval for hero carousel (ms) */
 export const AUTO_TRANSITION_INTERVAL = 6000;
 
-/** All gallery categories */
+/** All gallery categories with icons */
 export const ALL_CATEGORIES: Category[] = [
-  { id: 'estrenos', label: 'Estrenos' },
+  { id: 'piedras', label: 'Piedras' },
   { id: 'gemas', label: 'Gemas' },
   { id: 'lotes', label: 'Lotes' },
   { id: 'joyas', label: 'Joyas' },
 ];
+
+/** Icon map for categories (used in pill tabs) */
+export const CATEGORY_ICONS: Record<MainCategory, string> = {
+  piedras: '💎',
+  gemas: '✦',
+  lotes: '◆◆',
+  joyas: '👑',
+};

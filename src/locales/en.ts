@@ -25,7 +25,7 @@ export const en = {
       subtitle: 'Tierra Mädre',
       welcome: 'Welcome',
       dailyFact: 'Daily fact',
-      newProducts: 'New products',
+      newProducts: 'Premieres',
       spirituality: 'Spirituality',
       investment: 'Investment',
       meditation: 'Meditation',

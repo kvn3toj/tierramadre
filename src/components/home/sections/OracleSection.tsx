@@ -17,7 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { emeraldCore, surfacesLight } from '../../../design-system/tokens/colors';
-import { blackAlpha, opacity } from '../../../design-system';
+import { blackAlpha, emeraldAlpha, opacity } from '../../../design-system';
 import { textOnGlass, iosLabels, iosSeparators } from '../../../design-system/utils/colorUtils';
 import { ORACLE_QUOTES, OracleQuote } from '../../../data/homeContent';
 
@@ -25,27 +25,17 @@ import { ORACLE_QUOTES, OracleQuote } from '../../../data/homeContent';
 // HELPERS
 // =============================================================================
 
-/**
- * Get a random quote from the collection.
- * Uses session storage to avoid repeating the same quote on navigation within session.
- */
 const getRandomQuote = (): OracleQuote => {
   const sessionKey = 'oracle_quote_id';
   const storedId = sessionStorage.getItem(sessionKey);
 
-  // Filter out the last shown quote to avoid immediate repetition
   const availableQuotes = storedId
     ? ORACLE_QUOTES.filter(q => q.id !== parseInt(storedId, 10))
     : ORACLE_QUOTES;
 
-  // If somehow all quotes were filtered, use all
   const quotesToChoose = availableQuotes.length > 0 ? availableQuotes : ORACLE_QUOTES;
-
-  // Random selection
   const randomIndex = Math.floor(Math.random() * quotesToChoose.length);
   const selectedQuote = quotesToChoose[randomIndex];
-
-  // Store for next time
   sessionStorage.setItem(sessionKey, selectedQuote.id.toString());
 
   return selectedQuote;
@@ -114,29 +104,29 @@ export const OracleSection: React.FC = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
-  // State for the current quote
   const [quote, setQuote] = useState<OracleQuote | null>(null);
-  const [key, setKey] = useState(0); // For re-triggering animation
+  const [key, setKey] = useState(0);
 
-  // Select random quote on mount
   useEffect(() => {
     setQuote(getRandomQuote());
     setKey(prev => prev + 1);
   }, []);
 
-  // Theme-aware colors for iOS HIG compliance
   const colors = useMemo(() => ({
     cardBg: isDarkMode ? blackAlpha(opacity.overlay) : surfacesLight.surface.glass,
-    cardBorder: isDarkMode ? 'rgba(255,255,255,0.12)' : iosSeparators.default.light,
+    cardBorder: isDarkMode ? 'rgba(255,255,255,0.1)' : iosSeparators.default.light,
     textPrimary: isDarkMode ? textOnGlass.onDarkGlass.primary : iosLabels.primary.light,
     textSecondary: isDarkMode ? textOnGlass.onDarkGlass.secondary : iosLabels.secondary.light,
-    accentGlow: isDarkMode ? `${emeraldCore.primary}30` : `${emeraldCore.primary}20`,
+    iconBg: isDarkMode
+      ? `linear-gradient(135deg, ${emeraldAlpha(0.2)} 0%, ${emeraldAlpha(0.1)} 100%)`
+      : `linear-gradient(135deg, ${emeraldCore.lightest} 0%, rgba(0,174,122,0.08) 100%)`,
+    iconBorder: isDarkMode ? emeraldAlpha(0.2) : emeraldAlpha(0.15),
   }), [isDarkMode]);
 
   if (!quote) return null;
 
   return (
-    <Box sx={{ px: 2, py: 2 }} component="section" aria-labelledby="oracle-title">
+    <Box sx={{ px: 2, py: 1.5 }} component="section" aria-labelledby="oracle-title">
       <AnimatePresence mode="wait">
         <motion.div
           key={key}
@@ -145,15 +135,15 @@ export const OracleSection: React.FC = () => {
           animate="visible"
           exit="exit"
         >
-          {/* Glass Card */}
+          {/* Glass Card with ambient glow */}
           <Box
             sx={{
               display: 'flex',
               alignItems: 'flex-start',
               gap: 2,
               bgcolor: colors.cardBg,
-              backdropFilter: 'blur(24px)',
-              WebkitBackdropFilter: 'blur(24px)',
+              backdropFilter: 'blur(24px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(24px) saturate(180%)',
               border: '1px solid',
               borderColor: colors.cardBorder,
               borderRadius: 4,
@@ -161,31 +151,38 @@ export const OracleSection: React.FC = () => {
               py: 2,
               position: 'relative',
               overflow: 'hidden',
-              // Subtle emerald glow effect
+              // Ambient emerald glow
+              boxShadow: isDarkMode
+                ? `0 4px 24px ${emeraldAlpha(0.08)}, inset 0 1px 0 rgba(255,255,255,0.04)`
+                : `0 4px 16px rgba(0,0,0,0.06)`,
+              // Emerald gradient top accent
               '&::before': {
                 content: '""',
                 position: 'absolute',
                 top: 0,
-                left: 0,
-                right: 0,
+                left: '10%',
+                right: '10%',
                 height: '2px',
-                background: `linear-gradient(90deg, transparent, ${emeraldCore.primary}, transparent)`,
-                opacity: 0.6,
+                background: `linear-gradient(90deg, transparent, ${emeraldCore.primary}, ${emeraldCore.light}, transparent)`,
+                opacity: isDarkMode ? 0.5 : 0.4,
+                borderRadius: '0 0 2px 2px',
               },
             }}
           >
-            {/* Animated Icon */}
+            {/* Animated Icon with emerald glass effect */}
             <motion.div variants={iconVariants}>
               <Box
                 sx={{
                   width: 44,
                   height: 44,
                   borderRadius: 3,
-                  bgcolor: colors.accentGlow,
+                  background: colors.iconBg,
+                  border: `1px solid ${colors.iconBorder}`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
+                  boxShadow: `0 2px 8px ${emeraldAlpha(0.1)}`,
                 }}
               >
                 <Typography
@@ -208,9 +205,8 @@ export const OracleSection: React.FC = () => {
                   color: colors.textPrimary,
                   fontSize: '0.95rem',
                   fontWeight: 400,
-                  lineHeight: 1.6,
+                  lineHeight: 1.65,
                   mb: 0.75,
-                  // Allow full text display
                   display: 'block',
                 }}
               >
@@ -219,12 +215,14 @@ export const OracleSection: React.FC = () => {
               <Typography
                 variant="caption"
                 sx={{
-                  color: colors.textSecondary,
+                  color: isDarkMode ? emeraldCore.light : emeraldCore.dark,
                   fontSize: '0.7rem',
                   fontStyle: 'italic',
+                  fontWeight: 500,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 0.5,
+                  opacity: 0.8,
                   '&::before': {
                     content: '"—"',
                     opacity: 0.6,

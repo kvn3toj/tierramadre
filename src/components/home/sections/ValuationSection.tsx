@@ -23,6 +23,7 @@ import { TrendingUp, AutoGraph } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { emeraldCore, goldAccent } from '../../../design-system/tokens/colors';
 import { glassDark, glassLight, applyGlass } from '../../../design-system/tokens/glass';
+import { emeraldAlpha } from '../../../design-system/utils/colorUtils';
 import { fadeInUp } from '../../../design-system/tokens/motion';
 import {
   EMERALD_VALUATION_DATA,
@@ -75,12 +76,11 @@ function calculateChartPointsMulti(
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
 
-  // Find global min/max for consistent Y scale across all origins
   const allPrices = allData.flatMap((data) =>
     data.filter((d) => d.year >= startYear && d.year <= endYear).map((d) => d.price)
   );
-  const minPrice = 0; // Start from 0 for professional charts
-  const maxPrice = Math.max(...allPrices) * 1.1; // Add 10% padding
+  const minPrice = 0;
+  const maxPrice = Math.max(...allPrices) * 1.1;
   const priceRange = maxPrice - minPrice || 1;
 
   return allData.map((data) => {
@@ -98,6 +98,14 @@ function createLinePath(points: ChartPoint[]) {
   return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
 }
 
+function createAreaPath(points: ChartPoint[]) {
+  if (points.length < 2) return '';
+  const { height, padding } = CHART_CONFIG;
+  const chartBottom = height - padding.bottom;
+  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  return `${linePath} L ${points[points.length - 1].x} ${chartBottom} L ${points[0].x} ${chartBottom} Z`;
+}
+
 function formatPriceAxis(price: number): string {
   if (price >= 1000) {
     return `$${(price / 1000).toFixed(0)}k`;
@@ -106,7 +114,6 @@ function formatPriceAxis(price: number): string {
 }
 
 function calculateYAxisTicks(maxPrice: number): number[] {
-  // Round up to nice number
   const niceMax = Math.ceil(maxPrice / 20000) * 20000;
   const step = niceMax / 4;
   return [0, step, step * 2, step * 3, niceMax];
@@ -116,7 +123,6 @@ function calculateXAxisTicks(startYear: number, endYear: number): number[] {
   const range = endYear - startYear;
   if (range <= 5) return [startYear, endYear];
   if (range <= 10) return [startYear, startYear + Math.floor(range / 2), endYear];
-  // For longer ranges, show start, middle points, and end
   const step = Math.floor(range / 4);
   return [startYear, startYear + step, startYear + step * 2, startYear + step * 3, endYear];
 }
@@ -132,16 +138,13 @@ export const ValuationSection: React.FC = () => {
   const ref = React.useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: '-50px' });
 
-  // Year range state - default to 5 years
   const [yearsBack, setYearsBack] = useState(5);
 
   const glassEffect = isDarkMode ? glassDark.frosted : glassLight.frosted;
 
-  // Calculate start/end year from slider value
   const endYear = CURRENT_YEAR;
   const startYear = Math.max(MIN_YEAR, CURRENT_YEAR - yearsBack);
 
-  // Calculate chart data for all origins
   const allOriginData = useMemo(
     () => [EMERALD_VALUATION_DATA, ZAMBIAN_VALUATION_DATA, BRAZILIAN_VALUATION_DATA],
     []
@@ -152,14 +155,12 @@ export const ValuationSection: React.FC = () => {
     [allOriginData, startYear, endYear]
   );
 
-  // Colombian data for stats
   const colombianFiltered = useMemo(
     () => filterDataByYearRange(EMERALD_VALUATION_DATA, startYear, endYear),
     [startYear, endYear]
   );
   const appreciation = useMemo(() => calculateAppreciation(colombianFiltered), [colombianFiltered]);
 
-  // Calculate max price for Y axis
   const maxPrice = useMemo(() => {
     const allPrices = allOriginData.flatMap((data) =>
       data.filter((d) => d.year >= startYear && d.year <= endYear).map((d) => d.price)
@@ -170,7 +171,6 @@ export const ValuationSection: React.FC = () => {
   const yAxisTicks = useMemo(() => calculateYAxisTicks(maxPrice), [maxPrice]);
   const xAxisTicks = useMemo(() => calculateXAxisTicks(startYear, endYear), [startYear, endYear]);
 
-  // Chart dimensions
   const { width, height, padding } = CHART_CONFIG;
   const chartHeight = height - padding.top - padding.bottom;
   const chartWidth = width - padding.left - padding.right;
@@ -190,13 +190,16 @@ export const ValuationSection: React.FC = () => {
         <Card
           sx={{
             ...applyGlass(glassEffect),
-            borderRadius: 3,
+            borderRadius: 4,
             overflow: 'hidden',
+            boxShadow: isDarkMode
+              ? `0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)`
+              : `0 4px 24px rgba(0,0,0,0.08)`,
           }}
         >
           <CardContent sx={{ py: 2.5, px: 2 }}>
             {/* Header */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
               <Box>
                 <Typography
                   id="valuation-title"
@@ -207,7 +210,7 @@ export const ValuationSection: React.FC = () => {
                     letterSpacing: '-0.01em',
                   }}
                 >
-                  Índice de Precios de Esmeraldas
+                  Indice de Precios de Esmeraldas
                 </Typography>
                 <Typography
                   sx={{
@@ -216,18 +219,36 @@ export const ValuationSection: React.FC = () => {
                     mt: 0.25,
                   }}
                 >
-                  Precio grado inversión por quilate (USD)
+                  Precio grado inversion por quilate (USD)
                 </Typography>
               </Box>
-              <TrendingUp sx={{ fontSize: 20, color: emeraldCore.primary }} />
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 2.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: isDarkMode
+                    ? `linear-gradient(135deg, ${emeraldAlpha(0.15)} 0%, ${emeraldAlpha(0.08)} 100%)`
+                    : `linear-gradient(135deg, ${emeraldCore.lightest} 0%, rgba(0,174,122,0.06) 100%)`,
+                  border: `1px solid ${emeraldAlpha(0.15)}`,
+                }}
+              >
+                <TrendingUp sx={{ fontSize: 18, color: emeraldCore.primary }} />
+              </Box>
             </Box>
 
-            {/* Time Filter Pills - Compact like financial apps */}
+            {/* Time Filter Pills - Refined with glass effect */}
             <Box
               sx={{
                 display: 'flex',
                 gap: 0.5,
-                mb: 1.5,
+                mb: 2,
+                p: 0.5,
+                bgcolor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                borderRadius: 2,
               }}
             >
               {TIME_FILTERS.map((filter) => {
@@ -240,7 +261,7 @@ export const ValuationSection: React.FC = () => {
                       flex: 1,
                       py: 0.5,
                       px: 0.75,
-                      borderRadius: 1,
+                      borderRadius: 1.5,
                       textAlign: 'center',
                       cursor: 'pointer',
                       fontSize: '11px',
@@ -248,17 +269,17 @@ export const ValuationSection: React.FC = () => {
                       color: isActive ? 'white' : 'text.secondary',
                       bgcolor: isActive
                         ? emeraldCore.primary
-                        : isDarkMode
-                          ? 'rgba(255,255,255,0.05)'
-                          : 'rgba(0,0,0,0.04)',
-                      border: `1px solid ${isActive ? emeraldCore.primary : 'transparent'}`,
-                      transition: 'all 0.15s ease',
+                        : 'transparent',
+                      boxShadow: isActive
+                        ? `0 2px 8px ${emeraldAlpha(0.3)}`
+                        : 'none',
+                      transition: 'all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)',
                       '&:hover': {
                         bgcolor: isActive
                           ? emeraldCore.primary
                           : isDarkMode
-                            ? 'rgba(255,255,255,0.08)'
-                            : 'rgba(0,0,0,0.06)',
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.04)',
                       },
                     }}
                   >
@@ -284,6 +305,16 @@ export const ValuationSection: React.FC = () => {
                 aria-label={`Emerald price comparison chart: Colombia +${appreciation.percentage}% over ${appreciation.years} years`}
                 style={{ overflow: 'visible' }}
               >
+                <defs>
+                  {/* Gradient fills for area under each line */}
+                  {ORIGIN_PRICE_HISTORY.map((origin) => (
+                    <linearGradient key={`grad-${origin.origin}`} id={`area-${origin.origin}`} x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor={origin.color} stopOpacity={origin.origin === 'Colombia' ? 0.2 : 0.08} />
+                      <stop offset="100%" stopColor={origin.color} stopOpacity={0} />
+                    </linearGradient>
+                  ))}
+                </defs>
+
                 {/* Background */}
                 <rect
                   x={padding.left}
@@ -291,6 +322,7 @@ export const ValuationSection: React.FC = () => {
                   width={chartWidth}
                   height={chartHeight}
                   fill={isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)'}
+                  rx={4}
                 />
 
                 {/* Y-axis grid lines and labels */}
@@ -303,15 +335,15 @@ export const ValuationSection: React.FC = () => {
                         y1={y}
                         x2={padding.left + chartWidth}
                         y2={y}
-                        stroke={isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}
+                        stroke={isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}
                         strokeWidth={1}
-                        strokeDasharray={index === 0 ? 'none' : '2 2'}
+                        strokeDasharray={index === 0 ? 'none' : '3 3'}
                       />
                       <text
                         x={padding.left - 8}
                         y={y + 3}
                         textAnchor="end"
-                        fill={isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
+                        fill={isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.35)'}
                         fontSize={9}
                         fontFamily="system-ui, -apple-system, sans-serif"
                       >
@@ -330,12 +362,30 @@ export const ValuationSection: React.FC = () => {
                       x={x}
                       y={height - 8}
                       textAnchor="middle"
-                      fill={isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
+                      fill={isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.35)'}
                       fontSize={9}
                       fontFamily="system-ui, -apple-system, sans-serif"
                     >
                       {year}
                     </text>
+                  );
+                })}
+
+                {/* Area fills under each line (rendered first, behind lines) */}
+                {ORIGIN_PRICE_HISTORY.map((origin, originIndex) => {
+                  const points = chartPointsMulti[originIndex];
+                  if (!points || points.length < 2) return null;
+                  const areaPath = createAreaPath(points);
+
+                  return (
+                    <motion.path
+                      key={`area-${origin.origin}-${yearsBack}`}
+                      d={areaPath}
+                      fill={`url(#area-${origin.origin})`}
+                      initial={{ opacity: 0 }}
+                      animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+                      transition={{ duration: 1, delay: originIndex * 0.15 + 0.5 }}
+                    />
                   );
                 })}
 
@@ -354,7 +404,7 @@ export const ValuationSection: React.FC = () => {
                       strokeWidth={origin.origin === 'Colombia' ? CHART_CONFIG.lineWidth + 0.5 : CHART_CONFIG.lineWidth}
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      opacity={origin.origin === 'Colombia' ? 1 : 0.7}
+                      opacity={origin.origin === 'Colombia' ? 1 : 0.6}
                       initial={{ pathLength: 0 }}
                       animate={isInView ? { pathLength: 1 } : { pathLength: 0 }}
                       transition={{
@@ -377,6 +427,18 @@ export const ValuationSection: React.FC = () => {
                       animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0 }}
                       transition={{ delay: 1 + originIndex * 0.1, duration: 0.3 }}
                     >
+                      {/* Glow ring for Colombia */}
+                      {origin.origin === 'Colombia' && (
+                        <circle
+                          cx={lastPoint.x}
+                          cy={lastPoint.y}
+                          r={8}
+                          fill="none"
+                          stroke={origin.color}
+                          strokeWidth={1}
+                          opacity={0.3}
+                        />
+                      )}
                       <circle
                         cx={lastPoint.x}
                         cy={lastPoint.y}
@@ -385,7 +447,6 @@ export const ValuationSection: React.FC = () => {
                         stroke={isDarkMode ? '#1e293b' : 'white'}
                         strokeWidth={2}
                       />
-                      {/* Price label at end */}
                       <text
                         x={lastPoint.x + 6}
                         y={lastPoint.y + 3}
@@ -407,7 +468,7 @@ export const ValuationSection: React.FC = () => {
                   y1={padding.top}
                   x2={padding.left}
                   y2={padding.top + chartHeight}
-                  stroke={isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'}
+                  stroke={isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'}
                   strokeWidth={1}
                 />
                 <line
@@ -415,18 +476,18 @@ export const ValuationSection: React.FC = () => {
                   y1={padding.top + chartHeight}
                   x2={padding.left + chartWidth}
                   y2={padding.top + chartHeight}
-                  stroke={isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'}
+                  stroke={isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'}
                   strokeWidth={1}
                 />
               </svg>
             </Box>
 
-            {/* Legend */}
+            {/* Legend - Refined with better spacing */}
             <Box
               sx={{
                 display: 'flex',
                 justifyContent: 'center',
-                gap: 2,
+                gap: 2.5,
                 mb: 2,
                 flexWrap: 'wrap',
               }}
@@ -437,15 +498,18 @@ export const ValuationSection: React.FC = () => {
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 0.5,
+                    gap: 0.75,
                   }}
                 >
                   <Box
                     sx={{
-                      width: 12,
+                      width: 14,
                       height: 3,
-                      borderRadius: 1,
+                      borderRadius: 1.5,
                       bgcolor: origin.color,
+                      boxShadow: origin.origin === 'Colombia'
+                        ? `0 0 6px ${origin.color}40`
+                        : 'none',
                     }}
                   />
                   <Typography
@@ -453,6 +517,7 @@ export const ValuationSection: React.FC = () => {
                       fontSize: '11px',
                       color: 'text.secondary',
                       fontWeight: origin.origin === 'Colombia' ? 600 : 400,
+                      letterSpacing: '0.01em',
                     }}
                   >
                     {origin.origin}
@@ -461,33 +526,42 @@ export const ValuationSection: React.FC = () => {
               ))}
             </Box>
 
-            {/* Stats Row */}
+            {/* Stats Row - Refined with glass card feel */}
             <Box
               sx={{
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
+                alignItems: 'stretch',
+                gap: 1.5,
                 mb: 2,
-                pb: 2,
-                borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
                 pt: 2,
+                borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
               }}
             >
-              <Box>
+              {/* Total Return */}
+              <Box
+                sx={{
+                  flex: 1,
+                  p: 1.5,
+                  borderRadius: 2.5,
+                  bgcolor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'}`,
+                }}
+              >
                 <Typography
                   sx={{
-                    fontSize: '11px',
+                    fontSize: '10px',
                     color: 'text.secondary',
                     textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    mb: 0.25,
+                    letterSpacing: '0.06em',
+                    mb: 0.5,
+                    fontWeight: 500,
                   }}
                 >
-                  Retorno {appreciation.years} años
+                  Retorno {appreciation.years}A
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: '1.5rem',
+                    fontSize: '1.4rem',
                     fontWeight: 700,
                     color: emeraldCore.primary,
                     lineHeight: 1,
@@ -500,27 +574,38 @@ export const ValuationSection: React.FC = () => {
                     fontSize: '9px',
                     color: 'text.secondary',
                     mt: 0.5,
-                    opacity: 0.8,
+                    opacity: 0.7,
                   }}
                 >
                   Ganancia total acumulada
                 </Typography>
               </Box>
-              <Box sx={{ textAlign: 'right' }}>
+
+              {/* CAGR */}
+              <Box
+                sx={{
+                  flex: 1,
+                  p: 1.5,
+                  borderRadius: 2.5,
+                  bgcolor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'}`,
+                }}
+              >
                 <Typography
                   sx={{
-                    fontSize: '11px',
+                    fontSize: '10px',
                     color: 'text.secondary',
                     textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    mb: 0.25,
+                    letterSpacing: '0.06em',
+                    mb: 0.5,
+                    fontWeight: 500,
                   }}
                 >
                   CAGR
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: '1.5rem',
+                    fontSize: '1.4rem',
                     fontWeight: 700,
                     color: isDarkMode ? goldAccent.light : goldAccent.dark,
                     lineHeight: 1,
@@ -533,7 +618,7 @@ export const ValuationSection: React.FC = () => {
                     fontSize: '9px',
                     color: 'text.secondary',
                     mt: 0.5,
-                    opacity: 0.8,
+                    opacity: 0.7,
                   }}
                 >
                   Crecimiento anual promedio
@@ -553,6 +638,7 @@ export const ValuationSection: React.FC = () => {
                 sx={{
                   fontSize: '10px',
                   color: 'text.secondary',
+                  opacity: 0.7,
                 }}
               >
                 Fuentes: Christie's, Sotheby's, Piat, Gemfields
@@ -569,10 +655,11 @@ export const ValuationSection: React.FC = () => {
                   fontWeight: 600,
                   color: emeraldCore.primary,
                   py: 0.5,
-                  px: 1,
+                  px: 1.5,
                   minWidth: 'auto',
+                  borderRadius: 2,
                   '&:hover': {
-                    bgcolor: isDarkMode ? 'rgba(0,174,122,0.1)' : 'rgba(0,174,122,0.05)',
+                    bgcolor: isDarkMode ? emeraldAlpha(0.1) : emeraldAlpha(0.06),
                   },
                 }}
               >
