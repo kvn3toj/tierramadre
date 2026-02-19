@@ -54,7 +54,7 @@ export const STORAGE_KEYS = {
 
   BATCH_THUMBNAILS: 'tierramadre-batch-thumbnails-v2',
   TREASURE_MEDIA: 'tierramadre-treasure-media',
-  TREASURE_GALLERY: 'tierramadre-treasure-gallery',
+  TREASURE_GALLERY: 'tierramadre-treasure-gallery-v2',
   DRIVE_IMAGES_CACHE: 'tierramadre-drive-images-cache-v2',
   NEWEST_PRODUCTS_CACHE: 'tierramadre-newest-products-cache-v5',
   TREASURE_SHEETS_CACHE: 'tierramadre-treasure-sheets-cache',

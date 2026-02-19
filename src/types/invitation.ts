@@ -101,6 +101,7 @@ export interface PinVerificationResult {
   pinVerified?: boolean;
   isPinWrong?: boolean;
   isIpBlocked?: boolean;
+  deviceToken?: string;
   guestName?: string | null;
   guestContact?: string | null;
   error?: string;
@@ -124,4 +125,6 @@ export const INVITATION_STORAGE_KEYS = {
   GUEST_CONTACT: 'invitation-guest-contact',
   // PIN verification flag (survives tab refresh)
   PIN_VERIFIED: 'invitation-pin-verified',
+  // Device-bound token for single-device enforcement
+  DEVICE_TOKEN: 'invitation-device-token',
 } as const;

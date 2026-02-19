@@ -4,7 +4,6 @@
  * Modal for Embajadores/Admins to generate shareable guest access links.
  * Links are valid for 24 hours after the guest first opens them.
  * Supports pricing mode toggle (with/without prices).
- * Generates short links for easier sharing.
  */
 
 import { useState } from 'react';
@@ -61,11 +60,9 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
   const [showPrices, setShowPrices] = useState(true);
   const [formError, setFormError] = useState('');
 
-  // Validation: name required, and at least one of email or phone
   const isFormValid = guestName.trim().length > 0 && (guestEmail.trim().length > 0 || guestPhone.trim().length > 0);
 
   const handleGenerate = async () => {
-    // Validate
     if (!guestName.trim()) {
       setFormError('El nombre es requerido');
       return;
@@ -77,8 +74,6 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
 
     setFormError('');
     const pricingMode: PricingMode = showPrices ? 'with_prices' : 'no_prices';
-
-    // Determine contact info - prefer email if both provided
     const contactInfo = guestEmail.trim() || guestPhone.trim();
     const contactType = guestEmail.trim() ? 'email' : 'phone';
 
@@ -91,9 +86,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
   };
 
   const handleGenerateNew = () => {
-    // Clear the last invitation from hook state (this shows the form again)
     clearLastInvitation();
-    // Reset form state
     setGuestName('');
     setGuestEmail('');
     setGuestPhone('');
@@ -111,7 +104,6 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
       setSnackbarMessage('Enlace copiado al portapapeles');
       setSnackbarOpen(true);
     } catch {
-      // Fallback for older browsers
       const textArea = document.createElement('textarea');
       textArea.value = text;
       document.body.appendChild(textArea);
@@ -163,7 +155,6 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
         // User cancelled or share failed
       }
     } else {
-      // Fallback to copy
       handleCopy();
     }
   };
@@ -173,7 +164,6 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
     onClose();
   };
 
-  // Get the URL to display in QR code (prefer short URL)
   const qrUrl = lastInvitation?.url || '';
 
   return (
@@ -185,159 +175,140 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: 3,
+            borderRadius: '20px',
             maxHeight: '90vh',
+            overflow: 'hidden',
           },
         }}
       >
-        <DialogTitle
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            pb: 1,
-          }}
-        >
+        {/* ─── Header ─── */}
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 0.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <LinkIcon sx={{ color: brand.emerald[600] }} />
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: `${brand.emerald[50]}`,
+                border: '1px solid',
+                borderColor: brand.emerald[200],
+              }}
+            >
+              <LinkIcon sx={{ color: brand.emerald[600], fontSize: 18 }} />
+            </Box>
             <Typography variant="h6" fontWeight={typography.weight.semibold}>
               Invitar a Explorar
             </Typography>
           </Box>
-          <IconButton onClick={handleClose} size="small">
-            <CloseIcon />
+          <IconButton onClick={handleClose} size="small" sx={{ color: 'text.secondary' }}>
+            <CloseIcon fontSize="small" />
           </IconButton>
         </DialogTitle>
 
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        <DialogContent sx={{ pt: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5, lineHeight: 1.5 }}>
             Genera un enlace de acceso temporal para que tus clientes exploren
             nuestra coleccion de esmeraldas colombianas.
           </Typography>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
+            <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>{error}</Alert>
           )}
-
           {formError && (
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              {formError}
-            </Alert>
+            <Alert severity="warning" sx={{ mb: 2, borderRadius: '12px' }}>{formError}</Alert>
           )}
 
+          {/* ─── PHASE 1: Form ─── */}
           {!lastInvitation ? (
             <Box>
-              {/* Guest Info Card */}
-              <Box
-                sx={{
-                  p: 2.5,
-                  mb: 2,
-                  borderRadius: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  bgcolor: 'background.paper',
+              {/* Guest name */}
+              <TextField
+                fullWidth
+                label="Nombre del invitado"
+                placeholder="Maria Garcia"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                required
+                size="small"
+                inputProps={{ autoComplete: 'name' }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonIcon fontSize="small" sx={{ color: guestName ? brand.emerald[600] : 'text.disabled' }} />
+                    </InputAdornment>
+                  ),
                 }}
-              >
-                <Typography
-                  variant="subtitle2"
-                  fontWeight={typography.weight.semibold}
-                  sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
-                >
-                  <PersonIcon fontSize="small" sx={{ color: brand.emerald[600] }} />
-                  Datos del invitado
-                </Typography>
+                sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              />
 
-                {/* Guest Name Field */}
+              {/* Contact fields */}
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                Contacto (al menos uno)
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1.5, mb: 2.5, flexDirection: { xs: 'column', sm: 'row' } }}>
                 <TextField
                   fullWidth
-                  label="Nombre"
-                  placeholder="Maria Garcia"
-                  value={guestName}
-                  onChange={(e) => setGuestName(e.target.value)}
-                  required
+                  label="Email"
+                  placeholder="maria@email.com"
+                  type="email"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
                   size="small"
-                  inputProps={{ autoComplete: 'name' }}
+                  inputProps={{ autoComplete: 'email' }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <PersonIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                        <EmailIcon fontSize="small" sx={{ color: guestEmail ? brand.emerald[600] : 'text.disabled' }} />
                       </InputAdornment>
                     ),
                   }}
-                  sx={{ mb: 2 }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                 />
-
-                {/* Contact Fields - Both visible, one required */}
-                <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-                  Al menos uno requerido
-                </Typography>
-
-                <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' } }}>
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    placeholder="maria@email.com"
-                    type="email"
-                    value={guestEmail}
-                    onChange={(e) => setGuestEmail(e.target.value)}
-                    size="small"
-                    inputProps={{ autoComplete: 'email' }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <EmailIcon fontSize="small" sx={{ color: guestEmail ? brand.emerald[600] : 'text.secondary' }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderColor: guestEmail ? brand.emerald[300] : undefined,
-                      },
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    label="Teléfono"
-                    placeholder="+57 300 123 4567"
-                    type="tel"
-                    value={guestPhone}
-                    onChange={(e) => setGuestPhone(e.target.value)}
-                    size="small"
-                    inputProps={{ autoComplete: 'tel' }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <PhoneIcon fontSize="small" sx={{ color: guestPhone ? brand.emerald[600] : 'text.secondary' }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Box>
+                <TextField
+                  fullWidth
+                  label="Telefono"
+                  placeholder="+57 300 123 4567"
+                  type="tel"
+                  value={guestPhone}
+                  onChange={(e) => setGuestPhone(e.target.value)}
+                  size="small"
+                  inputProps={{ autoComplete: 'tel' }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PhoneIcon fontSize="small" sx={{ color: guestPhone ? brand.emerald[600] : 'text.disabled' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                />
               </Box>
 
-              {/* Pricing Mode Toggle */}
+              {/* Pricing toggle */}
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  p: 2,
+                  px: 2,
+                  py: 1.5,
                   mb: 3,
-                  borderRadius: 2,
+                  borderRadius: '14px',
                   border: '1px solid',
                   borderColor: showPrices ? brand.emerald[200] : 'divider',
-                  bgcolor: showPrices ? `${brand.emerald[50]}50` : 'background.paper',
+                  bgcolor: showPrices ? `${brand.emerald[50]}60` : 'transparent',
                   transition: 'all 0.2s ease',
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Box
                     sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 1.5,
+                      width: 36,
+                      height: 36,
+                      borderRadius: '10px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -345,16 +316,14 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                       transition: 'all 0.2s ease',
                     }}
                   >
-                    <PriceIcon sx={{ color: showPrices ? brand.emerald[600] : 'text.disabled' }} />
+                    <PriceIcon fontSize="small" sx={{ color: showPrices ? brand.emerald[600] : 'text.disabled' }} />
                   </Box>
                   <Box>
-                    <Typography variant="body2" fontWeight={typography.weight.medium}>
+                    <Typography variant="body2" fontWeight={typography.weight.medium} sx={{ lineHeight: 1.3 }}>
                       {showPrices ? 'Con precios' : 'Solo informacion'}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {showPrices
-                        ? 'El invitado vera los precios'
-                        : 'Solo caracteristicas, sin precios'}
+                      {showPrices ? 'El invitado vera los precios' : 'Solo caracteristicas, sin precios'}
                     </Typography>
                   </Box>
                 </Box>
@@ -362,16 +331,13 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   checked={showPrices}
                   onChange={(e) => setShowPrices(e.target.checked)}
                   sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: brand.emerald[600],
-                    },
-                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                      backgroundColor: brand.emerald[400],
-                    },
+                    '& .MuiSwitch-switchBase.Mui-checked': { color: brand.emerald[600] },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: brand.emerald[400] },
                   }}
                 />
               </Box>
 
+              {/* Generate button */}
               <Button
                 variant="contained"
                 size="large"
@@ -380,35 +346,39 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                 disabled={isGenerating || !isFormValid}
                 startIcon={isGenerating ? <CircularProgress size={20} /> : <LinkIcon />}
                 sx={{
-                  bgcolor: brand.emerald[600],
-                  '&:hover': { bgcolor: brand.emerald[700] },
-                  '&:disabled': { opacity: 0.45 },
+                  background: `linear-gradient(135deg, ${brand.emerald[600]} 0%, ${brand.emerald[700]} 100%)`,
+                  '&:hover': { background: `linear-gradient(135deg, ${brand.emerald[500]} 0%, ${brand.emerald[600]} 100%)` },
+                  '&:disabled': { opacity: 0.4 },
                   py: 1.5,
-                  borderRadius: 2,
+                  borderRadius: '14px',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  boxShadow: `0 4px 16px ${brand.emerald[600]}40`,
                 }}
               >
                 {isGenerating ? 'Generando...' : 'Generar Enlace'}
               </Button>
             </Box>
           ) : (
+            /* ─── PHASE 2: Success ─── */
             <Box>
-              {/* Success Header */}
+              {/* Success banner */}
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1.5,
                   p: 2,
-                  mb: 2,
-                  borderRadius: 2,
+                  mb: 2.5,
+                  borderRadius: '14px',
                   bgcolor: `${brand.emerald[50]}`,
                   border: '1px solid',
                   borderColor: brand.emerald[200],
                 }}
               >
-                <CheckIcon sx={{ color: brand.emerald[600], fontSize: 28 }} />
-                <Box>
-                  <Typography variant="body1" fontWeight={typography.weight.semibold}>
+                <CheckIcon sx={{ color: brand.emerald[600], fontSize: 24 }} />
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="body2" fontWeight={typography.weight.semibold} noWrap>
                     Enlace generado para {guestName}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
@@ -417,10 +387,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                 </Box>
               </Box>
 
-              {/* Invitation URL */}
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
-                Enlace de invitacion
-              </Typography>
+              {/* URL field */}
               <TextField
                 fullWidth
                 value={lastInvitation.url}
@@ -428,140 +395,158 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   readOnly: true,
                   sx: {
                     fontFamily: typography.fontFamily.mono,
-                    fontSize: '0.9rem',
-                    fontWeight: typography.weight.semibold,
-                    bgcolor: 'background.default',
+                    fontSize: '0.8rem',
+                    fontWeight: 500,
+                    bgcolor: 'action.hover',
+                    borderRadius: '12px',
                   },
                   endAdornment: (
                     <IconButton onClick={handleCopy} size="small">
                       {copied ? (
-                        <CheckIcon sx={{ color: brand.emerald[600] }} />
+                        <CheckIcon sx={{ color: brand.emerald[600], fontSize: 18 }} />
                       ) : (
-                        <CopyIcon />
+                        <CopyIcon sx={{ fontSize: 18 }} />
                       )}
                     </IconButton>
                   ),
                 }}
-                sx={{ mb: 2 }}
+                size="small"
+                sx={{ mb: 1.5 }}
               />
 
-              {/* PIN Display Card */}
+              {/* PIN — compact inline bar */}
               {lastInvitation.pin && (
                 <Box
-                  sx={{
-                    p: 2,
-                    mb: 2,
-                    borderRadius: 2,
-                    border: '2px solid',
-                    borderColor: brand.emerald[400],
-                    bgcolor: `${brand.emerald[50]}`,
-                    textAlign: 'center',
-                  }}
-                >
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                    PIN de acceso
-                  </Typography>
-                  <Typography
-                    variant="h4"
-                    sx={{
-                      fontFamily: 'monospace',
-                      fontWeight: 700,
-                      letterSpacing: '0.3em',
-                      color: brand.emerald[800],
-                      mb: 1,
-                    }}
-                  >
-                    {lastInvitation.pin}
-                  </Typography>
-                  <Button
-                    size="small"
-                    startIcon={copiedPin ? <CheckIcon sx={{ color: brand.emerald[600] }} /> : <CopyIcon />}
-                    onClick={handleCopyPin}
-                    sx={{ color: brand.emerald[600], mb: 0.5 }}
-                  >
-                    {copiedPin ? 'Copiado!' : 'Copiar PIN'}
-                  </Button>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                    Comparte este PIN por separado (WhatsApp, llamada, etc.)
-                  </Typography>
-                </Box>
-              )}
-
-              {/* Summary chips */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: 1,
-                  mb: 2,
-                  flexWrap: 'wrap',
-                }}
-              >
-                <Box
+                  onClick={handleCopyPin}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 0.5,
-                    px: 1.5,
-                    py: 0.5,
-                    borderRadius: 1,
-                    bgcolor: lastInvitation.pricingMode === 'with_prices' ? brand.emerald[50] : 'action.hover',
+                    justifyContent: 'space-between',
+                    p: 1.5,
+                    px: 2,
+                    mb: 2,
+                    borderRadius: '12px',
+                    bgcolor: `${brand.emerald[50]}`,
                     border: '1px solid',
-                    borderColor: lastInvitation.pricingMode === 'with_prices' ? brand.emerald[200] : 'divider',
+                    borderColor: brand.emerald[200],
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      borderColor: brand.emerald[400],
+                      boxShadow: `0 0 0 1px ${brand.emerald[200]}`,
+                    },
+                    '&:active': { transform: 'scale(0.99)' },
                   }}
                 >
-                  <PriceIcon fontSize="small" sx={{ color: lastInvitation.pricingMode === 'with_prices' ? brand.emerald[600] : 'text.secondary' }} />
-                  <Typography variant="caption" fontWeight={500}>
-                    {lastInvitation.pricingMode === 'with_prices' ? 'Con precios' : 'Sin precios'}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontWeight: 500, minWidth: 64 }}
+                    >
+                      PIN de acceso
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 0.75 }}>
+                      {lastInvitation.pin.split('').map((digit, i) => (
+                        <Box
+                          key={i}
+                          sx={{
+                            width: 32,
+                            height: 36,
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: brand.emerald[100],
+                            border: '1px solid',
+                            borderColor: brand.emerald[300],
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontFamily: 'monospace',
+                              fontWeight: 700,
+                              fontSize: '1.1rem',
+                              color: brand.emerald[800],
+                              lineHeight: 1,
+                            }}
+                          >
+                            {digit}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: brand.emerald[600] }}>
+                    {copiedPin ? (
+                      <CheckIcon sx={{ fontSize: 16 }} />
+                    ) : (
+                      <CopyIcon sx={{ fontSize: 16 }} />
+                    )}
+                    <Typography variant="caption" fontWeight={500}>
+                      {copiedPin ? 'Copiado' : 'Copiar'}
+                    </Typography>
+                  </Box>
                 </Box>
-                {guestEmail && (
+              )}
+
+              {/* Hint */}
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mb: 2, textAlign: 'center', opacity: 0.7, fontSize: '0.7rem' }}
+              >
+                Comparte el PIN por separado (WhatsApp, llamada, etc.)
+              </Typography>
+
+              {/* Summary tags */}
+              <Box sx={{ display: 'flex', gap: 0.75, mb: 2, flexWrap: 'wrap' }}>
+                {[
+                  {
+                    icon: <PriceIcon sx={{ fontSize: 14 }} />,
+                    label: lastInvitation.pricingMode === 'with_prices' ? 'Con precios' : 'Sin precios',
+                    active: lastInvitation.pricingMode === 'with_prices',
+                  },
+                  ...(guestEmail ? [{ icon: <EmailIcon sx={{ fontSize: 14 }} />, label: guestEmail, active: false }] : []),
+                  ...(guestPhone ? [{ icon: <PhoneIcon sx={{ fontSize: 14 }} />, label: guestPhone, active: false }] : []),
+                ].map((tag, i) => (
                   <Box
+                    key={i}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: 0.5,
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 1,
-                      bgcolor: 'action.hover',
+                      px: 1.25,
+                      py: 0.4,
+                      borderRadius: '8px',
+                      bgcolor: tag.active ? `${brand.emerald[50]}` : 'action.hover',
                       border: '1px solid',
-                      borderColor: 'divider',
+                      borderColor: tag.active ? brand.emerald[200] : 'divider',
+                      color: tag.active ? brand.emerald[700] : 'text.secondary',
                     }}
                   >
-                    <EmailIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                    <Typography variant="caption">{guestEmail}</Typography>
+                    {tag.icon}
+                    <Typography variant="caption" fontWeight={tag.active ? 500 : 400} noWrap sx={{ maxWidth: 140 }}>
+                      {tag.label}
+                    </Typography>
                   </Box>
-                )}
-                {guestPhone && (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 1,
-                      bgcolor: 'action.hover',
-                      border: '1px solid',
-                      borderColor: 'divider',
-                    }}
-                  >
-                    <PhoneIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                    <Typography variant="caption">{guestPhone}</Typography>
-                  </Box>
-                )}
+                ))}
               </Box>
 
               {/* Action buttons */}
-              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button
                   variant="contained"
-                  startIcon={<CopyIcon />}
+                  startIcon={<CopyIcon sx={{ fontSize: '18px !important' }} />}
                   onClick={handleCopy}
                   sx={{
                     flex: 1,
-                    bgcolor: brand.emerald[600],
-                    '&:hover': { bgcolor: brand.emerald[700] },
+                    background: `linear-gradient(135deg, ${brand.emerald[600]} 0%, ${brand.emerald[700]} 100%)`,
+                    '&:hover': { background: `linear-gradient(135deg, ${brand.emerald[500]} 0%, ${brand.emerald[600]} 100%)` },
+                    borderRadius: '12px',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    py: 1,
                   }}
                 >
                   {copied ? 'Copiado!' : 'Copiar'}
@@ -569,20 +554,33 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                 {'share' in navigator && (
                   <Button
                     variant="outlined"
-                    startIcon={<ShareIcon />}
+                    startIcon={<ShareIcon sx={{ fontSize: '18px !important' }} />}
                     onClick={handleShare}
-                    sx={{ flex: 1 }}
+                    sx={{
+                      flex: 1,
+                      borderRadius: '12px',
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      py: 1,
+                      borderColor: 'divider',
+                    }}
                   >
                     Compartir
                   </Button>
                 )}
-                <Button
-                  variant="outlined"
-                  startIcon={<QrCodeIcon />}
+                <IconButton
                   onClick={() => setShowQR(!showQR)}
+                  sx={{
+                    border: '1px solid',
+                    borderColor: showQR ? brand.emerald[300] : 'divider',
+                    borderRadius: '12px',
+                    bgcolor: showQR ? `${brand.emerald[50]}` : 'transparent',
+                    width: 42,
+                    height: 42,
+                  }}
                 >
-                  QR
-                </Button>
+                  <QrCodeIcon sx={{ fontSize: 20 }} />
+                </IconButton>
               </Box>
 
               {showQR && (
@@ -590,16 +588,17 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   sx={{
                     display: 'flex',
                     justifyContent: 'center',
-                    p: 3,
+                    p: 2.5,
+                    mt: 1.5,
                     bgcolor: 'white',
-                    borderRadius: 2,
+                    borderRadius: '14px',
                     border: '1px solid',
                     borderColor: 'divider',
                   }}
                 >
                   <QRCodeSVG
                     value={qrUrl}
-                    size={180}
+                    size={160}
                     level="M"
                     includeMargin
                     fgColor={brand.emerald[800]}
@@ -610,18 +609,18 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
           )}
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>
           {lastInvitation && (
             <Button
               onClick={handleGenerateNew}
               disabled={isGenerating}
-              startIcon={<LinkIcon />}
-              sx={{ color: brand.emerald[600] }}
+              startIcon={<LinkIcon sx={{ fontSize: '18px !important' }} />}
+              sx={{ color: brand.emerald[600], textTransform: 'none', fontWeight: 500 }}
             >
               Nuevo Enlace
             </Button>
           )}
-          <Button onClick={handleClose} color="inherit">
+          <Button onClick={handleClose} color="inherit" sx={{ textTransform: 'none', fontWeight: 500 }}>
             Cerrar
           </Button>
         </DialogActions>

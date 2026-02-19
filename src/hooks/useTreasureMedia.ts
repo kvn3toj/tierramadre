@@ -15,6 +15,9 @@ import { STORAGE_KEYS, LEGACY_KEYS } from '../constants/storage-keys';
 
 const log = createLogger('TreasureMedia');
 
+// Gallery cache TTL: 30 minutes
+const GALLERY_TTL = 30 * 60 * 1000;
+
 // Storage keys (new treasure namespace)
 const LEGACY_STORAGE_KEY = STORAGE_KEYS.TREASURE_MEDIA;
 const GALLERY_STORAGE_KEY = STORAGE_KEYS.TREASURE_GALLERY;
@@ -55,6 +58,17 @@ interface LegacyMediaEntry {
 
 interface LegacyTreasureMedia {
   [itemNumber: number]: LegacyMediaEntry;
+}
+
+/** Timestamped wrapper for gallery cache entries */
+interface GalleryCacheEntry {
+  items: MediaItem[];
+  timestamp: number;
+}
+
+/** Raw storage shape: each item number maps to a timestamped entry */
+interface GalleryCacheStorage {
+  [itemNumber: number]: GalleryCacheEntry;
 }
 
 interface ProductGallery {
@@ -116,7 +130,25 @@ function saveLegacyMediaToStorage(media: LegacyTreasureMedia): void {
 function loadGalleries(): ProductGallery {
   try {
     const stored = localStorage.getItem(GALLERY_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : {};
+    if (!stored) return {};
+
+    const parsed = JSON.parse(stored);
+    const now = Date.now();
+    const result: ProductGallery = {};
+
+    for (const key of Object.keys(parsed)) {
+      const entry = parsed[key];
+      // Handle legacy format (plain array without timestamp) — treat as expired
+      if (Array.isArray(entry)) continue;
+      // Handle timestamped format — check TTL
+      if (entry && entry.items && typeof entry.timestamp === 'number') {
+        if (now - entry.timestamp < GALLERY_TTL) {
+          result[Number(key)] = entry.items;
+        }
+      }
+    }
+
+    return result;
   } catch (error) {
     log.error('Error loading galleries:', error);
     return {};
@@ -125,7 +157,17 @@ function loadGalleries(): ProductGallery {
 
 function saveGalleriesToStorage(galleries: ProductGallery): void {
   try {
-    localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(galleries));
+    const now = Date.now();
+    const storage: GalleryCacheStorage = {};
+
+    for (const key of Object.keys(galleries)) {
+      storage[Number(key)] = {
+        items: galleries[Number(key)],
+        timestamp: now,
+      };
+    }
+
+    localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(storage));
   } catch (error) {
     log.error('Error saving galleries:', error);
   }

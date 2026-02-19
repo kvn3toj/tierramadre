@@ -30,7 +30,7 @@ export function setCorsHeaders(res, methods = ['GET', 'OPTIONS']) {
 export function setCacheHeaders(res, cacheType = CACHE.NONE) {
   res.setHeader('Cache-Control', cacheType);
   // Vary header for proper CDN caching across browsers
-  res.setHeader('Vary', 'Accept, Accept-Encoding');
+  res.setHeader('Vary', 'Accept, Accept-Encoding, Origin');
 
   if (cacheType === CACHE.NONE) {
     res.setHeader('Pragma', 'no-cache');

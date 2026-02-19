@@ -61,6 +61,8 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
     title: t.pages.treasure.title,
     mode: 'compact',
     logoUrl: '/images/logo-horizontal-white.png',
+    backgroundColor: '#00AE7A',
+    forceLogoUrl: '/images/logo-horizontal-white.png',
   },
   '/ambassadors': {
     title: t.pages.ambassadors.title,

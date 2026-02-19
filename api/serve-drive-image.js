@@ -97,15 +97,25 @@ export default withApiHandler(async (req, res) => {
     const drive = await getOAuthDriveClient();
 
     // Get file metadata first (with timeout to prevent 504)
-    const metadataResponse = await withTimeout(
-      drive.files.get({
-        fileId,
-        fields: 'id,name,mimeType,size',
-        supportsAllDrives: true,
-      }),
-      8000,
-      'Metadata fetch'
-    );
+    let metadataResponse;
+    try {
+      metadataResponse = await withTimeout(
+        drive.files.get({
+          fileId,
+          fields: 'id,name,mimeType,size',
+          supportsAllDrives: true,
+        }),
+        8000,
+        'Metadata fetch'
+      );
+    } catch (metaErr) {
+      // Detect deleted/trashed files (Google API returns 404)
+      if (metaErr?.code === 404 || metaErr?.response?.status === 404 || metaErr?.errors?.[0]?.reason === 'notFound') {
+        res.setHeader('Cache-Control', 'no-store');
+        return sendError(res, 404, 'File not found — it may have been deleted from Drive');
+      }
+      throw metaErr; // Re-throw other errors for the global handler
+    }
 
     const { mimeType, name, size } = metadataResponse.data;
     const etag = generateETag(fileId, size, mimeType);
@@ -158,7 +168,6 @@ export default withApiHandler(async (req, res) => {
             res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
             res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
             res.setHeader('Timing-Allow-Origin', '*');
-            res.setHeader('CDN-Cache-Control', 'public, max-age=604800');
 
             if (req.method === 'HEAD') {
               return res.status(200).end();
@@ -205,7 +214,6 @@ export default withApiHandler(async (req, res) => {
             res.setHeader('Vary', 'Accept-Encoding');
             res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, ETag');
             // CDN-specific caching for Vercel edge
-            res.setHeader('CDN-Cache-Control', 'public, max-age=604800');
 
             // HEAD request - return headers only
             if (req.method === 'HEAD') {
@@ -258,8 +266,6 @@ export default withApiHandler(async (req, res) => {
       // Cross-Origin headers for Chrome image handling
       res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
       res.setHeader('Timing-Allow-Origin', '*');
-      // CDN-specific caching for Vercel edge (7 days)
-      res.setHeader('CDN-Cache-Control', 'public, max-age=604800');
     };
 
     // HEAD request - return headers without body
@@ -303,7 +309,6 @@ export default withApiHandler(async (req, res) => {
           res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
           res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
           res.setHeader('Timing-Allow-Origin', '*');
-          res.setHeader('CDN-Cache-Control', 'public, max-age=604800');
 
           return res.status(200).send(buffer);
         }
@@ -331,7 +336,6 @@ export default withApiHandler(async (req, res) => {
         res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         res.setHeader('Timing-Allow-Origin', '*');
-        res.setHeader('CDN-Cache-Control', 'public, max-age=604800');
 
         return res.status(200).send(buffer);
       } catch (resizeError) {
@@ -366,8 +370,7 @@ export default withApiHandler(async (req, res) => {
                 res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
                 res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
                 res.setHeader('Timing-Allow-Origin', '*');
-                res.setHeader('CDN-Cache-Control', 'public, max-age=604800');
-
+    
                 return res.status(200).send(thumbBuffer);
               }
             }
@@ -407,7 +410,6 @@ export default withApiHandler(async (req, res) => {
             res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
             res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
             res.setHeader('Timing-Allow-Origin', '*');
-            res.setHeader('CDN-Cache-Control', 'public, max-age=604800');
 
             return res.status(200).send(thumbBuffer);
           }

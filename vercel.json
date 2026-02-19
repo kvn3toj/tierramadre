@@ -78,23 +78,6 @@
   },
   "headers": [
     {
-      "source": "/api/serve-drive-image",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400"
-        },
-        {
-          "key": "Vary",
-          "value": "Accept-Encoding"
-        },
-        {
-          "key": "CDN-Cache-Control",
-          "value": "public, max-age=604800"
-        }
-      ]
-    },
-    {
       "source": "/api/get-batch-thumbnails",
       "headers": [
         {

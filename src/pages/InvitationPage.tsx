@@ -2,12 +2,9 @@
  * InvitationPage
  *
  * Handles invitation link validation and grants temporary guest access.
- * Requires PIN verification + IP binding before granting access.
- * Includes a guest contact form (name + email/phone) for unregistered guests.
- * Fixed 24-hour duration with configurable pricing mode.
+ * "Emerald Vault" — immersive dark luxury experience for guests.
  *
  * Route: /invite/:shortCode (or /g/:shortCode via redirect)
- * NO JWT - Uses short codes validated against Google Sheets.
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
@@ -15,39 +12,428 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Typography,
-  CircularProgress,
   Button,
-  Alert,
-  Paper,
   TextField,
   ToggleButtonGroup,
   ToggleButton,
+  CircularProgress,
 } from '@mui/material';
+import { motion } from 'framer-motion';
 import {
   CheckCircle,
-  Error as ErrorIcon,
   Explore,
   Email as EmailIcon,
   Phone as PhoneIcon,
-  Lock as LockIcon,
-  Block as BlockIcon,
 } from '@mui/icons-material';
 import { useInvitation } from '../hooks/useInvitation';
 import { useAuth } from '../hooks/useAuth';
-import { brand, typography } from '../design-system';
 import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import type { ContactType, PricingMode } from '../types/invitation';
+
+// ═══════════════════════════════════════════════════════════════
+// VAULT DESIGN TOKENS — Self-contained dark luxury theme
+// ═══════════════════════════════════════════════════════════════
+
+const vault = {
+  bg: '#070D0B',
+  card: 'rgba(14, 26, 22, 0.85)',
+  cardBorder: 'rgba(0, 174, 122, 0.12)',
+  surface: 'rgba(0, 174, 122, 0.06)',
+  text: '#E8F0ED',
+  textMuted: 'rgba(232, 240, 237, 0.55)',
+  textDim: 'rgba(232, 240, 237, 0.35)',
+  emerald: '#00AE7A',
+  emeraldGlow: '0 0 30px rgba(0, 174, 122, 0.2)',
+  error: '#FF453A',
+  errorDim: 'rgba(255, 69, 58, 0.12)',
+  warning: '#FF9F0A',
+  warningDim: 'rgba(255, 159, 10, 0.12)',
+  serif: '"Libre Baskerville", Georgia, serif',
+  mono: '"SF Mono", "Fira Code", Consolas, monospace',
+  system: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif',
+} as const;
+
+// ═══════════════════════════════════════════════════════════════
+// ANIMATION
+// ═══════════════════════════════════════════════════════════════
+
+const fadeUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -10 },
+};
+
+const stagger = {
+  animate: { transition: { staggerChildren: 0.07 } },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// SHARED BUTTON STYLES
+// ═══════════════════════════════════════════════════════════════
+
+const emeraldBtnSx = {
+  py: 1.5,
+  borderRadius: '14px',
+  fontSize: '0.95rem',
+  fontWeight: 600,
+  fontFamily: vault.system,
+  textTransform: 'none' as const,
+  background: `linear-gradient(135deg, ${vault.emerald} 0%, #008C61 100%)`,
+  color: '#fff',
+  border: 'none',
+  boxShadow: '0 4px 20px rgba(0, 174, 122, 0.3)',
+  '&:hover': {
+    background: `linear-gradient(135deg, #00C98C 0%, ${vault.emerald} 100%)`,
+    boxShadow: '0 4px 24px rgba(0, 174, 122, 0.4)',
+  },
+  '&:disabled': {
+    background: 'rgba(0, 174, 122, 0.15)',
+    color: 'rgba(255, 255, 255, 0.3)',
+    boxShadow: 'none',
+  },
+};
+
+const ghostBtnSx = {
+  py: 1.5,
+  borderRadius: '14px',
+  fontSize: '0.95rem',
+  fontWeight: 500,
+  fontFamily: vault.system,
+  textTransform: 'none' as const,
+  color: vault.textMuted,
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  bgcolor: 'rgba(255, 255, 255, 0.03)',
+  '&:hover': {
+    bgcolor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+};
+
+const inputSx = {
+  '& .MuiOutlinedInput-root': {
+    color: vault.text,
+    borderRadius: '12px',
+    bgcolor: 'rgba(255, 255, 255, 0.03)',
+    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
+    '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' },
+    '&.Mui-focused fieldset': { borderColor: vault.emerald },
+  },
+  '& .MuiInputLabel-root': { color: vault.textMuted },
+  '& .MuiInputLabel-root.Mui-focused': { color: vault.emerald },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE-LEVEL LAYOUT (prevents remount → fixes mobile keyboard)
+// ═══════════════════════════════════════════════════════════════
+
+function PageShell({ children }: { children: React.ReactNode }) {
+  return (
+    <Box
+      sx={{
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: vault.bg,
+        p: 3,
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          background: `
+            radial-gradient(ellipse at 20% 0%, rgba(0, 174, 122, 0.08) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 100%, rgba(0, 106, 72, 0.06) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 50%, rgba(0, 174, 122, 0.03) 0%, transparent 70%)
+          `,
+          pointerEvents: 'none',
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `
+            linear-gradient(rgba(0, 174, 122, 0.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 174, 122, 0.025) 1px, transparent 1px)
+          `,
+          backgroundSize: '60px 60px',
+          pointerEvents: 'none',
+        },
+      }}
+    >
+      {children}
+    </Box>
+  );
+}
+
+function GlassCard({ children }: { children: React.ReactNode }) {
+  return (
+    <Box
+      sx={{
+        maxWidth: 400,
+        width: '100%',
+        position: 'relative',
+        zIndex: 1,
+        p: { xs: 3.5, sm: 4.5 },
+        borderRadius: '20px',
+        bgcolor: vault.card,
+        border: '1px solid',
+        borderColor: vault.cardBorder,
+        backdropFilter: 'blur(20px) saturate(1.5)',
+        WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
+        boxShadow: `
+          0 0 0 0.5px rgba(0, 174, 122, 0.06),
+          0 8px 40px rgba(0, 0, 0, 0.4),
+          ${vault.emeraldGlow}
+        `,
+      }}
+    >
+      {children}
+    </Box>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PIN DIGIT INPUT — Crystal facet boxes + hidden native input
+// ═══════════════════════════════════════════════════════════════
+
+function PinInput({
+  value,
+  onChange,
+  onSubmit,
+  disabled,
+  inputRef,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  onSubmit: () => void;
+  disabled?: boolean;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}) {
+  const digits = value.split('');
+
+  return (
+    <Box sx={{ position: 'relative', mb: 3.5, mx: 'auto', maxWidth: 280 }}>
+      {/* Hidden native input — always mounted, keyboard stays open */}
+      <input
+        ref={inputRef as React.LegacyRef<HTMLInputElement>}
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        autoComplete="one-time-code"
+        maxLength={4}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => {
+          const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+          onChange(val);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && value.length === 4 && !disabled) {
+            onSubmit();
+          }
+        }}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: 0,
+          width: '100%',
+          height: '100%',
+          fontSize: '16px',
+          zIndex: 2,
+          cursor: 'pointer',
+        }}
+      />
+
+      {/* Visual digit boxes */}
+      <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
+        {[0, 1, 2, 3].map((i) => {
+          const filled = i < digits.length;
+          const active = i === digits.length;
+
+          return (
+            <Box
+              key={i}
+              sx={{
+                width: 58,
+                height: 68,
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: filled ? 'rgba(0, 174, 122, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                border: '1.5px solid',
+                borderColor: filled
+                  ? 'rgba(0, 174, 122, 0.45)'
+                  : active
+                  ? 'rgba(0, 174, 122, 0.25)'
+                  : 'rgba(255, 255, 255, 0.07)',
+                boxShadow: filled
+                  ? '0 0 20px rgba(0, 174, 122, 0.12), inset 0 1px 0 rgba(0, 174, 122, 0.08)'
+                  : 'none',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                ...(active && !disabled && {
+                  animation: 'pinPulse 1.2s ease-in-out infinite',
+                  '@keyframes pinPulse': {
+                    '0%, 100%': { borderColor: 'rgba(0, 174, 122, 0.12)' },
+                    '50%': { borderColor: 'rgba(0, 174, 122, 0.35)' },
+                  },
+                }),
+              }}
+            >
+              <motion.div
+                key={`d-${i}-${digits[i] || ''}`}
+                initial={filled ? { scale: 1.25, opacity: 0 } : false}
+                animate={{ scale: 1, opacity: filled ? 1 : 0 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '1.75rem',
+                    fontWeight: 700,
+                    fontFamily: vault.mono,
+                    color: vault.emerald,
+                    lineHeight: 1,
+                  }}
+                >
+                  {digits[i] || ''}
+                </Typography>
+              </motion.div>
+            </Box>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STATUS ICONS
+// ═══════════════════════════════════════════════════════════════
+
+function LockGlyph() {
+  return (
+    <Box sx={{ position: 'relative', display: 'inline-flex', mb: 2.5 }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: -12,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(0, 174, 122, 0.15) 0%, transparent 70%)',
+        }}
+      />
+      <Box
+        sx={{
+          width: 64,
+          height: 64,
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'rgba(0, 174, 122, 0.08)',
+          border: '1px solid rgba(0, 174, 122, 0.18)',
+        }}
+      >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M16.5 10.5V6.5C16.5 4.01 14.49 2 12 2S7.5 4.01 7.5 6.5V10.5"
+            stroke={vault.emerald} strokeWidth="1.5" strokeLinecap="round"
+          />
+          <rect x="5" y="10" width="14" height="12" rx="3" stroke={vault.emerald} strokeWidth="1.5" />
+          <circle cx="12" cy="16" r="1.5" fill={vault.emerald} />
+        </svg>
+      </Box>
+    </Box>
+  );
+}
+
+function SuccessGlyph() {
+  return (
+    <Box sx={{ position: 'relative', display: 'inline-flex', mb: 2.5 }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: -16,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(0, 174, 122, 0.2) 0%, transparent 70%)',
+          animation: 'glowPulse 3s ease-in-out infinite',
+          '@keyframes glowPulse': {
+            '0%, 100%': { opacity: 0.5, transform: 'scale(0.95)' },
+            '50%': { opacity: 1, transform: 'scale(1.05)' },
+          },
+        }}
+      />
+      <Box
+        sx={{
+          width: 72,
+          height: 72,
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, rgba(0, 174, 122, 0.15) 0%, rgba(0, 106, 72, 0.15) 100%)',
+          border: '1px solid rgba(0, 174, 122, 0.25)',
+        }}
+      >
+        <CheckCircle sx={{ fontSize: 36, color: vault.emerald }} />
+      </Box>
+    </Box>
+  );
+}
+
+function AlertGlyph({ variant }: { variant: 'error' | 'warning' }) {
+  const color = variant === 'error' ? vault.error : vault.warning;
+  const bg = variant === 'error' ? vault.errorDim : vault.warningDim;
+  const borderTint = variant === 'error' ? 'rgba(255, 69, 58, 0.18)' : 'rgba(255, 159, 10, 0.18)';
+
+  return (
+    <Box sx={{ position: 'relative', display: 'inline-flex', mb: 2.5 }}>
+      <Box
+        sx={{
+          width: 72,
+          height: 72,
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: bg,
+          border: `1px solid ${borderTint}`,
+        }}
+      >
+        {variant === 'error' ? (
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <path d="M12 9v4" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="12" cy="16" r="1" fill={color} />
+            <path
+              d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+              stroke={color} strokeWidth="1.5"
+            />
+          </svg>
+        ) : (
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5" />
+            <path d="M5.5 5.5L18.5 18.5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════════
 
 type PageStatus = 'loading' | 'pin' | 'form' | 'valid' | 'expired' | 'error' | 'ip-blocked';
 
 const MAX_PIN_ATTEMPTS = 5;
 
 export default function InvitationPage() {
-  // Short code from URL (e.g., ABC123)
   const { shortCode } = useParams<{ shortCode: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  // If redirected from a product link with ?invite=, return there after access
   const redirectTo = searchParams.get('redirect');
   const { validateInvitation, verifyPin, registerGuest, isValidating, isVerifyingPin, isRegistering } = useInvitation();
   const { loginAsGuest } = useAuth();
@@ -66,7 +452,6 @@ export default function InvitationPage() {
   const [pinValue, setPinValue] = useState('');
   const [pinAttempts, setPinAttempts] = useState(0);
   const [pinError, setPinError] = useState<string>('');
-  // Track guest name from validation (pre-registered) vs form
   const [preRegisteredGuestName, setPreRegisteredGuestName] = useState<string>('');
   const [preRegisteredGuestContact, setPreRegisteredGuestContact] = useState<string>('');
 
@@ -76,12 +461,9 @@ export default function InvitationPage() {
   const [contactType, setContactType] = useState<ContactType>('email');
   const [formError, setFormError] = useState<string>('');
 
-  // Ref to track PIN input
   const pinInputRef = useRef<HTMLInputElement>(null);
 
-  /**
-   * Consolidated grant access helper — writes session/local storage and sets valid status
-   */
+  // ─── Grant access helper ───
   const grantAccess = useCallback((overrides?: { guestName?: string; guestContact?: string }) => {
     loginAsGuest();
 
@@ -113,6 +495,7 @@ export default function InvitationPage() {
     setStatus('valid');
   }, [loginAsGuest, guestName, guestContact, preRegisteredGuestName, preRegisteredGuestContact, expiresAt, currentShortCode, pricingMode, invitationId, createdBy, creatorEmail, inviterWhatsApp]);
 
+  // ─── Validate on mount ───
   useEffect(() => {
     if (!shortCode) {
       setStatus('error');
@@ -121,11 +504,9 @@ export default function InvitationPage() {
     }
 
     const validate = async () => {
-      // Validate using short code (Google Sheets lookup)
       const result = await validateInvitation(shortCode);
 
       if (result.isValid) {
-        // Store invitation info (fixed 24-hour duration)
         const resolvedPricingMode = result.pricingMode || 'with_prices';
         const resolvedCreatedBy = result.createdBy || '';
         const resolvedCreatorEmail = result.creatorEmail || '';
@@ -140,13 +521,11 @@ export default function InvitationPage() {
         setCurrentShortCode(resolvedShortCode);
         setExpiresAt(resolvedExpiresAt);
 
-        // Track pre-registered guest info
         if (result.guestName) {
           setPreRegisteredGuestName(result.guestName);
           setPreRegisteredGuestContact(result.guestContact || '');
         }
 
-        // Fetch inviter's WhatsApp from asesores if we have their email
         if (result.creatorEmail) {
           try {
             const asesoresResponse = await fetch('/api/get-asesores');
@@ -166,13 +545,8 @@ export default function InvitationPage() {
           }
         }
 
-        // If IP is already bound AND we have PIN_VERIFIED in sessionStorage (tab refresh),
-        // skip PIN screen entirely
+        // Already verified on this device — skip PIN
         if (result.isPinBound && sessionStorage.getItem(INVITATION_STORAGE_KEYS.PIN_VERIFIED)) {
-          // Already verified on this device — grant access directly
-          // Use setTimeout to let state settle before grantAccess reads them
-          // We set state above but grantAccess uses the callback closure values,
-          // so we need to handle it differently for this path
           loginAsGuest();
 
           const invitationData: Record<string, string> = {
@@ -198,7 +572,6 @@ export default function InvitationPage() {
           return;
         }
 
-        // Always require PIN verification
         setStatus('pin');
       } else if (result.status === 'expired') {
         setStatus('expired');
@@ -212,6 +585,7 @@ export default function InvitationPage() {
     validate();
   }, [shortCode, validateInvitation, loginAsGuest]);
 
+  // ─── PIN submit ───
   const handlePinSubmit = async () => {
     if (!shortCode || !pinValue || pinValue.length !== 4) {
       setPinError('Ingresa un PIN de 4 digitos');
@@ -227,15 +601,12 @@ export default function InvitationPage() {
     const result = await verifyPin(shortCode, pinValue);
 
     if (result.pinVerified) {
-      // PIN correct + IP OK
       if (result.guestName || preRegisteredGuestName) {
-        // Pre-registered guest — skip form, grant access
         grantAccess({
           guestName: result.guestName || preRegisteredGuestName,
           guestContact: result.guestContact || preRegisteredGuestContact,
         });
       } else {
-        // No guest info yet — show registration form
         setStatus('form');
       }
     } else if (result.isIpBlocked) {
@@ -255,17 +626,16 @@ export default function InvitationPage() {
     }
   };
 
+  // ─── Form validation ───
   const validateForm = (): boolean => {
     if (!guestName.trim()) {
       setFormError('Por favor ingresa tu nombre');
       return false;
     }
-
     if (!guestContact.trim()) {
       setFormError(`Por favor ingresa tu ${contactType === 'email' ? 'email' : 'telefono'}`);
       return false;
     }
-
     if (contactType === 'email') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(guestContact)) {
@@ -273,7 +643,6 @@ export default function InvitationPage() {
         return false;
       }
     }
-
     if (contactType === 'phone') {
       const phoneRegex = /^[\d\s\-+()]{7,20}$/;
       if (!phoneRegex.test(guestContact)) {
@@ -281,15 +650,14 @@ export default function InvitationPage() {
         return false;
       }
     }
-
     setFormError('');
     return true;
   };
 
+  // ─── Guest submit ───
   const handleGuestSubmit = async () => {
     if (!validateForm()) return;
 
-    // Register guest info in Google Sheets
     if (invitationId) {
       const success = await registerGuest({
         invitationId,
@@ -297,9 +665,7 @@ export default function InvitationPage() {
         guestContact: guestContact.trim(),
         contactType,
       });
-
       if (!success) {
-        // Continue anyway - registration is for tracking, not blocking
         console.warn('Guest registration failed, continuing...');
       }
     }
@@ -308,357 +674,372 @@ export default function InvitationPage() {
   };
 
   const handleExplore = () => {
-    // If redirected from a product link, go there; otherwise explore treasure
     navigate(redirectTo || '/treasure', { replace: true });
   };
 
-  const handleGoHome = () => {
-    navigate('/home');
-  };
+  // ═══════════════════════════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════════════════════════
 
-  // --- RENDER ---
-
-  // Centered page wrapper
-  const PageWrapper = ({ children }: { children: React.ReactNode }) => (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'background.default',
-        p: 3,
-      }}
-    >
-      {children}
-    </Box>
-  );
-
+  // Loading
   if (status === 'loading' || isValidating) {
     return (
-      <PageWrapper>
-        <CircularProgress sx={{ color: brand.emerald[600], mb: 2 }} />
-        <Typography variant="body1" color="text.secondary">
-          Validando invitacion...
-        </Typography>
-      </PageWrapper>
+      <PageShell>
+        <motion.div {...fadeUp} transition={{ duration: 0.5 }}>
+          <Box sx={{ textAlign: 'center' }}>
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: '50%',
+                border: '2px solid rgba(0, 174, 122, 0.15)',
+                borderTopColor: vault.emerald,
+                animation: 'spin 0.9s linear infinite',
+                mx: 'auto',
+                mb: 3,
+                '@keyframes spin': { to: { transform: 'rotate(360deg)' } },
+              }}
+            />
+            <Typography
+              sx={{
+                fontFamily: vault.serif,
+                fontSize: '0.95rem',
+                color: vault.textMuted,
+                letterSpacing: '0.02em',
+              }}
+            >
+              Validando invitacion...
+            </Typography>
+          </Box>
+        </motion.div>
+      </PageShell>
     );
   }
 
+  // Expired / Error
   if (status === 'expired' || status === 'error') {
     return (
-      <PageWrapper>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            maxWidth: 400,
-            textAlign: 'center',
-            borderRadius: 3,
-            border: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <ErrorIcon sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
-          <Typography variant="h5" fontWeight={typography.weight.bold} gutterBottom>
-            {status === 'expired' ? 'Invitacion Expirada' : 'Enlace Invalido'}
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            {errorMessage}
-          </Typography>
-          <Alert severity="info" sx={{ mb: 3, textAlign: 'left' }}>
-            Solicita un nuevo enlace al embajador que te invito.
-          </Alert>
-          <Button
-            variant="outlined"
-            onClick={() => navigate('/')}
-            fullWidth
-          >
-            Ir al Inicio
-          </Button>
-        </Paper>
-      </PageWrapper>
+      <PageShell>
+        <motion.div {...fadeUp} transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}>
+          <GlassCard>
+            <Box sx={{ textAlign: 'center' }}>
+              <AlertGlyph variant="error" />
+              <Typography
+                sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: 700, color: vault.text, mb: 1 }}
+              >
+                {status === 'expired' ? 'Invitacion Expirada' : 'Enlace Invalido'}
+              </Typography>
+              <Typography sx={{ color: vault.textMuted, fontSize: '0.9rem', mb: 3, lineHeight: 1.6 }}>
+                {errorMessage}
+              </Typography>
+
+              <Box
+                sx={{
+                  p: 2, mb: 3, borderRadius: '12px',
+                  bgcolor: vault.surface,
+                  border: '1px solid rgba(0, 174, 122, 0.08)',
+                }}
+              >
+                <Typography sx={{ color: vault.textMuted, fontSize: '0.85rem', lineHeight: 1.5 }}>
+                  Solicita un nuevo enlace al embajador que te invito.
+                </Typography>
+              </Box>
+
+              <Button fullWidth onClick={() => navigate('/')} sx={ghostBtnSx}>
+                Ir al Inicio
+              </Button>
+            </Box>
+          </GlassCard>
+        </motion.div>
+      </PageShell>
     );
   }
 
-  // IP blocked screen
+  // Device blocked
   if (status === 'ip-blocked') {
     return (
-      <PageWrapper>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            maxWidth: 400,
-            textAlign: 'center',
-            borderRadius: 3,
-            border: '1px solid',
-            borderColor: 'error.light',
-          }}
-        >
-          <BlockIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
-          <Typography variant="h5" fontWeight={typography.weight.bold} gutterBottom>
-            Acceso Restringido
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Esta invitacion esta vinculada a otro dispositivo o red.
-            Solo puede usarse desde el dispositivo donde se verifico por primera vez.
-          </Typography>
-          <Alert severity="warning" sx={{ mb: 3, textAlign: 'left' }}>
-            Si necesitas acceso, solicita una nueva invitacion a tu embajador.
-          </Alert>
-          <Button
-            variant="outlined"
-            onClick={() => navigate('/')}
-            fullWidth
-          >
-            Ir al Inicio
-          </Button>
-        </Paper>
-      </PageWrapper>
+      <PageShell>
+        <motion.div {...fadeUp} transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}>
+          <GlassCard>
+            <Box sx={{ textAlign: 'center' }}>
+              <AlertGlyph variant="warning" />
+              <Typography
+                sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: 700, color: vault.text, mb: 1 }}
+              >
+                Acceso Restringido
+              </Typography>
+              <Typography sx={{ color: vault.textMuted, fontSize: '0.9rem', mb: 3, lineHeight: 1.6 }}>
+                Esta invitacion esta vinculada a otro dispositivo.
+                Solo puede usarse desde el dispositivo donde se verifico por primera vez.
+              </Typography>
+
+              <Box
+                sx={{
+                  p: 2, mb: 3, borderRadius: '12px',
+                  bgcolor: vault.warningDim,
+                  border: '1px solid rgba(255, 159, 10, 0.12)',
+                }}
+              >
+                <Typography sx={{ color: 'rgba(255, 200, 100, 0.8)', fontSize: '0.85rem', lineHeight: 1.5 }}>
+                  Si necesitas acceso, solicita una nueva invitacion a tu embajador.
+                </Typography>
+              </Box>
+
+              <Button fullWidth onClick={() => navigate('/')} sx={ghostBtnSx}>
+                Ir al Inicio
+              </Button>
+            </Box>
+          </GlassCard>
+        </motion.div>
+      </PageShell>
     );
   }
 
-  // PIN entry screen
+  // PIN entry
   if (status === 'pin') {
     const isLockedOut = pinAttempts >= MAX_PIN_ATTEMPTS;
 
     return (
-      <PageWrapper>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            maxWidth: 400,
-            width: '100%',
-            textAlign: 'center',
-            borderRadius: 3,
-            border: '1px solid',
-            borderColor: brand.emerald[200],
-            bgcolor: `${brand.emerald[50]}50`,
-          }}
-        >
-          <LockIcon sx={{ fontSize: 48, color: brand.emerald[600], mb: 1 }} />
-          <Typography variant="h5" fontWeight={typography.weight.bold} gutterBottom>
-            Ingresa tu PIN
-          </Typography>
-          {createdBy && (
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              Invitado por {createdBy}
-            </Typography>
-          )}
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Ingresa el PIN de 4 digitos que te compartio tu embajador.
-          </Typography>
+      <PageShell>
+        <motion.div initial="initial" animate="animate" variants={stagger}>
+          <GlassCard>
+            <Box sx={{ textAlign: 'center' }}>
+              <motion.div variants={fadeUp}>
+                <LockGlyph />
+              </motion.div>
 
-          {pinError && (
-            <Alert severity={isLockedOut ? 'error' : 'warning'} sx={{ mb: 2, textAlign: 'left' }}>
-              {pinError}
-            </Alert>
-          )}
+              <motion.div variants={fadeUp}>
+                <Typography
+                  sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: 700, color: vault.text, mb: 0.5 }}
+                >
+                  Ingresa tu PIN
+                </Typography>
+              </motion.div>
 
-          <TextField
-            fullWidth
-            value={pinValue}
-            onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-              setPinValue(val);
-            }}
-            inputRef={pinInputRef}
-            placeholder="0000"
-            disabled={isLockedOut}
-            inputProps={{
-              inputMode: 'numeric',
-              pattern: '[0-9]*',
-              maxLength: 4,
-              style: {
-                textAlign: 'center',
-                fontSize: '2rem',
-                fontFamily: 'monospace',
-                letterSpacing: '0.5em',
-                fontWeight: 700,
-              },
-              autoComplete: 'one-time-code',
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && pinValue.length === 4 && !isLockedOut) {
-                handlePinSubmit();
-              }
-            }}
-            sx={{ mb: 3 }}
-          />
+              {createdBy && (
+                <motion.div variants={fadeUp}>
+                  <Typography sx={{ color: vault.textDim, fontSize: '0.8rem', mb: 0.5 }}>
+                    Invitado por
+                  </Typography>
+                  <Typography sx={{ color: vault.emerald, fontSize: '0.9rem', fontWeight: 500, mb: 2 }}>
+                    {createdBy}
+                  </Typography>
+                </motion.div>
+              )}
 
-          <Button
-            variant="contained"
-            size="large"
-            fullWidth
-            disabled={pinValue.length !== 4 || isVerifyingPin || isLockedOut}
-            onClick={handlePinSubmit}
-            startIcon={isVerifyingPin ? <CircularProgress size={20} /> : <LockIcon />}
-            sx={{
-              bgcolor: brand.emerald[600],
-              '&:hover': { bgcolor: brand.emerald[700] },
-            }}
-          >
-            {isVerifyingPin ? 'Verificando...' : 'Confirmar PIN'}
-          </Button>
-        </Paper>
-      </PageWrapper>
+              <motion.div variants={fadeUp}>
+                <Typography sx={{ color: vault.textMuted, fontSize: '0.85rem', mb: 3, lineHeight: 1.5 }}>
+                  Ingresa el PIN de 4 digitos que te compartio tu embajador.
+                </Typography>
+              </motion.div>
+
+              {pinError && (
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+                  <Box
+                    sx={{
+                      p: 1.5, mb: 2.5, borderRadius: '12px',
+                      bgcolor: isLockedOut ? vault.errorDim : vault.warningDim,
+                      border: '1px solid',
+                      borderColor: isLockedOut ? 'rgba(255, 69, 58, 0.15)' : 'rgba(255, 159, 10, 0.15)',
+                    }}
+                  >
+                    <Typography sx={{ color: isLockedOut ? vault.error : vault.warning, fontSize: '0.85rem' }}>
+                      {pinError}
+                    </Typography>
+                  </Box>
+                </motion.div>
+              )}
+
+              <motion.div variants={fadeUp}>
+                <PinInput
+                  value={pinValue}
+                  onChange={setPinValue}
+                  onSubmit={handlePinSubmit}
+                  disabled={isLockedOut}
+                  inputRef={pinInputRef}
+                />
+              </motion.div>
+
+              <motion.div variants={fadeUp}>
+                <Button
+                  variant="contained"
+                  size="large"
+                  fullWidth
+                  disabled={pinValue.length !== 4 || isVerifyingPin || isLockedOut}
+                  onClick={handlePinSubmit}
+                  sx={emeraldBtnSx}
+                >
+                  {isVerifyingPin ? (
+                    <CircularProgress size={22} sx={{ color: 'rgba(255,255,255,0.7)' }} />
+                  ) : (
+                    'Confirmar PIN'
+                  )}
+                </Button>
+              </motion.div>
+            </Box>
+          </GlassCard>
+        </motion.div>
+      </PageShell>
     );
   }
 
   // Guest registration form
   if (status === 'form') {
     return (
-      <PageWrapper>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            maxWidth: 400,
-            width: '100%',
-            borderRadius: 3,
-            border: '1px solid',
-            borderColor: brand.emerald[200],
-            bgcolor: `${brand.emerald[50]}50`,
-          }}
-        >
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <CheckCircle sx={{ fontSize: 48, color: brand.emerald[600], mb: 1 }} />
-            <Typography variant="h5" fontWeight={typography.weight.bold} gutterBottom>
-              Bienvenido a Tierra Madre
-            </Typography>
-            {createdBy && (
-              <Typography variant="body2" color="text.secondary">
-                Invitado por {createdBy}
+      <PageShell>
+        <motion.div {...fadeUp} transition={{ duration: 0.5 }}>
+          <GlassCard>
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
+              <SuccessGlyph />
+              <Typography
+                sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: 700, color: vault.text, mb: 0.5 }}
+              >
+                Bienvenido a Tierra Madre
               </Typography>
+              {createdBy && (
+                <Typography sx={{ color: vault.textMuted, fontSize: '0.85rem' }}>
+                  Invitado por {createdBy}
+                </Typography>
+              )}
+            </Box>
+
+            <Typography sx={{ color: vault.textMuted, fontSize: '0.9rem', mb: 3, textAlign: 'center', lineHeight: 1.5 }}>
+              Para explorar nuestra coleccion, por favor dejanos tus datos de contacto.
+            </Typography>
+
+            {formError && (
+              <Box
+                sx={{
+                  p: 1.5, mb: 2, borderRadius: '12px',
+                  bgcolor: vault.errorDim,
+                  border: '1px solid rgba(255, 69, 58, 0.15)',
+                }}
+              >
+                <Typography sx={{ color: vault.error, fontSize: '0.85rem' }}>{formError}</Typography>
+              </Box>
             )}
-          </Box>
 
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
-            Para explorar nuestra coleccion, por favor dejanos tus datos de contacto.
-          </Typography>
+            <TextField
+              fullWidth
+              label="Tu nombre"
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+              required
+              sx={{ ...inputSx, mb: 2 }}
+            />
 
-          {formError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {formError}
-            </Alert>
-          )}
+            <Typography sx={{ color: vault.textDim, fontSize: '0.8rem', mb: 1 }}>
+              Forma de contacto preferida
+            </Typography>
 
-          <TextField
-            fullWidth
-            label="Tu nombre"
-            value={guestName}
-            onChange={(e) => setGuestName(e.target.value)}
-            required
-            sx={{ mb: 2 }}
-          />
+            <ToggleButtonGroup
+              exclusive
+              value={contactType}
+              onChange={(_, value) => value && setContactType(value)}
+              fullWidth
+              sx={{
+                mb: 2,
+                '& .MuiToggleButton-root': {
+                  color: vault.textMuted,
+                  borderColor: 'rgba(255, 255, 255, 0.08)',
+                  borderRadius: '12px !important',
+                  fontFamily: vault.system,
+                  textTransform: 'none',
+                  py: 1,
+                  '&.Mui-selected': {
+                    bgcolor: 'rgba(0, 174, 122, 0.1)',
+                    color: vault.emerald,
+                    borderColor: 'rgba(0, 174, 122, 0.25)',
+                    '&:hover': { bgcolor: 'rgba(0, 174, 122, 0.15)' },
+                  },
+                },
+              }}
+            >
+              <ToggleButton value="email" sx={{ flex: 1 }}>
+                <EmailIcon sx={{ mr: 1 }} fontSize="small" />
+                Email
+              </ToggleButton>
+              <ToggleButton value="phone" sx={{ flex: 1 }}>
+                <PhoneIcon sx={{ mr: 1 }} fontSize="small" />
+                Telefono
+              </ToggleButton>
+            </ToggleButtonGroup>
 
-          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-            Forma de contacto preferida
-          </Typography>
+            <TextField
+              fullWidth
+              label={contactType === 'email' ? 'Tu email' : 'Tu telefono'}
+              type={contactType === 'email' ? 'email' : 'tel'}
+              value={guestContact}
+              onChange={(e) => setGuestContact(e.target.value)}
+              placeholder={contactType === 'email' ? 'ejemplo@email.com' : '+57 300 123 4567'}
+              required
+              sx={{ ...inputSx, mb: 3 }}
+            />
 
-          <ToggleButtonGroup
-            exclusive
-            value={contactType}
-            onChange={(_, value) => value && setContactType(value)}
-            fullWidth
-            sx={{ mb: 2 }}
-          >
-            <ToggleButton value="email" sx={{ flex: 1 }}>
-              <EmailIcon sx={{ mr: 1 }} fontSize="small" />
-              Email
-            </ToggleButton>
-            <ToggleButton value="phone" sx={{ flex: 1 }}>
-              <PhoneIcon sx={{ mr: 1 }} fontSize="small" />
-              Telefono
-            </ToggleButton>
-          </ToggleButtonGroup>
-
-          <TextField
-            fullWidth
-            label={contactType === 'email' ? 'Tu email' : 'Tu telefono'}
-            type={contactType === 'email' ? 'email' : 'tel'}
-            value={guestContact}
-            onChange={(e) => setGuestContact(e.target.value)}
-            placeholder={contactType === 'email' ? 'ejemplo@email.com' : '+57 300 123 4567'}
-            required
-            sx={{ mb: 3 }}
-          />
-
-          <Button
-            variant="contained"
-            size="large"
-            fullWidth
-            disabled={isRegistering}
-            onClick={handleGuestSubmit}
-            startIcon={isRegistering ? <CircularProgress size={20} /> : <Explore />}
-            sx={{
-              bgcolor: brand.emerald[600],
-              '&:hover': { bgcolor: brand.emerald[700] },
-            }}
-          >
-            {isRegistering ? 'Registrando...' : 'Explorar Coleccion'}
-          </Button>
-        </Paper>
-      </PageWrapper>
+            <Button
+              variant="contained"
+              size="large"
+              fullWidth
+              disabled={isRegistering}
+              onClick={handleGuestSubmit}
+              startIcon={
+                isRegistering
+                  ? <CircularProgress size={20} sx={{ color: 'rgba(255,255,255,0.7)' }} />
+                  : <Explore />
+              }
+              sx={emeraldBtnSx}
+            >
+              {isRegistering ? 'Registrando...' : 'Explorar Coleccion'}
+            </Button>
+          </GlassCard>
+        </motion.div>
+      </PageShell>
     );
   }
 
-  // Valid invitation — welcome screen
+  // Welcome — access granted
   return (
-    <PageWrapper>
-      <Paper
-        elevation={0}
-        sx={{
-          p: 4,
-          maxWidth: 400,
-          textAlign: 'center',
-          borderRadius: 3,
-          border: '1px solid',
-          borderColor: brand.emerald[200],
-          bgcolor: `${brand.emerald[50]}50`,
-        }}
-      >
-        <CheckCircle sx={{ fontSize: 64, color: brand.emerald[600], mb: 2 }} />
-        <Typography variant="h5" fontWeight={typography.weight.bold} gutterBottom>
-          Bienvenido a Tierra Madre
-        </Typography>
-        {createdBy && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Invitado por {createdBy}
-          </Typography>
-        )}
+    <PageShell>
+      <motion.div {...fadeUp} transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}>
+        <GlassCard>
+          <Box sx={{ textAlign: 'center' }}>
+            <SuccessGlyph />
+            <Typography
+              sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: 700, color: vault.text, mb: 0.5 }}
+            >
+              Bienvenido a Tierra Madre
+            </Typography>
+            {createdBy && (
+              <Typography sx={{ color: vault.textMuted, fontSize: '0.85rem', mb: 2.5 }}>
+                Invitado por {createdBy}
+              </Typography>
+            )}
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Tienes acceso para explorar nuestra coleccion exclusiva de esmeraldas colombianas.
-        </Typography>
+            <Typography sx={{ color: vault.textMuted, fontSize: '0.9rem', mb: 3.5, lineHeight: 1.6 }}>
+              Tienes acceso para explorar nuestra coleccion exclusiva de esmeraldas colombianas.
+            </Typography>
 
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={<Explore />}
-          onClick={handleExplore}
-          fullWidth
-          sx={{
-            bgcolor: brand.emerald[600],
-            '&:hover': { bgcolor: brand.emerald[700] },
-            mb: 1,
-          }}
-        >
-          Explorar Coleccion
-        </Button>
+            <Button
+              variant="contained"
+              size="large"
+              fullWidth
+              startIcon={<Explore />}
+              onClick={handleExplore}
+              sx={{ ...emeraldBtnSx, mb: 1.5 }}
+            >
+              Explorar Coleccion
+            </Button>
 
-        <Button
-          variant="text"
-          onClick={handleGoHome}
-          fullWidth
-          sx={{ color: 'text.secondary' }}
-        >
-          Ir al Inicio
-        </Button>
-      </Paper>
-    </PageWrapper>
+            <Button
+              fullWidth
+              onClick={() => navigate('/home')}
+              sx={{ ...ghostBtnSx, border: 'none', color: vault.textDim }}
+            >
+              Ir al Inicio
+            </Button>
+          </Box>
+        </GlassCard>
+      </motion.div>
+    </PageShell>
   );
 }

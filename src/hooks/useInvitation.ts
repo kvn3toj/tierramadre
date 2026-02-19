@@ -16,6 +16,7 @@ import type {
   GenerateInvitationOptions,
   GuestRegistration,
 } from '../types/invitation';
+import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 
 interface UseInvitationReturn {
   generateInvitation: (options?: GenerateInvitationOptions) => Promise<InvitationData | null>;
@@ -119,16 +120,23 @@ export const useInvitation = (): UseInvitationReturn => {
     setError(null);
 
     try {
+      const storedToken = localStorage.getItem(INVITATION_STORAGE_KEYS.DEVICE_TOKEN) || undefined;
+
       const response = await fetch('/api/invitations?action=verify-pin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shortCode, pin }),
+        body: JSON.stringify({ shortCode, pin, deviceToken: storedToken }),
       });
 
       const data = await response.json();
 
       if (!data.success) {
         setError(data.error || 'Error al verificar PIN');
+      }
+
+      // Persist device token on successful verification
+      if (data.pinVerified && data.deviceToken) {
+        localStorage.setItem(INVITATION_STORAGE_KEYS.DEVICE_TOKEN, data.deviceToken);
       }
 
       return data;

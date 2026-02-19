@@ -48,8 +48,8 @@ export const CACHE = {
   SHORT: 's-maxage=60, stale-while-revalidate=30',
   MEDIUM: 's-maxage=300, max-age=60, stale-while-revalidate=600',
   LONG: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400', // 24h browser, 7d CDN, 24h stale
-  // Optimized for images: immutable hint for CDN, long stale-while-revalidate for instant display
-  IMAGES: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400, immutable',
+  // Images: 1h browser + 1h CDN (Drive files can be deleted/replaced)
+  IMAGES: 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=300',
 };
 
 // Invitation Settings — no time limit on guest access

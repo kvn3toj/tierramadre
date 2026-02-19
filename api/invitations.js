@@ -25,7 +25,7 @@ const SHEET_NAME = SHEETS.INVITATIONS;
 const HEADERS = [
   'invitationId', 'shortCode', 'creatorEmail', 'creatorName', 'creatorRole',
   'guestName', 'guestContact', 'contactType', 'createdAt', 'activatedAt',
-  'expiresAt', 'pricingMode', 'durationHours', 'status', 'pin', 'boundIp'
+  'expiresAt', 'pricingMode', 'durationHours', 'status', 'pin', 'boundToken'
 ];
 
 /**
@@ -36,21 +36,17 @@ function generatePin() {
 }
 
 /**
- * Extract client IP from request headers (Vercel/proxy-aware)
+ * Generate a random device token
  */
-function getClientIp(req) {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
-  }
-  return req.headers['x-real-ip'] || 'unknown';
+function generateDeviceToken() {
+  return 'tk_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 12);
 }
 
 /**
- * Verify PIN and enforce IP binding
+ * Verify PIN and enforce device-token binding
  */
-async function verifyPin(sheets, req, body) {
-  const { shortCode, pin } = body;
+async function verifyPin(sheets, _req, body) {
+  const { shortCode, pin, deviceToken: clientToken } = body;
 
   if (!shortCode || !pin) {
     return { success: false, error: 'shortCode and pin are required' };
@@ -68,26 +64,29 @@ async function verifyPin(sheets, req, body) {
     return { success: true, isPinWrong: true, error: 'PIN incorrecto' };
   }
 
-  const clientIp = getClientIp(req);
-
-  // If IP already bound, enforce match
-  if (data.boundIp && data.boundIp !== 'unknown') {
-    if (clientIp !== 'unknown' && clientIp !== data.boundIp) {
+  // If token already bound, enforce match
+  if (data.boundToken) {
+    if (!clientToken || clientToken !== data.boundToken) {
       return { success: true, isIpBlocked: true, error: 'Acceso restringido a otro dispositivo' };
     }
-  } else if (clientIp !== 'unknown') {
-    // First verification — bind IP
+  }
+
+  // First verification — generate and bind token
+  let tokenToReturn = clientToken;
+  if (!data.boundToken) {
+    tokenToReturn = generateDeviceToken();
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!P${rowIndex}`,
       valueInputOption: 'RAW',
-      requestBody: { values: [[clientIp]] },
+      requestBody: { values: [[tokenToReturn]] },
     });
   }
 
   return {
     success: true,
     pinVerified: true,
+    deviceToken: tokenToReturn,
     guestName: data.guestName || null,
     guestContact: data.guestContact || null,
   };
@@ -110,7 +109,7 @@ async function ensureHeaders(sheets) {
       spreadsheetId: SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!O1:P1`,
       valueInputOption: 'RAW',
-      requestBody: { values: [['pin', 'boundIp']] },
+      requestBody: { values: [['pin', 'boundToken']] },
     });
   }
 }
@@ -148,7 +147,7 @@ async function findInvitationByCode(sheets, shortCode) {
           durationHours: parseInt(row[12]) || INVITATION_DURATION_HOURS,
           status: row[13] || 'pending',
           pin: row[14] || null,
-          boundIp: row[15] || null,
+          boundToken: row[15] || null,
         },
       };
     }
@@ -268,7 +267,7 @@ async function validateInvitation(sheets, shortCode) {
       guestName: data.guestName || null,
       guestContact: data.guestContact || null,
       contactType: data.contactType || null,
-      isPinBound: !!(data.boundIp),
+      isPinBound: !!(data.boundToken),
     };
   }
 
@@ -285,7 +284,7 @@ async function validateInvitation(sheets, shortCode) {
       guestName: data.guestName || null,
       guestContact: data.guestContact || null,
       contactType: data.contactType || null,
-      isPinBound: !!(data.boundIp),
+      isPinBound: !!(data.boundToken),
     };
   }
 
@@ -440,7 +439,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
 
   await ensureSheet(sheets, SHEET_NAME, HEADERS);
 
-  // Auto-migrate: add pin + boundIp headers if missing on existing sheet
+  // Auto-migrate: add pin + boundToken headers if missing on existing sheet
   await ensureHeaders(sheets);
 
   // POST - Generate invitation
@@ -449,7 +448,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     return res.status(200).json(result);
   }
 
-  // POST - Verify PIN + IP binding
+  // POST - Verify PIN + device token binding
   if (req.method === 'POST' && action === 'verify-pin') {
     const result = await verifyPin(sheets, req, req.body);
     return res.status(200).json(result);
