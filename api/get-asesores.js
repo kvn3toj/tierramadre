@@ -13,9 +13,10 @@ import {
   getSheetNames,
   findColumnIndex,
   formatDisplayName,
+  DRIVE_FOLDERS,
 } from './_lib/index.js';
 
-export default withApiHandler(async (req, res, { sheets }) => {
+export default withApiHandler(async (req, res, { sheets, drive, sharedDriveId }) => {
   const sheetNames = await getSheetNames(sheets);
 
   // Use sheet 3 (index 2) for asesores data
@@ -95,6 +96,45 @@ export default withApiHandler(async (req, res, { sheets }) => {
 
   asesoresData.sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
+  // Scan Drive ambassadors/ folder for profile photos
+  if (drive && sharedDriveId) {
+    try {
+      const folderResponse = await drive.files.list({
+        q: `name='${DRIVE_FOLDERS.AMBASSADORS}' and mimeType='application/vnd.google-apps.folder' and '${sharedDriveId}' in parents and trashed=false`,
+        fields: 'files(id)',
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
+      });
+
+      const ambassadorsFolderId = folderResponse.data.files?.[0]?.id;
+      if (ambassadorsFolderId) {
+        const photosResponse = await drive.files.list({
+          q: `'${ambassadorsFolderId}' in parents and (mimeType='image/jpeg' or mimeType='image/png' or mimeType='image/webp') and trashed=false`,
+          fields: 'files(id, name)',
+          supportsAllDrives: true,
+          includeItemsFromAllDrives: true,
+          pageSize: 100,
+        });
+
+        const photoMap = {};
+        for (const file of (photosResponse.data.files || [])) {
+          const slug = file.name.replace(/\.(jpg|jpeg|png|webp)$/i, '');
+          photoMap[slug] = file.id;
+        }
+
+        for (const asesor of asesoresData) {
+          const fileId = photoMap[asesor.slug];
+          if (fileId) {
+            asesor.photoFileId = fileId;
+            asesor.photoUrl = `/api/serve-drive-image?fileId=${fileId}`;
+          }
+        }
+      }
+    } catch (photoError) {
+      console.warn('[GetAsesores] Could not scan ambassador photos:', photoError.message);
+    }
+  }
+
   return sendSuccess(res, {
     asesores: asesoresData,
     count: asesoresData.length,
@@ -104,5 +144,6 @@ export default withApiHandler(async (req, res, { sheets }) => {
 }, {
   cache: CACHE.NONE,
   provideSheets: true,
+  provideDrive: true,
   errorPrefix: 'GetAsesores',
 });

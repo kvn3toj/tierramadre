@@ -109,6 +109,7 @@ export default function AsesorCard({
           {/* Header: Avatar + Name */}
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <Avatar
+              src={asesor.photoUrl}
               sx={{
                 width: 56,
                 height: 56,

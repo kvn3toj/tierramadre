@@ -9,6 +9,8 @@ export interface Asesor {
   whatsapp?: string | null;
   especialidad?: string | null;
   email?: string | null;
+  photoFileId?: string;
+  photoUrl?: string;
   productCount?: number;
   products?: TreasureItem[];
 }

@@ -52,6 +52,7 @@ export const STORAGE_KEYS = {
   // MEDIA & IMAGES
   // =============================================================================
 
+  AMBASSADOR_PHOTOS: 'tierramadre-ambassador-photos-v1',
   BATCH_THUMBNAILS: 'tierramadre-batch-thumbnails-v2',
   TREASURE_MEDIA: 'tierramadre-treasure-media',
   TREASURE_GALLERY: 'tierramadre-treasure-gallery-v2',

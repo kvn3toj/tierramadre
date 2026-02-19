@@ -3,7 +3,7 @@
  * Shows asesor details and their treasure products with filtering.
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -14,7 +14,7 @@ import {
   Skeleton,
   useTheme,
 } from '@mui/material';
-import { ArrowLeft, Package } from 'lucide-react';
+import { ArrowLeft, Package, Square } from 'lucide-react';
 import { useAsesores } from '../../../hooks/useAsesores';
 import { useTreasure } from '../../../hooks/useTreasure';
 import { useCotizacionHistory, SavedCotizacion } from '../../../hooks/useCotizacionHistory';
@@ -23,8 +23,10 @@ import { useNotification } from '../../../contexts/NotificationContext';
 import { TreasureItem } from '../../../types';
 import { TreasureCard } from '../../../components/treasure/TreasureCard';
 import ScrollToTop from '../../../components/shared/ScrollToTop';
+import ImageCropper from '../../../components/media/ImageCropper';
 import { brand, lightTokens, darkTokens } from '../../../design-system';
 import { useAsesorCollection } from '../../../hooks/useAsesorCollection';
+import { useAmbassadorPhoto } from '../../../hooks/useAmbassadorPhoto';
 import {
   ProfileHeader,
   ProductFilters,
@@ -73,11 +75,40 @@ export default function AsesorProfilePage() {
   // Exclusive collection state
   const [selectedCollectionProduct, setSelectedCollectionProduct] = useState<TreasureItem | null>(null);
 
+  // File input ref for photo upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const { treasure } = useTreasure();
   const { asesores, isLoading } = useAsesores(treasure);
   const { user: googleUser } = useGoogleAuth();
   const cotizacionHistory = useCotizacionHistory();
   const { notify, confirmAction } = useNotification();
+
+  // Ambassador photo upload
+  const {
+    localPhotoUrl,
+    isUploading: isUploadingPhoto,
+    uploadError: photoUploadError,
+    isCropperOpen,
+    cropperImageSrc,
+    handleFileSelect,
+    handleCropComplete,
+    closeCropper,
+  } = useAmbassadorPhoto(slug);
+
+  // Notify on photo upload result
+  const prevUploadingRef = useRef(false);
+  useEffect(() => {
+    // Detect when upload finishes (was uploading, now not)
+    if (prevUploadingRef.current && !isUploadingPhoto) {
+      if (photoUploadError) {
+        notify(photoUploadError, 'error');
+      } else if (localPhotoUrl) {
+        notify('Foto de perfil actualizada', 'success');
+      }
+    }
+    prevUploadingRef.current = isUploadingPhoto;
+  }, [isUploadingPhoto, photoUploadError, localPhotoUrl]);
 
   // Find the asesor by slug
   const asesor = useMemo(() => {
@@ -267,6 +298,19 @@ export default function AsesorProfilePage() {
     }
   };
 
+  const handlePhotoEditClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+    // Reset so the same file can be re-selected
+    e.target.value = '';
+  };
+
   if (isLoading) {
     return (
       <Box sx={{ pb: 4 }}>
@@ -338,6 +382,28 @@ export default function AsesorProfilePage() {
         Volver a Asesores
       </Button>
 
+      {/* Hidden file input for photo upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileInputChange}
+        style={{ display: 'none' }}
+      />
+
+      {/* Image Cropper Dialog (locked to 1:1) */}
+      {isCropperOpen && (
+        <ImageCropper
+          open={isCropperOpen}
+          imageSrc={cropperImageSrc}
+          onClose={closeCropper}
+          onCropComplete={handleCropComplete}
+          aspectRatioOptions={[
+            { label: '1:1', value: 1, icon: <Square size={18} /> },
+          ]}
+        />
+      )}
+
       {/* Profile Header */}
       <ProfileHeader
         asesor={asesor}
@@ -347,6 +413,10 @@ export default function AsesorProfilePage() {
         onShare={handleShare}
         onShareWhatsApp={handleShareWhatsApp}
         onCopyLink={handleCopyLink}
+        isOwner={isProfileOwner}
+        onPhotoEdit={handlePhotoEditClick}
+        photoUrl={localPhotoUrl || undefined}
+        isUploadingPhoto={isUploadingPhoto}
       />
 
       {/* My Cotizaciones Section - Only visible to profile owner */}

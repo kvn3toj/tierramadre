@@ -40,6 +40,8 @@ export const DRIVE_FOLDERS = {
   FEEDBACK_APP: 'feedback-app',
   // Screenshots subfolder inside feedback-app
   FEEDBACK_SCREENSHOTS: 'screenshots',
+  // Ambassador profile photos
+  AMBASSADORS: 'ambassadors',
 };
 
 // Cache Durations (optimized for Chrome/Safari compatibility)

@@ -13,6 +13,7 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  CircularProgress,
   alpha,
   useTheme,
 } from '@mui/material';
@@ -26,6 +27,7 @@ import {
   Crown,
   Link2,
   MessageCircle,
+  Camera,
 } from 'lucide-react';
 import { Asesor } from '../../../../hooks/useAsesores';
 import { brand, lightTokens, darkTokens } from '../../../../design-system';
@@ -103,6 +105,10 @@ interface ProfileHeaderProps {
   onShare: () => void;
   onShareWhatsApp?: () => void;
   onCopyLink?: () => void;
+  isOwner?: boolean;
+  onPhotoEdit?: () => void;
+  photoUrl?: string;
+  isUploadingPhoto?: boolean;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -113,6 +119,10 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   onShare,
   onShareWhatsApp,
   onCopyLink,
+  isOwner,
+  onPhotoEdit,
+  photoUrl,
+  isUploadingPhoto,
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -132,17 +142,57 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         {/* Avatar and Name */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 250 }}>
-          <Avatar
-            sx={{
-              width: 80,
-              height: 80,
-              bgcolor: brand.emerald[500],
-              fontSize: '2rem',
-              fontWeight: 700,
-            }}
-          >
-            {asesor.name.charAt(0).toUpperCase()}
-          </Avatar>
+          <Box sx={{ position: 'relative', flexShrink: 0 }}>
+            <Avatar
+              src={photoUrl || asesor.photoUrl}
+              sx={{
+                width: 80,
+                height: 80,
+                bgcolor: brand.emerald[500],
+                fontSize: '2rem',
+                fontWeight: 700,
+                opacity: isUploadingPhoto ? 0.6 : 1,
+                transition: 'opacity 0.2s',
+              }}
+            >
+              {asesor.name.charAt(0).toUpperCase()}
+            </Avatar>
+            {isUploadingPhoto && (
+              <CircularProgress
+                size={28}
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  mt: '-14px',
+                  ml: '-14px',
+                  color: brand.emerald[500],
+                }}
+              />
+            )}
+            {isOwner && onPhotoEdit && (
+              <IconButton
+                onClick={onPhotoEdit}
+                disabled={isUploadingPhoto}
+                size="small"
+                sx={{
+                  position: 'absolute',
+                  bottom: -2,
+                  right: -2,
+                  width: 28,
+                  height: 28,
+                  bgcolor: brand.emerald[500],
+                  color: '#fff',
+                  border: '2px solid',
+                  borderColor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
+                  '&:hover': { bgcolor: brand.emerald[600] },
+                  '&.Mui-disabled': { bgcolor: brand.emerald[300], color: '#fff' },
+                }}
+              >
+                <Camera size={14} />
+              </IconButton>
+            )}
+          </Box>
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
               {asesor.name}
