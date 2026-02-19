@@ -15,7 +15,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { ArrowLeft, Package, Square } from 'lucide-react';
-import { useAsesores } from '../../../hooks/useAsesores';
+import { useAsesores, matchesAsesorName } from '../../../hooks/useAsesores';
 import { useTreasure } from '../../../hooks/useTreasure';
 import { useCotizacionHistory, SavedCotizacion } from '../../../hooks/useCotizacionHistory';
 import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
@@ -43,17 +43,6 @@ import type {
   TypeFilter,
 } from './components';
 
-// Normalize name for comparison
-const normalizeName = (name: string): string => {
-  let result = '';
-  for (let i = 0; i < name.length; i++) {
-    const char = name.charCodeAt(i);
-    if ((char >= 65 && char <= 90) || (char >= 97 && char <= 122)) {
-      result += name[i].toUpperCase();
-    }
-  }
-  return result;
-};
 
 export default function AsesorProfilePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -147,13 +136,12 @@ export default function AsesorProfilePage() {
     }
   }, [isProfileOwner, googleUser?.email]);
 
-  // Get products for this asesor
+  // Get products for this asesor (handles abbreviated names like "JM.Escobar")
   const allProducts = useMemo(() => {
     if (!asesor || !treasure) return [];
-    const normalizedAsesorName = normalizeName(asesor.name);
     return treasure.filter(item => {
       if (!item.asesor) return false;
-      return normalizeName(item.asesor) === normalizedAsesorName;
+      return matchesAsesorName(item.asesor, asesor.name);
     });
   }, [asesor, treasure]);
 
