@@ -114,7 +114,6 @@ export default function AsesorCard({
                 height: 56,
                 background: emeraldGradients.deep,
                 fontSize: '1.3rem',
-                fontFamily: fontFamilies.brand,
                 fontWeight: 700,
                 border: '2px solid transparent',
                 backgroundClip: 'padding-box',
@@ -128,7 +127,6 @@ export default function AsesorCard({
               <Typography
                 variant="h6"
                 sx={{
-                  fontFamily: fontFamilies.brand,
                   fontWeight: 700,
                   fontSize: '1rem',
                   overflow: 'hidden',

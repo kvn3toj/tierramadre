@@ -36,7 +36,6 @@ import {
   glassEmerald,
   glassLight,
   glassDark,
-  fontFamilies,
 } from '../../design-system/index';
 import { fadeInUp, staggerContainer, staggerItem } from '../../design-system/tokens/motion';
 
@@ -307,7 +306,7 @@ export default function AmbassadorDirectory({
             <Gem size={48} style={{ color: emeraldCore.light, marginBottom: 16 }} />
             <Typography
               variant="h6"
-              sx={{ mb: 1, color: 'text.secondary', fontFamily: fontFamilies.brand }}
+              sx={{ mb: 1, color: 'text.secondary' }}
             >
               No se encontraron embajadores
             </Typography>
