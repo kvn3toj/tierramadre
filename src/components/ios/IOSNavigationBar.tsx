@@ -37,6 +37,8 @@ export interface IOSNavigationBarProps {
   trailingActions?: NavigationAction[];
   /** Custom trailing element (e.g., LevelBadge) */
   trailingElement?: React.ReactNode;
+  /** Override background color (e.g., brand green for home) */
+  backgroundColor?: string;
 }
 
 const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
@@ -49,6 +51,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
   leadingActions = [],
   trailingActions = [],
   trailingElement,
+  backgroundColor,
 }) => {
   const navigate = useNavigate();
   const { effectiveConfig } = useLiquidGlassSafe();
@@ -63,9 +66,18 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
   };
 
   const isLargeMode = mode === 'large';
+  const iconColor = backgroundColor ? '#ffffff' : 'var(--brand-primary)';
 
   // Liquid Glass styles based on scroll state - Apple HIG compliant
   const liquidGlassStyles = useMemo(() => {
+    if (backgroundColor) {
+      return {
+        backgroundColor,
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
+      };
+    }
+
     if (!effectiveConfig.blur) {
       return {
         backgroundColor: 'var(--surface-primary)',
@@ -81,7 +93,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
       backdropFilter: `blur(${blurValue}) saturate(${liquidSaturation.vibrant})`,
       WebkitBackdropFilter: `blur(${blurValue}) saturate(${liquidSaturation.vibrant})`,
     };
-  }, [effectiveConfig.blur, isScrolled]);
+  }, [effectiveConfig.blur, isScrolled, backgroundColor]);
 
   // Specular highlight on bottom edge
   const specularStyles = useMemo(() => {
@@ -112,7 +124,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
         right: 0,
         zIndex: 999,
         ...liquidGlassStyles,
-        borderBottom: '0.5px solid var(--border-default)',
+        borderBottom: backgroundColor ? 'none' : '0.5px solid var(--border-default)',
         boxShadow: isScrolled ? 'var(--shadow-md)' : 'var(--shadow-sm)',
         transition: effectiveConfig.animations
           ? `all ${durations.liquidNormal} ${easingCurves.liquidInOut}`
@@ -122,7 +134,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
         ...specularStyles,
 
         '@supports not (backdrop-filter: blur(10px))': {
-          backgroundColor: 'var(--surface-primary)',
+          backgroundColor: backgroundColor || 'var(--surface-primary)',
         },
         '@media (prefers-reduced-motion: reduce)': {
           transition: 'none',
@@ -148,7 +160,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
               onClick={handleBackClick}
               aria-label="Go back"
               sx={{
-                color: 'var(--brand-primary)',
+                color: iconColor,
                 padding: spacing.xxs,
                 '&:hover': { backgroundColor: 'var(--surface-tertiary)' },
               }}
@@ -165,7 +177,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
                 onClick={action.onClick}
                 aria-label={action.label}
                 sx={{
-                  color: 'var(--brand-primary)',
+                  color: iconColor,
                   padding: spacing.xxs,
                   '&:hover': { backgroundColor: 'var(--surface-tertiary)' },
                 }}
@@ -216,7 +228,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
                 onClick={action.onClick}
                 aria-label={action.label}
                 sx={{
-                  color: 'var(--brand-primary)',
+                  color: iconColor,
                   padding: spacing.xxs,
                   '&:hover': { backgroundColor: 'var(--surface-tertiary)' },
                 }}

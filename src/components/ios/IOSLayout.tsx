@@ -28,6 +28,10 @@ interface PageConfig {
   showBackButton?: boolean;
   leadingActions?: NavigationAction[];
   trailingActions?: NavigationAction[];
+  /** Override background color for the nav bar */
+  backgroundColor?: string;
+  /** Force a specific logo regardless of theme */
+  forceLogoUrl?: string;
 }
 
 const getPageConfigs = (t: any): Record<string, PageConfig> => ({
@@ -67,6 +71,8 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
     title: 'Tierra Mädre',
     mode: 'compact',
     logoUrl: '/images/logo-horizontal-white.png',
+    backgroundColor: '#00AE7A',
+    forceLogoUrl: '/images/logo-horizontal-white.png',
   },
   '/catalog': {
     title: t.pages.catalog.title,
@@ -225,11 +231,12 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         mode={pageConfig.mode}
         title={pageConfig.title}
         subtitle={pageConfig.subtitle}
-        logoUrl={pageConfig.logoUrl ? (isLight ? '/images/logo-horizontal-dark.png' : '/images/logo-horizontal-white.png') : undefined}
+        logoUrl={pageConfig.forceLogoUrl || (pageConfig.logoUrl ? (isLight ? '/images/logo-horizontal-dark.png' : '/images/logo-horizontal-white.png') : undefined)}
         showBackButton={pageConfig.showBackButton}
         leadingActions={pageConfig.leadingActions}
         trailingActions={pageConfig.trailingActions}
         trailingElement={undefined}
+        backgroundColor={pageConfig.backgroundColor}
       />
 
       <Box

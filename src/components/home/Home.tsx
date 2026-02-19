@@ -96,7 +96,7 @@ const Home: React.FC = () => {
     >
       {/* Hero + Gallery - Merged with interactive thumbnails */}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <HeroGallery treasure={treasure} />
+        <HeroGallery />
       </ErrorBoundary>
 
       {/* Oracle - Animated random quote */}

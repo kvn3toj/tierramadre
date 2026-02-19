@@ -66,6 +66,11 @@ function parseUrlFilters(): Partial<TreasureFilters> {
   const coleccion = params.get('coleccion');
   if (coleccion) filters.coleccionFilter = coleccion;
 
+  const cantidad = params.get('cantidad');
+  if (cantidad === '1' || cantidad === '2+' || cantidad === '2%2B') {
+    filters.cantidadFilter = cantidad === '2%2B' ? '2+' : cantidad;
+  }
+
   // Parse items filter (comma-separated item numbers for QR/quotation links)
   const items = params.get('items');
   if (items) {
@@ -129,6 +134,9 @@ export function useUrlFilterSync({
       params.set('coleccion', filters.coleccionFilter);
     }
     if (filters.sortBy !== 'newest') params.set('sort', filters.sortBy);
+    if (filters.cantidadFilter && filters.cantidadFilter !== 'all') {
+      params.set('cantidad', filters.cantidadFilter);
+    }
 
     // Price range - only if modified from defaults
     if (filters.priceRange[0] > 0) {
