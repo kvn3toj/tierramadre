@@ -28,6 +28,7 @@ const AUTHORIZED_EMAILS = [
   'juanmanuelescobarco@gmail.com',
   'ana.pelaezc@gmail.com',
   'isalavikinga@gmail.com',
+  'mitchellmorenoinvestor@gmail.com',
 ];
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
