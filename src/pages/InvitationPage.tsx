@@ -74,10 +74,6 @@ const fadeUp = {
   exit: { opacity: 0, y: -10 },
 };
 
-const stagger = {
-  animate: { transition: { staggerChildren: 0.07 } },
-};
-
 // ═══════════════════════════════════════════════════════════════
 // SHARED BUTTON STYLES
 // ═══════════════════════════════════════════════════════════════
@@ -692,6 +688,16 @@ export default function InvitationPage() {
     navigate(redirectTo || '/treasure', { replace: true });
   };
 
+  // ─── Auto-navigate after success ───
+  useEffect(() => {
+    if (status === 'valid') {
+      const timer = setTimeout(() => {
+        navigate(redirectTo || '/treasure', { replace: true });
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [status, navigate, redirectTo]);
+
   // ═══════════════════════════════════════════════════════════
   // RENDER
   // ═══════════════════════════════════════════════════════════
@@ -816,37 +822,31 @@ export default function InvitationPage() {
 
     return (
       <PageShell>
-        <motion.div initial="initial" animate="animate" variants={stagger}>
+        <motion.div {...fadeUp} transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}>
           <GlassCard>
             <Box sx={{ textAlign: 'center' }}>
-              <motion.div variants={fadeUp}>
-                <LockGlyph />
-              </motion.div>
+              <LockGlyph />
 
-              <motion.div variants={fadeUp}>
-                <Typography
-                  sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: 700, color: vault.text, mb: 0.5 }}
-                >
-                  Ingresa tu PIN
-                </Typography>
-              </motion.div>
+              <Typography
+                sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: 700, color: vault.text, mb: 0.5 }}
+              >
+                Ingresa tu PIN
+              </Typography>
 
               {createdBy && (
-                <motion.div variants={fadeUp}>
+                <>
                   <Typography sx={{ color: vault.textDim, fontSize: '0.8rem', mb: 0.5 }}>
                     Invitado por
                   </Typography>
                   <Typography sx={{ color: vault.emerald, fontSize: '0.9rem', fontWeight: 500, mb: 2 }}>
                     {createdBy}
                   </Typography>
-                </motion.div>
+                </>
               )}
 
-              <motion.div variants={fadeUp}>
-                <Typography sx={{ color: vault.textMuted, fontSize: '0.85rem', mb: 3, lineHeight: 1.5 }}>
-                  Ingresa el PIN de 4 digitos que te compartio tu embajador.
-                </Typography>
-              </motion.div>
+              <Typography sx={{ color: vault.textMuted, fontSize: '0.85rem', mb: 3, lineHeight: 1.5 }}>
+                Ingresa el PIN de 4 digitos que te compartio tu embajador.
+              </Typography>
 
               {pinError && (
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
@@ -865,32 +865,28 @@ export default function InvitationPage() {
                 </motion.div>
               )}
 
-              <motion.div variants={fadeUp}>
-                <PinInput
-                  value={pinValue}
-                  onChange={setPinValue}
-                  onSubmit={handlePinSubmit}
-                  disabled={isLockedOut}
-                  inputRef={pinInputRef}
-                />
-              </motion.div>
+              <PinInput
+                value={pinValue}
+                onChange={setPinValue}
+                onSubmit={handlePinSubmit}
+                disabled={isLockedOut}
+                inputRef={pinInputRef}
+              />
 
-              <motion.div variants={fadeUp}>
-                <Button
-                  variant="contained"
-                  size="large"
-                  fullWidth
-                  disabled={pinValue.length !== 4 || isVerifyingPin || isLockedOut}
-                  onClick={handlePinSubmit}
-                  sx={emeraldBtnSx}
-                >
-                  {isVerifyingPin ? (
-                    <CircularProgress size={22} sx={{ color: whiteAlpha(0.7) }} />
-                  ) : (
-                    'Confirmar PIN'
-                  )}
-                </Button>
-              </motion.div>
+              <Button
+                variant="contained"
+                size="large"
+                fullWidth
+                disabled={pinValue.length !== 4 || isVerifyingPin || isLockedOut}
+                onClick={handlePinSubmit}
+                sx={emeraldBtnSx}
+              >
+                {isVerifyingPin ? (
+                  <CircularProgress size={22} sx={{ color: whiteAlpha(0.7) }} />
+                ) : (
+                  'Confirmar PIN'
+                )}
+              </Button>
             </Box>
           </GlassCard>
         </motion.div>
@@ -1013,48 +1009,59 @@ export default function InvitationPage() {
   }
 
   // Welcome — access granted
+  if (status === 'valid') {
+    return (
+      <PageShell>
+        <motion.div {...fadeUp} transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}>
+          <GlassCard>
+            <Box sx={{ textAlign: 'center' }}>
+              <SuccessGlyph />
+              <Typography
+                sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: 700, color: vault.text, mb: 0.5 }}
+              >
+                Bienvenido a Tierra Madre
+              </Typography>
+              {createdBy && (
+                <Typography sx={{ color: vault.textMuted, fontSize: '0.85rem', mb: 2.5 }}>
+                  Invitado por {createdBy}
+                </Typography>
+              )}
+
+              <Typography sx={{ color: vault.textMuted, fontSize: '0.9rem', mb: 3.5, lineHeight: 1.6 }}>
+                Tienes acceso para explorar nuestra coleccion exclusiva de esmeraldas colombianas.
+              </Typography>
+
+              <Button
+                variant="contained"
+                size="large"
+                fullWidth
+                startIcon={<Explore />}
+                onClick={handleExplore}
+                sx={{ ...emeraldBtnSx, mb: 1.5 }}
+              >
+                Explorar Coleccion
+              </Button>
+
+              <Button
+                fullWidth
+                onClick={() => navigate('/home')}
+                sx={{ ...ghostBtnSx, border: 'none', color: vault.textDim }}
+              >
+                Ir al Inicio
+              </Button>
+            </Box>
+          </GlassCard>
+        </motion.div>
+      </PageShell>
+    );
+  }
+
+  // Fallback — unexpected state
   return (
     <PageShell>
-      <motion.div {...fadeUp} transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}>
-        <GlassCard>
-          <Box sx={{ textAlign: 'center' }}>
-            <SuccessGlyph />
-            <Typography
-              sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: 700, color: vault.text, mb: 0.5 }}
-            >
-              Bienvenido a Tierra Madre
-            </Typography>
-            {createdBy && (
-              <Typography sx={{ color: vault.textMuted, fontSize: '0.85rem', mb: 2.5 }}>
-                Invitado por {createdBy}
-              </Typography>
-            )}
-
-            <Typography sx={{ color: vault.textMuted, fontSize: '0.9rem', mb: 3.5, lineHeight: 1.6 }}>
-              Tienes acceso para explorar nuestra coleccion exclusiva de esmeraldas colombianas.
-            </Typography>
-
-            <Button
-              variant="contained"
-              size="large"
-              fullWidth
-              startIcon={<Explore />}
-              onClick={handleExplore}
-              sx={{ ...emeraldBtnSx, mb: 1.5 }}
-            >
-              Explorar Coleccion
-            </Button>
-
-            <Button
-              fullWidth
-              onClick={() => navigate('/home')}
-              sx={{ ...ghostBtnSx, border: 'none', color: vault.textDim }}
-            >
-              Ir al Inicio
-            </Button>
-          </Box>
-        </GlassCard>
-      </motion.div>
+      <Box sx={{ textAlign: 'center' }}>
+        <CircularProgress size={32} sx={{ color: vault.emerald }} />
+      </Box>
     </PageShell>
   );
 }
