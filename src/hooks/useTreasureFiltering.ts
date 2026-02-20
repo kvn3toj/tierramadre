@@ -10,7 +10,7 @@ import { normalizeQuality, normalizeColor } from '../constants/quality-and-color
 import { useFilterOptions } from './useFilterOptions';
 import { useTreasureSort, type SortOption } from './useTreasureSort';
 import { useFilterInactivityTimeout } from './useFilterInactivityTimeout';
-import { CATEGORY_SUBCATEGORIES, MainCategory } from '../components/home/sections/gallery-constants';
+// Category filter now matches directly against item.categoria (Column K from inventory sheet)
 
 // Sequential stock: same product listed multiple times.
 // Only the first non-sold item in each group is shown; the rest are hidden.
@@ -85,6 +85,7 @@ export interface UseTreasureFilteringReturn {
     qualities: string[];
     cantidades: number[];
     colecciones: string[];
+    categorias: string[];
     priceMinMax: { min: number; max: number };
   };
 }
@@ -180,16 +181,7 @@ export function useTreasureFiltering({
         (cantidadFilter === '1' && item.cantidad === 1) ||
         (cantidadFilter === '2+' && item.cantidad > 1);
       const matchesCity = cityFilter === 'all' || item.city === cityFilter;
-      const matchesCategoria = categoriaFilter === 'all' || (() => {
-        if (categoriaFilter === 'joyas') {
-          return item.isJewelry;
-        }
-        const subcats = CATEGORY_SUBCATEGORIES[categoriaFilter as MainCategory];
-        if (subcats && subcats.length > 0) {
-          return subcats.includes(item.categoria || '');
-        }
-        return true; // No subcategories defined = no additional filtering
-      })();
+      const matchesCategoria = categoriaFilter === 'all' || item.categoria === categoriaFilter;
       const matchesColeccion = coleccionFilter === 'all' || item.coleccion === coleccionFilter;
       const matchesItems = itemsFilter.length === 0 || itemsFilter.includes(item.item);
 

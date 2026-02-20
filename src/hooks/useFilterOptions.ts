@@ -13,6 +13,7 @@ export interface FilterOptions {
   qualities: string[];
   cantidades: number[];
   colecciones: string[];
+  categorias: string[];
   priceMinMax: { min: number; max: number };
 }
 
@@ -32,6 +33,7 @@ export function useFilterOptions(treasure: TreasureItem[]): FilterOptions {
     const qualities = new Set<string>();
     const cantidades = new Set<number>();
     const colecciones = new Set<string>();
+    const categorias = new Set<string>();
 
     treasure.forEach(item => {
       const normalizedColor = normalizeColor(item.color);
@@ -42,6 +44,7 @@ export function useFilterOptions(treasure: TreasureItem[]): FilterOptions {
       if (normalizedQuality) qualities.add(normalizedQuality);
       if (item.cantidad) cantidades.add(item.cantidad);
       if (item.coleccion) colecciones.add(item.coleccion);
+      if (item.categoria) categorias.add(item.categoria);
     });
 
     return {
@@ -50,6 +53,7 @@ export function useFilterOptions(treasure: TreasureItem[]): FilterOptions {
       qualities: Array.from(qualities).sort(),
       cantidades: Array.from(cantidades).sort((a, b) => a - b),
       colecciones: Array.from(colecciones).sort(),
+      categorias: Array.from(categorias).sort(),
       priceMinMax,
     };
   }, [treasure, priceMinMax]);

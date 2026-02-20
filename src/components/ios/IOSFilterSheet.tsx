@@ -45,6 +45,7 @@ export interface IOSFilterSheetProps {
   statusFilter: StatusFilter;
   sortBy: SortOption;
   typeFilter: TypeFilter;
+  categoriaFilter: string;
   colorFilter: string;
   shapeFilter: string;
   qualityFilter: string;
@@ -54,6 +55,7 @@ export interface IOSFilterSheetProps {
   setStatusFilter: (value: StatusFilter) => void;
   setSortBy: (value: SortOption) => void;
   setTypeFilter: (value: TypeFilter) => void;
+  setCategoriaFilter: (value: string) => void;
   setColorFilter: (value: string) => void;
   setShapeFilter: (value: string) => void;
   setQualityFilter: (value: string) => void;
@@ -63,6 +65,7 @@ export interface IOSFilterSheetProps {
   colors: string[];
   shapes: string[];
   qualities: string[];
+  categorias: string[];
   priceMinMax: { min: number; max: number };
   // Actions
   hasFilters: boolean;
@@ -75,6 +78,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
   statusFilter,
   sortBy,
   typeFilter,
+  categoriaFilter,
   colorFilter,
   shapeFilter,
   qualityFilter,
@@ -83,6 +87,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
   setStatusFilter,
   setSortBy,
   setTypeFilter,
+  setCategoriaFilter,
   setColorFilter,
   setShapeFilter,
   setQualityFilter,
@@ -91,6 +96,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
   colors,
   shapes,
   qualities,
+  categorias,
   priceMinMax,
   hasFilters,
   onClearFilters,
@@ -277,9 +283,40 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
           </Box>
         </Collapse>
 
-        {/* Type filter */}
+        {/* Category filter (Column K from inventory) */}
         <FilterRow
           label="Categoría"
+          value={categoriaFilter === 'all' ? 'Todas' : categoriaFilter}
+          section="categoria"
+          isActive={categoriaFilter !== 'all'}
+        />
+        <Collapse in={expandedSection === 'categoria'}>
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+            <Chip
+              label="Todas"
+              onClick={() => {
+                setCategoriaFilter('all');
+                setExpandedSection(null);
+              }}
+              sx={getChipStyle(categoriaFilter === 'all')}
+            />
+            {categorias.map((cat) => (
+              <Chip
+                key={cat}
+                label={cat}
+                onClick={() => {
+                  setCategoriaFilter(cat);
+                  setExpandedSection(null);
+                }}
+                sx={getChipStyle(categoriaFilter === cat)}
+              />
+            ))}
+          </Box>
+        </Collapse>
+
+        {/* Type filter */}
+        <FilterRow
+          label="Tipo"
           value={getTypeLabel()}
           section="type"
           isActive={typeFilter !== 'all'}

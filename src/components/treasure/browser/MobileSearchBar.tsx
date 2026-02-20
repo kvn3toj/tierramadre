@@ -29,6 +29,7 @@ export interface MobileSearchBarProps {
   setStatusFilter: (v: StatusFilter) => void;
   setShapeFilter: (v: string) => void;
   setCantidadFilter: (v: string) => void;
+  setCategoriaFilter: (v: string) => void;
   setPriceRange: (v: [number, number]) => void;
   // Favorites
   showFavoritesOnly: boolean;
@@ -55,6 +56,7 @@ export default function MobileSearchBar({
   setStatusFilter,
   setShapeFilter,
   setCantidadFilter,
+  setCategoriaFilter,
   setPriceRange,
   showFavoritesOnly,
   setShowFavoritesOnly,
@@ -238,6 +240,7 @@ export default function MobileSearchBar({
             onClearStatus={() => setStatusFilter('available')}
             onClearShape={() => setShapeFilter('all')}
             onClearCantidad={() => setCantidadFilter('all')}
+            onClearCategoria={() => setCategoriaFilter('all')}
             onClearPrice={() => setPriceRange([priceMinMax.min, priceMinMax.max])}
             compact
           />

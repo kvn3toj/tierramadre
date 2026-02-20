@@ -98,6 +98,7 @@ export default function TreasureBrowser({
     setPriceRange,
     setSortBy,
     setCantidadFilter,
+    setCategoriaFilter,
     setColeccionFilter,
     clearFilters,
     hasFilters,
@@ -219,10 +220,10 @@ export default function TreasureBrowser({
   }, [allTreasure]);
 
   // Filter options from hook
-  const { colors, shapes, qualities, colecciones, priceMinMax } = filterOptions;
+  const { colors, shapes, qualities, colecciones, categorias, priceMinMax } = filterOptions;
 
   // Destructure filter values for convenience
-  const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, coleccionFilter } = filters;
+  const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, coleccionFilter, categoriaFilter } = filters;
 
   // Handlers
   const handleCertClick = useCallback((item: TreasureItem) => {
@@ -262,6 +263,7 @@ export default function TreasureBrowser({
     shapeFilter,
     qualityFilter,
     coleccionFilter,
+    categoriaFilter,
     priceRange,
     setSearch,
     setStatusFilter,
@@ -272,6 +274,7 @@ export default function TreasureBrowser({
     setShapeFilter,
     setQualityFilter,
     setColeccionFilter,
+    setCategoriaFilter,
     setPriceRange,
     showAdvancedFilters,
     setShowAdvancedFilters,
@@ -284,6 +287,7 @@ export default function TreasureBrowser({
     shapes,
     qualities,
     colecciones,
+    categorias,
     priceMinMax,
     isLight,
     theme,
@@ -310,6 +314,7 @@ export default function TreasureBrowser({
             setStatusFilter={setStatusFilter}
             setShapeFilter={setShapeFilter}
             setCantidadFilter={setCantidadFilter}
+            setCategoriaFilter={setCategoriaFilter}
             setPriceRange={setPriceRange}
             showFavoritesOnly={showFavoritesOnly}
             setShowFavoritesOnly={setShowFavoritesOnly}
@@ -325,6 +330,7 @@ export default function TreasureBrowser({
             statusFilter={statusFilter}
             sortBy={sortBy}
             typeFilter={typeFilter}
+            categoriaFilter={categoriaFilter}
             colorFilter={colorFilter}
             shapeFilter={shapeFilter}
             qualityFilter={qualityFilter}
@@ -333,6 +339,7 @@ export default function TreasureBrowser({
             setStatusFilter={setStatusFilter}
             setSortBy={setSortBy}
             setTypeFilter={setTypeFilter}
+            setCategoriaFilter={setCategoriaFilter}
             setColorFilter={setColorFilter}
             setShapeFilter={setShapeFilter}
             setQualityFilter={setQualityFilter}
@@ -341,6 +348,7 @@ export default function TreasureBrowser({
             colors={colors}
             shapes={shapes}
             qualities={qualities}
+            categorias={categorias}
             priceMinMax={priceMinMax}
             hasFilters={hasFilters}
             onClearFilters={urlSync.handleClearFilters}
@@ -398,6 +406,7 @@ export default function TreasureBrowser({
             onClearStatus={() => setStatusFilter('available')}
             onClearShape={() => setShapeFilter('all')}
             onClearCantidad={() => setCantidadFilter('all')}
+            onClearCategoria={() => setCategoriaFilter('all')}
             onClearColeccion={() => setColeccionFilter('all')}
             onClearPrice={() => setPriceRange([priceMinMax.min, priceMinMax.max])}
           />

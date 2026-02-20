@@ -23,6 +23,7 @@ export interface ActiveFilterChipsProps {
   onClearStatus: () => void;
   onClearShape: () => void;
   onClearCantidad: () => void;
+  onClearCategoria?: () => void;
   onClearColeccion?: () => void;
   onClearPrice: () => void;
   /** Compact mode for mobile - smaller chips */
@@ -51,6 +52,7 @@ export function ActiveFilterChips({
   onClearStatus,
   onClearShape,
   onClearCantidad,
+  onClearCategoria,
   onClearColeccion,
   onClearPrice,
   compact = false,
@@ -181,6 +183,20 @@ export function ActiveFilterChips({
         ? (filters.cantidadFilter === '2+' ? 'Lotes' : filters.cantidadFilter)
         : `Cantidad: ${filters.cantidadFilter === '2+' ? 'Lotes' : filters.cantidadFilter}`,
       onDelete: onClearCantidad,
+      colors: {
+        bg: alpha(emeraldCore.primary, 0.1),
+        text: emeraldCore.dark,
+        delete: emeraldCore.dark,
+      },
+    });
+  }
+
+  // Categoria
+  if (filters.categoriaFilter !== 'all' && onClearCategoria) {
+    chips.push({
+      key: 'categoria',
+      label: compact ? filters.categoriaFilter : `Categoría: ${filters.categoriaFilter}`,
+      onDelete: onClearCategoria,
       colors: {
         bg: alpha(emeraldCore.primary, 0.1),
         text: emeraldCore.dark,

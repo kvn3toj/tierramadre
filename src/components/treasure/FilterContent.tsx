@@ -62,6 +62,7 @@ export interface FilterSetters {
   setShapeFilter: (value: string) => void;
   setQualityFilter: (value: string) => void;
   setColeccionFilter: (value: string) => void;
+  setCategoriaFilter: (value: string) => void;
   setPriceRange: (value: [number, number]) => void;
 }
 
@@ -71,6 +72,7 @@ export interface FilterOptions {
   shapes: string[];
   qualities: string[];
   colecciones: string[];
+  categorias: string[];
   priceMinMax: { min: number; max: number };
 }
 
@@ -116,6 +118,8 @@ export interface FilterContentProps {
   setQualityFilter: (value: string) => void;
   coleccionFilter: string;
   setColeccionFilter: (value: string) => void;
+  categoriaFilter: string;
+  setCategoriaFilter: (value: string) => void;
   priceRange: [number, number];
   setPriceRange: (value: [number, number]) => void;
   showAdvancedFilters: boolean;
@@ -129,6 +133,7 @@ export interface FilterContentProps {
   shapes: string[];
   qualities: string[];
   colecciones: string[];
+  categorias: string[];
   priceMinMax: { min: number; max: number };
   isLight: boolean;
   theme: Theme;
@@ -155,6 +160,8 @@ export const FilterContent = memo(function FilterContent({
   setQualityFilter,
   coleccionFilter,
   setColeccionFilter,
+  categoriaFilter,
+  setCategoriaFilter,
   priceRange,
   setPriceRange,
   showAdvancedFilters,
@@ -168,6 +175,7 @@ export const FilterContent = memo(function FilterContent({
   shapes,
   qualities,
   colecciones,
+  categorias,
   priceMinMax,
   isLight,
   theme,
@@ -337,6 +345,49 @@ export const FilterContent = memo(function FilterContent({
             </Select>
           </FormControl>
         </Box>
+
+        {/* Row 2.5: Category pills (from Column K) */}
+        {categorias.length > 0 && (
+          <Box>
+            <Typography variant="caption" sx={{ color: theme.palette.text.secondary, mb: 0.5, display: 'block' }}>
+              Categoría
+            </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 0.5,
+                overflowX: 'auto',
+                pb: 0.5,
+                mx: -1,
+                px: 1,
+                '&::-webkit-scrollbar': { display: 'none' },
+                scrollbarWidth: 'none',
+              }}
+            >
+              <Box
+                onClick={() => setCategoriaFilter('all')}
+                sx={{
+                  ...pillBase,
+                  ...(categoriaFilter === 'all' ? pillActive : pillInactive),
+                }}
+              >
+                Todas
+              </Box>
+              {categorias.map((cat) => (
+                <Box
+                  key={cat}
+                  onClick={() => setCategoriaFilter(categoriaFilter === cat ? 'all' : cat)}
+                  sx={{
+                    ...pillBase,
+                    ...(categoriaFilter === cat ? pillActive : pillInactive),
+                  }}
+                >
+                  {cat}
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        )}
 
         {/* Row 3: Color swatches (visual) */}
         <Box>
@@ -572,6 +623,26 @@ export const FilterContent = memo(function FilterContent({
           </Select>
         </FormControl>
 
+        {/* Category filter (Column K from inventory) */}
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <Select
+            value={categoriaFilter}
+            onChange={(e) => setCategoriaFilter(e.target.value)}
+            displayEmpty
+            sx={{
+              borderRadius: 2,
+              bgcolor: categoriaFilter !== 'all' ? alpha(emeraldCore.primary, 0.1) : 'transparent',
+            }}
+          >
+            <MenuItem value="all">Categoría</MenuItem>
+            {categorias.map((cat) => (
+              <MenuItem key={cat} value={cat}>
+                {cat}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
         {/* Type filter */}
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <Select
@@ -580,7 +651,7 @@ export const FilterContent = memo(function FilterContent({
             displayEmpty
             sx={{ borderRadius: 2 }}
           >
-            <MenuItem value="all">Categoría</MenuItem>
+            <MenuItem value="all">Tipo</MenuItem>
             <MenuItem value="loose">Gemas</MenuItem>
             <MenuItem value="jewelry">Joyería</MenuItem>
           </Select>
