@@ -145,15 +145,18 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
   const handleShare = async () => {
     const shareUrl = lastInvitation?.url;
     if (shareUrl && 'share' in navigator) {
-      // Embed URL + PIN in text so apps like Instagram DMs get the full message
       const pin = lastInvitation?.pin;
-      const pinLine = pin ? `\n\nTu PIN de acceso: ${pin}` : '';
-      const shareText = `Hola ${guestName}, te invito a explorar nuestra coleccion de esmeraldas colombianas. Este enlace es valido por 24 horas.\n\n${shareUrl}${pinLine}`;
+      // Message 1: invitation text + URL (generates link preview)
+      const shareText = `Hola ${guestName}, te invito a explorar nuestra coleccion de esmeraldas colombianas. Este enlace es valido por 24 horas.\n\n${shareUrl}${pin ? '\n\nTu PIN de acceso:' : ''}`;
       try {
         await navigator.share({
           title: 'Tierra Madre - Invitacion',
           text: shareText,
         });
+        // Message 2: just the PIN digits (easy to copy-paste)
+        if (pin) {
+          await navigator.share({ text: pin });
+        }
       } catch {
         // User cancelled or share failed
       }
