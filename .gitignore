@@ -52,6 +52,7 @@ docs/brand/
 *.sketch
 *.fig
 *.mp4
+!public/images/CEO/**/*.mp4
 *.mov
 *.avi
 *.mkv
