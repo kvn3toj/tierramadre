@@ -6,6 +6,7 @@ import { Box, Typography, alpha } from '@mui/material';
 import { TrendingUp, Gem, Award, DollarSign } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { cssTransition } from '../../design-system';
 
 export type ComparisonPriority = 'todos' | 'inversion' | 'tamano' | 'calidad';
 
@@ -102,7 +103,7 @@ export default function PriorityFilter({
                 py: 0.75,
                 borderRadius: 2,
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
+                transition: cssTransition.default,
                 border: '1px solid',
                 borderColor: isActive
                   ? emeraldCore.primary

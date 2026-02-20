@@ -10,7 +10,7 @@ import { motion } from 'framer-motion';
 import { Box, Typography, IconButton, Link } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { Instagram, Language, WhatsApp } from '@mui/icons-material';
-import { fadeInUp } from '../../../design-system/tokens/motion';
+import { fadeInUp, cssTransition } from '../../../design-system/tokens/motion';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 import { whiteAlpha, blackAlpha } from '../../../design-system/utils/colorUtils';
 
@@ -94,7 +94,7 @@ export const Footer: React.FC = () => {
                     transform: 'scale(1.08) translateY(-2px)',
                     boxShadow: `0 4px 16px ${color}30`,
                   },
-                  transition: 'all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                  transition: cssTransition.slow,
                 }}
               >
                 <Icon sx={{ fontSize: 22 }} />

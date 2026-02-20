@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { FileText, ChevronRight, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { brand, iosSemanticColors, iosTypographyScale, typography, radius } from '../../design-system';
+import { brand, iosSemanticColors, iosTypographyScale, legacyTypography as typography, radius, cssTransition } from '../../design-system';
 import { PRODUCT_TYPE_LABELS, REQUEST_STATUS_LABELS } from '../../types/provider';
 import type { QuotationRequest, RequestStatus } from '../../types/provider';
 
@@ -213,7 +213,7 @@ export default function ProviderRequestList() {
                     '&:hover': {
                       bgcolor: alpha(brand.emerald[500], 0.04),
                     },
-                    transition: 'all 0.2s',
+                    transition: cssTransition.default,
                   }}
                   onClick={() => navigate(`/provider/submit?requestId=${request.id}`)}
                 >

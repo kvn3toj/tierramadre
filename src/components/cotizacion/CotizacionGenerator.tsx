@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { documentShadows } from '../../design-system/tokens';
+import { documentShadows, cssTransition } from '../../design-system/tokens';
 import { useTreasure } from '../../hooks/useTreasure';
 import { useCotizacion } from '../../hooks/useCotizacion';
 import { TreasureItem } from '../../types';
@@ -542,7 +542,7 @@ export default function CotizacionGenerator() {
                     height: 4,
                     borderRadius: 2,
                     bgcolor: step.completed ? brandColors.emerald : brandColors.borderSubtle,
-                    transition: 'all 0.3s ease',
+                    transition: cssTransition.slow,
                   }}
                 />
               ))}

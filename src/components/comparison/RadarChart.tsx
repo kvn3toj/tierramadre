@@ -6,7 +6,7 @@
 import { Box, Typography, alpha } from '@mui/material';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 
 interface RadarChartProps {
   items: TreasureItem[];
@@ -20,7 +20,7 @@ interface DataPoint {
 
 // High-contrast color palette for better differentiation
 const itemColors = [
-  '#00AE7A',  // Emerald green
+  emeraldCore.primary,  // Emerald green
   '#FF6B6B',  // Coral red
   '#4ECDC4',  // Turquoise
 ];

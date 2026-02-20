@@ -7,6 +7,7 @@ import { Box, Typography, alpha } from '@mui/material';
 import { Images, Play } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { cssTransition } from '../../design-system';
 
 interface GalleryPreviewProps {
   /** Array of image URLs */
@@ -108,7 +109,7 @@ export default function GalleryPreview({
             overflow: 'hidden',
             border: '1px solid',
             borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-            transition: 'all 0.2s ease',
+            transition: cssTransition.default,
             flexShrink: 0,
             position: 'relative',
           }}

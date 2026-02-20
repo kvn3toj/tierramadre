@@ -10,6 +10,7 @@ import { useThemeMode } from '../../contexts/ThemeContext';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { surfacesLight, surfacesDark, emeraldCore } from '../../design-system/tokens/colors';
+import { cssTransition } from '../../design-system';
 import ProductHeader from './ProductHeader';
 import AttributeCard from './AttributeCard';
 import RadarChart from './RadarChart';
@@ -41,7 +42,7 @@ const priorityConfig: Record<ComparisonPriority, {
     icon: Gem,
     criteria: 'best_value',
     description: 'Alta calidad a precio razonable • Compra inteligente HOY',
-    gradient: 'linear-gradient(135deg, #00AE7A 0%, #008C61 100%)',
+    gradient: `linear-gradient(135deg, ${emeraldCore.primary} 0%, ${emeraldCore.dark} 100%)`,
   },
   best_investment: {
     label: 'Inversión',
@@ -307,7 +308,7 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
                         fontSize: '0.65rem',
                         height: 28,
                         cursor: 'pointer',
-                        transition: 'all 0.2s ease',
+                        transition: cssTransition.default,
                         '&:hover': {
                           transform: 'translateY(-1px)',
                           boxShadow: `0 2px 8px ${alpha(emeraldCore.primary, 0.2)}`,

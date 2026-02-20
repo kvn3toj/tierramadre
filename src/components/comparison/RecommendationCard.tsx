@@ -35,7 +35,7 @@ const criteriaConfig: Record<
   best_value: {
     label: 'Mejor Relación Calidad-Precio',
     icon: DollarSign,
-    gradient: 'linear-gradient(135deg, #00AE7A 0%, #008C61 100%)', // Emerald green
+    gradient: `linear-gradient(135deg, ${emeraldCore.primary} 0%, ${emeraldCore.dark} 100%)`, // Emerald green
   },
   best_investment: {
     label: 'Mejor Inversión',

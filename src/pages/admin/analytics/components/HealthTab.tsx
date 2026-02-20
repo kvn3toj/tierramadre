@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../../../contexts/ThemeContext';
 import { emeraldCore, goldAccent, semanticColors } from '../../../../design-system/tokens/colors';
+import { cssTransition } from '../../../../design-system';
 import { iosDimensions } from '../../../../design-system/tokens/primitives/spacing';
 import { HealthScoreHero } from '../../../../components/analytics/HealthScoreHero';
 import { HorizontalBarChart } from '../../../../components/analytics/HorizontalBarChart';
@@ -365,7 +366,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
                           ? alpha(semanticColors.success.main, 0.2)
                           : alpha(isLight ? '#000' : '#fff', 0.06)}`,
                         opacity: isUnlocked ? 1 : 0.7,
-                        transition: 'all 0.2s ease',
+                        transition: cssTransition.default,
                       }}
                     >
                       {/* Icon */}

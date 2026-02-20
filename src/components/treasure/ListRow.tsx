@@ -20,7 +20,7 @@ import { TreasureItem } from '../../types';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
-import { errorAlpha } from '../../design-system';
+import { errorAlpha, cssTransition } from '../../design-system';
 
 interface ListRowProps {
   item: TreasureItem;
@@ -76,7 +76,7 @@ function ListRow({
         alignItems: 'center',
         gap: 2,
         cursor: 'pointer',
-        transition: 'all 0.2s ease',
+        transition: cssTransition.default,
         '&:hover': {
           borderColor: emeraldCore.dark,
           bgcolor: isLight ? emeraldCore.lightest : alpha(emeraldCore.dark, 0.08),

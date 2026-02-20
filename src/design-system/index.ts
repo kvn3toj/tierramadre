@@ -104,6 +104,47 @@ export {
   chartBadge,
 } from './tokens/charts';
 
+// Accents & Status Colors
+export {
+  accentColors,
+  medalColors,
+  getAccentColor,
+} from './tokens/accents';
+
+// iOS Semantic Colors
+export {
+  iosSemanticColors,
+  getIOSColor,
+} from './tokens/ios-semantic';
+
+// iOS Typography Scale
+export { iosTypographyScale } from './tokens/ios-typography';
+
+// Layout Constants & Border Radius
+export {
+  layoutConstants,
+  radius,
+} from './tokens/layout';
+
+// CSS Transition helpers
+export { cssTransition } from './tokens/motion';
+
+// Legacy palette tokens (migrated from monolithic design-system.ts)
+export {
+  brand,
+  lightTokens,
+  darkTokens,
+  gradients as legacyGradients,
+  legacyTypography,
+  getTokens,
+  studioColors,
+  studioGradients,
+  studioShadows,
+  studioCardStyles,
+  animation,
+  disabledButton,
+} from './tokens/legacy-compat';
+
 // =============================================================================
 // UTILITIES
 // =============================================================================

@@ -16,7 +16,7 @@ import {
   Check,
 } from 'lucide-react';
 import { ColorScheme } from '../../../../types/ambassador';
-import { brand, lightTokens, darkTokens } from '../../../../design-system';
+import { brand, lightTokens, darkTokens, cssTransition } from '../../../../design-system';
 import { TemplateTabProps } from '../types';
 import { COLOR_PRESETS } from '../constants';
 
@@ -48,7 +48,7 @@ export default function TemplateTab({
                     borderColor: formData.template.type === 'tm-official' ? brand.emerald[500] : (isLight ? lightTokens.border.default : darkTokens.border.default),
                     bgcolor: formData.template.type === 'tm-official' ? alpha(brand.emerald[500], 0.05) : 'transparent',
                     cursor: 'pointer',
-                    transition: 'all 0.2s',
+                    transition: cssTransition.default,
                     '&:hover': {
                       borderColor: brand.emerald[500],
                     },
@@ -81,7 +81,7 @@ export default function TemplateTab({
                     borderColor: formData.template.type === 'self-brand' ? brand.emerald[500] : (isLight ? lightTokens.border.default : darkTokens.border.default),
                     bgcolor: formData.template.type === 'self-brand' ? alpha(brand.emerald[500], 0.05) : 'transparent',
                     cursor: 'pointer',
-                    transition: 'all 0.2s',
+                    transition: cssTransition.default,
                     '&:hover': {
                       borderColor: brand.emerald[500],
                     },
@@ -135,7 +135,7 @@ export default function TemplateTab({
                           ? brand.emerald[500]
                           : (isLight ? lightTokens.border.default : darkTokens.border.default),
                         cursor: 'pointer',
-                        transition: 'all 0.2s',
+                        transition: cssTransition.default,
                         '&:hover': { borderColor: brand.emerald[500] },
                       }}
                     >

@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { X } from 'lucide-react';
 import { TreasureItem } from '../../../../types';
-import { brand, lightTokens, darkTokens, typography } from '../../../../design-system';
+import { brand, lightTokens, darkTokens, legacyTypography as typography } from '../../../../design-system';
 import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
 import { accentuate } from '../../../../pages/collection/CollectionPage';
 

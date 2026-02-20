@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { Image as ImageIcon, Check } from 'lucide-react';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
+import { cssTransition } from '../../../design-system';
 import { GemologicalCertification, GemologicalLab } from '../../../types';
 import { LABS, CLARITY_GRADES, CUT_GRADES, TREATMENTS } from './constants';
 import type { GemologicalTabProps } from './types';
@@ -43,7 +44,7 @@ export default function GemologicalTab({
             : surfacesDark.background.secondary,
           textAlign: 'center',
           cursor: 'pointer',
-          transition: 'all 0.2s',
+          transition: cssTransition.default,
           '&:hover': {
             borderColor: emeraldCore.dark,
           },

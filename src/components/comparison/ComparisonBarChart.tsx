@@ -13,7 +13,7 @@ interface ComparisonBarChartProps {
 
 // High-contrast color palette for better differentiation
 const itemColors = [
-  '#00AE7A',  // Emerald green
+  emeraldCore.primary,  // Emerald green
   '#FF6B6B',  // Coral red
   '#4ECDC4',  // Turquoise
 ];

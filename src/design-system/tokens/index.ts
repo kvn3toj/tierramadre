@@ -35,7 +35,24 @@ import {
 
 // Migrated tokens (sacred brand & motion)
 import { brandTokens, colors as sacredColors, typography as sacredTypography, geometry as sacredGeometry } from './brand';
-import { motionTokens, duration as animDuration, easing as animEasing, spring as animSpring, cardVariants, fadeInUp, staggerContainer, staggerItem, scaleIn } from './motion';
+import { motionTokens, cssTransition, duration as animDuration, easing as animEasing, spring as animSpring, cardVariants, fadeInUp, staggerContainer, staggerItem, scaleIn } from './motion';
+
+// New canonical tokens (migrated from legacy design-system.ts)
+import { accentColors, medalColors, getAccentColor } from './accents';
+import { iosSemanticColors, getIOSColor } from './ios-semantic';
+import { iosTypographyScale } from './ios-typography';
+import { layoutConstants, radius } from './layout';
+
+// Legacy palette tokens (migrated from monolithic design-system.ts)
+import {
+  brand as brandPalette,
+  lightTokens, darkTokens,
+  gradients as compatGradients,
+  legacyTypography,
+  getTokens,
+  studioColors, studioGradients, studioShadows, studioCardStyles,
+  animation, disabledButton,
+} from './legacy-compat';
 
 // Semantics
 import { brand, brandColors, brandGradients, statusColors, treasureStatus } from './semantic/brand';
@@ -69,7 +86,7 @@ export {
   getFibonacci,
   goldenSplit,
 };
-export { brand, brandColors, brandGradients, statusColors, treasureStatus };
+export { brandColors, brandGradients, statusColors, treasureStatus };
 export { surface, surfaceBackgrounds, elevatedSurfaces, glassSurfaces, borderColors, overlayBackgrounds, backdropFilters };
 export { text, textColors, brandText, statusText, linkColors, placeholderText, inverseText };
 export { interactive, interactionStates, buttonStates, inputStates, cardStates, toggleStates, selectionStates, listItemStates };
@@ -77,7 +94,19 @@ export { document, documentColors, goldColors, documentShadows, documentTypograp
 
 // Migrated tokens exports
 export { brandTokens, sacredColors, sacredTypography, sacredGeometry };
-export { motionTokens, animDuration, animEasing, animSpring, cardVariants, fadeInUp, staggerContainer, staggerItem, scaleIn };
+export { motionTokens, cssTransition, animDuration, animEasing, animSpring, cardVariants, fadeInUp, staggerContainer, staggerItem, scaleIn };
+
+// New canonical tokens exports
+export { accentColors, medalColors, getAccentColor };
+export { iosSemanticColors, getIOSColor };
+export { iosTypographyScale };
+export { layoutConstants, radius };
+
+// Legacy palette tokens (consumers should migrate to canonical tokens)
+export { brandPalette as brand, lightTokens, darkTokens };
+export { compatGradients as legacyGradients, legacyTypography, getTokens };
+export { studioColors, studioGradients, studioShadows, studioCardStyles };
+export { animation, disabledButton };
 
 // Types
 export type { PrimitiveColors } from './primitives/colors';

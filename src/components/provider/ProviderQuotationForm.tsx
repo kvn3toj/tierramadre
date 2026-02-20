@@ -27,7 +27,7 @@ import {
 import { Send, ArrowLeft, CheckCircle, Camera, ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
-import { brand, iosSemanticColors, iosTypographyScale, typography, radius } from '../../design-system';
+import { brand, iosSemanticColors, iosTypographyScale, legacyTypography as typography, radius, cssTransition } from '../../design-system';
 import {
   PRODUCT_TYPE_LABELS,
   type ProductType,
@@ -140,7 +140,7 @@ function ChipSelector({ label, options, value, onChange, disabled }: ChipSelecto
               fontSize: iosTypographyScale.subhead,
               borderRadius: radius.lg,
               border: 'none',
-              transition: 'all 0.2s ease',
+              transition: cssTransition.default,
               '&:hover': {
                 bgcolor: value === option.value
                   ? brand.emerald[600]

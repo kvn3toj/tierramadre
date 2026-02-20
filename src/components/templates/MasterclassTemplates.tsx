@@ -1,5 +1,6 @@
 import { Box, Typography, Stack, Grid } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
+import { cssTransition } from '../../design-system';
 
 // ============================================================================
 // MASTERCLASS TEMPLATES - "El Poder de la Esmeralda Colombiana"
@@ -290,7 +291,7 @@ export function GlobalValidationTemplate({
                   border: `2px solid ${COLORS.emerald}`,
                   background: alpha(COLORS.darkTeal, 0.6),
                   textAlign: 'center',
-                  transition: 'all 0.3s ease',
+                  transition: cssTransition.slow,
                   '&:hover': { borderColor: COLORS.gold, boxShadow: `0 8px 30px ${alpha(COLORS.gold, 0.3)}` },
                 }}
               >
@@ -532,7 +533,7 @@ export function CelebritiesTemplate({
                 background: alpha(COLORS.gold, 0.1),
                 border: `2px solid ${COLORS.gold}`,
                 textAlign: 'center',
-                transition: 'all 0.3s ease',
+                transition: cssTransition.slow,
                 '&:hover': { background: alpha(COLORS.gold, 0.2), transform: 'translateY(-4px)', boxShadow: `0 8px 30px ${alpha(COLORS.gold, 0.4)}` },
               }}
             >
@@ -729,7 +730,7 @@ export function CTATemplate({
                   border: `3px solid ${COLORS.emerald}`,
                   display: 'flex',
                   flexDirection: 'column',
-                  transition: 'all 0.3s ease',
+                  transition: cssTransition.slow,
                   '&:hover': { borderColor: COLORS.gold, transform: 'translateY(-8px)', boxShadow: `0 12px 40px ${alpha(COLORS.gold, 0.4)}` },
                 }}
               >
@@ -759,7 +760,7 @@ export function CTATemplate({
             background: `linear-gradient(90deg, ${COLORS.gold}, ${COLORS.emerald})`,
             borderRadius: '50px',
             cursor: 'pointer',
-            transition: 'all 0.3s ease',
+            transition: cssTransition.slow,
             '&:hover': { transform: 'scale(1.05)', boxShadow: `0 8px 30px ${alpha(COLORS.gold, 0.5)}` },
           }}
         >

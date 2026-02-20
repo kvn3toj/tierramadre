@@ -22,7 +22,7 @@ import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
 import { floatingLayers, liquidSaturation, specularHighlights } from '../../design-system/tokens/liquid-glass';
 import { floatingLayerShadows } from '../../design-system/tokens/shadows';
-import { brand, radius, iosTypographyScale } from '../../design-system';
+import { brand, radius, iosTypographyScale, emeraldCore } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsGuest, useCanCreateInvitations } from '../../hooks/useAuth';
@@ -81,7 +81,7 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     subtitle: t.tools.nameGenerator?.subtitle || 'Genera nombres únicos para esmeraldas con IA',
     icon: AutoAwesome,
     route: '/admin/name-generator',
-    color: '#00AE7A', // Emerald green
+    color: emeraldCore.primary,
     badge: 'AI',
   },
   {
@@ -402,13 +402,13 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
               onChange={handlePriceToggle}
               sx={{
                 '& .MuiSwitch-switchBase.Mui-checked': {
-                  color: '#34C759',
+                  color: primitiveColors.system.green.light,
                   '&:hover': {
                     backgroundColor: 'rgba(52, 199, 89, 0.08)',
                   },
                 },
                 '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                  backgroundColor: '#34C759',
+                  backgroundColor: primitiveColors.system.green.light,
                 },
               }}
             />

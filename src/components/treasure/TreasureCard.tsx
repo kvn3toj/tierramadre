@@ -32,6 +32,7 @@ import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 // Design System Tokens
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { cssTransition } from '../../design-system';
 
 export interface TreasureCardProps {
   item: TreasureItem;
@@ -71,7 +72,7 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
           alignItems: 'center',
           gap: 2,
           cursor: 'pointer',
-          transition: 'all 0.2s ease',
+          transition: cssTransition.default,
           '&:hover': {
             borderColor: emeraldCore.dark,
             bgcolor: isLight ? emeraldCore.lightest : alpha(emeraldCore.dark, 0.08),

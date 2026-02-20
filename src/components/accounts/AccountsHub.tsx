@@ -16,7 +16,7 @@ import { useThemeMode } from '../../contexts/ThemeContext';
 import { useIsAdmin, useIsStaff } from '../../hooks/usePermissions';
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
-import { accentColors, iosTypographyScale } from '../../design-system';
+import { accentColors, iosTypographyScale, cssTransition } from '../../design-system';
 
 interface AccountTool {
   id: string;
@@ -164,7 +164,7 @@ const AccountsHub: React.FC = () => {
                   border: '1px solid',
                   borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
                   bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transition: cssTransition.slow,
                   '&:hover': {
                     borderColor: tool.color,
                     transform: 'translateY(-4px)',

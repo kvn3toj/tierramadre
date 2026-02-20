@@ -21,7 +21,7 @@ import { PlayArrow, SelfImprovement } from '@mui/icons-material';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { DAILY_MEDITATIONS, MeditationType } from '../../../data/homeContent';
-import { fadeInUp, cardVariants } from '../../../design-system/tokens/motion';
+import { fadeInUp, cardVariants, cssTransition } from '../../../design-system/tokens/motion';
 import { MeditationModal } from '../../meditation';
 
 // =============================================================================
@@ -176,7 +176,7 @@ export const MeditationSection: React.FC = () => {
                       color: 'white',
                       width: 56,
                       height: 56,
-                      transition: 'all 0.2s ease-out',
+                      transition: cssTransition.default,
                       '&:hover': {
                         bgcolor: emeraldCore.dark,
                         transform: 'scale(1.05)',

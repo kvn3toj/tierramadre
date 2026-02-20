@@ -17,7 +17,7 @@ import {
   Stack,
 } from '@mui/material';
 import { Upload, X, Image as ImageIcon, Video, Film } from 'lucide-react';
-import { brand } from '../../design-system';
+import { brand, cssTransition } from '../../design-system';
 
 interface UploadingFile {
   id: string;
@@ -174,7 +174,7 @@ export default function QuotationMediaUpload({
             : 'grey.50',
           textAlign: 'center',
           cursor: canUpload ? 'pointer' : 'not-allowed',
-          transition: 'all 0.3s ease',
+          transition: cssTransition.slow,
           '&:hover': canUpload
             ? {
                 borderColor: brand.emerald[500],

@@ -92,6 +92,22 @@ export const primitiveColors = {
       light: '#8E8E93',
       dark: '#8E8E93',
     },
+    purple: {
+      light: '#5856D6',
+      dark: '#BF5AF2',
+    },
+    pink: {
+      light: '#FF2D55',
+      dark: '#FF375F',
+    },
+    indigo: {
+      light: '#5856D6',
+      dark: '#5E5CE6',
+    },
+    teal: {
+      light: '#5AC8FA',
+      dark: '#64D2FF',
+    },
   },
 
   /**

@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../../contexts/ThemeContext';
 import { spacing, iosDimensions } from '../../../design-system/tokens/primitives/spacing';
-import { iosTypographyScale } from '../../../design-system';
+import { iosTypographyScale, cssTransition } from '../../../design-system';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 
 // Tab components
@@ -155,7 +155,7 @@ const AdminAnalyticsPage: React.FC = () => {
               fontWeight: 600,
               fontSize: '0.75rem',
               color: 'text.secondary',
-              transition: 'all 0.2s ease',
+              transition: cssTransition.default,
               py: 0.5,
               px: 1,
               minWidth: 0,

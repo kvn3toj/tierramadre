@@ -9,7 +9,7 @@
  */
 import { Box, Stack, Typography, useTheme } from '@mui/material';
 // Design System Tokens
-import { brand, iosSemanticColors, iosTypographyScale, typography } from '../../design-system';
+import { brand, iosSemanticColors, iosTypographyScale, legacyTypography as typography } from '../../design-system';
 import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 

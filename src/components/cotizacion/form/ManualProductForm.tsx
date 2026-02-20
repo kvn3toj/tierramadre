@@ -24,6 +24,7 @@ import {
   Video,
 } from 'lucide-react';
 import { brandColors } from '../constants';
+import { cssTransition } from '../../../design-system';
 import type { ManualProductFormProps } from '../types';
 
 export const ManualProductForm: React.FC<ManualProductFormProps> = ({
@@ -64,7 +65,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               cursor: isUploadingImage ? 'wait' : 'pointer',
               overflow: 'hidden',
               position: 'relative',
-              transition: 'all 0.2s ease',
+              transition: cssTransition.default,
               flexShrink: 0,
               '&:hover': {
                 borderColor: brandColors.emerald,
@@ -233,7 +234,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               bgcolor: !manualProduct.isJewelry
                 ? alpha(brandColors.emerald, 0.08)
                 : 'transparent',
-              transition: 'all 0.2s ease',
+              transition: cssTransition.default,
               '&:hover': {
                 borderColor: brandColors.emerald,
                 bgcolor: alpha(brandColors.emerald, 0.05),
@@ -286,7 +287,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               bgcolor: manualProduct.isJewelry
                 ? alpha(brandColors.gold, 0.08)
                 : 'transparent',
-              transition: 'all 0.2s ease',
+              transition: cssTransition.default,
               '&:hover': {
                 borderColor: brandColors.gold,
                 bgcolor: alpha(brandColors.gold, 0.05),

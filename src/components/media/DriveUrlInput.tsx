@@ -22,6 +22,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { cssTransition } from '../../design-system';
 
 const emerald = primitiveColors.emerald;
 import {
@@ -155,7 +156,7 @@ export default function DriveUrlInput({
           border: '2px dashed',
           borderColor: error ? 'error.main' : status === 'success' ? 'success.main' : 'divider',
           bgcolor: alpha(emerald[500], 0.05),
-          transition: 'all 0.2s ease',
+          transition: cssTransition.default,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>

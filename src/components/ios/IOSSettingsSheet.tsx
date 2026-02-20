@@ -12,8 +12,10 @@
 import React from 'react';
 import { Box, Typography, IconButton, Backdrop, Switch, SxProps, Theme } from '@mui/material';
 import { Close, DarkMode, LightMode, Language, Visibility, VisibilityOff, AttachMoney, CurrencyExchange } from '@mui/icons-material';
+import { alpha } from '@mui/material/styles';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
-import { radius, layoutConstants, iosTypographyScale } from '../../design-system';
+import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { radius, layoutConstants, iosTypographyScale, blackAlpha, blurValues } from '../../design-system';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
@@ -154,8 +156,8 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
         onClick={onClose}
         sx={{
           zIndex: 1100,
-          backgroundColor: 'rgba(0, 0, 0, 0.4)',
-          backdropFilter: 'blur(10px)',
+          backgroundColor: blackAlpha(0.4),
+          backdropFilter: `blur(${blurValues.md})`,
         }}
       />
 
@@ -233,26 +235,26 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
           <SettingToggleItem
             icon={
               isDarkMode
-                ? <DarkMode sx={{ fontSize: '24px', color: '#FFD60A' }} />
-                : <LightMode sx={{ fontSize: '24px', color: '#FF9500' }} />
+                ? <DarkMode sx={{ fontSize: '24px', color: primitiveColors.system.yellow.light }} />
+                : <LightMode sx={{ fontSize: '24px', color: primitiveColors.system.orange.light }} />
             }
-            iconBgColor={isDarkMode ? '#FFD60A15' : '#00000015'}
+            iconBgColor={isDarkMode ? alpha(primitiveColors.system.yellow.light, 0.08) : alpha('#000000', 0.08)}
             title={isDarkMode ? t.settings.darkMode : t.settings.lightMode}
             subtitle={isDarkMode ? t.settings.lightMode : t.settings.darkMode}
             checked={isDarkMode}
             onChange={toggleTheme}
-            accentColor="#FFD60A"
+            accentColor={primitiveColors.system.yellow.light}
           />
 
           {/* Language Toggle */}
           <SettingToggleItem
-            icon={<Language sx={{ fontSize: '24px', color: '#007AFF' }} />}
-            iconBgColor="#007AFF15"
+            icon={<Language sx={{ fontSize: '24px', color: primitiveColors.system.blue.light }} />}
+            iconBgColor={alpha(primitiveColors.system.blue.light, 0.08)}
             title={t.settings.language}
             subtitle={isEnglish ? t.settings.english : t.settings.spanish}
             checked={isEnglish}
             onChange={toggleLanguage}
-            accentColor="#007AFF"
+            accentColor={primitiveColors.system.blue.light}
           />
 
           {/* Price Share Toggle - Only for staff */}
@@ -260,15 +262,15 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
             <SettingToggleItem
               icon={
                 showPrices
-                  ? <Visibility sx={{ fontSize: '24px', color: '#34C759' }} />
-                  : <VisibilityOff sx={{ fontSize: '24px', color: '#8E8E93' }} />
+                  ? <Visibility sx={{ fontSize: '24px', color: primitiveColors.system.green.light }} />
+                  : <VisibilityOff sx={{ fontSize: '24px', color: primitiveColors.system.gray.light }} />
               }
-              iconBgColor={showPrices ? '#34C75915' : '#8E8E9315'}
+              iconBgColor={showPrices ? alpha(primitiveColors.system.green.light, 0.08) : alpha(primitiveColors.system.gray.light, 0.08)}
               title={t.settings.sharePrices}
               subtitle={showPrices ? t.settings.pricesShared : t.settings.pricesPrivate}
               checked={showPrices}
               onChange={togglePriceShare}
-              accentColor="#34C759"
+              accentColor={primitiveColors.system.green.light}
             />
           )}
 
@@ -280,7 +282,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
                   ? <AttachMoney sx={{ fontSize: '24px', color: '#2E7D32' }} />
                   : <CurrencyExchange sx={{ fontSize: '24px', color: '#2E7D32' }} />
               }
-              iconBgColor="#2E7D3215"
+              iconBgColor={alpha('#2E7D32', 0.08)}
               title={t.settings.currencyMode}
               subtitle={isUSD ? t.settings.currencyUSDActive : t.settings.currencyCOPActive}
               checked={isUSD}

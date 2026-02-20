@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 
 interface BenefitItem {
   icon: React.ElementType;
@@ -57,28 +58,28 @@ const MEMBER_BENEFITS: BenefitItem[] = [
     title: 'Acceso Anticipado',
     description: 'Sé el primero en ver nuevas esmeraldas antes del público general',
     badge: '24h antes',
-    color: '#5856D6', // iOS purple
+    color: primitiveColors.system.purple.light,
   },
   {
     icon: Gift,
     title: 'Recompensas',
     description: 'Programa de puntos, regalos de cumpleaños y beneficios sorpresa',
     badge: 'Puntos x2',
-    color: '#FF2D55', // iOS pink
+    color: primitiveColors.system.pink.light,
   },
   {
     icon: Users,
     title: 'Comunidad Exclusiva',
     description: 'Eventos privados, tours a minas y conexiones con coleccionistas',
     badge: 'VIP',
-    color: '#FF9500', // iOS orange
+    color: primitiveColors.system.orange.light,
   },
   {
     icon: Shield,
     title: 'Garantía Extendida',
     description: 'Certificación premium y garantía de autenticidad vitalicia',
     badge: 'Vitalicia',
-    color: '#34C759', // iOS green
+    color: primitiveColors.system.green.light,
   },
 ];
 

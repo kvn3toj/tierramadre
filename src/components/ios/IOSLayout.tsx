@@ -17,6 +17,7 @@ import IOSMoreSheet from './IOSMoreSheet';
 import IOSSettingsSheet from './IOSSettingsSheet';
 import { InvitationBanner } from '../invitation';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
+import { emeraldCore } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 
@@ -61,7 +62,7 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
     title: t.pages.treasure.title,
     mode: 'compact',
     logoUrl: '/images/logo-horizontal-white.png',
-    backgroundColor: '#00AE7A',
+    backgroundColor: emeraldCore.primary,
     forceLogoUrl: '/images/logo-horizontal-white.png',
   },
   '/ambassadors': {
@@ -73,7 +74,7 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
     title: 'Tierra Mädre',
     mode: 'compact',
     logoUrl: '/images/logo-horizontal-white.png',
-    backgroundColor: '#00AE7A',
+    backgroundColor: emeraldCore.primary,
     forceLogoUrl: '/images/logo-horizontal-white.png',
   },
   '/catalog': {

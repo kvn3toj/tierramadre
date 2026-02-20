@@ -6,7 +6,7 @@
 import { Box, Typography, Paper, Slider, Chip, IconButton, Tooltip, alpha } from '@mui/material';
 import { Target, Info } from 'lucide-react';
 import { PRICING_TIERS, PricingTier } from '../../hooks/usePriceCalculation';
-import { studioColors, studioCardStyles } from '../../design-system';
+import { studioColors, studioCardStyles, cssTransition } from '../../design-system';
 
 export interface FactorSliderProps {
   priceFactor: number;
@@ -164,7 +164,7 @@ export const FactorSlider: React.FC<FactorSliderProps> = ({
               height: 28,
               border: '1px solid',
               borderColor: Math.abs(priceFactor - tier.factor) < 0.05 ? tier.color : alpha(tier.color, 0.3),
-              transition: 'all 0.2s ease',
+              transition: cssTransition.default,
               '&:hover': {
                 bgcolor: Math.abs(priceFactor - tier.factor) < 0.05 ? tier.color : alpha(tier.color, 0.15),
                 transform: 'translateY(-1px)',

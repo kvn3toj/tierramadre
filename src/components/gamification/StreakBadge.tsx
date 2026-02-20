@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography, Chip, alpha } from '@mui/material';
 import { LocalFireDepartment, Whatshot } from '@mui/icons-material';
 import { goldAccent, semanticColors } from '../../design-system/tokens/colors';
+import { cssTransition } from '../../design-system';
 
 // =============================================================================
 // TYPES
@@ -149,7 +150,7 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
             '& .MuiChip-icon': {
               color: fireColor,
             },
-            transition: 'all 0.3s ease-out',
+            transition: cssTransition.slow,
           }}
         />
       </motion.div>

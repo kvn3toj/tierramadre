@@ -17,6 +17,7 @@ import {
   whiteAlpha,
   blackAlpha,
   emeraldAlpha,
+  cssTransition,
 } from '../../../design-system';
 import {
   ALL_CATEGORIES,
@@ -231,7 +232,7 @@ export const HeroGallery: React.FC = () => {
                     py: 0.75,
                     borderRadius: 2,
                     cursor: 'pointer',
-                    transition: 'all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                    transition: cssTransition.slow,
                     position: 'relative',
                     '&:hover': {
                       bgcolor: whiteAlpha(0.15),

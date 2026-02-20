@@ -7,10 +7,10 @@ import { Box, Typography, alpha } from '@mui/material';
 import { TrendingUp } from 'lucide-react';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 
 // Emerald green for value leaders
-const emeraldGreen = '#00AE7A';
+const emeraldGreen = emeraldCore.primary;
 
 interface ValueMatrixProps {
   items: TreasureItem[];
@@ -18,7 +18,7 @@ interface ValueMatrixProps {
 
 // High-contrast color palette for better differentiation
 const itemColors = [
-  '#00AE7A',  // Emerald green
+  emeraldCore.primary,  // Emerald green
   '#FF6B6B',  // Coral red
   '#4ECDC4',  // Turquoise
 ];

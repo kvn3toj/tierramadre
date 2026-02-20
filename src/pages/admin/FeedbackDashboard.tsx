@@ -38,6 +38,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { alpha } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import { emeraldCore } from '../../design-system/tokens/colors';
+import { cssTransition } from '../../design-system';
 import type { FeedbackItem, FeedbackStatus, FeedbackCategory } from '../../types/feedback';
 import { CATEGORY_OPTIONS, PRIORITY_OPTIONS } from '../../types/feedback';
 
@@ -244,7 +245,7 @@ export default function FeedbackDashboard() {
                 sx={{
                   p: 2,
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
+                  transition: cssTransition.default,
                   '&:hover': {
                     transform: 'translateY(-2px)',
                     boxShadow: 3,

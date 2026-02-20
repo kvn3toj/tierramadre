@@ -29,7 +29,7 @@ import {
   Maximize2,
 } from 'lucide-react';
 import { MediaItem, CATEGORY_LABELS } from './types';
-import { brand, darkTokens, lightTokens } from '../../design-system';
+import { brand, darkTokens, lightTokens, cssTransition } from '../../design-system';
 import ImageLightbox from './ImageLightbox';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import ProtectedContent from '../shared/ProtectedContent';
@@ -385,7 +385,7 @@ export default function MediaGallery({
           alignItems: 'center',
           justifyContent: 'center',
           cursor: isEditing ? 'pointer' : 'default',
-          transition: 'all 0.3s ease',
+          transition: cssTransition.slow,
           '&:hover': isEditing ? {
             borderColor: brand.emerald[500],
             bgcolor: alpha(brand.emerald[500], 0.1),
@@ -717,7 +717,7 @@ export default function MediaGallery({
                   height: 8,
                   borderRadius: 4,
                   bgcolor: index === currentIndex ? brand.emerald[500] : alpha(brand.emerald[500], 0.3),
-                  transition: 'all 0.3s ease',
+                  transition: cssTransition.slow,
                   cursor: 'pointer',
                   '&:hover': {
                     bgcolor: index === currentIndex ? brand.emerald[500] : alpha(brand.emerald[500], 0.5),
@@ -772,7 +772,7 @@ export default function MediaGallery({
                 border: '2px solid',
                 borderColor: index === currentIndex ? brand.emerald[500] : 'transparent',
                 opacity: index === currentIndex ? 1 : 0.6,
-                transition: 'all 0.2s ease',
+                transition: cssTransition.default,
                 position: 'relative',
                 '&:hover': {
                   opacity: 1,
@@ -830,7 +830,7 @@ export default function MediaGallery({
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
+                transition: cssTransition.default,
                 '&:hover': {
                   borderColor: brand.emerald[500],
                   bgcolor: alpha(brand.emerald[500], 0.1),

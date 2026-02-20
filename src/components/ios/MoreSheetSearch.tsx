@@ -35,6 +35,7 @@ import { useTreasure } from '../../hooks/useTreasure';
 import { useTreasureFiltering, TypeFilter } from '../../hooks/useTreasureFiltering';
 import { spacing } from '../../design-system/tokens/primitives/spacing';
 import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { goldAccent } from '../../design-system/tokens/colors';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 
 // Helper to generate filter chip styles
@@ -291,7 +292,7 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             icon={<Crown size={14} />}
             label="Joyería"
             onClick={() => setLocalTypeFilter(localTypeFilter === 'jewelry' ? 'all' : 'jewelry')}
-            sx={getFilterChipSx(localTypeFilter === 'jewelry', '#D4AF37', '#B8962F')}
+            sx={getFilterChipSx(localTypeFilter === 'jewelry', goldAccent.primary, goldAccent.dark)}
           />
 
           {/* Quality chip */}
@@ -300,7 +301,7 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             icon={<Sparkles size={14} />}
             label="Premium"
             onClick={() => setLocalQualityFilter(localQualityFilter === 'PREMIUM' ? 'all' : 'PREMIUM')}
-            sx={getFilterChipSx(localQualityFilter === 'PREMIUM', '#D4AF37', '#B8962F')}
+            sx={getFilterChipSx(localQualityFilter === 'PREMIUM', goldAccent.primary, goldAccent.dark)}
           />
 
           {/* City chips */}

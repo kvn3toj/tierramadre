@@ -23,6 +23,7 @@ import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { TreasureItem } from '../../types';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { cssTransition } from '../../design-system';
 
 interface RecentlyViewedCarouselProps {
   /** Array of recently viewed treasure items */
@@ -299,7 +300,7 @@ function RecentItemCard({
           bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
           cursor: 'pointer',
           overflow: 'hidden',
-          transition: reducedMotion ? 'none' : 'all 0.2s ease',
+          transition: reducedMotion ? 'none' : cssTransition.default,
           '&:hover': {
             borderColor: emeraldCore.primary,
             transform: reducedMotion ? 'none' : 'translateY(-2px)',

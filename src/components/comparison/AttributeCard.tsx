@@ -107,7 +107,7 @@ export default function AttributeCard({
 
           if (isHighest) {
             IndicatorIcon = TrendingUp;
-            indicatorColor = '#00AE7A'; // Emerald green
+            indicatorColor = emeraldCore.primary; // Emerald green
           } else if (isLowest) {
             IndicatorIcon = TrendingDown;
             indicatorColor = '#999';
@@ -123,7 +123,7 @@ export default function AttributeCard({
                 borderRadius: 1.5,
                 // Subtle highlight for highest values
                 bgcolor: isHighest
-                  ? alpha('#00AE7A', 0.08)
+                  ? alpha(emeraldCore.primary, 0.08)
                   : valuesAreDifferent
                   ? alpha(emeraldCore.primary, isLight ? 0.04 : 0.06)
                   : isLight
@@ -137,7 +137,7 @@ export default function AttributeCard({
                 justifyContent: 'center',
                 position: 'relative',
                 border: isHighest ? '1px solid' : 'none',
-                borderColor: isHighest ? alpha('#00AE7A', 0.2) : 'transparent',
+                borderColor: isHighest ? alpha(emeraldCore.primary, 0.2) : 'transparent',
               }}
             >
               {/* Subtle indicator for numeric values */}
@@ -159,7 +159,7 @@ export default function AttributeCard({
                   fontWeight: isHighest ? 600 : 500,
                   fontSize: type === 'numeric' ? '0.8rem' : '0.75rem',
                   color: isHighest
-                    ? '#00AE7A'
+                    ? emeraldCore.primary
                     : isLight
                       ? surfacesLight.text.primary
                       : surfacesDark.text.primary,

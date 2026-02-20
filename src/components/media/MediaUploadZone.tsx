@@ -13,7 +13,7 @@
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { createLogger } from '../../utils/logger';
-import { brand, accentColors, lightTokens } from '../../design-system';
+import { brand, accentColors, lightTokens, cssTransition } from '../../design-system';
 
 const log = createLogger('MediaUpload');
 import {
@@ -184,7 +184,7 @@ export default function MediaUploadZone({
             : 'grey.50',
           textAlign: 'center',
           cursor: canUpload ? 'pointer' : 'not-allowed',
-          transition: 'all 0.3s ease',
+          transition: cssTransition.slow,
           '&:hover': canUpload
             ? {
                 borderColor: brand.emerald[500],

@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import { User, Calendar, Trash2, Eye } from 'lucide-react';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
-import { brand, lightTokens, darkTokens, accentColors } from '../../../../design-system';
+import { brand, lightTokens, darkTokens, accentColors, cssTransition } from '../../../../design-system';
 
 // Format currency helper
 function formatCurrency(value: number): string {
@@ -116,7 +116,7 @@ export const CotizacionCard: React.FC<CotizacionCardProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             opacity: 0,
-            transition: 'all 0.2s',
+            transition: cssTransition.default,
             '&:hover': {
               bgcolor: 'rgba(0,0,0,0.4)',
               opacity: 1,

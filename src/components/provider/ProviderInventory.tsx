@@ -8,7 +8,7 @@
  */
 
 import { Box, Typography, useTheme } from '@mui/material';
-import { iosSemanticColors, iosTypographyScale, typography } from '../../design-system';
+import { iosSemanticColors, iosTypographyScale, legacyTypography as typography } from '../../design-system';
 import TreasureBrowser from '../treasure/TreasureBrowser';
 
 export default function ProviderInventory() {

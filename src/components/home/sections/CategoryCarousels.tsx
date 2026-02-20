@@ -8,6 +8,7 @@
  */
 
 import React, { useRef, useState } from 'react';
+import { cssTransition } from '../../../design-system/tokens/motion';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
@@ -115,7 +116,7 @@ export const CategoryCarousels: React.FC = () => {
                   py: 1,
                   borderRadius: 2.5,
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
+                  transition: cssTransition.default,
                   position: 'relative',
                   // Active state - Liquid Glass pill
                   ...(activeCategory === cat.id && {
@@ -130,7 +131,7 @@ export const CategoryCarousels: React.FC = () => {
                     color: activeCategory === cat.id ? 'white' : 'rgba(255,255,255,0.5)',
                     fontWeight: activeCategory === cat.id ? 600 : 400,
                     fontSize: '0.85rem',
-                    transition: 'all 0.2s ease',
+                    transition: cssTransition.default,
                   }}
                 >
                   {cat.label}

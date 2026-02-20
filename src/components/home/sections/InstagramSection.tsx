@@ -9,7 +9,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography, Avatar } from '@mui/material';
 import { Instagram, OpenInNew } from '@mui/icons-material';
-import { fadeInUp } from '../../../design-system/tokens/motion';
+import { fadeInUp, cssTransition } from '../../../design-system/tokens/motion';
 
 // =============================================================================
 // CONSTANTS
@@ -46,7 +46,7 @@ export const InstagramSection: React.FC = () => {
             p: 2,
             border: '1px solid rgba(255,255,255,0.08)',
             cursor: 'pointer',
-            transition: 'all 0.2s ease',
+            transition: cssTransition.default,
             '&:hover': {
               bgcolor: 'rgba(0,0,0,0.4)',
               border: '1px solid rgba(225, 48, 108, 0.2)',

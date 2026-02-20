@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import { cssTransition } from '../../../design-system';
 import { ORIGIN_PRICE_HISTORY, filterDataByYearRange, calculateAppreciation } from '../../../data/emerald-valuation';
 
 interface ChartLegendProps {
@@ -49,7 +50,7 @@ export const ChartLegend: React.FC<ChartLegendProps> = ({
             bgcolor: isHovered
               ? isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
               : 'transparent',
-            transition: 'all 0.2s',
+            transition: cssTransition.default,
             '&:hover': {
               bgcolor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
             },

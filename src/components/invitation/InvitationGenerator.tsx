@@ -37,7 +37,7 @@ import {
 } from '@mui/icons-material';
 import { QRCodeSVG } from 'qrcode.react';
 import { useInvitation } from '../../hooks/useInvitation';
-import { brand, typography } from '../../design-system';
+import { brand, legacyTypography as typography, cssTransition } from '../../design-system';
 import type { PricingMode } from '../../types/invitation';
 
 interface InvitationGeneratorProps {
@@ -300,7 +300,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   border: '1px solid',
                   borderColor: showPrices ? brand.emerald[200] : 'divider',
                   bgcolor: showPrices ? `${brand.emerald[50]}60` : 'transparent',
-                  transition: 'all 0.2s ease',
+                  transition: cssTransition.default,
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -313,7 +313,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                       alignItems: 'center',
                       justifyContent: 'center',
                       bgcolor: showPrices ? brand.emerald[100] : 'action.hover',
-                      transition: 'all 0.2s ease',
+                      transition: cssTransition.default,
                     }}
                   >
                     <PriceIcon fontSize="small" sx={{ color: showPrices ? brand.emerald[600] : 'text.disabled' }} />

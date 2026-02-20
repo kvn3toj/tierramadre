@@ -13,6 +13,7 @@
 
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
 
 // ============================================================================
 // CONSTANTS
@@ -28,9 +29,9 @@ const COLORS = {
   emerald: '#0A4D3C',
   emeraldRich: '#1B7A5E',
   emeraldLight: '#2E9B7D',
-  emeraldGlow: '#00AE7A', // Brand emerald
+  emeraldGlow: emeraldCore.primary, // Brand emerald
   // Gold Accents
-  gold: '#D4AF37',
+  gold: goldAccent.primary,
   goldDark: '#8B7355',
   // Backgrounds
   richBlack: '#0A0A0A',

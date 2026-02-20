@@ -21,7 +21,7 @@ import FocusTrap from '@mui/material/Unstable_TrapFocus';
 import { X, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 import { motion, AnimatePresence, PanInfo, useAnimation } from 'framer-motion';
 import { triggerHaptic } from '../../hooks/useHaptics';
-import { lightTokens, darkTokens } from '../../design-system';
+import { lightTokens, darkTokens, cssTransition } from '../../design-system';
 import ProtectedContent from '../shared/ProtectedContent';
 
 interface ImageLightboxProps {
@@ -416,7 +416,7 @@ export default function ImageLightbox({
                         bgcolor: index === currentIndex
                           ? lightTokens.text.inverse
                           : alpha(lightTokens.text.inverse, 0.4),
-                        transition: 'all 0.2s ease',
+                        transition: cssTransition.default,
                       }}
                     />
                   ))}

@@ -29,6 +29,16 @@ import { useInvitation } from '../hooks/useInvitation';
 import { useAuth } from '../hooks/useAuth';
 import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import type { ContactType, PricingMode } from '../types/invitation';
+import { alpha } from '@mui/material/styles';
+import {
+  emeraldCore,
+  emeraldAlpha,
+  whiteAlpha,
+  blackAlpha,
+  legacyTypography,
+  cssTransition,
+} from '../design-system';
+import { primitiveColors } from '../design-system/tokens/primitives/colors';
 
 // ═══════════════════════════════════════════════════════════════
 // VAULT DESIGN TOKENS — Self-contained dark luxury theme
@@ -37,20 +47,20 @@ import type { ContactType, PricingMode } from '../types/invitation';
 const vault = {
   bg: '#070D0B',
   card: 'rgba(14, 26, 22, 0.85)',
-  cardBorder: 'rgba(0, 174, 122, 0.12)',
-  surface: 'rgba(0, 174, 122, 0.06)',
+  cardBorder: emeraldAlpha(0.12),
+  surface: emeraldAlpha(0.06),
   text: '#E8F0ED',
   textMuted: 'rgba(232, 240, 237, 0.55)',
   textDim: 'rgba(232, 240, 237, 0.35)',
-  emerald: '#00AE7A',
-  emeraldGlow: '0 0 30px rgba(0, 174, 122, 0.2)',
-  error: '#FF453A',
+  emerald: emeraldCore.primary,
+  emeraldGlow: `0 0 30px ${emeraldAlpha(0.2)}`,
+  error: primitiveColors.system.red.dark,
   errorDim: 'rgba(255, 69, 58, 0.12)',
-  warning: '#FF9F0A',
+  warning: primitiveColors.system.orange.dark,
   warningDim: 'rgba(255, 159, 10, 0.12)',
-  serif: '"Libre Baskerville", Georgia, serif',
-  mono: '"SF Mono", "Fira Code", Consolas, monospace',
-  system: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif',
+  serif: legacyTypography.fontFamily.display,
+  mono: legacyTypography.fontFamily.mono,
+  system: legacyTypography.fontFamily.body,
 } as const;
 
 // ═══════════════════════════════════════════════════════════════
@@ -78,17 +88,17 @@ const emeraldBtnSx = {
   fontWeight: 600,
   fontFamily: vault.system,
   textTransform: 'none' as const,
-  background: `linear-gradient(135deg, ${vault.emerald} 0%, #008C61 100%)`,
+  background: `linear-gradient(135deg, ${vault.emerald} 0%, ${emeraldCore.dark} 100%)`,
   color: '#fff',
   border: 'none',
-  boxShadow: '0 4px 20px rgba(0, 174, 122, 0.3)',
+  boxShadow: `0 4px 20px ${emeraldAlpha(0.3)}`,
   '&:hover': {
-    background: `linear-gradient(135deg, #00C98C 0%, ${vault.emerald} 100%)`,
-    boxShadow: '0 4px 24px rgba(0, 174, 122, 0.4)',
+    background: `linear-gradient(135deg, ${emeraldCore.light} 0%, ${vault.emerald} 100%)`,
+    boxShadow: `0 4px 24px ${emeraldAlpha(0.4)}`,
   },
   '&:disabled': {
-    background: 'rgba(0, 174, 122, 0.15)',
-    color: 'rgba(255, 255, 255, 0.3)',
+    background: emeraldAlpha(0.15),
+    color: whiteAlpha(0.3),
     boxShadow: 'none',
   },
 };
@@ -101,11 +111,11 @@ const ghostBtnSx = {
   fontFamily: vault.system,
   textTransform: 'none' as const,
   color: vault.textMuted,
-  border: '1px solid rgba(255, 255, 255, 0.08)',
-  bgcolor: 'rgba(255, 255, 255, 0.03)',
+  border: `1px solid ${whiteAlpha(0.08)}`,
+  bgcolor: whiteAlpha(0.03),
   '&:hover': {
-    bgcolor: 'rgba(255, 255, 255, 0.06)',
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    bgcolor: whiteAlpha(0.06),
+    borderColor: whiteAlpha(0.12),
   },
 };
 
@@ -113,9 +123,9 @@ const inputSx = {
   '& .MuiOutlinedInput-root': {
     color: vault.text,
     borderRadius: '12px',
-    bgcolor: 'rgba(255, 255, 255, 0.03)',
-    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
-    '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' },
+    bgcolor: whiteAlpha(0.03),
+    '& fieldset': { borderColor: whiteAlpha(0.1) },
+    '&:hover fieldset': { borderColor: whiteAlpha(0.2) },
     '&.Mui-focused fieldset': { borderColor: vault.emerald },
   },
   '& .MuiInputLabel-root': { color: vault.textMuted },
@@ -144,9 +154,9 @@ function PageShell({ children }: { children: React.ReactNode }) {
           position: 'absolute',
           inset: 0,
           background: `
-            radial-gradient(ellipse at 20% 0%, rgba(0, 174, 122, 0.08) 0%, transparent 50%),
-            radial-gradient(ellipse at 80% 100%, rgba(0, 106, 72, 0.06) 0%, transparent 50%),
-            radial-gradient(ellipse at 50% 50%, rgba(0, 174, 122, 0.03) 0%, transparent 70%)
+            radial-gradient(ellipse at 20% 0%, ${emeraldAlpha(0.08)} 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 100%, ${alpha(emeraldCore.darker, 0.06)} 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 50%, ${emeraldAlpha(0.03)} 0%, transparent 70%)
           `,
           pointerEvents: 'none',
         },
@@ -155,8 +165,8 @@ function PageShell({ children }: { children: React.ReactNode }) {
           position: 'absolute',
           inset: 0,
           backgroundImage: `
-            linear-gradient(rgba(0, 174, 122, 0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 174, 122, 0.025) 1px, transparent 1px)
+            linear-gradient(${emeraldAlpha(0.025)} 1px, transparent 1px),
+            linear-gradient(90deg, ${emeraldAlpha(0.025)} 1px, transparent 1px)
           `,
           backgroundSize: '60px 60px',
           pointerEvents: 'none',
@@ -184,8 +194,8 @@ function GlassCard({ children }: { children: React.ReactNode }) {
         backdropFilter: 'blur(20px) saturate(1.5)',
         WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
         boxShadow: `
-          0 0 0 0.5px rgba(0, 174, 122, 0.06),
-          0 8px 40px rgba(0, 0, 0, 0.4),
+          0 0 0 0.5px ${emeraldAlpha(0.06)},
+          0 8px 40px ${blackAlpha(0.4)},
           ${vault.emeraldGlow}
         `,
       }}
@@ -263,22 +273,22 @@ function PinInput({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                bgcolor: filled ? 'rgba(0, 174, 122, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                bgcolor: filled ? emeraldAlpha(0.08) : whiteAlpha(0.02),
                 border: '1.5px solid',
                 borderColor: filled
-                  ? 'rgba(0, 174, 122, 0.45)'
+                  ? emeraldAlpha(0.45)
                   : active
-                  ? 'rgba(0, 174, 122, 0.25)'
-                  : 'rgba(255, 255, 255, 0.07)',
+                  ? emeraldAlpha(0.25)
+                  : whiteAlpha(0.07),
                 boxShadow: filled
-                  ? '0 0 20px rgba(0, 174, 122, 0.12), inset 0 1px 0 rgba(0, 174, 122, 0.08)'
+                  ? `0 0 20px ${emeraldAlpha(0.12)}, inset 0 1px 0 ${emeraldAlpha(0.08)}`
                   : 'none',
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: cssTransition.fast,
                 ...(active && !disabled && {
                   animation: 'pinPulse 1.2s ease-in-out infinite',
                   '@keyframes pinPulse': {
-                    '0%, 100%': { borderColor: 'rgba(0, 174, 122, 0.12)' },
-                    '50%': { borderColor: 'rgba(0, 174, 122, 0.35)' },
+                    '0%, 100%': { borderColor: emeraldAlpha(0.12) },
+                    '50%': { borderColor: emeraldAlpha(0.35) },
                   },
                 }),
               }}
@@ -321,7 +331,7 @@ function LockGlyph() {
           position: 'absolute',
           inset: -12,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0, 174, 122, 0.15) 0%, transparent 70%)',
+          background: `radial-gradient(circle, ${emeraldAlpha(0.15)} 0%, transparent 70%)`,
         }}
       />
       <Box
@@ -332,8 +342,8 @@ function LockGlyph() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          bgcolor: 'rgba(0, 174, 122, 0.08)',
-          border: '1px solid rgba(0, 174, 122, 0.18)',
+          bgcolor: emeraldAlpha(0.08),
+          border: `1px solid ${emeraldAlpha(0.18)}`,
         }}
       >
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -357,7 +367,7 @@ function SuccessGlyph() {
           position: 'absolute',
           inset: -16,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0, 174, 122, 0.2) 0%, transparent 70%)',
+          background: `radial-gradient(circle, ${emeraldAlpha(0.2)} 0%, transparent 70%)`,
           animation: 'glowPulse 3s ease-in-out infinite',
           '@keyframes glowPulse': {
             '0%, 100%': { opacity: 0.5, transform: 'scale(0.95)' },
@@ -373,8 +383,8 @@ function SuccessGlyph() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, rgba(0, 174, 122, 0.15) 0%, rgba(0, 106, 72, 0.15) 100%)',
-          border: '1px solid rgba(0, 174, 122, 0.25)',
+          background: `linear-gradient(135deg, ${emeraldAlpha(0.15)} 0%, ${alpha(emeraldCore.darker, 0.15)} 100%)`,
+          border: `1px solid ${emeraldAlpha(0.25)}`,
         }}
       >
         <CheckCircle sx={{ fontSize: 36, color: vault.emerald }} />
@@ -386,7 +396,7 @@ function SuccessGlyph() {
 function AlertGlyph({ variant }: { variant: 'error' | 'warning' }) {
   const color = variant === 'error' ? vault.error : vault.warning;
   const bg = variant === 'error' ? vault.errorDim : vault.warningDim;
-  const borderTint = variant === 'error' ? 'rgba(255, 69, 58, 0.18)' : 'rgba(255, 159, 10, 0.18)';
+  const borderTint = variant === 'error' ? alpha(vault.error, 0.18) : alpha(vault.warning, 0.18);
 
   return (
     <Box sx={{ position: 'relative', display: 'inline-flex', mb: 2.5 }}>
@@ -696,7 +706,7 @@ export default function InvitationPage() {
                 width: 44,
                 height: 44,
                 borderRadius: '50%',
-                border: '2px solid rgba(0, 174, 122, 0.15)',
+                border: `2px solid ${emeraldAlpha(0.15)}`,
                 borderTopColor: vault.emerald,
                 animation: 'spin 0.9s linear infinite',
                 mx: 'auto',
@@ -741,7 +751,7 @@ export default function InvitationPage() {
                 sx={{
                   p: 2, mb: 3, borderRadius: '12px',
                   bgcolor: vault.surface,
-                  border: '1px solid rgba(0, 174, 122, 0.08)',
+                  border: `1px solid ${emeraldAlpha(0.08)}`,
                 }}
               >
                 <Typography sx={{ color: vault.textMuted, fontSize: '0.85rem', lineHeight: 1.5 }}>
@@ -781,7 +791,7 @@ export default function InvitationPage() {
                 sx={{
                   p: 2, mb: 3, borderRadius: '12px',
                   bgcolor: vault.warningDim,
-                  border: '1px solid rgba(255, 159, 10, 0.12)',
+                  border: `1px solid ${alpha(vault.warning, 0.12)}`,
                 }}
               >
                 <Typography sx={{ color: 'rgba(255, 200, 100, 0.8)', fontSize: '0.85rem', lineHeight: 1.5 }}>
@@ -844,7 +854,7 @@ export default function InvitationPage() {
                       p: 1.5, mb: 2.5, borderRadius: '12px',
                       bgcolor: isLockedOut ? vault.errorDim : vault.warningDim,
                       border: '1px solid',
-                      borderColor: isLockedOut ? 'rgba(255, 69, 58, 0.15)' : 'rgba(255, 159, 10, 0.15)',
+                      borderColor: isLockedOut ? alpha(vault.error, 0.15) : alpha(vault.warning, 0.15),
                     }}
                   >
                     <Typography sx={{ color: isLockedOut ? vault.error : vault.warning, fontSize: '0.85rem' }}>
@@ -874,7 +884,7 @@ export default function InvitationPage() {
                   sx={emeraldBtnSx}
                 >
                   {isVerifyingPin ? (
-                    <CircularProgress size={22} sx={{ color: 'rgba(255,255,255,0.7)' }} />
+                    <CircularProgress size={22} sx={{ color: whiteAlpha(0.7) }} />
                   ) : (
                     'Confirmar PIN'
                   )}
@@ -916,7 +926,7 @@ export default function InvitationPage() {
                 sx={{
                   p: 1.5, mb: 2, borderRadius: '12px',
                   bgcolor: vault.errorDim,
-                  border: '1px solid rgba(255, 69, 58, 0.15)',
+                  border: `1px solid ${alpha(vault.error, 0.15)}`,
                 }}
               >
                 <Typography sx={{ color: vault.error, fontSize: '0.85rem' }}>{formError}</Typography>
@@ -945,16 +955,16 @@ export default function InvitationPage() {
                 mb: 2,
                 '& .MuiToggleButton-root': {
                   color: vault.textMuted,
-                  borderColor: 'rgba(255, 255, 255, 0.08)',
+                  borderColor: whiteAlpha(0.08),
                   borderRadius: '12px !important',
                   fontFamily: vault.system,
                   textTransform: 'none',
                   py: 1,
                   '&.Mui-selected': {
-                    bgcolor: 'rgba(0, 174, 122, 0.1)',
+                    bgcolor: emeraldAlpha(0.1),
                     color: vault.emerald,
-                    borderColor: 'rgba(0, 174, 122, 0.25)',
-                    '&:hover': { bgcolor: 'rgba(0, 174, 122, 0.15)' },
+                    borderColor: emeraldAlpha(0.25),
+                    '&:hover': { bgcolor: emeraldAlpha(0.15) },
                   },
                 },
               }}
@@ -988,7 +998,7 @@ export default function InvitationPage() {
               onClick={handleGuestSubmit}
               startIcon={
                 isRegistering
-                  ? <CircularProgress size={20} sx={{ color: 'rgba(255,255,255,0.7)' }} />
+                  ? <CircularProgress size={20} sx={{ color: whiteAlpha(0.7) }} />
                   : <Explore />
               }
               sx={emeraldBtnSx}

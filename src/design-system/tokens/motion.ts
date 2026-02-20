@@ -248,6 +248,23 @@ export const shimmer = {
 } as const;
 
 // =============================================================================
+// CSS TRANSITION STRINGS (for sx prop / inline styles)
+// =============================================================================
+
+export const cssTransition = {
+  /** Fast feedback (100ms) */
+  fast: 'all 100ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+  /** Default transitions (200ms) */
+  default: 'all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+  /** Slow transitions (300ms) */
+  slow: 'all 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+  /** Spring-like (300ms with overshoot) */
+  spring: 'all 300ms cubic-bezier(0.68, -0.15, 0.265, 1.35)',
+  /** Colors only (200ms) */
+  colors: 'background-color 200ms, border-color 200ms, color 200ms',
+} as const;
+
+// =============================================================================
 // GESTURE CONFIGURATIONS
 // =============================================================================
 
@@ -269,6 +286,7 @@ export const motionTokens = {
   easing,
   spring,
   transition,
+  cssTransition,
   variants: {
     card: cardVariants,
     fadeInUp,

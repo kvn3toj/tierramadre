@@ -11,6 +11,7 @@ import { Trophy, Zap, Star } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { useTracking } from '../../contexts/TrackingContext';
 import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
+import { cssTransition } from '../../design-system';
 import ProgressRing from './ProgressRing';
 
 interface LevelBadgeProps {
@@ -72,7 +73,7 @@ const LevelBadge: React.FC<LevelBadgeProps> = ({
             bgcolor: alpha(levelColor, 0.1),
             border: `1px solid ${alpha(levelColor, 0.3)}`,
             cursor: 'pointer',
-            transition: 'all 0.2s ease',
+            transition: cssTransition.default,
             '&:hover': {
               bgcolor: alpha(levelColor, 0.15),
               transform: 'translateY(-1px)',

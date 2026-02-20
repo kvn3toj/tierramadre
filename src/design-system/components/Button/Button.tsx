@@ -17,6 +17,8 @@ import {
 import { gradients } from '../../tokens/gradients';
 import { shadows } from '../../tokens/shadows';
 import { spacing, componentHeights } from '../../tokens/spacing';
+import { goldAccent } from '../../tokens/colors';
+import { emeraldAlpha, goldAlpha } from '../../utils/colorUtils';
 
 // =============================================================================
 // TYPES
@@ -112,16 +114,16 @@ const StyledButton = styled(MuiButton, {
     },
     secondary: {
       background: 'transparent',
-      color: '#D4AF37',
-      border: '2px solid #D4AF37',
+      color: goldAccent.primary,
+      border: `2px solid ${goldAccent.primary}`,
       boxShadow: 'none',
       '&:hover': {
-        background: 'rgba(212, 175, 55, 0.08)',
-        borderColor: '#E5C866',
+        background: goldAlpha(0.08),
+        borderColor: goldAccent.light,
         boxShadow: shadows.gold.sm,
       },
       '&:active': {
-        background: 'rgba(212, 175, 55, 0.15)',
+        background: goldAlpha(0.15),
       },
     },
     tertiary: {
@@ -130,10 +132,10 @@ const StyledButton = styled(MuiButton, {
       border: 'none',
       boxShadow: 'none',
       '&:hover': {
-        background: 'rgba(0, 174, 122, 0.08)',
+        background: emeraldAlpha(0.08),
       },
       '&:active': {
-        background: 'rgba(0, 174, 122, 0.15)',
+        background: emeraldAlpha(0.15),
       },
     },
     danger: {

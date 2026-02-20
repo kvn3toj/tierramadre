@@ -45,6 +45,7 @@ import { TreasureItem } from '../../types';
 import { formatCurrency, getColorDot, formatCollectionName } from '../../utils/formatting';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
+import { cssTransition } from '../../design-system';
 
 // =============================================================================
 // TYPES - Grouped for cleaner prop drilling
@@ -185,7 +186,7 @@ export const FilterContent = memo(function FilterContent({
       fontSize: '0.75rem',
       fontWeight: 500,
       cursor: 'pointer',
-      transition: 'all 0.2s ease',
+      transition: cssTransition.default,
       border: '1px solid',
       px: 1.5,
       py: 0.5,
@@ -268,7 +269,7 @@ export const FilterContent = memo(function FilterContent({
                   fontSize: '0.75rem',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
+                  transition: cssTransition.default,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

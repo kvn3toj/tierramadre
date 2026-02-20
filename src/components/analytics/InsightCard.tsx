@@ -13,6 +13,7 @@ import { Lightbulb, AlertTriangle, CheckCircle, AlertCircle, ChevronRight } from
 import { insightColors } from '../../design-system/tokens/colors';
 import { chartTokens } from '../../design-system/tokens/charts';
 import { iosDimensions } from '../../design-system/tokens/primitives/spacing';
+import { cssTransition } from '../../design-system';
 
 // =============================================================================
 // TYPES
@@ -88,7 +89,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({
         bgcolor: isDark ? colors.bgDark : colors.bg,
         border: `1px solid ${colors.border}`,
         borderLeft: `4px solid ${colors.icon}`,
-        transition: 'all 0.2s ease',
+        transition: cssTransition.default,
         ...(onAction && {
           cursor: 'pointer',
           '&:hover': {

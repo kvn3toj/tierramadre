@@ -28,7 +28,7 @@ import {
 import { textOnGlass } from '../../../design-system/utils/colorUtils';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { TreasureItem } from '../../../types';
-import { fadeInUp, staggerContainer, staggerItem, cardVariants } from '../../../design-system/tokens/motion';
+import { fadeInUp, staggerContainer, staggerItem, cardVariants, cssTransition } from '../../../design-system/tokens/motion';
 
 // =============================================================================
 // TYPES
@@ -191,7 +191,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                       backdropFilter: 'blur(12px)',
                       cursor: 'pointer',
                       flexShrink: 0,
-                      transition: 'all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                      transition: cssTransition.slow,
                       border: `1px solid ${whiteAlpha(0.08)}`,
                       borderRadius: 3,
                       overflow: 'hidden',

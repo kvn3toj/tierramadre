@@ -5,7 +5,7 @@
 
 import { Box, Typography, Paper, Button, alpha } from '@mui/material';
 import { Calculator, Eye } from 'lucide-react';
-import { studioColors, studioGradients, studioShadows } from '../../design-system';
+import { studioColors, studioGradients, studioShadows, cssTransition } from '../../design-system';
 
 export interface PriceSimulatorHeaderProps {
   totalInvestment: number;
@@ -150,7 +150,7 @@ export const PriceSimulatorHeader: React.FC<PriceSimulatorHeaderProps> = ({
                 background: alpha('#FFFFFF', 0.1),
                 color: alpha('#FFFFFF', 0.4),
               },
-              transition: 'all 0.2s ease',
+              transition: cssTransition.default,
             }}
           >
             Vista Previa

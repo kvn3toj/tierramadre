@@ -28,7 +28,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
-import { brand, iosSemanticColors, iosTypographyScale, typography, radius } from '../../design-system';
+import { brand, iosSemanticColors, iosTypographyScale, legacyTypography as typography, radius } from '../../design-system';
 import { PRODUCT_TYPE_LABELS, QUOTATION_STATUS_LABELS, type ProviderQuotation, type QuotationStatus } from '../../types/provider';
 
 interface DashboardStats {

@@ -16,6 +16,7 @@ import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
+import { cssTransition } from '../../design-system';
 
 interface InstallButtonProps {
   variant?: 'button' | 'card' | 'minimal';
@@ -75,7 +76,7 @@ export default function InstallButton({ variant = 'button', fullWidth = false }:
             border: '2px dashed',
             borderColor: 'primary.main',
             cursor: 'pointer',
-            transition: 'all 0.2s',
+            transition: cssTransition.default,
             '&:hover': {
               bgcolor: (theme) => alpha(theme.palette.primary.main, 0.15),
               transform: 'scale(1.02)',
