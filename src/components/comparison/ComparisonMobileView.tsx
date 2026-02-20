@@ -10,6 +10,7 @@ import { useThemeMode } from '../../contexts/ThemeContext';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { surfacesLight, surfacesDark, emeraldCore } from '../../design-system/tokens/colors';
+import { accentColors } from '../../design-system';
 import { cssTransition } from '../../design-system';
 import ProductHeader from './ProductHeader';
 import AttributeCard from './AttributeCard';
@@ -49,21 +50,21 @@ const priorityConfig: Record<ComparisonPriority, {
     icon: TrendingUp,
     criteria: 'best_investment',
     description: 'Apreciación a largo plazo • Calidad + Tamaño + Rareza',
-    gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+    gradient: `linear-gradient(135deg, ${accentColors.purple.light} 0%, ${accentColors.purple.dark} 100%)`,
   },
   largest_size: {
     label: 'Tamaño',
     icon: DollarSign,
     criteria: 'largest_size',
     description: 'Mayor quilataje • Presencia y valor por tamaño',
-    gradient: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
+    gradient: `linear-gradient(135deg, ${accentColors.cyan.light} 0%, ${accentColors.cyan.dark} 100%)`,
   },
   premium_quality: {
     label: 'Calidad',
     icon: Award,
     criteria: 'premium_quality',
     description: 'Excelencia premium • Los más altos estándares',
-    gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    gradient: `linear-gradient(135deg, ${accentColors.warning.light} 0%, ${accentColors.warning.dark} 100%)`,
   },
 };
 

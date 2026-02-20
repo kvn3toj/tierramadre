@@ -39,6 +39,7 @@ import { ComparisonBar, ComparisonModal } from '../comparison';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { createLogger } from '../../utils/logger';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { accentColors } from '../../design-system';
 import { GridCard, ListRow, VirtualGrid, FilterContent, ActiveFilterChips, type FilterContentProps } from './';
 import RecentlyViewedCarousel from './RecentlyViewedCarousel';
 import IOSFilterSheet from '../ios/IOSFilterSheet';
@@ -421,19 +422,19 @@ export default function TreasureBrowser({
             {/* Favorites toggle (hidden in provider mode) */}
             {!isProviderMode && (
               <Chip
-                icon={<Heart size={14} fill={showFavoritesOnly ? '#ef4444' : 'none'} color={showFavoritesOnly ? '#ef4444' : '#6b7280'} />}
+                icon={<Heart size={14} fill={showFavoritesOnly ? accentColors.error.light : 'none'} color={showFavoritesOnly ? accentColors.error.light : '#6b7280'} />}
                 label={`Favoritos (${favoritesCount})`}
                 size="small"
                 onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
                 sx={{
                   cursor: 'pointer',
-                  bgcolor: showFavoritesOnly ? alpha('#ef4444', 0.1) : 'transparent',
-                  color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
+                  bgcolor: showFavoritesOnly ? alpha(accentColors.error.light, 0.1) : 'transparent',
+                  color: showFavoritesOnly ? accentColors.error.light : theme.palette.text.secondary,
                   border: '1px solid',
-                  borderColor: showFavoritesOnly ? '#ef4444' : isLight ? surfacesLight.border.light : surfacesDark.border.default,
+                  borderColor: showFavoritesOnly ? accentColors.error.light : isLight ? surfacesLight.border.light : surfacesDark.border.default,
                   fontWeight: showFavoritesOnly ? 600 : 400,
                   '&:hover': {
-                    bgcolor: alpha('#ef4444', 0.1),
+                    bgcolor: alpha(accentColors.error.light, 0.1),
                   },
                 }}
               />

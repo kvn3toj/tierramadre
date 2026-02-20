@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../../../contexts/ThemeContext';
 import { emeraldCore, goldAccent, semanticColors } from '../../../../design-system/tokens/colors';
-import { cssTransition, iosDimensions } from '../../../../design-system';
+import { accentColors, cssTransition, iosDimensions } from '../../../../design-system';
 import { HealthScoreHero } from '../../../../components/analytics/HealthScoreHero';
 import { HorizontalBarChart } from '../../../../components/analytics/HorizontalBarChart';
 import { ProgressBar } from '../../../../components/analytics/ProgressBar';
@@ -108,7 +108,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
             value={healthScores.retention}
             label="Retención"
             sublabel="Racha y sesiones"
-            color="#8B5CF6"
+            color={accentColors.purple.light}
             icon={Zap}
             status={healthScores.retention >= 60 ? 'Activo' : 'Bajo'}
             animated
@@ -117,7 +117,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
             value={healthScores.conversion}
             label="Conversión"
             sublabel="Cotizaciones por vista"
-            color="#F59E0B"
+            color={accentColors.warning.light}
             icon={Target}
             status={healthScores.conversion >= 60 ? 'Activo' : 'Bajo'}
             animated

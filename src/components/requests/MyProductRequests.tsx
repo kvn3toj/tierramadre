@@ -31,6 +31,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { emeraldCore } from '../../design-system/tokens/colors';
+import { accentColors, primitiveColors } from '../../design-system';
 import {
   PRODUCT_TYPE_LABELS,
   PRODUCT_REQUEST_STATUS_LABELS,
@@ -72,12 +73,12 @@ export default function MyProductRequests() {
 
   const getStatusColor = (status: ProductRequestStatus) => {
     switch (status) {
-      case 'pendiente': return '#f59e0b';
+      case 'pendiente': return accentColors.warning.light;
       case 'aprobada': return emeraldCore.primary;
-      case 'enviada_proveedor': return '#3b82f6';
-      case 'rechazada': return '#ef4444';
-      case 'completada': return '#10b981';
-      default: return '#6b7280';
+      case 'enviada_proveedor': return accentColors.info.light;
+      case 'rechazada': return accentColors.error.light;
+      case 'completada': return accentColors.success.light;
+      default: return primitiveColors.metallic.silver[500];
     }
   };
 
@@ -94,9 +95,9 @@ export default function MyProductRequests() {
 
   const getPriorityColor = (priority: RequestPriority) => {
     switch (priority) {
-      case 'muy_urgente': return '#ef4444';
-      case 'urgente': return '#f59e0b';
-      default: return '#6b7280';
+      case 'muy_urgente': return accentColors.error.light;
+      case 'urgente': return accentColors.warning.light;
+      default: return primitiveColors.metallic.silver[500];
     }
   };
 

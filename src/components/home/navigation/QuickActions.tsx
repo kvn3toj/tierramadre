@@ -21,6 +21,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { emeraldCore, goldAccent } from '../../../design-system/tokens/colors';
+import { accentColors } from '../../../design-system';
 import { PHI_INVERSE } from '../../../design-system/tokens';
 
 // =============================================================================
@@ -81,7 +82,7 @@ const DEFAULT_ACTIONS: QuickAction[] = [
     label: 'Conocimiento',
     shortcut: 'C',
     action: () => document.getElementById('knowledge-section')?.scrollIntoView({ behavior: 'smooth' }),
-    color: '#8B5CF6',
+    color: accentColors.purple.light,
   },
   {
     id: 'upload',
@@ -89,7 +90,7 @@ const DEFAULT_ACTIONS: QuickAction[] = [
     label: 'Subir Esmeralda',
     shortcut: 'U',
     path: '/upload',
-    color: '#F59E0B',
+    color: accentColors.warning.light,
   },
 ];
 

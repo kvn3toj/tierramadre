@@ -5,15 +5,12 @@
 
 import { Box, Typography, Paper, alpha } from '@mui/material';
 import { Info } from 'lucide-react';
-import { studioColors } from '../../design-system';
+import { studioColors, accentColors } from '../../design-system';
 import { semanticColors } from '../../design-system/tokens/colors';
-
-// Accent color for purple elements
-const PURPLE_ACCENT = '#8B5CF6';
 
 const FORMULAS = [
   { color: semanticColors.info.main, formula: 'Precio = Inversion x Factor' },
-  { color: PURPLE_ACCENT, formula: 'Margen = (Precio - Inversion) / Precio x 100' },
+  { color: accentColors.purple.light, formula: 'Margen = (Precio - Inversion) / Precio x 100' },
   { color: studioColors.emerald, formula: 'ROI = (Precio - Inversion) / Inversion x 100' },
 ];
 

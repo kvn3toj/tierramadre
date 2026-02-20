@@ -8,7 +8,7 @@ import { TrendingUp, Gem, Percent, DollarSign, ArrowUpRight } from 'lucide-react
 import { PricingMetrics } from '../../hooks/usePriceCalculation';
 import { formatPercent } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
-import { studioColors, studioGradients, studioShadows } from '../../design-system';
+import { studioColors, studioGradients, studioShadows, accentColors } from '../../design-system';
 
 export interface PricingResultsProps {
   pricingMetrics: PricingMetrics;
@@ -184,18 +184,18 @@ export const PricingResults: React.FC<PricingResultsProps> = ({
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
           {/* Margin */}
           <MetricCard
-            icon={<Percent size={16} color="#3B82F6" />}
+            icon={<Percent size={16} color={accentColors.info.light} />}
             value={formatPercent(pricingMetrics.margin)}
             label="Margen s/Venta"
-            color="#3B82F6"
+            color={accentColors.info.light}
           />
 
           {/* ROI */}
           <MetricCard
-            icon={<TrendingUp size={16} color="#8B5CF6" />}
+            icon={<TrendingUp size={16} color={accentColors.purple.light} />}
             value={formatPercent(pricingMetrics.roi)}
             label="ROI (Retorno)"
-            color="#8B5CF6"
+            color={accentColors.purple.light}
           />
 
           {/* Profit */}

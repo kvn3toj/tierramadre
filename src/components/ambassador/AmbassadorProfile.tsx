@@ -205,7 +205,7 @@ export default function AmbassadorProfile({
                 label="Ventas Totales"
               />
               <StatBox
-                icon={<Star size={20} fill="#F59E0B" color="#F59E0B" />}
+                icon={<Star size={20} fill={accentColors.warning.light} color={accentColors.warning.light} />}
                 value={ambassador.reputation.averageRating.toFixed(1)}
                 label={`${ambassador.reputation.totalReviews} Resenas`}
               />
@@ -533,7 +533,7 @@ function ReviewsTab({ ambassador, testimonials }: { ambassador: AmbassadorProfil
                       <Typography variant="caption" sx={{ minWidth: 20 }}>
                         {stars}
                       </Typography>
-                      <Star size={12} fill="#F59E0B" color="#F59E0B" />
+                      <Star size={12} fill={accentColors.warning.light} color={accentColors.warning.light} />
                       <LinearProgress
                         variant="determinate"
                         value={percentage}
@@ -543,7 +543,7 @@ function ReviewsTab({ ambassador, testimonials }: { ambassador: AmbassadorProfil
                           borderRadius: 4,
                           bgcolor: isLight ? lightTokens.border.default : darkTokens.border.default,
                           '& .MuiLinearProgress-bar': {
-                            bgcolor: '#F59E0B',
+                            bgcolor: accentColors.warning.light,
                             borderRadius: 4,
                           },
                         }}

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../../../contexts/ThemeContext';
 import { emeraldCore } from '../../../../design-system/tokens/colors';
+import { accentColors } from '../../../../design-system';
 import { HorizontalBarChart } from '../../../../components/analytics/HorizontalBarChart';
 import { formatTimeAgo } from '../../../../utils/formatting';
 import {
@@ -74,7 +75,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
           label="Productos"
           value={viewStats?.uniqueProducts || 0}
           icon={Package}
-          color="#8B5CF6"
+          color={accentColors.purple.light}
           subtitle="Con al menos 1 vista"
           compact
         />

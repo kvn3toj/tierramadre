@@ -12,6 +12,7 @@ import {
   PieChart,
 } from 'lucide-react';
 import { emeraldCore } from '../../../../design-system/tokens/colors';
+import { accentColors } from '../../../../design-system';
 import { DonutChart } from '../../../../components/analytics/DonutChart';
 import { HorizontalBarChart } from '../../../../components/analytics/HorizontalBarChart';
 import {
@@ -53,7 +54,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
           label="Viewers"
           value={viewStats?.uniqueViewers || 0}
           icon={Users}
-          color="#8B5CF6"
+          color={accentColors.purple.light}
           subtitle="Únicos este mes"
           compact
         />
@@ -99,7 +100,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                 sublabel: v.role === 'admin' ? 'Admin' : v.role === 'embajador' ? 'Embajador' : (v.role === 'full' || v.role === 'asesor') ? 'Asesor' : 'Usuario',
                 value: v.views,
               }))}
-              color="#8B5CF6"
+              color={accentColors.purple.light}
               showMedals={true}
               unit="views"
               onItemClick={(item) => {

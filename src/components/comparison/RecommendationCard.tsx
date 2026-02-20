@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { accentColors } from '../../design-system';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import {
   ComparisonRecommendation,
@@ -40,27 +41,27 @@ const criteriaConfig: Record<
   best_investment: {
     label: 'Mejor Inversión',
     icon: TrendingUp,
-    gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', // Purple for long-term wealth
+    gradient: `linear-gradient(135deg, ${accentColors.purple.light} 0%, ${accentColors.purple.dark} 100%)`, // Purple for long-term wealth
   },
   premium_quality: {
     label: 'Calidad Premium',
     icon: Award,
-    gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', // Gold for premium
+    gradient: `linear-gradient(135deg, ${accentColors.warning.light} 0%, ${accentColors.warning.dark} 100%)`, // Gold for premium
   },
   largest_size: {
     label: 'Mayor Tamaño',
     icon: Gem,
-    gradient: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', // Cyan for size
+    gradient: `linear-gradient(135deg, ${accentColors.cyan.light} 0%, ${accentColors.cyan.dark} 100%)`, // Cyan for size
   },
   best_color: {
     label: 'Mejor Color',
     icon: Sparkles,
-    gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', // Green for color
+    gradient: `linear-gradient(135deg, ${accentColors.success.light} 0%, ${emeraldCore.dark} 100%)`, // Green for color
   },
   rare_find: {
     label: 'Hallazgo Único',
     icon: Sparkles,
-    gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)', // Pink for rarity
+    gradient: `linear-gradient(135deg, ${accentColors.pink.light} 0%, ${accentColors.pink.dark} 100%)`, // Pink for rarity
   },
 };
 
@@ -202,17 +203,17 @@ export default function RecommendationCard({
           <MetricPill
             label="Color"
             value={score.valueMetrics.colorScore}
-            color="#10b981"
+            color={accentColors.success.light}
           />
           <MetricPill
             label="Tamaño"
             value={score.valueMetrics.sizeScore}
-            color="#8b5cf6"
+            color={accentColors.purple.light}
           />
           <MetricPill
             label="Inversión"
             value={score.valueMetrics.investmentScore}
-            color="#f59e0b"
+            color={accentColors.warning.light}
           />
         </Box>
 
@@ -268,14 +269,14 @@ export default function RecommendationCard({
           score.considerations[0] !== 'Sin consideraciones especiales' && (
             <Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                <AlertCircle size={12} color="#f59e0b" />
+                <AlertCircle size={12} color={accentColors.warning.light} />
                 <Typography
                   sx={{
                     fontSize: '0.6rem',
                     fontWeight: 700,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    color: '#f59e0b',
+                    color: accentColors.warning.light,
                   }}
                 >
                   Consideraciones
@@ -292,7 +293,7 @@ export default function RecommendationCard({
                         width: 4,
                         height: 4,
                         borderRadius: '50%',
-                        bgcolor: '#f59e0b',
+                        bgcolor: accentColors.warning.light,
                         flexShrink: 0,
                       }}
                     />

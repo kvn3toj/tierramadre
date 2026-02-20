@@ -23,7 +23,7 @@ import {
 import { AmbassadorProfile } from '../../types/ambassador';
 import { StatItem } from './StatItem';
 import { getCardSx } from './styles';
-import { brand, lightTokens, darkTokens } from '../../design-system';
+import { brand, lightTokens, darkTokens, accentColors } from '../../design-system';
 
 interface AmbassadorCardProps {
   ambassador: AmbassadorProfile;
@@ -133,7 +133,7 @@ export default function AmbassadorCard({
             }}
           >
             <StatItem
-              icon={<Star size={14} fill="#F59E0B" color="#F59E0B" />}
+              icon={<Star size={14} fill={accentColors.warning.light} color={accentColors.warning.light} />}
               value={ambassador.reputation.averageRating.toFixed(1)}
               label={`(${ambassador.reputation.totalReviews})`}
             />
@@ -268,7 +268,7 @@ function CompactCard({
 
           {ambassador.reputation && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Star size={12} fill="#F59E0B" color="#F59E0B" />
+              <Star size={12} fill={accentColors.warning.light} color={accentColors.warning.light} />
               <Typography variant="caption" sx={{ fontWeight: 600 }}>
                 {ambassador.reputation.averageRating.toFixed(1)}
               </Typography>
@@ -381,7 +381,7 @@ function FeaturedCard({
                 <Typography variant="h6" sx={{ fontWeight: 700 }}>
                   {ambassador.reputation.averageRating.toFixed(1)}
                 </Typography>
-                <Star size={16} fill="#F59E0B" color="#F59E0B" />
+                <Star size={16} fill={accentColors.warning.light} color={accentColors.warning.light} />
               </Box>
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 ({ambassador.reputation.totalReviews} resenas)

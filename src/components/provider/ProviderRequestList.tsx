@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { FileText, ChevronRight, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { brand, iosSemanticColors, iosTypographyScale, legacyTypography as typography, radius, cssTransition } from '../../design-system';
+import { accentColors, brand, iosSemanticColors, iosTypographyScale, legacyTypography as typography, primitiveColors, radius, cssTransition } from '../../design-system';
 import { PRODUCT_TYPE_LABELS, REQUEST_STATUS_LABELS } from '../../types/provider';
 import type { QuotationRequest, RequestStatus } from '../../types/provider';
 
@@ -71,10 +71,10 @@ export default function ProviderRequestList() {
 
   const getStatusColor = (status: RequestStatus) => {
     switch (status) {
-      case 'pendiente': return '#f59e0b';
+      case 'pendiente': return accentColors.warning.light;
       case 'respondida': return brand.emerald[500];
-      case 'cancelada': return '#ef4444';
-      default: return '#6b7280';
+      case 'cancelada': return accentColors.error.light;
+      default: return primitiveColors.metallic.silver[500];
     }
   };
 

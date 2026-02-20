@@ -80,7 +80,7 @@ export default function AsesorCard({
             ? alpha(emeraldCore.primary, 0.06)
             : alpha(emeraldCore.primary, 0.1),
           boxShadow: cardShadows.resting,
-          transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
+          transition: cssTransition.default,
           cursor: 'pointer',
           position: 'relative',
           overflow: 'hidden',
@@ -93,7 +93,7 @@ export default function AsesorCard({
             height: '3px',
             background: emeraldGradients.deep,
             opacity: 0,
-            transition: 'opacity 0.25s ease',
+            transition: cssTransition.default,
             zIndex: 1,
           },
           '&:hover': {

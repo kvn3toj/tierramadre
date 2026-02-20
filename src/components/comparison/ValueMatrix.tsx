@@ -8,6 +8,7 @@ import { TrendingUp } from 'lucide-react';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { accentColors } from '../../design-system';
 
 // Emerald green for value leaders
 const emeraldGreen = emeraldCore.primary;
@@ -19,8 +20,8 @@ interface ValueMatrixProps {
 // High-contrast color palette for better differentiation
 const itemColors = [
   emeraldCore.primary,  // Emerald green
-  '#FF6B6B',  // Coral red
-  '#4ECDC4',  // Turquoise
+  accentColors.error.light,  // Coral red
+  accentColors.cyan.light,  // Turquoise
 ];
 
 /**

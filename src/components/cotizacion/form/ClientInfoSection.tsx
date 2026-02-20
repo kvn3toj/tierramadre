@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { User, AlertTriangle } from 'lucide-react';
 import { brandColors } from '../constants';
+import { accentColors } from '../../../design-system';
 import type { ClientInfoSectionProps } from '../types';
 import type { ClientOption, GuestValidationStatus } from '../../../types/creatorInvitations';
 import type { RecentClient } from '../../../hooks/useRecentClients';
@@ -117,7 +118,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
   }, [clientName, invitedGuests]);
 
   // Warning color
-  const warningColor = '#F59E0B';
+  const warningColor = accentColors.warning.light;
 
   return (
     <>

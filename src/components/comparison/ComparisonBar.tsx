@@ -18,7 +18,7 @@ import { Scale, Trash2 } from 'lucide-react';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { blurValues } from '../../design-system';
+import { blurValues, cssTransition } from '../../design-system';
 
 interface ComparisonBarProps {
   selectedItems: TreasureItem[];
@@ -114,7 +114,7 @@ export default function ComparisonBar({
                     border: '2px solid',
                     borderColor: emeraldCore.primary,
                     cursor: 'pointer',
-                    transition: 'transform 0.15s ease',
+                    transition: cssTransition.fast,
                     '&:hover': {
                       transform: 'scale(1.1)',
                     },

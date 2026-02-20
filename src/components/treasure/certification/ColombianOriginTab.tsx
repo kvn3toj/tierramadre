@@ -14,7 +14,10 @@ import {
 import { MapPin } from 'lucide-react';
 import { ColombianRegion } from '../../../types';
 import { REGIONS } from './constants';
+import { primitiveColors } from '../../../design-system';
 import type { ColombianOriginTabProps } from './types';
+
+const emerald = primitiveColors.emerald;
 
 export default function ColombianOriginTab({
   colombianOrigin,
@@ -29,13 +32,13 @@ export default function ColombianOriginTab({
           p: 2.5,
           borderRadius: 2.5,
           bgcolor: colombianOrigin.verified
-            ? alpha('#059669', 0.08)
+            ? alpha(emerald[600], 0.08)
             : isLight
             ? '#F9FAFB'
             : '#2C2C2E',
           border: '1px solid',
           borderColor: colombianOrigin.verified
-            ? '#059669'
+            ? emerald[600]
             : isLight
             ? '#E5E7EB'
             : '#3C3C3E',

@@ -430,7 +430,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                     border: '1px solid',
                     borderColor: brand.emerald[200],
                     cursor: 'pointer',
-                    transition: 'all 0.15s ease',
+                    transition: cssTransition.fast,
                     '&:hover': {
                       borderColor: brand.emerald[400],
                       boxShadow: `0 0 0 1px ${brand.emerald[200]}`,

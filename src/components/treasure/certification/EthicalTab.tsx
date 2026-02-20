@@ -7,7 +7,7 @@ import {
   FormControlLabel,
   alpha,
 } from '@mui/material';
-import { primitiveColors } from '../../../design-system';
+import { primitiveColors, accentColors } from '../../../design-system';
 import type { EthicalTabProps } from './types';
 
 const emerald = primitiveColors.emerald;
@@ -29,13 +29,13 @@ export default function EthicalTab({
           p: 2,
           borderRadius: 2,
           bgcolor: ethical.conflictFree
-            ? alpha('#059669', 0.08)
+            ? alpha(emerald[600], 0.08)
             : isLight
             ? '#F9FAFB'
             : '#2C2C2E',
           border: '1px solid',
           borderColor: ethical.conflictFree
-            ? '#059669'
+            ? emerald[600]
             : isLight
             ? '#E5E7EB'
             : '#3C3C3E',
@@ -70,13 +70,13 @@ export default function EthicalTab({
           p: 2,
           borderRadius: 2,
           bgcolor: ethical.fairTrade
-            ? alpha('#3B82F6', 0.08)
+            ? alpha(accentColors.info.light, 0.08)
             : isLight
             ? '#F9FAFB'
             : '#2C2C2E',
           border: '1px solid',
           borderColor: ethical.fairTrade
-            ? '#3B82F6'
+            ? accentColors.info.light
             : isLight
             ? '#E5E7EB'
             : '#3C3C3E',

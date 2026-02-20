@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, goldAccent, semanticColors } from '../../design-system/tokens/colors';
-import { cssTransition } from '../../design-system';
+import { cssTransition, accentColors } from '../../design-system';
 import type { FrictionPoint, UXInsight } from '../../types/analytics';
 
 // =============================================================================
@@ -51,7 +51,7 @@ const FrictionPointCard: React.FC<FrictionPointCardProps> = ({ friction }) => {
       case 'critical':
         return semanticColors.error.main;
       case 'high':
-        return '#ff6b35';
+        return accentColors.warning.light;
       case 'medium':
         return semanticColors.warning.main;
       default:
@@ -235,7 +235,7 @@ const UXInsightCard: React.FC<UXInsightCardProps> = ({ insight }) => {
       case 'urgent':
         return { label: 'Urgente', color: semanticColors.error.main };
       case 'high':
-        return { label: 'Alta', color: '#ff6b35' };
+        return { label: 'Alta', color: accentColors.warning.light };
       case 'medium':
         return { label: 'Media', color: semanticColors.warning.main };
       default:
@@ -408,11 +408,11 @@ const FrictionInsights: React.FC<FrictionInsightsProps> = ({
               flex: '1 1 120px',
               p: 1.5,
               borderRadius: 2,
-              bgcolor: alpha('#ff6b35', 0.1),
+              bgcolor: alpha(accentColors.warning.light, 0.1),
               textAlign: 'center',
             }}
           >
-            <Typography variant="h4" sx={{ fontWeight: 700, color: '#ff6b35' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: accentColors.warning.light }}>
               {highCount}
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>

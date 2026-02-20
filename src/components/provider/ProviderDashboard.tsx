@@ -28,7 +28,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
-import { brand, iosSemanticColors, iosTypographyScale, legacyTypography as typography, radius } from '../../design-system';
+import { accentColors, brand, iosSemanticColors, iosTypographyScale, legacyTypography as typography, primitiveColors, radius } from '../../design-system';
 import { PRODUCT_TYPE_LABELS, QUOTATION_STATUS_LABELS, type ProviderQuotation, type QuotationStatus } from '../../types/provider';
 
 interface DashboardStats {
@@ -98,9 +98,9 @@ export default function ProviderDashboard() {
   const getStatusColor = (status: QuotationStatus) => {
     switch (status) {
       case 'disponible': return brand.emerald[500];
-      case 'reservado': return '#f59e0b';
-      case 'vendido': return '#ef4444';
-      default: return '#6b7280';
+      case 'reservado': return accentColors.warning.light;
+      case 'vendido': return accentColors.error.light;
+      default: return primitiveColors.metallic.silver[500];
     }
   };
 
@@ -223,7 +223,7 @@ export default function ProviderDashboard() {
           <Card
             sx={{
               minWidth: 100,
-              bgcolor: alpha('#6366f1', 0.08),
+              bgcolor: alpha(accentColors.indigo.light, 0.08),
               border: 'none',
               boxShadow: 'none',
               borderRadius: radius.lg,
@@ -231,12 +231,12 @@ export default function ProviderDashboard() {
           >
             <CardContent sx={{ py: 2, px: 2, '&:last-child': { pb: 2 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                <Eye size={16} color="#6366f1" />
+                <Eye size={16} color={accentColors.indigo.light} />
                 <Typography sx={{ fontSize: iosTypographyScale.caption1, color: secondaryLabelColor }}>
                   Vistas
                 </Typography>
               </Box>
-              <Typography sx={{ fontSize: iosTypographyScale.title2, fontWeight: typography.weight.bold, color: '#6366f1' }}>
+              <Typography sx={{ fontSize: iosTypographyScale.title2, fontWeight: typography.weight.bold, color: accentColors.indigo.light }}>
                 {stats.viewedByAdmin}
               </Typography>
             </CardContent>
@@ -246,7 +246,7 @@ export default function ProviderDashboard() {
           <Card
             sx={{
               minWidth: 100,
-              bgcolor: alpha('#10b981', 0.08),
+              bgcolor: alpha(accentColors.success.light, 0.08),
               border: 'none',
               boxShadow: 'none',
               borderRadius: radius.lg,
@@ -254,12 +254,12 @@ export default function ProviderDashboard() {
           >
             <CardContent sx={{ py: 2, px: 2, '&:last-child': { pb: 2 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                <TrendingUp size={16} color="#10b981" />
+                <TrendingUp size={16} color={accentColors.success.light} />
                 <Typography sx={{ fontSize: iosTypographyScale.caption1, color: secondaryLabelColor }}>
                   Vendidas
                 </Typography>
               </Box>
-              <Typography sx={{ fontSize: iosTypographyScale.title2, fontWeight: typography.weight.bold, color: '#10b981' }}>
+              <Typography sx={{ fontSize: iosTypographyScale.title2, fontWeight: typography.weight.bold, color: accentColors.success.light }}>
                 {stats.vendidos}
               </Typography>
             </CardContent>
@@ -412,7 +412,7 @@ export default function ProviderDashboard() {
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                           {quotation.viewedByAdmin && (
-                            <Eye size={12} color="#6366f1" />
+                            <Eye size={12} color={accentColors.indigo.light} />
                           )}
                           <Typography
                             sx={{

@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { Search, X, Heart, SlidersHorizontal } from 'lucide-react';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
+import { accentColors } from '../../../design-system';
 import { ActiveFilterChips } from '../';
 import type { TreasureFilters, StatusFilter, TypeFilter } from '../../../hooks/useTreasureFiltering';
 
@@ -201,22 +202,22 @@ export default function MobileSearchBar({
                   outlineOffset: 2,
                 },
                 bgcolor: showFavoritesOnly
-                  ? alpha('#ef4444', 0.15)
+                  ? alpha(accentColors.error.light, 0.15)
                   : isLight
                     ? surfacesLight.background.secondary
                     : surfacesDark.background.tertiary,
-                border: showFavoritesOnly ? '1px solid #ef4444' : 'none',
+                border: showFavoritesOnly ? `1px solid ${accentColors.error.light}` : 'none',
                 flexShrink: 0,
               }}
             >
               <Heart
                 size={14}
-                fill={showFavoritesOnly ? '#ef4444' : 'none'}
-                color={showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary}
+                fill={showFavoritesOnly ? accentColors.error.light : 'none'}
+                color={showFavoritesOnly ? accentColors.error.light : theme.palette.text.secondary}
               />
               <Typography
                 sx={{
-                  color: showFavoritesOnly ? '#ef4444' : theme.palette.text.secondary,
+                  color: showFavoritesOnly ? accentColors.error.light : theme.palette.text.secondary,
                   fontWeight: 600,
                   fontSize: '0.7rem',
                 }}

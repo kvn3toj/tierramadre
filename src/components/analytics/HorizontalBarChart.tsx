@@ -10,7 +10,8 @@
 import React from 'react';
 import { Box, Typography, alpha, useTheme } from '@mui/material';
 import { Crown, Medal, Award, ChevronRight } from 'lucide-react';
-import { emeraldCore } from '../../design-system/tokens/colors';
+import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
+import { cssTransition, medalColors } from '../../design-system';
 
 // =============================================================================
 // TYPES
@@ -48,9 +49,9 @@ export interface HorizontalBarChartProps {
 
 const MedalBadge: React.FC<{ rank: number }> = ({ rank }) => {
   const medals = [
-    { icon: Crown, color: '#FFD700', bg: alpha('#FFD700', 0.15), label: '1st' },
-    { icon: Medal, color: '#C0C0C0', bg: alpha('#C0C0C0', 0.15), label: '2nd' },
-    { icon: Award, color: '#CD7F32', bg: alpha('#CD7F32', 0.15), label: '3rd' },
+    { icon: Crown, color: goldAccent.primary, bg: alpha(goldAccent.primary, 0.15), label: '1st' },
+    { icon: Medal, color: medalColors.silver, bg: alpha(medalColors.silver, 0.15), label: '2nd' },
+    { icon: Award, color: medalColors.bronze, bg: alpha(medalColors.bronze, 0.15), label: '3rd' },
   ];
 
   if (rank > 3) {
@@ -154,7 +155,7 @@ export const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
               borderBottom: index < displayData.length - 1
                 ? `1px solid ${alpha(isDark ? '#fff' : '#000', 0.06)}`
                 : 'none',
-              transition: 'background-color 0.15s ease',
+              transition: cssTransition.fast,
               '&:hover': isInteractive ? {
                 bgcolor: alpha(color, 0.05),
               } : {},

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../../../contexts/ThemeContext';
 import { emeraldCore, goldAccent } from '../../../../design-system/tokens/colors';
+import { accentColors } from '../../../../design-system';
 import { AreaChart } from '../../../../components/analytics/AreaChart';
 import { HorizontalBarChart } from '../../../../components/analytics/HorizontalBarChart';
 import { InsightCard } from '../../../../components/analytics/InsightCard';
@@ -104,7 +105,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           label="Esta Semana"
           value={viewStats?.weekViews || 0}
           icon={Calendar}
-          color="#8B5CF6"
+          color={accentColors.purple.light}
           tooltip="Vistas acumuladas de los últimos 7 días"
           trend={{ data: generateTrendData(viewStats?.weekViews || 0) }}
           subtitle="Últimos 7 días"
@@ -114,7 +115,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           label="Racha"
           value={`${metrics.streak} días`}
           icon={Zap}
-          color="#F59E0B"
+          color={accentColors.warning.light}
           tooltip="Días consecutivos con al menos una actividad registrada"
           subtitle="Días consecutivos"
           compact
@@ -172,7 +173,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               </Typography>
             </Box>
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#8B5CF6' }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: accentColors.purple.light }}>
                 {viewStats?.uniqueViewers || 0}
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>

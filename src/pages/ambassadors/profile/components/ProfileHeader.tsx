@@ -30,7 +30,7 @@ import {
   Camera,
 } from 'lucide-react';
 import { Asesor } from '../../../../hooks/useAsesores';
-import { brand, lightTokens, darkTokens, cssTransition } from '../../../../design-system';
+import { brand, lightTokens, darkTokens, cssTransition, accentColors } from '../../../../design-system';
 
 // Stat Box Component
 function StatBox({
@@ -291,19 +291,19 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           icon={<Gem size={20} />}
           value={stats.looseCount.toString()}
           label="Gemas"
-          color="#3B82F6"
+          color={accentColors.info.light}
         />
         <StatBox
           icon={<Crown size={20} />}
           value={stats.jewelryCount.toString()}
           label="Joyeria"
-          color="#8B5CF6"
+          color={accentColors.purple.light}
         />
         <StatBox
           icon={<DollarSign size={20} />}
           value={formatCurrency(stats.totalValue)}
           label="Valor Disponible"
-          color="#F59E0B"
+          color={accentColors.warning.light}
         />
       </Box>
     </Paper>

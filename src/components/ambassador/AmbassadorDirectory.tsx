@@ -32,6 +32,7 @@ import AsesorCard from './AsesorCard';
 import { StatItem } from './StatItem';
 import {
   emeraldCore,
+  accentColors,
   applyGlass,
   glassEmerald,
   glassLight,
@@ -186,21 +187,21 @@ export default function AmbassadorDirectory({
             icon={<Package size={18} />}
             value={stats.totalProducts.toString()}
             label="Productos totales"
-            color="#3B82F6"
+            color={accentColors.info.light}
             variant="stacked"
           />
           <StatItem
             icon={<Gem size={18} />}
             value={stats.looseCount.toString()}
             label="Gemas"
-            color="#8B5CF6"
+            color={accentColors.purple.light}
             variant="stacked"
           />
           <StatItem
             icon={<DollarSign size={18} />}
             value={formatValue(stats.totalValue)}
             label="Valor disponible"
-            color="#F59E0B"
+            color={accentColors.warning.light}
             variant="stacked"
           />
         </Box>

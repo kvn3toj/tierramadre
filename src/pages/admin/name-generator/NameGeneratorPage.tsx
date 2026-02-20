@@ -34,7 +34,7 @@ import {
   Delete,
 } from '@mui/icons-material';
 
-import { brand, radius, iosTypographyScale, cssTransition, primitiveSpacing as spacing } from '../../../design-system';
+import { accentColors, brand, radius, iosTypographyScale, cssTransition, primitiveSpacing as spacing } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import {
   useAI,
@@ -48,7 +48,7 @@ import { STORAGE_KEYS } from '../../../constants/storage-keys';
 
 const DEFAULT_TEMPERATURE = 0.7;
 const TOOL_COLOR = brand.emerald[500];
-const COLLECTION_COLOR = '#8B5CF6';
+const COLLECTION_COLOR = accentColors.purple.light;
 
 const NameGeneratorPage: React.FC = () => {
   const { t } = useLanguage();

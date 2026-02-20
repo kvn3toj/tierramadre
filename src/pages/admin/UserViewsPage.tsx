@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, goldAccent, semanticColors } from '../../design-system/tokens/colors';
-import { cssTransition, primitiveSpacing as spacing } from '../../design-system';
+import { accentColors, cssTransition, primitiveColors, primitiveSpacing as spacing } from '../../design-system';
 
 // =============================================================================
 // TYPES
@@ -211,10 +211,10 @@ const UserViewsPage: React.FC = () => {
   const getRoleColor = (role: string): string => {
     const r = role.toLowerCase();
     if (r === 'admin' || r.includes('admin')) return goldAccent.primary;
-    if (r === 'embajador' || r === 'ambassador') return '#8B5CF6'; // Purple for ambassadors
+    if (r === 'embajador' || r === 'ambassador') return accentColors.purple.light;
     if (r === 'full' || r === 'asesor') return emeraldCore.primary;
-    if (r === 'provider' || r === 'proveedor') return '#3B82F6';
-    return '#6B7280';
+    if (r === 'provider' || r === 'proveedor') return accentColors.info.light;
+    return primitiveColors.metallic.silver[500];
   };
 
   const userName = data?.user?.name || name || 'Usuario';
@@ -368,7 +368,7 @@ const UserViewsPage: React.FC = () => {
                 label="Total Vistas"
                 value={data.totalViews}
                 icon={Eye}
-                color="#3B82F6"
+                color={accentColors.info.light}
               />
               <StatCard
                 label="Productos Únicos"

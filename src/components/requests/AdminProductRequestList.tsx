@@ -39,6 +39,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { emeraldCore } from '../../design-system/tokens/colors';
+import { accentColors, primitiveColors } from '../../design-system';
 import {
   PRODUCT_TYPE_LABELS,
   PRODUCT_REQUEST_STATUS_LABELS,
@@ -84,12 +85,12 @@ export default function AdminProductRequestList() {
 
   const getStatusColor = (status: ProductRequestStatus) => {
     switch (status) {
-      case 'pendiente': return '#f59e0b';
+      case 'pendiente': return accentColors.warning.light;
       case 'aprobada': return emeraldCore.primary;
-      case 'enviada_proveedor': return '#3b82f6';
-      case 'rechazada': return '#ef4444';
-      case 'completada': return '#10b981';
-      default: return '#6b7280';
+      case 'enviada_proveedor': return accentColors.info.light;
+      case 'rechazada': return accentColors.error.light;
+      case 'completada': return accentColors.success.light;
+      default: return primitiveColors.metallic.silver[500];
     }
   };
 
@@ -106,9 +107,9 @@ export default function AdminProductRequestList() {
 
   const getPriorityColor = (priority: RequestPriority) => {
     switch (priority) {
-      case 'muy_urgente': return '#ef4444';
-      case 'urgente': return '#f59e0b';
-      default: return '#6b7280';
+      case 'muy_urgente': return accentColors.error.light;
+      case 'urgente': return accentColors.warning.light;
+      default: return primitiveColors.metallic.silver[500];
     }
   };
 
@@ -218,8 +219,8 @@ export default function AdminProductRequestList() {
                   size="small"
                   sx={{
                     ml: 1,
-                    bgcolor: alpha('#f59e0b', 0.1),
-                    color: '#f59e0b',
+                    bgcolor: alpha(accentColors.warning.light, 0.1),
+                    color: accentColors.warning.light,
                     fontWeight: 600,
                   }}
                 />
@@ -279,9 +280,9 @@ export default function AdminProductRequestList() {
                   key={request.id}
                   sx={{
                     border: '1px solid',
-                    borderColor: request.status === 'pendiente' ? alpha('#f59e0b', 0.3) : 'divider',
+                    borderColor: request.status === 'pendiente' ? alpha(accentColors.warning.light, 0.3) : 'divider',
                     boxShadow: 'none',
-                    bgcolor: request.status === 'pendiente' ? alpha('#f59e0b', 0.02) : 'background.paper',
+                    bgcolor: request.status === 'pendiente' ? alpha(accentColors.warning.light, 0.02) : 'background.paper',
                   }}
                 >
                   <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
