@@ -30,6 +30,45 @@ const FOLDER_ALIASES: Record<string, string> = {
   'ceo-tierra-madre': 'ceo-coomunity',
 };
 
+// Static CEO exclusive products (local video files, no API needed)
+const CEO_STATIC_PRODUCTS: TreasureItem[] = [
+  {
+    item: 911, nombre: 'Song of the River', peso: 1.825, color: 'Intense Green' as TreasureItem['color'],
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    precioCOP: 0, precioInternacional: 22857, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
+    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
+    videoUrl: '/images/CEO/911/1-1.825Cts.mp4', imagen: '/images/CEO/911/1-1.825Cts.mp4',
+  },
+  {
+    item: 912, nombre: 'Soul of the Mountain', peso: 1.93, color: 'Intense Green' as TreasureItem['color'],
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    precioCOP: 0, precioInternacional: 43429, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
+    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
+    videoUrl: '/images/CEO/912/2-1.93Cts.mp4', imagen: '/images/CEO/912/2-1.93Cts.mp4',
+  },
+  {
+    item: 913, nombre: 'Forest Hug', peso: 1.04, color: 'Intense Green' as TreasureItem['color'],
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    precioCOP: 0, precioInternacional: 38571, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
+    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
+    videoUrl: '/images/CEO/913/3-1.04Cts.mp4', imagen: '/images/CEO/913/3-1.04Cts.mp4',
+  },
+  {
+    item: 914, nombre: 'Light Echo', peso: 0.67, color: 'Intense Green' as TreasureItem['color'],
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    precioCOP: 0, precioInternacional: 15429, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
+    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
+    videoUrl: '/images/CEO/914/4-0.67-Cts.mp4', imagen: '/images/CEO/914/4-0.67-Cts.mp4',
+  },
+  {
+    item: 915, nombre: 'Kingdom of Peace', peso: 3.56, color: 'Intense Green' as TreasureItem['color'],
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    precioCOP: 0, precioInternacional: 12000, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
+    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
+    videoUrl: '/images/CEO/915/5-3.54Cts.mp4', imagen: '/images/CEO/915/5-3.54Cts.mp4',
+  },
+];
+
 // Map collection folders to WhatsApp contact info
 const COLLECTION_CONTACTS: Record<string, { name: string; phone: string; title?: string; subtitle?: string }> = {
   'ceo-tierra-madre': {
@@ -205,23 +244,19 @@ export default function CollectionPage() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
 
+  const isCeoCollection = folder === 'ceo-tierra-madre';
   const driveFolder = folder ? (FOLDER_ALIASES[folder] || folder) : null;
-  const { products, collectionInfo, isLoading, error } = useAsesorCollection(driveFolder);
+  const { products: apiProducts, collectionInfo, isLoading: apiLoading, error: apiError } = useAsesorCollection(isCeoCollection ? null : driveFolder);
   const [selectedProduct, setSelectedProduct] = useState<TreasureItem | null>(null);
   const [showSplash, setShowSplash] = useState(true);
 
   const contact = folder ? COLLECTION_CONTACTS[folder] : null;
 
-  // Custom display order: 907, 906, then the rest (901, 902, ...)
-  const PRIORITY_ORDER = [907, 906];
-  const sortedProducts = [...products].sort((a, b) => {
-    const aIdx = PRIORITY_ORDER.indexOf(a.item);
-    const bIdx = PRIORITY_ORDER.indexOf(b.item);
-    if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
-    if (aIdx !== -1) return -1;
-    if (bIdx !== -1) return 1;
-    return a.item - b.item;
-  });
+  // CEO collection uses static data; others use API
+  const products = isCeoCollection ? CEO_STATIC_PRODUCTS : apiProducts;
+  const isLoading = isCeoCollection ? false : apiLoading;
+  const error = isCeoCollection ? null : apiError;
+  const sortedProducts = products;
 
   const handleWhatsApp = () => {
     if (!contact) return;
