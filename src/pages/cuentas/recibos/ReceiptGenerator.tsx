@@ -3,7 +3,7 @@
  * Elegant purchase receipts for Colombian emeralds
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -22,9 +22,10 @@ import {
   alpha,
 } from '@mui/material';
 import { Receipt, Download, Printer, Copy, Moon, Sun } from 'lucide-react';
-import { ReceiptData, ReceiptProduct, Emerald } from '../../../types';
+import { ReceiptData, ReceiptProduct, TreasureItem } from '../../../types';
 import { exportReceiptToPdf } from '../../../utils/pdf';
-import { useEmeralds } from '../../../hooks/useEmeralds';
+import { useTreasure } from '../../../hooks/useTreasure';
+import { useCotizacionFormat } from '../../../hooks/useCotizacion';
 
 // Design System Imports
 import { surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
@@ -34,7 +35,6 @@ import { iosTypographyScale, blurValues, primitiveColors } from '../../../design
 import { ReceiptPreview, ReceiptSettings, ProductListEditor } from './components';
 import {
   generateReceiptNumber,
-  formatCurrency,
   defaultBusinessSettings,
   type ReceiptTheme,
   type DocumentType,
@@ -43,8 +43,16 @@ import {
 
 export default function ReceiptGenerator() {
   const receiptRef = useRef<HTMLDivElement>(null);
-  const { emeralds } = useEmeralds();
-  const [selectedEmerald, setSelectedEmerald] = useState<Emerald | null>(null);
+  const { treasure } = useTreasure();
+  const { formatPrice } = useCotizacionFormat();
+
+  // Filter available treasure items (only DISPONIBLE)
+  const availableTreasure = useMemo(
+    () => treasure.filter((t) => t.estado === 'DISPONIBLE'),
+    [treasure],
+  );
+
+  const [selectedItem, setSelectedItem] = useState<TreasureItem | null>(null);
   const [receiptTheme, setReceiptTheme] = useState<ReceiptTheme>('dark');
   const [documentType, setDocumentType] = useState<DocumentType>('receipt');
   const [businessSettings, setBusinessSettings] = useState<BusinessSettings>(defaultBusinessSettings);
@@ -68,49 +76,68 @@ export default function ReceiptGenerator() {
     notes: '',
   });
 
-  const [newProduct, setNewProduct] = useState<Partial<ReceiptProduct>>({
+  const [manualProduct, setManualProduct] = useState<Partial<ReceiptProduct>>({
     name: '',
     description: '',
     weightCarats: undefined,
+    precioCOP: 0,
     priceUSD: 0,
   });
 
-  // Calculate totals
+  // Calculate totals using precioCOP
   const calculateTotals = (products: ReceiptProduct[], discountPercent: number = 0) => {
-    const subtotal = products.reduce((sum, p) => sum + p.priceUSD, 0);
+    const subtotal = products.reduce((sum, p) => sum + p.precioCOP, 0);
     const discount = subtotal * (discountPercent / 100);
     const total = subtotal - discount;
     return { subtotal, discount, total };
   };
 
-  // Add product
-  const handleAddProduct = () => {
-    if (!newProduct.name || !newProduct.priceUSD) return;
+  // Add product from treasure inventory
+  const handleAddFromTreasure = () => {
+    if (!selectedItem) return;
 
     const product: ReceiptProduct = {
       id: crypto.randomUUID(),
-      name: newProduct.name,
-      description: newProduct.description,
-      weightCarats: newProduct.weightCarats,
-      priceUSD: newProduct.priceUSD,
+      name: selectedItem.nombre,
+      itemNumber: selectedItem.item,
+      peso: selectedItem.peso,
+      color: selectedItem.color,
+      calidad: selectedItem.calidad,
+      talla: selectedItem.talla,
+      precioCOP: selectedItem.precioCOP,
+      priceUSD: Math.round(selectedItem.precioCOP / 4000),
+      imagen: selectedItem.imagen,
+      isJewelry: selectedItem.isJewelry,
+      metalType: selectedItem.metalType,
+      isManual: false,
     };
 
     const updatedProducts = [...(receipt.products || []), product];
     const totals = calculateTotals(updatedProducts, receipt.discountPercent || 0);
 
-    setReceipt({
-      ...receipt,
-      products: updatedProducts,
-      ...totals,
-    });
+    setReceipt({ ...receipt, products: updatedProducts, ...totals });
+    setSelectedItem(null);
+  };
 
-    setNewProduct({
-      name: '',
-      description: '',
-      weightCarats: undefined,
-      priceUSD: 0,
-    });
-    setSelectedEmerald(null);
+  // Add product manually
+  const handleAddManual = () => {
+    if (!manualProduct.name || !manualProduct.precioCOP) return;
+
+    const product: ReceiptProduct = {
+      id: crypto.randomUUID(),
+      name: manualProduct.name!,
+      description: manualProduct.description,
+      weightCarats: manualProduct.weightCarats,
+      precioCOP: manualProduct.precioCOP!,
+      priceUSD: Math.round((manualProduct.precioCOP || 0) / 4000),
+      isManual: true,
+    };
+
+    const updatedProducts = [...(receipt.products || []), product];
+    const totals = calculateTotals(updatedProducts, receipt.discountPercent || 0);
+
+    setReceipt({ ...receipt, products: updatedProducts, ...totals });
+    setManualProduct({ name: '', description: '', weightCarats: undefined, precioCOP: 0, priceUSD: 0 });
   };
 
   // Remove product
@@ -151,6 +178,7 @@ export default function ReceiptGenerator() {
       paymentMethod: 'cash',
       notes: '',
     });
+    setSelectedItem(null);
   };
 
   return (
@@ -222,7 +250,7 @@ export default function ReceiptGenerator() {
               </Box>
               <Box sx={{ px: 2.5, py: 1.5, borderRadius: 2.5, bgcolor: 'rgba(255,255,255,0.25)', backdropFilter: `blur(${blurValues.sm})`, textAlign: 'center', minWidth: 100 }}>
                 <Typography sx={{ fontSize: iosTypographyScale.title3, fontWeight: 800, color: surfacesLight.background.primary, lineHeight: 1.2 }}>
-                  {formatCurrency(receipt.total || 0)}
+                  {formatPrice(receipt.total || 0)}
                 </Typography>
                 <Typography sx={{ fontSize: iosTypographyScale.caption2, color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
                   Total
@@ -262,7 +290,7 @@ export default function ReceiptGenerator() {
               <Receipt size={18} color={primitiveColors.emerald[600]} />
             </Box>
             <Typography sx={{ fontWeight: 700, color: surfacesLight.text.primary }}>
-              {documentType === 'invoice' ? 'Información de la Factura' : 'Información del Recibo'}
+              {documentType === 'invoice' ? 'Informacion de la Factura' : 'Informacion del Recibo'}
             </Typography>
           </Box>
 
@@ -278,7 +306,7 @@ export default function ReceiptGenerator() {
 
           {/* Client Information */}
           <Typography variant="subtitle2" sx={{ color: 'grey.400', mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
-            Información del Cliente
+            Informacion del Cliente
           </Typography>
 
           <Grid container spacing={{ xs: 1.5, md: 2 }} sx={{ mb: 3 }}>
@@ -294,7 +322,7 @@ export default function ReceiptGenerator() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Teléfono"
+                label="Telefono"
                 value={receipt.client?.phone || ''}
                 onChange={(e) => setReceipt({ ...receipt, client: { ...receipt.client!, phone: e.target.value } })}
                 size="small"
@@ -313,7 +341,7 @@ export default function ReceiptGenerator() {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Documento (Cédula/Pasaporte)"
+                label="Documento (Cedula/Pasaporte)"
                 value={receipt.client?.document || ''}
                 onChange={(e) => setReceipt({ ...receipt, client: { ...receipt.client!, document: e.target.value } })}
                 size="small"
@@ -325,13 +353,14 @@ export default function ReceiptGenerator() {
 
           {/* Product List Editor */}
           <ProductListEditor
-            emeralds={emeralds}
-            selectedEmerald={selectedEmerald}
-            setSelectedEmerald={setSelectedEmerald}
-            newProduct={newProduct}
-            setNewProduct={setNewProduct}
+            availableTreasure={availableTreasure}
+            selectedItem={selectedItem}
+            setSelectedItem={setSelectedItem}
+            manualProduct={manualProduct}
+            setManualProduct={setManualProduct}
             products={receipt.products || []}
-            onAddProduct={handleAddProduct}
+            onAddFromTreasure={handleAddFromTreasure}
+            onAddManual={handleAddManual}
             onRemoveProduct={handleRemoveProduct}
           />
 
@@ -352,10 +381,10 @@ export default function ReceiptGenerator() {
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth size="small">
-                <InputLabel>Método de Pago</InputLabel>
+                <InputLabel>Metodo de Pago</InputLabel>
                 <Select
                   value={receipt.paymentMethod || 'cash'}
-                  label="Método de Pago"
+                  label="Metodo de Pago"
                   onChange={(e) => setReceipt({ ...receipt, paymentMethod: e.target.value as ReceiptData['paymentMethod'] })}
                 >
                   <MenuItem value="cash">Efectivo</MenuItem>

@@ -1,16 +1,17 @@
 /**
  * ReceiptPreview Component
  * Renders the receipt document preview for PDF export.
+ * Shows product thumbnails and currency-aware pricing.
  */
 
 import React, { forwardRef } from 'react';
 import { Box, Typography, Divider } from '@mui/material';
 import { ReceiptData } from '../../../../types';
 import { semanticColors } from '../../../../design-system/tokens/colors';
+import { useCotizacionFormat } from '../../../../hooks/useCotizacion';
 import {
   receiptThemes,
   paymentMethodLabels,
-  formatCurrency,
   formatDate,
   type ReceiptTheme,
   type BusinessSettings,
@@ -27,6 +28,16 @@ interface ReceiptPreviewProps {
 export const ReceiptPreview = forwardRef<HTMLDivElement, ReceiptPreviewProps>(
   ({ receipt, receiptTheme, documentType, businessSettings }, ref) => {
     const theme = receiptThemes[receiptTheme];
+    const { formatPrice } = useCotizacionFormat();
+
+    const getPesoLabel = (product: ReceiptData['products'][number]): string => {
+      if (product.isJewelry) return product.metalType || 'Joya';
+      if (product.peso != null) {
+        return typeof product.peso === 'number' ? `${product.peso} ct` : String(product.peso);
+      }
+      if (product.weightCarats) return `${product.weightCarats} quilates`;
+      return '';
+    };
 
     return (
       <Box
@@ -181,28 +192,47 @@ export const ReceiptPreview = forwardRef<HTMLDivElement, ReceiptPreviewProps>(
                   key={product.id}
                   sx={{
                     display: 'flex',
-                    justifyContent: 'space-between',
+                    gap: 1.5,
                     py: 1.5,
                     borderBottom: `1px solid ${theme.border}`,
                   }}
                 >
-                  <Box>
+                  {/* Product Thumbnail */}
+                  {product.imagen && (
+                    <Box
+                      component="img"
+                      src={product.imagen}
+                      alt={product.name}
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 0.5,
+                        objectFit: 'cover',
+                        flexShrink: 0,
+                        border: `1px solid ${theme.border}`,
+                      }}
+                      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  )}
+                  <Box sx={{ flex: 1 }}>
                     <Typography sx={{ fontSize: '0.85rem', color: theme.text }}>
-                      {product.name}
+                      {product.itemNumber ? `#${product.itemNumber} - ` : ''}{product.name}
                     </Typography>
                     {product.description && (
                       <Typography sx={{ fontSize: '0.7rem', color: theme.textSecondary }}>
                         {product.description}
                       </Typography>
                     )}
-                    {product.weightCarats && (
+                    {(getPesoLabel(product) || product.color) && (
                       <Typography sx={{ fontSize: '0.7rem', color: receiptTheme === 'dark' ? theme.accent : theme.textSecondary }}>
-                        {product.weightCarats} quilates
+                        {[getPesoLabel(product), product.color].filter(Boolean).join(' \u2022 ')}
                       </Typography>
                     )}
                   </Box>
-                  <Typography sx={{ fontSize: '0.85rem', color: theme.text, fontWeight: 500 }}>
-                    {formatCurrency(product.priceUSD)}
+                  <Typography sx={{ fontSize: '0.85rem', color: theme.text, fontWeight: 500, flexShrink: 0 }}>
+                    {formatPrice(product.precioCOP)}
                   </Typography>
                 </Box>
               ))
@@ -233,7 +263,7 @@ export const ReceiptPreview = forwardRef<HTMLDivElement, ReceiptPreviewProps>(
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
               <Typography sx={{ fontSize: '0.8rem', color: theme.textSecondary }}>Subtotal</Typography>
               <Typography sx={{ fontSize: '0.8rem', color: theme.text }}>
-                {formatCurrency(receipt.subtotal || 0)}
+                {formatPrice(receipt.subtotal || 0)}
               </Typography>
             </Box>
 
@@ -243,7 +273,7 @@ export const ReceiptPreview = forwardRef<HTMLDivElement, ReceiptPreviewProps>(
                   Descuento ({receipt.discountPercent}%)
                 </Typography>
                 <Typography sx={{ fontSize: '0.8rem', color: semanticColors.error.main }}>
-                  -{formatCurrency(receipt.discount || 0)}
+                  -{formatPrice(receipt.discount || 0)}
                 </Typography>
               </Box>
             )}
@@ -268,7 +298,7 @@ export const ReceiptPreview = forwardRef<HTMLDivElement, ReceiptPreviewProps>(
                   fontWeight: 700,
                 }}
               >
-                {formatCurrency(receipt.total || 0)}
+                {formatPrice(receipt.total || 0)}
               </Typography>
             </Box>
           </Box>
@@ -276,7 +306,7 @@ export const ReceiptPreview = forwardRef<HTMLDivElement, ReceiptPreviewProps>(
           {/* Payment Method */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
             <Typography sx={{ fontSize: '0.75rem', color: theme.textSecondary }}>
-              Método de Pago:
+              Metodo de Pago:
             </Typography>
             <Typography sx={{ fontSize: '0.75rem', color: theme.text }}>
               {paymentMethodLabels[receipt.paymentMethod || 'cash']}

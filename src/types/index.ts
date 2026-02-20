@@ -74,6 +74,17 @@ export interface ReceiptProduct {
   description?: string;
   weightCarats?: number;
   priceUSD: number;
+  // Treasure inventory fields
+  itemNumber?: number;
+  peso?: string | number;
+  color?: string;
+  calidad?: string;
+  talla?: string;
+  precioCOP: number;
+  imagen?: string;
+  isJewelry?: boolean;
+  metalType?: string;
+  isManual?: boolean;
 }
 
 export interface ReceiptData {
