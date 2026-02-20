@@ -63,6 +63,9 @@ function parseUrlFilters(): Partial<TreasureFilters> {
   const color = params.get('color');
   if (color) filters.colorFilter = color;
 
+  const categoria = params.get('categoria');
+  if (categoria) filters.categoriaFilter = categoria;
+
   const coleccion = params.get('coleccion');
   if (coleccion) filters.coleccionFilter = coleccion;
 
@@ -130,6 +133,9 @@ export function useUrlFilterSync({
       params.set('shape', filters.shapeFilter);
     }
     if (filters.cityFilter !== 'all') params.set('city', filters.cityFilter);
+    if (filters.categoriaFilter && filters.categoriaFilter !== 'all') {
+      params.set('categoria', filters.categoriaFilter);
+    }
     if (filters.coleccionFilter && filters.coleccionFilter !== 'all') {
       params.set('coleccion', filters.coleccionFilter);
     }

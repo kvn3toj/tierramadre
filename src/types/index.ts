@@ -255,6 +255,7 @@ export interface TreasureItem {
   estado: TreasureStatus;
   caja?: string;
   qr?: string;                      // QR code data (Column P)
+  categoria?: string;                // Product category from Column K (e.g., Anillo en Plata, Aretes)
   coleccion?: string;               // Collection/Catalog label for grouping (Column Q)
   isJewelry: boolean;  // Computed: true if peso is "Plata" or "Oro 18k"
   metalType?: 'Plata' | 'Oro 18k';

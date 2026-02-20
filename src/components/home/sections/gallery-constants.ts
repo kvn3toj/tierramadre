@@ -37,3 +37,11 @@ export const CATEGORY_ICONS: Record<MainCategory, string> = {
   lotes: '◆◆',
   joyas: '👑',
 };
+
+/** Subcategories for each main category (values match Column K in Google Sheets) */
+export const CATEGORY_SUBCATEGORIES: Record<MainCategory, string[]> = {
+  joyas: ['Anillo en Plata', 'Aretes', 'Topitos', 'Pulsera', 'Dije', 'Anillo en Oro'],
+  piedras: [],  // TBD - uses current type/cantidad logic as fallback
+  gemas: [],    // TBD
+  lotes: [],    // TBD
+};

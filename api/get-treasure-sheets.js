@@ -50,7 +50,7 @@ function parsePeso(peso) {
  * H = Talla (7)
  * I = Medidas (8)
  * J = Medidas (9) - valores
- * K = Imagen (10) - unused, images from Google Drive products/ folder
+ * K = Categoría (10) - product category (e.g., Anillo en Plata, Aretes, Topitos)
  * L = Precio COP (11)
  * M = UBICACIÓN (12)
  * N = ASESOR (13)
@@ -69,7 +69,7 @@ const INVENTARIO_HEADERS = {
   CANTIDAD: 'cant.',
   TALLA: 'talla',
   MEDIDAS: 'medidas',
-  IMAGEN: 'imagen',
+  CATEGORIA: 'categoría',
   PRECIO_COP: 'precio cop',
   UBICACION: 'ubicación',
   ASESOR: 'asesor',
@@ -119,6 +119,7 @@ function mapRowToTreasureItem(row, headers) {
     talla: getValue(INVENTARIO_HEADERS.TALLA) || getByIndex(7) || '',
     medidas: getValue(INVENTARIO_HEADERS.MEDIDAS) || getByIndex(8) || '',
     medidasValores: getByIndex(9) || '',
+    categoria: getValue(INVENTARIO_HEADERS.CATEGORIA) || getByIndex(10) || '',
     precioCOP: parsePrice(getValue(INVENTARIO_HEADERS.PRECIO_COP) || getByIndex(11)),
     precioInternacional: 0,
     ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || getByIndex(12) || '',

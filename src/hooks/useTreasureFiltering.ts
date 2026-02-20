@@ -10,6 +10,7 @@ import { normalizeQuality, normalizeColor } from '../constants/quality-and-color
 import { useFilterOptions } from './useFilterOptions';
 import { useTreasureSort, type SortOption } from './useTreasureSort';
 import { useFilterInactivityTimeout } from './useFilterInactivityTimeout';
+import { CATEGORY_SUBCATEGORIES, MainCategory } from '../components/home/sections/gallery-constants';
 
 // Sequential stock: same product listed multiple times.
 // Only the first non-sold item in each group is shown; the rest are hidden.
@@ -37,6 +38,7 @@ export interface TreasureFilters {
   sortBy: SortOption;
   cantidadFilter: string; // 'all' | '1' | '2+'
   cityFilter: CityFilter;
+  categoriaFilter: string; // 'all' | main category name like 'joyas'
   coleccionFilter: string; // 'all' | specific collection name
   itemsFilter: number[]; // Filter by specific item numbers (for QR/quotation links)
 }
@@ -61,6 +63,7 @@ export interface UseTreasureFilteringReturn {
   setSortBy: (sort: SortOption) => void;
   setCantidadFilter: (cantidad: string) => void;
   setCityFilter: (city: CityFilter) => void;
+  setCategoriaFilter: (categoria: string) => void;
   setColeccionFilter: (coleccion: string) => void;
   clearFilters: () => void;
   hasFilters: boolean;
@@ -108,6 +111,7 @@ export function useTreasureFiltering({
   const [sortBy, setSortBy] = useState<SortOption>(initialFilters.sortBy || 'newest');
   const [cantidadFilter, setCantidadFilter] = useState(initialFilters.cantidadFilter || 'all');
   const [cityFilter, setCityFilter] = useState<CityFilter>(initialFilters.cityFilter || 'all');
+  const [categoriaFilter, setCategoriaFilter] = useState(initialFilters.categoriaFilter || 'all');
   const [coleccionFilter, setColeccionFilter] = useState(initialFilters.coleccionFilter || 'all');
   const [itemsFilter] = useState<number[]>(initialFilters.itemsFilter || []);
 
@@ -176,12 +180,19 @@ export function useTreasureFiltering({
         (cantidadFilter === '1' && item.cantidad === 1) ||
         (cantidadFilter === '2+' && item.cantidad > 1);
       const matchesCity = cityFilter === 'all' || item.city === cityFilter;
+      const matchesCategoria = categoriaFilter === 'all' || (() => {
+        const subcats = CATEGORY_SUBCATEGORIES[categoriaFilter as MainCategory];
+        if (subcats && subcats.length > 0) {
+          return subcats.includes(item.categoria || '');
+        }
+        return true; // No subcategories defined = no additional filtering
+      })();
       const matchesColeccion = coleccionFilter === 'all' || item.coleccion === coleccionFilter;
       const matchesItems = itemsFilter.length === 0 || itemsFilter.includes(item.item);
 
-      return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice && matchesCantidad && matchesCity && matchesColeccion && matchesItems;
+      return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice && matchesCantidad && matchesCity && matchesCategoria && matchesColeccion && matchesItems;
     });
-  }, [treasure, hiddenItems, search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, cantidadFilter, cityFilter, coleccionFilter, itemsFilter]);
+  }, [treasure, hiddenItems, search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, cantidadFilter, cityFilter, categoriaFilter, coleccionFilter, itemsFilter]);
 
   // Sort using extracted hook
   const sortedTreasure = useTreasureSort(filteredTreasure, sortBy);
@@ -202,6 +213,7 @@ export function useTreasureFiltering({
     setShapeFilter('all');
     setCantidadFilter('all');
     setCityFilter('all');
+    setCategoriaFilter('all');
     setColeccionFilter('all');
     setPriceRange([priceMinMax.min, priceMinMax.max]);
   }, [priceMinMax]);
@@ -217,11 +229,12 @@ export function useTreasureFiltering({
       shapeFilter !== 'all' ||
       cantidadFilter !== 'all' ||
       cityFilter !== 'all' ||
+      categoriaFilter !== 'all' ||
       coleccionFilter !== 'all' ||
       priceRange[0] !== priceMinMax.min ||
       priceRange[1] !== priceMinMax.max
     );
-  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, cityFilter, coleccionFilter, priceRange, priceMinMax]);
+  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, cityFilter, categoriaFilter, coleccionFilter, priceRange, priceMinMax]);
 
   // Inactivity timeout — clears filters after idle period
   useFilterInactivityTimeout({
@@ -240,11 +253,12 @@ export function useTreasureFiltering({
     shapeFilter,
     priceRange,
     sortBy,
+    categoriaFilter,
     cantidadFilter,
     cityFilter,
     coleccionFilter,
     itemsFilter,
-  }), [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, cityFilter, coleccionFilter, itemsFilter]);
+  }), [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, categoriaFilter, cantidadFilter, cityFilter, coleccionFilter, itemsFilter]);
 
   return {
     filters,
@@ -258,6 +272,7 @@ export function useTreasureFiltering({
     setSortBy,
     setCantidadFilter,
     setCityFilter,
+    setCategoriaFilter,
     setColeccionFilter,
     clearFilters,
     hasFilters,
