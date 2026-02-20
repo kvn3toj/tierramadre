@@ -11,7 +11,6 @@ import { STORAGE_KEYS, LEGACY_KEYS } from '../constants/storage-keys';
 
 // Cache configuration (new treasure namespace)
 const SHEETS_CACHE_KEY = STORAGE_KEYS.TREASURE_SHEETS_CACHE;
-const SHEETS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 // Old cache key for migration
 const OLD_SHEETS_CACHE_KEY = LEGACY_KEYS.INVENTORY_SHEETS_CACHE;
@@ -54,17 +53,15 @@ function migrateStorageKey(oldKey: string, newKey: string): void {
 }
 
 /**
- * Check if cached data is still valid
+ * Get cached data regardless of TTL (for instant initial render)
  */
 function getCachedData(): TreasureItem[] | null {
   try {
     const cached = localStorage.getItem(SHEETS_CACHE_KEY);
     if (!cached) return null;
 
-    const { data, timestamp }: SheetsCache = JSON.parse(cached);
-    if (Date.now() - timestamp < SHEETS_CACHE_TTL) {
-      return data;
-    }
+    const { data }: SheetsCache = JSON.parse(cached);
+    return data;
   } catch (error) {
     console.warn('Error reading sheets cache:', error);
   }
@@ -125,20 +122,28 @@ export function useSheetsTreasure(): UseSheetsTreasureReturn {
   const [isLoading, setIsLoading] = useState(() => getInitialSheetsData() === null);
   const [error, setError] = useState<string | null>(null);
 
-  // Load from API only if cache was empty
+  // Always background-fetch fresh data from API.
+  // If cache existed, we show it instantly (no blink), then silently update if data changed.
   useEffect(() => {
-    // Skip if we already have cached data
-    if (sheetsTreasure !== null) return;
+    const hasCachedData = sheetsTreasure !== null;
 
     const loadFromSheets = async () => {
       try {
-        // Fetch from API (cache was empty)
         const treasure = await fetchFromSheets();
-        setSheetsTreasure(treasure);
         setCachedData(treasure);
+        // Only trigger re-render if data actually changed
+        setSheetsTreasure(prev => {
+          if (!prev) return treasure;
+          const prevJson = JSON.stringify(prev);
+          const nextJson = JSON.stringify(treasure);
+          return prevJson === nextJson ? prev : treasure;
+        });
       } catch (err) {
-        console.warn('Could not load from Google Sheets:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        // If we have cached data, silently ignore the error
+        if (!hasCachedData) {
+          console.warn('Could not load from Google Sheets:', err);
+          setError(err instanceof Error ? err.message : 'Unknown error');
+        }
       } finally {
         setIsLoading(false);
       }

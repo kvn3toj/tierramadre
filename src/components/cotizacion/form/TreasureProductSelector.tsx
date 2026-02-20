@@ -72,7 +72,7 @@ export const TreasureProductSelector: React.FC<TreasureProductSelectorProps> = (
               {formatCurrency(option.precioCOP)}
             </Typography>
             <Chip
-              label={option.isJewelry ? 'Joya' : 'Gema'}
+              label={option.categoria || (option.isJewelry ? 'Joya' : 'Gema')}
               size="small"
               sx={{
                 fontSize: '0.65rem',

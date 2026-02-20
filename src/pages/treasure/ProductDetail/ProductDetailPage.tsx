@@ -462,7 +462,7 @@ export default function ProductDetail() {
                 <Typography component="span" sx={{ color: secondaryTextColor, fontSize: '13px', opacity: 0.5 }}>·</Typography>
                 {product.isJewelry && <Crown size={14} color={goldAccent.primary} />}
                 <Typography component="span" sx={{ fontSize: '13px', color: secondaryTextColor, fontWeight: 400 }}>
-                  {product.isJewelry ? 'Joyeria' : 'Gema'}
+                  {product.categoria || (product.isJewelry ? 'Joyeria' : 'Gema')}
                 </Typography>
                 <Typography component="span" sx={{ color: secondaryTextColor, fontSize: '13px', opacity: 0.5 }}>·</Typography>
                 <Typography
