@@ -146,18 +146,13 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
     const shareUrl = lastInvitation?.url;
     if (shareUrl && 'share' in navigator) {
       const pin = lastInvitation?.pin;
-      const shareText = `Hola ${guestName}, te invito a explorar nuestra coleccion de esmeraldas colombianas. Este enlace es valido por 24 horas.\n\n${shareUrl}${pin ? '\n\nTu PIN de acceso:' : ''}`;
+      const pinLine = pin ? `\n\nTu PIN de acceso: ${pin}` : '';
+      const shareText = `Hola ${guestName}, te invito a explorar nuestra coleccion de esmeraldas colombianas. Este enlace es valido por 24 horas.\n\n${shareUrl}${pinLine}`;
       try {
         await navigator.share({
           title: 'Tierra Madre - Invitacion',
           text: shareText,
         });
-        // Auto-copy PIN to clipboard so user can just paste it as a second message
-        if (pin) {
-          try { await navigator.clipboard.writeText(pin); } catch { /* ignore */ }
-          setSnackbarMessage('PIN copiado — pegalo en el chat');
-          setSnackbarOpen(true);
-        }
       } catch {
         // User cancelled or share failed
       }
