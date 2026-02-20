@@ -181,6 +181,9 @@ export function useTreasureFiltering({
         (cantidadFilter === '2+' && item.cantidad > 1);
       const matchesCity = cityFilter === 'all' || item.city === cityFilter;
       const matchesCategoria = categoriaFilter === 'all' || (() => {
+        if (categoriaFilter === 'joyas') {
+          return item.isJewelry;
+        }
         const subcats = CATEGORY_SUBCATEGORIES[categoriaFilter as MainCategory];
         if (subcats && subcats.length > 0) {
           return subcats.includes(item.categoria || '');
