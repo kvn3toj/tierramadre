@@ -145,11 +145,12 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
   const handleShare = async () => {
     const shareUrl = lastInvitation?.url;
     if (shareUrl && 'share' in navigator) {
+      // Embed URL in text so apps like Instagram DMs get the full message
+      const shareText = `Hola ${guestName}, te invito a explorar nuestra coleccion de esmeraldas colombianas. Este enlace es valido por 24 horas.\n\n${shareUrl}`;
       try {
         await navigator.share({
           title: 'Tierra Madre - Invitacion',
-          text: `Hola ${guestName}, te invito a explorar nuestra coleccion de esmeraldas colombianas. Este enlace es valido por 24 horas.`,
-          url: shareUrl,
+          text: shareText,
         });
       } catch {
         // User cancelled or share failed
