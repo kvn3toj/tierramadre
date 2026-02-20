@@ -15,7 +15,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { ArrowLeft, Package, Square } from 'lucide-react';
-import { useAsesores, matchesAsesorName } from '../../../hooks/useAsesores';
+import { useAsesores } from '../../../hooks/useAsesores';
+import { getAsesorProducts } from '../../../utils/asesorProductOwnership';
 import { useTreasure } from '../../../hooks/useTreasure';
 import { useCotizacionHistory, SavedCotizacion } from '../../../hooks/useCotizacionHistory';
 import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
@@ -136,13 +137,10 @@ export default function AsesorProfilePage() {
     }
   }, [isProfileOwner, googleUser?.email]);
 
-  // Get products for this asesor (handles abbreviated names like "JM.Escobar")
+  // Get products for this asesor with ownership-aware estado
   const allProducts = useMemo(() => {
     if (!asesor || !treasure) return [];
-    return treasure.filter(item => {
-      if (!item.asesor) return false;
-      return matchesAsesorName(item.asesor, asesor.name);
-    });
+    return getAsesorProducts(treasure, asesor.name);
   }, [asesor, treasure]);
 
   // Filter and sort products
@@ -160,12 +158,12 @@ export default function AsesorProfilePage() {
       );
     }
 
-    // Status filter
+    // Status filter (uses effectiveEstado for ownership-aware filtering)
     if (statusFilter !== 'all') {
       result = result.filter(item =>
         statusFilter === 'disponible'
-          ? item.estado === 'DISPONIBLE'
-          : item.estado === 'VENDIDA'
+          ? item.effectiveEstado === 'DISPONIBLE'
+          : item.effectiveEstado === 'VENDIDA'
       );
     }
 
@@ -205,7 +203,7 @@ export default function AsesorProfilePage() {
       vendidaCount: 0,
     };
 
-    const disponible = allProducts.filter(p => p.estado === 'DISPONIBLE');
+    const disponible = allProducts.filter(p => p.effectiveEstado === 'DISPONIBLE');
     const totalValue = disponible.reduce((sum, p) => sum + (p.precioCOP || 0), 0);
     const looseCount = allProducts.filter(p => !p.isJewelry).length;
     const jewelryCount = allProducts.filter(p => p.isJewelry).length;

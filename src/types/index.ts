@@ -253,6 +253,8 @@ export interface TreasureItem {
   ubicacion: string;
   asesor: string;
   estado: TreasureStatus;
+  asesorActual?: string;              // Column T: Current owner (overrides asesor if present)
+  estadoAsesor?: TreasureStatus | ''; // Column U: State from current owner's perspective
   caja?: string;
   qr?: string;                      // QR code data (Column P)
   categoria?: string;                // Product category from Column K (e.g., Anillo en Plata, Aretes)

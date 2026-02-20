@@ -58,6 +58,9 @@ function parsePeso(peso) {
  * P = QR (15)
  * Q = Colección (16)
  * R = CAJA (17)
+ * S = (18) - unused
+ * T = ASESOR ACTUAL (19) - current product owner (overrides N for ownership)
+ * U = ESTADO ASESOR (20) - state from current owner's perspective
  */
 const INVENTARIO_HEADERS = {
   ITEM: 'item',
@@ -77,6 +80,8 @@ const INVENTARIO_HEADERS = {
   QR: 'qr',
   COLECCION: 'colección',
   CAJA: 'caja',
+  ASESOR_ACTUAL: 'asesor actual',    // Column T (index 19)
+  ESTADO_ASESOR: 'estado asesor',    // Column U (index 20)
 };
 
 /**
@@ -128,6 +133,8 @@ function mapRowToTreasureItem(row, headers) {
     qr: getValue(INVENTARIO_HEADERS.QR) || getByIndex(15) || '',
     coleccion: getValue(INVENTARIO_HEADERS.COLECCION) || getByIndex(16) || '',
     caja: getValue(INVENTARIO_HEADERS.CAJA) || getByIndex(17) || '',
+    asesorActual: getValue(INVENTARIO_HEADERS.ASESOR_ACTUAL) || getByIndex(19) || '',
+    estadoAsesor: (getValue(INVENTARIO_HEADERS.ESTADO_ASESOR) || getByIndex(20) || '').toUpperCase(),
     isJewelry: pesoData.isJewelry,
     metalType: pesoData.metalType,
   };
@@ -218,7 +225,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     lastUpdated: new Date().toISOString(),
     _debug: {
       headers: headers.map((h, i) => `${String.fromCharCode(65 + i)}: ${h}`),
-      sampleValues: sampleRow.slice(0, 16).map((v, i) => `${String.fromCharCode(65 + i)}: ${v}`),
+      sampleValues: sampleRow.slice(0, 21).map((v, i) => `${String.fromCharCode(65 + i)}: ${v}`),
       pricingItemsFound: pricingCount,
     },
   });
