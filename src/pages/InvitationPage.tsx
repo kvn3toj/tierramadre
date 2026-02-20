@@ -181,6 +181,7 @@ function GlassCard({ children }: { children: React.ReactNode }) {
       sx={{
         maxWidth: 400,
         width: '100%',
+        mx: 'auto',
         position: 'relative',
         zIndex: 1,
         p: { xs: 3.5, sm: 4.5 },
