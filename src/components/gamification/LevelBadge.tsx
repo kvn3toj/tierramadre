@@ -11,7 +11,7 @@ import { Trophy, Zap, Star } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { useTracking } from '../../contexts/TrackingContext';
 import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
-import { cssTransition } from '../../design-system';
+import { cssTransition, accentColors, primitiveColors } from '../../design-system';
 import ProgressRing from './ProgressRing';
 
 interface LevelBadgeProps {
@@ -32,11 +32,11 @@ const LevelBadge: React.FC<LevelBadgeProps> = ({
   // Level colors based on level
   const getLevelColor = (level: number): string => {
     if (level >= 6) return goldAccent.primary; // Leyenda
-    if (level >= 5) return '#9333ea'; // Gran Maestro - Purple
-    if (level >= 4) return '#ec4899'; // Maestro - Pink
+    if (level >= 5) return accentColors.purple.light; // Gran Maestro - Purple
+    if (level >= 4) return accentColors.pink.light; // Maestro - Pink
     if (level >= 3) return emeraldCore.primary; // Experto - Emerald
-    if (level >= 2) return '#3b82f6'; // Conocedor - Blue
-    return '#6b7280'; // Aprendiz - Gray
+    if (level >= 2) return accentColors.info.light; // Conocedor - Blue
+    return primitiveColors.metallic.silver[500]; // Aprendiz - Gray
   };
 
   const levelColor = getLevelColor(levelInfo.level);
@@ -237,7 +237,7 @@ const LevelBadge: React.FC<LevelBadgeProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               gap: 0.5,
-              color: '#ec4899',
+              color: accentColors.pink.light,
             }}
           >
             <Star size={16} />

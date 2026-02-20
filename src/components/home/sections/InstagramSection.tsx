@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { Box, Typography, Avatar } from '@mui/material';
 import { Instagram, OpenInNew } from '@mui/icons-material';
 import { fadeInUp, cssTransition } from '../../../design-system/tokens/motion';
+import { blurValues } from '../../../design-system';
 
 // =============================================================================
 // CONSTANTS
@@ -41,7 +42,7 @@ export const InstagramSection: React.FC = () => {
             alignItems: 'center',
             gap: 2,
             bgcolor: 'rgba(0,0,0,0.3)',
-            backdropFilter: 'blur(20px)',
+            backdropFilter: `blur(${blurValues.xl})`,
             borderRadius: 3,
             p: 2,
             border: '1px solid rgba(255,255,255,0.08)',

@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { cssTransition } from '../../design-system';
 
 // ============================================================================
 // PRODUCT CATALOG TEMPLATE - Luxury Jewelry Design System
@@ -90,7 +91,7 @@ const ProductImageContainer = styled(Box)({
     maxHeight: '85%',
     objectFit: 'contain',
     filter: 'drop-shadow(0 30px 60px rgba(0, 0, 0, 0.12))',
-    transition: 'transform 0.3s ease',
+    transition: cssTransition.slow,
   },
 });
 

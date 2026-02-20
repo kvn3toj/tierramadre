@@ -109,7 +109,7 @@ export const MeditationSection: React.FC = () => {
                 borderRadius: 3,
                 overflow: 'hidden',
                 cursor: 'pointer',
-                transition: 'transform 0.2s ease-out, box-shadow 0.2s ease-out',
+                transition: cssTransition.default,
                 '&:hover': {
                   transform: 'translateY(-2px)',
                   boxShadow: '0 8px 24px rgba(16,185,129,0.15)',

@@ -11,7 +11,7 @@ import React from 'react';
 import { Box, Typography, alpha, useTheme } from '@mui/material';
 import { chartTokens } from '../../design-system/tokens/charts';
 import { emeraldCore } from '../../design-system/tokens/colors';
-import { iosDimensions } from '../../design-system/tokens/primitives/spacing';
+import { iosDimensions } from '../../design-system';
 
 // =============================================================================
 // TYPES

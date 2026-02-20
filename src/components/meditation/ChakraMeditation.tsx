@@ -8,6 +8,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
+import { blurValues } from '../../design-system';
 
 interface ChakraMeditationProps {
   isPlaying: boolean;
@@ -96,7 +97,7 @@ const ChakraMeditation: React.FC<ChakraMeditationProps> = ({
             height: 150,
             borderRadius: '50%',
             background: `radial-gradient(circle, ${chakraColor}66 0%, transparent 70%)`,
-            filter: 'blur(10px)',
+            filter: `blur(${blurValues.sm})`,
           }}
         />
 

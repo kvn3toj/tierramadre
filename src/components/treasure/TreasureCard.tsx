@@ -147,7 +147,7 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
         borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
         overflow: 'hidden',
-        transition: 'all 0.25s ease',
+        transition: cssTransition.default,
         cursor: 'pointer',
         '&:hover': {
           borderColor: emeraldCore.primary,

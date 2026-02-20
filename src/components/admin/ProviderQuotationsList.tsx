@@ -22,6 +22,7 @@ import {
 import { Package, Eye, EyeOff, ArrowLeft, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { emeraldCore } from '../../design-system/tokens/colors';
+import { accentColors, primitiveColors } from '../../design-system';
 import { PRODUCT_TYPE_LABELS, QUOTATION_STATUS_LABELS } from '../../types/provider';
 import type { ProviderQuotation, QuotationStatus } from '../../types/provider';
 
@@ -65,9 +66,9 @@ export default function ProviderQuotationsList() {
   const getStatusColor = (status: QuotationStatus) => {
     switch (status) {
       case 'disponible': return emeraldCore.primary;
-      case 'reservado': return '#f59e0b';
-      case 'vendido': return '#6366f1';
-      default: return '#6b7280';
+      case 'reservado': return accentColors.warning.light;
+      case 'vendido': return accentColors.indigo.light;
+      default: return primitiveColors.metallic.silver[500];
     }
   };
 
@@ -140,8 +141,8 @@ export default function ProviderQuotationsList() {
               label={`${newCount} nueva${newCount !== 1 ? 's' : ''}`}
               size="small"
               sx={{
-                bgcolor: alpha('#f59e0b', 0.1),
-                color: '#f59e0b',
+                bgcolor: alpha(accentColors.warning.light, 0.1),
+                color: accentColors.warning.light,
                 fontWeight: 600,
               }}
             />
@@ -204,7 +205,7 @@ export default function ProviderQuotationsList() {
                   key={quotation.id}
                   sx={{
                     border: isHighlighted ? '2px solid' : '1px solid',
-                    borderColor: isHighlighted ? emeraldCore.primary : isNew ? '#f59e0b' : 'divider',
+                    borderColor: isHighlighted ? emeraldCore.primary : isNew ? accentColors.warning.light : 'divider',
                     boxShadow: isHighlighted ? `0 0 0 4px ${alpha(emeraldCore.primary, 0.1)}` : 'none',
                     position: 'relative',
                   }}
@@ -219,7 +220,7 @@ export default function ProviderQuotationsList() {
                         width: 8,
                         height: 8,
                         borderRadius: '50%',
-                        bgcolor: '#f59e0b',
+                        bgcolor: accentColors.warning.light,
                       }}
                     />
                   )}
@@ -307,8 +308,8 @@ export default function ProviderQuotationsList() {
                           </>
                         ) : (
                           <>
-                            <EyeOff size={14} color="#f59e0b" />
-                            <Typography variant="caption" sx={{ color: '#f59e0b' }}>
+                            <EyeOff size={14} color={accentColors.warning.light} />
+                            <Typography variant="caption" sx={{ color: accentColors.warning.light }}>
                               Nueva
                             </Typography>
                           </>

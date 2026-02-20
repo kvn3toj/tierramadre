@@ -18,6 +18,7 @@ import {
   blackAlpha,
   emeraldAlpha,
   cssTransition,
+  blurValues,
 } from '../../../design-system';
 import {
   ALL_CATEGORIES,
@@ -210,8 +211,8 @@ export const HeroGallery: React.FC = () => {
                 gap: 0.5,
                 p: 0.5,
                 bgcolor: blackAlpha(0.35),
-                backdropFilter: 'blur(24px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                backdropFilter: `blur(${blurValues['2xl']}) saturate(180%)`,
+                WebkitBackdropFilter: `blur(${blurValues['2xl']}) saturate(180%)`,
                 borderRadius: 3,
                 border: `1px solid ${whiteAlpha(0.12)}`,
                 boxShadow: `0 8px 32px ${blackAlpha(0.2)}, inset 0 1px 0 ${whiteAlpha(0.08)}`,
@@ -252,7 +253,7 @@ export const HeroGallery: React.FC = () => {
                       fontSize: '0.65rem',
                       lineHeight: 1,
                       opacity: 0.5,
-                      transition: 'opacity 0.3s ease',
+                      transition: cssTransition.slow,
                     }}
                   >
                     {CATEGORY_ICONS[cat.id]}
@@ -264,7 +265,7 @@ export const HeroGallery: React.FC = () => {
                       fontWeight: 500,
                       fontSize: '0.8rem',
                       letterSpacing: '0.02em',
-                      transition: 'color 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                      transition: cssTransition.slow,
                     }}
                   >
                     {cat.label}

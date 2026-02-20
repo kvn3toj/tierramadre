@@ -11,6 +11,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography, Card, CardContent } from '@mui/material';
 import { goldAccent } from '../../../design-system/tokens/colors';
+import { blurValues } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useStreakTracking } from '../hooks/useStreakTracking';
 import { cardVariants, fadeInUp, spring } from '../../../design-system/tokens/motion';
@@ -59,7 +60,7 @@ export const WelcomeCard: React.FC = () => {
             tabIndex={0}
             sx={{
               background: 'rgba(0, 80, 50, 0.6)',
-              backdropFilter: 'blur(20px)',
+              backdropFilter: `blur(${blurValues.xl})`,
               color: 'white',
               borderRadius: 4,
               overflow: 'hidden',
@@ -272,7 +273,7 @@ export const WelcomeCard: React.FC = () => {
                   p: 2,
                   bgcolor: 'rgba(255,255,255,0.15)',
                   borderRadius: 2,
-                  backdropFilter: 'blur(4px)',
+                  backdropFilter: `blur(${blurValues.xs})`,
                 }}
               >
                 <Typography

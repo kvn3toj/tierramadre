@@ -8,7 +8,7 @@ import {
   surfacesLight,
   surfacesDark,
 } from '../../../../design-system/tokens/colors';
-import { primitiveColors } from '../../../../design-system/tokens/primitives/colors';
+import { primitiveColors } from '../../../../design-system';
 
 // Logo brand green
 export const logoGreen = emeraldCore.primary;

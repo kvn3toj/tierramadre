@@ -29,7 +29,7 @@ import {
   Maximize2,
 } from 'lucide-react';
 import { MediaItem, CATEGORY_LABELS } from './types';
-import { brand, darkTokens, lightTokens, cssTransition } from '../../design-system';
+import { brand, darkTokens, lightTokens, cssTransition, blurValues } from '../../design-system';
 import ImageLightbox from './ImageLightbox';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import ProtectedContent from '../shared/ProtectedContent';
@@ -598,7 +598,7 @@ export default function MediaGallery({
                 borderRadius: 2,
                 px: 1.5,
                 py: 0.75,
-                backdropFilter: 'blur(4px)',
+                backdropFilter: `blur(${blurValues.xs})`,
               }}
             >
               <CircularProgress size={20} sx={{ color: 'white', opacity: 0.7 }} />
@@ -617,7 +617,7 @@ export default function MediaGallery({
               bgcolor: alpha(darkTokens.background.app, 0.7),
               color: lightTokens.text.inverse,
               fontSize: '0.75rem',
-              backdropFilter: 'blur(4px)',
+              backdropFilter: `blur(${blurValues.xs})`,
             }}
           />
         )}

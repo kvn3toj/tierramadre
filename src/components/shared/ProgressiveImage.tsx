@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo, useCallback, useId } from 'react';
 import { Box, Skeleton } from '@mui/material';
 import { useInView } from 'react-intersection-observer';
 import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { cssTransition, blurValues } from '../../design-system';
 // Logo placeholder for products without images - use Vite asset import
 import logoPlaceholder from '../../assets/logo-symbol.png';
 import { useThemeMode } from '../../contexts/ThemeContext';
@@ -248,10 +249,10 @@ export default function ProgressiveImage({
             height: '100%',
             objectFit,
             objectPosition,
-            filter: 'blur(20px)',
+            filter: `blur(${blurValues.xl})`,
             transform: 'scale(1.1)', // Prevent blur edge artifacts
             opacity: 1,
-            transition: prefersReducedMotion ? 'none' : 'opacity 0.3s ease-in-out',
+            transition: prefersReducedMotion ? 'none' : cssTransition.slow,
           }}
         />
       )}
@@ -309,7 +310,7 @@ export default function ProgressiveImage({
             // Hide image until 100% loaded to prevent partial render/progressive JPEG blinking
             // USER REQUIREMENT: Don't show images until fully downloaded
             opacity: fullyLoaded ? 1 : 0,
-            transition: prefersReducedMotion ? 'none' : 'opacity 0.3s ease-in-out',
+            transition: prefersReducedMotion ? 'none' : cssTransition.slow,
           }}
         />
       )}

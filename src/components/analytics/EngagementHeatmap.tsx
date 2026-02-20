@@ -27,6 +27,7 @@ import {
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { useTracking } from '../../contexts/TrackingContext';
 import { emeraldCore, semanticColors } from '../../design-system/tokens/colors';
+import { cssTransition } from '../../design-system';
 import { analyzeEngagement } from '../../utils/engagementAnalyzer';
 import type { FeatureEngagement, EngagementHeatmapData } from '../../types/analytics';
 
@@ -83,7 +84,7 @@ const HeatmapRow: React.FC<HeatmapRowProps> = ({ feature, isLight }) => {
         borderRadius: 2,
         bgcolor: heatColor,
         border: `1px solid ${isLight ? alpha('#000', 0.05) : alpha('#fff', 0.05)}`,
-        transition: 'transform 0.2s, box-shadow 0.2s',
+        transition: cssTransition.default,
         '&:hover': {
           transform: 'translateX(4px)',
           boxShadow: `0 2px 8px ${alpha(feature.color, 0.2)}`,

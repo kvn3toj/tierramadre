@@ -30,7 +30,7 @@ import {
   Camera,
 } from 'lucide-react';
 import { Asesor } from '../../../../hooks/useAsesores';
-import { brand, lightTokens, darkTokens } from '../../../../design-system';
+import { brand, lightTokens, darkTokens, cssTransition } from '../../../../design-system';
 
 // Stat Box Component
 function StatBox({
@@ -152,7 +152,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 fontSize: '2rem',
                 fontWeight: 700,
                 opacity: isUploadingPhoto ? 0.6 : 1,
-                transition: 'opacity 0.2s',
+                transition: cssTransition.default,
               }}
             >
               {asesor.name.charAt(0).toUpperCase()}

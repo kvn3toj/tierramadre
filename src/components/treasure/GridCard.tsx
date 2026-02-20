@@ -35,6 +35,7 @@ import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/to
 import {
   animation,
   iosSemanticColors,
+  blurValues,
 } from '../../design-system';
 
 interface GridCardProps {
@@ -172,7 +173,7 @@ function GridCard({
                 bgcolor: quality.bg,
                 color: quality.color,
                 border: `1px solid ${quality.border}`,
-                backdropFilter: 'blur(4px)',
+                backdropFilter: `blur(${blurValues.xs})`,
                 '& .MuiChip-label': { px: 0.75 },
               }}
             />
@@ -191,7 +192,7 @@ function GridCard({
                   fontWeight: 700,
                   bgcolor: 'rgba(0, 0, 0, 0.7)',
                   color: 'white',
-                  backdropFilter: 'blur(4px)',
+                  backdropFilter: `blur(${blurValues.xs})`,
                   '& .MuiChip-label': { px: 0.5 },
                 }}
               />
@@ -212,7 +213,7 @@ function GridCard({
                   fontWeight: 500,
                   bgcolor: 'rgba(0, 0, 0, 0.55)',
                   color: 'rgba(255, 255, 255, 0.9)',
-                  backdropFilter: 'blur(4px)',
+                  backdropFilter: `blur(${blurValues.xs})`,
                   '& .MuiChip-icon': { color: 'rgba(255, 255, 255, 0.7)', ml: 0.5 },
                   '& .MuiChip-label': { px: 0.5 },
                 }}
@@ -236,7 +237,7 @@ function GridCard({
                     ? emeraldCore.primary
                     : alpha('#000000', 0.55),
                   color: 'white',
-                  backdropFilter: 'blur(4px)',
+                  backdropFilter: `blur(${blurValues.xs})`,
                   '&:hover': {
                     bgcolor: isSelectedForComparison
                       ? emeraldCore.dark

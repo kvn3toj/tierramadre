@@ -8,7 +8,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { cssTransition, primitiveColors } from '../../design-system';
 
 const emerald = primitiveColors.emerald;
 
@@ -179,7 +179,7 @@ const EnergyShieldMeditation: React.FC<EnergyShieldMeditationProps> = ({
                 height: 4,
                 borderRadius: 2,
                 bgcolor: progress >= (i + 1) * 20 ? emerald[500] : 'rgba(255,255,255,0.2)',
-                transition: 'background-color 0.3s',
+                transition: cssTransition.slow,
               }}
             />
           ))}

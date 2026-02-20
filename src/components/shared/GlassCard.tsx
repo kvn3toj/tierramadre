@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { Paper } from '@mui/material';
-import { iosDimensions } from '../../design-system/tokens/primitives/spacing';
+import { cssTransition, iosDimensions } from '../../design-system';
 
 export interface GlassCardProps {
   children: React.ReactNode;
@@ -27,7 +27,7 @@ const GlassCard: React.FC<GlassCardProps> = ({ children, noPadding = false, onCl
         border: '1px solid var(--glass-border)',
         overflow: 'hidden',
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        transition: cssTransition.default,
         ...(noPadding ? {} : { p: 2.5 }),
         ...(onClick && {
           '&:hover': {

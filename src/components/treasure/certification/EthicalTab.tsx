@@ -7,7 +7,7 @@ import {
   FormControlLabel,
   alpha,
 } from '@mui/material';
-import { primitiveColors } from '../../../design-system/tokens/primitives/colors';
+import { primitiveColors } from '../../../design-system';
 import type { EthicalTabProps } from './types';
 
 const emerald = primitiveColors.emerald;

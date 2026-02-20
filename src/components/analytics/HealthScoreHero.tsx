@@ -11,6 +11,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { Box, Typography, alpha, useTheme } from '@mui/material';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { goldAccent, semanticColors } from '../../design-system/tokens/colors';
+import { blurValues } from '../../design-system';
 
 // =============================================================================
 // TYPES
@@ -141,7 +142,7 @@ export const HealthScoreHero: React.FC<HealthScoreHeroProps> = ({
             height: size * 0.7,
             borderRadius: '50%',
             background: `radial-gradient(circle, ${alpha(color, 0.2)} 0%, transparent 70%)`,
-            filter: 'blur(20px)',
+            filter: `blur(${blurValues.xl})`,
             animation: animated ? 'pulse 2s ease-in-out infinite' : undefined,
             '@keyframes pulse': {
               '0%, 100%': { opacity: 0.6 },

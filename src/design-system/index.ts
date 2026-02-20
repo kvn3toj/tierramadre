@@ -129,6 +129,14 @@ export {
 // CSS Transition helpers
 export { cssTransition } from './tokens/motion';
 
+// Primitives (re-exported for consistent import paths)
+export { primitiveColors } from './tokens/primitives/colors';
+export {
+  spacing as primitiveSpacing,
+  iosDimensions,
+} from './tokens/primitives/spacing';
+export { easingCurves, durations } from './tokens/primitives/motion';
+
 // Legacy palette tokens (migrated from monolithic design-system.ts)
 export {
   brand,

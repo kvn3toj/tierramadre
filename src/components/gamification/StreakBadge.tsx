@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography, Chip, alpha } from '@mui/material';
 import { LocalFireDepartment, Whatshot } from '@mui/icons-material';
 import { goldAccent, semanticColors } from '../../design-system/tokens/colors';
-import { cssTransition } from '../../design-system';
+import { cssTransition, blurValues } from '../../design-system';
 
 // =============================================================================
 // TYPES
@@ -145,7 +145,7 @@ export const StreakBadge: React.FC<StreakBadgeProps> = ({
               : alpha('#FFFFFF', 0.2),
             color: 'white',
             fontWeight: 600,
-            backdropFilter: 'blur(8px)',
+            backdropFilter: `blur(${blurValues.sm})`,
             border: isAtRisk ? `1px solid ${alpha(semanticColors.error.main, 0.4)}` : 'none',
             '& .MuiChip-icon': {
               color: fireColor,

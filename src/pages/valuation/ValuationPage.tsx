@@ -29,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
+import { cssTransition } from '../../design-system';
 import { glassDark, glassLight, applyGlass } from '../../design-system/tokens/glass';
 import { staggerContainer, staggerItem } from '../../design-system/tokens/motion';
 import {
@@ -546,7 +547,7 @@ const ValuationPage: React.FC = () => {
                       py: 0.5,
                       px: 1,
                       borderRadius: 1,
-                      transition: 'background-color 0.2s',
+                      transition: cssTransition.default,
                       '&:hover': {
                         bgcolor: isDarkMode ? 'rgba(0,174,122,0.1)' : 'rgba(0,174,122,0.05)',
                         textDecoration: 'underline',

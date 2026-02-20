@@ -23,7 +23,7 @@ import { useAsesorCollection } from '../../hooks/useAsesorCollection';
 import { CollectionProductDialog } from '../ambassadors/profile/components/CollectionProductDialog';
 import CollectionSplashScreen from '../../components/shared/CollectionSplashScreen';
 import { TreasureItem } from '../../types';
-import { brand, lightTokens, darkTokens, legacyTypography as typography, legacyGradients as gradients } from '../../design-system';
+import { brand, lightTokens, darkTokens, legacyTypography as typography, legacyGradients as gradients, cssTransition } from '../../design-system';
 
 // Map URL slug to actual Drive folder name (when they differ)
 const FOLDER_ALIASES: Record<string, string> = {
@@ -100,7 +100,7 @@ function ProductCard({
         bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
         border: '1px solid',
         borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
-        transition: 'transform 0.2s, box-shadow 0.2s',
+        transition: cssTransition.default,
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow: isLight

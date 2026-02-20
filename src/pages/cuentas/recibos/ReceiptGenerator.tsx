@@ -28,8 +28,7 @@ import { useEmeralds } from '../../../hooks/useEmeralds';
 
 // Design System Imports
 import { surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
-import { primitiveColors } from '../../../design-system/tokens/primitives/colors';
-import { iosTypographyScale } from '../../../design-system';
+import { iosTypographyScale, blurValues, primitiveColors } from '../../../design-system';
 
 // Local components and constants
 import { ReceiptPreview, ReceiptSettings, ProductListEditor } from './components';
@@ -192,7 +191,7 @@ export default function ReceiptGenerator() {
                   width: 56, height: 56,
                   borderRadius: 3,
                   bgcolor: 'rgba(255,255,255,0.2)',
-                  backdropFilter: 'blur(10px)',
+                  backdropFilter: `blur(${blurValues.sm})`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -213,7 +212,7 @@ export default function ReceiptGenerator() {
 
             {/* Stats */}
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Box sx={{ px: 2.5, py: 1.5, borderRadius: 2.5, bgcolor: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', textAlign: 'center', minWidth: 80 }}>
+              <Box sx={{ px: 2.5, py: 1.5, borderRadius: 2.5, bgcolor: 'rgba(255,255,255,0.15)', backdropFilter: `blur(${blurValues.sm})`, textAlign: 'center', minWidth: 80 }}>
                 <Typography sx={{ fontSize: iosTypographyScale.title1, fontWeight: 800, color: surfacesLight.background.primary, lineHeight: 1 }}>
                   {(receipt.products || []).length}
                 </Typography>
@@ -221,7 +220,7 @@ export default function ReceiptGenerator() {
                   Productos
                 </Typography>
               </Box>
-              <Box sx={{ px: 2.5, py: 1.5, borderRadius: 2.5, bgcolor: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(10px)', textAlign: 'center', minWidth: 100 }}>
+              <Box sx={{ px: 2.5, py: 1.5, borderRadius: 2.5, bgcolor: 'rgba(255,255,255,0.25)', backdropFilter: `blur(${blurValues.sm})`, textAlign: 'center', minWidth: 100 }}>
                 <Typography sx={{ fontSize: iosTypographyScale.title3, fontWeight: 800, color: surfacesLight.background.primary, lineHeight: 1.2 }}>
                   {formatCurrency(receipt.total || 0)}
                 </Typography>

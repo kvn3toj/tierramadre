@@ -59,7 +59,7 @@ export const CotizacionCard: React.FC<CotizacionCardProps> = ({
         bgcolor: isLight ? '#fff' : darkTokens.background.elevated,
         border: '1px solid',
         borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
-        transition: 'transform 0.2s, box-shadow 0.2s',
+        transition: cssTransition.default,
         cursor: 'pointer',
         '&:hover': {
           transform: 'translateY(-2px)',
@@ -102,7 +102,7 @@ export const CotizacionCard: React.FC<CotizacionCardProps> = ({
             objectFit: 'cover',
             objectPosition: 'top',
             opacity: imgLoaded ? 1 : 0,
-            transition: 'opacity 0.3s',
+            transition: cssTransition.slow,
           }}
         />
 

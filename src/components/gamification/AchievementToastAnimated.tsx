@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography, IconButton, Paper, alpha } from '@mui/material';
 import { Close, EmojiEvents, Star, Whatshot, Diamond } from '@mui/icons-material';
 import { emeraldCore, goldAccent, semanticColors } from '../../design-system/tokens/colors';
+import { blurValues } from '../../design-system';
 
 // =============================================================================
 // TYPES
@@ -272,7 +273,7 @@ export const AchievementToast: React.FC<AchievementToastProps> = ({
                   inset: -2,
                   borderRadius: 4,
                   background: `linear-gradient(135deg, ${alpha(emeraldCore.primary, 0.25)} 0%, ${alpha(goldAccent.primary, 0.25)} 100%)`,
-                  filter: 'blur(8px)',
+                  filter: `blur(${blurValues.sm})`,
                   zIndex: -1,
                 }}
               />

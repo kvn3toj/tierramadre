@@ -20,7 +20,7 @@ import {
 import { Plus, Trash2 } from 'lucide-react';
 import { ReceiptProduct, Emerald } from '../../../../types';
 import { surfacesLight, semanticColors } from '../../../../design-system/tokens/colors';
-import { primitiveColors } from '../../../../design-system/tokens/primitives/colors';
+import { primitiveColors } from '../../../../design-system';
 import { formatCurrency } from '../constants/receiptThemes';
 
 interface ProductListEditorProps {

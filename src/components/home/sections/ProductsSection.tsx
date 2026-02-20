@@ -24,6 +24,7 @@ import {
   whiteAlpha,
   blackAlpha,
   emeraldAlpha,
+  blurValues,
 } from '../../../design-system';
 import { textOnGlass } from '../../../design-system/utils/colorUtils';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -83,8 +84,8 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
         <Box
           sx={{
             bgcolor: whiteAlpha(0.06),
-            backdropFilter: 'blur(16px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+            backdropFilter: `blur(${blurValues.lg}) saturate(180%)`,
+            WebkitBackdropFilter: `blur(${blurValues.lg}) saturate(180%)`,
             borderRadius: 4,
             p: 2,
             border: `1px solid ${whiteAlpha(0.1)}`,
@@ -188,7 +189,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                       minWidth: { xs: 140, sm: 160 },
                       maxWidth: { xs: 140, sm: 160 },
                       bgcolor: blackAlpha(0.3),
-                      backdropFilter: 'blur(12px)',
+                      backdropFilter: `blur(${blurValues.md})`,
                       cursor: 'pointer',
                       flexShrink: 0,
                       transition: cssTransition.slow,

@@ -32,7 +32,7 @@ import {
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { useCotizacionStats, TopProduct, AsesorProductStats } from '../../hooks/useCotizacionStats';
 import { emeraldCore, goldAccent, semanticColors } from '../../design-system/tokens/colors';
-import { spacing, iosDimensions } from '../../design-system/tokens/primitives/spacing';
+import { cssTransition, primitiveSpacing as spacing, iosDimensions } from '../../design-system';
 
 // =============================================================================
 // STAT CARD COMPONENT
@@ -121,7 +121,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, rank, maxCount, onNavi
         p: 2,
         borderBottom: `1px solid ${alpha(isLight ? '#000' : '#fff', 0.08)}`,
         cursor: 'pointer',
-        transition: 'background-color 0.2s',
+        transition: cssTransition.default,
         '&:hover': {
           bgcolor: alpha(emeraldCore.primary, 0.05),
         },

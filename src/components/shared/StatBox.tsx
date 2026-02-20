@@ -7,6 +7,7 @@
 import React from 'react';
 import { Box, Typography, alpha } from '@mui/material';
 import { useThemeMode } from '../../contexts/ThemeContext';
+import { cssTransition } from '../../design-system';
 
 export interface StatBoxProps {
   icon: React.ElementType;
@@ -40,7 +41,7 @@ const StatBox: React.FC<StatBoxProps> = ({
         border: `1px solid ${alpha(color, 0.2)}`,
         textAlign: 'center',
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        transition: cssTransition.default,
         '&:hover': onClick ? {
           transform: 'translateY(-2px)',
           boxShadow: `0 4px 12px ${alpha(color, 0.15)}`,

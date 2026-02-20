@@ -27,6 +27,7 @@ import { forwardRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { emeraldCore } from '../../design-system/tokens/colors';
+import { blurValues } from '../../design-system';
 import type {
   WizardStep,
   FeedbackCategory,
@@ -333,7 +334,7 @@ export default function FeedbackWizard({ open, onClose, onCaptureStart }: Feedba
           borderRadius: 3,
           overflow: 'hidden',
           bgcolor: alpha('#000', 0.95),
-          backdropFilter: 'blur(20px)',
+          backdropFilter: `blur(${blurValues.xl})`,
           border: `1px solid ${alpha(emeraldCore.primary, 0.2)}`,
         },
       }}

@@ -6,6 +6,7 @@ import { Box, Typography, alpha } from '@mui/material';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { cssTransition } from '../../design-system';
 
 interface ComparisonBarChartProps {
   items: TreasureItem[];
@@ -158,7 +159,7 @@ export default function ComparisonBarChart({ items }: ComparisonBarChartProps) {
                         borderRadius: 5,
                         bgcolor: alpha(itemColors[idx % itemColors.length], 0.3),
                         width: `${Math.max(value, 2)}%`,
-                        transition: 'width 0.3s ease',
+                        transition: cssTransition.slow,
                         minWidth: 4,
                         position: 'relative',
                         border: `2px solid ${itemColors[idx % itemColors.length]}`,

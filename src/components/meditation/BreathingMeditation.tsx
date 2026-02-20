@@ -9,7 +9,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
 import { BreathingPattern } from '../../data/homeContent';
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { primitiveColors } from '../../design-system';
 
 const emerald = primitiveColors.emerald;
 

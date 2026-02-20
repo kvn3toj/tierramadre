@@ -16,7 +16,7 @@ import {
   CircularProgress,
   Chip,
 } from '@mui/material';
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { primitiveColors } from '../../design-system';
 
 const emerald = primitiveColors.emerald;
 import {

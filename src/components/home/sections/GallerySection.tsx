@@ -17,7 +17,8 @@ import {
 } from '@mui/material';
 import { ChevronLeft, ChevronRight, Close } from '@mui/icons-material';
 import { emeraldCore } from '../../../design-system/tokens/colors';
-import { fadeInUp, cardVariants } from '../../../design-system/tokens/motion';
+import { fadeInUp, cardVariants, cssTransition } from '../../../design-system/tokens/motion';
+import { blurValues } from '../../../design-system';
 
 // =============================================================================
 // GALLERY DATA
@@ -198,7 +199,7 @@ export const GallerySection: React.FC = () => {
                           width: '100%',
                           height: '100%',
                           objectFit: 'cover',
-                          transition: 'transform 0.3s ease-out',
+                          transition: cssTransition.slow,
                           '&:hover': {
                             transform: 'scale(1.05)',
                           },
@@ -212,7 +213,7 @@ export const GallerySection: React.FC = () => {
                           top: 8,
                           left: 8,
                           bgcolor: 'rgba(0,0,0,0.6)',
-                          backdropFilter: 'blur(4px)',
+                          backdropFilter: `blur(${blurValues.xs})`,
                           color: 'white',
                           px: 1,
                           py: 0.25,
@@ -262,7 +263,7 @@ export const GallerySection: React.FC = () => {
           backdrop: {
             sx: {
               bgcolor: 'rgba(0,0,0,0.9)',
-              backdropFilter: 'blur(10px)',
+              backdropFilter: `blur(${blurValues.sm})`,
             },
           },
         }}

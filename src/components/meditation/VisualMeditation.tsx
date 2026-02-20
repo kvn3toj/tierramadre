@@ -8,7 +8,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { blurValues, primitiveColors } from '../../design-system';
 
 const emerald = primitiveColors.emerald;
 
@@ -86,7 +86,7 @@ const VisualMeditation: React.FC<VisualMeditationProps> = ({
             height: 200,
             borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(16,185,129,0.4) 0%, transparent 70%)',
-            filter: 'blur(20px)',
+            filter: `blur(${blurValues.xl})`,
           }}
         />
 

@@ -9,6 +9,7 @@
 
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
+import { blurValues } from '../../../design-system';
 import { FallbackProps } from 'react-error-boundary';
 
 // =============================================================================
@@ -27,7 +28,7 @@ export const ErrorFallback: React.FC<FallbackProps> = ({
       textAlign: 'center',
       bgcolor: 'rgba(255,255,255,0.1)',
       borderRadius: 3,
-      backdropFilter: 'blur(10px)',
+      backdropFilter: `blur(${blurValues.sm})`,
     }}
   >
     <Typography

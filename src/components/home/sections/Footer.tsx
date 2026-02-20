@@ -13,6 +13,7 @@ import { Instagram, Language, WhatsApp } from '@mui/icons-material';
 import { fadeInUp, cssTransition } from '../../../design-system/tokens/motion';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 import { whiteAlpha, blackAlpha } from '../../../design-system/utils/colorUtils';
+import { blurValues } from '../../../design-system';
 
 // =============================================================================
 // CONSTANTS
@@ -50,8 +51,8 @@ export const Footer: React.FC = () => {
         <Box
           sx={{
             bgcolor: isDarkMode ? blackAlpha(0.35) : 'rgba(255,255,255,0.6)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            backdropFilter: `blur(${blurValues.xl}) saturate(180%)`,
+            WebkitBackdropFilter: `blur(${blurValues.xl}) saturate(180%)`,
             borderRadius: 4,
             p: 3,
             border: `1px solid ${isDarkMode ? whiteAlpha(0.08) : 'rgba(0,0,0,0.06)'}`,
@@ -122,7 +123,7 @@ export const Footer: React.FC = () => {
                   textDecoration: 'underline',
                   color: emeraldCore.primary,
                 },
-                transition: 'color 0.2s ease',
+                transition: cssTransition.default,
               }}
             >
               www.tierramadre.co
@@ -176,7 +177,7 @@ export const Footer: React.FC = () => {
                 '&:hover': {
                   color: isDarkMode ? whiteAlpha(0.6) : 'rgba(0,0,0,0.5)',
                 },
-                transition: 'color 0.2s ease',
+                transition: cssTransition.default,
               }}
             >
               Privacidad
@@ -192,7 +193,7 @@ export const Footer: React.FC = () => {
                 '&:hover': {
                   color: isDarkMode ? whiteAlpha(0.6) : 'rgba(0,0,0,0.5)',
                 },
-                transition: 'color 0.2s ease',
+                transition: cssTransition.default,
               }}
             >
               Condiciones

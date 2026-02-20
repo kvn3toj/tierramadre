@@ -9,7 +9,7 @@ import React, { useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Box, IconButton, Typography, LinearProgress, Portal } from '@mui/material';
 import { Close, Pause, PlayArrow, Replay } from '@mui/icons-material';
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { blurValues, primitiveColors } from '../../design-system';
 
 const emerald = primitiveColors.emerald;
 import { DailyMeditation } from '../../data/homeContent';
@@ -134,7 +134,7 @@ const MeditationModal: React.FC<MeditationModalProps> = ({
                 position: 'absolute',
                 inset: 0,
                 background: 'linear-gradient(180deg, #0a1628 0%, #0f2027 50%, #1a3a3a 100%)',
-                backdropFilter: 'blur(20px)',
+                backdropFilter: `blur(${blurValues.xl})`,
               }}
             />
 

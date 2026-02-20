@@ -10,6 +10,7 @@ import { Layers, Trash2, Gem, ShoppingBag, Undo2 } from 'lucide-react';
 import { brandColors } from '../constants';
 import { useCotizacionFormat, getPesoDisplay } from '../../../hooks/useCotizacion';
 import type { ProductListSectionProps, ProductThumbnailProps } from '../types';
+import { cssTransition } from '../../../design-system';
 
 /**
  * ProductThumbnail - Product image with loading states and fallback
@@ -60,7 +61,7 @@ export const ProductThumbnail: React.FC<ProductThumbnailProps> = ({
             height: '100%',
             objectFit: 'cover',
             opacity: imgLoaded ? 1 : 0,
-            transition: 'opacity 0.2s ease',
+            transition: cssTransition.default,
           }}
         />
       )}
@@ -164,7 +165,7 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
             border: `1px solid ${brandColors.borderSubtle}`,
             // Fade out item pending removal
             opacity: pendingRemoval?.id === product.id ? 0.4 : 1,
-            transition: 'opacity 0.2s ease',
+            transition: cssTransition.default,
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>

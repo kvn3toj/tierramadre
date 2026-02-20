@@ -34,8 +34,7 @@ import {
   Delete,
 } from '@mui/icons-material';
 
-import { spacing } from '../../../design-system/tokens/primitives/spacing';
-import { brand, radius, iosTypographyScale } from '../../../design-system';
+import { brand, radius, iosTypographyScale, cssTransition, primitiveSpacing as spacing } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import {
   useAI,
@@ -435,7 +434,7 @@ const NameGeneratorPage: React.FC = () => {
                       borderRadius: radius.md,
                       border: '1px solid',
                       borderColor: copiedName === name ? TOOL_COLOR : 'var(--border-default)',
-                      transition: 'border-color 0.2s ease',
+                      transition: cssTransition.default,
                     }}
                   >
                     <Typography

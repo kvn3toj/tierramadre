@@ -19,6 +19,7 @@ import {
   iosTypographyScale,
   radius,
   animation,
+  blurValues,
 } from '../../design-system';
 
 interface UpdateToastProps {
@@ -55,8 +56,8 @@ const UpdateToast: React.FC<UpdateToastProps> = ({ visible, onDismiss }) => {
         border: '1px solid',
         borderColor: emeraldCore.primary,
         boxShadow: `0 8px 32px ${alpha(emeraldCore.primary, 0.2)}, 0 4px 16px rgba(0,0,0,0.15)`,
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        backdropFilter: `blur(${blurValues.xl})`,
+        WebkitBackdropFilter: `blur(${blurValues.xl})`,
         animation: `slideUp 0.3s ${animation.easing.spring}`,
         '@keyframes slideUp': {
           '0%': { opacity: 0, transform: 'translateY(20px)' },

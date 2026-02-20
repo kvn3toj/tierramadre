@@ -21,7 +21,7 @@ import FocusTrap from '@mui/material/Unstable_TrapFocus';
 import { X, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 import { motion, AnimatePresence, PanInfo, useAnimation } from 'framer-motion';
 import { triggerHaptic } from '../../hooks/useHaptics';
-import { lightTokens, darkTokens, cssTransition } from '../../design-system';
+import { lightTokens, darkTokens, cssTransition, blurValues } from '../../design-system';
 import ProtectedContent from '../shared/ProtectedContent';
 
 interface ImageLightboxProps {
@@ -232,7 +232,7 @@ export default function ImageLightbox({
                 position: 'absolute',
                 inset: 0,
                 bgcolor: alpha(darkTokens.background.app, opacity * 0.95),
-                transition: 'background-color 0.1s ease',
+                transition: cssTransition.fast,
               }}
             />
 
@@ -258,7 +258,7 @@ export default function ImageLightbox({
                   height: 44,
                   color: lightTokens.text.inverse,
                   bgcolor: alpha(lightTokens.background.surface, 0.1),
-                  backdropFilter: 'blur(8px)',
+                  backdropFilter: `blur(${blurValues.sm})`,
                   '&:hover': { bgcolor: alpha(lightTokens.background.surface, 0.2) },
                 }}
               >
@@ -273,7 +273,7 @@ export default function ImageLightbox({
                     height: 44,
                     color: lightTokens.text.inverse,
                     bgcolor: alpha(lightTokens.background.surface, 0.1),
-                    backdropFilter: 'blur(8px)',
+                    backdropFilter: `blur(${blurValues.sm})`,
                     '&:hover': { bgcolor: alpha(lightTokens.background.surface, 0.2) },
                   }}
                 >
@@ -328,7 +328,7 @@ export default function ImageLightbox({
                         maxHeight: '90vh',
                         objectFit: 'contain',
                         transform: `scale(${scale})`,
-                        transition: 'transform 0.2s ease',
+                        transition: cssTransition.default,
                         touchAction: 'none',
                         userSelect: 'none',
                         WebkitUserDrag: 'none',
@@ -358,7 +358,7 @@ export default function ImageLightbox({
                       height: 44,
                       color: lightTokens.text.inverse,
                       bgcolor: alpha(lightTokens.background.surface, 0.1),
-                      backdropFilter: 'blur(8px)',
+                      backdropFilter: `blur(${blurValues.sm})`,
                       '&:hover': { bgcolor: alpha(lightTokens.background.surface, 0.2) },
                     }}
                   >
@@ -379,7 +379,7 @@ export default function ImageLightbox({
                       height: 44,
                       color: lightTokens.text.inverse,
                       bgcolor: alpha(lightTokens.background.surface, 0.1),
-                      backdropFilter: 'blur(8px)',
+                      backdropFilter: `blur(${blurValues.sm})`,
                       '&:hover': { bgcolor: alpha(lightTokens.background.surface, 0.2) },
                     }}
                   >

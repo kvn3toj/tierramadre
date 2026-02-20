@@ -8,8 +8,8 @@ import React from 'react';
 import { Box, Paper, Typography, alpha, Tooltip } from '@mui/material';
 import { Info } from 'lucide-react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
-import { iosDimensions } from '../../design-system/tokens/primitives/spacing';
 import { semanticColors } from '../../design-system/tokens/colors';
+import { cssTransition, iosDimensions } from '../../design-system';
 import { SparklineChart } from '../analytics/SparklineChart';
 
 export interface MetricCardProps {
@@ -56,7 +56,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
         display: 'flex',
         flexDirection: 'column',
         gap: compact ? 1 : 1.5,
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        transition: cssTransition.default,
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': onClick ? {
           transform: 'translateY(-2px)',

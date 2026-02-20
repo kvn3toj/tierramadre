@@ -9,7 +9,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography, IconButton } from '@mui/material';
 import { VolumeUp, VolumeOff } from '@mui/icons-material';
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { blurValues, primitiveColors } from '../../design-system';
 
 const emerald = primitiveColors.emerald;
 
@@ -155,7 +155,7 @@ const AmbientMeditation: React.FC<AmbientMeditationProps> = ({
             flexDirection: 'column',
             alignItems: 'center',
             background: 'rgba(0,0,0,0.5)',
-            backdropFilter: 'blur(10px)',
+            backdropFilter: `blur(${blurValues.sm})`,
             px: 3,
             py: 2,
             borderRadius: 2,

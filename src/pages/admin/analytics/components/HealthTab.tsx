@@ -20,8 +20,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../../../contexts/ThemeContext';
 import { emeraldCore, goldAccent, semanticColors } from '../../../../design-system/tokens/colors';
-import { cssTransition } from '../../../../design-system';
-import { iosDimensions } from '../../../../design-system/tokens/primitives/spacing';
+import { cssTransition, iosDimensions } from '../../../../design-system';
 import { HealthScoreHero } from '../../../../components/analytics/HealthScoreHero';
 import { HorizontalBarChart } from '../../../../components/analytics/HorizontalBarChart';
 import { ProgressBar } from '../../../../components/analytics/ProgressBar';
@@ -242,7 +241,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
               p: 2.5,
               cursor: 'pointer',
               '&:hover': { bgcolor: alpha(goldAccent.primary, 0.04) },
-              transition: 'background-color 0.2s ease',
+              transition: cssTransition.default,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
@@ -281,7 +280,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
                 <Box
                   sx={{
                     transform: achievementsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.2s ease',
+                    transition: cssTransition.default,
                     color: 'text.secondary',
                   }}
                 >
@@ -309,7 +308,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
             sx={{
               maxHeight: achievementsExpanded ? 600 : 0,
               overflow: 'hidden',
-              transition: 'max-height 0.3s ease-in-out',
+              transition: cssTransition.slow,
             }}
           >
             <Box

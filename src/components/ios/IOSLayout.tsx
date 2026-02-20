@@ -16,8 +16,7 @@ import IOSNavigationBar, { NavigationBarMode, NavigationAction } from './IOSNavi
 import IOSMoreSheet from './IOSMoreSheet';
 import IOSSettingsSheet from './IOSSettingsSheet';
 import { InvitationBanner } from '../invitation';
-import { spacing } from '../../design-system/tokens/primitives/spacing';
-import { emeraldCore } from '../../design-system';
+import { emeraldCore, primitiveSpacing as spacing } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 

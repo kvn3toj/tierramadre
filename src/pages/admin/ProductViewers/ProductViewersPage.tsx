@@ -16,7 +16,7 @@ import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useThemeMode } from '../../../contexts/ThemeContext';
 import { useTreasure } from '../../../hooks/useTreasure';
 import { emeraldCore } from '../../../design-system/tokens/colors';
-import { spacing } from '../../../design-system/tokens/primitives/spacing';
+import { primitiveSpacing as spacing } from '../../../design-system';
 import type { ProductDetailViews, ProductCotizaciones } from './types';
 import {
   ViewerStats,

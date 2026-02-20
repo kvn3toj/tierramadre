@@ -23,6 +23,7 @@ import {
 import { FileText, Plus, Clock, CheckCircle, XCircle, Trash2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { emeraldCore } from '../../design-system/tokens/colors';
+import { accentColors, primitiveColors } from '../../design-system';
 import { useNotification } from '../../contexts/NotificationContext';
 import { PRODUCT_TYPE_LABELS, REQUEST_STATUS_LABELS } from '../../types/provider';
 import type { QuotationRequest, RequestStatus } from '../../types/provider';
@@ -62,10 +63,10 @@ export default function QuotationRequestList() {
 
   const getStatusColor = (status: RequestStatus) => {
     switch (status) {
-      case 'pendiente': return '#f59e0b';
+      case 'pendiente': return accentColors.warning.light;
       case 'respondida': return emeraldCore.primary;
-      case 'cancelada': return '#ef4444';
-      default: return '#6b7280';
+      case 'cancelada': return accentColors.error.light;
+      default: return primitiveColors.metallic.silver[500];
     }
   };
 

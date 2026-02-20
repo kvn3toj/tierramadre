@@ -12,8 +12,7 @@ import { Box, Typography, alpha, useTheme, ButtonBase } from '@mui/material';
 import { Lightbulb, AlertTriangle, CheckCircle, AlertCircle, ChevronRight } from 'lucide-react';
 import { insightColors } from '../../design-system/tokens/colors';
 import { chartTokens } from '../../design-system/tokens/charts';
-import { iosDimensions } from '../../design-system/tokens/primitives/spacing';
-import { cssTransition } from '../../design-system';
+import { cssTransition, iosDimensions } from '../../design-system';
 
 // =============================================================================
 // TYPES

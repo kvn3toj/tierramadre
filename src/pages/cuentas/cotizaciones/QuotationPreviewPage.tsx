@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { FileText, Download, Eye, ArrowLeft } from 'lucide-react';
 import { documentShadows } from '../../../design-system/tokens';
+import { blurValues } from '../../../design-system';
 import { exportQuotationToPdf } from '../../../utils/pdf';
 import { brandColors } from '../../../components/cotizacion/constants';
 import { createLogger } from '../../../utils/logger';
@@ -158,7 +159,7 @@ export default function QuotationPreview() {
                   height: 56,
                   borderRadius: 3,
                   bgcolor: 'rgba(255,255,255,0.15)',
-                  backdropFilter: 'blur(10px)',
+                  backdropFilter: `blur(${blurValues.sm})`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

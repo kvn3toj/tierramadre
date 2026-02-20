@@ -13,6 +13,7 @@ import {
   getPesoDisplay,
 } from '../../../hooks/useCotizacion';
 import { SectionHeader } from './shared';
+import { cssTransition } from '../../../design-system';
 
 // =============================================================================
 // ProductImage
@@ -63,7 +64,7 @@ const ProductImage: React.FC<ProductImageProps> = ({ src, isJewelry, size = 56 }
             height: '100%',
             objectFit: 'cover',
             opacity: imgLoaded ? 1 : 0,
-            transition: 'opacity 0.2s ease',
+            transition: cssTransition.default,
           }}
         />
       )}

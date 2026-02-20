@@ -7,7 +7,7 @@
  */
 
 import { Box, Typography, alpha } from '@mui/material';
-import { fontFamilies } from '../../design-system/index';
+import { fontFamilies, cssTransition } from '../../design-system/index';
 
 interface StatItemProps {
   icon: React.ReactNode;
@@ -36,7 +36,7 @@ export function StatItem({
           py: 1,
           px: 1.5,
           borderRadius: 2,
-          transition: 'background-color 0.2s ease',
+          transition: cssTransition.default,
           opacity: isZero ? 0.5 : 1,
           '&:hover': {
             bgcolor: color ? alpha(color, 0.06) : 'action.hover',

@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, goldAccent, semanticColors } from '../../design-system/tokens/colors';
-import { spacing } from '../../design-system/tokens/primitives/spacing';
+import { cssTransition, primitiveSpacing as spacing } from '../../design-system';
 
 // =============================================================================
 // TYPES
@@ -443,7 +443,7 @@ const UserViewsPage: React.FC = () => {
                       py: 1.5,
                       borderBottom: idx < data.products.length - 1 ? `1px solid ${alpha('#000', 0.06)}` : 'none',
                       cursor: 'pointer',
-                      transition: 'background-color 0.15s',
+                      transition: cssTransition.fast,
                       '&:hover': {
                         bgcolor: alpha(emeraldCore.primary, 0.05),
                       },

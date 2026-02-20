@@ -15,6 +15,7 @@ import {
   getPermissionStatus,
   requestPermission,
 } from '../../services/notifications';
+import { blurValues } from '../../design-system';
 import { STORAGE_KEYS } from '../../constants/storage-keys';
 
 interface NotificationPermissionProps {
@@ -89,7 +90,7 @@ export default function NotificationPermission({
                   alignItems: 'center',
                   gap: 1.5,
                   bgcolor: 'rgba(0,0,0,0.85)',
-                  backdropFilter: 'blur(20px)',
+                  backdropFilter: `blur(${blurValues.xl})`,
                   borderRadius: 3,
                   px: 2,
                   py: 1.5,

@@ -12,6 +12,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { alpha } from '@mui/material/styles';
 import html2canvas from 'html2canvas';
 import { emeraldCore } from '../../design-system/tokens/colors';
+import { blurValues } from '../../design-system';
 import { getMainScrollY } from '../../utils/mainScroll';
 
 interface FloatingCaptureButtonProps {
@@ -83,7 +84,7 @@ export default function FloatingCaptureButton({ onCapture, onCancel }: FloatingC
         <Box
           sx={{
             bgcolor: alpha('#000', 0.9),
-            backdropFilter: 'blur(10px)',
+            backdropFilter: `blur(${blurValues.sm})`,
             borderRadius: 3,
             px: 3,
             py: 2,

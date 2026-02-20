@@ -17,12 +17,9 @@ import FeedbackWizard from '../feedback/FeedbackWizard';
 import { InvitationGenerator } from '../invitation';
 import { useTheme } from '../../contexts/ThemeContext';
 
-import { spacing } from '../../design-system/tokens/primitives/spacing';
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
-import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
 import { floatingLayers, liquidSaturation, specularHighlights } from '../../design-system/tokens/liquid-glass';
 import { floatingLayerShadows } from '../../design-system/tokens/shadows';
-import { brand, radius, iosTypographyScale, emeraldCore } from '../../design-system';
+import { brand, radius, iosTypographyScale, emeraldCore, accentColors, cssTransition, blurValues, primitiveColors, primitiveSpacing as spacing, easingCurves, durations } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsGuest, useCanCreateInvitations } from '../../hooks/useAuth';
@@ -48,7 +45,7 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     subtitle: 'Genera un enlace temporal de 24 horas para tus clientes',
     icon: PersonAdd,
     action: 'invitation',
-    color: '#3B82F6', // Blue for invitation
+    color: accentColors.info.light, // Blue for invitation
   },
   // Product Requests - for asesores/embajadores (unified view)
   {
@@ -57,7 +54,7 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     subtitle: 'Solicita productos y ve el estado de tus pedidos',
     icon: ShoppingBag as any,
     route: '/solicitudes',
-    color: '#10B981', // Green
+    color: accentColors.success.light, // Green
   },
   {
     id: 'accounts',
@@ -73,7 +70,7 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     subtitle: 'Métricas y Business Health',
     icon: BarChart3 as any,
     route: '/admin/analytics',
-    color: '#8B5CF6', // Purple for analytics
+    color: accentColors.purple.light, // Purple for analytics
   },
   {
     id: 'name-generator',
@@ -98,7 +95,7 @@ const getMoreTools = (t: any): MoreToolConfig[] => [
     subtitle: 'Reporta bugs, sugiere features o mejoras de UX. Incluye captura de pantalla automática.',
     icon: BugReport,
     action: 'feedback',
-    color: '#F59E0B', // Amber for feedback
+    color: accentColors.warning.light, // Amber for feedback
     badge: 'DEV',
   },
   {
@@ -261,8 +258,8 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
         sx={{
           zIndex: 1100,
           backgroundColor: 'rgba(0, 0, 0, 0.3)',
-          backdropFilter: effectiveConfig.blur ? 'blur(16px)' : 'none',
-          WebkitBackdropFilter: effectiveConfig.blur ? 'blur(16px)' : 'none',
+          backdropFilter: effectiveConfig.blur ? `blur(${blurValues.lg})` : 'none',
+          WebkitBackdropFilter: effectiveConfig.blur ? `blur(${blurValues.lg})` : 'none',
           transition: effectiveConfig.animations
             ? `opacity ${durations.liquidNormal} ${easingCurves.liquidInOut}`
             : 'none',
@@ -286,7 +283,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
           transform: open ? 'translateY(0)' : 'translateY(100%)',
           transition: effectiveConfig.animations
             ? `transform ${durations.liquidNormal} ${easingCurves.liquidSpring}`
-            : 'transform 0.3s ease-out',
+            : cssTransition.slow,
           paddingBottom: 'env(safe-area-inset-bottom)',
           willChange: 'transform',
           ...headerSpecularStyles,
@@ -295,7 +292,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
             backgroundColor: 'var(--surface-secondary)',
           },
           '@media (prefers-reduced-motion: reduce)': {
-            transition: 'transform 0.2s ease-out',
+            transition: cssTransition.default,
           },
         }}
       >
@@ -451,13 +448,13 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
               onChange={handleCurrencyToggle}
               sx={{
                 '& .MuiSwitch-switchBase.Mui-checked': {
-                  color: '#2E7D32',
+                  color: emeraldCore.dark,
                   '&:hover': {
                     backgroundColor: 'rgba(46, 125, 50, 0.08)',
                   },
                 },
                 '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                  backgroundColor: '#2E7D32',
+                  backgroundColor: emeraldCore.dark,
                 },
               }}
             />
@@ -511,7 +508,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
               gap: spacing.xs,
               filter: isGuest ? 'blur(6px)' : 'none',
               pointerEvents: isGuest ? 'none' : 'auto',
-              transition: 'filter 0.3s ease',
+              transition: cssTransition.slow,
             }}
           >
           {MORE_TOOLS.map((tool) => {

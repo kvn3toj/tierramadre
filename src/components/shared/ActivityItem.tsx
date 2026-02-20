@@ -7,6 +7,7 @@
 import React from 'react';
 import { Box, Typography, alpha } from '@mui/material';
 import { useThemeMode } from '../../contexts/ThemeContext';
+import { cssTransition } from '../../design-system';
 
 export interface ActivityItemProps {
   icon: React.ReactNode;
@@ -41,7 +42,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
         px: 2,
         borderBottom: isLast ? 'none' : `1px solid ${alpha(isLight ? '#000' : '#fff', 0.06)}`,
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'background-color 0.15s ease',
+        transition: cssTransition.fast,
         '&:hover': onClick ? {
           bgcolor: alpha(isLight ? '#000' : '#fff', 0.03),
         } : {},

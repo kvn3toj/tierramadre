@@ -23,7 +23,7 @@ import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { TreasureItem } from '../../types';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { cssTransition } from '../../design-system';
+import { cssTransition, blurValues } from '../../design-system';
 
 interface RecentlyViewedCarouselProps {
   /** Array of recently viewed treasure items */
@@ -354,7 +354,7 @@ function RecentItemCard({
                 bottom: 3,
                 right: 3,
                 bgcolor: 'rgba(0, 0, 0, 0.5)', // More transparent (was 0.75)
-                backdropFilter: 'blur(4px)', // Less blur (was 8px)
+                backdropFilter: `blur(${blurValues.xs})`, // Less blur (was 8px)
                 borderRadius: '4px',
                 px: 0.4,
                 py: 0.15,

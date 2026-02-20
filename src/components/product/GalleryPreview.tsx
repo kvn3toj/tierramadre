@@ -7,7 +7,7 @@ import { Box, Typography, alpha } from '@mui/material';
 import { Images, Play } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { cssTransition } from '../../design-system';
+import { cssTransition, blurValues } from '../../design-system';
 
 interface GalleryPreviewProps {
   /** Array of image URLs */
@@ -209,7 +209,7 @@ export function GalleryCount({
         py: 0.25,
         borderRadius: 1,
         bgcolor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
+        backdropFilter: `blur(${blurValues.xs})`,
       }}
     >
       {hasVideo ? (

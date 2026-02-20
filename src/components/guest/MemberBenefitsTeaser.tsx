@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { primitiveColors } from '../../design-system';
 
 interface BenefitItem {
   icon: React.ElementType;

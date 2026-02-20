@@ -15,8 +15,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { useIsAdmin, useIsStaff } from '../../hooks/usePermissions';
 import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { spacing } from '../../design-system/tokens/primitives/spacing';
-import { accentColors, iosTypographyScale, cssTransition } from '../../design-system';
+import { accentColors, iosTypographyScale, cssTransition, primitiveSpacing as spacing } from '../../design-system';
 
 interface AccountTool {
   id: string;

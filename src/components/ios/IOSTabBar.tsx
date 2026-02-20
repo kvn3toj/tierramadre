@@ -23,11 +23,8 @@ import { Gem, FileText, PlusCircle, Package } from 'lucide-react';
 import { useIsProvider } from '../../hooks/usePermissions';
 
 // Design tokens
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
-import { spacing } from '../../design-system/tokens/primitives/spacing';
-import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
 import { dynamicBlur, dynamicOpacity, liquidSaturation, tabBarConfig } from '../../design-system/tokens/liquid-glass';
-import { radius, layoutConstants } from '../../design-system';
+import { radius, layoutConstants, primitiveColors, primitiveSpacing as spacing, easingCurves, durations } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import useScrollShrink from '../../hooks/useScrollShrink';

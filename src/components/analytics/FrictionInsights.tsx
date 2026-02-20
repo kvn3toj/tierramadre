@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, goldAccent, semanticColors } from '../../design-system/tokens/colors';
+import { cssTransition } from '../../design-system';
 import type { FrictionPoint, UXInsight } from '../../types/analytics';
 
 // =============================================================================
@@ -254,7 +255,7 @@ const UXInsightCard: React.FC<UXInsightCardProps> = ({ insight }) => {
         borderRadius: 2,
         bgcolor: isLight ? 'background.paper' : alpha('#000', 0.2),
         border: `1px solid ${isLight ? alpha('#000', 0.08) : alpha('#fff', 0.1)}`,
-        transition: 'transform 0.2s, box-shadow 0.2s',
+        transition: cssTransition.default,
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow: `0 4px 20px ${alpha(typeConfig.color, 0.15)}`,

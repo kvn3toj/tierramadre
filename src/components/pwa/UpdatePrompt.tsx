@@ -9,6 +9,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { Snackbar, Button, Box, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
+import { blurValues } from '../../design-system';
 import { createLogger } from '../../utils/logger';
 
 const log = createLogger('PWA');
@@ -105,7 +106,7 @@ export default function UpdatePrompt() {
           py: 1.5,
           borderRadius: 2,
           bgcolor: (theme) => alpha(theme.palette.primary.main, 0.95),
-          backdropFilter: 'blur(10px)',
+          backdropFilter: `blur(${blurValues.sm})`,
           boxShadow: '0 8px 32px rgba(0, 174, 122, 0.3)',
           border: '1px solid',
           borderColor: 'primary.light',

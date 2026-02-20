@@ -22,6 +22,7 @@ import MediaPreview from '../shared/MediaPreview';
 // Design System Tokens
 import { emeraldCore, goldAccent, semanticColors, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 import { cardShadows } from '../../design-system/tokens/shadows';
+import { cssTransition } from '../../design-system';
 
 interface EmeraldCardProps {
   emerald: Emerald;
@@ -90,7 +91,7 @@ export default function EmeraldCard({
         cursor: onSelect ? 'pointer' : 'default',
         border: selected ? `2px solid ${emeraldCore.primary}` : 'none',
         boxShadow: cardShadows.resting,
-        transition: 'transform 0.2s, box-shadow 0.2s',
+        transition: cssTransition.default,
         '&:hover': {
           transform: 'translateY(-4px)',
           boxShadow: cardShadows.emeraldHover,

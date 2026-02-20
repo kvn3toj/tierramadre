@@ -30,11 +30,9 @@ import {
 import { Search, X } from 'lucide-react';
 import MoreSheetSearch from './MoreSheetSearch';
 
-import { spacing } from '../../design-system/tokens/primitives/spacing';
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
-import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
 import { floatingLayers, liquidSaturation } from '../../design-system/tokens/liquid-glass';
 import { floatingLayerShadows } from '../../design-system/tokens/shadows';
+import { cssTransition, blurValues, primitiveColors, primitiveSpacing as spacing, easingCurves, durations } from '../../design-system';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 
 // Pages where FAB should be hidden (already have prominent search or not relevant)
@@ -117,7 +115,7 @@ const GlobalSearchFAB: React.FC<GlobalSearchFABProps> = ({ forceShow = false }) 
               height: 56,
               transition: effectiveConfig.animations
                 ? `all ${durations.liquidFast} ${easingCurves.liquidSpring}`
-                : 'all 0.2s ease',
+                : cssTransition.default,
               boxShadow: `0 8px 24px ${primitiveColors.emerald[500]}40`,
 
               '&:hover': {
@@ -146,7 +144,7 @@ const GlobalSearchFAB: React.FC<GlobalSearchFABProps> = ({ forceShow = false }) 
               },
 
               '@media (prefers-reduced-motion: reduce)': {
-                transition: 'background-color 0.2s ease',
+                transition: cssTransition.default,
                 '&:hover': {
                   transform: 'none',
                 },
@@ -165,11 +163,11 @@ const GlobalSearchFAB: React.FC<GlobalSearchFABProps> = ({ forceShow = false }) 
         sx={{
           zIndex: 1100,
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: effectiveConfig.blur ? 'blur(20px)' : 'none',
-          WebkitBackdropFilter: effectiveConfig.blur ? 'blur(20px)' : 'none',
+          backdropFilter: effectiveConfig.blur ? `blur(${blurValues.xl})` : 'none',
+          WebkitBackdropFilter: effectiveConfig.blur ? `blur(${blurValues.xl})` : 'none',
           transition: effectiveConfig.animations
             ? `opacity ${durations.liquidNormal} ${easingCurves.liquidInOut}`
-            : 'opacity 0.3s ease',
+            : cssTransition.slow,
         }}
       />
 
@@ -198,7 +196,7 @@ const GlobalSearchFAB: React.FC<GlobalSearchFABProps> = ({ forceShow = false }) 
           opacity: modalOpen ? 1 : 0,
           transition: effectiveConfig.animations
             ? `all ${durations.liquidNormal} ${easingCurves.liquidSpring}`
-            : 'all 0.3s ease-out',
+            : cssTransition.slow,
           pointerEvents: modalOpen ? 'auto' : 'none',
 
           '@supports not (backdrop-filter: blur(10px))': {
@@ -206,7 +204,7 @@ const GlobalSearchFAB: React.FC<GlobalSearchFABProps> = ({ forceShow = false }) 
           },
 
           '@media (prefers-reduced-motion: reduce)': {
-            transition: 'opacity 0.2s ease-out',
+            transition: cssTransition.default,
             transform: 'none',
           },
         }}

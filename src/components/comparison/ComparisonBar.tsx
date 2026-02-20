@@ -18,6 +18,7 @@ import { Scale, Trash2 } from 'lucide-react';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { blurValues } from '../../design-system';
 
 interface ComparisonBarProps {
   selectedItems: TreasureItem[];
@@ -53,7 +54,7 @@ export default function ComparisonBar({
           bgcolor: isLight
             ? alpha(surfacesLight.background.primary, 0.95)
             : alpha(surfacesDark.background.secondary, 0.95),
-          backdropFilter: 'blur(12px)',
+          backdropFilter: `blur(${blurValues.md})`,
           border: '1px solid',
           borderColor: isLight
             ? alpha(emeraldCore.primary, 0.2)

@@ -38,7 +38,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { alpha } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import { emeraldCore } from '../../design-system/tokens/colors';
-import { cssTransition } from '../../design-system';
+import { cssTransition, accentColors, primitiveColors } from '../../design-system';
 import type { FeedbackItem, FeedbackStatus, FeedbackCategory } from '../../types/feedback';
 import { CATEGORY_OPTIONS, PRIORITY_OPTIONS } from '../../types/feedback';
 
@@ -47,11 +47,11 @@ import { CATEGORY_OPTIONS, PRIORITY_OPTIONS } from '../../types/feedback';
 // =============================================================================
 
 const STATUS_CONFIG: Record<FeedbackStatus, { label: string; color: string }> = {
-  open: { label: 'Abierto', color: '#2196f3' },
-  in_progress: { label: 'En Progreso', color: '#ff9800' },
-  resolved: { label: 'Resuelto', color: '#4caf50' },
-  wontfix: { label: 'No se hará', color: '#9e9e9e' },
-  duplicate: { label: 'Duplicado', color: '#607d8b' },
+  open: { label: 'Abierto', color: accentColors.info.light },
+  in_progress: { label: 'En Progreso', color: accentColors.warning.light },
+  resolved: { label: 'Resuelto', color: accentColors.success.light },
+  wontfix: { label: 'No se hará', color: primitiveColors.metallic.silver[400] },
+  duplicate: { label: 'Duplicado', color: primitiveColors.metallic.silver[600] },
 };
 
 const formatDate = (isoString: string) => {

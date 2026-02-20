@@ -30,8 +30,7 @@ import {
   Heart,
 } from 'lucide-react';
 import { useThemeMode } from '../../../contexts/ThemeContext';
-import { spacing, iosDimensions } from '../../../design-system/tokens/primitives/spacing';
-import { iosTypographyScale, cssTransition } from '../../../design-system';
+import { iosTypographyScale, cssTransition, primitiveSpacing as spacing, iosDimensions } from '../../../design-system';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 
 // Tab components

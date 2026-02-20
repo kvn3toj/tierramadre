@@ -9,6 +9,7 @@
 
 import React, { useRef, useState } from 'react';
 import { cssTransition } from '../../../design-system/tokens/motion';
+import { blurValues } from '../../../design-system';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
@@ -98,8 +99,8 @@ export const CategoryCarousels: React.FC = () => {
               p: 0.5,
               // Liquid Glass container
               bgcolor: 'rgba(255,255,255,0.08)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
+              backdropFilter: `blur(${blurValues.xl})`,
+              WebkitBackdropFilter: `blur(${blurValues.xl})`,
               borderRadius: 3,
               border: '1px solid rgba(255,255,255,0.1)',
             }}
@@ -188,7 +189,7 @@ export const CategoryCarousels: React.FC = () => {
                         borderRadius: 3,
                         border: '1px solid rgba(255,255,255,0.15)',
                         zIndex: 1,
-                        transition: 'border-color 0.2s ease',
+                        transition: cssTransition.default,
                       },
                       '&:hover::before': {
                         borderColor: 'rgba(255,255,255,0.3)',
@@ -196,7 +197,7 @@ export const CategoryCarousels: React.FC = () => {
                       '&:active': {
                         transform: 'scale(0.98)',
                       },
-                      transition: 'transform 0.15s ease',
+                      transition: cssTransition.fast,
                     }}
                   >
                     <Box
@@ -234,7 +235,7 @@ export const CategoryCarousels: React.FC = () => {
           backdrop: {
             sx: {
               bgcolor: alpha('#000000', 0.95),
-              backdropFilter: 'blur(30px)',
+              backdropFilter: `blur(${blurValues['3xl']})`,
             },
           },
         }}

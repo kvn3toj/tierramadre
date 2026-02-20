@@ -12,6 +12,7 @@ import { useThemeMode } from '../../contexts/ThemeContext';
 import { useAuth } from '../../hooks/useAuth';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
+import { blurValues } from '../../design-system';
 
 const AUTO_DISMISS_MS = 4000;
 
@@ -67,7 +68,7 @@ const AchievementToast: React.FC = () => {
               ? `linear-gradient(135deg, ${alpha(goldAccent.primary, 0.95)} 0%, ${alpha(emeraldCore.primary, 0.9)} 100%)`
               : `linear-gradient(135deg, ${alpha(goldAccent.dark, 0.95)} 0%, ${alpha(emeraldCore.dark, 0.9)} 100%)`,
             boxShadow: `0 8px 32px ${alpha('#000', 0.25)}, 0 0 0 1px ${alpha(goldAccent.primary, 0.3)}`,
-            backdropFilter: 'blur(12px)',
+            backdropFilter: `blur(${blurValues.md})`,
             animation: prefersReducedMotion ? 'none' : 'achievement-pop 0.4s ease-out',
             '@keyframes achievement-pop': {
               '0%': {

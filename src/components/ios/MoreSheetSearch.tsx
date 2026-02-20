@@ -33,9 +33,8 @@ import {
 } from 'lucide-react';
 import { useTreasure } from '../../hooks/useTreasure';
 import { useTreasureFiltering, TypeFilter } from '../../hooks/useTreasureFiltering';
-import { spacing } from '../../design-system/tokens/primitives/spacing';
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
 import { goldAccent } from '../../design-system/tokens/colors';
+import { cssTransition, primitiveColors, primitiveSpacing as spacing } from '../../design-system';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 
 // Helper to generate filter chip styles
@@ -220,7 +219,7 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'var(--text-tertiary)',
-                    transition: 'color 0.2s ease',
+                    transition: cssTransition.default,
                     '&:hover': {
                       color: primitiveColors.emerald[500],
                     },

@@ -11,7 +11,7 @@ import { GoogleOAuthProvider, GoogleLogin, CredentialResponse } from '@react-oau
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { alpha } from '@mui/material/styles';
 import { createLogger } from '../../utils/logger';
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
+import { primitiveColors } from '../../design-system';
 
 const log = createLogger('Auth');
 const emerald = primitiveColors.emerald;

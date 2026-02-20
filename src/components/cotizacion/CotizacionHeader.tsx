@@ -7,7 +7,7 @@ import { Box, Typography, Paper } from '@mui/material';
 import { FileText } from 'lucide-react';
 import { brandColors } from './constants';
 import { useCotizacionFormat } from '../../hooks/useCotizacion';
-import { iosTypographyScale } from '../../design-system';
+import { iosTypographyScale, blurValues } from '../../design-system';
 
 export interface CotizacionHeaderProps {
   productCount: number;
@@ -41,7 +41,7 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
                 height: 36,
                 borderRadius: 2,
                 bgcolor: 'rgba(255,255,255,0.15)',
-                backdropFilter: 'blur(10px)',
+                backdropFilter: `blur(${blurValues.sm})`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -67,7 +67,7 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
                 py: 0.75,
                 borderRadius: 2,
                 bgcolor: 'rgba(255,255,255,0.2)',
-                backdropFilter: 'blur(10px)',
+                backdropFilter: `blur(${blurValues.sm})`,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0.75,
@@ -95,7 +95,7 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
                 py: 0.75,
                 borderRadius: 2,
                 bgcolor: 'rgba(255,255,255,0.3)',
-                backdropFilter: 'blur(10px)',
+                backdropFilter: `blur(${blurValues.sm})`,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0.5,

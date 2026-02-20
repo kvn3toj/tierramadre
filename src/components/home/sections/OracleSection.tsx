@@ -17,7 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { emeraldCore, surfacesLight } from '../../../design-system/tokens/colors';
-import { blackAlpha, emeraldAlpha, opacity } from '../../../design-system';
+import { blackAlpha, emeraldAlpha, opacity, blurValues } from '../../../design-system';
 import { textOnGlass, iosLabels, iosSeparators } from '../../../design-system/utils/colorUtils';
 import { ORACLE_QUOTES, OracleQuote } from '../../../data/homeContent';
 
@@ -142,8 +142,8 @@ export const OracleSection: React.FC = () => {
               alignItems: 'flex-start',
               gap: 2,
               bgcolor: colors.cardBg,
-              backdropFilter: 'blur(24px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+              backdropFilter: `blur(${blurValues['2xl']}) saturate(180%)`,
+              WebkitBackdropFilter: `blur(${blurValues['2xl']}) saturate(180%)`,
               border: '1px solid',
               borderColor: colors.cardBorder,
               borderRadius: 4,

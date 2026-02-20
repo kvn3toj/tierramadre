@@ -21,8 +21,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { primitiveColors } from '../../design-system/tokens/primitives/colors';
-import { cssTransition } from '../../design-system';
+import { cssTransition, primitiveColors } from '../../design-system';
 
 const emerald = primitiveColors.emerald;
 import {

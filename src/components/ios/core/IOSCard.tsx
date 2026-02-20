@@ -1,4 +1,5 @@
 import React, { CSSProperties, ReactNode } from 'react';
+import { blurValues } from '../../../design-system';
 
 /**
  * IOSCard Variants
@@ -147,8 +148,8 @@ export const IOSCard: React.FC<IOSCardProps> = ({
         return {
           backgroundColor: 'var(--liquid-glass-bg)',
           border: '1px solid var(--liquid-glass-border)',
-          backdropFilter: 'blur(16px) saturate(200%)',
-          WebkitBackdropFilter: 'blur(16px) saturate(200%)',
+          backdropFilter: `blur(${blurValues.lg}) saturate(200%)`,
+          WebkitBackdropFilter: `blur(${blurValues.lg}) saturate(200%)`,
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12), inset 0 1px 1px var(--liquid-glass-highlight)',
           // Specular highlight gradient overlay
           backgroundImage: 'linear-gradient(135deg, var(--liquid-glass-highlight) 0%, transparent 50%)',
@@ -182,8 +183,8 @@ export const IOSCard: React.FC<IOSCardProps> = ({
           borderColor: 'var(--card-hover-border)',
           // Liquid Glass: reduce blur on hover for more clarity
           ...(variant === 'liquidGlass' && {
-            backdropFilter: 'blur(12px) saturate(200%)',
-            WebkitBackdropFilter: 'blur(12px) saturate(200%)',
+            backdropFilter: `blur(${blurValues.md}) saturate(200%)`,
+            WebkitBackdropFilter: `blur(${blurValues.md}) saturate(200%)`,
           }),
         }),
         ...(isPressed && {
@@ -195,8 +196,8 @@ export const IOSCard: React.FC<IOSCardProps> = ({
               : variantStyles.boxShadow,
           // Liquid Glass: minimum blur on active for maximum clarity
           ...(variant === 'liquidGlass' && {
-            backdropFilter: 'blur(8px) saturate(200%)',
-            WebkitBackdropFilter: 'blur(8px) saturate(200%)',
+            backdropFilter: `blur(${blurValues.sm}) saturate(200%)`,
+            WebkitBackdropFilter: `blur(${blurValues.sm}) saturate(200%)`,
           }),
         }),
       }

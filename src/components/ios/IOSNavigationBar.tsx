@@ -11,12 +11,10 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
-import { spacing } from '../../design-system/tokens/primitives/spacing';
-import { easingCurves, durations } from '../../design-system/tokens/primitives/motion';
 import { dynamicBlur, liquidSaturation, specularHighlights } from '../../design-system/tokens/liquid-glass';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsScrolled } from '../../hooks/useScrollShrink';
-import { iosTypographyScale } from '../../design-system';
+import { iosTypographyScale, primitiveSpacing as spacing, easingCurves, durations } from '../../design-system';
 
 export type NavigationBarMode = 'compact' | 'large';
 

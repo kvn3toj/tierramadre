@@ -37,8 +37,9 @@ import {
   blackAlpha,
   legacyTypography,
   cssTransition,
+  blurValues,
+  primitiveColors,
 } from '../design-system';
-import { primitiveColors } from '../design-system/tokens/primitives/colors';
 
 // ═══════════════════════════════════════════════════════════════
 // VAULT DESIGN TOKENS — Self-contained dark luxury theme
@@ -191,8 +192,8 @@ function GlassCard({ children }: { children: React.ReactNode }) {
         bgcolor: vault.card,
         border: '1px solid',
         borderColor: vault.cardBorder,
-        backdropFilter: 'blur(20px) saturate(1.5)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
+        backdropFilter: `blur(${blurValues.xl}) saturate(1.5)`,
+        WebkitBackdropFilter: `blur(${blurValues.xl}) saturate(1.5)`,
         boxShadow: `
           0 0 0 0.5px ${emeraldAlpha(0.06)},
           0 8px 40px ${blackAlpha(0.4)},
