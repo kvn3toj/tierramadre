@@ -30,6 +30,9 @@ const FOLDER_ALIASES: Record<string, string> = {
   'ceo-tierra-madre': 'ceo-coomunity',
 };
 
+// Slugs that should not be publicly accessible (use the canonical alias instead)
+const BLOCKED_SLUGS = new Set(['ceo-coomunity']);
+
 // Static CEO exclusive products (local video files, no API needed)
 const CEO_STATIC_PRODUCTS: TreasureItem[] = [
   {
@@ -42,14 +45,14 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
   {
     item: 912, nombre: 'Soul of the Mountain', peso: 1.93, color: 'Intense Green' as TreasureItem['color'],
     calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
-    precioCOP: 0, precioInternacional: 43429, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
+    precioCOP: 0, precioInternacional: 36914, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/912/2-1.93Cts.mp4', imagen: '/images/CEO/912/2-1.93Cts.mp4',
   },
   {
     item: 913, nombre: 'Forest Hug', peso: 1.04, color: 'Intense Green' as TreasureItem['color'],
     calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
-    precioCOP: 0, precioInternacional: 38571, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
+    precioCOP: 0, precioInternacional: 30857, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/913/3-1.04Cts.mp4', imagen: '/images/CEO/913/3-1.04Cts.mp4',
   },
@@ -244,6 +247,7 @@ export default function CollectionPage() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
 
+  const isBlocked = folder ? BLOCKED_SLUGS.has(folder) : false;
   const isCeoCollection = folder === 'ceo-tierra-madre';
   const driveFolder = folder ? (FOLDER_ALIASES[folder] || folder) : null;
   const { products: apiProducts, collectionInfo, isLoading: apiLoading, error: apiError } = useAsesorCollection(isCeoCollection ? null : driveFolder);
@@ -263,6 +267,18 @@ export default function CollectionPage() {
     const text = `Hi ${contact.name}, I saw your exclusive collection on Tierra Madre and I'd like to know more.`;
     window.open(`https://wa.me/${contact.phone}?text=${encodeURIComponent(text)}`, '_blank');
   };
+
+  // Block restricted slugs
+  if (isBlocked) {
+    return (
+      <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: isLight ? lightTokens.background.page : darkTokens.background.app }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <Gem size={48} style={{ color: brand.emerald[300], marginBottom: 16 }} />
+          <Typography variant="h6">Collection not found</Typography>
+        </Box>
+      </Box>
+    );
+  }
 
   // Show splash screen
   if (showSplash) {
