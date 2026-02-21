@@ -12,7 +12,7 @@
 import {
   withApiHandler,
   sendError,
-  SPREADSHEET_ID,
+  APP_SPREADSHEET_ID,
   SHEETS,
   ensureSheet,
 } from './_lib/index.js';
@@ -66,7 +66,7 @@ async function logMismatchReport(sheets, body) {
   ];
 
   await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A:J`,
     valueInputOption: 'RAW',
     requestBody: { values: [row] },
@@ -80,7 +80,7 @@ async function logMismatchReport(sheets, body) {
 }
 
 export default withApiHandler(async (req, res, { sheets }) => {
-  await ensureSheet(sheets, SHEET_NAME, HEADERS);
+  await ensureSheet(sheets, SHEET_NAME, HEADERS, APP_SPREADSHEET_ID);
 
   // POST - Log mismatch report
   if (req.method === 'POST') {
@@ -91,7 +91,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
   // GET - List reports (for admin dashboard later)
   if (req.method === 'GET') {
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!A:J`,
     });
 

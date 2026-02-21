@@ -16,7 +16,7 @@ import {
   sendSuccess,
   setCacheHeaders,
   requireAdminEmail,
-  SPREADSHEET_ID,
+  APP_SPREADSHEET_ID,
   SHEETS,
   CACHE,
   ensureSheet,
@@ -94,7 +94,7 @@ async function createProductRequest(sheets, body) {
   ];
 
   await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEETS.PRODUCT_REQUESTS}'!A:Y`,
     valueInputOption: 'RAW',
     requestBody: { values: [row] },
@@ -139,7 +139,7 @@ async function createProductRequest(sheets, body) {
 
 async function listProductRequests(sheets, status, email) {
   const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEETS.PRODUCT_REQUESTS}'!A:Y`,
   });
 
@@ -201,7 +201,7 @@ async function updateProductRequest(sheets, id, updates) {
   }
 
   const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEETS.PRODUCT_REQUESTS}'!A:Y`,
   });
 
@@ -258,7 +258,7 @@ async function updateProductRequest(sheets, id, updates) {
   }
 
   await sheets.spreadsheets.values.update({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEETS.PRODUCT_REQUESTS}'!A${rowIndex + 2}:Y${rowIndex + 2}`,
     valueInputOption: 'RAW',
     requestBody: { values: [updatedRow] },
@@ -319,7 +319,7 @@ async function updateProductRequest(sheets, id, updates) {
 
 export default withApiHandler(async (req, res, { sheets }) => {
   // Ensure product requests sheet exists
-  await ensureSheet(sheets, SHEETS.PRODUCT_REQUESTS, PRODUCT_REQUEST_HEADERS);
+  await ensureSheet(sheets, SHEETS.PRODUCT_REQUESTS, PRODUCT_REQUEST_HEADERS, APP_SPREADSHEET_ID);
 
   // POST - Create new product request
   if (req.method === 'POST') {

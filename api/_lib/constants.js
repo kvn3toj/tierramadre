@@ -10,8 +10,8 @@ export const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
 // Dedicated Feedback Spreadsheet (separate from inventory to avoid overload)
 export const FEEDBACK_SPREADSHEET_ID = process.env.FEEDBACK_SPREADSHEET_ID?.trim() || '1Nl2gxfZzWy4lUv_C-9xTt90MzFDIgHLvWtWtDRNzJaU';
 
-// Dedicated Invitations Spreadsheet (separate from inventory - owner write permissions)
-export const INVITATIONS_SPREADSHEET_ID = process.env.INVITATIONS_SPREADSHEET_ID?.trim() || '1DuOhuPcHFBhliGJG_imKWA_Yyx4dAmvmmKr4Dp2TXoM';
+// Dedicated App Spreadsheet for all writable data (separate from read-only inventory)
+export const APP_SPREADSHEET_ID = process.env.APP_SPREADSHEET_ID?.trim() || '1DuOhuPcHFBhliGJG_imKWA_Yyx4dAmvmmKr4Dp2TXoM';
 
 // Sheet Names
 export const SHEETS = {

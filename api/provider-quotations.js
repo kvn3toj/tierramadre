@@ -19,7 +19,7 @@ import {
   sendError,
   sendSuccess,
   requireAdminEmail,
-  SPREADSHEET_ID,
+  APP_SPREADSHEET_ID,
   SHEETS,
   ensureSheet,
   generateId,
@@ -48,7 +48,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     return sendError(res, 301, 'Diagnostic endpoint has moved', 'Please use /api/drive-diagnostics instead');
   }
 
-  await ensureSheet(sheets, SHEET_NAME, HEADERS);
+  await ensureSheet(sheets, SHEET_NAME, HEADERS, APP_SPREADSHEET_ID);
 
   // GET - Fetch quotations
   // All-data view requires admin; filtered view (?email=) allows providers to see their own
@@ -57,7 +57,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     if (!email && !id && !requireAdminEmail(req, res)) return;
 
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!A:P`,
     });
 
@@ -124,7 +124,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     ];
 
     await sheets.spreadsheets.values.append({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!A:P`,
       valueInputOption: 'RAW',
       requestBody: { values: [newQuotation] },
@@ -134,7 +134,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     if (requestId) {
       try {
         const reqResponse = await sheets.spreadsheets.values.get({
-          spreadsheetId: SPREADSHEET_ID,
+          spreadsheetId: APP_SPREADSHEET_ID,
           range: `'SolicitudesCotizacion'!A:M`,
         });
 
@@ -143,7 +143,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
 
         if (reqRowIndex > 0) {
           await sheets.spreadsheets.values.update({
-            spreadsheetId: SPREADSHEET_ID,
+            spreadsheetId: APP_SPREADSHEET_ID,
             range: `'SolicitudesCotizacion'!J${reqRowIndex + 1}:L${reqRowIndex + 1}`,
             valueInputOption: 'RAW',
             requestBody: { values: [['respondida', '', quotationId]] },
@@ -194,7 +194,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     const { id, status, viewedByAdmin, adminNotes } = req.body;
 
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!A:P`,
     });
 
@@ -213,7 +213,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
 
     if (status) {
       await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: APP_SPREADSHEET_ID,
         range: `'${SHEET_NAME}'!M${rowIndex + 1}`,
         valueInputOption: 'RAW',
         requestBody: { values: [[status]] },
@@ -238,7 +238,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
 
     if (viewedByAdmin !== undefined) {
       await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: APP_SPREADSHEET_ID,
         range: `'${SHEET_NAME}'!O${rowIndex + 1}`,
         valueInputOption: 'RAW',
         requestBody: { values: [[viewedByAdmin ? 'TRUE' : 'FALSE']] },
@@ -253,7 +253,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     const { id } = req.query;
 
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!A:P`,
     });
 
@@ -272,7 +272,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
 
     // Mark as sold/unavailable instead of deleting
     await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!M${rowIndex + 1}`,
       valueInputOption: 'RAW',
       requestBody: { values: [['vendido']] },

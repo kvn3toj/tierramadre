@@ -15,7 +15,7 @@ import {
   sendError,
   sendSuccess,
   requireAdminEmail,
-  SPREADSHEET_ID,
+  APP_SPREADSHEET_ID,
   SHEETS,
   ensureSheet,
   generateId,
@@ -30,7 +30,7 @@ const HEADERS = [
 ];
 
 export default withApiHandler(async (req, res, { sheets }) => {
-  await ensureSheet(sheets, SHEET_NAME, HEADERS);
+  await ensureSheet(sheets, SHEET_NAME, HEADERS, APP_SPREADSHEET_ID);
 
   // GET - Fetch requests (admin only)
   if (req.method === 'GET') {
@@ -38,7 +38,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     const { id, status, email } = req.query;
 
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!A:O`,
     });
 
@@ -123,7 +123,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     ];
 
     await sheets.spreadsheets.values.append({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!A:O`,
       valueInputOption: 'RAW',
       requestBody: { values: [newRequest] },
@@ -167,7 +167,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     const { id, status, responseId } = req.body;
 
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!A:O`,
     });
 
@@ -181,7 +181,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     // K column = Estado (status)
     if (status) {
       await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: APP_SPREADSHEET_ID,
         range: `'${SHEET_NAME}'!K${rowIndex + 1}`,
         valueInputOption: 'RAW',
         requestBody: { values: [[status]] },
@@ -191,7 +191,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     // M column = RespuestaId (responseId)
     if (responseId) {
       await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: APP_SPREADSHEET_ID,
         range: `'${SHEET_NAME}'!M${rowIndex + 1}`,
         valueInputOption: 'RAW',
         requestBody: { values: [[responseId]] },
@@ -206,7 +206,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
     const { id, reason } = req.query;
 
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!A:O`,
     });
 
@@ -223,7 +223,7 @@ export default withApiHandler(async (req, res, { sheets }) => {
 
     // K column = Estado (status)
     await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!K${rowIndex + 1}`,
       valueInputOption: 'RAW',
       requestBody: { values: [['cancelada']] },

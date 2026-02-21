@@ -15,6 +15,7 @@ import { Readable } from 'stream';
 import {
   withApiHandler,
   SPREADSHEET_ID,
+  APP_SPREADSHEET_ID,
   sendError,
   sendSuccess,
   getSheetNames,
@@ -211,7 +212,7 @@ async function ensureCotizacionesSheet(sheets) {
   try {
     // Check if sheet exists
     const spreadsheet = await sheets.spreadsheets.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
     });
 
     const sheetExists = spreadsheet.data.sheets?.some(
@@ -221,7 +222,7 @@ async function ensureCotizacionesSheet(sheets) {
     if (!sheetExists) {
       // Create the sheet
       await sheets.spreadsheets.batchUpdate({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: APP_SPREADSHEET_ID,
         requestBody: {
           requests: [{
             addSheet: {
@@ -235,7 +236,7 @@ async function ensureCotizacionesSheet(sheets) {
 
       // Add headers
       await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: APP_SPREADSHEET_ID,
         range: `${COTIZACIONES_SHEET}!A1:L1`,
         valueInputOption: 'RAW',
         requestBody: {
@@ -272,7 +273,7 @@ async function ensureCotizacionesSheet(sheets) {
 async function ensureProductsSheet(sheets) {
   try {
     const spreadsheet = await sheets.spreadsheets.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
     });
 
     const sheetExists = spreadsheet.data.sheets?.some(
@@ -281,7 +282,7 @@ async function ensureProductsSheet(sheets) {
 
     if (!sheetExists) {
       await sheets.spreadsheets.batchUpdate({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: APP_SPREADSHEET_ID,
         requestBody: {
           requests: [{
             addSheet: {
@@ -294,7 +295,7 @@ async function ensureProductsSheet(sheets) {
       });
 
       await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: APP_SPREADSHEET_ID,
         range: `${PRODUCTS_SHEET}!A1:F1`,
         valueInputOption: 'RAW',
         requestBody: {
@@ -342,7 +343,7 @@ async function saveCotizacionToSheet(sheets, data) {
   ];
 
   await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `${COTIZACIONES_SHEET}!A:L`,
     valueInputOption: 'RAW',
     insertDataOption: 'INSERT_ROWS',
@@ -373,7 +374,7 @@ async function saveCotizacionProducts(sheets, cotizacionId, products, asesorEmai
   ]);
 
   await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `${PRODUCTS_SHEET}!A:F`,
     valueInputOption: 'RAW',
     insertDataOption: 'INSERT_ROWS',
@@ -391,7 +392,7 @@ async function saveCotizacionProducts(sheets, cotizacionId, products, asesorEmai
 async function getCotizacionesByAsesor(sheets, asesorEmail) {
   try {
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `${COTIZACIONES_SHEET}!A:L`,
     });
 
@@ -435,7 +436,7 @@ async function getCotizacionesByAsesor(sheets, asesorEmail) {
 async function getProductStats(sheets) {
   try {
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `${PRODUCTS_SHEET}!A:F`,
     });
 
@@ -524,7 +525,7 @@ async function getProductStats(sheets) {
 async function getProductCotizaciones(sheets, itemNumber) {
   try {
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `${PRODUCTS_SHEET}!A:F`,
     });
 
@@ -653,7 +654,7 @@ async function getCotizacionStats(sheets) {
     const asesorNameLookup = await getAsesorNamesByEmail(sheets);
 
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `${COTIZACIONES_SHEET}!A:L`,
     });
 
@@ -776,7 +777,7 @@ async function getCotizacionStats(sheets) {
 async function deleteCotizacion(drive, sheets, cotizacionId, asesorEmail) {
   // Get all rows to find the one to delete
   const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `${COTIZACIONES_SHEET}!A:L`,
   });
 
@@ -813,7 +814,7 @@ async function deleteCotizacion(drive, sheets, cotizacionId, asesorEmail) {
 
   // Delete from Sheet (clear the row)
   await sheets.spreadsheets.values.clear({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `${COTIZACIONES_SHEET}!A${rowIndex}:L${rowIndex}`,
   });
 

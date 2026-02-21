@@ -9,11 +9,12 @@ import { SPREADSHEET_ID } from './constants.js';
 /**
  * Get all sheet names from spreadsheet
  * @param {object} sheets - Google Sheets client
+ * @param {string} [spreadsheetId] - Optional spreadsheet ID (defaults to SPREADSHEET_ID)
  * @returns {Promise<string[]>} Array of sheet names
  */
-export async function getSheetNames(sheets) {
+export async function getSheetNames(sheets, spreadsheetId = SPREADSHEET_ID) {
   const metadata = await sheets.spreadsheets.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId,
   });
 
   return metadata.data.sheets.map(s => s.properties.title);
@@ -37,17 +38,18 @@ export function findSheetByPattern(sheetNames, patterns) {
  * @param {object} sheets - Google Sheets client (with write access)
  * @param {string} sheetName - Name of sheet to ensure
  * @param {string[]} headers - Header row to add if creating
+ * @param {string} [spreadsheetId] - Optional spreadsheet ID (defaults to SPREADSHEET_ID)
  * @returns {Promise<boolean>} True if sheet was created, false if existed
  */
-export async function ensureSheet(sheets, sheetName, headers = []) {
-  const sheetNames = await getSheetNames(sheets);
+export async function ensureSheet(sheets, sheetName, headers = [], spreadsheetId = SPREADSHEET_ID) {
+  const sheetNames = await getSheetNames(sheets, spreadsheetId);
 
   if (sheetNames.includes(sheetName)) {
     return false;
   }
 
   await sheets.spreadsheets.batchUpdate({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId,
     requestBody: {
       requests: [{
         addSheet: { properties: { title: sheetName } },
@@ -58,7 +60,7 @@ export async function ensureSheet(sheets, sheetName, headers = []) {
   if (headers.length > 0) {
     const lastCol = String.fromCharCode(64 + headers.length);
     await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId,
       range: `'${sheetName}'!A1:${lastCol}1`,
       valueInputOption: 'RAW',
       requestBody: { values: [headers] },

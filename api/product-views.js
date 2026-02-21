@@ -13,7 +13,7 @@
 
 import {
   sendError,
-  SPREADSHEET_ID,
+  APP_SPREADSHEET_ID,
   SHEETS,
   CACHE,
   ensureSheet,
@@ -79,7 +79,7 @@ async function trackView(sheets, body, headers) {
   ];
 
   await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A:L`,
     valueInputOption: 'RAW',
     requestBody: { values: [row] },
@@ -93,7 +93,7 @@ async function trackView(sheets, body, headers) {
  */
 async function getStats(sheets) {
   const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A:L`,
   });
 
@@ -247,7 +247,7 @@ async function getProductViews(sheets, itemId) {
   }
 
   const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A:L`,
   });
 
@@ -422,7 +422,7 @@ async function getUserViews(sheets, email, name) {
   }
 
   const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A:L`,
   });
 
@@ -553,7 +553,7 @@ async function getUserViews(sheets, email, name) {
  */
 async function getRecentActivity(sheets, limit = 50) {
   const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A:L`,
   });
 
@@ -592,7 +592,7 @@ async function getRecentActivity(sheets, limit = 50) {
 export default withApiHandler(async (req, res, { sheets }) => {
   const action = req.query.action || req.body?.action || 'stats';
 
-  await ensureSheet(sheets, SHEET_NAME, HEADERS);
+  await ensureSheet(sheets, SHEET_NAME, HEADERS, APP_SPREADSHEET_ID);
 
   // POST - Track view
   if (req.method === 'POST' && action === 'track') {

@@ -17,7 +17,7 @@ import {
   withApiHandler,
   sendError,
   sendSuccess,
-  SPREADSHEET_ID,
+  APP_SPREADSHEET_ID,
   SHEETS,
   ensureSheet,
 } from './_lib/index.js';
@@ -38,10 +38,10 @@ async function getPreferences(sheets, userId) {
   }
 
   // Ensure sheet exists before reading
-  await ensureSheet(sheets, SHEETS.USER_PREFERENCES, USER_PREFERENCES_HEADERS);
+  await ensureSheet(sheets, SHEETS.USER_PREFERENCES, USER_PREFERENCES_HEADERS, APP_SPREADSHEET_ID);
 
   const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEETS.USER_PREFERENCES}'!A:B`,
   });
 
@@ -66,10 +66,10 @@ async function setPreferences(sheets, userId, preferences) {
   }
 
   // Ensure sheet exists before writing
-  await ensureSheet(sheets, SHEETS.USER_PREFERENCES, USER_PREFERENCES_HEADERS);
+  await ensureSheet(sheets, SHEETS.USER_PREFERENCES, USER_PREFERENCES_HEADERS, APP_SPREADSHEET_ID);
 
   const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEETS.USER_PREFERENCES}'!A:B`,
   });
 
@@ -79,14 +79,14 @@ async function setPreferences(sheets, userId, preferences) {
 
   if (rowIndex >= 0) {
     await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEETS.USER_PREFERENCES}'!A${rowIndex + 1}:B${rowIndex + 1}`,
       valueInputOption: 'RAW',
       requestBody: { values: [[userId, prefsJson]] },
     });
   } else {
     await sheets.spreadsheets.values.append({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEETS.USER_PREFERENCES}'!A:B`,
       valueInputOption: 'RAW',
       requestBody: { values: [[userId, prefsJson]] },
