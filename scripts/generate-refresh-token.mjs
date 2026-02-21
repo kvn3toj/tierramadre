@@ -15,7 +15,8 @@ dotenv.config({ path: '.env.local' });
 
 const CLIENT_ID = process.env.GOOGLE_OAUTH_CLIENT_ID?.trim();
 const CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET?.trim();
-const REDIRECT_URI = 'http://localhost:3000/oauth-callback';
+const PORT = 8765;
+const REDIRECT_URI = `http://localhost:${PORT}/callback`;
 const SCOPES = [
   'https://www.googleapis.com/auth/drive',
   'https://www.googleapis.com/auth/spreadsheets',
@@ -44,9 +45,9 @@ const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 console.log('\n🔑 Opening browser for Google OAuth consent...\n');
 
 const server = http.createServer(async (req, res) => {
-  if (!req.url.startsWith('/oauth-callback')) return;
+  if (!req.url.startsWith('/callback')) return;
 
-  const url = new URL(req.url, 'http://localhost:3000');
+  const url = new URL(req.url, `http://localhost:${PORT}`);
   const code = url.searchParams.get('code');
 
   if (!code) {
@@ -97,8 +98,8 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(3000, () => {
-  console.log('Listening on http://localhost:3000 for callback...');
+server.listen(PORT, () => {
+  console.log(`Listening on http://localhost:${PORT} for callback...`);
   console.log('Auth URL:', authUrl, '\n');
   execSync(`open "${authUrl}"`);
 });

@@ -14,7 +14,7 @@
 import {
   withApiHandler,
   sendError,
-  SPREADSHEET_ID,
+  INVITATIONS_SPREADSHEET_ID,
   SHEETS,
   INVITATION_DURATION_HOURS,
   ensureSheet,
@@ -76,7 +76,7 @@ async function verifyPin(sheets, _req, body) {
   if (!data.boundToken) {
     tokenToReturn = generateDeviceToken();
     await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: INVITATIONS_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!P${rowIndex}`,
       valueInputOption: 'RAW',
       requestBody: { values: [[tokenToReturn]] },
@@ -97,7 +97,7 @@ async function verifyPin(sheets, _req, body) {
  */
 async function ensureHeaders(sheets) {
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: INVITATIONS_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A1:P1`,
   });
 
@@ -106,7 +106,7 @@ async function ensureHeaders(sheets) {
   // If column O (index 14) is missing or not 'pin', write both headers
   if (!headerRow[14] || headerRow[14] !== 'pin') {
     await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: INVITATIONS_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!O1:P1`,
       valueInputOption: 'RAW',
       requestBody: { values: [['pin', 'boundToken']] },
@@ -119,7 +119,7 @@ async function ensureHeaders(sheets) {
  */
 async function findInvitationByCode(sheets, shortCode) {
   const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: INVITATIONS_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A:P`,
   });
 
@@ -189,7 +189,7 @@ async function generateInvitation(sheets, body) {
   ];
 
   await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: INVITATIONS_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A:P`,
     valueInputOption: 'RAW',
     requestBody: { values: [row] },
@@ -247,7 +247,7 @@ async function validateInvitation(sheets, shortCode) {
     const expiresAt = new Date(now.getTime() + data.durationHours * 60 * 60 * 1000).toISOString();
 
     await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: INVITATIONS_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!J${rowIndex}:N${rowIndex}`,
       valueInputOption: 'RAW',
       requestBody: {
@@ -300,7 +300,7 @@ async function checkGuestHistory(sheets, guestContact) {
   }
 
   const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: INVITATIONS_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A:P`,
   });
 
@@ -349,7 +349,7 @@ async function listByCreator(sheets, creatorEmail) {
   }
 
   const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: INVITATIONS_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A:P`,
   });
 
@@ -404,7 +404,7 @@ async function registerGuest(sheets, body) {
   }
 
   const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: INVITATIONS_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A:P`,
   });
 
@@ -423,7 +423,7 @@ async function registerGuest(sheets, body) {
   }
 
   await sheets.spreadsheets.values.update({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: INVITATIONS_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!F${rowIndex}:H${rowIndex}`,
     valueInputOption: 'RAW',
     requestBody: {
