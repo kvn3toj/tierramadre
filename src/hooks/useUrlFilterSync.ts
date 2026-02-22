@@ -64,7 +64,14 @@ function parseUrlFilters(): Partial<TreasureFilters> {
   if (color) filters.colorFilter = color;
 
   const categoria = params.get('categoria');
-  if (categoria) filters.categoriaFilter = categoria;
+  if (categoria) {
+    // Backward compat: ?categoria=joyas → typeFilter jewelry
+    if (categoria.toLowerCase() === 'joyas') {
+      filters.typeFilter = 'jewelry';
+    } else {
+      filters.categoriaFilter = categoria;
+    }
+  }
 
   const coleccion = params.get('coleccion');
   if (coleccion) filters.coleccionFilter = coleccion;

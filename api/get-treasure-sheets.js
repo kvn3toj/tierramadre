@@ -84,6 +84,11 @@ const INVENTARIO_HEADERS = {
   ESTADO_ASESOR: 'estado asesor',    // Column U (index 20)
 };
 
+// Jewelry subcategory values from Column K (synced with CATEGORY_SUBCATEGORIES.joyas in gallery-constants.ts)
+const JEWELRY_CATEGORIES = new Set([
+  'anillo en plata', 'aretes', 'topitos', 'pulsera', 'dije', 'anillo en oro'
+]);
+
 /**
  * Map row data to treasure item using exact header matching
  */
@@ -113,7 +118,7 @@ function mapRowToTreasureItem(row, headers) {
   const peso = getValue(INVENTARIO_HEADERS.PESO) || getByIndex(3);
   const pesoData = parsePeso(peso);
 
-  return {
+  const item = {
     item: parseInt(getValue(INVENTARIO_HEADERS.ITEM) || getByIndex(0) || 0),
     fechaIngreso: getValue(INVENTARIO_HEADERS.FECHA_INGRESO) || getByIndex(1) || '',
     nombre: getValue(INVENTARIO_HEADERS.NOMBRE) || getByIndex(2) || '',
@@ -138,6 +143,13 @@ function mapRowToTreasureItem(row, headers) {
     isJewelry: pesoData.isJewelry,
     metalType: pesoData.metalType,
   };
+
+  // Also flag as jewelry if categoria matches a known jewelry subcategory (e.g. items with numeric peso)
+  if (!item.isJewelry && item.categoria && JEWELRY_CATEGORIES.has(item.categoria.toLowerCase().trim())) {
+    item.isJewelry = true;
+  }
+
+  return item;
 }
 
 /**

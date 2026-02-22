@@ -140,13 +140,16 @@ export function useTreasure() {
     return treasure.map((item, index) => {
       const prevItem = prevTreasure[index];
 
-      // Only reuse previous object if item number matches AND URLs are identical
+      // Only reuse previous object if item number matches AND key fields are identical
       if (
         prevItem?.item === item.item &&
         prevItem.imagen === item.imagen &&
         prevItem.thumbnailUrl === item.thumbnailUrl &&
         prevItem.mediaType === item.mediaType &&
-        prevItem.galleryCount === item.galleryCount
+        prevItem.galleryCount === item.galleryCount &&
+        prevItem.precioCOP === item.precioCOP &&
+        prevItem.isJewelry === item.isJewelry &&
+        prevItem.estado === item.estado
       ) {
         // URLs unchanged - reuse previous object reference
         // This prevents GridCard re-render due to memo comparison

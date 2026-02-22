@@ -45,7 +45,7 @@ const CATEGORY_ROUTES: Record<MainCategory, string> = {
   piedras: '/treasure?type=loose',
   gemas: '/treasure?type=loose&cantidad=1',
   lotes: '/treasure?type=loose&cantidad=2%2B',
-  joyas: '/treasure?categoria=joyas',
+  joyas: '/treasure?type=jewelry',
 };
 
 // =============================================================================
