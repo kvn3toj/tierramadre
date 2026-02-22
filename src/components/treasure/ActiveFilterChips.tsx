@@ -12,6 +12,7 @@ import { TreasureFilters } from '../../hooks/useTreasureFiltering';
 import { formatCurrency, getColorDot } from '../../utils/formatting';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { emeraldCore, goldAccent, semanticColors } from '../../design-system/tokens/colors';
+import { HERO_CATEGORY_LABELS, MainCategory } from '../home/sections/gallery-constants';
 
 export interface ActiveFilterChipsProps {
   filters: TreasureFilters;
@@ -25,6 +26,7 @@ export interface ActiveFilterChipsProps {
   onClearCantidad: () => void;
   onClearCategoria?: () => void;
   onClearColeccion?: () => void;
+  onClearHeroCategory?: () => void;
   onClearPrice: () => void;
   /** Compact mode for mobile - smaller chips */
   compact?: boolean;
@@ -54,6 +56,7 @@ export function ActiveFilterChips({
   onClearCantidad,
   onClearCategoria,
   onClearColeccion,
+  onClearHeroCategory,
   onClearPrice,
   compact = false,
 }: ActiveFilterChipsProps) {
@@ -73,6 +76,21 @@ export function ActiveFilterChips({
       onDelete: onClearSearch,
       colors: {
         bg: alpha(emeraldCore.primary, 0.1),
+        text: emeraldCore.dark,
+        delete: emeraldCore.dark,
+      },
+    });
+  }
+
+  // Hero category (from home page tabs)
+  if (filters.heroCategoryFilter !== 'all' && onClearHeroCategory) {
+    const label = HERO_CATEGORY_LABELS[filters.heroCategoryFilter as MainCategory] || filters.heroCategoryFilter;
+    chips.push({
+      key: 'heroCategory',
+      label: compact ? label : `Categoría: ${label}`,
+      onDelete: onClearHeroCategory,
+      colors: {
+        bg: alpha(emeraldCore.primary, 0.15),
         text: emeraldCore.dark,
         delete: emeraldCore.dark,
       },

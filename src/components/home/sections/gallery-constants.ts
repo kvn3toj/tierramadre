@@ -46,3 +46,11 @@ export const CATEGORY_SUBCATEGORIES: Record<MainCategory, string[]> = {
   gemas: [],    // TBD
   lotes: [],    // TBD
 };
+
+/** Display labels for hero category filter chips */
+export const HERO_CATEGORY_LABELS: Record<MainCategory, string> = {
+  piedras: 'Piedras',
+  gemas: 'Gemas',
+  lotes: 'Lotes',
+  joyas: 'Joyas',
+};

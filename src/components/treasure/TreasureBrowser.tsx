@@ -76,7 +76,7 @@ export default function TreasureBrowser({
 
   // URL sync hook - provides initial filters from URL
   const { initialFilters } = useUrlFilterSync({
-    filters: { search: '', colorFilter: 'all', qualityFilter: 'all', typeFilter: 'all', statusFilter: 'available', shapeFilter: 'all', priceRange: [0, Number.MAX_SAFE_INTEGER], sortBy: 'newest', categoriaFilter: 'all', cantidadFilter: 'all', cityFilter: 'all', coleccionFilter: 'all', itemsFilter: [] },
+    filters: { search: '', colorFilter: 'all', qualityFilter: 'all', typeFilter: 'all', statusFilter: 'available', shapeFilter: 'all', priceRange: [0, Number.MAX_SAFE_INTEGER], sortBy: 'newest', categoriaFilter: 'all', cantidadFilter: 'all', cityFilter: 'all', coleccionFilter: 'all', heroCategoryFilter: 'all', itemsFilter: [] },
     priceMinMax: { min: 0, max: 100000000 },
     clearFilters: () => {},
   });
@@ -100,6 +100,7 @@ export default function TreasureBrowser({
     setCantidadFilter,
     setCategoriaFilter,
     setColeccionFilter,
+    setHeroCategoryFilter,
     clearFilters,
     hasFilters,
     sortedTreasure: filteredTreasure,
@@ -408,6 +409,7 @@ export default function TreasureBrowser({
             onClearCantidad={() => setCantidadFilter('all')}
             onClearCategoria={() => setCategoriaFilter('all')}
             onClearColeccion={() => setColeccionFilter('all')}
+            onClearHeroCategory={() => setHeroCategoryFilter('all')}
             onClearPrice={() => setPriceRange([priceMinMax.min, priceMinMax.max])}
           />
         </Box>

@@ -52,6 +52,7 @@ export function useFilterTracking({
     if (filters.shapeFilter !== 'all') count++;
     if (filters.cantidadFilter !== 'all') count++;
     if (filters.coleccionFilter !== 'all') count++;
+    if (filters.heroCategoryFilter !== 'all') count++;
     if (filters.priceRange[0] !== priceMinMax.min || filters.priceRange[1] !== priceMinMax.max) {
       count++;
     }

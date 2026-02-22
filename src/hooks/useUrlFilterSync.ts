@@ -5,7 +5,7 @@
  * Extracted from TreasureBrowser for reusability and clarity.
  */
 import { useMemo, useEffect, useRef, useCallback } from 'react';
-import { TreasureFilters, TypeFilter, StatusFilter, SortOption, CityFilter } from './useTreasureFiltering';
+import { TreasureFilters, TypeFilter, StatusFilter, SortOption, CityFilter, HeroCategoryFilter } from './useTreasureFiltering';
 
 export interface UseUrlFilterSyncOptions {
   filters: TreasureFilters;
@@ -31,8 +31,22 @@ function parseUrlFilters(): Partial<TreasureFilters> {
   const search = params.get('search');
   if (search) filters.search = search;
 
+  // Hero category filter (new canonical param from hero tabs)
+  const heroCategory = params.get('heroCategory');
+  const validHeroCategories: HeroCategoryFilter[] = ['piedras', 'gemas', 'lotes', 'joyas'];
+  if (heroCategory && validHeroCategories.includes(heroCategory as HeroCategoryFilter)) {
+    filters.heroCategoryFilter = heroCategory as HeroCategoryFilter;
+  }
+
   const type = params.get('type');
-  if (type === 'loose' || type === 'jewelry') filters.typeFilter = type as TypeFilter;
+  if (type === 'loose' || type === 'jewelry') {
+    // Backward compat: ?type=jewelry → heroCategoryFilter 'joyas'
+    if (type === 'jewelry' && !heroCategory) {
+      filters.heroCategoryFilter = 'joyas';
+    } else {
+      filters.typeFilter = type as TypeFilter;
+    }
+  }
 
   const quality = params.get('quality');
   if (quality) filters.qualityFilter = quality;
@@ -65,9 +79,9 @@ function parseUrlFilters(): Partial<TreasureFilters> {
 
   const categoria = params.get('categoria');
   if (categoria) {
-    // Backward compat: ?categoria=joyas → typeFilter jewelry
-    if (categoria.toLowerCase() === 'joyas') {
-      filters.typeFilter = 'jewelry';
+    // Backward compat: ?categoria=joyas → heroCategoryFilter 'joyas'
+    if (categoria.toLowerCase() === 'joyas' && !heroCategory) {
+      filters.heroCategoryFilter = 'joyas';
     } else {
       filters.categoriaFilter = categoria;
     }
@@ -126,6 +140,7 @@ export function useUrlFilterSync({
 
     // Only add non-default values to URL
     if (filters.search) params.set('search', filters.search);
+    if (filters.heroCategoryFilter !== 'all') params.set('heroCategory', filters.heroCategoryFilter);
     if (filters.typeFilter !== 'all') params.set('type', filters.typeFilter);
     if (filters.statusFilter !== 'available' && filters.statusFilter !== 'all') {
       params.set('status', filters.statusFilter);

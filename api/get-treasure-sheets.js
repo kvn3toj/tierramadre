@@ -129,7 +129,7 @@ function mapRowToTreasureItem(row, headers) {
     talla: getValue(INVENTARIO_HEADERS.TALLA) || getByIndex(7) || '',
     medidas: getValue(INVENTARIO_HEADERS.MEDIDAS) || getByIndex(8) || '',
     medidasValores: getByIndex(9) || '',
-    categoria: getValue(INVENTARIO_HEADERS.CATEGORIA) || getByIndex(10) || '',
+    categoria: (getValue(INVENTARIO_HEADERS.CATEGORIA) || getByIndex(10) || '').trim(),
     precioCOP: parsePrice(getValue(INVENTARIO_HEADERS.PRECIO_COP) || getByIndex(11)),
     precioInternacional: 0,
     ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || getByIndex(12) || '',
