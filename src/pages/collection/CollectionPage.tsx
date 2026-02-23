@@ -18,7 +18,7 @@ import {
   alpha,
   useTheme,
 } from '@mui/material';
-import { Gem, MessageCircle, Play, ShieldCheck } from 'lucide-react';
+import { Gem, MessageCircle, Play, ShieldCheck, Clock } from 'lucide-react';
 import { useAsesorCollection } from '../../hooks/useAsesorCollection';
 import { CollectionProductDialog } from '../ambassadors/profile/components/CollectionProductDialog';
 import CollectionSplashScreen from '../../components/shared/CollectionSplashScreen';
@@ -222,11 +222,19 @@ function ProductCard({
             {accentuate(item.nombre)}
           </Typography>
           {item.certificateUrl ? (
-            <ShieldCheck size={14} color={brand.emerald[500]} style={{ flexShrink: 0 }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexShrink: 0 }}>
+              <ShieldCheck size={12} color={brand.emerald[500]} />
+              <Typography sx={{ fontSize: '0.55rem', color: brand.emerald[600], fontWeight: 600, lineHeight: 1 }}>
+                Certified
+              </Typography>
+            </Box>
           ) : (
-            <Typography sx={{ flexShrink: 0, fontSize: '0.55rem', color: 'text.secondary', fontWeight: 500, lineHeight: 1 }}>
-              Being issued
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexShrink: 0 }}>
+              <Clock size={11} color="#D4A017" />
+              <Typography sx={{ fontSize: '0.55rem', color: '#B8941F', fontWeight: 500, lineHeight: 1 }}>
+                Being issued
+              </Typography>
+            </Box>
           )}
         </Box>
         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 0.5 }}>
