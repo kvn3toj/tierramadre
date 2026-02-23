@@ -54,6 +54,7 @@ docs/brand/
 *.mp4
 !public/images/CEO/**/*.mp4
 *.mov
+!public/images/CEO/**/*.mov
 *.avi
 *.mkv
 *.zip

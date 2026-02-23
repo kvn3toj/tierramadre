@@ -90,7 +90,7 @@ export function useTreasure() {
   } = useTreasureMedia();
 
   // Batch thumbnails from Google Drive folders
-  const { thumbnails: batchThumbnails } = useBatchThumbnails();
+  const { thumbnails: batchThumbnails, isLoading: isLoadingThumbnails } = useBatchThumbnails();
 
   // Merge treasure data with media (memoized for performance)
   const treasure = useMemo((): TreasureItem[] => {
@@ -185,7 +185,8 @@ export function useTreasure() {
     updateMediaItems,
     getMediaItems,
 
-    // Google Sheets integration
+    // Loading states
+    isLoadingThumbnails,
     isLoadingSheets,
     sheetsError,
     refreshFromSheets,

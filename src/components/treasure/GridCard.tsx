@@ -16,6 +16,7 @@ import {
   CardContent,
   Chip,
   IconButton,
+  Skeleton,
   alpha,
 } from '@mui/material';
 import {
@@ -48,6 +49,8 @@ interface GridCardProps {
   onToggleComparison?: () => void;
   canAddToComparison?: boolean;
   isMobile?: boolean;
+  /** Whether batch thumbnails are still loading from the API */
+  isLoadingThumbnails?: boolean;
   /** View count for this product (optional) */
   viewCount?: number;
   /** Whether the current user is an admin (required to see view counts) */
@@ -58,6 +61,7 @@ function GridCard({
   item,
   onItemClick,
   isMobile = false,
+  isLoadingThumbnails = false,
   viewCount,
   isAdmin,
   isSelectedForComparison = false,
@@ -253,7 +257,13 @@ function GridCard({
               </IconButton>
             )}
           </>
+        ) : isLoadingThumbnails ? (
+          /* Skeleton while thumbnails are loading from API */
+          <Box sx={{ aspectRatio: '1 / 1', width: '100%' }}>
+            <Skeleton variant="rectangular" animation="wave" width="100%" height="100%" />
+          </Box>
         ) : (
+          /* Watermark placeholder - thumbnails loaded but no image for this product */
           <ProgressiveImage
             src={undefined}
             alt={`${item.nombre} - placeholder`}
@@ -348,6 +358,7 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.item.estado === nextProps.item.estado &&
     prevProps.isFavorite === nextProps.isFavorite &&
     prevProps.isMobile === nextProps.isMobile &&
+    prevProps.isLoadingThumbnails === nextProps.isLoadingThumbnails &&
     prevProps.viewCount === nextProps.viewCount &&
     prevProps.isAdmin === nextProps.isAdmin &&
     prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&

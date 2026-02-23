@@ -97,4 +97,4 @@ export default withApiHandler(async (req, res, { drive, sharedDriveId }) => {
     count,
     lastUpdated: new Date().toISOString(),
   });
-}, { methods: ['GET', 'OPTIONS'], cache: CACHE.SHORT, provideDrive: true, requireDriveId: true, errorPrefix: 'GetBatchThumbnails' });
+}, { methods: ['GET', 'OPTIONS'], cache: CACHE.MEDIUM, provideDrive: true, requireDriveId: true, errorPrefix: 'GetBatchThumbnails' });

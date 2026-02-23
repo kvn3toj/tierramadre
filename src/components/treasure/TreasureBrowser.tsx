@@ -72,7 +72,7 @@ export default function TreasureBrowser({
   const [_searchParams] = useSearchParams();
 
   // Get treasure data from hook
-  const { treasure: allTreasure } = useTreasure();
+  const { treasure: allTreasure, isLoadingThumbnails } = useTreasure();
 
   // URL sync hook - provides initial filters from URL
   const { initialFilters } = useUrlFilterSync({
@@ -493,6 +493,7 @@ export default function TreasureBrowser({
               isMobile={props.isMobile}
               viewCount={getViewCount(props.item.item)}
               isAdmin={isAdmin}
+              isLoadingThumbnails={isLoadingThumbnails}
               isSelectedForComparison={comparison.isSelected(props.item.item)}
               onToggleComparison={() => comparison.toggleComparison(props.item)}
               canAddToComparison={comparison.canAddMore}
