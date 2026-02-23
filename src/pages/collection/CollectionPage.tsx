@@ -172,10 +172,10 @@ function ProductCard({
       {/* Media — lightweight thumbnail; video plays only in dialog */}
       <Box sx={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', bgcolor: '#000' }}>
         {isVideo ? (
-          // Use a video element with preload="none" to avoid buffering the full file
+          // Use a video element with preload="metadata" to show first frame without buffering full file
           <video
             src={`${item.videoUrl || posterSrc}#t=0.001`}
-            preload="none"
+            preload="metadata"
             muted
             playsInline
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none' }}
