@@ -119,6 +119,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
       }}
     >
       <DialogContent
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         sx={{ p: 0, position: 'relative', ...(isMobile && { overflowY: 'auto' }) }}
       >
         <IconButton
@@ -140,8 +142,6 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
           <>
             {/* Media Carousel */}
             <Box
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
               sx={{ position: 'relative', overflow: 'hidden' }}
             >
               <Box
