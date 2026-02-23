@@ -36,6 +36,20 @@ const BLOCKED_SLUGS = new Set(['ceo-coomunity']);
 // Static CEO exclusive products (local video files, no API needed)
 const CEO_STATIC_PRODUCTS: TreasureItem[] = [
   {
+    item: 916, nombre: 'Emerald Whisper', peso: 1.26, color: 'Intense Green' as TreasureItem['color'],
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    precioCOP: 0, precioInternacional: 23000, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
+    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
+    videoUrl: '/images/CEO/916/6) 1.26 Cts.mov', imagen: '/images/CEO/916/6) 1.26 Cts.mov',
+  },
+  {
+    item: 917, nombre: 'Verdant Crown', peso: 2.20, color: 'Intense Green' as TreasureItem['color'],
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    precioCOP: 0, precioInternacional: 28257, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
+    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
+    videoUrl: '/images/CEO/917/7) 2.20 Cts.mp4', imagen: '/images/CEO/917/7) 2.20 Cts.mp4',
+  },
+  {
     item: 911, nombre: 'Song of the River', peso: 1.825, color: 'Intense Green' as TreasureItem['color'],
     calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
     precioCOP: 0, precioInternacional: 22857, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
@@ -69,20 +83,6 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     precioCOP: 0, precioInternacional: 12000, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/915/5-3.54Cts.mp4', imagen: '/images/CEO/915/5-3.54Cts.mp4',
-  },
-  {
-    item: 916, nombre: 'Emerald Whisper', peso: 1.26, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
-    precioCOP: 0, precioInternacional: 23000, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
-    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
-    videoUrl: '/images/CEO/916/6) 1.26 Cts.mov', imagen: '/images/CEO/916/6) 1.26 Cts.mov',
-  },
-  {
-    item: 917, nombre: 'Verdant Crown', peso: 2.20, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
-    precioCOP: 0, precioInternacional: 28257, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
-    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
-    videoUrl: '/images/CEO/917/7) 2.20 Cts.mp4', imagen: '/images/CEO/917/7) 2.20 Cts.mp4',
   },
 ];
 
