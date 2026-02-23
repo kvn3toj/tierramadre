@@ -2,6 +2,7 @@
  * CollectionProductDialog Component
  * Fullscreen dialog showing detail for an exclusive collection product.
  * These items are NOT in the main inventory, so we display them in-place.
+ * Supports a media carousel: video/image + certificate when available.
  */
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -15,7 +16,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { X } from 'lucide-react';
+import { X, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { TreasureItem } from '../../../../types';
 import { brand, lightTokens, darkTokens, legacyTypography as typography } from '../../../../design-system';
 import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
@@ -55,33 +56,48 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoLoading, setVideoLoading] = useState(true);
+  const [activeSlide, setActiveSlide] = useState(0);
 
-  // Reset loading state when product changes
+  const hasCertificate = !!product?.certificateUrl;
+  const isPdf = product?.certificateUrl?.endsWith('.pdf');
+  const slideCount = hasCertificate ? 2 : 1;
+
+  // Reset state when product changes
   useEffect(() => {
     if (product?.mediaType === 'video') setVideoLoading(true);
+    setActiveSlide(0);
   }, [product]);
 
-  // Swipe right to close gesture
+  // Carousel swipe handling
   const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
   }, []);
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-    if (deltaX > 100) onClose();
-  }, [onClose]);
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    // Only handle horizontal swipes (ignore vertical scroll)
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+      if (deltaX < 0 && activeSlide < slideCount - 1) {
+        setActiveSlide((s) => s + 1);
+      } else if (deltaX > 0 && activeSlide > 0) {
+        setActiveSlide((s) => s - 1);
+      }
+    }
+  }, [activeSlide, slideCount]);
 
   // Force video to play immediately when dialog opens
   useEffect(() => {
-    if (product && product.mediaType === 'video' && videoRef.current) {
+    if (product && product.mediaType === 'video' && videoRef.current && activeSlide === 0) {
       const video = videoRef.current;
-      // Reset and play
       video.currentTime = 0;
       video.play().catch((err) => {
         console.warn('Video autoplay failed:', err);
       });
     }
-  }, [product]);
+  }, [product, activeSlide]);
 
   return (
     <Dialog
@@ -98,8 +114,6 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
       }}
     >
       <DialogContent
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
         sx={{ p: 0, position: 'relative', ...(isMobile && { overflowY: 'auto' }) }}
       >
         <IconButton
@@ -108,7 +122,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
             position: 'absolute',
             top: isMobile ? 'max(env(safe-area-inset-top, 8px), 8px)' : 8,
             right: 8,
-            zIndex: 1,
+            zIndex: 2,
             bgcolor: 'rgba(0,0,0,0.5)',
             color: '#fff',
             '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
@@ -119,67 +133,250 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
 
         {product && (
           <>
-            {/* Product Media (Video or Image) */}
-            {product.imagen && (
-              product.mediaType === 'video' ? (
-                <Box sx={{ width: '100%', aspectRatio: '1/1', bgcolor: '#000', position: 'relative' }}>
-                  {videoLoading && (
-                    <Box
+            {/* Media Carousel */}
+            <Box
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              sx={{ position: 'relative', overflow: 'hidden' }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  transition: 'transform 0.3s ease',
+                  transform: `translateX(-${activeSlide * 100}%)`,
+                }}
+              >
+                {/* Slide 1: Video or Image */}
+                <Box sx={{ minWidth: '100%', aspectRatio: '1/1', position: 'relative' }}>
+                  {product.imagen && (
+                    product.mediaType === 'video' ? (
+                      <Box sx={{ width: '100%', height: '100%', bgcolor: '#000', position: 'relative' }}>
+                        {videoLoading && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              inset: 0,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              zIndex: 1,
+                              gap: 1.5,
+                            }}
+                          >
+                            <CircularProgress size={40} sx={{ color: brand.emerald[400] }} />
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                              Loading video...
+                            </Typography>
+                          </Box>
+                        )}
+                        <video
+                          ref={videoRef}
+                          key={product.item}
+                          src={product.videoUrl || getVideoUrl(product.imagen)}
+                          poster={product.posterUrl}
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          preload="auto"
+                          webkit-playsinline="true"
+                          onLoadedData={(e) => {
+                            setVideoLoading(false);
+                            const video = e.target as HTMLVideoElement;
+                            video.play().catch(() => {});
+                          }}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                            display: 'block',
+                          }}
+                        />
+                      </Box>
+                    ) : (
+                      <Box
+                        component="img"
+                        src={product.imagen}
+                        alt={product.nombre}
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block',
+                        }}
+                      />
+                    )
+                  )}
+                </Box>
+
+                {/* Slide 2: Certificate */}
+                {hasCertificate && (
+                  <Box
+                    sx={{
+                      minWidth: '100%',
+                      aspectRatio: '1/1',
+                      bgcolor: isLight ? '#f5f5f5' : '#1a1a1a',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      position: 'relative',
+                    }}
+                  >
+                    {isPdf ? (
+                      // PDF: show a branded card that opens the PDF
+                      <Box
+                        component="a"
+                        href={product.certificateUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: 2,
+                          textDecoration: 'none',
+                          p: 4,
+                        }}
+                      >
+                        <ShieldCheck size={56} color={brand.emerald[500]} />
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary', textAlign: 'center' }}>
+                          Authenticity Certificate
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
+                          Tap to open certificate PDF
+                        </Typography>
+                        <Box
+                          sx={{
+                            mt: 1,
+                            px: 3,
+                            py: 1,
+                            borderRadius: 2,
+                            bgcolor: brand.emerald[500],
+                            color: '#fff',
+                            fontWeight: 600,
+                            fontSize: '0.875rem',
+                          }}
+                        >
+                          View PDF
+                        </Box>
+                      </Box>
+                    ) : (
+                      // Image certificate: display inline
+                      <Box
+                        component="img"
+                        src={product.certificateUrl}
+                        alt="Certificate"
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          display: 'block',
+                        }}
+                      />
+                    )}
+                  </Box>
+                )}
+              </Box>
+
+              {/* Carousel Navigation Arrows (desktop) */}
+              {slideCount > 1 && !isMobile && (
+                <>
+                  {activeSlide > 0 && (
+                    <IconButton
+                      onClick={() => setActiveSlide((s) => s - 1)}
                       sx={{
                         position: 'absolute',
-                        inset: 0,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        left: 8,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        bgcolor: 'rgba(0,0,0,0.5)',
+                        color: '#fff',
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
                         zIndex: 1,
-                        gap: 1.5,
                       }}
                     >
-                      <CircularProgress size={40} sx={{ color: brand.emerald[400] }} />
-                      <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                        Loading video...
-                      </Typography>
-                    </Box>
+                      <ChevronLeft size={20} />
+                    </IconButton>
                   )}
-                  <video
-                    ref={videoRef}
-                    key={product.item}
-                    src={product.videoUrl || getVideoUrl(product.imagen)}
-                    poster={product.posterUrl}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="auto"
-                    webkit-playsinline="true"
-                    onLoadedData={(e) => {
-                      setVideoLoading(false);
-                      const video = e.target as HTMLVideoElement;
-                      video.play().catch(() => {});
-                    }}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      display: 'block',
-                    }}
-                  />
-                </Box>
-              ) : (
+                  {activeSlide < slideCount - 1 && (
+                    <IconButton
+                      onClick={() => setActiveSlide((s) => s + 1)}
+                      sx={{
+                        position: 'absolute',
+                        right: 8,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        bgcolor: 'rgba(0,0,0,0.5)',
+                        color: '#fff',
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                        zIndex: 1,
+                      }}
+                    >
+                      <ChevronRight size={20} />
+                    </IconButton>
+                  )}
+                </>
+              )}
+
+              {/* Dot indicators */}
+              {slideCount > 1 && (
                 <Box
-                  component="img"
-                  src={product.imagen}
-                  alt={product.nombre}
                   sx={{
-                    width: '100%',
-                    aspectRatio: '1/1',
-                    objectFit: 'cover',
-                    display: 'block',
+                    position: 'absolute',
+                    bottom: 12,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    display: 'flex',
+                    gap: 0.8,
+                    zIndex: 1,
                   }}
-                />
-              )
-            )}
+                >
+                  {Array.from({ length: slideCount }).map((_, i) => (
+                    <Box
+                      key={i}
+                      onClick={() => setActiveSlide(i)}
+                      sx={{
+                        width: activeSlide === i ? 18 : 8,
+                        height: 8,
+                        borderRadius: 4,
+                        bgcolor: activeSlide === i ? brand.emerald[400] : 'rgba(255,255,255,0.5)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                    />
+                  ))}
+                </Box>
+              )}
+
+              {/* Certificate badge on video slide */}
+              {hasCertificate && activeSlide === 0 && (
+                <Box
+                  onClick={() => setActiveSlide(1)}
+                  sx={{
+                    position: 'absolute',
+                    bottom: slideCount > 1 ? 32 : 12,
+                    right: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    bgcolor: 'rgba(0,0,0,0.6)',
+                    backdropFilter: 'blur(4px)',
+                    borderRadius: 1.5,
+                    px: 1,
+                    py: 0.5,
+                    cursor: 'pointer',
+                    zIndex: 1,
+                  }}
+                >
+                  <ShieldCheck size={14} color={brand.emerald[400]} />
+                  <Typography sx={{ color: '#fff', fontSize: '0.7rem', fontWeight: 600 }}>
+                    Certificate
+                  </Typography>
+                </Box>
+              )}
+            </Box>
 
             {/* Product Info */}
             <Box sx={{ p: { xs: 2.5, sm: 3 } }}>

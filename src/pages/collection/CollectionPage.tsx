@@ -18,7 +18,7 @@ import {
   alpha,
   useTheme,
 } from '@mui/material';
-import { Gem, MessageCircle, Play } from 'lucide-react';
+import { Gem, MessageCircle, Play, ShieldCheck } from 'lucide-react';
 import { useAsesorCollection } from '../../hooks/useAsesorCollection';
 import { CollectionProductDialog } from '../ambassadors/profile/components/CollectionProductDialog';
 import CollectionSplashScreen from '../../components/shared/CollectionSplashScreen';
@@ -41,6 +41,7 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     precioCOP: 0, precioInternacional: 23000, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/916/6) 1.26 Cts.mov', imagen: '/images/CEO/916/6) 1.26 Cts.mov',
+    certificateUrl: '/images/CEO/916/6) Certificate 1.26 Cts.pdf',
   },
   {
     item: 917, nombre: 'Verdant Crown', peso: 2.20, color: 'Intense Green' as TreasureItem['color'],
@@ -48,6 +49,7 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     precioCOP: 0, precioInternacional: 28257, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/917/7) 2.20 Cts.mp4', imagen: '/images/CEO/917/7) 2.20 Cts.mp4',
+    certificateUrl: '/images/CEO/917/7) Certificate 2.20 Cts.pdf',
   },
   {
     item: 911, nombre: 'Song of the River', peso: 1.825, color: 'Intense Green' as TreasureItem['color'],
@@ -69,6 +71,7 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     precioCOP: 0, precioInternacional: 30857, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/913/3-1.04Cts.mp4', imagen: '/images/CEO/913/3-1.04Cts.mp4',
+    certificateUrl: '/images/CEO/913/3) Certificate 1.04.pdf',
   },
   {
     item: 914, nombre: 'Light Echo', peso: 0.67, color: 'Intense Green' as TreasureItem['color'],
@@ -76,6 +79,7 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     precioCOP: 0, precioInternacional: 15429, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/914/4-0.67-Cts.mp4', imagen: '/images/CEO/914/4-0.67-Cts.mp4',
+    certificateUrl: '/images/CEO/914/4) Certificate 0.67 Cts.jpg',
   },
   {
     item: 915, nombre: 'Kingdom of Peace', peso: 3.56, color: 'Intense Green' as TreasureItem['color'],
@@ -196,6 +200,28 @@ function ProductCard({
             }}
           >
             <Play size={16} color="#fff" fill="#fff" />
+          </Box>
+        )}
+        {item.certificateUrl && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 6,
+              left: 6,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.4,
+              bgcolor: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(4px)',
+              borderRadius: 1,
+              px: 0.7,
+              py: 0.3,
+            }}
+          >
+            <ShieldCheck size={12} color={brand.emerald[400]} />
+            <Typography sx={{ color: '#fff', fontSize: '0.6rem', fontWeight: 600, lineHeight: 1 }}>
+              Certified
+            </Typography>
           </Box>
         )}
       </Box>

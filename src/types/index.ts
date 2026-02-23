@@ -287,5 +287,8 @@ export interface TreasureItem {
   // Location and exclusivity fields
   city?: 'Cali' | 'Bogotá';         // City location for filtering
   isVaultExclusive?: boolean;        // True if item is part of Secret Vault collection
+
+  // Certificate
+  certificateUrl?: string;           // URL to certificate image/PDF
 }
 

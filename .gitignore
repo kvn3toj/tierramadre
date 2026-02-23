@@ -32,6 +32,7 @@ npm-debug.log*
 
 # Reference files (not source code)
 *.pdf
+!public/images/CEO/**/*.pdf
 *.webarchive
 Home.html
 Instagram.html
