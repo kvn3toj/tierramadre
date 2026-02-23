@@ -399,8 +399,6 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                 {product.talla && (
                   <SpecItem label="Cut" value={product.talla} isLight={isLight} />
                 )}
-                <SpecItem label="Color" value={showUSD ? '-' : (product.color || '-')} isLight={isLight} />
-                <SpecItem label="Quality" value={showUSD ? '-' : (product.calidad || '-')} isLight={isLight} />
                 {product.medidas && (
                   <SpecItem label="Dimensions" value={product.medidas} isLight={isLight} />
                 )}
