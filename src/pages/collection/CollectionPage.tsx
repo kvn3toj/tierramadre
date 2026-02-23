@@ -169,9 +169,18 @@ function ProductCard({
         },
       }}
     >
-      {/* Media — poster image only, video plays in dialog on click */}
-      <Box sx={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', bgcolor: '#f0f0f0' }}>
-        {posterSrc ? (
+      {/* Media — lightweight thumbnail; video plays only in dialog */}
+      <Box sx={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', bgcolor: '#000' }}>
+        {isVideo ? (
+          // Use a video element with preload="none" to avoid buffering the full file
+          <video
+            src={`${item.videoUrl || posterSrc}#t=0.001`}
+            preload="none"
+            muted
+            playsInline
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none' }}
+          />
+        ) : posterSrc ? (
           <Box
             component="img"
             src={posterSrc}
