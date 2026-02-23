@@ -38,7 +38,7 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
   // --- Certified products first ---
   {
     item: 916, nombre: 'Emerald Whisper', peso: 1.26, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Emerald', medidas: '',
     precioCOP: 0, precioInternacional: 23000, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/916/6) 1.26 Cts.mov', imagen: '/images/CEO/916/6) 1.26 Cts.mov',
@@ -46,7 +46,7 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
   },
   {
     item: 917, nombre: 'Verdant Crown', peso: 2.20, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Cushion', medidas: '',
     precioCOP: 0, precioInternacional: 28257, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/917/7) 2.20 Cts.mp4', imagen: '/images/CEO/917/7) 2.20 Cts.mp4',
@@ -54,7 +54,7 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
   },
   {
     item: 913, nombre: 'Forest Hug', peso: 1.04, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Heart', medidas: '',
     precioCOP: 0, precioInternacional: 30857, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/913/3-1.04Cts.mp4', imagen: '/images/CEO/913/3-1.04Cts.mp4',
@@ -62,7 +62,7 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
   },
   {
     item: 914, nombre: 'Light Echo', peso: 0.67, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Emerald', medidas: '',
     precioCOP: 0, precioInternacional: 15429, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/914/4-0.67-Cts.mp4', imagen: '/images/CEO/914/4-0.67-Cts.mp4',
@@ -71,21 +71,21 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
   // --- Being issued ---
   {
     item: 911, nombre: 'Song of the River', peso: 1.825, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Emerald', medidas: '',
     precioCOP: 0, precioInternacional: 22857, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/911/1-1.825Cts.mp4', imagen: '/images/CEO/911/1-1.825Cts.mp4',
   },
   {
     item: 912, nombre: 'Soul of the Mountain', peso: 1.93, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Emerald', medidas: '',
     precioCOP: 0, precioInternacional: 36914, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/912/2-1.93Cts.mp4', imagen: '/images/CEO/912/2-1.93Cts.mp4',
   },
   {
     item: 915, nombre: 'Kingdom of Peace', peso: 3.56, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Cushion', medidas: '',
     precioCOP: 0, precioInternacional: 12000, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/915/5-3.54Cts.mp4', imagen: '/images/CEO/915/5-3.54Cts.mp4',
@@ -254,9 +254,16 @@ function ProductCard({
               {item.peso} ct
             </Typography>
           )}
-          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
-            -
-          </Typography>
+          {item.talla && (
+            <>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
+                ·
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
+                {item.talla}
+              </Typography>
+            </>
+          )}
         </Box>
         {(item.precioInternacional || item.precioCOP) && (
           <Typography
