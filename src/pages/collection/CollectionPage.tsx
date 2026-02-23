@@ -41,7 +41,7 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     precioCOP: 0, precioInternacional: 23000, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/916/6) 1.26 Cts.mov', imagen: '/images/CEO/916/6) 1.26 Cts.mov',
-    certificateUrl: '/images/CEO/916/6) Certificate 1.26 Cts.pdf',
+    certificateUrl: '/images/CEO/916/6)Certificate1.26 Cts.png',
   },
   {
     item: 917, nombre: 'Verdant Crown', peso: 2.20, color: 'Intense Green' as TreasureItem['color'],
@@ -49,7 +49,7 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     precioCOP: 0, precioInternacional: 28257, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/917/7) 2.20 Cts.mp4', imagen: '/images/CEO/917/7) 2.20 Cts.mp4',
-    certificateUrl: '/images/CEO/917/7) Certificate 2.20 Cts.pdf',
+    certificateUrl: '/images/CEO/917/7) Certificate 2.20Cts.png',
   },
   {
     item: 911, nombre: 'Song of the River', peso: 1.825, color: 'Intense Green' as TreasureItem['color'],
@@ -71,7 +71,7 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     precioCOP: 0, precioInternacional: 30857, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/913/3-1.04Cts.mp4', imagen: '/images/CEO/913/3-1.04Cts.mp4',
-    certificateUrl: '/images/CEO/913/3) Certificate 1.04.pdf',
+    certificateUrl: '/images/CEO/913/3)Certificate-1.04.png',
   },
   {
     item: 914, nombre: 'Light Echo', peso: 0.67, color: 'Intense Green' as TreasureItem['color'],
