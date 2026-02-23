@@ -56,6 +56,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoLoading, setVideoLoading] = useState(true);
+  const [certLoading, setCertLoading] = useState(true);
   const [activeSlide, setActiveSlide] = useState(0);
 
   const hasCertificate = !!product?.certificateUrl;
@@ -65,10 +66,11 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
   // Reset state when product changes
   useEffect(() => {
     if (product?.mediaType === 'video') setVideoLoading(true);
+    if (product?.certificateUrl && !product.certificateUrl.endsWith('.pdf')) setCertLoading(true);
     setActiveSlide(0);
   }, [product]);
 
-  // Carousel swipe handling
+  // Carousel swipe handling — swipe right on slide 0 closes dialog
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -84,9 +86,12 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
         setActiveSlide((s) => s + 1);
       } else if (deltaX > 0 && activeSlide > 0) {
         setActiveSlide((s) => s - 1);
+      } else if (deltaX > 100 && activeSlide === 0) {
+        // Swipe right on first slide closes dialog
+        onClose();
       }
     }
-  }, [activeSlide, slideCount]);
+  }, [activeSlide, slideCount, onClose]);
 
   // Force video to play immediately when dialog opens
   useEffect(() => {
@@ -263,18 +268,42 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                         </Box>
                       </Box>
                     ) : (
-                      // Image certificate: display inline
-                      <Box
-                        component="img"
-                        src={product.certificateUrl}
-                        alt="Certificate"
-                        sx={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'contain',
-                          display: 'block',
-                        }}
-                      />
+                      // Image certificate: display inline with loading state
+                      <>
+                        {certLoading && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              inset: 0,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              zIndex: 1,
+                              gap: 1.5,
+                            }}
+                          >
+                            <CircularProgress size={40} sx={{ color: brand.emerald[400] }} />
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                              Loading certificate...
+                            </Typography>
+                          </Box>
+                        )}
+                        <Box
+                          component="img"
+                          src={product.certificateUrl}
+                          alt="Certificate"
+                          onLoad={() => setCertLoading(false)}
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                            display: 'block',
+                            opacity: certLoading ? 0 : 1,
+                            transition: 'opacity 0.2s ease',
+                          }}
+                        />
+                      </>
                     )}
                   </Box>
                 )}

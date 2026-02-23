@@ -35,6 +35,7 @@ const BLOCKED_SLUGS = new Set(['ceo-coomunity']);
 
 // Static CEO exclusive products (local video files, no API needed)
 const CEO_STATIC_PRODUCTS: TreasureItem[] = [
+  // --- Certified products first ---
   {
     item: 916, nombre: 'Emerald Whisper', peso: 1.26, color: 'Intense Green' as TreasureItem['color'],
     calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
@@ -52,20 +53,6 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     certificateUrl: '/images/CEO/917/7) Certificate 2.20Cts.png',
   },
   {
-    item: 911, nombre: 'Song of the River', peso: 1.825, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
-    precioCOP: 0, precioInternacional: 22857, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
-    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
-    videoUrl: '/images/CEO/911/1-1.825Cts.mp4', imagen: '/images/CEO/911/1-1.825Cts.mp4',
-  },
-  {
-    item: 912, nombre: 'Soul of the Mountain', peso: 1.93, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
-    precioCOP: 0, precioInternacional: 36914, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
-    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
-    videoUrl: '/images/CEO/912/2-1.93Cts.mp4', imagen: '/images/CEO/912/2-1.93Cts.mp4',
-  },
-  {
     item: 913, nombre: 'Forest Hug', peso: 1.04, color: 'Intense Green' as TreasureItem['color'],
     calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
     precioCOP: 0, precioInternacional: 30857, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
@@ -80,6 +67,21 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/914/4-0.67-Cts.mp4', imagen: '/images/CEO/914/4-0.67-Cts.mp4',
     certificateUrl: '/images/CEO/914/4) Certificate 0.67 Cts.jpg',
+  },
+  // --- Being issued ---
+  {
+    item: 911, nombre: 'Song of the River', peso: 1.825, color: 'Intense Green' as TreasureItem['color'],
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    precioCOP: 0, precioInternacional: 22857, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
+    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
+    videoUrl: '/images/CEO/911/1-1.825Cts.mp4', imagen: '/images/CEO/911/1-1.825Cts.mp4',
+  },
+  {
+    item: 912, nombre: 'Soul of the Mountain', peso: 1.93, color: 'Intense Green' as TreasureItem['color'],
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Oval', medidas: '',
+    precioCOP: 0, precioInternacional: 36914, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
+    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
+    videoUrl: '/images/CEO/912/2-1.93Cts.mp4', imagen: '/images/CEO/912/2-1.93Cts.mp4',
   },
   {
     item: 915, nombre: 'Kingdom of Peace', peso: 3.56, color: 'Intense Green' as TreasureItem['color'],
