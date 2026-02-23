@@ -202,45 +202,33 @@ function ProductCard({
             <Play size={16} color="#fff" fill="#fff" />
           </Box>
         )}
-        {item.certificateUrl && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 6,
-              left: 6,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.4,
-              bgcolor: 'rgba(0,0,0,0.6)',
-              backdropFilter: 'blur(4px)',
-              borderRadius: 1,
-              px: 0.7,
-              py: 0.3,
-            }}
-          >
-            <ShieldCheck size={12} color={brand.emerald[400]} />
-            <Typography sx={{ color: '#fff', fontSize: '0.6rem', fontWeight: 600, lineHeight: 1 }}>
-              Certified
-            </Typography>
-          </Box>
-        )}
       </Box>
 
       {/* Info */}
       <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
-        <Typography
-          variant="body2"
-          sx={{
-            fontWeight: 600,
-            mb: 0.5,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            fontSize: { xs: '0.8rem', sm: '0.875rem' },
-          }}
-        >
-          {accentuate(item.nombre)}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 600,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              fontSize: { xs: '0.8rem', sm: '0.875rem' },
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            {accentuate(item.nombre)}
+          </Typography>
+          {item.certificateUrl ? (
+            <ShieldCheck size={14} color={brand.emerald[500]} style={{ flexShrink: 0 }} />
+          ) : (
+            <Typography sx={{ flexShrink: 0, fontSize: '0.55rem', color: 'text.secondary', fontWeight: 500, lineHeight: 1 }}>
+              Being issued
+            </Typography>
+          )}
+        </Box>
         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 0.5 }}>
           {typeof item.peso === 'number' && (
             <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
