@@ -188,6 +188,8 @@ export const es = {
     currencyMode: 'Moneda',
     currencyUSDActive: 'Precios en USD',
     currencyCOPActive: 'Precios en COP',
+    currencyMultiplier: 'Multiplicador USD',
+    currencyMultiplierHint: 'Factor de conversión',
   },
 
   // Common

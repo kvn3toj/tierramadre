@@ -2,7 +2,7 @@
  * CurrencyContext - COP/USD currency mode toggle
  *
  * - Gated to specific user (Diamanteforbes@gmail.com)
- * - USD conversion: (precioCOP / TRM) * 4
+ * - USD conversion: (precioCOP / TRM) * multiplier (x2/x3/x4, configurable by admin, default x4)
  * - Persists preference in localStorage, resets on user change
  */
 
@@ -13,6 +13,8 @@ import { STORAGE_KEYS } from '../constants/storage-keys';
 import { formatCurrency as _fmtCurrency, formatFullCurrency as _fmtFullCurrency } from '../utils/formatting';
 
 type CurrencyMode = 'COP' | 'USD';
+export type UsdMultiplier = 2 | 3 | 4;
+const DEFAULT_MULTIPLIER: UsdMultiplier = 4;
 
 interface CurrencyContextType {
   currency: CurrencyMode;
@@ -21,6 +23,8 @@ interface CurrencyContextType {
   convertPrice: (precioCOP: number) => number;
   trmRate: number;
   isTrmLoading: boolean;
+  multiplier: UsdMultiplier;
+  setMultiplier: (value: UsdMultiplier) => void;
 }
 
 const AUTHORIZED_EMAILS = [
@@ -82,6 +86,25 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     }
   });
 
+  const [multiplier, setMultiplierState] = useState<UsdMultiplier>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.CURRENCY_MULTIPLIER);
+      const parsed = saved ? Number(saved) : NaN;
+      return (parsed === 2 || parsed === 3 || parsed === 4) ? parsed : DEFAULT_MULTIPLIER;
+    } catch {
+      return DEFAULT_MULTIPLIER;
+    }
+  });
+
+  const setMultiplier = useCallback((value: UsdMultiplier) => {
+    setMultiplierState(value);
+    try {
+      localStorage.setItem(STORAGE_KEYS.CURRENCY_MULTIPLIER, String(value));
+    } catch {
+      // Ignore
+    }
+  }, []);
+
   // Reset to COP if user changes and is not authorized
   useEffect(() => {
     if (!canToggleCurrency && currency !== 'COP') {
@@ -109,9 +132,9 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
   const convertPrice = useCallback(
     (precioCOP: number): number => {
       if (currency === 'COP' || !precioCOP) return precioCOP;
-      return Math.round((precioCOP / trmRate) * 4);
+      return Math.round((precioCOP / trmRate) * multiplier);
     },
-    [currency, trmRate],
+    [currency, trmRate, multiplier],
   );
 
   return (
@@ -123,6 +146,8 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
         convertPrice,
         trmRate,
         isTrmLoading,
+        multiplier,
+        setMultiplier,
       }}
     >
       {children}

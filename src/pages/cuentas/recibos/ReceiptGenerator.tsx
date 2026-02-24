@@ -26,6 +26,7 @@ import { ReceiptData, ReceiptProduct, TreasureItem } from '../../../types';
 import { exportReceiptToPdf } from '../../../utils/pdf';
 import { useTreasure } from '../../../hooks/useTreasure';
 import { useCotizacionFormat } from '../../../hooks/useCotizacion';
+import { useCurrency } from '../../../contexts/CurrencyContext';
 
 // Design System Imports
 import { surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
@@ -45,6 +46,7 @@ export default function ReceiptGenerator() {
   const receiptRef = useRef<HTMLDivElement>(null);
   const { treasure } = useTreasure();
   const { formatPrice } = useCotizacionFormat();
+  const { convertPrice } = useCurrency();
 
   // Filter available treasure items (only DISPONIBLE)
   const availableTreasure = useMemo(
@@ -105,7 +107,7 @@ export default function ReceiptGenerator() {
       calidad: selectedItem.calidad,
       talla: selectedItem.talla,
       precioCOP: selectedItem.precioCOP,
-      priceUSD: Math.round(selectedItem.precioCOP / 4000),
+      priceUSD: convertPrice(selectedItem.precioCOP),
       imagen: selectedItem.imagen,
       isJewelry: selectedItem.isJewelry,
       metalType: selectedItem.metalType,
@@ -129,7 +131,7 @@ export default function ReceiptGenerator() {
       description: manualProduct.description,
       weightCarats: manualProduct.weightCarats,
       precioCOP: manualProduct.precioCOP!,
-      priceUSD: Math.round((manualProduct.precioCOP || 0) / 4000),
+      priceUSD: convertPrice(manualProduct.precioCOP || 0),
       isManual: true,
     };
 

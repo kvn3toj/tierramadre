@@ -10,8 +10,9 @@
 
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, IconButton, Backdrop, Chip, Switch } from '@mui/material';
+import { Box, Typography, IconButton, Backdrop, Chip, Switch, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport, AutoAwesome, PersonAdd } from '@mui/icons-material';
+import { alpha } from '@mui/material/styles';
 import { Vault, BarChart3, ShoppingBag } from 'lucide-react';
 import FeedbackWizard from '../feedback/FeedbackWizard';
 import { InvitationGenerator } from '../invitation';
@@ -25,7 +26,7 @@ import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsGuest, useCanCreateInvitations } from '../../hooks/useAuth';
 import { useIsAdmin, useIsStaff } from '../../hooks/usePermissions';
 import { usePriceShare } from '../../contexts/PriceShareContext';
-import { useCurrency } from '../../contexts/CurrencyContext';
+import { useCurrency, UsdMultiplier } from '../../contexts/CurrencyContext';
 
 export interface MoreToolConfig {
   id: string;
@@ -124,7 +125,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   const canCreateInvitations = useCanCreateInvitations();
   const { effectiveConfig } = useLiquidGlassSafe();
   const { showPrices, togglePriceShare, canToggle } = usePriceShare();
-  const { currency, toggleCurrency, canToggleCurrency } = useCurrency();
+  const { currency, toggleCurrency, canToggleCurrency, multiplier, setMultiplier } = useCurrency();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [invitationOpen, setInvitationOpen] = useState(false);
 
@@ -458,6 +459,71 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                 },
               }}
             />
+          </Box>
+        )}
+
+        {/* USD Multiplier Row - Only for admin + currency-authorized */}
+        {canToggleCurrency && isAdmin && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingX: spacing.md,
+              paddingY: spacing.sm,
+              borderBottom: '0.5px solid var(--border-default)',
+            }}
+          >
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: iosTypographyScale.body,
+                  fontWeight: 500,
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {t.settings.currencyMultiplier}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: iosTypographyScale.caption1,
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                {t.settings.currencyMultiplierHint}
+              </Typography>
+            </Box>
+            <ToggleButtonGroup
+              value={multiplier}
+              exclusive
+              onChange={(_e, val) => {
+                if (val !== null) {
+                  if ('vibrate' in navigator) navigator.vibrate(10);
+                  setMultiplier(val as UsdMultiplier);
+                }
+              }}
+              size="small"
+              sx={{
+                '& .MuiToggleButton-root': {
+                  px: 1.5,
+                  py: 0.5,
+                  fontSize: iosTypographyScale.footnote,
+                  fontWeight: 600,
+                  color: 'var(--text-secondary)',
+                  borderColor: 'var(--border-default)',
+                  '&.Mui-selected': {
+                    backgroundColor: alpha(emeraldCore.dark, 0.12),
+                    color: emeraldCore.dark,
+                    borderColor: emeraldCore.dark,
+                    '&:hover': { backgroundColor: alpha(emeraldCore.dark, 0.18) },
+                  },
+                },
+              }}
+            >
+              <ToggleButton value={2}>x2</ToggleButton>
+              <ToggleButton value={3}>x3</ToggleButton>
+              <ToggleButton value={4}>x4</ToggleButton>
+            </ToggleButtonGroup>
           </Box>
         )}
 
