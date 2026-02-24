@@ -1,13 +1,14 @@
 /**
  * CurrencyContext - COP/USD currency mode toggle
  *
- * - Gated to specific user (Diamanteforbes@gmail.com)
+ * - Gated to admins + whitelisted emails
  * - USD conversion: (precioCOP / TRM) * multiplier (x2/x3/x4, configurable by admin, default x4)
  * - Persists preference in localStorage, resets on user change
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useGoogleAuth } from './GoogleAuthContext';
+import { useAuthContext } from './AuthContext';
 import { useTRM } from '../hooks/useTRM';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 import { formatCurrency as _fmtCurrency, formatFullCurrency as _fmtFullCurrency } from '../utils/formatting';
@@ -71,13 +72,14 @@ interface CurrencyProviderProps {
 
 export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) => {
   const { user } = useGoogleAuth();
+  const { accessLevel } = useAuthContext();
   const { trmRate, isLoading: isTrmLoading } = useTRM();
 
   const userEmail = user?.email?.toLowerCase() ?? '';
-  const canToggleCurrency = AUTHORIZED_EMAILS.includes(userEmail);
+  const isAdmin = accessLevel === 'admin';
+  const canToggleCurrency = isAdmin || AUTHORIZED_EMAILS.includes(userEmail);
 
   const [currency, setCurrency] = useState<CurrencyMode>(() => {
-    if (!canToggleCurrency) return 'COP';
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.CURRENCY_MODE);
       return saved === 'USD' ? 'USD' : 'COP';
