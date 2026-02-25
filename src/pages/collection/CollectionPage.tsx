@@ -7,7 +7,7 @@
  * Prices always shown in USD.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box,
@@ -306,7 +306,44 @@ export default function CollectionPage() {
   const driveFolder = folder ? (FOLDER_ALIASES[folder] || folder) : null;
   const { products: apiProducts, collectionInfo, isLoading: apiLoading, error: apiError } = useAsesorCollection(isCeoCollection ? null : driveFolder);
   const [selectedProduct, setSelectedProduct] = useState<TreasureItem | null>(null);
-  const [showSplash, setShowSplash] = useState(true);
+  const dialogOpenRef = useRef(false);
+
+  // Only show splash once per browser session per collection
+  const splashSessionKey = `tm_collection_splash_${folder}`;
+  const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem(splashSessionKey));
+
+  const handleSplashComplete = useCallback(() => {
+    sessionStorage.setItem(splashSessionKey, '1');
+    setShowSplash(false);
+  }, [splashSessionKey]);
+
+  // Push a history entry when dialog opens (closed → open only) so browser
+  // Back closes the dialog instead of navigating away from the page
+  useEffect(() => {
+    const wasOpen = dialogOpenRef.current;
+    dialogOpenRef.current = !!selectedProduct;
+    if (!wasOpen && selectedProduct) {
+      window.history.pushState({ collectionDialog: true }, '');
+    }
+  }, [selectedProduct]);
+
+  // Intercept popstate (back button) to close the dialog
+  useEffect(() => {
+    const handlePopState = () => {
+      if (dialogOpenRef.current) {
+        setSelectedProduct(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Close dialog by popping the history entry we pushed
+  const handleCloseDialog = useCallback(() => {
+    if (dialogOpenRef.current) {
+      window.history.back();
+    }
+  }, []);
 
   const contact = folder ? COLLECTION_CONTACTS[folder] : null;
 
@@ -338,7 +375,7 @@ export default function CollectionPage() {
   if (showSplash) {
     return (
       <CollectionSplashScreen
-        onComplete={() => setShowSplash(false)}
+        onComplete={handleSplashComplete}
         showProgress={false}
       />
     );
@@ -477,7 +514,7 @@ export default function CollectionPage() {
       {/* Product Detail Dialog */}
       <CollectionProductDialog
         product={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
+        onClose={handleCloseDialog}
         showUSD
       />
     </Box>
