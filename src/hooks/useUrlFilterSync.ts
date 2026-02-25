@@ -22,7 +22,7 @@ export interface UseUrlFilterSyncReturn {
  * Parse URL query params into initial filter values.
  * Only runs once on mount to avoid infinite loops.
  */
-function parseUrlFilters(): Partial<TreasureFilters> {
+export function parseUrlFilters(): Partial<TreasureFilters> {
   if (typeof window === 'undefined') return {};
 
   const params = new URLSearchParams(window.location.search);

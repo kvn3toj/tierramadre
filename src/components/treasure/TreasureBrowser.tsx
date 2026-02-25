@@ -23,7 +23,7 @@ import { useAuthContext } from '../../contexts/AuthContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useTreasure } from '../../hooks/useTreasure';
 import { useTreasureFiltering } from '../../hooks/useTreasureFiltering';
-import { useUrlFilterSync } from '../../hooks/useUrlFilterSync';
+import { useUrlFilterSync, parseUrlFilters } from '../../hooks/useUrlFilterSync';
 import { useFilterTracking } from '../../hooks/useFilterTracking';
 import { useFavorites } from '../../hooks/useFavorites';
 import { usePagination } from '../../hooks/usePagination';
@@ -74,12 +74,8 @@ export default function TreasureBrowser({
   // Get treasure data from hook
   const { treasure: allTreasure, isLoadingThumbnails } = useTreasure();
 
-  // URL sync hook - provides initial filters from URL
-  const { initialFilters } = useUrlFilterSync({
-    filters: { search: '', colorFilter: 'all', qualityFilter: 'all', typeFilter: 'all', statusFilter: 'available', shapeFilter: 'all', priceRange: [0, Number.MAX_SAFE_INTEGER], sortBy: 'newest', categoriaFilter: 'all', cantidadFilter: 'all', cityFilter: 'all', coleccionFilter: 'all', heroCategoryFilter: 'all', itemsFilter: [] },
-    priceMinMax: { min: 0, max: 100000000 },
-    clearFilters: () => {},
-  });
+  // Parse URL params once on mount (no side effects, no URL sync race condition)
+  const initialFilters = useMemo(() => parseUrlFilters(), []);
 
   // Filtering hook - handles all filter state and computed values
   const filteringResult = useTreasureFiltering({
@@ -108,7 +104,7 @@ export default function TreasureBrowser({
     filterOptions,
   } = filteringResult;
 
-  // Re-initialize URL sync with actual filter values
+  // Sync filter state to URL (single instance, no race condition)
   const urlSync = useUrlFilterSync({
     filters,
     priceMinMax: filterOptions.priceMinMax,
