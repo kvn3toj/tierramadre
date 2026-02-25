@@ -422,7 +422,7 @@ export default function CollectionPage() {
       }
 
       if (navigator.share) {
-        navigator.share({ title: 'Tierra Madre', text: 'Open in Chrome or Safari', url }).catch(() => handleCopyUrl());
+        navigator.share({ title: 'Tierra Madre Collection', text: 'View this emerald collection in your browser', url }).catch(() => handleCopyUrl());
       } else {
         handleCopyUrl();
       }
@@ -461,13 +461,13 @@ export default function CollectionPage() {
             variant="subtitle2"
             sx={{ color: brand.emerald[300], mb: 1, textAlign: 'center', fontWeight: 500 }}
           >
-            For the best experience
+            This collection deserves a better window
           </Typography>
           <Typography
             variant="body2"
             sx={{ color: alpha('#fff', 0.6), mb: 3, textAlign: 'center', lineHeight: 1.5 }}
           >
-            {browserInfo.browserName || 'This browser'} doesn't support video playback properly. Open in Chrome or Safari to view the collection.
+            {browserInfo.browserName || 'This browser'} can't display our emeralds the way they were meant to be seen. Open in Safari or Chrome to experience the full collection.
           </Typography>
           <Stack spacing={1.5}>
             <Button
@@ -484,7 +484,7 @@ export default function CollectionPage() {
                 '&:hover': { bgcolor: brand.emerald[400] },
               }}
             >
-              Open in browser
+              View Collection
             </Button>
             <Button
               variant="text"
@@ -497,7 +497,7 @@ export default function CollectionPage() {
                 '&:hover': { color: alpha('#fff', 0.6) },
               }}
             >
-              {urlCopied ? 'Copied!' : 'Copy link'}
+              {urlCopied ? 'Copied' : 'Copy link'}
             </Button>
           </Stack>
         </Box>

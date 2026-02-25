@@ -423,6 +423,12 @@ const LAST_ACTIVITY_KEY = STORAGE_KEYS.LAST_ACTIVITY;
 const INACTIVITY_THRESHOLD = 30 * 60 * 1000; // 30 minutes
 
 function shouldShowSplash(): boolean {
+  // Public routes that have their own splash — skip the main app splash
+  const path = window.location.pathname;
+  if (path.startsWith('/c/') || path.startsWith('/invite/') || path.startsWith('/g/')) {
+    return false;
+  }
+
   // Check if this is a fresh session (browser was closed)
   const sessionActive = sessionStorage.getItem(SPLASH_SESSION_KEY);
 
