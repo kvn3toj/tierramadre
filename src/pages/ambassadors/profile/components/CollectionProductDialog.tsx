@@ -16,7 +16,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { X, ShieldCheck, ChevronLeft, ChevronRight, Gem, Ruler, Share2, Clock } from 'lucide-react';
+import { X, ShieldCheck, ChevronLeft, ChevronRight, Share2, Clock } from 'lucide-react';
 import { TreasureItem } from '../../../../types';
 import { brand, lightTokens, darkTokens, legacyTypography as typography } from '../../../../design-system';
 import { emeraldCore, goldAccent } from '../../../../design-system/tokens/colors';
@@ -459,75 +459,78 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                 )}
               </Box>
 
-              {/* Spec pills */}
-              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 1.5 }}>
+              {/* Specs + Price — labeled rows */}
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 1.5,
+                }}
+              >
+                {/* Price */}
+                {(showUSD && (product.precioInternacional || product.precioCOP)) && (
+                  <Box>
+                    <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontWeight: 500, mb: 0.25 }}>
+                      Price
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: { xs: '1.25rem', sm: '1.35rem' },
+                        fontWeight: 700,
+                        color: emeraldCore.primary,
+                        fontFamily: typography.fontFamily.mono,
+                        fontFeatureSettings: '"tnum"',
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {formatUSD(product.precioInternacional || product.precioCOP)}
+                    </Typography>
+                  </Box>
+                )}
+                {/* Price per Carat */}
+                {(showUSD && (product.precioInternacional || product.precioCOP) && typeof product.peso === 'number' && product.peso > 0) && (
+                  <Box>
+                    <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontWeight: 500, mb: 0.25 }}>
+                      Price per Carat
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: { xs: '1.25rem', sm: '1.35rem' },
+                        fontWeight: 700,
+                        fontFamily: typography.fontFamily.mono,
+                        fontFeatureSettings: '"tnum"',
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {formatUSD(Math.round((product.precioInternacional || product.precioCOP) / product.peso))}
+                    </Typography>
+                  </Box>
+                )}
+                {/* Carats */}
                 {typeof product.peso === 'number' && (
-                  <Box
-                    sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                      px: 1.25,
-                      py: 0.5,
-                      borderRadius: 6,
-                      bgcolor: isLight ? 'rgba(60,60,67,0.06)' : 'rgba(235,235,245,0.08)',
-                    }}
-                  >
-                    <Gem size={13} style={{ opacity: 0.5 }} />
-                    <Typography sx={{ fontSize: '13px', fontWeight: 500 }}>
+                  <Box>
+                    <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontWeight: 500, mb: 0.25 }}>
+                      Carats
+                    </Typography>
+                    <Typography sx={{ fontSize: { xs: '1.25rem', sm: '1.35rem' }, fontWeight: 700, lineHeight: 1.2 }}>
                       {product.peso} ct
                     </Typography>
                   </Box>
                 )}
+                {/* Cut */}
                 {product.talla && (
-                  <Box
-                    sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                      px: 1.25,
-                      py: 0.5,
-                      borderRadius: 6,
-                      bgcolor: isLight ? 'rgba(60,60,67,0.06)' : 'rgba(235,235,245,0.08)',
-                    }}
-                  >
-                    <Ruler size={13} style={{ opacity: 0.5 }} />
-                    <Typography sx={{ fontSize: '13px', fontWeight: 500 }}>
+                  <Box>
+                    <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontWeight: 500, mb: 0.25 }}>
+                      Cut
+                    </Typography>
+                    <Typography sx={{ fontSize: { xs: '1.25rem', sm: '1.35rem' }, fontWeight: 700, lineHeight: 1.2 }}>
                       {product.talla}
                     </Typography>
                   </Box>
                 )}
               </Box>
-
-              {/* Price */}
-              {showUSD && (product.precioInternacional || product.precioCOP) ? (
-                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                  <Typography
-                    sx={{
-                      fontSize: { xs: '1.5rem', sm: '1.65rem' },
-                      fontWeight: 700,
-                      color: emeraldCore.primary,
-                      fontFamily: typography.fontFamily.mono,
-                      fontFeatureSettings: '"tnum"',
-                      lineHeight: 1,
-                    }}
-                  >
-                    {formatUSD(product.precioInternacional || product.precioCOP)}
-                  </Typography>
-                  {typeof product.peso === 'number' && product.peso > 0 && (
-                    <Typography
-                      sx={{
-                        fontSize: '13px',
-                        color: isLight ? 'rgba(60,60,67,0.4)' : 'rgba(235,235,245,0.4)',
-                        fontFamily: typography.fontFamily.mono,
-                        fontFeatureSettings: '"tnum"',
-                      }}
-                    >
-                      {formatUSD(Math.round((product.precioInternacional || product.precioCOP) / product.peso))}/ct
-                    </Typography>
-                  )}
-                </Box>
-              ) : (
+              {/* Fallback non-USD price */}
+              {!(showUSD && (product.precioInternacional || product.precioCOP)) && (
                 <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />
               )}
             </Box>
