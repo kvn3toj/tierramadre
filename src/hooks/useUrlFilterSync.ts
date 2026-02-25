@@ -19,13 +19,14 @@ export interface UseUrlFilterSyncReturn {
 }
 
 /**
- * Parse URL query params into initial filter values.
- * Only runs once on mount to avoid infinite loops.
+ * Parse URL/search string into initial filter values.
+ * Accepts an explicit search string (from React Router's location.search)
+ * to avoid reading stale window.location during startTransition navigations.
  */
-export function parseUrlFilters(): Partial<TreasureFilters> {
+export function parseUrlFilters(searchString?: string): Partial<TreasureFilters> {
   if (typeof window === 'undefined') return {};
 
-  const params = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(searchString ?? window.location.search);
   const filters: Partial<TreasureFilters> = {};
 
   const search = params.get('search');

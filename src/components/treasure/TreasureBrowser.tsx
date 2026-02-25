@@ -6,7 +6,7 @@
  * empty state, and desktop filter toolbar into separate components.
  */
 import { useState, useMemo, useCallback, useRef, useEffect, } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -68,14 +68,14 @@ export default function TreasureBrowser({
   const isAdmin = accessLevel === 'admin';
   const isLight = mode === 'light';
   const navigate = useNavigate();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_searchParams] = useSearchParams();
+  const location = useLocation();
 
   // Get treasure data from hook
   const { treasure: allTreasure, isLoadingThumbnails } = useTreasure();
 
-  // Parse URL params once on mount (no side effects, no URL sync race condition)
-  const initialFilters = useMemo(() => parseUrlFilters(), []);
+  // Parse URL params once on mount using React Router's location.search
+  // (window.location.search may be stale during startTransition navigations)
+  const initialFilters = useMemo(() => parseUrlFilters(location.search), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filtering hook - handles all filter state and computed values
   const filteringResult = useTreasureFiltering({
