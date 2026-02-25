@@ -22,6 +22,8 @@ import {
   Snackbar,
   Switch,
   InputAdornment,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -31,6 +33,7 @@ import {
   LinkOutlined as LinkIcon,
   CheckCircle as CheckIcon,
   AttachMoney as PriceIcon,
+  CurrencyExchange as CurrencyIcon,
   Person as PersonIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
@@ -38,7 +41,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import { useInvitation } from '../../hooks/useInvitation';
 import { brand, legacyTypography as typography, cssTransition } from '../../design-system';
-import type { PricingMode } from '../../types/invitation';
+import type { PricingMode, GuestCurrencyMode, GuestMultiplier } from '../../types/invitation';
 
 interface InvitationGeneratorProps {
   open: boolean;
@@ -58,6 +61,8 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [showPrices, setShowPrices] = useState(true);
+  const [guestCurrency, setGuestCurrency] = useState<GuestCurrencyMode>('COP');
+  const [guestMultiplier, setGuestMultiplier] = useState<GuestMultiplier>(4);
   const [formError, setFormError] = useState('');
 
   const isFormValid = guestName.trim().length > 0 && (guestEmail.trim().length > 0 || guestPhone.trim().length > 0);
@@ -82,6 +87,8 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
       guestName: guestName.trim(),
       guestContact: contactInfo,
       contactType,
+      ...(showPrices && { guestCurrencyMode: guestCurrency }),
+      ...(showPrices && guestCurrency === 'USD' && { guestMultiplier }),
     });
   };
 
@@ -91,6 +98,8 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
     setGuestEmail('');
     setGuestPhone('');
     setShowPrices(true);
+    setGuestCurrency('COP');
+    setGuestMultiplier(4);
     setShowQR(false);
     setFormError('');
     setCopiedPin(false);
@@ -339,6 +348,105 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                 />
               </Box>
 
+              {/* Guest Currency Selection - Only when prices are ON */}
+              {showPrices && (
+                <Box
+                  sx={{
+                    px: 2,
+                    py: 1.5,
+                    mb: 3,
+                    borderRadius: '14px',
+                    border: '1px solid',
+                    borderColor: guestCurrency === 'USD' ? brand.emerald[200] : 'divider',
+                    bgcolor: guestCurrency === 'USD' ? `${brand.emerald[50]}40` : 'transparent',
+                    transition: cssTransition.default,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+                    <Box
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: guestCurrency === 'USD' ? brand.emerald[100] : 'action.hover',
+                        transition: cssTransition.default,
+                      }}
+                    >
+                      <CurrencyIcon fontSize="small" sx={{ color: guestCurrency === 'USD' ? brand.emerald[600] : 'text.disabled' }} />
+                    </Box>
+                    <Box>
+                      <Typography variant="body2" fontWeight={typography.weight.medium} sx={{ lineHeight: 1.3 }}>
+                        Moneda del invitado
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {guestCurrency === 'COP' ? 'Pesos colombianos' : `Dolares (x${guestMultiplier})`}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <ToggleButtonGroup
+                    value={guestCurrency}
+                    exclusive
+                    onChange={(_e, val) => { if (val !== null) setGuestCurrency(val as GuestCurrencyMode); }}
+                    fullWidth
+                    size="small"
+                    sx={{
+                      mb: guestCurrency === 'USD' ? 1.5 : 0,
+                      '& .MuiToggleButton-root': {
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        fontSize: '0.8rem',
+                        py: 0.75,
+                        borderColor: 'divider',
+                        '&.Mui-selected': {
+                          backgroundColor: `${brand.emerald[50]}`,
+                          color: brand.emerald[700],
+                          borderColor: brand.emerald[300],
+                          '&:hover': { backgroundColor: brand.emerald[100] },
+                        },
+                      },
+                    }}
+                  >
+                    <ToggleButton value="COP">COP</ToggleButton>
+                    <ToggleButton value="USD">USD</ToggleButton>
+                  </ToggleButtonGroup>
+
+                  {/* Multiplier selector - only when USD */}
+                  {guestCurrency === 'USD' && (
+                    <ToggleButtonGroup
+                      value={guestMultiplier}
+                      exclusive
+                      onChange={(_e, val) => { if (val !== null) setGuestMultiplier(val as GuestMultiplier); }}
+                      fullWidth
+                      size="small"
+                      sx={{
+                        '& .MuiToggleButton-root': {
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          fontSize: '0.8rem',
+                          py: 0.5,
+                          borderColor: 'divider',
+                          '&.Mui-selected': {
+                            backgroundColor: `${brand.emerald[50]}`,
+                            color: brand.emerald[700],
+                            borderColor: brand.emerald[300],
+                            '&:hover': { backgroundColor: brand.emerald[100] },
+                          },
+                        },
+                      }}
+                    >
+                      <ToggleButton value={1}>x1</ToggleButton>
+                      <ToggleButton value={2}>x2</ToggleButton>
+                      <ToggleButton value={3}>x3</ToggleButton>
+                      <ToggleButton value={4}>x4</ToggleButton>
+                    </ToggleButtonGroup>
+                  )}
+                </Box>
+              )}
+
               {/* Generate button */}
               <Button
                 variant="contained"
@@ -509,6 +617,13 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                     label: lastInvitation.pricingMode === 'with_prices' ? 'Con precios' : 'Sin precios',
                     active: lastInvitation.pricingMode === 'with_prices',
                   },
+                  ...(lastInvitation.guestCurrencyMode ? [{
+                    icon: <CurrencyIcon sx={{ fontSize: 14 }} />,
+                    label: lastInvitation.guestCurrencyMode === 'USD'
+                      ? `USD x${lastInvitation.guestMultiplier || 4}`
+                      : 'COP',
+                    active: lastInvitation.guestCurrencyMode === 'USD',
+                  }] : []),
                   ...(guestEmail ? [{ icon: <EmailIcon sx={{ fontSize: 14 }} />, label: guestEmail, active: false }] : []),
                   ...(guestPhone ? [{ icon: <PhoneIcon sx={{ fontSize: 14 }} />, label: guestPhone, active: false }] : []),
                 ].map((tag, i) => (

@@ -64,6 +64,8 @@ export const useInvitation = (): UseInvitationReturn => {
           guestName: options.guestName,
           guestContact: options.guestContact,
           contactType: options.contactType,
+          guestCurrencyMode: options.guestCurrencyMode,
+          guestMultiplier: options.guestMultiplier,
         }),
       });
 

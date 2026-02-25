@@ -448,6 +448,8 @@ export default function InvitationPage() {
 
   const [status, setStatus] = useState<PageStatus>('loading');
   const [pricingMode, setPricingMode] = useState<PricingMode>('with_prices');
+  const [guestCurrencyMode, setGuestCurrencyMode] = useState<string>('');
+  const [guestMultiplier, setGuestMultiplier] = useState<string>('');
   const [invitationId, setInvitationId] = useState<string>('');
   const [createdBy, setCreatedBy] = useState<string>('');
   const [creatorEmail, setCreatorEmail] = useState<string>('');
@@ -490,6 +492,12 @@ export default function InvitationPage() {
       [INVITATION_STORAGE_KEYS.GUEST_CONTACT]: resolvedGuestContact,
       [INVITATION_STORAGE_KEYS.PIN_VERIFIED]: 'true',
     };
+    if (guestCurrencyMode) {
+      invitationData[INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE] = guestCurrencyMode;
+    }
+    if (guestMultiplier) {
+      invitationData[INVITATION_STORAGE_KEYS.GUEST_MULTIPLIER] = guestMultiplier;
+    }
     const deviceToken = localStorage.getItem(INVITATION_STORAGE_KEYS.DEVICE_TOKEN);
     if (deviceToken) {
       invitationData[INVITATION_STORAGE_KEYS.DEVICE_TOKEN] = deviceToken;
@@ -505,7 +513,7 @@ export default function InvitationPage() {
     sessionStorage.removeItem('treasure-filters');
 
     setStatus('valid');
-  }, [loginAsGuest, guestName, guestContact, preRegisteredGuestName, preRegisteredGuestContact, expiresAt, currentShortCode, pricingMode, invitationId, createdBy, creatorEmail, inviterWhatsApp]);
+  }, [loginAsGuest, guestName, guestContact, preRegisteredGuestName, preRegisteredGuestContact, expiresAt, currentShortCode, pricingMode, invitationId, createdBy, creatorEmail, inviterWhatsApp, guestCurrencyMode, guestMultiplier]);
 
   // ─── Validate on mount ───
   useEffect(() => {
@@ -532,6 +540,13 @@ export default function InvitationPage() {
         setInvitationId(resolvedInvitationId);
         setCurrentShortCode(resolvedShortCode);
         setExpiresAt(resolvedExpiresAt);
+
+        if (result.guestCurrencyMode) {
+          setGuestCurrencyMode(result.guestCurrencyMode);
+        }
+        if (result.guestMultiplier) {
+          setGuestMultiplier(String(result.guestMultiplier));
+        }
 
         if (result.guestName) {
           setPreRegisteredGuestName(result.guestName);
@@ -573,6 +588,12 @@ export default function InvitationPage() {
             [INVITATION_STORAGE_KEYS.GUEST_CONTACT]: result.guestContact || '',
             [INVITATION_STORAGE_KEYS.PIN_VERIFIED]: 'true',
           };
+          if (result.guestCurrencyMode) {
+            invitationData[INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE] = result.guestCurrencyMode;
+          }
+          if (result.guestMultiplier) {
+            invitationData[INVITATION_STORAGE_KEYS.GUEST_MULTIPLIER] = String(result.guestMultiplier);
+          }
 
           for (const [key, value] of Object.entries(invitationData)) {
             sessionStorage.setItem(key, value);

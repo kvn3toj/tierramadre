@@ -25,7 +25,8 @@ const SHEET_NAME = SHEETS.INVITATIONS;
 const HEADERS = [
   'invitationId', 'shortCode', 'creatorEmail', 'creatorName', 'creatorRole',
   'guestName', 'guestContact', 'contactType', 'createdAt', 'activatedAt',
-  'expiresAt', 'pricingMode', 'durationHours', 'status', 'pin', 'boundToken'
+  'expiresAt', 'pricingMode', 'durationHours', 'status', 'pin', 'boundToken',
+  'guestCurrencyMode', 'guestMultiplier'
 ];
 
 /**
@@ -98,18 +99,27 @@ async function verifyPin(sheets, _req, body) {
 async function ensureHeaders(sheets) {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: APP_SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A1:P1`,
+    range: `'${SHEET_NAME}'!A1:R1`,
   });
 
   const headerRow = (res.data.values && res.data.values[0]) || [];
 
-  // If column O (index 14) is missing or not 'pin', write both headers
+  // If column O (index 14) is missing or not 'pin', write pin + boundToken headers
   if (!headerRow[14] || headerRow[14] !== 'pin') {
     await sheets.spreadsheets.values.update({
       spreadsheetId: APP_SPREADSHEET_ID,
-      range: `'${SHEET_NAME}'!O1:P1`,
+      range: `'${SHEET_NAME}'!O1:R1`,
       valueInputOption: 'RAW',
-      requestBody: { values: [['pin', 'boundToken']] },
+      requestBody: { values: [['pin', 'boundToken', 'guestCurrencyMode', 'guestMultiplier']] },
+    });
+  }
+  // If column Q (index 16) is missing, add currency columns
+  else if (!headerRow[16] || headerRow[16] !== 'guestCurrencyMode') {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: APP_SPREADSHEET_ID,
+      range: `'${SHEET_NAME}'!Q1:R1`,
+      valueInputOption: 'RAW',
+      requestBody: { values: [['guestCurrencyMode', 'guestMultiplier']] },
     });
   }
 }
@@ -120,7 +130,7 @@ async function ensureHeaders(sheets) {
 async function findInvitationByCode(sheets, shortCode) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: APP_SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:P`,
+    range: `'${SHEET_NAME}'!A:R`,
   });
 
   const rows = response.data.values || [];
@@ -148,6 +158,8 @@ async function findInvitationByCode(sheets, shortCode) {
           status: row[13] || 'pending',
           pin: row[14] || null,
           boundToken: row[15] || null,
+          guestCurrencyMode: row[16] || null,
+          guestMultiplier: row[17] ? parseInt(row[17]) : null,
         },
       };
     }
@@ -164,6 +176,7 @@ async function generateInvitation(sheets, body) {
     creatorEmail, creatorName, creatorRole,
     pricingMode = 'with_prices',
     guestName, guestContact, contactType,
+    guestCurrencyMode, guestMultiplier,
   } = body;
 
   if (!creatorEmail || !creatorName) {
@@ -186,11 +199,12 @@ async function generateInvitation(sheets, body) {
     creatorRole || 'Asesor', guestName || '', guestContact || '',
     contactType || '', createdAt, '', '',
     pricingMode, INVITATION_DURATION_HOURS, 'pending', pin, '',
+    guestCurrencyMode || '', guestMultiplier != null ? String(guestMultiplier) : '',
   ];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: APP_SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:P`,
+    range: `'${SHEET_NAME}'!A:R`,
     valueInputOption: 'RAW',
     requestBody: { values: [row] },
   });
@@ -209,6 +223,8 @@ async function generateInvitation(sheets, body) {
       createdAt,
       durationHours: INVITATION_DURATION_HOURS,
       pricingMode,
+      guestCurrencyMode: guestCurrencyMode || null,
+      guestMultiplier: guestMultiplier != null ? Number(guestMultiplier) : null,
       createdBy: { email: creatorEmail, name: creatorName, role: creatorRole || 'Asesor' },
     },
   };
@@ -268,6 +284,8 @@ async function validateInvitation(sheets, shortCode) {
       guestContact: data.guestContact || null,
       contactType: data.contactType || null,
       isPinBound: !!(data.boundToken),
+      guestCurrencyMode: data.guestCurrencyMode || null,
+      guestMultiplier: data.guestMultiplier || null,
     };
   }
 
@@ -285,6 +303,8 @@ async function validateInvitation(sheets, shortCode) {
       guestContact: data.guestContact || null,
       contactType: data.contactType || null,
       isPinBound: !!(data.boundToken),
+      guestCurrencyMode: data.guestCurrencyMode || null,
+      guestMultiplier: data.guestMultiplier || null,
     };
   }
 
@@ -301,7 +321,7 @@ async function checkGuestHistory(sheets, guestContact) {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: APP_SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:P`,
+    range: `'${SHEET_NAME}'!A:R`,
   });
 
   const rows = response.data.values || [];
@@ -350,7 +370,7 @@ async function listByCreator(sheets, creatorEmail) {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: APP_SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:P`,
+    range: `'${SHEET_NAME}'!A:R`,
   });
 
   const rows = response.data.values || [];
@@ -379,6 +399,8 @@ async function listByCreator(sheets, creatorEmail) {
         activatedAt: row[9] || null,
         expiresAt: row[10] || null,
         pricingMode: row[11] || 'with_prices',
+        guestCurrencyMode: row[16] || null,
+        guestMultiplier: row[17] ? parseInt(row[17]) : null,
       });
     }
   }
@@ -405,7 +427,7 @@ async function registerGuest(sheets, body) {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: APP_SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!A:P`,
+    range: `'${SHEET_NAME}'!A:R`,
   });
 
   const rows = response.data.values || [];

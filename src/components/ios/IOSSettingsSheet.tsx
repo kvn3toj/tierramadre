@@ -18,7 +18,6 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useCurrency, UsdMultiplier } from '../../contexts/CurrencyContext';
-import { useIsAdmin } from '../../hooks/usePermissions';
 import MeditationReminderSetting from '../settings/MeditationReminderSetting';
 import { UserProfileCard } from '../auth';
 
@@ -143,7 +142,6 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
   const { language, t, toggleLanguage } = useLanguage();
   const { showPrices, togglePriceShare, canToggle } = usePriceShare();
   const { currency, toggleCurrency, canToggleCurrency, multiplier, setMultiplier } = useCurrency();
-  const isAdmin = useIsAdmin();
 
   const isDarkMode = mode === 'dark';
   const isUSD = currency === 'USD';
@@ -291,8 +289,8 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
             />
           )}
 
-          {/* USD Multiplier - Only for admin + currency-authorized */}
-          {canToggleCurrency && isAdmin && (
+          {/* USD Multiplier - Only for currency-authorized */}
+          {canToggleCurrency && (
             <Box
               sx={{
                 display: 'flex',
@@ -345,6 +343,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
                   },
                 }}
               >
+                <ToggleButton value={1}>x1</ToggleButton>
                 <ToggleButton value={2}>x2</ToggleButton>
                 <ToggleButton value={3}>x3</ToggleButton>
                 <ToggleButton value={4}>x4</ToggleButton>

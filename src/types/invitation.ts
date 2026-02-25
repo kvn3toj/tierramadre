@@ -8,6 +8,8 @@
 export type PricingMode = 'with_prices' | 'no_prices';
 export type InvitationStatus = 'pending' | 'active' | 'expired' | 'used';
 export type ContactType = 'email' | 'phone';
+export type GuestCurrencyMode = 'COP' | 'USD';
+export type GuestMultiplier = 1 | 2 | 3 | 4;
 
 // Fixed 24-hour duration for all invitations
 export const INVITATION_DURATION_HOURS = 24;
@@ -20,6 +22,8 @@ export interface GenerateInvitationOptions {
   guestName?: string;
   guestContact?: string;
   contactType?: ContactType;
+  guestCurrencyMode?: GuestCurrencyMode;
+  guestMultiplier?: GuestMultiplier;
 }
 
 /**
@@ -34,6 +38,8 @@ export interface InvitationData {
   createdAt: string;
   durationHours: number;
   pricingMode: PricingMode;
+  guestCurrencyMode?: GuestCurrencyMode;
+  guestMultiplier?: GuestMultiplier;
   createdBy: {
     email: string;
     name: string;
@@ -63,6 +69,8 @@ export interface ValidationResult {
   guestContact?: string | null;
   contactType?: ContactType | null;
   isPinBound?: boolean;
+  guestCurrencyMode?: GuestCurrencyMode;
+  guestMultiplier?: GuestMultiplier;
 }
 
 /**
@@ -127,4 +135,7 @@ export const INVITATION_STORAGE_KEYS = {
   PIN_VERIFIED: 'invitation-pin-verified',
   // Device-bound token for single-device enforcement
   DEVICE_TOKEN: 'invitation-device-token',
+  // Guest currency/multiplier assigned by asesor
+  GUEST_CURRENCY_MODE: 'invitation-guest-currency-mode',
+  GUEST_MULTIPLIER: 'invitation-guest-multiplier',
 } as const;

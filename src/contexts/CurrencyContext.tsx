@@ -11,10 +11,11 @@ import { useGoogleAuth } from './GoogleAuthContext';
 import { useAuthContext } from './AuthContext';
 import { useTRM } from '../hooks/useTRM';
 import { STORAGE_KEYS } from '../constants/storage-keys';
+import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import { formatCurrency as _fmtCurrency, formatFullCurrency as _fmtFullCurrency } from '../utils/formatting';
 
 type CurrencyMode = 'COP' | 'USD';
-export type UsdMultiplier = 2 | 3 | 4;
+export type UsdMultiplier = 1 | 2 | 3 | 4;
 const DEFAULT_MULTIPLIER: UsdMultiplier = 4;
 
 interface CurrencyContextType {
@@ -76,11 +77,17 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
   const { trmRate, isLoading: isTrmLoading } = useTRM();
 
   const userEmail = user?.email?.toLowerCase() ?? '';
-  const isAdmin = accessLevel === 'admin';
-  const canToggleCurrency = isAdmin || AUTHORIZED_EMAILS.includes(userEmail);
+  const isGuest = accessLevel === 'guest';
+  const isStaff = accessLevel === 'admin' || accessLevel === 'embajador' || accessLevel === 'asesor';
+  const canToggleCurrency = !isGuest && (isStaff || AUTHORIZED_EMAILS.includes(userEmail));
 
   const [currency, setCurrency] = useState<CurrencyMode>(() => {
     try {
+      // Guests get currency from sessionStorage (set by InvitationPage)
+      if (isGuest) {
+        const guestCurrency = sessionStorage.getItem(INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE);
+        if (guestCurrency === 'USD') return 'USD';
+      }
       const saved = localStorage.getItem(STORAGE_KEYS.CURRENCY_MODE);
       return saved === 'USD' ? 'USD' : 'COP';
     } catch {
@@ -90,9 +97,15 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
 
   const [multiplier, setMultiplierState] = useState<UsdMultiplier>(() => {
     try {
+      // Guests get multiplier from sessionStorage (set by InvitationPage)
+      if (isGuest) {
+        const guestMult = sessionStorage.getItem(INVITATION_STORAGE_KEYS.GUEST_MULTIPLIER);
+        const guestParsed = guestMult ? Number(guestMult) : NaN;
+        if (guestParsed === 1 || guestParsed === 2 || guestParsed === 3 || guestParsed === 4) return guestParsed;
+      }
       const saved = localStorage.getItem(STORAGE_KEYS.CURRENCY_MULTIPLIER);
       const parsed = saved ? Number(saved) : NaN;
-      return (parsed === 2 || parsed === 3 || parsed === 4) ? parsed : DEFAULT_MULTIPLIER;
+      return (parsed === 1 || parsed === 2 || parsed === 3 || parsed === 4) ? parsed : DEFAULT_MULTIPLIER;
     } catch {
       return DEFAULT_MULTIPLIER;
     }
@@ -107,12 +120,12 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     }
   }, []);
 
-  // Reset to COP if user changes and is not authorized
+  // Reset to COP if user changes and is not authorized (guests keep asesor-assigned currency)
   useEffect(() => {
-    if (!canToggleCurrency && currency !== 'COP') {
+    if (!isGuest && !canToggleCurrency && currency !== 'COP') {
       setCurrency('COP');
     }
-  }, [canToggleCurrency, currency]);
+  }, [isGuest, canToggleCurrency, currency]);
 
   // Persist preference
   useEffect(() => {

@@ -462,8 +462,8 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
           </Box>
         )}
 
-        {/* USD Multiplier Row - Only for admin + currency-authorized */}
-        {canToggleCurrency && isAdmin && (
+        {/* USD Multiplier Row - Only for currency-authorized */}
+        {canToggleCurrency && (
           <Box
             sx={{
               display: 'flex',
@@ -520,6 +520,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                 },
               }}
             >
+              <ToggleButton value={1}>x1</ToggleButton>
               <ToggleButton value={2}>x2</ToggleButton>
               <ToggleButton value={3}>x3</ToggleButton>
               <ToggleButton value={4}>x4</ToggleButton>
