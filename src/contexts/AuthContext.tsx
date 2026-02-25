@@ -139,9 +139,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setAuthState(newState);
       setStoredAuth(newState);
     } else if (!isGoogleSignedIn && !googleUser) {
-      // User signed out from Google - reset to unauthenticated
-      setAuthState({ isAuthenticated: false, accessLevel: 'guest' });
-      clearStoredAuth();
+      // Don't reset if there's an active guest invitation session
+      // (restoreGuestSession already set auth from localStorage on mount)
+      const hasGuestSession = localStorage.getItem(GUEST_PERSIST_KEY);
+      if (!hasGuestSession) {
+        setAuthState({ isAuthenticated: false, accessLevel: 'guest' });
+        clearStoredAuth();
+      }
     }
   }, [isGoogleSignedIn, isGoogleAuthorized, googleUser?.accessLevel, googleUser, isGoogleLoading]);
 
