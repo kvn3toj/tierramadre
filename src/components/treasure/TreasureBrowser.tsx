@@ -312,6 +312,7 @@ export default function TreasureBrowser({
             setShapeFilter={setShapeFilter}
             setCantidadFilter={setCantidadFilter}
             setCategoriaFilter={setCategoriaFilter}
+            setHeroCategoryFilter={setHeroCategoryFilter}
             setPriceRange={setPriceRange}
             showFavoritesOnly={showFavoritesOnly}
             setShowFavoritesOnly={setShowFavoritesOnly}

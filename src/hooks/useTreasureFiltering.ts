@@ -123,6 +123,19 @@ export function useTreasureFiltering({
   // Track if priceRange has been initialized to prevent re-syncing
   const priceRangeInitialized = useRef(!!initialFilters.priceRange);
 
+  // Auto-clear heroCategory when user manually selects a conflicting filter.
+  // Without this, heroCategory (hidden on mobile) silently AND-conflicts with
+  // categoriaFilter/typeFilter/cantidadFilter, producing 0 results.
+  const heroCategoryRef = useRef(heroCategoryFilter);
+  heroCategoryRef.current = heroCategoryFilter;
+
+  useEffect(() => {
+    const hasManualOverride = categoriaFilter !== 'all' || typeFilter !== 'all' || cantidadFilter !== 'all';
+    if (hasManualOverride && heroCategoryRef.current !== 'all') {
+      setHeroCategoryFilter('all');
+    }
+  }, [categoriaFilter, typeFilter, cantidadFilter]);
+
   // Sync priceRange to full range when treasure loads (ensures all products shown by default)
   useEffect(() => {
     if (!priceRangeInitialized.current && treasure.length > 0 && priceMinMax.max > 0) {

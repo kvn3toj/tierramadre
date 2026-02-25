@@ -11,7 +11,7 @@ import { Search, X, Heart, SlidersHorizontal } from 'lucide-react';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
 import { accentColors } from '../../../design-system';
 import { ActiveFilterChips } from '../';
-import type { TreasureFilters, StatusFilter, TypeFilter } from '../../../hooks/useTreasureFiltering';
+import type { TreasureFilters, StatusFilter, TypeFilter, HeroCategoryFilter } from '../../../hooks/useTreasureFiltering';
 
 export interface MobileSearchBarProps {
   search: string;
@@ -30,6 +30,7 @@ export interface MobileSearchBarProps {
   setShapeFilter: (v: string) => void;
   setCantidadFilter: (v: string) => void;
   setCategoriaFilter: (v: string) => void;
+  setHeroCategoryFilter: (v: HeroCategoryFilter) => void;
   setPriceRange: (v: [number, number]) => void;
   // Favorites
   showFavoritesOnly: boolean;
@@ -57,6 +58,7 @@ export default function MobileSearchBar({
   setShapeFilter,
   setCantidadFilter,
   setCategoriaFilter,
+  setHeroCategoryFilter,
   setPriceRange,
   showFavoritesOnly,
   setShowFavoritesOnly,
@@ -241,6 +243,7 @@ export default function MobileSearchBar({
             onClearShape={() => setShapeFilter('all')}
             onClearCantidad={() => setCantidadFilter('all')}
             onClearCategoria={() => setCategoriaFilter('all')}
+            onClearHeroCategory={() => setHeroCategoryFilter('all')}
             onClearPrice={() => setPriceRange([priceMinMax.min, priceMinMax.max])}
             compact
           />
