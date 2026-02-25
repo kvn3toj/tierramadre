@@ -46,6 +46,7 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/916/6) 1.26 Cts.mov', imagen: '/images/CEO/916/6) 1.26 Cts.mov',
     certificateUrl: '/images/CEO/916/6)Certificate1.26 Cts.png',
+    description: 'A quiet fire trapped in emerald glass. Its precision cut lets the light speak in soft, knowing tones.',
   },
   {
     item: 917, nombre: 'Verdant Crown', peso: 2.20, color: 'Intense Green' as TreasureItem['color'],
@@ -54,14 +55,16 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/917/7) 2.20 Cts.mp4', imagen: '/images/CEO/917/7) 2.20 Cts.mp4',
     certificateUrl: '/images/CEO/917/7) Certificate 2.20Cts.png',
+    description: 'Born to reign. A generous cushion silhouette crowned with deep Colombian green — the kind of stone that commands a room.',
   },
   {
     item: 913, nombre: 'Forest Hug', peso: 1.04, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Heart', medidas: '',
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Emerald', medidas: '',
     precioCOP: 0, precioInternacional: 30857, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/913/3-1.04Cts.mp4', imagen: '/images/CEO/913/3-1.04Cts.mp4',
     certificateUrl: '/images/CEO/913/3)Certificate-1.04.png',
+    description: 'Warm as the canopy at dawn. A heart-shaped stone that carries the tenderness of the Colombian highlands in every facet.',
   },
   {
     item: 914, nombre: 'Light Echo', peso: 0.67, color: 'Intense Green' as TreasureItem['color'],
@@ -70,14 +73,16 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/914/4-0.67-Cts.mp4', imagen: '/images/CEO/914/4-0.67-Cts.mp4',
     certificateUrl: '/images/CEO/914/4) Certificate 0.67 Cts.jpg',
+    description: 'Small but unforgettable. This emerald-cut gem catches light like a memory you can\'t quite let go of.',
   },
   // --- Being issued ---
   {
     item: 911, nombre: 'Song of the River', peso: 1.825, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Emerald', medidas: '',
+    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Heart', medidas: '',
     precioCOP: 0, precioInternacional: 22857, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/911/1-1.825Cts.mp4', imagen: '/images/CEO/911/1-1.825Cts.mp4',
+    description: 'Shaped like a heart, moved like water. This stone hums with the rhythm of Boyacá\'s hidden rivers.',
   },
   {
     item: 912, nombre: 'Soul of the Mountain', peso: 1.93, color: 'Intense Green' as TreasureItem['color'],
@@ -85,6 +90,7 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     precioCOP: 0, precioInternacional: 36914, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/912/2-1.93Cts.mp4', imagen: '/images/CEO/912/2-1.93Cts.mp4',
+    description: 'Deep, ancient, unyielding. Nearly two carats of raw Colombian power, cut to reveal the mountain\'s innermost secret.',
   },
   {
     item: 915, nombre: 'Kingdom of Peace', peso: 3.56, color: 'Intense Green' as TreasureItem['color'],
@@ -92,6 +98,7 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     precioCOP: 0, precioInternacional: 12000, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
     fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
     videoUrl: '/images/CEO/915/5-3.54Cts.mp4', imagen: '/images/CEO/915/5-3.54Cts.mp4',
+    description: 'The collection\'s sovereign. At 3.56 carats, this cushion-cut emerald is a territory unto itself — vast, serene, and absolutely commanding.',
   },
 ];
 
@@ -365,6 +372,16 @@ export default function CollectionPage() {
     const text = `Hi ${contact.name}, I saw your exclusive collection on Tierra Madre and I'd like to know more.`;
     window.open(`https://wa.me/${contact.phone}?text=${encodeURIComponent(text)}`, '_blank');
   };
+
+  const handleProductShare = useCallback(async (product: TreasureItem) => {
+    const url = window.location.href;
+    const text = `${product.nombre} - ${product.peso} ct Colombian Emerald`;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Tierra Madre', text, url }); } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+    }
+  }, []);
 
   // Block restricted slugs
   if (isBlocked) {
@@ -650,6 +667,7 @@ export default function CollectionPage() {
         product={selectedProduct}
         onClose={handleCloseDialog}
         showUSD
+        onShare={handleProductShare}
       />
     </Box>
   );

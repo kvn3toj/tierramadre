@@ -290,5 +290,8 @@ export interface TreasureItem {
 
   // Certificate
   certificateUrl?: string;           // URL to certificate image/PDF
+
+  // Description
+  description?: string;              // Short evocative text giving the emerald personality
 }
 

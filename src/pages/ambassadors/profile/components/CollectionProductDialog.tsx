@@ -16,9 +16,10 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { X, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ShieldCheck, ChevronLeft, ChevronRight, Gem, Ruler, Share2, Clock } from 'lucide-react';
 import { TreasureItem } from '../../../../types';
 import { brand, lightTokens, darkTokens, legacyTypography as typography } from '../../../../design-system';
+import { emeraldCore, goldAccent } from '../../../../design-system/tokens/colors';
 import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
 import { accentuate } from '../../../../pages/collection/CollectionPage';
 
@@ -44,12 +45,14 @@ interface CollectionProductDialogProps {
   onClose: () => void;
   /** When true, shows price in USD directly instead of using CurrencyContext */
   showUSD?: boolean;
+  onShare?: (product: TreasureItem) => void;
 }
 
 export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = ({
   product,
   onClose,
   showUSD = false,
+  onShare,
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -408,63 +411,125 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
             </Box>
 
             {/* Product Info */}
-            <Box sx={{ p: { xs: 2.5, sm: 3 } }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1.5 }}>
-                {accentuate(product.nombre)}
-              </Typography>
+            <Box sx={{ px: { xs: 2, sm: 2.5 }, pt: 2, pb: { xs: 2, sm: 2.5 } }}>
+              {/* Name + metadata row */}
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1.5, mb: 1.5 }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    sx={{
+                      fontSize: { xs: '1.35rem', sm: '1.5rem' },
+                      fontWeight: 700,
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {accentuate(product.nombre)}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, mt: 0.5 }}>
+                    {product.certificateUrl ? (
+                      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.3 }}>
+                        <ShieldCheck size={11} color={emeraldCore.primary} />
+                        <Typography sx={{ fontSize: '12px', fontWeight: 600, color: emeraldCore.primary }}>
+                          Certified
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.3 }}>
+                        <Clock size={11} color={goldAccent.dark} />
+                        <Typography sx={{ fontSize: '12px', fontWeight: 500, color: goldAccent.dark }}>
+                          Being issued
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+                {/* Share icon button */}
+                {onShare && (
+                  <IconButton
+                    onClick={() => onShare(product)}
+                    size="small"
+                    sx={{
+                      mt: 0.25,
+                      color: isLight ? 'rgba(60,60,67,0.4)' : 'rgba(235,235,245,0.4)',
+                      '&:hover': { color: emeraldCore.primary },
+                    }}
+                  >
+                    <Share2 size={18} />
+                  </IconButton>
+                )}
+              </Box>
 
-              {/* Specs Grid */}
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 1.5,
-                  mb: 2,
-                }}
-              >
+              {/* Spec pills */}
+              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 1.5 }}>
                 {typeof product.peso === 'number' && (
-                  <SpecItem label="Weight" value={`${product.peso} ct`} isLight={isLight} />
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      px: 1.25,
+                      py: 0.5,
+                      borderRadius: 6,
+                      bgcolor: isLight ? 'rgba(60,60,67,0.06)' : 'rgba(235,235,245,0.08)',
+                    }}
+                  >
+                    <Gem size={13} style={{ opacity: 0.5 }} />
+                    <Typography sx={{ fontSize: '13px', fontWeight: 500 }}>
+                      {product.peso} ct
+                    </Typography>
+                  </Box>
                 )}
                 {product.talla && (
-                  <SpecItem label="Cut" value={product.talla} isLight={isLight} />
-                )}
-                {product.medidas && (
-                  <SpecItem label="Dimensions" value={product.medidas} isLight={isLight} />
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      px: 1.25,
+                      py: 0.5,
+                      borderRadius: 6,
+                      bgcolor: isLight ? 'rgba(60,60,67,0.06)' : 'rgba(235,235,245,0.08)',
+                    }}
+                  >
+                    <Ruler size={13} style={{ opacity: 0.5 }} />
+                    <Typography sx={{ fontSize: '13px', fontWeight: 500 }}>
+                      {product.talla}
+                    </Typography>
+                  </Box>
                 )}
               </Box>
 
               {/* Price */}
-              <Box sx={{ mt: 1 }}>
-                {showUSD && (product.precioInternacional || product.precioCOP) ? (
-                  <>
+              {showUSD && (product.precioInternacional || product.precioCOP) ? (
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                  <Typography
+                    sx={{
+                      fontSize: { xs: '1.5rem', sm: '1.65rem' },
+                      fontWeight: 700,
+                      color: emeraldCore.primary,
+                      fontFamily: typography.fontFamily.mono,
+                      fontFeatureSettings: '"tnum"',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {formatUSD(product.precioInternacional || product.precioCOP)}
+                  </Typography>
+                  {typeof product.peso === 'number' && product.peso > 0 && (
                     <Typography
                       sx={{
-                        fontSize: { xs: '1.3rem', sm: '1.5rem' },
-                        fontWeight: 700,
-                        color: brand.emerald[600],
+                        fontSize: '13px',
+                        color: isLight ? 'rgba(60,60,67,0.4)' : 'rgba(235,235,245,0.4)',
                         fontFamily: typography.fontFamily.mono,
                         fontFeatureSettings: '"tnum"',
                       }}
                     >
-                      {formatUSD(product.precioInternacional || product.precioCOP)} USD
+                      {formatUSD(Math.round((product.precioInternacional || product.precioCOP) / product.peso))}/ct
                     </Typography>
-                    {typeof product.peso === 'number' && product.peso > 0 && (
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: 'text.secondary',
-                          fontFamily: typography.fontFamily.mono,
-                          fontFeatureSettings: '"tnum"',
-                        }}
-                      >
-                        {formatUSD(Math.round((product.precioInternacional || product.precioCOP) / product.peso))}/ct
-                      </Typography>
-                    )}
-                  </>
-                ) : (
-                  <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />
-                )}
-              </Box>
+                  )}
+                </Box>
+              ) : (
+                <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />
+              )}
             </Box>
           </>
         )}
@@ -473,21 +538,3 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
   );
 };
 
-function SpecItem({ label, value, isLight }: { label: string; value: string; isLight: boolean }) {
-  return (
-    <Box
-      sx={{
-        p: 1.5,
-        borderRadius: 2,
-        bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.muted,
-      }}
-    >
-      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-        {label}
-      </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-        {value}
-      </Typography>
-    </Box>
-  );
-}
