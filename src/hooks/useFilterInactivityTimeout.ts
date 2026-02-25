@@ -15,12 +15,15 @@ interface UseFilterInactivityTimeoutOptions {
   hasFilters: boolean;
   clearFilters: () => void;
   inactivityTimeoutMinutes?: number;
+  /** When true, filters came from URL params (e.g. hero category navigation) — skip the stale-session mount clear */
+  hasUrlFilters?: boolean;
 }
 
 export function useFilterInactivityTimeout({
   hasFilters,
   clearFilters,
   inactivityTimeoutMinutes = DEFAULT_INACTIVITY_TIMEOUT_MINUTES,
+  hasUrlFilters = false,
 }: UseFilterInactivityTimeoutOptions): void {
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -72,13 +75,15 @@ export function useFilterInactivityTimeout({
     }
   }, [clearFilters, clearStoredActivity]);
 
-  // Check if filters should be cleared on mount (new browser session = no sessionStorage)
+  // Check if filters should be cleared on mount (new browser session = no sessionStorage).
+  // Skip if filters came from URL params — those are intentional navigations (e.g. hero tabs).
   useEffect(() => {
+    if (hasUrlFilters) return;
     const stored = sessionStorage.getItem(FILTER_ACTIVITY_KEY);
     if (!stored && hasFilters) {
       clearFiltersAndUrl();
     }
-  }, []); // Only run on mount
+  }, []); // Only run on mount // eslint-disable-line react-hooks/exhaustive-deps
 
   // Clear filters after inactivity (only if filters are active)
   useEffect(() => {

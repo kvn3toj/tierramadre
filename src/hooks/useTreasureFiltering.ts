@@ -269,11 +269,15 @@ export function useTreasureFiltering({
     );
   }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, cityFilter, categoriaFilter, coleccionFilter, heroCategoryFilter, priceRange, priceMinMax]);
 
-  // Inactivity timeout — clears filters after idle period
+  // Inactivity timeout — clears filters after idle period.
+  // Pass hasUrlFilters so the mount effect doesn't clear intentional URL navigations
+  // (e.g. hero category tabs from home page).
+  const hasUrlFilters = Object.keys(initialFilters).length > 0;
   useFilterInactivityTimeout({
     hasFilters,
     clearFilters,
     inactivityTimeoutMinutes,
+    hasUrlFilters,
   });
 
   // Memoize filters object to prevent infinite re-render loops in URL sync
