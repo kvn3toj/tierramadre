@@ -400,7 +400,7 @@ const ValuationPage: React.FC = () => {
                 <StatCard
                   label="Periodo"
                   value={appreciation.years}
-                  suffix=" anos"
+                  suffix=" años"
                 />
               </Box>
             </CardContent>

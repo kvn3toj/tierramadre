@@ -44,7 +44,7 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({
   >
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
       <Typography sx={{ fontSize: '13px', color: 'text.secondary', fontWeight: 500 }}>
-        Periodo de Analisis
+        Periodo de Análisis
       </Typography>
       <Box
         sx={{
@@ -61,7 +61,7 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({
           {startYear} - {endYear}
         </Typography>
         <Typography sx={{ fontSize: '11px', color: 'text.secondary' }}>
-          ({yearsBack} anos)
+          ({yearsBack} años)
         </Typography>
       </Box>
     </Box>
@@ -73,7 +73,7 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({
       step={1}
       marks={marks}
       valueLabelDisplay="auto"
-      valueLabelFormat={(v) => `${v} anos`}
+      valueLabelFormat={(v) => `${v} años`}
       sx={{
         color: emeraldCore.primary,
         height: 8,
@@ -133,7 +133,7 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({
         opacity: 0.7,
       }}
     >
-      Desliza para ajustar el rango de tiempo del analisis
+      Desliza para ajustar el rango de tiempo del análisis
     </Typography>
   </Box>
 );

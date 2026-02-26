@@ -16,7 +16,7 @@ export const StatCard: React.FC<StatCardProps> = ({ label, value, color = 'text.
   <Box sx={{ textAlign: 'center' }}>
     <Typography
       sx={{
-        fontSize: '10px',
+        fontSize: '11px',
         color: 'text.secondary',
         textTransform: 'uppercase',
         letterSpacing: '0.05em',
@@ -27,7 +27,7 @@ export const StatCard: React.FC<StatCardProps> = ({ label, value, color = 'text.
     </Typography>
     <Typography
       sx={{
-        fontSize: '1.75rem',
+        fontSize: '1.25rem',
         fontWeight: 700,
         color,
         lineHeight: 1,

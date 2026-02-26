@@ -30,7 +30,7 @@ export const OriginComparisonTable: React.FC<OriginComparisonTableProps> = ({ gl
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
         <Public sx={{ color: emeraldCore.primary }} />
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          Comparacion por Origen (2025)
+          Comparación por Origen (2025)
         </Typography>
       </Box>
 
@@ -43,7 +43,7 @@ export const OriginComparisonTable: React.FC<OriginComparisonTableProps> = ({ gl
                 Comercial
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>
-                Inversion
+                Inversión
               </TableCell>
             </TableRow>
           </TableHead>
