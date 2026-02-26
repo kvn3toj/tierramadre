@@ -289,7 +289,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
             />
           )}
 
-          {/* USD Multiplier - Only for currency-authorized */}
+          {/* Price Multiplier - Only for currency-authorized */}
           {canToggleCurrency && (
             <Box
               sx={{

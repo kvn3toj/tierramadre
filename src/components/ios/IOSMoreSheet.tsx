@@ -462,7 +462,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
           </Box>
         )}
 
-        {/* USD Multiplier Row - Only for currency-authorized */}
+        {/* Price Multiplier Row - Only for currency-authorized */}
         {canToggleCurrency && (
           <Box
             sx={{
