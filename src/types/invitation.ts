@@ -9,7 +9,7 @@ export type PricingMode = 'with_prices' | 'no_prices';
 export type InvitationStatus = 'pending' | 'active' | 'expired' | 'used';
 export type ContactType = 'email' | 'phone';
 export type GuestCurrencyMode = 'COP' | 'USD';
-export type GuestMultiplier = 1 | 2 | 3 | 4;
+export type GuestMultiplier = number; // 1.0–4.0 in 0.1 steps
 
 // Fixed 24-hour duration for all invitations
 export const INVITATION_DURATION_HOURS = 24;

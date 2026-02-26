@@ -10,9 +10,9 @@
 
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, IconButton, Backdrop, Chip, Switch, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Box, Typography, IconButton, Backdrop, Chip, Switch, Slider } from '@mui/material';
 import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport, AutoAwesome, PersonAdd } from '@mui/icons-material';
-import { alpha } from '@mui/material/styles';
+
 import { Vault, BarChart3, ShoppingBag } from 'lucide-react';
 import FeedbackWizard from '../feedback/FeedbackWizard';
 import { InvitationGenerator } from '../invitation';
@@ -26,7 +26,7 @@ import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsGuest, useCanCreateInvitations } from '../../hooks/useAuth';
 import { useIsAdmin, useIsStaff } from '../../hooks/usePermissions';
 import { usePriceShare } from '../../contexts/PriceShareContext';
-import { useCurrency, UsdMultiplier } from '../../contexts/CurrencyContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 export interface MoreToolConfig {
   id: string;
@@ -493,38 +493,36 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                 {t.settings.currencyMultiplierHint}
               </Typography>
             </Box>
-            <ToggleButtonGroup
-              value={multiplier}
-              exclusive
-              onChange={(_e, val) => {
-                if (val !== null) {
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 180 }}>
+              <Slider
+                value={multiplier}
+                onChange={(_e, val) => {
                   if ('vibrate' in navigator) navigator.vibrate(10);
-                  setMultiplier(val as UsdMultiplier);
-                }
-              }}
-              size="small"
-              sx={{
-                '& .MuiToggleButton-root': {
-                  px: 1.5,
-                  py: 0.5,
+                  setMultiplier(val as number);
+                }}
+                min={1}
+                max={4}
+                step={0.1}
+                valueLabelDisplay="auto"
+                valueLabelFormat={(v) => `x${v}`}
+                sx={{
+                  color: emeraldCore.dark,
+                  '& .MuiSlider-thumb': { width: 20, height: 20 },
+                  '& .MuiSlider-valueLabel': { fontSize: iosTypographyScale.footnote },
+                }}
+              />
+              <Typography
+                sx={{
                   fontSize: iosTypographyScale.footnote,
                   fontWeight: 600,
-                  color: 'var(--text-secondary)',
-                  borderColor: 'var(--border-default)',
-                  '&.Mui-selected': {
-                    backgroundColor: alpha(emeraldCore.dark, 0.12),
-                    color: emeraldCore.dark,
-                    borderColor: emeraldCore.dark,
-                    '&:hover': { backgroundColor: alpha(emeraldCore.dark, 0.18) },
-                  },
-                },
-              }}
-            >
-              <ToggleButton value={1}>x1</ToggleButton>
-              <ToggleButton value={2}>x2</ToggleButton>
-              <ToggleButton value={3}>x3</ToggleButton>
-              <ToggleButton value={4}>x4</ToggleButton>
-            </ToggleButtonGroup>
+                  color: emeraldCore.dark,
+                  minWidth: 28,
+                  textAlign: 'right',
+                }}
+              >
+                x{multiplier}
+              </Typography>
+            </Box>
           </Box>
         )}
 

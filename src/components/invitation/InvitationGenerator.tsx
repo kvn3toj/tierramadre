@@ -24,6 +24,7 @@ import {
   InputAdornment,
   ToggleButton,
   ToggleButtonGroup,
+  Slider,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -414,35 +415,35 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                     <ToggleButton value="USD">USD</ToggleButton>
                   </ToggleButtonGroup>
 
-                  {/* Multiplier selector - only when USD */}
+                  {/* Multiplier slider - only when USD */}
                   {guestCurrency === 'USD' && (
-                    <ToggleButtonGroup
-                      value={guestMultiplier}
-                      exclusive
-                      onChange={(_e, val) => { if (val !== null) setGuestMultiplier(val as GuestMultiplier); }}
-                      fullWidth
-                      size="small"
-                      sx={{
-                        '& .MuiToggleButton-root': {
-                          textTransform: 'none',
-                          fontWeight: 600,
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 1 }}>
+                      <Slider
+                        value={guestMultiplier}
+                        onChange={(_e, val) => setGuestMultiplier(val as number)}
+                        min={1}
+                        max={4}
+                        step={0.1}
+                        valueLabelDisplay="auto"
+                        valueLabelFormat={(v) => `x${v}`}
+                        sx={{
+                          color: brand.emerald[700],
+                          '& .MuiSlider-thumb': { width: 20, height: 20 },
+                          '& .MuiSlider-valueLabel': { fontSize: '0.75rem' },
+                        }}
+                      />
+                      <Typography
+                        sx={{
                           fontSize: '0.8rem',
-                          py: 0.5,
-                          borderColor: 'divider',
-                          '&.Mui-selected': {
-                            backgroundColor: `${brand.emerald[50]}`,
-                            color: brand.emerald[700],
-                            borderColor: brand.emerald[300],
-                            '&:hover': { backgroundColor: brand.emerald[100] },
-                          },
-                        },
-                      }}
-                    >
-                      <ToggleButton value={1}>x1</ToggleButton>
-                      <ToggleButton value={2}>x2</ToggleButton>
-                      <ToggleButton value={3}>x3</ToggleButton>
-                      <ToggleButton value={4}>x4</ToggleButton>
-                    </ToggleButtonGroup>
+                          fontWeight: 600,
+                          color: brand.emerald[700],
+                          minWidth: 28,
+                          textAlign: 'right',
+                        }}
+                      >
+                        x{guestMultiplier}
+                      </Typography>
+                    </Box>
                   )}
                 </Box>
               )}

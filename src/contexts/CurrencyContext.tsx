@@ -17,8 +17,15 @@ import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import { formatCurrency as _fmtCurrency, formatFullCurrency as _fmtFullCurrency } from '../utils/formatting';
 
 type CurrencyMode = 'COP' | 'USD';
-export type UsdMultiplier = 1 | 2 | 3 | 4;
+export type UsdMultiplier = number; // 1.0–4.0 in 0.1 steps
 const DEFAULT_MULTIPLIER: UsdMultiplier = 1;
+const MIN_MULTIPLIER = 1;
+const MAX_MULTIPLIER = 4;
+/** Clamp and round to nearest 0.1 */
+function normalizeMultiplier(value: number): number {
+  const clamped = Math.min(MAX_MULTIPLIER, Math.max(MIN_MULTIPLIER, value));
+  return Math.round(clamped * 10) / 10;
+}
 
 interface CurrencyContextType {
   currency: CurrencyMode;
@@ -103,11 +110,11 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
       if (isGuest) {
         const guestMult = sessionStorage.getItem(INVITATION_STORAGE_KEYS.GUEST_MULTIPLIER);
         const guestParsed = guestMult ? Number(guestMult) : NaN;
-        if (guestParsed === 1 || guestParsed === 2 || guestParsed === 3 || guestParsed === 4) return guestParsed;
+        if (!isNaN(guestParsed) && guestParsed >= MIN_MULTIPLIER && guestParsed <= MAX_MULTIPLIER) return normalizeMultiplier(guestParsed);
       }
       const saved = localStorage.getItem(STORAGE_KEYS.CURRENCY_MULTIPLIER);
       const parsed = saved ? Number(saved) : NaN;
-      return (parsed === 1 || parsed === 2 || parsed === 3 || parsed === 4) ? parsed : DEFAULT_MULTIPLIER;
+      return (!isNaN(parsed) && parsed >= MIN_MULTIPLIER && parsed <= MAX_MULTIPLIER) ? normalizeMultiplier(parsed) : DEFAULT_MULTIPLIER;
     } catch {
       return DEFAULT_MULTIPLIER;
     }
