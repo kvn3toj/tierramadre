@@ -67,7 +67,6 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/ambassadors': {
     title: t.pages.ambassadors.title,
     mode: 'large',
-    subtitle: t.pages.ambassadors.subtitle,
   },
   '/home': {
     title: 'Tierra Mädre',
