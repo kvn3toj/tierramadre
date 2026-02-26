@@ -2,7 +2,9 @@
  * CurrencyContext - COP/USD currency mode toggle
  *
  * - Gated to admins + whitelisted emails
- * - USD conversion: (precioCOP / TRM) * multiplier (x2/x3/x4, configurable by admin, default x4)
+ * - COP conversion: precioCOP * multiplier
+ * - USD conversion: (precioCOP / TRM) * multiplier
+ * - Multiplier (x1/x2/x3/x4, configurable by admin, default x4) applies to both currencies
  * - Persists preference in localStorage, resets on user change
  */
 
@@ -16,7 +18,7 @@ import { formatCurrency as _fmtCurrency, formatFullCurrency as _fmtFullCurrency 
 
 type CurrencyMode = 'COP' | 'USD';
 export type UsdMultiplier = 1 | 2 | 3 | 4;
-const DEFAULT_MULTIPLIER: UsdMultiplier = 4;
+const DEFAULT_MULTIPLIER: UsdMultiplier = 1;
 
 interface CurrencyContextType {
   currency: CurrencyMode;
@@ -146,7 +148,8 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
 
   const convertPrice = useCallback(
     (precioCOP: number): number => {
-      if (currency === 'COP' || !precioCOP) return precioCOP;
+      if (!precioCOP) return precioCOP;
+      if (currency === 'COP') return Math.round(precioCOP * multiplier);
       return Math.round((precioCOP / trmRate) * multiplier);
     },
     [currency, trmRate, multiplier],
