@@ -1,7 +1,7 @@
 # Dependencies
 node_modules/
 
-# Build
+# Build output
 dist/
 build/
 *.tsbuildinfo
@@ -12,6 +12,7 @@ vite.config.d.ts
 .env
 .env.local
 .env.*.local
+.env.vercel
 
 # IDE
 .idea/
@@ -31,21 +32,24 @@ public/emeralds/
 npm-debug.log*
 
 # Reference files (not source code)
-*.pdf
-!public/images/CEO/**/*.pdf
 *.webarchive
 Home.html
 Instagram.html
 Legado*.html
 *_files/
+
+# Vercel
 .vercel
 
-# Large files (>5MB should not be in git)
-release/
-docs/*.mp4
+# Large media — use Google Drive instead
+docs/media/
 docs/brand/
+docs/catallogs/
+docs/inventario/
+docs/reference/*.pdf
+docs/reference/*.xlsx
 
-# Large binary formats - use Google Drive instead
+# Large binary formats
 *.pptx
 *.ppt
 *.ai
@@ -73,12 +77,14 @@ docs/brand/
 public/slides/
 public/catalog-media/
 
-# Large files - Electron builds
-release/
-.env*.local
-.env.vercel
+# Exports and test artifacts
 exports/
 downloads/
+test-screenshots/
+test-results/
 
 # Gallery images (served from Cloudinary)
 public/gallery/
+
+# Plugin files
+*.plugin

@@ -2,7 +2,7 @@
  * Theme Context - Dark/Light Mode Support
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import { brandColors, iosSpacing, iosBorderRadius } from '../theme';
 import { STORAGE_KEYS } from '../constants/storage-keys';
@@ -104,15 +104,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   }, [mode]);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
+  }, []);
 
-  const setTheme = (newMode: ThemeMode) => {
+  const setTheme = useCallback((newMode: ThemeMode) => {
     setMode(newMode);
-  };
+  }, []);
 
-  const theme = createTheme({
+  const theme = useMemo(() => createTheme({
     palette: {
       mode,
       primary: {
@@ -183,10 +183,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         },
       },
     },
-  });
+  }), [mode]);
+
+  const contextValue = useMemo(() => ({ mode, toggleTheme, setTheme }), [mode, toggleTheme, setTheme]);
 
   return (
-    <ThemeContext.Provider value={{ mode, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={contextValue}>
       <MuiThemeProvider theme={theme}>{children}</MuiThemeProvider>
     </ThemeContext.Provider>
   );

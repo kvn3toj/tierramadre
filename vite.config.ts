@@ -4,7 +4,6 @@ import react from '@vitejs/plugin-react'
 // import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  // Use relative paths for Electron compatibility
   base: '/',
   plugins: [
     react(),

@@ -5,7 +5,7 @@
  * Refactored to extract URL sync, filter tracking, active chips, mobile search,
  * empty state, and desktop filter toolbar into separate components.
  */
-import { useState, useMemo, useCallback, useRef, useEffect, } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect, useDeferredValue } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -147,6 +147,15 @@ export default function TreasureBrowser({
   // Comparison hook
   const comparison = useComparison();
 
+  // Memoized favorites list — avoids rebuilding on every render
+  const favoriteIds = useMemo(
+    () => allTreasure.map(i => i.item).filter(id => isFavorite(id)),
+    [allTreasure, isFavorite]
+  );
+
+  // Defer filtered results so search input stays responsive with 500+ items
+  const deferredFilteredTreasure = useDeferredValue(filteredTreasure);
+
   // Aria-live announcements for filter results (WCAG 4.1.3)
   const { announce } = useLiveRegion();
   const prevFilteredCount = useRef(filteredTreasure.length);
@@ -248,6 +257,34 @@ export default function TreasureBrowser({
     setCertDialogOpen(false);
     setSelectedItem(null);
   }, [selectedItem]);
+
+  // Destructure comparison for granular deps — toggleComparison is stable across selection changes
+  const { isSelected: isComparisonSelected, toggleComparison, canAddMore: canAddToComparison } = comparison;
+
+  // Memoized renderCard — callbacks are stable refs; GridCard memo skips callback comparison
+  const renderCard = useCallback((props: {
+    item: TreasureItem;
+    isFavorite: boolean;
+    onItemClick: (item: TreasureItem) => void;
+    onCertClick: (item: TreasureItem) => void;
+    onToggleFavorite: (itemId: number) => void;
+    isMobile: boolean;
+  }) => (
+    <GridCard
+      item={props.item}
+      isFavorite={props.isFavorite}
+      onItemClick={props.onItemClick}
+      onCertClick={props.onCertClick}
+      onToggleFavorite={props.onToggleFavorite}
+      isMobile={props.isMobile}
+      viewCount={getViewCount(props.item.item)}
+      isAdmin={isAdmin}
+      isLoadingThumbnails={isLoadingThumbnails}
+      isSelectedForComparison={isComparisonSelected(props.item.item)}
+      onToggleComparison={toggleComparison}
+      canAddToComparison={canAddToComparison}
+    />
+  ), [getViewCount, isAdmin, isLoadingThumbnails, isComparisonSelected, toggleComparison, canAddToComparison]);
 
   // Props for FilterContent
   const filterContentProps: FilterContentProps = {
@@ -477,25 +514,13 @@ export default function TreasureBrowser({
       {/* Treasure Grid/List */}
       {viewMode === 'grid' ? (
         <VirtualGrid
-          items={showFavoritesOnly ? visibleItems : filteredTreasure}
-          favorites={allTreasure.map(i => i.item).filter(id => isFavorite(id))}
+          items={showFavoritesOnly ? visibleItems : deferredFilteredTreasure}
+          favorites={favoriteIds}
           onItemClick={handleItemClick}
           onCertClick={handleCertClick}
           onToggleFavorite={toggleFavorite}
           onScrollDirectionChange={handleScrollDirectionChange}
-          renderCard={(props) => (
-            <GridCard
-              item={props.item}
-              onItemClick={props.onItemClick}
-              isMobile={props.isMobile}
-              viewCount={getViewCount(props.item.item)}
-              isAdmin={isAdmin}
-              isLoadingThumbnails={isLoadingThumbnails}
-              isSelectedForComparison={comparison.isSelected(props.item.item)}
-              onToggleComparison={() => comparison.toggleComparison(props.item)}
-              canAddToComparison={comparison.canAddMore}
-            />
-          )}
+          renderCard={renderCard}
         />
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -504,9 +529,9 @@ export default function TreasureBrowser({
               key={item.item}
               item={item}
               isFavorite={isFavorite(item.item)}
-              onCertClick={() => handleCertClick(item)}
-              onItemClick={() => handleItemClick(item)}
-              onToggleFavorite={() => toggleFavorite(item.item)}
+              onCertClick={handleCertClick}
+              onItemClick={handleItemClick}
+              onToggleFavorite={toggleFavorite}
             />
           ))}
         </Box>

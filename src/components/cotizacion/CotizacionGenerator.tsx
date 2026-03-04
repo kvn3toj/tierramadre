@@ -14,8 +14,6 @@ import {
   Alert,
   Button,
 } from '@mui/material';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import { documentShadows, cssTransition } from '../../design-system/tokens';
 import { useTreasure } from '../../hooks/useTreasure';
 import { useCotizacion } from '../../hooks/useCotizacion';
@@ -326,6 +324,11 @@ export default function CotizacionGenerator() {
     if (!quotationRef.current) return;
 
     try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
+
       const contentElement = quotationRef.current;
       const contentWidth = contentElement.offsetWidth;
       const contentHeight = contentElement.offsetHeight;

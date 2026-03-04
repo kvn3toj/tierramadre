@@ -5,7 +5,7 @@
  * Provides tracking functions and achievement state to all components.
  */
 
-import React, { createContext, useContext, useCallback, useEffect, useRef, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useCallback, useEffect, useRef, useState, useMemo, ReactNode } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import type {
   AnalyticsEvent,
@@ -422,17 +422,18 @@ export const TrackingProvider: React.FC<TrackingProviderProps> = ({ children }) 
   }, []);
 
   // Get unlocked achievements as objects
-  const unlockedAchievements = ACHIEVEMENTS.filter(a =>
-    storage.achievements.unlocked.includes(a.id)
+  const unlockedAchievements = useMemo(() =>
+    ACHIEVEMENTS.filter(a => storage.achievements.unlocked.includes(a.id)),
+    [storage.achievements.unlocked]
   );
 
   // Level info
-  const levelInfo = getLevelFromXp(storage.achievements.totalXp);
+  const levelInfo = useMemo(() => getLevelFromXp(storage.achievements.totalXp), [storage.achievements.totalXp]);
 
   // Calculate total product views from progress
   const totalProductViews = storage.achievements.progress.products_viewed || 0;
 
-  const value: TrackingContextType = {
+  const value = useMemo<TrackingContextType>(() => ({
     track,
     trackPageView,
     achievements: storage.achievements,
@@ -447,7 +448,11 @@ export const TrackingProvider: React.FC<TrackingProviderProps> = ({ children }) 
     getSessionDuration,
     exportAnalytics,
     clearAnalytics,
-  };
+  }), [
+    track, trackPageView, storage, unlockedAchievements, recentAchievement,
+    dismissAchievement, checkAchievements, getAchievementProgress, levelInfo,
+    totalProductViews, getSessionDuration, exportAnalytics, clearAnalytics,
+  ]);
 
   return (
     <TrackingContext.Provider value={value}>

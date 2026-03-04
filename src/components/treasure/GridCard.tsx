@@ -42,11 +42,11 @@ import {
 interface GridCardProps {
   item: TreasureItem;
   isFavorite?: boolean;
-  onItemClick: () => void;
-  onCertClick?: () => void;
-  onToggleFavorite?: () => void;
+  onItemClick: (item: TreasureItem) => void;
+  onCertClick?: (item: TreasureItem) => void;
+  onToggleFavorite?: (itemId: number) => void;
   isSelectedForComparison?: boolean;
-  onToggleComparison?: () => void;
+  onToggleComparison?: (item: TreasureItem) => void;
   canAddToComparison?: boolean;
   isMobile?: boolean;
   /** Whether batch thumbnails are still loading from the API */
@@ -81,10 +81,14 @@ function GridCard({
   const colorDot = getColorDot(item.color);
   const isLoose = !item.isJewelry;
 
+  const handleItemClick = useCallback(() => {
+    onItemClick(item);
+  }, [onItemClick, item]);
+
   const handleCompareClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    onToggleComparison?.();
-  }, [onToggleComparison]);
+    onToggleComparison?.(item);
+  }, [onToggleComparison, item]);
 
   const handlePrefetch = useCallback(() => {
     prefetchRoute('product');
@@ -93,7 +97,7 @@ function GridCard({
   return (
     <Card
       elevation={0}
-      onClick={onItemClick}
+      onClick={handleItemClick}
       onMouseEnter={handlePrefetch}
       onFocus={handlePrefetch}
       role="article"
@@ -348,8 +352,9 @@ function GridCard({
   );
 }
 
-// Note: Memoization can't track shouldShowPrices from context, but that's fine
-// since context changes will trigger re-render anyway
+// Memo comparison skips callback props — they are stable parent refs or excluded
+// intentionally so that unstable wrappers don't defeat memoization.
+// Context-derived values (shouldShowPrices) trigger re-render via context anyway.
 export default React.memo(GridCard, (prevProps, nextProps) => {
   return (
     prevProps.item.item === nextProps.item.item &&
@@ -362,11 +367,6 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.viewCount === nextProps.viewCount &&
     prevProps.isAdmin === nextProps.isAdmin &&
     prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
-    prevProps.canAddToComparison === nextProps.canAddToComparison &&
-    // Callback props - compare by reference stability (must be memoized in parent)
-    prevProps.onItemClick === nextProps.onItemClick &&
-    prevProps.onCertClick === nextProps.onCertClick &&
-    prevProps.onToggleFavorite === nextProps.onToggleFavorite &&
-    prevProps.onToggleComparison === nextProps.onToggleComparison
+    prevProps.canAddToComparison === nextProps.canAddToComparison
   );
 });

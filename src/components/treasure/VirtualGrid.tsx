@@ -30,9 +30,9 @@ interface VirtualGridProps {
   renderCard: (props: {
     item: TreasureItem;
     isFavorite: boolean;
-    onItemClick: () => void;
-    onCertClick: () => void;
-    onToggleFavorite: () => void;
+    onItemClick: (item: TreasureItem) => void;
+    onCertClick: (item: TreasureItem) => void;
+    onToggleFavorite: (itemId: number) => void;
     isMobile: boolean;
   }) => React.ReactNode;
   /** Minimum height for the grid container */
@@ -58,7 +58,7 @@ const DESKTOP_GAP = 16; // 16pt - 2x base for desktop
 interface GridCellProps {
   items: TreasureItem[];
   columnCount: number;
-  favorites: number[];
+  favoritesSet: Set<number>;
   onItemClick: (item: TreasureItem) => void;
   onCertClick: (item: TreasureItem) => void;
   onToggleFavorite: (itemId: number) => void;
@@ -88,7 +88,7 @@ function CellRenderer({
   style,
   items,
   columnCount,
-  favorites,
+  favoritesSet,
   onItemClick,
   onCertClick,
   onToggleFavorite,
@@ -104,7 +104,7 @@ function CellRenderer({
   }
 
   const item = items[index];
-  const isFavorite = favorites.includes(item.item);
+  const isFavorite = favoritesSet.has(item.item);
 
   return (
     <div
@@ -122,9 +122,9 @@ function CellRenderer({
       {renderCard({
         item,
         isFavorite,
-        onItemClick: () => onItemClick(item),
-        onCertClick: () => onCertClick(item),
-        onToggleFavorite: () => onToggleFavorite(item.item),
+        onItemClick,
+        onCertClick,
+        onToggleFavorite,
         isMobile,
       })}
     </div>
@@ -229,10 +229,11 @@ export default function VirtualGrid({
   const isMobile = isXs || isSm;
 
   // Memoize cell props to prevent unnecessary re-renders
+  // Convert favorites array to Set for O(1) lookups per cell
   const cellProps = useMemo<GridCellProps>(() => ({
     items,
     columnCount,
-    favorites,
+    favoritesSet: new Set(favorites),
     onItemClick,
     onCertClick,
     onToggleFavorite,
@@ -240,6 +241,25 @@ export default function VirtualGrid({
     isMobile,
     gap,
   }), [items, columnCount, favorites, onItemClick, onCertClick, onToggleFavorite, renderCard, isMobile, gap]);
+
+  // Stable onScroll handler for react-window Grid
+  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
+    if (!onScrollDirectionChange) return;
+
+    const target = event.currentTarget;
+    const scrollTop = target.scrollTop;
+    const scrollThreshold = 10;
+    const delta = scrollTop - lastScrollTop.current;
+
+    if (Math.abs(delta) > scrollThreshold) {
+      const direction = delta > 0 ? 'down' : 'up';
+      if (direction !== lastDirection.current) {
+        lastDirection.current = direction;
+        onScrollDirectionChange(direction);
+      }
+      lastScrollTop.current = scrollTop;
+    }
+  }, [onScrollDirectionChange]);
 
   if (items.length === 0) {
     return null;
@@ -287,23 +307,7 @@ export default function VirtualGrid({
         rowCount={rowCount}
         rowHeight={cardHeight + gap}
         overscanCount={3}
-        onScroll={(event) => {
-          if (!onScrollDirectionChange) return;
-
-          const target = event.currentTarget;
-          const scrollTop = target.scrollTop;
-          const scrollThreshold = 10;
-          const delta = scrollTop - lastScrollTop.current;
-
-          if (Math.abs(delta) > scrollThreshold) {
-            const direction = delta > 0 ? 'down' : 'up';
-            if (direction !== lastDirection.current) {
-              lastDirection.current = direction;
-              onScrollDirectionChange(direction);
-            }
-            lastScrollTop.current = scrollTop;
-          }
-        }}
+        onScroll={handleScroll}
         style={{
           height: '100%',
           width: '100%',

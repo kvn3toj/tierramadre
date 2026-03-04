@@ -6,7 +6,7 @@
  * Respects: Provider role restrictions and guest invitation modes
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useIsGuest } from '../hooks/useAuth';
 import { useIsProvider } from '../hooks/usePermissions';
 import { INVITATION_STORAGE_KEYS } from '../types/invitation';
@@ -85,28 +85,28 @@ export const PriceShareProvider: React.FC<PriceShareProviderProps> = ({ children
     return showPrices;
   })();
 
-  const togglePriceShare = () => {
+  const togglePriceShare = useCallback(() => {
     if (canToggle) {
       setShowPrices((prev) => !prev);
     }
-  };
+  }, [canToggle]);
 
-  const setPriceShare = (show: boolean) => {
+  const setPriceShare = useCallback((show: boolean) => {
     if (canToggle) {
       setShowPrices(show);
     }
-  };
+  }, [canToggle]);
+
+  const value = useMemo(() => ({
+    showPrices,
+    togglePriceShare,
+    setPriceShare,
+    canToggle,
+    shouldShowPrices,
+  }), [showPrices, togglePriceShare, setPriceShare, canToggle, shouldShowPrices]);
 
   return (
-    <PriceShareContext.Provider
-      value={{
-        showPrices,
-        togglePriceShare,
-        setPriceShare,
-        canToggle,
-        shouldShowPrices,
-      }}
-    >
+    <PriceShareContext.Provider value={value}>
       {children}
     </PriceShareContext.Provider>
   );

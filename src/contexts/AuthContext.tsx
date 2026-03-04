@@ -5,7 +5,7 @@
  * Provider Mode: Google OAuth with provider validation
  */
 
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, ReactNode } from 'react';
 import type { AuthState, AuthContextType, AccessLevel } from '../types/auth';
 import { useGoogleAuth } from './GoogleAuthContext';
 import { SESSION_KEYS, STORAGE_KEYS } from '../constants/storage-keys';
@@ -161,11 +161,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem(GUEST_PERSIST_KEY);
   }, []);
 
-  const value: AuthContextType = {
+  const value = useMemo<AuthContextType>(() => ({
     ...authState,
     loginAsGuest,
     logout,
-  };
+  }), [authState, loginAsGuest, logout]);
 
   return (
     <AuthContext.Provider value={value}>

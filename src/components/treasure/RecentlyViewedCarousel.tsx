@@ -3,7 +3,7 @@
  * Horizontal scroll carousel showing recently viewed items.
  * Displays thumbnails with quick info on hover.
  */
-import { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -41,7 +41,7 @@ interface RecentlyViewedCarouselProps {
 const CARD_WIDTH = 80;
 const CARD_GAP = 6;
 
-export default function RecentlyViewedCarousel({
+function RecentlyViewedCarousel({
   items,
   onItemClick,
   onClear,
@@ -88,15 +88,25 @@ export default function RecentlyViewedCarousel({
   }
 
   // Scroll handlers
-  const scroll = (direction: 'left' | 'right') => {
+  const scrollLeft = useCallback(() => {
     if (scrollRef.current) {
       const scrollAmount = (CARD_WIDTH + CARD_GAP) * 3;
       scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        left: -scrollAmount,
         behavior: prefersReducedMotion ? 'auto' : 'smooth',
       });
     }
-  };
+  }, [prefersReducedMotion]);
+
+  const scrollRight = useCallback(() => {
+    if (scrollRef.current) {
+      const scrollAmount = (CARD_WIDTH + CARD_GAP) * 3;
+      scrollRef.current.scrollBy({
+        left: scrollAmount,
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      });
+    }
+  }, [prefersReducedMotion]);
 
   return (
     <Box
@@ -167,7 +177,7 @@ export default function RecentlyViewedCarousel({
 
           {/* Scroll buttons */}
           <IconButton
-            onClick={() => scroll('left')}
+            onClick={scrollLeft}
             size="small"
             sx={{
               color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
@@ -177,7 +187,7 @@ export default function RecentlyViewedCarousel({
             <ChevronLeft size={18} />
           </IconButton>
           <IconButton
-            onClick={() => scroll('right')}
+            onClick={scrollRight}
             size="small"
             sx={{
               color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
@@ -256,6 +266,8 @@ export default function RecentlyViewedCarousel({
     </Box>
   );
 }
+
+export default React.memo(RecentlyViewedCarousel);
 
 // Individual item card in carousel
 function RecentItemCard({

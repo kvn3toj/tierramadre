@@ -5,8 +5,8 @@
  * Uses html2canvas to capture DOM elements and jsPDF to generate PDFs.
  */
 
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+// html2canvas and jsPDF are loaded on-demand inside each export function
+// to avoid pulling ~500KB into chunks that may never trigger a PDF export.
 
 // =============================================================================
 // TYPES
@@ -65,6 +65,11 @@ export const exportToPdf = async (options: PdfExportOptions): Promise<PdfExportR
 
   try {
     onProgress?.('capture');
+
+    const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+      import('html2canvas'),
+      import('jspdf'),
+    ]);
 
     // Wait for any pending renders
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -193,6 +198,11 @@ export const exportReceiptToPdf = async (
 
   try {
     onProgress?.('capture');
+
+    const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+      import('html2canvas'),
+      import('jspdf'),
+    ]);
 
     // Wait for renders
     await new Promise(resolve => setTimeout(resolve, 200));

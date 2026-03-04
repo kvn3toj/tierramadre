@@ -10,7 +10,6 @@ import { Fab, Typography, Box, CircularProgress, Zoom, Tooltip } from '@mui/mate
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import CloseIcon from '@mui/icons-material/Close';
 import { alpha } from '@mui/material/styles';
-import html2canvas from 'html2canvas';
 import { emeraldCore } from '../../design-system/tokens/colors';
 import { blurValues } from '../../design-system';
 import { getMainScrollY } from '../../utils/mainScroll';
@@ -29,6 +28,8 @@ export default function FloatingCaptureButton({ onCapture, onCancel }: FloatingC
     try {
       // Small delay to let UI settle
       await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const { default: html2canvas } = await import('html2canvas');
 
       // Hide capture buttons during screenshot
       const captureUI = document.getElementById('floating-capture-ui');

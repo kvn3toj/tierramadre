@@ -21,9 +21,9 @@ Colombian Emeralds Catalog & Sales Platform - "Esencia y Poder"
 ```
 src/
 ├── components/       # 27 feature modules
-├── contexts/         # 8 context providers
-├── hooks/           # 48 custom hooks
-├── pages/           # 14 page components
+├── contexts/         # 11 context providers
+├── hooks/           # 59 custom hooks
+├── pages/           # 4 page components
 ├── data/            # Static data files
 ├── design-system/   # MUI theme tokens
 ├── types/           # TypeScript interfaces
@@ -31,7 +31,7 @@ src/
 ├── locales/         # i18n (ES/EN)
 └── assets/          # Static assets
 
-api/                 # 23 Vercel serverless functions
+api/                 # 27 Vercel serverless functions
 ├── _lib/            # Shared API utilities
 └── [endpoint].js    # API endpoints
 ```
@@ -42,6 +42,10 @@ npm run dev           # Development server (localhost:3000)
 npm run dev:api       # Dev + Vercel Functions locally
 npm run build         # Production build (auto-updates version)
 npm run preview       # Preview production build
+
+# Utilities
+npm run fix:inventory        # Dry-run inventory consistency check
+npm run fix:inventory:apply  # Apply inventory fixes
 ```
 
 ## Key Features
@@ -75,13 +79,14 @@ npm run preview       # Preview production build
 - Image proxy with auto-retry
 - Video GIF preview generation
 
-## API Endpoints (23)
+## API Endpoints (27)
 
 **Core Data:**
 - `get-treasure-sheets` - Product inventory
 - `get-batch-thumbnails` - Product thumbnails
 - `get-asesores` - Ambassador list
 - `get-newest-products` - New products
+- `get-collection` - Collection data
 
 **Media:**
 - `serve-drive-image` - Proxy image delivery
@@ -89,6 +94,9 @@ npm run preview       # Preview production build
 - `media-upload` - Upload to Drive
 - `fast-upload` - Fast upload with GIF generation
 - `cloudinary-upload` - Image processing for manual uploads only
+- `ambassador-photo` - Ambassador photo management
+- `og-product` - Open Graph image generation
+- `create-product-folders` - Drive folder creation
 
 **Quotations:**
 - `cotizacion-save` - Save quotations
@@ -131,6 +139,19 @@ ADMIN_EMAILS=admin1@email.com,admin2@email.com
 EMAIL_FROM=Tierra Madre <noti@domain.com>
 APP_URL=https://tierra-madre-studio.vercel.app
 ```
+
+## Design System
+
+**Canonical barrel**: `src/design-system/index.ts` — ALL imports come from here.
+
+```typescript
+import { emeraldCore, goldAccent, emeraldAlpha, cssTransition, blurValues } from '@/design-system';
+```
+
+- Token files: `accents.ts`, `ios-semantic.ts`, `ios-typography.ts`, `layout.ts`, `motion.ts`, `glass.ts`
+- Legacy compat: `src/design-system/tokens/legacy-compat.ts` (preserves `brand`, `lightTokens`, `darkTokens`)
+- Color utilities: `emeraldAlpha()`, `whiteAlpha()`, `blackAlpha()`, `goldAlpha()` from `utils/colorUtils`
+- **Do NOT** create a `src/design-system.ts` file — it shadows the barrel (module resolution: file > directory)
 
 ## Development Guidelines
 
@@ -243,7 +264,7 @@ useEffect(() => {
 - `ProgressiveImage.tsx` - Retry logic, unique keys, LQIP
 - `MediaGallery.tsx` - Image preloading
 
-## Context Providers (8)
+## Context Providers (11)
 1. **AuthContext** - Authentication & roles
 2. **GoogleAuthContext** - Google OAuth
 3. **ThemeContext** - Light/dark theme
@@ -252,6 +273,9 @@ useEffect(() => {
 6. **TrackingContext** - Analytics events
 7. **LiquidGlassContext** - Visual effects
 8. **ScreenProtectionContext** - Screenshot detection
+9. **CurrencyContext** - USD multiplier (x2/x3/x4) & currency toggle
+10. **GlobalLoadingContext** - App-wide loading states
+11. **NotificationContext** - Toast/notification system
 
 ## Part of CoomUnity Universe
 Built with the CoomUnity agent ecosystem:

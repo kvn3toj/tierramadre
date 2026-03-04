@@ -3,7 +3,7 @@
  * Compact list view row for treasure items.
  * Optimized for scanning and quick comparison.
  */
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -25,12 +25,12 @@ import { errorAlpha, cssTransition } from '../../design-system';
 interface ListRowProps {
   item: TreasureItem;
   isFavorite: boolean;
-  onItemClick: () => void;
-  onCertClick: () => void;
-  onToggleFavorite: () => void;
+  onItemClick: (item: TreasureItem) => void;
+  onCertClick: (item: TreasureItem) => void;
+  onToggleFavorite: (itemId: number) => void;
   // Comparison props
   isSelectedForComparison?: boolean;
-  onToggleComparison?: () => void;
+  onToggleComparison?: (item: TreasureItem) => void;
   canAddToComparison?: boolean;
 }
 
@@ -53,15 +53,19 @@ function ListRow({
   const colorDot = getColorDot(item.color);
   const weight = typeof item.peso === 'number' ? `${item.peso} ct` : item.metalType;
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onToggleFavorite();
-  };
+  const handleItemClick = useCallback(() => {
+    onItemClick(item);
+  }, [onItemClick, item]);
 
-  const handleCompareClick = (e: React.MouseEvent) => {
+  const handleFavoriteClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    onToggleComparison?.();
-  };
+    onToggleFavorite(item.item);
+  }, [onToggleFavorite, item.item]);
+
+  const handleCompareClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleComparison?.(item);
+  }, [onToggleComparison, item]);
 
   return (
     <Paper
@@ -86,7 +90,7 @@ function ListRow({
           outlineOffset: 2,
         },
       }}
-      onClick={onItemClick}
+      onClick={handleItemClick}
       role="article"
       aria-label={`${item.nombre} - ${item.color}, ${weight}`}
       tabIndex={0}
