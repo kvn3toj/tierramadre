@@ -60,6 +60,7 @@ export function StatItem({
         </Box>
         <Box>
           <Typography
+            component="p"
             variant="h6"
             sx={{
               fontFamily: fontFamilies.mono,

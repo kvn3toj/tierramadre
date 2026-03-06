@@ -110,6 +110,7 @@ export default function AsesorCard({
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <Avatar
               src={asesor.photoUrl}
+              alt={asesor.name}
               sx={{
                 width: 56,
                 height: 56,
@@ -126,6 +127,7 @@ export default function AsesorCard({
 
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography
+                component="p"
                 variant="h6"
                 sx={{
                   fontWeight: 700,
@@ -188,6 +190,7 @@ export default function AsesorCard({
               <Gem size={20} style={{ color: emeraldCore.primary }} />
               <Box>
                 <Typography
+                  component="p"
                   variant="h6"
                   sx={{
                     fontFamily: fontFamilies.mono,
@@ -339,6 +342,7 @@ export default function AsesorCard({
               <Button
                 variant="outlined"
                 size="small"
+                aria-label="WhatsApp"
                 onClick={(e) => {
                   e.stopPropagation();
                   window.open(formatWhatsAppLink(asesor.whatsapp!), '_blank');

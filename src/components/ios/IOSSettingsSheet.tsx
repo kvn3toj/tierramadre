@@ -127,6 +127,7 @@ const SettingToggleItem: React.FC<SettingToggleItemProps> = ({
       size={size === 'small' ? 'small' : 'medium'}
       checked={checked}
       onChange={onChange}
+      inputProps={{ 'aria-label': title }}
       sx={getSwitchStyles(accentColor)}
     />
   </Box>
@@ -162,6 +163,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
       <Box
         role="dialog"
         aria-modal="true"
+        aria-label={t.settings.theme}
         sx={{
           position: 'fixed',
           bottom: 0,
@@ -330,6 +332,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
                   step={0.1}
                   valueLabelDisplay="auto"
                   valueLabelFormat={(v) => `x${v}`}
+                  aria-label={t.settings.currencyMultiplier}
                   sx={{
                     color: '#2E7D32',
                     '& .MuiSlider-thumb': { width: 20, height: 20 },

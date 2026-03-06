@@ -116,6 +116,7 @@ export default function MeditationReminderSetting() {
           checked={enabled}
           onChange={handleToggle}
           disabled={permissionStatus === 'denied'}
+          inputProps={{ 'aria-label': 'Recordatorio de meditación' }}
         />
       </Box>
 

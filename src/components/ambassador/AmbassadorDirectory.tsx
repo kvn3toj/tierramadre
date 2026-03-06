@@ -248,10 +248,10 @@ export default function AmbassadorDirectory({
                 onChange={(_, value) => value && setViewMode(value)}
                 size="small"
               >
-                <ToggleButton value="grid">
+                <ToggleButton value="grid" aria-label="Vista cuadrícula">
                   <Grid3X3 size={18} />
                 </ToggleButton>
-                <ToggleButton value="list">
+                <ToggleButton value="list" aria-label="Vista lista">
                   <List size={18} />
                 </ToggleButton>
               </ToggleButtonGroup>

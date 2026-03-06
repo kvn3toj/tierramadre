@@ -131,10 +131,10 @@ export default function DesktopFilterToolbar({
         }}
         size="small"
       >
-        <ToggleButton value="grid" sx={{ px: 1.5 }}>
+        <ToggleButton value="grid" aria-label="Vista cuadrícula" sx={{ px: 1.5 }}>
           <LayoutGrid size={18} />
         </ToggleButton>
-        <ToggleButton value="list" sx={{ px: 1.5 }}>
+        <ToggleButton value="list" aria-label="Vista lista" sx={{ px: 1.5 }}>
           <List size={18} />
         </ToggleButton>
       </ToggleButtonGroup>

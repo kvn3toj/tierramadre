@@ -129,6 +129,7 @@ export default function MobileSearchBar({
         {/* Filter toggle button */}
         <IconButton
           onClick={() => setFilterSheetOpen(!filterSheetOpen)}
+          aria-label="Filtros"
           sx={{
             width: 44,
             height: 44,

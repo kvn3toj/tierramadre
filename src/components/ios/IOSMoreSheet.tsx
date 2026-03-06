@@ -270,6 +270,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
       <Box
         role="dialog"
         aria-modal="true"
+        aria-label={t.nav.more}
         sx={{
           position: 'fixed',
           bottom: 0,
@@ -398,6 +399,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
             <Switch
               checked={showPrices}
               onChange={handlePriceToggle}
+              inputProps={{ 'aria-label': t.settings.viewPrices }}
               sx={{
                 '& .MuiSwitch-switchBase.Mui-checked': {
                   color: primitiveColors.system.green.light,
@@ -447,6 +449,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
             <Switch
               checked={currency === 'USD'}
               onChange={handleCurrencyToggle}
+              inputProps={{ 'aria-label': t.settings.currencyMode }}
               sx={{
                 '& .MuiSwitch-switchBase.Mui-checked': {
                   color: emeraldCore.dark,
@@ -505,6 +508,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                 step={0.1}
                 valueLabelDisplay="auto"
                 valueLabelFormat={(v) => `x${v}`}
+                aria-label={t.settings.currencyMultiplier}
                 sx={{
                   color: emeraldCore.dark,
                   '& .MuiSlider-thumb': { width: 20, height: 20 },

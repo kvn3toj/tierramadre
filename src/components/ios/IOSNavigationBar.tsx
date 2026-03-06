@@ -201,6 +201,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
               />
             ) : (
               <Typography
+                component="h1"
                 variant="h6"
                 sx={{
                   fontSize: iosTypographyScale.headline,
