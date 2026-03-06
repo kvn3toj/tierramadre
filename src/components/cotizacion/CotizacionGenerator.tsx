@@ -261,11 +261,11 @@ export default function CotizacionGenerator() {
       let errorMessage = 'Error al subir el archivo';
       if (error instanceof Error && error.message) {
         if (error.message.includes('storage quota') || error.message.includes('Service Accounts')) {
-          errorMessage = 'El archivo es muy grande. Por favor intenta con un archivo mas pequeno.';
+          errorMessage = 'El archivo es muy grande. Por favor intenta con un archivo más pequeño.';
         } else if (error.message.includes('Failed to create upload folder')) {
-          errorMessage = 'Error de configuracion. Contacta al administrador.';
+          errorMessage = 'Error de configuración. Contacta al administrador.';
         } else if (error.message.includes('maxFileSize')) {
-          errorMessage = 'El archivo excede el tamano maximo permitido (100MB).';
+          errorMessage = 'El archivo excede el tamaño máximo permitido (100MB).';
         } else if (error.message.includes('Cloudinary not configured') || error.message.includes('OAuth')) {
           errorMessage = 'Servicio de subida no configurado. Contacta al administrador.';
         } else {
@@ -449,13 +449,13 @@ export default function CotizacionGenerator() {
 
       setSnackbar({
         open: true,
-        message: `Cotizacion ${quotationNumber} exportada exitosamente`,
+        message: `Cotización ${quotationNumber} exportada exitosamente`,
         severity: 'success',
       });
     } catch (error) {
       setSnackbar({
         open: true,
-        message: 'Error al exportar la cotizacion. Intenta de nuevo.',
+        message: 'Error al exportar la cotización. Intenta de nuevo.',
         severity: 'error',
       });
       log.error('PDF export error:', error);
@@ -517,22 +517,23 @@ export default function CotizacionGenerator() {
         </Alert>
       )}
 
-      <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+      <Box sx={{ display: 'flex', gap: 2.5, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         {/* Form Section */}
         <Paper
           elevation={0}
           sx={{
             flex: '1 1 450px',
-            p: { xs: 2, sm: 3 },
-            borderRadius: 3,
-            border: `1px solid ${brandColors.borderSubtle}`,
-            bgcolor: brandColors.white,
+            p: { xs: 1.5, sm: 2.5 },
+            borderRadius: 2.5,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
             boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           }}
         >
-          {/* Progress Indicator */}
-          <Box sx={{ mb: 3 }}>
-            <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+          {/* Progress Indicator — compact */}
+          <Box sx={{ mb: 2 }}>
+            <Box sx={{ display: 'flex', gap: 0.75, mb: 0.5 }}>
               {[
                 { label: 'Info', completed: clientName !== '' },
                 { label: 'Productos', completed: products.length > 0 },
@@ -542,22 +543,22 @@ export default function CotizacionGenerator() {
                   key={index}
                   sx={{
                     flex: 1,
-                    height: 4,
-                    borderRadius: 2,
-                    bgcolor: step.completed ? brandColors.emerald : brandColors.borderSubtle,
+                    height: 3,
+                    borderRadius: 1.5,
+                    bgcolor: step.completed ? brandColors.emerald : 'divider',
                     transition: cssTransition.slow,
                   }}
                 />
               ))}
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              {['Informacion', 'Productos', 'Revision'].map((label, index) => (
+              {['Información', 'Productos', 'Revisión'].map((label, index) => (
                 <Box
                   key={index}
                   component="span"
                   sx={{
-                    fontSize: '0.65rem',
-                    color: brandColors.textSecondary,
+                    fontSize: '0.6rem',
+                    color: 'text.secondary',
                     fontWeight: 500,
                   }}
                 >
@@ -612,7 +613,7 @@ export default function CotizacionGenerator() {
             }}
           />
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: 2 }} />
 
           {/* Add Product Section */}
           <ProductEntrySection
@@ -642,7 +643,7 @@ export default function CotizacionGenerator() {
             handleRemoveProduct={handleRemoveProduct}
           />
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: 2 }} />
 
           {/* Investment Section */}
           <InvestmentFormSection
@@ -659,7 +660,7 @@ export default function CotizacionGenerator() {
             totalInvestment={totalInvestment}
           />
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: 2 }} />
 
           {/* Discount & Validity */}
           <DiscountValiditySection

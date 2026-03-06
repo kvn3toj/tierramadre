@@ -55,7 +55,7 @@ export const DEFAULT_INVESTMENTS: InvestmentItem[] = [
   { id: 'gold', label: 'Oro (Estructura)', value: 0, unit: 'Precio Total', unitLabel: 'precio total', placeholder: '0' },
   { id: 'silver', label: 'Plata (Estructura)', value: 0, unit: 'Precio Total', unitLabel: 'precio total', placeholder: '0' },
   { id: 'setting', label: 'Engaste', value: 0, placeholder: '0' },
-  { id: 'certification', label: 'Certificacion', value: 0, placeholder: '0' },
+  { id: 'certification', label: 'Certificación', value: 0, placeholder: '0' },
   { id: 'packaging', label: 'Empaque', value: 0, placeholder: '0' },
 ];
 

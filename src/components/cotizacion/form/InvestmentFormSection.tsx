@@ -76,21 +76,21 @@ export const InvestmentFormSection: React.FC<InvestmentFormSectionProps> = ({
       <Typography
         variant="subtitle2"
         sx={{
-          color: brandColors.textPrimary,
+          color: 'text.primary',
           textTransform: 'uppercase',
           letterSpacing: 1,
           fontWeight: 700,
           fontSize: '0.875rem',
         }}
       >
-        Inversion
+        Inversión
       </Typography>
-      <Tooltip title="Reiniciar inversion">
+      <Tooltip title="Reiniciar inversión">
         <IconButton
           size="small"
           onClick={handleResetInvestments}
           sx={{
-            color: brandColors.textMuted,
+            color: 'text.disabled',
             '&:hover': { color: brandColors.emerald },
           }}
         >
@@ -106,7 +106,7 @@ export const InvestmentFormSection: React.FC<InvestmentFormSectionProps> = ({
             {getInvestmentIcon(inv.icon)}
             <Typography
               variant="body2"
-              sx={{ color: brandColors.textPrimary, fontWeight: 500 }}
+              sx={{ color: 'text.primary', fontWeight: 500 }}
             >
               {inv.label}
             </Typography>
@@ -136,9 +136,9 @@ export const InvestmentFormSection: React.FC<InvestmentFormSectionProps> = ({
       }}
     >
       <AccordionSummary
-        expandIcon={<ExpandMoreIcon sx={{ color: brandColors.textPrimary }} />}
+        expandIcon={<ExpandMoreIcon sx={{ color: 'text.primary' }} />}
         sx={{
-          bgcolor: brandColors.surfaceElevated,
+          bgcolor: 'action.hover',
           borderRadius: 1,
           minHeight: 40,
           '& .MuiAccordionSummary-content': { my: 1 },
@@ -146,7 +146,7 @@ export const InvestmentFormSection: React.FC<InvestmentFormSectionProps> = ({
       >
         <Typography
           variant="body2"
-          sx={{ color: brandColors.textPrimary, fontWeight: 600 }}
+          sx={{ color: 'text.primary', fontWeight: 600 }}
         >
           Costos adicionales{' '}
           {customCosts.length > 0 && `(${customCosts.length})`}
@@ -154,7 +154,7 @@ export const InvestmentFormSection: React.FC<InvestmentFormSectionProps> = ({
       </AccordionSummary>
       <AccordionDetails
         sx={{
-          bgcolor: brandColors.surfaceElevated,
+          bgcolor: 'action.hover',
           borderRadius: 1,
           mt: 0.5,
           p: 2,
@@ -168,7 +168,8 @@ export const InvestmentFormSection: React.FC<InvestmentFormSectionProps> = ({
               alignItems: 'center',
               justifyContent: 'space-between',
               py: 1,
-              borderBottom: `1px solid ${brandColors.borderSubtle}`,
+              borderBottom: '1px solid',
+              borderBottomColor: 'divider',
             }}
           >
             <Typography variant="body2">{cost.label}</Typography>
@@ -183,7 +184,7 @@ export const InvestmentFormSection: React.FC<InvestmentFormSectionProps> = ({
                 size="small"
                 onClick={() => handleRemoveCustomCost(cost.id)}
                 sx={{
-                  color: brandColors.textMuted,
+                  color: 'text.disabled',
                   '&:hover': { color: brandColors.error },
                 }}
               >
@@ -244,9 +245,9 @@ export const InvestmentFormSection: React.FC<InvestmentFormSectionProps> = ({
       >
         <Typography
           variant="body2"
-          sx={{ fontWeight: 600, color: brandColors.textPrimary }}
+          sx={{ fontWeight: 600, color: 'text.primary' }}
         >
-          Total Inversion
+          Total Inversión
         </Typography>
         <Typography variant="h6" sx={{ fontWeight: 700, color: brandColors.emerald }}>
           {formatCurrency(totalInvestment)}

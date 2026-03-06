@@ -60,7 +60,7 @@ export const TreasureProductSelector: React.FC<TreasureProductSelectorProps> = (
             <Typography variant="body2" fontWeight={600}>
               #{option.item} - {option.nombre}
             </Typography>
-            <Typography variant="caption" color="grey.500">
+            <Typography variant="caption" color="text.secondary">
               {getPesoDisplay(option)} • {option.color} • {option.talla}
             </Typography>
           </Box>
@@ -90,7 +90,7 @@ export const TreasureProductSelector: React.FC<TreasureProductSelectorProps> = (
         <TextField
           {...params}
           label="Buscar en inventario"
-          placeholder="Nombre, numero, color..."
+          placeholder="Nombre, número, color..."
         />
       )}
       noOptionsText="No hay productos disponibles"

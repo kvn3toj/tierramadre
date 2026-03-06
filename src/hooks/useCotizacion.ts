@@ -76,11 +76,10 @@ export interface ManualProductState {
 
 // Default investments
 export const DEFAULT_COTIZACION_INVESTMENTS: CotizacionInvestment[] = [
-  { id: 'emerald', label: 'Valor de la Esmeralda', value: 0, icon: 'emerald' },
   { id: 'gold', label: 'Oro (Estructura)', value: 0, icon: 'gold' },
   { id: 'silver', label: 'Plata (Estructura)', value: 0, icon: 'silver' },
   { id: 'setting', label: 'Engaste', value: 0, icon: 'setting' },
-  { id: 'certification', label: 'Certificacion', value: 0, icon: 'certification' },
+  { id: 'certification', label: 'Certificación', value: 0, icon: 'certification' },
   { id: 'packaging', label: 'Empaque', value: 0, icon: 'packaging' },
 ];
 
@@ -90,7 +89,7 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   contactEmail: 'tierramadre.co@gmail.com',
   appUrl: 'tierra-madre-studio.vercel.app',
   footerMessage: 'Gracias por su preferencia',
-  footerNote: 'Esta cotizacion es valida por el tiempo indicado. Los precios estan sujetos a disponibilidad. Las esmeraldas Tierra Madre cuentan con certificado de origen y autenticidad.',
+  footerNote: 'Esta cotización es válida por el tiempo indicado. Los precios están sujetos a disponibilidad. Las esmeraldas Tierra Madre cuentan con certificado de origen y autenticidad.',
 };
 
 // Storage key for quotation counter

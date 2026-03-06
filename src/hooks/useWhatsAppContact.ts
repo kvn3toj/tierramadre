@@ -115,10 +115,10 @@ function formatProductDetails(item: CartItem, index: number): string {
  * Professional, elegant format for Tierra Madre
  */
 function formatCartMessage(items: CartItem[], senderName?: string): string {
-  const greeting = 'Buen dia,';
+  const greeting = 'Buen día,';
   const intro = items.length === 1
-    ? 'Me gustaria solicitar informacion sobre la siguiente pieza de la coleccion *Tierra Madre*:'
-    : `Me gustaria solicitar informacion sobre las siguientes *${items.length} piezas* de la coleccion *Tierra Madre*:`;
+    ? 'Me gustaría solicitar información sobre la siguiente pieza de la colección *Tierra Madre*:'
+    : `Me gustaría solicitar información sobre las siguientes *${items.length} piezas* de la colección *Tierra Madre*:`;
 
   // Format each product with details
   const productLines = items

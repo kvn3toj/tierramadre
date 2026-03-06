@@ -53,7 +53,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         <Printer size={20} />
       </IconButton>
     </Tooltip>
-    <Tooltip title="Nueva Cotizacion">
+    <Tooltip title="Nueva Cotización">
       <IconButton
         onClick={handleNewQuotation}
         sx={{

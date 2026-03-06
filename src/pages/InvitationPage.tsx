@@ -937,7 +937,7 @@ export default function InvitationPage() {
             </Box>
 
             <Typography sx={{ color: vault.textMuted, fontSize: '0.9rem', mb: 3, textAlign: 'center', lineHeight: 1.5 }}>
-              Para explorar nuestra coleccion, por favor dejanos tus datos de contacto.
+              Para explorar nuestra colección, por favor déjanos tus datos de contacto.
             </Typography>
 
             {formError && (
@@ -1050,7 +1050,7 @@ export default function InvitationPage() {
               )}
 
               <Typography sx={{ color: vault.textMuted, fontSize: '0.9rem', mb: 3.5, lineHeight: 1.6 }}>
-                Tienes acceso para explorar nuestra coleccion exclusiva de esmeraldas colombianas.
+                Tienes acceso para explorar nuestra colección exclusiva de esmeraldas colombianas.
               </Typography>
 
               <Button

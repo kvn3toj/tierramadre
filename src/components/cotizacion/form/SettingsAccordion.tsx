@@ -36,9 +36,9 @@ export const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
     }}
   >
     <AccordionSummary
-      expandIcon={<ExpandMoreIcon sx={{ color: brandColors.textPrimary }} />}
+      expandIcon={<ExpandMoreIcon sx={{ color: 'text.primary' }} />}
       sx={{
-        bgcolor: brandColors.surfaceElevated,
+        bgcolor: 'action.hover',
         borderRadius: 1,
         minHeight: 44,
         '& .MuiAccordionSummary-content': { my: 1 },
@@ -48,15 +48,15 @@ export const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
         <Settings size={16} color={brandColors.emerald} />
         <Typography
           variant="body2"
-          sx={{ color: brandColors.textPrimary, fontWeight: 600 }}
+          sx={{ color: 'text.primary', fontWeight: 600 }}
         >
-          Configuracion de Cotizacion
+          Configuración de Cotización
         </Typography>
       </Box>
     </AccordionSummary>
     <AccordionDetails
       sx={{
-        bgcolor: brandColors.surfaceElevated,
+        bgcolor: 'action.hover',
         borderRadius: 1,
         mt: 0.5,
         p: 2,
@@ -67,7 +67,7 @@ export const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
           <Box sx={{ display: 'flex', gap: 1 }}>
             <TextField
               fullWidth
-              label="No. Cotizacion"
+              label="No. Cotización"
               value={quotationNumber}
               onChange={(e) => setQuotationNumber(e.target.value)}
               size="small"
@@ -83,7 +83,7 @@ export const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Telefono de Contacto"
+            label="Teléfono de Contacto"
             value={businessSettings.contactPhone}
             onChange={(e) =>
               setBusinessSettings({ ...businessSettings, contactPhone: e.target.value })

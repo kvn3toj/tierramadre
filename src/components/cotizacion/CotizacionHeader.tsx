@@ -1,13 +1,13 @@
 /**
  * CotizacionHeader Component
- * Stats banner showing product count and total.
+ * Compact status bar showing product count and total.
+ * Professional inline design — minimal vertical footprint.
  */
 
-import { Box, Typography, Paper } from '@mui/material';
-import { FileText } from 'lucide-react';
+import { Box, Typography, Chip } from '@mui/material';
+import { Package, DollarSign } from 'lucide-react';
 import { brandColors } from './constants';
 import { useCotizacionFormat } from '../../hooks/useCotizacion';
-import { iosTypographyScale, blurValues } from '../../design-system';
 
 export interface CotizacionHeaderProps {
   productCount: number;
@@ -20,100 +20,49 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
 }) => {
   const { formatPrice: formatCurrency } = useCotizacionFormat();
   return (
-    <Paper
-      elevation={0}
+    <Box
       sx={{
-        mb: 2,
-        p: 2,
-        borderRadius: 3,
-        background: `linear-gradient(135deg, ${brandColors.emeraldDark} 0%, ${brandColors.textPrimary} 100%)`,
-        position: 'relative',
-        overflow: 'hidden',
+        mb: 1.5,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: 1,
       }}
     >
-      <Box sx={{ position: 'relative', zIndex: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
-          {/* Title section - compact */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 2,
-                bgcolor: 'rgba(255,255,255,0.15)',
-                backdropFilter: `blur(${blurValues.sm})`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <FileText size={18} color="#FFFFFF" />
-            </Box>
-            <Typography sx={{
-              fontSize: iosTypographyScale.title3,
-              fontWeight: 700,
-              color: '#FFFFFF',
-              letterSpacing: '-0.01em',
-            }}>
-              Cotización de Venta
-            </Typography>
-          </Box>
+      {/* Product count chip */}
+      <Chip
+        icon={<Package size={14} />}
+        label={`${productCount} ${productCount === 1 ? 'producto' : 'productos'}`}
+        size="small"
+        sx={{
+          bgcolor: 'action.hover',
+          color: 'text.secondary',
+          fontWeight: 600,
+          fontSize: '0.75rem',
+          height: 28,
+          '& .MuiChip-icon': {
+            color: brandColors.emerald,
+          },
+        }}
+      />
 
-          {/* Stats as compact chips */}
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <Box
-              sx={{
-                px: 1.5,
-                py: 0.75,
-                borderRadius: 2,
-                bgcolor: 'rgba(255,255,255,0.2)',
-                backdropFilter: `blur(${blurValues.sm})`,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.75,
-              }}
-            >
-              <Typography sx={{
-                fontSize: iosTypographyScale.subhead,
-                fontWeight: 700,
-                color: '#FFFFFF',
-                lineHeight: 1,
-              }}>
-                {productCount}
-              </Typography>
-              <Typography sx={{
-                fontSize: iosTypographyScale.caption2,
-                color: 'rgba(255,255,255,0.85)',
-                fontWeight: 500,
-              }}>
-                {productCount === 1 ? 'producto' : 'productos'}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                px: 1.5,
-                py: 0.75,
-                borderRadius: 2,
-                bgcolor: 'rgba(255,255,255,0.3)',
-                backdropFilter: `blur(${blurValues.sm})`,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-              }}
-            >
-              <Typography sx={{
-                fontSize: iosTypographyScale.subhead,
-                fontWeight: 700,
-                color: '#FFFFFF',
-                lineHeight: 1,
-              }}>
-                {formatCurrency(total)}
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-    </Paper>
+      {/* Total chip */}
+      <Chip
+        icon={<DollarSign size={14} />}
+        label={formatCurrency(total)}
+        size="small"
+        sx={{
+          bgcolor: brandColors.emerald,
+          color: '#FFFFFF',
+          fontWeight: 700,
+          fontSize: '0.75rem',
+          height: 28,
+          '& .MuiChip-icon': {
+            color: '#FFFFFF',
+          },
+        }}
+      />
+    </Box>
   );
 };
 

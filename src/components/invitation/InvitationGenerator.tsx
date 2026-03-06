@@ -157,7 +157,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
     if (shareUrl && 'share' in navigator) {
       const pin = lastInvitation?.pin;
       const pinLine = pin ? `\n\nTu PIN de acceso: ${pin}` : '';
-      const shareText = `Hola ${guestName}, te invito a explorar nuestra coleccion de esmeraldas colombianas. Este enlace es valido por 24 horas.\n\n${shareUrl}${pinLine}`;
+      const shareText = `Hola ${guestName}, te invito a explorar nuestra colección de esmeraldas colombianas. Este enlace es válido por 24 horas.\n\n${shareUrl}${pinLine}`;
       try {
         await navigator.share({
           title: 'Tierra Madre - Invitacion',

@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
-import { Palette, Gem, Ruler, Award, Layers } from 'lucide-react';
+import { Palette, Gem, Ruler, Award, Hash, Diamond, Box as BoxIcon, Layers } from 'lucide-react';
 import { TreasureItem } from '../../../../types';
 import { SpecRow } from './SpecRow';
 
@@ -18,15 +18,24 @@ export const SpecificationsList: React.FC<SpecificationsListProps> = ({ product 
   const isLight = theme.palette.mode === 'light';
   const secondaryTextColor = isLight ? 'rgba(60, 60, 67, 0.6)' : 'rgba(235, 235, 245, 0.6)';
 
-  const weight = typeof product.peso === 'number' ? `${product.peso} ct` : product.metalType;
-
-  // Calculate which row is last to not show border
+  const hasGemWeight = typeof product.peso === 'number';
   const hasTalla = product.talla && product.talla !== '-';
   const hasMedidas = product.medidas && product.medidas !== '-' && product.medidas !== 'Anillo';
+  const hasMaterial = Boolean(product.metalType);
   const hasColeccion = Boolean(product.coleccion);
+
+  // Build group 2 rows to determine visibility
+  const group2Rows = [
+    hasMaterial,
+    product.isJewelry && hasGemWeight, // Peso for jewelry (total piece weight)
+    product.isJewelry && hasTalla,     // Talla (ring size) for jewelry
+    false,                              // Longitud - future field
+  ];
+  const hasGroup2 = group2Rows.some(Boolean);
 
   return (
     <Box sx={{ mb: 2 }}>
+      {/* === Group 1: Gem Specifications === */}
       <Typography
         sx={{
           fontSize: '13px',
@@ -40,56 +49,91 @@ export const SpecificationsList: React.FC<SpecificationsListProps> = ({ product 
         Especificaciones
       </Typography>
 
-      {/* Color Row */}
+      {/* Gema (Ct) */}
+      {hasGemWeight && (
+        <SpecRow
+          icon={<Gem size={18} />}
+          label="Gema (Ct)"
+          value={`${product.peso} ct`}
+        />
+      )}
+
+      {/* Color */}
       <SpecRow
         icon={<Palette size={18} />}
         label="Color"
         value={product.color}
       />
 
-      {/* Weight Row */}
+      {/* Calidad */}
       <SpecRow
-        icon={<Gem size={18} />}
-        label={product.isJewelry ? 'Metal' : 'Peso'}
-        value={weight}
+        icon={<Award size={18} />}
+        label="Calidad"
+        value={product.calidad}
       />
 
-      {/* Shape/Talla Row */}
-      {hasTalla && (
+      {/* Corte */}
+      {hasTalla && !product.isJewelry && (
         <SpecRow
-          icon={<Ruler size={18} />}
-          label={product.isJewelry ? 'Talla' : 'Corte'}
+          icon={<Diamond size={18} />}
+          label="Corte"
           value={product.talla!}
         />
       )}
 
-      {/* Measurements Row */}
+      {/* Cantidad */}
+      {product.cantidad > 0 && (
+        <SpecRow
+          icon={<Hash size={18} />}
+          label="Cantidad"
+          value={product.cantidad}
+        />
+      )}
+
+      {/* Medida */}
       {hasMedidas && (
         <SpecRow
           icon={<Ruler size={18} />}
-          label="Medidas"
+          label="Medida"
           value={
             product.medidasValores
               ? product.medidasValores.replace(/\n/g, ' x ') + ' mm'
               : product.medidas + ' mm'
           }
+          showBorder={hasGroup2 || hasColeccion}
         />
       )}
 
-      {/* Quality Row */}
-      <SpecRow
-        icon={<Award size={18} />}
-        label="Calidad"
-        value={product.calidad}
-        showBorder={hasColeccion}
-      />
+      {/* === Group 2: Physical / Jewelry Specifications === */}
+      {hasGroup2 && (
+        <Box sx={{ mt: 1.5 }}>
+          {/* Material */}
+          {hasMaterial && (
+            <SpecRow
+              icon={<BoxIcon size={18} />}
+              label="Material"
+              value={product.metalType!}
+            />
+          )}
+
+          {/* Talla (ring size for jewelry) */}
+          {product.isJewelry && hasTalla && (
+            <SpecRow
+              icon={<Ruler size={18} />}
+              label="Talla"
+              value={product.talla!}
+              showBorder={hasColeccion}
+            />
+          )}
+        </Box>
+      )}
 
       {/* Collection Row */}
       {hasColeccion && (
         <SpecRow
           icon={<Layers size={18} />}
-          label="Coleccion"
-          value={product.coleccion!}
+          label="Colección"
+          value={product.coleccion!.replace(/^COLECCION\b/i, 'COLECCIÓN')}
           showBorder={false}
         />
       )}

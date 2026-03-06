@@ -115,6 +115,11 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
     mode: 'compact',
     showBackButton: true,
   },
+  '/cuentas/cotizaciones': {
+    title: t.pages.cotizacion.title,
+    mode: 'compact',
+    showBackButton: true,
+  },
   '/cuentas': {
     title: t.pages.accounts.title,
     mode: 'large',

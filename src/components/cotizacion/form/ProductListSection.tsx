@@ -40,7 +40,8 @@ export const ProductThumbnail: React.FC<ProductThumbnailProps> = ({
         bgcolor: isJewelry
           ? alpha(brandColors.gold, 0.1)
           : alpha(brandColors.emerald, 0.1),
-        border: `1px solid ${brandColors.borderSubtle}`,
+        border: '1px solid',
+        borderColor: 'divider',
         flexShrink: 0,
         overflow: 'hidden',
         display: 'flex',
@@ -142,7 +143,7 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
         <Typography
           variant="subtitle2"
           sx={{
-            color: brandColors.textPrimary,
+            color: 'text.primary',
             fontWeight: 700,
             fontSize: '0.875rem',
           }}
@@ -160,9 +161,10 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
             py: 1.5,
             px: 1.5,
             mb: 1,
-            bgcolor: brandColors.surfaceElevated,
+            bgcolor: 'action.hover',
             borderRadius: 1.5,
-            border: `1px solid ${brandColors.borderSubtle}`,
+            border: '1px solid',
+            borderColor: 'divider',
             // Fade out item pending removal
             opacity: pendingRemoval?.id === product.id ? 0.4 : 1,
             transition: cssTransition.default,
@@ -178,7 +180,7 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
               <Typography variant="body2" fontWeight={600}>
                 #{product.itemNumber} - {product.name}
               </Typography>
-              <Typography variant="caption" color="grey.500">
+              <Typography variant="caption" color="text.secondary">
                 {getPesoDisplay(product)} • {product.color}
               </Typography>
             </Box>
@@ -196,7 +198,7 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
               aria-label={`Eliminar ${product.name}`}
               disabled={pendingRemoval?.id === product.id}
               sx={{
-                color: brandColors.textMuted,
+                color: 'text.disabled',
                 '&:hover': {
                   color: brandColors.error,
                   bgcolor: alpha(brandColors.error, 0.1),

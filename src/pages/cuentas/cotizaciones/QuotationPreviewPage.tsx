@@ -42,7 +42,6 @@ const defaultQuotationData: QuotationData = {
   productName: 'Esmeralda Natural Colombiana',
   caratWeight: 2.5,
   investments: [
-    { id: 'emerald', label: 'Valor de la Esmeralda', value: 500000 },
     { id: 'gold', label: 'Oro (Estructura)', value: 0 },
     { id: 'silver', label: 'Plata (Estructura)', value: 320000 },
     { id: 'setting', label: 'Engaste', value: 60000 },

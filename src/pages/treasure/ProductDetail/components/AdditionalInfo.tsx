@@ -36,7 +36,7 @@ export const AdditionalInfo: React.FC<AdditionalInfoProps> = ({ product, isAdmin
           mb: 0.5,
         }}
       >
-        Informacion Adicional
+        Información Adicional
       </Typography>
 
       {/* Admin-only fields: Location, Advisor, Date */}
@@ -44,7 +44,7 @@ export const AdditionalInfo: React.FC<AdditionalInfoProps> = ({ product, isAdmin
         <>
           <SpecRow
             icon={<MapPin size={18} />}
-            label="Ubicacion"
+            label="Ubicación"
             value={product.ubicacion}
           />
           <SpecRow
@@ -73,7 +73,7 @@ export const AdditionalInfo: React.FC<AdditionalInfoProps> = ({ product, isAdmin
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: secondaryTextColor }}>
           <QrCode size={18} />
           <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
-            Codigo QR
+            Código QR
           </Typography>
         </Box>
         <Paper

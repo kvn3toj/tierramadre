@@ -32,8 +32,8 @@ export const DiscountValiditySection: React.FC<DiscountValiditySectionProps> = (
     </Grid>
     <Grid item xs={12} sm={6}>
       <Box>
-        <Typography variant="caption" sx={{ color: 'grey.500' }}>
-          Dias de validez: {validDays}
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          Días de validez: {validDays}
         </Typography>
         <Slider
           value={validDays}

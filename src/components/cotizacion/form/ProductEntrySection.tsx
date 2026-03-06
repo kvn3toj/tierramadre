@@ -40,7 +40,7 @@ export const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
     <Typography
       variant="subtitle2"
       sx={{
-        color: brandColors.textPrimary,
+        color: 'text.primary',
         mb: 1.5,
         textTransform: 'uppercase',
         letterSpacing: 1,

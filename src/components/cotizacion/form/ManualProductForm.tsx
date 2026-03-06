@@ -38,7 +38,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
   setIsVideoPreview,
   onImageUpload,
 }) => (
-  <Box sx={{ bgcolor: brandColors.surfaceElevated, p: 2, borderRadius: 2, mb: 3 }}>
+  <Box sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 2, mb: 3 }}>
     <Grid container spacing={1.5}>
       {/* Image Upload Section */}
       <Grid item xs={12}>
@@ -337,7 +337,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
           placeholder={
             manualProduct.isJewelry
               ? 'Ej: Anillo Esperanza Oro 18k'
-              : 'Ej: Esmeralda Corazon Verde'
+              : 'Ej: Esmeralda Corazón Verde'
           }
           error={manualProduct.name !== '' && manualProduct.name.length < 2}
           helperText={
@@ -480,7 +480,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
           <Grid item xs={6}>
             <TextField
               fullWidth
-              label="Diseno"
+              label="Diseño"
               value={manualProduct.diseno}
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, diseno: e.target.value })
@@ -570,7 +570,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
           <Grid item xs={6}>
             <TextField
               fullWidth
-              label="Diseno"
+              label="Diseño"
               value={manualProduct.diseno}
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, diseno: e.target.value })

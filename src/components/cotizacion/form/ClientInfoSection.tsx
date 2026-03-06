@@ -125,7 +125,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
       <Typography
         variant="subtitle2"
         sx={{
-          color: brandColors.textPrimary,
+          color: 'text.primary',
           mb: 2,
           textTransform: 'uppercase',
           letterSpacing: 1,
@@ -133,7 +133,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
           fontSize: '0.875rem',
         }}
       >
-        Informacion del Cliente
+        Información del Cliente
       </Typography>
       <Grid container spacing={1.5} sx={{ mb: 3 }}>
         <Grid item xs={12}>
@@ -175,7 +175,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
                     py: 0.5,
                     display: 'block',
                     bgcolor: alpha(brandColors.emerald, 0.05),
-                    color: brandColors.textMuted,
+                    color: 'text.disabled',
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: 0.5,
@@ -222,7 +222,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
                   {(option.phone || option.email) && (
                     <Typography
                       variant="caption"
-                      sx={{ color: brandColors.textMuted }}
+                      sx={{ color: 'text.disabled' }}
                     >
                       {option.phone}
                       {option.phone && option.email ? ' · ' : ''}
@@ -239,7 +239,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
                 placeholder="Ej: Juan Perez (o selecciona de la lista)"
                 helperText={
                   validationStatus === 'warning'
-                    ? 'Este cliente no tiene una invitacion activa'
+                    ? 'Este cliente no tiene una invitación activa'
                     : clientName && clientName.length < 3
                       ? 'El nombre debe tener al menos 3 caracteres'
                       : combinedOptions.length > 0
@@ -261,7 +261,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
                   endAdornment: (
                     <>
                       {validationStatus === 'warning' && (
-                        <Tooltip title="El cliente ingresado no tiene una invitacion activa creada por ti. La cotizacion se generara pero quedara registrado el desajuste.">
+                        <Tooltip title="El cliente ingresado no tiene una invitación activa creada por ti. La cotización se generará pero quedará registrado el desajuste.">
                           <AlertTriangle
                             size={18}
                             color={warningColor}
@@ -289,7 +289,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Telefono"
+            label="Teléfono"
             type="tel"
             value={clientPhone}
             onChange={(e) => setClientPhone(e.target.value)}
@@ -311,7 +311,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
             error={clientEmail !== '' && !clientEmail.includes('@')}
             helperText={
               clientEmail !== '' && !clientEmail.includes('@')
-                ? 'Ingresa un email valido'
+                ? 'Ingresa un email válido'
                 : ''
             }
           />
@@ -319,7 +319,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Documento (Cedula/Pasaporte)"
+            label="Documento (Cédula/Pasaporte)"
             value={clientDocument}
             onChange={(e) => setClientDocument(e.target.value)}
             size="small"
@@ -356,18 +356,18 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
             <Box sx={{ flex: 1 }}>
               <Typography
                 variant="caption"
-                sx={{ color: brandColors.textMuted, display: 'block', mb: 0.25 }}
+                sx={{ color: 'text.disabled', display: 'block', mb: 0.25 }}
               >
                 {asesorLabel}
               </Typography>
               {isLoadingAsesores ? (
-                <Typography variant="body2" sx={{ color: brandColors.textMuted }}>
+                <Typography variant="body2" sx={{ color: 'text.disabled' }}>
                   Verificando...
                 </Typography>
               ) : asesorName ? (
                 <Typography
                   variant="body2"
-                  sx={{ fontWeight: 600, color: brandColors.textPrimary }}
+                  sx={{ fontWeight: 600, color: 'text.primary' }}
                 >
                   {asesorName}
                 </Typography>
