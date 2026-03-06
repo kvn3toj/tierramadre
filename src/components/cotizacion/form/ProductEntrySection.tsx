@@ -35,6 +35,8 @@ export const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
   setIsVideoPreview,
   onImageUpload,
   canUseManualEntry = false,
+  isEditing,
+  onCancelEdit,
 }) => (
   <Box sx={{ mb: 2 }}>
     <Typography
@@ -114,6 +116,8 @@ export const ProductEntrySection: React.FC<ProductEntrySectionProps> = ({
         isVideoPreview={isVideoPreview}
         setIsVideoPreview={setIsVideoPreview}
         onImageUpload={onImageUpload}
+        isEditing={isEditing}
+        onCancelEdit={onCancelEdit}
       />
     )}
   </Box>

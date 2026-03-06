@@ -4,7 +4,7 @@
  * Professional inline design — minimal vertical footprint.
  */
 
-import { Box, Typography, Chip } from '@mui/material';
+import { Box, Chip } from '@mui/material';
 import { Package, DollarSign } from 'lucide-react';
 import { brandColors } from './constants';
 import { useCotizacionFormat } from '../../hooks/useCotizacion';

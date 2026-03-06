@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Box, Typography, IconButton, alpha, Snackbar, Button } from '@mui/material';
-import { Layers, Trash2, Gem, ShoppingBag, Undo2 } from 'lucide-react';
+import { Layers, Trash2, Pencil, Gem, ShoppingBag, Undo2 } from 'lucide-react';
 import { brandColors } from '../constants';
 import { useCotizacionFormat, getPesoDisplay } from '../../../hooks/useCotizacion';
 import type { ProductListSectionProps, ProductThumbnailProps } from '../types';
@@ -92,6 +92,8 @@ const UNDO_TIMEOUT_MS = 5000;
 export const ProductListSection: React.FC<ProductListSectionProps> = ({
   products,
   handleRemoveProduct,
+  onEditProduct,
+  editingProductId,
 }) => {
   const { formatPrice: formatCurrency } = useCotizacionFormat();
   // Undo-based deletion state
@@ -164,7 +166,7 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
             bgcolor: 'action.hover',
             borderRadius: 1.5,
             border: '1px solid',
-            borderColor: 'divider',
+            borderColor: editingProductId === product.id ? brandColors.emerald : 'divider',
             // Fade out item pending removal
             opacity: pendingRemoval?.id === product.id ? 0.4 : 1,
             transition: cssTransition.default,
@@ -192,6 +194,24 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
             >
               {formatCurrency(product.precioCOP)}
             </Typography>
+            {/* Edit button — only for manual products */}
+            {product.isManual && onEditProduct && (
+              <IconButton
+                size="small"
+                onClick={() => onEditProduct(product.id)}
+                aria-label={`Editar ${product.name}`}
+                disabled={pendingRemoval?.id === product.id}
+                sx={{
+                  color: editingProductId === product.id ? brandColors.emerald : 'text.disabled',
+                  '&:hover': {
+                    color: brandColors.emerald,
+                    bgcolor: alpha(brandColors.emerald, 0.1),
+                  },
+                }}
+              >
+                <Pencil size={16} />
+              </IconButton>
+            )}
             <IconButton
               size="small"
               onClick={() => handleDelete(product.id, product.name)}

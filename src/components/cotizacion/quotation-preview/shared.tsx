@@ -5,6 +5,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { brandColors, quotationStyles, quotationTypography } from '../constants';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 // =============================================================================
 // InfoField - Reusable label + value display
@@ -38,29 +39,33 @@ export interface SectionHeaderProps {
   iconBgColor?: string;
 }
 
-export const SectionHeader: React.FC<SectionHeaderProps> = ({ icon, title, count, iconBgColor = quotationStyles.accentTint }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1.5 }}>
-    <Box sx={{
-      width: 24,
-      height: 24,
-      borderRadius: 1,
-      bgcolor: iconBgColor,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}>
-      {icon}
-    </Box>
-    <Typography sx={quotationTypography.sectionHeader}>{title}</Typography>
-    {count !== undefined && (
-      <Box sx={{ ml: 'auto', px: 1, py: 0.25, bgcolor: quotationStyles.accentTint, borderRadius: 1 }}>
-        <Typography sx={{ fontSize: '0.6rem', fontWeight: 600, color: brandColors.emerald }}>
-          {count} {count === 1 ? 'item' : 'items'}
-        </Typography>
+export const SectionHeader: React.FC<SectionHeaderProps> = ({ icon, title, count, iconBgColor = quotationStyles.accentTint }) => {
+  const { t } = useLanguage();
+  const labels = t.pages.cotizacion.preview;
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1.5 }}>
+      <Box sx={{
+        width: 24,
+        height: 24,
+        borderRadius: 1,
+        bgcolor: iconBgColor,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        {icon}
       </Box>
-    )}
-  </Box>
-);
+      <Typography sx={quotationTypography.sectionHeader}>{title}</Typography>
+      {count !== undefined && (
+        <Box sx={{ ml: 'auto', px: 1, py: 0.25, bgcolor: quotationStyles.accentTint, borderRadius: 1 }}>
+          <Typography sx={{ fontSize: '0.6rem', fontWeight: 600, color: brandColors.emerald }}>
+            {count} {count === 1 ? labels.item : labels.items}
+          </Typography>
+        </Box>
+      )}
+    </Box>
+  );
+};
 
 // =============================================================================
 // LineItem - Reusable row for lists (investments, subtotals)

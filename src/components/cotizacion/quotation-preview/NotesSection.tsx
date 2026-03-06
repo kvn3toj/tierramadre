@@ -5,6 +5,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { brandColors, quotationStyles } from '../constants';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 // =============================================================================
 // NotesSection
@@ -14,29 +15,32 @@ export interface NotesSectionProps {
   notes: string;
 }
 
-export const NotesSection: React.FC<NotesSectionProps> = ({ notes }) => (
-  <Box sx={{
-    mb: 3,
-    p: 1.5,
-    bgcolor: quotationStyles.surfaceTint,
-    borderRadius: 2,
-    border: `1px solid ${quotationStyles.borderLight}`,
-  }}>
-    <Typography sx={{
-      fontSize: '0.55rem',
-      fontWeight: 600,
-      color: brandColors.emerald,
-      mb: 0.5,
-      letterSpacing: '0.1em',
-      textTransform: 'uppercase',
+export const NotesSection: React.FC<NotesSectionProps> = ({ notes }) => {
+  const { t } = useLanguage();
+  return (
+    <Box sx={{
+      mb: 3,
+      p: 1.5,
+      bgcolor: quotationStyles.surfaceTint,
+      borderRadius: 2,
+      border: `1px solid ${quotationStyles.borderLight}`,
     }}>
-      Notas
-    </Typography>
-    <Typography sx={{ fontSize: '0.6rem', color: brandColors.textPrimary, lineHeight: 1.6 }}>
-      {notes}
-    </Typography>
-  </Box>
-);
+      <Typography sx={{
+        fontSize: '0.55rem',
+        fontWeight: 600,
+        color: brandColors.emerald,
+        mb: 0.5,
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+      }}>
+        {t.pages.cotizacion.preview.notes}
+      </Typography>
+      <Typography sx={{ fontSize: '0.6rem', color: brandColors.textPrimary, lineHeight: 1.6 }}>
+        {notes}
+      </Typography>
+    </Box>
+  );
+};
 
 // =============================================================================
 // ValiditySection
@@ -47,19 +51,21 @@ export interface ValiditySectionProps {
   footerNote: string;
 }
 
-export const ValiditySection: React.FC<ValiditySectionProps> = ({ expiryStr, footerNote }) => (
-  <Box sx={{
-    textAlign: 'center',
-    mb: 1.5,
-    py: 1,
-    px: 1.5,
-    bgcolor: quotationStyles.surfaceMuted,
-    borderRadius: 2,
-    border: `1px solid ${quotationStyles.borderLight}`,
-  }}>
-    <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray }}>
-      Esta cotización es válida hasta
-    </Typography>
+export const ValiditySection: React.FC<ValiditySectionProps> = ({ expiryStr, footerNote }) => {
+  const { t } = useLanguage();
+  return (
+    <Box sx={{
+      textAlign: 'center',
+      mb: 1.5,
+      py: 1,
+      px: 1.5,
+      bgcolor: quotationStyles.surfaceMuted,
+      borderRadius: 2,
+      border: `1px solid ${quotationStyles.borderLight}`,
+    }}>
+      <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray }}>
+        {t.pages.cotizacion.preview.validUntil}
+      </Typography>
     <Typography sx={{ fontSize: '0.65rem', fontWeight: 600, color: brandColors.textPrimary, mt: 0.25 }}>
       {expiryStr}
     </Typography>
@@ -74,7 +80,8 @@ export const ValiditySection: React.FC<ValiditySectionProps> = ({ expiryStr, foo
       {footerNote}
     </Typography>
   </Box>
-);
+  );
+};
 
 // =============================================================================
 // CertificationLogosSection

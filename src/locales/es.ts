@@ -80,6 +80,37 @@ export const es = {
     },
     cotizacion: {
       title: 'Cotización',
+      preview: {
+        // Header
+        client: 'Cliente',
+        ambassador: 'Embajador',
+        subtitle: 'Esmeraldas Colombianas',
+        salesQuotation: 'Cotización de Venta',
+        quotationNumber: 'No. Cotización',
+        issueDate: 'Fecha de Emisión',
+        // Products
+        products: 'Productos',
+        addProducts: 'Agrega productos del inventario',
+        expandView: 'Expandir visión',
+        item: 'artículo',
+        items: 'artículos',
+        // Investment
+        additionalInvestment: 'Inversión Adicional',
+        totalInvestment: 'Total Inversión',
+        // Totals
+        productSubtotal: 'Subtotal Productos',
+        investment: 'Inversión',
+        subtotal: 'Subtotal',
+        discount: 'Descuento',
+        total: 'Total',
+        scan: 'Escanea',
+        // Notes & validity
+        notes: 'Notas',
+        validUntil: 'Esta cotización es válida hasta',
+        // Export
+        exportSuccess: 'exportada exitosamente',
+        exportError: 'Error al exportar la cotización. Intenta de nuevo.',
+      },
     },
   },
 

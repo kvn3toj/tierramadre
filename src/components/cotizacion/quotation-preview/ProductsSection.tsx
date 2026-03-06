@@ -14,6 +14,7 @@ import {
 } from '../../../hooks/useCotizacion';
 import { SectionHeader } from './shared';
 import { cssTransition } from '../../../design-system';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 // =============================================================================
 // ProductImage
@@ -100,6 +101,8 @@ interface ProductRowProps {
 
 const ProductRow: React.FC<ProductRowProps> = ({ product, isEven, isLast }) => {
   const { formatPrice: formatCurrency } = useCotizacionFormat();
+  const { t } = useLanguage();
+  const labels = t.pages.cotizacion.preview;
   const displayUrl = getProductDisplayUrl(product);
 
   return (
@@ -146,7 +149,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, isEven, isLast }) => {
             color: brandColors.emerald,
             fontWeight: 500,
           }}>
-            Expandir visión
+            {labels.expandView}
           </Typography>
         </Box>
       </Box>
@@ -173,6 +176,9 @@ export interface ProductsSectionProps {
 }
 
 export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) => {
+  const { t } = useLanguage();
+  const labels = t.pages.cotizacion.preview;
+
   if (products.length === 0) {
     return (
       <Box sx={{
@@ -185,7 +191,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
       }}>
         <Package size={28} color={brandColors.gray} style={{ marginBottom: 8, opacity: 0.5 }} />
         <Typography sx={{ fontSize: '0.7rem', color: brandColors.gray }}>
-          Agrega productos del inventario
+          {labels.addProducts}
         </Typography>
       </Box>
     );
@@ -195,7 +201,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
     <Box sx={{ mb: 3 }}>
       <SectionHeader
         icon={<Package size={13} color={brandColors.emerald} />}
-        title="Productos"
+        title={labels.products}
         count={products.length}
       />
       <Box sx={{

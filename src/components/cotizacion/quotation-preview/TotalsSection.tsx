@@ -13,6 +13,7 @@ import {
   useCotizacionFormat,
 } from '../../../hooks/useCotizacion';
 import { LineItem } from './shared';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 export interface TotalsSectionProps {
   products: CotizacionProduct[];
@@ -34,6 +35,8 @@ export const TotalsSection: React.FC<TotalsSectionProps> = ({
   total,
 }) => {
   const { formatPrice: formatCurrency } = useCotizacionFormat();
+  const { t } = useLanguage();
+  const labels = t.pages.cotizacion.preview;
   const showBreakdown = products.length > 0 && totalInvestment > 0;
   const qrUrl = getQrCodeUrl(products);
 
@@ -49,18 +52,18 @@ export const TotalsSection: React.FC<TotalsSectionProps> = ({
       }}>
         {showBreakdown && (
           <>
-            <LineItem label="Subtotal Productos" value={formatCurrency(productSubtotal)} />
-            <LineItem label="Inversión" value={formatCurrency(totalInvestment)} />
+            <LineItem label={labels.productSubtotal} value={formatCurrency(productSubtotal)} />
+            <LineItem label={labels.investment} value={formatCurrency(totalInvestment)} />
           </>
         )}
         <LineItem
-          label="Subtotal"
+          label={labels.subtotal}
           value={formatCurrency(subtotal)}
           isLast={discountPercent <= 0}
         />
         {discountPercent > 0 && (
           <LineItem
-            label={`Descuento (${discountPercent}%)`}
+            label={`${labels.discount} (${discountPercent}%)`}
             value={`-${formatCurrency(discount)}`}
             isLast
             labelColor={accentColors.error.light}
@@ -91,7 +94,7 @@ export const TotalsSection: React.FC<TotalsSectionProps> = ({
             textTransform: 'uppercase',
             fontWeight: 500,
           }}>
-            Total
+            {labels.total}
           </Typography>
           <Typography sx={{
             fontSize: '1rem',
@@ -112,7 +115,7 @@ export const TotalsSection: React.FC<TotalsSectionProps> = ({
             color: brandColors.gray,
             letterSpacing: '0.02em',
           }}>
-            Escanea
+            {labels.scan}
           </Typography>
           <Box
             sx={{

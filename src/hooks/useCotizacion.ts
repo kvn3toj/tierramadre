@@ -227,6 +227,12 @@ export interface UseCotizacionReturn {
   addProductFromTreasure: (item: TreasureItem) => void;
   addManualProduct: (product: ManualProductState) => void;
   removeProduct: (productId: string) => void;
+  updateProduct: (productId: string, updates: Partial<CotizacionProduct>) => void;
+
+  // Edit mode
+  editingProductId: string | null;
+  startEditProduct: (productId: string) => CotizacionProduct | null;
+  cancelEdit: () => void;
 
   // Manual product entry
   manualProduct: ManualProductState;
@@ -314,6 +320,10 @@ export function useCotizacion(): UseCotizacionReturn {
     addProductFromTreasure: data.addProductFromTreasure,
     addManualProduct: data.addManualProduct,
     removeProduct: data.removeProduct,
+    updateProduct: data.updateProduct,
+    editingProductId: data.editingProductId,
+    startEditProduct: data.startEditProduct,
+    cancelEdit: data.cancelEdit,
     manualProduct: data.manualProduct,
     setManualProduct: data.setManualProduct,
     resetManualProduct: data.resetManualProduct,

@@ -37,6 +37,12 @@ export interface UseCotizacionDataReturn {
   addProductFromTreasure: (item: TreasureItem) => void;
   addManualProduct: (product: ManualProductState) => void;
   removeProduct: (productId: string) => void;
+  updateProduct: (productId: string, updates: Partial<CotizacionProduct>) => void;
+
+  // Edit mode
+  editingProductId: string | null;
+  startEditProduct: (productId: string) => CotizacionProduct | null;
+  cancelEdit: () => void;
 
   // Manual product entry
   manualProduct: ManualProductState;
@@ -137,6 +143,26 @@ export function useCotizacionData(): UseCotizacionDataReturn {
     setProducts(prev => prev.filter(p => p.id !== productId));
   }, []);
 
+  // Edit product support
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+
+  const updateProduct = useCallback((productId: string, updates: Partial<CotizacionProduct>) => {
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, ...updates } : p));
+    setEditingProductId(null);
+    setManualProduct(initialManualProduct);
+  }, []);
+
+  const startEditProduct = useCallback((productId: string): CotizacionProduct | null => {
+    const product = products.find(p => p.id === productId) ?? null;
+    if (product) setEditingProductId(productId);
+    return product;
+  }, [products]);
+
+  const cancelEdit = useCallback(() => {
+    setEditingProductId(null);
+    setManualProduct(initialManualProduct);
+  }, []);
+
   // Reset manual product
   const resetManualProduct = useCallback(() => {
     setManualProduct(initialManualProduct);
@@ -182,6 +208,10 @@ export function useCotizacionData(): UseCotizacionDataReturn {
     addProductFromTreasure,
     addManualProduct,
     removeProduct,
+    updateProduct,
+    editingProductId,
+    startEditProduct,
+    cancelEdit,
     manualProduct,
     setManualProduct,
     resetManualProduct,

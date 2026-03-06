@@ -75,6 +75,8 @@ export interface ProductEntrySectionProps {
   setIsVideoPreview: (v: boolean) => void;
   onImageUpload: (file: File) => Promise<void>;
   canUseManualEntry?: boolean;
+  isEditing?: boolean;
+  onCancelEdit?: () => void;
 }
 
 export interface TreasureProductSelectorProps {
@@ -94,6 +96,8 @@ export interface ManualProductFormProps {
   isVideoPreview: boolean;
   setIsVideoPreview: (v: boolean) => void;
   onImageUpload: (file: File) => Promise<void>;
+  isEditing?: boolean;
+  onCancelEdit?: () => void;
 }
 
 // =============================================================================
@@ -103,6 +107,8 @@ export interface ManualProductFormProps {
 export interface ProductListSectionProps {
   products: CotizacionProduct[];
   handleRemoveProduct: (id: string) => void;
+  onEditProduct?: (productId: string) => void;
+  editingProductId?: string | null;
 }
 
 export interface ProductThumbnailProps {

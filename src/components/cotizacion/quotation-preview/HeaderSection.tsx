@@ -7,6 +7,7 @@ import { Box, Typography } from '@mui/material';
 import { Calendar, User, FileText } from 'lucide-react';
 import { brandColors, quotationStyles, quotationTypography } from '../constants';
 import { InfoField } from './shared';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 export interface HeaderSectionProps {
   quotationNumber: string;
@@ -15,8 +16,12 @@ export interface HeaderSectionProps {
 }
 
 export const HeaderSection: React.FC<HeaderSectionProps> = ({ quotationNumber, clientName, asesorName }) => {
-  // Always use today's date (date of export/preview)
-  const formattedDate = new Date().toLocaleDateString('es-CO', {
+  const { t, language } = useLanguage();
+  const labels = t.pages.cotizacion.preview;
+
+  // Always use today's date (date of export/preview), locale-aware
+  const dateLocale = language === 'en' ? 'en-US' : 'es-CO';
+  const formattedDate = new Date().toLocaleDateString(dateLocale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -42,7 +47,7 @@ export const HeaderSection: React.FC<HeaderSectionProps> = ({ quotationNumber, c
                 letterSpacing: '0.08em',
                 mb: 0.25,
               }}>
-                Cliente
+                {labels.client}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <User size={10} color={brandColors.emerald} />
@@ -90,11 +95,11 @@ export const HeaderSection: React.FC<HeaderSectionProps> = ({ quotationNumber, c
             textTransform: 'uppercase',
             mt: 0.25,
           }}>
-            Colombian Emeralds
+            {labels.subtitle}
           </Typography>
         </Box>
 
-        {/* Right Column - Asesor Info */}
+        {/* Right Column - Ambassador Info */}
         <Box sx={{ flex: '0 0 120px', minWidth: 0, textAlign: 'right' }}>
           {asesorName && (
             <Box>
@@ -105,7 +110,7 @@ export const HeaderSection: React.FC<HeaderSectionProps> = ({ quotationNumber, c
                 letterSpacing: '0.08em',
                 mb: 0.25,
               }}>
-                Asesor
+                {labels.ambassador}
               </Typography>
               <Typography sx={{
                 fontSize: '0.6rem',
@@ -149,19 +154,19 @@ export const HeaderSection: React.FC<HeaderSectionProps> = ({ quotationNumber, c
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
           }}>
-            Cotización de Venta
+            {labels.salesQuotation}
           </Typography>
         </Box>
 
         {/* Info Row */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <InfoField
-            label="No. Cotización"
+            label={labels.quotationNumber}
             value={quotationNumber}
             valueStyle={{ fontSize: '0.65rem', fontWeight: 700, ...quotationTypography.monospace }}
           />
           <InfoField
-            label="Fecha de Emisión"
+            label={labels.issueDate}
             value={formattedDate}
             icon={<Calendar size={10} color={brandColors.gray} />}
             valueStyle={{ fontWeight: 500, fontSize: '0.6rem' }}

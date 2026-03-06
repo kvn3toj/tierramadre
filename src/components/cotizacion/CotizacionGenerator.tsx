@@ -28,6 +28,7 @@ import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { useCreatorInvitations } from '../../hooks/useCreatorInvitations';
 import { useIsAdmin } from '../../hooks/usePermissions';
 import { useIsEmbajador } from '../../hooks/useAuth';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 // Form components
 import {
@@ -64,6 +65,7 @@ export default function CotizacionGenerator() {
   const isAdmin = useIsAdmin();
   const isEmbajador = useIsEmbajador();
   const canUseManualEntry = isAdmin || isEmbajador;
+  const { t } = useLanguage();
 
   // Track cotizacion start time for funnel metrics
   const startTimeRef = useRef<number>(Date.now());
@@ -85,6 +87,10 @@ export default function CotizacionGenerator() {
     addProductFromTreasure,
     addManualProduct,
     removeProduct,
+    updateProduct,
+    editingProductId,
+    startEditProduct,
+    cancelEdit,
     manualProduct, setManualProduct,
     investments, updateInvestment, resetInvestments,
     customCosts, addCustomCost, removeCustomCost,
@@ -156,6 +162,12 @@ export default function CotizacionGenerator() {
   };
 
   const handleAddManualProduct = () => {
+    // If editing, update instead of adding
+    if (editingProductId) {
+      handleSaveEditedProduct();
+      return;
+    }
+
     addManualProduct(manualProduct);
 
     // Track manual product added
@@ -169,6 +181,71 @@ export default function CotizacionGenerator() {
 
     // Reset image preview after adding
     setImagePreview(null);
+    setIsVideoPreview(false);
+  };
+
+  // Handle editing a manual product — load into form
+  const handleEditProduct = (productId: string) => {
+    const product = startEditProduct(productId);
+    if (!product) return;
+
+    // Switch to manual entry mode
+    setProductEntryMode('manual');
+
+    // Convert CotizacionProduct → ManualProductState
+    setManualProduct(prev => ({
+      ...prev,
+      name: product.name,
+      peso: String(product.peso),
+      color: product.color,
+      calidad: product.calidad,
+      talla: product.talla,
+      precioCOP: product.precioCOP,
+      isJewelry: product.isJewelry,
+      metalType: product.metalType || '',
+      imagen: product.imagen,
+      videoUrl: product.videoUrl,
+      gifUrl: product.gifUrl,
+    }));
+
+    // Set image/video preview from product
+    if (product.imagen) {
+      setImagePreview(product.imagen);
+      setIsVideoPreview(!!product.videoUrl);
+    } else {
+      setImagePreview(null);
+      setIsVideoPreview(false);
+    }
+  };
+
+  // Handle save when editing (update instead of add)
+  const handleSaveEditedProduct = () => {
+    if (!editingProductId) return;
+
+    updateProduct(editingProductId, {
+      name: manualProduct.name,
+      peso: manualProduct.peso,
+      color: manualProduct.color,
+      calidad: manualProduct.calidad,
+      talla: manualProduct.talla,
+      precioCOP: manualProduct.precioCOP,
+      isJewelry: manualProduct.isJewelry,
+      metalType: manualProduct.metalType,
+      imagen: manualProduct.imagen,
+      videoUrl: manualProduct.videoUrl,
+      gifUrl: manualProduct.gifUrl,
+    });
+
+    // Reset form
+    setImagePreview(null);
+    setIsVideoPreview(false);
+  };
+
+  // Handle cancel edit
+  const handleCancelEdit = () => {
+    cancelEdit();
+    setImagePreview(null);
+    setIsVideoPreview(false);
   };
 
   // Handle media upload for manual product entry (images and videos)
@@ -323,57 +400,35 @@ export default function CotizacionGenerator() {
   const handleExportPDF = async () => {
     if (!quotationRef.current) return;
 
+    const previewLabels = t.pages.cotizacion.preview;
+
     try {
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import('html2canvas'),
-        import('jspdf'),
-      ]);
+      // Lazy-load html2canvas for thumbnail capture (history)
+      const { default: html2canvas } = await import('html2canvas');
+      const { exportQuotationToPdf } = await import('../../utils/pdf/pdfExport');
 
       const contentElement = quotationRef.current;
-      const contentWidth = contentElement.offsetWidth;
-      const contentHeight = contentElement.offsetHeight;
 
-      const canvas = await html2canvas(contentElement, {
-        scale: 2.5,
+      // 1. Capture a thumbnail for history before exporting
+      const thumbCanvas = await html2canvas(contentElement, {
+        scale: 1.5,
         backgroundColor: '#FFFFFF',
         useCORS: true,
+        allowTaint: true,
         logging: false,
-        width: contentWidth,
-        height: contentHeight,
-        windowWidth: contentWidth,
-        windowHeight: contentHeight,
+        width: contentElement.offsetWidth,
+        height: contentElement.offsetHeight,
       });
+      const imgData = thumbCanvas.toDataURL('image/jpeg', 0.8);
 
-      const imgData = canvas.toDataURL('image/png', 0.95);
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true,
-      });
+      // 2. Export PDF using consolidated utility (scale 3, margin 8mm)
+      const result = await exportQuotationToPdf(contentElement, quotationNumber);
 
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 4;
-      const maxWidth = pageWidth - (margin * 2);
-      const maxHeight = pageHeight - (margin * 2);
-
-      const aspectRatio = canvas.width / canvas.height;
-      let imgWidth = maxWidth;
-      let imgHeight = imgWidth / aspectRatio;
-
-      if (imgHeight > maxHeight) {
-        imgHeight = maxHeight;
-        imgWidth = imgHeight * aspectRatio;
+      if (!result.success) {
+        throw new Error(result.error || 'PDF export failed');
       }
 
-      const xOffset = (pageWidth - imgWidth) / 2;
-      const yOffset = margin;
-
-      pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight);
-      pdf.save(`Cotizacion_${quotationNumber}.pdf`);
-
-      // Track cotizacion exported
+      // 3. Track cotizacion exported
       const timeToComplete = Math.floor((Date.now() - startTimeRef.current) / 1000);
       track('cotizacion_exported', {
         quotation_number: quotationNumber,
@@ -383,7 +438,7 @@ export default function CotizacionGenerator() {
         time_to_complete: timeToComplete,
       });
 
-      // Save client for future autocomplete
+      // 4. Save client for future autocomplete
       if (clientName && clientName.length >= 3) {
         recentClients.saveClient({
           name: clientName,
@@ -393,7 +448,7 @@ export default function CotizacionGenerator() {
         });
       }
 
-      // Log mismatch report if client is not in invited guests
+      // 5. Log mismatch report if client is not in invited guests
       if (clientName && clientName.length >= 3 && !isInvitedGuest(clientName) && invitedGuests.length > 0) {
         fetch('/api/cotizacion-reports', {
           method: 'POST',
@@ -416,7 +471,7 @@ export default function CotizacionGenerator() {
 
       checkAchievements();
 
-      // Save cotizacion to history
+      // 6. Save cotizacion to history
       const effectiveAsesorName = asesorName || googleUser?.name || '';
       if (googleUser?.email && effectiveAsesorName) {
         const expiryDate = new Date();
@@ -432,7 +487,6 @@ export default function CotizacionGenerator() {
           total,
           expiryDate: expiryDate.toISOString(),
           imageBase64: imgData,
-          // Include product details for analytics tracking
           products: products.map(p => ({
             itemNumber: p.itemNumber,
             name: p.name,
@@ -449,13 +503,13 @@ export default function CotizacionGenerator() {
 
       setSnackbar({
         open: true,
-        message: `Cotización ${quotationNumber} exportada exitosamente`,
+        message: `${t.pages.cotizacion.title} ${quotationNumber} ${previewLabels.exportSuccess}`,
         severity: 'success',
       });
     } catch (error) {
       setSnackbar({
         open: true,
-        message: 'Error al exportar la cotización. Intenta de nuevo.',
+        message: previewLabels.exportError,
         severity: 'error',
       });
       log.error('PDF export error:', error);
@@ -635,32 +689,40 @@ export default function CotizacionGenerator() {
             setIsVideoPreview={setIsVideoPreview}
             onImageUpload={handleManualProductMediaUpload}
             canUseManualEntry={canUseManualEntry}
+            isEditing={!!editingProductId}
+            onCancelEdit={handleCancelEdit}
           />
 
           {/* Product List */}
           <ProductListSection
             products={products}
             handleRemoveProduct={handleRemoveProduct}
+            onEditProduct={handleEditProduct}
+            editingProductId={editingProductId}
           />
 
           <Divider sx={{ my: 2 }} />
 
-          {/* Investment Section */}
-          <InvestmentFormSection
-            investments={investments}
-            handleInvestmentChange={handleInvestmentChange}
-            handleResetInvestments={handleResetInvestments}
-            customCosts={customCosts}
-            handleRemoveCustomCost={handleRemoveCustomCost}
-            newCustomLabel={newCustomLabel}
-            setNewCustomLabel={setNewCustomLabel}
-            newCustomValue={newCustomValue}
-            setNewCustomValue={setNewCustomValue}
-            handleAddCustomCost={handleAddCustomCost}
-            totalInvestment={totalInvestment}
-          />
+          {/* Investment Section — only for treasure products */}
+          {productEntryMode === 'treasure' && (
+            <>
+              <InvestmentFormSection
+                investments={investments}
+                handleInvestmentChange={handleInvestmentChange}
+                handleResetInvestments={handleResetInvestments}
+                customCosts={customCosts}
+                handleRemoveCustomCost={handleRemoveCustomCost}
+                newCustomLabel={newCustomLabel}
+                setNewCustomLabel={setNewCustomLabel}
+                newCustomValue={newCustomValue}
+                setNewCustomValue={setNewCustomValue}
+                handleAddCustomCost={handleAddCustomCost}
+                totalInvestment={totalInvestment}
+              />
 
-          <Divider sx={{ my: 2 }} />
+              <Divider sx={{ my: 2 }} />
+            </>
+          )}
 
           {/* Discount & Validity */}
           <DiscountValiditySection

@@ -12,6 +12,7 @@ import {
   useCotizacionFormat,
 } from '../../../hooks/useCotizacion';
 import { SectionHeader, LineItem } from './shared';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 export interface InvestmentSectionProps {
   investments: CotizacionInvestment[];
@@ -21,6 +22,8 @@ export interface InvestmentSectionProps {
 
 export const InvestmentSection: React.FC<InvestmentSectionProps> = ({ investments, customCosts, totalInvestment }) => {
   const { formatPrice: formatCurrency } = useCotizacionFormat();
+  const { t } = useLanguage();
+  const labels = t.pages.cotizacion.preview;
   const activeInvestments = investments.filter(inv => inv.value > 0);
   const allItems = [
     ...activeInvestments.map(inv => ({ id: inv.id, label: inv.label, value: inv.value })),
@@ -31,7 +34,7 @@ export const InvestmentSection: React.FC<InvestmentSectionProps> = ({ investment
     <Box sx={{ mb: 3 }}>
       <SectionHeader
         icon={<DollarSign size={13} color={brandColors.gold} />}
-        title="Inversión Adicional"
+        title={labels.additionalInvestment}
         iconBgColor="rgba(212,175,55,0.1)"
       />
       <Box sx={{
@@ -58,7 +61,7 @@ export const InvestmentSection: React.FC<InvestmentSectionProps> = ({ investment
           borderTop: `1px solid ${quotationStyles.borderLight}`,
         }}>
           <Typography sx={{ fontSize: '0.6rem', fontWeight: 600, color: brandColors.textPrimary }}>
-            Total Inversión
+            {labels.totalInvestment}
           </Typography>
           <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: brandColors.gold, ...quotationTypography.monospace }}>
             {formatCurrency(totalInvestment)}

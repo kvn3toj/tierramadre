@@ -80,6 +80,37 @@ export const en = {
     },
     cotizacion: {
       title: 'Quotation',
+      preview: {
+        // Header
+        client: 'Client',
+        ambassador: 'Ambassador',
+        subtitle: 'Colombian Emeralds',
+        salesQuotation: 'Sales Quotation',
+        quotationNumber: 'Quotation No.',
+        issueDate: 'Issue Date',
+        // Products
+        products: 'Products',
+        addProducts: 'Add products from inventory',
+        expandView: 'Expand view',
+        item: 'item',
+        items: 'items',
+        // Investment
+        additionalInvestment: 'Additional Investment',
+        totalInvestment: 'Total Investment',
+        // Totals
+        productSubtotal: 'Product Subtotal',
+        investment: 'Investment',
+        subtotal: 'Subtotal',
+        discount: 'Discount',
+        total: 'Total',
+        scan: 'Scan',
+        // Notes & validity
+        notes: 'Notes',
+        validUntil: 'This quotation is valid until',
+        // Export
+        exportSuccess: 'exported successfully',
+        exportError: 'Error exporting quotation. Please try again.',
+      },
     },
   },
 

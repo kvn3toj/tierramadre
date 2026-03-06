@@ -161,7 +161,7 @@ export const exportQuotationToPdf = async (
   return exportToPdf({
     element,
     filename: `Cotizacion_${quotationNumber}`,
-    scale: 2.5,
+    scale: 3,
     margin: 8,
     centerVertically: true,
     onProgress,
