@@ -153,7 +153,7 @@ const ValuationPage: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', px: 2, py: 1.5 }}>
-          <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
+          <IconButton onClick={() => navigate(-1)} aria-label="Volver" sx={{ mr: 1 }}>
             <ArrowBack />
           </IconButton>
           <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
@@ -183,7 +183,7 @@ const ValuationPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Tooltip title="CAGR = Tasa de Crecimiento Anual Compuesta. El retorno anual promedio si el crecimiento fuera perfectamente uniforme cada año.">
-                  <IconButton size="small" sx={{ mt: -0.5 }}>
+                  <IconButton size="small" aria-label="Información sobre CAGR" sx={{ mt: -0.5 }}>
                     <Info sx={{ fontSize: 18, color: 'text.secondary' }} />
                   </IconButton>
                 </Tooltip>

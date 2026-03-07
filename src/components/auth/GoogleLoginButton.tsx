@@ -46,7 +46,7 @@ export default function GoogleLoginButton({
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-        <CircularProgress size={24} />
+        <CircularProgress size={24} aria-label="Cargando" />
       </Box>
     );
   }

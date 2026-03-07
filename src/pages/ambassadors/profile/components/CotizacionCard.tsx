@@ -88,7 +88,7 @@ export const CotizacionCard: React.FC<CotizacionCardProps> = ({
               justifyContent: 'center',
             }}
           >
-            <CircularProgress size={24} sx={{ color: brand.emerald[500] }} />
+            <CircularProgress size={24} aria-label="Cargando" sx={{ color: brand.emerald[500] }} />
           </Box>
         )}
         <Box

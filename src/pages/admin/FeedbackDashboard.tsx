@@ -217,7 +217,7 @@ export default function FeedbackDashboard() {
       {/* Loading */}
       {isLoading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress />
+          <CircularProgress aria-label="Cargando" />
         </Box>
       )}
 

@@ -1082,7 +1082,7 @@ export default function InvitationPage() {
   return (
     <PageShell>
       <Box sx={{ textAlign: 'center' }}>
-        <CircularProgress size={32} sx={{ color: vault.emerald }} />
+        <CircularProgress size={32} aria-label="Cargando" sx={{ color: vault.emerald }} />
       </Box>
     </PageShell>
   );

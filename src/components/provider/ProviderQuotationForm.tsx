@@ -296,7 +296,7 @@ export default function ProviderQuotationForm() {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <CircularProgress sx={{ color: brand.emerald[500] }} />
+        <CircularProgress aria-label="Cargando" sx={{ color: brand.emerald[500] }} />
       </Box>
     );
   }

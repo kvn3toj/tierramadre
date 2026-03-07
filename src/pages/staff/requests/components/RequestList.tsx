@@ -81,7 +81,7 @@ export const RequestList: React.FC<RequestListProps> = ({
       <Box sx={{ p: 2 }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress sx={{ color: emeraldCore.primary }} />
+            <CircularProgress aria-label="Cargando" sx={{ color: emeraldCore.primary }} />
           </Box>
         ) : filteredRequests.length === 0 ? (
           <Card sx={{ bgcolor: alpha(emeraldCore.primary, 0.04), border: 'none', boxShadow: 'none' }}>

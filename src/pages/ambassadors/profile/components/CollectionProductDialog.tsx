@@ -172,7 +172,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                               gap: 1.5,
                             }}
                           >
-                            <CircularProgress size={40} sx={{ color: brand.emerald[400] }} />
+                            <CircularProgress size={40} aria-label="Cargando" sx={{ color: brand.emerald[400] }} />
                             <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
                               Loading video...
                             </Typography>
@@ -286,7 +286,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                               gap: 1.5,
                             }}
                           >
-                            <CircularProgress size={40} sx={{ color: brand.emerald[400] }} />
+                            <CircularProgress size={40} aria-label="Cargando" sx={{ color: brand.emerald[400] }} />
                             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                               Loading certificate...
                             </Typography>

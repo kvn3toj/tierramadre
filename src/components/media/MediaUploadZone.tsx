@@ -449,7 +449,7 @@ export default function MediaUploadZone({
                       }}
                     >
                       {deleting === item.id ? (
-                        <CircularProgress size={16} />
+                        <CircularProgress size={16} aria-label="Cargando" />
                       ) : (
                         <X size={18} />
                       )}

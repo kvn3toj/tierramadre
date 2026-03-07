@@ -69,7 +69,7 @@ export default function MediaPreview({
           minHeight: 200,
         }}
       >
-        <CircularProgress size={40} />
+        <CircularProgress size={40} aria-label="Cargando" />
       </Box>
     );
   }

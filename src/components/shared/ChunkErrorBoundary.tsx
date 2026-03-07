@@ -97,7 +97,7 @@ export class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, Chunk
             color: 'text.primary',
             gap: 2,
           }}>
-            <CircularProgress sx={{ color: 'primary.main' }} />
+            <CircularProgress aria-label="Cargando" sx={{ color: 'primary.main' }} />
             <Typography>Actualizando aplicación...</Typography>
           </Box>
         );

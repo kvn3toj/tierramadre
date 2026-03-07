@@ -66,6 +66,7 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({
       </Box>
     </Box>
     <Slider
+      aria-label="Periodo de Análisis"
       value={yearsBack}
       onChange={onChange}
       min={minYears}

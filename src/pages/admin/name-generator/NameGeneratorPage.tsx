@@ -370,7 +370,7 @@ const NameGeneratorPage: React.FC = () => {
                     gap: 1,
                   }}
                 >
-                  <CircularProgress size={32} sx={{ color: brand.gold[500] }} />
+                  <CircularProgress size={32} aria-label="Cargando" sx={{ color: brand.gold[500] }} />
                   <Typography variant="body2">
                     {t.tools.nameGenerator?.analyzingImage || 'Analizando esmeralda...'}
                   </Typography>

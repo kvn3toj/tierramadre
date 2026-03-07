@@ -159,6 +159,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </Avatar>
             {isUploadingPhoto && (
               <CircularProgress
+                aria-label="Cargando"
                 size={28}
                 sx={{
                   position: 'absolute',

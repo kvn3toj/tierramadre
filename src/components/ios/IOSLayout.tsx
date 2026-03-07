@@ -248,7 +248,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
       <Box
         component="main"
         id="main-content"
-        tabIndex={-1}
+        tabIndex={0}
         sx={{
           flex: 1,
           minHeight: 0, // Override flexbox implicit min-height: auto so overflowY works

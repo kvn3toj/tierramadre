@@ -189,7 +189,7 @@ export default function AdminProductRequestList() {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <CircularProgress sx={{ color: emeraldCore.primary }} />
+        <CircularProgress aria-label="Cargando" sx={{ color: emeraldCore.primary }} />
       </Box>
     );
   }

@@ -136,7 +136,7 @@ export default function AmbassadorDirectory({
     return (
       <Box>
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <CircularProgress size={24} sx={{ color: emeraldCore.primary }} />
+          <CircularProgress size={24} aria-label="Cargando" sx={{ color: emeraldCore.primary }} />
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Cargando embajadores...
           </Typography>
@@ -194,7 +194,7 @@ export default function AmbassadorDirectory({
             icon={<Gem size={18} />}
             value={stats.looseCount.toString()}
             label="Gemas"
-            color={accentColors.purple.light}
+            color={isLight ? accentColors.purple.light : accentColors.purple.dark}
             variant="stacked"
           />
           <StatItem

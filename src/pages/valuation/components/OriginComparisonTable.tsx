@@ -34,7 +34,7 @@ export const OriginComparisonTable: React.FC<OriginComparisonTableProps> = ({ gl
         </Typography>
       </Box>
 
-      <TableContainer>
+      <TableContainer tabIndex={0} aria-label="Comparación por Origen">
         <Table size="small">
           <TableHead>
             <TableRow>

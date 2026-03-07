@@ -26,6 +26,7 @@ export default function LoadingFallback({ message = 'Cargando...' }: LoadingFall
       <CircularProgress
         size={48}
         thickness={4}
+        aria-label="Cargando"
         sx={{
           color: emeraldCore.primary,
         }}

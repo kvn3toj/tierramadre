@@ -480,7 +480,7 @@ export default function MediaGallery({
                             objectFit: 'cover',
                           }}
                         />
-                        <CircularProgress
+                        <CircularProgress aria-label="Cargando"
                           size={32}
                           sx={{
                             position: 'absolute',
@@ -601,7 +601,7 @@ export default function MediaGallery({
                 backdropFilter: `blur(${blurValues.xs})`,
               }}
             >
-              <CircularProgress size={20} sx={{ color: 'white', opacity: 0.7 }} />
+              <CircularProgress size={20} aria-label="Cargando" sx={{ color: 'white', opacity: 0.7 }} />
             </Box>
           )}
 

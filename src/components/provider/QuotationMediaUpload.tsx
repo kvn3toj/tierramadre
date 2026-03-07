@@ -280,7 +280,7 @@ export default function QuotationMediaUpload({
               </Box>
 
               {isUploading && !item.error && (
-                <CircularProgress size={16} sx={{ color: brand.emerald[500] }} />
+                <CircularProgress size={16} aria-label="Cargando" sx={{ color: brand.emerald[500] }} />
               )}
             </Box>
           ))}

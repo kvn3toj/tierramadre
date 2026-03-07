@@ -95,7 +95,7 @@ export default function AdminSelectDialog({
               py: 4,
             }}
           >
-            <CircularProgress size={32} sx={{ color: emeraldCore.primary }} />
+            <CircularProgress size={32} aria-label="Cargando" sx={{ color: emeraldCore.primary }} />
           </Box>
         ) : admins.length === 0 ? (
           <Box sx={{ p: 3, textAlign: 'center' }}>
