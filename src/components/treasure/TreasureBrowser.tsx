@@ -15,14 +15,13 @@ import {
   alpha,
   useTheme,
   useMediaQuery,
-  Button,
 } from '@mui/material';
 import { Heart } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useTreasure } from '../../hooks/useTreasure';
-import { useTreasureFiltering } from '../../hooks/useTreasureFiltering';
+import { useTreasureFiltering, type TypeFilter, type StatusFilter, type SortOption } from '../../hooks/useTreasureFiltering';
 import { useUrlFilterSync, parseUrlFilters } from '../../hooks/useUrlFilterSync';
 import { useFilterTracking } from '../../hooks/useFilterTracking';
 import { useFavorites } from '../../hooks/useFavorites';
@@ -49,6 +48,26 @@ import { useLiveRegion } from '../shared/LiveRegion';
 import ScrollToTop from '../shared/ScrollToTop';
 
 const log = createLogger('Treasure');
+
+/** Sentinel div that triggers loadMore via IntersectionObserver when scrolled into view. */
+function ListLoadMoreSentinel({ onIntersect }: { onIntersect: () => void }) {
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const onIntersectRef = useRef(onIntersect);
+  onIntersectRef.current = onIntersect;
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) onIntersectRef.current(); },
+      { rootMargin: '200px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return <Box ref={sentinelRef} sx={{ height: 1, mt: 2 }} />;
+}
 
 export interface TreasureBrowserProps {
   /** Provider mode - restricts features: hides prices, share, contact, cart, comparison */
@@ -391,6 +410,19 @@ export default function TreasureBrowser({
             hasFilters={hasFilters}
             onClearFilters={urlSync.handleClearFilters}
             resultCount={filteredTreasure.length}
+            savedPresets={savedFilters.presets}
+            onApplyPreset={(preset) => {
+              setSearch(preset.filters.search);
+              setColorFilter(preset.filters.colorFilter);
+              setQualityFilter(preset.filters.qualityFilter);
+              setTypeFilter(preset.filters.typeFilter as TypeFilter);
+              setStatusFilter(preset.filters.statusFilter as StatusFilter);
+              setShapeFilter(preset.filters.shapeFilter);
+              setPriceRange(preset.filters.priceRange);
+              setSortBy(preset.filters.sortBy as SortOption);
+              if (preset.filters.cantidadFilter) setCantidadFilter(preset.filters.cantidadFilter);
+              savedFilters.incrementUsage(preset.id);
+            }}
           />
         </>
       ) : (
@@ -541,32 +573,14 @@ export default function TreasureBrowser({
         </Box>
       )}
 
-      {/* Load More Button - List view only */}
+      {/* Auto-load sentinel - List view only */}
       {viewMode === 'list' && pagination.hasMore && !showFavoritesOnly && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 2 }}>
-          <Button
-            variant="outlined"
-            onClick={() => {
-              pagination.loadMore();
-              analyticsHook.trackLoadMore(pagination.visibleCount, filteredTreasure.length);
-            }}
-            sx={{
-              borderColor: emeraldCore.primary,
-              color: emeraldCore.primary,
-              textTransform: 'none',
-              fontWeight: 600,
-              px: 4,
-              py: 1.5,
-              borderRadius: 2,
-              '&:hover': {
-                bgcolor: alpha(emeraldCore.primary, 0.08),
-                borderColor: emeraldCore.dark,
-              },
-            }}
-          >
-            Cargar más ({filteredTreasure.length - pagination.visibleCount} restantes)
-          </Button>
-        </Box>
+        <ListLoadMoreSentinel
+          onIntersect={() => {
+            pagination.loadMore();
+            analyticsHook.trackLoadMore(pagination.visibleCount, filteredTreasure.length);
+          }}
+        />
       )}
 
       {/* Error State - only when no cached data */}

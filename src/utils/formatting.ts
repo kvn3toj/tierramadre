@@ -217,3 +217,32 @@ export const getQualityBadge = (calidad: string): QualityBadgeStyle => {
     border: '#9CA3AF',    // Gray 400
   };
 };
+
+/**
+ * Quality abbreviation definitions for tooltips.
+ * Maps quality names to their full descriptions.
+ */
+const QUALITY_DEFINITIONS: Record<string, string> = {
+  'SuperFina': 'Gema de color intenso, alta transparencia y minimas inclusiones',
+  'Fina': 'Gema de buen color y transparencia con pocas inclusiones',
+  'Superior Fina': 'Calidad intermedia-alta con buen brillo y color',
+  'Superior': 'Gema con color medio y transparencia aceptable',
+  'Comercial': 'Gema de calidad estandar para joyeria comercial',
+  'Muzo': 'Origen Muzo — reconocido por verde intenso y alto valor',
+  'Chivor': 'Origen Chivor — tono azul-verdoso caracteristico',
+  'Coscuez': 'Origen Coscuez — verde profundo con excelente saturacion',
+};
+
+/**
+ * Get a tooltip description for a quality abbreviation.
+ */
+export function getQualityTooltip(calidad: string): string {
+  if (!calidad) return '';
+  // Try exact match first
+  if (QUALITY_DEFINITIONS[calidad]) return QUALITY_DEFINITIONS[calidad];
+  // Try partial match
+  for (const [key, value] of Object.entries(QUALITY_DEFINITIONS)) {
+    if (calidad.includes(key)) return value;
+  }
+  return '';
+}

@@ -18,6 +18,7 @@ import {
   IconButton,
   Skeleton,
   alpha,
+  Tooltip,
 } from '@mui/material';
 import {
   Images,
@@ -29,7 +30,7 @@ import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { prefetchRoute } from '../../utils/routePrefetch';
 import { TreasureItem } from '../../types';
-import { getColorDot, getQualityBadge } from '../../utils/formatting';
+import { getColorDot, getQualityBadge, getQualityTooltip } from '../../utils/formatting';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 import ProgressiveImage from '../shared/ProgressiveImage';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
@@ -81,6 +82,7 @@ function GridCard({
 
   const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const quality = getQualityBadge(item.calidad);
+  const qualityTooltip = getQualityTooltip(item.calidad);
   const colorDot = getColorDot(item.color);
   const isLoose = !item.isJewelry;
 
@@ -197,6 +199,7 @@ function GridCard({
             )}
 
             {/* Quality badge — bottom left */}
+            <Tooltip title={qualityTooltip} arrow enterDelay={300} placement="top">
             <Chip
               label={quality.label}
               size="small"
@@ -223,6 +226,7 @@ function GridCard({
                 },
               }}
             />
+            </Tooltip>
 
             {/* Quantity badge — bottom right */}
             {item.cantidad > 1 && (

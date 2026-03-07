@@ -25,6 +25,7 @@ import {
   type TypeFilter,
   type SortOption,
 } from '../../hooks/useTreasureFiltering';
+import type { FilterPreset } from '../../hooks/useSavedFilters';
 import { getColorDot } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import {
@@ -70,6 +71,11 @@ export interface IOSFilterSheetProps {
   // Actions
   hasFilters: boolean;
   onClearFilters: () => void;
+  // Result count
+  resultCount?: number;
+  // Saved filter presets
+  savedPresets?: FilterPreset[];
+  onApplyPreset?: (preset: FilterPreset) => void;
 }
 
 const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
@@ -100,6 +106,9 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
   priceMinMax,
   hasFilters,
   onClearFilters,
+  resultCount,
+  savedPresets,
+  onApplyPreset,
 }) => {
   const { formatCurrency } = useCurrencyFormat();
   const { mode } = useThemeMode();
@@ -252,6 +261,29 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
           overflow: 'hidden',
         }}
       >
+        {/* Saved Presets */}
+        {savedPresets && savedPresets.length > 0 && onApplyPreset && (
+          <Box sx={{ display: 'flex', gap: 0.5, overflowX: 'auto', px: 1.5, py: 1, borderBottom: '1px solid', borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light }}>
+            {savedPresets.map((preset) => (
+              <Chip
+                key={preset.id}
+                label={preset.name}
+                size="small"
+                onClick={() => onApplyPreset(preset)}
+                sx={{
+                  flexShrink: 0,
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  bgcolor: alpha(emeraldCore.primary, 0.08),
+                  color: emeraldCore.primary,
+                  border: `1px solid ${alpha(emeraldCore.primary, 0.2)}`,
+                  '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.15) },
+                }}
+              />
+            ))}
+          </Box>
+        )}
+
         {/* Sort filter */}
         <FilterRow
           label="Ordenar"
@@ -515,6 +547,17 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
               : alpha(surfacesDark.background.tertiary, 0.3),
           }}
         >
+          {resultCount !== undefined && (
+            <Typography
+              sx={{
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: emeraldCore.primary,
+              }}
+            >
+              {resultCount} resultado{resultCount !== 1 ? 's' : ''}
+            </Typography>
+          )}
           {hasFilters ? (
             <Button
               size="small"
