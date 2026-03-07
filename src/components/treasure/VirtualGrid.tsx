@@ -14,7 +14,7 @@
  * Uses CSS custom property (--vh) for viewport height instead of 100vh.
  * This prevents layout shift when the address bar hides/shows on iOS Safari.
  */
-import React, { useCallback, useMemo, ReactElement, CSSProperties, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, ReactElement, CSSProperties, useState, useEffect, useRef } from 'react';
 import { Grid } from 'react-window';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import { TreasureItem } from '../../types';
@@ -34,6 +34,8 @@ interface VirtualGridProps {
     onCertClick: (item: TreasureItem) => void;
     onToggleFavorite: (itemId: number) => void;
     isMobile: boolean;
+    /** True for above-the-fold items (first row) — triggers eager loading */
+    priority?: boolean;
   }) => React.ReactNode;
   /** Minimum height for the grid container */
   minHeight?: number;
@@ -126,6 +128,7 @@ function CellRenderer({
         onCertClick,
         onToggleFavorite,
         isMobile,
+        priority: rowIndex === 0,
       })}
     </div>
   );
@@ -154,20 +157,34 @@ export default function VirtualGrid({
   const theme = useTheme();
   const { shouldShowPrices } = usePriceShare();
 
-  // Track viewport width for dynamic height calculation
-  const [viewportWidth, setViewportWidth] = useState(
-    typeof window !== 'undefined' ? window.innerWidth : 390
+  // Measure actual container width via ref for accurate row height calculation.
+  // This avoids guessing scrollbar widths and parent padding from viewport width.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(
+    typeof window !== 'undefined' ? document.documentElement.clientWidth : 390
   );
 
   // Track scroll position for direction detection
   const lastScrollTop = React.useRef(0);
   const lastDirection = React.useRef<'up' | 'down' | null>(null);
 
-  // Update viewport width on resize
+  // Observe actual container width via ResizeObserver
   useEffect(() => {
-    const handleResize = () => setViewportWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const el = containerRef.current;
+    if (!el) return;
+
+    // Initial measurement
+    setContainerWidth(el.clientWidth);
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        // contentBoxSize gives us width without padding
+        const width = entry.contentBoxSize?.[0]?.inlineSize ?? entry.contentRect.width;
+        setContainerWidth(width);
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   // Responsive breakpoint detection
@@ -186,41 +203,41 @@ export default function VirtualGrid({
 
   const columnCount = getColumnCount();
 
-  // Dynamic card height based on viewport and column count
-  // Uses 1:1 aspect ratio for images
+  // Dynamic card height based on measured container width and column count
+  // Uses 4:5 aspect ratio for product images (portrait crop)
   const cardHeight = useMemo(() => {
-    // Calculate available width per card
-    // Desktop/iPad respects maxWidth: 1200px container
-    const isDesktop = !isXs && !isSm;
-    const containerMaxWidth = 1200;
-    const effectiveWidth = isDesktop
-      ? Math.min(viewportWidth, containerMaxWidth)
-      : viewportWidth;
-
-    // Horizontal padding: 8px mobile, 16px tablet, 0 desktop (parent handles it)
-    const horizontalPadding = isXs ? 16 : isSm ? 16 : isMd ? 32 : 0;
+    // containerWidth is the actual inner width of the Box measured via ResizeObserver.
+    // This already excludes the Box's own padding (px: {xs:1, sm:1, md:2, lg:0}).
+    // The Grid inside takes 100% of this, and its scrollbar reduces content area further.
+    // react-window Grid scrollbar: mobile uses overlay (0px), desktop ~15px
+    const scrollbarWidth = (isXs || isSm) ? 0 : 15;
     const currentGap = isXs ? MOBILE_GAP : isSm ? MOBILE_GAP : isMd ? TABLET_GAP : DESKTOP_GAP;
-    const totalGapWidth = (columnCount - 1) * currentGap;
-    const availableWidth = effectiveWidth - horizontalPadding;
-    const cardWidth = (availableWidth - totalGapWidth) / columnCount;
+    const gridContentWidth = containerWidth - scrollbarWidth;
 
-    // Image height with 1:1 aspect ratio
-    const imageHeight = Math.round(cardWidth);
+    // Row height must accommodate the WIDEST card (edge columns: first/last).
+    // Edge cells have only gap/2 padding (one side), middle cells have gap (both sides).
+    // Use edge column width to prevent overflow on wider cards.
+    const cellWidth = gridContentWidth / columnCount;
+    const maxCardWidth = cellWidth - currentGap / 2;
 
-    // Content area breakdown for 2-line name support:
-    // - Padding: 12px top + 12px bottom = 24px
-    // - Header row (color dot + quality chip): ~20px
-    // - Name (2 lines @ 0.85rem × 1.3 lineHeight): ~36px
-    // - Specs: ~16px
-    // - Price: ~18px (only when visible)
-    // Total: ~114px with price, ~96px without (use reduced values for breathing room)
-    // 4 columns = narrower cards = more wrapping = need full height
-    const priceHeight = shouldShowPrices ? 18 : 0;
-    const baseHeight = isXs ? 82 : isSm ? 82 : isMd ? 90 : 96;
-    const contentHeight = baseHeight + priceHeight;
+    // Card border: 1px on each side reduces the inner width for the image
+    const cardInnerWidth = maxCardWidth - 2;
 
-    return imageHeight + contentHeight;
-  }, [viewportWidth, columnCount, isXs, isSm, isMd, shouldShowPrices]);
+    // Image height with 4:5 aspect ratio (width:height = 4:5)
+    const imageHeight = Math.round(cardInnerWidth * 1.25);
+
+    // Content area breakdown (vertical layout):
+    // - Padding: 10px top + 10px bottom (mobile) or 12px + 12px (desktop)
+    // - Name (up to 2 lines @ 14-15px × 1.25 lineHeight): ~35-38px
+    // - Gap: 2px
+    // - Specs + Price row (single line): ~16-18px
+    // - Border-top on content: 1px
+    // Total: ~65px mobile, ~70px desktop (measured)
+    const contentHeight = isXs ? 65 : isSm ? 65 : isMd ? 70 : 70;
+
+    // Card border adds 2px (top + bottom) to the total card height
+    return imageHeight + contentHeight + 2;
+  }, [containerWidth, columnCount, isXs, isSm, isMd, shouldShowPrices]);
 
   // Gap based on device - larger gaps for bigger screens
   const gap = isXs ? MOBILE_GAP : isSm ? MOBILE_GAP : isMd ? TABLET_GAP : DESKTOP_GAP;
@@ -277,6 +294,7 @@ export default function VirtualGrid({
 
   return (
     <Box
+      ref={containerRef}
       sx={{
         // iOS Safari fix: Use --vh custom property instead of 100vh
         height: vhCalc(100, HEADER_OFFSET),

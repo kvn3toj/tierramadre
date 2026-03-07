@@ -412,6 +412,7 @@ export default function AsesorProfilePage() {
           isLoading={cotizacionHistory.isLoading}
           onViewCotizacion={setSelectedCotizacion}
           onDeleteCotizacion={handleDeleteCotizacion}
+          onDuplicateCotizacion={(cot) => navigate('/cuentas/cotizaciones', { state: { duplicate: cot } })}
         />
       )}
 

@@ -2,7 +2,12 @@
  * Tracking Context - Tierra Madre Studio
  *
  * Global context for analytics tracking and achievement system.
- * Provides tracking functions and achievement state to all components.
+ * Split into two contexts for performance:
+ * - TrackingDispatchContext: stable callbacks (track, trackPageView, etc.)
+ * - TrackingStateContext: reactive state (achievements, metrics, etc.)
+ *
+ * Components that only fire events (TreasureBrowser, CotizacionGenerator) use
+ * useTrackingDispatch() and never re-render on state changes.
  */
 
 import React, { createContext, useContext, useCallback, useEffect, useRef, useState, useMemo, ReactNode } from 'react';
@@ -32,6 +37,18 @@ const DEBUG_MODE = import.meta.env.DEV;
 
 // Feature flag: Track all authenticated users (guests, asesores, embajadores, admins)
 const ADMIN_ONLY_MODE = false;
+
+// Events that modify metrics or achievement progress — only these trigger state updates
+const STATE_MODIFYING_EVENTS = new Set([
+  'cotizacion_exported',
+  'product_favorited',
+  'comparison_viewed',
+  'filter_saved',
+  'product_engaged',
+  'simulator_factors_adjusted',
+  'oracle_viewed',
+  'ambassador_profile_viewed',
+]);
 
 // =============================================================================
 // STORAGE HELPERS
@@ -93,10 +110,11 @@ const getStoredAnalytics = (): AnalyticsStorage => {
 
 const saveAnalytics = (data: AnalyticsStorage): void => {
   try {
-    if (data.events.length > MAX_STORED_EVENTS) {
-      data.events = data.events.slice(-MAX_STORED_EVENTS);
+    const toSave = { ...data };
+    if (toSave.events.length > MAX_STORED_EVENTS) {
+      toSave.events = toSave.events.slice(-MAX_STORED_EVENTS);
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   } catch (error) {
     log.error('Failed to save analytics', error);
   }
@@ -115,47 +133,73 @@ const isPWA = (): boolean => {
 };
 
 // =============================================================================
-// CONTEXT TYPE
+// CONTEXT TYPES
 // =============================================================================
 
-export interface TrackingContextType {
-  // Event tracking - using simpler type to avoid complex type inference issues
+/** Stable dispatch callbacks — rarely change */
+export interface TrackingDispatchType {
   track: (eventName: string, properties: Record<string, any>) => void;
-
-  // Page view tracking
   trackPageView: (pagePath: string, pageTitle: string) => void;
+  checkAchievements: () => Achievement[];
+  dismissAchievement: () => void;
+  clearAnalytics: () => void;
+  getSessionDuration: () => number;
+}
 
-  // Achievement system
+/** Reactive state — changes on tracking events */
+export interface TrackingStateType {
   achievements: UserAchievements;
   unlockedAchievements: Achievement[];
   recentAchievement: Achievement | null;
-  dismissAchievement: () => void;
-  checkAchievements: () => Achievement[];
   getAchievementProgress: (achievementId: string) => number;
-
-  // Achievement definitions (for admin dashboard)
   ACHIEVEMENTS: Achievement[];
-
-  // Level system
   levelInfo: { level: number; name: string; progress: number; nextLevelXp: number };
-
-  // Metrics
   metrics: AnalyticsStorage['metrics'] & { totalProductViews: number };
-
-  // Utilities
-  getSessionDuration: () => number;
   exportAnalytics: () => AnalyticsStorage;
-  clearAnalytics: () => void;
 }
 
-const TrackingContext = createContext<TrackingContextType | undefined>(undefined);
+/** Combined type for backward compatibility */
+export interface TrackingContextType extends TrackingDispatchType, TrackingStateType {}
 
-export const useTracking = (): TrackingContextType => {
-  const context = useContext(TrackingContext);
+// =============================================================================
+// CONTEXTS
+// =============================================================================
+
+const TrackingDispatchContext = createContext<TrackingDispatchType | undefined>(undefined);
+const TrackingStateContext = createContext<TrackingStateType | undefined>(undefined);
+
+/**
+ * Use for components that only fire events (TreasureBrowser, CotizacionGenerator).
+ * Does NOT re-render when achievements/metrics change.
+ */
+export const useTrackingDispatch = (): TrackingDispatchType => {
+  const context = useContext(TrackingDispatchContext);
   if (!context) {
-    throw new Error('useTracking must be used within TrackingProvider');
+    throw new Error('useTrackingDispatch must be used within TrackingProvider');
   }
   return context;
+};
+
+/**
+ * Use for components that display achievement/metric data (Dashboard, Profile).
+ * Re-renders when state changes.
+ */
+export const useTrackingState = (): TrackingStateType => {
+  const context = useContext(TrackingStateContext);
+  if (!context) {
+    throw new Error('useTrackingState must be used within TrackingProvider');
+  }
+  return context;
+};
+
+/**
+ * Combined hook — backward compatible. Returns both dispatch and state.
+ * Components using this will re-render on state changes.
+ */
+export const useTracking = (): TrackingContextType => {
+  const dispatch = useTrackingDispatch();
+  const state = useTrackingState();
+  return useMemo(() => ({ ...dispatch, ...state }), [dispatch, state]);
 };
 
 // =============================================================================
@@ -169,10 +213,23 @@ interface TrackingProviderProps {
 export const TrackingProvider: React.FC<TrackingProviderProps> = ({ children }) => {
   const { accessLevel } = useAuth();
   const sessionStartRef = useRef<number>(Date.now());
-  const [storage, setStorage] = useState<AnalyticsStorage>(getStoredAnalytics);
-  const [recentAchievement, setRecentAchievement] = useState<Achievement | null>(null);
   const lastPageRef = useRef<string>('');
   const initializedRef = useRef(false);
+
+  // Events stored in ref — write-only, never displayed in UI
+  const eventsRef = useRef<AnalyticsEvent[]>(getStoredAnalytics().events);
+
+  // Only achievements and metrics are in state (displayed in UI)
+  const initialData = getStoredAnalytics();
+  const [achievements, setAchievements] = useState<UserAchievements>(initialData.achievements);
+  const [metrics, setMetrics] = useState<AnalyticsStorage['metrics']>(initialData.metrics);
+  const [recentAchievement, setRecentAchievement] = useState<Achievement | null>(null);
+
+  // Refs for accessing current state in callbacks without dependencies
+  const achievementsRef = useRef(achievements);
+  const metricsRef = useRef(metrics);
+  useEffect(() => { achievementsRef.current = achievements; }, [achievements]);
+  useEffect(() => { metricsRef.current = metrics; }, [metrics]);
 
   // Initialize session on mount
   useEffect(() => {
@@ -198,7 +255,7 @@ export const TrackingProvider: React.FC<TrackingProviderProps> = ({ children }) 
     currentStorage.metrics.totalSessions += 1;
     currentStorage.metrics.lastVisit = now;
 
-    // Track session start
+    // Track session start event
     const sessionEvent = {
       event: 'session_start' as const,
       timestamp: now,
@@ -212,97 +269,120 @@ export const TrackingProvider: React.FC<TrackingProviderProps> = ({ children }) 
       },
     };
 
-    currentStorage.events.push(sessionEvent);
-    saveAnalytics(currentStorage);
-    setStorage(currentStorage);
+    eventsRef.current = [...currentStorage.events, sessionEvent];
+    setAchievements(currentStorage.achievements);
+    setMetrics(currentStorage.metrics);
+    saveAnalytics({ events: eventsRef.current, achievements: currentStorage.achievements, metrics: currentStorage.metrics });
 
     if (DEBUG_MODE) {
       log.info('Session started', sessionEvent.properties);
     }
   }, [accessLevel]);
 
-  // Core tracking function
+  // Core tracking function — only triggers state update for state-modifying events
   const track = useCallback((
     eventName: string,
     properties: Record<string, any>
   ) => {
-    // Only track for admins during testing phase
     if (ADMIN_ONLY_MODE && accessLevel !== 'admin') {
       return;
     }
 
-    setStorage(prev => {
-      const newStorage = { ...prev };
-      const event = {
-        event: eventName,
-        timestamp: Date.now(),
-        sessionId: getSessionId(),
-        accessLevel: accessLevel || 'guest',
-        properties,
-      } as AnalyticsEvent;
+    const event = {
+      event: eventName,
+      timestamp: Date.now(),
+      sessionId: getSessionId(),
+      accessLevel: accessLevel || 'guest',
+      properties,
+    } as AnalyticsEvent;
 
-      newStorage.events = [...prev.events, event];
+    // Always push event to ref (no re-render)
+    eventsRef.current = [...eventsRef.current, event];
+    if (eventsRef.current.length > MAX_STORED_EVENTS) {
+      eventsRef.current = eventsRef.current.slice(-MAX_STORED_EVENTS);
+    }
 
-      // Update metrics based on event type
-      switch (eventName) {
-        case 'cotizacion_exported':
-          newStorage.metrics = { ...prev.metrics, totalCotizaciones: prev.metrics.totalCotizaciones + 1 };
-          break;
-        case 'product_favorited':
-          if ((properties as any).action === 'add') {
-            newStorage.metrics = { ...prev.metrics, totalFavorites: prev.metrics.totalFavorites + 1 };
-          }
-          break;
-        case 'comparison_viewed':
-          newStorage.metrics = { ...prev.metrics, totalComparisons: prev.metrics.totalComparisons + 1 };
-          break;
-      }
+    if (DEBUG_MODE) {
+      log.info(`\u{1F4CA} ${eventName}`, properties);
+    }
+
+    // Only update React state if this event modifies metrics/progress
+    if (STATE_MODIFYING_EVENTS.has(eventName)) {
+      // Update metrics
+      setMetrics(prev => {
+        switch (eventName) {
+          case 'cotizacion_exported':
+            return { ...prev, totalCotizaciones: prev.totalCotizaciones + 1 };
+          case 'product_favorited':
+            if ((properties as any).action === 'add') {
+              return { ...prev, totalFavorites: prev.totalFavorites + 1 };
+            }
+            return prev;
+          case 'comparison_viewed':
+            return { ...prev, totalComparisons: prev.totalComparisons + 1 };
+          default:
+            return prev;
+        }
+      });
 
       // Update achievement progress
-      const progress = { ...prev.achievements.progress };
-      switch (eventName) {
-        case 'filter_saved':
-          progress.filters_saved = (progress.filters_saved || 0) + 1;
-          break;
-        case 'product_favorited':
-          if ((properties as any).action === 'add') {
-            progress.favorites_added = (progress.favorites_added || 0) + 1;
-          }
-          break;
-        case 'comparison_viewed':
-          progress.comparisons_made = (progress.comparisons_made || 0) + 1;
-          break;
-        case 'product_engaged':
-          progress.products_viewed = (progress.products_viewed || 0) + 1;
-          break;
-        case 'cotizacion_exported':
-          progress.cotizaciones_exported = (progress.cotizaciones_exported || 0) + 1;
-          if ((properties as any).time_to_complete < 300) {
-            progress.cotizacion_time = (properties as any).time_to_complete;
-          }
-          break;
-        case 'simulator_factors_adjusted':
-          progress.simulations_completed = (progress.simulations_completed || 0) + 1;
-          break;
-        case 'oracle_viewed':
-          progress.oracle_streak = prev.metrics.streak;
-          break;
-        case 'ambassador_profile_viewed':
-          progress.ambassador_profiles_viewed = (progress.ambassador_profiles_viewed || 0) + 1;
-          break;
-      }
-      progress.daily_streak = prev.metrics.streak;
+      setAchievements(prev => {
+        const progress = { ...prev.progress };
+        let changed = false;
 
-      newStorage.achievements = { ...prev.achievements, progress };
+        switch (eventName) {
+          case 'filter_saved':
+            progress.filters_saved = (progress.filters_saved || 0) + 1;
+            changed = true;
+            break;
+          case 'product_favorited':
+            if ((properties as any).action === 'add') {
+              progress.favorites_added = (progress.favorites_added || 0) + 1;
+              changed = true;
+            }
+            break;
+          case 'comparison_viewed':
+            progress.comparisons_made = (progress.comparisons_made || 0) + 1;
+            changed = true;
+            break;
+          case 'product_engaged':
+            progress.products_viewed = (progress.products_viewed || 0) + 1;
+            changed = true;
+            break;
+          case 'cotizacion_exported':
+            progress.cotizaciones_exported = (progress.cotizaciones_exported || 0) + 1;
+            if ((properties as any).time_to_complete < 300) {
+              progress.cotizacion_time = (properties as any).time_to_complete;
+            }
+            changed = true;
+            break;
+          case 'simulator_factors_adjusted':
+            progress.simulations_completed = (progress.simulations_completed || 0) + 1;
+            changed = true;
+            break;
+          case 'oracle_viewed':
+            progress.oracle_streak = metricsRef.current.streak;
+            changed = true;
+            break;
+          case 'ambassador_profile_viewed':
+            progress.ambassador_profiles_viewed = (progress.ambassador_profiles_viewed || 0) + 1;
+            changed = true;
+            break;
+        }
 
-      saveAnalytics(newStorage);
-
-      if (DEBUG_MODE) {
-        log.info(`📊 ${eventName}`, properties);
-      }
-
-      return newStorage;
-    });
+        if (changed) {
+          progress.daily_streak = metricsRef.current.streak;
+          const updated = { ...prev, progress };
+          // Save to localStorage with events from ref
+          saveAnalytics({ events: eventsRef.current, achievements: updated, metrics: metricsRef.current });
+          return updated;
+        }
+        return prev;
+      });
+    } else {
+      // Non-state event: just persist to localStorage
+      saveAnalytics({ events: eventsRef.current, achievements: achievementsRef.current, metrics: metricsRef.current });
+    }
   }, [accessLevel]);
 
   // Page view tracking
@@ -322,14 +402,14 @@ export const TrackingProvider: React.FC<TrackingProviderProps> = ({ children }) 
   const checkAchievements = useCallback((): Achievement[] => {
     const newlyUnlocked: Achievement[] = [];
 
-    setStorage(prev => {
-      const newStorage = { ...prev };
+    setAchievements(prev => {
+      let updated = prev;
       let totalXpGained = 0;
 
       for (const achievement of ACHIEVEMENTS) {
-        if (prev.achievements.unlocked.includes(achievement.id)) continue;
+        if (prev.unlocked.includes(achievement.id)) continue;
 
-        const progress = prev.achievements.progress[achievement.condition.metric] || 0;
+        const progress = prev.progress[achievement.condition.metric] || 0;
         let isUnlocked = false;
 
         switch (achievement.condition.type) {
@@ -345,29 +425,27 @@ export const TrackingProvider: React.FC<TrackingProviderProps> = ({ children }) 
         }
 
         if (isUnlocked) {
-          newStorage.achievements = {
-            ...newStorage.achievements,
-            unlocked: [...newStorage.achievements.unlocked, achievement.id],
-            totalXp: newStorage.achievements.totalXp + achievement.xp,
+          updated = {
+            ...updated,
+            unlocked: [...updated.unlocked, achievement.id],
+            totalXp: updated.totalXp + achievement.xp,
           };
           totalXpGained += achievement.xp;
           newlyUnlocked.push(achievement);
 
           if (DEBUG_MODE) {
-            log.info(`🏆 Achievement unlocked: ${achievement.name}`);
+            log.info(`\u{1F3C6} Achievement unlocked: ${achievement.name}`);
           }
         }
       }
 
       if (newlyUnlocked.length > 0) {
-        newStorage.achievements.level = getLevelFromXp(newStorage.achievements.totalXp).level;
-        saveAnalytics(newStorage);
-
-        // Show the first newly unlocked achievement
+        updated = { ...updated, level: getLevelFromXp(updated.totalXp).level };
+        saveAnalytics({ events: eventsRef.current, achievements: updated, metrics: metricsRef.current });
         setRecentAchievement(newlyUnlocked[0]);
       }
 
-      return newlyUnlocked.length > 0 ? newStorage : prev;
+      return newlyUnlocked.length > 0 ? updated : prev;
     });
 
     return newlyUnlocked;
@@ -378,9 +456,9 @@ export const TrackingProvider: React.FC<TrackingProviderProps> = ({ children }) 
     const achievement = ACHIEVEMENTS.find(a => a.id === achievementId);
     if (!achievement) return 0;
 
-    const progress = storage.achievements.progress[achievement.condition.metric] || 0;
+    const progress = achievements.progress[achievement.condition.metric] || 0;
     return Math.min((progress / achievement.condition.target) * 100, 100);
-  }, [storage.achievements.progress]);
+  }, [achievements.progress]);
 
   // Dismiss achievement toast
   const dismissAchievement = useCallback(() => {
@@ -392,72 +470,75 @@ export const TrackingProvider: React.FC<TrackingProviderProps> = ({ children }) 
     return Math.floor((Date.now() - sessionStartRef.current) / 1000);
   }, []);
 
-  // Export analytics for debugging
+  // Export analytics for debugging (includes events from ref)
   const exportAnalytics = useCallback((): AnalyticsStorage => {
-    return storage;
-  }, [storage]);
+    return { events: eventsRef.current, achievements, metrics };
+  }, [achievements, metrics]);
 
   // Clear all analytics
   const clearAnalytics = useCallback(() => {
-    const emptyStorage: AnalyticsStorage = {
-      events: [],
-      achievements: {
-        unlocked: [],
-        progress: {},
-        totalXp: 0,
-        level: 1,
-      },
-      metrics: {
-        totalSessions: 0,
-        totalCotizaciones: 0,
-        totalFavorites: 0,
-        totalComparisons: 0,
-        lastVisit: 0,
-        streak: 0,
-      },
+    const emptyAchievements: UserAchievements = {
+      unlocked: [],
+      progress: {},
+      totalXp: 0,
+      level: 1,
     };
+    const emptyMetrics: AnalyticsStorage['metrics'] = {
+      totalSessions: 0,
+      totalCotizaciones: 0,
+      totalFavorites: 0,
+      totalComparisons: 0,
+      lastVisit: 0,
+      streak: 0,
+    };
+    eventsRef.current = [];
     localStorage.removeItem(STORAGE_KEY);
-    setStorage(emptyStorage);
+    setAchievements(emptyAchievements);
+    setMetrics(emptyMetrics);
     log.info('Analytics cleared');
   }, []);
 
   // Get unlocked achievements as objects
   const unlockedAchievements = useMemo(() =>
-    ACHIEVEMENTS.filter(a => storage.achievements.unlocked.includes(a.id)),
-    [storage.achievements.unlocked]
+    ACHIEVEMENTS.filter(a => achievements.unlocked.includes(a.id)),
+    [achievements.unlocked]
   );
 
   // Level info
-  const levelInfo = useMemo(() => getLevelFromXp(storage.achievements.totalXp), [storage.achievements.totalXp]);
+  const levelInfo = useMemo(() => getLevelFromXp(achievements.totalXp), [achievements.totalXp]);
 
-  // Calculate total product views from progress
-  const totalProductViews = storage.achievements.progress.products_viewed || 0;
+  // Total product views from progress
+  const totalProductViews = achievements.progress.products_viewed || 0;
 
-  const value = useMemo<TrackingContextType>(() => ({
+  // Dispatch context — stable callbacks, rarely changes
+  const dispatchValue = useMemo<TrackingDispatchType>(() => ({
     track,
     trackPageView,
-    achievements: storage.achievements,
+    checkAchievements,
+    dismissAchievement,
+    clearAnalytics,
+    getSessionDuration,
+  }), [track, trackPageView, checkAchievements, dismissAchievement, clearAnalytics, getSessionDuration]);
+
+  // State context — changes when achievements/metrics update
+  const stateValue = useMemo<TrackingStateType>(() => ({
+    achievements,
     unlockedAchievements,
     recentAchievement,
-    dismissAchievement,
-    checkAchievements,
     getAchievementProgress,
     ACHIEVEMENTS,
     levelInfo,
-    metrics: { ...storage.metrics, totalProductViews },
-    getSessionDuration,
+    metrics: { ...metrics, totalProductViews },
     exportAnalytics,
-    clearAnalytics,
-  }), [
-    track, trackPageView, storage, unlockedAchievements, recentAchievement,
-    dismissAchievement, checkAchievements, getAchievementProgress, levelInfo,
-    totalProductViews, getSessionDuration, exportAnalytics, clearAnalytics,
-  ]);
+  }), [achievements, unlockedAchievements, recentAchievement, getAchievementProgress,
+    levelInfo, metrics, totalProductViews, exportAnalytics]);
 
   return (
-    <TrackingContext.Provider value={value}>
-      {children}
-    </TrackingContext.Provider>
+    <TrackingDispatchContext.Provider value={dispatchValue}>
+      <TrackingStateContext.Provider value={stateValue}>
+        {children}
+      </TrackingStateContext.Provider>
+    </TrackingDispatchContext.Provider>
   );
 };
 

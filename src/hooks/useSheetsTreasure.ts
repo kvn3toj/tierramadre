@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TreasureItem } from '../types';
 import { STORAGE_KEYS, LEGACY_KEYS } from '../constants/storage-keys';
+import { fetchWithRetry } from '../utils/fetchWithRetry';
 
 // Cache configuration (new treasure namespace)
 const SHEETS_CACHE_KEY = STORAGE_KEYS.TREASURE_SHEETS_CACHE;
@@ -87,7 +88,10 @@ function setCachedData(data: TreasureItem[]): void {
  * Fetch treasure from Google Sheets API
  */
 async function fetchFromSheets(): Promise<TreasureItem[]> {
-  const response = await fetch('/api/get-treasure-sheets');
+  const response = await fetchWithRetry('/api/get-treasure-sheets', undefined, {
+    retries: 3,
+    onRetry: (attempt) => console.warn(`[Sheets] Retry ${attempt}/3...`),
+  });
 
   if (!response.ok) {
     throw new Error('Failed to fetch treasure from Google Sheets');

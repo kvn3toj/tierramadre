@@ -16,6 +16,7 @@ import { ScreenProtectionProvider } from './contexts/ScreenProtectionContext';
 import { LiveRegionProvider } from './components/shared/LiveRegion';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 import { GlobalLoadingProvider } from './contexts/GlobalLoadingContext';
+import { NetworkStatusProvider } from './contexts/NetworkStatusContext';
 import { AchievementToast } from './components/gamification';
 import { useViewportHeight } from './hooks/useViewportHeight';
 import { lazyWithRetry } from './utils/lazyWithRetry';
@@ -513,6 +514,7 @@ function App() {
           <ScreenProtectionProvider>
             <LiveRegionProvider>
               <NotificationProvider>
+                <NetworkStatusProvider>
                 <GlobalLoadingProvider>
                   <BrowserRouter>
                     <InvitationRouter />
@@ -521,6 +523,7 @@ function App() {
                     {/* <UpdatePrompt /> */}
                   </BrowserRouter>
                 </GlobalLoadingProvider>
+                </NetworkStatusProvider>
               </NotificationProvider>
             </LiveRegionProvider>
           </ScreenProtectionProvider>

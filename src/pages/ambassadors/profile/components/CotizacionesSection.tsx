@@ -23,6 +23,7 @@ interface CotizacionesSectionProps {
   isLoading: boolean;
   onViewCotizacion: (cotizacion: SavedCotizacion) => void;
   onDeleteCotizacion: (cotizacion: SavedCotizacion) => void;
+  onDuplicateCotizacion?: (cotizacion: SavedCotizacion) => void;
 }
 
 export const CotizacionesSection: React.FC<CotizacionesSectionProps> = ({
@@ -30,6 +31,7 @@ export const CotizacionesSection: React.FC<CotizacionesSectionProps> = ({
   isLoading,
   onViewCotizacion,
   onDeleteCotizacion,
+  onDuplicateCotizacion,
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -142,6 +144,7 @@ export const CotizacionesSection: React.FC<CotizacionesSectionProps> = ({
               cotizacion={cot}
               onView={() => onViewCotizacion(cot)}
               onDelete={() => onDeleteCotizacion(cot)}
+              onDuplicate={onDuplicateCotizacion ? () => onDuplicateCotizacion(cot) : undefined}
               isLight={isLight}
             />
           ))}

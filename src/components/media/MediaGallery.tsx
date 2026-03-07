@@ -18,6 +18,7 @@ import {
   Typography,
   Chip,
   CircularProgress,
+  Skeleton,
   alpha,
   useTheme,
   useMediaQuery,
@@ -60,7 +61,11 @@ export default function MediaGallery({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
   const [errorIndices, setErrorIndices] = useState<Set<number>>(new Set());
-  const [loadingIndices, setLoadingIndices] = useState<Set<number>>(new Set());
+  // Start with index 0 in loadingIndices so the skeleton shows from first paint
+  const [loadingIndices, setLoadingIndices] = useState<Set<number>>(() => {
+    if (media.length > 0 && media[0].type === 'image') return new Set([0]);
+    return new Set();
+  });
 
   // Touch handling for swipe
   const touchStartX = useRef(0);
@@ -584,6 +589,20 @@ export default function MediaGallery({
               );
             })}
           </Box>
+
+          {/* Initial loading skeleton — covers dark bg until first image paints */}
+          {loadingIndices.has(visibleIndex) && (
+            <Skeleton
+              variant="rectangular"
+              animation="wave"
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 5,
+                borderRadius: 3,
+              }}
+            />
+          )}
 
           {/* Loading indicator — overlays visible slide while next image loads */}
           {currentIndex !== visibleIndex && loadingIndices.has(currentIndex) && (

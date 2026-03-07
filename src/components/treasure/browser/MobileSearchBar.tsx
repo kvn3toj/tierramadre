@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { Search, X, Heart, SlidersHorizontal } from 'lucide-react';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
-import { accentColors } from '../../../design-system';
+import { accentColors, blurValues } from '../../../design-system';
 import { ActiveFilterChips } from '../';
 import type { TreasureFilters, StatusFilter, TypeFilter, HeroCategoryFilter } from '../../../hooks/useTreasureFiltering';
 
@@ -80,7 +80,11 @@ export default function MobileSearchBar({
           position: 'sticky',
           top: 0,
           zIndex: 10,
-          bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
+          bgcolor: isLight
+            ? alpha(surfacesLight.background.primary, 0.85)
+            : alpha(surfacesDark.background.primary, 0.85),
+          backdropFilter: `blur(${blurValues.lg})`,
+          WebkitBackdropFilter: `blur(${blurValues.lg})`,
           py: 1,
           mx: -1,
           px: 1,
@@ -258,7 +262,7 @@ export default function MobileSearchBar({
               flexShrink: 0,
             }}
           >
-            {filteredCount} items
+            {filteredCount} tesoros
           </Typography>
         </Box>
       )}

@@ -136,7 +136,19 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
     };
   }, []);
 
-  if (products.length === 0) return null;
+  if (products.length === 0) {
+    return (
+      <Box sx={{ mb: 3, textAlign: 'center', py: 4 }}>
+        <ShoppingBag size={32} color={brandColors.emerald} style={{ opacity: 0.4 }} />
+        <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1, fontWeight: 500 }}>
+          Sin productos seleccionados
+        </Typography>
+        <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', mt: 0.5 }}>
+          Busca productos en el catalogo y agregalos a tu cotizacion
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ mb: 3 }}>

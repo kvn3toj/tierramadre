@@ -162,19 +162,19 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     [currency, trmRate, multiplier],
   );
 
+  const value = useMemo(() => ({
+    currency,
+    toggleCurrency,
+    canToggleCurrency,
+    convertPrice,
+    trmRate,
+    isTrmLoading,
+    multiplier,
+    setMultiplier,
+  }), [currency, toggleCurrency, canToggleCurrency, convertPrice, trmRate, isTrmLoading, multiplier, setMultiplier]);
+
   return (
-    <CurrencyContext.Provider
-      value={{
-        currency,
-        toggleCurrency,
-        canToggleCurrency,
-        convertPrice,
-        trmRate,
-        isTrmLoading,
-        multiplier,
-        setMultiplier,
-      }}
-    >
+    <CurrencyContext.Provider value={value}>
       {children}
     </CurrencyContext.Provider>
   );

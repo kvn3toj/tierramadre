@@ -51,6 +51,8 @@ interface GridCardProps {
   isMobile?: boolean;
   /** Whether batch thumbnails are still loading from the API */
   isLoadingThumbnails?: boolean;
+  /** Above-the-fold item — triggers eager loading */
+  priority?: boolean;
   /** View count for this product (optional) */
   viewCount?: number;
   /** Whether the current user is an admin (required to see view counts) */
@@ -62,6 +64,7 @@ function GridCard({
   onItemClick,
   isMobile = false,
   isLoadingThumbnails = false,
+  priority = false,
   viewCount,
   isAdmin,
   isSelectedForComparison = false,
@@ -107,23 +110,34 @@ function GridCard({
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: isMobile ? '10px' : '12px', // iOS HIG standard border radius
+        borderRadius: isMobile ? '10px' : '12px',
         border: '1px solid',
         borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
         overflow: 'hidden',
         transition: prefersReducedMotion ? 'none' : animation.transition.spring,
         cursor: 'pointer',
+        boxShadow: isLight
+          ? '0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)'
+          : '0 2px 6px rgba(0, 0, 0, 0.3), 0 0 1px rgba(255, 255, 255, 0.05) inset',
+        // Image zoom transition
+        '& img': {
+          transition: prefersReducedMotion ? 'none' : 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+        },
         '&:hover': {
           borderColor: emeraldCore.primary,
-          transform: prefersReducedMotion || isMobile ? 'none' : 'translateY(-2px)',
+          transform: prefersReducedMotion || isMobile ? 'none' : 'translateY(-3px)',
           boxShadow: isLight
-            ? '0 8px 20px rgba(0, 0, 0, 0.08)'
-            : '0 8px 20px rgba(0, 0, 0, 0.25)',
+            ? '0 12px 28px rgba(0, 0, 0, 0.10), 0 4px 8px rgba(0, 0, 0, 0.06)'
+            : `0 12px 28px rgba(0, 0, 0, 0.35), 0 0 1px ${alpha(emeraldCore.primary, 0.15)} inset`,
+          // Zoom product image on hover (desktop only)
+          ...(!prefersReducedMotion && !isMobile && {
+            '& img': { transform: 'scale(1.06)' },
+          }),
         },
         '&:active': {
-          transform: prefersReducedMotion ? 'none' : 'scale(0.98)',
-          transition: prefersReducedMotion ? 'none' : animation.transition.fast,
+          transform: prefersReducedMotion ? 'none' : 'scale(0.97)',
+          transition: prefersReducedMotion ? 'none' : 'transform 0.1s ease-out',
         },
         '&:focus-visible': {
           outline: `2px solid ${emeraldCore.primary}`,
@@ -131,41 +145,58 @@ function GridCard({
         },
       }}
     >
-      {/* Image Section - 1:1 aspect ratio */}
+      {/* Image Section */}
       <Box sx={{ position: 'relative', flexShrink: 0 }}>
         {item.imagen ? (
           <>
-            {/* Always use ProgressiveImage for grid - shows thumbnail for all products */}
             <ProgressiveImage
               src={item.imagen}
               alt={`${item.nombre} - ${item.color}`}
-              aspectRatio="1 / 1"
+              aspectRatio="4 / 5"
               layout="full"
               quality="eco"
+              priority={priority}
             />
 
-            {/* Gallery count badge */}
+            {/* Depth gradient overlay */}
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: '45%',
+                background: isLight
+                  ? 'linear-gradient(to top, rgba(0,0,0,0.06), transparent)'
+                  : 'linear-gradient(to top, rgba(0,0,0,0.35), transparent)',
+                pointerEvents: 'none',
+              }}
+            />
+
+            {/* Gallery count badge — bottom right, stacks above quantity when both exist */}
             {(item.galleryCount ?? 0) > 1 && (
               <Chip
-                icon={<Images size={12} />}
+                icon={<Images size={10} />}
                 label={item.galleryCount}
                 size="small"
                 sx={{
                   position: 'absolute',
-                  bottom: 6,
+                  // Shift up when quantity badge occupies the bottom-right slot
+                  bottom: item.cantidad > 1 ? 28 : 6,
                   right: 6,
-                  bgcolor: 'rgba(0, 0, 0, 0.7)',
+                  bgcolor: 'rgba(0, 0, 0, 0.65)',
                   color: 'white',
-                  fontSize: 10,
+                  fontSize: 9,
                   fontWeight: 600,
-                  height: 20,
-                  '& .MuiChip-icon': { color: 'white', ml: 0.5 },
+                  height: 18,
+                  backdropFilter: `blur(${blurValues.xs})`,
+                  '& .MuiChip-icon': { color: 'rgba(255, 255, 255, 0.8)', ml: 0.5 },
                   '& .MuiChip-label': { px: 0.5 },
                 }}
               />
             )}
 
-            {/* Quality badge */}
+            {/* Quality badge — bottom left */}
             <Chip
               label={quality.label}
               size="small"
@@ -173,6 +204,8 @@ function GridCard({
                 position: 'absolute',
                 bottom: 6,
                 left: 6,
+                // Cap width so it doesn't crash into right-side badges
+                maxWidth: item.cantidad > 1 ? 'calc(100% - 52px)' : 'calc(100% - 12px)',
                 height: 18,
                 fontSize: 9,
                 fontWeight: 700,
@@ -182,11 +215,16 @@ function GridCard({
                 color: quality.color,
                 border: `1px solid ${quality.border}`,
                 backdropFilter: `blur(${blurValues.xs})`,
-                '& .MuiChip-label': { px: 0.75 },
+                '& .MuiChip-label': {
+                  px: 0.75,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                },
               }}
             />
 
-            {/* Quantity badge */}
+            {/* Quantity badge — bottom right */}
             {item.cantidad > 1 && (
               <Chip
                 label={`×${item.cantidad}`}
@@ -194,11 +232,12 @@ function GridCard({
                 sx={{
                   position: 'absolute',
                   bottom: 6,
-                  left: quality.label.length > 4 ? 52 : 44,
+                  right: 6,
                   height: 18,
                   fontSize: 9,
                   fontWeight: 700,
-                  bgcolor: 'rgba(0, 0, 0, 0.7)',
+                  letterSpacing: '0.02em',
+                  bgcolor: 'rgba(0, 0, 0, 0.65)',
                   color: 'white',
                   backdropFilter: `blur(${blurValues.xs})`,
                   '& .MuiChip-label': { px: 0.5 },
@@ -246,10 +285,15 @@ function GridCard({
                     : alpha('#000000', 0.55),
                   color: 'white',
                   backdropFilter: `blur(${blurValues.xs})`,
+                  transition: prefersReducedMotion ? 'none' : 'background-color 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   '&:hover': {
                     bgcolor: isSelectedForComparison
                       ? emeraldCore.dark
                       : alpha('#000000', 0.7),
+                    transform: prefersReducedMotion ? 'none' : 'scale(1.1)',
+                  },
+                  '&:active': {
+                    transform: prefersReducedMotion ? 'none' : 'scale(0.9)',
                   },
                   '&:disabled': {
                     bgcolor: alpha('#000000', 0.3),
@@ -263,7 +307,7 @@ function GridCard({
           </>
         ) : isLoadingThumbnails ? (
           /* Skeleton while thumbnails are loading from API */
-          <Box sx={{ aspectRatio: '1 / 1', width: '100%' }}>
+          <Box sx={{ aspectRatio: '4 / 5', width: '100%' }}>
             <Skeleton variant="rectangular" animation="wave" width="100%" height="100%" />
           </Box>
         ) : (
@@ -271,82 +315,85 @@ function GridCard({
           <ProgressiveImage
             src={undefined}
             alt={`${item.nombre} - placeholder`}
-            aspectRatio="1 / 1"
+            aspectRatio="4 / 5"
           />
         )}
 
       </Box>
 
-      {/* Content Section - iOS HIG spacing (8pt base) */}
+      {/* Content Section — vertical: Name (full width) → specs + price row */}
       <CardContent
         sx={{
-          p: isMobile ? 1.5 : 2, // 12px mobile, 16px desktop
-          pt: isMobile ? 1 : 1.5, // 8px mobile, 12px desktop
-          '&:last-child': { pb: isMobile ? 1.5 : 2 },
-          flex: 1,
+          p: isMobile ? 1.25 : 1.5,
+          '&:last-child': { pb: isMobile ? 1.25 : 1.5 },
+          flexShrink: 0,
           display: 'flex',
-          flexDirection: 'row', // Horizontal layout to place price on right
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 1,
+          flexDirection: 'column',
+          gap: 0.25,
           minHeight: 0,
+          borderTop: `1px solid ${isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'}`,
+          bgcolor: isLight
+            ? surfacesLight.background.primary
+            : alpha(surfacesDark.background.tertiary, 0.5),
         }}
       >
-        {/* Left Section: Name and Specs */}
-        <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-          {/* Name - iOS HIG Subheadline (15pt mobile, 16pt desktop) */}
-          <Typography
-            variant="body2"
-            sx={{
-              fontWeight: 600,
-              color: labelColor,
-              lineHeight: 1.3,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              fontSize: isMobile ? 15 : 16, // iOS HIG subheadline
-              letterSpacing: '-0.24px', // iOS HIG subheadline tracking
-              mb: 0.5,
-            }}
-          >
-            {displayName}
-          </Typography>
+        {/* Name — full width, up to 2 lines, never truncated to "..." on single line */}
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: 600,
+            color: labelColor,
+            lineHeight: 1.25,
+            fontSize: isMobile ? 14 : 15,
+            letterSpacing: '-0.24px',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
+          {displayName}
+        </Typography>
 
-          {/* Specs with color dot - iOS HIG Caption1 (12pt mobile, 13pt desktop) */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Specs + Price row */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.5, mt: '-1px' }}>
+          {/* Color dot + specs */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0, flex: 1 }}>
             <Box
               sx={{
-                width: isMobile ? 8 : 10, // Slightly larger for visibility
-                height: isMobile ? 8 : 10,
+                width: 7,
+                height: 7,
                 borderRadius: '50%',
                 bgcolor: colorDot,
                 flexShrink: 0,
+                boxShadow: `0 0 0 1px ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}`,
               }}
             />
             <Typography
               variant="caption"
               sx={{
                 color: secondaryLabelColor,
-                fontSize: isMobile ? 12 : 13, // iOS HIG caption1
-                letterSpacing: 0, // iOS HIG caption1 tracking
+                fontSize: isMobile ? 11 : 12,
+                lineHeight: 1.2,
+                letterSpacing: '-0.1px',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
               }}
             >
               {item.color}
-              {isLoose && typeof item.peso === 'number' && ` • ${item.peso} ct`}
-              {item.isJewelry && item.metalType && ` • ${item.metalType}`}
+              {isLoose && typeof item.peso === 'number' && ` · ${item.peso} ct`}
+              {item.isJewelry && item.metalType && ` · ${item.metalType}`}
             </Typography>
           </Box>
-        </Box>
 
-        {/* Right Section: Price - Compact (hidden when shouldShowPrices is false) */}
-        {shouldShowPrices && (
-          <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'flex-start' }}>
-            <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
-          </Box>
-        )}
+          {/* Price — aligned right */}
+          {shouldShowPrices && (
+            <Box sx={{ flexShrink: 0 }}>
+              <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
+            </Box>
+          )}
+        </Box>
       </CardContent>
     </Card>
   );
@@ -364,6 +411,7 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.isFavorite === nextProps.isFavorite &&
     prevProps.isMobile === nextProps.isMobile &&
     prevProps.isLoadingThumbnails === nextProps.isLoadingThumbnails &&
+    prevProps.priority === nextProps.priority &&
     prevProps.viewCount === nextProps.viewCount &&
     prevProps.isAdmin === nextProps.isAdmin &&
     prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&

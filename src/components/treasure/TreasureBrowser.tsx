@@ -30,7 +30,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useRecentlyViewed } from '../../hooks/useRecentlyViewed';
 import { useSavedFilters } from '../../hooks/useSavedFilters';
 import { useTreasureAnalytics } from '../../hooks/useTreasureAnalytics';
-import { useTracking } from '../../contexts/TrackingContext';
+import { useTrackingDispatch } from '../../contexts/TrackingContext';
 import { useProductViews } from '../../hooks/useProductViews';
 import { useComparison } from '../../hooks/useComparison';
 import { TreasureItem } from '../../types';
@@ -44,6 +44,7 @@ import { GridCard, ListRow, VirtualGrid, FilterContent, ActiveFilterChips, type 
 import RecentlyViewedCarousel from './RecentlyViewedCarousel';
 import IOSFilterSheet from '../ios/IOSFilterSheet';
 import { MobileSearchBar, TreasureEmptyState, DesktopFilterToolbar } from './browser';
+import TreasureErrorState from './browser/TreasureErrorState';
 import { useLiveRegion } from '../shared/LiveRegion';
 import ScrollToTop from '../shared/ScrollToTop';
 
@@ -71,7 +72,7 @@ export default function TreasureBrowser({
   const location = useLocation();
 
   // Get treasure data from hook
-  const { treasure: allTreasure, isLoadingThumbnails } = useTreasure();
+  const { treasure: allTreasure, isLoadingThumbnails, sheetsError, refreshFromSheets, isLoadingSheets } = useTreasure();
 
   // Parse URL params once on mount using React Router's location.search
   // (window.location.search may be stale during startTransition navigations)
@@ -112,7 +113,7 @@ export default function TreasureBrowser({
   });
 
   // Funnel tracking hook
-  const { track, checkAchievements } = useTracking();
+  const { track, checkAchievements } = useTrackingDispatch();
 
   // Filter tracking hook - handles analytics and active filter count
   const { activeFilterCount } = useFilterTracking({
@@ -269,6 +270,7 @@ export default function TreasureBrowser({
     onCertClick: (item: TreasureItem) => void;
     onToggleFavorite: (itemId: number) => void;
     isMobile: boolean;
+    priority?: boolean;
   }) => (
     <GridCard
       item={props.item}
@@ -277,6 +279,7 @@ export default function TreasureBrowser({
       onCertClick={props.onCertClick}
       onToggleFavorite={props.onToggleFavorite}
       isMobile={props.isMobile}
+      priority={props.priority}
       viewCount={getViewCount(props.item.item)}
       isAdmin={isAdmin}
       isLoadingThumbnails={isLoadingThumbnails}
@@ -387,6 +390,7 @@ export default function TreasureBrowser({
             priceMinMax={priceMinMax}
             hasFilters={hasFilters}
             onClearFilters={urlSync.handleClearFilters}
+            resultCount={filteredTreasure.length}
           />
         </>
       ) : (
@@ -565,8 +569,18 @@ export default function TreasureBrowser({
         </Box>
       )}
 
+      {/* Error State - only when no cached data */}
+      {sheetsError && allTreasure.length === 0 && (
+        <TreasureErrorState
+          isLight={isLight}
+          error={sheetsError}
+          onRetry={refreshFromSheets}
+          isRetrying={isLoadingSheets}
+        />
+      )}
+
       {/* Empty State */}
-      {(visibleItems.length === 0 || (showFavoritesOnly && favoritesCount === 0)) && (
+      {!sheetsError && (visibleItems.length === 0 || (showFavoritesOnly && favoritesCount === 0)) && (
         <TreasureEmptyState
           isLight={isLight}
           hasFilters={hasFilters}

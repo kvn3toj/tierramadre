@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Box, Button, IconButton, Tooltip, alpha } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, alpha, CircularProgress } from '@mui/material';
 import { Download, Printer, Copy } from 'lucide-react';
 import { brandColors } from '../constants';
 import type { ActionButtonsProps } from '../types';
@@ -14,13 +14,14 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   handlePrint,
   handleNewQuotation,
   disabled,
+  isExporting = false,
 }) => (
   <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
     <Button
       variant="contained"
-      startIcon={<Download size={18} />}
+      startIcon={isExporting ? <CircularProgress size={18} color="inherit" /> : <Download size={18} />}
       onClick={handleExportPDF}
-      disabled={disabled}
+      disabled={disabled || isExporting}
       sx={{
         bgcolor: brandColors.emerald,
         flex: 1,
@@ -35,7 +36,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         },
       }}
     >
-      Exportar PDF
+      {isExporting ? 'Exportando...' : 'Exportar PDF'}
     </Button>
     <Tooltip title="Imprimir">
       <IconButton

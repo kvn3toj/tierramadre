@@ -158,9 +158,9 @@ export default function ProgressiveImage({
     };
   }, [lqipSrc, enableLQIP]);
 
-  // Preload main image with retry logic (skip for eco mode - use native lazy loading)
+  // Preload main image with retry logic (skip for eco mode unless priority - use native lazy loading)
   useEffect(() => {
-    if (!shouldLoad || !optimizedSrc || quality === 'eco') return;
+    if (!shouldLoad || !optimizedSrc || (quality === 'eco' && !priority)) return;
 
     const img = new Image();
 
@@ -190,10 +190,14 @@ export default function ProgressiveImage({
     };
   }, [optimizedSrc, srcSet, shouldLoad, quality, retryCount, retryImageLoad]);
 
+  // Container bgcolor matches Skeleton bgcolor — eliminates any white gap
+  // between mounting and Skeleton's first paint frame
+  const skeletonBg = isLight ? surfacesLight.background.tertiary : surfacesDark.background.secondary;
+
   const containerStyles = {
     position: 'relative' as const,
     overflow: 'hidden',
-    bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.tertiary,
+    bgcolor: skeletonBg,
     borderRadius,
     ...(aspectRatio ? { aspectRatio } : { height }),
   };
@@ -268,7 +272,7 @@ export default function ProgressiveImage({
             position: 'absolute',
             top: 0,
             left: 0,
-            bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.secondary,
+            bgcolor: skeletonBg,
           }}
         />
       )}

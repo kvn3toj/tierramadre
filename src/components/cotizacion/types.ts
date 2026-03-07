@@ -157,4 +157,5 @@ export interface ActionButtonsProps {
   handlePrint: () => void;
   handleNewQuotation: () => void;
   disabled: boolean;
+  isExporting?: boolean;
 }

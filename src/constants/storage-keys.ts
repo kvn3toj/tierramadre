@@ -106,6 +106,13 @@ export const STORAGE_KEYS = {
   VAULT_COOLDOWN: 'vault-cooldown',
 
   // =============================================================================
+  // ONBOARDING
+  // =============================================================================
+
+  PROVIDER_ONBOARDING_DISMISSED: 'tierramadre-provider-onboarding-dismissed',
+  COMPLETED_TOURS: 'tierramadre-completed-tours',
+
+  // =============================================================================
   // SYSTEM
   // =============================================================================
 

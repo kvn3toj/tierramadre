@@ -6,6 +6,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -21,7 +22,7 @@ import { TreasureItem } from '../../types';
 import { useAsesores } from '../../hooks/useAsesores';
 import { CotizacionHeader, QuotationPreview, brandColors } from './';
 import { createLogger } from '../../utils/logger';
-import { useTracking } from '../../contexts/TrackingContext';
+import { useTrackingDispatch } from '../../contexts/TrackingContext';
 import { useRecentClients } from '../../hooks/useRecentClients';
 import { useCotizacionHistory } from '../../hooks/useCotizacionHistory';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
@@ -50,7 +51,7 @@ const log = createLogger('Cotizacion');
 export default function CotizacionGenerator() {
   const quotationRef = useRef<HTMLDivElement>(null);
   const { treasure } = useTreasure();
-  const { track, checkAchievements } = useTracking();
+  const { track, checkAchievements } = useTrackingDispatch();
   const recentClients = useRecentClients();
   const cotizacionHistory = useCotizacionHistory();
   const { user: googleUser } = useGoogleAuth();
@@ -106,6 +107,32 @@ export default function CotizacionGenerator() {
     restoreDraft,
     discardDraft,
   } = cotizacion;
+
+  // Handle duplication from profile page
+  const location = useLocation();
+  useEffect(() => {
+    const state = location.state as { duplicate?: { clientName?: string; clientPhone?: string; productsCount: number; total: number; products?: Array<{ itemNumber: number; name: string; precioCOP: number }> } } | null;
+    if (!state?.duplicate) return;
+
+    const dup = state.duplicate;
+    resetAll();
+    regenerateQuotationNumber();
+
+    // Pre-populate client info
+    if (dup.clientName) setClientName(dup.clientName);
+    if (dup.clientPhone) setClientPhone(dup.clientPhone);
+
+    // Re-add products from treasure inventory
+    if (dup.products && treasure.length > 0) {
+      for (const p of dup.products) {
+        const match = treasure.find((t) => t.item === p.itemNumber);
+        if (match) addProductFromTreasure(match);
+      }
+    }
+
+    // Clear location state to prevent re-duplication on re-render
+    window.history.replaceState({}, document.title);
+  }, [location.state]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filter available treasure
   const availableTreasure = treasure.filter(item => item.estado === 'DISPONIBLE');
@@ -397,8 +424,11 @@ export default function CotizacionGenerator() {
     setSelectedItem(null);
   };
 
+  const [isExporting, setIsExporting] = useState(false);
+
   const handleExportPDF = async () => {
-    if (!quotationRef.current) return;
+    if (!quotationRef.current || isExporting) return;
+    setIsExporting(true);
 
     const previewLabels = t.pages.cotizacion.preview;
 
@@ -513,6 +543,8 @@ export default function CotizacionGenerator() {
         severity: 'error',
       });
       log.error('PDF export error:', error);
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -740,6 +772,7 @@ export default function CotizacionGenerator() {
             handlePrint={handlePrint}
             handleNewQuotation={handleNewQuotation}
             disabled={products.length === 0 && totalInvestment === 0}
+            isExporting={isExporting}
           />
         </Paper>
 

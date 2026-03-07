@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { STORAGE_KEYS } from '../constants/storage-keys';
+import { fetchWithRetry } from '../utils/fetchWithRetry';
 
 // Cache configuration
 const CACHE_KEY = STORAGE_KEYS.BATCH_THUMBNAILS;
@@ -66,7 +67,10 @@ function setCachedThumbnails(thumbnails: Record<number, ThumbnailInfo>): void {
  * Fetch thumbnails from API
  */
 async function fetchThumbnails(): Promise<Record<number, ThumbnailInfo>> {
-  const response = await fetch('/api/get-batch-thumbnails');
+  const response = await fetchWithRetry('/api/get-batch-thumbnails', undefined, {
+    retries: 3,
+    onRetry: (attempt) => console.warn(`[Thumbnails] Retry ${attempt}/3...`),
+  });
 
   if (!response.ok) {
     throw new Error('Failed to fetch thumbnails');

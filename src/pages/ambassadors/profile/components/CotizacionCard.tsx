@@ -12,7 +12,7 @@ import {
   CircularProgress,
   alpha,
 } from '@mui/material';
-import { User, Calendar, Trash2, Eye } from 'lucide-react';
+import { User, Calendar, Trash2, Eye, Copy } from 'lucide-react';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
 import { brand, lightTokens, darkTokens, accentColors, cssTransition } from '../../../../design-system';
 
@@ -31,6 +31,7 @@ interface CotizacionCardProps {
   cotizacion: SavedCotizacion;
   onView: () => void;
   onDelete: () => void;
+  onDuplicate?: () => void;
   isLight: boolean;
 }
 
@@ -38,6 +39,7 @@ export const CotizacionCard: React.FC<CotizacionCardProps> = ({
   cotizacion,
   onView,
   onDelete,
+  onDuplicate,
   isLight,
 }) => {
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -188,8 +190,24 @@ export const CotizacionCard: React.FC<CotizacionCardProps> = ({
           }}
         />
 
-        {/* Delete Button */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+        {/* Action Buttons */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5, mt: 1 }}>
+          {onDuplicate && (
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDuplicate();
+              }}
+              aria-label="Duplicar cotizacion"
+              sx={{
+                color: lightTokens.text.muted,
+                '&:hover': { color: brand.emerald[500], bgcolor: alpha(brand.emerald[500], 0.1) },
+              }}
+            >
+              <Copy size={14} />
+            </IconButton>
+          )}
           <IconButton
             size="small"
             onClick={(e) => {
