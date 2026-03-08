@@ -16,7 +16,7 @@ import IOSNavigationBar, { NavigationBarMode, NavigationAction } from './IOSNavi
 import IOSMoreSheet from './IOSMoreSheet';
 import IOSSettingsSheet from './IOSSettingsSheet';
 import { InvitationBanner } from '../invitation';
-import { emeraldCore, primitiveSpacing as spacing } from '../../design-system';
+import { primitiveSpacing as spacing, zIndex, defaultShadows } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 
@@ -34,7 +34,17 @@ interface PageConfig {
   forceLogoUrl?: string;
 }
 
-const getPageConfigs = (t: any): Record<string, PageConfig> => ({
+const DARK_HEADER_GRADIENT = [
+  'linear-gradient(to right, transparent 20%, rgba(0, 174, 122, 0.12) 50%, transparent 80%)',
+  'linear-gradient(to right, #050505 0%, #0d1a14 30%, #0d1a14 70%, #050505 100%)',
+].join(', ');
+
+const LIGHT_HEADER_GRADIENT = [
+  'linear-gradient(to right, transparent 20%, rgba(0, 174, 122, 0.08) 50%, transparent 80%)',
+  'linear-gradient(to right, #ffffff 0%, #f0faf5 30%, #f0faf5 70%, #ffffff 100%)',
+].join(', ');
+
+const getPageConfigs = (t: any, isLight: boolean): Record<string, PageConfig> => ({
   '/gallery': {
     title: t.pages.gallery.title,
     mode: 'large',
@@ -60,9 +70,9 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/treasure': {
     title: t.pages.treasure.title,
     mode: 'compact',
-    logoUrl: '/images/logo-horizontal-white.png',
-    backgroundColor: emeraldCore.primary,
-    forceLogoUrl: '/images/logo-horizontal-white.png',
+    logoUrl: '/images/logo-horizontal-green.png',
+    backgroundColor: isLight ? LIGHT_HEADER_GRADIENT : DARK_HEADER_GRADIENT,
+    forceLogoUrl: '/images/logo-horizontal-green.png',
   },
   '/ambassadors': {
     title: t.pages.ambassadors.title,
@@ -71,9 +81,9 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/home': {
     title: 'Tierra Mädre',
     mode: 'compact',
-    logoUrl: '/images/logo-horizontal-white.png',
-    backgroundColor: emeraldCore.primary,
-    forceLogoUrl: '/images/logo-horizontal-white.png',
+    logoUrl: '/images/logo-horizontal-green.png',
+    backgroundColor: isLight ? LIGHT_HEADER_GRADIENT : DARK_HEADER_GRADIENT,
+    forceLogoUrl: '/images/logo-horizontal-green.png',
   },
   '/catalog': {
     title: t.pages.catalog.title,
@@ -168,7 +178,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
 
   const pageConfig = useMemo((): PageConfig => {
-    const configs = getPageConfigs(t);
+    const configs = getPageConfigs(t, isLight);
 
     // Check for exact match first
     const exactMatch = configs[location.pathname];
@@ -185,7 +195,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
       title: 'Tierra Mädre',
       mode: 'compact',
     };
-  }, [location.pathname, t]);
+  }, [location.pathname, t, isLight]);
 
   return (
     <Box
@@ -209,7 +219,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
           position: 'absolute',
           top: -9999,
           left: 0,
-          zIndex: 9999,
+          zIndex: zIndex.modal,
           bgcolor: 'var(--surface-primary)',
           color: 'text.primary',
           px: 3,
@@ -218,7 +228,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
           fontSize: '0.875rem',
           textDecoration: 'none',
           borderRadius: '0 0 8px 0',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          boxShadow: defaultShadows.sm,
           '&:focus-visible': {
             top: 0,
             outline: '2px solid',

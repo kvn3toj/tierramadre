@@ -24,8 +24,9 @@ import { useIsProvider } from '../../hooks/usePermissions';
 
 // Design tokens
 import { dynamicBlur, dynamicOpacity, liquidSaturation, tabBarConfig } from '../../design-system/tokens/liquid-glass';
-import { radius, layoutConstants, primitiveColors, primitiveSpacing as spacing, easingCurves, durations } from '../../design-system';
+import { radius, layoutConstants, primitiveColors, primitiveSpacing as spacing, easingCurves, durations, zIndex, fontWeights } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useThemeMode } from '../../contexts/ThemeContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import useScrollShrink from '../../hooks/useScrollShrink';
 
@@ -102,6 +103,8 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
   const location = useLocation();
   const { t } = useLanguage();
   const { effectiveConfig } = useLiquidGlassSafe();
+  const { mode } = useThemeMode();
+  const isDark = mode === 'dark';
   const isProvider = useIsProvider();
 
   // Dynamic shrink/expand behavior - DISABLED for always-visible navigation
@@ -168,9 +171,21 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
   };
 
   // Tab Bar styles following Apple HIG - solid with subtle translucency
+  // Dark mode: matches header's splash screen gradient for visual cohesion
   const liquidGlassStyles = useMemo(() => {
+    if (isDark) {
+      // Dark mode: splash screen gradient with emerald glow — matches header
+      return {
+        background: [
+          'linear-gradient(to right, transparent 20%, rgba(0, 174, 122, 0.10) 50%, transparent 80%)',
+          'linear-gradient(to right, #050505 0%, #0d1a14 30%, #0d1a14 70%, #050505 100%)',
+        ].join(', '),
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
+      };
+    }
+
     if (!effectiveConfig.blur) {
-      // Fallback for low-tier devices - fully opaque
       return {
         backgroundColor: 'var(--surface-secondary)',
         backdropFilter: 'none',
@@ -178,21 +193,24 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
       };
     }
 
-    // Apple HIG: Tab bars use design system tokens for consistency
-    // "Frosted glass" effect - stronger blur + moderate opacity
-    const blurValue = dynamicBlur.resting; // 20px from design system
-    const saturation = liquidSaturation.intense; // 190% for tab bars
+    const blurValue = dynamicBlur.resting;
+    const saturation = liquidSaturation.intense;
 
     return {
       backgroundColor: `rgba(var(--surface-secondary-rgb), ${dynamicOpacity.resting})`,
       backdropFilter: `blur(${blurValue}) saturate(${saturation})`,
       WebkitBackdropFilter: `blur(${blurValue}) saturate(${saturation})`,
     };
-  }, [effectiveConfig.blur]);
+  }, [effectiveConfig.blur, isDark]);
 
   // Specular highlight for active tab - pill-shaped glow
+  // Enhanced in dark mode with stronger emerald presence
   const getTabSpecularStyles = (isActive: boolean) => {
     if (!isActive) return {};
+
+    const glowIntensity = isDark ? 0.18 : 0.12;
+    const glowFade = isDark ? 0.10 : 0.06;
+    const underlineGlow = isDark ? '0 0 12px rgba(0, 174, 122, 0.5)' : '0 0 8px rgba(0, 174, 122, 0.4)';
 
     return {
       // Pill-shaped background glow
@@ -205,12 +223,12 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         width: '80%',
         height: '70%',
         background: effectiveConfig.specular
-          ? 'radial-gradient(ellipse, rgba(0, 174, 122, 0.12) 0%, rgba(0, 174, 122, 0.06) 40%, transparent 70%)'
-          : 'rgba(0, 174, 122, 0.08)',
+          ? `radial-gradient(ellipse, rgba(0, 174, 122, ${glowIntensity}) 0%, rgba(0, 174, 122, ${glowFade}) 40%, transparent 70%)`
+          : `rgba(0, 174, 122, ${isDark ? 0.10 : 0.08})`,
         borderRadius: radius['3xl'],
         opacity: 1,
         transition: `all ${durations.liquidFast} ${easingCurves.liquidInOut}`,
-        zIndex: 0,
+        zIndex: zIndex.base,
       },
       // Animated gradient underline
       '&::after': {
@@ -219,17 +237,15 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         bottom: 0,
         left: '20%',
         right: '20%',
-        height: '3px',
+        height: isDark ? '2.5px' : '3px',
         background: effectiveConfig.specular
           ? 'linear-gradient(90deg, transparent, var(--brand-primary), transparent)'
           : 'var(--brand-primary)',
         borderRadius: '2px',
         opacity: 1,
         transition: `all ${durations.liquidFast} ${easingCurves.liquidInOut}`,
-        boxShadow: effectiveConfig.specular
-          ? '0 0 8px rgba(0, 174, 122, 0.4)'
-          : 'none',
-        zIndex: 1,
+        boxShadow: effectiveConfig.specular ? underlineGlow : 'none',
+        zIndex: zIndex.base,
       },
     };
   };
@@ -250,18 +266,22 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         ...liquidGlassStyles,
 
         // Instagram-style: straight top, rounded bottom corners matching phone screen
-        borderTop: '0.5px solid rgba(255, 255, 255, 0.15)',
+        borderTop: isDark
+          ? '0.5px solid rgba(0, 174, 122, 0.15)'
+          : '0.5px solid rgba(255, 255, 255, 0.15)',
         borderBottomLeftRadius: radius['2xl'],
         borderBottomRightRadius: radius['2xl'],
 
-        // Enhanced shadow for depth
-        boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.35), 0 -2px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+        // Enhanced shadow — emerald-tinted in dark mode
+        boxShadow: isDark
+          ? '0 -8px 32px rgba(0, 0, 0, 0.5), 0 -2px 12px rgba(0, 174, 122, 0.08), inset 0 1px 0 rgba(0, 174, 122, 0.06)'
+          : '0 -8px 32px rgba(0, 0, 0, 0.35), 0 -2px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
 
         display: 'flex',
         alignItems: 'center',
         paddingTop: spacing.sm,
         paddingBottom: `calc(${spacing.xs} + env(safe-area-inset-bottom))`,
-        zIndex: 1000,
+        zIndex: zIndex.float,
         overflow: 'hidden', // Contain shimmer effect within rounded corners
 
         // GPU acceleration - forces browser to keep element visible on scroll
@@ -281,7 +301,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
           ? `background-color ${tabBarConfig.transitionDuration} ${easingCurves.liquidInOut}, backdrop-filter ${tabBarConfig.transitionDuration} ${easingCurves.liquidInOut}, box-shadow ${tabBarConfig.transitionDuration} ${easingCurves.liquidInOut}`
           : 'none',
 
-        // Enhanced metallic shimmer effect - more visible
+        // Enhanced shimmer — emerald-tinted in dark mode
         '&::before': effectiveConfig.specular ? {
           content: '""',
           position: 'absolute',
@@ -289,28 +309,35 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
           left: '-50%',
           width: '200%',
           height: '3px',
-          background: `linear-gradient(
-            90deg,
-            transparent 0%,
-            transparent 40%,
-            rgba(255, 255, 255, 0.15) 45%,
-            rgba(255, 255, 255, 0.4) 50%,
-            rgba(255, 255, 255, 0.15) 55%,
-            transparent 60%,
-            transparent 100%
-          )`,
+          background: isDark
+            ? `linear-gradient(
+                90deg,
+                transparent 0%,
+                transparent 40%,
+                rgba(0, 174, 122, 0.15) 45%,
+                rgba(0, 174, 122, 0.4) 50%,
+                rgba(0, 174, 122, 0.15) 55%,
+                transparent 60%,
+                transparent 100%
+              )`
+            : `linear-gradient(
+                90deg,
+                transparent 0%,
+                transparent 40%,
+                rgba(255, 255, 255, 0.15) 45%,
+                rgba(255, 255, 255, 0.4) 50%,
+                rgba(255, 255, 255, 0.15) 55%,
+                transparent 60%,
+                transparent 100%
+              )`,
           animation: effectiveConfig.animations ? 'shimmer 6s ease-in-out infinite' : 'none',
           '@keyframes shimmer': {
-            '0%': {
-              transform: 'translateX(0)',
-            },
-            '100%': {
-              transform: 'translateX(50%)',
-            },
+            '0%': { transform: 'translateX(0)' },
+            '100%': { transform: 'translateX(50%)' },
           },
         } : {},
 
-        // Subtle inner glow for premium feel
+        // Top edge glow — emerald in dark, white in light
         '&::after': {
           content: '""',
           position: 'absolute',
@@ -318,7 +345,9 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
           left: 0,
           right: 0,
           height: '1px',
-          background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+          background: isDark
+            ? 'linear-gradient(90deg, transparent, rgba(0, 174, 122, 0.25), transparent)'
+            : 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
           opacity: 0.6,
         },
 
@@ -379,11 +408,14 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                   : 'none',
 
                 '&:hover': {
-                  opacity: 0.8,
-                  transform: effectiveConfig.animations ? 'scale(1.02)' : 'none',
+                  opacity: 0.85,
+                  transform: effectiveConfig.animations ? 'scale(1.05)' : 'none',
                 },
                 '&:active': {
-                  transform: effectiveConfig.animations ? 'scale(0.95)' : 'none',
+                  transform: effectiveConfig.animations ? 'scale(0.90)' : 'none',
+                  transition: effectiveConfig.animations
+                    ? `transform 80ms ${easingCurves.liquidIn}`
+                    : 'none',
                 },
                 '&:focus-visible': {
                   outline: `2px solid ${primitiveColors.emerald[500]}`,
@@ -406,7 +438,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                 transition: effectiveConfig.animations
                   ? `transform ${durations.liquidFast} ${easingCurves.liquidSpring}`
                   : 'none',
-                zIndex: 2, // Above background effects
+                zIndex: zIndex.base, // Above background effects
               }}>
                 {isLucideIcon ? (
                   <Icon
@@ -443,7 +475,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                       backgroundColor: 'var(--status-error)',
                       color: 'white',
                       fontSize: '10px',
-                      fontWeight: 600,
+                      fontWeight: fontWeights.semibold,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -473,7 +505,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                   transition: effectiveConfig.animations
                     ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
                     : 'none',
-                  zIndex: 2, // Above background effects
+                  zIndex: zIndex.base, // Above background effects
                   position: 'relative',
                 }}
               >

@@ -14,7 +14,7 @@ import { ArrowBack } from '@mui/icons-material';
 import { dynamicBlur, liquidSaturation, specularHighlights } from '../../design-system/tokens/liquid-glass';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsScrolled } from '../../hooks/useScrollShrink';
-import { iosTypographyScale, primitiveSpacing as spacing, easingCurves, durations } from '../../design-system';
+import { iosTypographyScale, primitiveSpacing as spacing, easingCurves, durations, zIndex } from '../../design-system';
 
 export type NavigationBarMode = 'compact' | 'large';
 
@@ -64,13 +64,14 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
   };
 
   const isLargeMode = mode === 'large';
-  const iconColor = backgroundColor ? '#ffffff' : 'var(--brand-primary)';
+  const iconColor = 'var(--brand-primary)';
 
   // Liquid Glass styles based on scroll state - Apple HIG compliant
   const liquidGlassStyles = useMemo(() => {
     if (backgroundColor) {
+      const isGradient = backgroundColor.includes('gradient');
       return {
-        backgroundColor,
+        ...(isGradient ? { background: backgroundColor } : { backgroundColor }),
         backdropFilter: 'none',
         WebkitBackdropFilter: 'none',
       };
@@ -120,9 +121,11 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
         top: 0,
         left: 0,
         right: 0,
-        zIndex: 999,
+        zIndex: zIndex.nav,
         ...liquidGlassStyles,
-        borderBottom: backgroundColor ? 'none' : '0.5px solid var(--border-default)',
+        borderBottom: backgroundColor
+          ? (backgroundColor.includes('gradient') ? '0.5px solid rgba(0, 174, 122, 0.15)' : 'none')
+          : '0.5px solid var(--border-default)',
         boxShadow: isScrolled ? 'var(--shadow-md)' : 'var(--shadow-sm)',
         transition: effectiveConfig.animations
           ? `all ${durations.liquidNormal} ${easingCurves.liquidInOut}`
@@ -132,7 +135,9 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
         ...specularStyles,
 
         '@supports not (backdrop-filter: blur(10px))': {
-          backgroundColor: backgroundColor || 'var(--surface-primary)',
+          ...(backgroundColor?.includes('gradient')
+            ? { background: backgroundColor }
+            : { backgroundColor: backgroundColor || 'var(--surface-primary)' }),
         },
         '@media (prefers-reduced-motion: reduce)': {
           transition: 'none',
