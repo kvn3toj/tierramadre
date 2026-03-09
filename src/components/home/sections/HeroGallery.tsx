@@ -24,7 +24,6 @@ import {
   ALL_CATEGORIES,
   AUTO_TRANSITION_INTERVAL,
   MainCategory,
-  CATEGORY_ICONS,
 } from './gallery-constants';
 
 // =============================================================================
@@ -255,10 +254,8 @@ export const HeroGallery: React.FC = () => {
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 0.75,
                     px: { xs: 1.75, sm: 2, md: 2.5 },
-                    py: { xs: 0.75, sm: 1 },
-                    minHeight: 44,
+                    py: { xs: 0.75, sm: 0.85 },
                     borderRadius: 2,
                     cursor: 'pointer',
                     transition: cssTransition.slow,
@@ -274,15 +271,6 @@ export const HeroGallery: React.FC = () => {
                     },
                   }}
                 >
-                  <Typography
-                    component="span"
-                    sx={{
-                      fontSize: { xs: '0.85rem', sm: '0.9rem' },
-                      lineHeight: 1,
-                    }}
-                  >
-                    {CATEGORY_ICONS[cat.id]}
-                  </Typography>
                   <Typography
                     variant="body2"
                     sx={{
