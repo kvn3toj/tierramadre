@@ -11,6 +11,7 @@ import BugReportIcon from '@mui/icons-material/BugReport';
 import { alpha } from '@mui/material/styles';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { emeraldCore } from '../../design-system/tokens/colors';
+import { zIndex } from '../../design-system';
 import FeedbackWizard from './FeedbackWizard';
 
 export default function FeedbackFAB() {
@@ -33,7 +34,7 @@ export default function FeedbackFAB() {
               position: 'fixed',
               bottom: { xs: 80, sm: 24 }, // Above bottom nav on mobile
               right: 24,
-              zIndex: 1200,
+              zIndex: zIndex.panel,
               bgcolor: emeraldCore.dark,
               color: 'white',
               '&:hover': {

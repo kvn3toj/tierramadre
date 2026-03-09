@@ -34,6 +34,7 @@ import AdminSelectDialog from '../components/cart/AdminSelectDialog';
 import { emeraldCore, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
 import { buttonGradients } from '../design-system/tokens/gradients';
 import { useCurrencyFormat } from '../contexts/CurrencyContext';
+import { fontWeights } from '../design-system';
 
 export default function CartPage() {
   const { formatCurrency } = useCurrencyFormat();
@@ -122,7 +123,7 @@ export default function CartPage() {
           <ChevronLeft size={24} />
         </IconButton>
         <Box sx={{ flex: 1 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          <Typography variant="h5" sx={{ fontWeight: fontWeights.bold }}>
             Mi Selección
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -165,7 +166,7 @@ export default function CartPage() {
             color={isLight ? surfacesLight.text.tertiary : surfacesDark.text.tertiary}
             style={{ marginBottom: 16, opacity: 0.5 }}
           />
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: fontWeights.semibold, mb: 1 }}>
             Tu selección está vacía
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>

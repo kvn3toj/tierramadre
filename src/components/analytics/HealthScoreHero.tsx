@@ -11,7 +11,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { Box, Typography, alpha, useTheme } from '@mui/material';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { goldAccent, semanticColors } from '../../design-system/tokens/colors';
-import { blurValues } from '../../design-system';
+import { blurValues, fontWeights } from '../../design-system';
 
 // =============================================================================
 // TYPES
@@ -216,7 +216,7 @@ export const HealthScoreHero: React.FC<HealthScoreHeroProps> = ({
           <Typography
             variant="h2"
             sx={{
-              fontWeight: 800,
+              fontWeight: fontWeights.bold,
               color: color,
               lineHeight: 1,
               fontSize: size * 0.28,
@@ -229,7 +229,7 @@ export const HealthScoreHero: React.FC<HealthScoreHeroProps> = ({
             variant="caption"
             sx={{
               color: 'text.secondary',
-              fontWeight: 600,
+              fontWeight: fontWeights.semibold,
               fontSize: size * 0.065,
               textTransform: 'uppercase',
               letterSpacing: 1,

@@ -9,6 +9,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography, useMediaQuery, LinearProgress } from '@mui/material';
 import { brandColors } from '../../theme';
+import { zIndex } from '../../design-system';
 
 // Inspirational English quotes for exclusive collection
 const COLLECTION_QUOTES = [
@@ -85,7 +86,7 @@ export default function CollectionSplashScreen({
         justifyContent: 'center',
         bgcolor: brandColors.darkBg,
         background: `radial-gradient(ellipse at 50% 30%, #0d1a14 0%, ${brandColors.darkBg} 50%, #050505 100%)`,
-        zIndex: 9999,
+        zIndex: zIndex.modal,
         overflow: 'hidden',
       }}
     >
@@ -146,7 +147,7 @@ export default function CollectionSplashScreen({
           alignItems: 'center',
           gap: 2.5,
           position: 'relative',
-          zIndex: 1,
+          zIndex: zIndex.base,
           px: 2,
         }}
       >

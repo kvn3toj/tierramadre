@@ -31,7 +31,7 @@ import {
 } from '../design-system/tokens/colors';
 import { spacing } from '../design-system/tokens/spacing';
 import { typography } from '../design-system/tokens/typography';
-import { shadows } from '../design-system/tokens/shadows';
+import { shadows, defaultShadows } from '../design-system/tokens/shadows';
 import { glass } from '../design-system/tokens/glass';
 import { gradients } from '../design-system/tokens/gradients';
 
@@ -57,7 +57,7 @@ const ColorSwatch: React.FC<{
         borderRadius: 2,
         bgcolor: color,
         mb: 1,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        boxShadow: defaultShadows.sm,
       }}
     />
     <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>

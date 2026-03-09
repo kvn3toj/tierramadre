@@ -16,7 +16,7 @@ import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useThemeMode } from '../../../contexts/ThemeContext';
 import { useTreasure } from '../../../hooks/useTreasure';
 import { emeraldCore } from '../../../design-system/tokens/colors';
-import { primitiveSpacing as spacing } from '../../../design-system';
+import { primitiveSpacing as spacing, zIndex } from '../../../design-system';
 import type { ProductDetailViews, ProductCotizaciones } from './types';
 import {
   ViewerStats,
@@ -109,7 +109,7 @@ const ProductViewersPage: React.FC = () => {
         sx={{
           position: 'sticky',
           top: 0,
-          zIndex: 10,
+          zIndex: zIndex.base,
           bgcolor: 'background.default',
           borderBottom: `1px solid ${alpha(isLight ? '#000' : '#fff', 0.1)}`,
           px: 2,

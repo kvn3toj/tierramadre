@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { FileText, Download, Eye, ArrowLeft } from 'lucide-react';
 import { documentShadows } from '../../../design-system/tokens';
-import { blurValues } from '../../../design-system';
+import { blurValues, zIndex } from '../../../design-system';
 import { exportQuotationToPdf } from '../../../utils/pdf';
 import { brandColors } from '../../../components/cotizacion/constants';
 import { createLogger } from '../../../utils/logger';
@@ -143,7 +143,7 @@ export default function QuotationPreview() {
           overflow: 'hidden',
         }}
       >
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
+        <Box sx={{ position: 'relative', zIndex: zIndex.base }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
               <IconButton

@@ -13,7 +13,7 @@ import React from 'react';
 import { Box, Typography, IconButton, Backdrop, Switch, SxProps, Theme, Slider } from '@mui/material';
 import { Close, DarkMode, LightMode, Language, Visibility, VisibilityOff, AttachMoney, CurrencyExchange } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
-import { radius, layoutConstants, iosTypographyScale, blackAlpha, blurValues, primitiveColors, primitiveSpacing as spacing } from '../../design-system';
+import { radius, layoutConstants, iosTypographyScale, blackAlpha, blurValues, primitiveColors, primitiveSpacing as spacing, zIndex } from '../../design-system';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
@@ -154,7 +154,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
         open={open}
         onClick={onClose}
         sx={{
-          zIndex: 1100,
+          zIndex: zIndex.sheet,
           backgroundColor: blackAlpha(0.4),
           backdropFilter: `blur(${blurValues.md})`,
         }}
@@ -169,7 +169,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
           bottom: 0,
           left: 0,
           right: 0,
-          zIndex: 1101,
+          zIndex: zIndex.sheetContent,
           backgroundColor: 'var(--surface-secondary)',
           borderTopLeftRadius: radius.xl,
           borderTopRightRadius: radius.xl,
@@ -185,7 +185,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
             position: 'sticky',
             top: 0,
             backgroundColor: 'var(--surface-secondary)',
-            zIndex: 1,
+            zIndex: zIndex.base,
             paddingTop: spacing.sm,
             paddingX: spacing.md,
             paddingBottom: spacing.xs,

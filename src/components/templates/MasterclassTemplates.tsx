@@ -1,6 +1,6 @@
 import { Box, Typography, Stack, Grid } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
-import { cssTransition } from '../../design-system';
+import { cssTransition, zIndex } from '../../design-system';
 
 // ============================================================================
 // MASTERCLASS TEMPLATES - "El Poder de la Esmeralda Colombiana"
@@ -125,7 +125,7 @@ export function BrandCoverTemplate({
       <CornerDecoration corner="br" />
 
       {/* Title - Top */}
-      <Box sx={{ position: 'absolute', top: 200, left: 0, width: 1920, textAlign: 'center', zIndex: 10 }}>
+      <Box sx={{ position: 'absolute', top: 200, left: 0, width: 1920, textAlign: 'center', zIndex: zIndex.base }}>
         <Typography
           sx={{
             fontSize: 100,
@@ -144,7 +144,7 @@ export function BrandCoverTemplate({
       <Box sx={{ position: 'absolute', top: 340, left: 760, width: 400, height: 2, background: `linear-gradient(90deg, transparent, ${COLORS.emerald}, transparent)` }} />
 
       {/* Contact Info - Bottom */}
-      <Box sx={{ position: 'absolute', bottom: 150, left: 0, width: 1920, textAlign: 'center', zIndex: 10 }}>
+      <Box sx={{ position: 'absolute', bottom: 150, left: 0, width: 1920, textAlign: 'center', zIndex: zIndex.base }}>
         <Typography
           sx={{
             fontSize: 24,
@@ -159,7 +159,7 @@ export function BrandCoverTemplate({
       </Box>
 
       {/* Logo - Bottom Right */}
-      <Box sx={{ position: 'absolute', bottom: 30, right: 50, zIndex: 10 }}>
+      <Box sx={{ position: 'absolute', bottom: 30, right: 50, zIndex: zIndex.base }}>
         <Box
           component="img"
           src={LOGO_PATH}
@@ -238,7 +238,7 @@ export function MissionTemplate({
       </Box>
 
       {/* Logo - Bottom Right */}
-      <Box sx={{ position: 'absolute', bottom: 30, right: 50, zIndex: 10 }}>
+      <Box sx={{ position: 'absolute', bottom: 30, right: 50, zIndex: zIndex.base }}>
         <Box
           component="img"
           src={LOGO_PATH}
@@ -339,7 +339,7 @@ export function OpportunityTemplate({
       <CornerDecoration corner="tl" />
       <CornerDecoration corner="br" />
 
-      <Stack sx={{ position: 'relative', zIndex: 1, height: '100%', justifyContent: 'center', px: 12 }} spacing={6}>
+      <Stack sx={{ position: 'relative', zIndex: zIndex.base, height: '100%', justifyContent: 'center', px: 12 }} spacing={6}>
         <Box sx={{ alignSelf: 'flex-start', px: 5, py: 2, background: `linear-gradient(90deg, ${COLORS.gold}, ${COLORS.emerald})`, borderRadius: '30px' }}>
           <Typography sx={{ fontSize: '22px', fontWeight: 700, color: COLORS.richBlack, letterSpacing: '0.15em', fontFamily: '"Inter", sans-serif' }}>
             OPORTUNIDAD ÚNICA
@@ -454,7 +454,7 @@ export function DifferentiatorsTemplate({
       <CornerDecoration corner="tr" />
       <CornerDecoration corner="bl" />
 
-      <Stack sx={{ height: '100%', p: 10, position: 'relative', zIndex: 1 }} spacing={6}>
+      <Stack sx={{ height: '100%', p: 10, position: 'relative', zIndex: zIndex.base }} spacing={6}>
         <Typography sx={{ fontSize: '64px', fontWeight: 600, color: COLORS.gold, textAlign: 'center', fontFamily: '"Cormorant Garamond", serif' }}>
           {title}
         </Typography>

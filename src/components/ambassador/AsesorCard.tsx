@@ -17,7 +17,7 @@ import {
 import { Gem, ChevronRight, Image, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Asesor } from '../../hooks/useAsesores';
-import { brand, lightTokens, darkTokens, accentColors, cssTransition } from '../../design-system';
+import { brand, lightTokens, darkTokens, accentColors, cssTransition, zIndex } from '../../design-system';
 import {
   emeraldCore,
   goldAccent,
@@ -94,7 +94,7 @@ export default function AsesorCard({
             background: emeraldGradients.deep,
             opacity: 0,
             transition: cssTransition.default,
-            zIndex: 1,
+            zIndex: zIndex.base,
           },
           '&:hover': {
             borderColor: emeraldCore.primary,

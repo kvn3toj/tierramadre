@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { Search, X, Heart, SlidersHorizontal } from 'lucide-react';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
-import { accentColors, blurValues } from '../../../design-system';
+import { accentColors, blurValues, zIndex } from '../../../design-system';
 import { ActiveFilterChips } from '../';
 import type { TreasureFilters, StatusFilter, TypeFilter, HeroCategoryFilter } from '../../../hooks/useTreasureFiltering';
 
@@ -79,7 +79,7 @@ export default function MobileSearchBar({
           alignItems: 'center',
           position: 'sticky',
           top: 0,
-          zIndex: 10,
+          zIndex: zIndex.base,
           bgcolor: isLight
             ? alpha(surfacesLight.background.primary, 0.85)
             : alpha(surfacesDark.background.primary, 0.85),

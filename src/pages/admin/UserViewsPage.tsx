@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, goldAccent, semanticColors } from '../../design-system/tokens/colors';
-import { accentColors, cssTransition, primitiveColors, primitiveSpacing as spacing } from '../../design-system';
+import { accentColors, cssTransition, primitiveColors, primitiveSpacing as spacing, zIndex } from '../../design-system';
 
 // =============================================================================
 // TYPES
@@ -227,7 +227,7 @@ const UserViewsPage: React.FC = () => {
         sx={{
           position: 'sticky',
           top: 0,
-          zIndex: 10,
+          zIndex: zIndex.base,
           bgcolor: 'background.default',
           borderBottom: `1px solid ${alpha(isLight ? '#000' : '#fff', 0.1)}`,
           px: 2,

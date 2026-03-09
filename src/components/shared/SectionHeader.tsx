@@ -7,6 +7,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { emeraldCore } from '../../design-system/tokens/colors';
+import { fontWeights } from '../../design-system';
 
 export interface SectionHeaderProps {
   title: string;
@@ -37,7 +38,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
         <Typography
           variant="subtitle2"
           sx={{
-            fontWeight: 700,
+            fontWeight: fontWeights.bold,
             color: 'text.secondary',
             textTransform: 'uppercase',
             letterSpacing: 0.5,

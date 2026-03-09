@@ -124,6 +124,7 @@ export { iosTypographyScale } from './tokens/ios-typography';
 export {
   layoutConstants,
   radius,
+  zIndex,
 } from './tokens/layout';
 
 // CSS Transition helpers

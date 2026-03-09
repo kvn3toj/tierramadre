@@ -1,5 +1,6 @@
 // Ambassador Mini-Webs Type System
 // Rachel's Trust Architecture for Seller Profiles
+import { emeraldCore, goldAccent, surfacesLight, accentColors, semanticColors } from '../design-system';
 
 /**
  * Ambassador Profile - Foundation of seller trust
@@ -284,11 +285,11 @@ export const TEMPLATE_PRESETS = {
     name: 'Tierra Madre Official',
     description: 'Consistencia de marca con paleta verde esmeralda',
     colorScheme: {
-      primary: '#059669',
-      secondary: '#064e3b',
-      accent: '#fbbf24',
-      background: '#ffffff',
-      text: '#1f2937'
+      primary: emeraldCore.primary,
+      secondary: emeraldCore.darker,
+      accent: goldAccent.light,
+      background: surfacesLight.background.primary,
+      text: surfacesLight.text.primary,
     },
     layout: 'professional' as LayoutVariation,
     restrictions: {
@@ -301,11 +302,11 @@ export const TEMPLATE_PRESETS = {
     name: 'Marca Personal',
     description: 'Personalizacion completa con tu identidad',
     colorScheme: {
-      primary: '#3b82f6',
-      secondary: '#1e40af',
-      accent: '#f59e0b',
-      background: '#f9fafb',
-      text: '#111827'
+      primary: accentColors.info.light,
+      secondary: semanticColors.info.dark,
+      accent: semanticColors.warning.main,
+      background: surfacesLight.background.secondary,
+      text: surfacesLight.text.primary,
     },
     layout: 'modern' as LayoutVariation,
     restrictions: {

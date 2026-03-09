@@ -39,6 +39,9 @@ import {
   cssTransition,
   blurValues,
   primitiveColors,
+  zIndex,
+  fontWeights,
+  emeraldShadows,
 } from '../design-system';
 
 // ═══════════════════════════════════════════════════════════════
@@ -82,16 +85,16 @@ const emeraldBtnSx = {
   py: 1.5,
   borderRadius: '14px',
   fontSize: '0.95rem',
-  fontWeight: 600,
+  fontWeight: fontWeights.semibold,
   fontFamily: vault.system,
   textTransform: 'none' as const,
   background: `linear-gradient(135deg, ${vault.emerald} 0%, ${emeraldCore.dark} 100%)`,
   color: '#fff',
   border: 'none',
-  boxShadow: `0 4px 20px ${emeraldAlpha(0.3)}`,
+  boxShadow: emeraldShadows.md,
   '&:hover': {
     background: `linear-gradient(135deg, ${emeraldCore.light} 0%, ${vault.emerald} 100%)`,
-    boxShadow: `0 4px 24px ${emeraldAlpha(0.4)}`,
+    boxShadow: emeraldShadows.lg,
   },
   '&:disabled': {
     background: emeraldAlpha(0.15),
@@ -104,7 +107,7 @@ const ghostBtnSx = {
   py: 1.5,
   borderRadius: '14px',
   fontSize: '0.95rem',
-  fontWeight: 500,
+  fontWeight: fontWeights.medium,
   fontFamily: vault.system,
   textTransform: 'none' as const,
   color: vault.textMuted,
@@ -183,7 +186,7 @@ function GlassCard({ children }: { children: React.ReactNode }) {
         width: '100%',
         mx: 'auto',
         position: 'relative',
-        zIndex: 1,
+        zIndex: zIndex.base,
         p: { xs: 3.5, sm: 4.5 },
         borderRadius: '20px',
         bgcolor: vault.card,
@@ -250,7 +253,7 @@ function PinInput({
           width: '100%',
           height: '100%',
           fontSize: '16px',
-          zIndex: 2,
+          zIndex: zIndex.base,
           cursor: 'pointer',
         }}
       />
@@ -300,7 +303,7 @@ function PinInput({
                 <Typography
                   sx={{
                     fontSize: '1.75rem',
-                    fontWeight: 700,
+                    fontWeight: fontWeights.bold,
                     fontFamily: vault.mono,
                     color: vault.emerald,
                     lineHeight: 1,
@@ -768,7 +771,7 @@ export default function InvitationPage() {
             <Box sx={{ textAlign: 'center' }}>
               <AlertGlyph variant="error" />
               <Typography
-                sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: 700, color: vault.text, mb: 1 }}
+                sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: fontWeights.bold, color: vault.text, mb: 1 }}
               >
                 {status === 'expired' ? 'Invitacion Expirada' : 'Enlace Invalido'}
               </Typography>
@@ -807,7 +810,7 @@ export default function InvitationPage() {
             <Box sx={{ textAlign: 'center' }}>
               <AlertGlyph variant="warning" />
               <Typography
-                sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: 700, color: vault.text, mb: 1 }}
+                sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: fontWeights.bold, color: vault.text, mb: 1 }}
               >
                 Acceso Restringido
               </Typography>
@@ -860,7 +863,7 @@ export default function InvitationPage() {
                   <Typography sx={{ color: vault.textDim, fontSize: '0.8rem', mb: 0.5 }}>
                     Invitado por
                   </Typography>
-                  <Typography sx={{ color: vault.emerald, fontSize: '0.9rem', fontWeight: 500, mb: 2 }}>
+                  <Typography sx={{ color: vault.emerald, fontSize: '0.9rem', fontWeight: fontWeights.medium, mb: 2 }}>
                     {createdBy}
                   </Typography>
                 </>

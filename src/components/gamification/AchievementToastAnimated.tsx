@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography, IconButton, Paper, alpha } from '@mui/material';
 import { Close, EmojiEvents, Star, Whatshot, Diamond } from '@mui/icons-material';
 import { emeraldCore, goldAccent, semanticColors } from '../../design-system/tokens/colors';
-import { blurValues } from '../../design-system';
+import { blurValues, zIndex } from '../../design-system';
 
 // =============================================================================
 // TYPES
@@ -137,7 +137,7 @@ export const AchievementToast: React.FC<AchievementToastProps> = ({
             top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
             left: '50%',
             transform: 'translateX(-50%)',
-            zIndex: 9999,
+            zIndex: zIndex.modal,
             pointerEvents: 'none',
           }}
         >

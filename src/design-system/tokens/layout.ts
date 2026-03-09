@@ -35,6 +35,41 @@ export const layoutConstants = {
 // BORDER RADIUS SCALE
 // =============================================================================
 
+// =============================================================================
+// Z-INDEX SCALE (Semantic Layering)
+// =============================================================================
+
+export const zIndex = {
+  /** Hidden elements */
+  hide: -1,
+  /** Base layer */
+  base: 0,
+  /** Sticky headers, tab bars */
+  sticky: 500,
+  /** Fixed navigation, scroll-to-top */
+  fixed: 900,
+  /** Navigation bar */
+  nav: 999,
+  /** Tab bar, floating action buttons */
+  float: 1000,
+  /** Sheets, drawers, dropdown overlays */
+  sheet: 1100,
+  /** Sheet content (above sheet backdrop) */
+  sheetContent: 1101,
+  /** Comparison bar, floating panels */
+  panel: 1200,
+  /** Cotizacion overlays */
+  overlay: 1400,
+  /** Toasts, achievement notifications */
+  toast: 2000,
+  /** Modals, splash screens, lightboxes */
+  modal: 9999,
+} as const;
+
+// =============================================================================
+// BORDER RADIUS SCALE
+// =============================================================================
+
 export const radius = {
   none: '0',
   xs: '0.25rem',    // 4px

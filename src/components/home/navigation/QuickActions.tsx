@@ -21,7 +21,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { emeraldCore, goldAccent } from '../../../design-system/tokens/colors';
-import { accentColors } from '../../../design-system';
+import { accentColors, zIndex } from '../../../design-system';
 import { PHI_INVERSE } from '../../../design-system/tokens';
 
 // =============================================================================
@@ -197,7 +197,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       sx={{
         position: 'fixed',
         ...positionStyles,
-        zIndex: 1000,
+        zIndex: zIndex.float,
         display: 'flex',
         flexDirection: 'column',
         alignItems: position === 'bottom-right' ? 'flex-end' : 'flex-start',

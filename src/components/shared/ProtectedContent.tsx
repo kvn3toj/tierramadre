@@ -3,7 +3,7 @@ import { Box, Typography, alpha } from '@mui/material';
 import { Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useScreenProtection } from '../../contexts/ScreenProtectionContext';
-import { brand, cssTransition, blurValues } from '../../design-system';
+import { brand, cssTransition, blurValues, zIndex } from '../../design-system';
 
 interface ProtectedContentProps {
   children: ReactNode;
@@ -72,7 +72,7 @@ export default function ProtectedContent({
               justifyContent: 'center',
               backgroundColor: alpha('#000', 0.3),
               backdropFilter: `blur(${blurValues.xs})`,
-              zIndex: 10,
+              zIndex: zIndex.base,
             }}
           >
             <Shield

@@ -10,6 +10,7 @@
 import React, { useRef, useState } from 'react';
 import { cssTransition } from '../../../design-system/tokens/motion';
 import { blurValues } from '../../../design-system';
+import { whiteAlpha } from '../../../design-system/utils/colorUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
@@ -98,11 +99,11 @@ export const CategoryCarousels: React.FC = () => {
               gap: 0.5,
               p: 0.5,
               // Liquid Glass container
-              bgcolor: 'rgba(255,255,255,0.08)',
+              bgcolor: whiteAlpha(0.08),
               backdropFilter: `blur(${blurValues.xl})`,
               WebkitBackdropFilter: `blur(${blurValues.xl})`,
               borderRadius: 3,
-              border: '1px solid rgba(255,255,255,0.1)',
+              border: `1px solid ${whiteAlpha(0.1)}`,
             }}
           >
             {CATEGORIES.map((cat) => (
@@ -121,15 +122,15 @@ export const CategoryCarousels: React.FC = () => {
                   position: 'relative',
                   // Active state - Liquid Glass pill
                   ...(activeCategory === cat.id && {
-                    bgcolor: 'rgba(255,255,255,0.15)',
-                    boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.2)',
+                    bgcolor: whiteAlpha(0.15),
+                    boxShadow: `inset 0 1px 1px ${whiteAlpha(0.2)}`,
                   }),
                 }}
               >
                 <Typography
                   variant="body2"
                   sx={{
-                    color: activeCategory === cat.id ? 'white' : 'rgba(255,255,255,0.5)',
+                    color: activeCategory === cat.id ? 'white' : whiteAlpha(0.5),
                     fontWeight: activeCategory === cat.id ? 600 : 400,
                     fontSize: '0.85rem',
                     transition: cssTransition.default,
@@ -187,12 +188,12 @@ export const CategoryCarousels: React.FC = () => {
                         position: 'absolute',
                         inset: 0,
                         borderRadius: 3,
-                        border: '1px solid rgba(255,255,255,0.15)',
+                        border: `1px solid ${whiteAlpha(0.15)}`,
                         zIndex: 1,
                         transition: cssTransition.default,
                       },
                       '&:hover::before': {
-                        borderColor: 'rgba(255,255,255,0.3)',
+                        borderColor: whiteAlpha(0.3),
                       },
                       '&:active': {
                         transform: 'scale(0.98)',
@@ -247,7 +248,7 @@ export const CategoryCarousels: React.FC = () => {
               position: 'absolute',
               top: -50,
               right: 0,
-              color: 'rgba(255,255,255,0.6)',
+              color: whiteAlpha(0.6),
               '&:hover': { color: 'white' },
             }}
           >

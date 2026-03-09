@@ -23,7 +23,7 @@ import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { TreasureItem } from '../../types';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { cssTransition, blurValues } from '../../design-system';
+import { cssTransition, blurValues, zIndex, defaultShadows } from '../../design-system';
 
 interface RecentlyViewedCarouselProps {
   /** Array of recently viewed treasure items */
@@ -210,7 +210,7 @@ function RecentlyViewedCarousel({
               left: 0,
               bottom: 0,
               width: 24,
-              zIndex: 2,
+              zIndex: zIndex.base,
               pointerEvents: 'none',
               background: isLight
                 ? `linear-gradient(to right, ${alpha(emeraldCore.lightest, 0.9)}, transparent)`
@@ -227,7 +227,7 @@ function RecentlyViewedCarousel({
               right: 0,
               bottom: 0,
               width: 24,
-              zIndex: 2,
+              zIndex: zIndex.base,
               pointerEvents: 'none',
               background: isLight
                 ? `linear-gradient(to left, ${alpha(emeraldCore.lightest, 0.9)}, transparent)`
@@ -316,9 +316,7 @@ function RecentItemCard({
           '&:hover': {
             borderColor: emeraldCore.primary,
             transform: reducedMotion ? 'none' : 'translateY(-2px)',
-            boxShadow: isLight
-              ? '0 4px 12px rgba(0, 0, 0, 0.1)'
-              : '0 4px 12px rgba(0, 0, 0, 0.3)',
+            boxShadow: defaultShadows.lg,
           },
         }}
       >

@@ -25,7 +25,7 @@ import { useAsesorCollection } from '../../hooks/useAsesorCollection';
 import { CollectionProductDialog } from '../ambassadors/profile/components/CollectionProductDialog';
 import CollectionSplashScreen from '../../components/shared/CollectionSplashScreen';
 import { TreasureItem } from '../../types';
-import { brand, lightTokens, darkTokens, legacyTypography as typography, legacyGradients as gradients, cssTransition } from '../../design-system';
+import { brand, lightTokens, darkTokens, legacyTypography as typography, legacyGradients as gradients, cssTransition, zIndex, fontWeights, emeraldShadows, defaultShadows } from '../../design-system';
 import { getCachedBrowserInfo } from '../../utils/deviceTier';
 
 // Map URL slug to actual Drive folder name (when they differ)
@@ -176,8 +176,8 @@ function ProductCard({
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow: isLight
-            ? `0 8px 24px ${alpha(brand.emerald[500], 0.15)}`
-            : `0 8px 24px rgba(0,0,0,0.4)`,
+            ? emeraldShadows.md
+            : defaultShadows.lg,
         },
       }}
     >
@@ -231,7 +231,7 @@ function ProductCard({
           <Typography
             variant="body2"
             sx={{
-              fontWeight: 600,
+              fontWeight: fontWeights.semibold,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -245,14 +245,14 @@ function ProductCard({
           {item.certificateUrl ? (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexShrink: 0 }}>
               <ShieldCheck size={12} color={brand.emerald[500]} />
-              <Typography sx={{ fontSize: '0.55rem', color: brand.emerald[600], fontWeight: 600, lineHeight: 1 }}>
+              <Typography sx={{ fontSize: '0.55rem', color: brand.emerald[600], fontWeight: fontWeights.semibold, lineHeight: 1 }}>
                 Certified
               </Typography>
             </Box>
           ) : (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexShrink: 0 }}>
               <Clock size={11} color="#D4A017" />
-              <Typography sx={{ fontSize: '0.55rem', color: '#B8941F', fontWeight: 500, lineHeight: 1 }}>
+              <Typography sx={{ fontSize: '0.55rem', color: '#B8941F', fontWeight: fontWeights.medium, lineHeight: 1 }}>
                 Being issued
               </Typography>
             </Box>
@@ -278,7 +278,7 @@ function ProductCard({
         {(item.precioInternacional || item.precioCOP) && (
           <Typography
             sx={{
-              fontWeight: 700,
+              fontWeight: fontWeights.bold,
               color: brand.emerald[600],
               fontFamily: typography.fontFamily.mono,
               fontSize: { xs: '0.85rem', sm: '0.95rem' },
@@ -476,7 +476,7 @@ export default function CollectionPage() {
         >
           <Typography
             variant="subtitle2"
-            sx={{ color: brand.emerald[300], mb: 1, textAlign: 'center', fontWeight: 500 }}
+            sx={{ color: brand.emerald[300], mb: 1, textAlign: 'center', fontWeight: fontWeights.medium }}
           >
             This collection deserves a better window
           </Typography>
@@ -497,7 +497,7 @@ export default function CollectionPage() {
                 color: '#000',
                 textTransform: 'none',
                 py: 1.2,
-                fontWeight: 500,
+                fontWeight: fontWeights.medium,
                 '&:hover': { bgcolor: brand.emerald[400] },
               }}
             >
@@ -643,7 +643,7 @@ export default function CollectionPage() {
             position: 'fixed',
             bottom: 'max(env(safe-area-inset-bottom, 16px), 16px)',
             right: 16,
-            zIndex: 10,
+            zIndex: zIndex.base,
           }}
         >
           <IconButton

@@ -9,6 +9,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { Snackbar, Alert, AlertColor } from '@mui/material';
+import { fontSizes, fontWeights, radius, semanticColors, whiteAlpha } from '../design-system';
 
 interface NotificationState {
   open: boolean;
@@ -107,14 +108,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                   onClick={() => handleConfirm(false)}
                   style={{
                     background: 'transparent',
-                    border: '1px solid rgba(255,255,255,0.5)',
+                    border: `1px solid ${whiteAlpha(0.5)}`,
                     color: 'white',
-                    borderRadius: 6,
+                    borderRadius: radius.sm,
                     padding: '4px 12px',
                     cursor: 'pointer',
                     marginRight: 8,
-                    fontSize: 13,
-                    fontWeight: 600,
+                    fontSize: fontSizes.sm,
+                    fontWeight: fontWeights.semibold,
                   }}
                 >
                   Cancelar
@@ -124,12 +125,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                   style={{
                     background: 'white',
                     border: 'none',
-                    color: '#d32f2f',
-                    borderRadius: 6,
+                    color: semanticColors.error.dark,
+                    borderRadius: radius.sm,
                     padding: '4px 12px',
                     cursor: 'pointer',
-                    fontSize: 13,
-                    fontWeight: 600,
+                    fontSize: fontSizes.sm,
+                    fontWeight: fontWeights.semibold,
                   }}
                 >
                   Eliminar

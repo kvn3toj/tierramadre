@@ -5,6 +5,7 @@
 import React from 'react';
 import { Box, Typography, Slider } from '@mui/material';
 import { emeraldCore } from '../../../design-system/tokens/colors';
+import { emeraldShadows } from '../../../design-system/tokens/shadows';
 
 interface TimeRangeMark {
   value: number;
@@ -82,7 +83,7 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({
           width: 24,
           height: 24,
           bgcolor: emeraldCore.primary,
-          boxShadow: `0 2px 8px ${isDarkMode ? 'rgba(0,174,122,0.4)' : 'rgba(0,174,122,0.3)'}`,
+          boxShadow: emeraldShadows.sm,
           '&::before': {
             content: '""',
             position: 'absolute',

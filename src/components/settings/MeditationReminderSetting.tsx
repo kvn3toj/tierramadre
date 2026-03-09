@@ -21,6 +21,7 @@ import {
 import { AccessTime, Notifications } from '@mui/icons-material';
 import { useMeditationReminder } from '../../hooks/useMeditationReminder';
 import { requestPermission, getPermissionStatus } from '../../services/notifications';
+import { fontWeights } from '../../design-system';
 
 export default function MeditationReminderSetting() {
   const {
@@ -90,10 +91,10 @@ export default function MeditationReminderSetting() {
               justifyContent: 'center',
             }}
           >
-            <Notifications sx={{ color: 'white', fontSize: 20 }} />
+            <Notifications sx={{ color: 'common.white', fontSize: 20 }} />
           </Box>
           <Box>
-            <Typography variant="body1" fontWeight={500}>
+            <Typography variant="body1" fontWeight={fontWeights.medium}>
               Recordatorio de Meditación
             </Typography>
             {enabled ? (

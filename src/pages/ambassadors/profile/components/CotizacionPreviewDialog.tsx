@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { X } from 'lucide-react';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
-import { lightTokens, darkTokens } from '../../../../design-system';
+import { lightTokens, darkTokens, zIndex } from '../../../../design-system';
 
 interface CotizacionPreviewDialogProps {
   cotizacion: SavedCotizacion | null;
@@ -47,7 +47,7 @@ export const CotizacionPreviewDialog: React.FC<CotizacionPreviewDialogProps> = (
             position: 'absolute',
             top: 8,
             right: 8,
-            zIndex: 1,
+            zIndex: zIndex.base,
             bgcolor: 'rgba(0,0,0,0.5)',
             color: '#fff',
             '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },

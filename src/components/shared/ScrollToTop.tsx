@@ -7,7 +7,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Fab, Zoom } from '@mui/material';
 import { ArrowUp } from 'lucide-react';
-import { emeraldCore } from '../../design-system/tokens/colors';
+import { emeraldCore, zIndex, defaultShadows } from '../../design-system';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { getMainScrollY, scrollMainTo, addMainScrollListener } from '../../utils/mainScroll';
 
@@ -41,11 +41,11 @@ export default function ScrollToTop() {
           position: 'fixed',
           bottom: 'calc(80px + env(safe-area-inset-bottom))',
           right: 16,
-          zIndex: 1000,
+          zIndex: zIndex.float,
           bgcolor: emeraldCore.primary,
           color: 'white',
           '&:hover': { bgcolor: emeraldCore.dark },
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          boxShadow: defaultShadows.lg,
         }}
       >
         <ArrowUp size={20} />

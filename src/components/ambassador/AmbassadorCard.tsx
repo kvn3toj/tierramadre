@@ -23,7 +23,7 @@ import {
 import { AmbassadorProfile } from '../../types/ambassador';
 import { StatItem } from './StatItem';
 import { getCardSx } from './styles';
-import { brand, lightTokens, darkTokens, accentColors } from '../../design-system';
+import { brand, lightTokens, darkTokens, accentColors, fontWeights } from '../../design-system';
 
 interface AmbassadorCardProps {
   ambassador: AmbassadorProfile;
@@ -85,7 +85,7 @@ export default function AmbassadorCard({
               <Typography
                 variant="h6"
                 sx={{
-                  fontWeight: 700,
+                  fontWeight: fontWeights.bold,
                   fontSize: '1rem',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',

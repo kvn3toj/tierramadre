@@ -1,5 +1,6 @@
 import { Box, Typography, Stack } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { zIndex } from '../../design-system';
 
 // ============================================================================
 // CATALOG COVER TEMPLATE - Luxury Jewelry Collection Cover
@@ -58,7 +59,7 @@ const LogoContainer = styled(Box)({
   position: 'absolute',
   top: '70px',
   left: '140px',
-  zIndex: 10,
+  zIndex: zIndex.base,
 });
 
 // Main content area - left side with better spacing
@@ -68,7 +69,7 @@ const ContentArea = styled(Box)({
   top: '50%',
   transform: 'translateY(-50%)',
   maxWidth: '850px',
-  zIndex: 5,
+  zIndex: zIndex.base,
 });
 
 // Preview images container - asymmetric luxury layout
@@ -79,7 +80,7 @@ const PreviewImagesContainer = styled(Box)({
   transform: 'translateY(-50%)',
   display: 'flex',
   gap: '35px',
-  zIndex: 5,
+  zIndex: zIndex.base,
 });
 
 // Preview image box with luxury card styling

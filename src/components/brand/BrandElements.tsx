@@ -6,6 +6,7 @@
 import React from 'react';
 import { Box, styled } from '@mui/material';
 import { colors, spacing, geometry, motion, brandVoice, typography } from '../../design-system/tokens/brand';
+import { zIndex } from '../../design-system';
 
 // ═══════════════════════════════════════════════════════════════
 // CORNER DECORATION - Geometric Presence
@@ -47,7 +48,7 @@ export const CornerDecoration: React.FC<CornerDecorationProps> = ({
         height: dimension,
         opacity: brandVoice.opacity.subtle,
         pointerEvents: 'none',
-        zIndex: 5,
+        zIndex: zIndex.base,
       }}
     >
       <svg

@@ -41,7 +41,7 @@ import {
 } from '@mui/icons-material';
 import { QRCodeSVG } from 'qrcode.react';
 import { useInvitation } from '../../hooks/useInvitation';
-import { brand, legacyTypography as typography, cssTransition } from '../../design-system';
+import { brand, legacyTypography as typography, cssTransition, fontWeights } from '../../design-system';
 import type { PricingMode, GuestCurrencyMode, GuestMultiplier } from '../../types/invitation';
 
 interface InvitationGeneratorProps {
@@ -398,7 +398,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                       mb: guestCurrency === 'USD' ? 1.5 : 0,
                       '& .MuiToggleButton-root': {
                         textTransform: 'none',
-                        fontWeight: 600,
+                        fontWeight: fontWeights.semibold,
                         fontSize: '0.8rem',
                         py: 0.75,
                         borderColor: 'divider',
@@ -435,7 +435,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                       <Typography
                         sx={{
                           fontSize: '0.8rem',
-                          fontWeight: 600,
+                          fontWeight: fontWeights.semibold,
                           color: brand.emerald[700],
                           minWidth: 28,
                           textAlign: 'right',

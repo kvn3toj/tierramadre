@@ -5,6 +5,8 @@
  * Enhanced with: severity, tags, device info, assignees, and metrics.
  */
 
+import { semanticColors, accentColors } from '../design-system';
+
 // =============================================================================
 // ENUMS
 // =============================================================================
@@ -285,10 +287,10 @@ export interface PriorityOption {
 }
 
 export const PRIORITY_OPTIONS: PriorityOption[] = [
-  { value: 'low', label: 'Baja', color: '#4caf50' },
-  { value: 'medium', label: 'Media', color: '#ff9800' },
-  { value: 'high', label: 'Alta', color: '#f44336' },
-  { value: 'critical', label: 'Crítica', color: '#9c27b0' },
+  { value: 'low', label: 'Baja', color: semanticColors.success.main },
+  { value: 'medium', label: 'Media', color: semanticColors.warning.main },
+  { value: 'high', label: 'Alta', color: semanticColors.error.main },
+  { value: 'critical', label: 'Crítica', color: accentColors.purple.light },
 ];
 
 export interface SeverityOption {
@@ -299,11 +301,11 @@ export interface SeverityOption {
 }
 
 export const SEVERITY_OPTIONS: SeverityOption[] = [
-  { value: 1, label: '1 - Cosmético', description: 'Visual menor, no afecta funcionalidad', color: '#4caf50' },
-  { value: 2, label: '2 - Menor', description: 'Molesto pero tiene workaround', color: '#8bc34a' },
-  { value: 3, label: '3 - Moderado', description: 'Afecta productividad pero funciona', color: '#ff9800' },
-  { value: 4, label: '4 - Mayor', description: 'Feature crítico no funciona bien', color: '#f44336' },
-  { value: 5, label: '5 - Bloqueante', description: 'No se puede continuar trabajando', color: '#9c27b0' },
+  { value: 1, label: '1 - Cosmético', description: 'Visual menor, no afecta funcionalidad', color: semanticColors.success.main },
+  { value: 2, label: '2 - Menor', description: 'Molesto pero tiene workaround', color: accentColors.success.light },
+  { value: 3, label: '3 - Moderado', description: 'Afecta productividad pero funciona', color: semanticColors.warning.main },
+  { value: 4, label: '4 - Mayor', description: 'Feature crítico no funciona bien', color: semanticColors.error.main },
+  { value: 5, label: '5 - Bloqueante', description: 'No se puede continuar trabajando', color: accentColors.purple.light },
 ];
 
 export interface FeatureOption {
@@ -325,11 +327,11 @@ export const FEATURE_OPTIONS: FeatureOption[] = [
 ];
 
 export const STATUS_OPTIONS: { value: FeedbackStatus; label: string; color: string }[] = [
-  { value: 'open', label: 'Abierto', color: '#2196f3' },
-  { value: 'in_progress', label: 'En Progreso', color: '#ff9800' },
-  { value: 'resolved', label: 'Resuelto', color: '#4caf50' },
-  { value: 'wontfix', label: 'No se hará', color: '#9e9e9e' },
-  { value: 'duplicate', label: 'Duplicado', color: '#607d8b' },
+  { value: 'open', label: 'Abierto', color: semanticColors.info.main },
+  { value: 'in_progress', label: 'En Progreso', color: semanticColors.warning.main },
+  { value: 'resolved', label: 'Resuelto', color: semanticColors.success.main },
+  { value: 'wontfix', label: 'No se hará', color: '#9CA3AF' },
+  { value: 'duplicate', label: 'Duplicado', color: '#64748B' },
 ];
 
 // Steve's Enhancements

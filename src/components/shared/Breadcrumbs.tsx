@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { ChevronRight } from 'lucide-react';
 import { emeraldCore } from '../../design-system/tokens/colors';
+import { fontWeights } from '../../design-system';
 
 export interface BreadcrumbItem {
   label: string;
@@ -56,7 +57,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
                 key={item.label}
                 variant="caption"
                 sx={{
-                  fontWeight: 600,
+                  fontWeight: fontWeights.semibold,
                   color: 'text.primary',
                   fontSize: '0.8rem',
                 }}
@@ -74,7 +75,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
               underline="hover"
               onClick={() => item.path && navigate(item.path)}
               sx={{
-                fontWeight: 500,
+                fontWeight: fontWeights.medium,
                 color: emeraldCore.primary,
                 fontSize: '0.8rem',
                 cursor: 'pointer',

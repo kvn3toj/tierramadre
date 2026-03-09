@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import { fontSizes, fontWeights, letterSpacing } from '../../../design-system';
 
 interface StatCardProps {
   label: string;
@@ -16,10 +17,10 @@ export const StatCard: React.FC<StatCardProps> = ({ label, value, color = 'text.
   <Box sx={{ textAlign: 'center' }}>
     <Typography
       sx={{
-        fontSize: '11px',
+        fontSize: fontSizes.xs,
         color: 'text.secondary',
         textTransform: 'uppercase',
-        letterSpacing: '0.05em',
+        letterSpacing: letterSpacing.wide,
         mb: 0.5,
       }}
     >
@@ -27,8 +28,8 @@ export const StatCard: React.FC<StatCardProps> = ({ label, value, color = 'text.
     </Typography>
     <Typography
       sx={{
-        fontSize: '1.25rem',
-        fontWeight: 700,
+        fontSize: fontSizes['3xl'],
+        fontWeight: fontWeights.bold,
         color,
         lineHeight: 1,
       }}

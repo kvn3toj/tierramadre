@@ -15,7 +15,8 @@ import {
   Alert,
   Button,
 } from '@mui/material';
-import { documentShadows, cssTransition } from '../../design-system/tokens';
+import { cssTransition, zIndex } from '../../design-system';
+import { documentShadows } from '../../design-system/tokens';
 import { useTreasure } from '../../hooks/useTreasure';
 import { useCotizacion } from '../../hooks/useCotizacion';
 import { TreasureItem } from '../../types';
@@ -806,7 +807,7 @@ export default function CotizacionGenerator() {
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         sx={{
-          zIndex: 1400,
+          zIndex: zIndex.overlay,
           mb: 'calc(env(safe-area-inset-bottom, 0px) + 72px)',
         }}
       >

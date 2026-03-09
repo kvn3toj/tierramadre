@@ -7,7 +7,7 @@
 import React from 'react';
 import { Box, Typography, alpha } from '@mui/material';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { cssTransition } from '../../design-system';
+import { cssTransition, fontWeights } from '../../design-system';
 
 export interface ActivityItemProps {
   icon: React.ReactNode;
@@ -53,7 +53,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
         <Typography
           variant="body2"
           sx={{
-            fontWeight: 500,
+            fontWeight: fontWeights.medium,
             fontSize: '0.8rem',
             overflow: 'hidden',
             textOverflow: 'ellipsis',

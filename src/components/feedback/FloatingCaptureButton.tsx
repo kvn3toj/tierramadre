@@ -11,7 +11,7 @@ import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import CloseIcon from '@mui/icons-material/Close';
 import { alpha } from '@mui/material/styles';
 import { emeraldCore } from '../../design-system/tokens/colors';
-import { blurValues } from '../../design-system';
+import { blurValues, zIndex } from '../../design-system';
 import { getMainScrollY } from '../../utils/mainScroll';
 
 interface FloatingCaptureButtonProps {
@@ -72,7 +72,7 @@ export default function FloatingCaptureButton({ onCapture, onCancel }: FloatingC
         bottom: 100,
         left: 0,
         right: 0,
-        zIndex: 9999,
+        zIndex: zIndex.modal,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

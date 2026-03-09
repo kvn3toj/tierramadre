@@ -14,6 +14,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
+import { zIndex } from '../../design-system';
 
 // ============================================================================
 // CONSTANTS
@@ -159,7 +160,7 @@ const EmeraldAccent: React.FC<{ position?: 'left' | 'top' | 'bottom' }> = ({ pos
 };
 
 const Logo: React.FC = () => (
-  <Box sx={{ position: 'absolute', bottom: 50, right: 60, zIndex: 20 }}>
+  <Box sx={{ position: 'absolute', bottom: 50, right: 60, zIndex: zIndex.base }}>
     <Box
       component="img"
       src={LOGO_PATH}
@@ -170,7 +171,7 @@ const Logo: React.FC = () => (
 );
 
 const SlideNumber: React.FC<{ number: number | string }> = ({ number }) => (
-  <Box sx={{ position: 'absolute', top: 80, left: 100, zIndex: 10 }}>
+  <Box sx={{ position: 'absolute', top: 80, left: 100, zIndex: zIndex.base }}>
     <Typography
       sx={{
         ...TYPOGRAPHY.number,
@@ -295,7 +296,7 @@ export const DynamicKeyPointSlide: React.FC<DynamicKeyPointProps> = ({
           top: 200,
           [isLeft ? 'right' : 'left']: 100,
           width: 900,
-          zIndex: 10,
+          zIndex: zIndex.base,
         }}
       >
         {/* Title with emerald accent */}
@@ -382,7 +383,7 @@ export const DynamicListSlide: React.FC<DynamicListProps> = ({
       <SlideNumber number={number} />
 
       {/* Content */}
-      <Box sx={{ position: 'absolute', top: 180, left: 100, width: 850, zIndex: 10 }}>
+      <Box sx={{ position: 'absolute', top: 180, left: 100, width: 850, zIndex: zIndex.base }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4 }}>
           <Box sx={{ width: 60, height: 3, bgcolor: COLORS.emeraldGlow }} />
           <Typography sx={{ ...TYPOGRAPHY.caption, color: COLORS.emeraldGlow }}>

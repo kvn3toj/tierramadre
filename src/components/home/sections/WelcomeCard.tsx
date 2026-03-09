@@ -11,10 +11,11 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography, Card, CardContent } from '@mui/material';
 import { goldAccent } from '../../../design-system/tokens/colors';
-import { blurValues } from '../../../design-system';
+import { blurValues, fontWeights } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useStreakTracking } from '../hooks/useStreakTracking';
 import { cardVariants, fadeInUp, spring } from '../../../design-system/tokens/motion';
+import { whiteAlpha, goldAlpha, emeraldAlpha } from '../../../design-system/utils/colorUtils';
 import { StreakBadge, ProgressRingAnimated as ProgressRing, useGamification } from '../../gamification';
 
 // =============================================================================
@@ -59,16 +60,16 @@ export const WelcomeCard: React.FC = () => {
             aria-label={`${t.pages.home.welcome}. Racha actual: ${current} días`}
             tabIndex={0}
             sx={{
-              background: 'rgba(0, 80, 50, 0.6)',
+              background: emeraldAlpha(0.6),
               backdropFilter: `blur(${blurValues.xl})`,
               color: 'white',
               borderRadius: 4,
               overflow: 'hidden',
               position: 'relative',
               cursor: 'pointer',
-              border: '1px solid rgba(255,255,255,0.15)',
+              border: `1px solid ${whiteAlpha(0.15)}`,
               '&:focus-visible': {
-                outline: '3px solid rgba(255, 255, 255, 0.8)',
+                outline: `3px solid ${whiteAlpha(0.8)}`,
                 outlineOffset: 4,
               },
               '&::before': {
@@ -78,7 +79,7 @@ export const WelcomeCard: React.FC = () => {
                 left: '-100%',
                 width: '100%',
                 height: '100%',
-                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                background: `linear-gradient(90deg, transparent, ${whiteAlpha(0.2)}, transparent)`,
                 transition: 'transform 0.8s ease-out',
               },
               '&:hover::before': {
@@ -105,7 +106,7 @@ export const WelcomeCard: React.FC = () => {
                     variant="h5"
                     component="h2"
                     sx={{
-                      fontWeight: 700,
+                      fontWeight: fontWeights.bold,
                       mb: 0.5,
                       fontSize: { xs: '1.25rem', sm: '1.5rem' },
                     }}
@@ -160,7 +161,7 @@ export const WelcomeCard: React.FC = () => {
                       <Typography
                         variant="h6"
                         sx={{
-                          fontWeight: 700,
+                          fontWeight: fontWeights.bold,
                           color: 'white',
                           lineHeight: 1,
                         }}
@@ -173,7 +174,7 @@ export const WelcomeCard: React.FC = () => {
                         variant="caption"
                         sx={{
                           color: goldAccent.light,
-                          fontWeight: 600,
+                          fontWeight: fontWeights.semibold,
                           mt: { xs: 0, sm: 0.5 },
                           textAlign: { xs: 'left', sm: 'center' },
                         }}
@@ -184,7 +185,7 @@ export const WelcomeCard: React.FC = () => {
                         variant="caption"
                         sx={{
                           display: { xs: 'block', sm: 'none' },
-                          color: 'rgba(255,255,255,0.6)',
+                          color: whiteAlpha(0.6),
                           fontSize: '0.7rem',
                         }}
                       >
@@ -210,7 +211,7 @@ export const WelcomeCard: React.FC = () => {
                 <Box
                   sx={{
                     height: 6,
-                    bgcolor: 'rgba(255,255,255,0.2)',
+                    bgcolor: whiteAlpha(0.2),
                     borderRadius: 3,
                     overflow: 'hidden',
                   }}
@@ -228,7 +229,7 @@ export const WelcomeCard: React.FC = () => {
                       height: '100%',
                       background: `linear-gradient(90deg, ${goldAccent.light}, ${goldAccent.primary})`,
                       borderRadius: 'inherit',
-                    }}
+                    }} // goldAccent tokens already imported
                   />
                 </Box>
               </Box>
@@ -243,7 +244,7 @@ export const WelcomeCard: React.FC = () => {
                     sx={{
                       mt: 0.5,
                       height: 4,
-                      bgcolor: 'rgba(255,255,255,0.2)',
+                      bgcolor: whiteAlpha(0.2),
                       borderRadius: 2,
                       overflow: 'hidden',
                     }}
@@ -259,7 +260,7 @@ export const WelcomeCard: React.FC = () => {
                       transition={{ ...spring.smooth, duration: 0.8 }}
                       style={{
                         height: '100%',
-                        background: 'linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.8))',
+                        background: `linear-gradient(90deg, ${whiteAlpha(0.4)}, ${whiteAlpha(0.8)})`,
                         borderRadius: 'inherit',
                       }}
                     />
@@ -271,7 +272,7 @@ export const WelcomeCard: React.FC = () => {
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: 'rgba(255,255,255,0.15)',
+                  bgcolor: whiteAlpha(0.15),
                   borderRadius: 2,
                   backdropFilter: `blur(${blurValues.xs})`,
                 }}
@@ -299,7 +300,7 @@ export const WelcomeCard: React.FC = () => {
                 right: 0,
                 width: '50%',
                 height: '100%',
-                background: 'radial-gradient(circle at 100% 0%, rgba(212, 175, 55, 0.15) 0%, transparent 50%)',
+                background: `radial-gradient(circle at 100% 0%, ${goldAlpha(0.15)} 0%, transparent 50%)`,
                 pointerEvents: 'none',
               }}
             />

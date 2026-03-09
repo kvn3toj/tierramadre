@@ -1,5 +1,6 @@
 import { Box, Typography, Stack } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { zIndex } from '../../design-system';
 
 // ============================================================================
 // THANK YOU TEMPLATE - Luxury Jewelry Closing Slide
@@ -61,7 +62,7 @@ const ContentContainer = styled(Box)({
   left: '50%',
   transform: 'translate(-50%, -50%)',
   textAlign: 'center',
-  zIndex: 5,
+  zIndex: zIndex.base,
 });
 
 // Logo with refined styling

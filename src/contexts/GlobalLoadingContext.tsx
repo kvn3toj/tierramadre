@@ -7,7 +7,7 @@
 
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { LinearProgress, Box } from '@mui/material';
-import { emeraldCore } from '../design-system/tokens/colors';
+import { emeraldCore, zIndex } from '../design-system';
 
 interface GlobalLoadingContextValue {
   /** Increment the loading counter (show bar) */
@@ -32,7 +32,7 @@ export function GlobalLoadingProvider({ children }: { children: ReactNode }) {
   return (
     <GlobalLoadingContext.Provider value={value}>
       {count > 0 && (
-        <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999 }}>
+        <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: zIndex.modal }}>
           <LinearProgress
             sx={{
               height: 2,

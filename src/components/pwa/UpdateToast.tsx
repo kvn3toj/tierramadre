@@ -20,6 +20,7 @@ import {
   radius,
   animation,
   blurValues,
+  zIndex,
 } from '../../design-system';
 
 interface UpdateToastProps {
@@ -44,7 +45,7 @@ const UpdateToast: React.FC<UpdateToastProps> = ({ visible, onDismiss }) => {
         bottom: `calc(80px + env(safe-area-inset-bottom))`, // Above tab bar
         left: 16,
         right: 16,
-        zIndex: 1100,
+        zIndex: zIndex.sheet,
         display: 'flex',
         alignItems: 'center',
         gap: 2,

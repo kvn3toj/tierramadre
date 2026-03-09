@@ -12,6 +12,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography, useMediaQuery } from '@mui/material';
 import { brandColors } from '../../theme';
+import { zIndex } from '../../design-system';
 
 // Splash screen quotes - different from Oracle quotes
 const SPLASH_QUOTES = [
@@ -64,7 +65,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         justifyContent: 'center',
         bgcolor: brandColors.darkBg,
         background: `radial-gradient(ellipse at 50% 30%, #0d1a14 0%, ${brandColors.darkBg} 50%, #050505 100%)`,
-        zIndex: 9999,
+        zIndex: zIndex.modal,
         overflow: 'hidden',
       }}
     >
@@ -125,7 +126,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           alignItems: 'center',
           gap: 2.5,
           position: 'relative',
-          zIndex: 1,
+          zIndex: zIndex.base,
         }}
       >
         {/* Symbol Logo - fade in with subtle scale - 77% of original size */}

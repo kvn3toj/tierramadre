@@ -38,7 +38,7 @@ import { ComparisonBar, ComparisonModal } from '../comparison';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { createLogger } from '../../utils/logger';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { accentColors } from '../../design-system';
+import { accentColors, zIndex, fontWeights } from '../../design-system';
 import { GridCard, ListRow, VirtualGrid, FilterContent, ActiveFilterChips, type FilterContentProps } from './';
 import RecentlyViewedCarousel from './RecentlyViewedCarousel';
 import IOSFilterSheet from '../ios/IOSFilterSheet';
@@ -513,7 +513,7 @@ export default function TreasureBrowser({
                   color: showFavoritesOnly ? accentColors.error.light : theme.palette.text.secondary,
                   border: '1px solid',
                   borderColor: showFavoritesOnly ? accentColors.error.light : isLight ? surfacesLight.border.light : surfacesDark.border.default,
-                  fontWeight: showFavoritesOnly ? 600 : 400,
+                  fontWeight: showFavoritesOnly ? fontWeights.semibold : fontWeights.normal,
                   '&:hover': {
                     bgcolor: alpha(accentColors.error.light, 0.1),
                   },
@@ -523,7 +523,7 @@ export default function TreasureBrowser({
           </Box>
           {/* Total value (hidden in provider mode or when prices not shown) */}
           {!isProviderMode && shouldShowPrices && (
-            <Typography variant="body2" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
+            <Typography variant="body2" sx={{ color: emeraldCore.dark, fontWeight: fontWeights.semibold }}>
               {formatFullCurrency(filteredStats.totalValue)} total
             </Typography>
           )}
@@ -536,7 +536,7 @@ export default function TreasureBrowser({
           sx={{
             position: 'sticky',
             top: 0,
-            zIndex: 10,
+            zIndex: zIndex.base,
           }}
         >
           <RecentlyViewedCarousel

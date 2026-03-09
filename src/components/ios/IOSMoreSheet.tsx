@@ -20,7 +20,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 
 import { floatingLayers, liquidSaturation, specularHighlights } from '../../design-system/tokens/liquid-glass';
 import { floatingLayerShadows } from '../../design-system/tokens/shadows';
-import { brand, radius, iosTypographyScale, emeraldCore, accentColors, cssTransition, blurValues, primitiveColors, primitiveSpacing as spacing, easingCurves, durations } from '../../design-system';
+import { brand, radius, iosTypographyScale, emeraldCore, accentColors, cssTransition, blurValues, primitiveColors, primitiveSpacing as spacing, easingCurves, durations, zIndex } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsGuest, useCanCreateInvitations } from '../../hooks/useAuth';
@@ -257,7 +257,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
         open={open}
         onClick={onClose}
         sx={{
-          zIndex: 1100,
+          zIndex: zIndex.sheet,
           backgroundColor: 'rgba(0, 0, 0, 0.3)',
           backdropFilter: effectiveConfig.blur ? `blur(${blurValues.lg})` : 'none',
           WebkitBackdropFilter: effectiveConfig.blur ? `blur(${blurValues.lg})` : 'none',
@@ -276,7 +276,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
           bottom: 0,
           left: 0,
           right: 0,
-          zIndex: 1101,
+          zIndex: zIndex.sheetContent,
           ...sheetStyles,
           borderTopLeftRadius: radius.xl,
           borderTopRightRadius: radius.xl,
@@ -304,7 +304,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
             position: 'sticky',
             top: 0,
             backgroundColor: 'var(--surface-secondary)',
-            zIndex: 1,
+            zIndex: zIndex.base,
             paddingTop: spacing.sm,
             paddingX: spacing.md,
             paddingBottom: spacing.sm,
@@ -545,7 +545,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                zIndex: 2,
+                zIndex: zIndex.base,
                 backgroundColor: 'rgba(0, 0, 0, 0.4)',
                 borderRadius: spacing.md,
               }}

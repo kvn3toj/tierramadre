@@ -8,6 +8,7 @@ import { Box, Chip } from '@mui/material';
 import { Package, DollarSign } from 'lucide-react';
 import { brandColors } from './constants';
 import { useCotizacionFormat } from '../../hooks/useCotizacion';
+import { fontWeights } from '../../design-system';
 
 export interface CotizacionHeaderProps {
   productCount: number;
@@ -37,7 +38,7 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
         sx={{
           bgcolor: 'action.hover',
           color: 'text.secondary',
-          fontWeight: 600,
+          fontWeight: fontWeights.semibold,
           fontSize: '0.75rem',
           height: 28,
           '& .MuiChip-icon': {
@@ -54,7 +55,7 @@ export const CotizacionHeader: React.FC<CotizacionHeaderProps> = ({
         sx={{
           bgcolor: brandColors.emerald,
           color: '#FFFFFF',
-          fontWeight: 700,
+          fontWeight: fontWeights.bold,
           fontSize: '0.75rem',
           height: 28,
           '& .MuiChip-icon': {

@@ -9,7 +9,7 @@ import { Box, Paper, Typography, alpha, Tooltip } from '@mui/material';
 import { Info } from 'lucide-react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { semanticColors } from '../../design-system/tokens/colors';
-import { cssTransition, iosDimensions } from '../../design-system';
+import { cssTransition, iosDimensions, fontWeights } from '../../design-system';
 import { SparklineChart } from '../analytics/SparklineChart';
 
 export interface MetricCardProps {
@@ -97,7 +97,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
       {/* Value */}
       <Typography
         variant={compact ? 'h5' : 'h4'}
-        sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.1 }}
+        sx={{ fontWeight: fontWeights.bold, color: 'text.primary', lineHeight: 1.1 }}
       >
         {typeof value === 'number' ? value.toLocaleString() : value}
       </Typography>

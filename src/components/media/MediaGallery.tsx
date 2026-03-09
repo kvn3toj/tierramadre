@@ -30,7 +30,7 @@ import {
   Maximize2,
 } from 'lucide-react';
 import { MediaItem, CATEGORY_LABELS } from './types';
-import { brand, darkTokens, lightTokens, cssTransition, blurValues } from '../../design-system';
+import { brand, darkTokens, lightTokens, cssTransition, blurValues, zIndex } from '../../design-system';
 import ImageLightbox from './ImageLightbox';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import ProtectedContent from '../shared/ProtectedContent';
@@ -470,7 +470,7 @@ export default function MediaGallery({
                         sx={{
                           position: 'absolute',
                           inset: 0,
-                          zIndex: 1,
+                          zIndex: zIndex.base,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -598,7 +598,7 @@ export default function MediaGallery({
               sx={{
                 position: 'absolute',
                 inset: 0,
-                zIndex: 5,
+                zIndex: zIndex.base,
                 borderRadius: 3,
               }}
             />
@@ -612,7 +612,7 @@ export default function MediaGallery({
                 top: 12,
                 left: '50%',
                 transform: 'translateX(-50%)',
-                zIndex: 10,
+                zIndex: zIndex.base,
                 bgcolor: alpha(darkTokens.background.app, 0.6),
                 borderRadius: 2,
                 px: 1.5,

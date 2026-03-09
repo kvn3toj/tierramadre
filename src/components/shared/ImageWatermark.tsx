@@ -4,6 +4,7 @@
  * Used for loading states and products without images.
  */
 import { Box } from '@mui/material';
+import { zIndex } from '../../design-system';
 import logoSymbol from '../../assets/logo-symbol.png';
 
 interface ImageWatermarkProps {
@@ -64,7 +65,7 @@ export default function ImageWatermark({
         opacity,
         pointerEvents: 'none',
         userSelect: 'none',
-        zIndex: 5,
+        zIndex: zIndex.base,
         filter: 'brightness(1.1) contrast(0.9)',
       }}
     />

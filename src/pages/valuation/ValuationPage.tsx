@@ -29,7 +29,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
-import { cssTransition } from '../../design-system';
+import { cssTransition, zIndex } from '../../design-system';
 import { glassDark, glassLight, applyGlass } from '../../design-system/tokens/glass';
 import { staggerContainer, staggerItem } from '../../design-system/tokens/motion';
 import {
@@ -147,7 +147,7 @@ const ValuationPage: React.FC = () => {
         sx={{
           position: 'sticky',
           top: 0,
-          zIndex: 10,
+          zIndex: zIndex.base,
           ...applyGlass(glassEffect),
           borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
         }}

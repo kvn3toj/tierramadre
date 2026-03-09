@@ -21,7 +21,7 @@ import FocusTrap from '@mui/material/Unstable_TrapFocus';
 import { X, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 import { motion, AnimatePresence, PanInfo, useAnimation } from 'framer-motion';
 import { triggerHaptic } from '../../hooks/useHaptics';
-import { lightTokens, darkTokens, cssTransition, blurValues } from '../../design-system';
+import { lightTokens, darkTokens, cssTransition, blurValues, zIndex } from '../../design-system';
 import ProtectedContent from '../shared/ProtectedContent';
 
 interface ImageLightboxProps {
@@ -218,7 +218,7 @@ export default function ImageLightbox({
             style={{
               position: 'fixed',
               inset: 0,
-              zIndex: 9999,
+              zIndex: zIndex.modal,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -248,7 +248,7 @@ export default function ImageLightbox({
                 alignItems: 'center',
                 p: 2,
                 pt: 'calc(env(safe-area-inset-top) + 16px)',
-                zIndex: 10,
+                zIndex: zIndex.base,
               }}
             >
               <IconButton
@@ -400,7 +400,7 @@ export default function ImageLightbox({
                 flexDirection: 'column',
                 alignItems: 'center',
                 pb: 'calc(env(safe-area-inset-bottom) + 24px)',
-                zIndex: 10,
+                zIndex: zIndex.base,
               }}
             >
               {/* Dot indicators */}

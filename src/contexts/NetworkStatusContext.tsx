@@ -9,6 +9,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { Alert, Collapse, Box, IconButton } from '@mui/material';
 import { WifiOff, X } from 'lucide-react';
+import { zIndex } from '../design-system';
 
 interface NetworkStatusContextValue {
   isOnline: boolean;
@@ -49,7 +50,7 @@ export function NetworkStatusProvider({ children }: { children: ReactNode }) {
   return (
     <NetworkStatusContext.Provider value={value}>
       <Collapse in={showBanner}>
-        <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9998 }}>
+        <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: zIndex.modal - 1 }}>
           <Alert
             severity="warning"
             icon={<WifiOff size={18} />}

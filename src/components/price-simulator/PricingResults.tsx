@@ -8,7 +8,7 @@ import { TrendingUp, Gem, Percent, DollarSign, ArrowUpRight } from 'lucide-react
 import { PricingMetrics } from '../../hooks/usePriceCalculation';
 import { formatPercent } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
-import { studioColors, studioGradients, studioShadows, accentColors } from '../../design-system';
+import { studioColors, studioGradients, studioShadows, accentColors, zIndex, fontWeights, fontFamilies } from '../../design-system';
 
 export interface PricingResultsProps {
   pricingMetrics: PricingMetrics;
@@ -67,7 +67,7 @@ export const PricingResults: React.FC<PricingResultsProps> = ({
           }}
         />
 
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
+        <Box sx={{ position: 'relative', zIndex: zIndex.base }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
             <Box
               sx={{
@@ -82,7 +82,7 @@ export const PricingResults: React.FC<PricingResultsProps> = ({
             >
               <TrendingUp size={18} color={studioColors.emerald} />
             </Box>
-            <Typography variant="body1" sx={{ fontWeight: 600, color: alpha('#FFFFFF', 0.9) }}>
+            <Typography variant="body1" sx={{ fontWeight: fontWeights.semibold, color: alpha('#FFFFFF', 0.9) }}>
               Precio de Venta Sugerido
             </Typography>
           </Box>
@@ -91,9 +91,9 @@ export const PricingResults: React.FC<PricingResultsProps> = ({
             <Typography
               sx={{
                 fontSize: '2.5rem',
-                fontWeight: 700,
+                fontWeight: fontWeights.bold,
                 color: studioColors.emerald,
-                fontFamily: 'monospace',
+                fontFamily: fontFamilies.mono,
                 letterSpacing: '-0.02em',
                 lineHeight: 1,
               }}
@@ -112,7 +112,7 @@ export const PricingResults: React.FC<PricingResultsProps> = ({
               }}
             >
               <ArrowUpRight size={14} color={studioColors.emerald} />
-              <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, color: studioColors.emerald }}>
+              <Typography sx={{ fontSize: '0.75rem', fontWeight: fontWeights.semibold, color: studioColors.emerald }}>
                 {priceFactor.toFixed(1)}x
               </Typography>
             </Box>
@@ -134,16 +134,16 @@ export const PricingResults: React.FC<PricingResultsProps> = ({
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Gem size={16} color={studioColors.gold} />
-                  <Typography variant="body2" sx={{ color: alpha('#FFFFFF', 0.85), fontWeight: 500 }}>
+                  <Typography variant="body2" sx={{ color: alpha('#FFFFFF', 0.85), fontWeight: fontWeights.medium }}>
                     Precio por Quilate
                   </Typography>
                 </Box>
                 <Typography
                   sx={{
                     fontSize: '1.125rem',
-                    fontWeight: 700,
+                    fontWeight: fontWeights.bold,
                     color: studioColors.gold,
-                    fontFamily: 'monospace',
+                    fontFamily: fontFamilies.mono,
                   }}
                 >
                   {formatCurrency(pricingMetrics.pricePerCarat)}/ct
@@ -155,10 +155,10 @@ export const PricingResults: React.FC<PricingResultsProps> = ({
           {/* Margin Progress Bar */}
           <Box sx={{ mt: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
-              <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.7), fontWeight: 500 }}>
+              <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.7), fontWeight: fontWeights.medium }}>
                 Margen de ganancia
               </Typography>
-              <Typography variant="caption" sx={{ color: studioColors.emerald, fontWeight: 600 }}>
+              <Typography variant="caption" sx={{ color: studioColors.emerald, fontWeight: fontWeights.semibold }}>
                 {formatPercent(pricingMetrics.margin)}
               </Typography>
             </Box>

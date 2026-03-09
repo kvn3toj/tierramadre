@@ -8,7 +8,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
-import { cssTransition, primitiveColors } from '../../design-system';
+import { cssTransition, primitiveColors, zIndex } from '../../design-system';
 
 const emerald = primitiveColors.emerald;
 
@@ -158,7 +158,7 @@ const EnergyShieldMeditation: React.FC<EnergyShieldMeditationProps> = ({
             background: `linear-gradient(135deg, ${emerald[400]} 0%, ${emerald[500]} 50%, ${emerald[700]} 100%)`,
             clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
             boxShadow: `0 0 ${30 + shieldStrength * 40}px rgba(16,185,129,${0.5 + shieldStrength * 0.3})`,
-            zIndex: 10,
+            zIndex: zIndex.base,
           }}
         />
 

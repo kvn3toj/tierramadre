@@ -19,6 +19,7 @@ import { ChevronLeft, ChevronRight, Close } from '@mui/icons-material';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 import { fadeInUp, cardVariants, cssTransition } from '../../../design-system/tokens/motion';
 import { blurValues } from '../../../design-system';
+import { blackAlpha, whiteAlpha } from '../../../design-system/utils/colorUtils';
 
 // =============================================================================
 // GALLERY DATA
@@ -212,7 +213,7 @@ export const GallerySection: React.FC = () => {
                           position: 'absolute',
                           top: 8,
                           left: 8,
-                          bgcolor: 'rgba(0,0,0,0.6)',
+                          bgcolor: blackAlpha(0.6),
                           backdropFilter: `blur(${blurValues.xs})`,
                           color: 'white',
                           px: 1,
@@ -262,7 +263,7 @@ export const GallerySection: React.FC = () => {
         slotProps={{
           backdrop: {
             sx: {
-              bgcolor: 'rgba(0,0,0,0.9)',
+              bgcolor: blackAlpha(0.9),
               backdropFilter: `blur(${blurValues.sm})`,
             },
           },
@@ -277,7 +278,7 @@ export const GallerySection: React.FC = () => {
               top: -40,
               right: 0,
               color: 'white',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+              '&:hover': { bgcolor: whiteAlpha(0.1) },
             }}
           >
             <Close />
@@ -303,7 +304,7 @@ export const GallerySection: React.FC = () => {
               <Typography
                 variant="body2"
                 sx={{
-                  color: 'rgba(255,255,255,0.8)',
+                  color: whiteAlpha(0.8),
                   textAlign: 'center',
                   mt: 2,
                 }}

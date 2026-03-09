@@ -12,7 +12,7 @@ import { useThemeMode } from '../../contexts/ThemeContext';
 import { useAuth } from '../../hooks/useAuth';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
-import { blurValues } from '../../design-system';
+import { blurValues, zIndex, fontWeights } from '../../design-system';
 
 const AUTO_DISMISS_MS = 4000;
 
@@ -50,7 +50,7 @@ const AchievementToast: React.FC = () => {
           top: { xs: 60, md: 80 },
           left: '50%',
           transform: 'translateX(-50%)',
-          zIndex: 2000,
+          zIndex: zIndex.toast,
           cursor: 'pointer',
           minWidth: 280,
           maxWidth: 'calc(100vw - 32px)',
@@ -108,7 +108,7 @@ const AchievementToast: React.FC = () => {
               variant="caption"
               sx={{
                 color: alpha('#fff', 0.85),
-                fontWeight: 600,
+                fontWeight: fontWeights.semibold,
                 textTransform: 'uppercase',
                 letterSpacing: 1,
                 display: 'block',
@@ -121,7 +121,7 @@ const AchievementToast: React.FC = () => {
               variant="subtitle1"
               sx={{
                 color: '#fff',
-                fontWeight: 700,
+                fontWeight: fontWeights.bold,
                 lineHeight: 1.2,
               }}
             >

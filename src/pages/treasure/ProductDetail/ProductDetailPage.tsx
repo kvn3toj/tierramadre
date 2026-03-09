@@ -38,7 +38,7 @@ import { PriceDisplay } from '../../../components/price-simulator/PriceDisplay';
 import { createLogger } from '../../../utils/logger';
 import { surfacesLight, surfacesDark, goldAccent, emeraldCore } from '../../../design-system/tokens/colors';
 import { buttonGradients } from '../../../design-system/tokens/gradients';
-import { accentColors, lightTokens, blurValues } from '../../../design-system';
+import { accentColors, lightTokens, blurValues, zIndex } from '../../../design-system';
 import { SpecificationsList, AdditionalInfo, ProductActions } from './components';
 import Breadcrumbs from '../../../components/shared/Breadcrumbs';
 import { scrollMainTo } from '../../../utils/mainScroll';
@@ -423,7 +423,7 @@ export default function ProductDetail() {
                   color: '#fff',
                   backdropFilter: `blur(${blurValues.sm})`,
                   '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
-                  zIndex: 2,
+                  zIndex: zIndex.base,
                   width: 36,
                   height: 36,
                 }}

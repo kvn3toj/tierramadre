@@ -14,6 +14,7 @@ import {
   alpha,
 } from '@mui/material';
 import { emeraldCore } from '../../design-system/tokens/colors';
+import { fontWeights } from '../../design-system';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -48,7 +49,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         },
       }}
     >
-      <DialogTitle sx={{ fontWeight: 700, fontSize: '1.1rem', pb: 0.5 }}>
+      <DialogTitle sx={{ fontWeight: fontWeights.bold, fontSize: '1.1rem', pb: 0.5 }}>
         {title}
       </DialogTitle>
       <DialogContent>
@@ -63,7 +64,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           sx={{
             borderRadius: 2,
             textTransform: 'none',
-            fontWeight: 600,
+            fontWeight: fontWeights.semibold,
             borderColor: alpha('#000', 0.15),
             color: 'text.primary',
           }}
@@ -77,7 +78,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           sx={{
             borderRadius: 2,
             textTransform: 'none',
-            fontWeight: 600,
+            fontWeight: fontWeights.semibold,
             ...(confirmColor === 'primary' && {
               bgcolor: emeraldCore.primary,
               '&:hover': { bgcolor: emeraldCore.dark },

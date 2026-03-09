@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { cssTransition } from '../../design-system';
+import { cssTransition, zIndex } from '../../design-system';
 
 // ============================================================================
 // PRODUCT CATALOG TEMPLATE - Luxury Jewelry Design System
@@ -205,7 +205,7 @@ const PriceAmount = styled(Typography)({
 // Logo container
 const LogoContainer = styled(Box)<{ logopos: string }>(({ logopos }) => ({
   position: 'absolute',
-  zIndex: 10,
+  zIndex: zIndex.base,
   ...(logopos === 'top-left' && { top: 50, left: 50 }),
   ...(logopos === 'top-right' && { top: 50, right: 50 }),
 }));

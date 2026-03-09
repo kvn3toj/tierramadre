@@ -31,7 +31,7 @@ import {
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { useAllActivity, ActivityFilters, TimeFilter, TypeFilter, Activity } from '../../hooks/useAllActivity';
 import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
-import { blurValues, primitiveSpacing as spacing, iosDimensions } from '../../design-system';
+import { blurValues, primitiveSpacing as spacing, iosDimensions, zIndex } from '../../design-system';
 
 // Filter chip options
 const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
@@ -305,7 +305,7 @@ const ActivityPage: React.FC = () => {
         sx={{
           position: 'sticky',
           top: 0,
-          zIndex: 10,
+          zIndex: zIndex.base,
           bgcolor: isLight
             ? alpha('#fff', 0.9)
             : alpha('#121212', 0.9),

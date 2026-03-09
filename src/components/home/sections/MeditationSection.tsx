@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { PlayArrow, SelfImprovement } from '@mui/icons-material';
 import { emeraldCore } from '../../../design-system/tokens/colors';
+import { emeraldShadows } from '../../../design-system/tokens/shadows';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { DAILY_MEDITATIONS, MeditationType } from '../../../data/homeContent';
 import { fadeInUp, cardVariants, cssTransition } from '../../../design-system/tokens/motion';
@@ -112,7 +113,7 @@ export const MeditationSection: React.FC = () => {
                 transition: cssTransition.default,
                 '&:hover': {
                   transform: 'translateY(-2px)',
-                  boxShadow: '0 8px 24px rgba(16,185,129,0.15)',
+                  boxShadow: emeraldShadows.md,
                 },
                 '&:active': {
                   transform: 'scale(0.98)',

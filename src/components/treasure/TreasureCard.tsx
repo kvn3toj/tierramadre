@@ -32,7 +32,7 @@ import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 // Design System Tokens
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { cssTransition } from '../../design-system';
+import { cssTransition, fontWeights } from '../../design-system';
 
 export interface TreasureCardProps {
   item: TreasureItem;
@@ -98,7 +98,7 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
           <Typography
             variant="body1"
             sx={{
-              fontWeight: 600,
+              fontWeight: fontWeights.semibold,
               color: theme.palette.text.primary,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -119,7 +119,7 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
           sx={{
             height: 22,
             fontSize: '0.6875rem',
-            fontWeight: 600,
+            fontWeight: fontWeights.semibold,
             bgcolor: quality.bg,
             color: quality.color,
             border: `1px solid ${quality.border}`,
@@ -285,7 +285,7 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
             sx={{
               height: 16,
               fontSize: '0.5rem',
-              fontWeight: 700,
+              fontWeight: fontWeights.bold,
               textTransform: 'uppercase',
               bgcolor: quality.bg,
               color: quality.color,
@@ -299,7 +299,7 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
         <Typography
           variant="body2"
           sx={{
-            fontWeight: 600,
+            fontWeight: fontWeights.semibold,
             color: theme.palette.text.primary,
             mb: 0.25,
             lineHeight: 1.3,
@@ -360,7 +360,7 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
                   <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
                     {item.isJewelry ? 'Talla' : 'Corte'}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: theme.palette.text.primary, fontWeight: 500 }}>
+                  <Typography variant="caption" sx={{ color: theme.palette.text.primary, fontWeight: fontWeights.medium }}>
                     {item.talla}
                   </Typography>
                 </Box>
@@ -371,7 +371,7 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
                   <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
                     Medidas
                   </Typography>
-                  <Typography variant="caption" sx={{ color: theme.palette.text.primary, fontWeight: 500 }}>
+                  <Typography variant="caption" sx={{ color: theme.palette.text.primary, fontWeight: fontWeights.medium }}>
                     {item.medidas}
                   </Typography>
                 </Box>

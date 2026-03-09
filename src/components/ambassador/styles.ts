@@ -3,7 +3,7 @@
  */
 
 import { alpha, SxProps, Theme } from '@mui/material';
-import { cardShadows, emeraldCore, emeraldGradients, cssTransition } from '../../design-system/index';
+import { cardShadows, emeraldCore, emeraldGradients, cssTransition, zIndex } from '../../design-system/index';
 
 // Card background and border colors based on theme mode
 export const CARD_COLORS = {
@@ -45,7 +45,7 @@ export const getCardSx = (isLight: boolean, options?: {
       background: emeraldGradients.deep,
       opacity: 0,
       transition: cssTransition.default,
-      zIndex: 1,
+      zIndex: zIndex.base,
     },
   };
 

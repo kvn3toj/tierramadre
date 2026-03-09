@@ -6,6 +6,7 @@ import { Box, Avatar, Typography, alpha } from '@mui/material';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { zIndex, defaultShadows } from '../../design-system';
 
 interface ProductHeaderProps {
   items: TreasureItem[];
@@ -20,13 +21,13 @@ export default function ProductHeader({ items }: ProductHeaderProps) {
       sx={{
         position: 'sticky',
         top: 0,
-        zIndex: 10,
+        zIndex: zIndex.base,
         bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
         borderBottom: '1px solid',
         borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
         px: 2,
         py: 1.25,
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+        boxShadow: defaultShadows.sm,
       }}
     >
       <Box

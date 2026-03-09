@@ -6,6 +6,11 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import { brandColors, iosSpacing, iosBorderRadius } from '../theme';
 import { STORAGE_KEYS } from '../constants/storage-keys';
+import {
+  surfacesLight, surfacesDark, fontFamilies, cssTransition,
+  whiteAlpha, defaultShadows, cardShadows,
+  iosLabels,
+} from '../design-system';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -76,7 +81,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const root = document.documentElement;
     root.setAttribute('data-theme', mode);
 
-    // Update CSS variables with RGB values for liquid glass
+    // Update CSS variables from design system tokens (single source of truth)
     if (mode === 'dark') {
       root.style.setProperty('--surface-primary', brandColors.darkBg);
       root.style.setProperty('--surface-primary-rgb', '0, 0, 0');
@@ -84,23 +89,23 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       root.style.setProperty('--surface-secondary-rgb', '28, 28, 30');
       root.style.setProperty('--surface-tertiary', brandColors.darkElevated);
       root.style.setProperty('--surface-tertiary-rgb', '10, 14, 19');
-      root.style.setProperty('--text-primary', '#FFFFFF');
-      root.style.setProperty('--text-secondary', '#A1A1A6');
-      root.style.setProperty('--text-tertiary', '#6E6E73');
-      root.style.setProperty('--text-quaternary', '#48484A');
-      root.style.setProperty('--border-default', 'rgba(255, 255, 255, 0.1)');
+      root.style.setProperty('--text-primary', iosLabels.primary.dark);
+      root.style.setProperty('--text-secondary', iosLabels.secondary.dark);
+      root.style.setProperty('--text-tertiary', iosLabels.tertiary.dark);
+      root.style.setProperty('--text-quaternary', iosLabels.quaternary.dark);
+      root.style.setProperty('--border-default', whiteAlpha(0.1));
     } else {
-      root.style.setProperty('--surface-primary', '#FAFAFA');
+      root.style.setProperty('--surface-primary', surfacesLight.background.secondary);
       root.style.setProperty('--surface-primary-rgb', '250, 250, 250');
-      root.style.setProperty('--surface-secondary', '#FFFFFF');
+      root.style.setProperty('--surface-secondary', surfacesLight.background.primary);
       root.style.setProperty('--surface-secondary-rgb', '255, 255, 255');
-      root.style.setProperty('--surface-tertiary', '#F2F2F7');
+      root.style.setProperty('--surface-tertiary', surfacesLight.background.tertiary);
       root.style.setProperty('--surface-tertiary-rgb', '242, 242, 247');
-      root.style.setProperty('--text-primary', '#111827');
-      root.style.setProperty('--text-secondary', '#6B7280');
-      root.style.setProperty('--text-tertiary', '#9CA3AF');
-      root.style.setProperty('--text-quaternary', '#D1D5DB');
-      root.style.setProperty('--border-default', '#E5E7EB');
+      root.style.setProperty('--text-primary', iosLabels.primary.light);
+      root.style.setProperty('--text-secondary', iosLabels.secondary.light);
+      root.style.setProperty('--text-tertiary', iosLabels.tertiary.light);
+      root.style.setProperty('--text-quaternary', iosLabels.quaternary.light);
+      root.style.setProperty('--border-default', surfacesLight.border.light);
     }
   }, [mode]);
 
@@ -125,18 +130,18 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         light: brandColors.goldLight,
       },
       background: {
-        default: mode === 'dark' ? brandColors.darkBg : '#FAFAFA',
-        paper: mode === 'dark' ? brandColors.darkSurface : '#FFFFFF',
+        default: mode === 'dark' ? brandColors.darkBg : surfacesLight.background.secondary,
+        paper: mode === 'dark' ? brandColors.darkSurface : surfacesLight.background.primary,
       },
       text: {
-        primary: mode === 'dark' ? '#FFFFFF' : '#111827',
-        secondary: mode === 'dark' ? '#A1A1A6' : '#6B7280',
-        disabled: mode === 'dark' ? '#6E6E73' : '#9CA3AF',
+        primary: mode === 'dark' ? iosLabels.primary.dark : iosLabels.primary.light,
+        secondary: mode === 'dark' ? iosLabels.secondary.dark : iosLabels.secondary.light,
+        disabled: mode === 'dark' ? iosLabels.tertiary.dark : iosLabels.tertiary.light,
       },
-      divider: mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB',
+      divider: mode === 'dark' ? whiteAlpha(0.1) : surfacesLight.border.light,
     },
     typography: {
-      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Roboto, Arial, sans-serif',
+      fontFamily: fontFamilies.system,
     },
     shape: {
       borderRadius: iosBorderRadius.sm,
@@ -147,18 +152,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         styleOverrides: {
           root: {
             borderRadius: iosBorderRadius.md,
-            backgroundColor: mode === 'dark' ? brandColors.darkSurface : '#FFFFFF',
+            backgroundColor: mode === 'dark' ? brandColors.darkSurface : surfacesLight.background.primary,
             backgroundImage: 'none',
-            boxShadow: mode === 'dark'
-              ? '0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2)'
-              : '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)',
-            border: `1px solid ${mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB'}`,
-            transition: 'all 0.2s ease',
+            boxShadow: mode === 'dark' ? cardShadows.resting : defaultShadows.sm,
+            border: `1px solid ${mode === 'dark' ? whiteAlpha(0.1) : surfacesLight.border.light}`,
+            transition: cssTransition.default,
             '&:hover': {
-              boxShadow: mode === 'dark'
-                ? '0 4px 12px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3)'
-                : '0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06)',
-              borderColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : '#D1D5DB',
+              boxShadow: mode === 'dark' ? cardShadows.hover : defaultShadows.md,
+              borderColor: mode === 'dark' ? whiteAlpha(0.15) : surfacesLight.border.default,
             },
           },
         },
@@ -167,9 +168,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         styleOverrides: {
           tooltip: {
             borderRadius: iosBorderRadius.xs,
-            backgroundColor: mode === 'dark' ? '#E5E7EB' : '#1F2937',
-            color: mode === 'dark' ? '#1F2937' : '#FFFFFF',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            backgroundColor: mode === 'dark' ? surfacesLight.border.light : surfacesDark.text.primary,
+            color: mode === 'dark' ? surfacesDark.text.primary : surfacesLight.background.primary,
+            boxShadow: defaultShadows.md,
           },
         },
       },
@@ -178,7 +179,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
           track: {
             borderRadius: 31 / 2,
             opacity: 1,
-            backgroundColor: mode === 'dark' ? '#48484A' : '#D1D5DB',
+            backgroundColor: mode === 'dark' ? iosLabels.quaternary.dark : surfacesLight.text.disabled,
           },
         },
       },

@@ -32,7 +32,7 @@ import MoreSheetSearch from './MoreSheetSearch';
 
 import { floatingLayers, liquidSaturation } from '../../design-system/tokens/liquid-glass';
 import { floatingLayerShadows } from '../../design-system/tokens/shadows';
-import { cssTransition, blurValues, primitiveColors, primitiveSpacing as spacing, easingCurves, durations } from '../../design-system';
+import { cssTransition, blurValues, primitiveColors, primitiveSpacing as spacing, easingCurves, durations, zIndex } from '../../design-system';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 
 // Pages where FAB should be hidden (already have prominent search or not relevant)
@@ -108,7 +108,7 @@ const GlobalSearchFAB: React.FC<GlobalSearchFABProps> = ({ forceShow = false }) 
                 md: 24,
               },
               right: 24,
-              zIndex: 1000,
+              zIndex: zIndex.float,
               bgcolor: primitiveColors.emerald[500],
               color: 'white',
               width: 56,
@@ -161,7 +161,7 @@ const GlobalSearchFAB: React.FC<GlobalSearchFABProps> = ({ forceShow = false }) 
         open={modalOpen}
         onClick={handleClose}
         sx={{
-          zIndex: 1100,
+          zIndex: zIndex.sheet,
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           backdropFilter: effectiveConfig.blur ? `blur(${blurValues.xl})` : 'none',
           WebkitBackdropFilter: effectiveConfig.blur ? `blur(${blurValues.xl})` : 'none',
@@ -182,7 +182,7 @@ const GlobalSearchFAB: React.FC<GlobalSearchFABProps> = ({ forceShow = false }) 
           left: 0,
           right: 0,
           bottom: isMobile ? 0 : 'auto',
-          zIndex: 1101,
+          zIndex: zIndex.sheetContent,
           display: modalOpen ? 'flex' : 'none',
           flexDirection: 'column',
           maxHeight: isMobile ? '100vh' : '90vh',
@@ -215,7 +215,7 @@ const GlobalSearchFAB: React.FC<GlobalSearchFABProps> = ({ forceShow = false }) 
             position: 'sticky',
             top: 0,
             backgroundColor: 'var(--surface-secondary)',
-            zIndex: 1,
+            zIndex: zIndex.base,
             paddingTop: isMobile ? 'env(safe-area-inset-top)' : spacing.md,
             paddingX: spacing.md,
             paddingBottom: spacing.sm,

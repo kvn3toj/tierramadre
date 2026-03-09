@@ -7,7 +7,7 @@
 import React from 'react';
 import { Box, Typography, alpha } from '@mui/material';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { cssTransition } from '../../design-system';
+import { cssTransition, fontWeights } from '../../design-system';
 
 export interface StatBoxProps {
   icon: React.ElementType;
@@ -51,7 +51,7 @@ const StatBox: React.FC<StatBoxProps> = ({
       <Icon size={compact ? 18 : 20} color={color} style={{ marginBottom: 4 }} />
       <Typography
         variant={compact ? 'h6' : 'h5'}
-        sx={{ fontWeight: 700, color }}
+        sx={{ fontWeight: fontWeights.bold, color }}
       >
         {typeof value === 'number' ? value.toLocaleString() : value}
       </Typography>

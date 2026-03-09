@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
+import { iosSeparators, iosLabels, fontSizes, fontWeights } from '../../../../design-system';
 
 interface SpecRowProps {
   icon: React.ReactNode;
@@ -21,8 +22,8 @@ export const SpecRow: React.FC<SpecRowProps> = ({
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
-  const separatorColor = isLight ? 'rgba(60, 60, 67, 0.12)' : 'rgba(235, 235, 245, 0.12)';
-  const secondaryTextColor = isLight ? 'rgba(60, 60, 67, 0.6)' : 'rgba(235, 235, 245, 0.6)';
+  const separatorColor = isLight ? iosSeparators.default.light : iosSeparators.default.dark;
+  const secondaryTextColor = isLight ? iosLabels.secondary.light : iosLabels.secondary.dark;
 
   return (
     <Box
@@ -37,15 +38,15 @@ export const SpecRow: React.FC<SpecRowProps> = ({
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: secondaryTextColor }}>
         {icon}
-        <Typography sx={{ fontSize: '15px', color: theme.palette.text.primary }}>
+        <Typography sx={{ fontSize: fontSizes.lg, color: theme.palette.text.primary }}>
           {label}
         </Typography>
       </Box>
       <Typography
         component="div"
         sx={{
-          fontSize: '15px',
-          fontWeight: 500,
+          fontSize: fontSizes.lg,
+          fontWeight: fontWeights.medium,
           color: theme.palette.text.primary,
           textAlign: 'right',
         }}

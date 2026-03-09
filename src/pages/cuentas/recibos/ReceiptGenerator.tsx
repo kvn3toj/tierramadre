@@ -30,7 +30,8 @@ import { useCurrency } from '../../../contexts/CurrencyContext';
 
 // Design System Imports
 import { surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
-import { iosTypographyScale, blurValues, primitiveColors } from '../../../design-system';
+import { defaultShadows } from '../../../design-system/tokens/shadows';
+import { iosTypographyScale, blurValues, primitiveColors, zIndex } from '../../../design-system';
 
 // Local components and constants
 import { ReceiptPreview, ReceiptSettings, ProductListEditor } from './components';
@@ -213,7 +214,7 @@ export default function ReceiptGenerator() {
           },
         }}
       >
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
+        <Box sx={{ position: 'relative', zIndex: zIndex.base }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
               <Box
@@ -273,7 +274,7 @@ export default function ReceiptGenerator() {
             borderRadius: 3,
             border: `1px solid ${surfacesLight.border.light}`,
             bgcolor: surfacesLight.background.primary,
-            boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+            boxShadow: defaultShadows.sm,
             maxHeight: 'calc(100vh - 300px)',
             overflowY: 'auto',
           }}

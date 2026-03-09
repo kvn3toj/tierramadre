@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { X, ShieldCheck, ChevronLeft, ChevronRight, Share2, Clock } from 'lucide-react';
 import { TreasureItem } from '../../../../types';
-import { brand, lightTokens, darkTokens, legacyTypography as typography } from '../../../../design-system';
+import { brand, lightTokens, darkTokens, legacyTypography as typography, zIndex, cssTransition } from '../../../../design-system';
 import { emeraldCore, goldAccent } from '../../../../design-system/tokens/colors';
 import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
 import { accentuate } from '../../../../pages/collection/CollectionPage';
@@ -132,7 +132,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
             position: 'absolute',
             top: isMobile ? 'max(env(safe-area-inset-top, 8px), 8px)' : 8,
             right: 8,
-            zIndex: 2,
+            zIndex: zIndex.base,
             bgcolor: 'rgba(0,0,0,0.5)',
             color: '#fff',
             '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
@@ -168,7 +168,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                               flexDirection: 'column',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              zIndex: 1,
+                              zIndex: zIndex.base,
                               gap: 1.5,
                             }}
                           >
@@ -282,7 +282,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                               flexDirection: 'column',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              zIndex: 1,
+                              zIndex: zIndex.base,
                               gap: 1.5,
                             }}
                           >
@@ -326,7 +326,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                         bgcolor: 'rgba(0,0,0,0.5)',
                         color: '#fff',
                         '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
-                        zIndex: 1,
+                        zIndex: zIndex.base,
                       }}
                     >
                       <ChevronLeft size={20} />
@@ -343,7 +343,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                         bgcolor: 'rgba(0,0,0,0.5)',
                         color: '#fff',
                         '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
-                        zIndex: 1,
+                        zIndex: zIndex.base,
                       }}
                     >
                       <ChevronRight size={20} />
@@ -362,7 +362,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     transform: 'translateX(-50%)',
                     display: 'flex',
                     gap: 0.8,
-                    zIndex: 1,
+                    zIndex: zIndex.base,
                   }}
                 >
                   {Array.from({ length: slideCount }).map((_, i) => (
@@ -375,7 +375,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                         borderRadius: 4,
                         bgcolor: activeSlide === i ? brand.emerald[400] : 'rgba(255,255,255,0.5)',
                         cursor: 'pointer',
-                        transition: 'all 0.2s ease',
+                        transition: cssTransition.fast,
                       }}
                     />
                   ))}

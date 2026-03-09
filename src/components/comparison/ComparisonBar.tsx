@@ -18,7 +18,7 @@ import { Scale, Trash2 } from 'lucide-react';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { blurValues, cssTransition } from '../../design-system';
+import { blurValues, cssTransition, zIndex } from '../../design-system';
 
 interface ComparisonBarProps {
   selectedItems: TreasureItem[];
@@ -47,7 +47,7 @@ export default function ComparisonBar({
           bottom: 'calc(72px + env(safe-area-inset-bottom))',
           left: 12,
           right: 12,
-          zIndex: 1100,
+          zIndex: zIndex.sheet,
           py: 1.5,
           px: 2,
           borderRadius: 3,

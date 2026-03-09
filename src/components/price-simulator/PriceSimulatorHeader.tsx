@@ -5,7 +5,7 @@
 
 import { Box, Typography, Paper, Button, alpha } from '@mui/material';
 import { Calculator, Eye } from 'lucide-react';
-import { studioColors, studioGradients, studioShadows, cssTransition } from '../../design-system';
+import { studioColors, studioGradients, studioShadows, cssTransition, zIndex, fontWeights, fontFamilies } from '../../design-system';
 
 export interface PriceSimulatorHeaderProps {
   totalInvestment: number;
@@ -66,7 +66,7 @@ export const PriceSimulatorHeader: React.FC<PriceSimulatorHeaderProps> = ({
           gap: 2,
           flexWrap: 'wrap',
           position: 'relative',
-          zIndex: 1,
+          zIndex: zIndex.base,
           flexDirection: { xs: 'column', sm: 'row' },
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, md: 2.5 } }}>
@@ -90,7 +90,7 @@ export const PriceSimulatorHeader: React.FC<PriceSimulatorHeaderProps> = ({
                 variant="overline"
                 sx={{
                   color: studioColors.emerald,
-                  fontWeight: 600,
+                  fontWeight: fontWeights.semibold,
                   letterSpacing: '0.12em',
                   fontSize: { xs: '0.5625rem', md: '0.625rem' },
                   display: 'block',
@@ -102,9 +102,9 @@ export const PriceSimulatorHeader: React.FC<PriceSimulatorHeaderProps> = ({
               <Typography
                 variant="h4"
                 sx={{
-                  fontWeight: 600,
+                  fontWeight: fontWeights.semibold,
                   color: '#FFFFFF',
-                  fontFamily: '"Libre Baskerville", Georgia, serif',
+                  fontFamily: fontFamilies.brand,
                   letterSpacing: '-0.02em',
                   fontSize: { xs: '1.25rem', sm: '1.375rem', md: '1.5rem' },
                 }}
@@ -115,7 +115,7 @@ export const PriceSimulatorHeader: React.FC<PriceSimulatorHeaderProps> = ({
                 variant="body2"
                 sx={{
                   color: alpha('#FFFFFF', 0.7),
-                  fontWeight: 400,
+                  fontWeight: fontWeights.normal,
                   fontSize: { xs: '0.8125rem', md: '0.875rem' },
                   display: { xs: 'none', sm: 'block' },
                 }}
@@ -132,7 +132,7 @@ export const PriceSimulatorHeader: React.FC<PriceSimulatorHeaderProps> = ({
             sx={{
               background: studioGradients.emerald,
               color: '#FFFFFF',
-              fontWeight: 600,
+              fontWeight: fontWeights.semibold,
               px: { xs: 2.5, md: 3 },
               py: { xs: 1, md: 1.25 },
               minHeight: 44, // iOS HIG touch target
