@@ -15,15 +15,15 @@ import {
   Snackbar,
   Skeleton,
   IconButton,
-  CircularProgress,
 } from '@mui/material';
-import { ChevronLeft, Package, Crown, RefreshCw } from 'lucide-react';
+import { ChevronLeft, Package, Crown, Heart } from 'lucide-react';
 
 import { useShare } from '../../../hooks/useShare';
 import { useHaptics } from '../../../hooks/useHaptics';
 import { useProductView } from '../../../hooks/useProductView';
 import { useCart } from '../../../hooks/useCart';
 import { useWhatsAppContact } from '../../../hooks/useWhatsAppContact';
+import { useFavorites } from '../../../hooks/useFavorites';
 import { treasureToCartItem } from '../../../types/cart';
 import AdminSelectDialog from '../../../components/cart/AdminSelectDialog';
 import { useThemeMode } from '../../../contexts/ThemeContext';
@@ -38,7 +38,7 @@ import { PriceDisplay } from '../../../components/price-simulator/PriceDisplay';
 import { createLogger } from '../../../utils/logger';
 import { surfacesLight, surfacesDark, goldAccent, emeraldCore } from '../../../design-system/tokens/colors';
 import { buttonGradients } from '../../../design-system/tokens/gradients';
-import { accentColors, lightTokens, blurValues, zIndex } from '../../../design-system';
+import { accentColors, lightTokens, zIndex } from '../../../design-system';
 import { SpecificationsList, AdditionalInfo, ProductActions } from './components';
 import Breadcrumbs from '../../../components/shared/Breadcrumbs';
 import { scrollMainTo } from '../../../utils/mainScroll';
@@ -55,13 +55,13 @@ export default function ProductDetail() {
   const isGuest = useIsGuest();
   const isProvider = useIsProvider();
   const { shouldShowPrices } = usePriceShare();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
-  const [refreshingGallery, setRefreshingGallery] = useState(false);
 
-  const { treasure, updateMediaItems, getMediaItems, invalidateGallery, isLoadingSheets } = useTreasure();
+  const { treasure, updateMediaItems, getMediaItems, isLoadingSheets } = useTreasure();
   const { shareProduct, isNativeShareSupported } = useShare();
   const { trigger: triggerHaptic } = useHaptics();
   const { addToCart, isInCart, cartCount } = useCart();
@@ -270,40 +270,6 @@ export default function ProductDetail() {
     await openWhatsAppToAdmin([cartItem], adminName);
   }, [product, openWhatsAppToAdmin]);
 
-  // Refresh gallery from Google Drive (force re-fetch)
-  const refreshGallery = useCallback(async () => {
-    if (!product || refreshingGallery) return;
-    setRefreshingGallery(true);
-    try {
-      invalidateGallery(product.item);
-      const response = await fetch(`/api/get-drive-images?itemNumber=${product.item}`);
-      const data = await response.json();
-      if (data.success && data.images && data.images.length > 0) {
-        const driveItems: MediaItem[] = data.images.map((img: {
-          id: string; name: string; proxyUrl: string;
-          thumbnailUrl: string; type: 'image' | 'video'; order: number;
-        }) => ({
-          id: img.id, url: img.proxyUrl, type: img.type,
-          thumbnailUrl: img.thumbnailUrl, category: 'hero' as const,
-          alt: img.name || `${displayName} - ${img.order + 1}`, order: img.order,
-        }));
-        const sorted = [...driveItems].sort((a, b) => {
-          if (a.type === 'image' && b.type === 'video') return -1;
-          if (a.type === 'video' && b.type === 'image') return 1;
-          return a.order - b.order;
-        });
-        setMediaItems(sorted);
-        updateMediaItemsRef.current?.(product.item, driveItems);
-      } else {
-        setMediaItems([]);
-      }
-    } catch (error) {
-      log.error('Error refreshing gallery:', error);
-    } finally {
-      setRefreshingGallery(false);
-    }
-  }, [product, refreshingGallery, invalidateGallery, displayName]);
-
   // Show skeleton loading state matching actual layout
   if (isLoadingSheets && !product) {
     return (
@@ -384,14 +350,6 @@ export default function ProductDetail() {
       px: { xs: 0, sm: 3, md: 4 },
       pb: { xs: 'calc(12px + env(safe-area-inset-bottom))', sm: 3 }
     }}>
-      {/* Breadcrumb navigation */}
-      <Breadcrumbs
-        items={[
-          { label: 'Tesoros', path: '/treasure' },
-          { label: displayName || `Producto ${itemId}` },
-        ]}
-      />
-
       <Grid container spacing={{ xs: 1.5, md: 3 }}>
         {/* Left Column - Image & Gallery */}
         <Grid item xs={12} md={6}>
@@ -406,34 +364,33 @@ export default function ProductDetail() {
               position: 'relative',
             }}
           >
+            {/* Breadcrumb overlay on image */}
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: zIndex.base + 10,
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.15) 60%, transparent 100%)',
+                px: { xs: 1.5, sm: 2 },
+                pt: { xs: 0.75, sm: 1 },
+                pb: 4,
+                borderRadius: '12px 12px 0 0',
+              }}
+            >
+              <Breadcrumbs
+                items={[
+                  { label: 'Tesoros', path: '/treasure' },
+                  { label: displayName || `Producto ${itemId}` },
+                ]}
+                overlayMode
+              />
+            </Box>
             <MediaGallery
               media={mediaItems}
               productName={displayName}
             />
-            {isAdmin && (
-              <IconButton
-                onClick={refreshGallery}
-                disabled={refreshingGallery}
-                aria-label="Refrescar galería"
-                size="small"
-                sx={{
-                  position: 'absolute',
-                  top: 8,
-                  left: 8,
-                  bgcolor: 'rgba(0,0,0,0.5)',
-                  color: '#fff',
-                  backdropFilter: `blur(${blurValues.sm})`,
-                  '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
-                  zIndex: zIndex.base,
-                  width: 36,
-                  height: 36,
-                }}
-              >
-                {refreshingGallery
-                  ? <CircularProgress size={18} sx={{ color: '#fff' }} />
-                  : <RefreshCw size={18} />}
-              </IconButton>
-            )}
           </Paper>
         </Grid>
 
@@ -442,18 +399,51 @@ export default function ProductDetail() {
           <Box sx={{ px: { xs: 2, sm: 0 } }}>
             {/* Header - iOS Large Title Style */}
             <Box sx={{ mb: 2 }}>
-              <Typography
-                sx={{
-                  fontSize: '28px',
-                  fontWeight: 700,
-                  color: theme.palette.text.primary,
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.15,
-                  mb: 0.5,
-                }}
-              >
-                {displayName}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: '28px',
+                    fontWeight: 700,
+                    color: theme.palette.text.primary,
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1.15,
+                    mb: 0.5,
+                    flex: 1,
+                  }}
+                >
+                  {displayName}
+                </Typography>
+                {/* Favorite button */}
+                {!isProvider && product && (
+                  <IconButton
+                    onClick={() => {
+                      toggleFavorite(product.item);
+                      triggerHaptic('light');
+                    }}
+                    aria-label={isFavorite(product.item) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                    sx={{
+                      mt: 0.25,
+                      flexShrink: 0,
+                      width: 44,
+                      height: 44,
+                      borderRadius: '50%',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        bgcolor: isFavorite(product.item)
+                          ? `${emeraldCore.primary}15`
+                          : isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.08)',
+                      },
+                    }}
+                  >
+                    <Heart
+                      size={22}
+                      fill={isFavorite(product.item) ? emeraldCore.primary : 'none'}
+                      color={isFavorite(product.item) ? emeraldCore.primary : theme.palette.text.secondary}
+                      strokeWidth={isFavorite(product.item) ? 0 : 1.5}
+                    />
+                  </IconButton>
+                )}
+              </Box>
 
               {/* Inline metadata */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mb: 1.5 }}>

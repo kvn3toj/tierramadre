@@ -231,6 +231,14 @@ export default function TreasureBrowser({
       .filter((item): item is TreasureItem => item !== undefined);
   }, [allTreasure, recentItems]);
 
+  // Map favorite IDs to actual treasure items (for mobile quick access panel)
+  const favoriteMappedItems = useMemo(() => {
+    const itemMap = new Map(allTreasure.map(item => [item.item, item]));
+    return favoriteIds
+      .map(id => itemMap.get(id))
+      .filter((item): item is TreasureItem => item !== undefined);
+  }, [allTreasure, favoriteIds]);
+
   // Certification dialog state
   const [certDialogOpen, setCertDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TreasureItem | null>(null);
@@ -378,6 +386,10 @@ export default function TreasureBrowser({
             favoritesCount={favoritesCount}
             isProviderMode={isProviderMode}
             filteredCount={filteredTreasure.length}
+            recentlyViewedItems={recentlyViewedItems}
+            onRecentItemClick={handleItemClick}
+            onClearRecent={clearRecent}
+            favoriteItems={favoriteMappedItems}
           />
 
           {/* iOS Filter Sheet */}
@@ -530,8 +542,8 @@ export default function TreasureBrowser({
         </Box>
       )}
 
-      {/* Recently Viewed Carousel - always visible, sticky at top of grid */}
-      {recentlyViewedItems.length > 0 && (
+      {/* Recently Viewed Carousel - Desktop only (mobile uses merged quick-access in search bar) */}
+      {!isMobile && recentlyViewedItems.length > 0 && (
         <Box
           sx={{
             position: 'sticky',

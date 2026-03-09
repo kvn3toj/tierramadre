@@ -2,6 +2,7 @@
  * Breadcrumbs Component
  * Route-aware breadcrumb navigation.
  * Compact on mobile (parent + current only).
+ * Supports overlayMode for rendering on top of images.
  */
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -24,9 +25,11 @@ export interface BreadcrumbItem {
 
 export interface BreadcrumbsProps {
   items: BreadcrumbItem[];
+  /** Render in overlay mode (white text for use on dark image backgrounds) */
+  overlayMode?: boolean;
 }
 
-const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
+const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, overlayMode = false }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -37,14 +40,14 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
   const displayItems = isMobile ? items.slice(-2) : items;
 
   return (
-    <Box sx={{ px: { xs: 2, sm: 3 }, py: 1 }}>
+    <Box sx={{ px: overlayMode ? 0 : { xs: 2, sm: 3 }, py: overlayMode ? 0 : 1 }}>
       <MUIBreadcrumbs
-        separator={<ChevronRight size={14} />}
-        aria-label="Navegación de ruta"
+        separator={<ChevronRight size={12} color={overlayMode ? 'rgba(255,255,255,0.7)' : undefined} />}
+        aria-label="Navegacion de ruta"
         sx={{
           '& .MuiBreadcrumbs-separator': {
             mx: 0.5,
-            color: 'text.disabled',
+            color: overlayMode ? 'rgba(255,255,255,0.7)' : 'text.disabled',
           },
         }}
       >
@@ -58,8 +61,9 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
                 variant="caption"
                 sx={{
                   fontWeight: fontWeights.semibold,
-                  color: 'text.primary',
-                  fontSize: '0.8rem',
+                  color: overlayMode ? 'rgba(255,255,255,0.95)' : 'text.primary',
+                  fontSize: overlayMode ? '0.72rem' : '0.8rem',
+                  textShadow: overlayMode ? '0 1px 3px rgba(0,0,0,0.5)' : 'none',
                 }}
               >
                 {item.label}
@@ -76,13 +80,14 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
               onClick={() => item.path && navigate(item.path)}
               sx={{
                 fontWeight: fontWeights.medium,
-                color: emeraldCore.primary,
-                fontSize: '0.8rem',
+                color: overlayMode ? 'rgba(255,255,255,0.85)' : emeraldCore.primary,
+                fontSize: overlayMode ? '0.72rem' : '0.8rem',
                 cursor: 'pointer',
-                minHeight: 44,
+                minHeight: 36,
                 display: 'inline-flex',
                 alignItems: 'center',
-                '&:hover': { color: emeraldCore.dark },
+                textShadow: overlayMode ? '0 1px 3px rgba(0,0,0,0.5)' : 'none',
+                '&:hover': { color: overlayMode ? '#fff' : emeraldCore.dark },
               }}
             >
               {item.label}

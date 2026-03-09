@@ -147,13 +147,13 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
       {/* Top Bar */}
       <Box
         sx={{
-          height: '52px',
+          height: '44px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           paddingX: spacing.sm,
-          paddingTop: `calc(env(safe-area-inset-top) + 8px)`,
-          paddingBottom: '4px',
+          paddingTop: `env(safe-area-inset-top)`,
+          paddingBottom: '2px',
         }}
       >
         {/* Leading Section */}
@@ -200,7 +200,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
                 src={logoUrl}
                 alt={title}
                 sx={{
-                  height: 55,
+                  height: 44,
                   objectFit: 'contain',
                 }}
               />

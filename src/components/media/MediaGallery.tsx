@@ -702,67 +702,91 @@ export default function MediaGallery({
             </IconButton>
           </>
         )}
-        </Box>
-      </ProtectedContent>
 
-      {/* Progress Indicator */}
-      {media.length > 1 && (
-        <Box sx={{ textAlign: 'center', py: 1.5 }}>
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            {currentIndex + 1} de {media.length}
-          </Typography>
-
-          {/* Dot indicators */}
+        {/* Progress indicator + dots — inside the image */}
+        {media.length > 1 && (
           <Box
-            role="tablist"
-            aria-label="Indicadores de imagen"
+            onClick={(e) => e.stopPropagation()}
             sx={{
+              position: 'absolute',
+              bottom: 12,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: zIndex.base + 5,
               display: 'flex',
-              gap: 0.75,
-              justifyContent: 'center',
-              mt: 1,
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 0.25,
+              pointerEvents: 'auto',
             }}
           >
-            {media.map((_, index) => (
-              <Box
-                key={index}
-                role="tab"
-                tabIndex={0}
-                aria-selected={index === currentIndex}
-                aria-label={`Imagen ${index + 1} de ${media.length}`}
-                onClick={() => handleThumbnailClick(index)}
-                onKeyDown={(e: React.KeyboardEvent) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleThumbnailClick(index);
-                  } else if (e.key === 'ArrowRight') {
-                    e.preventDefault();
-                    (e.currentTarget.nextElementSibling as HTMLElement)?.focus();
-                  } else if (e.key === 'ArrowLeft') {
-                    e.preventDefault();
-                    (e.currentTarget.previousElementSibling as HTMLElement)?.focus();
-                  }
-                }}
-                sx={{
-                  width: index === currentIndex ? 20 : 8,
-                  height: 8,
-                  borderRadius: 4,
-                  bgcolor: index === currentIndex ? brand.emerald[500] : alpha(brand.emerald[500], 0.3),
-                  transition: cssTransition.slow,
-                  cursor: 'pointer',
-                  '&:hover': {
-                    bgcolor: index === currentIndex ? brand.emerald[500] : alpha(brand.emerald[500], 0.5),
-                  },
-                  '&:focus-visible': {
-                    outline: `2px solid ${brand.emerald[500]}`,
-                    outlineOffset: 2,
-                  },
-                }}
-              />
-            ))}
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'rgba(255,255,255,0.9)',
+                fontSize: '0.6rem',
+                textShadow: '0 1px 4px rgba(0,0,0,0.6)',
+                fontWeight: 600,
+              }}
+            >
+              {currentIndex + 1} de {media.length}
+            </Typography>
+            <Box
+              role="tablist"
+              aria-label="Indicadores de imagen"
+              sx={{
+                display: 'flex',
+                gap: 0.5,
+                justifyContent: 'center',
+                bgcolor: 'rgba(0,0,0,0.45)',
+                backdropFilter: `blur(${blurValues.sm})`,
+                borderRadius: 2,
+                px: 1,
+                py: 0.4,
+              }}
+            >
+              {media.map((_, index) => (
+                <Box
+                  key={index}
+                  role="tab"
+                  tabIndex={0}
+                  aria-selected={index === currentIndex}
+                  aria-label={`Imagen ${index + 1} de ${media.length}`}
+                  onClick={() => handleThumbnailClick(index)}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleThumbnailClick(index);
+                    } else if (e.key === 'ArrowRight') {
+                      e.preventDefault();
+                      (e.currentTarget.nextElementSibling as HTMLElement)?.focus();
+                    } else if (e.key === 'ArrowLeft') {
+                      e.preventDefault();
+                      (e.currentTarget.previousElementSibling as HTMLElement)?.focus();
+                    }
+                  }}
+                  sx={{
+                    width: index === currentIndex ? 16 : 6,
+                    height: 6,
+                    borderRadius: 3,
+                    bgcolor: index === currentIndex ? '#fff' : 'rgba(255,255,255,0.4)',
+                    transition: cssTransition.slow,
+                    cursor: 'pointer',
+                    '&:hover': {
+                      bgcolor: index === currentIndex ? '#fff' : 'rgba(255,255,255,0.6)',
+                    },
+                    '&:focus-visible': {
+                      outline: '2px solid #fff',
+                      outlineOffset: 2,
+                    },
+                  }}
+                />
+              ))}
+            </Box>
           </Box>
+        )}
         </Box>
-      )}
+      </ProtectedContent>
 
       {/* Thumbnail Strip */}
       {media.length > 1 && (

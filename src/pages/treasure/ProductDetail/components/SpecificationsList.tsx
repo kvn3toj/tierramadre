@@ -19,8 +19,16 @@ export const SpecificationsList: React.FC<SpecificationsListProps> = ({ product 
   const secondaryTextColor = isLight ? 'rgba(60, 60, 67, 0.6)' : 'rgba(235, 235, 245, 0.6)';
 
   const hasGemWeight = typeof product.peso === 'number';
-  const hasTalla = product.talla && product.talla !== '-';
-  const hasMedidas = product.medidas && product.medidas !== '-' && product.medidas !== 'Anillo';
+  const hasTalla = product.talla && product.talla !== '-' && product.talla !== '0' && String(product.talla) !== '0';
+  const rawMedidas = product.medidasValores || product.medidas || '';
+  const medidasTrimmed = rawMedidas.trim();
+  // Hide row if empty, dash, zero, or 'Anillo' (jewelry type, not a measurement)
+  const hasMedidas = medidasTrimmed !== '' && medidasTrimmed !== '-' && medidasTrimmed !== '0' && medidasTrimmed !== 'Anillo';
+  // Only append 'mm' if the value looks like pure numbers/dimensions (no existing unit words)
+  const hasExistingUnit = /[a-zA-Z]/.test(medidasTrimmed);
+  const formattedMedidas = hasMedidas
+    ? (hasExistingUnit ? medidasTrimmed : `${medidasTrimmed.replace(/\n/g, ' x ')} mm`)
+    : '';
   const hasMaterial = Boolean(product.metalType);
   const hasColeccion = Boolean(product.coleccion);
 
@@ -95,11 +103,7 @@ export const SpecificationsList: React.FC<SpecificationsListProps> = ({ product 
         <SpecRow
           icon={<Ruler size={18} />}
           label="Medida"
-          value={
-            product.medidasValores
-              ? product.medidasValores.replace(/\n/g, ' x ') + ' mm'
-              : product.medidas + ' mm'
-          }
+          value={formattedMedidas}
           showBorder={hasGroup2 || hasColeccion}
         />
       )}
