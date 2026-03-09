@@ -24,6 +24,7 @@ import {
   ALL_CATEGORIES,
   AUTO_TRANSITION_INTERVAL,
   MainCategory,
+  CATEGORY_ICONS,
 } from './gallery-constants';
 
 // =============================================================================
@@ -233,9 +234,9 @@ export const HeroGallery: React.FC = () => {
             <Box
               sx={{
                 display: 'inline-flex',
-                gap: 0.5,
-                p: 0.5,
-                bgcolor: blackAlpha(0.35),
+                gap: 0.75,
+                p: 0.75,
+                bgcolor: blackAlpha(0.4),
                 backdropFilter: `blur(${blurValues['2xl']}) saturate(180%)`,
                 WebkitBackdropFilter: `blur(${blurValues['2xl']}) saturate(180%)`,
                 borderRadius: 3,
@@ -254,8 +255,9 @@ export const HeroGallery: React.FC = () => {
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    px: { xs: 1.5, sm: 1.75, md: 2 },
-                    py: { xs: 0.6, sm: 0.75 },
+                    gap: 0.75,
+                    px: { xs: 1.75, sm: 2, md: 2.5 },
+                    py: { xs: 0.75, sm: 1 },
                     minHeight: 44,
                     borderRadius: 2,
                     cursor: 'pointer',
@@ -273,11 +275,20 @@ export const HeroGallery: React.FC = () => {
                   }}
                 >
                   <Typography
+                    component="span"
+                    sx={{
+                      fontSize: { xs: '0.85rem', sm: '0.9rem' },
+                      lineHeight: 1,
+                    }}
+                  >
+                    {CATEGORY_ICONS[cat.id]}
+                  </Typography>
+                  <Typography
                     variant="body2"
                     sx={{
-                      color: whiteAlpha(0.75),
-                      fontWeight: 500,
-                      fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.85rem' },
+                      color: whiteAlpha(0.85),
+                      fontWeight: 600,
+                      fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
                       letterSpacing: '0.02em',
                       transition: cssTransition.slow,
                     }}

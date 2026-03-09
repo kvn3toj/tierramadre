@@ -40,8 +40,8 @@ const DARK_HEADER_GRADIENT = [
 ].join(', ');
 
 const LIGHT_HEADER_GRADIENT = [
-  'linear-gradient(to right, rgba(0, 174, 122, 0.05) 10%, transparent 40%, transparent 60%, rgba(0, 174, 122, 0.05) 90%)',
-  'linear-gradient(to right, #f5fcf9 0%, #ffffff 20%, #ffffff 80%, #f5fcf9 100%)',
+  'linear-gradient(to right, rgba(0, 174, 122, 0.02) 10%, transparent 40%, transparent 60%, rgba(0, 174, 122, 0.02) 90%)',
+  'linear-gradient(to right, #fafdfb 0%, #ffffff 15%, #ffffff 85%, #fafdfb 100%)',
 ].join(', ');
 
 const getPageConfigs = (t: any, isLight: boolean): Record<string, PageConfig> => ({
