@@ -253,6 +253,7 @@ export default function ImageLightbox({
             >
               <IconButton
                 onClick={handleClose}
+                aria-label="Cerrar visor"
                 sx={{
                   width: 44,
                   height: 44,
@@ -268,6 +269,7 @@ export default function ImageLightbox({
               {onShare && (
                 <IconButton
                   onClick={handleShare}
+                  aria-label="Compartir imagen"
                   sx={{
                     width: 44,
                     height: 44,
@@ -349,6 +351,7 @@ export default function ImageLightbox({
                 {currentIndex > 0 && (
                   <IconButton
                     onClick={goToPrevious}
+                    aria-label="Imagen anterior"
                     sx={{
                       position: 'absolute',
                       left: 16,
@@ -370,6 +373,7 @@ export default function ImageLightbox({
                 {currentIndex < images.length - 1 && (
                   <IconButton
                     onClick={goToNext}
+                    aria-label="Imagen siguiente"
                     sx={{
                       position: 'absolute',
                       right: 16,
@@ -405,10 +409,28 @@ export default function ImageLightbox({
             >
               {/* Dot indicators */}
               {images.length > 1 && images.length <= 10 && (
-                <Box sx={{ display: 'flex', gap: 0.75, mb: 1 }}>
+                <Box role="tablist" aria-label="Indicadores de imagen" sx={{ display: 'flex', gap: 0.75, mb: 1 }}>
                   {images.map((_, index) => (
                     <Box
                       key={index}
+                      role="tab"
+                      tabIndex={0}
+                      aria-selected={index === currentIndex}
+                      aria-label={`Imagen ${index + 1} de ${images.length}`}
+                      onClick={() => { setCurrentIndex(index); setScale(1); }}
+                      onKeyDown={(e: React.KeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setCurrentIndex(index);
+                          setScale(1);
+                        } else if (e.key === 'ArrowRight' && index < images.length - 1) {
+                          e.preventDefault();
+                          (e.currentTarget.nextElementSibling as HTMLElement)?.focus();
+                        } else if (e.key === 'ArrowLeft' && index > 0) {
+                          e.preventDefault();
+                          (e.currentTarget.previousElementSibling as HTMLElement)?.focus();
+                        }
+                      }}
                       sx={{
                         width: index === currentIndex ? 16 : 6,
                         height: 6,
@@ -417,6 +439,15 @@ export default function ImageLightbox({
                           ? lightTokens.text.inverse
                           : alpha(lightTokens.text.inverse, 0.4),
                         transition: cssTransition.default,
+                        cursor: 'pointer',
+                        // 44px touch target via padding
+                        p: '19px',
+                        m: '-19px',
+                        backgroundClip: 'content-box',
+                        '&:focus-visible': {
+                          outline: `2px solid ${lightTokens.text.inverse}`,
+                          outlineOffset: 2,
+                        },
                       }}
                     />
                   ))}

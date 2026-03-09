@@ -498,6 +498,7 @@ export default function MediaGallery({
                     <video
                       src={`${item.url}#t=0.001`}
                       poster={item.thumbnailUrl || logoPlaceholder}
+                      aria-label={`Video de ${productName}`}
                       autoPlay
                       muted
                       loop
@@ -570,7 +571,7 @@ export default function MediaGallery({
                     <img
                       src={getDisplayUrl(index)}
                       crossOrigin="anonymous"
-                      alt={item.alt || productName}
+                      alt={`${productName}, vista ${index + 1} de ${media.length}`}
                       draggable={false}
                       onLoad={() => handleSlideImgLoad(index)}
                       onError={() => handleSlideImgError(index)}
@@ -648,6 +649,7 @@ export default function MediaGallery({
               e.stopPropagation();
               setLightboxOpen(true);
             }}
+            aria-label="Ampliar imagen"
             sx={{
               position: 'absolute',
               top: 12,
@@ -669,6 +671,7 @@ export default function MediaGallery({
                 e.stopPropagation();
                 handlePrevious();
               }}
+              aria-label="Imagen anterior"
               sx={{
                 position: 'absolute',
                 left: 12,
@@ -685,6 +688,7 @@ export default function MediaGallery({
                 e.stopPropagation();
                 handleNext();
               }}
+              aria-label="Imagen siguiente"
               sx={{
                 position: 'absolute',
                 right: 12,
@@ -710,6 +714,8 @@ export default function MediaGallery({
 
           {/* Dot indicators */}
           <Box
+            role="tablist"
+            aria-label="Indicadores de imagen"
             sx={{
               display: 'flex',
               gap: 0.75,
@@ -720,15 +726,21 @@ export default function MediaGallery({
             {media.map((_, index) => (
               <Box
                 key={index}
-                role="button"
+                role="tab"
                 tabIndex={0}
+                aria-selected={index === currentIndex}
                 aria-label={`Imagen ${index + 1} de ${media.length}`}
-                aria-current={index === currentIndex ? 'true' : undefined}
                 onClick={() => handleThumbnailClick(index)}
                 onKeyDown={(e: React.KeyboardEvent) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     handleThumbnailClick(index);
+                  } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    (e.currentTarget.nextElementSibling as HTMLElement)?.focus();
+                  } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    (e.currentTarget.previousElementSibling as HTMLElement)?.focus();
                   }
                 }}
                 sx={{

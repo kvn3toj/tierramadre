@@ -514,7 +514,7 @@ export const FilterContent = memo(function FilterContent({
               alignSelf: 'flex-start',
               borderRadius: '16px',
               bgcolor: alpha(semanticColors.error.main, 0.08),
-              color: semanticColors.error.main,
+              color: semanticColors.error.dark,
               fontWeight: 600,
               cursor: 'pointer',
               fontSize: '0.7rem',
@@ -546,6 +546,7 @@ export const FilterContent = memo(function FilterContent({
           }}
           size="small"
           inputRef={searchInputRef}
+          inputProps={{ 'aria-label': 'Buscar productos por nombre' }}
           sx={{
             minWidth: 200,
             flex: 1,
@@ -570,6 +571,7 @@ export const FilterContent = memo(function FilterContent({
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
               displayEmpty
+              aria-label="Filtrar por estado"
               sx={{ borderRadius: 2 }}
             >
               <MenuItem value="available">
@@ -600,6 +602,7 @@ export const FilterContent = memo(function FilterContent({
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
             displayEmpty
+            aria-label="Ordenar productos"
             startAdornment={
               <InputAdornment position="start">
                 <ArrowUpDown size={16} color={emeraldCore.primary} />
@@ -629,6 +632,7 @@ export const FilterContent = memo(function FilterContent({
             value={categoriaFilter}
             onChange={(e) => setCategoriaFilter(e.target.value)}
             displayEmpty
+            aria-label="Filtrar por categoría"
             sx={{
               borderRadius: 2,
               bgcolor: categoriaFilter !== 'all' ? alpha(emeraldCore.primary, 0.1) : 'transparent',
@@ -649,6 +653,7 @@ export const FilterContent = memo(function FilterContent({
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
             displayEmpty
+            aria-label="Filtrar por tipo"
             sx={{ borderRadius: 2 }}
           >
             <MenuItem value="all">Tipo</MenuItem>
@@ -663,6 +668,7 @@ export const FilterContent = memo(function FilterContent({
             value={cantidadFilter}
             onChange={(e) => setCantidadFilter(e.target.value)}
             displayEmpty
+            aria-label="Filtrar por cantidad"
             startAdornment={
               <InputAdornment position="start">
                 <Layers size={14} color={theme.palette.text.secondary} />
@@ -680,6 +686,7 @@ export const FilterContent = memo(function FilterContent({
         <Button
           size="small"
           onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+          aria-expanded={showAdvancedFilters}
           startIcon={<SlidersHorizontal size={16} />}
           endIcon={showAdvancedFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           sx={{
@@ -699,7 +706,7 @@ export const FilterContent = memo(function FilterContent({
             onClick={handleClearFilters}
             sx={{
               bgcolor: alpha(semanticColors.error.main, 0.1),
-              color: semanticColors.error.main,
+              color: semanticColors.error.dark,
               fontWeight: 600,
               cursor: 'pointer',
             }}
@@ -716,6 +723,7 @@ export const FilterContent = memo(function FilterContent({
               value={colorFilter}
               onChange={(e) => setColorFilter(e.target.value)}
               displayEmpty
+              aria-label="Filtrar por color"
               sx={{ borderRadius: 2 }}
             >
               <MenuItem value="all">Todos colores</MenuItem>
@@ -736,6 +744,7 @@ export const FilterContent = memo(function FilterContent({
               value={shapeFilter}
               onChange={(e) => setShapeFilter(e.target.value)}
               displayEmpty
+              aria-label="Filtrar por talla"
               sx={{ borderRadius: 2 }}
             >
               <MenuItem value="all">Talla</MenuItem>
@@ -753,6 +762,7 @@ export const FilterContent = memo(function FilterContent({
               value={qualityFilter}
               onChange={(e) => setQualityFilter(e.target.value)}
               displayEmpty
+              aria-label="Filtrar por calidad"
               sx={{ borderRadius: 2 }}
             >
               <MenuItem value="all">Calidad</MenuItem>
@@ -771,6 +781,7 @@ export const FilterContent = memo(function FilterContent({
                 value={coleccionFilter}
                 onChange={(e) => setColeccionFilter(e.target.value)}
                 displayEmpty
+                aria-label="Filtrar por colección"
                 sx={{
                   borderRadius: 2,
                   bgcolor: coleccionFilter !== 'all' ? alpha(emeraldCore.primary, 0.1) : 'transparent',
@@ -806,6 +817,8 @@ export const FilterContent = memo(function FilterContent({
               step={100000}
               valueLabelDisplay="auto"
               valueLabelFormat={(value) => formatCurrency(convertPrice(value), currency)}
+              aria-label="Rango de precio"
+              getAriaValueText={(value) => formatCurrency(convertPrice(value), currency)}
               sx={{
                 color: emeraldCore.dark,
                 '& .MuiSlider-thumb': { width: 20, height: 20 },

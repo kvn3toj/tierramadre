@@ -245,9 +245,9 @@ export function ActiveFilterChips({
     <Box
       sx={{
         display: 'flex',
-        gap: compact ? 0.5 : 1,
+        gap: compact ? 0.75 : 1,
         flexWrap: 'wrap',
-        rowGap: compact ? 0.5 : undefined,
+        rowGap: compact ? 0.75 : undefined,
       }}
     >
       {chips.map((chip) => (
@@ -261,7 +261,7 @@ export function ActiveFilterChips({
           sx={{
             bgcolor: chip.colors.bg,
             color: chip.colors.text,
-            height: compact ? 24 : undefined,
+            height: compact ? 32 : undefined,
             '& .MuiChip-deleteIcon': { color: chip.colors.delete },
             '& .MuiChip-label': {
               px: compact ? 1 : undefined,

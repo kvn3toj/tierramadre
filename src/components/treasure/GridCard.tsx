@@ -103,6 +103,7 @@ function GridCard({
     <Card
       elevation={0}
       onClick={handleItemClick}
+      onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleItemClick(); } }}
       onMouseEnter={handlePrefetch}
       onFocus={handlePrefetch}
       role="article"
@@ -282,8 +283,8 @@ function GridCard({
                   position: 'absolute',
                   top: 6,
                   right: 6,
-                  width: 32,
-                  height: 32,
+                  width: 40,
+                  height: 40,
                   bgcolor: isSelectedForComparison
                     ? emeraldCore.primary
                     : alpha('#000000', 0.55),

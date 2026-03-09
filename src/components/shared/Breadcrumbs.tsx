@@ -79,6 +79,9 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
                 color: emeraldCore.primary,
                 fontSize: '0.8rem',
                 cursor: 'pointer',
+                minHeight: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
                 '&:hover': { color: emeraldCore.dark },
               }}
             >

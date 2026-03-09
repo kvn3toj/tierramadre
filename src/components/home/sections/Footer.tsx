@@ -166,7 +166,7 @@ export const Footer: React.FC = () => {
           </Typography>
 
           {/* Legal Links */}
-          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', gap: 2 }}>
+          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center' }}>
             <Link
               href="/privacy.html"
               target="_blank"

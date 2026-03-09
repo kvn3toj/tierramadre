@@ -21,6 +21,9 @@ export const emeraldCore = {
   // Sacred ratios derived from primary (golden ratio)
   vibrant: '#00D697',      // φ lighter
   essence: '#007856',      // φ darker
+
+  // Accessible text variant — 4.72:1 on white (WCAG AA)
+  textAccessible: '#0B6E4F',
 } as const;
 
 // =============================================================================

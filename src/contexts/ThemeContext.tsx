@@ -148,6 +148,16 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     },
     spacing: iosSpacing.xs,
     components: {
+      MuiButtonBase: {
+        styleOverrides: {
+          root: {
+            '&:focus-visible': {
+              outline: `2px solid ${brandColors.emeraldGreen}`,
+              outlineOffset: '2px',
+            },
+          },
+        },
+      },
       MuiCard: {
         styleOverrides: {
           root: {

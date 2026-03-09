@@ -163,6 +163,8 @@ function RecentlyViewedCarousel({
                 onClick={onClear}
                 size="small"
                 sx={{
+                  minWidth: 44,
+                  minHeight: 44,
                   color: isLight ? surfacesLight.text.tertiary : surfacesDark.text.tertiary,
                   '&:hover': {
                     color: 'error.main',
@@ -180,6 +182,8 @@ function RecentlyViewedCarousel({
             onClick={scrollLeft}
             size="small"
             sx={{
+              minWidth: 44,
+              minHeight: 44,
               color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
               '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.1) },
             }}
@@ -190,6 +194,8 @@ function RecentlyViewedCarousel({
             onClick={scrollRight}
             size="small"
             sx={{
+              minWidth: 44,
+              minHeight: 44,
               color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
               '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.1) },
             }}

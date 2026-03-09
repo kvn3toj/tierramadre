@@ -166,6 +166,8 @@ export const HeroGallery: React.FC = () => {
         >
           {/* Carousel Dots */}
           <Box
+            role="tablist"
+            aria-label="Galería de imágenes"
             sx={{
               display: 'flex',
               justifyContent: 'center',
@@ -176,7 +178,23 @@ export const HeroGallery: React.FC = () => {
             {HERO_IMAGES.map((img, idx) => (
               <Box
                 key={img.id}
+                role="tab"
+                tabIndex={0}
+                aria-selected={idx === currentIndex}
+                aria-label={`Imagen ${idx + 1} de ${HERO_IMAGES.length}`}
                 onClick={() => setCurrentIndex(idx)}
+                onKeyDown={(e: React.KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setCurrentIndex(idx);
+                  } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    (e.currentTarget.nextElementSibling as HTMLElement)?.focus();
+                  } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    (e.currentTarget.previousElementSibling as HTMLElement)?.focus();
+                  }
+                }}
                 sx={{
                   width: idx === currentIndex ? 20 : 6,
                   height: 6,
@@ -186,10 +204,18 @@ export const HeroGallery: React.FC = () => {
                     : whiteAlpha(0.4),
                   transition: cssTransition.slow,
                   cursor: 'pointer',
+                  // 44px touch target via padding
+                  p: '19px',
+                  m: '-19px',
+                  backgroundClip: 'content-box',
                   '&:hover': {
                     bgcolor: idx === currentIndex
                       ? emeraldCore.primary
                       : whiteAlpha(0.6),
+                  },
+                  '&:focus-visible': {
+                    outline: `2px solid ${emeraldCore.primary}`,
+                    outlineOffset: 2,
                   },
                 }}
               />
@@ -223,13 +249,15 @@ export const HeroGallery: React.FC = () => {
                   onClick={() => handleCategoryClick(cat.id)}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && handleCategoryClick(cat.id)}
+                  aria-label={cat.label}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCategoryClick(cat.id); } }}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 0.5,
                     px: { xs: 1.5, sm: 1.75, md: 2 },
                     py: { xs: 0.6, sm: 0.75 },
+                    minHeight: 44,
                     borderRadius: 2,
                     cursor: 'pointer',
                     transition: cssTransition.slow,

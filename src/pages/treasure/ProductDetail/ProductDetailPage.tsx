@@ -414,6 +414,7 @@ export default function ProductDetail() {
               <IconButton
                 onClick={refreshGallery}
                 disabled={refreshingGallery}
+                aria-label="Refrescar galería"
                 size="small"
                 sx={{
                   position: 'absolute',

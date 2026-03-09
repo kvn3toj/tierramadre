@@ -91,6 +91,7 @@ function ListRow({
         },
       }}
       onClick={handleItemClick}
+      onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleItemClick(); } }}
       role="article"
       aria-label={`${item.nombre} - ${item.color}, ${weight}`}
       tabIndex={0}
@@ -157,6 +158,8 @@ function ListRow({
             disabled={!isSelectedForComparison && !canAddToComparison}
             size="small"
             sx={{
+              minWidth: 44,
+              minHeight: 44,
               color: isSelectedForComparison ? 'white' : theme.palette.text.secondary,
               bgcolor: isSelectedForComparison ? emeraldCore.primary : 'transparent',
               '&:hover': {
@@ -179,6 +182,8 @@ function ListRow({
             aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
             size="small"
             sx={{
+              minWidth: 44,
+              minHeight: 44,
               color: isFavorite ? semanticColors.error.main : theme.palette.text.secondary,
               '&:hover': {
                 bgcolor: isFavorite ? errorAlpha(0.1) : alpha(emeraldCore.primary, 0.1),

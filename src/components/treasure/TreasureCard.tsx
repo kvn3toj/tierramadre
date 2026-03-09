@@ -79,7 +79,9 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
           },
         }}
         onClick={onClick}
+        onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
         role="article"
+        tabIndex={0}
         aria-label={`${item.nombre} - ${item.color}, ${weight}`}
       >
         {/* Color indicator */}
@@ -139,7 +141,9 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
     <Card
       elevation={0}
       onClick={onClick}
+      onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
       role="article"
+      tabIndex={0}
       aria-label={`${item.nombre} - ${item.color}, ${weight}`}
       sx={{
         borderRadius: 3,

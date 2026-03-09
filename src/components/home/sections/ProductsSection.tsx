@@ -82,7 +82,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
   }
 
   return (
-    <Box sx={{ pt: 2.5, px: 2, mb: 1 }} component="section" aria-labelledby="products-title">
+    <Box sx={{ pt: 2.5, px: 2, mb: 1, overflow: 'hidden' }} component="section" aria-labelledby="products-title">
       <motion.div variants={fadeInUp} initial="initial" animate="animate">
         {/* Section Container - refined glass with emerald tint */}
         <Box
@@ -130,7 +130,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
               onClick={() => navigate('/treasure')}
               aria-label="Ver todos los tesoros"
               sx={{
-                color: emeraldCore.light,
+                color: isDarkMode ? emeraldCore.light : emeraldCore.textAccessible,
                 fontSize: { xs: '0.75rem', sm: '0.8125rem' },
                 fontWeight: 500,
                 minWidth: 'auto',
@@ -257,7 +257,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                       <Typography
                         variant="caption"
                         sx={{
-                          color: emeraldCore.light,
+                          color: isDarkMode ? emeraldCore.light : emeraldCore.textAccessible,
                           fontSize: { xs: '0.7rem', sm: '0.75rem' },
                           fontWeight: 500,
                         }}
