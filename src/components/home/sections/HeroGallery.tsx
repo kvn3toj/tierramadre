@@ -84,7 +84,8 @@ export const HeroGallery: React.FC = () => {
       <Box
         sx={{
           position: 'relative',
-          aspectRatio: { xs: '4/3', sm: '16/9', md: '21/9' },
+          width: '100%',
+          height: { xs: '55vw', sm: '45vw', md: '38vw' },
           maxHeight: { xs: '55vh', sm: '50vh', md: '45vh' },
           overflow: 'hidden',
         }}
