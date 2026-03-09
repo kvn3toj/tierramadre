@@ -81,13 +81,12 @@ export const HeroGallery: React.FC = () => {
 
   return (
     <Box component="section" aria-label="Galeria">
-      {/* Hero Image - Compact */}
+      {/* Hero Image - Aspect-ratio based for full picture visibility */}
       <Box
         sx={{
           position: 'relative',
-          height: { xs: '40vh', sm: '44vh' },
-          minHeight: 300,
-          maxHeight: 400,
+          aspectRatio: { xs: '4/3', sm: '16/9' },
+          maxHeight: { xs: '55vh', sm: '50vh' },
           overflow: 'hidden',
         }}
       >
@@ -185,7 +184,7 @@ export const HeroGallery: React.FC = () => {
                   bgcolor: idx === currentIndex
                     ? emeraldCore.primary
                     : whiteAlpha(0.4),
-                  transition: 'all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                  transition: cssTransition.slow,
                   cursor: 'pointer',
                   '&:hover': {
                     bgcolor: idx === currentIndex
