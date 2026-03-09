@@ -163,6 +163,12 @@ const getPageConfigs = (t: any, isLight: boolean): Record<string, PageConfig> =>
     subtitle: 'Nombres únicos para esmeraldas con IA',
     showBackButton: true,
   },
+  '/mi-perfil': {
+    title: 'Mi Perfil',
+    mode: 'large',
+    subtitle: 'Tu portafolio y actividad',
+    showBackButton: true,
+  },
 });
 
 export interface IOSLayoutProps {

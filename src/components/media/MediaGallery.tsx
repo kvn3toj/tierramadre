@@ -87,11 +87,19 @@ export default function MediaGallery({
   const hasMedia = media.length > 0;
 
   // Compute the final display URL for a given index (Drive proxy gets size=medium)
-  const getDisplayUrl = useCallback((index: number): string => {
+  // Uses URL API to properly set size param, avoiding duplicate ?size=small&size=medium
+  const getDisplayUrl = useCallback((index: number, sizeOverride?: string): string => {
     const item = media[index];
     if (!item) return '';
     if (item.url.includes('serve-drive-image')) {
-      return `${item.url}${item.url.includes('?') ? '&' : '?'}size=medium`;
+      try {
+        const url = new URL(item.url, window.location.origin);
+        url.searchParams.set('size', sizeOverride || 'medium');
+        return url.pathname + url.search;
+      } catch {
+        // Fallback for malformed URLs
+        return item.url;
+      }
     }
     return item.url;
   }, [media]);
@@ -340,13 +348,23 @@ export default function MediaGallery({
   };
 
   // Prepare images for lightbox (only images, not videos)
+  // Use size=large (1200px) for fullscreen display instead of raw URL (size=small/400px)
   const lightboxImages = useMemo(() => {
     return media
       .filter(item => item.type === 'image')
-      .map(item => ({
-        url: item.url,
-        alt: item.alt || productName,
-      }));
+      .map(item => {
+        let url = item.url;
+        if (url.includes('serve-drive-image')) {
+          try {
+            const parsed = new URL(url, window.location.origin);
+            parsed.searchParams.set('size', 'large');
+            url = parsed.pathname + parsed.search;
+          } catch {
+            // Keep original URL on parse failure
+          }
+        }
+        return { url, alt: item.alt || productName };
+      });
   }, [media, productName]);
 
   // Get the lightbox index for current image
@@ -841,8 +859,20 @@ export default function MediaGallery({
               }}
             >
                 <img
-                src={item.thumbnailUrl || item.url}
+                src={(() => {
+                  // Use size=thumb (200px) for 64px thumbnail strip instead of size=small (400px)
+                  const thumbSrc = item.thumbnailUrl || item.url;
+                  if (thumbSrc.includes('serve-drive-image')) {
+                    try {
+                      const u = new URL(thumbSrc, window.location.origin);
+                      u.searchParams.set('size', 'thumb');
+                      return u.pathname + u.search;
+                    } catch { return thumbSrc; }
+                  }
+                  return thumbSrc;
+                })()}
                 alt={`Thumbnail ${index + 1}`}
+                loading="lazy"
                 draggable={false}
                 onContextMenu={(e) => e.preventDefault()}
                 onError={(e: SyntheticEvent<HTMLImageElement>) => {

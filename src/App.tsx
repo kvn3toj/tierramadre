@@ -56,6 +56,9 @@ const QuotationRequestForm = lazyWithRetry(() => import('./components/admin/Quot
 const QuotationRequestList = lazyWithRetry(() => import('./components/admin/QuotationRequestList'), 'QuotationRequestList');
 const ProviderQuotationsList = lazyWithRetry(() => import('./components/admin/ProviderQuotationsList'), 'ProviderQuotationsList');
 
+// My Profile (Ambassador personal dashboard)
+const MyProfilePage = lazyWithRetry(() => import('./pages/mi-perfil/MyProfilePage'), 'MyProfilePage');
+
 // Product Requests (Asesor/Embajador -> Admin)
 const ProductRequestsHub = lazyWithRetry(() => import('./pages/staff/requests/ProductRequestsHub'), 'ProductRequestsHub');
 const AdminProductRequestList = lazyWithRetry(() => import('./components/requests/AdminProductRequestList'), 'AdminProductRequestList');
@@ -293,6 +296,15 @@ function AppContent() {
                 <ProviderQuotationsList />
               </Suspense>
             </AdminRoute>
+          } />
+
+          {/* My Profile - Staff only */}
+          <Route path="/mi-perfil" element={
+            <StaffRoute>
+              <Suspense fallback={<LoadingFallback message="Cargando perfil..." />}>
+                <MyProfilePage />
+              </Suspense>
+            </StaffRoute>
           } />
 
           {/* Product Requests (Asesor/Embajador -> Admin) - Staff only */}

@@ -253,6 +253,34 @@ export const en = {
     urlCopied: 'Copied',
   },
 
+  // Profile
+  profile: {
+    title: 'My Profile',
+    subtitle: 'Your portfolio and activity',
+    portfolio: 'Your Portfolio',
+    totalProducts: 'Total Products',
+    gems: 'Gems',
+    jewelry: 'Jewelry',
+    availableValue: 'Available Value',
+    guestActivity: 'Guest Activity',
+    noGuestActivity: 'No guest activity yet',
+    inviteClient: 'Invite Client',
+    topGuestProducts: 'Top Products (Guests)',
+    invitations: 'Invitations',
+    total: 'Total',
+    active: 'Active',
+    pending: 'Pending',
+    notFound: 'Your ambassador profile was not found.',
+  },
+
+  // Menu sections
+  menu: {
+    salesTools: 'Sales Tools',
+    discover: 'Discover',
+    admin: 'Administration',
+    profileSubtitle: 'Your portfolio and guest activity',
+  },
+
   // Member Benefits (Guest Teaser)
   membership: {
     title: 'Tierra Madre Community',

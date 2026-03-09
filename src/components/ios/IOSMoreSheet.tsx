@@ -2,31 +2,33 @@
  * IOSMoreSheet Component
  *
  * Bottom sheet modal for secondary tools
- * - Search bar for inventory
- * - Bóveda Secreta and Cuentas options
- * - Spring animation
- * - Backdrop dismiss
+ * - Profile card at top (staff only)
+ * - Grouped tool sections with headers
+ * - Guest view: only Boveda + Settings (no blur overlay)
+ * - Spring animation + Backdrop dismiss
  */
 
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, IconButton, Backdrop, Chip, Switch, Slider } from '@mui/material';
-import { Lock, Close, AccountBalance, Settings, DarkMode, LightMode, BugReport, AutoAwesome, PersonAdd } from '@mui/icons-material';
+import { Box, Typography, IconButton, Backdrop, Chip, Switch, Slider, Avatar, alpha } from '@mui/material';
+import { Close, AccountBalance, Settings, DarkMode, LightMode, BugReport, AutoAwesome, PersonAdd } from '@mui/icons-material';
 
-import { Vault, BarChart3, ShoppingBag } from 'lucide-react';
+import { Vault, BarChart3, ShoppingBag, ChevronRight } from 'lucide-react';
 import FeedbackWizard from '../feedback/FeedbackWizard';
 import { InvitationGenerator } from '../invitation';
 import { useTheme } from '../../contexts/ThemeContext';
 
 import { floatingLayers, liquidSaturation, specularHighlights } from '../../design-system/tokens/liquid-glass';
 import { floatingLayerShadows } from '../../design-system/tokens/shadows';
-import { brand, radius, iosTypographyScale, emeraldCore, accentColors, cssTransition, blurValues, primitiveColors, primitiveSpacing as spacing, easingCurves, durations, zIndex } from '../../design-system';
+import { brand, radius, iosTypographyScale, emeraldCore, accentColors, cssTransition, blurValues, primitiveColors, primitiveSpacing as spacing, easingCurves, durations, zIndex, goldAccent } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
-import { useIsGuest, useCanCreateInvitations } from '../../hooks/useAuth';
+import { useCanCreateInvitations } from '../../hooks/useAuth';
 import { useIsAdmin, useIsStaff } from '../../hooks/usePermissions';
 import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { useCurrentAsesor } from '../../hooks/useCurrentAsesor';
+import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 
 export interface MoreToolConfig {
   id: string;
@@ -39,75 +41,134 @@ export interface MoreToolConfig {
   badge?: string; // Optional badge text
 }
 
-const getMoreTools = (t: any): MoreToolConfig[] => [
-  {
-    id: 'invitation',
-    label: 'Invitar',
-    subtitle: 'Genera un enlace temporal de 24 horas para tus clientes',
-    icon: PersonAdd,
-    action: 'invitation',
-    color: accentColors.info.light, // Blue for invitation
-  },
-  // Product Requests - for asesores/embajadores (unified view)
-  {
-    id: 'solicitudes',
-    label: 'Solicitudes',
-    subtitle: 'Solicita productos y ve el estado de tus pedidos',
-    icon: ShoppingBag as any,
-    route: '/solicitudes',
-    color: accentColors.success.light, // Green
-  },
-  {
-    id: 'accounts',
-    label: t.tools.accounts.label,
-    subtitle: t.tools.accounts.subtitle,
-    icon: AccountBalance,
-    route: '/cuentas',
-    color: brand.emerald[500], // Emerald from design system
-  },
-  {
-    id: 'analytics',
-    label: 'Analytics',
-    subtitle: 'Métricas y Business Health',
-    icon: BarChart3 as any,
-    route: '/admin/analytics',
-    color: accentColors.purple.light, // Purple for analytics
-  },
-  {
-    id: 'name-generator',
-    label: t.tools.nameGenerator?.label || 'Generador de Nombres',
-    subtitle: t.tools.nameGenerator?.subtitle || 'Genera nombres únicos para esmeraldas con IA',
-    icon: AutoAwesome,
-    route: '/admin/name-generator',
-    color: emeraldCore.primary,
-    badge: 'AI',
-  },
-  {
-    id: 'settings',
-    label: t.tools.settings.label,
-    subtitle: t.tools.settings.subtitle,
-    icon: Settings,
-    action: 'settings',
-    color: primitiveColors.metallic.silver[500],
-  },
-  {
-    id: 'feedback',
-    label: 'Reportar Feedback',
-    subtitle: 'Reporta bugs, sugiere features o mejoras de UX. Incluye captura de pantalla automática.',
-    icon: BugReport,
-    action: 'feedback',
-    color: accentColors.warning.light, // Amber for feedback
-    badge: 'DEV',
-  },
-  {
-    id: 'vault',
-    label: t.tools.vault.label,
-    subtitle: t.tools.vault.subtitle,
-    icon: Vault as any,
-    route: '/boveda-secreta',
-    color: brand.gold[500], // Gold accent
-  },
-];
+interface MenuSection {
+  id: string;
+  title: string;
+  tools: MoreToolConfig[];
+}
+
+const buildMenuSections = (t: any, flags: { isAdmin: boolean; isStaff: boolean; canCreateInvitations: boolean }): MenuSection[] => {
+  const sections: MenuSection[] = [];
+
+  // HERRAMIENTAS DE VENTA (staff only)
+  if (flags.isStaff) {
+    const salesTools: MoreToolConfig[] = [];
+
+    if (flags.canCreateInvitations) {
+      salesTools.push({
+        id: 'invitation',
+        label: 'Invitar',
+        subtitle: 'Genera un enlace temporal de 24 horas para tus clientes',
+        icon: PersonAdd,
+        action: 'invitation',
+        color: accentColors.info.light,
+      });
+    }
+
+    salesTools.push(
+      {
+        id: 'solicitudes',
+        label: 'Solicitudes',
+        subtitle: 'Solicita productos y ve el estado de tus pedidos',
+        icon: ShoppingBag as any,
+        route: '/solicitudes',
+        color: accentColors.success.light,
+      },
+      {
+        id: 'accounts',
+        label: t.tools.accounts.label,
+        subtitle: t.tools.accounts.subtitle,
+        icon: AccountBalance,
+        route: '/cuentas',
+        color: brand.emerald[500],
+      },
+    );
+
+    if (salesTools.length > 0) {
+      sections.push({ id: 'sales', title: 'HERRAMIENTAS DE VENTA', tools: salesTools });
+    }
+  }
+
+  // DESCUBRIR (all users)
+  const discoverTools: MoreToolConfig[] = [
+    {
+      id: 'vault',
+      label: t.tools.vault.label,
+      subtitle: t.tools.vault.subtitle,
+      icon: Vault as any,
+      route: '/boveda-secreta',
+      color: brand.gold[500],
+    },
+  ];
+
+  if (flags.isAdmin) {
+    discoverTools.push({
+      id: 'name-generator',
+      label: t.tools.nameGenerator?.label || 'Generador de Nombres',
+      subtitle: t.tools.nameGenerator?.subtitle || 'Genera nombres unicos para esmeraldas con IA',
+      icon: AutoAwesome,
+      route: '/admin/name-generator',
+      color: emeraldCore.primary,
+      badge: 'AI',
+    });
+  }
+
+  sections.push({ id: 'discover', title: 'DESCUBRIR', tools: discoverTools });
+
+  // ADMINISTRACION (admin only)
+  if (flags.isAdmin) {
+    sections.push({
+      id: 'admin',
+      title: 'ADMINISTRACION',
+      tools: [
+        {
+          id: 'analytics',
+          label: 'Analytics',
+          subtitle: 'Metricas y Business Health',
+          icon: BarChart3 as any,
+          route: '/admin/analytics',
+          color: accentColors.purple.light,
+        },
+      ],
+    });
+  }
+
+  return sections;
+};
+
+// Bottom items (always visible, not in sections)
+const getBottomTools = (t: any, isStaff: boolean): MoreToolConfig[] => {
+  const tools: MoreToolConfig[] = [
+    {
+      id: 'settings',
+      label: t.tools.settings.label,
+      subtitle: t.tools.settings.subtitle,
+      icon: Settings,
+      action: 'settings',
+      color: primitiveColors.metallic.silver[500],
+    },
+  ];
+
+  if (isStaff) {
+    tools.push({
+      id: 'feedback',
+      label: 'Reportar Feedback',
+      subtitle: 'Reporta bugs, sugiere features o mejoras de UX',
+      icon: BugReport,
+      action: 'feedback',
+      color: accentColors.warning.light,
+      badge: 'DEV',
+    });
+  }
+
+  return tools;
+};
+
+const ROLE_COLORS: Record<string, string> = {
+  Admin: accentColors.purple.light,
+  Embajador: goldAccent.primary,
+  Asesor: emeraldCore.primary,
+};
 
 export interface IOSMoreSheetProps {
   open: boolean;
@@ -119,7 +180,6 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { mode, toggleTheme } = useTheme();
-  const isGuest = useIsGuest();
   const isAdmin = useIsAdmin();
   const isStaff = useIsStaff();
   const canCreateInvitations = useCanCreateInvitations();
@@ -129,29 +189,17 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [invitationOpen, setInvitationOpen] = useState(false);
 
-  // Get tools and filter based on permissions
-  const MORE_TOOLS = useMemo(() => {
-    const allTools = getMoreTools(t);
-    const adminOnlyTools = ['analytics', 'name-generator'];
-    const invitationTools = ['invitation']; // Embajadores and Admins only
-    const staffTools = ['solicitudes', 'feedback', 'accounts']; // Asesores, Embajadores and Admins only
+  // Profile card data (staff only)
+  const { asesor } = useCurrentAsesor();
+  const { user: googleUser } = useGoogleAuth();
 
-    return allTools.filter(tool => {
-      // Admin-only tools
-      if (adminOnlyTools.includes(tool.id)) {
-        return isAdmin;
-      }
-      // Invitation tool - Embajadores and Admins
-      if (invitationTools.includes(tool.id)) {
-        return canCreateInvitations;
-      }
-      // Staff tools - Asesores, Embajadores, Admins (not guests or providers)
-      if (staffTools.includes(tool.id)) {
-        return isStaff;
-      }
-      return true;
-    });
-  }, [t, isAdmin, canCreateInvitations, isStaff]);
+  // Build grouped menu sections
+  const menuSections = useMemo(() =>
+    buildMenuSections(t, { isAdmin, isStaff, canCreateInvitations }),
+    [t, isAdmin, isStaff, canCreateInvitations],
+  );
+
+  const bottomTools = useMemo(() => getBottomTools(t, isStaff), [t, isStaff]);
 
   // Liquid Glass styles for the sheet
   const sheetStyles = useMemo(() => {
@@ -199,12 +247,12 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
     // Handle special actions
     if (tool.action === 'feedback') {
       setFeedbackOpen(true);
-      return; // Don't close sheet yet - will close when wizard closes
+      return;
     }
 
     if (tool.action === 'invitation') {
       setInvitationOpen(true);
-      return; // Don't close sheet yet - will close when generator closes
+      return;
     }
 
     if (tool.action === 'settings') {
@@ -250,6 +298,134 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
     }
     toggleCurrency();
   };
+
+  const handleProfileClick = () => {
+    if ('vibrate' in navigator) navigator.vibrate(10);
+    navigate('/mi-perfil');
+    onClose();
+  };
+
+  // Render a single tool row
+  const renderToolRow = (tool: MoreToolConfig) => {
+    const Icon = tool.icon;
+
+    return (
+      <Box
+        key={tool.id}
+        role="button"
+        aria-label={`${tool.label}: ${tool.subtitle}`}
+        tabIndex={0}
+        onClick={() => handleToolClick(tool)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            handleToolClick(tool);
+          }
+        }}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: spacing.sm,
+          padding: spacing.md,
+          background: effectiveConfig.blur
+            ? `linear-gradient(135deg, ${tool.color}08 0%, ${tool.color}03 100%)`
+            : 'var(--surface-primary)',
+          borderRadius: radius.lg,
+          cursor: 'pointer',
+          border: '1px solid',
+          borderColor: `${tool.color}20`,
+          transition: effectiveConfig.animations
+            ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
+            : 'none',
+          position: 'relative',
+          overflow: 'hidden',
+
+          '&::before': effectiveConfig.specular ? {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: '10%',
+            right: '10%',
+            height: '1px',
+            background: `linear-gradient(90deg, transparent, ${tool.color}30, transparent)`,
+          } : {},
+
+          '&:hover': {
+            backgroundColor: `${tool.color}10`,
+            borderColor: `${tool.color}40`,
+            transform: effectiveConfig.animations ? 'scale(1.02)' : 'none',
+            boxShadow: `0 4px 16px ${tool.color}20`,
+          },
+          '&:active': {
+            transform: effectiveConfig.animations ? 'scale(0.98)' : 'none',
+          },
+        }}
+      >
+        {/* Icon Container */}
+        <Box
+          sx={{
+            width: '48px',
+            height: '48px',
+            borderRadius: radius.md,
+            background: `linear-gradient(135deg, ${tool.color}20 0%, ${tool.color}10 100%)`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            boxShadow: `0 2px 8px ${tool.color}15`,
+          }}
+        >
+          <Icon sx={{ fontSize: iosTypographyScale.title1, color: tool.color }} />
+        </Box>
+
+        {/* Text Content */}
+        <Box sx={{ flex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, marginBottom: spacing.xxs }}>
+            <Typography
+              variant="body1"
+              sx={{
+                fontSize: iosTypographyScale.body,
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+              }}
+            >
+              {tool.label}
+            </Typography>
+            {tool.badge && (
+              <Chip
+                label={tool.badge}
+                size="small"
+                sx={{
+                  height: 18,
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  backgroundColor: `${tool.color}20`,
+                  color: tool.color,
+                  border: `1px solid ${tool.color}40`,
+                }}
+              />
+            )}
+          </Box>
+          <Typography
+            variant="body2"
+            sx={{
+              fontSize: iosTypographyScale.footnote,
+              color: 'var(--text-secondary)',
+            }}
+          >
+            {tool.subtitle}
+          </Typography>
+        </Box>
+
+        {/* Chevron */}
+        <Box sx={{ color: tool.color, fontSize: '20px', opacity: 0.6 }}>
+          <ChevronRight size={18} />
+        </Box>
+      </Box>
+    );
+  };
+
+  const roleColor = asesor?.role ? ROLE_COLORS[asesor.role] || emeraldCore.primary : emeraldCore.primary;
+  const photoUrl = asesor?.photoUrl || googleUser?.picture;
 
   return (
     <>
@@ -324,7 +500,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
           />
 
           {/* Title and Actions */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: isStaff && asesor ? 1.5 : 2 }}>
             <Typography
               variant="h2"
               sx={{
@@ -363,348 +539,295 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
             </Box>
           </Box>
 
-        </Box>
-
-        {/* Price Share Toggle Row - Only for staff */}
-        {canToggle && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingX: spacing.md,
-              paddingY: spacing.sm,
-              borderBottom: '0.5px solid var(--border-default)',
-            }}
-          >
-            <Box>
-              <Typography
-                sx={{
-                  fontSize: iosTypographyScale.body,
-                  fontWeight: 500,
-                  color: 'var(--text-primary)',
-                }}
-              >
-                {t.settings.viewPrices}
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: iosTypographyScale.caption1,
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                {showPrices ? t.settings.pricesShared : t.settings.pricesPrivate}
-              </Typography>
-            </Box>
-            <Switch
-              checked={showPrices}
-              onChange={handlePriceToggle}
-              inputProps={{ 'aria-label': t.settings.viewPrices }}
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': {
-                  color: primitiveColors.system.green.light,
-                  '&:hover': {
-                    backgroundColor: 'rgba(52, 199, 89, 0.08)',
-                  },
-                },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                  backgroundColor: primitiveColors.system.green.light,
-                },
-              }}
-            />
-          </Box>
-        )}
-
-        {/* Currency Toggle Row - Only for authorized user */}
-        {canToggleCurrency && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingX: spacing.md,
-              paddingY: spacing.sm,
-              borderBottom: '0.5px solid var(--border-default)',
-            }}
-          >
-            <Box>
-              <Typography
-                sx={{
-                  fontSize: iosTypographyScale.body,
-                  fontWeight: 500,
-                  color: 'var(--text-primary)',
-                }}
-              >
-                {t.settings.currencyMode}
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: iosTypographyScale.caption1,
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                {currency === 'USD' ? t.settings.currencyUSDActive : t.settings.currencyCOPActive}
-              </Typography>
-            </Box>
-            <Switch
-              checked={currency === 'USD'}
-              onChange={handleCurrencyToggle}
-              inputProps={{ 'aria-label': t.settings.currencyMode }}
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': {
-                  color: emeraldCore.dark,
-                  '&:hover': {
-                    backgroundColor: 'rgba(46, 125, 50, 0.08)',
-                  },
-                },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                  backgroundColor: emeraldCore.dark,
-                },
-              }}
-            />
-          </Box>
-        )}
-
-        {/* Price Multiplier Row - Only for currency-authorized */}
-        {canToggleCurrency && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingX: spacing.md,
-              paddingY: spacing.sm,
-              borderBottom: '0.5px solid var(--border-default)',
-            }}
-          >
-            <Box>
-              <Typography
-                sx={{
-                  fontSize: iosTypographyScale.body,
-                  fontWeight: 500,
-                  color: 'var(--text-primary)',
-                }}
-              >
-                {t.settings.currencyMultiplier}
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: iosTypographyScale.caption1,
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                {t.settings.currencyMultiplierHint}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 180 }}>
-              <Slider
-                value={multiplier}
-                onChange={(_e, val) => {
-                  if ('vibrate' in navigator) navigator.vibrate(10);
-                  setMultiplier(val as number);
-                }}
-                min={1}
-                max={4}
-                step={0.1}
-                valueLabelDisplay="auto"
-                valueLabelFormat={(v) => `x${v}`}
-                aria-label={t.settings.currencyMultiplier}
-                sx={{
-                  color: emeraldCore.dark,
-                  '& .MuiSlider-thumb': { width: 20, height: 20 },
-                  '& .MuiSlider-valueLabel': { fontSize: iosTypographyScale.footnote },
-                }}
-              />
-              <Typography
-                sx={{
-                  fontSize: iosTypographyScale.footnote,
-                  fontWeight: 600,
-                  color: emeraldCore.dark,
-                  minWidth: 28,
-                  textAlign: 'right',
-                }}
-              >
-                x{multiplier}
-              </Typography>
-            </Box>
-          </Box>
-        )}
-
-        {/* Tools Grid */}
-        <Box sx={{ position: 'relative', padding: spacing.md }}>
-          {/* Blur Overlay for Guest Mode */}
-          {isGuest && (
+          {/* Profile Card (staff only) */}
+          {isStaff && asesor && (
             <Box
+              role="button"
+              tabIndex={0}
+              onClick={handleProfileClick}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleProfileClick(); }}
               sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: zIndex.base,
-                backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                borderRadius: spacing.md,
+                gap: spacing.sm,
+                p: spacing.sm,
+                mb: spacing.xs,
+                borderRadius: radius.lg,
+                bgcolor: alpha(roleColor, 0.06),
+                border: `1px solid ${alpha(roleColor, 0.15)}`,
+                cursor: 'pointer',
+                transition: cssTransition.default,
+                '&:hover': { bgcolor: alpha(roleColor, 0.1) },
               }}
             >
-              <Lock
+              <Avatar
+                src={photoUrl || undefined}
+                alt={asesor.name}
                 sx={{
-                  fontSize: 48,
-                  color: brand.emerald[500],
-                  mb: 2,
-                }}
-              />
-              <Typography
-                variant="body2"
-                sx={{
-                  color: 'var(--text-secondary)',
-                  textAlign: 'center',
-                  px: 3,
+                  width: 44,
+                  height: 44,
+                  border: `2px solid ${alpha(roleColor, 0.25)}`,
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  bgcolor: alpha(roleColor, 0.15),
+                  color: roleColor,
                 }}
               >
-                {t.auth.invitationOnly}
-              </Typography>
+                {asesor.name?.charAt(0).toUpperCase()}
+              </Avatar>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  <Typography
+                    sx={{
+                      fontSize: iosTypographyScale.body,
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {asesor.name}
+                  </Typography>
+                  <Chip
+                    label={asesor.role || 'Asesor'}
+                    size="small"
+                    sx={{
+                      height: 18,
+                      fontSize: '0.6rem',
+                      fontWeight: 700,
+                      bgcolor: alpha(roleColor, 0.12),
+                      color: roleColor,
+                      border: `1px solid ${alpha(roleColor, 0.25)}`,
+                      flexShrink: 0,
+                    }}
+                  />
+                </Box>
+                <Typography
+                  sx={{
+                    fontSize: iosTypographyScale.caption1,
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  {t.menu.profileSubtitle}
+                </Typography>
+              </Box>
+              <ChevronRight size={18} style={{ color: roleColor, opacity: 0.5, flexShrink: 0 }} />
             </Box>
           )}
+        </Box>
 
-          {/* Tools List */}
-          <Box
-            sx={{
-              display: 'grid',
-              gap: spacing.xs,
-              filter: isGuest ? 'blur(6px)' : 'none',
-              pointerEvents: isGuest ? 'none' : 'auto',
-              transition: cssTransition.slow,
-            }}
-          >
-          {MORE_TOOLS.map((tool) => {
-            const Icon = tool.icon;
-
-            return (
-              <Box
-                key={tool.id}
-                role="button"
-                aria-label={`${tool.label}: ${tool.subtitle}`}
-                tabIndex={0}
-                onClick={() => handleToolClick(tool)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    handleToolClick(tool);
-                  }
+        {/* Grouped Tool Sections */}
+        <Box sx={{ padding: spacing.md }}>
+          {menuSections.map((section) => (
+            <Box key={section.id} sx={{ mb: spacing.md }}>
+              {/* Section Header */}
+              <Typography
+                variant="overline"
+                sx={{
+                  fontSize: iosTypographyScale.caption2,
+                  fontWeight: 600,
+                  color: 'var(--text-secondary)',
+                  letterSpacing: '0.08em',
+                  mb: 1,
+                  display: 'block',
+                  px: spacing.xs,
                 }}
+              >
+                {section.title}
+              </Typography>
+
+              <Box sx={{ display: 'grid', gap: spacing.xs }}>
+                {section.tools.map(renderToolRow)}
+              </Box>
+            </Box>
+          ))}
+
+          {/* Divider */}
+          <Box sx={{ height: '0.5px', bgcolor: 'var(--border-default)', my: spacing.sm }} />
+
+          {/* Bottom Items (Settings + Feedback) */}
+          <Box sx={{ display: 'grid', gap: spacing.xs }}>
+            {bottomTools.map(renderToolRow)}
+          </Box>
+        </Box>
+
+        {/* Quick Settings (toggles + slider) - at bottom per PRD */}
+        {(canToggle || canToggleCurrency) && (
+          <Box sx={{ borderTop: '0.5px solid var(--border-default)' }}>
+            {/* Price Share Toggle Row - Only for staff */}
+            {canToggle && (
+              <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: spacing.sm,
-                  padding: spacing.md,
-                  background: effectiveConfig.blur
-                    ? `linear-gradient(135deg, ${tool.color}08 0%, ${tool.color}03 100%)`
-                    : 'var(--surface-primary)',
-                  borderRadius: radius.lg,
-                  cursor: 'pointer',
-                  border: '1px solid',
-                  borderColor: `${tool.color}20`,
-                  transition: effectiveConfig.animations
-                    ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
-                    : 'none',
-                  position: 'relative',
-                  overflow: 'hidden',
-
-                  '&::before': effectiveConfig.specular ? {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: '10%',
-                    right: '10%',
-                    height: '1px',
-                    background: `linear-gradient(90deg, transparent, ${tool.color}30, transparent)`,
-                  } : {},
-
-                  '&:hover': {
-                    backgroundColor: `${tool.color}10`,
-                    borderColor: `${tool.color}40`,
-                    transform: effectiveConfig.animations ? 'scale(1.02)' : 'none',
-                    boxShadow: `0 4px 16px ${tool.color}20`,
-                  },
-                  '&:active': {
-                    transform: effectiveConfig.animations ? 'scale(0.98)' : 'none',
-                  },
+                  justifyContent: 'space-between',
+                  paddingX: spacing.md,
+                  paddingY: spacing.sm,
+                  borderBottom: '0.5px solid var(--border-default)',
                 }}
               >
-                {/* Icon Container */}
-                <Box
-                  sx={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: radius.md,
-                    background: `linear-gradient(135deg, ${tool.color}20 0%, ${tool.color}10 100%)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: `0 2px 8px ${tool.color}15`,
-                  }}
-                >
-                  <Icon sx={{ fontSize: iosTypographyScale.title1, color: tool.color }} />
-                </Box>
-
-                {/* Text Content */}
-                <Box sx={{ flex: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, marginBottom: spacing.xxs }}>
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        fontSize: iosTypographyScale.body,
-                        fontWeight: 600,
-                        color: 'var(--text-primary)',
-                      }}
-                    >
-                      {tool.label}
-                    </Typography>
-                    {tool.badge && (
-                      <Chip
-                        label={tool.badge}
-                        size="small"
-                        sx={{
-                          height: 18,
-                          fontSize: '0.65rem',
-                          fontWeight: 700,
-                          backgroundColor: `${tool.color}20`,
-                          color: tool.color,
-                          border: `1px solid ${tool.color}40`,
-                        }}
-                      />
-                    )}
-                  </Box>
+                <Box>
                   <Typography
-                    variant="body2"
                     sx={{
-                      fontSize: iosTypographyScale.footnote,
+                      fontSize: iosTypographyScale.body,
+                      fontWeight: 500,
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    {t.settings.viewPrices}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: iosTypographyScale.caption1,
                       color: 'var(--text-secondary)',
                     }}
                   >
-                    {tool.subtitle}
+                    {showPrices ? t.settings.pricesShared : t.settings.pricesPrivate}
                   </Typography>
                 </Box>
-
-                {/* Chevron */}
-                <Box sx={{ color: tool.color, fontSize: '20px', opacity: 0.6 }}>›</Box>
+                <Switch
+                  checked={showPrices}
+                  onChange={handlePriceToggle}
+                  inputProps={{ 'aria-label': t.settings.viewPrices }}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: primitiveColors.system.green.light,
+                      '&:hover': {
+                        backgroundColor: 'rgba(52, 199, 89, 0.08)',
+                      },
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: primitiveColors.system.green.light,
+                    },
+                  }}
+                />
               </Box>
-            );
-          })}
+            )}
+
+            {/* Currency Toggle Row - Only for authorized user */}
+            {canToggleCurrency && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingX: spacing.md,
+                  paddingY: spacing.sm,
+                  borderBottom: '0.5px solid var(--border-default)',
+                }}
+              >
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: iosTypographyScale.body,
+                      fontWeight: 500,
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    {t.settings.currencyMode}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: iosTypographyScale.caption1,
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    {currency === 'USD' ? t.settings.currencyUSDActive : t.settings.currencyCOPActive}
+                  </Typography>
+                </Box>
+                <Switch
+                  checked={currency === 'USD'}
+                  onChange={handleCurrencyToggle}
+                  inputProps={{ 'aria-label': t.settings.currencyMode }}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: emeraldCore.dark,
+                      '&:hover': {
+                        backgroundColor: 'rgba(46, 125, 50, 0.08)',
+                      },
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: emeraldCore.dark,
+                    },
+                  }}
+                />
+              </Box>
+            )}
+
+            {/* Price Multiplier Row - Only for currency-authorized */}
+            {canToggleCurrency && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingX: spacing.md,
+                  paddingY: spacing.sm,
+                }}
+              >
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: iosTypographyScale.body,
+                      fontWeight: 500,
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    {t.settings.currencyMultiplier}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: iosTypographyScale.caption1,
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    {t.settings.currencyMultiplierHint}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 180 }}>
+                  <Slider
+                    value={multiplier}
+                    onChange={(_e, val) => {
+                      if ('vibrate' in navigator) navigator.vibrate(10);
+                      setMultiplier(val as number);
+                    }}
+                    min={1}
+                    max={4}
+                    step={0.1}
+                    valueLabelDisplay="auto"
+                    valueLabelFormat={(v) => `x${v}`}
+                    aria-label={t.settings.currencyMultiplier}
+                    sx={{
+                      color: emeraldCore.dark,
+                      '& .MuiSlider-thumb': { width: 20, height: 20 },
+                      '& .MuiSlider-valueLabel': { fontSize: iosTypographyScale.footnote },
+                    }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: iosTypographyScale.footnote,
+                      fontWeight: 600,
+                      color: emeraldCore.dark,
+                      minWidth: 28,
+                      textAlign: 'right',
+                    }}
+                  >
+                    x{multiplier}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
           </Box>
-        </Box>
+        )}
 
       </Box>
 
-      {/* Feedback Wizard - Admin only */}
+      {/* Feedback Wizard - Staff only */}
       <FeedbackWizard
         open={feedbackOpen}
         onClose={handleFeedbackClose}
-        onCaptureStart={onClose} // Close the More sheet when capture mode starts
+        onCaptureStart={onClose}
       />
 
       {/* Invitation Generator - Embajadores and Admins */}

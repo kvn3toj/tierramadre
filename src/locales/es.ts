@@ -253,6 +253,34 @@ export const es = {
     urlCopied: 'Copiado',
   },
 
+  // Profile
+  profile: {
+    title: 'Mi Perfil',
+    subtitle: 'Tu portafolio y actividad',
+    portfolio: 'Tu Portafolio',
+    totalProducts: 'Total Productos',
+    gems: 'Gemas',
+    jewelry: 'Joyeria',
+    availableValue: 'Valor Disponible',
+    guestActivity: 'Actividad de Invitados',
+    noGuestActivity: 'Aun no hay actividad de invitados',
+    inviteClient: 'Invitar Cliente',
+    topGuestProducts: 'Top Productos (Invitados)',
+    invitations: 'Invitaciones',
+    total: 'Total',
+    active: 'Activas',
+    pending: 'Pendientes',
+    notFound: 'No se encontro tu perfil de embajador.',
+  },
+
+  // Menu sections
+  menu: {
+    salesTools: 'Herramientas de Venta',
+    discover: 'Descubrir',
+    admin: 'Administracion',
+    profileSubtitle: 'Tu portafolio y actividad de invitados',
+  },
+
   // Member Benefits (Guest Teaser)
   membership: {
     title: 'Comunidad Tierra Madre',
