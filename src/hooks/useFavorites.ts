@@ -50,10 +50,13 @@ export function useFavorites(): UseFavoritesReturn {
     }
   }, [favorites]);
 
-  // Check if an item is favorited
+  // Set for O(1) lookups instead of O(n) Array.includes
+  const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
+
+  // Check if an item is favorited — O(1) via Set
   const isFavorite = useCallback(
-    (itemId: number) => favorites.includes(itemId),
-    [favorites]
+    (itemId: number) => favoritesSet.has(itemId),
+    [favoritesSet]
   );
 
   // Toggle favorite status

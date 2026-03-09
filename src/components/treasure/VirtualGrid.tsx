@@ -24,6 +24,10 @@ import { usePriceShare } from '../../contexts/PriceShareContext';
 interface VirtualGridProps {
   items: TreasureItem[];
   favorites: number[];
+  /** Comparison-selected item IDs — flows through cellProps like favorites */
+  comparisonIds?: number[];
+  /** Whether more items can be added to comparison */
+  canAddToComparison?: boolean;
   onItemClick: (item: TreasureItem) => void;
   onCertClick: (item: TreasureItem) => void;
   onToggleFavorite: (itemId: number) => void;
@@ -36,6 +40,10 @@ interface VirtualGridProps {
     isMobile: boolean;
     /** True for above-the-fold items (first row) — triggers eager loading */
     priority?: boolean;
+    /** Whether item is selected for comparison */
+    isSelectedForComparison?: boolean;
+    /** Whether more items can be added to comparison */
+    canAddToComparison?: boolean;
   }) => React.ReactNode;
   /** Minimum height for the grid container */
   minHeight?: number;
@@ -61,6 +69,8 @@ interface GridCellProps {
   items: TreasureItem[];
   columnCount: number;
   favoritesSet: Set<number>;
+  comparisonIdsSet: Set<number>;
+  canAddToComparison: boolean;
   onItemClick: (item: TreasureItem) => void;
   onCertClick: (item: TreasureItem) => void;
   onToggleFavorite: (itemId: number) => void;
@@ -91,6 +101,8 @@ function CellRenderer({
   items,
   columnCount,
   favoritesSet,
+  comparisonIdsSet,
+  canAddToComparison,
   onItemClick,
   onCertClick,
   onToggleFavorite,
@@ -107,6 +119,7 @@ function CellRenderer({
 
   const item = items[index];
   const isFavorite = favoritesSet.has(item.item);
+  const isSelectedForComparison = comparisonIdsSet.has(item.item);
 
   return (
     <div
@@ -124,6 +137,8 @@ function CellRenderer({
       {renderCard({
         item,
         isFavorite,
+        isSelectedForComparison,
+        canAddToComparison,
         onItemClick,
         onCertClick,
         onToggleFavorite,
@@ -147,6 +162,8 @@ function CellRenderer({
 export default function VirtualGrid({
   items,
   favorites,
+  comparisonIds,
+  canAddToComparison = false,
   onItemClick,
   onCertClick,
   onToggleFavorite,
@@ -246,18 +263,20 @@ export default function VirtualGrid({
   const isMobile = isXs || isSm;
 
   // Memoize cell props to prevent unnecessary re-renders
-  // Convert favorites array to Set for O(1) lookups per cell
+  // Convert favorites/comparison arrays to Sets for O(1) lookups per cell
   const cellProps = useMemo<GridCellProps>(() => ({
     items,
     columnCount,
     favoritesSet: new Set(favorites),
+    comparisonIdsSet: new Set(comparisonIds || []),
+    canAddToComparison,
     onItemClick,
     onCertClick,
     onToggleFavorite,
     renderCard,
     isMobile,
     gap,
-  }), [items, columnCount, favorites, onItemClick, onCertClick, onToggleFavorite, renderCard, isMobile, gap]);
+  }), [items, columnCount, favorites, comparisonIds, canAddToComparison, onItemClick, onCertClick, onToggleFavorite, renderCard, isMobile, gap]);
 
   // Stable onScroll handler for react-window Grid
   const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {

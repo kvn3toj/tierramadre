@@ -164,8 +164,19 @@ export default function TreasureBrowser({
   // Product view counts for badges
   const { getViewCount } = useProductViews();
 
+  // Ref for getViewCount — avoids busting renderCard on background stats refresh.
+  // View count badges update lazily on next natural re-render (filter, scroll, etc.)
+  const getViewCountRef = useRef(getViewCount);
+  getViewCountRef.current = getViewCount;
+
   // Comparison hook
   const comparison = useComparison();
+
+  // Comparison IDs for VirtualGrid cellProps (same pattern as favorites)
+  const comparisonIds = useMemo(
+    () => comparison.selectedItems.map(i => i.item),
+    [comparison.selectedItems]
+  );
 
   // Memoized favorites list — avoids rebuilding on every render
   const favoriteIds = useMemo(
@@ -223,21 +234,25 @@ export default function TreasureBrowser({
     return paginatedItems.filter(item => isFavorite(item.item));
   }, [paginatedItems, showFavoritesOnly, isFavorite]);
 
+  // Shared lookup map — avoids duplicate Map construction
+  const treasureMap = useMemo(
+    () => new Map(allTreasure.map(item => [item.item, item])),
+    [allTreasure]
+  );
+
   // Map recent item IDs to actual treasure items
   const recentlyViewedItems = useMemo(() => {
-    const itemMap = new Map(allTreasure.map(item => [item.item, item]));
     return recentItems
-      .map(id => itemMap.get(id))
+      .map(id => treasureMap.get(id))
       .filter((item): item is TreasureItem => item !== undefined);
-  }, [allTreasure, recentItems]);
+  }, [treasureMap, recentItems]);
 
   // Map favorite IDs to actual treasure items (for mobile quick access panel)
   const favoriteMappedItems = useMemo(() => {
-    const itemMap = new Map(allTreasure.map(item => [item.item, item]));
     return favoriteIds
-      .map(id => itemMap.get(id))
+      .map(id => treasureMap.get(id))
       .filter((item): item is TreasureItem => item !== undefined);
-  }, [allTreasure, favoriteIds]);
+  }, [treasureMap, favoriteIds]);
 
   // Certification dialog state
   const [certDialogOpen, setCertDialogOpen] = useState(false);
@@ -286,10 +301,12 @@ export default function TreasureBrowser({
     setSelectedItem(null);
   }, [selectedItem]);
 
-  // Destructure comparison for granular deps — toggleComparison is stable across selection changes
-  const { isSelected: isComparisonSelected, toggleComparison, canAddMore: canAddToComparison } = comparison;
+  // Destructure comparison — toggleComparison is stable across selection changes
+  const { toggleComparison, canAddMore: canAddToComparison } = comparison;
 
-  // Memoized renderCard — callbacks are stable refs; GridCard memo skips callback comparison
+  // Memoized renderCard — callbacks are stable refs; GridCard memo skips callback comparison.
+  // getViewCount via ref: avoids re-render cascade on background stats refresh.
+  // comparison state flows through VirtualGrid cellProps (like favorites).
   const renderCard = useCallback((props: {
     item: TreasureItem;
     isFavorite: boolean;
@@ -298,6 +315,8 @@ export default function TreasureBrowser({
     onToggleFavorite: (itemId: number) => void;
     isMobile: boolean;
     priority?: boolean;
+    isSelectedForComparison?: boolean;
+    canAddToComparison?: boolean;
   }) => (
     <GridCard
       item={props.item}
@@ -307,14 +326,14 @@ export default function TreasureBrowser({
       onToggleFavorite={props.onToggleFavorite}
       isMobile={props.isMobile}
       priority={props.priority}
-      viewCount={getViewCount(props.item.item)}
+      viewCount={getViewCountRef.current(props.item.item)}
       isAdmin={isAdmin}
       isLoadingThumbnails={isLoadingThumbnails}
-      isSelectedForComparison={isComparisonSelected(props.item.item)}
+      isSelectedForComparison={props.isSelectedForComparison ?? false}
       onToggleComparison={toggleComparison}
-      canAddToComparison={canAddToComparison}
+      canAddToComparison={props.canAddToComparison ?? false}
     />
-  ), [getViewCount, isAdmin, isLoadingThumbnails, isComparisonSelected, toggleComparison, canAddToComparison]);
+  ), [isAdmin, isLoadingThumbnails, toggleComparison]);
 
   // Props for FilterContent
   const filterContentProps: FilterContentProps = {
@@ -564,6 +583,8 @@ export default function TreasureBrowser({
         <VirtualGrid
           items={showFavoritesOnly ? visibleItems : deferredFilteredTreasure}
           favorites={favoriteIds}
+          comparisonIds={comparisonIds}
+          canAddToComparison={canAddToComparison}
           onItemClick={handleItemClick}
           onCertClick={handleCertClick}
           onToggleFavorite={toggleFavorite}
