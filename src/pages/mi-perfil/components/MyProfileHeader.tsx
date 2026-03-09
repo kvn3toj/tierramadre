@@ -64,7 +64,7 @@ export function MyProfileHeader({ asesor, googlePicture }: MyProfileHeaderProps)
         sx={{
           position: 'sticky',
           top: 0,
-          zIndex: zIndex.base,
+          zIndex: zIndex.sticky,
           transform: showMiniBar ? 'translateY(0)' : 'translateY(-100%)',
           opacity: showMiniBar ? 1 : 0,
           transition: `transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease`,
