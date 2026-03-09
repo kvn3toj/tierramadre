@@ -22,7 +22,6 @@ import {
 } from '../../../design-system';
 import {
   ALL_CATEGORIES,
-  CATEGORY_ICONS,
   AUTO_TRANSITION_INTERVAL,
   MainCategory,
 } from './gallery-constants';
@@ -254,7 +253,6 @@ export const HeroGallery: React.FC = () => {
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 0.5,
                     px: { xs: 1.5, sm: 1.75, md: 2 },
                     py: { xs: 0.6, sm: 0.75 },
                     minHeight: 44,
@@ -264,7 +262,6 @@ export const HeroGallery: React.FC = () => {
                     position: 'relative',
                     '&:hover': {
                       bgcolor: whiteAlpha(0.15),
-                      '& .pill-icon': { opacity: 1 },
                       '& .MuiTypography-root': {
                         color: 'white',
                       },
@@ -274,17 +271,6 @@ export const HeroGallery: React.FC = () => {
                     },
                   }}
                 >
-                  <Typography
-                    className="pill-icon"
-                    sx={{
-                      fontSize: '0.65rem',
-                      lineHeight: 1,
-                      opacity: 0.5,
-                      transition: cssTransition.slow,
-                    }}
-                  >
-                    {CATEGORY_ICONS[cat.id]}
-                  </Typography>
                   <Typography
                     variant="body2"
                     sx={{
