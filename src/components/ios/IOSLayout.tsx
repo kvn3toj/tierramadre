@@ -6,10 +6,10 @@
  * - Page config system for route-specific settings
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Box } from '@mui/material';
-import { Search, FilterList } from '@mui/icons-material';
+import { Box, IconButton } from '@mui/material';
+import { Search, FilterList, Fullscreen, FullscreenExit } from '@mui/icons-material';
 
 import IOSTabBar from './IOSTabBar';
 import IOSNavigationBar, { NavigationBarMode, NavigationAction } from './IOSNavigationBar';
@@ -169,6 +169,11 @@ export interface IOSLayoutProps {
   children: React.ReactNode;
 }
 
+// Detect if already in standalone/PWA mode
+const isStandalone = () =>
+  window.matchMedia('(display-mode: standalone)').matches ||
+  (navigator as any).standalone === true;
+
 const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   const location = useLocation();
   const { t } = useLanguage();
@@ -176,6 +181,24 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   const isLight = mode === 'light';
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
   const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Track fullscreen state changes
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
+
+  const supportsFullscreen = typeof document.documentElement.requestFullscreen === 'function' && !isStandalone();
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }, []);
 
   const pageConfig = useMemo((): PageConfig => {
     const configs = getPageConfigs(t, isLight);
@@ -251,7 +274,21 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         showBackButton={pageConfig.showBackButton}
         leadingActions={pageConfig.leadingActions}
         trailingActions={pageConfig.trailingActions}
-        trailingElement={undefined}
+        trailingElement={supportsFullscreen ? (
+          <IconButton
+            onClick={toggleFullscreen}
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            size="small"
+            sx={{
+              color: 'var(--brand-primary)',
+              padding: '6px',
+              opacity: 0.7,
+              '&:hover': { opacity: 1, backgroundColor: 'var(--surface-tertiary)' },
+            }}
+          >
+            {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
+          </IconButton>
+        ) : undefined}
         backgroundColor={pageConfig.backgroundColor}
       />
 
