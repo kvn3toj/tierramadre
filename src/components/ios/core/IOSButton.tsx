@@ -1,4 +1,5 @@
 import React, { CSSProperties, ReactNode, ButtonHTMLAttributes } from 'react';
+import TouchRipple from './TouchRipple';
 
 /**
  * IOSButton Variants
@@ -166,7 +167,8 @@ export const IOSButton: React.FC<IOSButtonProps> = ({
     border: 'none',
     outline: 'none',
     cursor: isDisabled ? 'not-allowed' : 'pointer',
-    transition: `all var(--duration-fast) var(--easing-spring)`,
+    transition: `transform 300ms cubic-bezier(0.2, 1.4, 0.4, 1), box-shadow 400ms ease-out, opacity var(--duration-fast) var(--easing-spring)`,
+    overflow: 'hidden',
     width: fullWidth ? '100%' : 'auto',
     minWidth: size === 'small' ? '64px' : '88px', // iOS minimum touch target
     opacity: isDisabled ? 0.4 : 1,
@@ -220,10 +222,14 @@ export const IOSButton: React.FC<IOSButtonProps> = ({
     }
   })();
 
-  // Pressed state (iOS spring scale)
+  // Pressed state: 0.96 scale + emerald glow for filled variant
   const pressedStyles: CSSProperties = isPressed
     ? {
-        transform: 'scale(0.98)',
+        transform: 'scale(0.96)',
+        transition: 'transform 100ms ease-out, box-shadow 200ms ease-out, opacity var(--duration-fast) var(--easing-spring)',
+        ...(variant === 'filled' ? {
+          boxShadow: '0 0 20px rgba(0, 174, 122, 0.3), var(--shadow-emerald)',
+        } : {}),
       }
     : {};
 
@@ -302,16 +308,17 @@ export const IOSButton: React.FC<IOSButtonProps> = ({
       data-testid={testId}
       {...restProps}
     >
+      {!isDisabled && <TouchRipple />}
       {loading ? (
         <>
           {loadingSpinner}
-          <span style={{ opacity: 0.7 }}>{children}</span>
+          <span style={{ opacity: 0.7, position: 'relative', zIndex: 1 }}>{children}</span>
         </>
       ) : (
         <>
-          {icon && iconPosition === 'left' && <span className="ios-button__icon">{icon}</span>}
-          <span className="ios-button__text">{children}</span>
-          {icon && iconPosition === 'right' && <span className="ios-button__icon">{icon}</span>}
+          {icon && iconPosition === 'left' && <span className="ios-button__icon" style={{ position: 'relative', zIndex: 1 }}>{icon}</span>}
+          <span className="ios-button__text" style={{ position: 'relative', zIndex: 1 }}>{children}</span>
+          {icon && iconPosition === 'right' && <span className="ios-button__icon" style={{ position: 'relative', zIndex: 1 }}>{icon}</span>}
         </>
       )}
     </button>

@@ -73,6 +73,25 @@ export const spring = {
 } as const;
 
 // =============================================================================
+// MICROINTERACTION TOKENS (from ds-tm.pen 03A/03B specs)
+// =============================================================================
+
+export const microinteraction = {
+  /** 03B: Bottom nav pill slide */
+  navPill: { type: 'tween' as const, duration: 0.2, ease: [0.4, 0, 0.2, 1] },
+  /** 03A: Touch ripple expand */
+  ripple: { duration: 0.4, ease: 'easeOut' },
+  /** 03B: Badge pulse ring */
+  badgePulse: { duration: 2, scaleEnd: 2.5, opacityStart: 0.4 },
+  /** 03B: Scale & glow press/release */
+  pressScale: { press: 0.96, duration: 0.1 },
+  /** 03B: Spring release after press */
+  releaseSpring: { type: 'spring' as const, stiffness: 400, damping: 15 },
+  /** 03B: Toggle spring physics */
+  toggle: { type: 'spring' as const, mass: 1, stiffness: 500, damping: 30 },
+} as const;
+
+// =============================================================================
 // COMMON TRANSITIONS
 // =============================================================================
 
@@ -287,6 +306,7 @@ export const motionTokens = {
   spring,
   transition,
   cssTransition,
+  microinteraction,
   variants: {
     card: cardVariants,
     fadeInUp,

@@ -127,8 +127,8 @@ export {
   zIndex,
 } from './tokens/layout';
 
-// CSS Transition helpers
-export { cssTransition } from './tokens/motion';
+// CSS Transition helpers & Microinteraction tokens
+export { cssTransition, microinteraction } from './tokens/motion';
 
 // Primitives (re-exported for consistent import paths)
 export { primitiveColors } from './tokens/primitives/colors';

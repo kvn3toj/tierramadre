@@ -1,11 +1,11 @@
 /**
  * IOSTabBar Component
  *
- * iOS HIG-compliant bottom tab bar navigation with Liquid Glass effects (iOS 26)
- * - 4 primary tabs: Home, Treasures, Library, More
- * - Dynamic shrink/expand on scroll
- * - Specular highlights on active tab
- * - Badge support for notifications
+ * Floating pill-shaped bottom navigation matching ds-tm.pen BottomNavBar spec.
+ * - Outer wrapper with padding creates floating effect
+ * - Inner pill: rounded container with solid bg, subtle border + shadow
+ * - Active tab: solid emerald fill pill that slides between tabs (Framer Motion)
+ * - Badge support with pulse animation
  * - Haptic feedback on tab change
  * - Safe area insets for modern iOS devices
  */
@@ -14,6 +14,7 @@ import React, { useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
+import { motion, LayoutGroup } from 'framer-motion';
 import {
   Home,
   MoreHoriz,
@@ -23,12 +24,10 @@ import { Gem, FileText, PlusCircle, Package } from 'lucide-react';
 import { useIsProvider } from '../../hooks/usePermissions';
 
 // Design tokens
-import { dynamicBlur, dynamicOpacity, liquidSaturation, tabBarConfig } from '../../design-system/tokens/liquid-glass';
-import { radius, layoutConstants, primitiveColors, primitiveSpacing as spacing, easingCurves, durations, zIndex, fontWeights } from '../../design-system';
+import { primitiveColors, easingCurves, durations, zIndex, fontWeights, microinteraction } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
-import useScrollShrink from '../../hooks/useScrollShrink';
 
 export interface TabConfig {
   id: string;
@@ -98,6 +97,22 @@ export interface IOSTabBarProps {
   onMoreClick?: () => void;
 }
 
+// Design spec constants from ds-tm.pen BottomNavBar
+const PILL_HEIGHT = 62;
+const PILL_RADIUS = 36;
+const PILL_PADDING = 4;
+const TAB_RADIUS_ACTIVE = 36;
+const TAB_RADIUS_INACTIVE = 26;
+const ICON_SIZE = 20;
+const LABEL_SIZE = 10;
+const LABEL_SPACING = 0.5;
+// Logo green #00AF84 as gradient base, darker end derived from Button/Primary pattern
+const ACTIVE_GRADIENT = 'linear-gradient(225deg, #00AF84 0%, #008C6A 100%)';
+const ACTIVE_SHADOW = '0 4px 14px rgba(0, 175, 132, 0.3)';
+const ACTIVE_SOLID = '#00AF84'; // badge ring color
+const INACTIVE_LIGHT = '#9CA3AF';
+const INACTIVE_DARK = '#78788A';
+
 const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -107,16 +122,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
   const isDark = mode === 'dark';
   const isProvider = useIsProvider();
 
-  // Dynamic shrink/expand behavior - DISABLED for always-visible navigation
-  const {
-    iconSize,
-    labelOpacity,
-  } = useScrollShrink({
-    disabled: true, // Always show full tab bar
-    threshold: tabBarConfig.scrollThreshold,
-    expandedHeight: tabBarConfig.height.expanded,
-    collapsedHeight: tabBarConfig.height.collapsed,
-  });
+  const inactiveColor = isDark ? INACTIVE_DARK : INACTIVE_LIGHT;
 
   // Use provider tabs if user is a provider, otherwise use primary tabs
   const PRIMARY_TABS = useMemo(() => {
@@ -170,86 +176,6 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
     }
   };
 
-  // Tab Bar styles following Apple HIG - solid with subtle translucency
-  // Dark mode: matches header's splash screen gradient for visual cohesion
-  const liquidGlassStyles = useMemo(() => {
-    if (isDark) {
-      // Dark mode: splash screen gradient with emerald glow — matches header
-      return {
-        background: [
-          'linear-gradient(to right, transparent 20%, rgba(0, 174, 122, 0.10) 50%, transparent 80%)',
-          'linear-gradient(to right, #050505 0%, #0d1a14 30%, #0d1a14 70%, #050505 100%)',
-        ].join(', '),
-        backdropFilter: 'none',
-        WebkitBackdropFilter: 'none',
-      };
-    }
-
-    if (!effectiveConfig.blur) {
-      return {
-        backgroundColor: 'var(--surface-secondary)',
-        backdropFilter: 'none',
-        WebkitBackdropFilter: 'none',
-      };
-    }
-
-    const blurValue = dynamicBlur.resting;
-    const saturation = liquidSaturation.intense;
-
-    return {
-      backgroundColor: `rgba(var(--surface-secondary-rgb), ${dynamicOpacity.resting})`,
-      backdropFilter: `blur(${blurValue}) saturate(${saturation})`,
-      WebkitBackdropFilter: `blur(${blurValue}) saturate(${saturation})`,
-    };
-  }, [effectiveConfig.blur, isDark]);
-
-  // Specular highlight for active tab - pill-shaped glow
-  // Enhanced in dark mode with stronger emerald presence
-  const getTabSpecularStyles = (isActive: boolean) => {
-    if (!isActive) return {};
-
-    const glowIntensity = isDark ? 0.18 : 0.12;
-    const glowFade = isDark ? 0.10 : 0.06;
-    const underlineGlow = isDark ? '0 0 12px rgba(0, 174, 122, 0.5)' : '0 0 8px rgba(0, 174, 122, 0.4)';
-
-    return {
-      // Pill-shaped background glow
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '80%',
-        height: '70%',
-        background: effectiveConfig.specular
-          ? `radial-gradient(ellipse, rgba(0, 174, 122, ${glowIntensity}) 0%, rgba(0, 174, 122, ${glowFade}) 40%, transparent 70%)`
-          : `rgba(0, 174, 122, ${isDark ? 0.10 : 0.08})`,
-        borderRadius: radius['3xl'],
-        opacity: 1,
-        transition: `all ${durations.liquidFast} ${easingCurves.liquidInOut}`,
-        zIndex: zIndex.base,
-      },
-      // Animated gradient underline
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        bottom: 0,
-        left: '20%',
-        right: '20%',
-        height: isDark ? '2.5px' : '3px',
-        background: effectiveConfig.specular
-          ? 'linear-gradient(90deg, transparent, var(--brand-primary), transparent)'
-          : 'var(--brand-primary)',
-        borderRadius: '2px',
-        opacity: 1,
-        transition: `all ${durations.liquidFast} ${easingCurves.liquidInOut}`,
-        boxShadow: effectiveConfig.specular ? underlineGlow : 'none',
-        zIndex: zIndex.base,
-      },
-    };
-  };
-
   // Use portal to render at document.body level, outside any scrolling containers
   // This ensures fixed positioning works correctly in PWA standalone mode
   const tabBarContent = (
@@ -257,263 +183,264 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
       component="nav"
       aria-label="Primary navigation"
       sx={{
-        // CRITICAL: Always visible - prevent browser from hiding on scroll
+        // Outer wrapper — creates floating effect with padding
         position: 'fixed',
         bottom: 0,
         left: 0,
         right: 0,
-        height: `calc(64px + env(safe-area-inset-bottom))`, // Instagram-like height
-        ...liquidGlassStyles,
-
-        // Instagram-style: straight top, rounded bottom corners matching phone screen
-        borderTop: isDark
-          ? '0.5px solid rgba(0, 174, 122, 0.15)'
-          : '0.5px solid rgba(255, 255, 255, 0.15)',
-        borderBottomLeftRadius: radius['2xl'],
-        borderBottomRightRadius: radius['2xl'],
-
-        // Enhanced shadow — emerald-tinted in dark mode
-        boxShadow: isDark
-          ? '0 -8px 32px rgba(0, 0, 0, 0.5), 0 -2px 12px rgba(0, 174, 122, 0.08), inset 0 1px 0 rgba(0, 174, 122, 0.06)'
-          : '0 -8px 32px rgba(0, 0, 0, 0.35), 0 -2px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-
-        display: 'flex',
-        alignItems: 'center',
-        paddingTop: spacing.sm,
-        paddingBottom: `calc(${spacing.xs} + env(safe-area-inset-bottom))`,
+        padding: `12px 21px calc(21px + env(safe-area-inset-bottom)) 21px`,
         zIndex: zIndex.float,
-        overflow: 'hidden', // Contain shimmer effect within rounded corners
+        pointerEvents: 'none', // Pass through clicks outside the pill
 
-        // GPU acceleration - forces browser to keep element visible on scroll
+        // GPU acceleration
         WebkitTransform: 'translate3d(0, 0, 0)',
         transform: 'translate3d(0, 0, 0)',
         WebkitBackfaceVisibility: 'hidden',
         backfaceVisibility: 'hidden',
-
-        // Ensure always visible
-        visibility: 'visible',
-        opacity: 1,
-
-        willChange: 'transform', // Hint to browser to optimize
-        // CRITICAL: Only transition visual properties - never position/transform
-        // Using 'all' caused the bar to animate away during scroll on some devices
-        transition: effectiveConfig.animations
-          ? `background-color ${tabBarConfig.transitionDuration} ${easingCurves.liquidInOut}, backdrop-filter ${tabBarConfig.transitionDuration} ${easingCurves.liquidInOut}, box-shadow ${tabBarConfig.transitionDuration} ${easingCurves.liquidInOut}`
-          : 'none',
-
-        // Enhanced shimmer — emerald-tinted in dark mode
-        '&::before': effectiveConfig.specular ? {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: '-50%',
-          width: '200%',
-          height: '3px',
-          background: isDark
-            ? `linear-gradient(
-                90deg,
-                transparent 0%,
-                transparent 40%,
-                rgba(0, 174, 122, 0.15) 45%,
-                rgba(0, 174, 122, 0.4) 50%,
-                rgba(0, 174, 122, 0.15) 55%,
-                transparent 60%,
-                transparent 100%
-              )`
-            : `linear-gradient(
-                90deg,
-                transparent 0%,
-                transparent 40%,
-                rgba(255, 255, 255, 0.15) 45%,
-                rgba(255, 255, 255, 0.4) 50%,
-                rgba(255, 255, 255, 0.15) 55%,
-                transparent 60%,
-                transparent 100%
-              )`,
-          animation: effectiveConfig.animations ? 'shimmer 6s ease-in-out infinite' : 'none',
-          '@keyframes shimmer': {
-            '0%': { transform: 'translateX(0)' },
-            '100%': { transform: 'translateX(50%)' },
-          },
-        } : {},
-
-        // Top edge glow — emerald in dark, white in light
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '1px',
-          background: isDark
-            ? 'linear-gradient(90deg, transparent, rgba(0, 174, 122, 0.25), transparent)'
-            : 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
-          opacity: 0.6,
-        },
-
-        // Fallback for browsers without backdrop-filter
-        '@supports not (backdrop-filter: blur(10px))': {
-          backgroundColor: 'var(--surface-secondary)',
-        },
-
-        // Reduced motion support
-        '@media (prefers-reduced-motion: reduce)': {
-          transition: 'none',
-          '&::before': {
-            animation: 'none !important',
-          },
-        },
-
-        // Flex layout for tabs
-        justifyContent: 'space-evenly',
-        px: 1,
+        willChange: 'transform',
       }}
     >
-        {PRIMARY_TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          // Lucide icons: treasure (Gem), provider tabs (FileText, PlusCircle, Package)
-          const lucideIconIds = ['treasure', 'provider-requests', 'provider-submit', 'provider-inventory'];
-          const isLucideIcon = lucideIconIds.includes(tab.id);
+      {/* Inner pill container */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          height: PILL_HEIGHT,
+          borderRadius: `${PILL_RADIUS}px`,
+          padding: `${PILL_PADDING}px`,
+          pointerEvents: 'auto', // Re-enable clicks on the pill
+          overflow: 'hidden',
+          position: 'relative',
 
-          return (
-            <Box
-              key={tab.id}
-              role="button"
-              aria-label={tab.label}
-              aria-current={isActive ? 'page' : undefined}
-              tabIndex={0}
-              onClick={() => handleTabClick(tab)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  handleTabClick(tab);
-                }
-              }}
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flex: 1,
-                maxWidth: 90,
-                padding: `${spacing.xxs} ${spacing.xs}`,
-                cursor: 'pointer',
-                minHeight: `${layoutConstants.minTouchTarget}px`,
-                position: 'relative',
-                isolation: 'isolate', // Create stacking context for z-index
+          // Background
+          backgroundColor: isDark ? '#161618' : '#FFFFFF',
 
-                // Liquid Glass transitions
-                transition: effectiveConfig.animations
-                  ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
-                  : 'none',
+          // Border
+          border: `1px solid ${isDark ? '#2E2E33' : '#E5E7EB'}`,
 
-                '&:hover': {
-                  opacity: 0.85,
-                  transform: effectiveConfig.animations ? 'scale(1.05)' : 'none',
-                },
-                '&:active': {
-                  transform: effectiveConfig.animations ? 'scale(0.90)' : 'none',
-                  transition: effectiveConfig.animations
-                    ? `transform 80ms ${easingCurves.liquidIn}`
-                    : 'none',
-                },
-                '&:focus-visible': {
-                  outline: `2px solid ${primitiveColors.emerald[500]}`,
-                  outlineOffset: '2px',
-                  borderRadius: spacing.sm,
-                },
+          // Shadow — blur 16, offset y:4, subtle
+          boxShadow: isDark
+            ? '0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(0, 174, 122, 0.06)'
+            : '0 4px 16px rgba(0, 0, 0, 0.1)',
 
-                // Pill-shaped glow + gradient underline for active tab
-                ...getTabSpecularStyles(isActive),
-              }}
-            >
-              <Box sx={{
-                position: 'relative',
-                marginBottom: spacing.xxs,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: `${iconSize}px`,
-                width: `${iconSize}px`,
-                transition: effectiveConfig.animations
-                  ? `transform ${durations.liquidFast} ${easingCurves.liquidSpring}`
-                  : 'none',
-                zIndex: zIndex.base, // Above background effects
-              }}>
-                {isLucideIcon ? (
-                  <Icon
-                    size={iconSize - 2}
-                    color={isActive ? 'var(--brand-primary)' : 'var(--text-tertiary)'}
-                    strokeWidth={isActive ? 2.5 : 2}
-                    style={{
-                      transition: effectiveConfig.animations
-                        ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
-                        : 'none',
-                    }}
-                  />
-                ) : (
-                  <Icon
-                    sx={{
-                      fontSize: `${iconSize}px`,
-                      color: isActive ? 'var(--brand-primary)' : 'var(--text-tertiary)',
-                      transition: effectiveConfig.animations
-                        ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
-                        : 'none',
-                    }}
-                  />
-                )}
-                {tab.badge && tab.badge > 0 && (
-                  <Box
-                    aria-label={`${tab.badge} notifications`}
-                    sx={{
-                      position: 'absolute',
-                      top: '-4px',
-                      right: '-8px',
-                      minWidth: '16px',
-                      height: '16px',
-                      borderRadius: '8px',
-                      backgroundColor: 'var(--status-error)',
-                      color: 'white',
-                      fontSize: '10px',
-                      fontWeight: fontWeights.semibold,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '0 4px',
-                      boxShadow: '0 0 0 2px var(--surface-secondary)',
-                    }}
-                  >
-                    {tab.badge > 99 ? '99+' : tab.badge}
-                  </Box>
-                )}
-              </Box>
+          // Transitions
+          transition: effectiveConfig.animations
+            ? `background-color ${durations.liquidFast} ${easingCurves.liquidInOut}, border-color ${durations.liquidFast} ${easingCurves.liquidInOut}, box-shadow ${durations.liquidFast} ${easingCurves.liquidInOut}`
+            : 'none',
 
-              <Typography
-                variant="caption"
+          // Reduced motion support
+          '@media (prefers-reduced-motion: reduce)': {
+            transition: 'none',
+          },
+        }}
+      >
+        <LayoutGroup>
+          {PRIMARY_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            // Lucide icons: treasure (Gem), provider tabs (FileText, PlusCircle, Package)
+            const lucideIconIds = ['treasure', 'provider-requests', 'provider-submit', 'provider-inventory'];
+            const isLucideIcon = lucideIconIds.includes(tab.id);
+
+            return (
+              <Box
+                key={tab.id}
+                role="button"
+                aria-label={tab.label}
+                aria-current={isActive ? 'page' : undefined}
+                tabIndex={0}
+                onClick={() => handleTabClick(tab)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleTabClick(tab);
+                  }
+                }}
                 sx={{
-                  fontSize: { xs: '9px', sm: '10px' },
-                  fontWeight: isActive ? 600 : 400,
-                  color: isActive ? 'var(--brand-primary)' : 'var(--text-tertiary)',
-                  textAlign: 'center',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: '100%',
-                  lineHeight: 1.2,
-                  marginTop: spacing.xxs,
-                  opacity: labelOpacity,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flex: 1,
+                  height: '100%',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  isolation: 'isolate',
+                  borderRadius: `${isActive ? TAB_RADIUS_ACTIVE : TAB_RADIUS_INACTIVE}px`,
+                  gap: '3px',
+                  userSelect: 'none',
+                  WebkitTapHighlightColor: 'transparent',
+
+                  // Transitions
                   transition: effectiveConfig.animations
                     ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
                     : 'none',
-                  zIndex: zIndex.base, // Above background effects
-                  position: 'relative',
+
+                  '&:hover': !isActive ? {
+                    backgroundColor: effectiveConfig.animations
+                      ? (isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)')
+                      : undefined,
+                  } : {},
+                  '&:active': {
+                    transform: effectiveConfig.animations ? 'scale(0.95)' : 'none',
+                    transition: effectiveConfig.animations
+                      ? `transform 80ms ${easingCurves.liquidIn}`
+                      : 'none',
+                  },
+                  '&:focus-visible': {
+                    outline: `2px solid ${primitiveColors.emerald[500]}`,
+                    outlineOffset: '2px',
+                  },
                 }}
               >
-                {tab.label}
-              </Typography>
-            </Box>
-          );
-        })}
+                {/* Animated sliding emerald pill background for active tab */}
+                {isActive && (
+                  effectiveConfig.animations ? (
+                    <motion.div
+                      layoutId="tab-indicator"
+                      transition={microinteraction.navPill}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: ACTIVE_GRADIENT,
+                        boxShadow: ACTIVE_SHADOW,
+                        borderRadius: `${TAB_RADIUS_ACTIVE}px`,
+                        zIndex: 0,
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: ACTIVE_GRADIENT,
+                        boxShadow: ACTIVE_SHADOW,
+                        borderRadius: `${TAB_RADIUS_ACTIVE}px`,
+                        zIndex: 0,
+                      }}
+                    />
+                  )
+                )}
+
+                {/* Icon */}
+                <Box sx={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: ICON_SIZE,
+                  width: ICON_SIZE,
+                  zIndex: 1,
+                }}>
+                  {isLucideIcon ? (
+                    <Icon
+                      size={ICON_SIZE}
+                      color={isActive ? '#FFFFFF' : inactiveColor}
+                      strokeWidth={isActive ? 2.2 : 1.8}
+                      style={{
+                        transition: effectiveConfig.animations
+                          ? `color ${durations.liquidFast} ${easingCurves.liquidInOut}`
+                          : 'none',
+                      }}
+                    />
+                  ) : (
+                    <Icon
+                      sx={{
+                        fontSize: `${ICON_SIZE}px`,
+                        color: isActive ? '#FFFFFF' : inactiveColor,
+                        transition: effectiveConfig.animations
+                          ? `color ${durations.liquidFast} ${easingCurves.liquidInOut}`
+                          : 'none',
+                      }}
+                    />
+                  )}
+                  {/* Badge */}
+                  {tab.badge && tab.badge > 0 && (
+                    <Box
+                      aria-label={`${tab.badge} notifications`}
+                      sx={{
+                        position: 'absolute',
+                        top: '-4px',
+                        right: '-8px',
+                        minWidth: '16px',
+                        height: '16px',
+                        borderRadius: '8px',
+                        backgroundColor: 'var(--status-error)',
+                        color: 'white',
+                        fontSize: '10px',
+                        fontWeight: fontWeights.semibold,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 4px',
+                        boxShadow: isActive
+                          ? `0 0 0 2px ${ACTIVE_SOLID}`
+                          : `0 0 0 2px ${isDark ? '#161618' : '#FFFFFF'}`,
+                        // Badge entrance animation
+                        animation: effectiveConfig.animations
+                          ? `badgeIn 300ms ${easingCurves.liquidSpring} both`
+                          : 'none',
+                        // Pulse ring pseudo-element
+                        '&::after': effectiveConfig.animations ? {
+                          content: '""',
+                          position: 'absolute',
+                          inset: 0,
+                          borderRadius: 'inherit',
+                          backgroundColor: 'var(--status-error)',
+                          opacity: 0,
+                          animation: 'badgePulse 2s ease-in-out infinite',
+                          zIndex: -1,
+                        } : {},
+                        '@keyframes badgeIn': {
+                          '0%': { transform: 'scale(0)' },
+                          '70%': { transform: 'scale(1.15)' },
+                          '100%': { transform: 'scale(1)' },
+                        },
+                        '@keyframes badgePulse': {
+                          '0%': { transform: 'scale(1)', opacity: 0.4 },
+                          '100%': { transform: 'scale(2.5)', opacity: 0 },
+                        },
+                        '@media (prefers-reduced-motion: reduce)': {
+                          animation: 'none',
+                          '&::after': { animation: 'none' },
+                        },
+                      }}
+                    >
+                      {tab.badge > 99 ? '99+' : tab.badge}
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Label */}
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: `${LABEL_SIZE}px`,
+                    fontFamily: '"DM Sans", sans-serif',
+                    fontWeight: isActive ? 600 : 500,
+                    letterSpacing: `${LABEL_SPACING}px`,
+                    textTransform: 'uppercase',
+                    color: isActive ? '#FFFFFF' : inactiveColor,
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%',
+                    lineHeight: 1.2,
+                    transition: effectiveConfig.animations
+                      ? `color ${durations.liquidFast} ${easingCurves.liquidInOut}`
+                      : 'none',
+                    zIndex: 1,
+                    position: 'relative',
+                  }}
+                >
+                  {tab.label}
+                </Typography>
+              </Box>
+            );
+          })}
+        </LayoutGroup>
+      </Box>
     </Box>
   );
 
