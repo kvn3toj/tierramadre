@@ -18,8 +18,10 @@ import {
   CardContent,
   Button,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { ArrowForward } from '@mui/icons-material';
 import { emeraldCore } from '../../../design-system/tokens/colors';
+import { defaultShadows } from '../../../design-system/tokens/shadows';
 import {
   whiteAlpha,
   blackAlpha,
@@ -47,6 +49,8 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
   const navigate = useNavigate();
   const { t } = useLanguage();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
   // Keyboard navigation for carousel
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -83,13 +87,15 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
         {/* Section Container - refined glass with emerald tint */}
         <Box
           sx={{
-            bgcolor: whiteAlpha(0.06),
+            bgcolor: isDarkMode ? whiteAlpha(0.06) : whiteAlpha(0.85),
             backdropFilter: `blur(${blurValues.lg}) saturate(180%)`,
             WebkitBackdropFilter: `blur(${blurValues.lg}) saturate(180%)`,
             borderRadius: 4,
             p: 2,
-            border: `1px solid ${whiteAlpha(0.1)}`,
-            boxShadow: `0 4px 24px ${blackAlpha(0.15)}, inset 0 1px 0 ${whiteAlpha(0.06)}`,
+            border: `1px solid ${isDarkMode ? whiteAlpha(0.1) : blackAlpha(0.06)}`,
+            boxShadow: isDarkMode
+              ? `0 4px 24px ${blackAlpha(0.15)}, inset 0 1px 0 ${whiteAlpha(0.06)}`
+              : defaultShadows.md,
           }}
         >
           {/* Section Header */}
@@ -110,7 +116,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                 component="h2"
                 sx={{
                   fontWeight: 600,
-                  color: textOnGlass.onDarkGlass.primary,
+                  color: isDarkMode ? textOnGlass.onDarkGlass.primary : 'text.primary',
                   fontSize: { xs: '1rem', sm: '1.15rem' },
                   letterSpacing: '-0.01em',
                 }}
@@ -131,7 +137,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                 borderRadius: 2,
                 px: 1.5,
                 '&:hover': {
-                  bgcolor: emeraldAlpha(0.1),
+                  bgcolor: emeraldAlpha(isDarkMode ? 0.1 : 0.06),
                 },
               }}
             >
@@ -186,14 +192,14 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                     onClick={() => handleProductClick(product.item)}
                     onKeyDown={(e) => handleProductKeyDown(e, product.item)}
                     sx={{
-                      minWidth: { xs: 140, sm: 160 },
-                      maxWidth: { xs: 140, sm: 160 },
-                      bgcolor: blackAlpha(0.3),
+                      minWidth: { xs: 140, sm: 160, md: 180 },
+                      maxWidth: { xs: 140, sm: 160, md: 180 },
+                      bgcolor: isDarkMode ? blackAlpha(0.3) : whiteAlpha(0.9),
                       backdropFilter: `blur(${blurValues.md})`,
                       cursor: 'pointer',
                       flexShrink: 0,
                       transition: cssTransition.slow,
-                      border: `1px solid ${whiteAlpha(0.08)}`,
+                      border: `1px solid ${isDarkMode ? whiteAlpha(0.08) : blackAlpha(0.06)}`,
                       borderRadius: 3,
                       overflow: 'hidden',
                       '&:focus-visible': {
@@ -201,8 +207,10 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                         outlineOffset: 2,
                       },
                       '&:hover': {
-                        boxShadow: `0 8px 32px ${emeraldAlpha(0.2)}, 0 0 0 1px ${emeraldAlpha(0.15)}`,
-                        bgcolor: blackAlpha(0.4),
+                        boxShadow: isDarkMode
+                          ? `0 8px 32px ${emeraldAlpha(0.2)}, 0 0 0 1px ${emeraldAlpha(0.15)}`
+                          : '0 8px 24px rgba(0,174,122,0.12), 0 0 0 1px rgba(0,174,122,0.08)',
+                        bgcolor: isDarkMode ? blackAlpha(0.4) : blackAlpha(0.04),
                         borderColor: emeraldAlpha(0.2),
                       },
                     }}
@@ -212,7 +220,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                       <CardMedia
                         component="img"
                         sx={{
-                          height: { xs: 110, sm: 130 },
+                          height: { xs: 110, sm: 130, md: 150 },
                           objectFit: 'cover',
                         }}
                         image={product.imagen || '/placeholder-emerald.jpg'}
@@ -232,13 +240,13 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                         }}
                       />
                     </Box>
-                    <CardContent sx={{ p: { xs: 1.25, sm: 1.5 }, bgcolor: 'transparent' }}>
+                    <CardContent sx={{ p: { xs: 1.25, sm: 1.5, md: 1.75 }, bgcolor: 'transparent' }}>
                       <Typography
                         variant="body2"
                         component="h3"
                         sx={{
                           fontWeight: 600,
-                          color: textOnGlass.onDarkGlass.primary,
+                          color: isDarkMode ? textOnGlass.onDarkGlass.primary : 'text.primary',
                           fontSize: { xs: '0.8rem', sm: '0.875rem' },
                           letterSpacing: '-0.01em',
                         }}

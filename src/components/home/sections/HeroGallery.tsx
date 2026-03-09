@@ -85,8 +85,8 @@ export const HeroGallery: React.FC = () => {
       <Box
         sx={{
           position: 'relative',
-          aspectRatio: { xs: '4/3', sm: '16/9' },
-          maxHeight: { xs: '55vh', sm: '50vh' },
+          aspectRatio: { xs: '4/3', sm: '16/9', md: '21/9' },
+          maxHeight: { xs: '55vh', sm: '50vh', md: '45vh' },
           overflow: 'hidden',
         }}
       >
@@ -228,8 +228,8 @@ export const HeroGallery: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 0.5,
-                    px: 1.75,
-                    py: 0.75,
+                    px: { xs: 1.5, sm: 1.75, md: 2 },
+                    py: { xs: 0.6, sm: 0.75 },
                     borderRadius: 2,
                     cursor: 'pointer',
                     transition: cssTransition.slow,
@@ -262,7 +262,7 @@ export const HeroGallery: React.FC = () => {
                     sx={{
                       color: whiteAlpha(0.75),
                       fontWeight: 500,
-                      fontSize: '0.8rem',
+                      fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.85rem' },
                       letterSpacing: '0.02em',
                       transition: cssTransition.slow,
                     }}

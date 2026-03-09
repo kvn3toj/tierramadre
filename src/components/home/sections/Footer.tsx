@@ -12,6 +12,7 @@ import { useTheme } from '@mui/material/styles';
 import { Instagram, Language, WhatsApp } from '@mui/icons-material';
 import { fadeInUp, cssTransition } from '../../../design-system/tokens/motion';
 import { emeraldCore } from '../../../design-system/tokens/colors';
+import { defaultShadows } from '../../../design-system/tokens/shadows';
 import { whiteAlpha, blackAlpha } from '../../../design-system/utils/colorUtils';
 import { blurValues } from '../../../design-system';
 
@@ -43,22 +44,22 @@ export const Footer: React.FC = () => {
       component="footer"
       sx={{
         px: 2,
-        py: 3,
+        py: { xs: 3, md: 4 },
         mb: 2,
       }}
     >
       <motion.div variants={fadeInUp} initial="initial" animate="animate">
         <Box
           sx={{
-            bgcolor: isDarkMode ? blackAlpha(0.35) : 'rgba(255,255,255,0.6)',
+            bgcolor: isDarkMode ? blackAlpha(0.35) : whiteAlpha(0.6),
             backdropFilter: `blur(${blurValues.xl}) saturate(180%)`,
             WebkitBackdropFilter: `blur(${blurValues.xl}) saturate(180%)`,
             borderRadius: 4,
             p: 3,
-            border: `1px solid ${isDarkMode ? whiteAlpha(0.08) : 'rgba(0,0,0,0.06)'}`,
+            border: `1px solid ${isDarkMode ? whiteAlpha(0.08) : blackAlpha(0.06)}`,
             boxShadow: isDarkMode
               ? `0 4px 24px ${blackAlpha(0.2)}, inset 0 1px 0 ${whiteAlpha(0.04)}`
-              : `0 4px 16px rgba(0,0,0,0.05)`,
+              : defaultShadows.md,
             textAlign: 'center',
             position: 'relative',
             overflow: 'hidden',
@@ -75,7 +76,7 @@ export const Footer: React.FC = () => {
           }}
         >
           {/* Social Icons with glass effect */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 2.5 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 2, md: 2.5 }, mb: 2.5 }}>
             {SOCIAL_LINKS.map(({ icon: Icon, href, label, color }) => (
               <IconButton
                 key={label}
@@ -87,8 +88,8 @@ export const Footer: React.FC = () => {
                 sx={{
                   bgcolor: isDarkMode ? `${color}1A` : `${color}12`,
                   color: color,
-                  width: 44,
-                  height: 44,
+                  width: { xs: 44, md: 48 },
+                  height: { xs: 44, md: 48 },
                   border: `1px solid ${isDarkMode ? `${color}25` : `${color}18`}`,
                   '&:hover': {
                     bgcolor: `${color}30`,
@@ -107,7 +108,7 @@ export const Footer: React.FC = () => {
           <Typography
             variant="body2"
             sx={{
-              color: isDarkMode ? whiteAlpha(0.8) : 'rgba(0,0,0,0.7)',
+              color: isDarkMode ? whiteAlpha(0.8) : blackAlpha(0.7),
               mb: 0.75,
               fontWeight: 500,
             }}
@@ -133,7 +134,7 @@ export const Footer: React.FC = () => {
           <Typography
             variant="caption"
             sx={{
-              color: isDarkMode ? whiteAlpha(0.5) : 'rgba(0,0,0,0.45)',
+              color: isDarkMode ? whiteAlpha(0.5) : blackAlpha(0.45),
               display: 'block',
               letterSpacing: '0.03em',
             }}
@@ -148,7 +149,7 @@ export const Footer: React.FC = () => {
               height: '1px',
               background: isDarkMode
                 ? `linear-gradient(90deg, transparent, ${whiteAlpha(0.08)}, transparent)`
-                : `linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent)`,
+                : `linear-gradient(90deg, transparent, ${blackAlpha(0.06)}, transparent)`,
             }}
           />
 
@@ -156,7 +157,7 @@ export const Footer: React.FC = () => {
           <Typography
             variant="caption"
             sx={{
-              color: isDarkMode ? whiteAlpha(0.35) : 'rgba(0,0,0,0.3)',
+              color: isDarkMode ? whiteAlpha(0.35) : blackAlpha(0.3),
               display: 'block',
               fontSize: '0.7rem',
             }}
@@ -171,11 +172,11 @@ export const Footer: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               sx={{
-                color: isDarkMode ? whiteAlpha(0.3) : 'rgba(0,0,0,0.25)',
+                color: isDarkMode ? whiteAlpha(0.3) : blackAlpha(0.25),
                 fontSize: '0.65rem',
                 textDecoration: 'none',
                 '&:hover': {
-                  color: isDarkMode ? whiteAlpha(0.6) : 'rgba(0,0,0,0.5)',
+                  color: isDarkMode ? whiteAlpha(0.6) : blackAlpha(0.5),
                 },
                 transition: cssTransition.default,
               }}
@@ -187,11 +188,11 @@ export const Footer: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               sx={{
-                color: isDarkMode ? whiteAlpha(0.3) : 'rgba(0,0,0,0.25)',
+                color: isDarkMode ? whiteAlpha(0.3) : blackAlpha(0.25),
                 fontSize: '0.65rem',
                 textDecoration: 'none',
                 '&:hover': {
-                  color: isDarkMode ? whiteAlpha(0.6) : 'rgba(0,0,0,0.5)',
+                  color: isDarkMode ? whiteAlpha(0.6) : blackAlpha(0.5),
                 },
                 transition: cssTransition.default,
               }}

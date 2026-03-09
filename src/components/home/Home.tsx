@@ -99,61 +99,70 @@ const Home: React.FC = () => {
         <HeroGallery />
       </ErrorBoundary>
 
-      {/* Estrenos - New products carousel (above fold, critical) */}
-      {(isLoadingNewProducts || newProducts.length > 0) && (
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
-          {isLoadingNewProducts ? (
-            <SectionSkeleton height={SKELETON_HEIGHTS.products} />
-          ) : (
-            <ProductsSection products={newProducts} />
-          )}
-        </ErrorBoundary>
-      )}
-
-      {/* Oracle - Animated random quote */}
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <OracleSection />
-      </ErrorBoundary>
-
-      {/* Lower sections with background image - starts from chart */}
+      {/* Content sections with max-width constraint for wider viewports */}
       <Box
         sx={{
-          position: 'relative',
-          mt: 1,
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: isDarkMode
-              ? 'url(/images/home-bg.png)'
-              : 'url(/images/home-bg-light.png)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center top',
-            backgroundRepeat: 'no-repeat',
-            backgroundAttachment: 'scroll',
-            opacity: isDarkMode ? 0.2 : 0.15,
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%)',
-            zIndex: 0,
-          },
+          maxWidth: 640,
+          mx: 'auto',
+          width: '100%',
         }}
       >
-        {/* Valuation - Emerald appreciation */}
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
+        {/* Estrenos - New products carousel (above fold, critical) */}
+        {(isLoadingNewProducts || newProducts.length > 0) && (
           <ErrorBoundary FallbackComponent={ErrorFallback}>
-            <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.valuation} />}>
-              <ValuationSection />
-            </Suspense>
+            {isLoadingNewProducts ? (
+              <SectionSkeleton height={SKELETON_HEIGHTS.products} />
+            ) : (
+              <ProductsSection products={newProducts} />
+            )}
           </ErrorBoundary>
-        </Box>
+        )}
 
-        {/* Footer - Social links and contact */}
-        <Box sx={{ position: 'relative', zIndex: 1, mt: 0.5 }}>
-          <ErrorBoundary FallbackComponent={ErrorFallback}>
-            <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.footer} />}>
-              <Footer />
-            </Suspense>
-          </ErrorBoundary>
+        {/* Oracle - Animated random quote */}
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
+          <OracleSection />
+        </ErrorBoundary>
+
+        {/* Lower sections with background image - starts from chart */}
+        <Box
+          sx={{
+            position: 'relative',
+            mt: 1,
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: isDarkMode
+                ? 'url(/images/home-bg.png)'
+                : 'url(/images/home-bg-light.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center top',
+              backgroundRepeat: 'no-repeat',
+              backgroundAttachment: 'scroll',
+              opacity: isDarkMode ? 0.2 : 0.15,
+              maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%)',
+              zIndex: 0,
+            },
+          }}
+        >
+          {/* Valuation - Emerald appreciation */}
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.valuation} />}>
+                <ValuationSection />
+              </Suspense>
+            </ErrorBoundary>
+          </Box>
+
+          {/* Footer - Social links and contact */}
+          <Box sx={{ position: 'relative', zIndex: 1, mt: 0.5 }}>
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <Suspense fallback={<SectionSkeleton height={SKELETON_HEIGHTS.footer} />}>
+                <Footer />
+              </Suspense>
+            </ErrorBoundary>
+          </Box>
         </Box>
       </Box>
 

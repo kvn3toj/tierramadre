@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { emeraldCore, surfacesLight } from '../../../design-system/tokens/colors';
+import { emeraldShadows, defaultShadows } from '../../../design-system/tokens/shadows';
 import { blackAlpha, emeraldAlpha, opacity, blurValues } from '../../../design-system';
 import { textOnGlass, iosLabels, iosSeparators } from '../../../design-system/utils/colorUtils';
 import { ORACLE_QUOTES, OracleQuote } from '../../../data/homeContent';
@@ -126,7 +127,7 @@ export const OracleSection: React.FC = () => {
   if (!quote) return null;
 
   return (
-    <Box sx={{ px: 2, py: 1.5 }} component="section" aria-labelledby="oracle-title">
+    <Box sx={{ px: 2, py: { xs: 1.5, md: 2 } }} component="section" aria-labelledby="oracle-title">
       <AnimatePresence mode="wait">
         <motion.div
           key={key}
@@ -154,7 +155,7 @@ export const OracleSection: React.FC = () => {
               // Ambient emerald glow
               boxShadow: isDarkMode
                 ? `0 4px 24px ${emeraldAlpha(0.08)}, inset 0 1px 0 rgba(255,255,255,0.04)`
-                : `0 4px 16px rgba(0,0,0,0.06)`,
+                : defaultShadows.md,
               // Emerald gradient top accent
               '&::before': {
                 content: '""',
@@ -182,7 +183,7 @@ export const OracleSection: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
-                  boxShadow: `0 2px 8px ${emeraldAlpha(0.1)}`,
+                  boxShadow: emeraldShadows.xs,
                 }}
               >
                 <Typography
@@ -203,7 +204,7 @@ export const OracleSection: React.FC = () => {
                 variant="body1"
                 sx={{
                   color: colors.textPrimary,
-                  fontSize: '0.95rem',
+                  fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
                   fontWeight: 400,
                   lineHeight: 1.65,
                   mb: 0.75,

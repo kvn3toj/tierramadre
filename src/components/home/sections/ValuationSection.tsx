@@ -22,9 +22,10 @@ import { useTheme as useMuiTheme } from '@mui/material/styles';
 import { TrendingUp, AutoGraph } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { emeraldCore, goldAccent } from '../../../design-system/tokens/colors';
+import { emeraldShadows, defaultShadows } from '../../../design-system/tokens/shadows';
 import { cssTransition } from '../../../design-system';
 import { glassDark, glassLight, applyGlass } from '../../../design-system/tokens/glass';
-import { emeraldAlpha } from '../../../design-system/utils/colorUtils';
+import { emeraldAlpha, blackAlpha, whiteAlpha } from '../../../design-system/utils/colorUtils';
 import { fadeInUp } from '../../../design-system/tokens/motion';
 import {
   EMERALD_VALUATION_DATA,
@@ -181,7 +182,7 @@ export const ValuationSection: React.FC = () => {
       ref={ref}
       component="section"
       aria-labelledby="valuation-title"
-      sx={{ px: 2, py: 2 }}
+      sx={{ px: 2, py: { xs: 2, md: 2.5 } }}
     >
       <motion.div
         variants={fadeInUp}
@@ -194,8 +195,8 @@ export const ValuationSection: React.FC = () => {
             borderRadius: 4,
             overflow: 'hidden',
             boxShadow: isDarkMode
-              ? `0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)`
-              : `0 4px 24px rgba(0,0,0,0.08)`,
+              ? `0 8px 32px ${blackAlpha(0.3)}, inset 0 1px 0 ${whiteAlpha(0.04)}`
+              : defaultShadows.md,
           }}
         >
           <CardContent sx={{ py: 2.5, px: 2 }}>
@@ -205,7 +206,7 @@ export const ValuationSection: React.FC = () => {
                 <Typography
                   id="valuation-title"
                   sx={{
-                    fontSize: '15px',
+                    fontSize: { xs: '14px', sm: '15px', md: '16px' },
                     fontWeight: 600,
                     color: 'text.primary',
                     letterSpacing: '-0.01em',
@@ -233,7 +234,7 @@ export const ValuationSection: React.FC = () => {
                   justifyContent: 'center',
                   background: isDarkMode
                     ? `linear-gradient(135deg, ${emeraldAlpha(0.15)} 0%, ${emeraldAlpha(0.08)} 100%)`
-                    : `linear-gradient(135deg, ${emeraldCore.lightest} 0%, rgba(0,174,122,0.06) 100%)`,
+                    : `linear-gradient(135deg, ${emeraldCore.lightest} 0%, ${emeraldAlpha(0.06)} 100%)`,
                   border: `1px solid ${emeraldAlpha(0.15)}`,
                 }}
               >
@@ -248,7 +249,7 @@ export const ValuationSection: React.FC = () => {
                 gap: 0.5,
                 mb: 2,
                 p: 0.5,
-                bgcolor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                bgcolor: isDarkMode ? whiteAlpha(0.03) : blackAlpha(0.02),
                 borderRadius: 2,
               }}
             >
@@ -272,15 +273,15 @@ export const ValuationSection: React.FC = () => {
                         ? emeraldCore.primary
                         : 'transparent',
                       boxShadow: isActive
-                        ? `0 2px 8px ${emeraldAlpha(0.3)}`
+                        ? emeraldShadows.sm
                         : 'none',
                       transition: cssTransition.default,
                       '&:hover': {
                         bgcolor: isActive
                           ? emeraldCore.primary
                           : isDarkMode
-                            ? 'rgba(255,255,255,0.06)'
-                            : 'rgba(0,0,0,0.04)',
+                            ? whiteAlpha(0.06)
+                            : blackAlpha(0.04),
                       },
                     }}
                   >
@@ -293,7 +294,7 @@ export const ValuationSection: React.FC = () => {
             {/* Professional SVG Chart */}
             <Box
               sx={{
-                height: height + 10,
+                height: { xs: height + 10, md: height + 30 },
                 position: 'relative',
                 mb: 2,
               }}
@@ -322,7 +323,7 @@ export const ValuationSection: React.FC = () => {
                   y={padding.top}
                   width={chartWidth}
                   height={chartHeight}
-                  fill={isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)'}
+                  fill={isDarkMode ? whiteAlpha(0.02) : blackAlpha(0.01)}
                   rx={4}
                 />
 
@@ -336,7 +337,7 @@ export const ValuationSection: React.FC = () => {
                         y1={y}
                         x2={padding.left + chartWidth}
                         y2={y}
-                        stroke={isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}
+                        stroke={isDarkMode ? whiteAlpha(0.06) : blackAlpha(0.05)}
                         strokeWidth={1}
                         strokeDasharray={index === 0 ? 'none' : '3 3'}
                       />
@@ -344,7 +345,7 @@ export const ValuationSection: React.FC = () => {
                         x={padding.left - 8}
                         y={y + 3}
                         textAnchor="end"
-                        fill={isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.35)'}
+                        fill={isDarkMode ? whiteAlpha(0.45) : blackAlpha(0.35)}
                         fontSize={9}
                         fontFamily="system-ui, -apple-system, sans-serif"
                       >
@@ -363,7 +364,7 @@ export const ValuationSection: React.FC = () => {
                       x={x}
                       y={height - 8}
                       textAnchor="middle"
-                      fill={isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.35)'}
+                      fill={isDarkMode ? whiteAlpha(0.45) : blackAlpha(0.35)}
                       fontSize={9}
                       fontFamily="system-ui, -apple-system, sans-serif"
                     >
@@ -445,7 +446,7 @@ export const ValuationSection: React.FC = () => {
                         cy={lastPoint.y}
                         r={4}
                         fill={origin.color}
-                        stroke={isDarkMode ? '#1e293b' : 'white'}
+                        stroke={isDarkMode ? blackAlpha(0.8) : 'white'}
                         strokeWidth={2}
                       />
                       <text
@@ -469,7 +470,7 @@ export const ValuationSection: React.FC = () => {
                   y1={padding.top}
                   x2={padding.left}
                   y2={padding.top + chartHeight}
-                  stroke={isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'}
+                  stroke={isDarkMode ? whiteAlpha(0.15) : blackAlpha(0.1)}
                   strokeWidth={1}
                 />
                 <line
@@ -477,7 +478,7 @@ export const ValuationSection: React.FC = () => {
                   y1={padding.top + chartHeight}
                   x2={padding.left + chartWidth}
                   y2={padding.top + chartHeight}
-                  stroke={isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'}
+                  stroke={isDarkMode ? whiteAlpha(0.15) : blackAlpha(0.1)}
                   strokeWidth={1}
                 />
               </svg>
@@ -535,7 +536,7 @@ export const ValuationSection: React.FC = () => {
                 gap: 1.5,
                 mb: 2,
                 pt: 2,
-                borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+                borderTop: `1px solid ${isDarkMode ? whiteAlpha(0.06) : blackAlpha(0.05)}`,
               }}
             >
               {/* Total Return */}
@@ -544,8 +545,8 @@ export const ValuationSection: React.FC = () => {
                   flex: 1,
                   p: 1.5,
                   borderRadius: 2.5,
-                  bgcolor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'}`,
+                  bgcolor: isDarkMode ? whiteAlpha(0.03) : blackAlpha(0.02),
+                  border: `1px solid ${isDarkMode ? whiteAlpha(0.05) : blackAlpha(0.04)}`,
                 }}
               >
                 <Typography
@@ -562,7 +563,7 @@ export const ValuationSection: React.FC = () => {
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: '1.4rem',
+                    fontSize: { xs: '1.3rem', sm: '1.4rem', md: '1.6rem' },
                     fontWeight: 700,
                     color: emeraldCore.primary,
                     lineHeight: 1,
@@ -588,8 +589,8 @@ export const ValuationSection: React.FC = () => {
                   flex: 1,
                   p: 1.5,
                   borderRadius: 2.5,
-                  bgcolor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'}`,
+                  bgcolor: isDarkMode ? whiteAlpha(0.03) : blackAlpha(0.02),
+                  border: `1px solid ${isDarkMode ? whiteAlpha(0.05) : blackAlpha(0.04)}`,
                 }}
               >
                 <Typography
@@ -606,7 +607,7 @@ export const ValuationSection: React.FC = () => {
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: '1.4rem',
+                    fontSize: { xs: '1.3rem', sm: '1.4rem', md: '1.6rem' },
                     fontWeight: 700,
                     color: isDarkMode ? goldAccent.light : goldAccent.dark,
                     lineHeight: 1,
