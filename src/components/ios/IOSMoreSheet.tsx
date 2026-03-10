@@ -459,9 +459,11 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
           maxHeight: '85vh',
           overflowY: 'auto',
           transform: open ? 'translateY(0)' : 'translateY(100%)',
+          visibility: open ? 'visible' : 'hidden',
+          pointerEvents: open ? 'auto' : 'none',
           transition: effectiveConfig.animations
-            ? `transform ${durations.liquidNormal} ${easingCurves.liquidSpring}`
-            : cssTransition.slow,
+            ? `transform ${durations.liquidNormal} ${easingCurves.liquidSpring}, visibility ${durations.liquidNormal}`
+            : `${cssTransition.slow}, visibility 0.3s`,
           paddingBottom: 'env(safe-area-inset-bottom)',
           willChange: 'transform',
           ...headerSpecularStyles,

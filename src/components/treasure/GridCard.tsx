@@ -148,14 +148,14 @@ function GridCard({
         },
       }}
     >
-      {/* Image Section */}
-      <Box sx={{ position: 'relative', flexShrink: 0 }}>
+      {/* Image Section — flex:1 absorbs extra row height when name is single-line */}
+      <Box sx={{ position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden' }}>
         {item.imagen ? (
           <>
             <ProgressiveImage
               src={item.imagen}
               alt={`${item.nombre} - ${item.color}`}
-              aspectRatio="4 / 5"
+              height="100%"
               layout="full"
               quality="eco"
               priority={priority}

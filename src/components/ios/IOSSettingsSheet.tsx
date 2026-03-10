@@ -175,7 +175,9 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
           borderTopRightRadius: radius.xl,
           boxShadow: 'var(--shadow-lg)',
           transform: open ? 'translateY(0)' : 'translateY(100%)',
-          transition: 'transform 0.4s cubic-bezier(0.5, 1.25, 0.75, 1.25)',
+          visibility: open ? 'visible' : 'hidden',
+          pointerEvents: open ? 'auto' : 'none',
+          transition: 'transform 0.4s cubic-bezier(0.5, 1.25, 0.75, 1.25), visibility 0.4s',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >

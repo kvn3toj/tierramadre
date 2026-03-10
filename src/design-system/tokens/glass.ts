@@ -61,33 +61,33 @@ export const glassLight: Record<string, GlassEffect> = {
 // =============================================================================
 
 export const glassDark: Record<string, GlassEffect> = {
-  /** Standard dark glass */
+  /** Standard dark glass — neutral gray (aligned with iOS/bottom nav) */
   default: {
-    background: 'rgba(30, 41, 59, 0.7)',
+    background: 'rgba(28, 28, 30, 0.7)',
     backdropFilter: 'blur(10px) saturate(180%)',
     WebkitBackdropFilter: 'blur(10px) saturate(180%)',
     border: '1px solid rgba(255, 255, 255, 0.1)',
     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.2)',
   },
-  /** Frosted dark */
+  /** Frosted dark — neutral gray */
   frosted: {
-    background: 'rgba(15, 23, 42, 0.8)',
+    background: 'rgba(22, 22, 24, 0.85)',
     backdropFilter: 'blur(20px) saturate(150%)',
     WebkitBackdropFilter: 'blur(20px) saturate(150%)',
     border: '1px solid rgba(255, 255, 255, 0.08)',
     boxShadow: '0 10px 15px rgba(0, 0, 0, 0.3)',
   },
-  /** Ultra thin dark */
+  /** Ultra thin dark — neutral gray */
   ultraThin: {
-    background: 'rgba(30, 41, 59, 0.5)',
+    background: 'rgba(28, 28, 30, 0.5)',
     backdropFilter: 'blur(8px) saturate(120%)',
     WebkitBackdropFilter: 'blur(8px) saturate(120%)',
     border: '1px solid rgba(255, 255, 255, 0.05)',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.15)',
   },
-  /** Regular dark material */
+  /** Regular dark material — neutral gray */
   regular: {
-    background: 'rgba(30, 41, 59, 0.6)',
+    background: 'rgba(28, 28, 30, 0.6)',
     backdropFilter: 'blur(16px) saturate(180%)',
     WebkitBackdropFilter: 'blur(16px) saturate(180%)',
     border: '1px solid rgba(255, 255, 255, 0.07)',

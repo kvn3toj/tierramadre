@@ -188,27 +188,27 @@ export const surfacesLight = {
 
 export const surfacesDark = {
   background: {
-    primary: '#0F172A',
-    secondary: '#1E293B',
-    tertiary: '#334155',
-    elevated: '#1E293B',
+    primary: '#000000',
+    secondary: '#1C1C1E',
+    tertiary: '#2C2C2E',
+    elevated: '#1C1C1E',
   },
   surface: {
-    default: '#1E293B',
-    paper: '#1E293B',
+    default: '#1C1C1E',
+    paper: '#1C1C1E',
     overlay: 'rgba(255, 255, 255, 0.05)',
-    glass: 'rgba(30, 41, 59, 0.8)',
+    glass: 'rgba(28, 28, 30, 0.8)',
   },
   text: {
     primary: '#F8FAFC',
-    secondary: '#CBD5E1',
-    tertiary: '#94A3B8',
-    disabled: '#475569',
+    secondary: '#ABABAF',
+    tertiary: '#7C7C80',
+    disabled: '#48484A',
   },
   border: {
-    light: '#334155',
-    default: '#475569',
-    dark: '#64748B',
+    light: '#38383A',
+    default: '#48484A',
+    dark: '#636366',
   },
 } as const;
 
