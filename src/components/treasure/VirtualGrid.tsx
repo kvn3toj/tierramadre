@@ -302,7 +302,9 @@ export default function VirtualGrid({
   }
 
   // Calculate row count based on items and columns
-  const rowCount = Math.ceil(items.length / columnCount);
+  // Add 1 extra empty row at the bottom as spacer so the last real row
+  // scrolls fully above the bottom tab bar (95px + safe-area)
+  const rowCount = Math.ceil(items.length / columnCount) + 1;
 
   // Column width as percentage
   const columnWidth = `${100 / columnCount}%`;
