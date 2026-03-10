@@ -481,8 +481,10 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
           sx={{
             position: 'sticky',
             top: 0,
-            backgroundColor: 'var(--surface-secondary)',
-            zIndex: zIndex.base,
+            // Must be fully opaque so scrolling content doesn't bleed through
+            // the translucent sheet behind the sticky header
+            backgroundColor: 'rgb(var(--surface-secondary-rgb))',
+            zIndex: zIndex.sticky,
             paddingTop: spacing.sm,
             paddingX: spacing.md,
             paddingBottom: spacing.sm,
@@ -555,11 +557,11 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                 p: spacing.sm,
                 mb: spacing.xs,
                 borderRadius: radius.lg,
-                bgcolor: alpha(roleColor, 0.06),
+                bgcolor: 'var(--surface-primary)',
                 border: `1px solid ${alpha(roleColor, 0.15)}`,
                 cursor: 'pointer',
                 transition: cssTransition.default,
-                '&:hover': { bgcolor: alpha(roleColor, 0.1) },
+                '&:hover': { bgcolor: 'var(--surface-tertiary)' },
               }}
             >
               <Avatar
@@ -619,44 +621,9 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
           )}
         </Box>
 
-        {/* Grouped Tool Sections */}
-        <Box sx={{ padding: spacing.md }}>
-          {menuSections.map((section) => (
-            <Box key={section.id} sx={{ mb: spacing.md }}>
-              {/* Section Header */}
-              <Typography
-                variant="overline"
-                sx={{
-                  fontSize: iosTypographyScale.caption2,
-                  fontWeight: 600,
-                  color: 'var(--text-secondary)',
-                  letterSpacing: '0.08em',
-                  mb: 1,
-                  display: 'block',
-                  px: spacing.xs,
-                }}
-              >
-                {section.title}
-              </Typography>
-
-              <Box sx={{ display: 'grid', gap: spacing.xs }}>
-                {section.tools.map(renderToolRow)}
-              </Box>
-            </Box>
-          ))}
-
-          {/* Divider */}
-          <Box sx={{ height: '0.5px', bgcolor: 'var(--border-default)', my: spacing.sm }} />
-
-          {/* Bottom Items (Settings + Feedback) */}
-          <Box sx={{ display: 'grid', gap: spacing.xs }}>
-            {bottomTools.map(renderToolRow)}
-          </Box>
-        </Box>
-
-        {/* Quick Settings (toggles + slider) - at bottom per PRD */}
+        {/* Quick Settings (toggles + slider) - right after profile for easy access */}
         {(canToggle || canToggleCurrency) && (
-          <Box sx={{ borderTop: '0.5px solid var(--border-default)' }}>
+          <Box sx={{ borderBottom: '0.5px solid var(--border-default)' }}>
             {/* Price Share Toggle Row - Only for staff */}
             {canToggle && (
               <Box
@@ -822,6 +789,41 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
             )}
           </Box>
         )}
+
+        {/* Grouped Tool Sections */}
+        <Box sx={{ padding: spacing.md }}>
+          {menuSections.map((section) => (
+            <Box key={section.id} sx={{ mb: spacing.md }}>
+              {/* Section Header */}
+              <Typography
+                variant="overline"
+                sx={{
+                  fontSize: iosTypographyScale.caption2,
+                  fontWeight: 600,
+                  color: 'var(--text-secondary)',
+                  letterSpacing: '0.08em',
+                  mb: 1,
+                  display: 'block',
+                  px: spacing.xs,
+                }}
+              >
+                {section.title}
+              </Typography>
+
+              <Box sx={{ display: 'grid', gap: spacing.xs }}>
+                {section.tools.map(renderToolRow)}
+              </Box>
+            </Box>
+          ))}
+
+          {/* Divider */}
+          <Box sx={{ height: '0.5px', bgcolor: 'var(--border-default)', my: spacing.sm }} />
+
+          {/* Bottom Items (Settings + Feedback) */}
+          <Box sx={{ display: 'grid', gap: spacing.xs }}>
+            {bottomTools.map(renderToolRow)}
+          </Box>
+        </Box>
 
       </Box>
 
