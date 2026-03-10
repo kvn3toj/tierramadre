@@ -16,7 +16,7 @@ import IOSNavigationBar, { NavigationBarMode, NavigationAction } from './IOSNavi
 import IOSMoreSheet from './IOSMoreSheet';
 import IOSSettingsSheet from './IOSSettingsSheet';
 import { InvitationBanner } from '../invitation';
-import { primitiveSpacing as spacing, zIndex, defaultShadows } from '../../design-system';
+import { zIndex, defaultShadows } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 
@@ -305,7 +305,8 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         sx={{
           flex: 1,
           minHeight: 0, // Override flexbox implicit min-height: auto so overflowY works
-          paddingBottom: `calc(65px + env(safe-area-inset-bottom) + ${spacing.md})`,
+          // Tab bar: 12px top + 62px pill + 21px bottom + safe-area = 95px + safe-area
+          paddingBottom: `calc(95px + env(safe-area-inset-bottom))`,
           overflowY: 'auto',
           WebkitOverflowScrolling: 'touch',
           // iOS HIG: Improve scroll performance and touch handling
