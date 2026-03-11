@@ -10,7 +10,7 @@
  *   background: emeraldAlpha(opacity.medium);
  */
 
-import { alpha } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { emeraldCore, goldAccent, semanticColors } from '../tokens/colors';
 import { opacity, type OpacityLevel } from '../tokens/opacity';
 
