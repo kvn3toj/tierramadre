@@ -16,6 +16,8 @@ export const es = {
     tools: 'Herramientas',
     vault: 'Bóveda Secreta',
     accounts: 'Cuentas',
+    requests: 'Solicitudes',
+    inventory: 'Inventario',
   },
 
   // Pages
@@ -29,6 +31,9 @@ export const es = {
       spirituality: 'Espiritualidad',
       investment: 'Inversión',
       meditation: 'Meditación',
+      gallery: 'Galeria',
+      followInstagram: 'Síguenos en Instagram',
+      oracle: 'Oráculo',
     },
     gallery: {
       title: 'Galería',
@@ -168,6 +173,22 @@ export const es = {
       label: 'Cotización',
       subtitle: 'Cotizar desde tesoros',
     },
+    invitation: {
+      label: 'Invitar',
+      subtitle: 'Genera un enlace temporal de 24 horas para tus clientes',
+    },
+    requests: {
+      label: 'Solicitudes',
+      subtitle: 'Solicita productos y ve el estado de tus pedidos',
+    },
+    analytics: {
+      label: 'Analytics',
+      subtitle: 'Métricas y Business Health',
+    },
+    feedback: {
+      label: 'Reportar Feedback',
+      subtitle: 'Reporta bugs, sugiere features o mejoras de UX',
+    },
     settings: {
       label: 'Configuración',
       subtitle: 'Tema, idioma y preferencias',
@@ -202,6 +223,18 @@ export const es = {
     delete: 'Eliminar',
     edit: 'Editar',
     back: 'Volver',
+    logout: 'Cerrar Sesión',
+    quote: 'Cotizar',
+    viewAll: 'Ver todos',
+    favoritesOnly: 'Solo favoritos',
+    apply: 'Aplicar',
+    preview: 'Vista Previa',
+    saving: 'Guardando...',
+    share: 'Compartir',
+    send: 'Enviar',
+    clear: 'Limpiar',
+    explore: 'Explorar',
+    retry: 'Reintentar',
   },
 
   // Settings
@@ -221,6 +254,14 @@ export const es = {
     currencyCOPActive: 'Precios en COP',
     currencyMultiplier: 'Multiplicador de precio',
     currencyMultiplierHint: 'Aplica a COP y USD',
+    meditationReminder: 'Recordatorio de Meditación',
+    dailyReminderHint: 'Recibe un recordatorio diario',
+    reminderTime: 'Hora del Recordatorio',
+    reminderTimePrompt: '¿A qué hora te gustaría recibir tu recordatorio diario de meditación?',
+    timeHour: 'Hora',
+    timeMinute: 'Minuto',
+    timeFormatHint: 'Formato 24 horas (ej: 8:00 = 8 AM, 20:00 = 8 PM)',
+    notificationPermissionRequired: 'Habilita las notificaciones en la configuración de tu navegador para usar esta función.',
   },
 
   // Common
@@ -230,7 +271,255 @@ export const es = {
     success: 'Éxito',
     confirm: 'Confirmar',
     noResults: 'No hay resultados',
+    all: 'Todos',
+    uploading: 'Subiendo...',
+    processing: 'Procesando...',
   },
+
+  // Loading
+  loading: {
+    general: 'Cargando...',
+    treasures: 'Cargando tesoros...',
+    product: 'Cargando producto...',
+    selection: 'Cargando selección...',
+    ambassadors: 'Cargando embajadores...',
+    profile: 'Cargando perfil...',
+    information: 'Cargando información...',
+    accounts: 'Cargando cuentas...',
+    simulator: 'Cargando simulador...',
+    receipts: 'Cargando recibos...',
+    quotations: 'Cargando cotizaciones...',
+    quotation: 'Cargando cotización...',
+    vault: 'Cargando bóveda...',
+    analytics: 'Cargando analytics...',
+    generator: 'Cargando generador...',
+    views: 'Cargando vistas...',
+    history: 'Cargando historial...',
+    activity: 'Cargando actividad...',
+    products: 'Cargando productos...',
+    feedback: 'Cargando feedback...',
+    requests: 'Cargando solicitudes...',
+    form: 'Cargando formulario...',
+    portal: 'Cargando portal...',
+    inventory: 'Cargando inventario...',
+    collection: 'Cargando colección...',
+  },
+
+  // Treasure
+  treasure: {
+    totalEmeralds: 'esmeraldas en total',
+    noName: 'Sin nombre',
+    resultsFound: 'productos encontrados',
+    showingOf: 'Mostrando',
+    of: 'de',
+    emeralds: 'esmeraldas',
+    clearHistory: 'Limpiar historial',
+    filter: {
+      available: 'Disponibles',
+      availableHint: 'Esmeraldas listas para vender',
+      sold: 'Vendidas',
+      soldHint: 'Historial de ventas realizadas',
+      all: 'Todas',
+      allHint: 'Ver todo el inventario',
+      allTypes: 'Todo',
+      looseStones: 'Gemas',
+      jewelry: 'Joyería',
+      category: 'Categoría',
+      allCategories: 'Todas',
+      color: 'Color',
+      allColors: 'Todos colores',
+      price: 'Precio',
+      priceRange: 'Rango de Precio',
+      shape: 'Talla',
+      quality: 'Calidad',
+      collection: 'Colección',
+      type: 'Tipo',
+      quantity: 'Cantidad',
+      singleUnit: '1 unidad',
+      lots: '2+ (Lotes)',
+      moreFilters: 'Más filtros',
+      clear: 'Limpiar',
+      clearFilters: 'Limpiar filtros',
+      statusTooltip: 'Filtra por estado de venta',
+    },
+    sort: {
+      newest: 'Más Recientes',
+      priceDesc: 'Precio: Mayor a Menor',
+      priceAsc: 'Precio: Menor a Mayor',
+      nameAsc: 'Nombre A-Z',
+      nameDesc: 'Nombre Z-A',
+      bestQuality: 'Mejor Calidad',
+      itemNumber: 'Número de Ítem',
+      mostSearched: 'Más Buscados',
+    },
+    search: {
+      placeholder: 'Buscar esmeraldas...',
+      ariaLabel: 'Buscar productos',
+      clearAriaLabel: 'Limpiar búsqueda',
+      tooltip: 'Buscar tesoros',
+      title: 'Buscar Tesoros',
+    },
+    quickAccess: {
+      close: 'Cerrar acceso rápido',
+      open: 'Abrir recientes y favoritos',
+      noFavorites: 'Toca el corazón en cualquier esmeralda para guardarla',
+      noRecent: 'Explora esmeraldas para verlas aquí',
+    },
+    empty: {
+      noResults: 'No encontramos esmeraldas con los filtros seleccionados...',
+      clearFilters: 'Limpiar filtros',
+    },
+    error: {
+      loadingFailed: 'Error al cargar el inventario',
+    },
+    favorites: 'Favoritos',
+    recentlyViewed: 'Recientes',
+    savedFilters: {
+      saveSearch: 'Guardar búsqueda actual',
+      save: 'Guardar búsqueda',
+      searchName: 'Nombre de la búsqueda',
+      exampleName: 'Ej: Esmeraldas finas verdes',
+    },
+  },
+
+  // Price Simulator
+  priceSimulator: {
+    title: 'Simulador de Precios',
+    suggestedPrice: 'Precio de Venta Sugerido',
+    pricePerCarat: 'Precio por Quilate',
+    weightInCarats: 'Peso en Quilates (opcional)',
+    noEmeralds: 'No hay esmeraldas en la galería',
+    noProducts: 'No hay productos disponibles en tesoros',
+    allShapes: 'Todas',
+    factorTooltip: 'Multiplicador que se aplica al total de inversión',
+    formula: {
+      price: 'Precio = Inversión × Factor',
+      margin: 'Margen = (Precio - Inversión) / Precio × 100',
+      roi: 'ROI = (Precio - Inversión) / Inversión × 100',
+    },
+  },
+
+  // Valuation
+  valuation: {
+    priceIndex: 'Índice de Precios de Esmeraldas',
+    investmentGradePrice: 'Precio grado inversión por quilate (USD)',
+  },
+
+  // Quotation
+  quotation: {
+    settings: {
+      title: 'Configuración de Cotización',
+      number: 'No. Cotización',
+      phone: 'Teléfono de Contacto',
+    },
+    newQuotation: 'Nueva Cotización',
+    sent: 'Cotización Enviada',
+    sendAnother: 'Enviar Otra',
+    submitting: 'Enviando...',
+    send: 'Enviar Cotización',
+    product: {
+      gemQuantity: 'Cantidad de gemas',
+      design: 'Diseño',
+      designExample: 'Ej: Clásico, Moderno',
+    },
+  },
+
+  // Ambassador
+  ambassador: {
+    searchPlaceholder: 'Buscar embajador por nombre...',
+    noAmbassadors: 'No hay embajadores registrados',
+    clearFilters: 'Limpiar filtros',
+    searchCatalog: 'Buscar en catálogo...',
+    category: 'Categoría',
+    exclusiveCollection: 'Colección Exclusiva',
+    profile: {
+      basicInfo: 'Información Básica',
+      saveError: 'Error al guardar. Intenta de nuevo.',
+    },
+  },
+
+  // Error
+  error: {
+    sectionFailed: 'Algo salió mal al cargar esta sección',
+    somethingWrong: 'Algo salió mal',
+    newVersionAvailable: 'Nueva versión disponible',
+  },
+
+  // Comparison
+  comparison: {
+    clearSelection: 'Limpiar selección',
+    table: 'Tabla de comparación',
+    pricePerCarat: 'Precio/Quilate',
+  },
+
+  // Cart
+  cart: {
+    clear: 'Limpiar',
+    exploreCollection: 'Explorar Colección',
+    sending: 'Enviando...',
+    sendWhatsApp: 'Enviar Consulta por WhatsApp',
+  },
+
+  // Provider
+  provider: {
+    sold: 'Vendidas',
+    quotationHistory: 'Historial de Cotizaciones',
+    noRequests: 'No hay solicitudes',
+  },
+
+  // Feedback
+  feedback: {
+    exampleDescription: 'Ejemplo: El botón de filtros no responde...',
+    submitting: 'Enviando...',
+    send: 'Enviar Feedback',
+    sendError: 'Error al enviar feedback',
+    screenshotError: 'Error al capturar pantalla. Intenta de nuevo.',
+  },
+
+  // Gamification
+  gamification: {
+    maxLevel: '¡Nivel máximo!',
+    streak: 'Racha',
+    level: 'Nivel',
+    xpTotal: 'XP Total',
+    xpToNextLevel: 'XP para nivel',
+    journeyMessage: 'Tu viaje esmeralda continúa',
+    nextMilestone: 'Próximo logro',
+    daysRemaining: 'días restantes',
+    xpProgress: 'Progreso de experiencia',
+    progressToward: 'Progreso hacia',
+    currentStreak: 'Racha actual',
+    days: 'días',
+    achievements: 'Logros',
+    achievementsUnlocked: 'logros desbloqueados',
+    consecutiveDays: 'días consecutivos',
+    quotations: 'Cotizaciones',
+  },
+
+  // Meditation
+  meditation: {
+    types: {
+      breathing: 'Respiración',
+      visual: 'Visual',
+      chakra: 'Chakra',
+      ambient: 'Sonidos',
+      energyShield: 'Escudo',
+      guided: 'Guiada',
+    },
+    tapToStart: 'Toca para comenzar la experiencia inmersiva',
+    startLabel: 'Iniciar',
+  },
+
+  // Daily Quotes
+  dailyQuotes: [
+    { text: 'La esmeralda es el espejo del alma - refleja tu verdad interior', author: 'Proverbio colombiano' },
+    { text: 'En cada esmeralda habita un fragmento de la montaña', author: 'Sabiduría Muzo' },
+    { text: 'El verde profundo revela lo que el corazón anhela', author: 'Tradición ancestral' },
+    { text: 'Quien porta una esmeralda, porta la tierra misma', author: 'Leyenda Muisca' },
+    { text: 'La claridad de la gema refleja la claridad del espíritu', author: 'Filosofía esmeralda' },
+    { text: 'Cada inclusión cuenta una historia de millones de años', author: 'Gemología poética' },
+    { text: 'El poder de la esmeralda reside en su imperfección perfecta', author: 'Maestros artesanos' },
+  ],
 
   // Auth
   auth: {
@@ -251,6 +540,10 @@ export const es = {
     openInBrowser: 'Abrir en navegador',
     copyUrl: 'Copiar enlace',
     urlCopied: 'Copiado',
+    signIn: 'Inicia Sesión',
+    syncMessage: 'Sincroniza tus favoritos y preferencias en todos tus dispositivos',
+    favorites: 'favoritos',
+    saved: 'guardados',
   },
 
   // Profile
@@ -322,5 +615,30 @@ export const es = {
         badge: 'Vitalicia',
       },
     },
+  },
+
+  // Footer
+  footer: {
+    tagline: 'Esmeraldas Colombianas de Alta Calidad',
+    copyright: 'Todos los derechos reservados.',
+    privacy: 'Privacidad',
+    terms: 'Condiciones',
+  },
+
+  // Accessibility
+  accessibility: {
+    imageGallery: 'Galería de imágenes',
+    previousImage: 'Imagen anterior',
+    nextImage: 'Imagen siguiente',
+  },
+
+  // Analytics
+  analytics: {
+    views7Days: 'Vistas acumuladas de los últimos 7 días',
+    last7Days: 'Últimos 7 días',
+    consecutiveDays: 'Días consecutivos',
+    quickSummary: 'Resumen Rápido',
+    viewAll: 'Ver Todas',
+    recentViews: 'Vistas Recientes',
   },
 };

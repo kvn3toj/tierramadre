@@ -29,18 +29,10 @@ export const WelcomeCard: React.FC = () => {
 
   // Daily inspirational quote
   const dailyQuote = useMemo(() => {
-    const quotes = [
-      { text: 'La esmeralda es el espejo del alma - refleja tu verdad interior', author: 'Proverbio colombiano' },
-      { text: 'En cada esmeralda habita un fragmento de la montaña', author: 'Sabiduría Muzo' },
-      { text: 'El verde profundo revela lo que el corazón anhela', author: 'Tradición ancestral' },
-      { text: 'Quien porta una esmeralda, porta la tierra misma', author: 'Leyenda Muisca' },
-      { text: 'La claridad de la gema refleja la claridad del espíritu', author: 'Filosofía esmeralda' },
-      { text: 'Cada inclusión cuenta una historia de millones de años', author: 'Gemología poética' },
-      { text: 'El poder de la esmeralda reside en su imperfección perfecta', author: 'Maestros artesanos' },
-    ];
+    const quotes = t.dailyQuotes;
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
     return quotes[dayOfYear % quotes.length];
-  }, []);
+  }, [t.dailyQuotes]);
 
   return (
     <Box sx={{ px: 2, mb: 2 }} component="section" aria-labelledby="welcome-title">
@@ -57,7 +49,7 @@ export const WelcomeCard: React.FC = () => {
           <Card
             component="article"
             role="article"
-            aria-label={`${t.pages.home.welcome}. Racha actual: ${current} días`}
+            aria-label={`${t.pages.home.welcome}. ${t.gamification.currentStreak}: ${current} ${t.gamification.days}`}
             tabIndex={0}
             sx={{
               background: emeraldAlpha(0.6),
@@ -121,7 +113,7 @@ export const WelcomeCard: React.FC = () => {
                       fontSize: { xs: '0.8rem', sm: '0.875rem' },
                     }}
                   >
-                    Tu viaje esmeralda continúa
+                    {t.gamification.journeyMessage}
                   </Typography>
 
                   {/* Enhanced Streak Badge */}
@@ -156,7 +148,7 @@ export const WelcomeCard: React.FC = () => {
                       strokeWidth={6}
                       color="gradient"
                       showPercentage={false}
-                      label={`Nivel ${gamification.level}`}
+                      label={`${t.gamification.level} ${gamification.level}`}
                     >
                       <Typography
                         variant="h6"
@@ -189,7 +181,7 @@ export const WelcomeCard: React.FC = () => {
                           fontSize: '0.7rem',
                         }}
                       >
-                        Nivel {gamification.level}
+                        {t.gamification.level} {gamification.level}
                       </Typography>
                     </Box>
                   </Box>
@@ -200,12 +192,12 @@ export const WelcomeCard: React.FC = () => {
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                   <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                    {gamification.xp} XP Total
+                    {gamification.xp} {t.gamification.xpTotal}
                   </Typography>
                   <Typography variant="caption" sx={{ opacity: 0.8 }}>
                     {gamification.xpToNextLevel > 0
-                      ? `${gamification.xpToNextLevel} XP para nivel ${gamification.level + 1}`
-                      : '¡Nivel máximo!'}
+                      ? `${gamification.xpToNextLevel} ${t.gamification.xpToNextLevel} ${gamification.level + 1}`
+                      : t.gamification.maxLevel}
                   </Typography>
                 </Box>
                 <Box
@@ -219,7 +211,7 @@ export const WelcomeCard: React.FC = () => {
                   aria-valuenow={gamification.levelProgress}
                   aria-valuemin={0}
                   aria-valuemax={100}
-                  aria-label={`Progreso de experiencia: ${Math.round(gamification.levelProgress)}%`}
+                  aria-label={`${t.gamification.xpProgress}: ${Math.round(gamification.levelProgress)}%`}
                 >
                   <motion.div
                     initial={{ width: 0 }}
@@ -238,7 +230,7 @@ export const WelcomeCard: React.FC = () => {
               {nextMilestone && (
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                    Próximo logro: {nextMilestone.label} ({nextMilestone.daysRemaining} días restantes)
+                    {t.gamification.nextMilestone}: {nextMilestone.label} ({nextMilestone.daysRemaining} {t.gamification.daysRemaining})
                   </Typography>
                   <Box
                     sx={{
@@ -252,7 +244,7 @@ export const WelcomeCard: React.FC = () => {
                     aria-valuenow={current}
                     aria-valuemin={0}
                     aria-valuemax={nextMilestone.days}
-                    aria-label={`Progreso hacia ${nextMilestone.label}`}
+                    aria-label={`${t.gamification.progressToward} ${nextMilestone.label}`}
                   >
                     <motion.div
                       initial={{ width: 0 }}

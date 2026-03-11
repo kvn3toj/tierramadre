@@ -16,6 +16,8 @@ export const en = {
     tools: 'Tools',
     vault: 'Secret Vault',
     accounts: 'Accounts',
+    requests: 'Requests',
+    inventory: 'Inventory',
   },
 
   // Pages
@@ -29,6 +31,9 @@ export const en = {
       spirituality: 'Spirituality',
       investment: 'Investment',
       meditation: 'Meditation',
+      gallery: 'Gallery',
+      followInstagram: 'Follow us on Instagram',
+      oracle: 'Oracle',
     },
     gallery: {
       title: 'Gallery',
@@ -168,6 +173,22 @@ export const en = {
       label: 'Quotation',
       subtitle: 'Quote from treasure collection',
     },
+    invitation: {
+      label: 'Invite',
+      subtitle: 'Generate a temporary 24-hour link for your clients',
+    },
+    requests: {
+      label: 'Requests',
+      subtitle: 'Request products and track your orders',
+    },
+    analytics: {
+      label: 'Analytics',
+      subtitle: 'Metrics and Business Health',
+    },
+    feedback: {
+      label: 'Report Feedback',
+      subtitle: 'Report bugs, suggest features or UX improvements',
+    },
     settings: {
       label: 'Settings',
       subtitle: 'Theme, language and preferences',
@@ -202,6 +223,18 @@ export const en = {
     delete: 'Delete',
     edit: 'Edit',
     back: 'Back',
+    logout: 'Sign Out',
+    quote: 'Quote',
+    viewAll: 'View all',
+    favoritesOnly: 'Favorites only',
+    apply: 'Apply',
+    preview: 'Preview',
+    saving: 'Saving...',
+    share: 'Share',
+    send: 'Send',
+    clear: 'Clear',
+    explore: 'Explore',
+    retry: 'Retry',
   },
 
   // Settings
@@ -221,6 +254,14 @@ export const en = {
     currencyCOPActive: 'Prices in COP',
     currencyMultiplier: 'Price Multiplier',
     currencyMultiplierHint: 'Applies to COP and USD',
+    meditationReminder: 'Meditation Reminder',
+    dailyReminderHint: 'Receive a daily reminder',
+    reminderTime: 'Reminder Time',
+    reminderTimePrompt: 'What time would you like to receive your daily meditation reminder?',
+    timeHour: 'Hour',
+    timeMinute: 'Minute',
+    timeFormatHint: '24-hour format (e.g.: 8:00 = 8 AM, 20:00 = 8 PM)',
+    notificationPermissionRequired: 'Enable notifications in your browser settings to use this feature.',
   },
 
   // Common
@@ -230,7 +271,255 @@ export const en = {
     success: 'Success',
     confirm: 'Confirm',
     noResults: 'No results',
+    all: 'All',
+    uploading: 'Uploading...',
+    processing: 'Processing...',
   },
+
+  // Loading states
+  loading: {
+    general: 'Loading...',
+    treasures: 'Loading treasures...',
+    product: 'Loading product...',
+    selection: 'Loading selection...',
+    ambassadors: 'Loading ambassadors...',
+    profile: 'Loading profile...',
+    information: 'Loading information...',
+    accounts: 'Loading accounts...',
+    simulator: 'Loading simulator...',
+    receipts: 'Loading receipts...',
+    quotations: 'Loading quotations...',
+    quotation: 'Loading quotation...',
+    vault: 'Loading vault...',
+    analytics: 'Loading analytics...',
+    generator: 'Loading generator...',
+    views: 'Loading views...',
+    history: 'Loading history...',
+    activity: 'Loading activity...',
+    products: 'Loading products...',
+    feedback: 'Loading feedback...',
+    requests: 'Loading requests...',
+    form: 'Loading form...',
+    portal: 'Loading portal...',
+    inventory: 'Loading inventory...',
+    collection: 'Loading collection...',
+  },
+
+  // Treasure browser
+  treasure: {
+    totalEmeralds: 'emeralds in total',
+    noName: 'No name',
+    resultsFound: 'products found',
+    showingOf: 'Showing',
+    of: 'of',
+    emeralds: 'emeralds',
+    clearHistory: 'Clear history',
+    filter: {
+      available: 'Available',
+      availableHint: 'Emeralds ready for sale',
+      sold: 'Sold',
+      soldHint: 'Sales history',
+      all: 'All',
+      allHint: 'View entire inventory',
+      allTypes: 'All',
+      looseStones: 'Gems',
+      jewelry: 'Jewelry',
+      category: 'Category',
+      allCategories: 'All',
+      color: 'Color',
+      allColors: 'All colors',
+      price: 'Price',
+      priceRange: 'Price Range',
+      shape: 'Shape',
+      quality: 'Quality',
+      collection: 'Collection',
+      type: 'Type',
+      quantity: 'Quantity',
+      singleUnit: '1 unit',
+      lots: '2+ (Lots)',
+      moreFilters: 'More filters',
+      clear: 'Clear',
+      clearFilters: 'Clear filters',
+      statusTooltip: 'Filter by sale status',
+    },
+    sort: {
+      newest: 'Newest',
+      priceDesc: 'Price: High to Low',
+      priceAsc: 'Price: Low to High',
+      nameAsc: 'Name A-Z',
+      nameDesc: 'Name Z-A',
+      bestQuality: 'Best Quality',
+      itemNumber: 'Item Number',
+      mostSearched: 'Most Searched',
+    },
+    search: {
+      placeholder: 'Search emeralds...',
+      ariaLabel: 'Search products',
+      clearAriaLabel: 'Clear search',
+      tooltip: 'Search treasures',
+      title: 'Search Treasures',
+    },
+    quickAccess: {
+      close: 'Close quick access',
+      open: 'Open recents and favorites',
+      noFavorites: 'Tap the heart on any emerald to save it',
+      noRecent: 'Explore emeralds to see them here',
+    },
+    empty: {
+      noResults: 'No emeralds found with the selected filters...',
+      clearFilters: 'Clear filters',
+    },
+    error: {
+      loadingFailed: 'Error loading inventory',
+    },
+    favorites: 'Favorites',
+    recentlyViewed: 'Recent',
+    savedFilters: {
+      saveSearch: 'Save current search',
+      save: 'Save search',
+      searchName: 'Search name',
+      exampleName: 'E.g.: Fine green emeralds',
+    },
+  },
+
+  // Price Simulator
+  priceSimulator: {
+    title: 'Price Simulator',
+    suggestedPrice: 'Suggested Sale Price',
+    pricePerCarat: 'Price per Carat',
+    weightInCarats: 'Weight in Carats (optional)',
+    noEmeralds: 'No emeralds in the gallery',
+    noProducts: 'No products available in treasures',
+    allShapes: 'All',
+    factorTooltip: 'Multiplier applied to total investment',
+    formula: {
+      price: 'Price = Investment × Factor',
+      margin: 'Margin = (Price - Investment) / Price × 100',
+      roi: 'ROI = (Price - Investment) / Investment × 100',
+    },
+  },
+
+  // Valuation
+  valuation: {
+    priceIndex: 'Emerald Price Index',
+    investmentGradePrice: 'Investment grade price per carat (USD)',
+  },
+
+  // Quotation
+  quotation: {
+    settings: {
+      title: 'Quotation Settings',
+      number: 'Quotation No.',
+      phone: 'Contact Phone',
+    },
+    newQuotation: 'New Quotation',
+    sent: 'Quotation Sent',
+    sendAnother: 'Send Another',
+    submitting: 'Submitting...',
+    send: 'Send Quotation',
+    product: {
+      gemQuantity: 'Gem quantity',
+      design: 'Design',
+      designExample: 'E.g.: Classic, Modern',
+    },
+  },
+
+  // Ambassador
+  ambassador: {
+    searchPlaceholder: 'Search ambassador by name...',
+    noAmbassadors: 'No ambassadors registered',
+    clearFilters: 'Clear filters',
+    searchCatalog: 'Search in catalog...',
+    category: 'Category',
+    exclusiveCollection: 'Exclusive Collection',
+    profile: {
+      basicInfo: 'Basic Information',
+      saveError: 'Error saving. Try again.',
+    },
+  },
+
+  // Error
+  error: {
+    sectionFailed: 'Something went wrong loading this section',
+    somethingWrong: 'Something went wrong',
+    newVersionAvailable: 'New version available',
+  },
+
+  // Comparison
+  comparison: {
+    clearSelection: 'Clear selection',
+    table: 'Comparison table',
+    pricePerCarat: 'Price/Carat',
+  },
+
+  // Cart
+  cart: {
+    clear: 'Clear',
+    exploreCollection: 'Explore Collection',
+    sending: 'Sending...',
+    sendWhatsApp: 'Send Inquiry via WhatsApp',
+  },
+
+  // Provider
+  provider: {
+    sold: 'Sold',
+    quotationHistory: 'Quotation History',
+    noRequests: 'No requests',
+  },
+
+  // Feedback
+  feedback: {
+    exampleDescription: 'Example: The filter button is not responding...',
+    submitting: 'Submitting...',
+    send: 'Send Feedback',
+    sendError: 'Error sending feedback',
+    screenshotError: 'Error capturing screenshot. Try again.',
+  },
+
+  // Gamification
+  gamification: {
+    maxLevel: 'Max level!',
+    streak: 'Streak',
+    level: 'Level',
+    xpTotal: 'XP Total',
+    xpToNextLevel: 'XP to level',
+    journeyMessage: 'Your emerald journey continues',
+    nextMilestone: 'Next milestone',
+    daysRemaining: 'days remaining',
+    xpProgress: 'Experience progress',
+    progressToward: 'Progress toward',
+    currentStreak: 'Current streak',
+    days: 'days',
+    achievements: 'Achievements',
+    achievementsUnlocked: 'achievements unlocked',
+    consecutiveDays: 'consecutive days',
+    quotations: 'Quotations',
+  },
+
+  // Meditation
+  meditation: {
+    types: {
+      breathing: 'Breathing',
+      visual: 'Visual',
+      chakra: 'Chakra',
+      ambient: 'Ambient',
+      energyShield: 'Shield',
+      guided: 'Guided',
+    },
+    tapToStart: 'Tap to start the immersive experience',
+    startLabel: 'Start',
+  },
+
+  // Daily Quotes
+  dailyQuotes: [
+    { text: 'The emerald is the mirror of the soul - it reflects your inner truth', author: 'Colombian proverb' },
+    { text: 'In each emerald lives a fragment of the mountain', author: 'Muzo wisdom' },
+    { text: 'The deep green reveals what the heart longs for', author: 'Ancestral tradition' },
+    { text: 'Whoever wears an emerald, carries the earth itself', author: 'Muisca legend' },
+    { text: 'The clarity of the gem reflects the clarity of the spirit', author: 'Emerald philosophy' },
+    { text: 'Each inclusion tells a story of millions of years', author: 'Poetic gemology' },
+    { text: 'The power of the emerald lies in its perfect imperfection', author: 'Master artisans' },
+  ],
 
   // Auth
   auth: {
@@ -251,6 +540,10 @@ export const en = {
     openInBrowser: 'Open in browser',
     copyUrl: 'Copy link',
     urlCopied: 'Copied',
+    signIn: 'Sign In',
+    syncMessage: 'Sync your favorites and preferences across all your devices',
+    favorites: 'favorites',
+    saved: 'saved',
   },
 
   // Profile
@@ -322,5 +615,30 @@ export const en = {
         badge: 'Lifetime',
       },
     },
+  },
+
+  // Footer
+  footer: {
+    tagline: 'High Quality Colombian Emeralds',
+    copyright: 'All rights reserved.',
+    privacy: 'Privacy',
+    terms: 'Terms',
+  },
+
+  // Accessibility
+  accessibility: {
+    imageGallery: 'Image gallery',
+    previousImage: 'Previous image',
+    nextImage: 'Next image',
+  },
+
+  // Analytics
+  analytics: {
+    views7Days: 'Cumulative views for the last 7 days',
+    last7Days: 'Last 7 days',
+    consecutiveDays: 'Consecutive days',
+    quickSummary: 'Quick Summary',
+    viewAll: 'View All',
+    recentViews: 'Recent Views',
   },
 };

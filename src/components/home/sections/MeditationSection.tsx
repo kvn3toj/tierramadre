@@ -26,16 +26,16 @@ import { fadeInUp, cardVariants, cssTransition } from '../../../design-system/to
 import { MeditationModal } from '../../meditation';
 
 // =============================================================================
-// MEDITATION TYPE LABELS
+// MEDITATION TYPE KEY MAP
 // =============================================================================
 
-const meditationTypeLabels: Record<MeditationType, string> = {
-  breathing: 'Respiración',
-  visual: 'Visual',
-  chakra: 'Chakra',
-  ambient: 'Sonidos',
-  'energy-shield': 'Escudo',
-  guided: 'Guiada',
+const meditationTypeKeys: Record<MeditationType, 'breathing' | 'visual' | 'chakra' | 'ambient' | 'energyShield' | 'guided'> = {
+  breathing: 'breathing',
+  visual: 'visual',
+  chakra: 'chakra',
+  ambient: 'ambient',
+  'energy-shield': 'energyShield',
+  guided: 'guided',
 };
 
 // Use Tierra Madre symbol for breathing, emojis for others
@@ -127,7 +127,7 @@ export const MeditationSection: React.FC = () => {
                     <Chip
                       size="small"
                       icon={<>{getMeditationIcon(dailyMeditation.type)}</>}
-                      label={meditationTypeLabels[dailyMeditation.type]}
+                      label={t.meditation.types[meditationTypeKeys[dailyMeditation.type]]}
                       sx={{
                         mb: 1,
                         bgcolor: `${emeraldCore.primary}20`,
@@ -171,7 +171,7 @@ export const MeditationSection: React.FC = () => {
                       e.stopPropagation();
                       handleOpenMeditation();
                     }}
-                    aria-label="Iniciar meditación"
+                    aria-label={`${t.meditation.startLabel} ${t.pages.home.meditation}`}
                     sx={{
                       bgcolor: emeraldCore.primary,
                       color: 'white',
@@ -202,7 +202,7 @@ export const MeditationSection: React.FC = () => {
                     textAlign: 'center',
                   }}
                 >
-                  Toca para comenzar la experiencia inmersiva
+                  {t.meditation.tapToStart}
                 </Typography>
               </CardContent>
             </Card>

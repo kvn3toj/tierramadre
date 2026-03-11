@@ -10,6 +10,7 @@ import { Box, Typography, Tooltip, alpha } from '@mui/material';
 import { Trophy, Zap, Star } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { useTracking } from '../../contexts/TrackingContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
 import { cssTransition, accentColors, primitiveColors } from '../../design-system';
 import ProgressRing from './ProgressRing';
@@ -26,6 +27,7 @@ const LevelBadge: React.FC<LevelBadgeProps> = ({
   showAchievements = true,
 }) => {
   const { mode } = useThemeMode();
+  const { t } = useLanguage();
   const { achievements, levelInfo, unlockedAchievements, metrics } = useTracking();
   const isLight = mode === 'light';
 
@@ -47,16 +49,16 @@ const LevelBadge: React.FC<LevelBadgeProps> = ({
         title={
           <Box sx={{ p: 0.5 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-              Nivel {levelInfo.level}: {levelInfo.name}
+              {t.gamification.level} {levelInfo.level}: {levelInfo.name}
             </Typography>
             <Typography variant="caption" sx={{ display: 'block', opacity: 0.8 }}>
-              {achievements.totalXp} XP total
+              {achievements.totalXp} {t.gamification.xpTotal}
             </Typography>
             <Typography variant="caption" sx={{ display: 'block', opacity: 0.8 }}>
-              {unlockedAchievements.length} logros desbloqueados
+              {unlockedAchievements.length} {t.gamification.achievementsUnlocked}
             </Typography>
             <Typography variant="caption" sx={{ display: 'block', opacity: 0.8 }}>
-              {metrics.streak} días consecutivos
+              {metrics.streak} {t.gamification.consecutiveDays}
             </Typography>
           </Box>
         }
@@ -205,7 +207,7 @@ const LevelBadge: React.FC<LevelBadgeProps> = ({
               </Typography>
             </Box>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Logros
+              {t.gamification.achievements}
             </Typography>
           </Box>
         )}
@@ -226,7 +228,7 @@ const LevelBadge: React.FC<LevelBadgeProps> = ({
             </Typography>
           </Box>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Racha
+            {t.gamification.streak}
           </Typography>
         </Box>
 
@@ -246,7 +248,7 @@ const LevelBadge: React.FC<LevelBadgeProps> = ({
             </Typography>
           </Box>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Cotizaciones
+            {t.gamification.quotations}
           </Typography>
         </Box>
       </Box>
