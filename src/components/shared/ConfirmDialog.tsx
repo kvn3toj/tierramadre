@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { emeraldCore } from '../../design-system/tokens/colors';
 import { fontWeights } from '../../design-system';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -31,12 +32,15 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   open,
   title,
   message,
-  confirmLabel = 'Eliminar',
-  cancelLabel = 'Cancelar',
+  confirmLabel,
+  cancelLabel,
   confirmColor = 'error',
   onConfirm,
   onCancel,
 }) => {
+  const { t } = useLanguage();
+  const finalConfirmLabel = confirmLabel || t.actions.delete;
+  const finalCancelLabel = cancelLabel || t.actions.cancel;
   return (
     <Dialog
       open={open}
@@ -69,7 +73,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             color: 'text.primary',
           }}
         >
-          {cancelLabel}
+          {finalCancelLabel}
         </Button>
         <Button
           onClick={onConfirm}
@@ -85,7 +89,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             }),
           }}
         >
-          {confirmLabel}
+          {finalConfirmLabel}
         </Button>
       </DialogActions>
     </Dialog>

@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { MediaItem, CATEGORY_LABELS } from './types';
 import { brand, darkTokens, lightTokens, cssTransition, blurValues, zIndex } from '../../design-system';
+import { useLanguage } from '../../contexts/LanguageContext';
 import ImageLightbox from './ImageLightbox';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import ProtectedContent from '../shared/ProtectedContent';
@@ -54,6 +55,7 @@ export default function MediaGallery({
   onAddMedia,
   isEditing = false,
 }: MediaGalleryProps) {
+  const { t } = useLanguage();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -689,7 +691,7 @@ export default function MediaGallery({
                 e.stopPropagation();
                 handlePrevious();
               }}
-              aria-label="Imagen anterior"
+              aria-label={t.accessibility.previousImage}
               sx={{
                 position: 'absolute',
                 left: 12,
@@ -706,7 +708,7 @@ export default function MediaGallery({
                 e.stopPropagation();
                 handleNext();
               }}
-              aria-label="Imagen siguiente"
+              aria-label={t.accessibility.nextImage}
               sx={{
                 position: 'absolute',
                 right: 12,

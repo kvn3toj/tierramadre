@@ -20,6 +20,7 @@ import logoPlaceholder from '../../assets/logo-symbol.png';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { TreasureItem } from '../../types';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
@@ -48,6 +49,7 @@ function RecentlyViewedCarousel({
   title = 'Visto recientemente',
   maxItems = 10,
 }: RecentlyViewedCarouselProps) {
+  const { t } = useLanguage();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -158,7 +160,7 @@ function RecentlyViewedCarousel({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           {/* Clear button */}
           {onClear && (
-            <Tooltip title="Limpiar historial">
+            <Tooltip title={t.treasure.clearHistory}>
               <IconButton
                 onClick={onClear}
                 size="small"

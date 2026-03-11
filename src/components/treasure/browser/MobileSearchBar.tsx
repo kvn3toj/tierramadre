@@ -14,6 +14,7 @@ import {
 import { Search, X, Heart, SlidersHorizontal, Clock } from 'lucide-react';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
 import { accentColors, blurValues, zIndex, cssTransition } from '../../../design-system';
+import { useLanguage } from '../../../contexts/LanguageContext';
 import { ActiveFilterChips } from '../';
 import { useCurrencyFormat } from '../../../contexts/CurrencyContext';
 import { usePriceShare } from '../../../contexts/PriceShareContext';
@@ -87,6 +88,7 @@ export default function MobileSearchBar({
   onClearRecent,
   favoriteItems = [],
 }: MobileSearchBarProps) {
+  const { t } = useLanguage();
   const theme = useTheme();
   const [quickAccessOpen, setQuickAccessOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<QuickAccessTab>('recent');
@@ -144,10 +146,10 @@ export default function MobileSearchBar({
           <TextField
             fullWidth
             size="small"
-            placeholder="Buscar esmeraldas..."
+            placeholder={t.treasure.search.placeholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            inputProps={{ 'aria-label': 'Buscar productos' }}
+            inputProps={{ 'aria-label': t.treasure.search.ariaLabel }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -159,7 +161,7 @@ export default function MobileSearchBar({
                   <IconButton
                     size="small"
                     onClick={() => setSearch('')}
-                    aria-label="Limpiar busqueda"
+                    aria-label={t.treasure.search.clearAriaLabel}
                     sx={{ width: 36, height: 36 }}
                   >
                     <X size={14} />
@@ -186,7 +188,7 @@ export default function MobileSearchBar({
           {!isProviderMode && hasQuickAccessContent && (
             <IconButton
               onClick={handleQuickAccessToggle}
-              aria-label={quickAccessOpen ? 'Cerrar acceso rapido' : 'Abrir recientes y favoritos'}
+              aria-label={quickAccessOpen ? t.treasure.quickAccess.close : t.treasure.quickAccess.open}
               aria-expanded={quickAccessOpen}
               sx={{
                 width: 38,
@@ -333,7 +335,7 @@ export default function MobileSearchBar({
                 letterSpacing: '0.01em',
               }}
             >
-              {filteredCount} tesoros
+              {filteredCount} {t.treasure.totalEmeralds}
             </Typography>
           </Box>
         )}
@@ -385,7 +387,7 @@ export default function MobileSearchBar({
                     color: activeTab === 'recent' ? emeraldCore.primary : theme.palette.text.secondary,
                   }}
                 >
-                  Recientes ({recentlyViewedItems.length})
+                  {t.treasure.recentlyViewed} ({recentlyViewedItems.length})
                 </Typography>
               </Box>
             )}
@@ -423,7 +425,7 @@ export default function MobileSearchBar({
                     color: activeTab === 'favorites' ? accentColors.error.light : theme.palette.text.secondary,
                   }}
                 >
-                  Favoritos ({favoritesCount})
+                  {t.treasure.favorites} ({favoritesCount})
                 </Typography>
               </Box>
             )}
@@ -449,7 +451,7 @@ export default function MobileSearchBar({
                     '&:focus-visible': { outline: `2px solid ${emeraldCore.primary}`, outlineOffset: 2 },
                   }}
                 >
-                  Limpiar
+                  {t.treasure.filter.clear}
                 </Typography>
               )}
               {activeTab === 'favorites' && favoritesCount > 0 && (
@@ -476,7 +478,7 @@ export default function MobileSearchBar({
                     '&:focus-visible': { outline: `2px solid ${emeraldCore.primary}`, outlineOffset: 2 },
                   }}
                 >
-                  {showFavoritesOnly ? 'Ver todos' : 'Solo favoritos'}
+                  {showFavoritesOnly ? t.actions.viewAll : t.actions.favoritesOnly}
                 </Typography>
               )}
             </Box>
@@ -515,8 +517,8 @@ export default function MobileSearchBar({
             <Box sx={{ py: 2, textAlign: 'center' }}>
               <Typography sx={{ fontSize: '0.7rem', color: theme.palette.text.secondary }}>
                 {activeTab === 'favorites'
-                  ? 'Toca el corazon en cualquier esmeralda para guardarla'
-                  : 'Explora esmeraldas para verlas aqui'}
+                  ? t.treasure.quickAccess.noFavorites
+                  : t.treasure.quickAccess.noRecent}
               </Typography>
             </Box>
           )}

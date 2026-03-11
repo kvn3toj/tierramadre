@@ -15,7 +15,7 @@ import { Close, DarkMode, LightMode, Language, Visibility, VisibilityOff, Attach
 import { alpha } from '@mui/material/styles';
 import { radius, layoutConstants, iosTypographyScale, blackAlpha, blurValues, primitiveColors, primitiveSpacing as spacing, zIndex } from '../../design-system';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useLanguage } from '../../contexts/LanguageContext';
+import { useLanguage, LANGUAGE_OPTIONS } from '../../contexts/LanguageContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import MeditationReminderSetting from '../settings/MeditationReminderSetting';
@@ -140,13 +140,13 @@ const SettingToggleItem: React.FC<SettingToggleItemProps> = ({
 
 const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) => {
   const { mode, toggleTheme } = useTheme();
-  const { language, t, toggleLanguage } = useLanguage();
+  const { language, t, setLanguage } = useLanguage();
   const { showPrices, togglePriceShare, canToggle } = usePriceShare();
   const { currency, toggleCurrency, canToggleCurrency, multiplier, setMultiplier } = useCurrency();
 
   const isDarkMode = mode === 'dark';
   const isUSD = currency === 'USD';
-  const isEnglish = language === 'en';
+  const currentLangOption = LANGUAGE_OPTIONS.find(opt => opt.code === language);
 
   return (
     <>
@@ -248,16 +248,101 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({ open, onClose }) =>
             accentColor={primitiveColors.system.yellow.light}
           />
 
-          {/* Language Toggle */}
-          <SettingToggleItem
-            icon={<Language sx={{ fontSize: '24px', color: primitiveColors.system.blue.light }} />}
-            iconBgColor={alpha(primitiveColors.system.blue.light, 0.08)}
-            title={t.settings.language}
-            subtitle={isEnglish ? t.settings.english : t.settings.spanish}
-            checked={isEnglish}
-            onChange={toggleLanguage}
-            accentColor={primitiveColors.system.blue.light}
-          />
+          {/* Language Selector */}
+          <Box
+            sx={{
+              padding: spacing.sm,
+              backgroundColor: 'var(--surface-primary)',
+              borderRadius: spacing.md,
+            }}
+          >
+            {/* Language header row */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: spacing.sm, mb: spacing.sm }}>
+              <Box
+                sx={{
+                  width: `${layoutConstants.minTouchTarget}px`,
+                  height: `${layoutConstants.minTouchTarget}px`,
+                  borderRadius: radius.md,
+                  backgroundColor: alpha(primitiveColors.system.blue.light, 0.08),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Language sx={{ fontSize: '24px', color: primitiveColors.system.blue.light }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontSize: iosTypographyScale.headline,
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  {t.settings.language}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ fontSize: iosTypographyScale.footnote, color: 'var(--text-secondary)' }}
+                >
+                  {currentLangOption?.flag} {currentLangOption?.label}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Language options grid */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: spacing.xs,
+              }}
+            >
+              {LANGUAGE_OPTIONS.map((opt) => (
+                <Box
+                  key={opt.code}
+                  onClick={() => setLanguage(opt.code)}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px',
+                    padding: spacing.xs,
+                    borderRadius: radius.md,
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s',
+                    backgroundColor: language === opt.code
+                      ? alpha(primitiveColors.system.blue.light, 0.12)
+                      : 'transparent',
+                    border: language === opt.code
+                      ? `1.5px solid ${primitiveColors.system.blue.light}`
+                      : '1.5px solid transparent',
+                    '&:active': {
+                      backgroundColor: alpha(primitiveColors.system.blue.light, 0.08),
+                    },
+                  }}
+                >
+                  <Typography sx={{ fontSize: '20px', lineHeight: 1 }}>
+                    {opt.flag}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: iosTypographyScale.caption2,
+                      fontWeight: language === opt.code ? 600 : 400,
+                      color: language === opt.code
+                        ? primitiveColors.system.blue.light
+                        : 'var(--text-secondary)',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {opt.label}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
 
           {/* Price Share Toggle - Only for staff */}
           {canToggle && (

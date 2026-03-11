@@ -27,6 +27,7 @@ import {
 } from '@mui/material';
 import { X, Scale, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { TreasureItem } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
@@ -113,6 +114,7 @@ export default function ComparisonModal({
   onClose,
   items,
 }: ComparisonModalProps) {
+  const { t } = useLanguage();
   const { formatFullCurrency } = useCurrencyFormat();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -189,7 +191,7 @@ export default function ComparisonModal({
       ) : (
         <DialogContent sx={{ p: 0 }}>
           <TableContainer component={Paper} elevation={0}>
-            <Table sx={{ minWidth: 600 }} aria-label="tabla de comparación">
+            <Table sx={{ minWidth: 600 }} aria-label={t.comparison.table}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700, width: 150 }}>Atributo</TableCell>
@@ -247,7 +249,7 @@ export default function ComparisonModal({
                 {/* Price per Carat (only for loose stones) */}
                 {items.some(i => !i.isJewelry && typeof i.peso === 'number') && (
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600 }}>Precio/Quilate</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{t.comparison.pricePerCarat}</TableCell>
                     {items.map((item, idx) => {
                       if (item.isJewelry || typeof item.peso !== 'number' || item.peso === 0) {
                         return (

@@ -20,6 +20,7 @@ import { emeraldCore } from '../../../design-system/tokens/colors';
 import { fadeInUp, cardVariants, cssTransition } from '../../../design-system/tokens/motion';
 import { blurValues } from '../../../design-system';
 import { blackAlpha, whiteAlpha } from '../../../design-system/utils/colorUtils';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 // =============================================================================
 // GALLERY DATA
@@ -59,6 +60,7 @@ type CategoryFilter = 'all' | 'gems' | 'rings';
 // =============================================================================
 
 export const GallerySection: React.FC = () => {
+  const { t } = useLanguage();
   const [filter, setFilter] = useState<CategoryFilter>('all');
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -92,7 +94,7 @@ export const GallerySection: React.FC = () => {
                 component="h2"
                 sx={{ fontWeight: 600, color: 'var(--text-primary)' }}
               >
-                Galeria
+                {t.pages.home.gallery}
               </Typography>
 
               {/* Navigation arrows (desktop) */}

@@ -27,6 +27,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { Emerald, TreasureItem } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { studioColors, studioShadows, accentColors } from '../../design-system';
 import { semanticColors, goldAccent, surfacesLight } from '../../design-system/tokens/colors';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
@@ -91,7 +92,10 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
   shapeFilter,
   setShapeFilter,
   uniqueShapes,
-}) => (
+}) => {
+  const { t } = useLanguage();
+
+  return (
   <Box sx={{ mb: 3 }}>
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -103,7 +107,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
       <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
         <SourceChip
           icon={<Image size={12} />}
-          label={`Galeria (${emeralds.length})`}
+          label={`${t.pages.home.gallery} (${emeralds.length})`}
           active={productSource === 'gallery'}
           onClick={() => setProductSource('gallery')}
         />
@@ -200,7 +204,8 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
       />
     )}
   </Box>
-);
+  );
+};
 
 // =============================================================================
 // SUB-COMPONENTS
@@ -250,6 +255,7 @@ const GalleryAutocomplete: React.FC<GalleryAutocompleteProps> = ({
   setProductName,
   handleEmeraldSelect,
 }) => {
+  const { t } = useLanguage();
   const { formatFullCurrency: formatCurrency } = useCurrencyFormat();
   return (
   <Autocomplete
@@ -346,7 +352,7 @@ const GalleryAutocomplete: React.FC<GalleryAutocompleteProps> = ({
     noOptionsText={
       <Box sx={{ py: 2, textAlign: 'center' }}>
         <Typography variant="body2" sx={{ color: studioColors.textSecondary }}>
-          No hay esmeraldas en la galeria
+          {t.priceSimulator.noEmeralds}
         </Typography>
         <Typography variant="caption" sx={{ color: studioColors.textMuted }}>
           Agrega esmeraldas en la seccion "Subir"
@@ -387,6 +393,7 @@ const TreasureAutocomplete: React.FC<TreasureAutocompleteProps> = ({
   setShapeFilter,
   uniqueShapes,
 }) => {
+  const { t } = useLanguage();
   const { formatFullCurrency: formatCurrency } = useCurrencyFormat();
   return (
   <>
@@ -420,7 +427,7 @@ const TreasureAutocomplete: React.FC<TreasureAutocompleteProps> = ({
       {uniqueShapes.map(shape => (
         <FilterChip
           key={shape}
-          label={shape === 'all' ? 'Todas' : shape}
+          label={shape === 'all' ? t.priceSimulator.allShapes : shape}
           active={shapeFilter === shape}
           onClick={() => setShapeFilter(shape)}
           variant="secondary"
@@ -555,7 +562,7 @@ const TreasureAutocomplete: React.FC<TreasureAutocompleteProps> = ({
       noOptionsText={
         <Box sx={{ py: 2, textAlign: 'center' }}>
           <Typography variant="body2" sx={{ color: studioColors.textSecondary }}>
-            No hay productos disponibles en tesoros
+            {t.priceSimulator.noProducts}
           </Typography>
         </Box>
       }

@@ -7,6 +7,7 @@ import { Box, Typography, Paper, LinearProgress, alpha } from '@mui/material';
 import { TrendingUp, Gem, Percent, DollarSign, ArrowUpRight } from 'lucide-react';
 import { PricingMetrics } from '../../hooks/usePriceCalculation';
 import { formatPercent } from '../../utils/formatting';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { studioColors, studioGradients, studioShadows, accentColors, zIndex, fontWeights, fontFamilies } from '../../design-system';
 
@@ -23,6 +24,7 @@ export const PricingResults: React.FC<PricingResultsProps> = ({
   caratWeight,
   marginProgress,
 }) => {
+  const { t } = useLanguage();
   const { formatFullCurrency: formatCurrency } = useCurrencyFormat();
   return (
     <Paper
@@ -83,7 +85,7 @@ export const PricingResults: React.FC<PricingResultsProps> = ({
               <TrendingUp size={18} color={studioColors.emerald} />
             </Box>
             <Typography variant="body1" sx={{ fontWeight: fontWeights.semibold, color: alpha('#FFFFFF', 0.9) }}>
-              Precio de Venta Sugerido
+              {t.priceSimulator.suggestedPrice}
             </Typography>
           </Box>
 
@@ -135,7 +137,7 @@ export const PricingResults: React.FC<PricingResultsProps> = ({
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Gem size={16} color={studioColors.gold} />
                   <Typography variant="body2" sx={{ color: alpha('#FFFFFF', 0.85), fontWeight: fontWeights.medium }}>
-                    Precio por Quilate
+                    {t.priceSimulator.pricePerCarat}
                   </Typography>
                 </Box>
                 <Typography

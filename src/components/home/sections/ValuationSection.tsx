@@ -21,6 +21,7 @@ import {
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import { TrendingUp, AutoGraph } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../../contexts/LanguageContext';
 import { emeraldCore, goldAccent } from '../../../design-system/tokens/colors';
 import { emeraldShadows, defaultShadows } from '../../../design-system/tokens/shadows';
 import { cssTransition } from '../../../design-system';
@@ -134,6 +135,7 @@ function calculateXAxisTicks(startYear: number, endYear: number): number[] {
 // =============================================================================
 
 export const ValuationSection: React.FC = () => {
+  const { t } = useLanguage();
   const muiTheme = useMuiTheme();
   const isDarkMode = muiTheme.palette.mode === 'dark';
   const navigate = useNavigate();
@@ -212,7 +214,7 @@ export const ValuationSection: React.FC = () => {
                     letterSpacing: '-0.01em',
                   }}
                 >
-                  Indice de Precios de Esmeraldas
+                  {t.valuation.priceIndex}
                 </Typography>
                 <Typography
                   sx={{
@@ -221,7 +223,7 @@ export const ValuationSection: React.FC = () => {
                     mt: 0.25,
                   }}
                 >
-                  Precio grado inversion por quilate (USD)
+                  {t.valuation.investmentGradePrice}
                 </Typography>
               </Box>
               <Box

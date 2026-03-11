@@ -26,6 +26,7 @@ import {
   Package,
   X,
 } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useCart } from '../hooks/useCart';
 import { useWhatsAppContact } from '../hooks/useWhatsAppContact';
 import { useIsGuest, useGuestCanSeePrices } from '../hooks/useAuth';
@@ -37,6 +38,7 @@ import { useCurrencyFormat } from '../contexts/CurrencyContext';
 import { fontWeights } from '../design-system';
 
 export default function CartPage() {
+  const { t } = useLanguage();
   const { formatCurrency } = useCurrencyFormat();
   const navigate = useNavigate();
   const { mode } = useThemeMode();
@@ -137,7 +139,7 @@ export default function CartPage() {
             startIcon={<Trash2 size={16} />}
             onClick={clearCart}
           >
-            Limpiar
+            {t.cart.clear}
           </Button>
         )}
       </Box>
@@ -180,7 +182,7 @@ export default function CartPage() {
               color: '#FFFFFF',
             }}
           >
-            Explorar Colección
+            {t.cart.exploreCollection}
           </Button>
         </Paper>
       ) : (
@@ -325,7 +327,7 @@ export default function CartPage() {
               },
             }}
           >
-            {isLoading ? 'Enviando...' : 'Enviar Consulta por WhatsApp'}
+            {isLoading ? t.cart.sending : t.cart.sendWhatsApp}
           </Button>
 
           <Typography

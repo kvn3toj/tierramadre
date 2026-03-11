@@ -8,6 +8,7 @@ import { Box, Typography, Button, Stack, TextField, Alert, CircularProgress } fr
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SendIcon from '@mui/icons-material/Send';
 import { alpha } from '@mui/material/styles';
+import { useLanguage } from '../../../contexts/LanguageContext';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 
 interface DescribeStepProps {
@@ -27,6 +28,7 @@ export default function DescribeStep({
   isSubmitting,
   error,
 }: DescribeStepProps) {
+  const { t } = useLanguage();
   const canSubmit = description.trim().length >= 10;
 
   return (
@@ -54,7 +56,7 @@ export default function DescribeStep({
         rows={5}
         value={description}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Ejemplo: El botón de filtros no responde al hacer clic. Esperaba que abriera el menú de filtros pero no pasa nada..."
+        placeholder={t.feedback.exampleDescription}
         sx={{
           flex: 1,
           '& .MuiOutlinedInput-root': {
@@ -127,7 +129,7 @@ export default function DescribeStep({
             },
           }}
         >
-          {isSubmitting ? 'Enviando...' : 'Enviar Feedback'}
+          {isSubmitting ? t.feedback.submitting : t.feedback.send}
         </Button>
       </Stack>
     </Box>

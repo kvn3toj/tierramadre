@@ -38,6 +38,7 @@ import {
   Person as PersonIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
+  InfoOutlined as InfoIcon,
 } from '@mui/icons-material';
 import { QRCodeSVG } from 'qrcode.react';
 import { useInvitation } from '../../hooks/useInvitation';
@@ -89,7 +90,7 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
       guestContact: contactInfo,
       contactType,
       ...(showPrices && { guestCurrencyMode: guestCurrency }),
-      ...(showPrices && guestCurrency === 'USD' && { guestMultiplier }),
+      ...(showPrices && { guestMultiplier }),
     });
   };
 
@@ -221,10 +222,23 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
         </DialogTitle>
 
         <DialogContent sx={{ pt: 1 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5, lineHeight: 1.5 }}>
-            Genera un enlace de acceso temporal para que tus clientes exploren
-            nuestra coleccion de esmeraldas colombianas.
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.5 }}>
+            Genera un enlace temporal para que tu cliente explore esmeraldas colombianas.
           </Typography>
+
+          {/* Step indicator */}
+          {!lastInvitation && (
+            <Box sx={{ display: 'flex', gap: 0.75, justifyContent: 'center', mb: 2 }}>
+              <Box sx={{ width: 24, height: 6, borderRadius: '3px', bgcolor: brand.emerald[500] }} />
+              <Box sx={{ width: 8, height: 6, borderRadius: '3px', bgcolor: 'divider' }} />
+            </Box>
+          )}
+          {lastInvitation && (
+            <Box sx={{ display: 'flex', gap: 0.75, justifyContent: 'center', mb: 2 }}>
+              <Box sx={{ width: 8, height: 6, borderRadius: '3px', bgcolor: brand.emerald[300] }} />
+              <Box sx={{ width: 24, height: 6, borderRadius: '3px', bgcolor: brand.emerald[500] }} />
+            </Box>
+          )}
 
           {error && (
             <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>{error}</Alert>
@@ -256,11 +270,35 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                 sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
               />
 
-              {/* Contact fields */}
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-                Contacto (al menos uno)
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1.5, mb: 2.5, flexDirection: { xs: 'column', sm: 'row' } }}>
+              {/* Contact fields — grouped card */}
+              <Box
+                sx={{
+                  border: '1px solid',
+                  borderColor: (guestEmail || guestPhone) ? brand.emerald[200] : 'divider',
+                  borderRadius: '12px',
+                  p: 1.5,
+                  mb: 2.5,
+                  transition: cssTransition.default,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                    Contacto
+                  </Typography>
+                  <Box
+                    sx={{
+                      fontSize: '0.65rem',
+                      color: 'text.disabled',
+                      bgcolor: 'action.hover',
+                      px: 0.75,
+                      py: 0.15,
+                      borderRadius: '4px',
+                    }}
+                  >
+                    al menos uno
+                  </Box>
+                </Box>
+              <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' } }}>
                 <TextField
                   fullWidth
                   label="Email"
@@ -298,50 +336,30 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                 />
               </Box>
+              </Box>
 
-              {/* Pricing toggle */}
+              {/* Divider before pricing section */}
+              <Box sx={{ height: '1px', bgcolor: 'divider', mb: 2.5, opacity: 0.6 }} />
+
+              {/* Pricing toggle — compact row */}
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  px: 2,
-                  py: 1.5,
-                  mb: 3,
-                  borderRadius: '14px',
-                  border: '1px solid',
-                  borderColor: showPrices ? brand.emerald[200] : 'divider',
-                  bgcolor: showPrices ? `${brand.emerald[50]}60` : 'transparent',
-                  transition: cssTransition.default,
+                  mb: showPrices ? 1.5 : 2.5,
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Box
-                    sx={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      bgcolor: showPrices ? brand.emerald[100] : 'action.hover',
-                      transition: cssTransition.default,
-                    }}
-                  >
-                    <PriceIcon fontSize="small" sx={{ color: showPrices ? brand.emerald[600] : 'text.disabled' }} />
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" fontWeight={typography.weight.medium} sx={{ lineHeight: 1.3 }}>
-                      {showPrices ? 'Con precios' : 'Solo informacion'}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {showPrices ? 'El invitado vera los precios' : 'Solo caracteristicas, sin precios'}
-                    </Typography>
-                  </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PriceIcon fontSize="small" sx={{ color: showPrices ? brand.emerald[600] : 'text.disabled', transition: cssTransition.default }} />
+                  <Typography variant="body2" fontWeight={typography.weight.medium}>
+                    Mostrar precios
+                  </Typography>
                 </Box>
                 <Switch
                   checked={showPrices}
                   onChange={(e) => setShowPrices(e.target.checked)}
+                  inputProps={{ 'aria-label': 'Mostrar precios al invitado' }}
                   sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': { color: brand.emerald[600] },
                     '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: brand.emerald[400] },
@@ -349,102 +367,119 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                 />
               </Box>
 
-              {/* Guest Currency Selection - Only when prices are ON */}
+              {/* Currency + Multiplier — indented sub-settings */}
               {showPrices && (
                 <Box
                   sx={{
-                    px: 2,
-                    py: 1.5,
-                    mb: 3,
-                    borderRadius: '14px',
-                    border: '1px solid',
-                    borderColor: guestCurrency === 'USD' ? brand.emerald[200] : 'divider',
-                    bgcolor: guestCurrency === 'USD' ? `${brand.emerald[50]}40` : 'transparent',
+                    pl: 2.5,
+                    ml: 0.75,
+                    mb: 2.5,
+                    borderLeft: '2px solid',
+                    borderColor: brand.emerald[200],
                     transition: cssTransition.default,
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-                    <Box
+                  {/* Currency selector row */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, minWidth: 52 }}>
+                      Moneda
+                    </Typography>
+                    <ToggleButtonGroup
+                      value={guestCurrency}
+                      exclusive
+                      onChange={(_e, val) => { if (val !== null) setGuestCurrency(val as GuestCurrencyMode); }}
+                      size="small"
+                      aria-label="Moneda del invitado"
                       sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        bgcolor: guestCurrency === 'USD' ? brand.emerald[100] : 'action.hover',
-                        transition: cssTransition.default,
+                        flex: 1,
+                        maxWidth: 180,
+                        '& .MuiToggleButton-root': {
+                          textTransform: 'none',
+                          fontWeight: fontWeights.semibold,
+                          fontSize: '0.78rem',
+                          py: 0.5,
+                          borderColor: 'divider',
+                          '&.Mui-selected': {
+                            backgroundColor: `${brand.emerald[50]}`,
+                            color: brand.emerald[700],
+                            borderColor: brand.emerald[300],
+                            '&:hover': { backgroundColor: brand.emerald[100] },
+                          },
+                        },
                       }}
                     >
-                      <CurrencyIcon fontSize="small" sx={{ color: guestCurrency === 'USD' ? brand.emerald[600] : 'text.disabled' }} />
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" fontWeight={typography.weight.medium} sx={{ lineHeight: 1.3 }}>
-                        Moneda del invitado
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {guestCurrency === 'COP' ? 'Pesos colombianos' : `Dolares (x${guestMultiplier})`}
-                      </Typography>
-                    </Box>
+                      <ToggleButton value="COP">COP</ToggleButton>
+                      <ToggleButton value="USD">USD</ToggleButton>
+                    </ToggleButtonGroup>
                   </Box>
 
-                  <ToggleButtonGroup
-                    value={guestCurrency}
-                    exclusive
-                    onChange={(_e, val) => { if (val !== null) setGuestCurrency(val as GuestCurrencyMode); }}
-                    fullWidth
-                    size="small"
-                    sx={{
-                      mb: guestCurrency === 'USD' ? 1.5 : 0,
-                      '& .MuiToggleButton-root': {
-                        textTransform: 'none',
-                        fontWeight: fontWeights.semibold,
+                  {/* Multiplier label + value badge */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.25 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                      Multiplicador de precio
+                    </Typography>
+                    <Typography
+                      sx={{
                         fontSize: '0.8rem',
-                        py: 0.75,
-                        borderColor: 'divider',
-                        '&.Mui-selected': {
-                          backgroundColor: `${brand.emerald[50]}`,
-                          color: brand.emerald[700],
-                          borderColor: brand.emerald[300],
-                          '&:hover': { backgroundColor: brand.emerald[100] },
-                        },
-                      },
+                        fontWeight: fontWeights.bold,
+                        color: brand.emerald[700],
+                        bgcolor: `${brand.emerald[50]}`,
+                        px: 1,
+                        py: 0.1,
+                        borderRadius: '6px',
+                      }}
+                    >
+                      x{guestMultiplier}
+                    </Typography>
+                  </Box>
+
+                  {/* Slider with range labels */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 0.25 }}>
+                    <Typography sx={{ fontSize: '0.68rem', color: 'text.disabled' }}>x1</Typography>
+                    <Slider
+                      value={guestMultiplier}
+                      onChange={(_e, val) => setGuestMultiplier(val as number)}
+                      min={1}
+                      max={4}
+                      step={0.1}
+                      valueLabelDisplay="auto"
+                      valueLabelFormat={(v) => `x${v}`}
+                      aria-label="Multiplicador de precio"
+                      aria-valuetext={`multiplicador ${guestMultiplier}`}
+                      sx={{
+                        color: brand.emerald[700],
+                        '& .MuiSlider-thumb': { width: 18, height: 18 },
+                        '& .MuiSlider-valueLabel': { fontSize: '0.72rem' },
+                      }}
+                    />
+                    <Typography sx={{ fontSize: '0.68rem', color: 'text.disabled' }}>x4</Typography>
+                  </Box>
+
+                  {/* Live price preview */}
+                  <Box
+                    sx={{
+                      mt: 1,
+                      px: 1.5,
+                      py: 0.75,
+                      borderRadius: '8px',
+                      bgcolor: 'action.hover',
+                      border: '1px dashed',
+                      borderColor: 'divider',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                     }}
                   >
-                    <ToggleButton value="COP">COP</ToggleButton>
-                    <ToggleButton value="USD">USD</ToggleButton>
-                  </ToggleButtonGroup>
-
-                  {/* Multiplier slider - only when USD */}
-                  {guestCurrency === 'USD' && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 1 }}>
-                      <Slider
-                        value={guestMultiplier}
-                        onChange={(_e, val) => setGuestMultiplier(val as number)}
-                        min={1}
-                        max={4}
-                        step={0.1}
-                        valueLabelDisplay="auto"
-                        valueLabelFormat={(v) => `x${v}`}
-                        sx={{
-                          color: brand.emerald[700],
-                          '& .MuiSlider-thumb': { width: 20, height: 20 },
-                          '& .MuiSlider-valueLabel': { fontSize: '0.75rem' },
-                        }}
-                      />
-                      <Typography
-                        sx={{
-                          fontSize: '0.8rem',
-                          fontWeight: fontWeights.semibold,
-                          color: brand.emerald[700],
-                          minWidth: 28,
-                          textAlign: 'right',
-                        }}
-                      >
-                        x{guestMultiplier}
-                      </Typography>
-                    </Box>
-                  )}
+                    <Typography sx={{ fontSize: '0.7rem', color: 'text.disabled' }}>
+                      Ej: piedra de $2M {guestCurrency} →
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.78rem', fontWeight: fontWeights.semibold, color: 'text.primary' }}>
+                      {guestCurrency === 'COP'
+                        ? `$${(2_000_000 * guestMultiplier).toLocaleString('es-CO')} COP`
+                        : `$${Math.round((2_000_000 / 4200) * guestMultiplier).toLocaleString('en-US')} USD`
+                      }
+                    </Typography>
+                  </Box>
                 </Box>
               )}
 
@@ -467,8 +502,16 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   boxShadow: `0 4px 16px ${brand.emerald[600]}40`,
                 }}
               >
-                {isGenerating ? 'Generando...' : 'Generar Enlace'}
+                {isGenerating ? 'Generando...' : guestName.trim() ? `Crear enlace para ${guestName.trim().split(' ')[0]}` : 'Generar Enlace'}
               </Button>
+
+              {/* Expiry hint */}
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mt: 1 }}>
+                <InfoIcon sx={{ fontSize: 12, color: 'text.disabled' }} />
+                <Typography sx={{ fontSize: '0.7rem', color: 'text.disabled' }}>
+                  El enlace expira 24h despues de que lo abra
+                </Typography>
+              </Box>
             </Box>
           ) : (
             /* ─── PHASE 2: Success ─── */
@@ -604,8 +647,8 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
               {/* Hint */}
               <Typography
                 variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', mb: 2, textAlign: 'center', opacity: 0.7, fontSize: '0.7rem' }}
+                color="text.disabled"
+                sx={{ display: 'block', mb: 2, textAlign: 'center', fontSize: '0.72rem' }}
               >
                 Comparte el PIN por separado (WhatsApp, llamada, etc.)
               </Typography>
@@ -622,8 +665,8 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                     icon: <CurrencyIcon sx={{ fontSize: 14 }} />,
                     label: lastInvitation.guestCurrencyMode === 'USD'
                       ? `USD x${lastInvitation.guestMultiplier || 4}`
-                      : 'COP',
-                    active: lastInvitation.guestCurrencyMode === 'USD',
+                      : `COP x${lastInvitation.guestMultiplier || 4}`,
+                    active: true,
                   }] : []),
                   ...(guestEmail ? [{ icon: <EmailIcon sx={{ fontSize: 14 }} />, label: guestEmail, active: false }] : []),
                   ...(guestPhone ? [{ icon: <PhoneIcon sx={{ fontSize: 14 }} />, label: guestPhone, active: false }] : []),

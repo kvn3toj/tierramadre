@@ -5,16 +5,19 @@
 
 import { Box, Typography, Paper, alpha } from '@mui/material';
 import { Info } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { studioColors, accentColors } from '../../design-system';
 import { semanticColors } from '../../design-system/tokens/colors';
 
-const FORMULAS = [
-  { color: semanticColors.info.main, formula: 'Precio = Inversion x Factor' },
-  { color: accentColors.purple.light, formula: 'Margen = (Precio - Inversion) / Precio x 100' },
-  { color: studioColors.emerald, formula: 'ROI = (Precio - Inversion) / Inversion x 100' },
-];
-
 export const FormulaInfo: React.FC = () => {
+  const { t } = useLanguage();
+
+  const FORMULAS = [
+    { color: semanticColors.info.main, formula: t.priceSimulator.formula.price },
+    { color: accentColors.purple.light, formula: t.priceSimulator.formula.margin },
+    { color: studioColors.emerald, formula: t.priceSimulator.formula.roi },
+  ];
+
   return (
     <Paper
       elevation={0}

@@ -1,15 +1,15 @@
 /**
- * Language Context - Spanish/English Support
+ * Language Context - Multi-language Support (6 languages)
+ *
+ * Supported: Spanish, English, French, Italian, Chinese, Portuguese
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { es } from '../locales/es';
-import { en } from '../locales/en';
+import { translations, LANGUAGE_OPTIONS } from '../locales';
+import type { Language, Translations } from '../locales';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 
-export type Language = 'es' | 'en';
-
-type Translations = typeof es;
+export type { Language };
 
 interface LanguageContextType {
   language: Language;
@@ -32,12 +32,17 @@ interface LanguageProviderProps {
   children: ReactNode;
 }
 
-const translations = { es, en };
+/** Validate that a stored value is a valid language code */
+const isValidLanguage = (value: string | null): value is Language => {
+  return value !== null && LANGUAGE_OPTIONS.some(opt => opt.code === value);
+};
+
+export { LANGUAGE_OPTIONS };
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.LANGUAGE);
-    return (saved as Language) || 'es'; // Default: Spanish
+    return isValidLanguage(saved) ? saved : 'es'; // Default: Spanish
   });
 
   useEffect(() => {
@@ -48,8 +53,13 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     setLanguageState(lang);
   };
 
+  // Legacy toggle — cycles through all languages in order
   const toggleLanguage = () => {
-    setLanguageState((prev) => (prev === 'es' ? 'en' : 'es'));
+    setLanguageState((prev) => {
+      const currentIndex = LANGUAGE_OPTIONS.findIndex(opt => opt.code === prev);
+      const nextIndex = (currentIndex + 1) % LANGUAGE_OPTIONS.length;
+      return LANGUAGE_OPTIONS[nextIndex].code;
+    });
   };
 
   const t = translations[language];

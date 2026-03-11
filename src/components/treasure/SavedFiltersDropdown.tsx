@@ -31,6 +31,7 @@ import {
   X,
   Filter,
 } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { FilterPreset } from '../../hooks/useSavedFilters';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
@@ -61,6 +62,7 @@ export default function SavedFiltersDropdown({
   hasActiveFilters,
   compact = false,
 }: SavedFiltersDropdownProps) {
+  const { t } = useLanguage();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
 
@@ -203,7 +205,7 @@ export default function SavedFiltersDropdown({
             <BookmarkPlus size={18} color={emeraldCore.primary} />
           </ListItemIcon>
           <ListItemText
-            primary="Guardar búsqueda actual"
+            primary={t.treasure.savedFilters.saveSearch}
             secondary={hasActiveFilters ? 'Crear nuevo preset' : 'Sin filtros activos'}
             primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
             secondaryTypographyProps={{ variant: 'caption' }}
@@ -324,7 +326,7 @@ export default function SavedFiltersDropdown({
         <DialogTitle sx={{ pb: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <BookmarkPlus size={20} color={emeraldCore.primary} />
-            Guardar búsqueda
+            {t.treasure.savedFilters.save}
           </Box>
         </DialogTitle>
         <DialogContent>
@@ -335,8 +337,8 @@ export default function SavedFiltersDropdown({
             autoFocus
             fullWidth
             size="small"
-            label="Nombre de la búsqueda"
-            placeholder="Ej: Esmeraldas finas verdes"
+            label={t.treasure.savedFilters.searchName}
+            placeholder={t.treasure.savedFilters.exampleName}
             value={newPresetName}
             onChange={(e) => setNewPresetName(e.target.value)}
             onKeyDown={(e) => {
@@ -364,7 +366,7 @@ export default function SavedFiltersDropdown({
               '&:hover': { bgcolor: emeraldCore.dark },
             }}
           >
-            Guardar
+            {t.actions.save}
           </Button>
         </DialogActions>
       </Dialog>

@@ -8,6 +8,7 @@
 import React from 'react';
 import { Box, Chip, alpha } from '@mui/material';
 import { X } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { TreasureFilters } from '../../hooks/useTreasureFiltering';
 import { formatCurrency, getColorDot } from '../../utils/formatting';
 import { useCurrency } from '../../contexts/CurrencyContext';
@@ -60,6 +61,7 @@ export function ActiveFilterChips({
   onClearPrice,
   compact = false,
 }: ActiveFilterChipsProps) {
+  const { t } = useLanguage();
   const { currency, convertPrice } = useCurrency();
   const chipSize = compact ? 'small' : 'small';
   const iconSize = compact ? 12 : 14;
@@ -72,7 +74,7 @@ export function ActiveFilterChips({
   if (filters.search) {
     chips.push({
       key: 'search',
-      label: compact ? `"${filters.search}"` : `Búsqueda: "${filters.search}"`,
+      label: compact ? `"${filters.search}"` : `${t.actions.search}: "${filters.search}"`,
       onDelete: onClearSearch,
       colors: {
         bg: alpha(emeraldCore.primary, 0.1),
@@ -169,7 +171,7 @@ export function ActiveFilterChips({
   if (filters.statusFilter !== 'available' && filters.statusFilter !== 'all') {
     chips.push({
       key: 'status',
-      label: filters.statusFilter === 'sold' ? 'Vendidas' : 'Todas',
+      label: filters.statusFilter === 'sold' ? t.treasure.filter.sold : t.treasure.filter.all,
       onDelete: onClearStatus,
       colors: {
         bg: alpha(semanticColors.error.main, 0.1),
@@ -199,7 +201,7 @@ export function ActiveFilterChips({
       key: 'cantidad',
       label: compact
         ? (filters.cantidadFilter === '2+' ? 'Lotes' : filters.cantidadFilter)
-        : `Cantidad: ${filters.cantidadFilter === '2+' ? 'Lotes' : filters.cantidadFilter}`,
+        : `${t.treasure.filter.quantity}: ${filters.cantidadFilter === '2+' ? 'Lotes' : filters.cantidadFilter}`,
       onDelete: onClearCantidad,
       colors: {
         bg: alpha(emeraldCore.primary, 0.1),

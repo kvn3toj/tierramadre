@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import { Scale, Trash2 } from 'lucide-react';
 import { TreasureItem } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 import { blurValues, cssTransition, zIndex } from '../../design-system';
@@ -33,6 +34,7 @@ export default function ComparisonBar({
   onClear,
   onCompare,
 }: ComparisonBarProps) {
+  const { t } = useLanguage();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const count = selectedItems.length;
@@ -139,7 +141,7 @@ export default function ComparisonBar({
                 bgcolor: alpha('#ef4444', 0.1),
               },
             }}
-            aria-label="Limpiar selección"
+            aria-label={t.comparison.clearSelection}
           >
             <Trash2 size={18} />
           </IconButton>

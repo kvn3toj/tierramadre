@@ -22,6 +22,7 @@ import { X, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 import { motion, AnimatePresence, PanInfo, useAnimation } from 'framer-motion';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import { lightTokens, darkTokens, cssTransition, blurValues, zIndex } from '../../design-system';
+import { useLanguage } from '../../contexts/LanguageContext';
 import ProtectedContent from '../shared/ProtectedContent';
 
 interface ImageLightboxProps {
@@ -47,6 +48,7 @@ export default function ImageLightbox({
   onClose,
   onShare,
 }: ImageLightboxProps) {
+  const { t } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [scale, setScale] = useState(1);
   const [translateY, setTranslateY] = useState(0);
@@ -351,7 +353,7 @@ export default function ImageLightbox({
                 {currentIndex > 0 && (
                   <IconButton
                     onClick={goToPrevious}
-                    aria-label="Imagen anterior"
+                    aria-label={t.accessibility.previousImage}
                     sx={{
                       position: 'absolute',
                       left: 16,
@@ -373,7 +375,7 @@ export default function ImageLightbox({
                 {currentIndex < images.length - 1 && (
                   <IconButton
                     onClick={goToNext}
-                    aria-label="Imagen siguiente"
+                    aria-label={t.accessibility.nextImage}
                     sx={{
                       position: 'absolute',
                       right: 16,

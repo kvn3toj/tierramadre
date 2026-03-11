@@ -23,6 +23,7 @@ import { useNavigate } from 'react-router-dom';
 import { emeraldCore, goldAccent } from '../../../design-system/tokens/colors';
 import { accentColors, zIndex } from '../../../design-system';
 import { PHI_INVERSE } from '../../../design-system/tokens';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 // =============================================================================
 // TYPES
@@ -51,11 +52,11 @@ interface QuickActionsProps {
 // CONSTANTS
 // =============================================================================
 
-const DEFAULT_ACTIONS: QuickAction[] = [
+const getDefaultActions = (t: any): QuickAction[] => [
   {
     id: 'oracle',
     icon: <AutoAwesome />,
-    label: 'Oráculo',
+    label: t.pages.home.oracle,
     shortcut: 'O',
     action: () => document.getElementById('oracle-title')?.scrollIntoView({ behavior: 'smooth' }),
     color: goldAccent.primary,
@@ -63,7 +64,7 @@ const DEFAULT_ACTIONS: QuickAction[] = [
   {
     id: 'meditation',
     icon: <SelfImprovement />,
-    label: 'Meditación',
+    label: t.pages.home.meditation,
     shortcut: 'M',
     action: () => document.getElementById('meditation-section')?.scrollIntoView({ behavior: 'smooth' }),
     color: emeraldCore.primary,
@@ -71,7 +72,7 @@ const DEFAULT_ACTIONS: QuickAction[] = [
   {
     id: 'treasure',
     icon: <Inventory2 />,
-    label: 'Tesoros',
+    label: t.nav.treasure,
     shortcut: 'T',
     path: '/treasure',
     color: emeraldCore.light,
@@ -79,7 +80,7 @@ const DEFAULT_ACTIONS: QuickAction[] = [
   {
     id: 'knowledge',
     icon: <School />,
-    label: 'Conocimiento',
+    label: t.pages.home.spirituality,
     shortcut: 'C',
     action: () => document.getElementById('knowledge-section')?.scrollIntoView({ behavior: 'smooth' }),
     color: accentColors.purple.light,
@@ -87,7 +88,7 @@ const DEFAULT_ACTIONS: QuickAction[] = [
   {
     id: 'upload',
     icon: <PhotoCamera />,
-    label: 'Subir Esmeralda',
+    label: t.pages.home.upload,
     shortcut: 'U',
     path: '/upload',
     color: accentColors.warning.light,
@@ -128,12 +129,13 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   position = 'bottom-right',
   showShortcuts = false, // Disabled - target devices are mobile (iPhone 12+, iPad)
 }) => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const actions = [...DEFAULT_ACTIONS, ...customActions];
+  const actions = [...getDefaultActions(t), ...customActions];
 
   // Handle action execution
   const handleAction = useCallback((action: QuickAction) => {
@@ -317,7 +319,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
         <Fab
           color="primary"
           onClick={() => setIsOpen(prev => !prev)}
-          aria-label={isOpen ? 'Cerrar menú de acciones rápidas' : 'Abrir menú de acciones rápidas. Atajo: /'}
+          aria-label={isOpen ? `${t.actions.close} menú de acciones rápidas` : `${t.actions.back} menú de acciones rápidas`}
           aria-expanded={isOpen}
           sx={{
             bgcolor: isOpen ? 'var(--surface-secondary)' : emeraldCore.primary,

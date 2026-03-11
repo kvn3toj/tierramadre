@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   base: '/',
+  cacheDir: '/tmp/vite-deps-cache',
   plugins: [
     react(),
     // PWA temporarily disabled due to SW generation issues

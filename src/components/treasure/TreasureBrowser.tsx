@@ -20,6 +20,7 @@ import { Heart } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useTreasure } from '../../hooks/useTreasure';
 import { useTreasureFiltering, type TypeFilter, type StatusFilter, type SortOption } from '../../hooks/useTreasureFiltering';
 import { useUrlFilterSync, parseUrlFilters } from '../../hooks/useUrlFilterSync';
@@ -80,6 +81,7 @@ export default function TreasureBrowser({
   isProviderMode = false,
   defaultViewMode,
 }: TreasureBrowserProps = {}) {
+  const { t } = useLanguage();
   const { formatFullCurrency } = useCurrencyFormat();
   const theme = useTheme();
   const { mode } = useThemeMode();
@@ -192,10 +194,10 @@ export default function TreasureBrowser({
   const prevFilteredCount = useRef(filteredTreasure.length);
   useEffect(() => {
     if (prevFilteredCount.current !== filteredTreasure.length && hasFilters) {
-      announce(`${filteredTreasure.length} productos encontrados`);
+      announce(`${filteredTreasure.length} ${t.treasure.resultsFound}`);
     }
     prevFilteredCount.current = filteredTreasure.length;
-  }, [filteredTreasure.length, hasFilters, announce]);
+  }, [filteredTreasure.length, hasFilters, announce, t]);
 
   // Track treasure view on mount
   useEffect(() => {
@@ -285,13 +287,13 @@ export default function TreasureBrowser({
     analyticsHook.trackItemView(item.item, item.nombre);
     track('product_clicked', {
       item_id: item.item,
-      item_name: item.nombre || 'Sin nombre',
+      item_name: item.nombre || t.treasure.noName,
       position_in_list: positionInList,
       filters_active: hasFilters,
       view_mode: viewMode,
     });
     navigate(`/product/${item.item}`);
-  }, [navigate, addToRecent, analyticsHook, track, hasFilters, viewMode]);
+  }, [navigate, addToRecent, analyticsHook, track, hasFilters, viewMode, t]);
 
   const handleSaveCertifications = useCallback((certifications: TreasureItem['certifications']) => {
     if (selectedItem) {
@@ -523,11 +525,11 @@ export default function TreasureBrowser({
             <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
               {filteredTreasure.length === allTreasure.length ? (
                 <>
-                  <strong style={{ color: theme.palette.text.primary }}>{allTreasure.length}</strong> esmeraldas en total
+                  <strong style={{ color: theme.palette.text.primary }}>{allTreasure.length}</strong> {t.treasure.totalEmeralds}
                 </>
               ) : (
                 <>
-                  Mostrando <strong style={{ color: theme.palette.text.primary }}>{visibleItems.length}</strong> de {filteredTreasure.length} esmeraldas
+                  {t.treasure.showingOf} <strong style={{ color: theme.palette.text.primary }}>{visibleItems.length}</strong> de {filteredTreasure.length} {t.treasure.emeralds}
                 </>
               )}
             </Typography>
@@ -535,7 +537,7 @@ export default function TreasureBrowser({
             {!isProviderMode && (
               <Chip
                 icon={<Heart size={14} fill={showFavoritesOnly ? accentColors.error.light : 'none'} color={showFavoritesOnly ? accentColors.error.light : '#6b7280'} />}
-                label={`Favoritos (${favoritesCount})`}
+                label={`${t.treasure.favorites} (${favoritesCount})`}
                 size="small"
                 onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
                 sx={{

@@ -25,6 +25,7 @@ import {
   RotateCcw,
   Info,
 } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { studioColors, studioCardStyles } from '../../design-system';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { getInvestmentIcon } from './index';
@@ -67,13 +68,16 @@ export interface InvestmentSectionProps {
 // CARAT WEIGHT INPUT
 // =============================================================================
 
-export const CaratWeightInput: React.FC<CaratWeightInputProps> = ({ caratWeight, setCaratWeight }) => (
-  <Box sx={{ mb: 2.5 }}>
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.75 }}>
-      <Gem size={16} color={studioColors.emerald} />
-      <Typography variant="body2" sx={{ fontWeight: 600, color: studioColors.textPrimary }}>
-        Peso en Quilates (opcional)
-      </Typography>
+export const CaratWeightInput: React.FC<CaratWeightInputProps> = ({ caratWeight, setCaratWeight }) => {
+  const { t } = useLanguage();
+
+  return (
+    <Box sx={{ mb: 2.5 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.75 }}>
+        <Gem size={16} color={studioColors.emerald} />
+        <Typography variant="body2" sx={{ fontWeight: 600, color: studioColors.textPrimary }}>
+          {t.priceSimulator.weightInCarats}
+        </Typography>
       <Tooltip title="Ingresa el peso total en quilates para calcular el precio por quilate">
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Info size={14} color={studioColors.textMuted} />
@@ -108,8 +112,9 @@ export const CaratWeightInput: React.FC<CaratWeightInputProps> = ({ caratWeight,
         },
       }}
     />
-  </Box>
-);
+    </Box>
+  );
+};
 
 // =============================================================================
 // INVESTMENT SECTION

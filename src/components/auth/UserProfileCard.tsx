@@ -9,6 +9,7 @@ import { Box, Card, CardContent, Typography, Avatar, Button, Chip } from '@mui/m
 import { Person } from '@mui/icons-material';
 import { GoogleOAuthProvider, GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { alpha } from '@mui/material/styles';
 import { createLogger } from '../../utils/logger';
 import { primitiveColors } from '../../design-system';
@@ -22,6 +23,7 @@ const isGoogleConfigured = Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length >
 
 export default function UserProfileCard() {
   const { user, isSignedIn, signIn, signOut, preferences } = useGoogleAuth();
+  const { t, language } = useLanguage();
 
   const handleSuccess = async (response: CredentialResponse) => {
     if (response.credential) {
@@ -88,14 +90,14 @@ export default function UserProfileCard() {
             {preferences.favoriteProducts && (
               <Chip
                 size="small"
-                label={`${preferences.favoriteProducts.length} favoritos`}
+                label={`${preferences.favoriteProducts.length} ${t.auth.favorites}`}
                 sx={{ bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1) }}
               />
             )}
             {preferences.savedFacts && (
               <Chip
                 size="small"
-                label={`${preferences.savedFacts.length} guardados`}
+                label={`${preferences.savedFacts.length} ${t.auth.saved}`}
                 sx={{ bgcolor: (theme) => alpha(theme.palette.info.main, 0.1) }}
               />
             )}
@@ -108,7 +110,7 @@ export default function UserProfileCard() {
             onClick={signOut}
             sx={{ mt: 1 }}
           >
-            Cerrar Sesión
+            {t.actions.logout}
           </Button>
         </CardContent>
       </Card>
@@ -146,11 +148,11 @@ export default function UserProfileCard() {
         </Box>
 
         <Typography variant="h6" gutterBottom fontWeight={600}>
-          Inicia Sesión
+          {t.auth.signIn}
         </Typography>
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Sincroniza tus favoritos y preferencias en todos tus dispositivos
+          {t.auth.syncMessage}
         </Typography>
 
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -161,7 +163,7 @@ export default function UserProfileCard() {
               theme="filled_black"
               shape="pill"
               text="signin_with"
-              locale="es"
+              locale={language}
             />
           </GoogleOAuthProvider>
         </Box>

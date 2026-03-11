@@ -26,6 +26,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useAsesores, Asesor } from '../../hooks/useAsesores';
 import { useTreasure } from '../../hooks/useTreasure';
 import AsesorCard from './AsesorCard';
@@ -57,6 +58,7 @@ export default function AmbassadorDirectory({
   maxVisible,
   showFilters = true,
 }: AmbassadorDirectoryProps) {
+  const { t } = useLanguage();
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
 
@@ -136,9 +138,9 @@ export default function AmbassadorDirectory({
     return (
       <Box>
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <CircularProgress size={24} aria-label="Cargando" sx={{ color: emeraldCore.primary }} />
+          <CircularProgress size={24} aria-label={t.loading.general} sx={{ color: emeraldCore.primary }} />
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Cargando embajadores...
+            {t.loading.ambassadors}
           </Typography>
         </Box>
         <AmbassadorDirectorySkeleton />
@@ -220,7 +222,7 @@ export default function AmbassadorDirectory({
           >
             <TextField
               fullWidth
-              placeholder="Buscar embajador por nombre..."
+              placeholder={t.ambassador.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               size="small"
@@ -312,7 +314,7 @@ export default function AmbassadorDirectory({
               No se encontraron embajadores
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-              {hasActiveFilters ? 'Intenta con otros criterios de b\u00fasqueda' : 'No hay embajadores registrados'}
+              {hasActiveFilters ? 'Intenta con otros criterios de búsqueda' : t.ambassador.noAmbassadors}
             </Typography>
             {hasActiveFilters && (
               <Button
@@ -324,7 +326,7 @@ export default function AmbassadorDirectory({
                   color: emeraldCore.primary,
                 }}
               >
-                Limpiar filtros
+                {t.ambassador.clearFilters}
               </Button>
             )}
           </Box>

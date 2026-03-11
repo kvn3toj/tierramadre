@@ -11,6 +11,7 @@ import { Box, Typography, Avatar } from '@mui/material';
 import { Instagram, OpenInNew } from '@mui/icons-material';
 import { fadeInUp, cssTransition } from '../../../design-system/tokens/motion';
 import { blurValues } from '../../../design-system';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 // =============================================================================
 // CONSTANTS
@@ -25,6 +26,8 @@ const INSTAGRAM_GRADIENT = 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2
 // =============================================================================
 
 export const InstagramSection: React.FC = () => {
+  const { t } = useLanguage();
+
   const handleOpenInstagram = () => {
     window.open(INSTAGRAM_LINK, '_blank', 'noopener,noreferrer');
   };
@@ -77,7 +80,7 @@ export const InstagramSection: React.FC = () => {
               variant="caption"
               sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}
             >
-              Síguenos en Instagram
+              {t.pages.home.followInstagram}
             </Typography>
           </Box>
 

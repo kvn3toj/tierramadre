@@ -30,6 +30,7 @@ import {
   Gem,
   Crown,
 } from 'lucide-react';
+import { useLanguage } from '../../../../contexts/LanguageContext';
 import { brand, lightTokens, darkTokens, accentColors } from '../../../../design-system';
 
 export type ViewMode = 'grid' | 'list';
@@ -70,6 +71,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
   onClearFilters,
   hasActiveFilters,
 }) => {
+  const { t } = useLanguage();
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
 
@@ -88,7 +90,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
         {/* Search */}
         <TextField
-          placeholder="Buscar en catalogo..."
+          placeholder={t.ambassador.searchCatalog}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           size="small"
@@ -177,10 +179,10 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
 
           {/* Type Filter */}
           <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>Categoria</InputLabel>
+            <InputLabel>{t.ambassador.category}</InputLabel>
             <Select
               value={typeFilter}
-              label="Categoria"
+              label={t.ambassador.category}
               onChange={(e) => onTypeFilterChange(e.target.value as TypeFilter)}
             >
               <MenuItem value="all">Todos</MenuItem>
@@ -225,7 +227,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
               onClick={onClearFilters}
               sx={{ textTransform: 'none', color: 'text.secondary' }}
             >
-              Limpiar filtros
+              {t.ambassador.clearFilters}
             </Button>
           )}
         </Box>

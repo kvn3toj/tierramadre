@@ -29,6 +29,7 @@ import {
 } from '@mui/material';
 import { Search, X } from 'lucide-react';
 import MoreSheetSearch from './MoreSheetSearch';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 import { floatingLayers, liquidSaturation } from '../../design-system/tokens/liquid-glass';
 import { floatingLayerShadows } from '../../design-system/tokens/shadows';
@@ -47,6 +48,7 @@ interface GlobalSearchFABProps {
 }
 
 const GlobalSearchFAB: React.FC<GlobalSearchFABProps> = ({ forceShow = false }) => {
+  const { t } = useLanguage();
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -96,11 +98,11 @@ const GlobalSearchFAB: React.FC<GlobalSearchFABProps> = ({ forceShow = false }) 
     <>
       {/* FAB Button */}
       <Zoom in timeout={300}>
-        <Tooltip title="Buscar tesoros" placement="left" arrow>
+        <Tooltip title={t.treasure.search.tooltip} placement="left" arrow>
           <Fab
             color="primary"
             onClick={handleOpen}
-            aria-label="Abrir búsqueda global"
+            aria-label={`${t.treasure.search.ariaLabel}`}
             sx={{
               position: 'fixed',
               bottom: {
@@ -261,13 +263,13 @@ const GlobalSearchFAB: React.FC<GlobalSearchFABProps> = ({ forceShow = false }) 
                   color: 'var(--text-primary)',
                 }}
               >
-                Buscar Tesoros
+                {t.treasure.search.title}
               </Typography>
             </Box>
 
             <IconButton
               onClick={handleClose}
-              aria-label="Cerrar búsqueda"
+              aria-label={`${t.actions.close} búsqueda`}
               sx={{
                 color: 'var(--text-secondary)',
                 '&:hover': {

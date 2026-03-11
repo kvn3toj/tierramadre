@@ -15,6 +15,7 @@ import { emeraldCore } from '../../../design-system/tokens/colors';
 import { defaultShadows } from '../../../design-system/tokens/shadows';
 import { whiteAlpha, blackAlpha } from '../../../design-system/utils/colorUtils';
 import { blurValues } from '../../../design-system';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 // =============================================================================
 // CONSTANTS
@@ -38,6 +39,7 @@ const SOCIAL_LINKS = [
 export const Footer: React.FC = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+  const { t } = useLanguage();
 
   return (
     <Box
@@ -139,7 +141,7 @@ export const Footer: React.FC = () => {
               letterSpacing: '0.03em',
             }}
           >
-            Esmeraldas Colombianas de Alta Calidad
+            {t.footer.tagline}
           </Typography>
 
           {/* Divider */}
@@ -162,7 +164,7 @@ export const Footer: React.FC = () => {
               fontSize: '0.7rem',
             }}
           >
-            {new Date().getFullYear()} Tierra Madre. Todos los derechos reservados.
+            {new Date().getFullYear()} Tierra Madre. {t.footer.copyright}
           </Typography>
 
           {/* Legal Links */}
@@ -181,7 +183,7 @@ export const Footer: React.FC = () => {
                 transition: cssTransition.default,
               }}
             >
-              Privacidad
+              {t.footer.privacy}
             </Link>
             <Link
               href="/terms.html"
@@ -197,7 +199,7 @@ export const Footer: React.FC = () => {
                 transition: cssTransition.default,
               }}
             >
-              Condiciones
+              {t.footer.terms}
             </Link>
           </Box>
         </Box>

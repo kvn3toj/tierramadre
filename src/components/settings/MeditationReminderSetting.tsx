@@ -22,6 +22,7 @@ import { AccessTime, Notifications } from '@mui/icons-material';
 import { useMeditationReminder } from '../../hooks/useMeditationReminder';
 import { requestPermission, getPermissionStatus } from '../../services/notifications';
 import { fontWeights } from '../../design-system';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function MeditationReminderSetting() {
   const {
@@ -34,6 +35,7 @@ export default function MeditationReminderSetting() {
     isNotificationEnabled,
   } = useMeditationReminder();
 
+  const { t } = useLanguage();
   const [timeDialogOpen, setTimeDialogOpen] = useState(false);
   const [selectedHour, setSelectedHour] = useState(hour);
   const [selectedMinute, setSelectedMinute] = useState(minute);
@@ -95,7 +97,7 @@ export default function MeditationReminderSetting() {
           </Box>
           <Box>
             <Typography variant="body1" fontWeight={fontWeights.medium}>
-              Recordatorio de Meditación
+              {t.settings.meditationReminder}
             </Typography>
             {enabled ? (
               <Button
@@ -108,7 +110,7 @@ export default function MeditationReminderSetting() {
               </Button>
             ) : (
               <Typography variant="caption" color="text.secondary">
-                Recibe un recordatorio diario
+                {t.settings.dailyReminderHint}
               </Typography>
             )}
           </Box>
@@ -117,26 +119,26 @@ export default function MeditationReminderSetting() {
           checked={enabled}
           onChange={handleToggle}
           disabled={permissionStatus === 'denied'}
-          inputProps={{ 'aria-label': 'Recordatorio de meditación' }}
+          inputProps={{ 'aria-label': t.settings.meditationReminder }}
         />
       </Box>
 
       {permissionStatus === 'denied' && (
         <Alert severity="info" sx={{ mt: 1 }}>
-          Habilita las notificaciones en la configuración de tu navegador para usar esta función.
+          {t.settings.notificationPermissionRequired}
         </Alert>
       )}
 
       {/* Time Picker Dialog */}
       <Dialog open={timeDialogOpen} onClose={() => setTimeDialogOpen(false)}>
-        <DialogTitle>Hora del Recordatorio</DialogTitle>
+        <DialogTitle>{t.settings.reminderTime}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            ¿A qué hora te gustaría recibir tu recordatorio diario de meditación?
+            {t.settings.reminderTimePrompt}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
             <TextField
-              label="Hora"
+              label={t.settings.timeHour}
               type="number"
               value={selectedHour}
               onChange={(e) => setSelectedHour(Math.max(0, Math.min(23, parseInt(e.target.value) || 0)))}
@@ -144,7 +146,7 @@ export default function MeditationReminderSetting() {
               sx={{ width: 100 }}
             />
             <TextField
-              label="Minuto"
+              label={t.settings.timeMinute}
               type="number"
               value={selectedMinute}
               onChange={(e) => setSelectedMinute(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
@@ -153,13 +155,13 @@ export default function MeditationReminderSetting() {
             />
           </Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2, textAlign: 'center' }}>
-            Formato 24 horas (ej: 8:00 = 8 AM, 20:00 = 8 PM)
+            {t.settings.timeFormatHint}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setTimeDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setTimeDialogOpen(false)}>{t.actions.cancel}</Button>
           <Button variant="contained" onClick={handleSaveTime}>
-            Guardar
+            {t.actions.save}
           </Button>
         </DialogActions>
       </Dialog>

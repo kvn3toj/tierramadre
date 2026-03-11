@@ -20,6 +20,7 @@ import {
   cssTransition,
   blurValues,
 } from '../../../design-system';
+import { useLanguage } from '../../../contexts/LanguageContext';
 import {
   ALL_CATEGORIES,
   AUTO_TRANSITION_INTERVAL,
@@ -52,6 +53,7 @@ const CATEGORY_ROUTES: Record<MainCategory, string> = {
 // =============================================================================
 
 export const HeroGallery: React.FC = () => {
+  const { t } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
   const navigate = useNavigate();
 
@@ -79,7 +81,7 @@ export const HeroGallery: React.FC = () => {
   }, []);
 
   return (
-    <Box component="section" aria-label="Galeria">
+    <Box component="section" aria-label={t.accessibility.imageGallery}>
       {/* Hero Image - Aspect-ratio based for full picture visibility */}
       <Box
         sx={{

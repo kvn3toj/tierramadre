@@ -24,6 +24,7 @@ import {
   Slider,
   Tooltip,
 } from '@mui/material';
+import { useLanguage } from '../../contexts/LanguageContext';
 import type { Theme } from '@mui/material/styles';
 import {
   Search,
@@ -184,6 +185,7 @@ export const FilterContent = memo(function FilterContent({
   // Use context to determine if prices should be shown
   const { shouldShowPrices } = usePriceShare();
   const { currency, convertPrice } = useCurrency();
+  const { t } = useLanguage();
   const hidePriceFilter = !shouldShowPrices;
 
   // Compact mode: Beautiful modern pill-based filters (mobile)
@@ -255,9 +257,9 @@ export const FilterContent = memo(function FilterContent({
           }}
         >
           {[
-            { value: 'available' as StatusFilter, label: 'Disponibles', dot: emeraldCore.primary, tooltip: 'Esmeraldas listas para vender' },
-            { value: 'sold' as StatusFilter, label: 'Vendidas', dot: semanticColors.error.main, tooltip: 'Historial de ventas realizadas' },
-            { value: 'all' as StatusFilter, label: 'Todas', dot: null, tooltip: 'Ver todo el inventario' },
+            { value: 'available' as StatusFilter, label: t.treasure.filter.available, dot: emeraldCore.primary, tooltip: t.treasure.filter.availableHint },
+            { value: 'sold' as StatusFilter, label: t.treasure.filter.sold, dot: semanticColors.error.main, tooltip: t.treasure.filter.soldHint },
+            { value: 'all' as StatusFilter, label: t.treasure.filter.all, dot: null, tooltip: t.treasure.filter.allHint },
           ].map((option) => (
             <Tooltip
               key={option.value}
@@ -307,9 +309,9 @@ export const FilterContent = memo(function FilterContent({
         <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
           {/* Type pills */}
           {[
-            { value: 'all' as TypeFilter, label: 'Todo' },
-            { value: 'loose' as TypeFilter, label: '💎 Gemas' },
-            { value: 'jewelry' as TypeFilter, label: '💍 Joyería' },
+            { value: 'all' as TypeFilter, label: t.treasure.filter.allTypes },
+            { value: 'loose' as TypeFilter, label: `💎 ${t.treasure.filter.looseStones}` },
+            { value: 'jewelry' as TypeFilter, label: `💍 ${t.treasure.filter.jewelry}` },
           ].map((option) => (
             <Box
               key={option.value}
@@ -337,9 +339,9 @@ export const FilterContent = memo(function FilterContent({
                 },
               }}
             >
-              <MenuItem value="newest">Recientes</MenuItem>
-              {!hidePriceFilter && <MenuItem value="price-desc">Precio ↓</MenuItem>}
-              {!hidePriceFilter && <MenuItem value="price-asc">Precio ↑</MenuItem>}
+              <MenuItem value="newest">{t.treasure.sort.newest}</MenuItem>
+              {!hidePriceFilter && <MenuItem value="price-desc">{`${t.treasure.filter.price} ↓`}</MenuItem>}
+              {!hidePriceFilter && <MenuItem value="price-asc">{`${t.treasure.filter.price} ↑`}</MenuItem>}
               <MenuItem value="name-asc">A-Z</MenuItem>
               <MenuItem value="quality-premium">Calidad</MenuItem>
             </Select>
@@ -350,7 +352,7 @@ export const FilterContent = memo(function FilterContent({
         {categorias.length > 0 && (
           <Box>
             <Typography variant="caption" sx={{ color: theme.palette.text.secondary, mb: 0.5, display: 'block' }}>
-              Categoría
+              {t.treasure.filter.category}
             </Typography>
             <Box
               sx={{
@@ -371,7 +373,7 @@ export const FilterContent = memo(function FilterContent({
                   ...(categoriaFilter === 'all' ? pillActive : pillInactive),
                 }}
               >
-                Todas
+                {t.treasure.filter.allCategories}
               </Box>
               {categorias.map((cat) => (
                 <Box
@@ -392,7 +394,7 @@ export const FilterContent = memo(function FilterContent({
         {/* Row 3: Color swatches (visual) */}
         <Box>
           <Typography variant="caption" sx={{ color: theme.palette.text.secondary, mb: 0.5, display: 'block' }}>
-            Color
+            {t.treasure.filter.color}
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
             <Box
@@ -402,7 +404,7 @@ export const FilterContent = memo(function FilterContent({
                 ...(colorFilter === 'all' ? pillActive : pillInactive),
               }}
             >
-              Todos
+              {t.treasure.filter.allColors}
             </Box>
             {colors.slice(0, 6).map((color) => (
               <Box
@@ -432,7 +434,7 @@ export const FilterContent = memo(function FilterContent({
         {!hidePriceFilter && (
           <Box>
             <Typography variant="caption" sx={{ color: theme.palette.text.secondary, mb: 0.5, display: 'block' }}>
-              Precio
+              {t.treasure.filter.price}
             </Typography>
             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
               {priceTiers.map((tier) => (
@@ -500,14 +502,14 @@ export const FilterContent = memo(function FilterContent({
               ...(cantidadFilter === '2+' ? pillActive : pillInactive),
             }}
           >
-            Lotes
+            {t.treasure.filter.lots}
           </Box>
         </Box>
 
         {/* Clear filters button */}
         {hasFilters && (
           <Chip
-            label="✕ Limpiar filtros"
+            label={`✕ ${t.treasure.filter.clearFilters}`}
             size="small"
             onClick={handleClearFilters}
             sx={{
@@ -534,7 +536,7 @@ export const FilterContent = memo(function FilterContent({
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mb: showAdvancedFilters ? 2 : 0 }}>
         {/* Search */}
         <TextField
-          placeholder="Buscar... (presiona /)"
+          placeholder={t.treasure.search.placeholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onBlur={() => {
@@ -546,7 +548,7 @@ export const FilterContent = memo(function FilterContent({
           }}
           size="small"
           inputRef={searchInputRef}
-          inputProps={{ 'aria-label': 'Buscar productos por nombre' }}
+          inputProps={{ 'aria-label': t.treasure.search.ariaLabel }}
           sx={{
             minWidth: 200,
             flex: 1,
@@ -565,7 +567,7 @@ export const FilterContent = memo(function FilterContent({
         />
 
         {/* Status filter with tooltip */}
-        <Tooltip title="Filtra por estado de venta" arrow enterDelay={600} placement="top">
+        <Tooltip title={t.treasure.filter.statusTooltip} arrow enterDelay={600} placement="top">
           <FormControl size="small" sx={{ minWidth: 130 }}>
             <Select
               value={statusFilter}
@@ -577,19 +579,19 @@ export const FilterContent = memo(function FilterContent({
               <MenuItem value="available">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: emeraldCore.primary }} />
-                  Disponibles
+                  {t.treasure.filter.available}
                 </Box>
               </MenuItem>
               <MenuItem value="sold">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: semanticColors.error.main }} />
-                  Vendidas
+                  {t.treasure.filter.sold}
                 </Box>
               </MenuItem>
               <MenuItem value="all">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: surfacesLight.text.secondary }} />
-                  Todas
+                  {t.treasure.filter.all}
                 </Box>
               </MenuItem>
             </Select>
@@ -615,14 +617,14 @@ export const FilterContent = memo(function FilterContent({
               '& .MuiSelect-select': { fontWeight: 500 },
             }}
           >
-            <MenuItem value="newest">Más Recientes</MenuItem>
-            {!hidePriceFilter && <MenuItem value="price-desc">Precio: Mayor a Menor</MenuItem>}
-            {!hidePriceFilter && <MenuItem value="price-asc">Precio: Menor a Mayor</MenuItem>}
-            <MenuItem value="name-asc">Nombre A-Z</MenuItem>
-            <MenuItem value="name-desc">Nombre Z-A</MenuItem>
-            <MenuItem value="quality-premium">Mejor Calidad</MenuItem>
-            <MenuItem value="item-number">Número de Ítem</MenuItem>
-            <MenuItem value="most-searched">Más Buscados</MenuItem>
+            <MenuItem value="newest">{t.treasure.sort.newest}</MenuItem>
+            {!hidePriceFilter && <MenuItem value="price-desc">{t.treasure.sort.priceDesc}</MenuItem>}
+            {!hidePriceFilter && <MenuItem value="price-asc">{t.treasure.sort.priceAsc}</MenuItem>}
+            <MenuItem value="name-asc">{t.treasure.sort.nameAsc}</MenuItem>
+            <MenuItem value="name-desc">{t.treasure.sort.nameDesc}</MenuItem>
+            <MenuItem value="quality-premium">{t.treasure.sort.bestQuality}</MenuItem>
+            <MenuItem value="item-number">{t.treasure.sort.itemNumber}</MenuItem>
+            <MenuItem value="most-searched">{t.treasure.sort.mostSearched}</MenuItem>
           </Select>
         </FormControl>
 
@@ -638,7 +640,7 @@ export const FilterContent = memo(function FilterContent({
               bgcolor: categoriaFilter !== 'all' ? alpha(emeraldCore.primary, 0.1) : 'transparent',
             }}
           >
-            <MenuItem value="all">Categoría</MenuItem>
+            <MenuItem value="all">{t.treasure.filter.category}</MenuItem>
             {categorias.map((cat) => (
               <MenuItem key={cat} value={cat}>
                 {cat}
@@ -656,9 +658,9 @@ export const FilterContent = memo(function FilterContent({
             aria-label="Filtrar por tipo"
             sx={{ borderRadius: 2 }}
           >
-            <MenuItem value="all">Tipo</MenuItem>
-            <MenuItem value="loose">Gemas</MenuItem>
-            <MenuItem value="jewelry">Joyería</MenuItem>
+            <MenuItem value="all">{t.treasure.filter.type}</MenuItem>
+            <MenuItem value="loose">{t.treasure.filter.looseStones}</MenuItem>
+            <MenuItem value="jewelry">{t.treasure.filter.jewelry}</MenuItem>
           </Select>
         </FormControl>
 
@@ -676,9 +678,9 @@ export const FilterContent = memo(function FilterContent({
             }
             sx={{ borderRadius: 2 }}
           >
-            <MenuItem value="all">Cantidad</MenuItem>
-            <MenuItem value="1">1 unidad</MenuItem>
-            <MenuItem value="2+">2+ (Lotes)</MenuItem>
+            <MenuItem value="all">{t.treasure.filter.quantity}</MenuItem>
+            <MenuItem value="1">{t.treasure.filter.singleUnit}</MenuItem>
+            <MenuItem value="2+">{t.treasure.filter.lots}</MenuItem>
           </Select>
         </FormControl>
 
@@ -695,13 +697,13 @@ export const FilterContent = memo(function FilterContent({
             fontWeight: 500,
           }}
         >
-          Más filtros
+          {t.treasure.filter.moreFilters}
         </Button>
 
         {/* Clear filters */}
         {hasFilters && (
           <Chip
-            label="Limpiar"
+            label={t.treasure.filter.clear}
             size="small"
             onClick={handleClearFilters}
             sx={{
@@ -726,7 +728,7 @@ export const FilterContent = memo(function FilterContent({
               aria-label="Filtrar por color"
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value="all">Todos colores</MenuItem>
+              <MenuItem value="all">{t.treasure.filter.allColors}</MenuItem>
               {colors.map((color) => (
                 <MenuItem key={color} value={color}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -747,7 +749,7 @@ export const FilterContent = memo(function FilterContent({
               aria-label="Filtrar por talla"
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value="all">Talla</MenuItem>
+              <MenuItem value="all">{t.treasure.filter.shape}</MenuItem>
               {shapes.map((shape) => (
                 <MenuItem key={shape} value={shape}>
                   {shape}
@@ -765,7 +767,7 @@ export const FilterContent = memo(function FilterContent({
               aria-label="Filtrar por calidad"
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value="all">Calidad</MenuItem>
+              <MenuItem value="all">{t.treasure.filter.quality}</MenuItem>
               {qualities.map((quality) => (
                 <MenuItem key={quality} value={quality}>
                   {quality}
@@ -787,7 +789,7 @@ export const FilterContent = memo(function FilterContent({
                   bgcolor: coleccionFilter !== 'all' ? alpha(emeraldCore.primary, 0.1) : 'transparent',
                 }}
               >
-                <MenuItem value="all">Colección</MenuItem>
+                <MenuItem value="all">{t.treasure.filter.collection}</MenuItem>
                 {colecciones.map((coleccion) => (
                   <MenuItem key={coleccion} value={coleccion}>
                     {formatCollectionName(coleccion)}
@@ -803,7 +805,7 @@ export const FilterContent = memo(function FilterContent({
           <Box sx={{ mt: 2, px: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
-                Rango de Precio
+                {t.treasure.filter.priceRange}
               </Typography>
               <Typography variant="caption" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
                 {formatCurrency(convertPrice(priceRange[0]), currency)} - {formatCurrency(convertPrice(priceRange[1]), currency)}

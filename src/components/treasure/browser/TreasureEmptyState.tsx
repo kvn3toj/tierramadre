@@ -1,5 +1,6 @@
 import { Box, Typography, Paper, Button, Chip, alpha } from '@mui/material';
 import { SearchX } from 'lucide-react';
+import { useLanguage } from '../../../contexts/LanguageContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
 
 const SUGGESTIONS = [
@@ -25,6 +26,7 @@ export default function TreasureEmptyState({
   onClearFilters,
   onSuggestionClick,
 }: TreasureEmptyStateProps) {
+  const { t } = useLanguage();
   return (
     <Paper
       elevation={0}
@@ -53,10 +55,10 @@ export default function TreasureEmptyState({
         <SearchX size={32} color={isLight ? surfacesLight.text.tertiary : surfacesDark.text.tertiary} />
       </Box>
       <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-        Sin resultados
+        {t.common?.noResults || 'Sin resultados'}
       </Typography>
       <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, maxWidth: 300, mx: 'auto' }}>
-        No encontramos esmeraldas con los filtros seleccionados. Prueba ajustando los criterios de búsqueda.
+        {t.treasure.empty.noResults}
       </Typography>
       {hasFilters && (
         <Button
@@ -75,7 +77,7 @@ export default function TreasureEmptyState({
             },
           }}
         >
-          Limpiar {activeFilterCount} filtro{activeFilterCount !== 1 ? 's' : ''}
+          {t.treasure.empty.clearFilters} {activeFilterCount} filtro{activeFilterCount !== 1 ? 's' : ''}
         </Button>
       )}
       {onSuggestionClick && (

@@ -1,5 +1,6 @@
 import { Box, Typography, Paper, Button, CircularProgress, alpha } from '@mui/material';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { useLanguage } from '../../../contexts/LanguageContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
 
 interface TreasureErrorStateProps {
@@ -15,6 +16,7 @@ export default function TreasureErrorState({
   onRetry,
   isRetrying = false,
 }: TreasureErrorStateProps) {
+  const { t } = useLanguage();
   return (
     <Paper
       elevation={0}
@@ -48,7 +50,7 @@ export default function TreasureErrorState({
         />
       </Box>
       <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-        Error al cargar el inventario
+        {t.treasure.error.loadingFailed}
       </Typography>
       <Typography
         variant="body2"
@@ -79,7 +81,7 @@ export default function TreasureErrorState({
           },
         }}
       >
-        {isRetrying ? 'Reintentando...' : 'Reintentar'}
+        {isRetrying ? 'Reintentando...' : t.actions.retry}
       </Button>
     </Paper>
   );

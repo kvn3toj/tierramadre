@@ -7,6 +7,7 @@ import { useIsProvider } from './hooks/usePermissions';
 import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
 import { LoadingFallback, SplashScreen, ChunkErrorBoundary } from './components/shared';
+import { useLanguage } from './contexts/LanguageContext';
 // PWA update toast (version check on visibility change)
 import UpdateToast from './components/pwa/UpdateToast';
 import { usePWAUpdate } from './hooks/usePWAUpdate';
@@ -21,6 +22,16 @@ import { AchievementToast } from './components/gamification';
 import { useViewportHeight } from './hooks/useViewportHeight';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 import { STORAGE_KEYS } from './constants/storage-keys';
+
+/**
+ * Localized Loading Component
+ * Uses useLanguage hook to retrieve translated loading messages
+ * Supports nested key paths (e.g., "loading.treasures")
+ */
+function LocalizedLoading({ messageKey }: { messageKey: keyof typeof import('./locales/es').es.loading }) {
+  const { t } = useLanguage();
+  return <LoadingFallback message={t.loading[messageKey]} />;
+}
 
 // All routes lazy loaded with retry for optimal bundle splitting
 const Home = lazyWithRetry(() => import('./components/home'), 'Home');
@@ -92,7 +103,7 @@ function HomeOrProviderRedirect() {
     return <Navigate to="/provider" replace />;
   }
   return (
-    <Suspense fallback={<LoadingFallback message="Cargando..." />}>
+    <Suspense fallback={<LocalizedLoading messageKey="general" />}>
       <Home />
     </Suspense>
   );
@@ -121,7 +132,7 @@ function AppContent() {
           <Route path="/" element={<RoleBasedRedirect />} />
           <Route path="/home" element={<HomeOrProviderRedirect />} />
           <Route path="/treasure" element={
-            <Suspense fallback={<LoadingFallback message="Cargando tesoros..." />}>
+            <Suspense fallback={<LocalizedLoading messageKey="treasures" />}>
               <TreasureBrowser />
             </Suspense>
           } />
@@ -130,14 +141,14 @@ function AppContent() {
 
           {/* Product detail */}
           <Route path="/product/:itemId" element={
-            <Suspense fallback={<LoadingFallback message="Cargando producto..." />}>
+            <Suspense fallback={<LocalizedLoading messageKey="product" />}>
               <ProductDetail />
             </Suspense>
           } />
 
           {/* Cart / Selection */}
           <Route path="/cart" element={
-            <Suspense fallback={<LoadingFallback message="Cargando selección..." />}>
+            <Suspense fallback={<LocalizedLoading messageKey="selection" />}>
               <CartPage />
             </Suspense>
           } />
@@ -146,7 +157,7 @@ function AppContent() {
           <Route
             path="/ambassadors"
             element={
-              <Suspense fallback={<LoadingFallback message="Cargando embajadores..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="ambassadors" />}>
                 <AmbassadorsPage
                   onViewProducts={handleViewAsesorProducts}
                   onContact={handleContactAsesor}
@@ -155,14 +166,14 @@ function AppContent() {
             }
           />
           <Route path="/ambassadors/:slug" element={
-            <Suspense fallback={<LoadingFallback message="Cargando perfil..." />}>
+            <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
               <AsesorProfilePage />
             </Suspense>
           } />
 
           {/* Valuation Page - Emerald investment information */}
           <Route path="/valuation" element={
-            <Suspense fallback={<LoadingFallback message="Cargando información..." />}>
+            <Suspense fallback={<LocalizedLoading messageKey="information" />}>
               <ValuationPage />
             </Suspense>
           } />
@@ -170,21 +181,21 @@ function AppContent() {
           {/* Cuentas Hub - Staff access (Admin, Embajador, Asesor) */}
           <Route path="/cuentas" element={
             <StaffRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando cuentas..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="accounts" />}>
                 <AccountsHub />
               </Suspense>
             </StaffRoute>
           } />
           <Route path="/cuentas/simulador" element={
             <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando simulador..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="simulator" />}>
                 <PriceSimulator />
               </Suspense>
             </AdminRoute>
           } />
           <Route path="/cuentas/recibos" element={
             <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando recibos..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="receipts" />}>
                 <ReceiptGenerator />
               </Suspense>
             </AdminRoute>
@@ -192,14 +203,14 @@ function AppContent() {
           {/* Cotizaciones - Staff access (Admin, Embajador, Asesor) */}
           <Route path="/cuentas/cotizaciones" element={
             <StaffRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando cotizaciones..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="quotations" />}>
                 <CotizacionGenerator />
               </Suspense>
             </StaffRoute>
           } />
           <Route path="/cuentas/cotizaciones/preview" element={
             <StaffRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando cotización..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="quotation" />}>
                 <QuotationPreview />
               </Suspense>
             </StaffRoute>
@@ -207,7 +218,7 @@ function AppContent() {
 
           {/* Bóveda Secreta */}
           <Route path="/boveda-secreta" element={
-            <Suspense fallback={<LoadingFallback message="Cargando bóveda..." />}>
+            <Suspense fallback={<LocalizedLoading messageKey="vault" />}>
               <VaultPage />
             </Suspense>
           } />
@@ -215,7 +226,7 @@ function AppContent() {
           {/* Admin Analytics Dashboard */}
           <Route path="/admin/analytics" element={
             <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando analytics..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="analytics" />}>
                 <AdminAnalyticsPage />
               </Suspense>
             </AdminRoute>
@@ -224,7 +235,7 @@ function AppContent() {
           {/* Admin Name Generator */}
           <Route path="/admin/name-generator" element={
             <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando generador..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="generator" />}>
                 <NameGeneratorPage />
               </Suspense>
             </AdminRoute>
@@ -233,7 +244,7 @@ function AppContent() {
           {/* Product Viewers Analytics */}
           <Route path="/admin/analytics/item/:itemId" element={
             <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando vistas..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="views" />}>
                 <ProductViewersPage />
               </Suspense>
             </AdminRoute>
@@ -242,7 +253,7 @@ function AppContent() {
           {/* User Views Analytics */}
           <Route path="/admin/analytics/user" element={
             <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando historial..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="history" />}>
                 <UserViewsPage />
               </Suspense>
             </AdminRoute>
@@ -251,7 +262,7 @@ function AppContent() {
           {/* All Users Activity Feed */}
           <Route path="/admin/analytics/activity" element={
             <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando actividad..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="activity" />}>
                 <ActivityPage />
               </Suspense>
             </AdminRoute>
@@ -260,7 +271,7 @@ function AppContent() {
           {/* Cotización Products Analytics */}
           <Route path="/admin/cotizacion-products" element={
             <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando productos..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="products" />}>
                 <CotizacionProductsPage />
               </Suspense>
             </AdminRoute>
@@ -269,7 +280,7 @@ function AppContent() {
           {/* Admin Feedback Dashboard */}
           <Route path="/admin/feedback" element={
             <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando feedback..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="feedback" />}>
                 <FeedbackDashboard />
               </Suspense>
             </AdminRoute>
@@ -278,21 +289,21 @@ function AppContent() {
           {/* Admin Quotation Management */}
           <Route path="/cuentas/solicitudes" element={
             <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando solicitudes..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="requests" />}>
                 <QuotationRequestList />
               </Suspense>
             </AdminRoute>
           } />
           <Route path="/cuentas/solicitudes/nueva" element={
             <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando formulario..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="form" />}>
                 <QuotationRequestForm />
               </Suspense>
             </AdminRoute>
           } />
           <Route path="/cuentas/cotizaciones-proveedor" element={
             <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando cotizaciones..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="quotations" />}>
                 <ProviderQuotationsList />
               </Suspense>
             </AdminRoute>
@@ -301,7 +312,7 @@ function AppContent() {
           {/* My Profile - Staff only */}
           <Route path="/mi-perfil" element={
             <StaffRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando perfil..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
                 <MyProfilePage />
               </Suspense>
             </StaffRoute>
@@ -310,7 +321,7 @@ function AppContent() {
           {/* Product Requests (Asesor/Embajador -> Admin) - Staff only */}
           <Route path="/solicitudes" element={
             <StaffRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando solicitudes..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="requests" />}>
                 <ProductRequestsHub />
               </Suspense>
             </StaffRoute>
@@ -320,7 +331,7 @@ function AppContent() {
           <Route path="/mis-solicitudes" element={<Navigate to="/solicitudes" replace />} />
           <Route path="/cuentas/solicitudes-asesores" element={
             <AdminRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando solicitudes..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="requests" />}>
                 <AdminProductRequestList />
               </Suspense>
             </AdminRoute>
@@ -329,28 +340,28 @@ function AppContent() {
           {/* Provider Portal Routes */}
           <Route path="/provider" element={
             <ProviderRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando portal..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="portal" />}>
                 <ProviderDashboard />
               </Suspense>
             </ProviderRoute>
           } />
           <Route path="/provider/requests" element={
             <ProviderRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando solicitudes..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="requests" />}>
                 <ProviderRequestList />
               </Suspense>
             </ProviderRoute>
           } />
           <Route path="/provider/submit" element={
             <ProviderRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando formulario..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="form" />}>
                 <ProviderQuotationForm />
               </Suspense>
             </ProviderRoute>
           } />
           <Route path="/provider/inventory" element={
             <ProviderRoute>
-              <Suspense fallback={<LoadingFallback message="Cargando inventario..." />}>
+              <Suspense fallback={<LocalizedLoading messageKey="inventory" />}>
                 <ProviderInventory />
               </Suspense>
             </ProviderRoute>
@@ -369,7 +380,7 @@ function InvitationRouter() {
       <Route
         path="/invite/:shortCode"
         element={
-          <Suspense fallback={<LoadingFallback message="Cargando..." />}>
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
             <InvitationPage />
           </Suspense>
         }
@@ -378,7 +389,7 @@ function InvitationRouter() {
       <Route
         path="/g/:shortCode"
         element={
-          <Suspense fallback={<LoadingFallback message="Cargando..." />}>
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
             <InvitationPage />
           </Suspense>
         }
@@ -387,7 +398,7 @@ function InvitationRouter() {
       <Route
         path="/c/:folder"
         element={
-          <Suspense fallback={<LoadingFallback message="Cargando coleccion..." />}>
+          <Suspense fallback={<LocalizedLoading messageKey="collection" />}>
             <CollectionPage />
           </Suspense>
         }

@@ -66,28 +66,29 @@ const getPrimaryTabs = (t: any): TabConfig[] => [
 ];
 
 // Provider-specific tabs
-const getProviderTabs = (): TabConfig[] => [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getProviderTabs = (t: any): TabConfig[] => [
   {
     id: 'provider-home',
-    label: 'Inicio',
+    label: t.nav.home,
     icon: Home,
     route: '/provider',
   },
   {
     id: 'provider-requests',
-    label: 'Solicitudes',
+    label: t.nav.requests,
     icon: FileText as React.ElementType,
     route: '/provider/requests',
   },
   {
     id: 'provider-submit',
-    label: 'Cotizar',
+    label: t.actions.quote,
     icon: PlusCircle as React.ElementType,
     route: '/provider/submit',
   },
   {
     id: 'provider-inventory',
-    label: 'Inventario',
+    label: t.nav.inventory,
     icon: Package as React.ElementType,
     route: '/provider/inventory',
   },
@@ -127,7 +128,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
   // Use provider tabs if user is a provider, otherwise use primary tabs
   const PRIMARY_TABS = useMemo(() => {
     if (isProvider) {
-      return getProviderTabs();
+      return getProviderTabs(t);
     }
     return getPrimaryTabs(t);
   }, [t, isProvider]);

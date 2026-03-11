@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Box, Typography, Chip, alpha, Collapse } from '@mui/material';
 import { BarChart3, Radar as RadarIcon, TrendingUp, DollarSign, Gem, Award, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { TreasureItem } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { getColorDot, getQualityBadge } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
@@ -69,6 +70,7 @@ const priorityConfig: Record<ComparisonPriority, {
 };
 
 export default function ComparisonMobileView({ items }: ComparisonMobileViewProps) {
+  const { t } = useLanguage();
   const { formatCurrency } = useCurrencyFormat();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -123,7 +125,7 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
         return (
           <AttributeCard
             key="precioquilate"
-            label="Precio/Quilate"
+            label={t.comparison.pricePerCarat}
             values={items.map((item, idx) => {
               if (
                 item.isJewelry ||

@@ -15,6 +15,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { ArrowLeft, Package, Square } from 'lucide-react';
+import { useLanguage } from '../../../contexts/LanguageContext';
 import { useAsesores } from '../../../hooks/useAsesores';
 import { getAsesorProducts } from '../../../utils/asesorProductOwnership';
 import { useTreasure } from '../../../hooks/useTreasure';
@@ -46,6 +47,7 @@ import type {
 
 
 export default function AsesorProfilePage() {
+  const { t } = useLanguage();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -426,7 +428,7 @@ export default function AsesorProfilePage() {
       {collectionFolder && (
         <ExclusiveCollectionSection
           products={collectionProducts}
-          collectionName={collectionInfo?.name || 'Coleccion Exclusiva'}
+          collectionName={collectionInfo?.name || t.ambassador.exclusiveCollection}
           collectionDescription={collectionInfo?.description}
           isLoading={collectionLoading}
           onProductClick={setSelectedCollectionProduct}
@@ -499,7 +501,7 @@ export default function AsesorProfilePage() {
               onClick={clearFilters}
               sx={{ textTransform: 'none' }}
             >
-              Limpiar filtros
+              {t.ambassador.clearFilters}
             </Button>
           )}
         </Paper>

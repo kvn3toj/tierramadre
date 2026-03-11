@@ -5,6 +5,7 @@
 
 import { Box, Typography, Paper, Button, alpha } from '@mui/material';
 import { Calculator, Eye } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { studioColors, studioGradients, studioShadows, cssTransition, zIndex, fontWeights, fontFamilies } from '../../design-system';
 
 export interface PriceSimulatorHeaderProps {
@@ -16,6 +17,8 @@ export const PriceSimulatorHeader: React.FC<PriceSimulatorHeaderProps> = ({
   totalInvestment,
   onPreview,
 }) => {
+  const { t } = useLanguage();
+
   return (
     <Box
       sx={{
@@ -109,7 +112,7 @@ export const PriceSimulatorHeader: React.FC<PriceSimulatorHeaderProps> = ({
                   fontSize: { xs: '1.25rem', sm: '1.375rem', md: '1.5rem' },
                 }}
               >
-                Simulador de Precios
+                {t.priceSimulator.title}
               </Typography>
               <Typography
                 variant="body2"

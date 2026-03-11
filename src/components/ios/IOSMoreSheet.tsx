@@ -57,8 +57,8 @@ const buildMenuSections = (t: any, flags: { isAdmin: boolean; isStaff: boolean; 
     if (flags.canCreateInvitations) {
       salesTools.push({
         id: 'invitation',
-        label: 'Invitar',
-        subtitle: 'Genera un enlace temporal de 24 horas para tus clientes',
+        label: t.tools.invitation.label,
+        subtitle: t.tools.invitation.subtitle,
         icon: PersonAdd,
         action: 'invitation',
         color: accentColors.info.light,
@@ -68,8 +68,8 @@ const buildMenuSections = (t: any, flags: { isAdmin: boolean; isStaff: boolean; 
     salesTools.push(
       {
         id: 'solicitudes',
-        label: 'Solicitudes',
-        subtitle: 'Solicita productos y ve el estado de tus pedidos',
+        label: t.tools.requests.label,
+        subtitle: t.tools.requests.subtitle,
         icon: ShoppingBag as any,
         route: '/solicitudes',
         color: accentColors.success.light,
@@ -85,7 +85,7 @@ const buildMenuSections = (t: any, flags: { isAdmin: boolean; isStaff: boolean; 
     );
 
     if (salesTools.length > 0) {
-      sections.push({ id: 'sales', title: 'HERRAMIENTAS DE VENTA', tools: salesTools });
+      sections.push({ id: 'sales', title: t.menu.salesTools.toUpperCase(), tools: salesTools });
     }
   }
 
@@ -113,18 +113,18 @@ const buildMenuSections = (t: any, flags: { isAdmin: boolean; isStaff: boolean; 
     });
   }
 
-  sections.push({ id: 'discover', title: 'DESCUBRIR', tools: discoverTools });
+  sections.push({ id: 'discover', title: t.menu.discover.toUpperCase(), tools: discoverTools });
 
   // ADMINISTRACION (admin only)
   if (flags.isAdmin) {
     sections.push({
       id: 'admin',
-      title: 'ADMINISTRACION',
+      title: t.menu.admin.toUpperCase(),
       tools: [
         {
           id: 'analytics',
-          label: 'Analytics',
-          subtitle: 'Metricas y Business Health',
+          label: t.tools.analytics.label,
+          subtitle: t.tools.analytics.subtitle,
           icon: BarChart3 as any,
           route: '/admin/analytics',
           color: accentColors.purple.light,
@@ -152,8 +152,8 @@ const getBottomTools = (t: any, isStaff: boolean): MoreToolConfig[] => {
   if (isStaff) {
     tools.push({
       id: 'feedback',
-      label: 'Reportar Feedback',
-      subtitle: 'Reporta bugs, sugiere features o mejoras de UX',
+      label: t.tools.feedback.label,
+      subtitle: t.tools.feedback.subtitle,
       icon: BugReport,
       action: 'feedback',
       color: accentColors.warning.light,
@@ -520,7 +520,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
               {/* Theme Toggle */}
               <IconButton
                 onClick={handleThemeToggle}
-                aria-label={mode === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+                aria-label={mode === 'dark' ? t.settings.lightMode : t.settings.darkMode}
                 sx={{
                   color: brand.emerald[500],
                   backgroundColor: `${brand.emerald[500]}15`,
