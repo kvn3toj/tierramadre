@@ -37,6 +37,8 @@ export interface PdfExportResult {
   success: boolean;
   filename?: string;
   error?: string;
+  /** PDF blob for sharing via Web Share API */
+  blob?: Blob;
 }
 
 // =============================================================================
@@ -134,9 +136,10 @@ export const exportToPdf = async (options: PdfExportOptions): Promise<PdfExportR
     onProgress?.('download');
 
     const fullFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+    const blob = pdf.output('blob');
     pdf.save(fullFilename);
 
-    return { success: true, filename: fullFilename };
+    return { success: true, filename: fullFilename, blob };
   } catch (error) {
     console.error('PDF export failed:', error);
     return {
@@ -155,12 +158,16 @@ export const exportToPdf = async (options: PdfExportOptions): Promise<PdfExportR
  */
 export const exportQuotationToPdf = async (
   element: HTMLElement,
-  quotationNumber: string,
+  _quotationNumber: string,
   onProgress?: (stage: 'capture' | 'generate' | 'download') => void
 ): Promise<PdfExportResult> => {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+
   return exportToPdf({
     element,
-    filename: `Cotizacion_${quotationNumber}`,
+    filename: `Tierra Mädre - Cotización-(${day}-${month})`,
     scale: 3,
     margin: 8,
     centerVertically: true,

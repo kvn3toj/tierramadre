@@ -426,6 +426,10 @@ export default function CotizacionGenerator() {
   };
 
   const [isExporting, setIsExporting] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  // Store the last exported PDF blob for sharing without re-generating
+  const lastPdfBlobRef = useRef<Blob | null>(null);
+  const lastPdfFilenameRef = useRef<string>('');
 
   const handleExportPDF = async () => {
     if (!quotationRef.current || isExporting) return;
@@ -457,6 +461,12 @@ export default function CotizacionGenerator() {
 
       if (!result.success) {
         throw new Error(result.error || 'PDF export failed');
+      }
+
+      // Store blob for share functionality
+      if (result.blob) {
+        lastPdfBlobRef.current = result.blob;
+        lastPdfFilenameRef.current = result.filename || `Tierra Mädre - Cotización-(${String(new Date().getDate()).padStart(2, '0')}-${String(new Date().getMonth() + 1).padStart(2, '0')}).pdf`;
       }
 
       // 3. Track cotizacion exported
@@ -546,6 +556,106 @@ export default function CotizacionGenerator() {
       log.error('PDF export error:', error);
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleSharePDF = async () => {
+    if (!quotationRef.current || isSharing) return;
+    setIsSharing(true);
+
+    try {
+      let blob = lastPdfBlobRef.current;
+      let filename = lastPdfFilenameRef.current;
+
+      // If no cached blob, generate the PDF first (without triggering download)
+      if (!blob) {
+        const { exportQuotationToPdf } = await import('../../utils/pdf/pdfExport');
+        const contentElement = quotationRef.current;
+        const result = await exportQuotationToPdf(contentElement, quotationNumber);
+
+        if (!result.success || !result.blob) {
+          throw new Error(result.error || 'PDF generation failed');
+        }
+        blob = result.blob;
+        filename = result.filename || `Tierra Mädre - Cotización-(${String(new Date().getDate()).padStart(2, '0')}-${String(new Date().getMonth() + 1).padStart(2, '0')}).pdf`;
+        lastPdfBlobRef.current = blob;
+        lastPdfFilenameRef.current = filename;
+      }
+
+      if (!filename) {
+        filename = `Tierra Mädre - Cotización-(${String(new Date().getDate()).padStart(2, '0')}-${String(new Date().getMonth() + 1).padStart(2, '0')}).pdf`;
+      }
+
+      const pdfFile = new File([blob], filename, { type: 'application/pdf' });
+
+      // Try native Web Share API with file support
+      if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+        await navigator.share({
+          title: `Cotización ${quotationNumber} - Tierra Madre`,
+          text: clientName
+            ? `Cotización para ${clientName}`
+            : `Cotización ${quotationNumber}`,
+          files: [pdfFile],
+        });
+
+        track('cotizacion_shared', {
+          quotation_number: quotationNumber,
+          method: 'native',
+        });
+
+        setSnackbar({
+          open: true,
+          message: 'Cotización compartida',
+          severity: 'success',
+        });
+      } else {
+        // Fallback: create a downloadable link and copy info to clipboard
+        const shareUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = shareUrl;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(shareUrl);
+
+        // Also copy a text summary to clipboard
+        const shareText = clientName
+          ? `Cotización ${quotationNumber} para ${clientName} - Tierra Madre`
+          : `Cotización ${quotationNumber} - Tierra Madre`;
+
+        try {
+          await navigator.clipboard.writeText(shareText);
+          setSnackbar({
+            open: true,
+            message: 'PDF descargado y texto copiado al portapapeles',
+            severity: 'success',
+          });
+        } catch {
+          setSnackbar({
+            open: true,
+            message: 'PDF descargado para compartir',
+            severity: 'success',
+          });
+        }
+
+        track('cotizacion_shared', {
+          quotation_number: quotationNumber,
+          method: 'fallback',
+        });
+      }
+    } catch (error) {
+      // Don't show error if user cancelled the share dialog
+      if (error instanceof Error && error.name === 'AbortError') {
+        log.debug('Share cancelled by user');
+      } else {
+        log.error('Share PDF error:', error);
+        setSnackbar({
+          open: true,
+          message: 'Error al compartir la cotización',
+          severity: 'error',
+        });
+      }
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -770,10 +880,12 @@ export default function CotizacionGenerator() {
           {/* Actions */}
           <ActionButtons
             handleExportPDF={handleExportPDF}
+            handleSharePDF={handleSharePDF}
             handlePrint={handlePrint}
             handleNewQuotation={handleNewQuotation}
             disabled={products.length === 0 && totalInvestment === 0}
             isExporting={isExporting}
+            isSharing={isSharing}
           />
         </Paper>
 

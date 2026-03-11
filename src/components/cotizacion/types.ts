@@ -154,8 +154,10 @@ export interface DiscountValiditySectionProps {
 
 export interface ActionButtonsProps {
   handleExportPDF: () => void;
+  handleSharePDF: () => void;
   handlePrint: () => void;
   handleNewQuotation: () => void;
   disabled: boolean;
   isExporting?: boolean;
+  isSharing?: boolean;
 }
