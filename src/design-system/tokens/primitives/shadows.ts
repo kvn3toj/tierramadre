@@ -1,11 +1,14 @@
 /**
- * Primitive Shadow Tokens
+ * Primitive Shadow Tokens — RAW THEME-AWARE PAIRS
  * "Emerald iOS" Design System
  *
  * iOS elevation system using subtle shadows. iOS shadows are more
  * refined than Material Design - softer, more organic, less pronounced.
  *
  * Shadows adapt to theme: subtle in light mode, deeper in dark mode.
+ *
+ * For semantic/branded shadows (card, focus, emerald, gold, etc.),
+ * prefer importing from tokens/shadows.ts instead.
  */
 
 /**

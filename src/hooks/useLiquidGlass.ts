@@ -10,6 +10,24 @@ import type { SxProps, Theme } from '@mui/material';
 import { liquidGlassEffect, type LiquidGlassOptions } from '../design-system/mixins/liquidGlassMixins';
 import type { InteractionState, ElevationLevel, DeviceTier } from '../design-system/tokens/liquid-glass';
 import { getCachedDeviceTier } from '../utils/deviceTier';
+import { whiteAlpha, blackAlpha } from '../design-system/utils/colorUtils';
+
+// =============================================================================
+// FALLBACK STYLES (shared across hooks to avoid duplication)
+// =============================================================================
+
+/** Opaque fallback for devices that don't support Liquid Glass */
+const getFallbackStyles = (isDark: boolean): SxProps<Theme> => ({
+  background: isDark ? 'rgba(30, 41, 59, 0.95)' : whiteAlpha(0.95),
+  border: isDark
+    ? `1px solid ${whiteAlpha(0.1)}`
+    : `1px solid ${blackAlpha(0.1)}`,
+});
+
+/** Minimal fallback (background only, no border) */
+const getFallbackBg = (isDark: boolean): SxProps<Theme> => ({
+  background: isDark ? 'rgba(30, 41, 59, 0.95)' : whiteAlpha(0.95),
+});
 
 // =============================================================================
 // TYPES
@@ -137,13 +155,7 @@ export const useLiquidGlass = (options: UseLiquidGlassOptions = {}): UseLiquidGl
   // Generate glass effect styles
   const glassProps = useMemo((): SxProps<Theme> => {
     if (!isEnabled) {
-      // Fallback styles for disabled/low-tier
-      return {
-        background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-        border: isDark
-          ? '1px solid rgba(255, 255, 255, 0.1)'
-          : '1px solid rgba(0, 0, 0, 0.1)',
-      };
+      return getFallbackStyles(isDark);
     }
 
     const effectOptions: LiquidGlassOptions = {
@@ -194,12 +206,7 @@ export const useLiquidGlassStatic = (options: Omit<UseLiquidGlassOptions, 'disab
 
   return useMemo(() => {
     if (tier === 'low') {
-      return {
-        background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-        border: isDark
-          ? '1px solid rgba(255, 255, 255, 0.1)'
-          : '1px solid rgba(0, 0, 0, 0.1)',
-      };
+      return getFallbackStyles(isDark);
     }
 
     return liquidGlassEffect({
@@ -223,9 +230,7 @@ export const useLiquidGlassNav = (isDark: boolean = false): SxProps<Theme> => {
 
   return useMemo(() => {
     if (tier === 'low') {
-      return {
-        background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-      };
+      return getFallbackBg(isDark);
     }
 
     return liquidGlassEffect({

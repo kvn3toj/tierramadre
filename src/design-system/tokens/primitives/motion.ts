@@ -1,9 +1,17 @@
 /**
- * Primitive Motion Tokens
+ * Primitive Motion Tokens — CSS LAYER
  * "Emerald iOS" Design System
  *
  * iOS-inspired animation system with spring physics and easing curves.
  * Creates natural, organic motion that feels alive and responsive.
+ *
+ * ┌──────────────────────────────────────────────────────┐
+ * │  THIS FILE: CSS easing strings, keyframes, durations │
+ * │  Use in: sx props, styled(), CSS-in-JS               │
+ * │                                                      │
+ * │  For Framer Motion springs & variants, see:           │
+ * │  tokens/motion.ts                                     │
+ * └──────────────────────────────────────────────────────┘
  *
  * Reference: https://developer.apple.com/design/human-interface-guidelines/motion
  */

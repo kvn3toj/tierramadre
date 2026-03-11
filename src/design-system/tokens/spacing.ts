@@ -5,8 +5,9 @@
  * Based on iOS Human Interface Guidelines.
  */
 
-// Golden ratio constant
-export const PHI = 1.618033988749895;
+// Golden ratio — imported from single source of truth
+import { PHI } from './primitives/geometry';
+export { PHI };
 
 // =============================================================================
 // BASE SPACING (8pt Grid)

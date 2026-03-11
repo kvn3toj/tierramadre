@@ -18,7 +18,9 @@ import { gradients } from '../../tokens/gradients';
 import { shadows } from '../../tokens/shadows';
 import { spacing, componentHeights } from '../../tokens/spacing';
 import { goldAccent } from '../../tokens/colors';
-import { emeraldAlpha, goldAlpha } from '../../utils/colorUtils';
+import { emeraldAlpha, goldAlpha, errorAlpha } from '../../utils/colorUtils';
+import { fontSizes } from '../../tokens/typography';
+import { cssTransition } from '../../tokens/motion';
 
 // =============================================================================
 // TYPES
@@ -40,6 +42,11 @@ export interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size'> {
   endIcon?: React.ReactNode;
   /** Full width button */
   fullWidth?: boolean;
+  /**
+   * Accessible label — required for icon-only buttons.
+   * When children is only an icon (no visible text), you MUST provide aria-label.
+   */
+  'aria-label'?: string;
   /** Button content */
   children: React.ReactNode;
 }
@@ -52,17 +59,17 @@ const sizeStyles = {
   sm: {
     height: componentHeights.button.sm,
     padding: `${spacing.xs}px ${spacing.md}px`,
-    fontSize: '0.875rem',
+    fontSize: fontSizes.md,      // 13px footnote
   },
   md: {
     height: componentHeights.button.md,
     padding: `${spacing.sm}px ${spacing.lg}px`,
-    fontSize: '0.9375rem',
+    fontSize: fontSizes.lg,      // 15px subheadline
   },
   lg: {
     height: componentHeights.button.lg,
     padding: `${spacing.md}px ${spacing.xl}px`,
-    fontSize: '1rem',
+    fontSize: fontSizes.xl,      // 16px callout
   },
 };
 
@@ -87,9 +94,13 @@ const StyledButton = styled(MuiButton, {
     fontWeight: 600,
     borderRadius: 8,
     textTransform: 'none' as const,
-    transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+    transition: cssTransition.default,
     opacity: loading ? 0.7 : 1,
     pointerEvents: loading ? 'none' as const : 'auto' as const,
+    '&:focus-visible': {
+      outline: 'none',
+      boxShadow: shadows.focus.default,
+    },
     '&:active': {
       transform: 'scale(0.98)',
     },
@@ -145,7 +156,7 @@ const StyledButton = styled(MuiButton, {
       boxShadow: shadows.semantic.error,
       '&:hover': {
         background: gradients.button.dangerHover,
-        boxShadow: `0 6px 20px rgba(239, 68, 68, 0.4)`,
+        boxShadow: `0 6px 20px ${errorAlpha(0.4)}`,
       },
       '&:active': {
         background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',

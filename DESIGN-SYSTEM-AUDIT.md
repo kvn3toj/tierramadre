@@ -1,206 +1,200 @@
 # Design System Audit Report — Tierra Madre Studio
 
-**Date:** March 7, 2026
-**Scope:** All files in `src/pages/`, `src/components/`, `src/contexts/`, `src/hooks/`
-**Version:** Post-Audit v2 (z-index, typography, shadows, transitions already fixed)
+**Date:** March 11, 2026 (v3 — full architecture + adoption audit)
+**Scope:** Token architecture, component completeness, codebase-wide adoption
+**System:** Emerald iOS — iOS HIG + Colombian emerald brand identity
 
 ---
 
 ## Executive Summary
 
-After the initial audit that connected ~90+ files to the design system (z-index, fontWeights, fontFamily, shadows, transitions), a second deep scan reveals **~300+ remaining hardcoded values** across the codebase. The biggest offenders are hex colors, rgba values, borderRadius, and fontSize literals.
+| Metric | Value |
+|--------|-------|
+| **Token files** | 23 files across primitives, semantic, and composite layers |
+| **DS components** | 7 (Button, Card, Container, Stack, VStack, HStack, ThemeProvider) |
+| **Codebase files scanned** | 250 (189 components + 61 pages) |
+| **DS adoption rate** | 65% of files import from `@/design-system` |
+| **Hardcoded violations** | ~1,022 (478 color + 411 spacing + 83 z-index + 50 shadow) |
+| **Component completeness** | 94% average |
+| **Overall score** | **78 / 100** |
 
-### Severity Breakdown
-
-| Priority | Category | Count | Impact |
-|----------|----------|-------|--------|
-| P0 | Hardcoded hex colors (#fff, #000, surface/text colors) | ~105 | Theme inconsistency, dark mode breaks |
-| P0 | Hardcoded rgba() not using alpha utilities | ~75 | Theme inconsistency |
-| P1 | Hardcoded borderRadius px values | ~70 | Visual inconsistency |
-| P1 | Hardcoded fontWeight numbers (still remaining) | ~80 | Minor, but violates single-source-of-truth |
-| P2 | Hardcoded fontSize rem/px strings | ~50 | Scale drift |
-| P2 | Hardcoded lineHeight/letterSpacing | ~50 | Typography drift |
-| P3 | Hardcoded boxShadow strings | ~12 | Shadow inconsistency |
-| P3 | Hardcoded transitions | ~5 | Motion inconsistency |
+The token architecture is mature and mathematically grounded (golden ratio, Fibonacci, iOS HIG). Core components are well-built at 94% completeness. The main gap is **adoption** — 35% of component files bypass design tokens with hardcoded values.
 
 ---
 
-## P0 — Critical (Theme/Dark Mode Impact)
+## 1. Token Architecture
 
-### Hardcoded Hex Colors
+### Three-tier hierarchy (well-structured)
 
-These break dark mode theming because they don't respond to theme context.
+```
+primitives/     → Raw values (colors, spacing, motion, shadows, typography, geometry)
+semantic/       → Purpose-driven (brand, surface, text, interactive, document)
+composite/      → Feature tokens (glass, gradients, charts, liquid-glass, overlays)
+legacy-compat   → Migration path for old consumers
+```
 
-**Worst offenders:**
+Golden ratio (φ = 1.618) is embedded throughout spacing, typography, and container proportions. The 8pt grid aligns with iOS standards. Sacred geometry tokens (emerald cut angles, Fibonacci sequences) are unique and brand-aligned.
 
-| File | Count | Examples |
-|------|-------|---------|
-| `pages/collection/CollectionPage.tsx` | 25+ | `#fff`, `#000`, `#D4A017`, `#B8941F` |
-| `pages/admin/ActivityPage.tsx` | 20+ | `#666`, surface colors |
-| `pages/ambassadors/profile/components/CollectionProductDialog.tsx` | 20+ | Colors, fontSizes |
-| `components/treasure/certification/EthicalTab.tsx` | 16 | `#F9FAFB`, `#2C2C2E`, `#E5E7EB`, `#3C3C3E` |
-| `components/treasure/certification/ColombianOriginTab.tsx` | 4 | Same surface/border pattern |
-| `components/media/DriveUrlInput.tsx` | 3 | `#fff`, `rgba(0,0,0,...)` |
-| `components/media/MediaUploadZone.tsx` | 4 | `#9CA3AF`, `#6B7280` |
-| `components/media/DriveFolderInfo.tsx` | 3 | `#fff`, `#f5f5f5`, `#ccc` |
-| `components/home/sections/InstagramSection.tsx` | 2 | `#fff` |
-| `components/auth/WelcomeScreen.tsx` | 3 | `#0d1a14`, `#050505`, `#000` |
-| `components/cotizacion/constants.ts` | 2 | `#FFFFFF`, `#FAFAFA` |
-| `components/cotizacion/quotation-preview/TotalsSection.tsx` | 1 | `#E5E7EB` |
-| `components/treasure/RecentlyViewedCarousel.tsx` | 1 | `#ef4444` |
-| `components/comparison/AttributeCard.tsx` | 1 | `#999` |
+### Structural issues
 
-**Recommended tokens:**
+**1. Dual motion systems** — `primitives/motion.ts` defines CSS easing curves and keyframes while `tokens/motion.ts` defines Framer Motion spring configs. Both export to the barrel but the boundary isn't documented.
 
-| Hardcoded | Token Replacement |
-|-----------|-------------------|
-| `#fff`, `#FFFFFF` | `surfacesLight.background.primary` or CSS `var(--surface-primary)` |
-| `#000` | `surfacesLight.text.primary` or `surfacesDark.background.primary` |
-| `#F9FAFB` | `surfacesLight.background.secondary` |
-| `#2C2C2E` | `surfacesDark.background.secondary` |
-| `#E5E7EB` | `surfacesLight.border.light` |
-| `#3C3C3E` | `surfacesDark.border.default` |
-| `#9CA3AF` | `surfacesLight.text.tertiary` |
-| `#6B7280` | `surfacesLight.text.secondary` |
-| `#ef4444` | `semanticColors.error.main` |
-| `#D4A017`, `#B8941F` | `goldAccent.primary`, `goldAccent.dark` |
+**2. Dual shadow systems** — `primitives/shadows.ts` provides light/dark elevation scales. `tokens/shadows.ts` adds emerald-tinted, gold-tinted, semantic, card, and specular shadows. Developers don't know which to reach for.
 
-### Hardcoded rgba() Values
+**3. PHI redefined in three places** — `primitives/geometry.ts`, `tokens/spacing.ts`, and `tokens/brand.ts` all define the golden ratio independently instead of importing from a single source.
 
-Should use `whiteAlpha()`, `blackAlpha()`, `emeraldAlpha()`, `goldAlpha()`.
+**4. Font family conflict** — `primitives/typography.ts` uses SF Pro Display/Text. `tokens/brand.ts` uses Cormorant Garamond / Montserrat. No documented canonical choice.
 
-**Top files:**
+**5. Gradient duplication** — `semantic/brand.ts` defines `brandGradients` while `tokens/gradients.ts` defines `emeraldGradients` with overlapping but slightly different values.
 
-| File | Count | Examples |
-|------|-------|---------|
-| `components/shared/CollectionSplashScreen.tsx` | 5 | `rgba(80,200,120,0.35)`, `rgba(255,255,255,0.95/0.85/0.1/0.5)` |
-| `components/ios/IOSMoreSheet.tsx` | 4 | `rgba(0,0,0,0.3/0.4)`, `rgba(52,199,89,0.08)`, `rgba(46,125,50,0.08)` |
-| `components/pwa/NotificationPermission.tsx` | 5 | `rgba(0,0,0,0.85/0.3)`, `rgba(255,255,255,0.1/0.5/0.4)` |
-| `components/product/GalleryPreview.tsx` | 3 | `rgba(0,0,0,0.7/0.1/0.6)` |
-| `components/analytics/FrictionInsights.tsx` | 6 | Uses MUI `alpha('#000',...)` instead of `blackAlpha()` |
-| `hooks/useLiquidGlass.ts` | 7 | `rgba(30,41,59,0.95)`, `rgba(255,255,255,0.1)`, `rgba(0,0,0,0.1)` — repeated 3x |
+---
 
-**Fix pattern:**
-```typescript
-// Before
-rgba(0, 0, 0, 0.6)           →  blackAlpha(0.6)
-rgba(255, 255, 255, 0.5)     →  whiteAlpha(0.5)
-rgba(0, 174, 122, 0.3)       →  emeraldAlpha(0.3)
-rgba(80, 200, 120, 0.35)     →  emeraldAlpha(0.35)  // approximate
-alpha('#000', 0.2)           →  blackAlpha(0.2)
+## 2. Naming Consistency
+
+| Category | Convention | Consistent? |
+|----------|-----------|-------------|
+| Colors | `category[shade]` (emerald[500]) | ✅ Yes |
+| Spacing | `xs`/`sm`/`md`/`lg`/`xl` scale | ✅ Yes |
+| Typography | iOS text style names (headline, body, callout) | ✅ Yes |
+| Shadows | `{context}Shadows.{size}` | ⚠️ Mixed paths (`card.resting` vs `cardShadows.resting`) |
+| Motion | `easing.{name}` / `spring.{name}` | ⚠️ Split across two files |
+| Opacity | Semantic names (whisper, subtle, glass, solid) | ✅ Yes |
+| Z-Index | Semantic names (nav, modal, toast) | ✅ Yes |
+| Radius | `xs`/`sm`/`md`/`lg`/`xl`/`full` | ✅ Yes |
+
+---
+
+## 3. Token Coverage
+
+| Category | Tokens Defined | Hardcoded Values Found | Adoption |
+|----------|---------------|----------------------|----------|
+| Colors | 200+ values | 269 hex + 209 rgba = **478** | 🔴 ~58% |
+| Spacing | 30+ scale values | **411** px-based dimensions | 🔴 ~52% |
+| Shadows | 60+ presets | **50** inline box-shadows | 🟡 ~75% |
+| Z-Index | 12 semantic levels | **83** hardcoded integers | 🟡 ~70% |
+| Typography | 11 iOS styles + custom | Hardcoded font-size/weight in many files | 🟡 ~65% |
+| Border Radius | 7 scale values | Scattered `borderRadius: '10px'` etc. | 🟡 ~70% |
+
+---
+
+## 4. Component Completeness
+
+| Component | States | Variants | A11y | Tokens | Score |
+|-----------|--------|----------|------|--------|-------|
+| **Button** | ✅ rest/hover/active/disabled/loading | ✅ 4 (primary, secondary, tertiary, danger) | ⚠️ missing icon-only ARIA | ✅ 100% | **95** |
+| **Card** | ✅ rest/hover/active/focus | ✅ 3 (elevated, outlined, filled) | ⚠️ missing aria-label, disabled | ✅ 100% | **90** |
+| **Container** | N/A (layout) | ✅ 4 max-widths | ✅ semantic | ✅ 100% | **95** |
+| **Stack / VStack / HStack** | N/A (layout) | ✅ direction, wrap, align, justify | ✅ semantic | ✅ 100% | **100** |
+| **ThemeProvider** | ✅ light/dark/system | ✅ manual + auto | ✅ prefers-color-scheme | ✅ 100% | **95** |
+| **Color Utils** | N/A (utility) | ✅ 11 alpha fns + iOS tokens | ✅ WCAG AA/AAA | ✅ 100% | **98** |
+| **Liquid Glass Mixins** | ✅ resting/hover/active | ✅ elevation tiers, accent colors | ✅ reduced-motion, fallbacks | ✅ 100% | **100** |
+
+---
+
+## 5. Top 10 Worst-Offending Files
+
+| # | File | Hex | RGBA | Pixels | Total |
+|---|------|-----|------|--------|-------|
+| 1 | `templates/MasterclassTemplates.tsx` | 13 | 6 | 74 | **93** |
+| 2 | `templates/CatalogCoverTemplate.tsx` | 8 | 6 | 48 | **62** |
+| 3 | `invitation/InvitationGenerator.tsx` | — | — | 57 | **57+** |
+| 4 | `ambassador/AsesorCard.tsx` | 10 | 8 | 36 | **54** |
+| 5 | `treasure/FilterContent.tsx` | — | — | 52 | **52+** |
+| 6 | `feedback/steps/CaptureStep.tsx` | — | — | 52 | **52+** |
+| 7 | `feedback/FeedbackWizard.tsx` | — | — | 45 | **45+** |
+| 8 | `pages/collection/CollectionPage.tsx` | 25+ | — | — | **25+** |
+| 9 | `ambassador/AmbassadorDirectory.tsx` | 23 | — | — | **23+** |
+| 10 | `templates/DynamicBusinessTemplates.tsx` | 7 | 13 | — | **20+** |
+
+### Common violation patterns
+
+```
+rgba(255,255,255,0.8)  →  whiteAlpha(0.8)
+rgba(0,0,0,0.5)        →  blackAlpha(0.5)
+#E1306C (Instagram)    →  accentColors.social.instagram
+fontSize: '14px'       →  fontSizes.sm
+borderRadius: '10px'   →  radius.md (nearest: 8px) or radius.lg (12px)
+zIndex: 1000           →  zIndex.float
+boxShadow: '0 2px...'  →  cardShadows.resting / defaultShadows.sm
 ```
 
 ---
 
-## P1 — High Priority (Visual Consistency)
+## 6. Design System Token Gaps
 
-### Hardcoded borderRadius
-
-| File | Count | Values Found |
-|------|-------|-------------|
-| `pages/InvitationPage.tsx` | 15+ | `'14px'`, `'12px'`, `'20px'`, `'50%'`, `'10px'` |
-| `components/treasure/FilterContent.tsx` | 5 | `'20px'`, `'24px'`, `'16px'` |
-| `components/invitation/InvitationGenerator.tsx` | 20+ | `'20px'`, `'10px'`, `'12px'`, `'14px'` |
-| `components/treasure/browser/MobileSearchBar.tsx` | 1 | `'16px'` |
-| `components/analytics/HealthScoreHero.tsx` | 1 | `'9999px'` |
-| `components/shared/MediaPreview.tsx` | 1 | `'8px'` |
-
-**Token mapping:**
-```
-'50%' or '9999px'  →  radius.full
-'24px'             →  radius['3xl']
-'20px'             →  radius['2xl']
-'16px'             →  radius.xl
-'12px'             →  radius.lg
-'8px'              →  radius.md
-'6px'              →  radius.sm
-'4px'              →  radius.xs
-'14px'             →  No exact token — use radius.lg (12px) or radius.xl (16px)
-'10px'             →  No exact token — use radius.lg (12px) closest
-```
-
-> **Note:** `14px` and `10px` have no exact tokens. Consider adding `radius.mlg: '0.625rem'` (10px) if used frequently, or round to nearest token.
-
-### Remaining Hardcoded fontWeight Numbers
-
-~80 instances across components still use numeric values (500, 600, 700) instead of tokens. These were found in files not touched by the first audit wave.
-
-**Top files:** `analytics/FrictionInsights.tsx` (19 instances), certification tabs, meditation components, various home sections.
+| Gap | Used Values | Nearest Token | Recommendation |
+|-----|-------------|---------------|----------------|
+| `borderRadius: '10px'` | Frequent | `radius.md` (8px) or `radius.lg` (12px) | Add `radius.mlg: 10px` |
+| `borderRadius: '14px'` | Occasional | `radius.lg` (12px) or `radius.xl` (16px) | Round to nearest |
+| `fontSize: '0.6rem'` (9.6px) | Rare | `fontSizes.xs` (11px) | Add `fontSizes.2xs` if needed |
+| `fontSize: '0.8rem'` (12.8px) | Occasional | `fontSizes.sm` (13px) | Round to `fontSizes.sm` |
+| `fontSize: '0.875rem'` (14px) | Frequent | Between `sm` and `base` | Add `fontSizes.md` at 14px |
 
 ---
 
-## P2 — Medium Priority (Scale Drift)
+## 7. Priority Actions
 
-### Hardcoded fontSize Strings
+### P0 — Structural consolidation
 
-~50 instances of literal `'0.75rem'`, `'0.8rem'`, `'0.85rem'`, `'0.875rem'`, `'0.6rem'` instead of `fontSizes` tokens.
+1. **Unify motion tokens.** Document the boundary: `primitives/motion.ts` = CSS-only, `tokens/motion.ts` = Framer Motion. Or merge into a single file with `css` and `framer` namespaces.
 
-**Top files:** `CollectionProductDialog.tsx` (7+), `CotizacionCard.tsx` (5+), `ActivityPage.tsx`.
+2. **Unify shadow tokens.** Merge `primitives/shadows.ts` and `tokens/shadows.ts`. Keep semantic grouping but eliminate two-file ambiguity.
 
-**Token mapping:**
-```
-'0.6rem'    →  No exact match (9.6px). Closest: fontSizes.xs (11px)
-'0.75rem'   →  fontSizes.xs (12px = 0.75rem) ✓
-'0.8rem'    →  No exact match. Closest: fontSizes.xs
-'0.85rem'   →  No exact match. Closest: fontSizes.sm (13px = 0.8125rem)
-'0.875rem'  →  No exact match. Between sm and base
-```
+3. **Single PHI source.** Import from `primitives/geometry.ts` everywhere. Remove redefinitions in `spacing.ts` and `brand.ts`.
 
-> **Note:** Several commonly-used sizes don't have exact tokens. Consider whether the design system's type scale needs a `fontSizes.2xs` for very small text.
+### P1 — Adoption enforcement
 
-### Hardcoded lineHeight and letterSpacing
+4. **Add ESLint rules** to flag hardcoded hex colors, `rgba()`, numeric `fontWeight`, and pixel-based spacing in `.tsx` files.
 
-~50 combined instances. Mostly in `InvitationPage.tsx` (7+ lineHeights), `CollectionProductDialog.tsx`, and receipt/cotizacion components (10+ letterSpacing).
+5. **Migrate top 10 offending files.** Start with templates (93+ violations each) and ambassador components.
+
+6. **Fix `useLiquidGlass.ts`** — 7 hardcoded rgba values repeated 3× across functions. Consolidate to shared constant using tokens.
+
+### P2 — Component gaps
+
+7. **Card:** Add disabled state (opacity + non-interactive) and `aria-label` prop for interactive variant.
+
+8. **Button:** Add explicit focus-visible ring token. Add ARIA handling for icon-only usage.
+
+9. **Fill token gaps:** Add `radius.mlg` (10px), `fontSizes.md` (14px), `fontSizes.2xs` (10px) if codebase usage justifies them.
+
+10. **Document font family strategy:** When to use SF Pro (UI), Playfair Display (product names), Cormorant Garamond (certificates), Montserrat (body alternative).
+
+### P3 — Missing component families
+
+The system has 3 component families. Consider adding:
+
+- **Input / TextField** — form elements with consistent states
+- **Badge / Chip** — status indicators using `qualityTiers` and `priceTiers`
+- **Dialog / Sheet** — modals and bottom sheets with glass effects
+- **Toast / Notification** — feedback with `semanticColors`
+- **Skeleton / Loading** — loading states with shimmer animation tokens
 
 ---
 
-## P3 — Low Priority (Polish)
+## 8. What's Working Well
 
-### Hardcoded boxShadow Strings
-
-12+ instances in `pwa/InstallButton.tsx`, `pwa/UpdatePrompt.tsx`, `pwa/NotificationPermission.tsx`, `ios/IOSCard.tsx`, `ios/IOSTabBar.tsx`, `meditation/GuidedMeditation.tsx`, `meditation/VisualMeditation.tsx`, `cotizacion/CotizacionGenerator.tsx`.
-
-### Hardcoded Transitions
-
-5 instances in `CollectionProductDialog.tsx`, `CotizacionProductsPage.tsx`.
-
-### Hardcoded Gradients
-
-Custom gradients in `InstagramSection.tsx` (Instagram brand), `MeditationModal.tsx`, `ChakraMeditation.tsx`, `CollectionSplashScreen.tsx`, `WelcomeScreen.tsx`. Some are legitimately custom (Instagram brand gradient), others could use `emeraldGradients` or `backgroundGradients`.
+- **Mathematical harmony:** Golden ratio, Fibonacci, sacred geometry give the system a distinctive feel beyond typical token sets.
+- **iOS alignment:** Touch targets (44px), 8pt grid, SF Pro typography, HIG semantic colors.
+- **Liquid Glass:** iOS 26-style glassmorphism with performance tiers, reduced-motion support, and browser fallbacks.
+- **Color utilities:** `whiteAlpha()`, `blackAlpha()`, `emeraldAlpha()` with documented WCAG contrast ratios (7:1 secondary, 21:1 primary).
+- **ThemeProvider:** System preference detection, localStorage persistence, SSR safety.
+- **Type safety:** Full TypeScript interfaces for all token groups.
 
 ---
 
-## Contexts & Hooks (Post-First-Audit Residuals)
+## 9. Contexts & Hooks Residuals
 
 | File | Issues | Details |
 |------|--------|---------|
-| `contexts/NotificationContext.tsx` | 3 | Hardcoded `padding: '4px 12px'` (×2), `borderRadius: 2` (MUI scale) |
-| `contexts/ThemeContext.tsx` | 1 | `borderRadius: 31/2` magic number calculation |
+| `contexts/NotificationContext.tsx` | 3 | Hardcoded `padding: '4px 12px'`, `borderRadius: 2` |
+| `contexts/ThemeContext.tsx` | 1 | `borderRadius: 31/2` magic number |
 | `contexts/GlobalLoadingContext.tsx` | 1 | `height: 2` hardcoded |
 | `contexts/NetworkStatusContext.tsx` | 2 | `borderRadius: 0`, `fontSize: '0.8125rem'` |
-| `hooks/useLiquidGlass.ts` | 7 | `rgba(30,41,59,0.95)` repeated 3× across 3 functions, plus border rgba values |
+| `hooks/useLiquidGlass.ts` | 7 | `rgba(30,41,59,0.95)` repeated 3× |
 
-**All other contexts (7) and hooks (58):** Clean — no design violations.
-
----
-
-## Recommendations
-
-### Immediate Actions
-1. **Fix certification tabs** (ColombianOriginTab, EthicalTab, GemologicalTab) — they have the most systematic pattern of hardcoded surface/border colors that should be theme-aware tokens.
-2. **Fix useLiquidGlass.ts** — consolidate the 3 duplicate fallback objects into a shared constant using design tokens.
-3. **Fix CollectionSplashScreen.tsx** — 5 hardcoded rgba values.
-
-### Design System Gaps to Address
-1. **Missing radius tokens:** `10px` and `14px` are used frequently but have no exact token. Consider adding `radius.mlg` or accepting rounding.
-2. **Missing fontSize tokens:** Very small sizes (`0.6rem`, `0.8rem`) don't map cleanly. Consider adding `fontSizes.2xs`.
-3. **Instagram gradient:** This is a brand-specific external gradient — acceptable as hardcoded, but could be added to `accentColors` or a social gradients token.
-
-### Process Improvements
-1. Add ESLint rule to flag hardcoded hex colors in `.tsx` files.
-2. Add ESLint rule to flag numeric `fontWeight` values (should use tokens).
-3. Consider a `no-magic-numbers` rule for `zIndex`, `borderRadius` in `sx` props.
+All other contexts (7) and hooks (58): Clean.
 
 ---
 
-*Generated by design system audit — Tierra Madre Studio v2.0*
+*Generated by design system audit v3 — Tierra Madre Studio*

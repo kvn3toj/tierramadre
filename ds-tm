@@ -1288,7 +1288,8 @@
                   "width": "fill_container",
                   "content": "Subtle tones from Colombian highlands — stone, earth, mist, and water that naturally accompany emeralds",
                   "fontFamily": "DM Sans",
-                  "fontSize": 13
+                  "fontSize": 13,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "text",
@@ -1341,7 +1342,8 @@
                           "fill": "$text-secondary",
                           "content": "#8B9A8E",
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 10
+                          "fontSize": 10,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -1379,7 +1381,8 @@
                           "fill": "$text-secondary",
                           "content": "#6B5B4E",
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 10
+                          "fontSize": 10,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -1417,7 +1420,8 @@
                           "fill": "$text-secondary",
                           "content": "#B0917A",
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 10
+                          "fontSize": 10,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -1455,7 +1459,8 @@
                           "fill": "$text-secondary",
                           "content": "#D4C5B2",
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 10
+                          "fontSize": 10,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -1493,7 +1498,8 @@
                           "fill": "$text-secondary",
                           "content": "#F0EBE1",
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 10
+                          "fontSize": 10,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -1531,7 +1537,8 @@
                           "fill": "$text-secondary",
                           "content": "#4A5D4F",
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 10
+                          "fontSize": 10,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -1569,7 +1576,8 @@
                           "fill": "$text-secondary",
                           "content": "#5A6B70",
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 10
+                          "fontSize": 10,
+                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -1626,7 +1634,8 @@
                           "fill": "$text-secondary",
                           "content": "#C8D5D0",
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 10
+                          "fontSize": 10,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -1664,7 +1673,8 @@
                           "fill": "$text-secondary",
                           "content": "#94A3A8",
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 10
+                          "fontSize": 10,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -1702,7 +1712,8 @@
                           "fill": "$text-secondary",
                           "content": "#3D4F5F",
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 10
+                          "fontSize": 10,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -1740,7 +1751,8 @@
                           "fill": "$text-secondary",
                           "content": "#C4A6A0",
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 10
+                          "fontSize": 10,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -1778,7 +1790,8 @@
                           "fill": "$text-secondary",
                           "content": "#A67F78",
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 10
+                          "fontSize": 10,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -1816,7 +1829,8 @@
                           "fill": "$text-secondary",
                           "content": "#7A8F7B",
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 10
+                          "fontSize": 10,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -1854,7 +1868,8 @@
                           "fill": "$text-secondary",
                           "content": "#2C4A52",
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 10
+                          "fontSize": 10,
+                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -7527,7 +7542,8 @@
               "fill": "$text-secondary",
               "content": "Each button variant shown across Default, Hover, Pressed, and Disabled states.",
               "fontFamily": "DM Sans",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             }
           ]
         },
@@ -8396,7 +8412,8 @@
               "fill": "$text-secondary",
               "content": "Each chip variant shown across Default, Hover, and Selected states.",
               "fontFamily": "DM Sans",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             }
           ]
         },
@@ -9042,7 +9059,8 @@
               "width": "fill_container",
               "content": "Concentric circles expand outward from the touch point with decreasing opacity, providing tactile feedback.",
               "fontFamily": "DM Sans",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             }
           ]
         },
@@ -9282,7 +9300,8 @@
                   "fill": "$text-tertiary",
                   "content": "Duration: 400ms ease-out  •  Touch origin offset",
                   "fontFamily": "DM Sans",
-                  "fontSize": 12
+                  "fontSize": 12,
+                  "fontWeight": "normal"
                 }
               ]
             }
@@ -11353,11 +11372,39 @@
       "reusable": true,
       "width": 80,
       "height": 54,
-      "fill": "$emerald-primary",
+      "fill": {
+        "type": "gradient",
+        "gradientType": "linear",
+        "enabled": true,
+        "rotation": 225,
+        "size": {
+          "height": 1
+        },
+        "colors": [
+          {
+            "color": "#00AF84",
+            "position": 0
+          },
+          {
+            "color": "#008C6A",
+            "position": 1
+          }
+        ]
+      },
       "cornerRadius": 36,
       "stroke": {
         "align": "inside",
         "thickness": 1
+      },
+      "effect": {
+        "type": "shadow",
+        "shadowType": "outer",
+        "color": "#00AF844D",
+        "offset": {
+          "x": 0,
+          "y": 4
+        },
+        "blur": 14
       },
       "layout": "vertical",
       "gap": 3,
@@ -11393,9 +11440,7 @@
       "x": 3897,
       "y": 2315,
       "name": "BottomNavBar",
-      "theme": {
-        "mode": "light"
-      },
+      "theme": {},
       "reusable": true,
       "width": 393,
       "layout": "vertical",
@@ -11411,9 +11456,7 @@
           "type": "frame",
           "id": "doONr",
           "name": "pill",
-          "theme": {
-            "mode": "light"
-          },
+          "theme": {},
           "width": "fill_container",
           "height": 62,
           "fill": "$bg-primary",
@@ -13241,11 +13284,17 @@
                 "DWCQY/U0ku4": {
                   "fill": "\\$text-tertiary"
                 },
+                "DWCQY/I6g4f": {
+                  "fill": "$text-tertiary"
+                },
                 "IJIZB/U0ku4": {
                   "fill": "\\$text-tertiary"
                 },
                 "tbcQN/U0ku4": {
                   "fill": "\\$text-tertiary"
+                },
+                "tbcQN/I6g4f": {
+                  "fill": "$text-tertiary"
                 }
               }
             }
@@ -15054,41 +15103,43 @@
           ]
         },
         {
-          "id": "zyc5K",
+          "id": "448m3",
           "type": "ref",
           "ref": "JvxYD",
-          "width": "fill_container",
           "name": "navBar",
-          "x": 0,
-          "y": 757,
-          "height": "fit_content",
-          "flipX": false,
-          "flipY": false,
-          "textGrowth": "auto",
+          "width": "fill_container",
           "descendants": {
             "NTZBz": {
-              "fill": "#00000000"
-            },
-            "NTZBz/DyhwX": {
-              "fill": "$text-tertiary",
-              "iconFontName": "house"
-            },
-            "NTZBz/5NJzZ": {
-              "fill": "$text-tertiary",
-              "content": "INICIO",
-              "fontWeight": "500"
+              "id": "6xIdb",
+              "type": "ref",
+              "ref": "W6hBu",
+              "height": "fill_container",
+              "width": "fill_container",
+              "name": "inactiveInicio",
+              "descendants": {
+                "U0ku4": {
+                  "iconFontName": "house"
+                },
+                "I6g4f": {
+                  "content": "INICIO"
+                }
+              }
             },
             "DWCQY": {
-              "fill": "#036B52"
-            },
-            "DWCQY/U0ku4": {
-              "fill": "#FFFFFF",
-              "iconFontName": "gem"
-            },
-            "DWCQY/I6g4f": {
-              "fill": "#FFFFFF",
-              "content": "TESOROS",
-              "fontWeight": "600"
+              "id": "Dc8H1",
+              "type": "ref",
+              "ref": "GFlUw",
+              "height": "fill_container",
+              "width": "fill_container",
+              "name": "activeTesoros",
+              "descendants": {
+                "DyhwX": {
+                  "iconFontName": "gem"
+                },
+                "5NJzZ": {
+                  "content": "TESOROS"
+                }
+              }
             }
           }
         }
@@ -15516,7 +15567,8 @@
                   "fill": "$text-secondary",
                   "content": "Gema",
                   "fontFamily": "DM Sans",
-                  "fontSize": 13
+                  "fontSize": 13,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "text",
@@ -15562,6 +15614,7 @@
                   "content": "Precio",
                   "fontFamily": "DM Sans",
                   "fontSize": 13,
+                  "fontWeight": "normal",
                   "letterSpacing": 0.3
                 },
                 {
@@ -20161,17 +20214,17 @@
           ]
         },
         {
-          "id": "Da51G",
+          "id": "v81A9",
           "type": "ref",
           "ref": "JvxYD",
-          "width": "fill_container",
           "name": "navBar",
           "theme": {
             "mode": "dark"
           },
+          "width": "fill_container",
           "descendants": {
             "doONr": {
-              "fill": "$bg-secondary",
+              "fill": "$bg-primary",
               "stroke": {
                 "align": "inside",
                 "thickness": 1,
@@ -20182,44 +20235,36 @@
               }
             },
             "NTZBz": {
-              "fill": "#00000000"
-            },
-            "NTZBz/DyhwX": {
-              "fill": "\\$text-tertiary",
-              "iconFontName": "house",
-              "x": 32.875,
-              "y": 9
-            },
-            "NTZBz/5NJzZ": {
-              "fill": "$text-tertiary",
-              "content": "INICIO",
-              "fontWeight": "500",
-              "x": 26.375,
-              "y": 32
+              "id": "CAHQz",
+              "type": "ref",
+              "ref": "W6hBu",
+              "height": "fill_container",
+              "width": "fill_container",
+              "name": "inactiveInicio",
+              "descendants": {
+                "U0ku4": {
+                  "iconFontName": "house"
+                },
+                "I6g4f": {
+                  "content": "INICIO"
+                }
+              }
             },
             "DWCQY": {
-              "fill": "$emerald-primary"
-            },
-            "DWCQY/U0ku4": {
-              "fill": "#FFFFFF",
-              "iconFontName": "gem"
-            },
-            "DWCQY/I6g4f": {
-              "fill": "#FFFFFF",
-              "content": "TESOROS",
-              "fontWeight": "600"
-            },
-            "IJIZB/U0ku4": {
-              "fill": "\\$text-tertiary"
-            },
-            "IJIZB/I6g4f": {
-              "fill": "$text-tertiary"
-            },
-            "tbcQN/U0ku4": {
-              "fill": "\\$text-tertiary"
-            },
-            "tbcQN/I6g4f": {
-              "fill": "$text-tertiary"
+              "id": "cXmxx",
+              "type": "ref",
+              "ref": "GFlUw",
+              "height": "fill_container",
+              "width": "fill_container",
+              "name": "activeTesoros",
+              "descendants": {
+                "DyhwX": {
+                  "iconFontName": "gem"
+                },
+                "5NJzZ": {
+                  "content": "TESOROS"
+                }
+              }
             }
           }
         }
@@ -20647,7 +20692,8 @@
                   "fill": "$text-secondary",
                   "content": "Gema",
                   "fontFamily": "DM Sans",
-                  "fontSize": 13
+                  "fontSize": 13,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "text",
@@ -20693,6 +20739,7 @@
                   "content": "Precio",
                   "fontFamily": "DM Sans",
                   "fontSize": 13,
+                  "fontWeight": "normal",
                   "letterSpacing": 0.3
                 },
                 {
@@ -23586,7 +23633,8 @@
               "content": "Touch feedback patterns, state transitions, loading animations, and notification indicators for mobile-first experiences.",
               "lineHeight": 1.5,
               "fontFamily": "DM Sans",
-              "fontSize": 15
+              "fontSize": 15,
+              "fontWeight": "normal"
             }
           ]
         },
@@ -23626,7 +23674,8 @@
               "content": "Individual tab states showing the visual transition from inactive to active. The active state slides in with an emerald fill and white icon/label.",
               "lineHeight": 1.5,
               "fontFamily": "DM Sans",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "type": "frame",
@@ -23804,7 +23853,8 @@
                   "fill": "$text-secondary",
                   "content": "Transition: 200ms ease-out  ·  Fill fade + icon color swap  ·  Spring-based scale: 0.95 → 1.0",
                   "fontFamily": "DM Sans",
-                  "fontSize": 13
+                  "fontSize": 13,
+                  "fontWeight": "normal"
                 }
               ]
             }
@@ -23846,7 +23896,8 @@
               "content": "Three-frame animation showing the active tab indicator sliding from INICIO to TESOROS. The emerald pill morphs position while icons cross-fade.",
               "lineHeight": 1.5,
               "fontFamily": "DM Sans",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "type": "frame",
@@ -24024,7 +24075,8 @@
                   "fill": "$text-secondary",
                   "content": "Duration: 200ms  ·  Easing: cubic-bezier(0.4, 0, 0.2, 1)  ·  Active pill slides + cross-fades icon/label colors",
                   "fontFamily": "DM Sans",
-                  "fontSize": 13
+                  "fontSize": 13,
+                  "fontWeight": "normal"
                 }
               ]
             }
@@ -24066,7 +24118,8 @@
               "content": "Placeholder skeletons that show content shape before data loads. A gradient shimmer sweeps left-to-right creating a subtle loading animation.",
               "lineHeight": 1.5,
               "fontFamily": "DM Sans",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "type": "frame",
@@ -24256,7 +24309,8 @@
                           "fill": "$text-secondary",
                           "content": "3.2 ct  ·  Muzo, Colombia",
                           "fontFamily": "DM Sans",
-                          "fontSize": 14
+                          "fontSize": 14,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -24484,7 +24538,8 @@
                   "fill": "$text-secondary",
                   "content": "Shimmer: 1.5s infinite  ·  linear-gradient sweep  ·  Background: #E5E7EB → #F3F4F6 → #E5E7EB  ·  Skeleton corners match final content shape",
                   "fontFamily": "DM Sans",
-                  "fontSize": 13
+                  "fontSize": 13,
+                  "fontWeight": "normal"
                 }
               ]
             }
@@ -24526,7 +24581,8 @@
               "content": "iOS-style toggle with emerald active state. The thumb slides and scales slightly during transition while the track color fades.",
               "lineHeight": 1.5,
               "fontFamily": "DM Sans",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "type": "frame",
@@ -24584,7 +24640,8 @@
                       "fill": "$text-tertiary",
                       "content": "Inactive",
                       "fontFamily": "DM Sans",
-                      "fontSize": 12
+                      "fontSize": 12,
+                      "fontWeight": "normal"
                     }
                   ]
                 },
@@ -24646,7 +24703,8 @@
                       "fill": "$text-tertiary",
                       "content": "t=100ms",
                       "fontFamily": "DM Sans",
-                      "fontSize": 12
+                      "fontSize": 12,
+                      "fontWeight": "normal"
                     }
                   ]
                 },
@@ -24708,7 +24766,8 @@
                       "fill": "$emerald-primary",
                       "content": "Active",
                       "fontFamily": "DM Sans",
-                      "fontSize": 12
+                      "fontSize": 12,
+                      "fontWeight": "normal"
                     }
                   ]
                 },
@@ -24761,7 +24820,8 @@
                       "fill": "$text-tertiary",
                       "content": "50% opacity",
                       "fontFamily": "DM Sans",
-                      "fontSize": 12
+                      "fontSize": 12,
+                      "fontWeight": "normal"
                     }
                   ]
                 },
@@ -24813,7 +24873,8 @@
                       "fill": "$gold-primary",
                       "content": "Premium",
                       "fontFamily": "DM Sans",
-                      "fontSize": 12
+                      "fontSize": 12,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -24850,7 +24911,8 @@
                   "fill": "$text-secondary",
                   "content": "Duration: 200ms  ·  Spring: mass 1, stiffness 500, damping 30  ·  Thumb stretches to 28px width mid-slide  ·  Track color fades simultaneously",
                   "fontFamily": "DM Sans",
-                  "fontSize": 13
+                  "fontSize": 13,
+                  "fontWeight": "normal"
                 }
               ]
             }
@@ -24892,7 +24954,8 @@
               "content": "Attention-grabbing notification indicators with expanding pulse rings. Used on nav tabs, buttons, and avatars to signal new content or actions.",
               "lineHeight": 1.5,
               "fontFamily": "DM Sans",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "type": "frame",
@@ -25139,7 +25202,8 @@
                       "fill": "$text-tertiary",
                       "content": "3 rings expanding",
                       "fontFamily": "DM Sans",
-                      "fontSize": 12
+                      "fontSize": 12,
+                      "fontWeight": "normal"
                     }
                   ]
                 },
@@ -25313,7 +25377,8 @@
                   "fill": "$text-secondary",
                   "content": "Pulse: 2s infinite ease-in-out  ·  Ring opacity: 40% → 0%  ·  Ring scale: 1.0 → 2.5  ·  Badge entrance: scale 0 → 1 with spring bounce",
                   "fontFamily": "DM Sans",
-                  "fontSize": 13
+                  "fontSize": 13,
+                  "fontWeight": "normal"
                 }
               ]
             }
@@ -25355,7 +25420,8 @@
               "content": "Haptic-like visual feedback for touch interactions. Cards and interactive elements scale down on press and return with a subtle spring bounce on release. Emerald glow effect adds premium feel.",
               "lineHeight": 1.5,
               "fontFamily": "DM Sans",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "type": "frame",
@@ -25441,7 +25507,8 @@
                           "fill": "$text-secondary",
                           "content": "2.1 ct · $4,200",
                           "fontFamily": "DM Sans",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -25452,7 +25519,8 @@
                       "fill": "$text-tertiary",
                       "content": "scale(1.0)",
                       "fontFamily": "DM Sans",
-                      "fontSize": 12
+                      "fontSize": 12,
+                      "fontWeight": "normal"
                     }
                   ]
                 },
@@ -25552,7 +25620,8 @@
                           "fill": "$text-secondary",
                           "content": "2.1 ct · $4,200",
                           "fontFamily": "DM Sans",
-                          "fontSize": 11
+                          "fontSize": 11,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -25563,7 +25632,8 @@
                       "fill": "$text-tertiary",
                       "content": "scale(0.96)",
                       "fontFamily": "DM Sans",
-                      "fontSize": 12
+                      "fontSize": 12,
+                      "fontWeight": "normal"
                     }
                   ]
                 },
@@ -25671,7 +25741,8 @@
                           "fill": "$text-secondary",
                           "content": "2.1 ct · $4,200",
                           "fontFamily": "DM Sans",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -25720,7 +25791,8 @@
                   "fill": "$text-secondary",
                   "content": "Press: 100ms to 0.96  ·  Release: 300ms spring bounce  ·  Glow: 200ms fade-in, 400ms fade-out  ·  Haptic: UIImpactFeedback light",
                   "fontFamily": "DM Sans",
-                  "fontSize": 13
+                  "fontSize": 13,
+                  "fontWeight": "normal"
                 }
               ]
             }
@@ -25754,7 +25826,8 @@
               "fill": "$text-tertiary",
               "content": "Tierra Madre Studio · Microinteractions Reference · Navigation & Feedback",
               "fontFamily": "DM Sans",
-              "fontSize": 13
+              "fontSize": 13,
+              "fontWeight": "normal"
             },
             {
               "type": "text",
@@ -25763,7 +25836,4336 @@
               "fill": "$text-tertiary",
               "content": "All timings use CSS custom properties for consistency across platforms",
               "fontFamily": "DM Sans",
-              "fontSize": 12
+              "fontSize": 12,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "7stdX",
+      "x": 6183,
+      "y": 0,
+      "name": "Ambassador Museum",
+      "theme": {
+        "mode": "light"
+      },
+      "clip": true,
+      "width": 393,
+      "height": 852,
+      "fill": "$bg-primary",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "0pZQo",
+          "name": "StatusBar",
+          "width": "fill_container",
+          "height": 62,
+          "padding": [
+            0,
+            24
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "amjgr",
+              "name": "timeLabel",
+              "fill": "$text-primary",
+              "content": "9:41",
+              "fontFamily": "SF Pro Display",
+              "fontSize": 16,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "TN3ND",
+              "name": "StatusIcons",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "AjubV",
+                  "name": "sigIcon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "signal",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "SHTfs",
+                  "name": "wifiIcon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "wifi",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "29XYq",
+                  "name": "battIcon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "battery-full",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "OUlNi",
+          "name": "NavHeader",
+          "width": "fill_container",
+          "height": 44,
+          "padding": [
+            0,
+            16
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "GgPjk",
+              "name": "backIcon",
+              "width": 24,
+              "height": 24,
+              "iconFontName": "chevron-left",
+              "iconFontFamily": "lucide",
+              "fill": "$text-primary"
+            },
+            {
+              "type": "text",
+              "id": "e3j9Z",
+              "name": "navTitle",
+              "fill": "$text-primary",
+              "content": "Museo del Embajador",
+              "fontFamily": "DM Sans",
+              "fontSize": 17,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "okg54",
+              "name": "spacer",
+              "width": 24,
+              "height": 24
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "tCbbQ",
+          "name": "HeroProfile",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            4,
+            16,
+            8,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "Tl5o3",
+              "name": "AvatarRing",
+              "clip": true,
+              "width": 102,
+              "height": 102,
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "./images/generated-1773260166666.png",
+                "mode": "fill"
+              },
+              "cornerRadius": 51,
+              "stroke": {
+                "align": "outside",
+                "thickness": 3,
+                "fill": "$emerald-primary"
+              },
+              "layout": "none"
+            },
+            {
+              "type": "text",
+              "id": "etnlI",
+              "name": "AmbassadorName",
+              "fill": "$text-primary",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Isa la Negra Vikinga Warrior Portocarrero",
+              "textAlign": "center",
+              "fontFamily": "DM Sans",
+              "fontSize": 20,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "KGyyD",
+              "name": "ChipsRow",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "id": "TTlQs",
+                  "type": "ref",
+                  "ref": "bAXu8",
+                  "name": "emeraldChip",
+                  "descendants": {
+                    "vBkZB": {
+                      "content": "EMBAJADORA",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 1
+                    }
+                  }
+                },
+                {
+                  "id": "d5CSW",
+                  "type": "ref",
+                  "ref": "XZa2o",
+                  "name": "goldChip",
+                  "descendants": {
+                    "5tFOg": {
+                      "content": "ADMIN",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "TVI38",
+              "name": "StatsRow",
+              "width": "fill_container",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "sFKnI",
+                  "name": "StatTesoros",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "$bg-secondary",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "Wbl8L",
+                      "name": "stat1Icon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "gem",
+                      "iconFontFamily": "lucide",
+                      "fill": "$emerald-primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "zZFY7",
+                      "name": "stat1Text",
+                      "fill": "$text-primary",
+                      "content": "20 Tesoros",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "2mZ3A",
+                  "name": "StatValor",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "$bg-secondary",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "G0gym",
+                      "name": "stat2Icon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "dollar-sign",
+                      "iconFontFamily": "lucide",
+                      "fill": "$gold-primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "UW1Th",
+                      "name": "stat2Text",
+                      "fill": "$text-primary",
+                      "content": "$4.2M",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "JeDDL",
+                  "name": "StatRating",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "$bg-secondary",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "4Ms3o",
+                      "name": "stat3Icon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "star",
+                      "iconFontFamily": "lucide",
+                      "fill": "$gold-primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "NTy94",
+                      "name": "stat3Text",
+                      "fill": "$text-primary",
+                      "content": "4.9",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "QjuOR",
+              "name": "BioText",
+              "fill": "$text-secondary",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Guardiana de las esmeraldas más exclusivas de Colombia",
+              "textAlign": "center",
+              "fontFamily": "DM Sans",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "jPGkw",
+          "name": "CategorySection",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            4,
+            0
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "8RNqS",
+              "name": "SectionTitle",
+              "fill": "$text-primary",
+              "content": "Explorar Colección",
+              "fontFamily": "DM Sans",
+              "fontSize": 18,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "bv2ph",
+              "name": "GridWrap",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "8u2i7",
+                  "name": "GridRow1",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "D9jzk",
+                      "name": "CardPiedras",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1773260201099.png",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 16,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "DDE2d",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay1",
+                          "width": 200,
+                          "height": 120,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000BF",
+                                "position": 1
+                              }
+                            ]
+                          },
+                          "layout": "none"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "5TtMT",
+                          "x": 12,
+                          "y": 82,
+                          "name": "CardContent1",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "TSGpS",
+                              "name": "emoji1",
+                              "fill": "#FFFFFF",
+                              "content": "💎 Piedras",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "TYI6G",
+                              "name": "count1",
+                              "fill": "#FFFFFFBF",
+                              "content": "8 piezas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "U6nE0",
+                      "name": "CardGemas",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1773260219643.png",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 16,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "HFHwN",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay2",
+                          "width": 200,
+                          "height": 120,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000BF",
+                                "position": 1
+                              }
+                            ]
+                          },
+                          "layout": "none"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "KtN9a",
+                          "x": 12,
+                          "y": 82,
+                          "name": "CardContent2",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "ZOgwF",
+                              "name": "emoji2",
+                              "fill": "#FFFFFF",
+                              "content": "✨ Gemas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "yy3gH",
+                              "name": "count2",
+                              "fill": "#FFFFFFBF",
+                              "content": "5 piezas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "kHhqu",
+                  "name": "GridRow2",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "EpYUE",
+                      "name": "CardLotes",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1773260236495.png",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 16,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "zhMOR",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay3",
+                          "width": 200,
+                          "height": 120,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000BF",
+                                "position": 1
+                              }
+                            ]
+                          },
+                          "layout": "none"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "qaOAp",
+                          "x": 12,
+                          "y": 82,
+                          "name": "CardContent3",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "M9Qxc",
+                              "name": "emoji3",
+                              "fill": "#FFFFFF",
+                              "content": "📦 Lotes",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "lwOK1",
+                              "name": "count3",
+                              "fill": "#FFFFFFBF",
+                              "content": "3 lotes",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "feGZv",
+                      "name": "CardJoyas",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1773260257743.png",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 16,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "MG4gz",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay4",
+                          "width": 200,
+                          "height": 120,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000BF",
+                                "position": 1
+                              }
+                            ]
+                          },
+                          "layout": "none"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "HSxtE",
+                          "x": 12,
+                          "y": 82,
+                          "name": "CardContent4",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "tNeIO",
+                              "name": "emoji4",
+                              "fill": "#FFFFFF",
+                              "content": "💍 Joyas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "Jbohm",
+                              "name": "count4",
+                              "fill": "#FFFFFFBF",
+                              "content": "4 piezas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "tNQ7g",
+          "name": "QuickActions",
+          "width": "fill_container",
+          "gap": 8,
+          "padding": [
+            4,
+            16
+          ],
+          "children": [
+            {
+              "id": "bC433",
+              "type": "ref",
+              "ref": "R8rmm",
+              "name": "primaryBtn",
+              "width": "fill_container",
+              "descendants": {
+                "n2Hhi": {
+                  "content": "Ver Todas las Esmeraldas →",
+                  "fontSize": 14
+                }
+              }
+            },
+            {
+              "id": "MxRWI",
+              "type": "ref",
+              "ref": "Nrsvh",
+              "name": "whatsBtn",
+              "width": 130,
+              "descendants": {
+                "h5UrL": {
+                  "content": "WhatsApp",
+                  "fontSize": 14
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "D814f",
+          "type": "ref",
+          "ref": "JvxYD",
+          "name": "bottomNav",
+          "width": "fill_container",
+          "descendants": {
+            "NTZBz": {
+              "id": "HwZdD",
+              "type": "ref",
+              "ref": "W6hBu",
+              "height": "fill_container",
+              "width": "fill_container",
+              "name": "inactiveHome",
+              "descendants": {
+                "U0ku4": {
+                  "iconFontName": "house"
+                },
+                "I6g4f": {
+                  "content": "INICIO"
+                }
+              }
+            },
+            "IJIZB": {
+              "id": "oScPB",
+              "type": "ref",
+              "ref": "GFlUw",
+              "height": "fill_container",
+              "width": "fill_container",
+              "name": "activeEmb",
+              "descendants": {
+                "DyhwX": {
+                  "iconFontName": "users"
+                },
+                "5NJzZ": {
+                  "content": "EMBAJADORES"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "I7xiH",
+      "x": 6183,
+      "y": 932,
+      "name": "Ambassador Museum — Dark",
+      "theme": {
+        "mode": "dark"
+      },
+      "clip": true,
+      "width": 393,
+      "height": 852,
+      "fill": "$bg-primary",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "sDm1D",
+          "name": "StatusBar",
+          "width": "fill_container",
+          "height": 62,
+          "padding": [
+            0,
+            24
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "cG435",
+              "name": "timeLabel",
+              "fill": "$text-primary",
+              "content": "9:41",
+              "fontFamily": "SF Pro Display",
+              "fontSize": 16,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "5BL5E",
+              "name": "StatusIcons",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "mDJfg",
+                  "name": "signalIcon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "signal",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "2wj0h",
+                  "name": "wifiIcon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "wifi",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "l0CbD",
+                  "name": "batteryIcon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "battery-full",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Uiw4z",
+          "name": "NavHeader",
+          "width": "fill_container",
+          "height": 44,
+          "padding": [
+            0,
+            16
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "RMxiW",
+              "name": "backIcon",
+              "width": 24,
+              "height": 24,
+              "iconFontName": "chevron-left",
+              "iconFontFamily": "lucide",
+              "fill": "$text-primary"
+            },
+            {
+              "type": "text",
+              "id": "m2Eao",
+              "name": "navTitle",
+              "fill": "$text-primary",
+              "content": "Museo del Embajador",
+              "fontFamily": "DM Sans",
+              "fontSize": 17,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "3RfkP",
+              "name": "spacer",
+              "width": 24,
+              "height": 24
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "dMAEU",
+          "name": "HeroProfile",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            4,
+            16,
+            8,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "FbnQT",
+              "name": "AvatarRing",
+              "clip": true,
+              "width": 102,
+              "height": 102,
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "./images/generated-1773259573702.png",
+                "mode": "fill"
+              },
+              "cornerRadius": 51,
+              "stroke": {
+                "align": "outside",
+                "thickness": 3,
+                "fill": "$emerald-primary"
+              }
+            },
+            {
+              "type": "text",
+              "id": "sZ5EX",
+              "name": "AmbassadorName",
+              "fill": "$text-primary",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Isa la Negra Vikinga Warrior Portocarrero",
+              "textAlign": "center",
+              "fontFamily": "DM Sans",
+              "fontSize": 20,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "pdf0q",
+              "name": "ChipsRow",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "id": "gfEgK",
+                  "type": "ref",
+                  "ref": "bAXu8",
+                  "name": "emeraldChip",
+                  "descendants": {
+                    "vBkZB": {
+                      "content": "EMBAJADORA",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 1
+                    }
+                  }
+                },
+                {
+                  "id": "WfAhT",
+                  "type": "ref",
+                  "ref": "XZa2o",
+                  "name": "goldChip",
+                  "descendants": {
+                    "5tFOg": {
+                      "content": "ADMIN",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "blQHI",
+              "name": "StatsRow",
+              "width": "fill_container",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "uyuTE",
+                  "name": "StatTesoros",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "$bg-secondary",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "qrv8e",
+                      "name": "stat1Icon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "gem",
+                      "iconFontFamily": "lucide",
+                      "fill": "$emerald-primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "EYlHh",
+                      "name": "stat1Text",
+                      "fill": "$text-primary",
+                      "content": "20 Tesoros",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "2xKCo",
+                  "name": "StatValor",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "$bg-secondary",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "XJxOR",
+                      "name": "stat2Icon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "dollar-sign",
+                      "iconFontFamily": "lucide",
+                      "fill": "$gold-primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "rGRYW",
+                      "name": "stat2Text",
+                      "fill": "$text-primary",
+                      "content": "$4.2M",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "yaxsW",
+                  "name": "StatRating",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "$bg-secondary",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "YD909",
+                      "name": "stat3Icon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "star",
+                      "iconFontFamily": "lucide",
+                      "fill": "$gold-primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "qVSrv",
+                      "name": "stat3Text",
+                      "fill": "$text-primary",
+                      "content": "4.9",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "FcDeb",
+              "name": "BioText",
+              "fill": "$text-secondary",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Guardiana de las esmeraldas más exclusivas de Colombia",
+              "textAlign": "center",
+              "fontFamily": "DM Sans",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "OSFec",
+          "name": "CategorySection",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            4,
+            0
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "6UlrJ",
+              "name": "SectionTitle",
+              "fill": "$text-primary",
+              "content": "Explorar Colección",
+              "fontFamily": "DM Sans",
+              "fontSize": 18,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "VNdZm",
+              "name": "GridWrap",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "1KryI",
+                  "name": "GridRow1",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Qp63Z",
+                      "name": "CardPiedras",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1773259623592.png",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 16,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "MwJIL",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay1",
+                          "width": 200,
+                          "height": 120,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000BF",
+                                "position": 1
+                              }
+                            ]
+                          },
+                          "layout": "none"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Q2WJ1",
+                          "x": 12,
+                          "y": 82,
+                          "name": "CardContent1",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "URw7V",
+                              "name": "card1emoji",
+                              "fill": "#FFFFFF",
+                              "content": "💎 Piedras",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "MXbrL",
+                              "name": "card1count",
+                              "fill": "#FFFFFFBF",
+                              "content": "8 piezas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "mAXvM",
+                      "name": "CardGemas",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1773259650307.png",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 16,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "TQGgE",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay2",
+                          "width": 200,
+                          "height": 120,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000BF",
+                                "position": 1
+                              }
+                            ]
+                          },
+                          "layout": "none"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ODUoq",
+                          "x": 12,
+                          "y": 82,
+                          "name": "CardContent2",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "XUYXU",
+                              "name": "card2label",
+                              "fill": "#FFFFFF",
+                              "content": "✨ Gemas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "0sviY",
+                              "name": "card2count",
+                              "fill": "#FFFFFFBF",
+                              "content": "5 piezas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "jn6Zu",
+                  "name": "GridRow2",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "VfXE7",
+                      "name": "CardLotes",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1773259721079.png",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 16,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Bv63Y",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay3",
+                          "width": 200,
+                          "height": 120,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000BF",
+                                "position": 1
+                              }
+                            ]
+                          },
+                          "layout": "none"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "EIA9V",
+                          "x": 12,
+                          "y": 82,
+                          "name": "CardContent3",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "ShgRk",
+                              "name": "card3label",
+                              "fill": "#FFFFFF",
+                              "content": "📦 Lotes",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "lvcUd",
+                              "name": "card3count",
+                              "fill": "#FFFFFFBF",
+                              "content": "3 lotes",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "MCtHG",
+                      "name": "CardJoyas",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1773259742562.png",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 16,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Vz884",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay4",
+                          "width": 200,
+                          "height": 120,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000BF",
+                                "position": 1
+                              }
+                            ]
+                          },
+                          "layout": "none"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "IUzuW",
+                          "x": 12,
+                          "y": 82,
+                          "name": "CardContent4",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "CizHy",
+                              "name": "card4label",
+                              "fill": "#FFFFFF",
+                              "content": "💍 Joyas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "RhPJU",
+                              "name": "card4count",
+                              "fill": "#FFFFFFBF",
+                              "content": "4 piezas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "pG7CV",
+          "name": "QuickActions",
+          "width": "fill_container",
+          "gap": 8,
+          "padding": [
+            4,
+            16
+          ],
+          "children": [
+            {
+              "id": "81VDt",
+              "type": "ref",
+              "ref": "R8rmm",
+              "width": "fill_container",
+              "name": "primaryBtn",
+              "descendants": {
+                "n2Hhi": {
+                  "content": "Ver Todas las Esmeraldas →",
+                  "fontSize": 14
+                }
+              }
+            },
+            {
+              "id": "QSh4a",
+              "type": "ref",
+              "ref": "Nrsvh",
+              "width": 130,
+              "name": "whatsBtn",
+              "descendants": {
+                "h5UrL": {
+                  "content": "WhatsApp",
+                  "fontSize": 14
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "g7O8w",
+          "type": "ref",
+          "ref": "JvxYD",
+          "width": "fill_container",
+          "theme": {
+            "mode": "dark"
+          },
+          "name": "bottomNav",
+          "descendants": {
+            "doONr": {
+              "fill": "$bg-primary",
+              "theme": {
+                "mode": "dark"
+              }
+            },
+            "NTZBz": {
+              "id": "IqdmX",
+              "type": "ref",
+              "ref": "W6hBu",
+              "width": "fill_container",
+              "height": "fill_container",
+              "name": "inactiveHome",
+              "descendants": {
+                "U0ku4": {
+                  "iconFontName": "house"
+                },
+                "I6g4f": {
+                  "content": "INICIO"
+                }
+              }
+            },
+            "DWCQY/U0ku4": {
+              "iconFontName": "gem"
+            },
+            "DWCQY/I6g4f": {
+              "content": "TESOROS"
+            },
+            "IJIZB": {
+              "id": "2NsCB",
+              "type": "ref",
+              "ref": "GFlUw",
+              "width": "fill_container",
+              "height": "fill_container",
+              "name": "activeEmb",
+              "descendants": {
+                "DyhwX": {
+                  "iconFontName": "users"
+                },
+                "5NJzZ": {
+                  "content": "EMBAJADORES"
+                }
+              }
+            },
+            "tbcQN/U0ku4": {
+              "iconFontName": "ellipsis"
+            },
+            "tbcQN/I6g4f": {
+              "content": "MÁS"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "VNTlF",
+      "x": 6183,
+      "y": 1884,
+      "name": "Ambassador Museum — Scrolled",
+      "theme": {
+        "mode": "dark"
+      },
+      "clip": true,
+      "width": 393,
+      "height": 852,
+      "fill": "$bg-primary",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "v2kKx",
+          "name": "StatusBar",
+          "width": "fill_container",
+          "height": 62,
+          "padding": [
+            0,
+            24
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "bTpFH",
+              "name": "timeLabel1",
+              "fill": "$text-primary",
+              "content": "9:41",
+              "fontFamily": "SF Pro Display",
+              "fontSize": 16,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "6TbSa",
+              "name": "StatusIcons",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "ckuPC",
+                  "name": "sig1",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "signal",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "OcFpN",
+                  "name": "wifi1",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "wifi",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "iuxug",
+                  "name": "batt1",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "battery-full",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "ZSYKC",
+          "name": "CollapsedNav",
+          "width": "fill_container",
+          "height": 44,
+          "fill": "$bg-primary",
+          "gap": 10,
+          "padding": [
+            0,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "mFHME",
+              "name": "backIcon1",
+              "width": 24,
+              "height": 24,
+              "iconFontName": "chevron-left",
+              "iconFontFamily": "lucide",
+              "fill": "$text-primary"
+            },
+            {
+              "type": "frame",
+              "id": "9mqYE",
+              "name": "MiniAvatar",
+              "clip": true,
+              "width": 32,
+              "height": 32,
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "./images/generated-1773259573702.png",
+                "mode": "fill"
+              },
+              "cornerRadius": 16
+            },
+            {
+              "type": "text",
+              "id": "VCwXT",
+              "name": "miniName",
+              "fill": "$text-primary",
+              "content": "Isa la Negra V.",
+              "fontFamily": "DM Sans",
+              "fontSize": 14,
+              "fontWeight": "600"
+            },
+            {
+              "type": "ellipse",
+              "id": "bDLcW",
+              "name": "emeraldDot",
+              "fill": "$emerald-primary",
+              "width": 8,
+              "height": 8
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Z3xOo",
+          "name": "ScrollContent",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": [
+            0,
+            0,
+            16,
+            0
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "7svuF",
+              "name": "CategorySection",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "padding": [
+                4,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "XCHjl",
+                  "name": "catTitle",
+                  "fill": "$text-primary",
+                  "content": "Explorar Colección",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 18,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "22nSO",
+                  "name": "GridWrap",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "DjMWp",
+                      "name": "GridRow1",
+                      "width": "fill_container",
+                      "gap": 12,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "e1c9I",
+                          "name": "CardPiedras",
+                          "metadata": {
+                            "type": "unsplash",
+                            "username": "wyxina",
+                            "link": "https://unsplash.com/@wyxina",
+                            "author": "Wyxina Tresse"
+                          },
+                          "clip": true,
+                          "width": "fill_container",
+                          "height": 120,
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "https://images.unsplash.com/photo-1701096619998-2ef3efc189d4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjAzMTV8&ixlib=rb-4.1.0&q=80&w=1080",
+                            "mode": "fill"
+                          },
+                          "cornerRadius": 16,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "RL7se",
+                              "x": 0,
+                              "y": 0,
+                              "name": "Overlay",
+                              "width": 200,
+                              "height": 120,
+                              "fill": {
+                                "type": "gradient",
+                                "gradientType": "linear",
+                                "enabled": true,
+                                "rotation": 180,
+                                "size": {
+                                  "height": 1
+                                },
+                                "colors": [
+                                  {
+                                    "color": "#00000000",
+                                    "position": 0
+                                  },
+                                  {
+                                    "color": "#000000BF",
+                                    "position": 1
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "type": "frame",
+                              "id": "3MXUM",
+                              "x": 12,
+                              "y": 82,
+                              "name": "CardContent",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "jooj4",
+                                  "name": "label1a",
+                                  "fill": "#FFFFFF",
+                                  "content": "💎 Piedras",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 16,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "ctJAu",
+                                  "name": "label1b",
+                                  "fill": "#FFFFFFBF",
+                                  "content": "8 piezas",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "40MgV",
+                          "name": "CardGemas",
+                          "metadata": {
+                            "type": "unsplash",
+                            "username": "mirtha_rr",
+                            "link": "https://unsplash.com/@mirtha_rr",
+                            "author": "Mirtha Rodríguez Rojas"
+                          },
+                          "clip": true,
+                          "width": "fill_container",
+                          "height": 120,
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "https://images.unsplash.com/photo-1660354862177-be804093dbf0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjAzMjJ8&ixlib=rb-4.1.0&q=80&w=1080",
+                            "mode": "fill"
+                          },
+                          "cornerRadius": 16,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "HPvjP",
+                              "x": 0,
+                              "y": 0,
+                              "name": "Overlay",
+                              "width": 200,
+                              "height": 120,
+                              "fill": {
+                                "type": "gradient",
+                                "gradientType": "linear",
+                                "enabled": true,
+                                "rotation": 180,
+                                "size": {
+                                  "height": 1
+                                },
+                                "colors": [
+                                  {
+                                    "color": "#00000000",
+                                    "position": 0
+                                  },
+                                  {
+                                    "color": "#000000BF",
+                                    "position": 1
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "type": "frame",
+                              "id": "zKsxF",
+                              "x": 12,
+                              "y": 82,
+                              "name": "CardContent",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "jAz7y",
+                                  "name": "label2a",
+                                  "fill": "#FFFFFF",
+                                  "content": "✨ Gemas",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 16,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "Sz3eX",
+                                  "name": "label2b",
+                                  "fill": "#FFFFFFBF",
+                                  "content": "5 piezas",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "HQDmp",
+                      "name": "GridRow2",
+                      "width": "fill_container",
+                      "gap": 12,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Ju4Al",
+                          "name": "CardLotes",
+                          "metadata": {
+                            "type": "unsplash",
+                            "username": "loganvoss",
+                            "link": "https://unsplash.com/@loganvoss",
+                            "author": "Logan Voss"
+                          },
+                          "clip": true,
+                          "width": "fill_container",
+                          "height": 120,
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "https://images.unsplash.com/photo-1772047678458-c183547dfba8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjAzMzV8&ixlib=rb-4.1.0&q=80&w=1080",
+                            "mode": "fill"
+                          },
+                          "cornerRadius": 16,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "nhjDg",
+                              "x": 0,
+                              "y": 0,
+                              "name": "Overlay",
+                              "width": 200,
+                              "height": 120,
+                              "fill": {
+                                "type": "gradient",
+                                "gradientType": "linear",
+                                "enabled": true,
+                                "rotation": 180,
+                                "size": {
+                                  "height": 1
+                                },
+                                "colors": [
+                                  {
+                                    "color": "#00000000",
+                                    "position": 0
+                                  },
+                                  {
+                                    "color": "#000000BF",
+                                    "position": 1
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "type": "frame",
+                              "id": "yPLHs",
+                              "x": 12,
+                              "y": 82,
+                              "name": "CardContent",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "riEkE",
+                                  "name": "lb3a",
+                                  "fill": "#FFFFFF",
+                                  "content": "📦 Lotes",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 16,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "IxCwA",
+                                  "name": "lb3b",
+                                  "fill": "#FFFFFFBF",
+                                  "content": "3 lotes",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "pxuHk",
+                          "name": "CardJoyas",
+                          "metadata": {
+                            "type": "unsplash",
+                            "username": "pavlo_talpa",
+                            "link": "https://unsplash.com/@pavlo_talpa",
+                            "author": "Pavlo Talpa"
+                          },
+                          "clip": true,
+                          "width": "fill_container",
+                          "height": 120,
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "https://images.unsplash.com/photo-1749497636434-82e53b6358b2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjAzNDN8&ixlib=rb-4.1.0&q=80&w=1080",
+                            "mode": "fill"
+                          },
+                          "cornerRadius": 16,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "i8hvC",
+                              "x": 0,
+                              "y": 0,
+                              "name": "Overlay",
+                              "width": 200,
+                              "height": 120,
+                              "fill": {
+                                "type": "gradient",
+                                "gradientType": "linear",
+                                "enabled": true,
+                                "rotation": 180,
+                                "size": {
+                                  "height": 1
+                                },
+                                "colors": [
+                                  {
+                                    "color": "#00000000",
+                                    "position": 0
+                                  },
+                                  {
+                                    "color": "#000000BF",
+                                    "position": 1
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "type": "frame",
+                              "id": "95b8r",
+                              "x": 12,
+                              "y": 82,
+                              "name": "CardContent",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "hGLmd",
+                                  "name": "lb4a",
+                                  "fill": "#FFFFFF",
+                                  "content": "💍 Joyas",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 16,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "l2yuP",
+                                  "name": "lb4b",
+                                  "fill": "#FFFFFFBF",
+                                  "content": "4 piezas",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "rOEDF",
+              "name": "FeaturedSection",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "dXYQ7",
+                  "name": "FeatHeader",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Gcmiy",
+                      "name": "featTitle",
+                      "fill": "$text-primary",
+                      "content": "Piezas Destacadas",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "k7Ju2",
+                      "name": "featLink",
+                      "fill": "$emerald-primary",
+                      "content": "Ver todas →",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "zoI1Q",
+                  "name": "FeatRow",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "C5cgg",
+                      "name": "PreviewCard1",
+                      "metadata": {
+                        "type": "unsplash",
+                        "username": "thapapawan",
+                        "link": "https://unsplash.com/@thapapawan",
+                        "author": "Bobby"
+                      },
+                      "clip": true,
+                      "width": 120,
+                      "height": 150,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1664305693526-a5557cf061be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjA3Mjl8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 12,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "jbiJk",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay",
+                          "width": 120,
+                          "height": 150,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000CC",
+                                "position": 1
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "8eHE9",
+                          "x": 8,
+                          "y": 114,
+                          "name": "Content",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "9lOmh",
+                              "name": "pcName1",
+                              "fill": "#FFFFFF",
+                              "content": "3.2ct Muzo",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "SzspO",
+                              "name": "pcPrice1",
+                              "fill": "$emerald-light",
+                              "content": "$2,400",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 10,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "TNVEk",
+                      "name": "PreviewCard2",
+                      "metadata": {
+                        "type": "unsplash",
+                        "username": "benyamin_bohlouli",
+                        "link": "https://unsplash.com/@benyamin_bohlouli",
+                        "author": "Benyamin Bohlouli"
+                      },
+                      "clip": true,
+                      "width": 120,
+                      "height": 150,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1721561709651-8f5f6688b50d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjA3MzV8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 12,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "7WhkX",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay",
+                          "width": 120,
+                          "height": 150,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000CC",
+                                "position": 1
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "afcQP",
+                          "x": 8,
+                          "y": 114,
+                          "name": "Content",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "8FXJo",
+                              "name": "pcName2",
+                              "fill": "#FFFFFF",
+                              "content": "1.8ct Chivor",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "ScKRa",
+                              "name": "pcPrice2",
+                              "fill": "$emerald-light",
+                              "content": "$1,850",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 10,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "A06bq",
+                      "name": "PreviewCard3",
+                      "metadata": {
+                        "type": "unsplash",
+                        "username": "crinitus",
+                        "link": "https://unsplash.com/@crinitus",
+                        "author": "Ilias Gainutdinov"
+                      },
+                      "clip": true,
+                      "width": 120,
+                      "height": 150,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1685723655983-51053135e342?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjA3Mzl8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 12,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "mfg2H",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay",
+                          "width": 120,
+                          "height": 150,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000CC",
+                                "position": 1
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "EyT47",
+                          "x": 8,
+                          "y": 114,
+                          "name": "Content",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "sSp7t",
+                              "name": "pcName3",
+                              "fill": "#FFFFFF",
+                              "content": "5.1ct Coscuez",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "nTGRm",
+                              "name": "pcPrice3",
+                              "fill": "$emerald-light",
+                              "content": "$5,200",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 10,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "axUOE",
+              "name": "QuickActions",
+              "width": "fill_container",
+              "gap": 8,
+              "padding": [
+                4,
+                16
+              ],
+              "children": [
+                {
+                  "id": "8M5TA",
+                  "type": "ref",
+                  "ref": "R8rmm",
+                  "width": "fill_container",
+                  "name": "btn1",
+                  "descendants": {
+                    "n2Hhi": {
+                      "content": "Ver Todas las Esmeraldas →",
+                      "fontSize": 14
+                    }
+                  }
+                },
+                {
+                  "id": "Ct4C0",
+                  "type": "ref",
+                  "ref": "Nrsvh",
+                  "width": 130,
+                  "name": "btn2",
+                  "descendants": {
+                    "h5UrL": {
+                      "content": "WhatsApp",
+                      "fontSize": 14
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "T9ZRc",
+          "type": "ref",
+          "ref": "JvxYD",
+          "name": "bottomNav",
+          "width": "fill_container",
+          "theme": {
+            "mode": "dark"
+          },
+          "descendants": {
+            "doONr": {
+              "fill": "$bg-secondary",
+              "theme": {
+                "mode": "dark"
+              },
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$border-default"
+              }
+            },
+            "NTZBz": {
+              "id": "2Ovh2",
+              "type": "ref",
+              "ref": "W6hBu",
+              "width": "fill_container",
+              "height": "fill_container",
+              "descendants": {
+                "U0ku4": {
+                  "iconFontName": "house",
+                  "fill": "$text-tertiary"
+                },
+                "I6g4f": {
+                  "content": "INICIO",
+                  "fill": "$text-tertiary"
+                }
+              }
+            },
+            "DWCQY/U0ku4": {
+              "iconFontName": "gem",
+              "fill": "$text-tertiary"
+            },
+            "DWCQY/I6g4f": {
+              "content": "TESOROS",
+              "fill": "$text-tertiary"
+            },
+            "IJIZB": {
+              "id": "yKzFe",
+              "type": "ref",
+              "ref": "GFlUw",
+              "width": "fill_container",
+              "height": "fill_container",
+              "descendants": {
+                "DyhwX": {
+                  "iconFontName": "users"
+                },
+                "5NJzZ": {
+                  "content": "EMBAJADORES"
+                }
+              }
+            },
+            "tbcQN/U0ku4": {
+              "iconFontName": "ellipsis",
+              "fill": "$text-tertiary"
+            },
+            "tbcQN/I6g4f": {
+              "content": "MÁS",
+              "fill": "$text-tertiary"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "pVHpf",
+      "x": 6626,
+      "y": 1884,
+      "name": "Ambassador Museum — Category Tap",
+      "theme": {
+        "mode": "dark"
+      },
+      "clip": true,
+      "width": 393,
+      "height": 852,
+      "fill": "$bg-primary",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "HRPyx",
+          "name": "StatusBar",
+          "width": "fill_container",
+          "height": 62,
+          "padding": [
+            0,
+            24
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "EDzes",
+              "name": "t2",
+              "fill": "$text-primary",
+              "content": "9:41",
+              "fontFamily": "SF Pro Display",
+              "fontSize": 16,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "dktPl",
+              "name": "StatusIcons",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "jmnYX",
+                  "name": "s2a",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "signal",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "Ziw7K",
+                  "name": "s2b",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "wifi",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "RPWz4",
+                  "name": "s2c",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "battery-full",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Ql4kC",
+          "name": "NavHeader",
+          "width": "fill_container",
+          "height": 44,
+          "padding": [
+            0,
+            16
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "EHFZc",
+              "name": "bk2",
+              "width": 24,
+              "height": 24,
+              "iconFontName": "chevron-left",
+              "iconFontFamily": "lucide",
+              "fill": "$text-primary"
+            },
+            {
+              "type": "text",
+              "id": "ESIVn",
+              "name": "nt2",
+              "fill": "$text-primary",
+              "content": "Museo del Embajador",
+              "fontFamily": "DM Sans",
+              "fontSize": 17,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "KwnZf",
+              "name": "spacer",
+              "width": 24,
+              "height": 24
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "G2Xar",
+          "name": "HeroProfile",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            4,
+            16,
+            8,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "KVcx6",
+              "name": "AvatarRing",
+              "clip": true,
+              "width": 102,
+              "height": 102,
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "./images/generated-1773260857918.png",
+                "mode": "fill"
+              },
+              "cornerRadius": 51,
+              "stroke": {
+                "align": "outside",
+                "thickness": 3,
+                "fill": "$emerald-primary"
+              }
+            },
+            {
+              "type": "text",
+              "id": "yViIR",
+              "name": "nm2",
+              "fill": "$text-primary",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Isa la Negra Vikinga Warrior Portocarrero",
+              "textAlign": "center",
+              "fontFamily": "DM Sans",
+              "fontSize": 20,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "CRsLi",
+              "name": "ChipsRow",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "id": "KxHJA",
+                  "type": "ref",
+                  "ref": "bAXu8",
+                  "name": "ch2a",
+                  "descendants": {
+                    "vBkZB": {
+                      "content": "EMBAJADORA",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 1
+                    }
+                  }
+                },
+                {
+                  "id": "bul0x",
+                  "type": "ref",
+                  "ref": "XZa2o",
+                  "name": "ch2b",
+                  "descendants": {
+                    "5tFOg": {
+                      "content": "ADMIN",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "bnRJF",
+              "name": "StatsRow",
+              "width": "fill_container",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "ffyIp",
+                  "name": "StatTesoros",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "$bg-secondary",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "4k77j",
+                      "name": "st2aI",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "gem",
+                      "iconFontFamily": "lucide",
+                      "fill": "$emerald-primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "chi73",
+                      "name": "st2aT",
+                      "fill": "$text-primary",
+                      "content": "20 Tesoros",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "hb3Co",
+                  "name": "StatValor",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "$bg-secondary",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "UQK8J",
+                      "name": "st2bI",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "dollar-sign",
+                      "iconFontFamily": "lucide",
+                      "fill": "$gold-primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "dbMVZ",
+                      "name": "st2bT",
+                      "fill": "$text-primary",
+                      "content": "$4.2M",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "8tVvA",
+                  "name": "StatRating",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "$bg-secondary",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$border-light"
+                  },
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "wqgrd",
+                      "name": "st2cI",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "star",
+                      "iconFontFamily": "lucide",
+                      "fill": "$gold-primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "6Xe3X",
+                      "name": "st2cT",
+                      "fill": "$text-primary",
+                      "content": "4.9",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "LUa6k",
+              "name": "bio2",
+              "fill": "$text-secondary",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Guardiana de las esmeraldas más exclusivas de Colombia",
+              "textAlign": "center",
+              "fontFamily": "DM Sans",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "heO4B",
+          "name": "CategorySection",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            4,
+            0
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "971lQ",
+              "name": "catT2",
+              "fill": "$text-primary",
+              "content": "Explorar Colección",
+              "fontFamily": "DM Sans",
+              "fontSize": 18,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "Mix8B",
+              "name": "GridWrap",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "RbddZ",
+                  "name": "GridRow1",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "EDbgC",
+                      "name": "CardPiedras-Pressed",
+                      "metadata": {
+                        "type": "unsplash",
+                        "username": "wyxina",
+                        "link": "https://unsplash.com/@wyxina",
+                        "author": "Wyxina Tresse"
+                      },
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1764776950542-83ab10b61659?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjA4Njh8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 16,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00AE7A66",
+                        "blur": 8,
+                        "spread": 2
+                      },
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Uu1gl",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay",
+                          "width": 200,
+                          "height": 120,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000BF",
+                                "position": 1
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "GsbmC",
+                          "x": 12,
+                          "y": 82,
+                          "name": "CardContent",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "4cyh9",
+                              "name": "pressedL1",
+                              "fill": "#FFFFFF",
+                              "content": "💎 Piedras",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "ILQyX",
+                              "name": "pressedL2",
+                              "fill": "#FFFFFFBF",
+                              "content": "8 piezas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "zP0Fo",
+                      "name": "CardGemas",
+                      "metadata": {
+                        "type": "unsplash",
+                        "username": "googledeepmind",
+                        "link": "https://unsplash.com/@googledeepmind",
+                        "author": "Google DeepMind"
+                      },
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1655720845034-b8f615109b5b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjA4NzB8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 16,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "NO6KS",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay",
+                          "width": 200,
+                          "height": 120,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000BF",
+                                "position": 1
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "WRm4u",
+                          "x": 12,
+                          "y": 82,
+                          "name": "CardContent",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "FZS5Y",
+                              "name": "c2gL1",
+                              "fill": "#FFFFFF",
+                              "content": "✨ Gemas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "NfPwL",
+                              "name": "c2gL2",
+                              "fill": "#FFFFFFBF",
+                              "content": "5 piezas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "LvMHX",
+                  "name": "GridRow2",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "lxw3l",
+                      "name": "CardLotes",
+                      "metadata": {
+                        "type": "unsplash",
+                        "username": "gyostimages",
+                        "link": "https://unsplash.com/@gyostimages",
+                        "author": "Gary Yost"
+                      },
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1620360094127-854a67f8c959?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjA4Njh8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 16,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "lQVcc",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay",
+                          "width": 200,
+                          "height": 120,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000BF",
+                                "position": 1
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "gUqXq",
+                          "x": 12,
+                          "y": 82,
+                          "name": "CardContent",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "XloY7",
+                              "name": "c2lL1",
+                              "fill": "#FFFFFF",
+                              "content": "📦 Lotes",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "BHxPn",
+                              "name": "c2lL2",
+                              "fill": "#FFFFFFBF",
+                              "content": "3 lotes",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "2EjL5",
+                      "name": "CardJoyas",
+                      "metadata": {
+                        "type": "unsplash",
+                        "username": "adialbulescu",
+                        "link": "https://unsplash.com/@adialbulescu",
+                        "author": "Adi Albulescu"
+                      },
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 120,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1767921482419-d2d255b5b700?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjA4Njl8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 16,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "qtyJy",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Overlay",
+                          "width": 200,
+                          "height": 120,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#00000000",
+                                "position": 0
+                              },
+                              {
+                                "color": "#000000BF",
+                                "position": 1
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "i8AXM",
+                          "x": 12,
+                          "y": 82,
+                          "name": "CardContent",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "gO2VZ",
+                              "name": "c2jL1",
+                              "fill": "#FFFFFF",
+                              "content": "💍 Joyas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "cZUFV",
+                              "name": "c2jL2",
+                              "fill": "#FFFFFFBF",
+                              "content": "4 piezas",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "VICxg",
+          "name": "ExpandedPanel",
+          "width": "fill_container",
+          "fill": "$bg-secondary",
+          "cornerRadius": [
+            16,
+            16,
+            0,
+            0
+          ],
+          "layout": "vertical",
+          "gap": 12,
+          "padding": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "XBM5B",
+              "name": "PanelHeader",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "aTZ3a",
+                  "name": "panelTitle",
+                  "fill": "$text-primary",
+                  "content": "💎 Piedras de Isa",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "BUFBi",
+                  "name": "panelLink",
+                  "fill": "$emerald-primary",
+                  "content": "Ver todas →",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "UUknN",
+              "name": "ThumbRow",
+              "width": "fill_container",
+              "gap": 16,
+              "justifyContent": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "AaWHI",
+                  "name": "Thumb1",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Rhn8y",
+                      "name": "ThumbImg1",
+                      "metadata": {
+                        "type": "unsplash",
+                        "username": "alexeydemidov",
+                        "link": "https://unsplash.com/@alexeydemidov",
+                        "author": "Alexey Demidov"
+                      },
+                      "clip": true,
+                      "width": 64,
+                      "height": 64,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1641875702618-d44086a5defa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjA4ODV8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 32,
+                      "stroke": {
+                        "align": "outside",
+                        "thickness": 2,
+                        "fill": "$emerald-primary"
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "mx0h6",
+                      "name": "th1name",
+                      "fill": "$text-secondary",
+                      "content": "Muzo Elite",
+                      "textAlign": "center",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ZHXlo",
+                  "name": "Thumb2",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "2XFJt",
+                      "name": "ThumbImg2",
+                      "metadata": {
+                        "type": "unsplash",
+                        "username": "olivia_brewer2002",
+                        "link": "https://unsplash.com/@olivia_brewer2002",
+                        "author": "Olivia Brewer"
+                      },
+                      "clip": true,
+                      "width": 64,
+                      "height": 64,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1716257910112-a6b45e394432?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjA4ODZ8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 32,
+                      "stroke": {
+                        "align": "outside",
+                        "thickness": 2,
+                        "fill": "$emerald-primary"
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "YlYha",
+                      "name": "th2name",
+                      "fill": "$text-secondary",
+                      "content": "Chivor AAA",
+                      "textAlign": "center",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "J0ns6",
+                  "name": "Thumb3",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "h3Lg4",
+                      "name": "ThumbImg3",
+                      "metadata": {
+                        "type": "unsplash",
+                        "username": "comehomewitch",
+                        "link": "https://unsplash.com/@comehomewitch",
+                        "author": "Agatha Landau"
+                      },
+                      "clip": true,
+                      "width": 64,
+                      "height": 64,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1655207285604-fa855fd0a7cb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjA4ODZ8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 32,
+                      "stroke": {
+                        "align": "outside",
+                        "thickness": 2,
+                        "fill": "$emerald-primary"
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "motzy",
+                      "name": "th3name",
+                      "fill": "$text-secondary",
+                      "content": "Boyacá Pure",
+                      "textAlign": "center",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "VClCe",
+                  "name": "Thumb4",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "XQpOq",
+                      "name": "ThumbImg4",
+                      "metadata": {
+                        "type": "unsplash",
+                        "username": "loganvoss",
+                        "link": "https://unsplash.com/@loganvoss",
+                        "author": "Logan Voss"
+                      },
+                      "clip": true,
+                      "width": 64,
+                      "height": 64,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1771788894258-82ac901efac2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzMyNjA4ODd8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 32,
+                      "stroke": {
+                        "align": "outside",
+                        "thickness": 2,
+                        "fill": "$emerald-primary"
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "hSi59",
+                      "name": "th4name",
+                      "fill": "$text-secondary",
+                      "content": "Coscuez Gem",
+                      "textAlign": "center",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "y1ZPL",
+          "type": "ref",
+          "ref": "JvxYD",
+          "name": "bottomNav",
+          "width": "fill_container",
+          "theme": {
+            "mode": "dark"
+          },
+          "descendants": {
+            "doONr": {
+              "fill": "$bg-secondary",
+              "theme": {
+                "mode": "dark"
+              },
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$border-default"
+              }
+            },
+            "NTZBz": {
+              "id": "wV2Kl",
+              "type": "ref",
+              "ref": "W6hBu",
+              "width": "fill_container",
+              "height": "fill_container",
+              "descendants": {
+                "U0ku4": {
+                  "iconFontName": "house",
+                  "fill": "$text-tertiary"
+                },
+                "I6g4f": {
+                  "content": "INICIO",
+                  "fill": "$text-tertiary"
+                }
+              }
+            },
+            "DWCQY/U0ku4": {
+              "iconFontName": "gem",
+              "fill": "$text-tertiary"
+            },
+            "DWCQY/I6g4f": {
+              "content": "TESOROS",
+              "fill": "$text-tertiary"
+            },
+            "IJIZB": {
+              "id": "g2rhs",
+              "type": "ref",
+              "ref": "GFlUw",
+              "width": "fill_container",
+              "height": "fill_container",
+              "descendants": {
+                "DyhwX": {
+                  "iconFontName": "users"
+                },
+                "5NJzZ": {
+                  "content": "EMBAJADORES"
+                }
+              }
+            },
+            "tbcQN/U0ku4": {
+              "iconFontName": "ellipsis",
+              "fill": "$text-tertiary"
+            },
+            "tbcQN/I6g4f": {
+              "content": "MÁS",
+              "fill": "$text-tertiary"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "n7oLQ",
+      "x": 7069,
+      "y": 1884,
+      "name": "Ambassador Museum — Config Sheet",
+      "theme": {
+        "mode": "dark"
+      },
+      "clip": true,
+      "width": 393,
+      "height": 852,
+      "fill": "$bg-primary",
+      "layout": "none",
+      "children": [
+        {
+          "type": "frame",
+          "id": "gr5dl",
+          "x": 0,
+          "y": 0,
+          "name": "BgContent",
+          "clip": true,
+          "width": 393,
+          "height": 852,
+          "fill": "$bg-primary",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "6176D",
+              "name": "StatusBar",
+              "width": "fill_container",
+              "height": 62,
+              "padding": [
+                0,
+                24
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "xWgZZ",
+                  "name": "t3",
+                  "fill": "$text-primary",
+                  "content": "9:41",
+                  "fontFamily": "SF Pro Display",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "MdKTW",
+                  "name": "StatusIcons",
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "NQBsd",
+                      "name": "s3a",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "signal",
+                      "iconFontFamily": "lucide",
+                      "fill": "$text-primary"
+                    },
+                    {
+                      "type": "icon_font",
+                      "id": "ya1pV",
+                      "name": "s3b",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "wifi",
+                      "iconFontFamily": "lucide",
+                      "fill": "$text-primary"
+                    },
+                    {
+                      "type": "icon_font",
+                      "id": "Lp6Xr",
+                      "name": "s3c",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "battery-full",
+                      "iconFontFamily": "lucide",
+                      "fill": "$text-primary"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "AhhuK",
+              "name": "NavHeader",
+              "width": "fill_container",
+              "height": 44,
+              "padding": [
+                0,
+                16
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "8h4sI",
+                  "name": "bk3",
+                  "width": 24,
+                  "height": 24,
+                  "iconFontName": "chevron-left",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                },
+                {
+                  "type": "text",
+                  "id": "2jL5h",
+                  "name": "nt3",
+                  "fill": "$text-primary",
+                  "content": "Museo del Embajador",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 17,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "hoNy1",
+                  "name": "spacer",
+                  "width": 24,
+                  "height": 24
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "qmRSN",
+              "name": "HeroProfile",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "padding": [
+                4,
+                16,
+                8,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "MbMKG",
+                  "name": "AvatarRing",
+                  "clip": true,
+                  "width": 102,
+                  "height": 102,
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "./images/generated-1773260966241.png",
+                    "mode": "fill"
+                  },
+                  "cornerRadius": 51,
+                  "stroke": {
+                    "align": "outside",
+                    "thickness": 3,
+                    "fill": "$emerald-primary"
+                  }
+                },
+                {
+                  "type": "text",
+                  "id": "3ByD6",
+                  "name": "nm3",
+                  "fill": "$text-primary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Isa la Negra Vikinga Warrior Portocarrero",
+                  "textAlign": "center",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 20,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "UxiwJ",
+                  "name": "ChipsRow",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "N7JkK",
+                      "type": "ref",
+                      "ref": "bAXu8",
+                      "name": "ch3a",
+                      "descendants": {
+                        "vBkZB": {
+                          "content": "EMBAJADORA",
+                          "fontSize": 10,
+                          "fontWeight": "600",
+                          "letterSpacing": 1
+                        }
+                      }
+                    },
+                    {
+                      "id": "L4BYX",
+                      "type": "ref",
+                      "ref": "XZa2o",
+                      "name": "ch3b",
+                      "descendants": {
+                        "5tFOg": {
+                          "content": "ADMIN",
+                          "fontSize": 10,
+                          "fontWeight": "600",
+                          "letterSpacing": 1
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "aCoOg",
+                  "name": "StatsRow",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "NBWIU",
+                      "name": "StatTesoros",
+                      "width": "fill_container",
+                      "height": 44,
+                      "fill": "$bg-secondary",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "$border-light"
+                      },
+                      "gap": 6,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "xK77a",
+                          "name": "st3aI",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "gem",
+                          "iconFontFamily": "lucide",
+                          "fill": "$emerald-primary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "vWMMQ",
+                          "name": "st3aT",
+                          "fill": "$text-primary",
+                          "content": "20 Tesoros",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "xXN1d",
+                      "name": "StatValor",
+                      "width": "fill_container",
+                      "height": 44,
+                      "fill": "$bg-secondary",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "$border-light"
+                      },
+                      "gap": 6,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "6XzmY",
+                          "name": "st3bI",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "dollar-sign",
+                          "iconFontFamily": "lucide",
+                          "fill": "$gold-primary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "YnulC",
+                          "name": "st3bT",
+                          "fill": "$text-primary",
+                          "content": "$4.2M",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "TI0Sd",
+                      "name": "StatRating",
+                      "width": "fill_container",
+                      "height": 44,
+                      "fill": "$bg-secondary",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "$border-light"
+                      },
+                      "gap": 6,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "TJf43",
+                          "name": "st3cI",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "star",
+                          "iconFontFamily": "lucide",
+                          "fill": "$gold-primary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "GTQ1U",
+                          "name": "st3cT",
+                          "fill": "$text-primary",
+                          "content": "4.9",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "wVuZL",
+                  "name": "bio3",
+                  "fill": "$text-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Guardiana de las esmeraldas más exclusivas de Colombia",
+                  "textAlign": "center",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "DK6ao",
+              "name": "CategorySection",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "padding": [
+                4,
+                16
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "q60yk",
+                  "name": "catT3",
+                  "fill": "$text-primary",
+                  "content": "Explorar Colección",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 18,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Cx8R5",
+          "x": 0,
+          "y": 0,
+          "name": "DimOverlay",
+          "width": 393,
+          "height": 852,
+          "fill": "#00000080"
+        },
+        {
+          "type": "frame",
+          "id": "VFm7Q",
+          "x": 0,
+          "y": 420,
+          "name": "BottomSheet",
+          "width": 393,
+          "fill": "$bg-secondary",
+          "cornerRadius": [
+            24,
+            24,
+            0,
+            0
+          ],
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 20,
+          "children": [
+            {
+              "type": "frame",
+              "id": "rPEDo",
+              "name": "DragIndicator",
+              "width": "fill_container",
+              "justifyContent": "center",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 2,
+                  "id": "KAmTX",
+                  "name": "dragBar",
+                  "fill": "$text-tertiary",
+                  "width": 40,
+                  "height": 4
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "3EJ7w",
+              "name": "sheetTitle",
+              "fill": "$text-primary",
+              "content": "Configuración del Museo",
+              "fontFamily": "DM Sans",
+              "fontSize": 18,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "eIDRr",
+              "name": "ToggleRow1",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "36Cus",
+                  "name": "toggle1Label",
+                  "fill": "$text-primary",
+                  "content": "Mostrar precios",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 15,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "frame",
+                  "id": "XEQsO",
+                  "name": "ToggleOn",
+                  "width": 52,
+                  "height": 32,
+                  "fill": "$emerald-primary",
+                  "cornerRadius": 16,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "fN2CC",
+                      "x": 22,
+                      "y": 2,
+                      "name": "toggle1Circle",
+                      "fill": "#FFFFFF",
+                      "width": 28,
+                      "height": 28
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Ua1UY",
+              "name": "ToggleRow2",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "YR1pQ",
+                  "name": "toggle2Label",
+                  "fill": "$text-primary",
+                  "content": "Modo privado",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 15,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "frame",
+                  "id": "GWn5G",
+                  "name": "ToggleOff",
+                  "width": 52,
+                  "height": 32,
+                  "fill": "$bg-tertiary",
+                  "cornerRadius": 16,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "wFb44",
+                      "x": 2,
+                      "y": 2,
+                      "name": "toggle2Circle",
+                      "fill": "#FFFFFF",
+                      "width": 28,
+                      "height": 28
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "DMlt7",
+              "name": "ToggleRow3",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "GyETM",
+                  "name": "toggle3Label",
+                  "fill": "$text-primary",
+                  "content": "Notificaciones",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 15,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "frame",
+                  "id": "RovHv",
+                  "name": "ToggleOn2",
+                  "width": 52,
+                  "height": 32,
+                  "fill": "$emerald-primary",
+                  "cornerRadius": 16,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "jbOpc",
+                      "x": 22,
+                      "y": 2,
+                      "name": "toggle3Circle",
+                      "fill": "#FFFFFF",
+                      "width": 28,
+                      "height": 28
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "sI9SU",
+              "name": "Divider",
+              "width": "fill_container",
+              "height": 1,
+              "fill": "$border-light"
+            },
+            {
+              "type": "frame",
+              "id": "0twsG",
+              "name": "SortSection",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "bup1V",
+                  "name": "sortLabel",
+                  "fill": "$text-primary",
+                  "content": "Ordenar colección",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 15,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "frame",
+                  "id": "W6jBr",
+                  "name": "SortPills",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "3D1mN",
+                      "name": "PillPrecio",
+                      "fill": "$emerald-primary",
+                      "cornerRadius": 9999,
+                      "padding": [
+                        8,
+                        16
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "qZyzu",
+                          "name": "pillActiveT",
+                          "fill": "#FFFFFF",
+                          "content": "Precio",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "8EnzD",
+                      "name": "PillFecha",
+                      "fill": "$bg-tertiary",
+                      "cornerRadius": 9999,
+                      "padding": [
+                        8,
+                        16
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "4Epho",
+                          "name": "pillInact1T",
+                          "fill": "$text-secondary",
+                          "content": "Fecha",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "c5dmw",
+                      "name": "PillNombre",
+                      "fill": "$bg-tertiary",
+                      "cornerRadius": 9999,
+                      "padding": [
+                        8,
+                        16
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "GGjud",
+                          "name": "pillInact2T",
+                          "fill": "$text-secondary",
+                          "content": "Nombre",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wIrQh",
+              "type": "ref",
+              "ref": "R8rmm",
+              "width": "fill_container",
+              "name": "saveBtn",
+              "descendants": {
+                "n2Hhi": {
+                  "content": "Guardar Cambios"
+                }
+              }
             }
           ]
         }

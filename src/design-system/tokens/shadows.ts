@@ -1,8 +1,22 @@
 /**
- * Tierra Madre Design System - Shadow Tokens
+ * Tierra Madre Design System - Shadow Tokens — CANONICAL SHADOW FILE
  *
  * iOS-style soft, diffused shadows with emerald-tinted variants.
  * Follows Fibonacci sequence for depth progression.
+ *
+ * ┌──────────────────────────────────────────────────────┐
+ * │  SHADOW TOKEN BOUNDARY                                │
+ * │                                                       │
+ * │  primitives/shadows.ts → Raw light/dark elevation     │
+ * │                          scales, theme-aware pairs     │
+ * │                                                       │
+ * │  tokens/shadows.ts     → Semantic & branded shadows   │
+ * │  (THIS FILE — START HERE)  card, focus, emerald,      │
+ * │                          gold, floating, specular      │
+ * │                                                       │
+ * │  When in doubt, import from THIS file.                 │
+ * │  Use primitives only for raw light/dark theme pairs.   │
+ * └──────────────────────────────────────────────────────┘
  */
 
 // Base color values for rgba

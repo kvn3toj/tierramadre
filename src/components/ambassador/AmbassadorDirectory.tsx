@@ -1,5 +1,5 @@
 // Ambassador Directory Component
-// Browse and filter embajadores from Google Sheets (only role=Embajador*)
+// Premium editorial directory for Tierra Madre embajadores
 
 import { useState, useMemo } from 'react';
 import {
@@ -15,6 +15,7 @@ import {
   Button,
   CircularProgress,
   Alert,
+  alpha,
 } from '@mui/material';
 import {
   Search,
@@ -30,16 +31,18 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useAsesores, Asesor } from '../../hooks/useAsesores';
 import { useTreasure } from '../../hooks/useTreasure';
 import AsesorCard from './AsesorCard';
-import { StatItem } from './StatItem';
 import {
   emeraldCore,
+  goldAccent,
   accentColors,
-  applyGlass,
-  glassEmerald,
-  glassLight,
-  glassDark,
+  fontFamilies,
+  cssTransition,
+  surfacesLight,
+  surfacesDark,
 } from '../../design-system/index';
 import { fadeInUp, staggerContainer, staggerItem } from '../../design-system/tokens/motion';
+import { iosSemanticColors } from '../../design-system/tokens/ios-semantic';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 interface AmbassadorDirectoryProps {
   onViewProducts?: (asesor: Asesor) => void;
@@ -61,23 +64,21 @@ export default function AmbassadorDirectory({
   const { t } = useLanguage();
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const prefersReducedMotion = useReducedMotion();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortOption>('products');
 
-  // Load treasure and asesores from Google Sheets
   const { treasure } = useTreasure();
   const { asesores, isLoading, error } = useAsesores(treasure);
 
-  // Only show people whose role contains "Embajador" on the directory page
   const embajadores = useMemo(() => {
     return asesores.filter(a =>
       (a.role || '').toLowerCase().includes('embajador')
     );
   }, [asesores]);
 
-  // Calculate aggregate stats
   const stats = useMemo(() => {
     const totalProducts = embajadores.reduce((sum, a) => sum + (a.productCount || 0), 0);
     const totalValue = embajadores.reduce((sum, a) => {
@@ -95,11 +96,9 @@ export default function AmbassadorDirectory({
     return { totalProducts, totalValue, activeEmbajadores, looseCount };
   }, [embajadores]);
 
-  // Filter and sort embajadores
   const filteredAsesores = useMemo(() => {
     let result = [...embajadores];
 
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(a =>
@@ -107,7 +106,6 @@ export default function AmbassadorDirectory({
       );
     }
 
-    // Sort
     result.sort((a, b) => {
       switch (sortBy) {
         case 'products':
@@ -119,7 +117,6 @@ export default function AmbassadorDirectory({
       }
     });
 
-    // Limit if maxVisible is set
     if (maxVisible) {
       result = result.slice(0, maxVisible);
     }
@@ -133,27 +130,34 @@ export default function AmbassadorDirectory({
     setSearchQuery('');
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <Box>
-        <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <CircularProgress size={24} aria-label={t.loading.general} sx={{ color: emeraldCore.primary }} />
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <CircularProgress size={18} aria-label={t.loading.general} sx={{ color: goldAccent.primary }} />
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'text.secondary',
+              fontFamily: fontFamilies.mono,
+              fontSize: '0.7rem',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}
+          >
             {t.loading.ambassadors}
           </Typography>
         </Box>
-        <AmbassadorDirectorySkeleton />
+        <AmbassadorDirectorySkeleton isLight={isLight} />
       </Box>
     );
   }
 
-  // Error state
   if (error) {
     return (
       <Box>
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          No se pudieron cargar los embajadores. Recarga la p&aacute;gina para intentar de nuevo.
+        <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
+          {t.ambassador.loadError}
         </Alert>
       </Box>
     );
@@ -161,63 +165,75 @@ export default function AmbassadorDirectory({
 
   return (
     <Box>
-      {/* Stats Bar */}
+      {/* Stats Row */}
       <motion.div
         variants={fadeInUp}
-        initial="initial"
+        initial={prefersReducedMotion ? false : "initial"}
         animate="animate"
       >
         <Box
           sx={{
-            mb: 3,
-            p: 2,
-            borderRadius: 3,
-            ...applyGlass(isLight ? glassEmerald.light : glassEmerald.dark),
+            mb: 3.5,
             display: 'grid',
             gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-            gap: { xs: 0.5, md: 1 },
+            gap: 0,
+            borderRadius: 3,
+            overflow: 'hidden',
+            border: '1px solid',
+            borderColor: isLight
+              ? alpha(goldAccent.primary, 0.12)
+              : alpha(goldAccent.primary, 0.08),
+            bgcolor: isLight ? alpha('#fff', 0.6) : alpha('#fff', 0.015),
           }}
         >
-          <StatItem
-            icon={<Users size={18} />}
+          <StatCard
+            icon={<Users size={15} strokeWidth={1.5} />}
             value={stats.activeEmbajadores.toString()}
-            label="Embajadores activos"
-            color={emeraldCore.primary}
-            variant="stacked"
+            label={t.ambassador.activeAmbassadors}
+            isLight={isLight}
+            accentColor={emeraldCore.primary}
           />
-          <StatItem
-            icon={<Package size={18} />}
+          <StatCard
+            icon={<Package size={15} strokeWidth={1.5} />}
             value={stats.totalProducts.toString()}
-            label="Productos totales"
-            color={accentColors.info.light}
-            variant="stacked"
+            label={t.ambassador.totalProducts}
+            isLight={isLight}
+            accentColor={accentColors.info.light}
+            hasDivider
           />
-          <StatItem
-            icon={<Gem size={18} />}
+          <StatCard
+            icon={<Gem size={15} strokeWidth={1.5} />}
             value={stats.looseCount.toString()}
-            label="Gemas"
-            color={isLight ? accentColors.purple.light : accentColors.purple.dark}
-            variant="stacked"
+            label={t.ambassador.looseGems}
+            isLight={isLight}
+            accentColor={isLight ? accentColors.purple.light : accentColors.purple.dark}
+            hasDivider
           />
-          <StatItem
-            icon={<DollarSign size={18} />}
+          <StatCard
+            icon={<DollarSign size={15} strokeWidth={1.5} />}
             value={formatValue(stats.totalValue)}
-            label="Valor disponible"
-            color={accentColors.warning.light}
-            variant="stacked"
+            label={t.ambassador.availableValue}
+            isLight={isLight}
+            accentColor={goldAccent.primary}
+            hasDivider
           />
         </Box>
       </motion.div>
 
-      {/* Search and View Toggle */}
+      {/* Search & Controls */}
       {showFilters && (
-        <Box sx={{ mb: 3 }}>
+        <motion.div
+          variants={fadeInUp}
+          initial={prefersReducedMotion ? false : "initial"}
+          animate="animate"
+        >
           <Box
             sx={{
+              mb: 3,
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row' },
-              gap: 2,
-              mb: 2,
+              gap: 1.5,
+              alignItems: { sm: 'center' },
             }}
           >
             <TextField
@@ -229,32 +245,72 @@ export default function AmbassadorDirectory({
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Search size={18} />
+                    <Search size={15} strokeWidth={1.5} style={{ opacity: 0.35 }} />
                   </InputAdornment>
                 ),
               }}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: emeraldCore.primary,
+                  borderRadius: 2.5,
+                  bgcolor: isLight ? alpha('#000', 0.015) : alpha('#fff', 0.025),
+                  fontSize: '0.82rem',
+                  letterSpacing: '0.01em',
+                  '& fieldset': {
+                    borderColor: isLight
+                      ? alpha('#000', 0.07)
+                      : alpha('#fff', 0.07),
+                    transition: cssTransition.default,
+                  },
+                  '&:hover fieldset': {
+                    borderColor: isLight
+                      ? alpha('#000', 0.12)
+                      : alpha('#fff', 0.12),
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: alpha(goldAccent.primary, 0.4),
+                    borderWidth: '1px !important',
                   },
                 },
               }}
             />
 
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
               <ToggleButtonGroup
                 value={viewMode}
                 exclusive
                 onChange={(_, value) => value && setViewMode(value)}
                 size="small"
+                sx={{
+                  '& .MuiToggleButtonGroup-grouped': {
+                    border: '1px solid',
+                    borderColor: isLight ? alpha('#000', 0.07) : alpha('#fff', 0.07),
+                    '&:not(:first-of-type)': {
+                      borderLeft: '1px solid',
+                      borderColor: isLight ? alpha('#000', 0.07) : alpha('#fff', 0.07),
+                    },
+                  },
+                  '& .MuiToggleButton-root': {
+                    color: isLight ? alpha('#000', 0.35) : alpha('#fff', 0.35),
+                    px: 1.25,
+                    transition: cssTransition.default,
+                    '&.Mui-selected': {
+                      bgcolor: isLight ? alpha(emeraldCore.primary, 0.07) : alpha(emeraldCore.primary, 0.12),
+                      color: emeraldCore.primary,
+                      '&:hover': {
+                        bgcolor: isLight ? alpha(emeraldCore.primary, 0.1) : alpha(emeraldCore.primary, 0.15),
+                      },
+                    },
+                    '&:hover': {
+                      bgcolor: isLight ? alpha('#000', 0.03) : alpha('#fff', 0.03),
+                    },
+                  },
+                }}
               >
-                <ToggleButton value="grid" aria-label="Vista cuadrícula">
-                  <Grid3X3 size={18} />
+                <ToggleButton value="grid" aria-label={t.ambassador.gridView}>
+                  <Grid3X3 size={15} strokeWidth={1.5} />
                 </ToggleButton>
-                <ToggleButton value="list" aria-label="Vista lista">
-                  <List size={18} />
+                <ToggleButton value="list" aria-label={t.ambassador.listView}>
+                  <List size={15} strokeWidth={1.5} />
                 </ToggleButton>
               </ToggleButtonGroup>
 
@@ -263,58 +319,116 @@ export default function AmbassadorDirectory({
                 exclusive
                 onChange={(_, value) => value && setSortBy(value)}
                 size="small"
+                sx={{
+                  '& .MuiToggleButtonGroup-grouped': {
+                    border: '1px solid',
+                    borderColor: isLight ? alpha('#000', 0.07) : alpha('#fff', 0.07),
+                    '&:not(:first-of-type)': {
+                      borderLeft: '1px solid',
+                      borderColor: isLight ? alpha('#000', 0.07) : alpha('#fff', 0.07),
+                    },
+                  },
+                  '& .MuiToggleButton-root': {
+                    textTransform: 'none',
+                    px: 1.75,
+                    fontSize: '0.72rem',
+                    fontWeight: 500,
+                    letterSpacing: '0.02em',
+                    color: isLight ? alpha('#000', 0.45) : alpha('#fff', 0.45),
+                    transition: cssTransition.default,
+                    '&.Mui-selected': {
+                      bgcolor: isLight ? alpha(emeraldCore.primary, 0.07) : alpha(emeraldCore.primary, 0.12),
+                      color: emeraldCore.primary,
+                      fontWeight: 600,
+                      '&:hover': {
+                        bgcolor: isLight ? alpha(emeraldCore.primary, 0.1) : alpha(emeraldCore.primary, 0.15),
+                      },
+                    },
+                    '&:hover': {
+                      bgcolor: isLight ? alpha('#000', 0.03) : alpha('#fff', 0.03),
+                    },
+                  },
+                }}
               >
-                <ToggleButton value="products" sx={{ textTransform: 'none', px: 2 }}>
-                  Por Productos
+                <ToggleButton value="products">
+                  {t.ambassador.sortByProducts}
                 </ToggleButton>
-                <ToggleButton value="name" sx={{ textTransform: 'none', px: 2 }}>
-                  Por Nombre
+                <ToggleButton value="name">
+                  {t.ambassador.sortByName}
                 </ToggleButton>
               </ToggleButtonGroup>
             </Box>
           </Box>
-        </Box>
+        </motion.div>
       )}
 
       {/* Results Count */}
-      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box
+          sx={{
+            width: 16,
+            height: '1px',
+            bgcolor: isLight ? alpha(goldAccent.primary, 0.3) : alpha(goldAccent.primary, 0.2),
+          }}
+        />
         <Typography
           variant="overline"
           sx={{
             color: 'text.secondary',
-            letterSpacing: '0.1em',
-            fontSize: '0.7rem',
+            letterSpacing: '0.15em',
+            fontSize: '0.6rem',
+            fontWeight: 500,
           }}
         >
-          {filteredAsesores.length} embajadores encontrados
+          {filteredAsesores.length} {t.ambassador.ambassadorsFound}
         </Typography>
       </Box>
 
-      {/* Asesor Grid/List */}
+      {/* Ambassador Grid/List */}
       {filteredAsesores.length === 0 ? (
         <motion.div
           variants={fadeInUp}
-          initial="initial"
+          initial={prefersReducedMotion ? false : "initial"}
           animate="animate"
         >
           <Box
             sx={{
               textAlign: 'center',
-              py: 8,
+              py: 10,
               px: 4,
               borderRadius: 3,
-              ...applyGlass(isLight ? glassLight.ultraThin : glassDark.ultraThin),
+              border: '1px solid',
+              borderColor: isLight ? alpha('#000', 0.05) : alpha('#fff', 0.05),
             }}
           >
-            <Gem size={48} style={{ color: emeraldCore.light, marginBottom: 16 }} />
-            <Typography
-              variant="h6"
-              sx={{ mb: 1, color: 'text.secondary' }}
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                border: '1px solid',
+                borderColor: alpha(goldAccent.primary, 0.2),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2.5,
+              }}
             >
-              No se encontraron embajadores
+              <Gem size={24} strokeWidth={1} style={{ color: alpha(goldAccent.primary, 0.5) }} />
+            </Box>
+            <Typography
+              sx={{
+                mb: 0.75,
+                color: 'text.secondary',
+                fontWeight: 500,
+                fontSize: '1rem',
+              }}
+            >
+              {t.ambassador.noResults}
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-              {hasActiveFilters ? 'Intenta con otros criterios de búsqueda' : t.ambassador.noAmbassadors}
+            <Typography sx={{ color: 'text.secondary', mb: 3, fontSize: '0.78rem', opacity: 0.7 }}>
+              {hasActiveFilters ? t.ambassador.tryOtherCriteria : t.ambassador.noAmbassadors}
             </Typography>
             {hasActiveFilters && (
               <Button
@@ -322,8 +436,17 @@ export default function AmbassadorDirectory({
                 onClick={clearFilters}
                 sx={{
                   textTransform: 'none',
-                  borderColor: emeraldCore.primary,
-                  color: emeraldCore.primary,
+                  borderColor: alpha(goldAccent.primary, 0.25),
+                  color: isLight ? goldAccent.dark : goldAccent.light,
+                  fontSize: '0.78rem',
+                  fontWeight: 500,
+                  px: 3,
+                  py: 0.75,
+                  borderRadius: 2,
+                  '&:hover': {
+                    borderColor: goldAccent.primary,
+                    bgcolor: alpha(goldAccent.primary, 0.04),
+                  },
                 }}
               >
                 {t.ambassador.clearFilters}
@@ -334,10 +457,10 @@ export default function AmbassadorDirectory({
       ) : viewMode === 'grid' ? (
         <motion.div
           variants={staggerContainer}
-          initial="initial"
+          initial={prefersReducedMotion ? false : "initial"}
           animate="animate"
         >
-          <Grid container spacing={{ xs: 1.5, md: 2 }}>
+          <Grid container spacing={{ xs: 2, md: 2.5 }}>
             {filteredAsesores.map((asesor) => (
               <Grid item xs={12} sm={6} md={4} key={asesor.id}>
                 <motion.div variants={staggerItem}>
@@ -354,16 +477,17 @@ export default function AmbassadorDirectory({
       ) : (
         <motion.div
           variants={staggerContainer}
-          initial="initial"
+          initial={prefersReducedMotion ? false : "initial"}
           animate="animate"
         >
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             {filteredAsesores.map((asesor) => (
               <motion.div key={asesor.id} variants={staggerItem}>
                 <AsesorCard
                   asesor={asesor}
                   onViewProducts={onViewProducts}
                   onContact={onContact}
+                  variant="list"
                 />
               </motion.div>
             ))}
@@ -374,44 +498,158 @@ export default function AmbassadorDirectory({
   );
 }
 
-// Loading Skeleton
-export function AmbassadorDirectorySkeleton() {
+// Refined stat card for the hero section
+function StatCard({
+  icon,
+  value,
+  label,
+  isLight,
+  accentColor,
+  hasDivider,
+}: {
+  icon: React.ReactNode;
+  value: string;
+  label: string;
+  isLight: boolean;
+  accentColor: string;
+  hasDivider?: boolean;
+}) {
+  const isZero = value === '0' || value === '$0';
+
+  return (
+    <Box
+      sx={{
+        py: { xs: 2, md: 2.5 },
+        px: { xs: 1.5, md: 2.5 },
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        opacity: isZero ? 0.45 : 1,
+        transition: cssTransition.default,
+        position: 'relative',
+        ...(hasDivider && {
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: { xs: 0, md: '20%' },
+            left: { xs: 0, md: 0 },
+            width: { xs: '100%', md: '1px' },
+            height: { xs: '1px', md: '60%' },
+            bgcolor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+          },
+        }),
+        '&:hover': {
+          bgcolor: isLight ? alpha(accentColor, 0.025) : alpha(accentColor, 0.04),
+        },
+      }}
+    >
+      <Box
+        sx={{
+          width: 34,
+          height: 34,
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: alpha(accentColor, 0.07),
+          color: accentColor,
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography
+          component="p"
+          sx={{
+            fontFamily: fontFamilies.mono,
+            fontVariantNumeric: 'tabular-nums',
+            fontWeight: 600,
+            fontSize: { xs: '1rem', md: '1.1rem' },
+            lineHeight: 1.1,
+            color: accentColor,
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {value}
+        </Typography>
+        <Typography
+          sx={{
+            color: isLight ? iosSemanticColors.secondaryLabel.light : iosSemanticColors.secondaryLabel.dark,
+            fontSize: '0.6rem',
+            letterSpacing: '-0.01em',
+            mt: 0.25,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {label}
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
+
+// Refined shimmer skeleton
+export function AmbassadorDirectorySkeleton({ isLight = false }: { isLight?: boolean }) {
   return (
     <motion.div
       variants={staggerContainer}
       initial="initial"
       animate="animate"
     >
-      <Grid container spacing={{ xs: 1.5, md: 2 }}>
-        {[1, 2, 3, 4, 5, 6].map((i) => (
+      <Grid container spacing={{ xs: 2, md: 2.5 }}>
+        {[1, 2, 3].map((i) => (
           <Grid item xs={12} sm={6} md={4} key={i}>
             <motion.div variants={staggerItem}>
               <Box
                 sx={{
                   p: 2.5,
                   borderRadius: 3,
-                  bgcolor: 'background.paper',
                   border: '1px solid',
-                  borderColor: 'divider',
+                  borderColor: isLight ? alpha('#000', 0.05) : alpha('#fff', 0.05),
+                  bgcolor: isLight ? '#fff' : alpha('#fff', 0.02),
+                  overflow: 'hidden',
+                  position: 'relative',
+                  // Shimmer overlay
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: '-100%',
+                    width: '100%',
+                    height: '100%',
+                    background: isLight
+                      ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)'
+                      : 'linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent)',
+                    animation: 'shimmer 2s infinite',
+                    '@keyframes shimmer': {
+                      '0%': { left: '-100%' },
+                      '100%': { left: '100%' },
+                    },
+                  },
                 }}
               >
-                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                  <Skeleton variant="circular" width={56} height={56} />
-                  <Box sx={{ flex: 1 }}>
-                    <Skeleton variant="text" width="60%" />
-                    <Skeleton variant="text" width="40%" />
+                <Box sx={{ display: 'flex', gap: 2, mb: 2.5 }}>
+                  <Skeleton
+                    variant="circular"
+                    width={64}
+                    height={64}
+                    sx={{ bgcolor: isLight ? alpha('#000', 0.04) : alpha('#fff', 0.04) }}
+                  />
+                  <Box sx={{ flex: 1, pt: 0.5 }}>
+                    <Skeleton variant="text" width="75%" sx={{ mb: 0.75, bgcolor: isLight ? alpha('#000', 0.05) : alpha('#fff', 0.04) }} />
+                    <Skeleton variant="rounded" width={80} height={18} sx={{ borderRadius: 0.75, bgcolor: isLight ? alpha('#000', 0.03) : alpha('#fff', 0.03) }} />
                   </Box>
                 </Box>
-                <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 2 }} />
-                <Box sx={{ display: 'flex', gap: 0.5, mb: 2 }}>
-                  {[1, 2, 3].map(j => (
-                    <Skeleton key={j} variant="rectangular" width={52} height={52} sx={{ borderRadius: 2 }} />
+                <Skeleton variant="rounded" height={44} sx={{ borderRadius: 2, mb: 2, bgcolor: isLight ? alpha('#000', 0.03) : alpha('#fff', 0.03) }} />
+                <Box sx={{ display: 'flex', gap: 0.75, mb: 2.5 }}>
+                  {[1, 2, 3, 4].map(j => (
+                    <Skeleton key={j} variant="rounded" width={56} height={56} sx={{ borderRadius: 2, bgcolor: isLight ? alpha('#000', 0.04) : alpha('#fff', 0.03) }} />
                   ))}
                 </Box>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Skeleton variant="rectangular" height={36} sx={{ flex: 1, borderRadius: 1 }} />
-                  <Skeleton variant="rectangular" height={36} width={80} sx={{ borderRadius: 1 }} />
-                </Box>
+                <Skeleton variant="rounded" height={36} sx={{ borderRadius: 2, bgcolor: isLight ? alpha('#000', 0.04) : alpha('#fff', 0.04) }} />
               </Box>
             </motion.div>
           </Grid>
@@ -421,7 +659,6 @@ export function AmbassadorDirectorySkeleton() {
   );
 }
 
-// Format currency value
 function formatValue(value: number): string {
   if (value >= 1000000000) {
     return `$${(value / 1000000000).toFixed(1)}B`;

@@ -7,8 +7,8 @@
 
 import { primitiveColors } from './primitives/colors';
 
-// Golden Ratio for sacred proportions
-const PHI = 1.618;
+// Golden Ratio — imported from single source of truth
+import { PHI } from './primitives/geometry';
 const BASE_UNIT = 8;
 
 // ═══════════════════════════════════════════════════════════════

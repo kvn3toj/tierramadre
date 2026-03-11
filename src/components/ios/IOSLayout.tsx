@@ -76,7 +76,7 @@ const getPageConfigs = (t: any, isLight: boolean): Record<string, PageConfig> =>
   },
   '/ambassadors': {
     title: t.pages.ambassadors.title,
-    mode: 'large',
+    mode: 'compact',
   },
   '/home': {
     title: 'Tierra Mädre',

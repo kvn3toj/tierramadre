@@ -1,8 +1,23 @@
 /**
- * Motion Design Tokens
+ * Motion Design Tokens — FRAMER MOTION LAYER
  *
  * iOS HIG-compliant animation system using framer-motion.
  * Based on sacred geometry principles (φ = 1.618).
+ *
+ * ┌──────────────────────────────────────────────────────┐
+ * │  MOTION TOKEN BOUNDARY                               │
+ * │                                                      │
+ * │  primitives/motion.ts  → CSS easing strings,         │
+ * │                          CSS keyframes, CSS durations │
+ * │                          Use in: sx props, styled()   │
+ * │                                                      │
+ * │  tokens/motion.ts      → Framer Motion springs,      │
+ * │  (THIS FILE)             animation variants,          │
+ * │                          gesture configs              │
+ * │                          Use in: <motion.div />       │
+ * │                                                      │
+ * │  Both share: cssTransition (CSS transition strings)   │
+ * └──────────────────────────────────────────────────────┘
  *
  * Designed by ARIA - UX/UI Implementation Capitana
  */

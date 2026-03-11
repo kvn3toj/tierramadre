@@ -31,8 +31,12 @@ export interface CardProps extends Omit<MuiCardProps, 'variant'> {
   variant?: CardVariant;
   /** Makes the card interactive (hover effects) */
   interactive?: boolean;
+  /** Disables the card (reduces opacity, prevents interaction) */
+  disabled?: boolean;
   /** Click handler (makes card interactive) */
   onClick?: () => void;
+  /** Accessible label for interactive cards (required for icon-only cards) */
+  'aria-label'?: string;
   /** Card content */
   children: React.ReactNode;
 }
@@ -68,16 +72,19 @@ export interface CardFooterProps {
 
 const StyledCard = styled(MuiCard, {
   shouldForwardProp: (prop) =>
-    !['cardVariant', 'interactive'].includes(prop as string),
+    !['cardVariant', 'interactive', 'isDisabled'].includes(prop as string),
 })<{
   cardVariant: CardVariant;
   interactive: boolean;
-}>(({ cardVariant, interactive }) => {
+  isDisabled?: boolean;
+}>(({ cardVariant, interactive, isDisabled }) => {
   const baseStyles = {
     borderRadius: 12,
     overflow: 'hidden',
     transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-    cursor: interactive ? 'pointer' : 'default',
+    cursor: isDisabled ? 'not-allowed' : interactive ? 'pointer' : 'default',
+    opacity: isDisabled ? 0.5 : 1,
+    pointerEvents: isDisabled ? 'none' as const : 'auto' as const,
     '&:focus-visible': {
       outline: 'none',
       boxShadow: shadows.focus.default,
@@ -256,17 +263,20 @@ export const CardFooter: React.FC<CardFooterProps> = ({
 // =============================================================================
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ variant = 'elevated', interactive, onClick, children, ...props }, ref) => {
-    const isInteractive = interactive ?? !!onClick;
+  ({ variant = 'elevated', interactive, disabled, onClick, 'aria-label': ariaLabel, children, ...props }, ref) => {
+    const isInteractive = !disabled && (interactive ?? !!onClick);
 
     return (
       <StyledCard
         ref={ref}
         cardVariant={variant}
         interactive={isInteractive}
-        onClick={onClick}
+        isDisabled={disabled}
+        onClick={disabled ? undefined : onClick}
         tabIndex={isInteractive ? 0 : undefined}
         role={isInteractive ? 'button' : undefined}
+        aria-label={ariaLabel}
+        aria-disabled={disabled || undefined}
         onKeyDown={
           isInteractive
             ? (e) => {

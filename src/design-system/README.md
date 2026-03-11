@@ -94,13 +94,27 @@ Info:     #007AFF / #0A84FF
 
 ## Typography
 
-### Font Families
+### Font Families & Strategy
+
+| Family | Token | When to Use |
+|--------|-------|-------------|
+| **System** (`fontFamilies.system`) | SF Pro Display/Text + fallbacks | All UI text: navigation, body, buttons, forms, labels. This is the default. |
+| **Brand** (`fontFamilies.brand`) | Libre Baskerville / Georgia | Page titles (`largeTitle`, `title1`, `title2`). Adds elegant serif flavor. |
+| **Mono** (`fontFamilies.mono`) | SF Mono / Fira Code | Prices, carat weights, technical specs, item numbers. |
+| **Luxury serif** (`sacredTypography.serif.elegant`) | Cormorant Garamond / Playfair Display | Product names on certificates, PDF quotations, hero display text. |
+| **Clean sans** (`sacredTypography.sans.clean`) | Montserrat / Helvetica Neue | Alternative body text in marketing materials, documents. |
+
+**Rule of thumb**: Use `fontFamilies.system` everywhere in the app. Switch to `brand` for page titles. Use `mono` for data. Reserve luxury serif for offline documents (PDF, certificates).
 
 ```typescript
+// In-app (iOS HIG)
 Display:  -apple-system, "SF Pro Display"  // Headlines (20pt+)
 Text:     -apple-system, "SF Pro Text"     // Body (19pt-)
 Mono:     ui-monospace, "SF Mono"          // Technical data
-Luxury:   "Playfair Display"               // Emerald names
+
+// Documents & certificates
+Elegant:  "Cormorant Garamond"             // Product names
+Display:  "Playfair Display"               // Document titles
 ```
 
 ### iOS Type Scale
