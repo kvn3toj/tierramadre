@@ -293,6 +293,7 @@ export async function getOrCreateFolder(drive, parentFolderId, folderName, share
     const searchResponse = await drive.files.list({
       q: searchQuery,
       fields: 'files(id, name)',
+      pageSize: 200,
       supportsAllDrives: true,
       includeItemsFromAllDrives: true,
       ...(sharedDriveId && { driveId: sharedDriveId, corpora: 'drive' }),
@@ -300,6 +301,8 @@ export async function getOrCreateFolder(drive, parentFolderId, folderName, share
 
     if (itemNumber !== null && searchResponse.data.files?.length > 0) {
       // For product folders, find exact prefix match (e.g., "222 - " not "2222 - ")
+      // The `contains` query can match substrings (e.g., "22 -" matches "122 - ..."),
+      // so we filter client-side with startsWith for exact item number prefix.
       const exactMatch = searchResponse.data.files.find(f =>
         f.name.startsWith(`${itemNumber} - `)
       );

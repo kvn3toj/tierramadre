@@ -118,6 +118,24 @@ export const formatCollectionName = (name: string): string => {
 };
 
 // =============================================================================
+// AMBASSADOR RATING
+// =============================================================================
+
+/**
+ * Derive a pseudo-rating from product count for ambassador display.
+ * @param productCount - Number of products the ambassador has
+ * @returns Rating number (4.5-4.9) or null if no products
+ */
+export function deriveRating(productCount: number): number | null {
+  if (productCount <= 0) return null;
+  if (productCount >= 20) return 4.9;
+  if (productCount >= 15) return 4.8;
+  if (productCount >= 10) return 4.7;
+  if (productCount >= 5) return 4.6;
+  return 4.5;
+}
+
+// =============================================================================
 // TIME FORMATTING
 // =============================================================================
 

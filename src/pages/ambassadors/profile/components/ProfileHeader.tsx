@@ -1,6 +1,7 @@
 /**
- * ProfileHeader Component
- * Avatar, name, contact info, stats, and action buttons for asesor profile.
+ * ProfileHeader Component (Museum Layout)
+ * Centered avatar with decorative ring, name, badge row, elegant stats,
+ * bio text. Action buttons (share/edit) as refined top-right icons.
  */
 
 import React from 'react';
@@ -8,8 +9,6 @@ import {
   Box,
   Typography,
   Avatar,
-  Button,
-  Paper,
   Chip,
   IconButton,
   Tooltip,
@@ -18,75 +17,23 @@ import {
   useTheme,
 } from '@mui/material';
 import {
-  Package,
-  Phone,
+  Share2,
+  Camera,
+  Edit3,
+  Star,
   Gem,
   DollarSign,
-  Share2,
-  CheckCircle,
-  Crown,
-  Link2,
-  MessageCircle,
-  Camera,
 } from 'lucide-react';
 import { Asesor } from '../../../../hooks/useAsesores';
-import { brand, lightTokens, darkTokens, cssTransition, accentColors } from '../../../../design-system';
-
-// Stat Box Component
-function StatBox({
-  icon,
-  value,
-  label,
-  color,
-}: {
-  icon: React.ReactNode;
-  value: string;
-  label: string;
-  color: string;
-}) {
-  const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1.5,
-        px: 2,
-        py: 1.5,
-        borderRadius: 2,
-        bgcolor: alpha(color, isLight ? 0.1 : 0.15),
-        minWidth: 130,
-        flex: '1 1 auto',
-      }}
-    >
-      <Box sx={{ color }}>{icon}</Box>
-      <Box>
-        <Typography
-          variant="h6"
-          sx={{ fontWeight: 700, fontSize: '1.1rem', lineHeight: 1, color }}
-        >
-          {value}
-        </Typography>
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          {label}
-        </Typography>
-      </Box>
-    </Box>
-  );
-}
-
-// Format currency helper
-function formatCurrency(value: number): string {
-  if (value >= 1000000) {
-    return `$${(value / 1000000).toFixed(1)}M`;
-  }
-  if (value >= 1000) {
-    return `$${Math.round(value / 1000)}K`;
-  }
-  return `$${value.toLocaleString('es-CO')}`;
-}
+import {
+  emeraldCore,
+  goldAccent,
+  cssTransition,
+  fontFamilies,
+  surfacesLight,
+  surfacesDark,
+} from '../../../../design-system';
+import { deriveRating, formatCurrency } from '../../../../utils/formatting';
 
 export interface ProfileStats {
   totalValue: number;
@@ -101,214 +48,310 @@ interface ProfileHeaderProps {
   asesor: Asesor;
   stats: ProfileStats;
   totalProducts: number;
-  onContact: () => void;
   onShare: () => void;
   onShareWhatsApp?: () => void;
   onCopyLink?: () => void;
   isOwner?: boolean;
   onPhotoEdit?: () => void;
+  onEditProfile?: () => void;
   photoUrl?: string;
   isUploadingPhoto?: boolean;
 }
 
-export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
+export const ProfileHeader = React.memo<ProfileHeaderProps>(({
   asesor,
   stats,
   totalProducts,
-  onContact,
   onShare,
-  onShareWhatsApp,
-  onCopyLink,
   isOwner,
   onPhotoEdit,
+  onEditProfile,
   photoUrl,
   isUploadingPhoto,
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
 
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 3,
-        mb: 3,
-        borderRadius: 3,
-        bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
-        border: '1px solid',
-        borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
-      }}
-    >
-      <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        {/* Avatar and Name */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 250 }}>
-          <Box sx={{ position: 'relative', flexShrink: 0 }}>
-            <Avatar
-              src={photoUrl || asesor.photoUrl}
-              sx={{
-                width: 80,
-                height: 80,
-                bgcolor: brand.emerald[500],
-                fontSize: '2rem',
-                fontWeight: 700,
-                opacity: isUploadingPhoto ? 0.6 : 1,
-                transition: cssTransition.default,
-              }}
-            >
-              {asesor.name.charAt(0).toUpperCase()}
-            </Avatar>
-            {isUploadingPhoto && (
-              <CircularProgress
-                aria-label="Cargando"
-                size={28}
-                sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  mt: '-14px',
-                  ml: '-14px',
-                  color: brand.emerald[500],
-                }}
-              />
-            )}
-            {isOwner && onPhotoEdit && (
-              <IconButton
-                onClick={onPhotoEdit}
-                disabled={isUploadingPhoto}
-                size="small"
-                sx={{
-                  position: 'absolute',
-                  bottom: -2,
-                  right: -2,
-                  width: 28,
-                  height: 28,
-                  bgcolor: brand.emerald[500],
-                  color: '#fff',
-                  border: '2px solid',
-                  borderColor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
-                  '&:hover': { bgcolor: brand.emerald[600] },
-                  '&.Mui-disabled': { bgcolor: brand.emerald[300], color: '#fff' },
-                }}
-              >
-                <Camera size={14} />
-              </IconButton>
-            )}
-          </Box>
-          <Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-              {asesor.name}
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Embajador de Esmeraldas - Tierra Madre
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Chip
-                size="small"
-                icon={<CheckCircle size={12} />}
-                label={`${stats.disponibleCount} disponibles`}
-                sx={{
-                  bgcolor: alpha(brand.emerald[500], 0.1),
-                  color: brand.emerald[500],
-                  fontSize: '0.7rem',
-                }}
-              />
-              {stats.vendidaCount > 0 && (
-                <Chip
-                  size="small"
-                  label={`${stats.vendidaCount} vendidas`}
-                  sx={{
-                    bgcolor: alpha(lightTokens.text.muted, 0.1),
-                    color: lightTokens.text.secondary,
-                    fontSize: '0.7rem',
-                  }}
-                />
-              )}
-            </Box>
-          </Box>
-        </Box>
+  const isAdmin = (asesor.role || '').toLowerCase().includes('admin');
+  const rating = deriveRating(totalProducts);
+  const accentColor = isAdmin ? goldAccent.primary : emeraldCore.primary;
 
-        {/* Action Buttons */}
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          {onShareWhatsApp && (
-            <Tooltip title="Compartir por WhatsApp">
-              <IconButton
-                onClick={onShareWhatsApp}
-                sx={{
-                  color: '#25D366',
-                  '&:hover': { bgcolor: alpha('#25D366', 0.1) },
-                }}
-              >
-                <MessageCircle size={20} />
-              </IconButton>
-            </Tooltip>
-          )}
-          {onCopyLink && (
-            <Tooltip title="Copiar enlace">
-              <IconButton onClick={onCopyLink} sx={{ color: 'text.secondary' }}>
-                <Link2 size={20} />
-              </IconButton>
-            </Tooltip>
-          )}
-          <Tooltip title="Compartir perfil">
-            <IconButton onClick={onShare} sx={{ color: 'text.secondary' }}>
-              <Share2 size={20} />
-            </IconButton>
-          </Tooltip>
-          <Button
-            variant="contained"
-            startIcon={<Phone size={18} />}
-            onClick={onContact}
+  return (
+    <Box sx={{ position: 'relative', mb: 2, textAlign: 'center' }}>
+      {/* Top-right action icons */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          display: 'flex',
+          gap: 0.5,
+          zIndex: 1,
+        }}
+      >
+        <Tooltip title="Compartir perfil">
+          <IconButton
+            onClick={onShare}
+            aria-label="Compartir perfil"
+            size="small"
             sx={{
-              bgcolor: brand.emerald[500],
-              '&:hover': { bgcolor: brand.emerald[600] },
-              textTransform: 'none',
-              fontWeight: 600,
+              color: 'text.secondary',
+              bgcolor: isLight ? alpha('#000', 0.03) : alpha('#fff', 0.04),
+              '&:hover': {
+                bgcolor: alpha(emeraldCore.primary, 0.08),
+                color: emeraldCore.primary,
+              },
             }}
           >
-            Contactar
-          </Button>
+            <Share2 size={16} />
+          </IconButton>
+        </Tooltip>
+        {isOwner && onEditProfile && (
+          <Tooltip title="Editar perfil">
+            <IconButton
+              onClick={onEditProfile}
+              aria-label="Editar perfil"
+              size="small"
+              sx={{
+                color: 'text.secondary',
+                bgcolor: isLight ? alpha('#000', 0.03) : alpha('#fff', 0.04),
+                '&:hover': {
+                  bgcolor: alpha(emeraldCore.primary, 0.08),
+                  color: emeraldCore.primary,
+                },
+              }}
+            >
+              <Edit3 size={16} />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+
+      {/* Centered Avatar with decorative ring */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
+        <Box sx={{ position: 'relative' }}>
+          {/* Outer decorative ring */}
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: -6,
+              borderRadius: '50%',
+              border: '1.5px solid',
+              borderColor: alpha(accentColor, 0.2),
+            }}
+          />
+          <Avatar
+            src={photoUrl || asesor.photoUrl}
+            sx={{
+              width: 104,
+              height: 104,
+              bgcolor: accentColor,
+              fontSize: '2.5rem',
+              fontWeight: 700,
+              opacity: isUploadingPhoto ? 0.6 : 1,
+              transition: cssTransition.default,
+              border: '3px solid',
+              borderColor: accentColor,
+              boxShadow: `0 4px 20px ${alpha(accentColor, 0.25)}`,
+            }}
+          >
+            {asesor.name.charAt(0).toUpperCase()}
+          </Avatar>
+          {isUploadingPhoto && (
+            <CircularProgress
+              aria-label="Cargando"
+              size={28}
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                mt: '-14px',
+                ml: '-14px',
+                color: accentColor,
+              }}
+            />
+          )}
+          {isOwner && onPhotoEdit && (
+            <IconButton
+              onClick={onPhotoEdit}
+              disabled={isUploadingPhoto}
+              size="small"
+              aria-label="Cambiar foto de perfil"
+              sx={{
+                position: 'absolute',
+                bottom: 2,
+                right: 2,
+                width: 30,
+                height: 30,
+                bgcolor: accentColor,
+                color: '#fff',
+                border: '2.5px solid',
+                borderColor: isLight ? '#fff' : surfacesDark.background.secondary,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                '&:hover': { bgcolor: isAdmin ? goldAccent.dark : emeraldCore.dark },
+                '&.Mui-disabled': { bgcolor: alpha(accentColor, 0.5), color: '#fff' },
+              }}
+            >
+              <Camera size={14} />
+            </IconButton>
+          )}
         </Box>
       </Box>
 
-      {/* Stats */}
+      {/* Name */}
+      <Typography
+        variant="h5"
+        sx={{
+          fontWeight: 700,
+          mb: 0.75,
+          fontSize: '1.3rem',
+          letterSpacing: '-0.02em',
+        }}
+      >
+        {asesor.name}
+      </Typography>
+
+      {/* Badge Row — refined outlined chips */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.75, mb: 2 }}>
+        <Chip
+          size="small"
+          variant="outlined"
+          label={(asesor.role || 'Embajadora').toUpperCase()}
+          sx={{
+            height: 26,
+            fontSize: '0.62rem',
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            borderColor: alpha(emeraldCore.primary, 0.4),
+            color: emeraldCore.primary,
+            borderRadius: '8px',
+          }}
+        />
+        {isAdmin && (
+          <Chip
+            size="small"
+            variant="outlined"
+            label="ADMIN"
+            sx={{
+              height: 26,
+              fontSize: '0.62rem',
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              borderColor: alpha(goldAccent.primary, 0.4),
+              color: isLight ? goldAccent.dark : goldAccent.light,
+              borderRadius: '8px',
+            }}
+          />
+        )}
+      </Box>
+
+      {/* Stats Row — 3 elegant stat cells */}
       <Box
         sx={{
           display: 'flex',
-          gap: 2,
-          mt: 3,
-          pt: 3,
-          borderTop: '1px solid',
-          borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
-          flexWrap: 'wrap',
+          gap: '8px',
+          width: '100%',
+          px: 1,
         }}
       >
-        <StatBox
-          icon={<Package size={20} />}
-          value={totalProducts.toString()}
-          label="Total Productos"
-          color={brand.emerald[500]}
-        />
-        <StatBox
-          icon={<Gem size={20} />}
-          value={stats.looseCount.toString()}
-          label="Gemas"
-          color={accentColors.info.light}
-        />
-        <StatBox
-          icon={<Crown size={20} />}
-          value={stats.jewelryCount.toString()}
-          label="Joyeria"
-          color={accentColors.purple.light}
-        />
-        <StatBox
-          icon={<DollarSign size={20} />}
-          value={formatCurrency(stats.totalValue)}
-          label="Valor Disponible"
-          color={accentColors.warning.light}
-        />
+        {[
+          {
+            icon: <Gem size={15} color={emeraldCore.primary} />,
+            value: String(totalProducts),
+            label: 'Tesoros',
+            accent: emeraldCore.primary,
+          },
+          {
+            icon: <DollarSign size={15} color={goldAccent.primary} />,
+            value: formatCurrency(stats.totalValue),
+            label: 'Valor',
+            accent: goldAccent.primary,
+          },
+          {
+            icon: <Star size={15} color={goldAccent.primary} />,
+            value: rating ? String(rating) : '—',
+            label: 'Rating',
+            accent: goldAccent.primary,
+          },
+        ].map((stat) => (
+          <Box
+            key={stat.label}
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '3px',
+              flex: 1,
+              py: 1.25,
+              borderRadius: '12px',
+              bgcolor: isLight ? surfacesLight.surface.default : surfacesDark.background.secondary,
+              border: '1px solid',
+              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+              boxShadow: isLight
+                ? '0 1px 4px rgba(0,0,0,0.04)'
+                : '0 1px 4px rgba(0,0,0,0.12)',
+              position: 'relative',
+              overflow: 'hidden',
+              // Subtle top accent line
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: '25%',
+                right: '25%',
+                height: '1.5px',
+                bgcolor: alpha(stat.accent, 0.25),
+                borderRadius: '0 0 2px 2px',
+              },
+            }}
+          >
+            {stat.icon}
+            <Typography
+              sx={{
+                fontFamily: fontFamilies.mono,
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              {stat.value}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: '0.55rem',
+                fontWeight: 600,
+                color: 'text.secondary',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              {stat.label}
+            </Typography>
+          </Box>
+        ))}
       </Box>
-    </Paper>
+
+      {/* Bio */}
+      {asesor.especialidad && (
+        <Typography
+          sx={{
+            mt: 2,
+            color: 'text.secondary',
+            fontSize: '0.82rem',
+            lineHeight: 1.55,
+            maxWidth: 340,
+            mx: 'auto',
+            fontStyle: 'italic',
+          }}
+        >
+          {asesor.especialidad}
+        </Typography>
+      )}
+    </Box>
   );
-};
+});
+
+ProfileHeader.displayName = 'ProfileHeader';
 
 export default ProfileHeader;

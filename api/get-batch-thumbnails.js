@@ -28,8 +28,10 @@ export default withApiHandler(async (req, res, { drive, sharedDriveId }) => {
   const folders = await listProductFolders(drive, productsFolderId);
   console.log(`Found ${folders.length} product folders`);
 
-  // Deduplicate: keep only the first folder per item number (by name order).
-  // This prevents duplicate folders from causing inconsistent thumbnails.
+  // Deduplicate: keep only one folder per item number.
+  // listProductFolders returns alphabetical order from Drive, so we pick
+  // the folder with the lowest numeric item number prefix as canonical.
+  // If two folders share the same item number, the first alphabetically wins.
   const seenItems = new Set();
   const uniqueFolders = folders.filter(folder => {
     const itemNumber = extractItemNumber(folder.name);

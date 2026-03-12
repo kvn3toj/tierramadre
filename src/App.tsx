@@ -15,7 +15,7 @@ import { LiquidGlassProvider } from './contexts/LiquidGlassContext';
 import { TrackingProvider } from './contexts/TrackingContext';
 import { ScreenProtectionProvider } from './contexts/ScreenProtectionContext';
 import { LiveRegionProvider } from './components/shared/LiveRegion';
-import { NotificationProvider, useNotification } from './contexts/NotificationContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { GlobalLoadingProvider } from './contexts/GlobalLoadingContext';
 import { NetworkStatusProvider } from './contexts/NetworkStatusContext';
 import { AchievementToast } from './components/gamification';
@@ -112,17 +112,10 @@ function HomeOrProviderRedirect() {
 // Inner component that uses routing hooks
 function AppContent() {
   const navigate = useNavigate();
-  const { notify } = useNotification();
-
   // Navigate to asesor profile page
   const handleViewAsesorProducts = useCallback((asesor: Asesor) => {
     navigate(`/ambassadors/${asesor.slug}`);
   }, [navigate]);
-
-  // Contact asesor (placeholder - can be enhanced later)
-  const handleContactAsesor = useCallback((asesor: Asesor) => {
-    notify(`Contacto con ${asesor.name} estará disponible próximamente`, 'info');
-  }, [notify]);
 
   return (
     <>
@@ -160,7 +153,6 @@ function AppContent() {
               <Suspense fallback={<LocalizedLoading messageKey="ambassadors" />}>
                 <AmbassadorsPage
                   onViewProducts={handleViewAsesorProducts}
-                  onContact={handleContactAsesor}
                 />
               </Suspense>
             }

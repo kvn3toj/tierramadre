@@ -1,20 +1,19 @@
 /**
- * AsesorProfile Component
- * Shows asesor details and their treasure products with filtering.
+ * AsesorProfile Component — Museum Experience
+ * Centered profile, category grid, favorites, and internal view switching.
  */
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
   Button,
-  Grid,
-  Paper,
   Skeleton,
-  useTheme,
 } from '@mui/material';
-import { ArrowLeft, Package, Square } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, Square } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useReducedMotion } from '../../../hooks/useReducedMotion';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useAsesores } from '../../../hooks/useAsesores';
 import { getAsesorProducts } from '../../../utils/asesorProductOwnership';
@@ -22,44 +21,59 @@ import { useTreasure } from '../../../hooks/useTreasure';
 import { useCotizacionHistory, SavedCotizacion } from '../../../hooks/useCotizacionHistory';
 import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { useAmbassadorFavorites } from '../../../hooks/useAmbassadorFavorites';
+import { categorizeProducts, type ProductCategory } from '../../../utils/productCategories';
 import { TreasureItem } from '../../../types';
-import { TreasureCard } from '../../../components/treasure/TreasureCard';
 import ScrollToTop from '../../../components/shared/ScrollToTop';
 import ImageCropper from '../../../components/media/ImageCropper';
-import { brand, lightTokens, darkTokens } from '../../../design-system';
+import { emeraldCore, cssTransition } from '../../../design-system';
 import { useAsesorCollection } from '../../../hooks/useAsesorCollection';
 import { useAmbassadorPhoto } from '../../../hooks/useAmbassadorPhoto';
 import {
   ProfileHeader,
-  ProductFilters,
+  CategoryGrid,
+  FavoritesRow,
+  CategoryDetailView,
+  FavoriteDetailView,
+  ManageFavoritesView,
+  EditProfileView,
+  AmbassadorProductDetail,
   CotizacionesSection,
   CotizacionPreviewDialog,
   ExclusiveCollectionSection,
   CollectionProductDialog,
 } from './components';
-import type {
-  ProfileStats,
-  ViewMode,
-  SortOption,
-  StatusFilter,
-  TypeFilter,
-} from './components';
+import type { ProfileStats } from './components';
 
+type ProfileView =
+  | 'museum'
+  | 'category'
+  | 'favoriteDetail'
+  | 'productDetail'
+  | 'edit'
+  | 'manageFavorites';
+
+/** Module-scope constants (avoid recreating per render) */
+const COLLECTION_FOLDERS: Record<string, string> = {
+  'cvocmnty@gmail.com': 'ceo-tierra-madre',
+};
+const COLLECTION_SLUGS: Record<string, string> = {
+  'andres-mauricio-escobar-ramirez': 'ceo-tierra-madre',
+};
+const EMPTY_STATS: ProfileStats = {
+  totalValue: 0, avgPrice: 0, looseCount: 0,
+  jewelryCount: 0, disponibleCount: 0, vendidaCount: 0,
+};
 
 export default function AsesorProfilePage() {
   const { t } = useLanguage();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
-
-  // State for filters
-  const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
-  const [showFilters, setShowFilters] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  // View state
+  const [activeView, setActiveView] = useState<ProfileView>('museum');
+  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<TreasureItem | null>(null);
 
   // Cotizaciones state
   const [selectedCotizacion, setSelectedCotizacion] = useState<SavedCotizacion | null>(null);
@@ -88,10 +102,17 @@ export default function AsesorProfilePage() {
     closeCropper,
   } = useAmbassadorPhoto(slug);
 
+  // Ambassador favorites
+  const {
+    favorites: favoriteIds,
+    addFavorite,
+    removeFavorite,
+    reorderFavorites,
+  } = useAmbassadorFavorites(slug);
+
   // Notify on photo upload result
   const prevUploadingRef = useRef(false);
   useEffect(() => {
-    // Detect when upload finishes (was uploading, now not)
     if (prevUploadingRef.current && !isUploadingPhoto) {
       if (photoUploadError) {
         notify(photoUploadError, 'error');
@@ -108,7 +129,7 @@ export default function AsesorProfilePage() {
     return asesores.find(a => a.slug === slug) || null;
   }, [slug, asesores]);
 
-  // Check if current user owns this profile (email must match Asesores sheet)
+  // Check if current user owns this profile
   const isProfileOwner = useMemo(() => {
     if (!googleUser?.email || !asesor?.email) return false;
     const userEmail = googleUser.email.toLowerCase().trim();
@@ -116,14 +137,7 @@ export default function AsesorProfilePage() {
     return userEmail === asesorEmail;
   }, [googleUser, asesor]);
 
-  // Exclusive collection - map asesor email to Drive folder name
-  const COLLECTION_FOLDERS: Record<string, string> = {
-    'cvocmnty@gmail.com': 'ceo-tierra-madre',
-  };
-  // Fallback: match by slug when email lookup fails
-  const COLLECTION_SLUGS: Record<string, string> = {
-    'andres-mauricio-escobar-ramirez': 'ceo-tierra-madre',
-  };
+  // Exclusive collection
   const collectionFolder = isProfileOwner && asesor
     ? COLLECTION_FOLDERS[asesor.email?.toLowerCase().trim() ?? '']
       ?? COLLECTION_SLUGS[asesor.slug]
@@ -139,200 +153,180 @@ export default function AsesorProfilePage() {
     }
   }, [isProfileOwner, googleUser?.email]);
 
-  // Get products for this asesor with ownership-aware estado
+  // Get products for this asesor
   const allProducts = useMemo(() => {
     if (!asesor || !treasure) return [];
     return getAsesorProducts(treasure, asesor.name);
   }, [asesor, treasure]);
 
-  // Filter and sort products
-  const filteredProducts = useMemo(() => {
-    let result = [...allProducts];
+  // Categorize products for museum grid
+  const categories = useMemo(() => categorizeProducts(allProducts), [allProducts]);
 
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(item =>
-        item.nombre.toLowerCase().includes(query) ||
-        item.color?.toLowerCase().includes(query) ||
-        item.calidad?.toLowerCase().includes(query) ||
-        String(item.item).includes(query)
-      );
+  // Favorite items resolved
+  const favoriteItems = useMemo(() => {
+    if (favoriteIds.length === 0) {
+      // Default: top 6 by price
+      return [...allProducts]
+        .sort((a, b) => (b.precioCOP || 0) - (a.precioCOP || 0))
+        .slice(0, 6);
     }
-
-    // Status filter (uses effectiveEstado for ownership-aware filtering)
-    if (statusFilter !== 'all') {
-      result = result.filter(item =>
-        statusFilter === 'disponible'
-          ? item.effectiveEstado === 'DISPONIBLE'
-          : item.effectiveEstado === 'VENDIDA'
-      );
-    }
-
-    // Type filter
-    if (typeFilter !== 'all') {
-      result = result.filter(item =>
-        typeFilter === 'loose' ? !item.isJewelry : item.isJewelry
-      );
-    }
-
-    // Sort
-    result.sort((a, b) => {
-      switch (sortBy) {
-        case 'price-high':
-          return (b.precioCOP || 0) - (a.precioCOP || 0);
-        case 'price-low':
-          return (a.precioCOP || 0) - (b.precioCOP || 0);
-        case 'name':
-          return a.nombre.localeCompare(b.nombre, 'es');
-        case 'newest':
-        default:
-          return b.item - a.item;
-      }
-    });
-
-    return result;
-  }, [allProducts, searchQuery, statusFilter, typeFilter, sortBy]);
+    return favoriteIds
+      .map(id => allProducts.find(p => String(p.item) === id))
+      .filter(Boolean) as TreasureItem[];
+  }, [favoriteIds, allProducts]);
 
   // Calculate stats
   const stats: ProfileStats = useMemo(() => {
-    if (!allProducts.length) return {
-      totalValue: 0,
-      avgPrice: 0,
-      looseCount: 0,
-      jewelryCount: 0,
-      disponibleCount: 0,
-      vendidaCount: 0,
-    };
-
+    if (!allProducts.length) return EMPTY_STATS;
     const disponible = allProducts.filter(p => p.effectiveEstado === 'DISPONIBLE');
     const totalValue = disponible.reduce((sum, p) => sum + (p.precioCOP || 0), 0);
-    const looseCount = allProducts.filter(p => !p.isJewelry).length;
-    const jewelryCount = allProducts.filter(p => p.isJewelry).length;
-
     return {
       totalValue,
       avgPrice: disponible.length ? totalValue / disponible.length : 0,
-      looseCount,
-      jewelryCount,
+      looseCount: allProducts.filter(p => !p.isJewelry).length,
+      jewelryCount: allProducts.filter(p => p.isJewelry).length,
       disponibleCount: disponible.length,
       vendidaCount: allProducts.length - disponible.length,
     };
   }, [allProducts]);
 
-  const handleBack = () => {
-    navigate('/ambassadors');
-  };
+  // Handlers — wrapped in useCallback to stabilize references for React.memo children
+  const handleBack = useCallback(() => navigate('/ambassadors'), [navigate]);
 
-  const handleProductClick = (item: TreasureItem) => {
-    navigate(`/product/${item.item}`);
-  };
+  const handleCategorySelect = useCallback((category: ProductCategory) => {
+    setSelectedCategory(category);
+    setActiveView('category');
+  }, []);
 
-  const handleContact = () => {
-    if (asesor) {
-      notify(`Contacto con ${asesor.name} estará disponible próximamente`, 'info');
+  const handleProductClick = useCallback((item: TreasureItem) => {
+    setSelectedProduct(item);
+    setActiveView('productDetail');
+  }, []);
+
+  const handleFavoriteItemClick = useCallback((item: TreasureItem) => {
+    setSelectedProduct(item);
+    setActiveView('favoriteDetail');
+  }, []);
+
+  const handleShare = useCallback(async () => {
+    if (!asesor) return;
+    const url = window.location.href;
+    const text = `Mira el catalogo de ${asesor.name} en Tierra Madre - ${stats.disponibleCount} esmeraldas disponibles`;
+    if (navigator.share) {
+      try { await navigator.share({ title: `${asesor.name} - Tierra Madre`, text, url }); }
+      catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+      notify('Enlace copiado al portapapeles', 'success');
     }
-  };
+  }, [asesor, stats.disponibleCount, notify]);
 
-  const handleShare = async () => {
-    if (asesor) {
-      const url = window.location.href;
-      const text = `Mira el catalogo de ${asesor.name} en Tierra Madre - ${stats.disponibleCount} esmeraldas disponibles`;
-
-      if (navigator.share) {
-        try {
-          await navigator.share({ title: `${asesor.name} - Tierra Madre`, text, url });
-        } catch {
-          // User cancelled or error
-        }
-      } else {
-        await navigator.clipboard.writeText(url);
-        notify('Enlace copiado al portapapeles', 'success');
-      }
-    }
-  };
-
-  const handleShareWhatsApp = () => {
-    if (asesor) {
-      const url = window.location.href;
-      const text = `Mira el catalogo de ${asesor.name} en Tierra Madre - ${stats.disponibleCount} esmeraldas disponibles: ${url}`;
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-    }
-  };
-
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      // Could use a snackbar here in the future
-    } catch {
-      // Clipboard not available
-    }
-  };
-
-  const clearFilters = () => {
-    setSearchQuery('');
-    setStatusFilter('all');
-    setTypeFilter('all');
-    setSortBy('newest');
-  };
-
-  const hasActiveFilters = Boolean(searchQuery || statusFilter !== 'all' || typeFilter !== 'all');
-
-  const handleDeleteCotizacion = async (cot: SavedCotizacion) => {
+  const handleDeleteCotizacion = useCallback(async (cot: SavedCotizacion) => {
     if (!googleUser?.email) return;
     const confirmed = await confirmAction('¿Eliminar esta cotización?');
     if (confirmed) {
       cotizacionHistory.deleteCotizacion(cot.id, googleUser.email);
     }
-  };
+  }, [googleUser?.email, confirmAction, cotizacionHistory]);
 
-  const handlePhotoEditClick = () => {
-    fileInputRef.current?.click();
-  };
+  const handlePhotoEditClick = useCallback(() => fileInputRef.current?.click(), []);
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      handleFileSelect(file);
-    }
-    // Reset so the same file can be re-selected
+    if (file) handleFileSelect(file);
     e.target.value = '';
-  };
+  }, [handleFileSelect]);
 
+  // Scroll to top on view change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'instant' : 'smooth' });
+  }, [activeView, prefersReducedMotion]);
+
+  const handleBackToMuseum = useCallback(() => {
+    setActiveView('museum');
+    setSelectedCategory(null);
+    setSelectedProduct(null);
+  }, []);
+
+  const handleEditProfile = useCallback(() => setActiveView('edit'), []);
+
+  const handleManageFavorites = useCallback(() => setActiveView('manageFavorites'), []);
+
+  const handleDuplicateCotizacion = useCallback((cot: SavedCotizacion) => {
+    navigate('/cuentas/cotizaciones', { state: { duplicate: cot } });
+  }, [navigate]);
+
+  const handleCloseCotizacionPreview = useCallback(() => setSelectedCotizacion(null), []);
+
+  const handleCloseCollectionDialog = useCallback(() => setSelectedCollectionProduct(null), []);
+
+  // Keep selectedCategory ref for back navigation from product detail
+  const selectedCategoryRef = useRef(selectedCategory);
+  selectedCategoryRef.current = selectedCategory;
+
+  const handleProductDetailBack = useCallback(() => {
+    if (selectedCategoryRef.current) {
+      setActiveView('category');
+    } else {
+      setActiveView('museum');
+      setSelectedCategory(null);
+      setSelectedProduct(null);
+    }
+  }, []);
+
+  const handleEditSave = useCallback(async (data: { especialidad?: string; whatsapp?: string }) => {
+    const res = await fetch('/api/user-prefs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: asesor?.email,
+        ...data,
+      }),
+    });
+    if (!res.ok) throw new Error('Save failed');
+  }, [asesor?.email]);
+
+  const handleShareCollection = useCallback(async () => {
+    if (!collectionFolder) return;
+    const url = `${window.location.origin}/c/${collectionFolder}`;
+    const text = `Mira mi coleccion exclusiva de esmeraldas colombianas en Tierra Madre`;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Coleccion Exclusiva - Tierra Madre', text, url }); }
+      catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+      notify('Enlace de coleccion copiado', 'success');
+    }
+  }, [collectionFolder, notify]);
+
+  // Loading skeleton — museum layout
   if (isLoading) {
     return (
       <Box sx={{ pb: 4 }}>
-        {/* Back button skeleton */}
         <Skeleton width={140} height={36} sx={{ mb: 2, borderRadius: 1 }} />
-        {/* Profile header skeleton */}
-        <Paper elevation={0} sx={{ p: 3, borderRadius: 3, mb: 3 }}>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-            <Skeleton variant="circular" width={64} height={64} />
-            <Box sx={{ flex: 1 }}>
-              <Skeleton width="60%" height={28} />
-              <Skeleton width="40%" height={20} sx={{ mt: 0.5 }} />
-            </Box>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            {[0, 1, 2, 3].map((i) => (
-              <Skeleton key={i} variant="rounded" width={80} height={56} sx={{ borderRadius: 2, flex: 1 }} />
-            ))}
-          </Box>
-        </Paper>
-        {/* Search bar skeleton */}
-        <Skeleton variant="rounded" height={44} sx={{ borderRadius: 3, mb: 2 }} />
-        {/* Product grid skeleton */}
-        <Grid container spacing={2}>
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <Grid item xs={12} sm={6} md={4} key={i}>
-              <Skeleton variant="rounded" sx={{ width: '100%', aspectRatio: '1/1', borderRadius: 3 }} />
-              <Box sx={{ px: 1, mt: 1 }}>
-                <Skeleton width="70%" height={20} />
-                <Skeleton width="40%" height={16} sx={{ mt: 0.5 }} />
-              </Box>
-            </Grid>
+        {/* Centered avatar skeleton */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
+          <Skeleton variant="circular" width={96} height={96} />
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Skeleton width="50%" height={28} />
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+          <Skeleton width={80} height={22} sx={{ borderRadius: 2 }} />
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 1.5, mb: 3 }}>
+          <Skeleton width={60} height={18} />
+          <Skeleton width={60} height={18} />
+          <Skeleton width={60} height={18} />
+        </Box>
+        {/* 2x2 grid skeleton */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5, mb: 3 }}>
+          {[0, 1, 2, 3].map(i => (
+            <Skeleton key={i} variant="rounded" sx={{ aspectRatio: '1/1', borderRadius: 3 }} />
           ))}
-        </Grid>
+        </Box>
+        {/* Favorites row skeleton */}
+        <Skeleton variant="rounded" height={90} sx={{ borderRadius: '16px 16px 0 0' }} />
       </Box>
     );
   }
@@ -355,20 +349,36 @@ export default function AsesorProfilePage() {
   }
 
   return (
-    <Box sx={{ pb: 4 }}>
-      {/* Back Button */}
-      <Button
-        startIcon={<ArrowLeft size={18} />}
-        onClick={handleBack}
-        sx={{
-          textTransform: 'none',
-          color: 'text.secondary',
-          mb: 2,
-          '&:hover': { color: brand.emerald[500] },
-        }}
-      >
-        Volver a Asesores
-      </Button>
+    <Box sx={{ pb: 4, position: 'relative' }}>
+      {/* Back Button — circular bg-secondary pill (ds-tm.pen NavHeader) */}
+      {activeView === 'museum' && (
+        <Box
+          role="button"
+          tabIndex={0}
+          onClick={handleBack}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleBack(); } }}
+          aria-label={t.actions.back}
+          sx={{
+            position: 'absolute',
+            top: 10,
+            left: 16,
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            bgcolor: 'background.paper',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+            zIndex: 2,
+            transition: cssTransition.default,
+            '&:hover': { bgcolor: emeraldCore.primary, color: '#fff' },
+          }}
+        >
+          <ChevronLeft size={20} />
+        </Box>
+      )}
 
       {/* Hidden file input for photo upload */}
       <input
@@ -379,7 +389,7 @@ export default function AsesorProfilePage() {
         style={{ display: 'none' }}
       />
 
-      {/* Image Cropper Dialog (locked to 1:1) */}
+      {/* Image Cropper Dialog */}
       {isCropperOpen && (
         <ImageCropper
           open={isCropperOpen}
@@ -392,139 +402,149 @@ export default function AsesorProfilePage() {
         />
       )}
 
-      {/* Profile Header */}
-      <ProfileHeader
-        asesor={asesor}
-        stats={stats}
-        totalProducts={allProducts.length}
-        onContact={handleContact}
-        onShare={handleShare}
-        onShareWhatsApp={handleShareWhatsApp}
-        onCopyLink={handleCopyLink}
-        isOwner={isProfileOwner}
-        onPhotoEdit={handlePhotoEditClick}
-        photoUrl={localPhotoUrl || undefined}
-        isUploadingPhoto={isUploadingPhoto}
-      />
-
-      {/* My Cotizaciones Section - Only visible to profile owner */}
-      {isProfileOwner && (
-        <CotizacionesSection
-          cotizaciones={cotizacionHistory.cotizaciones}
-          isLoading={cotizacionHistory.isLoading}
-          onViewCotizacion={setSelectedCotizacion}
-          onDeleteCotizacion={handleDeleteCotizacion}
-          onDuplicateCotizacion={(cot) => navigate('/cuentas/cotizaciones', { state: { duplicate: cot } })}
-        />
-      )}
-
       {/* Cotizacion Preview Dialog */}
       <CotizacionPreviewDialog
         cotizacion={selectedCotizacion}
-        onClose={() => setSelectedCotizacion(null)}
+        onClose={handleCloseCotizacionPreview}
       />
-
-      {/* Exclusive Collection - Only visible to profile owner */}
-      {collectionFolder && (
-        <ExclusiveCollectionSection
-          products={collectionProducts}
-          collectionName={collectionInfo?.name || t.ambassador.exclusiveCollection}
-          collectionDescription={collectionInfo?.description}
-          isLoading={collectionLoading}
-          onProductClick={setSelectedCollectionProduct}
-          onShare={isProfileOwner ? async () => {
-            const url = `${window.location.origin}/c/${collectionFolder}`;
-            const text = `Mira mi coleccion exclusiva de esmeraldas colombianas en Tierra Madre`;
-            if (navigator.share) {
-              try {
-                await navigator.share({ title: 'Coleccion Exclusiva - Tierra Madre', text, url });
-              } catch { /* user cancelled */ }
-            } else {
-              await navigator.clipboard.writeText(url);
-              notify('Enlace de coleccion copiado', 'success');
-            }
-          } : undefined}
-        />
-      )}
 
       {/* Collection Product Detail Dialog */}
       <CollectionProductDialog
         product={selectedCollectionProduct}
-        onClose={() => setSelectedCollectionProduct(null)}
+        onClose={handleCloseCollectionDialog}
       />
 
-      {/* Search and Filters */}
-      <ProductFilters
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        typeFilter={typeFilter}
-        onTypeFilterChange={setTypeFilter}
-        showFilters={showFilters}
-        onToggleFilters={() => setShowFilters(!showFilters)}
-        onClearFilters={clearFilters}
-        hasActiveFilters={hasActiveFilters}
-      />
+      <AnimatePresence mode="wait">
+        {/* Museum View (Default) */}
+        {activeView === 'museum' && (
+          <motion.div
+            key="museum"
+            initial={prefersReducedMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={prefersReducedMotion ? undefined : { opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Profile Header — centered museum layout */}
+            <ProfileHeader
+              asesor={asesor}
+              stats={stats}
+              totalProducts={allProducts.length}
+              onShare={handleShare}
+              isOwner={isProfileOwner}
+              onPhotoEdit={handlePhotoEditClick}
+              onEditProfile={handleEditProfile}
+              photoUrl={localPhotoUrl || undefined}
+              isUploadingPhoto={isUploadingPhoto}
+            />
 
-      {/* Results Count */}
-      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          {filteredProducts.length} de {allProducts.length} productos
-        </Typography>
-      </Box>
-
-      {/* Products Grid/List */}
-      {filteredProducts.length === 0 ? (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            textAlign: 'center',
-            borderRadius: 3,
-            bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
-          }}
-        >
-          <Package size={48} style={{ color: lightTokens.text.muted, marginBottom: 16 }} />
-          <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2 }}>
-            {hasActiveFilters
-              ? 'No se encontraron productos con los filtros seleccionados'
-              : 'Este embajador no tiene productos asignados actualmente'}
-          </Typography>
-          {hasActiveFilters && (
-            <Button
-              variant="outlined"
-              onClick={clearFilters}
-              sx={{ textTransform: 'none' }}
-            >
-              {t.ambassador.clearFilters}
-            </Button>
-          )}
-        </Paper>
-      ) : (
-        <Grid container spacing={2}>
-          {filteredProducts.map((item) => (
-            <Grid
-              item
-              xs={12}
-              sm={viewMode === 'list' ? 12 : 6}
-              md={viewMode === 'list' ? 12 : 4}
-              key={item.item}
-            >
-              <TreasureCard
-                item={item}
-                isCompact={viewMode === 'list'}
-                onCertClick={() => {}}
-                onClick={() => handleProductClick(item)}
+            {/* My Cotizaciones — Only visible to profile owner */}
+            {isProfileOwner && (
+              <CotizacionesSection
+                cotizaciones={cotizacionHistory.cotizaciones}
+                isLoading={cotizacionHistory.isLoading}
+                onViewCotizacion={setSelectedCotizacion}
+                onDeleteCotizacion={handleDeleteCotizacion}
+                onDuplicateCotizacion={handleDuplicateCotizacion}
               />
-            </Grid>
-          ))}
-        </Grid>
-      )}
+            )}
+
+            {/* Exclusive Collection — Only visible to profile owner */}
+            {collectionFolder && (
+              <ExclusiveCollectionSection
+                products={collectionProducts}
+                collectionName={collectionInfo?.name || t.ambassador.exclusiveCollection}
+                collectionDescription={collectionInfo?.description}
+                isLoading={collectionLoading}
+                onProductClick={setSelectedCollectionProduct}
+                onShare={isProfileOwner ? handleShareCollection : undefined}
+              />
+            )}
+
+            {/* Divider — ds-tm.pen 1px border-light, full width with 24px side padding */}
+            <Box sx={{ height: '1px', bgcolor: 'divider', mx: 3, my: 0.5 }} />
+
+            {/* Category Section — ds-tm.pen padding [4,16], gap 10 */}
+            <Box sx={{ px: 2, pt: 0.5, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {categories.length > 0 && (
+                <Typography
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: '1.125rem',
+                  }}
+                >
+                  {t.ambassador.museum?.exploreCollection ?? 'Explorar Colección'}
+                </Typography>
+              )}
+              <CategoryGrid
+                categories={categories}
+                onCategorySelect={handleCategorySelect}
+              />
+            </Box>
+
+            {/* Favorites Row */}
+            <FavoritesRow
+              items={favoriteItems}
+              onItemClick={handleFavoriteItemClick}
+              onViewAll={isProfileOwner ? handleManageFavorites : undefined}
+            />
+          </motion.div>
+        )}
+
+        {/* Category Detail View */}
+        {activeView === 'category' && selectedCategory && (
+          <CategoryDetailView
+            key="category"
+            category={selectedCategory}
+            onBack={handleBackToMuseum}
+            onProductClick={handleProductClick}
+          />
+        )}
+
+        {/* Favorite Detail View */}
+        {activeView === 'favoriteDetail' && selectedProduct && (
+          <FavoriteDetailView
+            key="favoriteDetail"
+            item={selectedProduct}
+            asesor={asesor}
+            onBack={handleBackToMuseum}
+          />
+        )}
+
+        {/* Product Detail View */}
+        {activeView === 'productDetail' && selectedProduct && (
+          <AmbassadorProductDetail
+            key="productDetail"
+            item={selectedProduct}
+            onBack={handleProductDetailBack}
+          />
+        )}
+
+        {/* Edit Profile View */}
+        {activeView === 'edit' && (
+          <EditProfileView
+            key="edit"
+            asesor={asesor}
+            photoUrl={localPhotoUrl || undefined}
+            isUploadingPhoto={isUploadingPhoto}
+            onPhotoEdit={handlePhotoEditClick}
+            onBack={handleBackToMuseum}
+            onSave={handleEditSave}
+          />
+        )}
+
+        {/* Manage Favorites View */}
+        {activeView === 'manageFavorites' && (
+          <ManageFavoritesView
+            key="manageFavorites"
+            allProducts={allProducts}
+            favoriteIds={favoriteIds}
+            onBack={handleBackToMuseum}
+            onAddFavorite={addFavorite}
+            onRemoveFavorite={removeFavorite}
+            onReorderFavorites={reorderFavorites}
+          />
+        )}
+      </AnimatePresence>
 
       <ScrollToTop />
     </Box>

@@ -14,8 +14,9 @@ import {
   useTheme,
 } from '@mui/material';
 import { FileText } from 'lucide-react';
+import { useLanguage } from '../../../../contexts/LanguageContext';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
-import { brand, lightTokens, darkTokens } from '../../../../design-system';
+import { emeraldCore, surfacesLight, surfacesDark } from '../../../../design-system';
 import { CotizacionCard } from './CotizacionCard';
 
 interface CotizacionesSectionProps {
@@ -26,7 +27,7 @@ interface CotizacionesSectionProps {
   onDuplicateCotizacion?: (cotizacion: SavedCotizacion) => void;
 }
 
-export const CotizacionesSection: React.FC<CotizacionesSectionProps> = ({
+export const CotizacionesSection = React.memo<CotizacionesSectionProps>(({
   cotizaciones,
   isLoading,
   onViewCotizacion,
@@ -34,6 +35,7 @@ export const CotizacionesSection: React.FC<CotizacionesSectionProps> = ({
   onDuplicateCotizacion,
 }) => {
   const theme = useTheme();
+  const { t } = useLanguage();
   const isLight = theme.palette.mode === 'light';
 
   return (
@@ -43,9 +45,9 @@ export const CotizacionesSection: React.FC<CotizacionesSectionProps> = ({
         p: 3,
         mb: 3,
         borderRadius: 3,
-        bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
+        bgcolor: isLight ? surfacesLight.surface.default : surfacesDark.background.secondary,
         border: '1px solid',
-        borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
+        borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -55,20 +57,20 @@ export const CotizacionesSection: React.FC<CotizacionesSectionProps> = ({
               width: 36,
               height: 36,
               borderRadius: 2,
-              bgcolor: alpha(brand.emerald[500], 0.1),
+              bgcolor: alpha(emeraldCore.primary, 0.1),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <FileText size={20} color={brand.emerald[500]} />
+            <FileText size={20} color={emeraldCore.primary} />
           </Box>
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1rem' }}>
-              Mis Cotizaciones
+              {t.ambassador.museum?.myCotizaciones ?? 'Mis Cotizaciones'}
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Solo tu puedes ver esta seccion
+              {t.ambassador.museum?.onlyYouCanSee ?? 'Solo tú puedes ver esta sección'}
             </Typography>
           </Box>
         </Box>
@@ -77,8 +79,8 @@ export const CotizacionesSection: React.FC<CotizacionesSectionProps> = ({
             size="small"
             label={`${cotizaciones.length} cotizaciones`}
             sx={{
-              bgcolor: alpha(brand.emerald[500], 0.1),
-              color: brand.emerald[500],
+              bgcolor: alpha(emeraldCore.primary, 0.1),
+              color: emeraldCore.primary,
               fontWeight: 600,
             }}
           />
@@ -106,17 +108,17 @@ export const CotizacionesSection: React.FC<CotizacionesSectionProps> = ({
           sx={{
             textAlign: 'center',
             py: 4,
-            bgcolor: alpha(brand.emerald[500], 0.02),
+            bgcolor: alpha(emeraldCore.primary, 0.02),
             borderRadius: 2,
-            border: `1px dashed ${alpha(brand.emerald[500], 0.3)}`,
+            border: `1px dashed ${alpha(emeraldCore.primary, 0.3)}`,
           }}
         >
-          <FileText size={40} color={lightTokens.text.muted} style={{ marginBottom: 12 }} />
+          <FileText size={40} color={theme.palette.text.secondary} style={{ marginBottom: 12 }} />
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-            Aun no tienes cotizaciones guardadas
+            {t.ambassador.museum?.noSavedQuotations ?? 'Aún no tienes cotizaciones guardadas'}
           </Typography>
-          <Typography variant="caption" sx={{ color: 'text.muted' }}>
-            Las cotizaciones que exportes apareceran aqui
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {t.ambassador.museum?.quotationsWillAppear ?? 'Las cotizaciones que exportes aparecerán aquí'}
           </Typography>
         </Box>
       )}
@@ -133,7 +135,7 @@ export const CotizacionesSection: React.FC<CotizacionesSectionProps> = ({
             px: 1,
             '&::-webkit-scrollbar': { height: 6 },
             '&::-webkit-scrollbar-thumb': {
-              bgcolor: alpha(brand.emerald[500], 0.3),
+              bgcolor: alpha(emeraldCore.primary, 0.3),
               borderRadius: 3,
             },
           }}
@@ -152,6 +154,8 @@ export const CotizacionesSection: React.FC<CotizacionesSectionProps> = ({
       )}
     </Paper>
   );
-};
+});
+
+CotizacionesSection.displayName = 'CotizacionesSection';
 
 export default CotizacionesSection;

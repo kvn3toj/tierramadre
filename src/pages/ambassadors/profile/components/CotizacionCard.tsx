@@ -35,7 +35,7 @@ interface CotizacionCardProps {
   isLight: boolean;
 }
 
-export const CotizacionCard: React.FC<CotizacionCardProps> = ({
+export const CotizacionCard = React.memo<CotizacionCardProps>(({
   cotizacion,
   onView,
   onDelete,
@@ -225,6 +225,8 @@ export const CotizacionCard: React.FC<CotizacionCardProps> = ({
       </Box>
     </Box>
   );
-};
+});
+
+CotizacionCard.displayName = 'CotizacionCard';
 
 export default CotizacionCard;
