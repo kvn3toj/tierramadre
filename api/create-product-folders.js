@@ -81,12 +81,27 @@ export default withApiHandler(async (req, res, { sheets, drive, sharedDriveId })
   const productsFolderId = await getProductsFolderId(drive, sharedDriveId);
   const existingFolders = await listProductFolders(drive, productsFolderId);
 
-  // Build map: itemNumber -> { id, name }
+  // Build map: itemNumber -> array of { id, name } (to detect duplicates)
   const folderMap = new Map();
   for (const folder of existingFolders) {
     const itemNumber = extractItemNumber(folder.name);
     if (itemNumber !== null) {
-      folderMap.set(itemNumber, { id: folder.id, name: folder.name });
+      if (!folderMap.has(itemNumber)) {
+        folderMap.set(itemNumber, []);
+      }
+      folderMap.get(itemNumber).push({ id: folder.id, name: folder.name });
+    }
+  }
+
+  // Detect duplicate folders (multiple folders for the same item number)
+  const duplicates = [];
+  for (const [itemNumber, folders] of folderMap) {
+    if (folders.length > 1) {
+      duplicates.push({
+        item: itemNumber,
+        count: folders.length,
+        folders: folders.map(f => ({ id: f.id, name: f.name })),
+      });
     }
   }
 
@@ -97,7 +112,9 @@ export default withApiHandler(async (req, res, { sheets, drive, sharedDriveId })
 
   for (const item of sheetItems) {
     const expectedName = buildFolderName(item.item, item.nombre);
-    const existing = folderMap.get(item.item);
+    const existingList = folderMap.get(item.item);
+    // Use the first folder found for this item number (oldest by position)
+    const existing = existingList?.[0];
 
     if (!existing) {
       toCreate.push({ item: item.item, folderName: expectedName });
@@ -117,12 +134,13 @@ export default withApiHandler(async (req, res, { sheets, drive, sharedDriveId })
   if (isDryRun) {
     return sendSuccess(res, {
       mode: 'dry-run',
-      message: `${toCreate.length} to create, ${toRename.length} to rename, ${upToDate.length} up to date. POST to apply.`,
+      message: `${toCreate.length} to create, ${toRename.length} to rename, ${upToDate.length} up to date, ${duplicates.length} items with duplicate folders. POST to apply.`,
       totalSheetItems: sheetItems.length,
       totalDriveFolders: existingFolders.length,
       toCreate: toCreate.length > 0 ? toCreate : undefined,
       toRename: toRename.length > 0 ? toRename : undefined,
       upToDateCount: upToDate.length,
+      duplicates: duplicates.length > 0 ? duplicates : undefined,
     });
   }
 
@@ -131,10 +149,10 @@ export default withApiHandler(async (req, res, { sheets, drive, sharedDriveId })
   const renamed = [];
   const errors = [];
 
-  // Create missing folders
+  // Create missing folders (pass itemNumber to prevent duplicates via prefix search)
   for (const item of toCreate) {
     try {
-      const folderId = await getOrCreateFolder(drive, productsFolderId, item.folderName, sharedDriveId);
+      const folderId = await getOrCreateFolder(drive, productsFolderId, item.folderName, sharedDriveId, item.item);
       created.push({ item: item.item, folderName: item.folderName, folderId });
       console.log(`[Sync] Created: ${item.folderName}`);
     } catch (error) {
@@ -170,6 +188,7 @@ export default withApiHandler(async (req, res, { sheets, drive, sharedDriveId })
     created: created.length > 0 ? created : undefined,
     renamed: renamed.length > 0 ? renamed : undefined,
     errors: errors.length > 0 ? errors : undefined,
+    duplicates: duplicates.length > 0 ? duplicates : undefined,
   });
 }, {
   methods: ['GET', 'POST', 'OPTIONS'],

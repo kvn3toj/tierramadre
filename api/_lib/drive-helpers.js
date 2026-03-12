@@ -64,23 +64,32 @@ export async function getProductsFolderId(drive, sharedDriveId) {
 }
 
 /**
- * List all product folders within the products folder
+ * List all product folders within the products folder (with pagination)
  * @param {object} drive - Google Drive client
  * @param {string} productsFolderId - Products folder ID
  * @param {string} orderBy - Sort order (default: 'name')
  * @returns {Promise<Array>} Array of folder objects {id, name, createdTime}
  */
 export async function listProductFolders(drive, productsFolderId, orderBy = 'name') {
-  const response = await drive.files.list({
-    q: `'${productsFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-    fields: 'files(id, name, createdTime)',
-    orderBy,
-    pageSize: MAX_PAGE_SIZE,
-    supportsAllDrives: true,
-    includeItemsFromAllDrives: true,
-  });
+  const allFiles = [];
+  let pageToken = null;
 
-  return response.data.files || [];
+  do {
+    const response = await drive.files.list({
+      q: `'${productsFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      fields: 'nextPageToken, files(id, name, createdTime)',
+      orderBy,
+      pageSize: MAX_PAGE_SIZE,
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
+      ...(pageToken && { pageToken }),
+    });
+
+    allFiles.push(...(response.data.files || []));
+    pageToken = response.data.nextPageToken;
+  } while (pageToken);
+
+  return allFiles;
 }
 
 /**
@@ -254,27 +263,50 @@ export function getProxyUrl(fileId, isVideo = false, size = 'original') {
 }
 
 /**
- * Find or create a folder within a parent folder
+ * Find or create a folder within a parent folder.
+ *
+ * For product folders (when itemNumber is provided), searches by item number
+ * prefix (e.g., "222 -") instead of exact name to prevent duplicate folder
+ * creation when product names change in the sheet.
+ *
  * @param {object} drive - Google Drive client (with write access)
  * @param {string} parentFolderId - Parent folder ID
  * @param {string} folderName - Name of folder to find or create
  * @param {string} [sharedDriveId] - Optional Shared Drive ID (required for creating in Shared Drives)
+ * @param {number} [itemNumber] - Optional item number for product folder prefix search
  * @returns {Promise<string>} Folder ID
  */
-export async function getOrCreateFolder(drive, parentFolderId, folderName, sharedDriveId = null) {
-  // Escape single quotes in folder name for query
-  const escapedFolderName = folderName.replace(/'/g, "\\'");
-
+export async function getOrCreateFolder(drive, parentFolderId, folderName, sharedDriveId = null, itemNumber = null) {
   try {
+    let searchQuery;
+
+    if (itemNumber !== null) {
+      // Product folder: search by item number prefix to find existing folder
+      // regardless of name changes. This prevents duplicate folders.
+      searchQuery = `name contains '${itemNumber} -' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    } else {
+      // Non-product folder: search by exact name
+      const escapedFolderName = folderName.replace(/'/g, "\\'");
+      searchQuery = `name='${escapedFolderName}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    }
+
     const searchResponse = await drive.files.list({
-      q: `name='${escapedFolderName}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      q: searchQuery,
       fields: 'files(id, name)',
       supportsAllDrives: true,
       includeItemsFromAllDrives: true,
       ...(sharedDriveId && { driveId: sharedDriveId, corpora: 'drive' }),
     });
 
-    if (searchResponse.data.files && searchResponse.data.files.length > 0) {
+    if (itemNumber !== null && searchResponse.data.files?.length > 0) {
+      // For product folders, find exact prefix match (e.g., "222 - " not "2222 - ")
+      const exactMatch = searchResponse.data.files.find(f =>
+        f.name.startsWith(`${itemNumber} - `)
+      );
+      if (exactMatch) {
+        return exactMatch.id;
+      }
+    } else if (searchResponse.data.files?.length > 0) {
       return searchResponse.data.files[0].id;
     }
   } catch (searchError) {

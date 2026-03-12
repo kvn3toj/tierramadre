@@ -21,6 +21,7 @@ import { goldAccent } from '../../tokens/colors';
 import { emeraldAlpha, goldAlpha, errorAlpha } from '../../utils/colorUtils';
 import { fontSizes } from '../../tokens/typography';
 import { cssTransition } from '../../tokens/motion';
+import { radius } from '../../tokens/layout';
 
 // =============================================================================
 // TYPES
@@ -92,7 +93,7 @@ const StyledButton = styled(MuiButton, {
     padding: size.padding,
     fontSize: size.fontSize,
     fontWeight: 600,
-    borderRadius: 8,
+    borderRadius: radius.md,
     textTransform: 'none' as const,
     transition: cssTransition.default,
     opacity: loading ? 0.7 : 1,

@@ -57,6 +57,8 @@ export {
   semanticShadows,
   cardShadows,
   focusShadows,
+  floatingLayerShadows,
+  specularShadows,
   shadows,
 } from './tokens/shadows';
 

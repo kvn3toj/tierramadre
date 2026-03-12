@@ -28,11 +28,25 @@ export default withApiHandler(async (req, res, { drive, sharedDriveId }) => {
   const folders = await listProductFolders(drive, productsFolderId);
   console.log(`Found ${folders.length} product folders`);
 
+  // Deduplicate: keep only the first folder per item number (by name order).
+  // This prevents duplicate folders from causing inconsistent thumbnails.
+  const seenItems = new Set();
+  const uniqueFolders = folders.filter(folder => {
+    const itemNumber = extractItemNumber(folder.name);
+    if (itemNumber === null || seenItems.has(itemNumber)) return false;
+    seenItems.add(itemNumber);
+    return true;
+  });
+
+  if (uniqueFolders.length < folders.length) {
+    console.log(`[Thumbnails] Deduplicated: ${folders.length} folders → ${uniqueFolders.length} unique items`);
+  }
+
   // Fetch first image from each folder in parallel (with concurrency limit)
   const thumbnails = {};
 
-  for (let i = 0; i < folders.length; i += BATCH_SIZE) {
-    const batch = folders.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < uniqueFolders.length; i += BATCH_SIZE) {
+    const batch = uniqueFolders.slice(i, i + BATCH_SIZE);
 
     const results = await Promise.all(
       batch.map(async (folder) => {

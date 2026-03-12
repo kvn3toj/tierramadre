@@ -11,6 +11,10 @@ import { liquidGlassEffect, type LiquidGlassOptions } from '../design-system/mix
 import type { InteractionState, ElevationLevel, DeviceTier } from '../design-system/tokens/liquid-glass';
 import { getCachedDeviceTier } from '../utils/deviceTier';
 import { whiteAlpha, blackAlpha } from '../design-system/utils/colorUtils';
+import { surfacesDark } from '../design-system/tokens/colors';
+
+/** Dark fallback with 95% opacity — uses semantic surface token */
+const DARK_SURFACE_FALLBACK = `${surfacesDark.surface.default}F2`; // #1C1C1EF2 = 95% opacity
 
 // =============================================================================
 // FALLBACK STYLES (shared across hooks to avoid duplication)
@@ -18,7 +22,7 @@ import { whiteAlpha, blackAlpha } from '../design-system/utils/colorUtils';
 
 /** Opaque fallback for devices that don't support Liquid Glass */
 const getFallbackStyles = (isDark: boolean): SxProps<Theme> => ({
-  background: isDark ? 'rgba(30, 41, 59, 0.95)' : whiteAlpha(0.95),
+  background: isDark ? DARK_SURFACE_FALLBACK : whiteAlpha(0.95),
   border: isDark
     ? `1px solid ${whiteAlpha(0.1)}`
     : `1px solid ${blackAlpha(0.1)}`,
@@ -26,7 +30,7 @@ const getFallbackStyles = (isDark: boolean): SxProps<Theme> => ({
 
 /** Minimal fallback (background only, no border) */
 const getFallbackBg = (isDark: boolean): SxProps<Theme> => ({
-  background: isDark ? 'rgba(30, 41, 59, 0.95)' : whiteAlpha(0.95),
+  background: isDark ? DARK_SURFACE_FALLBACK : whiteAlpha(0.95),
 });
 
 // =============================================================================
