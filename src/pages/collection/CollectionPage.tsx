@@ -84,22 +84,6 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     videoUrl: '/images/CEO/911/1-1.825Cts.mp4', imagen: '/images/CEO/911/1-1.825Cts.mp4',
     description: 'Shaped like a heart, moved like water. This stone hums with the rhythm of Boyacá\'s hidden rivers.',
   },
-  {
-    item: 912, nombre: 'Soul of the Mountain', peso: 1.93, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Emerald', medidas: '',
-    precioCOP: 0, precioInternacional: 36914, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
-    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
-    videoUrl: '/images/CEO/912/2-1.93Cts.mp4', imagen: '/images/CEO/912/2-1.93Cts.mp4',
-    description: 'Deep, ancient, unyielding. Nearly two carats of raw Colombian power, cut to reveal the mountain\'s innermost secret.',
-  },
-  {
-    item: 915, nombre: 'Kingdom of Peace', peso: 3.56, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Cushion', medidas: '',
-    precioCOP: 0, precioInternacional: 12000, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
-    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
-    videoUrl: '/images/CEO/915/5-3.54Cts.mp4', imagen: '/images/CEO/915/5-3.54Cts.mp4',
-    description: 'The collection\'s sovereign. At 3.56 carats, this cushion-cut emerald is a territory unto itself — vast, serene, and absolutely commanding.',
-  },
 ];
 
 // Map collection folders to WhatsApp contact info
