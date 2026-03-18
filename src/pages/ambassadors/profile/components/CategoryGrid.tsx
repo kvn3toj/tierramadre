@@ -45,8 +45,11 @@ export const CategoryGrid = React.memo(function CategoryGrid({ categories, onCat
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: '10px',
+        gridTemplateColumns: {
+          xs: 'repeat(2, 1fr)',
+          md: categories.length >= 3 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)',
+        },
+        gap: { xs: '10px', sm: '14px' },
       }}
     >
       {categories.map((category, index) => (
@@ -71,7 +74,7 @@ export const CategoryGrid = React.memo(function CategoryGrid({ categories, onCat
               position: 'relative',
               borderRadius: '18px',
               overflow: 'hidden',
-              height: 130,
+              height: { xs: 130, sm: 160, md: 180 },
               cursor: 'pointer',
               transition: `all ${cssTransition.default}`,
               boxShadow: isLight
@@ -142,7 +145,7 @@ export const CategoryGrid = React.memo(function CategoryGrid({ categories, onCat
                 bottom: 0,
                 left: 0,
                 right: 0,
-                p: '14px 16px',
+                p: { xs: '14px 16px', sm: '16px 20px' },
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '3px',
@@ -152,7 +155,7 @@ export const CategoryGrid = React.memo(function CategoryGrid({ categories, onCat
                 sx={{
                   color: '#fff',
                   fontWeight: 700,
-                  fontSize: '1.05rem',
+                  fontSize: { xs: '1.05rem', sm: '1.15rem' },
                   lineHeight: 1.25,
                   letterSpacing: '-0.01em',
                   textShadow: '0 1px 3px rgba(0,0,0,0.2)',
@@ -163,7 +166,7 @@ export const CategoryGrid = React.memo(function CategoryGrid({ categories, onCat
               <Typography
                 sx={{
                   color: 'rgba(255,255,255,0.7)',
-                  fontSize: '0.7rem',
+                  fontSize: { xs: '0.7rem', sm: '0.76rem' },
                   fontWeight: 500,
                 }}
               >

@@ -54,7 +54,7 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
       transition={{ duration: 0.2 }}
     >
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, px: { xs: 0, sm: 0.5 } }}>
         <IconButton
           onClick={onBack}
           aria-label={t.actions.back}
@@ -146,8 +146,14 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
         </Box>
       )}
 
-      {/* Product List */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      {/* Product List — responsive grid on wider screens */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+          gap: { xs: 1, sm: 1.5 },
+        }}
+      >
         {filteredItems.map((item, index) => (
           <motion.div
             key={item.item}

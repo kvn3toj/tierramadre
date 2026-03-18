@@ -143,8 +143,8 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(({
           <Avatar
             src={photoUrl || asesor.photoUrl}
             sx={{
-              width: 104,
-              height: 104,
+              width: { xs: 104, sm: 120, md: 130 },
+              height: { xs: 104, sm: 120, md: 130 },
               bgcolor: accentColor,
               fontSize: '2.5rem',
               fontWeight: 700,
@@ -204,7 +204,7 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(({
         sx={{
           fontWeight: 700,
           mb: 0.75,
-          fontSize: '1.3rem',
+          fontSize: { xs: '1.3rem', sm: '1.45rem', md: '1.55rem' },
           letterSpacing: '-0.02em',
         }}
       >
@@ -249,9 +249,9 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(({
       <Box
         sx={{
           display: 'flex',
-          gap: '8px',
+          gap: { xs: '8px', sm: '12px' },
           width: '100%',
-          px: 1,
+          px: { xs: 1, sm: 2, md: 3 },
         }}
       >
         {[
@@ -281,9 +281,9 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '3px',
+              gap: { xs: '3px', sm: '5px' },
               flex: 1,
-              py: 1.25,
+              py: { xs: 1.25, sm: 1.5 },
               borderRadius: '12px',
               bgcolor: isLight ? surfacesLight.surface.default : surfacesDark.background.secondary,
               border: '1px solid',
@@ -311,7 +311,7 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(({
               sx={{
                 fontFamily: fontFamilies.mono,
                 fontWeight: 700,
-                fontSize: '0.82rem',
+                fontSize: { xs: '0.82rem', sm: '0.9rem' },
                 letterSpacing: '-0.02em',
               }}
             >
@@ -338,9 +338,9 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(({
           sx={{
             mt: 2,
             color: 'text.secondary',
-            fontSize: '0.82rem',
+            fontSize: { xs: '0.82rem', sm: '0.88rem' },
             lineHeight: 1.55,
-            maxWidth: 340,
+            maxWidth: { xs: 340, sm: 420 },
             mx: 'auto',
             fontStyle: 'italic',
           }}

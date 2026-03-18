@@ -137,8 +137,8 @@ export default function AsesorProfilePage() {
     return userEmail === asesorEmail;
   }, [googleUser, asesor]);
 
-  // Exclusive collection
-  const collectionFolder = isProfileOwner && asesor
+  // Exclusive collection — visible to all visitors, not just owner
+  const collectionFolder = asesor
     ? COLLECTION_FOLDERS[asesor.email?.toLowerCase().trim() ?? '']
       ?? COLLECTION_SLUGS[asesor.slug]
       ?? null
@@ -299,14 +299,14 @@ export default function AsesorProfilePage() {
     }
   }, [collectionFolder, notify]);
 
-  // Loading skeleton — museum layout
+  // Loading skeleton — museum layout (responsive)
   if (isLoading) {
     return (
-      <Box sx={{ pb: 4 }}>
+      <Box sx={{ pb: 4, maxWidth: { sm: 720, md: 840 }, mx: 'auto' }}>
         <Skeleton width={140} height={36} sx={{ mb: 2, borderRadius: 1 }} />
         {/* Centered avatar skeleton */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
-          <Skeleton variant="circular" width={96} height={96} />
+          <Skeleton variant="circular" sx={{ width: { xs: 96, sm: 112, md: 120 }, height: { xs: 96, sm: 112, md: 120 } }} />
         </Box>
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <Skeleton width="50%" height={28} />
@@ -314,15 +314,21 @@ export default function AsesorProfilePage() {
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
           <Skeleton width={80} height={22} sx={{ borderRadius: 2 }} />
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 1.5, mb: 3 }}>
-          <Skeleton width={60} height={18} />
-          <Skeleton width={60} height={18} />
-          <Skeleton width={60} height={18} />
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 1.5, mb: 3, px: { xs: 1, sm: 2, md: 3 } }}>
+          {[0, 1, 2].map(i => (
+            <Skeleton key={i} sx={{ flex: 1, height: { xs: 60, sm: 70 }, borderRadius: '12px' }} />
+          ))}
         </Box>
-        {/* 2x2 grid skeleton */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5, mb: 3 }}>
+        {/* Category grid skeleton — responsive columns */}
+        <Box sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+          gap: { xs: 1.5, sm: 2 },
+          px: { xs: 2, sm: 3 },
+          mb: 3,
+        }}>
           {[0, 1, 2, 3].map(i => (
-            <Skeleton key={i} variant="rounded" sx={{ aspectRatio: '1/1', borderRadius: 3 }} />
+            <Skeleton key={i} variant="rounded" sx={{ height: { xs: 130, sm: 160, md: 180 }, borderRadius: 3 }} />
           ))}
         </Box>
         {/* Favorites row skeleton */}
@@ -349,7 +355,7 @@ export default function AsesorProfilePage() {
   }
 
   return (
-    <Box sx={{ pb: 4, position: 'relative' }}>
+    <Box sx={{ pb: 4, position: 'relative', maxWidth: { sm: 720, md: 840 }, mx: 'auto' }}>
       {/* Back Button — circular bg-secondary pill (ds-tm.pen NavHeader) */}
       {activeView === 'museum' && (
         <Box
@@ -448,12 +454,13 @@ export default function AsesorProfilePage() {
               />
             )}
 
-            {/* Exclusive Collection — Only visible to profile owner */}
+            {/* Exclusive Collection — visible to all visitors (share is owner-only) */}
             {collectionFolder && (
               <ExclusiveCollectionSection
                 products={collectionProducts}
                 collectionName={collectionInfo?.name || t.ambassador.exclusiveCollection}
                 collectionDescription={collectionInfo?.description}
+                collectionFolder={collectionFolder}
                 isLoading={collectionLoading}
                 onProductClick={setSelectedCollectionProduct}
                 onShare={isProfileOwner ? handleShareCollection : undefined}
@@ -464,7 +471,7 @@ export default function AsesorProfilePage() {
             <Box sx={{ height: '1px', bgcolor: 'divider', mx: 3, my: 0.5 }} />
 
             {/* Category Section — ds-tm.pen padding [4,16], gap 10 */}
-            <Box sx={{ px: 2, pt: 0.5, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <Box sx={{ px: { xs: 2, sm: 3 }, pt: 0.5, display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {categories.length > 0 && (
                 <Typography
                   sx={{

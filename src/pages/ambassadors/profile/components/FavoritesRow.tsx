@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { Box, Typography, alpha, useTheme } from '@mui/material';
+import { Box, Typography, alpha, useTheme, useMediaQuery, type Theme } from '@mui/material';
 import { ChevronRight, Gem } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import {
@@ -28,11 +28,14 @@ export const FavoritesRow = React.memo(function FavoritesRow({ items, onItemClic
   const theme = useTheme();
   const { t } = useLanguage();
   const isLight = theme.palette.mode === 'light';
+  const isTablet = useMediaQuery((t: Theme) => t.breakpoints.up('sm'));
+  const isDesktop = useMediaQuery((t: Theme) => t.breakpoints.up('md'));
 
   if (items.length === 0) return null;
 
-  // Show up to 5 highlight thumbnails
-  const displayItems = items.slice(0, 5);
+  // Show up to 5 highlight thumbnails — show all 6 on desktop
+  const displayItems = items.slice(0, isDesktop ? 6 : 5);
+  const thumbSize = isDesktop ? 88 : isTablet ? 80 : 68;
 
   return (
     <Box
@@ -42,9 +45,9 @@ export const FavoritesRow = React.memo(function FavoritesRow({ items, onItemClic
         boxShadow: isLight
           ? '0 -4px 16px rgba(0,0,0,0.08)'
           : '0 -4px 16px rgba(0,0,0,0.2)',
-        pt: 2,
-        px: 2,
-        pb: 1.5,
+        pt: { xs: 2, sm: 2.5 },
+        px: { xs: 2, sm: 3 },
+        pb: { xs: 1.5, sm: 2 },
         mt: 2.5,
       }}
     >
@@ -108,8 +111,8 @@ export const FavoritesRow = React.memo(function FavoritesRow({ items, onItemClic
       <Box
         sx={{
           display: 'flex',
-          gap: '16px',
-          justifyContent: displayItems.length < 4 ? 'center' : 'flex-start',
+          gap: isDesktop ? '24px' : isTablet ? '20px' : '16px',
+          justifyContent: (isTablet || displayItems.length < 4) ? 'center' : 'flex-start',
           overflowX: 'auto',
           pb: 0.5,
           scrollbarWidth: 'none',
@@ -149,8 +152,8 @@ export const FavoritesRow = React.memo(function FavoritesRow({ items, onItemClic
             <Box
               className="fav-thumb"
               sx={{
-                width: 68,
-                height: 68,
+                width: thumbSize,
+                height: thumbSize,
                 borderRadius: '50%',
                 overflow: 'hidden',
                 border: '2.5px solid',
@@ -162,8 +165,8 @@ export const FavoritesRow = React.memo(function FavoritesRow({ items, onItemClic
               <ProgressiveImage
                 src={item.thumbnailUrl || item.imagen}
                 alt={item.nombre}
-                width={68}
-                height={68}
+                width={thumbSize}
+                height={thumbSize}
                 layout="thumbnail"
                 quality="eco"
                 enableLQIP={false}
@@ -175,7 +178,7 @@ export const FavoritesRow = React.memo(function FavoritesRow({ items, onItemClic
                 fontSize: '0.6rem',
                 fontWeight: 500,
                 color: 'text.secondary',
-                maxWidth: 68,
+                maxWidth: thumbSize,
                 textAlign: 'center',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',

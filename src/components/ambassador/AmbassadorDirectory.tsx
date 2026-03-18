@@ -239,9 +239,9 @@ export default function AmbassadorDirectory({
         >
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+              gap: { xs: '12px', sm: '16px' },
             }}
           >
             {filteredAsesores.map((asesor, index) => (
@@ -265,9 +265,9 @@ export function AmbassadorDirectorySkeleton({ isLight = false }: { isLight?: boo
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+        gap: { xs: '12px', sm: '16px' },
       }}
     >
       {[1, 2, 3].map((i) => (

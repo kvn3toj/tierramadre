@@ -16,15 +16,17 @@ import {
   alpha,
   useTheme,
 } from '@mui/material';
-import { Gem, Share2 } from 'lucide-react';
+import { Gem, Share2, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { TreasureItem } from '../../../../types';
 import { TreasureCard } from '../../../../components/treasure/TreasureCard';
-import { brand, lightTokens, darkTokens } from '../../../../design-system';
+import { brand, lightTokens, darkTokens, cssTransition } from '../../../../design-system';
 
 interface ExclusiveCollectionSectionProps {
   products: TreasureItem[];
   collectionName: string;
   collectionDescription?: string;
+  collectionFolder?: string | null;
   isLoading: boolean;
   onProductClick: (product: TreasureItem) => void;
   onShare?: () => void;
@@ -34,12 +36,14 @@ export const ExclusiveCollectionSection: React.FC<ExclusiveCollectionSectionProp
   products,
   collectionName,
   collectionDescription,
+  collectionFolder,
   isLoading,
   onProductClick,
   onShare,
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const navigate = useNavigate();
 
   // Don't render anything if no products and not loading
   if (!isLoading && products.length === 0) return null;
@@ -130,6 +134,56 @@ export const ExclusiveCollectionSection: React.FC<ExclusiveCollectionSectionProp
             </Grid>
           ))}
         </Grid>
+      )}
+
+      {/* View Full Collection CTA */}
+      {collectionFolder && !isLoading && products.length > 0 && (
+        <Box
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate(`/c/${collectionFolder}`)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              navigate(`/c/${collectionFolder}`);
+            }
+          }}
+          sx={{
+            mt: 2.5,
+            py: 1.5,
+            px: 2.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
+            borderRadius: 2.5,
+            cursor: 'pointer',
+            bgcolor: alpha(brand.emerald[500], 0.08),
+            border: '1px solid',
+            borderColor: alpha(brand.emerald[500], 0.2),
+            transition: cssTransition.default,
+            '&:hover': {
+              bgcolor: alpha(brand.emerald[500], 0.14),
+              borderColor: alpha(brand.emerald[500], 0.35),
+            },
+            '&:focus-visible': {
+              outline: `2px solid ${brand.emerald[500]}`,
+              outlineOffset: 2,
+            },
+          }}
+        >
+          <ExternalLink size={16} style={{ color: brand.emerald[600] }} />
+          <Typography
+            sx={{
+              fontWeight: 600,
+              fontSize: '0.82rem',
+              color: brand.emerald[600],
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Ver Coleccion Completa
+          </Typography>
+        </Box>
       )}
     </Paper>
   );

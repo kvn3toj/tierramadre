@@ -16,7 +16,7 @@ interface AmbassadorsPageProps {
 
 const AmbassadorsPage: React.FC<AmbassadorsPageProps> = ({ onViewProducts }) => {
   return (
-    <Box sx={{ pt: 0.5 }}>
+    <Box sx={{ pt: 0.5, maxWidth: { sm: 720, md: 840 }, mx: 'auto' }}>
       <AmbassadorDirectory onViewProducts={onViewProducts} />
     </Box>
   );
