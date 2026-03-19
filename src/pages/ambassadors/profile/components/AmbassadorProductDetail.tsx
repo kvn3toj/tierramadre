@@ -1,11 +1,13 @@
 /**
  * AmbassadorProductDetail Component
  * Full product detail view within the ambassador profile context.
- * Hero image, name + price, specs grid, description.
+ * Fetches full image gallery from Drive API for carousel display.
+ * Hero carousel, name + price, specs grid, description.
  */
 
-import { Box, Typography, Chip, IconButton, alpha, useTheme } from '@mui/material';
-import { ArrowLeft, Scale, MapPin, Award, Ruler, Palette } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Box, Typography, Chip, IconButton, alpha, useTheme, CircularProgress, Button } from '@mui/material';
+import { ArrowLeft, Scale, MapPin, Award, Ruler, Palette, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
   emeraldCore,
@@ -15,12 +17,22 @@ import {
   surfacesLight,
   surfacesDark,
   fontFamilies,
+  brand,
+  cssTransition,
+  zIndex,
 } from '../../../../design-system';
 import { formatFullCurrency } from '../../../../utils/formatting';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
 import type { TreasureItem } from '../../../../types';
+
+interface MediaSlide {
+  id: string;
+  url: string;
+  type: 'image' | 'video';
+  alt: string;
+}
 
 interface AmbassadorProductDetailProps {
   item: TreasureItem;
@@ -33,9 +45,87 @@ export function AmbassadorProductDetail({ item, onBack }: AmbassadorProductDetai
   const isLight = theme.palette.mode === 'light';
   const prefersReducedMotion = useReducedMotion();
 
+  const [gallerySlides, setGallerySlides] = useState<MediaSlide[]>([]);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+
   const weightDisplay = typeof item.peso === 'number'
     ? `${item.peso} ct`
     : item.peso || '-';
+
+  // Fetch gallery from Drive API
+  useEffect(() => {
+    setActiveSlide(0);
+
+    // Fallback: use existing thumbnail/image
+    const fallback: MediaSlide = {
+      id: `fallback-${item.item}`,
+      url: item.thumbnailUrl || item.imagen,
+      type: item.mediaType === 'video' ? 'video' : 'image',
+      alt: item.nombre,
+    };
+    if (fallback.url) {
+      setGallerySlides([fallback]);
+    }
+
+    if (item.item) {
+      setGalleryLoading(true);
+      fetch(`/api/get-drive-images?itemNumber=${item.item}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.images?.length > 0) {
+            const driveSlides: MediaSlide[] = data.images
+              .sort((a: any, b: any) => {
+                if (a.type === 'image' && b.type === 'video') return -1;
+                if (a.type === 'video' && b.type === 'image') return 1;
+                return (a.order ?? 0) - (b.order ?? 0);
+              })
+              .map((img: any) => ({
+                id: img.id,
+                url: img.type === 'video'
+                  ? `/api/serve-drive-image?fileId=${img.id}`
+                  : (img.proxyUrl || img.fullUrl || img.previewUrl || img.thumbnailUrl),
+                type: img.type as 'image' | 'video',
+                alt: img.name || `${item.nombre} - ${(img.order ?? 0) + 1}`,
+              }));
+            setGallerySlides(driveSlides);
+          }
+        })
+        .catch((err) => console.warn('Failed to fetch gallery:', err))
+        .finally(() => setGalleryLoading(false));
+    }
+  }, [item.item]);
+
+  // Swipe handling
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }, []);
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+      if (deltaX < 0 && activeSlide < gallerySlides.length - 1) {
+        setActiveSlide((s) => s + 1);
+      } else if (deltaX > 0 && activeSlide > 0) {
+        setActiveSlide((s) => s - 1);
+      }
+    }
+  }, [activeSlide, gallerySlides.length]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' && activeSlide > 0) setActiveSlide((s) => s - 1);
+      if (e.key === 'ArrowRight' && activeSlide < gallerySlides.length - 1) setActiveSlide((s) => s + 1);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [activeSlide, gallerySlides.length]);
+
+  const slideCount = gallerySlides.length;
 
   return (
     <motion.div
@@ -63,27 +153,184 @@ export function AmbassadorProductDetail({ item, onBack }: AmbassadorProductDetai
         </IconButton>
       </Box>
 
-      {/* Hero Image */}
+      {/* Hero Gallery Carousel */}
       <Box
         sx={{
           borderRadius: '18px',
           overflow: 'hidden',
           mb: 2.5,
-          aspectRatio: '4/3',
+          position: 'relative',
           boxShadow: isLight
             ? '0 4px 20px rgba(0,0,0,0.1)'
             : '0 4px 20px rgba(0,0,0,0.3)',
         }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
-        <ProgressiveImage
-          src={item.thumbnailUrl || item.imagen}
-          alt={item.nombre}
-          width={400}
-          height={300}
-          layout="full"
-          quality="good"
-          enableLQIP
-        />
+        {slideCount > 0 ? (
+          <>
+            <Box
+              sx={{
+                display: 'flex',
+                transition: 'transform 0.3s ease',
+                transform: `translateX(-${activeSlide * 100}%)`,
+              }}
+            >
+              {gallerySlides.map((slide) => (
+                <Box key={slide.id} sx={{ minWidth: '100%', aspectRatio: '4/3', position: 'relative' }}>
+                  {slide.type === 'video' ? (
+                    <video
+                      key={slide.id}
+                      src={slide.url}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      component="img"
+                      src={slide.url}
+                      alt={slide.alt}
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
+                      }}
+                    />
+                  )}
+                </Box>
+              ))}
+            </Box>
+
+            {/* Slide counter */}
+            {slideCount > 1 && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 12,
+                  right: 12,
+                  bgcolor: 'rgba(0,0,0,0.5)',
+                  backdropFilter: 'blur(4px)',
+                  borderRadius: 1.5,
+                  px: 1,
+                  py: 0.3,
+                  zIndex: zIndex.base,
+                }}
+              >
+                <Typography sx={{ color: '#fff', fontSize: '0.7rem', fontWeight: 600 }}>
+                  {activeSlide + 1} / {slideCount}
+                </Typography>
+              </Box>
+            )}
+
+            {/* Gallery loading indicator */}
+            {galleryLoading && slideCount <= 1 && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 12,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  bgcolor: 'rgba(0,0,0,0.5)',
+                  backdropFilter: 'blur(4px)',
+                  borderRadius: 2,
+                  px: 1.5,
+                  py: 0.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  zIndex: zIndex.base,
+                }}
+              >
+                <CircularProgress size={14} sx={{ color: '#fff' }} />
+                <Typography sx={{ color: '#fff', fontSize: '0.7rem' }}>
+                  Loading gallery...
+                </Typography>
+              </Box>
+            )}
+
+            {/* Navigation arrows (desktop) */}
+            {slideCount > 1 && (
+              <>
+                {activeSlide > 0 && (
+                  <IconButton
+                    onClick={() => setActiveSlide((s) => s - 1)}
+                    sx={{
+                      position: 'absolute',
+                      left: 8,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'rgba(0,0,0,0.5)',
+                      color: '#fff',
+                      '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                      zIndex: zIndex.base,
+                    }}
+                  >
+                    <ChevronLeft size={20} />
+                  </IconButton>
+                )}
+                {activeSlide < slideCount - 1 && (
+                  <IconButton
+                    onClick={() => setActiveSlide((s) => s + 1)}
+                    sx={{
+                      position: 'absolute',
+                      right: 8,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'rgba(0,0,0,0.5)',
+                      color: '#fff',
+                      '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                      zIndex: zIndex.base,
+                    }}
+                  >
+                    <ChevronRight size={20} />
+                  </IconButton>
+                )}
+              </>
+            )}
+
+            {/* Dot indicators */}
+            {slideCount > 1 && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 12,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  display: 'flex',
+                  gap: 0.8,
+                  zIndex: zIndex.base,
+                }}
+              >
+                {gallerySlides.map((_, i) => (
+                  <Box
+                    key={i}
+                    onClick={() => setActiveSlide(i)}
+                    sx={{
+                      width: activeSlide === i ? 18 : 8,
+                      height: 8,
+                      borderRadius: 4,
+                      bgcolor: activeSlide === i ? brand.emerald[400] : 'rgba(255,255,255,0.5)',
+                      cursor: 'pointer',
+                      transition: cssTransition.fast,
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
+          </>
+        ) : (
+          <Box sx={{ aspectRatio: '4/3', bgcolor: isLight ? '#f5f5f5' : '#1a1a1a' }} />
+        )}
       </Box>
 
       {/* Name & Price */}
@@ -157,9 +404,28 @@ export function AmbassadorProductDetail({ item, onBack }: AmbassadorProductDetai
         {item.cantidad > 1 && <SpecCell icon={<Scale size={16} />} label="Cantidad" value={`${item.cantidad} uds`} />}
       </Box>
 
+      {/* Contact CTA */}
+      <Button
+        fullWidth
+        variant="contained"
+        startIcon={<MessageCircle size={18} />}
+        sx={{
+          bgcolor: emeraldCore.primary,
+          color: '#fff',
+          borderRadius: '14px',
+          py: 1.5,
+          fontWeight: 600,
+          textTransform: 'none',
+          fontSize: '0.95rem',
+          '&:hover': { bgcolor: emeraldCore.dark },
+        }}
+      >
+        Contactar Embajador
+      </Button>
+
       {/* Description */}
       {item.description && (
-        <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem', lineHeight: 1.6 }}>
+        <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem', lineHeight: 1.6, mt: 2 }}>
           {item.description}
         </Typography>
       )}

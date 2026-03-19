@@ -1,8 +1,8 @@
 /**
  * CollectionProductDialog Component
  * Fullscreen dialog showing detail for an exclusive collection product.
- * These items are NOT in the main inventory, so we display them in-place.
- * Supports a media carousel: video/image + certificate when available.
+ * Fetches full image gallery from Drive API for carousel display.
+ * Supports: multiple images, videos, certificate slide.
  */
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -22,6 +22,14 @@ import { brand, lightTokens, darkTokens, legacyTypography as typography, zIndex,
 import { emeraldCore, goldAccent } from '../../../../design-system/tokens/colors';
 import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
 import { accentuate } from '../../../../pages/collection/CollectionPage';
+
+/** A single media slide in the carousel */
+interface MediaSlide {
+  id: string;
+  url: string;
+  type: 'image' | 'video';
+  alt: string;
+}
 
 /** Extract fileId from proxy URL and return a clean video streaming URL */
 function getVideoUrl(thumbnailUrl: string): string {
@@ -62,18 +70,74 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
   const [certLoading, setCertLoading] = useState(true);
   const [activeSlide, setActiveSlide] = useState(0);
 
+  // Gallery state — fetched from Drive API
+  const [gallerySlides, setGallerySlides] = useState<MediaSlide[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+
   const hasCertificate = !!product?.certificateUrl;
   const isPdf = product?.certificateUrl?.endsWith('.pdf');
-  const slideCount = hasCertificate ? 2 : 1;
 
-  // Reset state when product changes
+  // Total slides = gallery images + certificate (if any)
+  const slideCount = gallerySlides.length + (hasCertificate ? 1 : 0);
+
+  // Fetch full gallery from Drive API when product changes
   useEffect(() => {
-    if (product?.mediaType === 'video') setVideoLoading(true);
-    if (product?.certificateUrl && !product.certificateUrl.endsWith('.pdf')) setCertLoading(true);
+    if (!product) return;
+
     setActiveSlide(0);
+    setVideoLoading(true);
+    if (product.certificateUrl && !product.certificateUrl.endsWith('.pdf')) setCertLoading(true);
+
+    // Start with the product's existing image as fallback
+    const fallbackSlide: MediaSlide = {
+      id: `fallback-${product.item}`,
+      url: product.mediaType === 'video'
+        ? (product.videoUrl || getVideoUrl(product.imagen))
+        : product.imagen,
+      type: product.mediaType === 'video' ? 'video' : 'image',
+      alt: product.nombre,
+    };
+
+    if (product.imagen) {
+      setGallerySlides([fallbackSlide]);
+    } else {
+      setGallerySlides([]);
+    }
+
+    // Fetch full gallery from API
+    if (product.item) {
+      setGalleryLoading(true);
+      fetch(`/api/get-drive-images?itemNumber=${product.item}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.images?.length > 0) {
+            const driveSlides: MediaSlide[] = data.images
+              .sort((a: any, b: any) => {
+                // Images first, then videos
+                if (a.type === 'image' && b.type === 'video') return -1;
+                if (a.type === 'video' && b.type === 'image') return 1;
+                return (a.order ?? 0) - (b.order ?? 0);
+              })
+              .map((img: any) => ({
+                id: img.id,
+                url: img.type === 'video'
+                  ? `/api/serve-drive-image?fileId=${img.id}`
+                  : (img.proxyUrl || img.fullUrl || img.previewUrl || img.thumbnailUrl),
+                type: img.type as 'image' | 'video',
+                alt: img.name || `${product.nombre} - ${(img.order ?? 0) + 1}`,
+              }));
+            setGallerySlides(driveSlides);
+          }
+        })
+        .catch((err) => {
+          console.warn('Failed to fetch gallery:', err);
+          // Keep fallback slide
+        })
+        .finally(() => setGalleryLoading(false));
+    }
   }, [product]);
 
-  // Carousel swipe handling — swipe right on slide 0 closes dialog
+  // Carousel swipe handling
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -83,29 +147,38 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-    // Only handle horizontal swipes (ignore vertical scroll)
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
       if (deltaX < 0 && activeSlide < slideCount - 1) {
         setActiveSlide((s) => s + 1);
       } else if (deltaX > 0 && activeSlide > 0) {
         setActiveSlide((s) => s - 1);
-      } else if (deltaX > 100 && activeSlide === 0) {
-        // Swipe right on first slide closes dialog
-        onClose();
       }
     }
-  }, [activeSlide, slideCount, onClose]);
+  }, [activeSlide, slideCount]);
 
-  // Force video to play immediately when dialog opens
+  // Keyboard navigation
   useEffect(() => {
-    if (product && product.mediaType === 'video' && videoRef.current && activeSlide === 0) {
-      const video = videoRef.current;
-      video.currentTime = 0;
-      video.play().catch((err) => {
-        console.warn('Video autoplay failed:', err);
-      });
+    if (!product) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' && activeSlide > 0) setActiveSlide((s) => s - 1);
+      if (e.key === 'ArrowRight' && activeSlide < slideCount - 1) setActiveSlide((s) => s + 1);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [product, activeSlide, slideCount]);
+
+  // Auto-play video when its slide is active
+  useEffect(() => {
+    if (!product || activeSlide >= gallerySlides.length) return;
+    const slide = gallerySlides[activeSlide];
+    if (slide?.type === 'video' && videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {});
     }
-  }, [product, activeSlide]);
+  }, [product, activeSlide, gallerySlides]);
+
+  // Certificate slide index
+  const certSlideIndex = hasCertificate ? gallerySlides.length : -1;
 
   return (
     <Dialog
@@ -144,9 +217,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
         {product && (
           <>
             {/* Media Carousel */}
-            <Box
-              sx={{ position: 'relative', overflow: 'hidden' }}
-            >
+            <Box sx={{ position: 'relative', overflow: 'hidden' }}>
               <Box
                 sx={{
                   display: 'flex',
@@ -154,12 +225,12 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                   transform: `translateX(-${activeSlide * 100}%)`,
                 }}
               >
-                {/* Slide 1: Video or Image */}
-                <Box sx={{ minWidth: '100%', aspectRatio: '1/1', position: 'relative' }}>
-                  {product.imagen && (
-                    product.mediaType === 'video' ? (
+                {/* Gallery slides */}
+                {gallerySlides.map((slide) => (
+                  <Box key={slide.id} sx={{ minWidth: '100%', aspectRatio: '1/1', position: 'relative' }}>
+                    {slide.type === 'video' ? (
                       <Box sx={{ width: '100%', height: '100%', bgcolor: '#000', position: 'relative' }}>
-                        {videoLoading && (
+                        {videoLoading && activeSlide === gallerySlides.indexOf(slide) && (
                           <Box
                             sx={{
                               position: 'absolute',
@@ -179,20 +250,18 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                           </Box>
                         )}
                         <video
-                          ref={videoRef}
-                          key={product.item}
-                          src={product.videoUrl || getVideoUrl(product.imagen)}
+                          ref={activeSlide === gallerySlides.indexOf(slide) ? videoRef : undefined}
+                          key={slide.id}
+                          src={slide.url}
                           poster={product.posterUrl}
                           autoPlay
                           muted
                           loop
                           playsInline
                           preload="auto"
-                          webkit-playsinline="true"
                           onLoadedData={(e) => {
                             setVideoLoading(false);
-                            const video = e.target as HTMLVideoElement;
-                            video.play().catch(() => {});
+                            (e.target as HTMLVideoElement).play().catch(() => {});
                           }}
                           style={{
                             width: '100%',
@@ -205,8 +274,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     ) : (
                       <Box
                         component="img"
-                        src={product.imagen}
-                        alt={product.nombre}
+                        src={slide.url}
+                        alt={slide.alt}
                         sx={{
                           width: '100%',
                           height: '100%',
@@ -214,11 +283,11 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                           display: 'block',
                         }}
                       />
-                    )
-                  )}
-                </Box>
+                    )}
+                  </Box>
+                ))}
 
-                {/* Slide 2: Certificate */}
+                {/* Certificate slide (last) */}
                 {hasCertificate && (
                   <Box
                     sx={{
@@ -233,7 +302,6 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     }}
                   >
                     {isPdf ? (
-                      // PDF: show a branded card that opens the PDF
                       <Box
                         component="a"
                         href={product.certificateUrl}
@@ -271,7 +339,6 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                         </Box>
                       </Box>
                     ) : (
-                      // Image certificate: display inline with loading state
                       <>
                         {certLoading && (
                           <Box
@@ -311,6 +378,53 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                   </Box>
                 )}
               </Box>
+
+              {/* Slide counter */}
+              {slideCount > 1 && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 12,
+                    left: 12,
+                    bgcolor: 'rgba(0,0,0,0.5)',
+                    backdropFilter: 'blur(4px)',
+                    borderRadius: 1.5,
+                    px: 1,
+                    py: 0.3,
+                    zIndex: zIndex.base,
+                  }}
+                >
+                  <Typography sx={{ color: '#fff', fontSize: '0.7rem', fontWeight: 600 }}>
+                    {activeSlide + 1} / {slideCount}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Gallery loading indicator */}
+              {galleryLoading && gallerySlides.length <= 1 && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    bottom: 40,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    bgcolor: 'rgba(0,0,0,0.5)',
+                    backdropFilter: 'blur(4px)',
+                    borderRadius: 2,
+                    px: 1.5,
+                    py: 0.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    zIndex: zIndex.base,
+                  }}
+                >
+                  <CircularProgress size={14} sx={{ color: '#fff' }} />
+                  <Typography sx={{ color: '#fff', fontSize: '0.7rem' }}>
+                    Loading gallery...
+                  </Typography>
+                </Box>
+              )}
 
               {/* Carousel Navigation Arrows (desktop) */}
               {slideCount > 1 && !isMobile && (
@@ -373,7 +487,9 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                         width: activeSlide === i ? 18 : 8,
                         height: 8,
                         borderRadius: 4,
-                        bgcolor: activeSlide === i ? brand.emerald[400] : 'rgba(255,255,255,0.5)',
+                        bgcolor: activeSlide === i
+                          ? (i === certSlideIndex ? goldAccent.primary : brand.emerald[400])
+                          : 'rgba(255,255,255,0.5)',
                         cursor: 'pointer',
                         transition: cssTransition.fast,
                       }}
@@ -382,10 +498,10 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                 </Box>
               )}
 
-              {/* Certificate badge on video slide */}
-              {hasCertificate && activeSlide === 0 && (
+              {/* Certificate badge */}
+              {hasCertificate && activeSlide !== certSlideIndex && (
                 <Box
-                  onClick={() => setActiveSlide(1)}
+                  onClick={() => setActiveSlide(certSlideIndex)}
                   sx={{
                     position: 'absolute',
                     bottom: slideCount > 1 ? 32 : 12,
@@ -443,7 +559,6 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     )}
                   </Box>
                 </Box>
-                {/* Share icon button */}
                 {onShare && (
                   <IconButton
                     onClick={() => onShare(product)}
@@ -459,7 +574,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                 )}
               </Box>
 
-              {/* Specs + Price — labeled rows */}
+              {/* Specs + Price */}
               <Box
                 sx={{
                   display: 'grid',
@@ -467,7 +582,6 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                   gap: 1.5,
                 }}
               >
-                {/* Price */}
                 {(showUSD && (product.precioInternacional || product.precioCOP)) && (
                   <Box>
                     <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontWeight: 500, mb: 0.25 }}>
@@ -487,7 +601,6 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     </Typography>
                   </Box>
                 )}
-                {/* Price per Carat */}
                 {(showUSD && (product.precioInternacional || product.precioCOP) && typeof product.peso === 'number' && product.peso > 0) && (
                   <Box>
                     <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontWeight: 500, mb: 0.25 }}>
@@ -506,7 +619,6 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     </Typography>
                   </Box>
                 )}
-                {/* Carats */}
                 {typeof product.peso === 'number' && (
                   <Box>
                     <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontWeight: 500, mb: 0.25 }}>
@@ -517,7 +629,6 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     </Typography>
                   </Box>
                 )}
-                {/* Cut */}
                 {product.talla && (
                   <Box>
                     <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontWeight: 500, mb: 0.25 }}>
@@ -529,7 +640,6 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                   </Box>
                 )}
               </Box>
-              {/* Fallback non-USD price */}
               {!(showUSD && (product.precioInternacional || product.precioCOP)) && (
                 <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />
               )}
@@ -540,4 +650,3 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
     </Dialog>
   );
 };
-
