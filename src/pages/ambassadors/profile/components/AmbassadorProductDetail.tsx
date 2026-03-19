@@ -54,6 +54,7 @@ export function AmbassadorProductDetail({ item, onBack }: AmbassadorProductDetai
 
   // Fetch gallery from Drive API
   useEffect(() => {
+    const controller = new AbortController();
     setActiveSlide(0);
 
     // Fallback: use existing thumbnail/image
@@ -69,7 +70,7 @@ export function AmbassadorProductDetail({ item, onBack }: AmbassadorProductDetai
 
     if (item.item) {
       setGalleryLoading(true);
-      fetch(`/api/get-drive-images?itemNumber=${item.item}`)
+      fetch(`/api/get-drive-images?itemNumber=${item.item}`, { signal: controller.signal })
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.images?.length > 0) {
@@ -90,9 +91,13 @@ export function AmbassadorProductDetail({ item, onBack }: AmbassadorProductDetai
             setGallerySlides(driveSlides);
           }
         })
-        .catch((err) => console.warn('Failed to fetch gallery:', err))
+        .catch((err) => {
+          if (err.name !== 'AbortError') console.warn('Failed to fetch gallery:', err);
+        })
         .finally(() => setGalleryLoading(false));
     }
+
+    return () => controller.abort();
   }, [item.item]);
 
   // Swipe handling
@@ -185,7 +190,7 @@ export function AmbassadorProductDetail({ item, onBack }: AmbassadorProductDetai
                       muted
                       loop
                       playsInline
-                      preload="auto"
+                      preload={idx === activeSlide ? 'auto' : 'none'}
                       style={{
                         width: '100%',
                         height: '100%',

@@ -434,7 +434,10 @@ export const IOSFilePicker: React.FC<IOSFilePickerProps> = ({
                 />
               ) : (
                 <video
-                  src={fileWithPreview.preview}
+                  src={`${fileWithPreview.preview}#t=0.001`}
+                  muted
+                  playsInline
+                  preload="metadata"
                   style={{
                     width: '100%',
                     height: '100%',

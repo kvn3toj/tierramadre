@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import { MediaType } from '../../types';
 import { getVideoUrl, isVideoReference } from '../../utils/videoStorage';
@@ -33,6 +33,8 @@ export default function MediaPreview({
 }: MediaPreviewProps) {
   const [videoObjectUrl, setVideoObjectUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Track blob URL in ref for proper cleanup (avoids stale closure)
+  const objectUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     // If it's a video reference (indexeddb://), load the video from IndexedDB
@@ -41,6 +43,7 @@ export default function MediaPreview({
       getVideoUrl(mediaUrl)
         .then((url) => {
           if (url) {
+            objectUrlRef.current = url;
             setVideoObjectUrl(url);
           }
           setLoading(false);
@@ -50,10 +53,11 @@ export default function MediaPreview({
           setLoading(false);
         });
 
-      // Cleanup
+      // Cleanup: revoke blob URL via ref (not stale closure)
       return () => {
-        if (videoObjectUrl) {
-          URL.revokeObjectURL(videoObjectUrl);
+        if (objectUrlRef.current) {
+          URL.revokeObjectURL(objectUrlRef.current);
+          objectUrlRef.current = null;
         }
       };
     }

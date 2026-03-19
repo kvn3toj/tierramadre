@@ -84,6 +84,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
   useEffect(() => {
     if (!product) return;
 
+    const controller = new AbortController();
     setActiveSlide(0);
     setVideoLoading(true);
     if (product.certificateUrl && !product.certificateUrl.endsWith('.pdf')) setCertLoading(true);
@@ -107,7 +108,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
     // Fetch full gallery from API
     if (product.item) {
       setGalleryLoading(true);
-      fetch(`/api/get-drive-images?itemNumber=${product.item}`)
+      fetch(`/api/get-drive-images?itemNumber=${product.item}`, { signal: controller.signal })
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.images?.length > 0) {
@@ -130,11 +131,13 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
           }
         })
         .catch((err) => {
-          console.warn('Failed to fetch gallery:', err);
+          if (err.name !== 'AbortError') console.warn('Failed to fetch gallery:', err);
           // Keep fallback slide
         })
         .finally(() => setGalleryLoading(false));
     }
+
+    return () => controller.abort();
   }, [product]);
 
   // Carousel swipe handling
@@ -254,11 +257,11 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                           key={slide.id}
                           src={`${slide.url}#t=0.001`}
                           poster={product.posterUrl}
-                          autoPlay
+                          autoPlay={activeSlide === gallerySlides.indexOf(slide)}
                           muted
                           loop
                           playsInline
-                          preload="auto"
+                          preload={activeSlide === gallerySlides.indexOf(slide) ? 'auto' : 'none'}
                           onLoadedData={(e) => {
                             setVideoLoading(false);
                             (e.target as HTMLVideoElement).play().catch(() => {});
