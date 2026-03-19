@@ -59,12 +59,17 @@ export default withApiHandler(async (req, res, { drive, sharedDriveId }) => {
           const result = await getFirstImageOrVideoThumbnail(drive, folder.id);
           if (result) {
             const { file, isVideo } = result;
+            // Generate tiny placeholder URL from Google's thumbnailLink (20px for LQIP blur-up)
+            const tinyThumb = file.thumbnailLink
+              ? file.thumbnailLink.replace(/=s\d+/, '=s20')
+              : null;
             return {
               itemNumber,
               fileId: file.id,
               // Use 'small' size (400px) for grid thumbnails - faster loading, less bandwidth
               proxyUrl: getProxyUrl(file.id, isVideo, 'small'),
               isVideo,
+              tinyThumb,
             };
           }
         } catch (error) {
@@ -76,10 +81,12 @@ export default withApiHandler(async (req, res, { drive, sharedDriveId }) => {
 
     results.forEach((result) => {
       if (result) {
-        thumbnails[result.itemNumber] = {
+        const entry = {
           url: result.proxyUrl,
           isVideoThumbnail: result.isVideo,
         };
+        if (result.tinyThumb) entry.tinyThumb = result.tinyThumb;
+        thumbnails[result.itemNumber] = entry;
       }
     });
   }
@@ -113,4 +120,4 @@ export default withApiHandler(async (req, res, { drive, sharedDriveId }) => {
     count,
     lastUpdated: new Date().toISOString(),
   });
-}, { methods: ['GET', 'OPTIONS'], cache: CACHE.MEDIUM, provideDrive: true, requireDriveId: true, errorPrefix: 'GetBatchThumbnails' });
+}, { methods: ['GET', 'OPTIONS'], cache: CACHE.CATALOG, provideDrive: true, requireDriveId: true, errorPrefix: 'GetBatchThumbnails' });

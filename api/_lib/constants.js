@@ -53,15 +53,17 @@ export const CACHE = {
   SHORT: 's-maxage=60, stale-while-revalidate=30',
   MEDIUM: 's-maxage=300, max-age=60, stale-while-revalidate=600',
   LONG: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400', // 24h browser, 7d CDN, 24h stale
-  // Images: 1h browser + 1h CDN (Drive files can be deleted/replaced)
-  IMAGES: 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=300',
+  // Catalog data (thumbnails map): 1h CDN, 5min browser, stale up to 2h while revalidating
+  CATALOG: 's-maxage=3600, max-age=300, stale-while-revalidate=7200',
+  // Images: 1h browser + 24h CDN (Drive fileIds are immutable — new uploads get new IDs)
+  IMAGES: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=3600',
 };
 
 // Invitation Settings — no time limit on guest access
 export const INVITATION_DURATION_HOURS = 876000; // ~100 years
 
-// Batch Processing
-export const BATCH_SIZE = 10;
+// Batch Processing (25 concurrent Drive API calls — well within 12,000 queries/min limit)
+export const BATCH_SIZE = 25;
 export const MAX_PAGE_SIZE = 500;
 
 // Supported Media Types

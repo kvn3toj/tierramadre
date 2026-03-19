@@ -159,6 +159,7 @@ function GridCard({
               layout="full"
               quality="eco"
               priority={priority}
+              tinyThumb={item.tinyThumb}
             />
 
             {/* Depth gradient overlay */}

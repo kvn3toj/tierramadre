@@ -123,6 +123,7 @@ export function useTreasure() {
         mediaType,
         thumbnailUrl: convertToProxyUrl(rawThumbnailUrl),
         galleryCount,
+        tinyThumb: batchThumb?.tinyThumb,
       };
     });
   }, [sheetsTreasure, legacyMedia, galleries, batchThumbnails]);

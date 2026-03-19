@@ -11,11 +11,14 @@ import { fetchWithRetry } from '../utils/fetchWithRetry';
 
 // Cache configuration
 const CACHE_KEY = STORAGE_KEYS.BATCH_THUMBNAILS;
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours (hard expiry)
+const SOFT_TTL = 30 * 60 * 1000; // 30 minutes (triggers background refresh)
 
 export interface ThumbnailInfo {
   url: string;
   isVideoThumbnail: boolean;
+  /** Tiny 20px Google thumbnail URL for LQIP blur-up placeholder */
+  tinyThumb?: string;
 }
 
 interface ThumbnailCache {
@@ -31,7 +34,7 @@ interface UseBatchThumbnailsReturn {
 }
 
 /**
- * Load cached thumbnails
+ * Load cached thumbnails (valid within CACHE_TTL)
  */
 function getCachedThumbnails(): Record<number, ThumbnailInfo> | null {
   try {
@@ -46,6 +49,21 @@ function getCachedThumbnails(): Record<number, ThumbnailInfo> | null {
     // Ignore cache errors
   }
   return null;
+}
+
+/**
+ * Check if cache is past soft TTL (still valid, but should refresh in background)
+ */
+function isCacheStale(): boolean {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return false;
+
+    const { timestamp }: ThumbnailCache = JSON.parse(cached);
+    return Date.now() - timestamp >= SOFT_TTL;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -89,9 +107,11 @@ async function fetchThumbnails(): Promise<Record<number, ThumbnailInfo>> {
       // Old format: just a URL string
       thumbnails[itemNumber] = { url: value, isVideoThumbnail: false };
     } else if (value && typeof value === 'object') {
-      // New format: { url, isVideoThumbnail }
-      const obj = value as { url: string; isVideoThumbnail: boolean };
-      thumbnails[itemNumber] = { url: obj.url, isVideoThumbnail: obj.isVideoThumbnail };
+      // New format: { url, isVideoThumbnail, tinyThumb? }
+      const obj = value as { url: string; isVideoThumbnail: boolean; tinyThumb?: string };
+      const info: ThumbnailInfo = { url: obj.url, isVideoThumbnail: obj.isVideoThumbnail };
+      if (obj.tinyThumb) info.tinyThumb = obj.tinyThumb;
+      thumbnails[itemNumber] = info;
     }
   }
 
@@ -137,11 +157,19 @@ export function useBatchThumbnails(): UseBatchThumbnailsReturn {
     }
   }, []);
 
-  // Initial load - only fetch from API if cache was empty (already loaded synchronously)
+  // Initial load - fetch from API if cache was empty, or background-refresh if stale
   useEffect(() => {
     const hasInitialCache = Object.keys(thumbnails).length > 0;
     if (!hasInitialCache) {
-      loadThumbnails(true); // Skip cache check, go directly to API
+      loadThumbnails(true); // No cache — fetch with loading state
+    } else if (isCacheStale()) {
+      // Cache is valid but stale — refresh silently in background (no loading state)
+      fetchThumbnails()
+        .then((data) => {
+          setThumbnails(data);
+          setCachedThumbnails(data);
+        })
+        .catch((err) => console.warn('[Thumbnails] Background refresh failed:', err));
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

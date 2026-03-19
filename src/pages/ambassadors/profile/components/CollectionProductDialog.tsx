@@ -92,8 +92,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
     const fallbackSlide: MediaSlide = {
       id: `fallback-${product.item}`,
       url: product.mediaType === 'video'
-        ? (product.videoUrl || getVideoUrl(product.imagen))
-        : product.imagen,
+        ? (product.videoUrl || getVideoUrl(product.imagen || ''))
+        : (product.imagen || ''),
       type: product.mediaType === 'video' ? 'video' : 'image',
       alt: product.nombre,
     };

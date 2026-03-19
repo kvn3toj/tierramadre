@@ -47,6 +47,8 @@ interface ProgressiveImageProps {
   enableLQIP?: boolean;
   /** Quality preset: 'eco' for fast loading, 'good' for balance, 'best' for quality */
   quality?: 'eco' | 'good' | 'best';
+  /** Tiny thumbnail URL (20px) for LQIP blur-up on non-Cloudinary images */
+  tinyThumb?: string;
 }
 
 export default function ProgressiveImage({
@@ -63,6 +65,7 @@ export default function ProgressiveImage({
   layout = 'grid',
   enableLQIP = true,
   quality = 'good',
+  tinyThumb,
 }: ProgressiveImageProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
@@ -108,10 +111,13 @@ export default function ProgressiveImage({
         : src,
       srcSet: isCloudinary ? getResponsiveSrcSet(src, srcSetWidths, cloudinaryQuality) : '',
       sizes: isCloudinary ? getImageSizes(layout) : '',
-      // Disable LQIP for eco mode to reduce requests
-      lqipSrc: isCloudinary && enableLQIP && quality !== 'eco' ? getLQIPUrl(src) : '',
+      // LQIP: Cloudinary tiny URL for Cloudinary images, tinyThumb for Drive proxy images
+      // tinyThumb is always allowed even in eco mode (20px = ~200 bytes, negligible cost)
+      lqipSrc: enableLQIP
+        ? (isCloudinary && quality !== 'eco' ? getLQIPUrl(src) : (tinyThumb || ''))
+        : '',
     };
-  }, [src, width, layout, enableLQIP, quality, cloudinaryQuality]);
+  }, [src, width, layout, enableLQIP, quality, cloudinaryQuality, tinyThumb]);
 
   /**
    * Retry image loading with exponential backoff
@@ -158,37 +164,8 @@ export default function ProgressiveImage({
     };
   }, [lqipSrc, enableLQIP]);
 
-  // Preload main image with retry logic (skip for eco mode unless priority - use native lazy loading)
-  useEffect(() => {
-    if (!shouldLoad || !optimizedSrc || (quality === 'eco' && !priority)) return;
-
-    const img = new Image();
-
-    // Add cache-busting for retries
-    const srcWithCacheBust = retryCount > 0
-      ? `${optimizedSrc}${optimizedSrc.includes('?') ? '&' : '?'}retry=${retryCount}&t=${Date.now()}`
-      : optimizedSrc;
-
-    img.src = srcWithCacheBust;
-    if (srcSet) img.srcset = srcSet;
-
-    img.onload = () => {
-      log.info('Image preload success', { src: optimizedSrc, attempts: retryCount + 1 });
-      setLoaded(true);
-      setError(false);
-      setRetryCount(0);
-    };
-
-    img.onerror = () => {
-      log.warn('Image preload failed', { src: optimizedSrc, attempt: retryCount + 1 });
-      retryImageLoad(retryCount);
-    };
-
-    return () => {
-      img.onload = null;
-      img.onerror = null;
-    };
-  }, [optimizedSrc, srcSet, shouldLoad, quality, retryCount, retryImageLoad]);
+  // Note: Main image loading is handled by the <img> element's onLoad/onError callbacks.
+  // Previously, a separate useEffect preloaded via `new Image()` which caused double network requests.
 
   // Container bgcolor matches Skeleton bgcolor — eliminates any white gap
   // between mounting and Skeleton's first paint frame

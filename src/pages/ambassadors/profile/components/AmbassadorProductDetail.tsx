@@ -24,7 +24,6 @@ import {
 import { formatFullCurrency } from '../../../../utils/formatting';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
-import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
 import type { TreasureItem } from '../../../../types';
 
 interface MediaSlide {
@@ -60,7 +59,7 @@ export function AmbassadorProductDetail({ item, onBack }: AmbassadorProductDetai
     // Fallback: use existing thumbnail/image
     const fallback: MediaSlide = {
       id: `fallback-${item.item}`,
-      url: item.thumbnailUrl || item.imagen,
+      url: item.thumbnailUrl || item.imagen || '',
       type: item.mediaType === 'video' ? 'video' : 'image',
       alt: item.nombre,
     };

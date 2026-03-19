@@ -163,7 +163,7 @@ export async function getFirstImageOrVideoThumbnail(drive, folderId) {
   // orderBy='name' ensures consistent "first image" selection across API calls
   const imageResponse = await drive.files.list({
     q: `'${folderId}' in parents and (${imageMimeTypeQuery}) and trashed=false`,
-    fields: 'files(id, name, mimeType)',
+    fields: 'files(id, name, mimeType, thumbnailLink)',
     orderBy: 'name', // Alphabetical ordering for stability
     pageSize: 1,
     supportsAllDrives: true,

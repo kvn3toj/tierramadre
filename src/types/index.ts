@@ -258,6 +258,7 @@ export interface TreasureItem {
   videoUrl?: string;         // Direct URL to static video file (e.g., /videos/ceo-collection/901.mp4)
   posterUrl?: string;        // Direct URL to video poster image
   galleryCount?: number;     // Number of media items in gallery
+  tinyThumb?: string;        // Tiny 20px Google thumbnail URL for LQIP blur-up
   costoTM?: number;
   precioCOP: number;
   precioInternacional?: number;  // International price from Google Sheets (Column H)
