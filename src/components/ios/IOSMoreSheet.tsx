@@ -724,15 +724,54 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
               </Box>
             )}
 
-            {/* Price Multiplier Row - Only for currency-authorized */}
-            {canToggleCurrency && (
+          </Box>
+        )}
+
+        {/* Grouped Tool Sections */}
+        <Box sx={{ padding: spacing.md }}>
+          {menuSections.map((section) => (
+            <Box key={section.id} sx={{ mb: spacing.md }}>
+              {/* Section Header */}
+              <Typography
+                variant="overline"
+                sx={{
+                  fontSize: iosTypographyScale.caption2,
+                  fontWeight: 600,
+                  color: 'var(--text-secondary)',
+                  letterSpacing: '0.08em',
+                  mb: 1,
+                  display: 'block',
+                  px: spacing.xs,
+                }}
+              >
+                {section.title}
+              </Typography>
+
+              <Box sx={{ display: 'grid', gap: spacing.xs }}>
+                {section.tools.map(renderToolRow)}
+              </Box>
+            </Box>
+          ))}
+
+          {/* Divider */}
+          <Box sx={{ height: '0.5px', bgcolor: 'var(--border-default)', my: spacing.sm }} />
+
+          {/* Bottom Items (Settings + Feedback) */}
+          <Box sx={{ display: 'grid', gap: spacing.xs }}>
+            {bottomTools.map(renderToolRow)}
+          </Box>
+
+          {/* Price Multiplier - at bottom, only for currency-authorized */}
+          {canToggleCurrency && (
+            <>
+              <Box sx={{ height: '0.5px', bgcolor: 'var(--border-default)', my: spacing.sm }} />
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  paddingX: spacing.md,
                   paddingY: spacing.sm,
+                  paddingX: spacing.xs,
                 }}
               >
                 <Box>
@@ -786,43 +825,8 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({ open, onClose, onOpenSettin
                   </Typography>
                 </Box>
               </Box>
-            )}
-          </Box>
-        )}
-
-        {/* Grouped Tool Sections */}
-        <Box sx={{ padding: spacing.md }}>
-          {menuSections.map((section) => (
-            <Box key={section.id} sx={{ mb: spacing.md }}>
-              {/* Section Header */}
-              <Typography
-                variant="overline"
-                sx={{
-                  fontSize: iosTypographyScale.caption2,
-                  fontWeight: 600,
-                  color: 'var(--text-secondary)',
-                  letterSpacing: '0.08em',
-                  mb: 1,
-                  display: 'block',
-                  px: spacing.xs,
-                }}
-              >
-                {section.title}
-              </Typography>
-
-              <Box sx={{ display: 'grid', gap: spacing.xs }}>
-                {section.tools.map(renderToolRow)}
-              </Box>
-            </Box>
-          ))}
-
-          {/* Divider */}
-          <Box sx={{ height: '0.5px', bgcolor: 'var(--border-default)', my: spacing.sm }} />
-
-          {/* Bottom Items (Settings + Feedback) */}
-          <Box sx={{ display: 'grid', gap: spacing.xs }}>
-            {bottomTools.map(renderToolRow)}
-          </Box>
+            </>
+          )}
         </Box>
 
       </Box>
