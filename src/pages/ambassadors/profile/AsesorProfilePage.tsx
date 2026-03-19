@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useMatch } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -70,8 +70,11 @@ export default function AsesorProfilePage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
+  // URL-based product detail: /ambassadors/:slug/product/:itemId
+  const productMatch = useMatch('/ambassadors/:slug/product/:itemId');
+  const urlItemId = productMatch?.params?.itemId;
   // View state
-  const [activeView, setActiveView] = useState<ProfileView>('museum');
+  const [activeView, setActiveView] = useState<ProfileView>(() => urlItemId ? 'productDetail' : 'museum');
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<TreasureItem | null>(null);
 
@@ -190,6 +193,24 @@ export default function AsesorProfilePage() {
     };
   }, [allProducts]);
 
+  // Sync URL → state: when urlItemId changes, resolve product and set view
+  useEffect(() => {
+    if (urlItemId) {
+      const id = parseInt(urlItemId, 10);
+      const found = allProducts.find(p => p.item === id)
+        || collectionProducts.find(p => p.item === id);
+      if (found) {
+        setSelectedProduct(found);
+        setActiveView('productDetail');
+      }
+    } else if (activeView === 'productDetail' || activeView === 'favoriteDetail') {
+      // URL no longer has itemId (back navigation) — return to museum
+      setActiveView('museum');
+      setSelectedProduct(null);
+      setSelectedCategory(null);
+    }
+  }, [urlItemId, allProducts, collectionProducts]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Handlers — wrapped in useCallback to stabilize references for React.memo children
   const handleBack = useCallback(() => navigate('/ambassadors'), [navigate]);
 
@@ -199,14 +220,12 @@ export default function AsesorProfilePage() {
   }, []);
 
   const handleProductClick = useCallback((item: TreasureItem) => {
-    setSelectedProduct(item);
-    setActiveView('productDetail');
-  }, []);
+    navigate(`/ambassadors/${slug}/product/${item.item}`);
+  }, [navigate, slug]);
 
   const handleFavoriteItemClick = useCallback((item: TreasureItem) => {
-    setSelectedProduct(item);
-    setActiveView('favoriteDetail');
-  }, []);
+    navigate(`/ambassadors/${slug}/product/${item.item}`);
+  }, [navigate, slug]);
 
   const handleShare = useCallback(async () => {
     if (!asesor) return;
@@ -258,6 +277,10 @@ export default function AsesorProfilePage() {
 
   const handleCloseCotizacionPreview = useCallback(() => setSelectedCotizacion(null), []);
 
+  const handleCollectionProductClick = useCallback((item: TreasureItem) => {
+    navigate(`/ambassadors/${slug}/product/${item.item}`);
+  }, [navigate, slug]);
+
   const handleCloseCollectionDialog = useCallback(() => setSelectedCollectionProduct(null), []);
 
   // Keep selectedCategory ref for back navigation from product detail
@@ -265,14 +288,9 @@ export default function AsesorProfilePage() {
   selectedCategoryRef.current = selectedCategory;
 
   const handleProductDetailBack = useCallback(() => {
-    if (selectedCategoryRef.current) {
-      setActiveView('category');
-    } else {
-      setActiveView('museum');
-      setSelectedCategory(null);
-      setSelectedProduct(null);
-    }
-  }, []);
+    // Navigate back to ambassador profile (URL change triggers state reset via useEffect)
+    navigate(`/ambassadors/${slug}`);
+  }, [navigate, slug]);
 
   const handleEditSave = useCallback(async (data: { especialidad?: string; whatsapp?: string }) => {
     const res = await fetch('/api/user-prefs', {
@@ -462,7 +480,7 @@ export default function AsesorProfilePage() {
                 collectionDescription={collectionInfo?.description}
                 collectionFolder={collectionFolder}
                 isLoading={collectionLoading}
-                onProductClick={setSelectedCollectionProduct}
+                onProductClick={handleCollectionProductClick}
                 onShare={isProfileOwner ? handleShareCollection : undefined}
               />
             )}

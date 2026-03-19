@@ -7,8 +7,8 @@
  * Prices always shown in USD.
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useCallback, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -291,7 +291,8 @@ function ProductCard({
 }
 
 export default function CollectionPage() {
-  const { folder } = useParams<{ folder: string }>();
+  const { folder, itemId } = useParams<{ folder: string; itemId?: string }>();
+  const navigate = useNavigate();
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
 
@@ -303,8 +304,6 @@ export default function CollectionPage() {
   const browserInfo = useMemo(() => getCachedBrowserInfo(), []);
   const [urlCopied, setUrlCopied] = useState(false);
   const { products: apiProducts, collectionInfo, isLoading: apiLoading, error: apiError } = useAsesorCollection(isCeoCollection ? null : driveFolder);
-  const [selectedProduct, setSelectedProduct] = useState<TreasureItem | null>(null);
-  const dialogOpenRef = useRef(false);
 
   // Only show splash once per browser session per collection
   const splashSessionKey = `tm_collection_splash_${folder}`;
@@ -315,38 +314,28 @@ export default function CollectionPage() {
     setShowSplash(false);
   }, [splashSessionKey]);
 
-  // Push a history entry when dialog opens (closed → open only) so browser
-  // Back closes the dialog instead of navigating away from the page
-  useEffect(() => {
-    const wasOpen = dialogOpenRef.current;
-    dialogOpenRef.current = !!selectedProduct;
-    if (!wasOpen && selectedProduct) {
-      window.history.pushState({ collectionDialog: true }, '');
-    }
-  }, [selectedProduct]);
+  // CEO collection uses static data; others use API
+  const products = isCeoCollection ? CEO_STATIC_PRODUCTS : apiProducts;
 
-  // Intercept popstate (back button) to close the dialog
-  useEffect(() => {
-    const handlePopState = () => {
-      if (dialogOpenRef.current) {
-        setSelectedProduct(null);
-      }
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  // URL-driven product selection: resolve itemId param to a product
+  const selectedProduct = useMemo(() => {
+    if (!itemId) return null;
+    const id = parseInt(itemId, 10);
+    return products.find(p => p.item === id) || null;
+  }, [itemId, products]);
 
-  // Close dialog by popping the history entry we pushed
+  // Navigate to product detail URL
+  const handleProductClick = useCallback((item: TreasureItem) => {
+    navigate(`/c/${folder}/${item.item}`);
+  }, [navigate, folder]);
+
+  // Close dialog by navigating back to collection grid
   const handleCloseDialog = useCallback(() => {
-    if (dialogOpenRef.current) {
-      window.history.back();
-    }
-  }, []);
+    navigate(`/c/${folder}`);
+  }, [navigate, folder]);
 
   const contact = folder ? COLLECTION_CONTACTS[folder] : null;
 
-  // CEO collection uses static data; others use API
-  const products = isCeoCollection ? CEO_STATIC_PRODUCTS : apiProducts;
   const isLoading = isCeoCollection ? false : apiLoading;
   const error = isCeoCollection ? null : apiError;
   const sortedProducts = products;
@@ -358,14 +347,14 @@ export default function CollectionPage() {
   };
 
   const handleProductShare = useCallback(async (product: TreasureItem) => {
-    const url = window.location.href;
+    const url = `${window.location.origin}/c/${folder}/${product.item}`;
     const text = `${product.nombre} - ${product.peso} ct Colombian Emerald`;
     if (navigator.share) {
       try { await navigator.share({ title: 'Tierra Madre', text, url }); } catch { /* user cancelled */ }
     } else {
       await navigator.clipboard.writeText(url);
     }
-  }, []);
+  }, [folder]);
 
   // Block restricted slugs
   if (isBlocked) {
@@ -601,7 +590,7 @@ export default function CollectionPage() {
               <Grid item xs={6} sm={4} md={3} key={item.item}>
                 <ProductCard
                   item={item}
-                  onClick={() => setSelectedProduct(item)}
+                  onClick={() => handleProductClick(item)}
                   isLight={isLight}
                 />
               </Grid>

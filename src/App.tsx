@@ -162,6 +162,11 @@ function AppContent() {
               <AsesorProfilePage />
             </Suspense>
           } />
+          <Route path="/ambassadors/:slug/product/:itemId" element={
+            <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
+              <AsesorProfilePage />
+            </Suspense>
+          } />
 
           {/* Valuation Page - Emerald investment information */}
           <Route path="/valuation" element={
@@ -386,9 +391,9 @@ function InvitationRouter() {
           </Suspense>
         }
       />
-      {/* Public collection page (e.g., /c/ceo-tierra-madre) */}
+      {/* Public collection page (e.g., /c/ceo-tierra-madre or /c/ceo-tierra-madre/916) */}
       <Route
-        path="/c/:folder"
+        path="/c/:folder/:itemId?"
         element={
           <Suspense fallback={<LocalizedLoading messageKey="collection" />}>
             <CollectionPage />

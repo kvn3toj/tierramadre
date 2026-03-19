@@ -252,7 +252,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                         <video
                           ref={activeSlide === gallerySlides.indexOf(slide) ? videoRef : undefined}
                           key={slide.id}
-                          src={slide.url}
+                          src={`${slide.url}#t=0.001`}
                           poster={product.posterUrl}
                           autoPlay
                           muted

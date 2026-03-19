@@ -175,17 +175,17 @@ export function AmbassadorProductDetail({ item, onBack }: AmbassadorProductDetai
                 transform: `translateX(-${activeSlide * 100}%)`,
               }}
             >
-              {gallerySlides.map((slide) => (
-                <Box key={slide.id} sx={{ minWidth: '100%', aspectRatio: '4/3', position: 'relative' }}>
+              {gallerySlides.map((slide, idx) => (
+                <Box key={slide.id} sx={{ minWidth: '100%', aspectRatio: '4/3', position: 'relative', bgcolor: isLight ? '#f5f5f5' : '#1a1a1a' }}>
                   {slide.type === 'video' ? (
                     <video
                       key={slide.id}
-                      src={slide.url}
-                      autoPlay
+                      src={`${slide.url}#t=0.001`}
+                      autoPlay={idx === activeSlide}
                       muted
                       loop
                       playsInline
-                      preload="metadata"
+                      preload="auto"
                       style={{
                         width: '100%',
                         height: '100%',
@@ -198,6 +198,7 @@ export function AmbassadorProductDetail({ item, onBack }: AmbassadorProductDetai
                       component="img"
                       src={slide.url}
                       alt={slide.alt}
+                      loading={idx <= 1 ? 'eager' : 'lazy'}
                       sx={{
                         width: '100%',
                         height: '100%',

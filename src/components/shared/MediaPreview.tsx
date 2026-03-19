@@ -80,10 +80,11 @@ export default function MediaPreview({
 
     return (
       <video
-        src={videoSrc}
+        src={`${videoSrc}#t=0.001`}
         controls={controls}
         autoPlay={autoPlay}
         muted={muted}
+        playsInline
         poster={thumbnailUrl}
         style={{
           maxWidth,
