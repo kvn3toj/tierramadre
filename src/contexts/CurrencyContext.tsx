@@ -129,6 +129,23 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     }
   }, []);
 
+  // Sync guest currency/multiplier from sessionStorage when guest access is granted
+  // (useState initializers run once on mount, before guest auth completes)
+  useEffect(() => {
+    if (!isGuest) return;
+    try {
+      const guestCurrency = sessionStorage.getItem(INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE);
+      if (guestCurrency === 'USD') setCurrency('USD');
+      const guestMult = sessionStorage.getItem(INVITATION_STORAGE_KEYS.GUEST_MULTIPLIER);
+      const parsed = guestMult ? Number(guestMult) : NaN;
+      if (!isNaN(parsed) && parsed >= MIN_MULTIPLIER && parsed <= MAX_MULTIPLIER) {
+        setMultiplierState(normalizeMultiplier(parsed));
+      }
+    } catch {
+      // Ignore
+    }
+  }, [isGuest]);
+
   // Reset to COP if user changes and is not authorized (guests keep asesor-assigned currency)
   useEffect(() => {
     if (!isGuest && !canToggleCurrency && currency !== 'COP') {
