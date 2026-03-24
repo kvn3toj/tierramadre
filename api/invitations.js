@@ -44,6 +44,19 @@ function generateDeviceToken() {
 }
 
 /**
+ * Sanitize guest multiplier from request body or Sheets cell.
+ * Sheets returns '' for empty cells — must not coerce to 1.0.
+ * Range [1.0, 4.0] must stay in sync with CurrencyContext MIN/MAX_MULTIPLIER.
+ */
+function sanitizeMultiplier(raw) {
+  if (raw == null || raw === '') return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  const clamped = Math.min(4.0, Math.max(1.0, n));
+  return Math.round(clamped * 10) / 10;
+}
+
+/**
  * Verify PIN and enforce device-token binding
  */
 async function verifyPin(sheets, _req, body) {
@@ -159,7 +172,7 @@ async function findInvitationByCode(sheets, shortCode) {
           pin: row[14] || null,
           boundToken: row[15] || null,
           guestCurrencyMode: row[16] || null,
-          guestMultiplier: row[17] ? parseInt(row[17]) : null,
+          guestMultiplier: sanitizeMultiplier(row[17]),
         },
       };
     }
@@ -193,13 +206,14 @@ async function generateInvitation(sheets, body) {
   const invitationId = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const createdAt = new Date().toISOString();
   const pin = generatePin();
+  const safeMultiplier = sanitizeMultiplier(guestMultiplier);
 
   const row = [
     invitationId, shortCode, creatorEmail, creatorName,
     creatorRole || 'Asesor', guestName || '', guestContact || '',
     contactType || '', createdAt, '', '',
     pricingMode, INVITATION_DURATION_HOURS, 'pending', pin, '',
-    guestCurrencyMode || '', guestMultiplier != null ? String(guestMultiplier) : '',
+    guestCurrencyMode || '', safeMultiplier != null ? String(safeMultiplier) : '',
   ];
 
   await sheets.spreadsheets.values.append({
@@ -224,7 +238,7 @@ async function generateInvitation(sheets, body) {
       durationHours: INVITATION_DURATION_HOURS,
       pricingMode,
       guestCurrencyMode: guestCurrencyMode || null,
-      guestMultiplier: guestMultiplier != null ? Number(guestMultiplier) : null,
+      guestMultiplier: safeMultiplier,
       createdBy: { email: creatorEmail, name: creatorName, role: creatorRole || 'Asesor' },
     },
   };
@@ -285,7 +299,7 @@ async function validateInvitation(sheets, shortCode) {
       contactType: data.contactType || null,
       isPinBound: !!(data.boundToken),
       guestCurrencyMode: data.guestCurrencyMode || null,
-      guestMultiplier: data.guestMultiplier || null,
+      guestMultiplier: data.guestMultiplier,
     };
   }
 
@@ -304,7 +318,7 @@ async function validateInvitation(sheets, shortCode) {
       contactType: data.contactType || null,
       isPinBound: !!(data.boundToken),
       guestCurrencyMode: data.guestCurrencyMode || null,
-      guestMultiplier: data.guestMultiplier || null,
+      guestMultiplier: data.guestMultiplier,
     };
   }
 
@@ -400,7 +414,7 @@ async function listByCreator(sheets, creatorEmail) {
         expiresAt: row[10] || null,
         pricingMode: row[11] || 'with_prices',
         guestCurrencyMode: row[16] || null,
-        guestMultiplier: row[17] ? parseInt(row[17]) : null,
+        guestMultiplier: sanitizeMultiplier(row[17]),
       });
     }
   }
