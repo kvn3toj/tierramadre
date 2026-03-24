@@ -35,6 +35,7 @@ export interface MobileSearchBarProps {
   activeFilterCount: number;
   filters: TreasureFilters;
   priceMinMax: { min: number; max: number };
+  caratMinMax: { min: number; max: number };
   setColorFilter: (v: string) => void;
   setQualityFilter: (v: string) => void;
   setTypeFilter: (v: TypeFilter) => void;
@@ -44,6 +45,7 @@ export interface MobileSearchBarProps {
   setCategoriaFilter: (v: string) => void;
   setHeroCategoryFilter: (v: HeroCategoryFilter) => void;
   setPriceRange: (v: [number, number]) => void;
+  setCaratRange: (v: [number, number]) => void;
   // Favorites
   showFavoritesOnly: boolean;
   setShowFavoritesOnly: (v: boolean) => void;
@@ -69,6 +71,7 @@ export default function MobileSearchBar({
   activeFilterCount,
   filters,
   priceMinMax,
+  caratMinMax,
   setColorFilter,
   setQualityFilter,
   setTypeFilter,
@@ -78,6 +81,7 @@ export default function MobileSearchBar({
   setCategoriaFilter,
   setHeroCategoryFilter,
   setPriceRange,
+  setCaratRange,
   showFavoritesOnly,
   setShowFavoritesOnly,
   favoritesCount,
@@ -320,6 +324,8 @@ export default function MobileSearchBar({
                   onClearCategoria={() => setCategoriaFilter('all')}
                   onClearHeroCategory={() => setHeroCategoryFilter('all')}
                   onClearPrice={() => setPriceRange([priceMinMax.min, priceMinMax.max])}
+                  onClearCarat={() => setCaratRange([caratMinMax.min, caratMinMax.max])}
+                  caratMinMax={caratMinMax}
                   compact
                 />
               </Box>

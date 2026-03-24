@@ -29,6 +29,8 @@ export interface ActiveFilterChipsProps {
   onClearColeccion?: () => void;
   onClearHeroCategory?: () => void;
   onClearPrice: () => void;
+  onClearCarat?: () => void;
+  caratMinMax?: { min: number; max: number };
   /** Compact mode for mobile - smaller chips */
   compact?: boolean;
 }
@@ -59,6 +61,8 @@ export function ActiveFilterChips({
   onClearColeccion,
   onClearHeroCategory,
   onClearPrice,
+  onClearCarat,
+  caratMinMax,
   compact = false,
 }: ActiveFilterChipsProps) {
   const { t } = useLanguage();
@@ -106,6 +110,23 @@ export function ActiveFilterChips({
       key: 'price',
       label: `${formatCurrency(convertPrice(filters.priceRange[0]), currency)} - ${formatCurrency(convertPrice(filters.priceRange[1]), currency)}`,
       onDelete: onClearPrice,
+      colors: {
+        bg: alpha(emeraldCore.primary, 0.1),
+        text: emeraldCore.dark,
+        delete: emeraldCore.dark,
+      },
+    });
+  }
+
+  // Carat range
+  const hasCaratFilter = caratMinMax && onClearCarat && (
+    filters.caratRange[0] !== caratMinMax.min || filters.caratRange[1] !== caratMinMax.max
+  );
+  if (hasCaratFilter) {
+    chips.push({
+      key: 'carat',
+      label: `${filters.caratRange[0].toFixed(1)} - ${filters.caratRange[1].toFixed(1)} ct`,
+      onDelete: onClearCarat!,
       colors: {
         bg: alpha(emeraldCore.primary, 0.1),
         text: emeraldCore.dark,

@@ -114,6 +114,7 @@ export default function TreasureBrowser({
     setStatusFilter,
     setShapeFilter,
     setPriceRange,
+    setCaratRange,
     setSortBy,
     setCantidadFilter,
     setCategoriaFilter,
@@ -140,6 +141,7 @@ export default function TreasureBrowser({
   const { activeFilterCount } = useFilterTracking({
     filters,
     priceMinMax: filterOptions.priceMinMax,
+    caratMinMax: filterOptions.caratMinMax,
     resultsCount: filteredTreasure.length,
     track,
     checkAchievements,
@@ -271,7 +273,7 @@ export default function TreasureBrowser({
   }, [allTreasure]);
 
   // Filter options from hook
-  const { colors, shapes, qualities, colecciones, categorias, priceMinMax } = filterOptions;
+  const { colors, shapes, qualities, colecciones, categorias, priceMinMax, caratMinMax } = filterOptions;
 
   // Destructure filter values for convenience
   const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, coleccionFilter, categoriaFilter } = filters;
@@ -350,6 +352,7 @@ export default function TreasureBrowser({
     coleccionFilter,
     categoriaFilter,
     priceRange,
+    caratRange: filters.caratRange,
     setSearch,
     setStatusFilter,
     setSortBy,
@@ -361,6 +364,7 @@ export default function TreasureBrowser({
     setColeccionFilter,
     setCategoriaFilter,
     setPriceRange,
+    setCaratRange,
     showAdvancedFilters,
     setShowAdvancedFilters,
     hasFilters,
@@ -374,6 +378,7 @@ export default function TreasureBrowser({
     colecciones,
     categorias,
     priceMinMax,
+    caratMinMax,
     isLight,
     theme,
   };
@@ -393,6 +398,7 @@ export default function TreasureBrowser({
             activeFilterCount={activeFilterCount}
             filters={filters}
             priceMinMax={priceMinMax}
+            caratMinMax={caratMinMax}
             setColorFilter={setColorFilter}
             setQualityFilter={setQualityFilter}
             setTypeFilter={setTypeFilter}
@@ -402,6 +408,7 @@ export default function TreasureBrowser({
             setCategoriaFilter={setCategoriaFilter}
             setHeroCategoryFilter={setHeroCategoryFilter}
             setPriceRange={setPriceRange}
+            setCaratRange={setCaratRange}
             showFavoritesOnly={showFavoritesOnly}
             setShowFavoritesOnly={setShowFavoritesOnly}
             favoritesCount={favoritesCount}
@@ -425,6 +432,7 @@ export default function TreasureBrowser({
             shapeFilter={shapeFilter}
             qualityFilter={qualityFilter}
             priceRange={priceRange}
+            caratRange={filters.caratRange}
             cantidadFilter={cantidadFilter}
             setStatusFilter={setStatusFilter}
             setSortBy={setSortBy}
@@ -434,12 +442,14 @@ export default function TreasureBrowser({
             setShapeFilter={setShapeFilter}
             setQualityFilter={setQualityFilter}
             setPriceRange={setPriceRange}
+            setCaratRange={setCaratRange}
             setCantidadFilter={setCantidadFilter}
             colors={colors}
             shapes={shapes}
             qualities={qualities}
             categorias={categorias}
             priceMinMax={priceMinMax}
+            caratMinMax={caratMinMax}
             hasFilters={hasFilters}
             onClearFilters={urlSync.handleClearFilters}
             resultCount={filteredTreasure.length}
@@ -452,6 +462,7 @@ export default function TreasureBrowser({
               setStatusFilter(preset.filters.statusFilter as StatusFilter);
               setShapeFilter(preset.filters.shapeFilter);
               setPriceRange(preset.filters.priceRange);
+              if (preset.filters.caratRange) setCaratRange(preset.filters.caratRange);
               setSortBy(preset.filters.sortBy as SortOption);
               if (preset.filters.cantidadFilter) setCantidadFilter(preset.filters.cantidadFilter);
               savedFilters.incrementUsage(preset.id);
@@ -514,6 +525,8 @@ export default function TreasureBrowser({
             onClearColeccion={() => setColeccionFilter('all')}
             onClearHeroCategory={() => setHeroCategoryFilter('all')}
             onClearPrice={() => setPriceRange([priceMinMax.min, priceMinMax.max])}
+            onClearCarat={() => setCaratRange([caratMinMax.min, caratMinMax.max])}
+            caratMinMax={caratMinMax}
           />
         </Box>
       )}

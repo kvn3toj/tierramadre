@@ -36,6 +36,7 @@ export interface TreasureFilters {
   statusFilter: StatusFilter;
   shapeFilter: string;
   priceRange: [number, number];
+  caratRange: [number, number];
   sortBy: SortOption;
   cantidadFilter: string; // 'all' | '1' | '2+'
   cityFilter: CityFilter;
@@ -62,6 +63,7 @@ export interface UseTreasureFilteringReturn {
   setStatusFilter: (status: StatusFilter) => void;
   setShapeFilter: (shape: string) => void;
   setPriceRange: (range: [number, number]) => void;
+  setCaratRange: (range: [number, number]) => void;
   setSortBy: (sort: SortOption) => void;
   setCantidadFilter: (cantidad: string) => void;
   setCityFilter: (city: CityFilter) => void;
@@ -90,6 +92,7 @@ export interface UseTreasureFilteringReturn {
     colecciones: string[];
     categorias: string[];
     priceMinMax: { min: number; max: number };
+    caratMinMax: { min: number; max: number };
   };
 }
 
@@ -100,7 +103,7 @@ export function useTreasureFiltering({
 }: UseTreasureFilteringOptions): UseTreasureFilteringReturn {
   // Compute available filter options from treasure data
   const filterOptions = useFilterOptions(treasure);
-  const { priceMinMax } = filterOptions;
+  const { priceMinMax, caratMinMax } = filterOptions;
 
   // Filter state
   const [search, setSearch] = useState(initialFilters.search || '');
@@ -112,6 +115,9 @@ export function useTreasureFiltering({
   const [priceRange, setPriceRange] = useState<[number, number]>(
     initialFilters.priceRange || [0, Number.MAX_SAFE_INTEGER]
   );
+  const [caratRange, setCaratRange] = useState<[number, number]>(
+    initialFilters.caratRange || [0, Number.MAX_SAFE_INTEGER]
+  );
   const [sortBy, setSortBy] = useState<SortOption>(initialFilters.sortBy || 'newest');
   const [cantidadFilter, setCantidadFilter] = useState(initialFilters.cantidadFilter || 'all');
   const [cityFilter, setCityFilter] = useState<CityFilter>(initialFilters.cityFilter || 'all');
@@ -120,8 +126,9 @@ export function useTreasureFiltering({
   const [heroCategoryFilter, setHeroCategoryFilter] = useState<HeroCategoryFilter>(initialFilters.heroCategoryFilter || 'all');
   const [itemsFilter] = useState<number[]>(initialFilters.itemsFilter || []);
 
-  // Track if priceRange has been initialized to prevent re-syncing
+  // Track if priceRange/caratRange have been initialized to prevent re-syncing
   const priceRangeInitialized = useRef(!!initialFilters.priceRange);
+  const caratRangeInitialized = useRef(!!initialFilters.caratRange);
 
   // Auto-clear heroCategory when user manually selects a conflicting filter.
   // Without this, heroCategory (hidden on mobile) silently AND-conflicts with
@@ -143,6 +150,14 @@ export function useTreasureFiltering({
       setPriceRange([priceMinMax.min, priceMinMax.max]);
     }
   }, [priceMinMax.min, priceMinMax.max, treasure.length]);
+
+  // Sync caratRange to full range when treasure loads
+  useEffect(() => {
+    if (!caratRangeInitialized.current && treasure.length > 0 && caratMinMax.max > 0) {
+      caratRangeInitialized.current = true;
+      setCaratRange([caratMinMax.min, caratMinMax.max]);
+    }
+  }, [caratMinMax.min, caratMinMax.max, treasure.length]);
 
   // Hide sequential stock duplicates — keep only the first non-sold item per group
   const hiddenItems = useMemo(() => {
@@ -212,6 +227,8 @@ export function useTreasureFiltering({
         (typeFilter === 'jewelry' && item.isJewelry);
       const matchesShape = shapeFilter === 'all' || item.talla === shapeFilter;
       const matchesPrice = item.precioCOP === 0 || (item.precioCOP >= priceRange[0] && item.precioCOP <= priceRange[1]);
+      const itemCarats = typeof item.peso === 'number' ? item.peso : parseFloat(String(item.peso));
+      const matchesCarat = isNaN(itemCarats) || itemCarats === 0 || (itemCarats >= caratRange[0] && itemCarats <= caratRange[1]);
       const matchesCantidad =
         cantidadFilter === 'all' ||
         (cantidadFilter === '1' && item.cantidad === 1) ||
@@ -221,9 +238,9 @@ export function useTreasureFiltering({
       const matchesColeccion = coleccionFilter === 'all' || item.coleccion === coleccionFilter;
       const matchesItems = itemsFilter.length === 0 || itemsFilter.includes(item.item);
 
-      return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice && matchesCantidad && matchesCity && matchesCategoria && matchesColeccion && matchesItems;
+      return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice && matchesCarat && matchesCantidad && matchesCity && matchesCategoria && matchesColeccion && matchesItems;
     });
-  }, [treasure, hiddenItems, search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, cantidadFilter, cityFilter, categoriaFilter, coleccionFilter, itemsFilter, matchesHeroCategory]);
+  }, [treasure, hiddenItems, search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, caratRange, cantidadFilter, cityFilter, categoriaFilter, coleccionFilter, itemsFilter, matchesHeroCategory]);
 
   // Sort using extracted hook
   const sortedTreasure = useTreasureSort(filteredTreasure, sortBy);
@@ -248,7 +265,8 @@ export function useTreasureFiltering({
     setColeccionFilter('all');
     setHeroCategoryFilter('all');
     setPriceRange([priceMinMax.min, priceMinMax.max]);
-  }, [priceMinMax]);
+    setCaratRange([caratMinMax.min, caratMinMax.max]);
+  }, [priceMinMax, caratMinMax]);
 
   // Check if any filters are active (note: 'available' is the default status)
   const hasFilters = useMemo(() => {
@@ -265,9 +283,11 @@ export function useTreasureFiltering({
       coleccionFilter !== 'all' ||
       heroCategoryFilter !== 'all' ||
       priceRange[0] !== priceMinMax.min ||
-      priceRange[1] !== priceMinMax.max
+      priceRange[1] !== priceMinMax.max ||
+      caratRange[0] !== caratMinMax.min ||
+      caratRange[1] !== caratMinMax.max
     );
-  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, cityFilter, categoriaFilter, coleccionFilter, heroCategoryFilter, priceRange, priceMinMax]);
+  }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, cityFilter, categoriaFilter, coleccionFilter, heroCategoryFilter, priceRange, priceMinMax, caratRange, caratMinMax]);
 
   // Inactivity timeout — clears filters after idle period.
   // Pass hasUrlFilters so the mount effect doesn't clear intentional URL navigations
@@ -289,6 +309,7 @@ export function useTreasureFiltering({
     statusFilter,
     shapeFilter,
     priceRange,
+    caratRange,
     sortBy,
     categoriaFilter,
     cantidadFilter,
@@ -296,7 +317,7 @@ export function useTreasureFiltering({
     coleccionFilter,
     heroCategoryFilter,
     itemsFilter,
-  }), [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, categoriaFilter, cantidadFilter, cityFilter, coleccionFilter, heroCategoryFilter, itemsFilter]);
+  }), [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, caratRange, sortBy, categoriaFilter, cantidadFilter, cityFilter, coleccionFilter, heroCategoryFilter, itemsFilter]);
 
   return {
     filters,
@@ -307,6 +328,7 @@ export function useTreasureFiltering({
     setStatusFilter,
     setShapeFilter,
     setPriceRange,
+    setCaratRange,
     setSortBy,
     setCantidadFilter,
     setCityFilter,

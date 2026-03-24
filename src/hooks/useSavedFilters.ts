@@ -19,6 +19,7 @@ export interface FilterState {
   statusFilter: string;
   shapeFilter: string;
   priceRange: [number, number];
+  caratRange?: [number, number]; // Optional for backward compatibility with saved presets
   sortBy: string;
   cantidadFilter?: string; // Optional for backward compatibility with saved presets
 }

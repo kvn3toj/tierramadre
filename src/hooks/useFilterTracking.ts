@@ -10,6 +10,7 @@ import { TreasureFilters } from './useTreasureFiltering';
 export interface UseFilterTrackingOptions {
   filters: TreasureFilters;
   priceMinMax: { min: number; max: number };
+  caratMinMax: { min: number; max: number };
   resultsCount: number;
   track: (event: string, data: Record<string, unknown>) => void;
   checkAchievements: () => void;
@@ -37,6 +38,7 @@ type TrackedFilterKey = typeof TRACKED_FILTERS[number];
 export function useFilterTracking({
   filters,
   priceMinMax,
+  caratMinMax,
   resultsCount,
   track,
   checkAchievements,
@@ -56,8 +58,11 @@ export function useFilterTracking({
     if (filters.priceRange[0] !== priceMinMax.min || filters.priceRange[1] !== priceMinMax.max) {
       count++;
     }
+    if (filters.caratRange[0] !== caratMinMax.min || filters.caratRange[1] !== caratMinMax.max) {
+      count++;
+    }
     return count;
-  }, [filters, priceMinMax]);
+  }, [filters, priceMinMax, caratMinMax]);
 
   // Previous filters for comparison
   const prevFiltersRef = useRef(filters);
@@ -94,11 +99,24 @@ export function useFilterTracking({
       });
     }
 
+    // Track carat range changes
+    if (
+      JSON.stringify(prev.caratRange) !== JSON.stringify(filters.caratRange) &&
+      filters.caratRange[0] !== caratMinMax.min
+    ) {
+      track('treasure_filter_applied', {
+        filter_type: 'carat',
+        filter_value: `${filters.caratRange[0]}-${filters.caratRange[1]}`,
+        filters_count: activeFilterCount,
+        results_count: resultsCount,
+      });
+    }
+
     // Check for achievements after filter changes
     checkAchievements();
 
     prevFiltersRef.current = filters;
-  }, [filters, track, activeFilterCount, resultsCount, checkAchievements, priceMinMax.min]);
+  }, [filters, track, activeFilterCount, resultsCount, checkAchievements, priceMinMax.min, caratMinMax.min]);
 
   return {
     activeFilterCount,

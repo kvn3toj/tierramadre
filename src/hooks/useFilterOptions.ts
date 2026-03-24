@@ -15,6 +15,7 @@ export interface FilterOptions {
   colecciones: string[];
   categorias: string[];
   priceMinMax: { min: number; max: number };
+  caratMinMax: { min: number; max: number };
 }
 
 export function useFilterOptions(treasure: TreasureItem[]): FilterOptions {
@@ -24,6 +25,17 @@ export function useFilterOptions(treasure: TreasureItem[]): FilterOptions {
     return {
       min: Math.min(...prices),
       max: Math.max(...prices),
+    };
+  }, [treasure]);
+
+  const caratMinMax = useMemo(() => {
+    const weights = treasure
+      .map(item => typeof item.peso === 'number' ? item.peso : parseFloat(String(item.peso)))
+      .filter(w => !isNaN(w) && w > 0);
+    if (weights.length === 0) return { min: 0, max: 100 };
+    return {
+      min: Math.min(...weights),
+      max: Math.max(...weights),
     };
   }, [treasure]);
 
@@ -55,8 +67,9 @@ export function useFilterOptions(treasure: TreasureItem[]): FilterOptions {
       colecciones: Array.from(colecciones).sort(),
       categorias: Array.from(categorias).sort(),
       priceMinMax,
+      caratMinMax,
     };
-  }, [treasure, priceMinMax]);
+  }, [treasure, priceMinMax, caratMinMax]);
 
   return filterOptions;
 }

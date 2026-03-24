@@ -96,6 +96,15 @@ export function parseUrlFilters(searchString?: string): Partial<TreasureFilters>
     filters.cantidadFilter = cantidad === '2%2B' ? '2+' : cantidad;
   }
 
+  const caratMin = params.get('caratMin');
+  const caratMax = params.get('caratMax');
+  if (caratMin || caratMax) {
+    filters.caratRange = [
+      caratMin ? parseFloat(caratMin) : 0,
+      caratMax ? parseFloat(caratMax) : Number.MAX_SAFE_INTEGER
+    ];
+  }
+
   // Parse items filter (comma-separated item numbers for QR/quotation links)
   const items = params.get('items');
   if (items) {
@@ -173,6 +182,14 @@ export function useUrlFilterSync({
     }
     if (filters.priceRange[1] < Number.MAX_SAFE_INTEGER) {
       params.set('priceMax', String(filters.priceRange[1]));
+    }
+
+    // Carat range - only if modified from defaults
+    if (filters.caratRange[0] > 0) {
+      params.set('caratMin', String(filters.caratRange[0]));
+    }
+    if (filters.caratRange[1] < Number.MAX_SAFE_INTEGER) {
+      params.set('caratMax', String(filters.caratRange[1]));
     }
 
     const newParamsString = params.toString();

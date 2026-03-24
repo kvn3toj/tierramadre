@@ -51,6 +51,7 @@ export interface IOSFilterSheetProps {
   shapeFilter: string;
   qualityFilter: string;
   priceRange: [number, number];
+  caratRange: [number, number];
   cantidadFilter: string;
   // Setters
   setStatusFilter: (value: StatusFilter) => void;
@@ -61,6 +62,7 @@ export interface IOSFilterSheetProps {
   setShapeFilter: (value: string) => void;
   setQualityFilter: (value: string) => void;
   setPriceRange: (value: [number, number]) => void;
+  setCaratRange: (value: [number, number]) => void;
   setCantidadFilter: (value: string) => void;
   // Options
   colors: string[];
@@ -68,6 +70,7 @@ export interface IOSFilterSheetProps {
   qualities: string[];
   categorias: string[];
   priceMinMax: { min: number; max: number };
+  caratMinMax: { min: number; max: number };
   // Actions
   hasFilters: boolean;
   onClearFilters: () => void;
@@ -89,6 +92,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
   shapeFilter,
   qualityFilter,
   priceRange,
+  caratRange,
   cantidadFilter: _cantidadFilter,
   setStatusFilter,
   setSortBy,
@@ -98,12 +102,14 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
   setShapeFilter,
   setQualityFilter,
   setPriceRange,
+  setCaratRange,
   setCantidadFilter: _setCantidadFilter,
   colors,
   shapes,
   qualities,
   categorias,
   priceMinMax,
+  caratMinMax,
   hasFilters,
   onClearFilters,
   resultCount,
@@ -502,6 +508,45 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
                       setExpandedSection(null);
                     }}
                     sx={getChipStyle(getCurrentPriceTier() === tier.label)}
+                  />
+                ))}
+              </Box>
+            </Collapse>
+          </>
+        )}
+
+        {/* Carat filter */}
+        {caratMinMax.max > 0 && (
+          <>
+            <FilterRow
+              label="Quilates"
+              value={
+                caratRange[0] === caratMinMax.min && caratRange[1] === caratMinMax.max
+                  ? 'Todos'
+                  : `${caratRange[0].toFixed(1)} - ${caratRange[1].toFixed(1)} ct`
+              }
+              section="carat"
+              isActive={caratRange[0] !== caratMinMax.min || caratRange[1] !== caratMinMax.max}
+            />
+            <Collapse in={expandedSection === 'carat'}>
+              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+                {[
+                  { label: 'Todos', min: caratMinMax.min, max: caratMinMax.max },
+                  { label: '< 1 ct', min: caratMinMax.min, max: 1 },
+                  { label: '1 - 3 ct', min: 1, max: 3 },
+                  { label: '3 - 10 ct', min: 3, max: 10 },
+                  { label: '> 10 ct', min: 10, max: caratMinMax.max },
+                ].map((tier) => (
+                  <Chip
+                    key={tier.label}
+                    label={tier.label}
+                    onClick={() => {
+                      setCaratRange([tier.min, tier.max]);
+                      setExpandedSection(null);
+                    }}
+                    sx={getChipStyle(
+                      caratRange[0] === tier.min && caratRange[1] === tier.max
+                    )}
                   />
                 ))}
               </Box>

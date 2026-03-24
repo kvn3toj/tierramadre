@@ -65,6 +65,7 @@ export interface FilterSetters {
   setColeccionFilter: (value: string) => void;
   setCategoriaFilter: (value: string) => void;
   setPriceRange: (value: [number, number]) => void;
+  setCaratRange: (value: [number, number]) => void;
 }
 
 /** Filter options derived from treasure data */
@@ -75,6 +76,7 @@ export interface FilterOptions {
   colecciones: string[];
   categorias: string[];
   priceMinMax: { min: number; max: number };
+  caratMinMax: { min: number; max: number };
 }
 
 /** UI-specific state for filter panel */
@@ -123,6 +125,8 @@ export interface FilterContentProps {
   setCategoriaFilter: (value: string) => void;
   priceRange: [number, number];
   setPriceRange: (value: [number, number]) => void;
+  caratRange: [number, number];
+  setCaratRange: (value: [number, number]) => void;
   showAdvancedFilters: boolean;
   setShowAdvancedFilters: (value: boolean) => void;
   hasFilters: boolean;
@@ -136,6 +140,7 @@ export interface FilterContentProps {
   colecciones: string[];
   categorias: string[];
   priceMinMax: { min: number; max: number };
+  caratMinMax: { min: number; max: number };
   isLight: boolean;
   theme: Theme;
   /** Hide search field (when parent already has one) */
@@ -165,6 +170,8 @@ export const FilterContent = memo(function FilterContent({
   setCategoriaFilter,
   priceRange,
   setPriceRange,
+  caratRange,
+  setCaratRange,
   showAdvancedFilters,
   setShowAdvancedFilters,
   hasFilters,
@@ -178,6 +185,7 @@ export const FilterContent = memo(function FilterContent({
   colecciones,
   categorias,
   priceMinMax,
+  caratMinMax,
   isLight,
   theme,
   compact = false,
@@ -449,6 +457,39 @@ export const FilterContent = memo(function FilterContent({
                   {tier.label}
                 </Box>
               ))}
+            </Box>
+          </Box>
+        )}
+
+        {/* Row 4.5: Carat tiers */}
+        {caratMinMax.max > 0 && (
+          <Box>
+            <Typography variant="caption" sx={{ color: theme.palette.text.secondary, mb: 0.5, display: 'block' }}>
+              {t.treasure.filter.carat}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+              {[
+                { label: t.treasure.filter.allCarats, min: caratMinMax.min, max: caratMinMax.max },
+                { label: '< 1 ct', min: caratMinMax.min, max: 1 },
+                { label: '1 - 3 ct', min: 1, max: 3 },
+                { label: '3 - 10 ct', min: 3, max: 10 },
+                { label: '> 10 ct', min: 10, max: caratMinMax.max },
+              ].map((tier) => {
+                const isActive =
+                  caratRange[0] === tier.min && caratRange[1] === tier.max;
+                return (
+                  <Box
+                    key={tier.label}
+                    onClick={() => setCaratRange([tier.min, tier.max])}
+                    sx={{
+                      ...pillBase,
+                      ...(isActive ? pillActive : pillInactive),
+                    }}
+                  >
+                    {tier.label}
+                  </Box>
+                );
+              })}
             </Box>
           </Box>
         )}
@@ -821,6 +862,40 @@ export const FilterContent = memo(function FilterContent({
               valueLabelFormat={(value) => formatCurrency(convertPrice(value), currency)}
               aria-label="Rango de precio"
               getAriaValueText={(value) => formatCurrency(convertPrice(value), currency)}
+              sx={{
+                color: emeraldCore.dark,
+                '& .MuiSlider-thumb': { width: 20, height: 20 },
+                '& .MuiSlider-track': { height: 4 },
+                '& .MuiSlider-rail': {
+                  height: 4,
+                  bgcolor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+                },
+              }}
+            />
+          </Box>
+        )}
+
+        {/* Carat Range Slider */}
+        {caratMinMax.max > 0 && (
+          <Box sx={{ mt: 2, px: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+                {t.treasure.filter.caratRange}
+              </Typography>
+              <Typography variant="caption" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
+                {caratRange[0].toFixed(1)} - {caratRange[1].toFixed(1)} ct
+              </Typography>
+            </Box>
+            <Slider
+              value={caratRange}
+              onChange={(_, value) => setCaratRange(value as [number, number])}
+              min={caratMinMax.min}
+              max={caratMinMax.max}
+              step={0.1}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(value) => `${value.toFixed(1)} ct`}
+              aria-label={t.treasure.filter.caratRange}
+              getAriaValueText={(value) => `${value.toFixed(1)} ct`}
               sx={{
                 color: emeraldCore.dark,
                 '& .MuiSlider-thumb': { width: 20, height: 20 },
