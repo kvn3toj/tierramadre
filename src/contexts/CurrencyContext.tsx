@@ -4,7 +4,7 @@
  * - Gated to admins + whitelisted emails
  * - COP conversion: precioCOP * multiplier
  * - USD conversion: (precioCOP / TRM) * multiplier
- * - Multiplier (x1/x2/x3/x4, configurable by admin, default x4) applies to both currencies
+ * - Multiplier (x1–x4 in 0.1 steps, configurable by admin, default x1) applies to both currencies
  * - Persists preference in localStorage, resets on user change
  */
 
@@ -96,6 +96,8 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
       if (isGuest) {
         const guestCurrency = sessionStorage.getItem(INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE);
         if (guestCurrency === 'USD') return 'USD';
+        // Don't fall through to localStorage for guests — avoid stale asesor values
+        return 'COP';
       }
       const saved = localStorage.getItem(STORAGE_KEYS.CURRENCY_MODE);
       return saved === 'USD' ? 'USD' : 'COP';
@@ -111,6 +113,8 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
         const guestMult = sessionStorage.getItem(INVITATION_STORAGE_KEYS.GUEST_MULTIPLIER);
         const guestParsed = guestMult ? Number(guestMult) : NaN;
         if (!isNaN(guestParsed) && guestParsed >= MIN_MULTIPLIER && guestParsed <= MAX_MULTIPLIER) return normalizeMultiplier(guestParsed);
+        // Don't fall through to localStorage for guests — avoid stale asesor values
+        return DEFAULT_MULTIPLIER;
       }
       const saved = localStorage.getItem(STORAGE_KEYS.CURRENCY_MULTIPLIER);
       const parsed = saved ? Number(saved) : NaN;
@@ -122,12 +126,15 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
 
   const setMultiplier = useCallback((value: UsdMultiplier) => {
     setMultiplierState(value);
-    try {
-      localStorage.setItem(STORAGE_KEYS.CURRENCY_MULTIPLIER, String(value));
-    } catch {
-      // Ignore
+    // Only persist to localStorage for non-guest users (guests use ephemeral sessionStorage)
+    if (!isGuest) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.CURRENCY_MULTIPLIER, String(value));
+      } catch {
+        // Ignore
+      }
     }
-  }, []);
+  }, [isGuest]);
 
   // Sync guest currency/multiplier from sessionStorage when guest access is granted.
   // Depends on isAuthenticated because accessLevel defaults to 'guest' (so isGuest
