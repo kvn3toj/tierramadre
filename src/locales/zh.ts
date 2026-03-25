@@ -656,6 +656,14 @@ export const zh = {
     active: '活跃',
     pending: '待处理',
     notFound: '未找到您的大使资料。',
+    multiplier: '倍率',
+    save: '保存',
+    cancel: '取消',
+    expireTitle: '使邀请过期',
+    expireConfirm: '使{name}的邀请过期？访客将在下次会话时失去访问权限。',
+    expire: '过期',
+    updateError: '无法更新倍率',
+    expireError: '无法使邀请过期',
   },
 
   // Menu sections

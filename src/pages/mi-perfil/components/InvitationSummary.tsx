@@ -13,6 +13,7 @@ import {
 import { Link2, CheckCircle, Clock, XCircle, Send, Ban } from 'lucide-react';
 import { emeraldCore, accentColors, iosTypographyScale, primitiveSpacing as spacing, radius, fontFamilies } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { useNotification } from '../../../contexts/NotificationContext';
 import type { Invitation } from '../../../hooks/useMyInvitations';
 
 interface InvitationSummaryProps {
@@ -40,6 +41,7 @@ export function InvitationSummary({
   mutatingCodes, onUpdateMultiplier, onExpire,
 }: InvitationSummaryProps) {
   const { t } = useLanguage();
+  const { notify } = useNotification();
   const [editAnchor, setEditAnchor] = useState<HTMLElement | null>(null);
   const [editCode, setEditCode] = useState<string | null>(null);
   const [editValue, setEditValue] = useState(1);
@@ -54,7 +56,8 @@ export function InvitationSummary({
 
   const handleEditSave = async () => {
     if (!editCode) return;
-    await onUpdateMultiplier(editCode, editValue);
+    const ok = await onUpdateMultiplier(editCode, editValue);
+    if (!ok) notify(t.profile.updateError, 'error');
     setEditAnchor(null);
     setEditCode(null);
   };
@@ -62,8 +65,9 @@ export function InvitationSummary({
   const handleExpireConfirm = async () => {
     if (!expireCode) return;
     const code = expireCode;
-    setExpireCode(null); // Close dialog before optimistic removal
-    await onExpire(code);
+    setExpireCode(null);
+    const ok = await onExpire(code);
+    if (!ok) notify(t.profile.expireError, 'error');
   };
 
   if (!isLoading && invitations.length === 0) return null;
@@ -232,7 +236,7 @@ export function InvitationSummary({
         slotProps={{ paper: { sx: { p: 2, borderRadius: radius.lg, width: 220 } } }}
       >
         <Typography variant="caption" sx={{ fontWeight: 600, mb: 1, display: 'block' }}>
-          Multiplicador: x{editValue}
+          {t.profile.multiplier}: x{editValue}
         </Typography>
         <Slider
           value={editValue}
@@ -244,7 +248,7 @@ export function InvitationSummary({
         />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1 }}>
           <Button size="small" onClick={() => setEditAnchor(null)} sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
-            Cancelar
+            {t.profile.cancel}
           </Button>
           <Button
             size="small" variant="contained"
@@ -255,7 +259,7 @@ export function InvitationSummary({
               bgcolor: emeraldCore.primary, '&:hover': { bgcolor: emeraldCore.dark },
             }}
           >
-            Guardar
+            {t.profile.save}
           </Button>
         </Box>
       </Popover>
@@ -267,17 +271,16 @@ export function InvitationSummary({
         slotProps={{ paper: { sx: { borderRadius: radius.lg } } }}
       >
         <DialogTitle sx={{ fontSize: '1rem', fontWeight: 600 }}>
-          Expirar invitación
+          {t.profile.expireTitle}
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ fontSize: '0.85rem' }}>
-            ¿Expirar la invitación de {expireTarget?.guestName || expireTarget?.guestContact || expireTarget?.shortCode}?
-            El invitado perderá acceso en su próxima sesión.
+            {t.profile.expireConfirm.replace('{name}', expireTarget?.guestName || expireTarget?.guestContact || expireTarget?.shortCode || '')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setExpireCode(null)} sx={{ textTransform: 'none' }}>
-            Cancelar
+            {t.profile.cancel}
           </Button>
           <Button
             onClick={handleExpireConfirm}
@@ -285,7 +288,7 @@ export function InvitationSummary({
             variant="contained"
             sx={{ textTransform: 'none' }}
           >
-            Expirar
+            {t.profile.expire}
           </Button>
         </DialogActions>
       </Dialog>

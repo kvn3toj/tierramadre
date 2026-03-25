@@ -656,6 +656,14 @@ export const pt = {
     active: 'Ativos',
     pending: 'Pendentes',
     notFound: 'Seu perfil de embaixador não foi encontrado.',
+    multiplier: 'Multiplicador',
+    save: 'Salvar',
+    cancel: 'Cancelar',
+    expireTitle: 'Expirar convite',
+    expireConfirm: 'Expirar o convite de {name}? O convidado perderá acesso na próxima sessão.',
+    expire: 'Expirar',
+    updateError: 'Não foi possível atualizar o multiplicador',
+    expireError: 'Não foi possível expirar o convite',
   },
 
   // Menu sections

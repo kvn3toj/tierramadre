@@ -649,6 +649,14 @@ export const en = {
     active: 'Active',
     pending: 'Pending',
     notFound: 'Your ambassador profile was not found.',
+    multiplier: 'Multiplier',
+    save: 'Save',
+    cancel: 'Cancel',
+    expireTitle: 'Expire invitation',
+    expireConfirm: 'Expire invitation for {name}? The guest will lose access on their next session.',
+    expire: 'Expire',
+    updateError: 'Could not update multiplier',
+    expireError: 'Could not expire invitation',
   },
 
   // Menu sections

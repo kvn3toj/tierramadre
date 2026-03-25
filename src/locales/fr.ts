@@ -384,6 +384,14 @@ export const fr = {
     active: 'Actives',
     pending: 'En attente',
     notFound: 'Votre profil d\'ambassadeur n\'a pas été trouvé.',
+    multiplier: 'Multiplicateur',
+    save: 'Enregistrer',
+    cancel: 'Annuler',
+    expireTitle: 'Expirer l\'invitation',
+    expireConfirm: 'Expirer l\'invitation de {name} ? L\'invité perdra l\'accès lors de sa prochaine session.',
+    expire: 'Expirer',
+    updateError: 'Impossible de mettre à jour le multiplicateur',
+    expireError: 'Impossible d\'expirer l\'invitation',
   },
 
   // Menu sections

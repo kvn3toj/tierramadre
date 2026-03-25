@@ -384,6 +384,14 @@ export const it = {
     active: 'Attivi',
     pending: 'In attesa',
     notFound: 'Il tuo profilo ambasciatore non è stato trovato.',
+    multiplier: 'Moltiplicatore',
+    save: 'Salva',
+    cancel: 'Annulla',
+    expireTitle: 'Scadere invito',
+    expireConfirm: 'Scadere l\'invito di {name}? L\'ospite perderà l\'accesso alla prossima sessione.',
+    expire: 'Scadere',
+    updateError: 'Impossibile aggiornare il moltiplicatore',
+    expireError: 'Impossibile scadere l\'invito',
   },
 
   // Menu sections

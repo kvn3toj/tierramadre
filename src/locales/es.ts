@@ -649,6 +649,14 @@ export const es = {
     active: 'Activas',
     pending: 'Pendientes',
     notFound: 'No se encontro tu perfil de embajador.',
+    multiplier: 'Multiplicador',
+    save: 'Guardar',
+    cancel: 'Cancelar',
+    expireTitle: 'Expirar invitación',
+    expireConfirm: '¿Expirar la invitación de {name}? El invitado perderá acceso en su próxima sesión.',
+    expire: 'Expirar',
+    updateError: 'No se pudo actualizar el multiplicador',
+    expireError: 'No se pudo expirar la invitación',
   },
 
   // Menu sections
