@@ -5,7 +5,7 @@
  * Returns invitation list + summary metrics.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 const CACHE_KEY = 'tm-my-invitations';
 
@@ -83,11 +83,15 @@ export function useMyInvitations(creatorEmail: string | null | undefined): UseMy
     return { total: invitations.length, active, pending };
   }, [invitations]);
 
+  // Ref tracks current invitations for revert in optimistic mutations (avoids stale closure)
+  const invitationsRef = useRef(invitations);
+  invitationsRef.current = invitations;
+
   const updateMultiplier = useCallback(async (shortCode: string, multiplier: number): Promise<boolean> => {
     if (!creatorEmail) return false;
     setMutatingCodes(prev => new Set(prev).add(shortCode));
 
-    const prevInvitations = invitations;
+    const prevInvitations = invitationsRef.current;
     setInvitations(prev => prev.map(inv =>
       inv.shortCode === shortCode ? { ...inv, guestMultiplier: multiplier } : inv
     ));
@@ -116,7 +120,7 @@ export function useMyInvitations(creatorEmail: string | null | undefined): UseMy
     if (!creatorEmail) return false;
     setMutatingCodes(prev => new Set(prev).add(shortCode));
 
-    const prevInvitations = invitations;
+    const prevInvitations = invitationsRef.current;
     setInvitations(prev => prev.filter(inv => inv.shortCode !== shortCode));
 
     try {

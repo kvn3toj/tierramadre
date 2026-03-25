@@ -61,8 +61,9 @@ export function InvitationSummary({
 
   const handleExpireConfirm = async () => {
     if (!expireCode) return;
-    await onExpire(expireCode);
-    setExpireCode(null);
+    const code = expireCode;
+    setExpireCode(null); // Close dialog before optimistic removal
+    await onExpire(code);
   };
 
   if (!isLoading && invitations.length === 0) return null;
@@ -171,7 +172,7 @@ export function InvitationSummary({
 
               {/* Multiplier chip */}
               <Chip
-                label={`x${inv.guestMultiplier ?? 1}`}
+                label={`x${(inv.guestMultiplier ?? 1).toFixed(1)}`}
                 size="small"
                 onClick={isEditable ? (e) => handleEditOpen(e, inv) : undefined}
                 sx={{
@@ -263,7 +264,7 @@ export function InvitationSummary({
       <Dialog
         open={Boolean(expireCode)}
         onClose={() => setExpireCode(null)}
-        PaperProps={{ sx: { borderRadius: radius.lg } }}
+        slotProps={{ paper: { sx: { borderRadius: radius.lg } } }}
       >
         <DialogTitle sx={{ fontSize: '1rem', fontWeight: 600 }}>
           Expirar invitación

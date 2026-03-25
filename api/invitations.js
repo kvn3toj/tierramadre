@@ -549,19 +549,13 @@ async function expireInvitationAction(sheets, body) {
     return { success: false, error: 'Solo se pueden expirar invitaciones activas o pendientes' };
   }
 
-  // Update expiresAt (col K) and status (col N)
+  // Update K:N atomically (expiresAt, pricingMode, durationHours, status)
   const now = new Date().toISOString();
   await sheets.spreadsheets.values.update({
     spreadsheetId: APP_SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!K${invitation.rowIndex}`,
+    range: `'${SHEET_NAME}'!K${invitation.rowIndex}:N${invitation.rowIndex}`,
     valueInputOption: 'RAW',
-    requestBody: { values: [[now]] },
-  });
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: APP_SPREADSHEET_ID,
-    range: `'${SHEET_NAME}'!N${invitation.rowIndex}`,
-    valueInputOption: 'RAW',
-    requestBody: { values: [['expired']] },
+    requestBody: { values: [[now, invitation.data.pricingMode, invitation.data.durationHours, 'expired']] },
   });
 
   return { success: true };
