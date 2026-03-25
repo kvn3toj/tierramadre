@@ -470,6 +470,103 @@ async function registerGuest(sheets, body) {
   return { success: true, message: 'Guest registered successfully', guestName };
 }
 
+/**
+ * Update invitation fields (POST action=update)
+ * Currently supports: guestMultiplier
+ */
+async function updateInvitation(sheets, body) {
+  const { shortCode, creatorEmail, fields } = body;
+
+  if (!shortCode || !creatorEmail) {
+    return { success: false, error: 'shortCode and creatorEmail are required' };
+  }
+
+  const invitation = await findInvitationByCode(sheets, shortCode);
+  if (!invitation) {
+    return { success: false, error: 'Invitación no encontrada' };
+  }
+
+  // Ownership check (case-insensitive)
+  if (invitation.data.creatorEmail.toLowerCase().trim() !== creatorEmail.toLowerCase().trim()) {
+    return { success: false, error: 'No tienes permiso para editar esta invitación' };
+  }
+
+  // Only active/pending can be edited
+  if (invitation.data.status !== 'active' && invitation.data.status !== 'pending') {
+    return { success: false, error: 'Solo se pueden editar invitaciones activas o pendientes' };
+  }
+
+  // Update multiplier if provided
+  if (fields?.guestMultiplier !== undefined) {
+    const safe = sanitizeMultiplier(fields.guestMultiplier);
+    if (safe == null) {
+      return { success: false, error: 'Multiplicador inválido' };
+    }
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: APP_SPREADSHEET_ID,
+      range: `'${SHEET_NAME}'!R${invitation.rowIndex}`,
+      valueInputOption: 'RAW',
+      requestBody: { values: [[String(safe)]] },
+    });
+
+    return {
+      success: true,
+      invitation: { shortCode, guestMultiplier: safe },
+    };
+  }
+
+  return { success: false, error: 'No fields to update' };
+}
+
+/**
+ * Expire/revoke an invitation (POST action=expire)
+ */
+async function expireInvitationAction(sheets, body) {
+  const { shortCode, creatorEmail } = body;
+
+  if (!shortCode || !creatorEmail) {
+    return { success: false, error: 'shortCode and creatorEmail are required' };
+  }
+
+  const invitation = await findInvitationByCode(sheets, shortCode);
+  if (!invitation) {
+    return { success: false, error: 'Invitación no encontrada' };
+  }
+
+  // Ownership check (case-insensitive)
+  if (invitation.data.creatorEmail.toLowerCase().trim() !== creatorEmail.toLowerCase().trim()) {
+    return { success: false, error: 'No tienes permiso para expirar esta invitación' };
+  }
+
+  // Already expired is a no-op success
+  if (invitation.data.status === 'expired') {
+    return { success: true };
+  }
+
+  // Only active/pending can be expired
+  if (invitation.data.status !== 'active' && invitation.data.status !== 'pending') {
+    return { success: false, error: 'Solo se pueden expirar invitaciones activas o pendientes' };
+  }
+
+  // Update expiresAt (col K) and status (col N)
+  const now = new Date().toISOString();
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: APP_SPREADSHEET_ID,
+    range: `'${SHEET_NAME}'!K${invitation.rowIndex}`,
+    valueInputOption: 'RAW',
+    requestBody: { values: [[now]] },
+  });
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: APP_SPREADSHEET_ID,
+    range: `'${SHEET_NAME}'!N${invitation.rowIndex}`,
+    valueInputOption: 'RAW',
+    requestBody: { values: [['expired']] },
+  });
+
+  return { success: true };
+}
+
 export default withApiHandler(async (req, res, { sheets }) => {
   const action = req.query.action || req.body?.action || 'validate';
 
@@ -493,6 +590,18 @@ export default withApiHandler(async (req, res, { sheets }) => {
   // POST - Register guest
   if (req.method === 'POST' && action === 'register') {
     const result = await registerGuest(sheets, req.body);
+    return res.status(200).json(result);
+  }
+
+  // POST - Update invitation (multiplier, etc.)
+  if (req.method === 'POST' && action === 'update') {
+    const result = await updateInvitation(sheets, req.body);
+    return res.status(200).json(result);
+  }
+
+  // POST - Expire/revoke invitation
+  if (req.method === 'POST' && action === 'expire') {
+    const result = await expireInvitationAction(sheets, req.body);
     return res.status(200).json(result);
   }
 

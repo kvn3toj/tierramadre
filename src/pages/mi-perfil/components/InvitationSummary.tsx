@@ -1,19 +1,27 @@
 /**
  * InvitationSummary Component
  *
- * 3 metric cards (total, active, pending) + compact invitation list.
+ * 3 metric cards (total, active, pending) + invitation list with multiplier + actions.
  */
 
-import { Box, Typography, Chip, alpha } from '@mui/material';
-import { Link2, CheckCircle, Clock, XCircle, Send } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Box, Typography, Chip, alpha, IconButton,
+  Popover, Slider, Button, Dialog, DialogTitle,
+  DialogContent, DialogContentText, DialogActions,
+} from '@mui/material';
+import { Link2, CheckCircle, Clock, XCircle, Send, Ban } from 'lucide-react';
 import { emeraldCore, accentColors, iosTypographyScale, primitiveSpacing as spacing, radius, fontFamilies } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import type { Invitation, } from '../../../hooks/useMyInvitations';
+import type { Invitation } from '../../../hooks/useMyInvitations';
 
 interface InvitationSummaryProps {
   invitations: Invitation[];
   metrics: { total: number; active: number; pending: number };
   isLoading: boolean;
+  mutatingCodes: Set<string>;
+  onUpdateMultiplier: (shortCode: string, multiplier: number) => Promise<boolean>;
+  onExpire: (shortCode: string) => Promise<boolean>;
 }
 
 function formatDate(iso: string): string {
@@ -27,8 +35,35 @@ const STATUS_CONFIG = {
   expired: { label: 'Expirada', color: accentColors.error?.light || '#f44336', icon: XCircle },
 };
 
-export function InvitationSummary({ invitations, metrics, isLoading }: InvitationSummaryProps) {
+export function InvitationSummary({
+  invitations, metrics, isLoading,
+  mutatingCodes, onUpdateMultiplier, onExpire,
+}: InvitationSummaryProps) {
   const { t } = useLanguage();
+  const [editAnchor, setEditAnchor] = useState<HTMLElement | null>(null);
+  const [editCode, setEditCode] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState(1);
+  const [expireCode, setExpireCode] = useState<string | null>(null);
+  const expireTarget = invitations.find(i => i.shortCode === expireCode);
+
+  const handleEditOpen = (event: React.MouseEvent<HTMLElement>, inv: Invitation) => {
+    setEditAnchor(event.currentTarget);
+    setEditCode(inv.shortCode);
+    setEditValue(inv.guestMultiplier ?? 1);
+  };
+
+  const handleEditSave = async () => {
+    if (!editCode) return;
+    await onUpdateMultiplier(editCode, editValue);
+    setEditAnchor(null);
+    setEditCode(null);
+  };
+
+  const handleExpireConfirm = async () => {
+    if (!expireCode) return;
+    await onExpire(expireCode);
+    setExpireCode(null);
+  };
 
   if (!isLoading && invitations.length === 0) return null;
 
@@ -88,10 +123,12 @@ export function InvitationSummary({ invitations, metrics, isLoading }: Invitatio
         ))}
       </Box>
 
-      {/* Invitation List (compact, max 5) */}
+      {/* Invitation List */}
       <Box sx={{ display: 'grid', gap: spacing.xxs }}>
-        {invitations.slice(0, 5).map((inv) => {
+        {invitations.map((inv) => {
           const statusConf = STATUS_CONFIG[inv.status] || STATUS_CONFIG.pending;
+          const isEditable = inv.status === 'active' || inv.status === 'pending';
+          const isMutating = mutatingCodes.has(inv.shortCode);
 
           return (
             <Box
@@ -103,17 +140,16 @@ export function InvitationSummary({ invitations, metrics, isLoading }: Invitatio
                 p: spacing.sm,
                 borderRadius: radius.md,
                 bgcolor: 'var(--surface-primary)',
+                opacity: isMutating ? 0.6 : 1,
+                transition: 'opacity 0.2s',
               }}
             >
               <Box
                 sx={{
-                  width: 28,
-                  height: 28,
+                  width: 28, height: 28,
                   borderRadius: radius.sm,
                   bgcolor: alpha(statusConf.color, 0.1),
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
@@ -124,30 +160,55 @@ export function InvitationSummary({ invitations, metrics, isLoading }: Invitatio
                 <Typography
                   variant="body2"
                   sx={{
-                    fontSize: iosTypographyScale.footnote,
-                    fontWeight: 500,
+                    fontSize: iosTypographyScale.footnote, fontWeight: 500,
                     color: 'var(--text-primary)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}
                 >
                   {inv.guestName || inv.guestContact || inv.shortCode}
                 </Typography>
               </Box>
 
+              {/* Multiplier chip */}
+              <Chip
+                label={`x${inv.guestMultiplier ?? 1}`}
+                size="small"
+                onClick={isEditable ? (e) => handleEditOpen(e, inv) : undefined}
+                sx={{
+                  height: 20, fontSize: '0.6rem', fontWeight: 700,
+                  bgcolor: alpha(emeraldCore.primary, isEditable ? 0.1 : 0.05),
+                  color: isEditable ? emeraldCore.primary : 'var(--text-tertiary)',
+                  border: `1px solid ${alpha(emeraldCore.primary, isEditable ? 0.2 : 0.08)}`,
+                  cursor: isEditable ? 'pointer' : 'default',
+                  '&:hover': isEditable ? { bgcolor: alpha(emeraldCore.primary, 0.15) } : {},
+                }}
+              />
+
               <Chip
                 label={statusConf.label}
                 size="small"
                 sx={{
-                  height: 20,
-                  fontSize: '0.6rem',
-                  fontWeight: 600,
+                  height: 20, fontSize: '0.6rem', fontWeight: 600,
                   bgcolor: alpha(statusConf.color, 0.1),
                   color: statusConf.color,
                   border: `1px solid ${alpha(statusConf.color, 0.2)}`,
                 }}
               />
+
+              {isEditable && (
+                <IconButton
+                  size="small"
+                  disabled={isMutating}
+                  onClick={() => setExpireCode(inv.shortCode)}
+                  sx={{
+                    width: 24, height: 24, p: 0,
+                    color: 'var(--text-tertiary)',
+                    '&:hover': { color: accentColors.error?.light || '#f44336' },
+                  }}
+                >
+                  <Ban size={13} />
+                </IconButton>
+              )}
 
               <Typography
                 variant="caption"
@@ -159,6 +220,74 @@ export function InvitationSummary({ invitations, metrics, isLoading }: Invitatio
           );
         })}
       </Box>
+
+      {/* Multiplier Edit Popover */}
+      <Popover
+        open={Boolean(editAnchor)}
+        anchorEl={editAnchor}
+        onClose={() => setEditAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+        slotProps={{ paper: { sx: { p: 2, borderRadius: radius.lg, width: 220 } } }}
+      >
+        <Typography variant="caption" sx={{ fontWeight: 600, mb: 1, display: 'block' }}>
+          Multiplicador: x{editValue}
+        </Typography>
+        <Slider
+          value={editValue}
+          onChange={(_, v) => setEditValue(v as number)}
+          min={1} max={4} step={0.1}
+          valueLabelDisplay="auto"
+          valueLabelFormat={(v) => `x${v}`}
+          sx={{ color: emeraldCore.primary, '& .MuiSlider-thumb': { width: 16, height: 16 } }}
+        />
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1 }}>
+          <Button size="small" onClick={() => setEditAnchor(null)} sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
+            Cancelar
+          </Button>
+          <Button
+            size="small" variant="contained"
+            disabled={editCode ? mutatingCodes.has(editCode) : false}
+            onClick={handleEditSave}
+            sx={{
+              textTransform: 'none', fontSize: '0.75rem',
+              bgcolor: emeraldCore.primary, '&:hover': { bgcolor: emeraldCore.dark },
+            }}
+          >
+            Guardar
+          </Button>
+        </Box>
+      </Popover>
+
+      {/* Expire Confirmation Dialog */}
+      <Dialog
+        open={Boolean(expireCode)}
+        onClose={() => setExpireCode(null)}
+        PaperProps={{ sx: { borderRadius: radius.lg } }}
+      >
+        <DialogTitle sx={{ fontSize: '1rem', fontWeight: 600 }}>
+          Expirar invitación
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ fontSize: '0.85rem' }}>
+            ¿Expirar la invitación de {expireTarget?.guestName || expireTarget?.guestContact || expireTarget?.shortCode}?
+            El invitado perderá acceso en su próxima sesión.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setExpireCode(null)} sx={{ textTransform: 'none' }}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleExpireConfirm}
+            color="error"
+            variant="contained"
+            sx={{ textTransform: 'none' }}
+          >
+            Expirar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

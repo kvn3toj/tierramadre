@@ -82,7 +82,7 @@ interface CurrencyProviderProps {
 
 export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) => {
   const { user } = useGoogleAuth();
-  const { accessLevel } = useAuthContext();
+  const { accessLevel, isAuthenticated } = useAuthContext();
   const { trmRate, isLoading: isTrmLoading } = useTRM();
 
   const userEmail = user?.email?.toLowerCase() ?? '';
@@ -129,10 +129,11 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     }
   }, []);
 
-  // Sync guest currency/multiplier from sessionStorage when guest access is granted
-  // (useState initializers run once on mount, before guest auth completes)
+  // Sync guest currency/multiplier from sessionStorage when guest access is granted.
+  // Depends on isAuthenticated because accessLevel defaults to 'guest' (so isGuest
+  // is true before login), but sessionStorage is only populated after loginAsGuest().
   useEffect(() => {
-    if (!isGuest) return;
+    if (!isGuest || !isAuthenticated) return;
     try {
       const guestCurrency = sessionStorage.getItem(INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE);
       if (guestCurrency === 'USD') setCurrency('USD');
@@ -144,7 +145,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     } catch {
       // Ignore
     }
-  }, [isGuest]);
+  }, [isGuest, isAuthenticated]);
 
   // Reset to COP if user changes and is not authorized (guests keep asesor-assigned currency)
   useEffect(() => {

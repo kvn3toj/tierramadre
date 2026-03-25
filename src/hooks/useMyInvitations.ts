@@ -34,7 +34,10 @@ interface UseMyInvitationsReturn {
   invitations: Invitation[];
   metrics: InvitationMetrics;
   isLoading: boolean;
+  mutatingCodes: Set<string>;
   refresh: () => void;
+  updateMultiplier: (shortCode: string, multiplier: number) => Promise<boolean>;
+  expireInvitation: (shortCode: string) => Promise<boolean>;
 }
 
 export function useMyInvitations(creatorEmail: string | null | undefined): UseMyInvitationsReturn {
@@ -48,6 +51,7 @@ export function useMyInvitations(creatorEmail: string | null | undefined): UseMy
     }
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [mutatingCodes, setMutatingCodes] = useState<Set<string>>(new Set());
 
   const fetchInvitations = useCallback(async () => {
     if (!creatorEmail) return;
@@ -79,5 +83,61 @@ export function useMyInvitations(creatorEmail: string | null | undefined): UseMy
     return { total: invitations.length, active, pending };
   }, [invitations]);
 
-  return { invitations, metrics, isLoading, refresh: fetchInvitations };
+  const updateMultiplier = useCallback(async (shortCode: string, multiplier: number): Promise<boolean> => {
+    if (!creatorEmail) return false;
+    setMutatingCodes(prev => new Set(prev).add(shortCode));
+
+    const prevInvitations = invitations;
+    setInvitations(prev => prev.map(inv =>
+      inv.shortCode === shortCode ? { ...inv, guestMultiplier: multiplier } : inv
+    ));
+
+    try {
+      const res = await fetch('/api/invitations?action=update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shortCode, creatorEmail, fields: { guestMultiplier: multiplier } }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setInvitations(prevInvitations);
+        return false;
+      }
+      return true;
+    } catch {
+      setInvitations(prevInvitations);
+      return false;
+    } finally {
+      setMutatingCodes(prev => { const next = new Set(prev); next.delete(shortCode); return next; });
+    }
+  }, [creatorEmail]);
+
+  const expireInvitation = useCallback(async (shortCode: string): Promise<boolean> => {
+    if (!creatorEmail) return false;
+    setMutatingCodes(prev => new Set(prev).add(shortCode));
+
+    const prevInvitations = invitations;
+    setInvitations(prev => prev.filter(inv => inv.shortCode !== shortCode));
+
+    try {
+      const res = await fetch('/api/invitations?action=expire', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shortCode, creatorEmail }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setInvitations(prevInvitations);
+        return false;
+      }
+      return true;
+    } catch {
+      setInvitations(prevInvitations);
+      return false;
+    } finally {
+      setMutatingCodes(prev => { const next = new Set(prev); next.delete(shortCode); return next; });
+    }
+  }, [creatorEmail]);
+
+  return { invitations, metrics, isLoading, mutatingCodes, refresh: fetchInvitations, updateMultiplier, expireInvitation };
 }

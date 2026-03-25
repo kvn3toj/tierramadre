@@ -31,7 +31,7 @@ export default function MyProfilePage() {
   const { asesor, isLoading: asesorLoading } = useCurrentAsesor();
   const { treasure } = useTreasure();
   const { guestViews, topProducts, isLoading: activityLoading } = useGuestActivity(asesor?.name);
-  const { invitations, metrics, isLoading: invitationsLoading } = useMyInvitations(googleUser?.email);
+  const { invitations, metrics, isLoading: invitationsLoading, mutatingCodes, updateMultiplier, expireInvitation } = useMyInvitations(googleUser?.email);
 
   if (asesorLoading) {
     return (
@@ -84,6 +84,9 @@ export default function MyProfilePage() {
         invitations={invitations}
         metrics={metrics}
         isLoading={invitationsLoading}
+        mutatingCodes={mutatingCodes}
+        onUpdateMultiplier={updateMultiplier}
+        onExpire={expireInvitation}
       />
     </Box>
   );
