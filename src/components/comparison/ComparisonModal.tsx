@@ -29,7 +29,7 @@ import { X, Scale, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { TreasureItem } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { getColorDot, getQualityBadge } from '../../utils/formatting';
+import { getColorDot, getQualityBadge, formatCarats } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
 import { ComparisonMobileView } from './';
@@ -234,7 +234,7 @@ export default function ComparisonModal({
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Peso</TableCell>
                   {items.map((item, idx) => {
-                    const weight = typeof item.peso === 'number' ? `${item.peso} ct` : item.metalType || '-';
+                    const weight = typeof item.peso === 'number' ? `${formatCarats(item.peso)} ct` : item.metalType || '-';
                     return (
                       <ComparisonCell
                         key={item.item}

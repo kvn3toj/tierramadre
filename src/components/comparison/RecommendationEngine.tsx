@@ -4,6 +4,7 @@
  * intelligent insights based on user priorities.
  */
 import { TreasureItem } from '../../types';
+import { formatCarats } from '../../utils/formatting';
 
 export type RecommendationCriteria =
   | 'best_investment'        // Long-term value appreciation
@@ -275,7 +276,7 @@ function generateAnalysis(
 
     premium_quality: `${displayName} alcanza los más altos estándares de calidad con ${item.calidad} y color ${item.color}. Esta esmeralda representa la excelencia premium del grupo.`,
 
-    largest_size: `${displayName} es la esmeralda de mayor tamaño con ${item.peso} quilates. Su tamaño excepcional la hace destacar en presencia y valor.`,
+    largest_size: `${displayName} es la esmeralda de mayor tamaño con ${formatCarats(item.peso)} quilates. Su tamaño excepcional la hace destacar en presencia y valor.`,
 
     best_color: `${displayName} presenta el mejor color del grupo: ${item.color}. Su tonalidad superior es un factor clave de valor y belleza.`,
 

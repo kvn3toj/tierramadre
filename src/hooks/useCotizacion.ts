@@ -9,6 +9,7 @@ import { useCotizacionForm } from './useCotizacionForm';
 import { useCotizacionData } from './useCotizacionData';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { formatCarats } from '../utils/formatting';
 
 // Cotizacion product interface
 export interface CotizacionProduct {
@@ -169,7 +170,7 @@ export const getPesoDisplay = (item: CotizacionProduct | TreasureItem): string =
   if (item.isJewelry) {
     return item.metalType || 'Joya';
   }
-  return typeof item.peso === 'number' ? `${item.peso} ct` : String(item.peso);
+  return typeof item.peso === 'number' ? `${formatCarats(item.peso)} ct` : String(item.peso);
 };
 
 /**

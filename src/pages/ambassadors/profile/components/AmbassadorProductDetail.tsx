@@ -21,7 +21,7 @@ import {
   cssTransition,
   zIndex,
 } from '../../../../design-system';
-import { formatFullCurrency } from '../../../../utils/formatting';
+import { formatFullCurrency, formatCarats } from '../../../../utils/formatting';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import type { TreasureItem } from '../../../../types';
@@ -49,7 +49,7 @@ export function AmbassadorProductDetail({ item, onBack }: AmbassadorProductDetai
   const [galleryLoading, setGalleryLoading] = useState(false);
 
   const weightDisplay = typeof item.peso === 'number'
-    ? `${item.peso} ct`
+    ? `${formatCarats(item.peso)} ct`
     : item.peso || '-';
 
   // Fetch gallery from Drive API

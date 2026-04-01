@@ -22,6 +22,7 @@ import { brand, lightTokens, darkTokens, legacyTypography as typography, zIndex,
 import { emeraldCore, goldAccent } from '../../../../design-system/tokens/colors';
 import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
 import { accentuate } from '../../../../pages/collection/CollectionPage';
+import { formatCarats } from '../../../../utils/formatting';
 
 /** A single media slide in the carousel */
 interface MediaSlide {
@@ -628,7 +629,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                       Carats
                     </Typography>
                     <Typography sx={{ fontSize: { xs: '1.25rem', sm: '1.35rem' }, fontWeight: 700, lineHeight: 1.2 }}>
-                      {product.peso} ct
+                      {formatCarats(product.peso)} ct
                     </Typography>
                   </Box>
                 )}

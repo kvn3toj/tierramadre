@@ -19,7 +19,7 @@ import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import { triggerHaptic } from './useHaptics';
 import { usePriceShare } from '../contexts/PriceShareContext';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { formatCurrency } from '../utils/formatting';
+import { formatCurrency, formatCarats } from '../utils/formatting';
 import { createLogger } from '../utils/logger';
 
 const log = createLogger('useShare');
@@ -92,7 +92,7 @@ function checkShareSupport(): boolean {
  */
 function formatProductShareText(product: TreasureItem, productUrl: string, includePrice: boolean, convertPrice?: (v: number) => number, currency?: 'COP' | 'USD'): string {
   const displayName = product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
-  const weight = typeof product.peso === 'number' ? `${product.peso} ct` : '';
+  const weight = typeof product.peso === 'number' ? `${formatCarats(product.peso)} ct` : '';
 
   // Build share text with emoji for visual appeal
   const lines = [

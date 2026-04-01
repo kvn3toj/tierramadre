@@ -17,7 +17,7 @@ import { Heart, Scale } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
 import { TreasureItem } from '../../types';
-import { getColorDot, getQualityBadge } from '../../utils/formatting';
+import { getColorDot, getQualityBadge, formatCarats } from '../../utils/formatting';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
 import { errorAlpha, cssTransition } from '../../design-system';
@@ -51,7 +51,7 @@ function ListRow({
   const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const quality = getQualityBadge(item.calidad);
   const colorDot = getColorDot(item.color);
-  const weight = typeof item.peso === 'number' ? `${item.peso} ct` : item.metalType;
+  const weight = typeof item.peso === 'number' ? `${formatCarats(item.peso)} ct` : item.metalType;
 
   const handleItemClick = useCallback(() => {
     onItemClick(item);

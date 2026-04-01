@@ -7,7 +7,7 @@
 import React from 'react';
 import { Box, Typography, Chip, alpha, useTheme } from '@mui/material';
 import { emeraldCore, cssTransition, surfacesLight, surfacesDark, fontFamilies } from '../../../../design-system';
-import { formatCurrency } from '../../../../utils/formatting';
+import { formatCurrency, formatCarats } from '../../../../utils/formatting';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
 import type { TreasureItem } from '../../../../types';
@@ -23,7 +23,7 @@ export const ProductListCard = React.memo(function ProductListCard({ item, onCli
   const prefersReducedMotion = useReducedMotion();
 
   const weightDisplay = typeof item.peso === 'number'
-    ? `${item.peso} ct`
+    ? `${formatCarats(item.peso)} ct`
     : item.peso || '';
 
   return (

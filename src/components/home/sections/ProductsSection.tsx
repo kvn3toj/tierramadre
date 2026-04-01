@@ -32,6 +32,7 @@ import { textOnGlass } from '../../../design-system/utils/colorUtils';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { TreasureItem } from '../../../types';
 import { fadeInUp, staggerContainer, staggerItem, cardVariants, cssTransition } from '../../../design-system/tokens/motion';
+import { formatCarats } from '../../../utils/formatting';
 
 // =============================================================================
 // TYPES
@@ -187,7 +188,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                     role="article"
                     tabIndex={0}
                     aria-label={`${product.nombre || 'Esmeralda'}, ${
-                      typeof product.peso === 'number' ? `${product.peso} quilates` : product.peso
+                      typeof product.peso === 'number' ? `${formatCarats(product.peso)} quilates` : product.peso
                     }`}
                     onClick={() => handleProductClick(product.item)}
                     onKeyDown={(e) => handleProductKeyDown(e, product.item)}
@@ -262,7 +263,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                           fontWeight: 500,
                         }}
                       >
-                        {typeof product.peso === 'number' ? `${product.peso} ct` : product.peso}
+                        {typeof product.peso === 'number' ? `${formatCarats(product.peso)} ct` : product.peso}
                       </Typography>
                     </CardContent>
                   </Card>

@@ -25,6 +25,7 @@ import { primitiveColors, cssTransition } from '../../../../design-system';
 import { TreasureProductSelector } from '../../../../components/cotizacion/form/TreasureProductSelector';
 import { ProductThumbnail } from '../../../../components/cotizacion/form/ProductListSection';
 import { useCotizacionFormat } from '../../../../hooks/useCotizacion';
+import { formatCarats } from '../../../../utils/formatting';
 
 interface ProductListEditorProps {
   availableTreasure: TreasureItem[];
@@ -91,9 +92,9 @@ export const ProductListEditor: React.FC<ProductListEditorProps> = ({
   const getPesoLabel = (product: ReceiptProduct): string => {
     if (product.isJewelry) return product.metalType || 'Joya';
     if (product.peso != null) {
-      return typeof product.peso === 'number' ? `${product.peso} ct` : String(product.peso);
+      return typeof product.peso === 'number' ? `${formatCarats(product.peso)} ct` : String(product.peso);
     }
-    if (product.weightCarats) return `${product.weightCarats} ct`;
+    if (product.weightCarats) return `${formatCarats(product.weightCarats)} ct`;
     return '';
   };
 

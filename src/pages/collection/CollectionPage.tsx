@@ -27,6 +27,7 @@ import CollectionSplashScreen from '../../components/shared/CollectionSplashScre
 import { TreasureItem } from '../../types';
 import { brand, lightTokens, darkTokens, legacyTypography as typography, legacyGradients as gradients, cssTransition, zIndex, fontWeights, emeraldShadows, defaultShadows } from '../../design-system';
 import { getCachedBrowserInfo } from '../../utils/deviceTier';
+import { formatCarats } from '../../utils/formatting';
 
 // Map URL slug to actual Drive folder name (when they differ)
 const FOLDER_ALIASES: Record<string, string> = {
@@ -245,7 +246,7 @@ function ProductCard({
         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 0.5 }}>
           {typeof item.peso === 'number' && (
             <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
-              {item.peso} ct
+              {formatCarats(item.peso)} ct
             </Typography>
           )}
           {item.talla && (
@@ -348,7 +349,7 @@ export default function CollectionPage() {
 
   const handleProductShare = useCallback(async (product: TreasureItem) => {
     const url = `${window.location.origin}/c/${folder}/${product.item}`;
-    const text = `${product.nombre} - ${product.peso} ct Colombian Emerald`;
+    const text = `${product.nombre} - ${formatCarats(product.peso)} ct Colombian Emerald`;
     if (navigator.share) {
       try { await navigator.share({ title: 'Tierra Madre', text, url }); } catch { /* user cancelled */ }
     } else {

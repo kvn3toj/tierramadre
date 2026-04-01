@@ -8,6 +8,7 @@ import { Box, Typography, useTheme } from '@mui/material';
 import { Palette, Gem, Ruler, Award, Hash, Diamond, Box as BoxIcon, Layers } from 'lucide-react';
 import { TreasureItem } from '../../../../types';
 import { SpecRow } from './SpecRow';
+import { formatCarats } from '../../../../utils/formatting';
 
 interface SpecificationsListProps {
   product: TreasureItem;
@@ -62,7 +63,7 @@ export const SpecificationsList: React.FC<SpecificationsListProps> = ({ product 
         <SpecRow
           icon={<Gem size={18} />}
           label="Gema (Ct)"
-          value={`${product.peso} ct`}
+          value={`${formatCarats(product.peso)} ct`}
         />
       )}
 

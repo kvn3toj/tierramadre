@@ -28,7 +28,7 @@ import {
 import logoPlaceholder from '../../assets/logo-symbol.png';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { TreasureItem } from '../../types';
-import { getColorDot, getQualityBadge } from '../../utils/formatting';
+import { getColorDot, getQualityBadge, formatCarats } from '../../utils/formatting';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 // Design System Tokens
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
@@ -55,7 +55,7 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
   const quality = getQualityBadge(item.calidad);
   const colorDot = getColorDot(item.color);
   const isLoose = !item.isJewelry;
-  const weight = typeof item.peso === 'number' ? `${item.peso} ct` : item.metalType;
+  const weight = typeof item.peso === 'number' ? `${formatCarats(item.peso)} ct` : item.metalType;
 
   // Compact list view
   if (isCompact) {
@@ -328,7 +328,7 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
             mb: 0.75,
           }}
         >
-          {isLoose && typeof item.peso === 'number' && `${item.peso} ct`}
+          {isLoose && typeof item.peso === 'number' && `${formatCarats(item.peso)} ct`}
           {item.isJewelry && item.metalType && item.metalType}
         </Typography>
 

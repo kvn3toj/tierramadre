@@ -30,7 +30,7 @@ import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { prefetchRoute } from '../../utils/routePrefetch';
 import { TreasureItem } from '../../types';
-import { getQualityBadge, getQualityTooltip } from '../../utils/formatting';
+import { getQualityBadge, getQualityTooltip, formatCarats } from '../../utils/formatting';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 import ProgressiveImage from '../shared/ProgressiveImage';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
@@ -379,7 +379,7 @@ function GridCard({
           }}
         >
           {item.color}
-          {isLoose && typeof item.peso === 'number' && ` · ${item.peso} ct`}
+          {isLoose && typeof item.peso === 'number' && ` · ${formatCarats(item.peso)} ct`}
           {item.isJewelry && item.metalType && ` · ${item.metalType}`}
         </Typography>
       </CardContent>

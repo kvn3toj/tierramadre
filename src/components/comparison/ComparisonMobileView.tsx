@@ -8,7 +8,7 @@ import { BarChart3, Radar as RadarIcon, TrendingUp, DollarSign, Gem, Award, Chev
 import { TreasureItem } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { getColorDot, getQualityBadge } from '../../utils/formatting';
+import { getColorDot, getQualityBadge, formatCarats } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { surfacesLight, surfacesDark, emeraldCore } from '../../design-system/tokens/colors';
 import { accentColors } from '../../design-system';
@@ -114,7 +114,7 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
             label="Peso"
             values={items.map((item) =>
               typeof item.peso === 'number'
-                ? `${item.peso} ct`
+                ? `${formatCarats(item.peso)} ct`
                 : item.metalType || '-'
             )}
             type="numeric"

@@ -1,7 +1,15 @@
 /**
- * Shared formatting utilities for currency, colors, and quality badges.
+ * Shared formatting utilities for currency, colors, quality badges, and weight.
  * Extracted from TreasureBrowser, ProductDetail, and PriceSimulator.
  */
+
+/**
+ * Format carat weight with 2 decimal places (e.g. 0.50, 1.20, 3.00).
+ */
+export const formatCarats = (peso: string | number): string => {
+  const n = typeof peso === 'number' ? peso : parseFloat(peso);
+  return isNaN(n) ? String(peso) : n.toFixed(2);
+};
 
 /**
  * Format currency with abbreviated notation for large values.

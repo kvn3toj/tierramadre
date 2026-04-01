@@ -9,6 +9,7 @@ import { Box, Typography, Divider } from '@mui/material';
 import { ReceiptData } from '../../../../types';
 import { semanticColors } from '../../../../design-system/tokens/colors';
 import { useCotizacionFormat } from '../../../../hooks/useCotizacion';
+import { formatCarats } from '../../../../utils/formatting';
 import {
   receiptThemes,
   paymentMethodLabels,
@@ -33,9 +34,9 @@ export const ReceiptPreview = forwardRef<HTMLDivElement, ReceiptPreviewProps>(
     const getPesoLabel = (product: ReceiptData['products'][number]): string => {
       if (product.isJewelry) return product.metalType || 'Joya';
       if (product.peso != null) {
-        return typeof product.peso === 'number' ? `${product.peso} ct` : String(product.peso);
+        return typeof product.peso === 'number' ? `${formatCarats(product.peso)} ct` : String(product.peso);
       }
-      if (product.weightCarats) return `${product.weightCarats} quilates`;
+      if (product.weightCarats) return `${formatCarats(product.weightCarats)} quilates`;
       return '';
     };
 

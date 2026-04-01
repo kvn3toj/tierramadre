@@ -9,6 +9,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import type { CartItem } from '../types/cart';
 import type { Asesor } from './useAsesores';
+import { formatCarats } from '../utils/formatting';
 
 // Admin contacts - these are the only people staff can contact
 const ADMIN_NAMES = [
@@ -92,7 +93,7 @@ function formatProductDetails(item: CartItem, index: number): string {
   } else {
     // Gem details
     if (item.peso && item.peso !== '-') {
-      lines.push(`   Peso: ${item.peso} ct`);
+      lines.push(`   Peso: ${formatCarats(item.peso)} ct`);
     }
     if (item.talla && item.talla !== '-') {
       lines.push(`   Corte: ${item.talla}`);

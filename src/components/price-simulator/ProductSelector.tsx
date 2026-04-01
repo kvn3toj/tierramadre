@@ -32,6 +32,7 @@ import { studioColors, studioShadows, accentColors } from '../../design-system';
 import { semanticColors, goldAccent, surfacesLight } from '../../design-system/tokens/colors';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { getCategoryLabel, ProductSource, STATUS_FILTERS, PRODUCT_TYPE_FILTERS } from './index';
+import { formatCarats } from '../../utils/formatting';
 
 // Use design system accent color for purple elements (multi-select, lot badges)
 const PURPLE_ACCENT = accentColors.purple.light;
@@ -520,7 +521,7 @@ const TreasureAutocomplete: React.FC<TreasureAutocompleteProps> = ({
               )}
               {!option.isJewelry && typeof option.peso === 'number' && (
                 <Typography variant="caption" sx={{ color: studioColors.emerald, fontWeight: 500 }}>
-                  {option.peso} ct
+                  {formatCarats(option.peso)} ct
                 </Typography>
               )}
               {option.precioCOP && option.precioCOP > 0 && (

@@ -15,7 +15,7 @@ import {
   surfacesDark,
   fontFamilies,
 } from '../../../../design-system';
-import { formatFullCurrency } from '../../../../utils/formatting';
+import { formatFullCurrency, formatCarats } from '../../../../utils/formatting';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
 import type { TreasureItem } from '../../../../types';
@@ -34,7 +34,7 @@ export function FavoriteDetailView({ item, asesor, onBack }: FavoriteDetailViewP
   const prefersReducedMotion = useReducedMotion();
 
   const weightDisplay = typeof item.peso === 'number'
-    ? `${item.peso} ct`
+    ? `${formatCarats(item.peso)} ct`
     : item.peso || '';
 
   const handleContact = () => {

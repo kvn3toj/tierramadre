@@ -15,6 +15,7 @@ import {
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 import { accentColors } from '../../design-system';
+import { formatCarats } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import {
   ComparisonRecommendation,
@@ -153,7 +154,7 @@ export default function RecommendationCard({
             >
               {formatCurrency(winner.precioCOP)}
               {!winner.isJewelry && typeof winner.peso === 'number' && (
-                <> • {winner.peso} ct</>
+                <> • {formatCarats(winner.peso)} ct</>
               )}
             </Typography>
           </Box>
