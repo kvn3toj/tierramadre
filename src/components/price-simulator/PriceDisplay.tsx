@@ -42,28 +42,6 @@ const formatCurrencyValue = (value: number, currency: 'COP' | 'USD' = 'COP'): st
   }).format(value);
 };
 
-/**
- * Formatea un valor en formato compacto ($9.6M, $377K for COP; US$9.5K for USD)
- */
-const formatCompact = (value: number, currency: 'COP' | 'USD' = 'COP'): string => {
-  const prefix = currency === 'USD' ? 'US$' : '$';
-  if (currency === 'USD') {
-    if (value >= 1000000) {
-      return `${prefix}${(value / 1000000).toFixed(1)}M`;
-    }
-    if (value >= 1000) {
-      return `${prefix}${(value / 1000).toFixed(1)}K`;
-    }
-    return `${prefix}${value.toLocaleString('en-US')}`;
-  }
-  if (value >= 1000000) {
-    return `${prefix}${(value / 1000000).toFixed(1)}M`;
-  }
-  if (value >= 1000) {
-    return `${prefix}${Math.round(value / 1000)}K`;
-  }
-  return `${prefix}${value.toLocaleString('es-CO')}`;
-};
 
 export const PriceDisplay = ({
   price,
@@ -97,7 +75,7 @@ export const PriceDisplay = ({
           fontFeatureSettings: '"tnum"',
         }}
       >
-        {formatCompact(displayPrice, currency)}
+        {formatCurrencyValue(displayPrice, currency)}
       </Typography>
     );
   }

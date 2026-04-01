@@ -18,13 +18,12 @@ import { brand, lightTokens, darkTokens, accentColors, cssTransition } from '../
 
 // Format currency helper
 function formatCurrency(value: number): string {
-  if (value >= 1000000) {
-    return `$${(value / 1000000).toFixed(1)}M`;
-  }
-  if (value >= 1000) {
-    return `$${Math.round(value / 1000)}K`;
-  }
-  return `$${value.toLocaleString('es-CO')}`;
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
 interface CotizacionCardProps {

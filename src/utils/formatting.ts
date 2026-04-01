@@ -11,21 +11,13 @@
  * @returns Formatted string like "$1.5M", "$300K", "US$9.5K"
  */
 export const formatCurrency = (value: number, currency: 'COP' | 'USD' = 'COP'): string => {
-  const prefix = currency === 'USD' ? 'US$' : '$';
   if (currency === 'USD') {
-    if (value >= 1000000) {
-      return `${prefix}${(value / 1000000).toFixed(1)}M`;
-    }
-    if (value >= 1000) {
-      return `${prefix}${(value / 1000).toFixed(1)}K`;
-    }
-    return `${prefix}${value.toLocaleString('en-US')}`;
-  }
-  if (value >= 1000000) {
-    return `${prefix}${(value / 1000000).toFixed(1)}M`;
-  }
-  if (value >= 1000) {
-    return `${prefix}${(value / 1000).toFixed(0)}K`;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
   }
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',

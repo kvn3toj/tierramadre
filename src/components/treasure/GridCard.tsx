@@ -30,7 +30,7 @@ import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { prefetchRoute } from '../../utils/routePrefetch';
 import { TreasureItem } from '../../types';
-import { getColorDot, getQualityBadge, getQualityTooltip } from '../../utils/formatting';
+import { getQualityBadge, getQualityTooltip } from '../../utils/formatting';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 import ProgressiveImage from '../shared/ProgressiveImage';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
@@ -83,7 +83,6 @@ function GridCard({
   const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
   const quality = getQualityBadge(item.calidad);
   const qualityTooltip = getQualityTooltip(item.calidad);
-  const colorDot = getColorDot(item.color);
   const isLoose = !item.isJewelry;
 
   const handleItemClick = useCallback(() => {
@@ -327,7 +326,7 @@ function GridCard({
 
       </Box>
 
-      {/* Content Section — vertical: Name (full width) → specs + price row */}
+      {/* Content Section — vertical: Name → Price → specs */}
       <CardContent
         sx={{
           p: isMobile ? 1.25 : 1.5,
@@ -343,7 +342,7 @@ function GridCard({
             : alpha(surfacesDark.background.tertiary, 0.5),
         }}
       >
-        {/* Name — full width, up to 2 lines, never truncated to "..." on single line */}
+        {/* Name — full width, up to 2 lines */}
         <Typography
           variant="body2"
           sx={{
@@ -361,45 +360,28 @@ function GridCard({
           {displayName}
         </Typography>
 
-        {/* Specs + Price row */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.5, mt: '-1px' }}>
-          {/* Color dot + specs */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0, flex: 1 }}>
-            <Box
-              sx={{
-                width: 7,
-                height: 7,
-                borderRadius: '50%',
-                bgcolor: colorDot,
-                flexShrink: 0,
-                boxShadow: `0 0 0 1px ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}`,
-              }}
-            />
-            <Typography
-              variant="caption"
-              sx={{
-                color: secondaryLabelColor,
-                fontSize: isMobile ? 11 : 12,
-                lineHeight: 1.2,
-                letterSpacing: '-0.1px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {item.color}
-              {isLoose && typeof item.peso === 'number' && ` · ${item.peso} ct`}
-              {item.isJewelry && item.metalType && ` · ${item.metalType}`}
-            </Typography>
-          </Box>
+        {/* Price — full width below name */}
+        {shouldShowPrices && (
+          <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
+        )}
 
-          {/* Price — aligned right */}
-          {shouldShowPrices && (
-            <Box sx={{ flexShrink: 0 }}>
-              <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
-            </Box>
-          )}
-        </Box>
+        {/* Specs */}
+        <Typography
+          variant="caption"
+          sx={{
+            color: secondaryLabelColor,
+            fontSize: isMobile ? 11 : 12,
+            lineHeight: 1.2,
+            letterSpacing: '-0.1px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {item.color}
+          {isLoose && typeof item.peso === 'number' && ` · ${item.peso} ct`}
+          {item.isJewelry && item.metalType && ` · ${item.metalType}`}
+        </Typography>
       </CardContent>
     </Card>
   );
