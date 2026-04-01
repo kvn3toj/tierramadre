@@ -83,22 +83,27 @@ export function showNotification(options: NotificationOptions): Notification | n
     return null;
   }
 
-  const notification = new Notification(options.title, {
-    body: options.body,
-    icon: options.icon || '/logo-symbol.png',
-    badge: options.badge || '/logo-symbol.png',
-    tag: options.tag,
-    data: options.data,
-  });
+  try {
+    const notification = new Notification(options.title, {
+      body: options.body,
+      icon: options.icon || '/logo-symbol.png',
+      badge: options.badge || '/logo-symbol.png',
+      tag: options.tag,
+      data: options.data,
+    });
 
-  if (options.onClick) {
-    notification.onclick = () => {
-      options.onClick?.();
-      notification.close();
-    };
+    if (options.onClick) {
+      notification.onclick = () => {
+        options.onClick?.();
+        notification.close();
+      };
+    }
+
+    return notification;
+  } catch (error) {
+    log.warn('Notification constructor not supported:', error);
+    return null;
   }
-
-  return notification;
 }
 
 // =============================================================================
