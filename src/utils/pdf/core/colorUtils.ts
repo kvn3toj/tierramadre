@@ -5,7 +5,7 @@
  * Converts design tokens to jsPDF RGB values for consistent PDF styling.
  */
 
-import jsPDF from 'jspdf';
+import type jsPDF from 'jspdf';
 import { primitiveColors } from '../../../design-system/tokens/primitives/colors';
 
 /**

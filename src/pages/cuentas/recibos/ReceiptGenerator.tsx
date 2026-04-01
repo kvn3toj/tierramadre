@@ -23,7 +23,6 @@ import {
 } from '@mui/material';
 import { Receipt, Download, Printer, Copy, Moon, Sun } from 'lucide-react';
 import { ReceiptData, ReceiptProduct, TreasureItem } from '../../../types';
-import { exportReceiptToPdf } from '../../../utils/pdf';
 import { useTreasure } from '../../../hooks/useTreasure';
 import { useCotizacionFormat } from '../../../hooks/useCotizacion';
 import { useCurrency } from '../../../contexts/CurrencyContext';
@@ -156,9 +155,10 @@ export default function ReceiptGenerator() {
     setReceipt({ ...receipt, discountPercent: percent, ...totals });
   };
 
-  // Export to PDF
+  // Export to PDF (dynamic import keeps jspdf/html2canvas off the initial route chunk)
   const handleExportPDF = async () => {
     if (!receiptRef.current) return;
+    const { exportReceiptToPdf } = await import('../../../utils/pdf/pdfExport');
     await exportReceiptToPdf(
       receiptRef.current,
       receipt.receiptNumber || 'Receipt',

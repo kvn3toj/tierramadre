@@ -6,7 +6,7 @@
  * Preserves iOS typography hierarchy and metrics as closely as possible.
  */
 
-import jsPDF from 'jspdf';
+import type jsPDF from 'jspdf';
 import { setTextColor, RGB, ThemeMode, getThemeColors } from './colorUtils';
 
 /**

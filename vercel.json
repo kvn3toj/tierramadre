@@ -1,9 +1,9 @@
 {
   "functions": {
-    "api/get-treasure-sheets.js": {
+    "api/get-treasure-sheets.ts": {
       "maxDuration": 30
     },
-    "api/get-asesores.js": {
+    "api/get-asesores.ts": {
       "maxDuration": 30
     },
     "api/get-drive-images.js": {
@@ -12,7 +12,7 @@
     "api/serve-drive-image.js": {
       "maxDuration": 30
     },
-    "api/get-batch-thumbnails.js": {
+    "api/get-batch-thumbnails.ts": {
       "maxDuration": 30
     },
     "api/get-newest-products.js": {
@@ -48,7 +48,7 @@
     "api/cloudinary-upload.js": {
       "maxDuration": 60
     },
-    "api/cotizacion-save.js": {
+    "api/cotizacion-save.ts": {
       "maxDuration": 30
     },
     "api/cotizacion-reports.js": {
@@ -57,10 +57,10 @@
     "api/quotation-requests.js": {
       "maxDuration": 30
     },
-    "api/invitations.js": {
+    "api/invitations.ts": {
       "maxDuration": 30
     },
-    "api/validate.js": {
+    "api/validate.ts": {
       "maxDuration": 30
     },
     "api/send-email.js": {

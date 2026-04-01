@@ -6,7 +6,8 @@
  * Ensures consistent header styling across all PDF exports.
  */
 
-import jsPDF, { GState } from 'jspdf';
+import type jsPDF from 'jspdf';
+import { getGState } from '../jspdf-loader';
 import { addLogoToHeader, getLogoDimensions } from './logo';
 import { applyIOSTextStyle, applyCustomTextStyle } from '../core/typography';
 import { getThemeColors, ThemeMode, setFillColor, setStrokeColor } from '../core/colorUtils';
@@ -191,9 +192,9 @@ export function addDecoratedHeader(
 
   // Draw emerald background strip
   setFillColor(pdf, colors.emeraldPrimary);
-  pdf.setGState(new GState({ opacity: 0.1 }));
+  pdf.setGState(new (getGState())({ opacity: 0.1 }));
   pdf.rect(0, headerY, pageWidth, headerHeight, 'F');
-  pdf.setGState(new GState({ opacity: 1 }));
+  pdf.setGState(new (getGState())({ opacity: 1 }));
 
   // Add standard header elements on top
   addPageHeader(pdf, logoBase64, {

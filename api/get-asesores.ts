@@ -5,6 +5,9 @@
  * and returns them as JSON for the ambassadors page.
  */
 
+import type { sheets_v4 } from '@googleapis/sheets';
+import type { drive_v3 } from '@googleapis/drive';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   sendSuccess,
   SPREADSHEET_ID,
@@ -16,7 +19,27 @@ import {
   DRIVE_FOLDERS,
 } from './_lib/index.js';
 
-export default withApiHandler(async (req, res, { sheets, drive, sharedDriveId }) => {
+type Sheets = sheets_v4.Sheets;
+type Drive = drive_v3.Drive;
+
+/** Public API row — aligned with frontend `Asesor` usage (see src/types, useAsesores). */
+export interface GetAsesoresRow {
+  id: string;
+  name: string;
+  slug: string;
+  role: string;
+  whatsapp: string | null;
+  especialidad: string | null;
+  email: string | null;
+  photoFileId?: string;
+  photoUrl?: string;
+}
+
+export default withApiHandler(
+  async (_req: VercelRequest, res: VercelResponse, context: Record<string, unknown>) => {
+    const sheets = context.sheets as Sheets;
+    const drive = context.drive as Drive;
+    const sharedDriveId = context.sharedDriveId as string | undefined;
   const sheetNames = await getSheetNames(sheets);
 
   // Use sheet 3 (index 2) for asesores data
@@ -65,7 +88,7 @@ export default withApiHandler(async (req, res, { sheets, drive, sharedDriveId })
   const estadoIndex = findColumnIndex(headers, ['estado', 'status']);
 
   const dataRows = rows.slice(1);
-  const asesoresData = [];
+  const asesoresData: GetAsesoresRow[] = [];
 
   dataRows.forEach((row, index) => {
     const name = row[nameColumnIndex];
@@ -116,8 +139,9 @@ export default withApiHandler(async (req, res, { sheets, drive, sharedDriveId })
           pageSize: 100,
         });
 
-        const photoMap = {};
-        for (const file of (photosResponse.data.files || [])) {
+        const photoMap: Record<string, string> = {};
+        for (const file of photosResponse.data.files || []) {
+          if (!file.name || !file.id) continue;
           const slug = file.name.replace(/\.(jpg|jpeg|png|webp)$/i, '');
           photoMap[slug] = file.id;
         }
@@ -130,8 +154,9 @@ export default withApiHandler(async (req, res, { sheets, drive, sharedDriveId })
           }
         }
       }
-    } catch (photoError) {
-      console.warn('[GetAsesores] Could not scan ambassador photos:', photoError.message);
+    } catch (photoError: unknown) {
+      const msg = photoError instanceof Error ? photoError.message : String(photoError);
+      console.warn('[GetAsesores] Could not scan ambassador photos:', msg);
     }
   }
 
@@ -141,9 +166,11 @@ export default withApiHandler(async (req, res, { sheets, drive, sharedDriveId })
     sheetName: asesoresSheet,
     lastUpdated: new Date().toISOString(),
   });
-}, {
-  cache: CACHE.NONE,
-  provideSheets: true,
-  provideDrive: true,
-  errorPrefix: 'GetAsesores',
-});
+  },
+  {
+    cache: CACHE.NONE,
+    provideSheets: true,
+    provideDrive: true,
+    errorPrefix: 'GetAsesores',
+  }
+);

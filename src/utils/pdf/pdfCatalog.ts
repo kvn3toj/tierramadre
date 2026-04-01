@@ -5,7 +5,8 @@
  * Extracted from pdfGenerator.ts for modularity.
  */
 
-import jsPDF, { GState } from 'jspdf';
+import type jsPDF from 'jspdf';
+import { ensureJsPDFLoaded, getGState } from './jspdf-loader';
 import {
   getThemeColors as getIOSThemeColors,
   setFillColor,
@@ -36,6 +37,8 @@ export async function generateCatalog(
   emeralds: Emerald[],
   options: CatalogOptions
 ): Promise<jsPDF> {
+  const { default: jsPDF } = await ensureJsPDFLoaded();
+
   // Load logo if not provided
   let logoBase64 = options.logoBase64;
   if (!logoBase64) {
@@ -59,7 +62,7 @@ export async function generateCatalog(
 
   // Cover Page
   if (isCarousel) {
-    addHorizontalCoverPage(pdf, pageWidth, pageHeight, options.title, emeralds.length, logoBase64, theme);
+    await addHorizontalCoverPage(pdf, pageWidth, pageHeight, options.title, emeralds.length, logoBase64, theme);
   } else {
     addCoverPage(pdf, pageWidth, pageHeight, options.title);
   }
@@ -256,9 +259,9 @@ async function addGridLayout(
         const cx = currentX + cardWidth / 2;
         const cy = currentY + imageAreaHeight / 2;
         setFillColor(pdf, iosColors.emeraldPrimary);
-        pdf.setGState(new GState({ opacity: 0.3 }));
+        pdf.setGState(new (getGState())({ opacity: 0.3 }));
         pdf.circle(cx, cy, 8, 'F');
-        pdf.setGState(new GState({ opacity: 1 }));
+        pdf.setGState(new (getGState())({ opacity: 1 }));
       }
     }
 
@@ -299,9 +302,9 @@ async function addGridLayout(
 
       // Emerald-tinted pill
       setFillColor(pdf, iosColors.emeraldPrimary);
-      pdf.setGState(new GState({ opacity: 0.15 }));
+      pdf.setGState(new (getGState())({ opacity: 0.15 }));
       pdf.roundedRect(pillX, pillY, pillWidth, pillHeight, 1.5, 1.5, 'F');
-      pdf.setGState(new GState({ opacity: 1 }));
+      pdf.setGState(new (getGState())({ opacity: 1 }));
 
       // Pill text
       applyCustomTextStyle(pdf, 'caption2', iosColors.emeraldPrimary, theme as ThemeMode);
@@ -545,9 +548,9 @@ async function addListLayout(
     applyIOSTextStyle(pdf, 'caption2', iosColors.emeraldPrimary, theme as ThemeMode);
     const categoryWidth = pdf.getTextWidth(category) + 4;
     setFillColor(pdf, iosColors.emeraldPrimary);
-    pdf.setGState(new GState({ opacity: 0.12 }));
+    pdf.setGState(new (getGState())({ opacity: 0.12 }));
     pdf.roundedRect(contentX, contentY - 3, categoryWidth, 5, 2.5, 2.5, 'F');
-    pdf.setGState(new GState({ opacity: 1 }));
+    pdf.setGState(new (getGState())({ opacity: 1 }));
 
     setTextColor(pdf, iosColors.emeraldPrimary);
     pdf.text(category, contentX + 2, contentY);

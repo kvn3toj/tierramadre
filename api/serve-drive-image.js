@@ -14,6 +14,15 @@
 import sharp from 'sharp';
 
 /**
+ * @param {import('http').IncomingMessage} req
+ * @returns {boolean}
+ */
+function acceptsWebp(req) {
+  const accept = req.headers.accept || '';
+  return accept.includes('image/webp');
+}
+
+/**
  * MIME types that require special handling (not natively supported by browsers)
  * HEIC/HEIF are Apple formats that Chrome/Firefox don't support natively
  */
@@ -118,7 +127,16 @@ export default withApiHandler(async (req, res) => {
     }
 
     const { mimeType, name, size } = metadataResponse.data;
-    const etag = generateETag(fileId, size, mimeType);
+    /** Client asked for WebP; raster images only (not SVG). Used for ETag + output format. */
+    const prefersWebp =
+      acceptsWebp(req) &&
+      mimeType.startsWith('image/') &&
+      !mimeType.includes('svg');
+    const etag = generateETag(
+      fileId,
+      `${size}-${sizeParam}-${prefersWebp ? 'webp' : 'std'}`,
+      mimeType
+    );
 
     // Use optimized image caching (stale-while-revalidate for instant display)
     const imageCache = CACHE.IMAGES || CACHE.LONG;
@@ -156,15 +174,28 @@ export default withApiHandler(async (req, res) => {
           );
 
           if (thumbFetch.ok) {
-            const thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
+            let thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
+            let outMime = 'image/jpeg';
+            let fname = name.replace(/\.[^.]+$/, '.jpg');
+            if (prefersWebp) {
+              try {
+                thumbBuffer = await sharp(thumbBuffer)
+                  .webp({ quality: 82, effort: 4 })
+                  .toBuffer();
+                outMime = 'image/webp';
+                fname = name.replace(/\.[^.]+$/, '.webp');
+              } catch (e) {
+                console.warn('HEIC thumb WebP conversion failed, serving JPEG:', e.message);
+              }
+            }
 
-            res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Content-Type', outMime);
             res.setHeader('Content-Length', thumbBuffer.length);
             res.setHeader('Cache-Control', imageCache);
-            res.setHeader('ETag', `"heic-fast-${fileId}-${sizeParam}"`);
-            res.setHeader('Vary', 'Accept-Encoding');
+            res.setHeader('ETag', etag);
+            res.setHeader('Vary', 'Accept, Accept-Encoding');
             res.setHeader('Accept-Ranges', 'bytes');
-            res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(name.replace(/\.[^.]+$/, '.jpg'))}"`);
+            res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(fname)}"`);
             res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
             res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
             res.setHeader('Timing-Allow-Origin', '*');
@@ -204,14 +235,25 @@ export default withApiHandler(async (req, res) => {
           );
 
           if (thumbFetch.ok) {
-            const thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
+            let thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
+            let outMime = 'image/jpeg';
+            if (prefersWebp) {
+              try {
+                thumbBuffer = await sharp(thumbBuffer)
+                  .webp({ quality: 82, effort: 4 })
+                  .toBuffer();
+                outMime = 'image/webp';
+              } catch (e) {
+                console.warn('Video thumb WebP conversion failed:', e.message);
+              }
+            }
 
             // Chrome-optimized headers for thumbnails (stale-while-revalidate for instant display)
-            res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Content-Type', outMime);
             res.setHeader('Content-Length', thumbBuffer.length);
             res.setHeader('Cache-Control', imageCache);
-            res.setHeader('ETag', `"thumb-${fileId}"`);
-            res.setHeader('Vary', 'Accept-Encoding');
+            res.setHeader('ETag', etag);
+            res.setHeader('Vary', 'Accept, Accept-Encoding');
             res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, ETag');
             // CDN-specific caching for Vercel edge
 
@@ -298,41 +340,54 @@ export default withApiHandler(async (req, res) => {
         // Skip resize if image is already smaller than target (with 20% tolerance)
         if (imageWidth && imageWidth <= targetWidth * 1.2) {
           console.log(`Skipping resize for ${name}: ${imageWidth}px <= ${targetWidth * 1.2}px`);
-          // Return original buffer (already optimized)
-          res.setHeader('Content-Type', mimeType);
-          res.setHeader('Content-Length', buffer.length);
+          let outBuf = buffer;
+          let outMime = mimeType;
+          let dispName = name;
+          if (prefersWebp) {
+            try {
+              outBuf = await sharp(buffer).webp({ quality: 82, effort: 4 }).toBuffer();
+              outMime = 'image/webp';
+              dispName = name.replace(/\.[^.]+$/, '.webp');
+            } catch (swErr) {
+              console.warn('WebP transcode (skip-resize) failed:', swErr.message);
+            }
+          }
+          res.setHeader('Content-Type', outMime);
+          res.setHeader('Content-Length', outBuf.length);
           res.setHeader('Cache-Control', imageCache);
-          res.setHeader('ETag', `"${generateETag(fileId, buffer.length, mimeType)}-${sizeParam}"`);
-          res.setHeader('Vary', 'Accept-Encoding');
+          res.setHeader('ETag', etag);
+          res.setHeader('Vary', 'Accept, Accept-Encoding');
           res.setHeader('Accept-Ranges', 'bytes');
-          res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(name)}"`);
+          res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(dispName)}"`);
           res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
           res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
           res.setHeader('Timing-Allow-Origin', '*');
 
-          return res.status(200).send(buffer);
+          return res.status(200).send(outBuf);
         }
 
         // Proceed with resize for larger images
-        const resizedBuffer = await sharp(buffer)
-          .resize(targetWidth, null, {
-            fit: 'inside',
-            withoutEnlargement: true, // Don't upscale small images
-          })
-          .jpeg({ quality: 85, progressive: true }) // Convert to optimized JPEG
-          .toBuffer();
+        const resized = sharp(buffer).resize(targetWidth, null, {
+          fit: 'inside',
+          withoutEnlargement: true, // Don't upscale small images
+        });
+        buffer = prefersWebp
+          ? await resized.webp({ quality: 82, effort: 4 }).toBuffer()
+          : await resized.jpeg({ quality: 85, progressive: true }).toBuffer();
 
-        buffer = resizedBuffer;
+        const outMimeResized = prefersWebp ? 'image/webp' : 'image/jpeg';
+        const dispResized = prefersWebp
+          ? name.replace(/\.[^.]+$/, '.webp')
+          : name.replace(/\.[^.]+$/, '.jpg');
 
         // Update headers for resized image
-        res.setHeader('Content-Type', 'image/jpeg');
+        res.setHeader('Content-Type', outMimeResized);
         res.setHeader('Content-Length', buffer.length);
         res.setHeader('Cache-Control', imageCache);
-        // Update ETag to include size for proper caching
-        res.setHeader('ETag', `"${generateETag(fileId, buffer.length, 'image/jpeg')}-${sizeParam}"`);
-        res.setHeader('Vary', 'Accept-Encoding');
+        res.setHeader('ETag', etag);
+        res.setHeader('Vary', 'Accept, Accept-Encoding');
         res.setHeader('Accept-Ranges', 'bytes');
-        res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(name.replace(/\.[^.]+$/, '.jpg'))}"`);
+        res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(dispResized)}"`);
         res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         res.setHeader('Timing-Allow-Origin', '*');
@@ -358,20 +413,31 @@ export default withApiHandler(async (req, res) => {
               const thumbFetch = await fetch(thumbnailUrl);
 
               if (thumbFetch.ok) {
-                const thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
+                let thumbBuf = Buffer.from(await thumbFetch.arrayBuffer());
+                let outMimeFb = 'image/jpeg';
+                let fnameFb = name.replace(/\.[^.]+$/, '.jpg');
+                if (prefersWebp) {
+                  try {
+                    thumbBuf = await sharp(thumbBuf).webp({ quality: 82, effort: 4 }).toBuffer();
+                    outMimeFb = 'image/webp';
+                    fnameFb = name.replace(/\.[^.]+$/, '.webp');
+                  } catch (e) {
+                    console.warn('HEIC fallback WebP failed:', e.message);
+                  }
+                }
 
-                res.setHeader('Content-Type', 'image/jpeg');
-                res.setHeader('Content-Length', thumbBuffer.length);
+                res.setHeader('Content-Type', outMimeFb);
+                res.setHeader('Content-Length', thumbBuf.length);
                 res.setHeader('Cache-Control', imageCache);
-                res.setHeader('ETag', `"heic-thumb-${fileId}-${sizeParam}"`);
-                res.setHeader('Vary', 'Accept-Encoding');
+                res.setHeader('ETag', etag);
+                res.setHeader('Vary', 'Accept, Accept-Encoding');
                 res.setHeader('Accept-Ranges', 'bytes');
-                res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(name.replace(/\.[^.]+$/, '.jpg'))}"`);
+                res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(fnameFb)}"`);
                 res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
                 res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
                 res.setHeader('Timing-Allow-Origin', '*');
     
-                return res.status(200).send(thumbBuffer);
+                return res.status(200).send(thumbBuf);
               }
             }
           } catch (thumbError) {
@@ -398,15 +464,26 @@ export default withApiHandler(async (req, res) => {
           const thumbFetch = await fetch(thumbnailUrl);
 
           if (thumbFetch.ok) {
-            const thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
+            let thumbBuffer = Buffer.from(await thumbFetch.arrayBuffer());
+            let outMimeOrig = 'image/jpeg';
+            let fnameOrig = name.replace(/\.[^.]+$/, '.jpg');
+            if (prefersWebp) {
+              try {
+                thumbBuffer = await sharp(thumbBuffer).webp({ quality: 82, effort: 4 }).toBuffer();
+                outMimeOrig = 'image/webp';
+                fnameOrig = name.replace(/\.[^.]+$/, '.webp');
+              } catch (e) {
+                console.warn('HEIC orig WebP failed:', e.message);
+              }
+            }
 
-            res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Content-Type', outMimeOrig);
             res.setHeader('Content-Length', thumbBuffer.length);
             res.setHeader('Cache-Control', imageCache);
-            res.setHeader('ETag', `"heic-orig-${fileId}"`);
-            res.setHeader('Vary', 'Accept-Encoding');
+            res.setHeader('ETag', etag);
+            res.setHeader('Vary', 'Accept, Accept-Encoding');
             res.setHeader('Accept-Ranges', 'bytes');
-            res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(name.replace(/\.[^.]+$/, '.jpg'))}"`);
+            res.setHeader('Content-Disposition', `inline; filename="${encodeFilename(fnameOrig)}"`);
             res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, ETag, Accept-Ranges');
             res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
             res.setHeader('Timing-Allow-Origin', '*');

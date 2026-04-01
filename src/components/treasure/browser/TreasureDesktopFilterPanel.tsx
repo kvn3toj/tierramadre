@@ -1,0 +1,95 @@
+/**
+ * Desktop catalog filter card: full FilterContent + toolbar (view mode, stats, saved filters).
+ */
+
+import { Paper } from '@mui/material';
+import { FilterContent, type FilterContentProps } from '../FilterContent';
+import DesktopFilterToolbar from './DesktopFilterToolbar';
+import { surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
+import type {
+  TreasureFilters,
+  TypeFilter,
+  StatusFilter,
+  SortOption,
+} from '../../../hooks/useTreasureFiltering';
+import { useSavedFilters } from '../../../hooks/useSavedFilters';
+
+export interface TreasureDesktopFilterPanelProps {
+  isLight: boolean;
+  filterContentProps: FilterContentProps;
+  shouldShowPrices: boolean;
+  stats: { looseStones: number; jewelry: number };
+  viewMode: 'grid' | 'list';
+  onViewModeChange: (mode: 'grid' | 'list') => void;
+  savedFilters: ReturnType<typeof useSavedFilters>;
+  hasFilters: boolean;
+  filters: TreasureFilters;
+  setSearch: (s: string) => void;
+  setColorFilter: (c: string) => void;
+  setQualityFilter: (q: string) => void;
+  setTypeFilter: (t: TypeFilter) => void;
+  setStatusFilter: (s: StatusFilter) => void;
+  setShapeFilter: (s: string) => void;
+  setPriceRange: (r: [number, number]) => void;
+  setSortBy: (s: SortOption) => void;
+  setCantidadFilter: (c: string) => void;
+  trackViewModeChange: (mode: 'grid' | 'list') => void;
+}
+
+export default function TreasureDesktopFilterPanel({
+  isLight,
+  filterContentProps,
+  shouldShowPrices,
+  stats,
+  viewMode,
+  onViewModeChange,
+  savedFilters,
+  hasFilters,
+  filters,
+  setSearch,
+  setColorFilter,
+  setQualityFilter,
+  setTypeFilter,
+  setStatusFilter,
+  setShapeFilter,
+  setPriceRange,
+  setSortBy,
+  setCantidadFilter,
+  trackViewModeChange,
+}: TreasureDesktopFilterPanelProps) {
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 1.5,
+        mb: 1.5,
+        borderRadius: 2,
+        bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
+        border: '1px solid',
+        borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+      }}
+    >
+      <FilterContent {...filterContentProps} />
+      <DesktopFilterToolbar
+        shouldShowPrices={shouldShowPrices}
+        stats={stats}
+        viewMode={viewMode}
+        onViewModeChange={onViewModeChange}
+        savedFilters={savedFilters}
+        hasFilters={hasFilters}
+        filters={filters}
+        setSearch={setSearch}
+        setColorFilter={setColorFilter}
+        setQualityFilter={setQualityFilter}
+        setTypeFilter={setTypeFilter}
+        setStatusFilter={setStatusFilter}
+        setShapeFilter={setShapeFilter}
+        setPriceRange={setPriceRange}
+        setSortBy={setSortBy}
+        setCantidadFilter={setCantidadFilter}
+        trackViewModeChange={trackViewModeChange}
+        isLight={isLight}
+      />
+    </Paper>
+  );
+}

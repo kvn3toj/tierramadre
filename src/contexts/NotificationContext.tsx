@@ -7,7 +7,8 @@
  * Nielsen H5: Error prevention (confirm before destructive actions)
  */
 
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { registerFetchFailureHandler } from '../utils/fetchFailureBridge';
 import { Snackbar, Alert, AlertColor } from '@mui/material';
 import { fontSizes, fontWeights, radius, semanticColors, whiteAlpha } from '../design-system';
 
@@ -64,13 +65,23 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     });
   }, []);
 
+  useEffect(() => {
+    registerFetchFailureHandler((message) => notify(message, 'error'));
+    return () => registerFetchFailureHandler(null);
+  }, [notify]);
+
   const handleConfirm = useCallback((accepted: boolean) => {
     confirm.resolve?.(accepted);
     setConfirm({ open: false, message: '', resolve: null });
   }, [confirm.resolve]);
 
+  const contextValue = useMemo(
+    () => ({ notify, confirmAction }),
+    [notify, confirmAction]
+  );
+
   return (
-    <NotificationContext.Provider value={{ notify, confirmAction }}>
+    <NotificationContext.Provider value={contextValue}>
       {children}
 
       {/* Snackbar notification (replaces alert()) */}

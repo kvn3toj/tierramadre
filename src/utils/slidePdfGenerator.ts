@@ -1,6 +1,3 @@
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-
 interface SlideExportOptions {
   filename?: string;
   format?: 'pdf' | 'png' | 'jpg';
@@ -110,6 +107,11 @@ export async function generateSlidePDF(
     // Extra wait for rendering
     await new Promise(resolve => setTimeout(resolve, 500));
 
+    const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+      import('html2canvas'),
+      import('jspdf'),
+    ]);
+
     const canvas = await html2canvas(element, {
       scale,
       useCORS: true,
@@ -176,6 +178,11 @@ export async function generateMultiSlidePDF(
     quality = 0.95,
     scale = 2,
   } = options;
+
+  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+    import('html2canvas'),
+    import('jspdf'),
+  ]);
 
   const pdf = new jsPDF({
     orientation: 'landscape',
@@ -253,6 +260,8 @@ export async function getSlidePreview(
   if (!element) {
     throw new Error(`Element with id "${elementId}" not found`);
   }
+
+  const { default: html2canvas } = await import('html2canvas');
 
   const canvas = await html2canvas(element, {
     scale,

@@ -11,6 +11,7 @@ import { useState, useCallback } from 'react';
 import { MediaType } from '../types';
 import { MediaItem } from '../components/media/types';
 import { createLogger } from '../utils/logger';
+import { fetchWithRetry } from '../utils/fetchWithRetry';
 import { STORAGE_KEYS, LEGACY_KEYS } from '../constants/storage-keys';
 
 const log = createLogger('TreasureMedia');
@@ -276,7 +277,14 @@ export function useTreasureMedia(): UseTreasureMediaReturn {
   const fetchCloudGallery = useCallback(async (itemNumber: number): Promise<MediaItem[]> => {
     try {
       // Primary source: Google Drive folders
-      const driveResponse = await fetch(`/api/get-drive-images?itemNumber=${itemNumber}`);
+      const driveResponse = await fetchWithRetry(
+        `/api/get-drive-images?itemNumber=${itemNumber}`,
+        undefined,
+        {
+          retries: 2,
+          notifyOnFailure: false,
+        }
+      );
       if (driveResponse.ok) {
         const driveData = await driveResponse.json();
         if (driveData.success && driveData.images && driveData.images.length > 0) {

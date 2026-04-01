@@ -55,8 +55,10 @@ export const CACHE = {
   LONG: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400', // 24h browser, 7d CDN, 24h stale
   // Catalog data (thumbnails map): 1h CDN, 5min browser, stale up to 2h while revalidating
   CATALOG: 's-maxage=3600, max-age=300, stale-while-revalidate=7200',
-  // Images: 1h browser + 24h CDN (Drive fileIds are immutable — new uploads get new IDs)
-  IMAGES: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=3600',
+  // Images: 1h browser + 24h CDN; long SWR at edge so Vercel can serve stale while revalidating Drive
+  // (Drive fileIds are immutable — new uploads get new IDs)
+  IMAGES:
+    'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
 };
 
 // Invitation Settings — no time limit on guest access

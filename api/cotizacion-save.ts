@@ -3,14 +3,11 @@
  *
  * Saves cotización images to Google Drive and metadata to Google Sheets.
  * Each asesor has their own folder: TM-Studio/cotizaciones/asesores/{email}/
- *
- * Endpoints:
- * - POST /api/cotizacion-save - Save cotización image + metadata
- * - GET /api/cotizacion-save?email={email} - Get cotizaciones for an asesor
- * - GET /api/cotizacion-save?action=stats - Get aggregate cotización statistics
- * - DELETE /api/cotizacion-save?id={id}&email={email} - Delete a cotización
  */
 
+import type { sheets_v4 } from '@googleapis/sheets';
+import type { drive_v3 } from '@googleapis/drive';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Readable } from 'stream';
 import {
   withApiHandler,
@@ -27,18 +24,55 @@ import {
 const COTIZACIONES_SHEET = 'CotizacionesAsesores';
 const PRODUCTS_SHEET = 'CotizacionProducts';
 
+function firstQueryParam(v: string | string[] | undefined): string | undefined {
+  if (v == null) return undefined;
+  return Array.isArray(v) ? v[0] : v;
+}
+
+interface CotizacionSheetRow {
+  quotationNumber: string;
+  asesorEmail: string;
+  asesorName: string;
+  clientName: string;
+  clientPhone: string;
+  productsCount: number;
+  total: number | string;
+  imageUrl: string;
+  driveFileId: string;
+  expiryDate: string;
+}
+
+interface CotizacionProductLine {
+  itemNumber?: number;
+  name?: string;
+  precioCOP?: number;
+}
+
+interface CotizacionPostBody {
+  quotationNumber?: string;
+  asesorEmail?: string;
+  asesorName?: string;
+  clientName?: string;
+  clientPhone?: string;
+  productsCount?: number;
+  total?: number;
+  expiryDate?: string;
+  imageBase64?: string;
+  products?: CotizacionProductLine[];
+}
+
 /**
  * Get asesor names from the Asesores sheet, indexed by email
  * Returns a map of { email: name }
  */
-async function getAsesorNamesByEmail(sheets) {
+async function getAsesorNamesByEmail(sheets: sheets_v4.Sheets): Promise<Record<string, string>> {
   try {
     const sheetNames = await getSheetNames(sheets);
 
     // Find asesores sheet (index 2 or by name)
     let asesoresSheet = sheetNames[2];
     if (!asesoresSheet) {
-      asesoresSheet = sheetNames.find(name =>
+      asesoresSheet = sheetNames.find((name: string) =>
         name.toLowerCase().includes('asesor') ||
         name.toLowerCase().includes('embajador')
       ) || sheetNames[0];
@@ -52,19 +86,19 @@ async function getAsesorNamesByEmail(sheets) {
     const rows = response.data.values || [];
     if (rows.length <= 1) return {};
 
-    const headers = rows[0];
+    const headers = rows[0] as string[];
     const nameIndex = findColumnIndex(headers, ['nombre', 'name', 'asesor', 'vendedor']);
     const emailIndex = findColumnIndex(headers, ['instagram', 'ig', 'email']);
 
     if (nameIndex === -1 || emailIndex === -1) return {};
 
-    const namesByEmail = {};
+    const namesByEmail: Record<string, string> = {};
     for (const row of rows.slice(1)) {
       const name = row[nameIndex];
       const email = row[emailIndex];
       if (name && email) {
         const cleanEmail = String(email).trim().toLowerCase();
-        namesByEmail[cleanEmail] = formatDisplayName(name);
+        namesByEmail[cleanEmail] = formatDisplayName(String(name));
       }
     }
 
@@ -83,12 +117,16 @@ async function getAsesorNamesByEmail(sheets) {
  * Get or create the asesores cotizaciones folder structure
  * TM-Studio/cotizaciones/asesores/{email}/
  */
-async function getAsesorCotizacionesFolder(drive, sharedDriveId, asesorEmail) {
+async function getAsesorCotizacionesFolder(
+  drive: drive_v3.Drive,
+  sharedDriveId: string,
+  asesorEmail: string
+): Promise<string> {
   // Sanitize email for folder name
   const sanitizedEmail = asesorEmail.toLowerCase().trim().replace(/[^a-z0-9@._-]/g, '_');
 
   // Find or create cotizaciones folder
-  let cotizacionesFolderId;
+  let cotizacionesFolderId: string;
   const cotizacionesQuery = await drive.files.list({
     q: `name = 'cotizaciones' and '${sharedDriveId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
     fields: 'files(id, name)',
@@ -96,10 +134,10 @@ async function getAsesorCotizacionesFolder(drive, sharedDriveId, asesorEmail) {
     includeItemsFromAllDrives: true,
   });
 
-  if (cotizacionesQuery.data.files?.length > 0) {
-    cotizacionesFolderId = cotizacionesQuery.data.files[0].id;
+  const cotFiles = cotizacionesQuery.data.files ?? [];
+  if (cotFiles.length > 0 && cotFiles[0].id) {
+    cotizacionesFolderId = cotFiles[0].id;
   } else {
-    // Create cotizaciones folder
     const folder = await drive.files.create({
       requestBody: {
         name: 'cotizaciones',
@@ -109,11 +147,11 @@ async function getAsesorCotizacionesFolder(drive, sharedDriveId, asesorEmail) {
       fields: 'id',
       supportsAllDrives: true,
     });
-    cotizacionesFolderId = folder.data.id;
+    cotizacionesFolderId = folder.data.id!;
   }
 
   // Find or create asesores subfolder
-  let asesoresFolderId;
+  let asesoresFolderId: string;
   const asesoresQuery = await drive.files.list({
     q: `name = 'asesores' and '${cotizacionesFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
     fields: 'files(id, name)',
@@ -121,8 +159,9 @@ async function getAsesorCotizacionesFolder(drive, sharedDriveId, asesorEmail) {
     includeItemsFromAllDrives: true,
   });
 
-  if (asesoresQuery.data.files?.length > 0) {
-    asesoresFolderId = asesoresQuery.data.files[0].id;
+  const asesFiles = asesoresQuery.data.files ?? [];
+  if (asesFiles.length > 0 && asesFiles[0].id) {
+    asesoresFolderId = asesFiles[0].id;
   } else {
     const folder = await drive.files.create({
       requestBody: {
@@ -133,11 +172,11 @@ async function getAsesorCotizacionesFolder(drive, sharedDriveId, asesorEmail) {
       fields: 'id',
       supportsAllDrives: true,
     });
-    asesoresFolderId = folder.data.id;
+    asesoresFolderId = folder.data.id!;
   }
 
   // Find or create asesor's personal folder
-  let asesorFolderId;
+  let asesorFolderId: string;
   const asesorQuery = await drive.files.list({
     q: `name = '${sanitizedEmail}' and '${asesoresFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
     fields: 'files(id, name)',
@@ -145,8 +184,9 @@ async function getAsesorCotizacionesFolder(drive, sharedDriveId, asesorEmail) {
     includeItemsFromAllDrives: true,
   });
 
-  if (asesorQuery.data.files?.length > 0) {
-    asesorFolderId = asesorQuery.data.files[0].id;
+  const asesorFiles = asesorQuery.data.files ?? [];
+  if (asesorFiles.length > 0 && asesorFiles[0].id) {
+    asesorFolderId = asesorFiles[0].id;
   } else {
     const folder = await drive.files.create({
       requestBody: {
@@ -157,7 +197,7 @@ async function getAsesorCotizacionesFolder(drive, sharedDriveId, asesorEmail) {
       fields: 'id',
       supportsAllDrives: true,
     });
-    asesorFolderId = folder.data.id;
+    asesorFolderId = folder.data.id!;
   }
 
   return asesorFolderId;
@@ -166,7 +206,12 @@ async function getAsesorCotizacionesFolder(drive, sharedDriveId, asesorEmail) {
 /**
  * Upload base64 image to Drive
  */
-async function uploadImageToDrive(drive, folderId, imageBase64, quotationNumber) {
+async function uploadImageToDrive(
+  drive: drive_v3.Drive,
+  folderId: string,
+  imageBase64: string,
+  quotationNumber: string
+) {
   // Remove data URL prefix if present
   const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
   const buffer = Buffer.from(base64Data, 'base64');
@@ -186,9 +231,14 @@ async function uploadImageToDrive(drive, folderId, imageBase64, quotationNumber)
     supportsAllDrives: true,
   });
 
+  const newFileId = uploadedFile.data.id;
+  if (!newFileId) {
+    throw new Error('Drive upload did not return a file id');
+  }
+
   // Make file viewable
   await drive.permissions.create({
-    fileId: uploadedFile.data.id,
+    fileId: newFileId,
     requestBody: {
       role: 'reader',
       type: 'anyone',
@@ -197,18 +247,18 @@ async function uploadImageToDrive(drive, folderId, imageBase64, quotationNumber)
   });
 
   return {
-    fileId: uploadedFile.data.id,
+    fileId: newFileId,
     fileName: uploadedFile.data.name,
     viewUrl: uploadedFile.data.webViewLink,
     downloadUrl: uploadedFile.data.webContentLink,
-    proxyUrl: `/api/serve-drive-image?fileId=${uploadedFile.data.id}`,
+    proxyUrl: `/api/serve-drive-image?fileId=${newFileId}`,
   };
 }
 
 /**
  * Ensure the cotizaciones sheet exists with headers
  */
-async function ensureCotizacionesSheet(sheets) {
+async function ensureCotizacionesSheet(sheets: sheets_v4.Sheets): Promise<boolean> {
   try {
     // Check if sheet exists
     const spreadsheet = await sheets.spreadsheets.get({
@@ -270,7 +320,7 @@ async function ensureCotizacionesSheet(sheets) {
 /**
  * Ensure the products sheet exists with headers
  */
-async function ensureProductsSheet(sheets) {
+async function ensureProductsSheet(sheets: sheets_v4.Sheets): Promise<boolean> {
   try {
     const spreadsheet = await sheets.spreadsheets.get({
       spreadsheetId: APP_SPREADSHEET_ID,
@@ -323,7 +373,7 @@ async function ensureProductsSheet(sheets) {
 /**
  * Save cotización metadata to sheet
  */
-async function saveCotizacionToSheet(sheets, data) {
+async function saveCotizacionToSheet(sheets: sheets_v4.Sheets, data: CotizacionSheetRow): Promise<string> {
   await ensureCotizacionesSheet(sheets);
 
   const id = `cot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -358,7 +408,12 @@ async function saveCotizacionToSheet(sheets, data) {
 /**
  * Save cotización products to sheet
  */
-async function saveCotizacionProducts(sheets, cotizacionId, products, asesorEmail) {
+async function saveCotizacionProducts(
+  sheets: sheets_v4.Sheets,
+  cotizacionId: string,
+  products: CotizacionProductLine[],
+  asesorEmail: string
+): Promise<void> {
   if (!products || products.length === 0) return;
 
   await ensureProductsSheet(sheets);
@@ -389,7 +444,7 @@ async function saveCotizacionProducts(sheets, cotizacionId, products, asesorEmai
 /**
  * Get cotizaciones for an asesor
  */
-async function getCotizacionesByAsesor(sheets, asesorEmail) {
+async function getCotizacionesByAsesor(sheets: sheets_v4.Sheets, asesorEmail: string) {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: APP_SPREADSHEET_ID,
@@ -418,12 +473,16 @@ async function getCotizacionesByAsesor(sheets, asesorEmail) {
         createdAt: row[10],
         expiryDate: row[11],
       }))
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Most recent first
+      .sort(
+        (a, b) =>
+          new Date(String(b.createdAt)).getTime() - new Date(String(a.createdAt)).getTime()
+      ); // Most recent first
 
     return cotizaciones;
-  } catch (error) {
+  } catch (error: unknown) {
     // Sheet might not exist yet
-    if (error.code === 400 || error.message?.includes('Unable to parse range')) {
+    const err = error as { code?: number; message?: string };
+    if (err.code === 400 || err.message?.includes('Unable to parse range')) {
       return [];
     }
     throw error;
@@ -433,7 +492,7 @@ async function getCotizacionesByAsesor(sheets, asesorEmail) {
 /**
  * Get product statistics from CotizacionProducts sheet
  */
-async function getProductStats(sheets) {
+async function getProductStats(sheets: sheets_v4.Sheets) {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: APP_SPREADSHEET_ID,
@@ -448,8 +507,14 @@ async function getProductStats(sheets) {
     const dataRows = rows.slice(1).filter(row => row[0]); // Skip header
 
     // Aggregate products
-    const productStats = {};
-    const asesorProducts = {};
+    const productStats: Record<
+      string,
+      { itemNumber: number; name: string; count: number; totalValue: number }
+    > = {};
+    const asesorProducts: Record<
+      string,
+      Record<string, { itemNumber: number; name: string; count: number; totalValue: number }>
+    > = {};
 
     for (const row of dataRows) {
       const itemNumber = parseInt(row[1]) || 0;
@@ -509,9 +574,10 @@ async function getProductStats(sheets) {
       .slice(0, 10);
 
     return { topProducts, productsByAsesor };
-  } catch (error) {
+  } catch (error: unknown) {
     // Sheet might not exist yet
-    if (error.code === 400 || error.message?.includes('Unable to parse range')) {
+    const err = error as { code?: number; message?: string };
+    if (err.code === 400 || err.message?.includes('Unable to parse range')) {
       return { topProducts: [], productsByAsesor: [] };
     }
     throw error;
@@ -522,7 +588,7 @@ async function getProductStats(sheets) {
  * Get cotización data for a specific product (by itemNumber)
  * Returns who quoted this product and when
  */
-async function getProductCotizaciones(sheets, itemNumber) {
+async function getProductCotizaciones(sheets: sheets_v4.Sheets, itemNumber: string | string[]) {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: APP_SPREADSHEET_ID,
@@ -532,7 +598,7 @@ async function getProductCotizaciones(sheets, itemNumber) {
     const rows = response.data.values || [];
     if (rows.length <= 1) {
       return {
-        itemNumber,
+        itemNumber: parseInt(String(itemNumber), 10),
         productName: null,
         totalCotizaciones: 0,
         totalValue: 0,
@@ -542,8 +608,8 @@ async function getProductCotizaciones(sheets, itemNumber) {
     }
 
     // Filter rows by itemNumber
-    const targetItemNumber = parseInt(itemNumber);
-    const dataRows = rows.slice(1).filter(row => parseInt(row[1]) === targetItemNumber);
+    const targetItemNumber = parseInt(String(itemNumber), 10);
+    const dataRows = rows.slice(1).filter(row => parseInt(String(row[1]), 10) === targetItemNumber);
 
     if (dataRows.length === 0) {
       return {
@@ -559,9 +625,16 @@ async function getProductCotizaciones(sheets, itemNumber) {
     // Get product name from first row
     const productName = dataRows[0][2] || null;
 
-    // Aggregate by asesor
-    const asesorStats = {};
-    const allQuotes = [];
+    type AsesorAgg = {
+      email: string;
+      name: string;
+      count: number;
+      totalValue: number;
+      firstQuote: string;
+      lastQuote: string;
+    };
+    const asesorStats: Record<string, AsesorAgg> = {};
+    const allQuotes: { cotizacionId: string | number | boolean | undefined; asesorEmail: string; price: number; createdAt: string }[] = [];
 
     for (const row of dataRows) {
       const cotizacionId = row[0];
@@ -614,7 +687,10 @@ async function getProductCotizaciones(sheets, itemNumber) {
 
     // Sort all quotes by date (most recent first)
     const recentQuotes = allQuotes
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .sort(
+        (a, b) =>
+          new Date(String(b.createdAt)).getTime() - new Date(String(a.createdAt)).getTime()
+      )
       .slice(0, 20);
 
     // Calculate totals
@@ -629,11 +705,12 @@ async function getProductCotizaciones(sheets, itemNumber) {
       quotedBy,
       recentQuotes,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     // Sheet might not exist yet
-    if (error.code === 400 || error.message?.includes('Unable to parse range')) {
+    const err = error as { code?: number; message?: string };
+    if (err.code === 400 || err.message?.includes('Unable to parse range')) {
       return {
-        itemNumber: parseInt(itemNumber),
+        itemNumber: parseInt(String(itemNumber), 10),
         productName: null,
         totalCotizaciones: 0,
         totalValue: 0,
@@ -648,7 +725,7 @@ async function getProductCotizaciones(sheets, itemNumber) {
 /**
  * Get aggregate cotización statistics
  */
-async function getCotizacionStats(sheets) {
+async function getCotizacionStats(sheets: sheets_v4.Sheets) {
   try {
     // Fetch asesor names from Asesores sheet (lookup by email)
     const asesorNameLookup = await getAsesorNamesByEmail(sheets);
@@ -682,8 +759,8 @@ async function getCotizacionStats(sheets) {
     let totalValue = 0;
     let todayCotizaciones = 0;
     let weekCotizaciones = 0;
-    const asesorCounts = {};
-    const clientSet = new Set();
+    const asesorCounts: Record<string, number> = {};
+    const clientSet = new Set<string>();
 
     for (const row of dataRows) {
       const asesorEmail = row[2] || '';
@@ -706,9 +783,10 @@ async function getCotizacionStats(sheets) {
     }
 
     // Helper to get asesor display name (lookup from Asesores sheet, fallback to email)
-    const getAsesorDisplayName = (email) => {
-      const normalizedEmail = (email || '').toLowerCase().trim();
-      return asesorNameLookup[normalizedEmail] || email.split('@')[0] || 'Asesor';
+    const getAsesorDisplayName = (email: string | number | boolean | undefined) => {
+      const e = String(email ?? '');
+      const normalizedEmail = e.toLowerCase().trim();
+      return asesorNameLookup[normalizedEmail] || e.split('@')[0] || 'Asesor';
     };
 
     // Top asesores by count (use name from Asesores sheet)
@@ -733,7 +811,10 @@ async function getCotizacionStats(sheets) {
         total: parseFloat(row[7]) || 0,
         createdAt: row[10],
       }))
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .sort(
+        (a, b) =>
+          new Date(String(b.createdAt)).getTime() - new Date(String(a.createdAt)).getTime()
+      )
       .slice(0, 20);
 
     // Get product stats
@@ -751,9 +832,10 @@ async function getCotizacionStats(sheets) {
       topProducts,
       productsByAsesor,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     // Sheet might not exist yet
-    if (error.code === 400 || error.message?.includes('Unable to parse range')) {
+    const err = error as { code?: number; message?: string };
+    if (err.code === 400 || err.message?.includes('Unable to parse range')) {
       return {
         totalCotizaciones: 0,
         totalValue: 0,
@@ -774,7 +856,12 @@ async function getCotizacionStats(sheets) {
 /**
  * Delete a cotización
  */
-async function deleteCotizacion(drive, sheets, cotizacionId, asesorEmail) {
+async function deleteCotizacion(
+  drive: drive_v3.Drive,
+  sheets: sheets_v4.Sheets,
+  cotizacionId: string,
+  asesorEmail: string
+): Promise<boolean> {
   // Get all rows to find the one to delete
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: APP_SPREADSHEET_ID,
@@ -786,7 +873,7 @@ async function deleteCotizacion(drive, sheets, cotizacionId, asesorEmail) {
 
   // Find the row index (1-based for sheets)
   let rowIndex = -1;
-  let driveFileId = null;
+  let driveFileId: string | null | undefined = null;
 
   for (let i = 1; i < rows.length; i++) {
     if (rows[i][0] === cotizacionId && rows[i][2]?.toLowerCase().trim() === normalizedEmail) {
@@ -807,8 +894,8 @@ async function deleteCotizacion(drive, sheets, cotizacionId, asesorEmail) {
         fileId: driveFileId,
         supportsAllDrives: true,
       });
-    } catch (error) {
-      console.warn('[CotizacionSave] Could not delete Drive file:', error.message);
+    } catch (error: unknown) {
+      console.warn('[CotizacionSave] Could not delete Drive file:', error instanceof Error ? error.message : error);
     }
   }
 
@@ -825,14 +912,21 @@ async function deleteCotizacion(drive, sheets, cotizacionId, asesorEmail) {
 // MAIN HANDLER
 // =============================================================================
 
-export default withApiHandler(async (req, res, { sheets, oauthDrive, sharedDriveId }) => {
+export default withApiHandler(async (req: VercelRequest, res: VercelResponse, ctx: Record<string, unknown>) => {
+  const { sheets, oauthDrive, sharedDriveId } = ctx as {
+    sheets: sheets_v4.Sheets;
+    oauthDrive: drive_v3.Drive | null;
+    sharedDriveId: string | undefined;
+  };
   const drive = oauthDrive;
 
-  // ==========================================================================
-  // GET - Fetch cotizaciones for an asesor or aggregate stats
-  // ==========================================================================
-  if (req.method === 'GET') {
-      const { email, action, itemId } = req.query;
+    // ==========================================================================
+    // GET - Fetch cotizaciones for an asesor or aggregate stats
+    // ==========================================================================
+    if (req.method === 'GET') {
+      const email = firstQueryParam(req.query?.email as string | string[] | undefined);
+      const action = firstQueryParam(req.query?.action as string | string[] | undefined);
+      const itemId = firstQueryParam(req.query?.itemId as string | string[] | undefined);
 
       // Stats endpoint for analytics dashboard
       if (action === 'stats') {
@@ -863,6 +957,10 @@ export default withApiHandler(async (req, res, { sheets, oauthDrive, sharedDrive
     // POST - Save a new cotización
     // ==========================================================================
     if (req.method === 'POST') {
+      if (!drive || !sharedDriveId) {
+        return sendError(res, 500, 'Google Drive not available');
+      }
+
       const {
         quotationNumber,
         asesorEmail,
@@ -874,7 +972,7 @@ export default withApiHandler(async (req, res, { sheets, oauthDrive, sharedDrive
         expiryDate,
         imageBase64,
         products, // Array of { itemNumber, name, precioCOP }
-      } = req.body;
+      } = req.body as CotizacionPostBody;
 
       // Validate required fields
       if (!quotationNumber || !asesorEmail || !asesorName || !imageBase64) {
@@ -918,7 +1016,12 @@ export default withApiHandler(async (req, res, { sheets, oauthDrive, sharedDrive
     // DELETE - Delete a cotización
     // ==========================================================================
     if (req.method === 'DELETE') {
-      const { id, email } = req.query;
+      if (!drive) {
+        return sendError(res, 500, 'Google Drive not available');
+      }
+
+      const id = firstQueryParam(req.query?.id as string | string[] | undefined);
+      const email = firstQueryParam(req.query?.email as string | string[] | undefined);
 
       if (!id || !email) {
         return sendError(res, 400, 'ID and email parameters required');

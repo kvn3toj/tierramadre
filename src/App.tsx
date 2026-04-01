@@ -11,13 +11,7 @@ import { useLanguage } from './contexts/LanguageContext';
 // PWA update toast (version check on visibility change)
 import UpdateToast from './components/pwa/UpdateToast';
 import { usePWAUpdate } from './hooks/usePWAUpdate';
-import { LiquidGlassProvider } from './contexts/LiquidGlassContext';
-import { TrackingProvider } from './contexts/TrackingContext';
-import { ScreenProtectionProvider } from './contexts/ScreenProtectionContext';
-import { LiveRegionProvider } from './components/shared/LiveRegion';
-import { NotificationProvider } from './contexts/NotificationContext';
-import { GlobalLoadingProvider } from './contexts/GlobalLoadingContext';
-import { NetworkStatusProvider } from './contexts/NetworkStatusContext';
+import { AppShellProviders } from './contexts/AppShellProviders';
 import { AchievementToast } from './components/gamification';
 import { useViewportHeight } from './hooks/useViewportHeight';
 import { lazyWithRetry } from './utils/lazyWithRetry';
@@ -529,26 +523,14 @@ function App() {
 
   return (
     <ChunkErrorBoundary>
-      <LiquidGlassProvider>
-        <TrackingProvider>
-          <ScreenProtectionProvider>
-            <LiveRegionProvider>
-              <NotificationProvider>
-                <NetworkStatusProvider>
-                <GlobalLoadingProvider>
-                  <BrowserRouter>
-                    <InvitationRouter />
-                    {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
-                    {/* PWA disabled - service worker not generating correctly */}
-                    {/* <UpdatePrompt /> */}
-                  </BrowserRouter>
-                </GlobalLoadingProvider>
-                </NetworkStatusProvider>
-              </NotificationProvider>
-            </LiveRegionProvider>
-          </ScreenProtectionProvider>
-        </TrackingProvider>
-      </LiquidGlassProvider>
+      <AppShellProviders>
+        <BrowserRouter>
+          <InvitationRouter />
+          {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
+          {/* PWA disabled - service worker not generating correctly */}
+          {/* <UpdatePrompt /> */}
+        </BrowserRouter>
+      </AppShellProviders>
     </ChunkErrorBoundary>
   );
 }

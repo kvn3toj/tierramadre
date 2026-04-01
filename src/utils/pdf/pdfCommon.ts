@@ -5,7 +5,7 @@
  * Extracted from pdfGenerator.ts for modularity.
  */
 
-import jsPDF from 'jspdf';
+import type jsPDF from 'jspdf';
 import { Emerald } from '../../types';
 
 // =============================================================================

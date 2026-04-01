@@ -5,7 +5,8 @@
  * Extracted from pdfGenerator.ts for modularity.
  */
 
-import jsPDF, { GState } from 'jspdf';
+import type jsPDF from 'jspdf';
+import { ensureJsPDFLoaded, getGState } from './jspdf-loader';
 import {
   getThemeColors as getIOSThemeColors,
   setFillColor,
@@ -24,7 +25,7 @@ import type { Emerald, CatalogOptions } from './pdfCommon';
 // HORIZONTAL COVER PAGE (iOS HIG Premium Style)
 // =============================================================================
 
-export function addHorizontalCoverPage(
+export async function addHorizontalCoverPage(
   pdf: jsPDF,
   pageWidth: number,
   pageHeight: number,
@@ -33,6 +34,7 @@ export function addHorizontalCoverPage(
   logoBase64?: string,
   theme: 'dark' | 'light' = 'dark'
 ) {
+  await ensureJsPDFLoaded();
   const iosColors = getIOSThemeColors(theme as ThemeMode);
   const margin = SPACING_MM.xl;
 
@@ -128,9 +130,9 @@ export function addHorizontalCoverPage(
   const badgeWidth = 100;
   const badgeHeight = 6;
   setFillColor(pdf, iosColors.emeraldPrimary);
-  pdf.setGState(new GState({ opacity: 0.1 }));
+  pdf.setGState(new (getGState())({ opacity: 0.1 }));
   pdf.roundedRect(centerX - badgeWidth / 2, badgeY - 2, badgeWidth, badgeHeight, 3, 3, 'F');
-  pdf.setGState(new GState({ opacity: 1 }));
+  pdf.setGState(new (getGState())({ opacity: 1 }));
 
   // Badge text
   applyCustomTextStyle(pdf, 'pageNumber', iosColors.emeraldPrimary, theme as ThemeMode);
@@ -167,6 +169,7 @@ export async function addHorizontalCarouselLayout(
   logoBase64?: string,
   theme: 'dark' | 'light' = 'dark'
 ) {
+  await ensureJsPDFLoaded();
   const iosColors = getIOSThemeColors(theme as ThemeMode);
   const iosMargin = SPACING_MM.xl;
 
@@ -297,9 +300,9 @@ export async function addHorizontalCarouselLayout(
     applyIOSTextStyle(pdf, 'callout', iosColors.emeraldPrimary, theme as ThemeMode);
     const categoryWidth = pdf.getTextWidth(category) + 8;
     setFillColor(pdf, iosColors.emeraldPrimary);
-    pdf.setGState(new GState({ opacity: 0.12 }));
+    pdf.setGState(new (getGState())({ opacity: 0.12 }));
     pdf.roundedRect(innerX + (innerWidth - categoryWidth) / 2, infoY - 4, categoryWidth, 7, 3.5, 3.5, 'F');
-    pdf.setGState(new GState({ opacity: 1 }));
+    pdf.setGState(new (getGState())({ opacity: 1 }));
 
     setTextColor(pdf, iosColors.emeraldPrimary);
     pdf.text(category, innerX + innerWidth / 2, infoY, { align: 'center' });

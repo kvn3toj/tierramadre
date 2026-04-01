@@ -102,7 +102,9 @@
       "Bash(cat \"/Users/kevinp/.claude/projects/-Users-kevinp-Movies-coomunity-universe-TierraMadre/8d8e991d-9184-424e-83bf-2cf4ead3c625/tool-results/mcp-pencil-batch_get-1773287853115.txt\" 2>/dev/null | sed -n '1p' | jq -r '.[] | select\\(.text | contains\\(\"\\\\\"name\\\\\"\"\\)\\) | .text | fromjson | recurse | select\\(.type==\"frame\" or .type==\"ref\"\\) | \"\\\\\\(.name\\) \\(\\\\\\(.type\\)\\): \\\\\\(.id\\)\"' 2>/dev/null | head -100)",
       "Bash(kill -9 2521 33767)",
       "Bash(source ~/.nvm/nvm.sh)",
-      "Bash(source ~/.zshrc)"
+      "Bash(source ~/.zshrc)",
+      "Bash(git stash:*)",
+      "Bash(git status:*)"
     ],
     "deny": [],
     "ask": []

@@ -11,6 +11,8 @@
  * - list-by-creator: List active/pending invitations by creator email (GET ?creatorEmail=X)
  */
 
+import type { sheets_v4 } from '@googleapis/sheets';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   withApiHandler,
   sendError,
@@ -20,6 +22,10 @@ import {
   ensureSheet,
   generateShortCode,
 } from './_lib/index.js';
+
+type Sheets = sheets_v4.Sheets;
+/** POST bodies use loose JSON shapes */
+type ApiBody = Record<string, unknown>;
 
 const SHEET_NAME = SHEETS.INVITATIONS;
 const HEADERS = [
@@ -40,7 +46,7 @@ function generatePin() {
  * Generate a random device token
  */
 function generateDeviceToken() {
-  return 'tk_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 12);
+  return 'tk_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 14);
 }
 
 /**
@@ -48,7 +54,7 @@ function generateDeviceToken() {
  * Sheets returns '' for empty cells — must not coerce to 1.0.
  * Range [1.0, 4.0] must stay in sync with CurrencyContext MIN/MAX_MULTIPLIER.
  */
-function sanitizeMultiplier(raw) {
+function sanitizeMultiplier(raw: unknown): number | null {
   if (raw == null || raw === '') return null;
   const n = Number(raw);
   if (!Number.isFinite(n)) return null;
@@ -59,8 +65,10 @@ function sanitizeMultiplier(raw) {
 /**
  * Verify PIN and enforce device-token binding
  */
-async function verifyPin(sheets, _req, body) {
-  const { shortCode, pin, deviceToken: clientToken } = body;
+async function verifyPin(sheets: Sheets, _req: VercelRequest, body: ApiBody) {
+  const shortCode = body.shortCode as string | undefined;
+  const pin = body.pin as string | number | undefined;
+  const clientToken = body.deviceToken as string | undefined;
 
   if (!shortCode || !pin) {
     return { success: false, error: 'shortCode and pin are required' };
@@ -109,7 +117,7 @@ async function verifyPin(sheets, _req, body) {
 /**
  * Ensure pin + boundToken headers exist (auto-migration for existing sheets)
  */
-async function ensureHeaders(sheets) {
+async function ensureHeaders(sheets: Sheets) {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A1:R1`,
@@ -140,7 +148,7 @@ async function ensureHeaders(sheets) {
 /**
  * Find invitation by short code
  */
-async function findInvitationByCode(sheets, shortCode) {
+async function findInvitationByCode(sheets: Sheets, shortCode: string) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A:R`,
@@ -150,8 +158,8 @@ async function findInvitationByCode(sheets, shortCode) {
   if (rows.length <= 1) return null;
 
   for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    if (row[1] && row[1].toUpperCase() === shortCode.toUpperCase()) {
+    const row = rows[i] as (string | number | undefined)[];
+    if (row[1] != null && String(row[1]).toUpperCase() === shortCode.toUpperCase()) {
       return {
         rowIndex: i + 1,
         data: {
@@ -167,7 +175,7 @@ async function findInvitationByCode(sheets, shortCode) {
           activatedAt: row[9] || null,
           expiresAt: row[10] || null,
           pricingMode: row[11] || 'with_prices',
-          durationHours: parseInt(row[12]) || INVITATION_DURATION_HOURS,
+          durationHours: parseInt(String(row[12] ?? ''), 10) || INVITATION_DURATION_HOURS,
           status: row[13] || 'pending',
           pin: row[14] || null,
           boundToken: row[15] || null,
@@ -184,13 +192,28 @@ async function findInvitationByCode(sheets, shortCode) {
 /**
  * Generate a new invitation (POST)
  */
-async function generateInvitation(sheets, body) {
+async function generateInvitation(sheets: Sheets, body: ApiBody) {
   const {
-    creatorEmail, creatorName, creatorRole,
+    creatorEmail,
+    creatorName,
+    creatorRole,
     pricingMode = 'with_prices',
-    guestName, guestContact, contactType,
-    guestCurrencyMode, guestMultiplier,
-  } = body;
+    guestName,
+    guestContact,
+    contactType,
+    guestCurrencyMode,
+    guestMultiplier,
+  } = body as ApiBody & {
+    creatorEmail?: string;
+    creatorName?: string;
+    creatorRole?: string;
+    pricingMode?: string;
+    guestName?: string;
+    guestContact?: string;
+    contactType?: string;
+    guestCurrencyMode?: string;
+    guestMultiplier?: unknown;
+  };
 
   if (!creatorEmail || !creatorName) {
     return { success: false, error: 'Creator email and name are required' };
@@ -203,7 +226,7 @@ async function generateInvitation(sheets, body) {
     attempts++;
   }
 
-  const invitationId = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const invitationId = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   const createdAt = new Date().toISOString();
   const pin = generatePin();
   const safeMultiplier = sanitizeMultiplier(guestMultiplier);
@@ -247,7 +270,7 @@ async function generateInvitation(sheets, body) {
 /**
  * Validate an invitation (GET ?code=X)
  */
-async function validateInvitation(sheets, shortCode) {
+async function validateInvitation(sheets: Sheets, shortCode: string) {
   if (!shortCode || shortCode.length !== 6) {
     return {
       success: false, isValid: false, status: 'expired',
@@ -328,7 +351,7 @@ async function validateInvitation(sheets, shortCode) {
 /**
  * Check if a guest contact has previous invitations
  */
-async function checkGuestHistory(sheets, guestContact) {
+async function checkGuestHistory(sheets: Sheets, guestContact: string) {
   if (!guestContact) {
     return { success: false, error: 'Guest contact is required' };
   }
@@ -377,7 +400,7 @@ async function checkGuestHistory(sheets, guestContact) {
  * List invitations by creator email
  * Returns active/pending invitations for cotizacion client validation
  */
-async function listByCreator(sheets, creatorEmail) {
+async function listByCreator(sheets: Sheets, creatorEmail: string) {
   if (!creatorEmail) {
     return { success: false, error: 'creatorEmail is required' };
   }
@@ -432,8 +455,13 @@ async function listByCreator(sheets, creatorEmail) {
 /**
  * Register a guest with an invitation (POST)
  */
-async function registerGuest(sheets, body) {
-  const { invitationId, guestName, guestContact, contactType } = body;
+async function registerGuest(sheets: Sheets, body: ApiBody) {
+  const { invitationId, guestName, guestContact, contactType } = body as ApiBody & {
+    invitationId?: string;
+    guestName?: string;
+    guestContact?: string;
+    contactType?: string;
+  };
 
   if (!invitationId || !guestName) {
     return { success: false, error: 'Invitation ID and guest name are required' };
@@ -474,8 +502,12 @@ async function registerGuest(sheets, body) {
  * Update invitation fields (POST action=update)
  * Currently supports: guestMultiplier
  */
-async function updateInvitation(sheets, body) {
-  const { shortCode, creatorEmail, fields } = body;
+async function updateInvitation(sheets: Sheets, body: ApiBody) {
+  const { shortCode, creatorEmail, fields } = body as ApiBody & {
+    shortCode?: string;
+    creatorEmail?: string;
+    fields?: { guestMultiplier?: unknown };
+  };
 
   if (!shortCode || !creatorEmail) {
     return { success: false, error: 'shortCode and creatorEmail are required' };
@@ -487,7 +519,10 @@ async function updateInvitation(sheets, body) {
   }
 
   // Ownership check (case-insensitive)
-  if (invitation.data.creatorEmail.toLowerCase().trim() !== creatorEmail.toLowerCase().trim()) {
+  if (
+    String(invitation.data.creatorEmail ?? '').toLowerCase().trim() !==
+    creatorEmail.toLowerCase().trim()
+  ) {
     return { success: false, error: 'No tienes permiso para editar esta invitación' };
   }
 
@@ -522,8 +557,11 @@ async function updateInvitation(sheets, body) {
 /**
  * Expire/revoke an invitation (POST action=expire)
  */
-async function expireInvitationAction(sheets, body) {
-  const { shortCode, creatorEmail } = body;
+async function expireInvitationAction(sheets: Sheets, body: ApiBody) {
+  const { shortCode, creatorEmail } = body as ApiBody & {
+    shortCode?: string;
+    creatorEmail?: string;
+  };
 
   if (!shortCode || !creatorEmail) {
     return { success: false, error: 'shortCode and creatorEmail are required' };
@@ -535,7 +573,10 @@ async function expireInvitationAction(sheets, body) {
   }
 
   // Ownership check (case-insensitive)
-  if (invitation.data.creatorEmail.toLowerCase().trim() !== creatorEmail.toLowerCase().trim()) {
+  if (
+    String(invitation.data.creatorEmail ?? '').toLowerCase().trim() !==
+    creatorEmail.toLowerCase().trim()
+  ) {
     return { success: false, error: 'No tienes permiso para expirar esta invitación' };
   }
 
@@ -561,8 +602,9 @@ async function expireInvitationAction(sheets, body) {
   return { success: true };
 }
 
-export default withApiHandler(async (req, res, { sheets }) => {
-  const action = req.query.action || req.body?.action || 'validate';
+export default withApiHandler(async (req: VercelRequest, res: VercelResponse, context: Record<string, unknown>) => {
+  const sheets = context.sheets as Sheets;
+  const action = (req.query.action as string) || (req.body as ApiBody | undefined)?.action || 'validate';
 
   await ensureSheet(sheets, SHEET_NAME, HEADERS, APP_SPREADSHEET_ID);
 
@@ -571,38 +613,39 @@ export default withApiHandler(async (req, res, { sheets }) => {
 
   // POST - Generate invitation
   if (req.method === 'POST' && action === 'generate') {
-    const result = await generateInvitation(sheets, req.body);
+    const result = await generateInvitation(sheets, (req.body as ApiBody) || {});
     return res.status(200).json(result);
   }
 
   // POST - Verify PIN + device token binding
   if (req.method === 'POST' && action === 'verify-pin') {
-    const result = await verifyPin(sheets, req, req.body);
+    const result = await verifyPin(sheets, req, (req.body as ApiBody) || {});
     return res.status(200).json(result);
   }
 
   // POST - Register guest
   if (req.method === 'POST' && action === 'register') {
-    const result = await registerGuest(sheets, req.body);
+    const result = await registerGuest(sheets, (req.body as ApiBody) || {});
     return res.status(200).json(result);
   }
 
   // POST - Update invitation (multiplier, etc.)
   if (req.method === 'POST' && action === 'update') {
-    const result = await updateInvitation(sheets, req.body);
+    const result = await updateInvitation(sheets, (req.body as ApiBody) || {});
     return res.status(200).json(result);
   }
 
   // POST - Expire/revoke invitation
   if (req.method === 'POST' && action === 'expire') {
-    const result = await expireInvitationAction(sheets, req.body);
+    const result = await expireInvitationAction(sheets, (req.body as ApiBody) || {});
     return res.status(200).json(result);
   }
 
   // GET - Validate invitation
   if (req.method === 'GET' && (action === 'validate' || req.query.code)) {
-    const code = req.query.code || req.query.shortCode;
-    if (!code) {
+    const rawCode = req.query.code ?? req.query.shortCode;
+    const code = Array.isArray(rawCode) ? rawCode[0] : rawCode;
+    if (!code || typeof code !== 'string') {
       return sendError(res, 400, 'Code is required');
     }
     const result = await validateInvitation(sheets, code);
@@ -611,8 +654,9 @@ export default withApiHandler(async (req, res, { sheets }) => {
 
   // GET - Check guest history
   if (req.method === 'GET' && action === 'check-guest') {
-    const guestContact = req.query.guestContact;
-    if (!guestContact) {
+    const rawGuest = req.query.guestContact;
+    const guestContact = Array.isArray(rawGuest) ? rawGuest[0] : rawGuest;
+    if (!guestContact || typeof guestContact !== 'string') {
       return sendError(res, 400, 'guestContact is required');
     }
     const result = await checkGuestHistory(sheets, guestContact);
@@ -621,8 +665,9 @@ export default withApiHandler(async (req, res, { sheets }) => {
 
   // GET - List invitations by creator
   if (req.method === 'GET' && action === 'list-by-creator') {
-    const creatorEmail = req.query.creatorEmail;
-    if (!creatorEmail) {
+    const rawCreator = req.query.creatorEmail;
+    const creatorEmail = Array.isArray(rawCreator) ? rawCreator[0] : rawCreator;
+    if (!creatorEmail || typeof creatorEmail !== 'string') {
       return sendError(res, 400, 'creatorEmail is required');
     }
     const result = await listByCreator(sheets, creatorEmail);

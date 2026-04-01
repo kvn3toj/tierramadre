@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invitation Generator — Design Critique</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --emerald-50: #E6F7F2;
+    --emerald-100: #B3E8D9;
+    --emerald-200: #80D9C0;
+    --emerald-300: #4DCAA7;
+    --emerald-400: #26BE93;
+    --emerald-500: #00AE7A;
+    --emerald-600: #009A6C;
+    --emerald-700: #008A61;
+    --emerald-800: #006B4D;
+    --emerald-900: #004D38;
+    --gold-500: #D4AF37;
+    --slate-50: #F8FAFC;
+    --slate-100: #F1F5F9;
+    --slate-200: #E2E8F0;
+    --slate-300: #CBD5E1;
+    --slate-400: #94A3B8;
+    --slate-500: #64748B;
+    --slate-600: #475569;
+    --slate-800: #1E293B;
+    --slate-900: #0F172A;
+    --red-500: #EF4444;
+    --amber-100: #FEF3C7;
+    --amber-700: #B45309;
+    --blue-50: #EFF6FF;
+    --blue-500: #3B82F6;
+    --blue-700: #1D4ED8;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #F5F7F9;
+    color: var(--slate-900);
+    line-height: 1.5;
+  }
+
+  /* ───── Page Layout ───── */
+  .page-header {
+    background: linear-gradient(135deg, var(--slate-900), var(--emerald-800));
+    color: white;
+    padding: 48px 24px 40px;
+    text-align: center;
+  }
+  .page-header h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
+  .page-header p { font-size: 0.9rem; opacity: 0.7; max-width: 520px; margin: 0 auto; }
+
+  .critique-container { max-width: 960px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  /* ───── Tab Navigation ───── */
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    background: var(--slate-100);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 32px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--slate-500);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab.active { background: white; color: var(--emerald-700); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .tab:hover:not(.active) { color: var(--slate-800); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ───── Critique Cards ───── */
+  .critique-section { margin-bottom: 28px; }
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--slate-400);
+    margin-bottom: 10px;
+  }
+  .critique-card {
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+  .critique-card h3 {
+    font-size: 0.92rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .critique-card p { font-size: 0.84rem; color: var(--slate-600); line-height: 1.6; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .badge-good { background: var(--emerald-50); color: var(--emerald-700); }
+  .badge-issue { background: #FEF2F2; color: var(--red-500); }
+  .badge-improve { background: var(--amber-100); color: var(--amber-700); }
+  .badge-info { background: var(--blue-50); color: var(--blue-700); }
+
+  /* ───── Score Header ───── */
+  .score-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .score-card {
+    flex: 1;
+    min-width: 100px;
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  .score-card .score { font-size: 1.6rem; font-weight: 700; color: var(--emerald-700); }
+  .score-card .score-label { font-size: 0.7rem; color: var(--slate-500); margin-top: 2px; }
+
+  /* ───── Side-by-side ───── */
+  .compare-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 700px) { .compare-row { grid-template-columns: 1fr; } }
+
+  .compare-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .compare-label.before { color: var(--slate-400); }
+  .compare-label.after { color: var(--emerald-600); }
+
+  /* ───── MOCK DIALOGS ───── */
+  .mock-dialog {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    overflow: hidden;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .mock-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 4px;
+  }
+  .mock-header-left { display: flex; align-items: center; gap: 8px; }
+  .mock-icon-box {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--emerald-50);
+    border: 1px solid var(--emerald-200);
+    font-size: 14px;
+  }
+  .mock-title { font-size: 1.05rem; font-weight: 600; }
+  .mock-close { width: 28px; height: 28px; border: none; background: none; cursor: pointer; color: var(--slate-400); font-size: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+  .mock-body { padding: 4px 20px 20px; }
+  .mock-desc { font-size: 0.82rem; color: var(--slate-500); margin-bottom: 18px; line-height: 1.5; }
+
+  .mock-input {
+    width: 100%;
+    border: 1px solid var(--slate-200);
+    border-radius: 12px;
+    padding: 9px 12px 9px 36px;
+    font-size: 0.84rem;
+    font-family: inherit;
+    color: var(--slate-800);
+    outline: none;
+    transition: border-color 0.2s;
+    background-position: 10px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+  }
+  .mock-input:focus { border-color: var(--emerald-500); }
+  .mock-input::placeholder { color: var(--slate-400); }
+
+  .mock-label { font-size: 0.72rem; color: var(--slate-500); margin-bottom: 6px; display: block; }
+  .mock-input-row { display: flex; gap: 10px; }
+
+  .mock-card-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--slate-200);
+    margin-bottom: 14px;
+  }
+  .mock-card-row.active { border-color: var(--emerald-200); background: rgba(230, 247, 242, 0.35); }
+  .mock-card-left { display: flex; align-items: center; gap: 10px; }
+  .mock-card-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .mock-card-icon.on { background: var(--emerald-100); color: var(--emerald-600); }
+  .mock-card-icon.off { background: var(--slate-100); color: var(--slate-400); }
+  .mock-card-title { font-size: 0.84rem; font-weight: 500; }
+  .mock-card-sub { font-size: 0.72rem; color: var(--slate-500); }
+
+  .mock-toggle {
+    width: 44px; height: 24px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .mock-toggle.on { background: var(--emerald-500); }
+  .mock-toggle.off { background: var(--slate-300); }
+  .mock-toggle::after {
+    content: '';
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: white;
+    position: absolute;
+    top: 3px;
+    transition: left 0.2s;
+  }
+  .mock-toggle.on::after { left: 23px; }
+  .mock-toggle.off::after { left: 3px; }
+
+  .mock-toggle-group {
+    display: flex;
+    border: 1px solid var(--slate-200);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .mock-toggle-btn {
+    flex: 1;
+    padding: 6px 12px;
+    border: none;
+    background: white;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--slate-500);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mock-toggle-btn.active {
+    background: var(--emerald-50);
+    color: var(--emerald-700);
+    border-color: var(--emerald-300);
+  }
+
+  .mock-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 6px 0;
+  }
+  .mock-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--emerald-200);
+    outline: none;
+  }
+  .mock-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--emerald-700);
+    cursor: pointer;
+  }
+  .mock-slider-label { font-size: 0.78rem; font-weight: 600; color: var(--emerald-700); min-width: 24px; text-align: right; }
+
+  .mock-btn-primary {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--emerald-600), var(--emerald-700));
+    color: white;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(0, 154, 108, 0.25);
+  }
+  .mock-btn-primary:disabled { opacity: 0.4; cursor: default; }
+  .mock-btn-primary:hover:not(:disabled) { filter: brightness(1.05); }
+
+  .mock-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 8px 20px 14px;
+  }
+  .mock-footer-btn { border: none; background: none; font-family: inherit; font-size: 0.84rem; font-weight: 500; color: var(--slate-500); cursor: pointer; padding: 6px 12px; border-radius: 8px; }
+  .mock-footer-btn:hover { background: var(--slate-50); }
+  .mock-footer-btn.emerald { color: var(--emerald-600); }
+
+  /* ───── IMPROVED VERSION EXTRAS ───── */
+  .step-indicator {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    justify-content: center;
+  }
+  .step-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--slate-200);
+  }
+  .step-dot.active { background: var(--emerald-500); width: 24px; border-radius: 4px; }
+
+  .field-group { margin-bottom: 14px; }
+  .field-group:last-of-type { margin-bottom: 0; }
+
+  .inline-helper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: var(--slate-400);
+    margin-top: 4px;
+    padding-left: 2px;
+  }
+  .inline-helper svg { width: 12px; height: 12px; }
+
+  .multiplier-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+    padding: 0 2px;
+  }
+  .multiplier-label { font-size: 0.72rem; color: var(--slate-500); font-weight: 500; }
+  .multiplier-value {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--emerald-700);
+    background: var(--emerald-50);
+    padding: 1px 8px;
+    border-radius: 6px;
+  }
+
+  .price-preview {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--slate-50);
+    border: 1px dashed var(--slate-200);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .price-preview-label { font-size: 0.7rem; color: var(--slate-400); }
+  .price-preview-val { font-size: 0.8rem; font-weight: 600; color: var(--slate-700); }
+
+  .divider {
+    height: 1px;
+    background: var(--slate-100);
+    margin: 16px 0;
+  }
+
+  /* Annotation callouts */
+  .annotation {
+    position: relative;
+    margin: 10px 0;
+    padding: 10px 14px;
+    border-left: 3px solid var(--emerald-400);
+    background: rgba(230, 247, 242, 0.3);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.76rem;
+    color: var(--slate-600);
+    line-height: 1.5;
+  }
+  .annotation strong { color: var(--emerald-700); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Invitation Generator — Design Critique</h1>
+  <p>Structured evaluation of usability, hierarchy, consistency, and accessibility with actionable improvements.</p>
+</div>
+
+<div class="critique-container">
+
+  <!-- ───── TAB BAR ───── -->
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('critique')">Critique</button>
+    <button class="tab" onclick="switchTab('before')">Current</button>
+    <button class="tab" onclick="switchTab('after')">Improved</button>
+    <button class="tab" onclick="switchTab('compare')">Side-by-Side</button>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- TAB 1: CRITIQUE                              -->
+  <!-- ════════════════════════════════════════════ -->
+  <div id="tab-critique" class="tab-panel active">
+
+    <div class="score-row">
+      <div class="score-card">
+        <div class="score">72</div>
+        <div class="score-label">Overall</div>
+      </div>
+      <div class="score-card">
+        <div class="score">68</div>
+        <div class="score-label">Usability</div>
+      </div>
+      <div class="score-card">
+        <div class="score">75</div>
+        <div class="score-label">Hierarchy</div>
+      </div>
+      <div class="score-card">
+        <div class="score">80</div>
+        <div class="score-label">Consistency</div>
+      </div>
+      <div class="score-card">
+        <div class="score">65</div>
+        <div class="score-label">Accessibility</div>
+      </div>
+    </div>
+
+    <!-- First Impression -->
+    <div class="critique-section">
+      <div class="section-label">1. First Impression</div>
+      <div class="critique-card">
+        <h3><span class="badge badge-good">Good</span> Clean, branded modal with clear intent</h3>
+        <p>The emerald header icon + title "Invitar a Explorar" immediately communicates purpose. The description paragraph reinforces it. The overall polish (rounded corners, gradient CTA, branded toggle group) feels premium and on-brand for a luxury emerald catalog.</p>
+      </div>
+      <div class="critique-card">
+        <h3><span class="badge badge-issue">Issue</span> Form feels long — too many decisions at once</h3>
+        <p>On mobile, the user sees: name field, contact label, email, phone, pricing toggle, currency toggle, multiplier slider, and the CTA — all in a single scroll. There's no sense of progression or which fields matter most. A first-time asesor may feel overwhelmed, especially since "multiplier" is a concept that requires domain knowledge to understand.</p>
+      </div>
+    </div>
+
+    <!-- Usability -->
+    <div class="critique-section">
+      <div class="section-label">2. Usability</div>
+      <div class="critique-card">
+        <h3><span class="badge badge-issue">Issue</span> Multiplier has no context — "x4" means what?</h3>
+        <p>The slider goes from 1 to 4 with no explanation of what the multiplier does. A new asesor won't know that "x4" means the guest sees prices 4x higher than base cost. There's no preview showing what price the guest would actually see. This is the most consequential field in the form — getting it wrong means quoting the wrong price — yet it's visually the smallest and least explained element.</p>
+      </div>
+      <div class="critique-card">
+        <h3><span class="badge badge-issue">Issue</span> "Contacto (al menos uno)" label is disconnected</h3>
+        <p>The caption "Contacto (al menos uno)" floats above two fields but isn't visually grouped with them. It reads as a section header but lacks the weight or containment to function as one. The parenthetical "(al menos uno)" is easy to miss and critical to understand — the asesor might fill both fields thinking both are required.</p>
+      </div>
+      <div class="critique-card">
+        <h3><span class="badge badge-improve">Improve</span> Currency section always looks "active" even at default</h3>
+        <p>After the recent fix, the currency card is always emerald-bordered and highlighted regardless of selection. This removes the visual feedback that told users something was actively configured. The card should still indicate the selected state, but through the toggle buttons themselves — not the container being permanently green.</p>
+      </div>
+      <div class="critique-card">
+        <h3><span class="badge badge-good">Good</span> Success phase is well-designed</h3>
+        <p>The Phase 2 (success) screen is strong: clear confirmation banner, copyable URL field, nicely styled PIN digits, share button, QR toggle. The summary tags give a clear at-a-glance recap. The PIN hint about sharing separately shows good security thinking.</p>
+      </div>
+    </div>
+
+    <!-- Visual Hierarchy -->
+    <div class="critique-section">
+      <div class="section-label">3. Visual Hierarchy</div>
+      <div class="critique-card">
+        <h3><span class="badge badge-improve">Improve</span> Primary and secondary actions compete for attention</h3>
+        <p>The pricing toggle card and currency card both use the same visual treatment (emerald border, icon, description). They compete for the same level of hierarchy, even though pricing toggle is the "gate" control (it shows/hides currency). The currency section should feel subordinate — it's a sub-setting of "show prices."</p>
+      </div>
+      <div class="critique-card">
+        <h3><span class="badge badge-improve">Improve</span> CTA button reads "Generar Enlace" — could be more specific</h3>
+        <p>The button copies well but could reinforce the action context. Since the guest's name is already filled in, the CTA could dynamically read "Crear enlace para Maria" which would increase confidence and reduce mis-clicks.</p>
+      </div>
+      <div class="critique-card">
+        <h3><span class="badge badge-good">Good</span> Icon + text pairing in toggle cards</h3>
+        <p>The 36px icon boxes with title/subtitle pairs create a scannable, consistent pattern. Each control card follows the same layout which helps learnability.</p>
+      </div>
+    </div>
+
+    <!-- Consistency -->
+    <div class="critique-section">
+      <div class="section-label">4. Consistency</div>
+      <div class="critique-card">
+        <h3><span class="badge badge-good">Good</span> Follows design system tokens faithfully</h3>
+        <p>Uses brand.emerald palette, cssTransition, fontWeights, and typography from the design system barrel. Border radii are consistent (12-14px). The component feels like it belongs in the Tierra Madre ecosystem.</p>
+      </div>
+      <div class="critique-card">
+        <h3><span class="badge badge-improve">Improve</span> Spacing inconsistencies in margin-bottom</h3>
+        <p>Name field: mb=2, contact row: mb=2.5, pricing toggle: mb=3, currency card: mb=3. The vertical rhythm isn't consistent — it drifts from 16px to 20px to 24px without a clear reason. A uniform 20px (mb: 2.5) between form sections would create calmer rhythm.</p>
+      </div>
+    </div>
+
+    <!-- Accessibility -->
+    <div class="critique-section">
+      <div class="section-label">5. Accessibility</div>
+      <div class="critique-card">
+        <h3><span class="badge badge-issue">Issue</span> Slider lacks aria-label and step description</h3>
+        <p>The multiplier Slider has no aria-label or aria-valuetext. Screen readers will announce it as a generic slider. It should have <code>aria-label="Multiplicador de precio"</code> and <code>aria-valuetext={`multiplicador ${guestMultiplier}`}</code>.</p>
+      </div>
+      <div class="critique-card">
+        <h3><span class="badge badge-issue">Issue</span> Switch toggle has no visible label for screen readers</h3>
+        <p>The pricing Switch uses visual context (nearby text) but has no <code>inputProps={{ 'aria-label': '...' }}</code>. Same for the ToggleButtonGroup which lacks an aria-label.</p>
+      </div>
+      <div class="critique-card">
+        <h3><span class="badge badge-improve">Improve</span> PIN hint text at 0.7rem with 0.7 opacity is very hard to read</h3>
+        <p>The hint "Comparte el PIN por separado" is 11.2px at 70% opacity. This falls below WCAG AA minimum contrast thresholds. Bump to 0.75rem with opacity 0.85, or use color: var(--slate-400) directly.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- TAB 2: CURRENT (BEFORE)                     -->
+  <!-- ════════════════════════════════════════════ -->
+  <div id="tab-before" class="tab-panel">
+    <div class="compare-label before">CURRENT DESIGN</div>
+    <div class="mock-dialog">
+      <div class="mock-header">
+        <div class="mock-header-left">
+          <div class="mock-icon-box">🔗</div>
+          <span class="mock-title">Invitar a Explorar</span>
+        </div>
+        <button class="mock-close">✕</button>
+      </div>
+      <div class="mock-body">
+        <p class="mock-desc">Genera un enlace de acceso temporal para que tus clientes exploren nuestra coleccion de esmeraldas colombianas.</p>
+
+        <div class="field-group">
+          <input class="mock-input" placeholder="Maria Garcia" value="Maria Garcia" style="padding-left:12px;">
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <span class="mock-label">Contacto (al menos uno)</span>
+          <div class="mock-input-row">
+            <input class="mock-input" placeholder="maria@email.com" style="padding-left:12px;" value="maria@email.com">
+            <input class="mock-input" placeholder="+57 300 123 4567" style="padding-left:12px;">
+          </div>
+        </div>
+
+        <div class="mock-card-row active">
+          <div class="mock-card-left">
+            <div class="mock-card-icon on">💲</div>
+            <div>
+              <div class="mock-card-title">Con precios</div>
+              <div class="mock-card-sub">El invitado vera los precios</div>
+            </div>
+          </div>
+          <button class="mock-toggle on"></button>
+        </div>
+
+        <div class="mock-card-row active">
+          <div style="width:100%;">
+            <div class="mock-card-left" style="margin-bottom:10px;">
+              <div class="mock-card-icon on">💱</div>
+              <div>
+                <div class="mock-card-title">Moneda del invitado</div>
+                <div class="mock-card-sub">Pesos colombianos (x4)</div>
+              </div>
+            </div>
+            <div class="mock-toggle-group">
+              <button class="mock-toggle-btn active">COP</button>
+              <button class="mock-toggle-btn">USD</button>
+            </div>
+            <div class="mock-slider-row">
+              <input type="range" class="mock-slider" min="1" max="4" step="0.1" value="4">
+              <span class="mock-slider-label">x4</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="mock-btn-primary">🔗 Generar Enlace</button>
+      </div>
+      <div class="mock-footer">
+        <button class="mock-footer-btn">Cerrar</button>
+      </div>
+    </div>
+
+    <div class="annotation" style="max-width:400px;margin:16px auto;">
+      <strong>Key issues:</strong> No multiplier explanation, flat form with no progression, contact label disconnected, no price preview, slider lacks aria labels.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- TAB 3: IMPROVED (AFTER)                     -->
+  <!-- ════════════════════════════════════════════ -->
+  <div id="tab-after" class="tab-panel">
+    <div class="compare-label after">IMPROVED DESIGN</div>
+    <div class="mock-dialog">
+      <div class="mock-header">
+        <div class="mock-header-left">
+          <div class="mock-icon-box">🔗</div>
+          <span class="mock-title">Invitar a Explorar</span>
+        </div>
+        <button class="mock-close">✕</button>
+      </div>
+      <div class="mock-body">
+        <p class="mock-desc">Genera un enlace temporal para que tu cliente explore esmeraldas colombianas.</p>
+
+        <!-- Step indicator -->
+        <div class="step-indicator">
+          <div class="step-dot active"></div>
+          <div class="step-dot"></div>
+        </div>
+
+        <div class="field-group">
+          <input class="mock-input" placeholder="Nombre del invitado" value="Maria Garcia" style="padding-left:12px;">
+        </div>
+
+        <!-- Contact group with visual containment -->
+        <div style="border:1px solid var(--slate-200); border-radius:12px; padding:12px; margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+            <span class="mock-label" style="margin:0;font-weight:600;color:var(--slate-600);">Contacto</span>
+            <span style="font-size:0.65rem;color:var(--slate-400);background:var(--slate-100);padding:1px 6px;border-radius:4px;">al menos uno</span>
+          </div>
+          <div class="mock-input-row">
+            <input class="mock-input" placeholder="Email" style="padding-left:12px;" value="maria@email.com">
+            <input class="mock-input" placeholder="Telefono" style="padding-left:12px;">
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Pricing section — visually grouped as sub-settings -->
+        <div style="margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:14px;">💲</span>
+              <div>
+                <div class="mock-card-title">Mostrar precios</div>
+              </div>
+            </div>
+            <button class="mock-toggle on"></button>
+          </div>
+
+          <!-- Currency + multiplier as indented sub-controls -->
+          <div style="padding-left:22px; border-left:2px solid var(--emerald-200); margin-left:6px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span class="mock-label" style="margin:0;">Moneda</span>
+              <div class="mock-toggle-group" style="flex:1;max-width:160px;">
+                <button class="mock-toggle-btn active">COP</button>
+                <button class="mock-toggle-btn">USD</button>
+              </div>
+            </div>
+
+            <div class="multiplier-label-row">
+              <span class="multiplier-label">Multiplicador de precio</span>
+              <span class="multiplier-value">x4.0</span>
+            </div>
+            <div class="mock-slider-row" style="padding-top:4px;">
+              <span style="font-size:0.68rem;color:var(--slate-400);">x1</span>
+              <input type="range" class="mock-slider" min="1" max="4" step="0.1" value="4">
+              <span style="font-size:0.68rem;color:var(--slate-400);">x4</span>
+            </div>
+
+            <!-- Price preview -->
+            <div class="price-preview">
+              <span class="price-preview-label">Ej: piedra de $2M COP →</span>
+              <span class="price-preview-val">$8,000,000 COP</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="mock-btn-primary">🔗 Crear enlace para Maria</button>
+
+        <div class="inline-helper" style="justify-content:center;margin-top:8px;">
+          <svg viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3M8 10h.01"/></svg>
+          <span>El enlace expira 24h despues de que lo abra</span>
+        </div>
+      </div>
+      <div class="mock-footer">
+        <button class="mock-footer-btn">Cerrar</button>
+      </div>
+    </div>
+
+    <div class="annotation" style="max-width:400px;margin:16px auto;">
+      <strong>Improvements:</strong> Step indicator, contact group containment, indented sub-settings with left border, multiplier with label + range labels + live price preview, dynamic CTA with guest name, expiry hint moved below CTA.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- TAB 4: SIDE-BY-SIDE                         -->
+  <!-- ════════════════════════════════════════════ -->
+  <div id="tab-compare" class="tab-panel">
+    <div class="compare-row">
+      <div>
+        <div class="compare-label before">CURRENT</div>
+        <div class="mock-dialog" style="transform:scale(0.92);transform-origin:top center;">
+          <div class="mock-header">
+            <div class="mock-header-left">
+              <div class="mock-icon-box">🔗</div>
+              <span class="mock-title" style="font-size:0.95rem;">Invitar a Explorar</span>
+            </div>
+            <button class="mock-close">✕</button>
+          </div>
+          <div class="mock-body" style="padding:4px 16px 16px;">
+            <p class="mock-desc" style="font-size:0.76rem;">Genera un enlace de acceso temporal para que tus clientes exploren nuestra coleccion de esmeraldas colombianas.</p>
+            <div class="field-group"><input class="mock-input" value="Maria Garcia" style="padding-left:10px;font-size:0.78rem;"></div>
+            <div style="margin-bottom:12px;">
+              <span class="mock-label" style="font-size:0.68rem;">Contacto (al menos uno)</span>
+              <div class="mock-input-row">
+                <input class="mock-input" value="maria@email.com" style="padding-left:10px;font-size:0.78rem;">
+                <input class="mock-input" placeholder="Telefono" style="padding-left:10px;font-size:0.78rem;">
+              </div>
+            </div>
+            <div class="mock-card-row active" style="padding:8px 10px;">
+              <div class="mock-card-left">
+                <div class="mock-card-icon on" style="width:30px;height:30px;font-size:12px;">💲</div>
+                <div><div class="mock-card-title" style="font-size:0.78rem;">Con precios</div><div class="mock-card-sub" style="font-size:0.66rem;">El invitado vera los precios</div></div>
+              </div>
+              <button class="mock-toggle on" style="width:38px;height:20px;"><style>.mock-toggle.sm::after{width:15px;height:15px;}</style></button>
+            </div>
+            <div class="mock-card-row active" style="padding:8px 10px;">
+              <div style="width:100%;">
+                <div class="mock-card-left" style="margin-bottom:8px;">
+                  <div class="mock-card-icon on" style="width:30px;height:30px;font-size:12px;">💱</div>
+                  <div><div class="mock-card-title" style="font-size:0.78rem;">Moneda del invitado</div><div class="mock-card-sub" style="font-size:0.66rem;">Pesos colombianos (x4)</div></div>
+                </div>
+                <div class="mock-toggle-group">
+                  <button class="mock-toggle-btn active" style="font-size:0.72rem;padding:5px 10px;">COP</button>
+                  <button class="mock-toggle-btn" style="font-size:0.72rem;padding:5px 10px;">USD</button>
+                </div>
+                <div class="mock-slider-row"><input type="range" class="mock-slider" min="1" max="4" step="0.1" value="4"><span class="mock-slider-label">x4</span></div>
+              </div>
+            </div>
+            <button class="mock-btn-primary" style="font-size:0.82rem;padding:10px;">🔗 Generar Enlace</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="compare-label after">IMPROVED</div>
+        <div class="mock-dialog" style="transform:scale(0.92);transform-origin:top center;">
+          <div class="mock-header">
+            <div class="mock-header-left">
+              <div class="mock-icon-box">🔗</div>
+              <span class="mock-title" style="font-size:0.95rem;">Invitar a Explorar</span>
+            </div>
+            <button class="mock-close">✕</button>
+          </div>
+          <div class="mock-body" style="padding:4px 16px 16px;">
+            <p class="mock-desc" style="font-size:0.76rem;">Genera un enlace temporal para que tu cliente explore esmeraldas colombianas.</p>
+            <div class="step-indicator"><div class="step-dot active"></div><div class="step-dot"></div></div>
+            <div class="field-group"><input class="mock-input" value="Maria Garcia" style="padding-left:10px;font-size:0.78rem;"></div>
+            <div style="border:1px solid var(--slate-200);border-radius:10px;padding:10px;margin-bottom:14px;">
+              <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;">
+                <span style="font-size:0.68rem;font-weight:600;color:var(--slate-600);">Contacto</span>
+                <span style="font-size:0.6rem;color:var(--slate-400);background:var(--slate-100);padding:1px 5px;border-radius:3px;">min. 1</span>
+              </div>
+              <div class="mock-input-row">
+                <input class="mock-input" value="maria@email.com" style="padding-left:10px;font-size:0.78rem;">
+                <input class="mock-input" placeholder="Tel" style="padding-left:10px;font-size:0.78rem;">
+              </div>
+            </div>
+            <div style="height:1px;background:var(--slate-100);margin:12px 0;"></div>
+            <div style="margin-bottom:14px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:12px;">💲</span><span style="font-size:0.78rem;font-weight:500;">Mostrar precios</span></div>
+                <button class="mock-toggle on" style="width:38px;height:20px;"></button>
+              </div>
+              <div style="padding-left:18px;border-left:2px solid var(--emerald-200);margin-left:5px;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                  <span style="font-size:0.68rem;color:var(--slate-500);">Moneda</span>
+                  <div class="mock-toggle-group" style="flex:1;max-width:130px;">
+                    <button class="mock-toggle-btn active" style="font-size:0.7rem;padding:4px 8px;">COP</button>
+                    <button class="mock-toggle-btn" style="font-size:0.7rem;padding:4px 8px;">USD</button>
+                  </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1px;">
+                  <span style="font-size:0.68rem;color:var(--slate-500);">Multiplicador</span>
+                  <span style="font-size:0.76rem;font-weight:700;color:var(--emerald-700);background:var(--emerald-50);padding:0 6px;border-radius:4px;">x4.0</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;padding:2px 0;">
+                  <span style="font-size:0.62rem;color:var(--slate-400);">x1</span>
+                  <input type="range" class="mock-slider" min="1" max="4" step="0.1" value="4" style="flex:1;">
+                  <span style="font-size:0.62rem;color:var(--slate-400);">x4</span>
+                </div>
+                <div style="margin-top:6px;padding:6px 10px;border-radius:6px;background:var(--slate-50);border:1px dashed var(--slate-200);display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:0.64rem;color:var(--slate-400);">$2M COP →</span>
+                  <span style="font-size:0.72rem;font-weight:600;color:var(--slate-700);">$8,000,000</span>
+                </div>
+              </div>
+            </div>
+            <button class="mock-btn-primary" style="font-size:0.82rem;padding:10px;">🔗 Crear enlace para Maria</button>
+            <div style="text-align:center;margin-top:6px;font-size:0.64rem;color:var(--slate-400);">Expira 24h despues de abrirlo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="critique-card" style="max-width: 700px; margin: 0 auto;">
+      <h3>Key Changes Summary</h3>
+      <p style="margin-top:8px;">
+        <strong style="color:var(--emerald-700);">1. Visual hierarchy:</strong> Pricing sub-settings now indent under a left emerald border, making the parent-child relationship between "show prices" → currency/multiplier obvious.<br><br>
+        <strong style="color:var(--emerald-700);">2. Multiplier clarity:</strong> Added "Multiplicador de precio" label, min/max range labels (x1–x4), prominent value badge, and a live price preview so the asesor can see the actual impact.<br><br>
+        <strong style="color:var(--emerald-700);">3. Contact grouping:</strong> Email + Phone wrapped in a contained card with "min. 1" badge — no ambiguity about requirements.<br><br>
+        <strong style="color:var(--emerald-700);">4. Dynamic CTA:</strong> "Crear enlace para Maria" personalizes the action and increases confidence.<br><br>
+        <strong style="color:var(--emerald-700);">5. Reduced density:</strong> Shorter description text, divider before pricing section, step dots hint at a two-phase flow (form → success).
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

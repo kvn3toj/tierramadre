@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { useSyncCacheState } from './useSyncCache';
 
 // Cache configuration
 const CACHE_KEY = STORAGE_KEYS.BATCH_THUMBNAILS;
@@ -83,11 +84,14 @@ function setCachedThumbnails(thumbnails: Record<number, ThumbnailInfo>): void {
 
 /**
  * Fetch thumbnails from API
+ * @param notifyOnFailure - toast when all retries fail (off for silent background refresh)
  */
-async function fetchThumbnails(): Promise<Record<number, ThumbnailInfo>> {
+async function fetchThumbnails(notifyOnFailure = false): Promise<Record<number, ThumbnailInfo>> {
   const response = await fetchWithRetry('/api/get-batch-thumbnails', undefined, {
     retries: 3,
     onRetry: (attempt) => console.warn(`[Thumbnails] Retry ${attempt}/3...`),
+    notifyOnFailure,
+    failureMessage: 'No se pudieron cargar las miniaturas. Intenta de nuevo.',
   });
 
   if (!response.ok) {
@@ -127,9 +131,15 @@ function getInitialThumbnails(): Record<number, ThumbnailInfo> {
 }
 
 export function useBatchThumbnails(): UseBatchThumbnailsReturn {
-  // Initialize with cached data synchronously to prevent image URL changes (blinking)
-  const [thumbnails, setThumbnails] = useState<Record<number, ThumbnailInfo>>(getInitialThumbnails);
-  const [isLoading, setIsLoading] = useState(() => Object.keys(getInitialThumbnails()).length === 0);
+  const {
+    value: thumbnails,
+    setValue: setThumbnails,
+    isLoading,
+    setIsLoading,
+  } = useSyncCacheState<Record<number, ThumbnailInfo>>(
+    getInitialThumbnails,
+    (v) => Object.keys(v).length === 0
+  );
   const [error, setError] = useState<string | null>(null);
 
   const loadThumbnails = useCallback(async (skipCache = false) => {
@@ -144,8 +154,8 @@ export function useBatchThumbnails(): UseBatchThumbnailsReturn {
         }
       }
 
-      // Fetch from API
-      const data = await fetchThumbnails();
+      // Fetch from API (user is waiting or explicitly refreshing — notify on hard failure)
+      const data = await fetchThumbnails(true);
       setThumbnails(data);
       setCachedThumbnails(data);
       setError(null);
@@ -164,7 +174,7 @@ export function useBatchThumbnails(): UseBatchThumbnailsReturn {
       loadThumbnails(true); // No cache — fetch with loading state
     } else if (isCacheStale()) {
       // Cache is valid but stale — refresh silently in background (no loading state)
-      fetchThumbnails()
+      fetchThumbnails(false)
         .then((data) => {
           setThumbnails(data);
           setCachedThumbnails(data);

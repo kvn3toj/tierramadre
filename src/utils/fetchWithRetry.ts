@@ -7,10 +7,16 @@
  * Early-exits if navigator.onLine is false.
  */
 
+import { reportFetchFailure } from './fetchFailureBridge';
+
 interface FetchWithRetryOptions {
   retries?: number;
   baseDelay?: number;
   onRetry?: (attempt: number, error: Error) => void;
+  /** When true, shows a snackbar via NotificationContext after all retries fail (server/429/network). */
+  notifyOnFailure?: boolean;
+  /** Override default user-facing message when notifyOnFailure is true */
+  failureMessage?: string;
 }
 
 const NON_RETRYABLE_STATUSES = new Set([400, 401, 403, 404, 405, 409, 422]);
@@ -20,7 +26,13 @@ export async function fetchWithRetry(
   fetchOptions?: RequestInit,
   retryOptions?: FetchWithRetryOptions
 ): Promise<Response> {
-  const { retries = 3, baseDelay = 1000, onRetry } = retryOptions ?? {};
+  const {
+    retries = 3,
+    baseDelay = 1000,
+    onRetry,
+    notifyOnFailure = false,
+    failureMessage,
+  } = retryOptions ?? {};
 
   let lastError: Error | null = null;
 
@@ -54,5 +66,14 @@ export async function fetchWithRetry(
     }
   }
 
-  throw lastError ?? new Error('fetchWithRetry exhausted all retries');
+  const err = lastError ?? new Error('fetchWithRetry exhausted all retries');
+  if (notifyOnFailure) {
+    const msg =
+      failureMessage ??
+      (err.message.includes('Sin conexion')
+        ? err.message
+        : 'No se pudo conectar. Revisa tu red o intenta de nuevo en un momento.');
+    reportFetchFailure(msg);
+  }
+  throw err;
 }

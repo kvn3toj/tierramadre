@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import { useScreenshotDetection } from '../hooks/useScreenshotDetection';
 
 interface ScreenProtectionContextType {
@@ -45,8 +45,13 @@ export function ScreenProtectionProvider({
     detectWindowBlur: enabled,
   });
 
+  const value = useMemo(
+    () => ({ isProtectionActive, triggerProtection }),
+    [isProtectionActive, triggerProtection]
+  );
+
   return (
-    <ScreenProtectionContext.Provider value={{ isProtectionActive, triggerProtection }}>
+    <ScreenProtectionContext.Provider value={value}>
       {children}
     </ScreenProtectionContext.Provider>
   );

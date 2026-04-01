@@ -6,7 +6,7 @@
  * Ensures consistent logo placement, sizing, and aspect ratio.
  */
 
-import jsPDF from 'jspdf';
+import type jsPDF from 'jspdf';
 import { PAGE_LAYOUT } from '../core/spacing';
 import { drawIOSShadow } from '../core/shadows';
 

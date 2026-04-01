@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { TreasureItem } from '../types';
 import { normalizeName, matchesAsesorName } from '../utils/asesorNameUtils';
+import { fetchWithRetry } from '../utils/fetchWithRetry';
 
 // Re-export for backwards compatibility
 export { matchesAsesorName } from '../utils/asesorNameUtils';
@@ -47,8 +48,11 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
       setIsLoading(true);
       setError(null);
 
-      // Always fetch fresh from API - no cache
-      const response = await fetch('/api/get-asesores');
+      const response = await fetchWithRetry('/api/get-asesores', undefined, {
+        retries: 3,
+        notifyOnFailure: true,
+        failureMessage: 'No se pudieron cargar los asesores. Intenta de nuevo.',
+      });
       if (!response.ok) throw new Error('Failed to fetch asesores');
 
       const result = await response.json();

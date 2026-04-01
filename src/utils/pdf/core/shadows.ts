@@ -6,7 +6,8 @@
  * jsPDF doesn't support native shadows, so we fake them with graphics state opacity.
  */
 
-import jsPDF, { GState } from 'jspdf';
+import type jsPDF from 'jspdf';
+import { getGState } from '../jspdf-loader';
 import { BORDER_RADIUS_MM } from './spacing';
 
 /**
@@ -136,7 +137,7 @@ export function drawIOSShadow(
     }
 
     // Apply opacity
-    pdf.setGState(new GState({ opacity: layer.opacity }));
+    pdf.setGState(new (getGState())({ opacity: layer.opacity }));
 
     // Draw shadow layers with blur simulation
     for (let i = 0; i < layer.blur; i++) {
@@ -155,7 +156,7 @@ export function drawIOSShadow(
   });
 
   // Reset graphics state to full opacity
-  pdf.setGState(new GState({ opacity: 1 }));
+  pdf.setGState(new (getGState())({ opacity: 1 }));
 }
 
 /**
@@ -243,11 +244,11 @@ export function drawTextShadow(
 ): void {
   // Draw shadow (black, subtle offset)
   pdf.setTextColor(0, 0, 0);
-  pdf.setGState(new GState({ opacity: 0.3 }));
+  pdf.setGState(new (getGState())({ opacity: 0.3 }));
   pdf.text(text, x + 0.3, y + 0.3);
 
   // Reset opacity
-  pdf.setGState(new GState({ opacity: 1 }));
+  pdf.setGState(new (getGState())({ opacity: 1 }));
 }
 
 /**

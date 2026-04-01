@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { TreasureItem } from '../types';
 import { STORAGE_KEYS, LEGACY_KEYS } from '../constants/storage-keys';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { useSyncCacheState } from './useSyncCache';
 
 // Cache configuration (new treasure namespace)
 const SHEETS_CACHE_KEY = STORAGE_KEYS.TREASURE_SHEETS_CACHE;
@@ -86,11 +87,14 @@ function setCachedData(data: TreasureItem[]): void {
 
 /**
  * Fetch treasure from Google Sheets API
+ * @param notifyOnFailure - show snackbar if all retries fail (use true when user has no cache or forced refresh)
  */
-async function fetchFromSheets(): Promise<TreasureItem[]> {
+async function fetchFromSheets(notifyOnFailure = false): Promise<TreasureItem[]> {
   const response = await fetchWithRetry('/api/get-treasure-sheets', undefined, {
     retries: 3,
     onRetry: (attempt) => console.warn(`[Sheets] Retry ${attempt}/3...`),
+    notifyOnFailure,
+    failureMessage: 'No se pudo cargar el inventario. Intenta de nuevo.',
   });
 
   if (!response.ok) {
@@ -121,9 +125,12 @@ function getInitialSheetsData(): TreasureItem[] | null {
  * Hook to fetch and manage treasure data from Google Sheets
  */
 export function useSheetsTreasure(): UseSheetsTreasureReturn {
-  // Initialize with cached data synchronously to prevent treasure changes (image blinking)
-  const [sheetsTreasure, setSheetsTreasure] = useState<TreasureItem[] | null>(getInitialSheetsData);
-  const [isLoading, setIsLoading] = useState(() => getInitialSheetsData() === null);
+  const {
+    value: sheetsTreasure,
+    setValue: setSheetsTreasure,
+    isLoading,
+    setIsLoading,
+  } = useSyncCacheState<TreasureItem[] | null>(getInitialSheetsData, (v) => v === null);
   const [error, setError] = useState<string | null>(null);
 
   // Always background-fetch fresh data from API.
@@ -133,7 +140,7 @@ export function useSheetsTreasure(): UseSheetsTreasureReturn {
 
     const loadFromSheets = async () => {
       try {
-        const treasure = await fetchFromSheets();
+        const treasure = await fetchFromSheets(!hasCachedData);
         setCachedData(treasure);
         // Only trigger re-render if data actually changed
         setSheetsTreasure(prev => {
@@ -162,7 +169,7 @@ export function useSheetsTreasure(): UseSheetsTreasureReturn {
     setError(null);
 
     try {
-      const treasure = await fetchFromSheets();
+      const treasure = await fetchFromSheets(true);
       setSheetsTreasure(treasure);
       setCachedData(treasure);
     } catch (err) {

@@ -1,3 +1,10 @@
+/**
+ * ChunkErrorBoundary
+ *
+ * Catches lazy-route / dynamic-import failures (e.g. new deploy while session open)
+ * and auto-reloads once; pairs with `lazyWithRetry` in the shell. Network/API failures
+ * from `fetchWithRetry` are surfaced via `fetchFailureBridge` + NotificationContext.
+ */
 import { Component, ReactNode } from 'react';
 import { Box, Typography, Button, CircularProgress, alpha } from '@mui/material';
 import { STORAGE_KEYS, SESSION_KEYS } from '../../constants/storage-keys';

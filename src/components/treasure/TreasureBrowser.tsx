@@ -2,53 +2,29 @@
  * TreasureBrowser Component
  *
  * Main treasure browsing interface with filtering, sorting, and grid/list views.
- * Refactored to extract URL sync, filter tracking, active chips, mobile search,
- * empty state, and desktop filter toolbar into separate components.
+ * Logic lives in useTreasureBrowserController; desktop chrome is split into browser/* components.
  */
-import { useState, useMemo, useCallback, useRef, useEffect, useDeferredValue } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  Box,
-  Typography,
-  Paper,
-  Chip,
-  alpha,
-  useTheme,
-  useMediaQuery,
-} from '@mui/material';
-import { Heart } from 'lucide-react';
-import { useThemeMode } from '../../contexts/ThemeContext';
-import { useAuthContext } from '../../contexts/AuthContext';
-import { usePriceShare } from '../../contexts/PriceShareContext';
+
+import { useRef, useEffect } from 'react';
+import { Box, useTheme } from '@mui/material';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { useTreasure } from '../../hooks/useTreasure';
-import { useTreasureFiltering, type TypeFilter, type StatusFilter, type SortOption } from '../../hooks/useTreasureFiltering';
-import { useUrlFilterSync, parseUrlFilters } from '../../hooks/useUrlFilterSync';
-import { useFilterTracking } from '../../hooks/useFilterTracking';
-import { useFavorites } from '../../hooks/useFavorites';
-import { usePagination } from '../../hooks/usePagination';
-import { useRecentlyViewed } from '../../hooks/useRecentlyViewed';
-import { useSavedFilters } from '../../hooks/useSavedFilters';
-import { useTreasureAnalytics } from '../../hooks/useTreasureAnalytics';
-import { useTrackingDispatch } from '../../contexts/TrackingContext';
-import { useProductViews } from '../../hooks/useProductViews';
-import { useComparison } from '../../hooks/useComparison';
-import { TreasureItem } from '../../types';
 import CertificationUpload from './CertificationUpload';
 import { ComparisonBar, ComparisonModal } from '../comparison';
-import { useCurrencyFormat } from '../../contexts/CurrencyContext';
-import { createLogger } from '../../utils/logger';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { accentColors, zIndex, fontWeights } from '../../design-system';
-import { GridCard, ListRow, VirtualGrid, FilterContent, ActiveFilterChips, type FilterContentProps } from './';
+import { zIndex } from '../../design-system';
+import ListRow from './ListRow';
+import VirtualGrid from './VirtualGrid';
+import { ActiveFilterChips } from './ActiveFilterChips';
 import RecentlyViewedCarousel from './RecentlyViewedCarousel';
 import IOSFilterSheet from '../ios/IOSFilterSheet';
-import { MobileSearchBar, TreasureEmptyState, DesktopFilterToolbar } from './browser';
+import {
+  MobileSearchBar,
+  TreasureEmptyState,
+  TreasureDesktopFilterPanel,
+  TreasureDesktopResultsSummary,
+} from './browser';
 import TreasureErrorState from './browser/TreasureErrorState';
-import { useLiveRegion } from '../shared/LiveRegion';
 import ScrollToTop from '../shared/ScrollToTop';
-
-const log = createLogger('Treasure');
+import { useTreasureBrowserController } from '../../hooks/useTreasureBrowserController';
 
 /** Sentinel div that triggers loadMore via IntersectionObserver when scrolled into view. */
 function ListLoadMoreSentinel({ onIntersect }: { onIntersect: () => void }) {
@@ -60,7 +36,9 @@ function ListLoadMoreSentinel({ onIntersect }: { onIntersect: () => void }) {
     const el = sentinelRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) onIntersectRef.current(); },
+      ([entry]) => {
+        if (entry.isIntersecting) onIntersectRef.current();
+      },
       { rootMargin: '200px' }
     );
     observer.observe(el);
@@ -82,314 +60,87 @@ export default function TreasureBrowser({
   defaultViewMode,
 }: TreasureBrowserProps = {}) {
   const { t } = useLanguage();
-  const { formatFullCurrency } = useCurrencyFormat();
   const theme = useTheme();
-  const { mode } = useThemeMode();
-  const { accessLevel } = useAuthContext();
-  const { shouldShowPrices } = usePriceShare();
-  const isAdmin = accessLevel === 'admin';
-  const isLight = mode === 'light';
-  const navigate = useNavigate();
-  const location = useLocation();
 
-  // Get treasure data from hook
-  const { treasure: allTreasure, isLoadingThumbnails, sheetsError, refreshFromSheets, isLoadingSheets } = useTreasure();
-
-  // Parse URL params once on mount using React Router's location.search
-  // (window.location.search may be stale during startTransition navigations)
-  const initialFilters = useMemo(() => parseUrlFilters(location.search), []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Filtering hook - handles all filter state and computed values
-  const filteringResult = useTreasureFiltering({
-    treasure: allTreasure,
-    initialFilters,
-  });
+  const c = useTreasureBrowserController({ isProviderMode, defaultViewMode });
 
   const {
+    formatFullCurrency,
+    isLight,
+    shouldShowPrices,
+    isProviderMode: providerMode,
+    isMobile,
+    allTreasure,
+    sheetsError,
+    refreshFromSheets,
+    isLoadingSheets,
     filters,
-    setSearch,
-    setColorFilter,
-    setQualityFilter,
-    setTypeFilter,
-    setStatusFilter,
-    setShapeFilter,
-    setPriceRange,
-    setCaratRange,
-    setSortBy,
-    setCantidadFilter,
-    setCategoriaFilter,
-    setColeccionFilter,
-    setHeroCategoryFilter,
-    clearFilters,
-    hasFilters,
-    sortedTreasure: filteredTreasure,
+    filteredTreasure,
     filteredStats,
-    filterOptions,
-  } = filteringResult;
-
-  // Sync filter state to URL (single instance, no race condition)
-  const urlSync = useUrlFilterSync({
-    filters,
-    priceMinMax: filterOptions.priceMinMax,
-    clearFilters,
-  });
-
-  // Funnel tracking hook
-  const { track, checkAchievements } = useTrackingDispatch();
-
-  // Filter tracking hook - handles analytics and active filter count
-  const { activeFilterCount } = useFilterTracking({
-    filters,
-    priceMinMax: filterOptions.priceMinMax,
-    caratMinMax: filterOptions.caratMinMax,
-    resultsCount: filteredTreasure.length,
-    track,
-    checkAchievements,
-  });
-
-  // Favorites hook
-  const { isFavorite, toggleFavorite, favoritesCount } = useFavorites();
-
-  // Pagination hook (24 items per page)
-  const pagination = usePagination({
-    totalItems: filteredTreasure.length,
-    itemsPerPage: 24,
-  });
-
-  // Recently viewed hook
-  const { addToRecent, recentItems, clearRecent } = useRecentlyViewed();
-
-  // Saved filters hook
-  const savedFilters = useSavedFilters();
-
-  // Analytics hook
-  const analyticsHook = useTreasureAnalytics();
-
-  // Product view counts for badges
-  const { getViewCount } = useProductViews();
-
-  // Ref for getViewCount — avoids busting renderCard on background stats refresh.
-  // View count badges update lazily on next natural re-render (filter, scroll, etc.)
-  const getViewCountRef = useRef(getViewCount);
-  getViewCountRef.current = getViewCount;
-
-  // Comparison hook
-  const comparison = useComparison();
-
-  // Comparison IDs for VirtualGrid cellProps (same pattern as favorites)
-  const comparisonIds = useMemo(
-    () => comparison.selectedItems.map(i => i.item),
-    [comparison.selectedItems]
-  );
-
-  // Memoized favorites list — avoids rebuilding on every render
-  const favoriteIds = useMemo(
-    () => allTreasure.map(i => i.item).filter(id => isFavorite(id)),
-    [allTreasure, isFavorite]
-  );
-
-  // Defer filtered results so search input stays responsive with 500+ items
-  const deferredFilteredTreasure = useDeferredValue(filteredTreasure);
-
-  // Aria-live announcements for filter results (WCAG 4.1.3)
-  const { announce } = useLiveRegion();
-  const prevFilteredCount = useRef(filteredTreasure.length);
-  useEffect(() => {
-    if (prevFilteredCount.current !== filteredTreasure.length && hasFilters) {
-      announce(`${filteredTreasure.length} ${t.treasure.resultsFound}`);
-    }
-    prevFilteredCount.current = filteredTreasure.length;
-  }, [filteredTreasure.length, hasFilters, announce, t]);
-
-  // Track treasure view on mount
-  useEffect(() => {
-    track('treasure_view', {
-      total_items: allTreasure.length,
-      view_mode: viewMode,
-    });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Search input ref
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // UI state - provider mode defaults to list view
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>(
-    defaultViewMode ?? (isProviderMode ? 'list' : 'grid')
-  );
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
-  const handleScrollDirectionChange = useCallback((_direction: 'up' | 'down') => {
-    // No-op: recently viewed is always visible now
-  }, []);
-
-  // Get visible items based on pagination
-  const paginatedItems = useMemo(
-    () => pagination.getVisibleItems(filteredTreasure),
-    [pagination, filteredTreasure]
-  );
-
-  // Mobile detection
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-  // Filter by favorites if enabled
-  const visibleItems = useMemo(() => {
-    if (!showFavoritesOnly) return paginatedItems;
-    return paginatedItems.filter(item => isFavorite(item.item));
-  }, [paginatedItems, showFavoritesOnly, isFavorite]);
-
-  // Shared lookup map — avoids duplicate Map construction
-  const treasureMap = useMemo(
-    () => new Map(allTreasure.map(item => [item.item, item])),
-    [allTreasure]
-  );
-
-  // Map recent item IDs to actual treasure items
-  const recentlyViewedItems = useMemo(() => {
-    return recentItems
-      .map(id => treasureMap.get(id))
-      .filter((item): item is TreasureItem => item !== undefined);
-  }, [treasureMap, recentItems]);
-
-  // Map favorite IDs to actual treasure items (for mobile quick access panel)
-  const favoriteMappedItems = useMemo(() => {
-    return favoriteIds
-      .map(id => treasureMap.get(id))
-      .filter((item): item is TreasureItem => item !== undefined);
-  }, [treasureMap, favoriteIds]);
-
-  // Certification dialog state
-  const [certDialogOpen, setCertDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<TreasureItem | null>(null);
-
-  // Stats for header
-  const stats = useMemo(() => {
-    const available = allTreasure.filter(i => i.estado?.toUpperCase() === 'DISPONIBLE');
-    return {
-      totalItems: available.length,
-      looseStones: available.filter(i => !i.isJewelry).length,
-      jewelry: available.filter(i => i.isJewelry).length,
-    };
-  }, [allTreasure]);
-
-  // Filter options from hook
-  const { colors, shapes, qualities, colecciones, categorias, priceMinMax, caratMinMax } = filterOptions;
-
-  // Destructure filter values for convenience
-  const { search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, priceRange, sortBy, cantidadFilter, coleccionFilter, categoriaFilter } = filters;
-
-  // Handlers
-  const handleCertClick = useCallback((item: TreasureItem) => {
-    setSelectedItem(item);
-    setCertDialogOpen(true);
-  }, []);
-
-  const handleItemClick = useCallback((item: TreasureItem, positionInList: number = 0) => {
-    addToRecent(item.item);
-    analyticsHook.trackItemView(item.item, item.nombre);
-    track('product_clicked', {
-      item_id: item.item,
-      item_name: item.nombre || t.treasure.noName,
-      position_in_list: positionInList,
-      filters_active: hasFilters,
-      view_mode: viewMode,
-    });
-    navigate(`/product/${item.item}`);
-  }, [navigate, addToRecent, analyticsHook, track, hasFilters, viewMode, t]);
-
-  const handleSaveCertifications = useCallback((certifications: TreasureItem['certifications']) => {
-    if (selectedItem) {
-      log.info('Saving certifications for item:', selectedItem.item, certifications);
-    }
-    setCertDialogOpen(false);
-    setSelectedItem(null);
-  }, [selectedItem]);
-
-  // Destructure comparison — toggleComparison is stable across selection changes
-  const { toggleComparison, canAddMore: canAddToComparison } = comparison;
-
-  // Memoized renderCard — callbacks are stable refs; GridCard memo skips callback comparison.
-  // getViewCount via ref: avoids re-render cascade on background stats refresh.
-  // comparison state flows through VirtualGrid cellProps (like favorites).
-  const renderCard = useCallback((props: {
-    item: TreasureItem;
-    isFavorite: boolean;
-    onItemClick: (item: TreasureItem) => void;
-    onCertClick: (item: TreasureItem) => void;
-    onToggleFavorite: (itemId: number) => void;
-    isMobile: boolean;
-    priority?: boolean;
-    isSelectedForComparison?: boolean;
-    canAddToComparison?: boolean;
-  }) => (
-    <GridCard
-      item={props.item}
-      isFavorite={props.isFavorite}
-      onItemClick={props.onItemClick}
-      onCertClick={props.onCertClick}
-      onToggleFavorite={props.onToggleFavorite}
-      isMobile={props.isMobile}
-      priority={props.priority}
-      viewCount={getViewCountRef.current(props.item.item)}
-      isAdmin={isAdmin}
-      isLoadingThumbnails={isLoadingThumbnails}
-      isSelectedForComparison={props.isSelectedForComparison ?? false}
-      onToggleComparison={toggleComparison}
-      canAddToComparison={props.canAddToComparison ?? false}
-    />
-  ), [isAdmin, isLoadingThumbnails, toggleComparison]);
-
-  // Props for FilterContent
-  const filterContentProps: FilterContentProps = {
-    search,
-    statusFilter,
-    sortBy,
-    typeFilter,
-    cantidadFilter,
-    colorFilter,
-    shapeFilter,
-    qualityFilter,
-    coleccionFilter,
-    categoriaFilter,
-    priceRange,
-    caratRange: filters.caratRange,
-    setSearch,
-    setStatusFilter,
-    setSortBy,
-    setTypeFilter,
-    setCantidadFilter,
-    setColorFilter,
-    setShapeFilter,
-    setQualityFilter,
-    setColeccionFilter,
-    setCategoriaFilter,
-    setPriceRange,
-    setCaratRange,
-    showAdvancedFilters,
-    setShowAdvancedFilters,
+    deferredFilteredTreasure,
+    visibleItems,
     hasFilters,
-    handleClearFilters: urlSync.handleClearFilters,
-    searchInputRef,
-    sortedTreasure: filteredTreasure,
+    activeFilterCount,
+    filterOptions,
+    filterContentProps,
+    urlSync,
+    savedFilters,
     analyticsHook,
-    colors,
-    shapes,
-    qualities,
-    colecciones,
-    categorias,
+    pagination,
+    comparison,
+    comparisonIds,
+    favoriteIds,
+    toggleFavorite,
+    isFavorite,
+    favoritesCount,
+    recentlyViewedItems,
+    favoriteMappedItems,
+    clearRecent,
+    stats,
     priceMinMax,
     caratMinMax,
-    isLight,
-    theme,
-  };
+    certDialogOpen,
+    setCertDialogOpen,
+    selectedItem,
+    setSelectedItem,
+    handleCertClick,
+    handleItemClick,
+    handleSaveCertifications,
+    renderCard,
+    viewMode,
+    setViewMode,
+    showFavoritesOnly,
+    setShowFavoritesOnly,
+    filterSheetOpen,
+    setFilterSheetOpen,
+    handleScrollDirectionChange,
+    setSearch,
+    setColorFilter,
+    setQualityFilter,
+    setTypeFilter,
+    setStatusFilter,
+    setShapeFilter,
+    setPriceRange,
+    setCaratRange,
+    setSortBy,
+    setCantidadFilter,
+    setCategoriaFilter,
+    setHeroCategoryFilter,
+    setColeccionFilter,
+    canAddToComparison,
+    applySavedPreset,
+  } = c;
+
+  const { colors, shapes, qualities, categorias } = filterOptions;
+  const { statusFilter, sortBy, typeFilter, categoriaFilter, colorFilter, shapeFilter, qualityFilter, priceRange } =
+    filters;
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 1, sm: 2, md: 3, lg: 2 } }}>
-      {/* Mobile Layout */}
       {isMobile ? (
         <>
           <MobileSearchBar
-            search={search}
+            search={filters.search}
             setSearch={setSearch}
             isLight={isLight}
             filterSheetOpen={filterSheetOpen}
@@ -412,7 +163,7 @@ export default function TreasureBrowser({
             showFavoritesOnly={showFavoritesOnly}
             setShowFavoritesOnly={setShowFavoritesOnly}
             favoritesCount={favoritesCount}
-            isProviderMode={isProviderMode}
+            isProviderMode={providerMode}
             filteredCount={filteredTreasure.length}
             recentlyViewedItems={recentlyViewedItems}
             onRecentItemClick={handleItemClick}
@@ -420,7 +171,6 @@ export default function TreasureBrowser({
             favoriteItems={favoriteMappedItems}
           />
 
-          {/* iOS Filter Sheet */}
           <IOSFilterSheet
             open={filterSheetOpen}
             onClose={() => setFilterSheetOpen(false)}
@@ -433,7 +183,7 @@ export default function TreasureBrowser({
             qualityFilter={qualityFilter}
             priceRange={priceRange}
             caratRange={filters.caratRange}
-            cantidadFilter={cantidadFilter}
+            cantidadFilter={filters.cantidadFilter}
             setStatusFilter={setStatusFilter}
             setSortBy={setSortBy}
             setTypeFilter={setTypeFilter}
@@ -454,61 +204,33 @@ export default function TreasureBrowser({
             onClearFilters={urlSync.handleClearFilters}
             resultCount={filteredTreasure.length}
             savedPresets={savedFilters.presets}
-            onApplyPreset={(preset) => {
-              setSearch(preset.filters.search);
-              setColorFilter(preset.filters.colorFilter);
-              setQualityFilter(preset.filters.qualityFilter);
-              setTypeFilter(preset.filters.typeFilter as TypeFilter);
-              setStatusFilter(preset.filters.statusFilter as StatusFilter);
-              setShapeFilter(preset.filters.shapeFilter);
-              setPriceRange(preset.filters.priceRange);
-              if (preset.filters.caratRange) setCaratRange(preset.filters.caratRange);
-              setSortBy(preset.filters.sortBy as SortOption);
-              if (preset.filters.cantidadFilter) setCantidadFilter(preset.filters.cantidadFilter);
-              savedFilters.incrementUsage(preset.id);
-            }}
+            onApplyPreset={applySavedPreset}
           />
         </>
       ) : (
-        <>
-          {/* Desktop: Full filters */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 1.5,
-              mb: 1.5,
-              borderRadius: 2,
-              bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
-              border: '1px solid',
-              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-            }}
-          >
-            <FilterContent {...filterContentProps} />
-            <DesktopFilterToolbar
-              shouldShowPrices={shouldShowPrices}
-              stats={stats}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              savedFilters={savedFilters}
-              hasFilters={hasFilters}
-              filters={filters}
-              setSearch={setSearch}
-              setColorFilter={setColorFilter}
-              setQualityFilter={setQualityFilter}
-              setTypeFilter={setTypeFilter}
-              setStatusFilter={setStatusFilter}
-              setShapeFilter={setShapeFilter}
-              setPriceRange={setPriceRange}
-              setSortBy={setSortBy}
-              setCantidadFilter={setCantidadFilter}
-              trackViewModeChange={analyticsHook.trackViewModeChange}
-              isLight={isLight}
-            />
-          </Paper>
-        </>
+        <TreasureDesktopFilterPanel
+          isLight={isLight}
+          filterContentProps={filterContentProps}
+          shouldShowPrices={shouldShowPrices}
+          stats={stats}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          savedFilters={savedFilters}
+          hasFilters={hasFilters}
+          filters={filters}
+          setSearch={setSearch}
+          setColorFilter={setColorFilter}
+          setQualityFilter={setQualityFilter}
+          setTypeFilter={setTypeFilter}
+          setStatusFilter={setStatusFilter}
+          setShapeFilter={setShapeFilter}
+          setPriceRange={setPriceRange}
+          setSortBy={setSortBy}
+          setCantidadFilter={setCantidadFilter}
+          trackViewModeChange={analyticsHook.trackViewModeChange}
+        />
       )}
 
-      {/* Active Filter Chips - Desktop only */}
       {!isMobile && hasFilters && (
         <Box sx={{ mb: 2 }}>
           <ActiveFilterChips
@@ -531,52 +253,24 @@ export default function TreasureBrowser({
         </Box>
       )}
 
-      {/* Results info - Desktop only */}
       {!isMobile && (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-              {filteredTreasure.length === allTreasure.length ? (
-                <>
-                  <strong style={{ color: theme.palette.text.primary }}>{allTreasure.length}</strong> {t.treasure.totalEmeralds}
-                </>
-              ) : (
-                <>
-                  {t.treasure.showingOf} <strong style={{ color: theme.palette.text.primary }}>{visibleItems.length}</strong> de {filteredTreasure.length} {t.treasure.emeralds}
-                </>
-              )}
-            </Typography>
-            {/* Favorites toggle (hidden in provider mode) */}
-            {!isProviderMode && (
-              <Chip
-                icon={<Heart size={14} fill={showFavoritesOnly ? accentColors.error.light : 'none'} color={showFavoritesOnly ? accentColors.error.light : '#6b7280'} />}
-                label={`${t.treasure.favorites} (${favoritesCount})`}
-                size="small"
-                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                sx={{
-                  cursor: 'pointer',
-                  bgcolor: showFavoritesOnly ? alpha(accentColors.error.light, 0.1) : 'transparent',
-                  color: showFavoritesOnly ? accentColors.error.light : theme.palette.text.secondary,
-                  border: '1px solid',
-                  borderColor: showFavoritesOnly ? accentColors.error.light : isLight ? surfacesLight.border.light : surfacesDark.border.default,
-                  fontWeight: showFavoritesOnly ? fontWeights.semibold : fontWeights.normal,
-                  '&:hover': {
-                    bgcolor: alpha(accentColors.error.light, 0.1),
-                  },
-                }}
-              />
-            )}
-          </Box>
-          {/* Total value (hidden in provider mode or when prices not shown) */}
-          {!isProviderMode && shouldShowPrices && (
-            <Typography variant="body2" sx={{ color: emeraldCore.dark, fontWeight: fontWeights.semibold }}>
-              {formatFullCurrency(filteredStats.totalValue)} total
-            </Typography>
-          )}
-        </Box>
+        <TreasureDesktopResultsSummary
+          theme={theme}
+          isLight={isLight}
+          t={t}
+          filteredTreasureLength={filteredTreasure.length}
+          allTreasureLength={allTreasure.length}
+          visibleItemsLength={visibleItems.length}
+          isProviderMode={providerMode}
+          shouldShowPrices={shouldShowPrices}
+          formatFullCurrency={formatFullCurrency}
+          filteredStatsTotalValue={filteredStats.totalValue}
+          showFavoritesOnly={showFavoritesOnly}
+          favoritesCount={favoritesCount}
+          onToggleFavoritesOnly={() => setShowFavoritesOnly(!showFavoritesOnly)}
+        />
       )}
 
-      {/* Recently Viewed Carousel - Desktop only (mobile uses merged quick-access in search bar) */}
       {!isMobile && recentlyViewedItems.length > 0 && (
         <Box
           sx={{
@@ -593,7 +287,6 @@ export default function TreasureBrowser({
         </Box>
       )}
 
-      {/* Treasure Grid/List */}
       {viewMode === 'grid' ? (
         <VirtualGrid
           items={showFavoritesOnly ? visibleItems : deferredFilteredTreasure}
@@ -621,7 +314,6 @@ export default function TreasureBrowser({
         </Box>
       )}
 
-      {/* Auto-load sentinel - List view only */}
       {viewMode === 'list' && pagination.hasMore && !showFavoritesOnly && (
         <ListLoadMoreSentinel
           onIntersect={() => {
@@ -631,7 +323,6 @@ export default function TreasureBrowser({
         />
       )}
 
-      {/* Error State - only when no cached data */}
       {sheetsError && allTreasure.length === 0 && (
         <TreasureErrorState
           isLight={isLight}
@@ -641,7 +332,6 @@ export default function TreasureBrowser({
         />
       )}
 
-      {/* Empty State */}
       {!sheetsError && (visibleItems.length === 0 || (showFavoritesOnly && favoritesCount === 0)) && (
         <TreasureEmptyState
           isLight={isLight}
@@ -655,7 +345,6 @@ export default function TreasureBrowser({
         />
       )}
 
-      {/* Certification Upload Dialog */}
       {selectedItem && (
         <CertificationUpload
           open={certDialogOpen}
@@ -668,8 +357,7 @@ export default function TreasureBrowser({
         />
       )}
 
-      {/* Comparison Bar (hidden in provider mode) */}
-      {!isProviderMode && (
+      {!providerMode && (
         <ComparisonBar
           selectedItems={comparison.selectedItems}
           onRemove={(itemId) => comparison.removeFromComparison(itemId)}
@@ -678,8 +366,7 @@ export default function TreasureBrowser({
         />
       )}
 
-      {/* Comparison Modal (hidden in provider mode) */}
-      {!isProviderMode && (
+      {!providerMode && (
         <ComparisonModal
           open={comparison.showComparisonModal}
           onClose={comparison.closeComparisonModal}

@@ -11,6 +11,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { TreasureItem } from '../types';
 import { createLogger } from '../utils/logger';
 import { STORAGE_KEYS } from '../constants/storage-keys';
+import { fetchWithRetry } from '../utils/fetchWithRetry';
 
 const log = createLogger('NewestProducts');
 
@@ -97,9 +98,16 @@ function saveCache(products: NewestProduct[]): void {
 /**
  * Fetch newest products from API
  */
-async function fetchNewestProducts(limit: number): Promise<NewestProduct[]> {
+async function fetchNewestProducts(
+  limit: number,
+  notifyOnFailure = false
+): Promise<NewestProduct[]> {
   try {
-    const response = await fetch(`/api/get-newest-products?limit=${limit}`);
+    const response = await fetchWithRetry(`/api/get-newest-products?limit=${limit}`, undefined, {
+      retries: 3,
+      notifyOnFailure,
+      failureMessage: 'No se pudieron cargar las novedades.',
+    });
     if (!response.ok) {
       log.debug('Failed to fetch newest products');
       return [];
@@ -149,7 +157,7 @@ export function useNewestProducts(
 
         // Stale or expired: refresh in background (don't block UI)
         log.debug('Cache is stale, refreshing in background...');
-        fetchNewestProducts(limit).then((freshProducts) => {
+        fetchNewestProducts(limit, false).then((freshProducts) => {
           if (freshProducts.length > 0) {
             log.debug(`Background refresh: ${freshProducts.length} products`);
             saveCache(freshProducts);
@@ -162,7 +170,7 @@ export function useNewestProducts(
       // No cache - must fetch (show loading state)
       setIsLoading(true);
       log.debug('No cache, fetching newest products from API...');
-      const products = await fetchNewestProducts(limit);
+      const products = await fetchNewestProducts(limit, true);
 
       if (products.length > 0) {
         log.debug(`Fetched ${products.length} newest products`);
