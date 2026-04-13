@@ -24,3 +24,6 @@ export * from './sheets-helpers.js';
 
 // API Handler Wrapper
 export * from './with-api-handler.js';
+
+// Convex client (conditional)
+export { convexClient, isConvexEnabled } from './convex-client.js';
