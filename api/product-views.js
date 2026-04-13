@@ -19,6 +19,8 @@ import {
   ensureSheet,
   withApiHandler,
 } from './_lib/index.js';
+import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
+import { api } from '../convex/_generated/api.js';
 
 const SHEET_NAME = SHEETS.PRODUCT_VIEWS;
 const HEADERS = [
@@ -596,6 +598,25 @@ export default withApiHandler(async (req, res, { sheets }) => {
 
   // POST - Track view
   if (req.method === 'POST' && action === 'track') {
+    if (isConvexEnabled && convexClient) {
+      const { itemId, productName, sessionId, referrer, userName, userEmail, userRole, country, inviterName } = req.body;
+      if (!itemId) return sendError(res, 400, 'itemId is required');
+      const userAgent = req.headers['user-agent'] || '';
+      await convexClient.mutation(api.productViews.track, {
+        itemId: String(itemId),
+        productName: productName || undefined,
+        sessionId: sessionId || undefined,
+        referrer: referrer || undefined,
+        deviceType: detectDevice(userAgent),
+        browser: detectBrowser(userAgent),
+        country: country || undefined,
+        userName: userName || undefined,
+        userEmail: userEmail || undefined,
+        userRole: userRole || undefined,
+        inviterName: inviterName || undefined,
+      });
+      return res.status(200).json({ success: true, tracked: true, itemId, timestamp: new Date().toISOString() });
+    }
     const result = await trackView(sheets, req.body, req.headers);
     return res.status(200).json(result);
   }
