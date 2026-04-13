@@ -15,6 +15,7 @@ import { useTRM } from '../hooks/useTRM';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import { formatCurrency as _fmtCurrency, formatFullCurrency as _fmtFullCurrency } from '../utils/formatting';
+import { useConvexQuery, convexApi, convexReady } from '../lib/convex-safe';
 
 type CurrencyMode = 'COP' | 'USD';
 export type UsdMultiplier = number; // 1.0–4.0 in 0.1 steps
@@ -153,6 +154,59 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
       // Ignore
     }
   }, [isGuest, isAuthenticated]);
+
+  // ─── Live sync: Convex subscription for guest multiplier ─────────
+  // When the asesor changes guestMultiplier via updateMultiplier mutation,
+  // this subscription updates the guest's CurrencyContext in <2s without page reload.
+  const guestShortCode = isGuest
+    ? (() => {
+        try {
+          return sessionStorage.getItem(INVITATION_STORAGE_KEYS.TOKEN);
+        } catch {
+          return null;
+        }
+      })()
+    : null;
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const liveInvitation = convexReady && useConvexQuery
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    ? useConvexQuery(convexApi.invitations.getByShortCode, guestShortCode ? { shortCode: guestShortCode } : 'skip')
+    : undefined;
+
+  useEffect(() => {
+    if (!isGuest || !liveInvitation) return;
+    const liveDoc = liveInvitation as Record<string, unknown>;
+
+    // Sync multiplier
+    const rawMult = liveDoc.guestMultiplier;
+    if (rawMult != null) {
+      const liveMult = Number(rawMult);
+      if (Number.isFinite(liveMult)) {
+        const normalized = normalizeMultiplier(liveMult);
+        if (normalized !== multiplier) {
+          setMultiplierState(normalized);
+          try {
+            sessionStorage.setItem(INVITATION_STORAGE_KEYS.GUEST_MULTIPLIER, String(normalized));
+          } catch { /* ignore */ }
+        }
+      }
+    }
+
+    // Sync currency mode
+    const liveCurrency = liveDoc.guestCurrencyMode as string | null | undefined;
+    if (liveCurrency === 'USD' && currency !== 'USD') {
+      setCurrency('USD');
+      try {
+        sessionStorage.setItem(INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE, 'USD');
+      } catch { /* ignore */ }
+    } else if (liveCurrency === 'COP' && currency !== 'COP') {
+      setCurrency('COP');
+      try {
+        sessionStorage.setItem(INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE, 'COP');
+      } catch { /* ignore */ }
+    }
+  }, [isGuest, liveInvitation, multiplier, currency]);
 
   // Reset to COP if user changes and is not authorized (guests keep asesor-assigned currency)
   useEffect(() => {
