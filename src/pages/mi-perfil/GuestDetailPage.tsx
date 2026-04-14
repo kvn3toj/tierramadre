@@ -10,13 +10,39 @@
  * Route: /mi-perfil/invitado/:guestName
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Box, Typography, Skeleton, alpha } from '@mui/material';
-import { Eye, Clock, ArrowLeft, Package, Users, Calendar } from 'lucide-react';
+import {
+  Box,
+  Typography,
+  Skeleton,
+  alpha,
+  Popover,
+  Slider,
+  Button,
+  Chip,
+  IconButton,
+} from '@mui/material';
+import {
+  Eye,
+  Clock,
+  ArrowLeft,
+  Package,
+  Users,
+  Calendar,
+  Phone,
+  Mail,
+  Edit3,
+  CheckCircle,
+  CircleDashed,
+  XCircle,
+} from 'lucide-react';
+import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { useCurrentAsesor } from '../../hooks/useCurrentAsesor';
 import { useGuestDetail } from '../../hooks/useGuestDetail';
+import { useMyInvitations } from '../../hooks/useMyInvitations';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useNotification } from '../../contexts/NotificationContext';
 import Breadcrumbs from '../../components/shared/Breadcrumbs';
 import {
   emeraldCore,
@@ -46,17 +72,59 @@ function formatDateTime(iso: string): string {
   });
 }
 
+const STATUS_META = {
+  active: { label: 'Activa', color: '#34c759', icon: CheckCircle },
+  pending: { label: 'Pendiente', color: '#ff9500', icon: CircleDashed },
+  expired: { label: 'Expirada', color: '#ff3b30', icon: XCircle },
+} as const;
+
 export default function GuestDetailPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { notify } = useNotification();
   const { guestName: guestNameRaw } = useParams<{ guestName: string }>();
   const guestName = useMemo(
     () => (guestNameRaw ? decodeURIComponent(guestNameRaw) : null),
     [guestNameRaw],
   );
 
+  const { user: googleUser } = useGoogleAuth();
   const { asesor, isLoading: asesorLoading } = useCurrentAsesor();
   const { views, metrics, isLoading } = useGuestDetail(asesor?.name, guestName);
+  const { invitations, mutatingCodes, updateMultiplier } = useMyInvitations(googleUser?.email);
+
+  // Find invitations for this guest (most-recent first); prefer active, fall back to any.
+  const guestInvitations = useMemo(() => {
+    if (!guestName) return [];
+    return invitations
+      .filter((inv) => (inv.guestName ?? '').trim() === guestName.trim())
+      .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
+  }, [invitations, guestName]);
+
+  const primaryInvitation = useMemo(() => {
+    if (guestInvitations.length === 0) return null;
+    return (
+      guestInvitations.find((inv) => inv.status === 'active' || inv.status === 'pending') ||
+      guestInvitations[0]
+    );
+  }, [guestInvitations]);
+
+  // Multiplier editor state
+  const [editAnchor, setEditAnchor] = useState<HTMLElement | null>(null);
+  const [editValue, setEditValue] = useState(1);
+
+  const openEditor = (event: React.MouseEvent<HTMLElement>) => {
+    if (!primaryInvitation) return;
+    setEditAnchor(event.currentTarget);
+    setEditValue(primaryInvitation.guestMultiplier ?? 1);
+  };
+
+  const saveMultiplier = async () => {
+    if (!primaryInvitation) return;
+    const ok = await updateMultiplier(primaryInvitation.shortCode, editValue);
+    if (!ok) notify('No se pudo actualizar el multiplicador', 'error');
+    setEditAnchor(null);
+  };
 
   if (asesorLoading || isLoading) {
     return (
@@ -137,6 +205,227 @@ export default function GuestDetailPage() {
           Invitado por {asesor.name}
         </Typography>
       </Box>
+
+      {/* Invitation data + multiplier editor */}
+      {primaryInvitation && (() => {
+        const statusConf = STATUS_META[primaryInvitation.status] || STATUS_META.pending;
+        const StatusIcon = statusConf.icon;
+        const isEditable =
+          primaryInvitation.status === 'active' || primaryInvitation.status === 'pending';
+        const isMutating = mutatingCodes.has(primaryInvitation.shortCode);
+
+        return (
+          <Box
+            sx={{
+              mb: spacing.md,
+              p: spacing.sm,
+              borderRadius: radius.lg,
+              bgcolor: 'var(--surface-primary)',
+              border: `1px solid ${alpha(emeraldCore.primary, 0.08)}`,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography
+                variant="overline"
+                sx={{
+                  fontSize: iosTypographyScale.caption2,
+                  fontWeight: 600,
+                  color: 'var(--text-secondary)',
+                  letterSpacing: '0.08em',
+                }}
+              >
+                DATOS DEL INVITADO
+              </Typography>
+              <Chip
+                icon={<StatusIcon size={11} style={{ color: statusConf.color }} />}
+                label={statusConf.label}
+                size="small"
+                sx={{
+                  height: 22,
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  bgcolor: alpha(statusConf.color, 0.1),
+                  color: statusConf.color,
+                  border: `1px solid ${alpha(statusConf.color, 0.25)}`,
+                  '& .MuiChip-icon': { ml: 0.5, mr: -0.25 },
+                }}
+              />
+            </Box>
+
+            {/* Contact */}
+            {primaryInvitation.guestContact && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}>
+                {primaryInvitation.contactType === 'email' ? (
+                  <Mail size={13} style={{ color: 'var(--text-tertiary)' }} />
+                ) : (
+                  <Phone size={13} style={{ color: 'var(--text-tertiary)' }} />
+                )}
+                <Typography
+                  variant="body2"
+                  sx={{ fontSize: iosTypographyScale.footnote, color: 'var(--text-primary)' }}
+                >
+                  {primaryInvitation.guestContact}
+                </Typography>
+              </Box>
+            )}
+
+            {/* Created + activated */}
+            <Box sx={{ display: 'flex', gap: spacing.sm, mb: 1 }}>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ fontSize: iosTypographyScale.caption2, color: 'var(--text-tertiary)' }}
+                >
+                  Invitación enviada
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ fontSize: iosTypographyScale.footnote, fontWeight: 500 }}
+                >
+                  {formatDate(primaryInvitation.createdAt)}
+                </Typography>
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ fontSize: iosTypographyScale.caption2, color: 'var(--text-tertiary)' }}
+                >
+                  Cuenta activada
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontSize: iosTypographyScale.footnote,
+                    fontWeight: 500,
+                    color: primaryInvitation.activatedAt ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  }}
+                >
+                  {primaryInvitation.activatedAt ? formatDate(primaryInvitation.activatedAt) : 'Aún no'}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Multiplier + currency */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: spacing.sm,
+                pt: 1,
+                borderTop: `1px solid ${alpha(emeraldCore.primary, 0.08)}`,
+              }}
+            >
+              <Box>
+                <Typography
+                  variant="caption"
+                  sx={{ fontSize: iosTypographyScale.caption2, color: 'var(--text-tertiary)' }}
+                >
+                  Multiplicador · {primaryInvitation.guestCurrencyMode || 'COP'}
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontFamily: fontFamilies.mono,
+                    fontWeight: 700,
+                    fontSize: '1.1rem',
+                    color: emeraldCore.primary,
+                    lineHeight: 1,
+                  }}
+                >
+                  ×{(primaryInvitation.guestMultiplier ?? 1).toFixed(1)}
+                </Typography>
+              </Box>
+              {isEditable && (
+                <IconButton
+                  size="small"
+                  disabled={isMutating}
+                  onClick={openEditor}
+                  sx={{
+                    border: `1px solid ${alpha(emeraldCore.primary, 0.25)}`,
+                    color: emeraldCore.primary,
+                    bgcolor: alpha(emeraldCore.primary, 0.06),
+                    borderRadius: radius.md,
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: iosTypographyScale.footnote,
+                    fontWeight: 600,
+                    gap: 0.5,
+                    '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.12) },
+                  }}
+                >
+                  <Edit3 size={13} />
+                  <Typography component="span" sx={{ fontSize: iosTypographyScale.footnote, fontWeight: 600 }}>
+                    Editar
+                  </Typography>
+                </IconButton>
+              )}
+            </Box>
+
+            {guestInvitations.length > 1 && (
+              <Typography
+                variant="caption"
+                sx={{
+                  display: 'block',
+                  mt: 1,
+                  fontSize: iosTypographyScale.caption2,
+                  color: 'var(--text-tertiary)',
+                }}
+              >
+                {guestInvitations.length} invitaciones asociadas a este invitado — mostrando la más reciente
+                activa.
+              </Typography>
+            )}
+          </Box>
+        );
+      })()}
+
+      {/* Multiplier editor popover */}
+      <Popover
+        open={Boolean(editAnchor)}
+        anchorEl={editAnchor}
+        onClose={() => setEditAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{ paper: { sx: { p: 2, borderRadius: radius.lg, width: 240 } } }}
+      >
+        <Typography variant="caption" sx={{ fontWeight: 600, mb: 1, display: 'block' }}>
+          Multiplicador: x{editValue.toFixed(1)}
+        </Typography>
+        <Slider
+          value={editValue}
+          onChange={(_, v) => setEditValue(v as number)}
+          min={1}
+          max={4}
+          step={0.1}
+          valueLabelDisplay="auto"
+          valueLabelFormat={(v) => `x${v}`}
+          sx={{ color: emeraldCore.primary, '& .MuiSlider-thumb': { width: 16, height: 16 } }}
+        />
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1 }}>
+          <Button
+            size="small"
+            onClick={() => setEditAnchor(null)}
+            sx={{ textTransform: 'none', fontSize: '0.75rem' }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            size="small"
+            variant="contained"
+            disabled={primaryInvitation ? mutatingCodes.has(primaryInvitation.shortCode) : false}
+            onClick={saveMultiplier}
+            sx={{
+              textTransform: 'none',
+              fontSize: '0.75rem',
+              bgcolor: emeraldCore.primary,
+              '&:hover': { bgcolor: emeraldCore.dark },
+            }}
+          >
+            Guardar
+          </Button>
+        </Box>
+      </Popover>
 
       {/* Empty state */}
       {metrics.totalViews === 0 ? (
