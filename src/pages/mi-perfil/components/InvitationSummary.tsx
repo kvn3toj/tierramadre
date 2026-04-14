@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Chip, alpha, IconButton,
   Popover, Slider, Button, Dialog, DialogTitle,
@@ -40,6 +41,7 @@ export function InvitationSummary({
   invitations, metrics, isLoading,
   mutatingCodes, onUpdateMultiplier, onExpire,
 }: InvitationSummaryProps) {
+  const navigate = useNavigate();
   const { t } = useLanguage();
   const { notify } = useNotification();
   const [editAnchor, setEditAnchor] = useState<HTMLElement | null>(null);
@@ -162,16 +164,41 @@ export function InvitationSummary({
               </Box>
 
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontSize: iosTypographyScale.footnote, fontWeight: 500,
-                    color: 'var(--text-primary)',
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}
-                >
-                  {inv.guestName || inv.guestContact || inv.shortCode}
-                </Typography>
+                {inv.guestName ? (
+                  <Typography
+                    component="span"
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => navigate(`/mi-perfil/invitado/${encodeURIComponent(inv.guestName as string)}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        navigate(`/mi-perfil/invitado/${encodeURIComponent(inv.guestName as string)}`);
+                      }
+                    }}
+                    sx={{
+                      display: 'block',
+                      fontSize: iosTypographyScale.footnote,
+                      fontWeight: 600,
+                      color: emeraldCore.primary,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      '&:hover': { textDecoration: 'underline' },
+                    }}
+                  >
+                    {inv.guestName}
+                  </Typography>
+                ) : (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: iosTypographyScale.footnote, fontWeight: 500,
+                      color: 'var(--text-primary)',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {inv.guestContact || inv.shortCode}
+                  </Typography>
+                )}
               </Box>
 
               {/* Multiplier chip */}
