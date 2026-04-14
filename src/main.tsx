@@ -1,6 +1,7 @@
 import React, { ReactNode, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import App from './App';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -11,6 +12,18 @@ import { CurrencyProvider } from './contexts/CurrencyContext';
 import { checkAndInvalidateCaches } from './utils/cacheInvalidation';
 import { STORAGE_KEYS } from './constants/storage-keys';
 import './design-system/tokens/css-variables.css';
+
+// Initialize Convex client once at module load.
+// Must wrap everything that depends on useQuery (e.g. CurrencyProvider's live-sync).
+const convexUrl = import.meta.env.VITE_CONVEX_URL as string | undefined;
+const convexClient = convexUrl ? new ConvexReactClient(convexUrl) : null;
+
+function ConvexWrapper({ children }: { children: ReactNode }) {
+  if (convexClient) {
+    return <ConvexProvider client={convexClient}>{children}</ConvexProvider>;
+  }
+  return <>{children}</>;
+}
 
 // Invalidate transient caches on new deploy (before any data fetching)
 checkAndInvalidateCaches();
@@ -88,19 +101,21 @@ function waitForVersionReady(): Promise<void> {
 waitForVersionReady().then(() => {
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-      <LanguageProvider>
-        <ThemeProvider>
-          <GoogleWrapper>
-            <AuthProvider>
-                <PriceShareProvider>
-                  <CurrencyProvider>
-                    <App />
-                  </CurrencyProvider>
-                </PriceShareProvider>
-              </AuthProvider>
-          </GoogleWrapper>
-        </ThemeProvider>
-      </LanguageProvider>
+      <ConvexWrapper>
+        <LanguageProvider>
+          <ThemeProvider>
+            <GoogleWrapper>
+              <AuthProvider>
+                  <PriceShareProvider>
+                    <CurrencyProvider>
+                      <App />
+                    </CurrencyProvider>
+                  </PriceShareProvider>
+                </AuthProvider>
+            </GoogleWrapper>
+          </ThemeProvider>
+        </LanguageProvider>
+      </ConvexWrapper>
     </React.StrictMode>
   );
 });
