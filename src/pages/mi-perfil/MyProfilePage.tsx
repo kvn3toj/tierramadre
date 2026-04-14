@@ -54,40 +54,45 @@ export default function MyProfilePage() {
   }
 
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', p: spacing.md, pb: 12 }}>
-      <Breadcrumbs
-        items={[
-          { label: 'Inicio', path: '/home' },
-          { label: 'Mi Perfil' },
-        ]}
-      />
+    <Box sx={{ maxWidth: 600, mx: 'auto', px: spacing.md, pt: 1.5, pb: 12 }}>
+      <Box sx={{ mb: 1.5 }}>
+        <Breadcrumbs
+          items={[
+            { label: 'Inicio', path: '/home' },
+            { label: 'Mi Perfil' },
+          ]}
+        />
+      </Box>
 
-      <MyProfileHeader
-        asesor={asesor}
-        googlePicture={googleUser?.picture}
-      />
+      <MyProfileHeader asesor={asesor} googlePicture={googleUser?.picture} />
 
-      <PortfolioStats
-        asesorName={asesor.name}
-        treasure={treasure}
-      />
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2.25,
+          mt: 2,
+        }}
+      >
+        <PortfolioStats asesorName={asesor.name} treasure={treasure} />
 
-      <GuestActivityFeed
-        guestViews={guestViews}
-        isLoading={activityLoading}
-        onInvite={() => navigate('/home')}
-      />
+        <GuestActivityFeed
+          guestViews={guestViews}
+          isLoading={activityLoading}
+          onInvite={() => navigate('/home')}
+        />
 
-      <TopGuestProducts topProducts={topProducts} />
+        <TopGuestProducts topProducts={topProducts} />
 
-      <InvitationSummary
-        invitations={invitations}
-        metrics={metrics}
-        isLoading={invitationsLoading}
-        mutatingCodes={mutatingCodes}
-        onUpdateMultiplier={updateMultiplier}
-        onExpire={expireInvitation}
-      />
+        <InvitationSummary
+          invitations={invitations}
+          metrics={metrics}
+          isLoading={invitationsLoading}
+          mutatingCodes={mutatingCodes}
+          onUpdateMultiplier={updateMultiplier}
+          onExpire={expireInvitation}
+        />
+      </Box>
     </Box>
   );
 }

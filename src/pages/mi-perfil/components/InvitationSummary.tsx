@@ -15,6 +15,7 @@ import { Link2, CheckCircle, Clock, XCircle, Send, Ban } from 'lucide-react';
 import { emeraldCore, accentColors, iosTypographyScale, primitiveSpacing as spacing, radius, fontFamilies } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { SectionHeading } from './SectionHeading';
 import type { Invitation } from '../../../hooks/useMyInvitations';
 
 interface InvitationSummaryProps {
@@ -81,21 +82,8 @@ export function InvitationSummary({
   ];
 
   return (
-    <Box sx={{ mb: spacing.md }}>
-      <Typography
-        variant="overline"
-        sx={{
-          fontSize: iosTypographyScale.caption2,
-          fontWeight: 600,
-          color: 'var(--text-secondary)',
-          letterSpacing: '0.08em',
-          mb: 1,
-          display: 'block',
-          px: spacing.xs,
-        }}
-      >
-        {t.profile.invitations.toUpperCase()}
-      </Typography>
+    <Box>
+      <SectionHeading>{t.profile.invitations}</SectionHeading>
 
       {/* Metric Cards */}
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: spacing.xs, mb: spacing.sm }}>

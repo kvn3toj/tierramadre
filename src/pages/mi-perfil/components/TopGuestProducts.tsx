@@ -10,6 +10,7 @@ import { Box, Typography, alpha } from '@mui/material';
 import { TrendingUp } from 'lucide-react';
 import { emeraldCore, iosTypographyScale, primitiveSpacing as spacing, radius, cssTransition, fontFamilies } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { SectionHeading } from './SectionHeading';
 
 interface TopProduct {
   itemId: number;
@@ -30,21 +31,8 @@ export function TopGuestProducts({ topProducts }: TopGuestProductsProps) {
   const maxViews = topProducts[0]?.viewCount || 1;
 
   return (
-    <Box sx={{ mb: spacing.md }}>
-      <Typography
-        variant="overline"
-        sx={{
-          fontSize: iosTypographyScale.caption2,
-          fontWeight: 600,
-          color: 'var(--text-secondary)',
-          letterSpacing: '0.08em',
-          mb: 1,
-          display: 'block',
-          px: spacing.xs,
-        }}
-      >
-        {t.profile.topGuestProducts.toUpperCase()}
-      </Typography>
+    <Box>
+      <SectionHeading>{t.profile.topGuestProducts}</SectionHeading>
 
       <Box sx={{ display: 'grid', gap: spacing.xs }}>
         {topProducts.map((product, i) => {

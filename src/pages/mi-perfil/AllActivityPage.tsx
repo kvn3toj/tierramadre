@@ -8,11 +8,12 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Skeleton, alpha } from '@mui/material';
-import { Eye, Clock, ArrowLeft } from 'lucide-react';
+import { Eye, Clock } from 'lucide-react';
 import { useCurrentAsesor } from '../../hooks/useCurrentAsesor';
 import { useGuestActivity } from '../../hooks/useGuestActivity';
 import { useLanguage } from '../../contexts/LanguageContext';
 import Breadcrumbs from '../../components/shared/Breadcrumbs';
+import { SectionHeading } from './components/SectionHeading';
 import {
   emeraldCore,
   accentColors,
@@ -20,6 +21,7 @@ import {
   primitiveSpacing as spacing,
   radius,
   cssTransition,
+  fontFamilies,
 } from '../../design-system';
 
 function formatDateTime(iso: string): string {
@@ -75,42 +77,32 @@ export default function AllActivityPage() {
   }
 
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', p: spacing.md, pb: 12 }}>
-      <Breadcrumbs
-        items={[
-          { label: 'Inicio', path: '/home' },
-          { label: 'Mi Perfil', path: '/mi-perfil' },
-          { label: 'Actividad' },
-        ]}
-      />
-
-      <Box
-        role="button"
-        tabIndex={0}
-        onClick={() => navigate('/mi-perfil')}
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 0.5,
-          mb: spacing.sm,
-          cursor: 'pointer',
-          color: 'var(--text-secondary)',
-          fontSize: iosTypographyScale.footnote,
-          '&:hover': { color: emeraldCore.primary },
-        }}
-      >
-        <ArrowLeft size={14} /> Mi Perfil
+    <Box sx={{ maxWidth: 600, mx: 'auto', px: spacing.md, pt: 1.5, pb: 12 }}>
+      <Box sx={{ mb: 1.5 }}>
+        <Breadcrumbs
+          items={[
+            { label: 'Inicio', path: '/home' },
+            { label: 'Mi Perfil', path: '/mi-perfil' },
+            { label: 'Actividad' },
+          ]}
+        />
       </Box>
 
-      <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-        Actividad de invitados
-      </Typography>
-      <Typography
-        variant="body2"
-        sx={{ color: 'var(--text-secondary)', mb: spacing.md, fontSize: iosTypographyScale.footnote }}
-      >
-        {guestViews.length} {guestViews.length === 1 ? 'visita' : 'visitas'} en total
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', mb: 2 }}>
+        <Typography sx={{ fontSize: iosTypographyScale.title3, fontWeight: 700, letterSpacing: '-0.01em' }}>
+          Actividad de invitados
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: '0.7rem',
+            fontFamily: fontFamilies.mono,
+            color: 'var(--text-tertiary)',
+            letterSpacing: '0.04em',
+          }}
+        >
+          {guestViews.length} {guestViews.length === 1 ? 'visita' : 'visitas'}
+        </Typography>
+      </Box>
 
       {guestViews.length === 0 ? (
         <Box
@@ -128,24 +120,12 @@ export default function AllActivityPage() {
           </Typography>
         </Box>
       ) : (
-        <Box sx={{ display: 'grid', gap: spacing.md }}>
+        <Box sx={{ display: 'grid', gap: 2 }}>
           {viewsByDay.map(([day, views]) => (
             <Box key={day}>
-              <Typography
-                variant="overline"
-                sx={{
-                  fontSize: iosTypographyScale.caption2,
-                  fontWeight: 600,
-                  color: 'var(--text-secondary)',
-                  letterSpacing: '0.08em',
-                  mb: 0.5,
-                  display: 'block',
-                  px: spacing.xs,
-                  textTransform: 'capitalize',
-                }}
-              >
-                {day}
-              </Typography>
+              <SectionHeading>
+                <Box component="span" sx={{ textTransform: 'capitalize' }}>{day}</Box>
+              </SectionHeading>
               <Box sx={{ display: 'grid', gap: spacing.xxs }}>
                 {views.map((view) => {
                   const guestLabel = view.userName || 'Invitado';

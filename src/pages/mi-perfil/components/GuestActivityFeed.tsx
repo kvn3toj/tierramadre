@@ -11,6 +11,7 @@ import { Box, Typography, alpha } from '@mui/material';
 import { Eye, UserPlus, Clock, ChevronRight } from 'lucide-react';
 import { emeraldCore, accentColors, iosTypographyScale, primitiveSpacing as spacing, radius, cssTransition } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { SectionHeading } from './SectionHeading';
 import type { GuestView } from '../../../hooks/useGuestActivity';
 
 interface GuestActivityFeedProps {
@@ -35,21 +36,8 @@ export function GuestActivityFeed({ guestViews, isLoading, onInvite }: GuestActi
 
   if (!isLoading && guestViews.length === 0) {
     return (
-      <Box sx={{ mb: spacing.md }}>
-        <Typography
-          variant="overline"
-          sx={{
-            fontSize: iosTypographyScale.caption2,
-            fontWeight: 600,
-            color: 'var(--text-secondary)',
-            letterSpacing: '0.08em',
-            mb: 1,
-            display: 'block',
-            px: spacing.xs,
-          }}
-        >
-          {t.profile.guestActivity.toUpperCase()}
-        </Typography>
+      <Box>
+        <SectionHeading>{t.profile.guestActivity}</SectionHeading>
         <Box
           sx={{
             p: spacing.lg,
@@ -97,21 +85,35 @@ export function GuestActivityFeed({ guestViews, isLoading, onInvite }: GuestActi
   }
 
   return (
-    <Box sx={{ mb: spacing.md }}>
-      <Typography
-        variant="overline"
-        sx={{
-          fontSize: iosTypographyScale.caption2,
-          fontWeight: 600,
-          color: 'var(--text-secondary)',
-          letterSpacing: '0.08em',
-          mb: 1,
-          display: 'block',
-          px: spacing.xs,
-        }}
+    <Box>
+      <SectionHeading
+        action={
+          guestViews.length > 10 ? (
+            <Box
+              component="button"
+              onClick={() => navigate('/mi-perfil/actividad')}
+              sx={{
+                all: 'unset',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.25,
+                color: emeraldCore.primary,
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                letterSpacing: '0.02em',
+                transition: cssTransition.default,
+                '&:hover': { color: emeraldCore.light },
+              }}
+            >
+              Ver todas ({guestViews.length})
+              <ChevronRight size={12} />
+            </Box>
+          ) : undefined
+        }
       >
-        ACTIVIDAD DE INVITADOS
-      </Typography>
+        Actividad de invitados
+      </SectionHeading>
 
       <Box sx={{ display: 'grid', gap: spacing.xxs }}>
         {guestViews.slice(0, 10).map((view) => {
@@ -204,34 +206,6 @@ export function GuestActivityFeed({ guestViews, isLoading, onInvite }: GuestActi
         })}
       </Box>
 
-      {guestViews.length > 10 && (
-        <Box
-          role="button"
-          tabIndex={0}
-          onClick={() => navigate('/mi-perfil/actividad')}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') navigate('/mi-perfil/actividad');
-          }}
-          sx={{
-            mt: spacing.xs,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 0.5,
-            p: spacing.sm,
-            borderRadius: radius.md,
-            cursor: 'pointer',
-            color: emeraldCore.primary,
-            fontSize: iosTypographyScale.footnote,
-            fontWeight: 600,
-            transition: cssTransition.default,
-            '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.08) },
-          }}
-        >
-          Ver todas las actividades ({guestViews.length})
-          <ChevronRight size={14} />
-        </Box>
-      )}
     </Box>
   );
 }

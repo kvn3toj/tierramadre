@@ -135,57 +135,75 @@ export function MyProfileHeader({ asesor, googlePicture }: MyProfileHeaderProps)
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: spacing.md,
-          p: spacing.md,
+          gap: 1.75,
+          px: 1.75,
+          py: 1.75,
           borderRadius: radius.lg,
-          background: `linear-gradient(135deg, ${alpha(config.color, 0.06)} 0%, transparent 100%)`,
-          border: `1px solid ${alpha(config.color, 0.15)}`,
-          mb: spacing.md,
+          background: `linear-gradient(135deg, ${alpha(config.color, 0.08)} 0%, transparent 65%)`,
+          border: `1px solid ${alpha(config.color, 0.14)}`,
+          position: 'relative',
+          overflow: 'hidden',
+          // Decorative corner accent
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: 80,
+            height: 80,
+            background: `radial-gradient(circle at top right, ${alpha(config.color, 0.22)} 0%, transparent 70%)`,
+            pointerEvents: 'none',
+          },
         }}
       >
         <Avatar
           src={photoUrl || undefined}
           alt={asesor.name}
           sx={{
-            width: 64,
-            height: 64,
-            border: `2px solid ${alpha(config.color, 0.3)}`,
-            fontSize: '1.5rem',
+            width: 56,
+            height: 56,
+            border: `2px solid ${alpha(config.color, 0.35)}`,
+            fontSize: '1.3rem',
             fontWeight: 700,
             bgcolor: alpha(config.color, 0.15),
             color: config.color,
+            flexShrink: 0,
+            boxShadow: `0 6px 18px ${alpha(config.color, 0.18)}`,
           }}
         >
           {asesor.name?.charAt(0).toUpperCase()}
         </Avatar>
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+        <Box sx={{ flex: 1, minWidth: 0, position: 'relative' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
             <Typography
               variant="h6"
               sx={{
                 fontSize: iosTypographyScale.title3,
                 fontWeight: 700,
+                letterSpacing: '-0.01em',
                 color: 'var(--text-primary)',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
+                lineHeight: 1.15,
               }}
             >
               {asesor.name}
             </Typography>
             <Chip
-              icon={<Icon size={12} />}
+              icon={<Icon size={11} />}
               label={config.label}
               size="small"
               sx={{
-                height: 22,
-                fontSize: '0.7rem',
+                height: 20,
+                fontSize: '0.65rem',
                 fontWeight: 600,
-                bgcolor: alpha(config.color, 0.12),
+                bgcolor: alpha(config.color, 0.14),
                 color: config.color,
-                border: `1px solid ${alpha(config.color, 0.25)}`,
-                '& .MuiChip-icon': { color: config.color },
+                border: `1px solid ${alpha(config.color, 0.28)}`,
+                '& .MuiChip-icon': { color: config.color, ml: 0.5, mr: -0.25 },
+                '& .MuiChip-label': { px: 0.75 },
                 flexShrink: 0,
               }}
             />
@@ -200,6 +218,7 @@ export function MyProfileHeader({ asesor, googlePicture }: MyProfileHeaderProps)
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
+                lineHeight: 1.3,
               }}
             >
               {asesor.especialidad}
@@ -210,8 +229,11 @@ export function MyProfileHeader({ asesor, googlePicture }: MyProfileHeaderProps)
             <Typography
               variant="caption"
               sx={{
-                fontSize: iosTypographyScale.caption2,
+                fontSize: '0.7rem',
                 color: 'var(--text-tertiary)',
+                display: 'block',
+                mt: 0.25,
+                letterSpacing: '0.01em',
               }}
             >
               {asesor.email}

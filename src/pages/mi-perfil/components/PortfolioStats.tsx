@@ -6,12 +6,13 @@
  */
 
 import { useMemo } from 'react';
-import { Box, Typography, alpha } from '@mui/material';
+import { Box, alpha } from '@mui/material';
 import { Package, Gem, Crown, DollarSign } from 'lucide-react';
 import { StatItem } from '../../../components/ambassador/StatItem';
-import { emeraldCore, goldAccent, accentColors, iosTypographyScale, primitiveSpacing as spacing, radius } from '../../../design-system';
+import { emeraldCore, goldAccent, accentColors, radius } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useCurrencyFormat } from '../../../contexts/CurrencyContext';
+import { SectionHeading } from './SectionHeading';
 import type { TreasureItem } from '../../../types';
 import { getAsesorProducts } from '../../../utils/asesorProductOwnership';
 
@@ -41,27 +42,14 @@ export function PortfolioStats({ asesorName, treasure }: PortfolioStatsProps) {
   }, [treasure, asesorName]);
 
   return (
-    <Box sx={{ mb: spacing.md }}>
-      <Typography
-        variant="overline"
-        sx={{
-          fontSize: iosTypographyScale.caption2,
-          fontWeight: 600,
-          color: 'var(--text-secondary)',
-          letterSpacing: '0.08em',
-          mb: 1,
-          display: 'block',
-          px: spacing.xs,
-        }}
-      >
-        {t.profile.portfolio.toUpperCase()}
-      </Typography>
+    <Box>
+      <SectionHeading>{t.profile.portfolio}</SectionHeading>
 
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: spacing.xs,
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' },
+          gap: 1,
         }}
       >
         <Box
