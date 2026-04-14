@@ -9,6 +9,7 @@
 
 import { useState, useCallback } from 'react';
 import { useGoogleAuth } from '../contexts/GoogleAuthContext';
+import { useCurrentAsesor } from './useCurrentAsesor';
 import type {
   InvitationData,
   ValidationResult,
@@ -34,6 +35,7 @@ interface UseInvitationReturn {
 
 export const useInvitation = (): UseInvitationReturn => {
   const { user } = useGoogleAuth();
+  const { asesor } = useCurrentAsesor();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -58,7 +60,9 @@ export const useInvitation = (): UseInvitationReturn => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           creatorEmail: user.email,
-          creatorName: user.name,
+          // Use canonical asesor name from Sheets (matches productViews.inviterName filter).
+          // Falls back to Google profile name if the user isn't in Asesores yet.
+          creatorName: asesor?.name ?? user.name,
           creatorRole: user.role,
           pricingMode: options.pricingMode || 'with_prices',
           guestName: options.guestName,

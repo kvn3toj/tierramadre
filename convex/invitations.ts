@@ -277,6 +277,26 @@ export const verifyPin = mutation({
 // ─── Migration-only ─────────────────────────────────────────────────
 
 /**
+ * Rename all invitations matching an old creatorName to the canonical name.
+ * Migration-only — fixes historical data where creatorName was stored as the
+ * Google profile name instead of the canonical Asesor name.
+ */
+export const _normalizeCreatorName = mutation({
+  args: { oldName: v.string(), newName: v.string() },
+  handler: async (ctx, { oldName, newName }) => {
+    const all = await ctx.db.query("invitations").collect();
+    let patched = 0;
+    for (const doc of all) {
+      if (doc.creatorName === oldName) {
+        await ctx.db.patch(doc._id, { creatorName: newName });
+        patched++;
+      }
+    }
+    return { patched };
+  },
+});
+
+/**
  * Insert an invitation with all original fields preserved (for migration).
  * NOT for production use — use generate() instead.
  */

@@ -54,6 +54,25 @@ export const _migrateInsert = mutation({
 });
 
 /**
+ * Rename all productViews matching an old inviterName to the canonical name.
+ * Migration-only — fixes historical data where creatorName was set from the
+ * Google profile name instead of the canonical Asesor name.
+ */
+export const _normalizeInviterName = mutation({
+  args: { oldName: v.string(), newName: v.string() },
+  handler: async (ctx, { oldName, newName }) => {
+    const docs = await ctx.db
+      .query("productViews")
+      .withIndex("by_inviterName", (q) => q.eq("inviterName", oldName))
+      .collect();
+    for (const doc of docs) {
+      await ctx.db.patch(doc._id, { inviterName: newName });
+    }
+    return { patched: docs.length };
+  },
+});
+
+/**
  * Get recent guest activity for a specific inviter.
  * Replaces: GET /api/product-views?action=recent filtered by inviterName
  * Used by useGuestActivity hook in /mi-perfil.
