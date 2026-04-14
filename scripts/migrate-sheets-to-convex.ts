@@ -211,7 +211,7 @@ async function migrateProductViews(sheets: ReturnType<typeof google.sheets>, dry
         const parsed = parseProductViewRow(row);
         if (!parsed.itemId) return;
         try {
-          await convex.mutation(api.productViews.track, parsed);
+          await convex.mutation(api.productViews._migrateInsert, parsed);
           inserted++;
         } catch (err) {
           console.error(`  ERROR inserting view for item ${parsed.itemId}:`, err);

@@ -29,6 +29,31 @@ export const track = mutation({
 });
 
 /**
+ * Insert a product view preserving its original timestamp (migration only).
+ * NOT for production use — use track() instead.
+ */
+export const _migrateInsert = mutation({
+  args: {
+    timestamp: v.string(),
+    itemId: v.string(),
+    productName: v.optional(v.string()),
+    sessionId: v.optional(v.string()),
+    referrer: v.optional(v.string()),
+    deviceType: v.optional(v.string()),
+    browser: v.optional(v.string()),
+    country: v.optional(v.string()),
+    userName: v.optional(v.string()),
+    userEmail: v.optional(v.string()),
+    userRole: v.optional(v.string()),
+    inviterName: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("productViews", args);
+    return { success: true, itemId: args.itemId };
+  },
+});
+
+/**
  * Get recent guest activity for a specific inviter.
  * Replaces: GET /api/product-views?action=recent filtered by inviterName
  * Used by useGuestActivity hook in /mi-perfil.
