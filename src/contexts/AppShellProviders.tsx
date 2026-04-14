@@ -4,6 +4,7 @@
  */
 
 import { ReactNode } from 'react';
+import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { LiquidGlassProvider } from './LiquidGlassContext';
 import { TrackingProvider } from './TrackingContext';
 import { ScreenProtectionProvider } from './ScreenProtectionContext';
@@ -12,8 +13,11 @@ import { NotificationProvider } from './NotificationContext';
 import { NetworkStatusProvider } from './NetworkStatusContext';
 import { GlobalLoadingProvider } from './GlobalLoadingContext';
 
+const convexUrl = import.meta.env.VITE_CONVEX_URL as string;
+const convex = convexUrl ? new ConvexReactClient(convexUrl) : null;
+
 export function AppShellProviders({ children }: { children: ReactNode }) {
-  return (
+  const inner = (
     <LiquidGlassProvider>
       <TrackingProvider>
         <ScreenProtectionProvider>
@@ -28,4 +32,9 @@ export function AppShellProviders({ children }: { children: ReactNode }) {
       </TrackingProvider>
     </LiquidGlassProvider>
   );
+
+  if (convex) {
+    return <ConvexProvider client={convex}>{inner}</ConvexProvider>;
+  }
+  return inner;
 }

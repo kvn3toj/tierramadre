@@ -1,15 +1,13 @@
 /**
  * useGuestActivity Hook
  *
- * Fetches recent product views and filters for views
- * from guests invited by the current user.
- * Uses synchronous cache init pattern (anti-blink).
+ * Fetches recent product views from guests invited by the current user.
+ * Uses Convex reactive query when available — falls back to empty state when
+ * Convex is not ready.
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-
-const CACHE_KEY = 'tm-guest-activity';
-const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+import { useMemo, useCallback } from 'react';
+import { useConvexQuery, convexApi, convexReady } from '../lib/convex-safe';
 
 export interface GuestView {
   timestamp: string;
@@ -29,61 +27,27 @@ interface UseGuestActivityReturn {
 }
 
 export function useGuestActivity(inviterName: string | null | undefined): UseGuestActivityReturn {
-  const [allActivity, setAllActivity] = useState<GuestView[]>(() => {
-    if (!inviterName) return [];
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      return cached ? JSON.parse(cached) : [];
-    } catch {
-      return [];
-    }
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const convexData = convexReady && useConvexQuery
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    ? useConvexQuery(convexApi.productViews.guestActivity, inviterName ? { inviterName, limit: 50 } : 'skip')
+    : undefined;
 
-  const fetchActivity = useCallback(async () => {
-    if (!inviterName) return;
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/product-views?action=recent&limit=500');
-      if (!res.ok) throw new Error('Failed to fetch');
-      const data = await res.json();
-      if (data.success && data.activity) {
-        setAllActivity(data.activity);
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify(data.activity));
-        } catch { /* storage full */ }
-      }
-    } catch {
-      // Keep cached data
-    } finally {
-      setIsLoading(false);
-    }
-  }, [inviterName]);
+  const guestViews: GuestView[] = useMemo(() => {
+    if (!Array.isArray(convexData)) return [];
+    return (convexData as Record<string, unknown>[]).map((doc) => ({
+      timestamp: String(doc.timestamp ?? ''),
+      itemId: parseInt(String(doc.itemId ?? '0'), 10),
+      productName: String(doc.productName ?? ''),
+      userName: (doc.userName as string) ?? null,
+      userEmail: (doc.userEmail as string) ?? null,
+      userRole: String(doc.userRole ?? 'guest'),
+      inviterName: (doc.inviterName as string) ?? null,
+    }));
+  }, [convexData]);
 
-  useEffect(() => {
-    fetchActivity();
-  }, [fetchActivity]);
+  const isLoading = convexReady && convexData === undefined && !!inviterName;
 
-  // Filter for views from this inviter's guests (90-day window, top 50)
-  // The inviterName field in product-views stores the inviter's display name
-  // (set from sessionStorage INVITER_NAME when a guest views via invitation)
-  const guestViews = useMemo(() => {
-    if (!inviterName || !allActivity.length) return [];
-    const cutoff = Date.now() - NINETY_DAYS_MS;
-    const normalizedName = inviterName.toLowerCase().trim();
-
-    return allActivity
-      .filter(view => {
-        if (!view.inviterName) return false;
-        const viewTime = new Date(view.timestamp).getTime();
-        if (isNaN(viewTime) || viewTime < cutoff) return false;
-        // Match by inviter display name (data isolation: only own guests)
-        return view.inviterName.toLowerCase().trim() === normalizedName;
-      })
-      .slice(0, 50);
-  }, [allActivity, inviterName]);
-
-  // Aggregate top products by guest view count
   const topProducts = useMemo(() => {
     if (!guestViews.length) return [];
     const counts: Record<string, { itemId: number; productName: string; viewCount: number }> = {};
@@ -99,5 +63,9 @@ export function useGuestActivity(inviterName: string | null | undefined): UseGue
       .slice(0, 5);
   }, [guestViews]);
 
-  return { guestViews, topProducts, isLoading, refresh: fetchActivity };
+  const refresh = useCallback(() => {
+    // No-op with Convex reactive queries
+  }, []);
+
+  return { guestViews, topProducts, isLoading, refresh };
 }

@@ -27,8 +27,17 @@ interface UseAsesoresReturn {
   refreshAsesores: () => Promise<void>;
 }
 
+const CACHE_KEY = 'tm-asesores';
+
 export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
-  const [asesores, setAsesores] = useState<Asesor[]>([]);
+  const [asesores, setAsesores] = useState<Asesor[]>(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +68,11 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
       if (result.success && result.asesores) {
         const deduped = dedupeAsesores(result.asesores);
         setAsesores(deduped);
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify(deduped));
+        } catch {
+          // Storage full — non-critical
+        }
       }
     } catch (err) {
       console.warn('Could not load asesores from Google Sheets:', err);

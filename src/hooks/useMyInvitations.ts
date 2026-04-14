@@ -1,13 +1,12 @@
 /**
  * useMyInvitations Hook
  *
- * Fetches invitations created by the current user.
- * Returns invitation list + summary metrics.
+ * Fetches invitations created by the current user via Convex reactive query.
+ * Mutations still go through /api/invitations for auth validation.
  */
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-
-const CACHE_KEY = 'tm-my-invitations';
+import { useState, useCallback, useMemo, useRef } from 'react';
+import { useConvexQuery, convexApi, convexReady } from '../lib/convex-safe';
 
 export interface Invitation {
   invitationId: string;
@@ -40,108 +39,112 @@ interface UseMyInvitationsReturn {
   expireInvitation: (shortCode: string) => Promise<boolean>;
 }
 
+function toInvitation(doc: Record<string, unknown>): Invitation {
+  return {
+    invitationId: String(doc.invitationId ?? ''),
+    shortCode: String(doc.shortCode ?? ''),
+    guestName: (doc.guestName as string) ?? null,
+    guestContact: (doc.guestContact as string) ?? null,
+    contactType: (doc.contactType as string) ?? null,
+    status: (doc.status as Invitation['status']) ?? 'pending',
+    createdAt: String(doc.createdAt ?? ''),
+    activatedAt: (doc.activatedAt as string) ?? null,
+    expiresAt: (doc.expiresAt as string) ?? null,
+    pricingMode: String(doc.pricingMode ?? 'with_prices'),
+    guestCurrencyMode: (doc.guestCurrencyMode as string) ?? null,
+    guestMultiplier: doc.guestMultiplier != null ? Number(doc.guestMultiplier) : null,
+  };
+}
+
 export function useMyInvitations(creatorEmail: string | null | undefined): UseMyInvitationsReturn {
-  const [invitations, setInvitations] = useState<Invitation[]>(() => {
-    if (!creatorEmail) return [];
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      return cached ? JSON.parse(cached) : [];
-    } catch {
-      return [];
-    }
-  });
-  const [isLoading, setIsLoading] = useState(false);
   const [mutatingCodes, setMutatingCodes] = useState<Set<string>>(new Set());
 
-  const fetchInvitations = useCallback(async () => {
-    if (!creatorEmail) return;
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/invitations?action=list-by-creator&creatorEmail=${encodeURIComponent(creatorEmail)}`);
-      if (!res.ok) throw new Error('Failed to fetch');
-      const data = await res.json();
-      if (data.success && data.invitations) {
-        setInvitations(data.invitations);
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify(data.invitations));
-        } catch { /* storage full */ }
-      }
-    } catch {
-      // Keep cached data
-    } finally {
-      setIsLoading(false);
-    }
-  }, [creatorEmail]);
+  // Always call useQuery unconditionally to respect Rules of Hooks.
+  // When Convex is not ready (no generated API or no provider), useConvexQuery is null,
+  // so we fall back to a no-op memoized empty array.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const convexData = convexReady && useConvexQuery
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    ? useConvexQuery(convexApi.invitations.listByCreator, creatorEmail ? { creatorEmail } : 'skip')
+    : undefined;
 
-  useEffect(() => {
-    fetchInvitations();
-  }, [fetchInvitations]);
+  const invitations: Invitation[] = useMemo(() => {
+    if (!Array.isArray(convexData)) return [];
+    return (convexData as Record<string, unknown>[]).map(toInvitation);
+  }, [convexData]);
+
+  const isLoading = convexReady && convexData === undefined && !!creatorEmail;
 
   const metrics = useMemo<InvitationMetrics>(() => {
-    const active = invitations.filter(i => i.status === 'active').length;
-    const pending = invitations.filter(i => i.status === 'pending').length;
+    const active = invitations.filter((i) => i.status === 'active').length;
+    const pending = invitations.filter((i) => i.status === 'pending').length;
     return { total: invitations.length, active, pending };
   }, [invitations]);
 
-  // Ref tracks current invitations for revert in optimistic mutations (avoids stale closure)
   const invitationsRef = useRef(invitations);
   invitationsRef.current = invitations;
 
-  const updateMultiplier = useCallback(async (shortCode: string, multiplier: number): Promise<boolean> => {
-    if (!creatorEmail) return false;
-    setMutatingCodes(prev => new Set(prev).add(shortCode));
-
-    const prevInvitations = invitationsRef.current;
-    setInvitations(prev => prev.map(inv =>
-      inv.shortCode === shortCode ? { ...inv, guestMultiplier: multiplier } : inv
-    ));
-
-    try {
-      const res = await fetch('/api/invitations?action=update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shortCode, creatorEmail, fields: { guestMultiplier: multiplier } }),
-      });
-      const data = await res.json();
-      if (!data.success) {
-        setInvitations(prevInvitations);
+  const updateMultiplier = useCallback(
+    async (shortCode: string, multiplier: number): Promise<boolean> => {
+      if (!creatorEmail) return false;
+      setMutatingCodes((prev) => new Set(prev).add(shortCode));
+      try {
+        const res = await fetch('/api/invitations?action=update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ shortCode, creatorEmail, fields: { guestMultiplier: multiplier } }),
+        });
+        const data = await res.json();
+        return !!data.success;
+      } catch {
         return false;
+      } finally {
+        setMutatingCodes((prev) => {
+          const next = new Set(prev);
+          next.delete(shortCode);
+          return next;
+        });
       }
-      return true;
-    } catch {
-      setInvitations(prevInvitations);
-      return false;
-    } finally {
-      setMutatingCodes(prev => { const next = new Set(prev); next.delete(shortCode); return next; });
-    }
-  }, [creatorEmail]);
+    },
+    [creatorEmail]
+  );
 
-  const expireInvitation = useCallback(async (shortCode: string): Promise<boolean> => {
-    if (!creatorEmail) return false;
-    setMutatingCodes(prev => new Set(prev).add(shortCode));
-
-    const prevInvitations = invitationsRef.current;
-    setInvitations(prev => prev.filter(inv => inv.shortCode !== shortCode));
-
-    try {
-      const res = await fetch('/api/invitations?action=expire', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shortCode, creatorEmail }),
-      });
-      const data = await res.json();
-      if (!data.success) {
-        setInvitations(prevInvitations);
+  const expireInvitation = useCallback(
+    async (shortCode: string): Promise<boolean> => {
+      if (!creatorEmail) return false;
+      setMutatingCodes((prev) => new Set(prev).add(shortCode));
+      try {
+        const res = await fetch('/api/invitations?action=expire', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ shortCode, creatorEmail }),
+        });
+        const data = await res.json();
+        return !!data.success;
+      } catch {
         return false;
+      } finally {
+        setMutatingCodes((prev) => {
+          const next = new Set(prev);
+          next.delete(shortCode);
+          return next;
+        });
       }
-      return true;
-    } catch {
-      setInvitations(prevInvitations);
-      return false;
-    } finally {
-      setMutatingCodes(prev => { const next = new Set(prev); next.delete(shortCode); return next; });
-    }
-  }, [creatorEmail]);
+    },
+    [creatorEmail]
+  );
 
-  return { invitations, metrics, isLoading, mutatingCodes, refresh: fetchInvitations, updateMultiplier, expireInvitation };
+  const refresh = useCallback(() => {
+    // No-op with Convex reactive queries (auto-updating)
+  }, []);
+
+  return {
+    invitations,
+    metrics,
+    isLoading,
+    mutatingCodes,
+    refresh,
+    updateMultiplier,
+    expireInvitation,
+  };
 }
