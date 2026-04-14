@@ -10,8 +10,10 @@
 
 import { ConvexHttpClient } from "convex/browser";
 
-const CONVEX_URL = process.env.CONVEX_URL;
+// Trim env values — Vercel can leak trailing newlines when vars are pasted via CLI/dashboard.
+const CONVEX_URL = process.env.CONVEX_URL?.trim();
+const DATA_SOURCE = process.env.DATA_SOURCE?.trim();
 
-export const isConvexEnabled = process.env.DATA_SOURCE === "convex" && !!CONVEX_URL;
+export const isConvexEnabled = DATA_SOURCE === "convex" && !!CONVEX_URL;
 
 export const convexClient = CONVEX_URL ? new ConvexHttpClient(CONVEX_URL) : null;
