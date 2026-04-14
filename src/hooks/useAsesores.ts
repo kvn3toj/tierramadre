@@ -28,6 +28,11 @@ interface UseAsesoresReturn {
 }
 
 const CACHE_KEY = 'tm-asesores';
+const CACHE_TS_KEY = 'tm-asesores-ts';
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+/** Shared in-flight promise — dedupes concurrent fetches from multiple hook mounts. */
+let inflightFetch: Promise<Asesor[]> | null = null;
 
 export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
   const [asesores, setAsesores] = useState<Asesor[]>(() => {
@@ -52,27 +57,47 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
     });
   };
 
-  const loadAsesores = async () => {
+  const loadAsesores = async (force = false) => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetchWithRetry('/api/get-asesores', undefined, {
-        retries: 3,
-        notifyOnFailure: true,
-        failureMessage: 'No se pudieron cargar los asesores. Intenta de nuevo.',
-      });
-      if (!response.ok) throw new Error('Failed to fetch asesores');
-
-      const result = await response.json();
-      if (result.success && result.asesores) {
-        const deduped = dedupeAsesores(result.asesores);
-        setAsesores(deduped);
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify(deduped));
-        } catch {
-          // Storage full — non-critical
+      // Skip fetch if cache is fresh (unless forced).
+      if (!force) {
+        const tsRaw = localStorage.getItem(CACHE_TS_KEY);
+        const ts = tsRaw ? Number(tsRaw) : 0;
+        if (ts && Date.now() - ts < CACHE_TTL_MS && asesores.length > 0) {
+          setIsLoading(false);
+          return;
         }
+      }
+
+      // Deduplicate concurrent fetches across hook instances.
+      if (!inflightFetch) {
+        inflightFetch = (async () => {
+          const response = await fetchWithRetry('/api/get-asesores', undefined, {
+            retries: 3,
+            notifyOnFailure: true,
+            failureMessage: 'No se pudieron cargar los asesores. Intenta de nuevo.',
+          });
+          if (!response.ok) throw new Error('Failed to fetch asesores');
+          const result = await response.json();
+          if (!result.success || !result.asesores) {
+            throw new Error('Invalid asesores response');
+          }
+          return dedupeAsesores(result.asesores);
+        })().finally(() => {
+          inflightFetch = null;
+        });
+      }
+
+      const deduped = await inflightFetch;
+      setAsesores(deduped);
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(deduped));
+        localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
+      } catch {
+        // Storage full — non-critical
       }
     } catch (err) {
       console.warn('Could not load asesores from Google Sheets:', err);
@@ -84,6 +109,7 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
 
   useEffect(() => {
     loadAsesores();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Enrich asesores with treasure data
@@ -111,7 +137,7 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
     asesores: enrichedAsesores,
     isLoading,
     error,
-    refreshAsesores: loadAsesores,
+    refreshAsesores: () => loadAsesores(true),
   };
 }
 

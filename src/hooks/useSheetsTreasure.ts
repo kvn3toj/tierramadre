@@ -70,6 +70,24 @@ function getCachedData(): TreasureItem[] | null {
   return null;
 }
 
+/** How recently the cached data was written (ms epoch), or 0 if missing/invalid. */
+function getCachedTimestamp(): number {
+  try {
+    const cached = localStorage.getItem(SHEETS_CACHE_KEY);
+    if (!cached) return 0;
+    const { timestamp }: SheetsCache = JSON.parse(cached);
+    return typeof timestamp === 'number' ? timestamp : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Skip background refetch if cache is newer than this. */
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+/** Shared in-flight promise — dedupes concurrent calls from multiple hooks. */
+let inflightFetch: Promise<TreasureItem[]> | null = null;
+
 /**
  * Save data to cache
  */
@@ -133,16 +151,28 @@ export function useSheetsTreasure(): UseSheetsTreasureReturn {
   } = useSyncCacheState<TreasureItem[] | null>(getInitialSheetsData, (v) => v === null);
   const [error, setError] = useState<string | null>(null);
 
-  // Always background-fetch fresh data from API.
-  // If cache existed, we show it instantly (no blink), then silently update if data changed.
+  // Background-fetch only when the cache is missing or older than CACHE_TTL_MS.
+  // Concurrent calls (multiple hooks mounting simultaneously) share a single in-flight
+  // promise, so we never hammer the Sheets API during navigation.
   useEffect(() => {
     const hasCachedData = sheetsTreasure !== null;
+    const cacheAge = Date.now() - getCachedTimestamp();
+    const cacheIsFresh = hasCachedData && cacheAge < CACHE_TTL_MS;
+
+    if (cacheIsFresh) {
+      setIsLoading(false);
+      return;
+    }
 
     const loadFromSheets = async () => {
       try {
-        const treasure = await fetchFromSheets(!hasCachedData);
+        if (!inflightFetch) {
+          inflightFetch = fetchFromSheets(!hasCachedData).finally(() => {
+            inflightFetch = null;
+          });
+        }
+        const treasure = await inflightFetch;
         setCachedData(treasure);
-        // Only trigger re-render if data actually changed
         setSheetsTreasure(prev => {
           if (!prev) return treasure;
           const prevJson = JSON.stringify(prev);
@@ -150,7 +180,6 @@ export function useSheetsTreasure(): UseSheetsTreasureReturn {
           return prevJson === nextJson ? prev : treasure;
         });
       } catch (err) {
-        // If we have cached data, silently ignore the error
         if (!hasCachedData) {
           console.warn('Could not load from Google Sheets:', err);
           setError(err instanceof Error ? err.message : 'Unknown error');
