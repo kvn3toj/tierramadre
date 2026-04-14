@@ -90,3 +90,23 @@ export const guestActivity = query({
       .take(limit ?? 50);
   },
 });
+
+/**
+ * Get all views for a specific guest of a specific inviter.
+ * Used by useGuestDetail hook for the guest detail page.
+ */
+export const byInviterAndGuest = query({
+  args: {
+    inviterName: v.string(),
+    guestName: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { inviterName, guestName, limit }) => {
+    return await ctx.db
+      .query("productViews")
+      .withIndex("by_inviterName", (q) => q.eq("inviterName", inviterName))
+      .filter((q) => q.eq(q.field("userName"), guestName))
+      .order("desc")
+      .take(limit ?? 500);
+  },
+});

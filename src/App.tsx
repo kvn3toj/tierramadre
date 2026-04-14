@@ -63,6 +63,8 @@ const ProviderQuotationsList = lazyWithRetry(() => import('./components/admin/Pr
 
 // My Profile (Ambassador personal dashboard)
 const MyProfilePage = lazyWithRetry(() => import('./pages/mi-perfil/MyProfilePage'), 'MyProfilePage');
+const AllActivityPage = lazyWithRetry(() => import('./pages/mi-perfil/AllActivityPage'), 'AllActivityPage');
+const GuestDetailPage = lazyWithRetry(() => import('./pages/mi-perfil/GuestDetailPage'), 'GuestDetailPage');
 
 // Product Requests (Asesor/Embajador -> Admin)
 const ProductRequestsHub = lazyWithRetry(() => import('./pages/staff/requests/ProductRequestsHub'), 'ProductRequestsHub');
@@ -305,6 +307,20 @@ function AppContent() {
             <StaffRoute>
               <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
                 <MyProfilePage />
+              </Suspense>
+            </StaffRoute>
+          } />
+          <Route path="/mi-perfil/actividad" element={
+            <StaffRoute>
+              <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
+                <AllActivityPage />
+              </Suspense>
+            </StaffRoute>
+          } />
+          <Route path="/mi-perfil/invitado/:guestName" element={
+            <StaffRoute>
+              <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
+                <GuestDetailPage />
               </Suspense>
             </StaffRoute>
           } />

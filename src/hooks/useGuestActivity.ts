@@ -26,11 +26,14 @@ interface UseGuestActivityReturn {
   refresh: () => void;
 }
 
-export function useGuestActivity(inviterName: string | null | undefined): UseGuestActivityReturn {
+export function useGuestActivity(
+  inviterName: string | null | undefined,
+  limit = 50,
+): UseGuestActivityReturn {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const convexData = convexReady && useConvexQuery
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    ? useConvexQuery(convexApi.productViews.guestActivity, inviterName ? { inviterName, limit: 50 } : 'skip')
+    ? useConvexQuery(convexApi.productViews.guestActivity, inviterName ? { inviterName, limit } : 'skip')
     : undefined;
 
   const guestViews: GuestView[] = useMemo(() => {

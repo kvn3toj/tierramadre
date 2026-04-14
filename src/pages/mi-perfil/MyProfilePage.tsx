@@ -30,7 +30,7 @@ export default function MyProfilePage() {
   const { user: googleUser } = useGoogleAuth();
   const { asesor, isLoading: asesorLoading } = useCurrentAsesor();
   const { treasure } = useTreasure();
-  const { guestViews, topProducts, isLoading: activityLoading } = useGuestActivity(asesor?.name);
+  const { guestViews, topProducts, isLoading: activityLoading } = useGuestActivity(asesor?.name, 500);
   const { invitations, metrics, isLoading: invitationsLoading, mutatingCodes, updateMultiplier, expireInvitation } = useMyInvitations(googleUser?.email);
 
   if (asesorLoading) {
