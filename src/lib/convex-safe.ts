@@ -1,30 +1,14 @@
 /**
- * Safe dynamic imports for Convex. Allows hooks to be Convex-aware without
- * breaking the build when convex/_generated/api is not yet generated.
+ * Safe wrapper for Convex client hooks.
  *
- * Remove this file once Convex is permanent (Task 13 cleanup).
+ * Exposes static imports so builds work with any ES target. The
+ * `convexReady` flag is derived from `VITE_CONVEX_URL` to let hooks
+ * gracefully skip Convex queries when the client wasn't configured.
  */
 
-// Dynamically loaded — null until import resolves. Module-level constants.
-let _useQuery: typeof import('convex/react').useQuery | null = null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _api: any = null;
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 
-try {
-  const convexReact = await import('convex/react');
-  _useQuery = convexReact.useQuery;
-} catch {
-  // convex/react not available — hooks will gracefully no-op
-}
-
-try {
-  // @ts-expect-error — _generated/api may not exist yet until `npx convex dev` runs
-  const generated = await import('../../convex/_generated/api');
-  _api = generated.api;
-} catch {
-  // Generated API not available — hooks will gracefully no-op
-}
-
-export const useConvexQuery = _useQuery;
-export const convexApi = _api;
-export const convexReady = !!_useQuery && !!_api;
+export const useConvexQuery = useQuery;
+export const convexApi = api;
+export const convexReady = !!import.meta.env.VITE_CONVEX_URL;
