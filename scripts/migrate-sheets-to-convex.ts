@@ -13,7 +13,8 @@
 
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api.js";
-import { google } from "googleapis";
+import { sheets_v4 } from "@googleapis/sheets";
+import { OAuth2Client } from "google-auth-library";
 import * as dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
@@ -28,17 +29,23 @@ const APP_SPREADSHEET_ID = process.env.APP_SPREADSHEET_ID?.trim() || "1DuOhuPcHF
 const INVITATIONS_SHEET = "Invitations";
 const PRODUCT_VIEWS_SHEET = "ProductViews";
 
-// ─── Google Sheets client ───────────────────────────────────────────
+// ─── Google Sheets client (OAuth2, same as api/_lib/google-clients.js) ───
 
-async function getSheetsClient() {
-  const keyRaw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-  if (!keyRaw) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY not found");
-  const key = JSON.parse(keyRaw);
-  const auth = new google.auth.GoogleAuth({
-    credentials: key,
-    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-  });
-  return google.sheets({ version: "v4", auth });
+function cleanEnv(value: string | undefined): string {
+  if (!value) return "";
+  return value.replace(/^["']|["']$/g, "").replace(/\\n/g, "").replace(/[\r\n]/g, "").trim();
+}
+
+function getSheetsClient() {
+  const clientId = cleanEnv(process.env.GOOGLE_OAUTH_CLIENT_ID);
+  const clientSecret = cleanEnv(process.env.GOOGLE_OAUTH_CLIENT_SECRET);
+  const refreshToken = cleanEnv(process.env.GOOGLE_OAUTH_REFRESH_TOKEN);
+  if (!clientId || !clientSecret || !refreshToken) {
+    throw new Error("GOOGLE_OAUTH_CLIENT_ID, _SECRET, and _REFRESH_TOKEN required");
+  }
+  const auth = new OAuth2Client(clientId, clientSecret);
+  auth.setCredentials({ refresh_token: refreshToken });
+  return new sheets_v4.Sheets({ auth });
 }
 
 // ─── Parsers ────────────────────────────────────────────────────────
@@ -99,7 +106,7 @@ function parseProductViewRow(row: (string | number | undefined)[]) {
 
 // ─── Migration logic ────────────────────────────────────────────────
 
-async function migrateInvitations(sheets: ReturnType<typeof google.sheets>, dryRun: boolean) {
+async function migrateInvitations(sheets: sheets_v4.Sheets, dryRun: boolean) {
   console.log("\n=== Migrating Invitations ===");
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: APP_SPREADSHEET_ID,
@@ -182,7 +189,7 @@ async function migrateInvitations(sheets: ReturnType<typeof google.sheets>, dryR
   return inserted;
 }
 
-async function migrateProductViews(sheets: ReturnType<typeof google.sheets>, dryRun: boolean) {
+async function migrateProductViews(sheets: sheets_v4.Sheets, dryRun: boolean) {
   console.log("\n=== Migrating ProductViews ===");
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: APP_SPREADSHEET_ID,
