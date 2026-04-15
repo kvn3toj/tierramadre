@@ -1,0 +1,193 @@
+wing: tierra_madre
+rooms:
+- name: backend
+  description: Vercel serverless API endpoints and shared libraries
+  keywords:
+  - api
+  - endpoint
+  - handler
+  - serverless
+  - sheets
+  - drive
+
+- name: types
+  description: TypeScript type definitions, interfaces, and domain models
+  keywords:
+  - types
+  - interface
+  - type
+  - schema
+  - model
+
+- name: invitation
+  description: Guest invitation system, PIN validation, multiplier, device binding
+  keywords:
+  - invitation
+  - guest
+  - invitado
+  - multiplier
+  - pin
+  - shortCode
+
+- name: ambassador
+  description: Ambassador/asesor profiles, reputation, templates, branding
+  keywords:
+  - ambassador
+  - asesor
+  - embajador
+  - profile
+  - reputation
+
+- name: treasure
+  description: Product catalog, emerald browser, filters, detail views
+  keywords:
+  - treasure
+  - emerald
+  - product
+  - catalog
+  - inventory
+  - esmeralda
+
+- name: cotizacion
+  description: Quotation generation, PDF export, pricing, discounts
+  keywords:
+  - cotizacion
+  - quotation
+  - quote
+  - pricing
+  - discount
+
+- name: analytics
+  description: Event tracking, funnels, product views, session analytics
+  keywords:
+  - analytics
+  - tracking
+  - funnel
+  - views
+  - metrics
+  - event
+
+- name: auth
+  description: Authentication, authorization, roles, permissions, Google OAuth
+  keywords:
+  - auth
+  - login
+  - validate
+  - permission
+  - role
+  - oauth
+
+- name: frontend
+  description: React components, pages, contexts, shared UI
+  keywords:
+  - components
+  - pages
+  - contexts
+  - shared
+  - home
+  - settings
+
+- name: hooks
+  description: Custom React hooks for data fetching and state management
+  keywords:
+  - hooks
+  - useSheet
+  - useBatch
+  - useProduct
+
+- name: design-system
+  description: MUI theme tokens, design utilities, brand styling
+  keywords:
+  - design-system
+  - theme
+  - tokens
+  - brand
+  - style
+
+- name: provider
+  description: Provider portal, quotation requests, product sourcing
+  keywords:
+  - provider
+  - proveedor
+  - quotation-requests
+  - sourcing
+
+- name: media
+  description: Image/video upload, Drive proxy, thumbnails, optimization
+  keywords:
+  - media
+  - upload
+  - image
+  - video
+  - drive
+  - thumbnail
+  - cloudinary
+
+- name: gamification
+  description: Achievements, XP system, badges
+  keywords:
+  - gamification
+  - achievement
+  - xp
+  - badge
+
+- name: configuration
+  description: Vite config, Vercel config, package.json, tsconfig
+  keywords:
+  - config
+  - vercel
+  - vite
+  - tsconfig
+  - package
+
+- name: testing
+  description: Test files, test utilities, Vitest setup
+  keywords:
+  - test
+  - vitest
+  - spec
+  - mock
+
+- name: documentation
+  description: Architecture docs, PRDs, design specs, audits
+  keywords:
+  - docs
+  - documentation
+  - prd
+  - architecture
+  - audit
+  - spec
+
+- name: guests
+  description: Consolidated guest profiles (operational memory, not code)
+  keywords:
+  - guest
+  - invitado
+  - profile
+
+- name: interactions
+  description: Narrative of visits, whatsapp, meetings, cotizaciones per guest
+  keywords:
+  - interaction
+  - visit
+  - whatsapp
+  - meeting
+
+- name: preferences
+  description: Learned guest preferences (confirmed, inferred, rejected)
+  keywords:
+  - preference
+  - likes
+  - prefers
+
+- name: sales-context
+  description: Commercial decisions, multiplier justifications, objections, closings
+  keywords:
+  - multiplier
+  - pricing
+  - objection
+  - closing
+
+- name: general
+  description: Files that don't fit other rooms
+  keywords: []
