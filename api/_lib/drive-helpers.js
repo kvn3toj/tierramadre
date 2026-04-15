@@ -7,6 +7,34 @@
 import { DRIVE_FOLDERS, IMAGE_MIME_TYPES, VIDEO_MIME_TYPES, ALL_MEDIA_TYPES, MAX_PAGE_SIZE } from './constants.js';
 
 /**
+ * Module-level TTL cache for folder lookups.
+ *
+ * Vercel Fluid Compute reuses function instances across requests, so a Map
+ * scoped to the module stays hot between invocations. Short TTL (60s) keeps
+ * user-visible staleness bounded; mutations call invalidateFolderCache().
+ */
+const FOLDER_CACHE_TTL_MS = 60_000;
+const folderCache = new Map(); // key -> { value, expiresAt }
+
+function cacheGet(key) {
+  const entry = folderCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() >= entry.expiresAt) {
+    folderCache.delete(key);
+    return undefined;
+  }
+  return entry.value;
+}
+
+function cacheSet(key, value) {
+  folderCache.set(key, { value, expiresAt: Date.now() + FOLDER_CACHE_TTL_MS });
+}
+
+export function invalidateFolderCache() {
+  folderCache.clear();
+}
+
+/**
  * Find the collections folder ID (sibling of products inside the drive root)
  * @param {object} drive - Google Drive client
  * @param {string} sharedDriveId - Root folder ID (TM-Studio)
@@ -49,6 +77,10 @@ export async function findCollectionFolder(drive, collectionsFolderId, folderNam
  * @returns {Promise<string>} Products folder ID or shared drive ID if not found
  */
 export async function getProductsFolderId(drive, sharedDriveId) {
+  const cacheKey = `productsFolder:${sharedDriveId}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
   const response = await drive.files.list({
     q: `name='${DRIVE_FOLDERS.PRODUCTS}' and mimeType='application/vnd.google-apps.folder' and '${sharedDriveId}' in parents and trashed=false`,
     fields: 'files(id, name)',
@@ -56,11 +88,9 @@ export async function getProductsFolderId(drive, sharedDriveId) {
     includeItemsFromAllDrives: true,
   });
 
-  if (response.data.files && response.data.files.length > 0) {
-    return response.data.files[0].id;
-  }
-
-  return sharedDriveId;
+  const folderId = response.data.files?.[0]?.id || sharedDriveId;
+  cacheSet(cacheKey, folderId);
+  return folderId;
 }
 
 /**
@@ -71,6 +101,10 @@ export async function getProductsFolderId(drive, sharedDriveId) {
  * @returns {Promise<Array>} Array of folder objects {id, name, createdTime}
  */
 export async function listProductFolders(drive, productsFolderId, orderBy = 'name') {
+  const cacheKey = `productFolders:${productsFolderId}:${orderBy}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
   const allFiles = [];
   let pageToken = null;
 
@@ -89,6 +123,7 @@ export async function listProductFolders(drive, productsFolderId, orderBy = 'nam
     pageToken = response.data.nextPageToken;
   } while (pageToken);
 
+  cacheSet(cacheKey, allFiles);
   return allFiles;
 }
 

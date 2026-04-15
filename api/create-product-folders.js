@@ -23,6 +23,7 @@ import {
   listProductFolders,
   extractItemNumber,
   getOrCreateFolder,
+  invalidateFolderCache,
 } from './_lib/index.js';
 
 /**
@@ -175,6 +176,10 @@ export default withApiHandler(async (req, res, { sheets, drive, sharedDriveId })
       console.error(`[Sync] Failed to rename ${item.currentName}:`, error.message);
       errors.push({ action: 'rename', item: item.item, from: item.currentName, to: item.newName, error: error.message });
     }
+  }
+
+  if (created.length > 0 || renamed.length > 0) {
+    invalidateFolderCache();
   }
 
   return sendSuccess(res, {
