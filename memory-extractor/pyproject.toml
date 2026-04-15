@@ -1,0 +1,29 @@
+[project]
+name = "tierramadre-memory-extractor"
+version = "0.1.0"
+description = "Extracts operational events from TierraMadre Sheets into mempalace memory layer."
+requires-python = ">=3.9"
+dependencies = [
+    "mempalace",
+    "google-api-python-client>=2.0",
+    "google-auth>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+
+[project.scripts]
+tm-extract = "tm_extractor.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["tm_extractor*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
