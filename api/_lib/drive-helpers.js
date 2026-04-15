@@ -144,54 +144,42 @@ export function buildMimeTypeQuery(mimeTypes) {
 }
 
 /**
- * Get first image from a folder (or video thumbnail if no images)
+ * Get first image from a folder (or video thumbnail if no images).
  *
- * IMPORTANT: Uses orderBy='name' for consistent file selection across API calls.
- * This ensures the same file is returned as "first image" even when folder contents change.
+ * Single Drive `files.list` call: fetches up to 50 media files sorted by
+ * name, then prefers the first image; falls back to the first video only
+ * if no images are present. Previously this did two sequential queries
+ * per folder, doubling round-trips on batch thumbnail refreshes.
  *
- * Note: 'name' uses alphabetical sort (1, 12, 2, 22). For natural sort (1, 2, 12, 22),
- * use 'name_natural'. See: https://developers.google.com/drive/api/v3/reference/files/list
+ * Note: 'name' uses alphabetical sort (1, 12, 2, 22). For natural sort
+ * (1, 2, 12, 22) use 'name_natural'.
  *
  * @param {object} drive - Google Drive client
  * @param {string} folderId - Folder ID
  * @returns {Promise<{file: object, isVideo: boolean}|null>}
  */
 export async function getFirstImageOrVideoThumbnail(drive, folderId) {
-  const imageMimeTypeQuery = buildMimeTypeQuery(IMAGE_MIME_TYPES.slice(0, 6)); // Main image types
+  const imageMimes = IMAGE_MIME_TYPES.slice(0, 6); // Main browser-supported image types
+  const mediaMimeQuery = buildMimeTypeQuery([...imageMimes, ...VIDEO_MIME_TYPES]);
 
-  // First, try to get an image
-  // orderBy='name' ensures consistent "first image" selection across API calls
-  const imageResponse = await drive.files.list({
-    q: `'${folderId}' in parents and (${imageMimeTypeQuery}) and trashed=false`,
+  const response = await drive.files.list({
+    q: `'${folderId}' in parents and (${mediaMimeQuery}) and trashed=false`,
     fields: 'files(id, name, mimeType, thumbnailLink)',
-    orderBy: 'name', // Alphabetical ordering for stability
-    pageSize: 1,
+    orderBy: 'name',
+    pageSize: 50, // covers typical product folders; rare to exceed this
     supportsAllDrives: true,
     includeItemsFromAllDrives: true,
   });
 
-  if (imageResponse.data.files?.length > 0) {
-    return { file: imageResponse.data.files[0], isVideo: false };
-  }
+  const files = response.data.files || [];
+  if (files.length === 0) return null;
 
-  // If no images, try to get a video
-  const videoMimeTypeQuery = buildMimeTypeQuery(VIDEO_MIME_TYPES);
+  const imageMimeSet = new Set(imageMimes);
+  const firstImage = files.find(f => imageMimeSet.has(f.mimeType));
+  if (firstImage) return { file: firstImage, isVideo: false };
 
-  // Same orderBy='name' for video fallback to maintain stability
-  const videoResponse = await drive.files.list({
-    q: `'${folderId}' in parents and (${videoMimeTypeQuery}) and trashed=false`,
-    fields: 'files(id, name, mimeType, thumbnailLink)',
-    orderBy: 'name', // Alphabetical ordering for stability
-    pageSize: 1,
-    supportsAllDrives: true,
-    includeItemsFromAllDrives: true,
-  });
-
-  if (videoResponse.data.files?.length > 0) {
-    return { file: videoResponse.data.files[0], isVideo: true };
-  }
-
-  return null;
+  const firstVideo = files.find(f => !imageMimeSet.has(f.mimeType));
+  return firstVideo ? { file: firstVideo, isVideo: true } : null;
 }
 
 /**
