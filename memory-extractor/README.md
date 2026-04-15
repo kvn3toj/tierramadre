@@ -7,7 +7,7 @@ See design spec in `mempalace/docs/superpowers/specs/2026-04-13-tierramadre-memo
 ## Install
 
 ```bash
-pip install -e /Users/kevinp/Movies/coommunity-universe/mempalace
+pip install -e /Users/kevinp/Movies/coomunity-universe/mempalace
 pip install -e .[dev]
 ```
 
