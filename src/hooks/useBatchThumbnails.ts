@@ -83,6 +83,44 @@ function setCachedThumbnails(thumbnails: Record<number, ThumbnailInfo>): void {
 }
 
 /**
+ * Normalize raw thumbnails payload (from API or seed JSON) into ThumbnailInfo map.
+ * Accepts both legacy string URLs and the new {url, isVideoThumbnail, tinyThumb?} shape.
+ */
+function normalizeThumbnails(raw: Record<string, unknown>): Record<number, ThumbnailInfo> {
+  const thumbnails: Record<number, ThumbnailInfo> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    const itemNumber = parseInt(key, 10);
+    if (typeof value === 'string') {
+      thumbnails[itemNumber] = { url: value, isVideoThumbnail: false };
+    } else if (value && typeof value === 'object') {
+      const obj = value as { url: string; isVideoThumbnail: boolean; tinyThumb?: string };
+      const info: ThumbnailInfo = { url: obj.url, isVideoThumbnail: obj.isVideoThumbnail };
+      if (obj.tinyThumb) info.tinyThumb = obj.tinyThumb;
+      thumbnails[itemNumber] = info;
+    }
+  }
+  return thumbnails;
+}
+
+/**
+ * Fetch the static seed snapshot generated at build time.
+ * Returns null on any failure or if the seed is empty — the hook then falls
+ * back to the live API. Uses default browser cache so repeat visits are free.
+ */
+async function fetchSeed(): Promise<Record<number, ThumbnailInfo> | null> {
+  try {
+    const response = await fetch('/thumbnails-seed.json', { cache: 'default' });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (!data?.thumbnails || typeof data.thumbnails !== 'object') return null;
+    const normalized = normalizeThumbnails(data.thumbnails);
+    return Object.keys(normalized).length > 0 ? normalized : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Fetch thumbnails from API
  * @param notifyOnFailure - toast when all retries fail (off for silent background refresh)
  */
@@ -103,23 +141,7 @@ async function fetchThumbnails(notifyOnFailure = false): Promise<Record<number, 
     throw new Error('Invalid response from thumbnails API');
   }
 
-  // Handle both old format (string) and new format (object)
-  const thumbnails: Record<number, ThumbnailInfo> = {};
-  for (const [key, value] of Object.entries(data.thumbnails)) {
-    const itemNumber = parseInt(key, 10);
-    if (typeof value === 'string') {
-      // Old format: just a URL string
-      thumbnails[itemNumber] = { url: value, isVideoThumbnail: false };
-    } else if (value && typeof value === 'object') {
-      // New format: { url, isVideoThumbnail, tinyThumb? }
-      const obj = value as { url: string; isVideoThumbnail: boolean; tinyThumb?: string };
-      const info: ThumbnailInfo = { url: obj.url, isVideoThumbnail: obj.isVideoThumbnail };
-      if (obj.tinyThumb) info.tinyThumb = obj.tinyThumb;
-      thumbnails[itemNumber] = info;
-    }
-  }
-
-  return thumbnails;
+  return normalizeThumbnails(data.thumbnails);
 }
 
 /**
@@ -167,20 +189,51 @@ export function useBatchThumbnails(): UseBatchThumbnailsReturn {
     }
   }, []);
 
-  // Initial load - fetch from API if cache was empty, or background-refresh if stale
+  // Initial load:
+  //   1. localStorage cache → use it, background-refresh if stale (existing path)
+  //   2. No cache → try static seed (instant from CDN), then refresh from API
+  //   3. No seed either → fall back to blocking API fetch with loading state
   useEffect(() => {
     const hasInitialCache = Object.keys(thumbnails).length > 0;
-    if (!hasInitialCache) {
-      loadThumbnails(true); // No cache — fetch with loading state
-    } else if (isCacheStale()) {
-      // Cache is valid but stale — refresh silently in background (no loading state)
-      fetchThumbnails(false)
-        .then((data) => {
-          setThumbnails(data);
-          setCachedThumbnails(data);
-        })
-        .catch((err) => console.warn('[Thumbnails] Background refresh failed:', err));
+    if (hasInitialCache) {
+      if (isCacheStale()) {
+        fetchThumbnails(false)
+          .then((data) => {
+            setThumbnails(data);
+            setCachedThumbnails(data);
+          })
+          .catch((err) => console.warn('[Thumbnails] Background refresh failed:', err));
+      }
+      return;
     }
+
+    let cancelled = false;
+    (async () => {
+      const seed = await fetchSeed();
+      if (cancelled) return;
+
+      if (seed) {
+        // Instant first paint from the build-time seed.
+        setThumbnails(seed);
+        setCachedThumbnails(seed);
+        setIsLoading(false);
+        // Background refresh to pick up anything added since the seed.
+        fetchThumbnails(false)
+          .then((data) => {
+            if (cancelled) return;
+            setThumbnails(data);
+            setCachedThumbnails(data);
+          })
+          .catch((err) => console.warn('[Thumbnails] Seed refresh failed:', err));
+      } else {
+        // No seed available — original blocking load path.
+        loadThumbnails(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Force refresh

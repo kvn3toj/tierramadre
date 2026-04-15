@@ -27,6 +27,9 @@ Thumbs.db
 # Uploaded images
 public/emeralds/
 
+# Generated at build time by scripts/generate-thumbnails-seed.mjs
+public/thumbnails-seed.json
+
 # Logs
 *.log
 npm-debug.log*
@@ -89,3 +92,4 @@ public/gallery/
 # Plugin files
 *.plugin
 .claude/settings.local.json
+.env*.local
