@@ -20,6 +20,7 @@ import {
   sendSuccess,
   DRIVE_FOLDERS,
 } from './_lib/index.js';
+import { getOAuthUserEmail } from './_lib/oauth-drive-client.js';
 
 // =============================================================================
 // DIAGNOSTIC FUNCTIONS
@@ -203,12 +204,15 @@ export default withApiHandler(async (req, res, { drive, oauthDrive, sharedDriveI
   const { folderId, action } = req.query;
   const configuredId = sharedDriveId;
 
+  const authenticatedEmail = await getOAuthUserEmail().catch(() => null);
+
   // If no specific action or folderId, show configuration status
   if (!folderId && !action) {
     if (!configuredId) {
       return sendSuccess(res, {
         status: 'error',
         configured: false,
+        authenticatedEmail,
         recommendation: 'GOOGLE_SHARED_DRIVE_ID environment variable is not set',
       });
     }
@@ -219,16 +223,30 @@ export default withApiHandler(async (req, res, { drive, oauthDrive, sharedDriveI
       return sendSuccess(res, {
         ...driveResult,
         configuredId,
+        authenticatedEmail,
         configurationType: 'shared_drive_root',
       });
-    } catch {
+    } catch (rootErr) {
       // Not a Shared Drive root, try as folder
-      const folderResult = await checkFolderInfo(drive, configuredId);
-      return sendSuccess(res, {
-        ...folderResult,
-        configuredId,
-        configurationType: 'folder',
-      });
+      try {
+        const folderResult = await checkFolderInfo(drive, configuredId);
+        return sendSuccess(res, {
+          ...folderResult,
+          configuredId,
+          authenticatedEmail,
+          configurationType: 'folder',
+        });
+      } catch (folderErr) {
+        return sendSuccess(res, {
+          status: 'error',
+          configuredId,
+          authenticatedEmail,
+          error: folderErr.message,
+          recommendation: authenticatedEmail
+            ? `OAuth account '${authenticatedEmail}' cannot access folder ${configuredId}. Share the folder with this account, or regenerate the OAuth refresh token from the account that owns it.`
+            : 'OAuth is failing. Check GOOGLE_OAUTH_REFRESH_TOKEN.',
+        });
+      }
     }
   }
 
