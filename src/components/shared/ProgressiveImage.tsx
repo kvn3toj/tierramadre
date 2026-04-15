@@ -19,6 +19,11 @@ import {
   getImageSizes,
   isCloudinaryUrl,
 } from '../../utils/cloudinaryImage';
+import {
+  isDriveProxyUrl,
+  withSize,
+  getDriveProxySrcSet,
+} from '../../utils/driveImage';
 import { createLogger } from '../../utils/logger';
 import ImageWatermark from './ImageWatermark';
 
@@ -96,9 +101,23 @@ export default function ProgressiveImage({
     if (!src) return { optimizedSrc: '', srcSet: '', sizes: '', lqipSrc: '' };
 
     const isCloudinary = isCloudinaryUrl(src);
+    const isDriveProxy = !isCloudinary && isDriveProxyUrl(src);
 
     // For eco quality, use smaller srcset widths for faster loading
     const srcSetWidths = quality === 'eco' ? [200, 300, 400] : [280, 400, 560, 800];
+
+    // For Drive proxy URLs, the backend only exposes a fixed set of size presets.
+    // Thumbnails + grid cards use thumb/small/medium; detail views add 'large'.
+    const driveSizes =
+      quality === 'eco' || layout === 'thumbnail'
+        ? (['thumb', 'small'] as const)
+        : layout === 'full'
+          ? (['small', 'medium', 'large'] as const)
+          : (['thumb', 'small', 'medium'] as const);
+
+    // For the src attribute on Drive proxies, ask for the smallest of the set
+    // so mobile/eco paths download less while srcSet lets the browser upgrade.
+    const baseDriveSrc = isDriveProxy ? withSize(src, driveSizes[0]) : src;
 
     return {
       optimizedSrc: isCloudinary
@@ -108,9 +127,13 @@ export default function ProgressiveImage({
             format: 'auto',
             crop: 'fill',
           })
-        : src,
-      srcSet: isCloudinary ? getResponsiveSrcSet(src, srcSetWidths, cloudinaryQuality) : '',
-      sizes: isCloudinary ? getImageSizes(layout) : '',
+        : baseDriveSrc,
+      srcSet: isCloudinary
+        ? getResponsiveSrcSet(src, srcSetWidths, cloudinaryQuality)
+        : isDriveProxy
+          ? getDriveProxySrcSet(src, driveSizes)
+          : '',
+      sizes: isCloudinary || isDriveProxy ? getImageSizes(layout) : '',
       // LQIP: Cloudinary tiny URL for Cloudinary images, tinyThumb for Drive proxy images
       // tinyThumb is always allowed even in eco mode (20px = ~200 bytes, negligible cost)
       lqipSrc: enableLQIP
