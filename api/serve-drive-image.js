@@ -69,11 +69,14 @@ function encodeFilename(filename) {
 }
 
 /**
- * Generate ETag from file metadata for conditional requests
+ * Generate a cheap ETag computable from request params alone (no Drive round-trip).
+ * Drive fileIds are immutable; combined with size+thumbnail+webp flags this is
+ * a stable cache key. Lets us short-circuit 304s before any Drive call.
  */
-function generateETag(fileId, size, mimeType) {
-  const hash = Buffer.from(`${fileId}-${size}-${mimeType}`).toString('base64').slice(0, 16);
-  return `"${hash}"`;
+function generateEarlyETag(fileId, sizeParam, isVideoThumb, prefersWebp) {
+  const variant = `${sizeParam}-${isVideoThumb ? 'vthumb' : 'full'}-${prefersWebp ? 'webp' : 'std'}`;
+  const hash = Buffer.from(`${fileId}-${variant}`).toString('base64').slice(0, 16);
+  return `"e${hash}"`;
 }
 
 /**
@@ -103,6 +106,25 @@ export default withApiHandler(async (req, res) => {
     // Validate size parameter for responsive images
     const targetWidth = IMAGE_SIZES[sizeParam] ?? IMAGE_SIZES.original;
 
+    // Use optimized image caching (stale-while-revalidate for instant display)
+    const imageCache = CACHE.IMAGES || CACHE.LONG;
+
+    // Short-circuit 304 BEFORE hitting Drive: compute ETag from request params only.
+    // Saves a metadata round-trip on every cache-revalidation hit.
+    const acceptsWebpHeader = acceptsWebp(req);
+    const earlyEtag = generateEarlyETag(
+      fileId,
+      sizeParam,
+      thumbnail === 'true',
+      acceptsWebpHeader
+    );
+    const ifNoneMatch = req.headers['if-none-match'];
+    if (ifNoneMatch === earlyEtag) {
+      res.setHeader('ETag', earlyEtag);
+      res.setHeader('Cache-Control', imageCache);
+      return res.status(304).end();
+    }
+
     const drive = await getOAuthDriveClient();
 
     // Get file metadata first (with timeout to prevent 504)
@@ -127,27 +149,13 @@ export default withApiHandler(async (req, res) => {
     }
 
     const { mimeType, name, size } = metadataResponse.data;
-    /** Client asked for WebP; raster images only (not SVG). Used for ETag + output format. */
+    /** Client asked for WebP; raster images only (not SVG). Used for output format. */
     const prefersWebp =
-      acceptsWebp(req) &&
+      acceptsWebpHeader &&
       mimeType.startsWith('image/') &&
       !mimeType.includes('svg');
-    const etag = generateETag(
-      fileId,
-      `${size}-${sizeParam}-${prefersWebp ? 'webp' : 'std'}`,
-      mimeType
-    );
-
-    // Use optimized image caching (stale-while-revalidate for instant display)
-    const imageCache = CACHE.IMAGES || CACHE.LONG;
-
-    // Check If-None-Match for conditional requests (304 Not Modified)
-    const ifNoneMatch = req.headers['if-none-match'];
-    if (ifNoneMatch === etag) {
-      res.setHeader('ETag', etag);
-      res.setHeader('Cache-Control', imageCache);
-      return res.status(304).end();
-    }
+    // Keep earlyEtag as the canonical ETag so future revalidations short-circuit.
+    const etag = earlyEtag;
 
     // HEIC Fast Path: Use Drive thumbnail immediately (skip expensive download + conversion)
     if (UNSUPPORTED_BROWSER_FORMATS.includes(mimeType) && thumbnail !== 'true') {

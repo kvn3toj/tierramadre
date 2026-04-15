@@ -262,7 +262,7 @@ export default function ProgressiveImage({
           component="img"
           src={
             retryCount > 0
-              ? `${optimizedSrc}${optimizedSrc.includes('?') ? '&' : '?'}retry=${retryCount}&t=${Date.now()}`
+              ? `${optimizedSrc}${optimizedSrc.includes('?') ? '&' : '?'}retry=${retryCount}`
               : optimizedSrc
           }
           key={`img-${instanceId}-${imageKey}`}
