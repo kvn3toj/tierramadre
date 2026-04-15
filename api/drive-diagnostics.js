@@ -22,6 +22,15 @@ import {
 } from './_lib/index.js';
 import { getOAuthUserEmail } from './_lib/oauth-drive-client.js';
 
+async function getDriveAboutEmail(drive) {
+  try {
+    const { data } = await drive.about.get({ fields: 'user(emailAddress,displayName)' });
+    return data?.user?.emailAddress || null;
+  } catch {
+    return null;
+  }
+}
+
 // =============================================================================
 // DIAGNOSTIC FUNCTIONS
 // =============================================================================
@@ -204,7 +213,11 @@ export default withApiHandler(async (req, res, { drive, oauthDrive, sharedDriveI
   const { folderId, action } = req.query;
   const configuredId = sharedDriveId;
 
-  const authenticatedEmail = await getOAuthUserEmail().catch(() => null);
+  const [userinfoEmail, driveAboutEmail] = await Promise.all([
+    getOAuthUserEmail().catch(() => null),
+    getDriveAboutEmail(drive),
+  ]);
+  const authenticatedEmail = driveAboutEmail || userinfoEmail;
 
   // If no specific action or folderId, show configuration status
   if (!folderId && !action) {
