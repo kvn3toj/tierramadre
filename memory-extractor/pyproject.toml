@@ -17,6 +17,7 @@ dev = [
 
 [project.scripts]
 tm-extract = "tm_extractor.cli:main"
+tm-mcp = "tm_extractor.mcp_main:main"
 
 [build-system]
 requires = ["setuptools>=61"]
