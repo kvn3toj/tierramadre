@@ -1,0 +1,78 @@
+"""Synthetic rows matching the expected columns in TierraMadre app sheets."""
+
+INVITATIONS_ROWS = [
+    {
+        "id": "row_inv_1",
+        "updatedAt": "2026-04-10T14:00:00",
+        "shortCode": "ABC123",
+        "creatorEmail": "maria@tm.co",
+        "creatorName": "Maria Lopez",
+        "guestName": "Juan Perez",
+        "guestContact": "+57 300 123 4567",
+        "contactType": "phone",
+        "createdAt": "2026-04-10T14:00:00",
+        "activatedAt": "",
+        "expiresAt": "2026-04-10T20:00:00",
+        "pricingMode": "with_prices",
+        "durationHours": "6",
+        "status": "pending",
+        "guestMultiplier": "2.5",
+    },
+    {
+        "id": "row_inv_2",
+        "updatedAt": "2026-04-10T14:05:00",
+        "shortCode": "ABC123",
+        "creatorEmail": "maria@tm.co",
+        "creatorName": "Maria Lopez",
+        "guestName": "Juan Perez",
+        "guestContact": "+57 300 123 4567",
+        "contactType": "phone",
+        "createdAt": "2026-04-10T14:00:00",
+        "activatedAt": "2026-04-10T14:05:00",
+        "expiresAt": "2026-04-10T20:00:00",
+        "pricingMode": "with_prices",
+        "durationHours": "6",
+        "status": "active",
+        "guestMultiplier": "2.5",
+    },
+]
+
+PRODUCT_VIEWS_ROWS = [
+    {
+        "id": "row_view_1",
+        "updatedAt": "2026-04-10T14:30:15",
+        "guestName": "Juan Perez",
+        "guestContact": "+57 300 123 4567",
+        "contactType": "phone",
+        "shortCode": "ABC123",
+        "productItem": "234",
+        "productColor": "verde-muzo",
+        "productQuality": "fina",
+        "pesoCt": "3.2",
+        "durationSec": "45",
+        "shownPriceCop": "8500000",
+        "multiplierUsed": "2.5",
+        "currency": "COP",
+    },
+]
+
+COTIZACIONES_ROWS = [
+    {
+        "id": "row_cot_1",
+        "updatedAt": "2026-04-11T10:00:00",
+        "cotizacionId": "cot_42",
+        "asesorEmail": "maria@tm.co",
+        "guestName": "Juan Perez",
+        "guestContact": "+57 300 123 4567",
+        "contactType": "phone",
+        "shortCode": "ABC123",
+        "items": "234,267",
+        "basePriceCop": "18000000",
+        "discountCop": "0",
+        "totalPriceCop": "18000000",
+        "multiplier": "2.5",
+        "currency": "COP",
+        "exportedAt": "2026-04-11T10:00:00",
+        "status": "exported",
+    },
+]
