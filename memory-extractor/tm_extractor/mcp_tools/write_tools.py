@@ -175,6 +175,67 @@ def tool_confirm_preference(
     return {"success": True, "drawer_id": drawer_id, "preference": preference}
 
 
+def tool_merge_guest(from_id: str, to_id: str) -> dict:
+    """Merge two guest entities: move all triples/drawers from from_id to to_id."""
+    if from_id == to_id:
+        return {"success": False, "error": "Cannot merge a guest into itself"}
+
+    deps = get_deps()
+    kg = deps.kg
+    col = deps.collection
+
+    from_eid = kg._entity_id(from_id)
+    to_eid = kg._entity_id(to_id)
+
+    conn = kg._conn()
+    entity_row = conn.execute(
+        "SELECT id FROM entities WHERE id = ?", (from_eid,)
+    ).fetchone()
+    if not entity_row:
+        return {"success": False, "error": f"Entity '{from_id}' not found"}
+
+    try:
+        from mempalace.mcp_server import _wal_log
+
+        _wal_log("tm_merge_guest", {"from_id": from_id, "to_id": to_id})
+    except ImportError:
+        pass
+
+    with kg._lock:
+        c = kg._conn()
+        with c:
+            sub_count = c.execute(
+                "UPDATE triples SET subject = ? WHERE subject = ?",
+                (to_eid, from_eid),
+            ).rowcount
+            obj_count = c.execute(
+                "UPDATE triples SET object = ? WHERE object = ?",
+                (to_eid, from_eid),
+            ).rowcount
+            c.execute("DELETE FROM entities WHERE id = ?", (from_eid,))
+
+    drawers_moved = 0
+    try:
+        hits = col.get(
+            where={"guest_id": from_id}, include=["documents", "metadatas"]
+        )
+        if hits and hits.get("ids"):
+            for did, doc, meta in zip(
+                hits["ids"], hits["documents"], hits["metadatas"]
+            ):
+                meta["guest_id"] = to_id
+                col.upsert(ids=[did], documents=[doc], metadatas=[meta])
+                drawers_moved += 1
+    except Exception:
+        pass
+
+    return {
+        "success": True,
+        "triples_moved": sub_count + obj_count,
+        "drawers_moved": drawers_moved,
+    }
+
+
 TOOLS: dict = {
     "tm_record_interaction": {
         "description": (
@@ -249,5 +310,26 @@ TOOLS: dict = {
             "required": ["guest_id", "preference", "evidence_text"],
         },
         "handler": tool_confirm_preference,
+    },
+    "tm_merge_guest": {
+        "description": (
+            "Merge two guest entities: move all triples and drawers "
+            "from one guest to another, then delete the source entity."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "from_id": {
+                    "type": "string",
+                    "description": "Source guest entity ID (will be deleted)",
+                },
+                "to_id": {
+                    "type": "string",
+                    "description": "Target guest entity ID (receives data)",
+                },
+            },
+            "required": ["from_id", "to_id"],
+        },
+        "handler": tool_merge_guest,
     },
 }

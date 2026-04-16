@@ -3,6 +3,7 @@
 from tm_extractor.mcp_tools.write_tools import tool_record_interaction
 from tm_extractor.mcp_tools.write_tools import tool_set_multiplier
 from tm_extractor.mcp_tools.write_tools import tool_confirm_preference
+from tm_extractor.mcp_tools.write_tools import tool_merge_guest
 
 
 class TestRecordInteraction:
@@ -134,4 +135,43 @@ class TestConfirmPreference:
             preference="rojo-inexistente",
             evidence_text="t",
         )
+        assert result["success"] is False
+
+
+class TestMergeGuest:
+    def test_moves_triples_and_drawers(self, seeded_deps):
+        deps, ids = seeded_deps
+        kg = deps.kg
+        col = deps.collection
+        kg.add_entity("guest_pending_xyz", "guest")
+        kg.add_triple(
+            "guest_pending_xyz", "viewed", "product_item_999", valid_from="2026-04-10"
+        )
+        col.upsert(
+            ids=["drawer_pending_test"],
+            documents=["Pending guest viewed product."],
+            metadatas=[
+                {
+                    "wing": "tierra_madre",
+                    "room": "interactions",
+                    "guest_id": "guest_pending_xyz",
+                    "hall": "hall_visit",
+                }
+            ],
+        )
+        result = tool_merge_guest(from_id="guest_pending_xyz", to_id=ids["juan"])
+        assert result["success"] is True
+        assert result["triples_moved"] >= 1
+        assert result["drawers_moved"] >= 1
+        from_triples = kg.query_entity("guest_pending_xyz", direction="both")
+        assert len(from_triples) == 0
+
+    def test_merge_nonexistent_from_returns_error(self, seeded_deps):
+        deps, ids = seeded_deps
+        result = tool_merge_guest(from_id="guest_nonexistent", to_id=ids["juan"])
+        assert result["success"] is False
+
+    def test_merge_same_id_returns_error(self, seeded_deps):
+        deps, ids = seeded_deps
+        result = tool_merge_guest(from_id=ids["juan"], to_id=ids["juan"])
         assert result["success"] is False
