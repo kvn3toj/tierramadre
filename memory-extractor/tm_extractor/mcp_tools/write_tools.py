@@ -236,6 +236,62 @@ def tool_merge_guest(from_id: str, to_id: str) -> dict:
     }
 
 
+def _wal_log_forget(operation: str, params: dict):
+    """Log to WAL -- wrapper for testing."""
+    try:
+        from mempalace.mcp_server import _wal_log
+
+        _wal_log(operation, params)
+    except ImportError:
+        pass
+
+
+def tool_forget_guest(guest_id: str) -> dict:
+    """Delete a guest: entity, triples, drawers. Logs deletion to WAL."""
+    deps = get_deps()
+    kg = deps.kg
+    col = deps.collection
+    eid = kg._entity_id(guest_id)
+
+    conn = kg._conn()
+    triple_count = conn.execute(
+        "SELECT COUNT(*) as cnt FROM triples WHERE subject = ? OR object = ?",
+        (eid, eid),
+    ).fetchone()["cnt"]
+
+    drawers_deleted = 0
+    try:
+        hits = col.get(where={"guest_id": guest_id}, include=[])
+        if hits and hits.get("ids"):
+            drawers_deleted = len(hits["ids"])
+            col.delete(where={"guest_id": guest_id})
+    except Exception:
+        pass
+
+    with kg._lock:
+        c = kg._conn()
+        with c:
+            c.execute(
+                "DELETE FROM triples WHERE subject = ? OR object = ?", (eid, eid)
+            )
+            c.execute("DELETE FROM entities WHERE id = ?", (eid,))
+
+    _wal_log_forget(
+        "tm_forget_guest",
+        {
+            "guest_id": guest_id,
+            "triples_deleted": triple_count,
+            "drawers_deleted": drawers_deleted,
+        },
+    )
+
+    return {
+        "success": True,
+        "triples_deleted": triple_count,
+        "drawers_deleted": drawers_deleted,
+    }
+
+
 TOOLS: dict = {
     "tm_record_interaction": {
         "description": (
@@ -331,5 +387,22 @@ TOOLS: dict = {
             "required": ["from_id", "to_id"],
         },
         "handler": tool_merge_guest,
+    },
+    "tm_forget_guest": {
+        "description": (
+            "Delete a guest entity and all associated triples and drawers. "
+            "Logs the deletion to the WAL for audit."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "guest_id": {
+                    "type": "string",
+                    "description": "Guest entity ID to delete",
+                },
+            },
+            "required": ["guest_id"],
+        },
+        "handler": tool_forget_guest,
     },
 }

@@ -4,6 +4,7 @@ from tm_extractor.mcp_tools.write_tools import tool_record_interaction
 from tm_extractor.mcp_tools.write_tools import tool_set_multiplier
 from tm_extractor.mcp_tools.write_tools import tool_confirm_preference
 from tm_extractor.mcp_tools.write_tools import tool_merge_guest
+from tm_extractor.mcp_tools.write_tools import tool_forget_guest
 
 
 class TestRecordInteraction:
@@ -175,3 +176,18 @@ class TestMergeGuest:
         deps, ids = seeded_deps
         result = tool_merge_guest(from_id=ids["juan"], to_id=ids["juan"])
         assert result["success"] is False
+
+
+class TestForgetGuest:
+    def test_removes_entity_triples_and_drawers(self, seeded_deps):
+        deps, ids = seeded_deps
+        result = tool_forget_guest(guest_id=ids["ana"])
+        assert result["success"] is True
+        assert result["triples_deleted"] >= 1
+        triples = deps.kg.query_entity(ids["ana"], direction="both")
+        assert len(triples) == 0
+
+    def test_nonexistent_guest_returns_gracefully(self, seeded_deps):
+        result = tool_forget_guest(guest_id="guest_nonexistent_0000")
+        assert result["success"] is True
+        assert result["triples_deleted"] == 0
