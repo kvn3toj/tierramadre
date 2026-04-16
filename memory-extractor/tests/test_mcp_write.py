@@ -2,6 +2,7 @@
 
 from tm_extractor.mcp_tools.write_tools import tool_record_interaction
 from tm_extractor.mcp_tools.write_tools import tool_set_multiplier
+from tm_extractor.mcp_tools.write_tools import tool_confirm_preference
 
 
 class TestRecordInteraction:
@@ -94,5 +95,43 @@ class TestSetMultiplier:
         deps, ids = seeded_deps
         result = tool_set_multiplier(
             guest_id=ids["juan"], value=0.5, reason_text="t", asesor_id=ids["asesor"]
+        )
+        assert result["success"] is False
+
+
+class TestConfirmPreference:
+    def test_promotes_confidence_to_1(self, seeded_deps):
+        deps, ids = seeded_deps
+        result = tool_confirm_preference(
+            guest_id=ids["juan"], preference="verde-muzo", evidence_text="Confirmado."
+        )
+        assert result["success"] is True
+        triples = deps.kg.query_entity(ids["juan"], direction="outgoing")
+        muzo = [
+            t
+            for t in triples
+            if t["predicate"] == "prefers"
+            and t["object"] == "verde-muzo"
+            and t.get("current")
+        ]
+        assert len(muzo) == 1
+        assert muzo[0]["confidence"] == 1.0
+
+    def test_creates_confirmed_drawer(self, seeded_deps):
+        deps, ids = seeded_deps
+        result = tool_confirm_preference(
+            guest_id=ids["juan"], preference="verde-muzo", evidence_text="Confirmado."
+        )
+        drawer = deps.collection.get(
+            ids=[result["drawer_id"]], include=["metadatas"]
+        )
+        assert drawer["metadatas"][0]["hall"] == "hall_confirmed"
+
+    def test_nonexistent_preference_returns_error(self, seeded_deps):
+        deps, ids = seeded_deps
+        result = tool_confirm_preference(
+            guest_id=ids["juan"],
+            preference="rojo-inexistente",
+            evidence_text="t",
         )
         assert result["success"] is False

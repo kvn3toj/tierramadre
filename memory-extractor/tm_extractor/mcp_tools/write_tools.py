@@ -121,6 +121,60 @@ def tool_set_multiplier(
     }
 
 
+def tool_confirm_preference(
+    guest_id: str, preference: str, evidence_text: str
+) -> dict:
+    """Promote an inferred preference to confirmed (confidence 1.0)."""
+    deps = get_deps()
+    kg = deps.kg
+    emitter = deps.emitter
+    now = datetime.now().isoformat()
+
+    triples = kg.query_entity(guest_id, direction="outgoing")
+    target = None
+    for t in triples:
+        if (
+            t["predicate"] == "prefers"
+            and t["object"] == preference
+            and t.get("current", False)
+        ):
+            target = t
+            break
+
+    if target is None:
+        return {
+            "success": False,
+            "error": f"Active preference '{preference}' not found for {guest_id}",
+        }
+
+    kg.invalidate(guest_id, "prefers", preference, ended=now[:10])
+    emitter.emit(
+        AddTripleEvent(
+            subject=guest_id,
+            predicate="prefers",
+            object=preference,
+            valid_from=now,
+            confidence=1.0,
+        )
+    )
+
+    drawer_event = AddDrawerEvent(
+        wing="tierra_madre",
+        room="preferences",
+        hall="hall_confirmed",
+        content=evidence_text,
+        metadata={
+            "guest_id": guest_id,
+            "value": preference,
+            "kind": "confirmed_preference",
+        },
+        dedup_key=f"mcp_confirm:{guest_id}:{preference}:{now}",
+    )
+    drawer_id = emitter.emit(drawer_event)
+
+    return {"success": True, "drawer_id": drawer_id, "preference": preference}
+
+
 TOOLS: dict = {
     "tm_record_interaction": {
         "description": (
@@ -176,5 +230,24 @@ TOOLS: dict = {
             "required": ["guest_id", "value", "reason_text", "asesor_id"],
         },
         "handler": tool_set_multiplier,
+    },
+    "tm_confirm_preference": {
+        "description": "Promote an inferred preference to confirmed (confidence 1.0).",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "guest_id": {"type": "string", "description": "Guest entity ID"},
+                "preference": {
+                    "type": "string",
+                    "description": "Preference value to confirm",
+                },
+                "evidence_text": {
+                    "type": "string",
+                    "description": "Evidence supporting the confirmation",
+                },
+            },
+            "required": ["guest_id", "preference", "evidence_text"],
+        },
+        "handler": tool_confirm_preference,
     },
 }
