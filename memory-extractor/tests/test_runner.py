@@ -29,7 +29,7 @@ def test_run_once_processes_all_sheets_and_advances_checkpoint(
     client = MockSheetsClient({
         "Invitations": INVITATIONS_ROWS,
         "ProductViews": PRODUCT_VIEWS_ROWS,
-        "Cotizaciones": COTIZACIONES_ROWS,
+        "CotizacionesAsesores": COTIZACIONES_ROWS,
     })
 
     stats = run_once(client=client, emitter=emitter, checkpoint=cp,
@@ -37,7 +37,7 @@ def test_run_once_processes_all_sheets_and_advances_checkpoint(
 
     assert stats["Invitations"]["rows_processed"] == 2
     assert stats["ProductViews"]["rows_processed"] == 1
-    assert stats["Cotizaciones"]["rows_processed"] == 1
+    assert stats["CotizacionesAsesores"]["rows_processed"] == 1
     assert cp.get("Invitations") is not None
     assert cp.get("ProductViews") is not None
 

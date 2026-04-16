@@ -13,7 +13,7 @@ from ..config import ExtractorConfig
 from ..events import AddDrawerEvent, AddTripleEvent, Event
 from ..identity import guest_id
 
-SHEET_NAME = "Cotizaciones"
+SHEET_NAME = "CotizacionesAsesores"
 
 
 def handle_row(row: dict, cfg: ExtractorConfig) -> List[Event]:

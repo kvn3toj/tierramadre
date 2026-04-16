@@ -31,7 +31,7 @@ def test_full_extraction_populates_kg_and_drawers(tmp_path, tmp_palace_path):
         {
             "Invitations": INVITATIONS_ROWS,
             "ProductViews": PRODUCT_VIEWS_ROWS,
-            "Cotizaciones": COTIZACIONES_ROWS,
+            "CotizacionesAsesores": COTIZACIONES_ROWS,
         }
     )
 
