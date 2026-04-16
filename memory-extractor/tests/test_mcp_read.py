@@ -1,6 +1,10 @@
 """Tests for Phase 3 MCP read tools."""
 
-from tm_extractor.mcp_tools.read_tools import tool_guest_profile, tool_guest_timeline
+from tm_extractor.mcp_tools.read_tools import (
+    tool_guest_interests,
+    tool_guest_profile,
+    tool_guest_timeline,
+)
 
 
 class TestGuestProfile:
@@ -54,3 +58,37 @@ class TestGuestTimeline:
     def test_empty_guest_returns_no_events(self, seeded_deps):
         result = tool_guest_timeline(guest_id="guest_nonexistent_0000")
         assert result["events"] == []
+
+
+class TestGuestInterests:
+    def test_filters_by_min_confidence(self, seeded_deps):
+        deps, ids = seeded_deps
+        result = tool_guest_interests(guest_id=ids["juan"], min_confidence=0.7)
+
+        for pref in result["interests"]:
+            assert pref["confidence"] >= 0.7
+        values = [p["value"] for p in result["interests"]]
+        assert "verde-muzo" in values
+        assert "alta-calidad" not in values  # confidence 0.5
+
+    def test_excludes_expired_preferences(self, seeded_deps):
+        deps, ids = seeded_deps
+        result = tool_guest_interests(guest_id=ids["juan"])
+
+        values = [p["value"] for p in result["interests"]]
+        assert "azul-vivido" not in values
+
+    def test_orders_by_confidence_desc(self, seeded_deps):
+        deps, ids = seeded_deps
+        result = tool_guest_interests(guest_id=ids["juan"], min_confidence=0.0)
+
+        confidences = [p["confidence"] for p in result["interests"]]
+        assert confidences == sorted(confidences, reverse=True)
+
+    def test_includes_evidence_drawer(self, seeded_deps):
+        deps, ids = seeded_deps
+        result = tool_guest_interests(guest_id=ids["juan"], min_confidence=0.7)
+
+        muzo = next(p for p in result["interests"] if p["value"] == "verde-muzo")
+        assert muzo.get("evidence") is not None
+        assert "verde-muzo" in muzo["evidence"].lower() or "muzo" in muzo["evidence"].lower()

@@ -105,6 +105,60 @@ def tool_guest_timeline(guest_id: str, since: str = None) -> dict:
     return {"guest_id": guest_id, "since": since, "events": events}
 
 
+def tool_guest_interests(guest_id: str, min_confidence: float = 0.7) -> dict:
+    """Inferred and confirmed preferences for a guest, with evidence."""
+    deps = get_deps()
+    kg = deps.kg
+    col = deps.collection
+
+    triples = kg.query_entity(guest_id, direction="outgoing")
+    active_prefs = [
+        t
+        for t in triples
+        if t["predicate"] == "prefers" and t.get("current", False)
+    ]
+
+    interests = []
+    for t in active_prefs:
+        conf = t.get("confidence", 1.0)
+        if conf < min_confidence:
+            continue
+
+        evidence = None
+        try:
+            pref_value = t["object"]
+            hits = col.get(
+                where={"$and": [{"guest_id": guest_id}, {"room": "preferences"}]},
+                include=["documents", "metadatas"],
+            )
+            if hits and hits.get("documents"):
+                for doc, meta in zip(hits["documents"], hits["metadatas"]):
+                    if (
+                        meta.get("value") == pref_value
+                        or pref_value.lower() in doc.lower()
+                    ):
+                        evidence = doc[:300]
+                        break
+        except Exception:
+            pass
+
+        interests.append({
+            "value": t["object"],
+            "confidence": conf,
+            "valid_from": t.get("valid_from"),
+            "hall": "hall_confirmed" if conf >= 1.0 else "hall_inferred",
+            "evidence": evidence,
+        })
+
+    interests.sort(key=lambda p: (-p["confidence"], p.get("valid_from") or ""))
+
+    return {
+        "guest_id": guest_id,
+        "min_confidence": min_confidence,
+        "interests": interests,
+    }
+
+
 TOOLS: dict = {
     "tm_guest_profile": {
         "description": (
@@ -143,5 +197,26 @@ TOOLS: dict = {
             "required": ["guest_id"],
         },
         "handler": tool_guest_timeline,
+    },
+    "tm_guest_interests": {
+        "description": (
+            "Guest preferences (inferred + confirmed) with confidence "
+            "scores and evidence."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "guest_id": {
+                    "type": "string",
+                    "description": "Guest entity ID",
+                },
+                "min_confidence": {
+                    "type": "number",
+                    "description": "Minimum confidence threshold (default 0.7)",
+                },
+            },
+            "required": ["guest_id"],
+        },
+        "handler": tool_guest_interests,
     },
 }
