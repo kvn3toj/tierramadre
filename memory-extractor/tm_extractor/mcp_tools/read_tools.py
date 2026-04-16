@@ -82,6 +82,29 @@ def tool_guest_profile(guest_id: str) -> dict:
     }
 
 
+def tool_guest_timeline(guest_id: str, since: str = None) -> dict:
+    """Chronological timeline of all events involving a guest."""
+    deps = get_deps()
+    kg = deps.kg
+
+    raw = kg.timeline(guest_id)
+
+    events = []
+    for t in raw:
+        if since and t.get("valid_from") and t["valid_from"] < since:
+            continue
+        events.append({
+            "subject": t["subject"],
+            "predicate": t["predicate"],
+            "object": t["object"],
+            "valid_from": t.get("valid_from"),
+            "valid_to": t.get("valid_to"),
+            "current": t.get("current", False),
+        })
+
+    return {"guest_id": guest_id, "since": since, "events": events}
+
+
 TOOLS: dict = {
     "tm_guest_profile": {
         "description": (
@@ -99,5 +122,26 @@ TOOLS: dict = {
             "required": ["guest_id"],
         },
         "handler": tool_guest_profile,
+    },
+    "tm_guest_timeline": {
+        "description": (
+            "Chronological timeline of guest events: invitations, views, "
+            "preferences, quotations, purchases."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "guest_id": {
+                    "type": "string",
+                    "description": "Guest entity ID",
+                },
+                "since": {
+                    "type": "string",
+                    "description": "ISO date — only events after this date (optional)",
+                },
+            },
+            "required": ["guest_id"],
+        },
+        "handler": tool_guest_timeline,
     },
 }
