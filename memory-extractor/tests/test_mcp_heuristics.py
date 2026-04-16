@@ -28,3 +28,37 @@ class TestSuggestMultiplier:
         assert "reasoning" in result
         assert isinstance(result["reasoning"], list)
         assert len(result["reasoning"]) > 0
+
+
+from tm_extractor.mcp_tools.heuristics import tool_asesor_dashboard
+
+
+class TestAsesorDashboard:
+    def test_counts_active_guests(self, seeded_deps):
+        deps, ids = seeded_deps
+        result = tool_asesor_dashboard(asesor_id=ids["asesor"])
+        assert result["asesor_id"] == ids["asesor"]
+        assert result["active_guests"] >= 2
+        assert isinstance(result["guest_details"], list)
+
+    def test_calculates_conversions(self, seeded_deps):
+        deps, ids = seeded_deps
+        result = tool_asesor_dashboard(asesor_id=ids["asesor"])
+        assert "conversions" in result
+        assert isinstance(result["conversions"], int)
+
+    def test_flags_follow_up_needed(self, seeded_deps):
+        deps, ids = seeded_deps
+        result = tool_asesor_dashboard(asesor_id=ids["asesor"])
+        assert "follow_up" in result
+        assert isinstance(result["follow_up"], list)
+
+    def test_respects_window(self, seeded_deps):
+        deps, ids = seeded_deps
+        result = tool_asesor_dashboard(asesor_id=ids["asesor"], window="1d")
+        assert "active_guests" in result
+
+    def test_unknown_asesor_returns_empty(self, seeded_deps):
+        result = tool_asesor_dashboard(asesor_id="asesor_nonexistent")
+        assert result["active_guests"] == 0
+        assert result["guest_details"] == []
