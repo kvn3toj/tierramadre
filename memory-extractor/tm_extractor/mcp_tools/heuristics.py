@@ -29,14 +29,22 @@ def tool_suggest_multiplier(guest_id: str) -> dict:
 
     # 1. Current multiplier
     current_mult = _DEFAULT_MULTIPLIER
+    has_confirmed_multiplier = False
     for t in triples:
         if t["predicate"] == "has_multiplier" and t.get("current", False):
             try:
                 current_mult = float(t["object"])
+                has_confirmed_multiplier = True
             except (ValueError, TypeError):
                 pass
             break
-    reasoning.append(f"Current multiplier: {current_mult}")
+    if has_confirmed_multiplier:
+        reasoning.append(f"Current multiplier: {current_mult}")
+    else:
+        reasoning.append(
+            f"Current multiplier: {current_mult} "
+            "(default, no confirmed multiplier)"
+        )
 
     # 2. Engagement signal: views per day
     view_triples = [t for t in triples if t["predicate"] == "viewed"]
@@ -100,8 +108,12 @@ def tool_suggest_multiplier(guest_id: str) -> dict:
     # Weighted formula
     if peer_mult is not None:
         weights = {"peer": 0.4, "engagement": 0.3, "current": 0.3}
-    else:
+    elif has_confirmed_multiplier:
         weights = {"peer": 0.0, "engagement": 0.5, "current": 0.5}
+        peer_mult = 0.0
+    else:
+        # No peers AND no confirmed multiplier: engagement is the only signal
+        weights = {"peer": 0.0, "engagement": 1.0, "current": 0.0}
         peer_mult = 0.0
 
     suggested = (
@@ -138,7 +150,7 @@ def tool_asesor_dashboard(asesor_id: str, window: str = "30d") -> dict:
     kg = deps.kg
 
     days = _parse_window(window)
-    since = (datetime.now() - timedelta(days=days)).isoformat()[:10]  # noqa: F841
+    since = (datetime.now() - timedelta(days=days)).isoformat()[:10]
 
     asesor_triples = kg.query_entity(asesor_id, direction="outgoing")
     invitation_ids = [
@@ -177,6 +189,15 @@ def tool_asesor_dashboard(asesor_id: str, window: str = "30d") -> dict:
         if not g_triples:
             continue
 
+        last_interaction = None
+        for t in g_triples:
+            vf = t.get("valid_from")
+            if vf and (last_interaction is None or vf > last_interaction):
+                last_interaction = vf
+
+        if last_interaction is None or last_interaction[:10] < since:
+            continue
+
         mult = None
         for t in g_triples:
             if t["predicate"] == "has_multiplier" and t.get("current"):
@@ -199,21 +220,14 @@ def tool_asesor_dashboard(asesor_id: str, window: str = "30d") -> dict:
                 prod = t["object"]
                 product_counts[prod] = product_counts.get(prod, 0) + 1
 
-        last_interaction = None
-        for t in g_triples:
-            vf = t.get("valid_from")
-            if vf and (last_interaction is None or vf > last_interaction):
-                last_interaction = vf
-
         needs_follow_up = False
-        if last_interaction:
-            try:
-                last_dt = datetime.fromisoformat(last_interaction[:10])
-                days_since = (datetime.now() - last_dt).days
-                if days_since > 7 and quotations == 0 and purchases == 0:
-                    needs_follow_up = True
-            except (ValueError, TypeError):
-                pass
+        try:
+            last_dt = datetime.fromisoformat(last_interaction[:10])
+            days_since = (datetime.now() - last_dt).days
+            if days_since > 7 and quotations == 0 and purchases == 0:
+                needs_follow_up = True
+        except (ValueError, TypeError):
+            pass
 
         guest_details.append(
             {
