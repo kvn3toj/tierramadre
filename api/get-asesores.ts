@@ -33,6 +33,7 @@ export interface GetAsesoresRow {
   email: string | null;
   photoFileId?: string;
   photoUrl?: string;
+  vaultCode: string | null;
 }
 
 export default withApiHandler(
@@ -86,6 +87,7 @@ export default withApiHandler(
   const especialidadIndex = findColumnIndex(headers, ['especialidad', 'specialty']);
   const instagramIndex = findColumnIndex(headers, ['instagram', 'ig', 'email']);
   const estadoIndex = findColumnIndex(headers, ['estado', 'status']);
+  const vaultCodeIndex = findColumnIndex(headers, ['vaultcode', 'vault_code', 'codigo_boveda', 'boveda']);
 
   const dataRows = rows.slice(1);
   const asesoresData: GetAsesoresRow[] = [];
@@ -114,6 +116,7 @@ export default withApiHandler(
       whatsapp: whatsappIndex !== -1 ? row[whatsappIndex] || null : null,
       especialidad: especialidadIndex !== -1 ? row[especialidadIndex] || null : null,
       email: cleanEmail,
+      vaultCode: vaultCodeIndex !== -1 ? (row[vaultCodeIndex] ? String(row[vaultCodeIndex]).trim() : null) : null,
     });
   });
 

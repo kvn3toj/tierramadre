@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { TreasureItem } from '../types';
 import { normalizeName, matchesAsesorName } from '../utils/asesorNameUtils';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { parseVaultCode } from '../utils/parseVaultCode';
+import type { VaultCombination } from '../types/vault';
 
 // Re-export for backwards compatibility
 export { matchesAsesorName } from '../utils/asesorNameUtils';
@@ -18,6 +20,7 @@ export interface Asesor {
   photoUrl?: string;
   productCount?: number;
   products?: TreasureItem[];
+  vaultCode?: string | null;
 }
 
 interface UseAsesoresReturn {
@@ -25,6 +28,7 @@ interface UseAsesoresReturn {
   isLoading: boolean;
   error: string | null;
   refreshAsesores: () => Promise<void>;
+  ambassadorVaultCodes: Map<string, VaultCombination>;
 }
 
 const CACHE_KEY = 'tm-asesores';
@@ -133,11 +137,21 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
     });
   }, [asesores, treasure]);
 
+  const ambassadorVaultCodes = useMemo(() => {
+    const map = new Map<string, VaultCombination>();
+    for (const a of asesores) {
+      const combo = parseVaultCode(a.vaultCode ?? null);
+      if (combo) map.set(a.slug, combo);
+    }
+    return map;
+  }, [asesores]);
+
   return {
     asesores: enrichedAsesores,
     isLoading,
     error,
     refreshAsesores: () => loadAsesores(true),
+    ambassadorVaultCodes,
   };
 }
 
