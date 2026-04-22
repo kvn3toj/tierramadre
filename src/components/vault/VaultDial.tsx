@@ -40,6 +40,14 @@ function normalizeDelta(delta: number): number {
   return d;
 }
 
+function deriveValueText(item: VaultDialItem | undefined): string {
+  if (!item) return '';
+  if (typeof item.label === 'string' || typeof item.label === 'number') {
+    return String(item.label);
+  }
+  return item.id;
+}
+
 /**
  * Generic rotary dial — renders items on a ring, drag to rotate, release to snap.
  * Emits onChange with the new selected index after snap.
@@ -63,8 +71,14 @@ export function VaultDial({
   const motionTarget = useMotionValue(accumulated.current);
   const spring = useSpring(motionTarget, cfg);
 
+  const ringRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  const prevAngle = useRef(0);
+
   // Sync when value changes externally (e.g. keyboard or programmatic).
+  // Defer if a drag is in progress — the pointerUp handler will snap + notify.
   useEffect(() => {
+    if (dragging.current) return;
     const expected = Math.round(accumulated.current / stepDeg) * stepDeg;
     const currentIndex = ((Math.round(-expected / stepDeg)) % totalItems + totalItems) % totalItems;
     if (currentIndex !== value) {
@@ -72,10 +86,6 @@ export function VaultDial({
       motionTarget.set(accumulated.current);
     }
   }, [value, stepDeg, totalItems, motionTarget]);
-
-  const ringRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
-  const prevAngle = useRef(0);
   const [isDragging, setIsDragging] = useState(false);
 
   const pointerAngle = useCallback((e: React.PointerEvent) => {
@@ -161,6 +171,7 @@ export function VaultDial({
       aria-valuenow={value}
       aria-valuemin={0}
       aria-valuemax={totalItems - 1}
+      aria-valuetext={deriveValueText(items[value])}
       aria-disabled={disabled}
       tabIndex={disabled ? -1 : 0}
       onPointerDown={onPointerDown}
