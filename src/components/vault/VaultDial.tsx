@@ -23,8 +23,15 @@ interface VaultDialProps {
   radius: number;
   disabled?: boolean;
   ariaLabel: string;
-  /** Render prop for each label — receives the item and the ring's rotation. */
-  renderLabel: (item: VaultDialItem, index: number, ringRotate: MotionValue<number>) => ReactNode;
+  /** Render prop for each label — receives the item, ring rotate, AND opacity (1 when focusMode is off). */
+  renderLabel: (
+    item: VaultDialItem,
+    index: number,
+    ringRotate: MotionValue<number>,
+    opacity: number,
+  ) => ReactNode;
+  /** Si true, opacidad escalonada según distancia al activo (foco suave cinematográfico). */
+  focusMode?: boolean;
 }
 
 function springCfg(reduce: boolean | null) {
@@ -61,6 +68,7 @@ export function VaultDial({
   disabled = false,
   ariaLabel,
   renderLabel,
+  focusMode = false,
 }: VaultDialProps) {
   const reduceMotion = useReducedMotion();
   const totalItems = items.length;
@@ -163,6 +171,22 @@ export function VaultDial({
     [value, totalItems, onChange, disabled],
   );
 
+  // Helper: distance in steps to active (wraps around the circle)
+  const distanceTo = (i: number): number => {
+    const total = items.length;
+    const raw = Math.abs(i - value);
+    return Math.min(raw, total - raw);
+  };
+
+  // Helper: opacity per label
+  const opacityFor = (i: number): number => {
+    if (!focusMode) return 1;
+    const d = distanceTo(i);
+    if (d === 0) return 1;
+    if (d === 1) return 0.6;
+    return 0.28;
+  };
+
   return (
     <motion.div
       ref={ringRef}
@@ -199,7 +223,7 @@ export function VaultDial({
         willChange: isDragging ? 'transform' : undefined,
       }}
     >
-      {items.map((item, i) => renderLabel(item, i, spring))}
+      {items.map((item, i) => renderLabel(item, i, spring, opacityFor(i)))}
     </motion.div>
   );
 }
