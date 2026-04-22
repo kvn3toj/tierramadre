@@ -59,8 +59,9 @@ function readInitialState(): {
   const cooldownRaw = safeGetItem(VAULT_STORAGE.COOLDOWN_UNTIL);
   const attemptsRaw = safeGetItem(VAULT_STORAGE.ATTEMPTS);
 
-  const cooldownUntil = cooldownRaw ? Number.parseInt(cooldownRaw, 10) : null;
-  const attemptsUsed = attemptsRaw ? Number.parseInt(attemptsRaw, 10) : 0;
+  const cooldownUntilParsed = cooldownRaw ? Number.parseInt(cooldownRaw, 10) : null;
+  const cooldownUntil = Number.isFinite(cooldownUntilParsed) ? cooldownUntilParsed : null;
+  const attemptsUsed = attemptsRaw ? Number.parseInt(attemptsRaw, 10) || 0 : 0;
   const attemptsLeft = Math.max(0, VAULT_CONFIG.MAX_ATTEMPTS - attemptsUsed);
 
   if (cooldownUntil && cooldownUntil > Date.now()) {
@@ -138,7 +139,7 @@ export function useVaultUnlock(options: UseVaultUnlockOptions = {}): UseVaultUnl
   }, []);
 
   const tryUnlock = useCallback(() => {
-    if (state === 'unlocking' || state === 'cooldown') return;
+    if (state === 'unlocking' || state === 'cooldown' || state === 'error') return;
 
     const outerId = VAULT_SYMBOLS[outerIdx]?.id;
     if (!outerId) return;
@@ -195,6 +196,10 @@ export function useVaultUnlock(options: UseVaultUnlockOptions = {}): UseVaultUnl
   }, [state, outerIdx, innerIdx, ambassadorCodes, attemptsLeft]);
 
   const reset = useCallback(() => {
+    if (shakeTimeout.current) {
+      clearTimeout(shakeTimeout.current);
+      shakeTimeout.current = null;
+    }
     safeRemoveItem(VAULT_STORAGE.UNLOCKED);
     safeRemoveItem(VAULT_STORAGE.UNLOCK_METHOD);
     safeRemoveItem(VAULT_STORAGE.ATTEMPTS);
