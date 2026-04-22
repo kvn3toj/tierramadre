@@ -29,15 +29,6 @@ export function VaultMonumentCenter({
   const isLg = useMediaQuery('(min-width: 600px)');
   const numberSize = isLg ? typography.centerNumberSizeLg : typography.centerNumberSize;
 
-  const breathScale = !reducedMotion ? [1, 1.004, 1] : undefined;
-  const breathTransition = !reducedMotion
-    ? {
-        duration: vaultDurations.hubBreathMs / 1000,
-        ease: vaultEasing.breath,
-        repeat: Infinity,
-      }
-    : undefined;
-
   if (cooldownText) {
     return (
       <Box
@@ -63,8 +54,16 @@ export function VaultMonumentCenter({
 
   return (
     <motion.div
-      animate={{ scale: breathScale }}
-      transition={breathTransition}
+      animate={reducedMotion ? undefined : { scale: [1, 1.004, 1] }}
+      transition={
+        reducedMotion
+          ? undefined
+          : {
+              duration: vaultDurations.hubBreathMs / 1000,
+              ease: vaultEasing.breath,
+              repeat: Infinity,
+            }
+      }
       style={{
         position: 'absolute',
         top: '50%',
