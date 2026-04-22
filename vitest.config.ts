@@ -7,6 +7,9 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     environmentMatchGlobs: [
       ['tests/useVaultUnlock.test.ts', 'jsdom'],
+      ['tests/useVaultReducedMotion.test.ts', 'jsdom'],
+      ['tests/vault-cinematic-sequence.test.ts', 'jsdom'],
+      ['tests/vault-audio.test.ts', 'jsdom'],
     ],
   },
 });
