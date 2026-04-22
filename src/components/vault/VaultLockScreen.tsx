@@ -233,7 +233,7 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
         {/* Wheel container */}
         <Box
           ref={wheelRef}
-          role="img"
+          role="group"
           aria-label={combinationLabel}
           sx={{
             position: 'relative',

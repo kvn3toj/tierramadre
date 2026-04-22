@@ -29,8 +29,7 @@ export function VaultCenter({
 
   return (
     <Box
-      role="status"
-      aria-live="polite"
+      role="presentation"
       sx={{
         position: 'relative',
         zIndex: 10,
