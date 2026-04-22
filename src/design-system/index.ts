@@ -132,6 +132,19 @@ export {
 // CSS Transition helpers & Microinteraction tokens
 export { cssTransition, microinteraction } from './tokens/motion';
 
+// Vault Cinema (cinematic lockscreen tokens)
+export {
+  vaultCinema,
+  type VaultCinemaTokens,
+} from './tokens/vault-cinema';
+export {
+  vaultEasing,
+  vaultEasingCss,
+  vaultDurations,
+  type VaultEasing,
+  type VaultDurations,
+} from './tokens/vault-motion';
+
 // Primitives (re-exported for consistent import paths)
 export { primitiveColors } from './tokens/primitives/colors';
 export {
