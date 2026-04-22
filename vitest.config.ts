@@ -5,5 +5,8 @@ export default defineConfig({
     globals: false,
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    environmentMatchGlobs: [
+      ['tests/useVaultUnlock.test.ts', 'jsdom'],
+    ],
   },
 });
