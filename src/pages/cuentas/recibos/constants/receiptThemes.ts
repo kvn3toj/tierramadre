@@ -63,9 +63,9 @@ export interface BusinessSettings {
 
 // Default business settings
 export const defaultBusinessSettings: BusinessSettings = {
-  contactPhone: '+57 310 XXX XXXX',
-  contactEmail: 'info@tierramadre.co',
-  nit: 'NIT: 900.XXX.XXX-X',
+  contactPhone: '+57 311 305 2755',
+  contactEmail: 'direccion.tierramadre@gmail.com',
+  nit: 'NIT: 902.028.863-3',
   footerMessage: 'Gracias por su preferencia',
   footerNote: 'Este documento es un comprobante de pago válido. Las esmeraldas Tierra Madre cuentan con certificado de origen y autenticidad.',
   documentTypeLabels: {

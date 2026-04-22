@@ -80,8 +80,8 @@ function formatPhoneNumber(phone: string): string {
 function formatProductDetails(item: CartItem, index: number): string {
   const lines: string[] = [];
 
-  // Product header with name
-  lines.push(`${index + 1}. 💎 *${item.nombre}*`);
+  // Product header with name (green heart for brand identity, not diamond)
+  lines.push(`${index + 1}. 💚 *${item.nombre}*`);
   lines.push(`   Ref: #${item.item}`);
 
   // Type: Jewelry or Gem

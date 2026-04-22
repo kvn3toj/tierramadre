@@ -29,6 +29,8 @@ import ImageCropper from '../../../components/media/ImageCropper';
 import { emeraldCore, cssTransition } from '../../../design-system';
 import { useAsesorCollection } from '../../../hooks/useAsesorCollection';
 import { useAmbassadorPhoto } from '../../../hooks/useAmbassadorPhoto';
+import { useAmbassadorOverrides } from '../../../hooks/useAmbassadorOverrides';
+import { applyAmbassadorOverrides } from '../../../utils/applyAmbassadorOverride';
 import {
   ProfileHeader,
   CategoryGrid,
@@ -42,6 +44,7 @@ import {
   CotizacionPreviewDialog,
   ExclusiveCollectionSection,
   CollectionProductDialog,
+  ViewAllTreasuresFAB,
 } from './components';
 import type { ProfileStats } from './components';
 
@@ -113,6 +116,9 @@ export default function AsesorProfilePage() {
     reorderFavorites,
   } = useAmbassadorFavorites(slug);
 
+  // Ambassador per-product overrides (custom name / price) — T4 MVP
+  const { overrides: ambassadorOverrides } = useAmbassadorOverrides(slug);
+
   // Notify on photo upload result
   const prevUploadingRef = useRef(false);
   useEffect(() => {
@@ -165,18 +171,17 @@ export default function AsesorProfilePage() {
   // Categorize products for museum grid
   const categories = useMemo(() => categorizeProducts(allProducts), [allProducts]);
 
-  // Favorite items resolved
+  // Favorite items resolved (with ambassador per-product overrides applied)
   const favoriteItems = useMemo(() => {
-    if (favoriteIds.length === 0) {
-      // Default: top 6 by price
-      return [...allProducts]
-        .sort((a, b) => (b.precioCOP || 0) - (a.precioCOP || 0))
-        .slice(0, 6);
-    }
-    return favoriteIds
-      .map(id => allProducts.find(p => String(p.item) === id))
-      .filter(Boolean) as TreasureItem[];
-  }, [favoriteIds, allProducts]);
+    const baseList: TreasureItem[] = favoriteIds.length === 0
+      ? [...allProducts]
+          .sort((a, b) => (b.precioCOP || 0) - (a.precioCOP || 0))
+          .slice(0, 6)
+      : (favoriteIds
+          .map(id => allProducts.find(p => String(p.item) === id))
+          .filter(Boolean) as TreasureItem[]);
+    return applyAmbassadorOverrides(baseList, ambassadorOverrides);
+  }, [favoriteIds, allProducts, ambassadorOverrides]);
 
   // Calculate stats
   const stats: ProfileStats = useMemo(() => {
@@ -461,18 +466,8 @@ export default function AsesorProfilePage() {
               isUploadingPhoto={isUploadingPhoto}
             />
 
-            {/* My Cotizaciones — Only visible to profile owner */}
-            {isProfileOwner && (
-              <CotizacionesSection
-                cotizaciones={cotizacionHistory.cotizaciones}
-                isLoading={cotizacionHistory.isLoading}
-                onViewCotizacion={setSelectedCotizacion}
-                onDeleteCotizacion={handleDeleteCotizacion}
-                onDuplicateCotizacion={handleDuplicateCotizacion}
-              />
-            )}
-
-            {/* Exclusive Collection — visible to all visitors (share is owner-only) */}
+            {/* Exclusive Collection — shown FIRST so visitors see the
+                ambassador's own curation before the broader catalog (T3). */}
             {collectionFolder && (
               <ExclusiveCollectionSection
                 products={collectionProducts}
@@ -482,6 +477,17 @@ export default function AsesorProfilePage() {
                 isLoading={collectionLoading}
                 onProductClick={handleCollectionProductClick}
                 onShare={isProfileOwner ? handleShareCollection : undefined}
+              />
+            )}
+
+            {/* My Cotizaciones — Only visible to profile owner */}
+            {isProfileOwner && (
+              <CotizacionesSection
+                cotizaciones={cotizacionHistory.cotizaciones}
+                isLoading={cotizacionHistory.isLoading}
+                onViewCotizacion={setSelectedCotizacion}
+                onDeleteCotizacion={handleDeleteCotizacion}
+                onDuplicateCotizacion={handleDuplicateCotizacion}
               />
             )}
 
@@ -567,9 +573,16 @@ export default function AsesorProfilePage() {
             onAddFavorite={addFavorite}
             onRemoveFavorite={removeFavorite}
             onReorderFavorites={reorderFavorites}
+            asesorSlug={asesor.slug}
           />
         )}
       </AnimatePresence>
+
+      {/* Floating CTA: jump to the full TM treasure catalog from the
+          ambassador profile (T3). Only shown in the default museum view. */}
+      {activeView === 'museum' && asesor && (
+        <ViewAllTreasuresFAB asesorSlug={asesor.slug} />
+      )}
 
       <ScrollToTop />
     </Box>

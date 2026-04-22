@@ -208,7 +208,7 @@ export const en = {
       withoutPrices: 'Without prices',
       share: 'Share',
       shareTitle: 'Tierra Madre - Invitation',
-      shareText: 'Hi {name}, I invite you to explore our Colombian emerald collection. This link is valid for 24 hours.',
+      shareText: 'Hi {name}, I invite you to explore our Tierra Mädre Colombian emerald collection.',
       sharePinLine: 'Your access PIN: {pin}',
       newLink: 'New Link',
       nameRequired: 'Name is required',
@@ -472,6 +472,7 @@ export const en = {
     searchCatalog: 'Search in catalog...',
     category: 'Category',
     exclusiveCollection: 'Exclusive Collection',
+    viewAllTreasures: 'View all treasures',
     profile: {
       basicInfo: 'Basic Information',
       saveError: 'Error saving. Try again.',

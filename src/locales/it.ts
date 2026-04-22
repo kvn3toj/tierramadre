@@ -208,7 +208,7 @@ export const it = {
       withoutPrices: 'Senza prezzi',
       share: 'Condividi',
       shareTitle: 'Tierra Madre - Invito',
-      shareText: 'Ciao {name}, ti invito a esplorare la nostra collezione di smeraldi colombiani. Questo link è valido per 24 ore.',
+      shareText: 'Ciao {name}, ti invito a esplorare la nostra collezione di smeraldi colombiani Tierra Mädre.',
       sharePinLine: 'Il tuo PIN di accesso: {pin}',
       newLink: 'Nuovo Link',
       nameRequired: 'Il nome è obbligatorio',
@@ -590,6 +590,7 @@ export const it = {
     searchCatalog: 'Cerca nel catalogo...',
     category: 'Categoria',
     exclusiveCollection: 'Collezione Esclusiva',
+    viewAllTreasures: 'Vedi tutti i tesori',
     profile: {
       basicInfo: 'Informazioni di base',
       saveError: 'Errore nel salvataggio. Riprova.',

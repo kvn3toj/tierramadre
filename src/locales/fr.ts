@@ -208,7 +208,7 @@ export const fr = {
       withoutPrices: 'Sans prix',
       share: 'Partager',
       shareTitle: 'Tierra Madre - Invitation',
-      shareText: 'Bonjour {name}, je vous invite à explorer notre collection d\'émeraudes colombiennes. Ce lien est valide 24 heures.',
+      shareText: 'Bonjour {name}, je vous invite à explorer notre collection d\'émeraudes colombiennes Tierra Mädre.',
       sharePinLine: 'Votre PIN d\'accès : {pin}',
       newLink: 'Nouveau lien',
       nameRequired: 'Le nom est requis',
@@ -590,6 +590,7 @@ export const fr = {
     searchCatalog: 'Rechercher dans le catalogue...',
     category: 'Catégorie',
     exclusiveCollection: 'Collection Exclusive',
+    viewAllTreasures: 'Voir tous les trésors',
     profile: {
       basicInfo: 'Informations de base',
       saveError: 'Erreur de sauvegarde. Réessayez.',

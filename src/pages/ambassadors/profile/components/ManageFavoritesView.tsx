@@ -14,7 +14,7 @@ import {
   alpha,
   useTheme,
 } from '@mui/material';
-import { ArrowLeft, Search, X, Plus } from 'lucide-react';
+import { ArrowLeft, Search, X, Plus, Pencil } from 'lucide-react';
 import { Reorder } from 'framer-motion';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import {
@@ -26,6 +26,8 @@ import {
 } from '../../../../design-system';
 import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
 import type { TreasureItem } from '../../../../types';
+import { useAmbassadorOverrides } from '../../../../hooks/useAmbassadorOverrides';
+import { EditProductOverrideDialog } from './EditProductOverrideDialog';
 
 interface ManageFavoritesViewProps {
   allProducts: TreasureItem[];
@@ -34,6 +36,8 @@ interface ManageFavoritesViewProps {
   onAddFavorite: (itemId: string) => void;
   onRemoveFavorite: (itemId: string) => void;
   onReorderFavorites: (newOrder: string[]) => void;
+  /** Slug of the ambassador whose collection is being managed. */
+  asesorSlug?: string;
 }
 
 export function ManageFavoritesView({
@@ -43,11 +47,16 @@ export function ManageFavoritesView({
   onAddFavorite,
   onRemoveFavorite,
   onReorderFavorites,
+  asesorSlug,
 }: ManageFavoritesViewProps) {
   const theme = useTheme();
   const { t } = useLanguage();
   const isLight = theme.palette.mode === 'light';
   const [searchQuery, setSearchQuery] = useState('');
+
+  // T4: per-ambassador overrides (custom name / price)
+  const { getOverride, setOverride, clearOverride } = useAmbassadorOverrides(asesorSlug);
+  const [editingProduct, setEditingProduct] = useState<TreasureItem | null>(null);
 
   // O(1) lookup map instead of O(n) find() per item
   const productMap = useMemo(() => {
@@ -191,6 +200,29 @@ export function ManageFavoritesView({
                     >
                       <X size={12} />
                     </IconButton>
+                    {asesorSlug && (
+                      <IconButton
+                        onClick={() => setEditingProduct(item)}
+                        aria-label={`Editar nombre y precio de ${item.nombre}`}
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          bottom: 18,
+                          right: -6,
+                          width: 20,
+                          height: 20,
+                          bgcolor: emeraldCore.primary,
+                          color: '#fff',
+                          '&:hover': { bgcolor: emeraldCore.dark ?? emeraldCore.primary },
+                          zIndex: 1,
+                          ...(getOverride(id) ? {
+                            boxShadow: `0 0 0 2px #fff, 0 0 0 3px ${emeraldCore.primary}`,
+                          } : {}),
+                        }}
+                      >
+                        <Pencil size={11} />
+                      </IconButton>
+                    )}
                     <Typography
                       sx={{
                         fontSize: '0.52rem',
@@ -294,6 +326,26 @@ export function ManageFavoritesView({
           </Box>
         ))}
       </Box>
+
+      {/* T4: per-ambassador product overrides */}
+      <EditProductOverrideDialog
+        open={editingProduct !== null}
+        product={editingProduct}
+        currentOverride={editingProduct ? getOverride(editingProduct.item) : undefined}
+        onClose={() => setEditingProduct(null)}
+        onSave={(patch) => {
+          if (!editingProduct) return;
+          const result = setOverride(editingProduct.item, patch, editingProduct);
+          if (result.ok) {
+            setEditingProduct(null);
+          }
+        }}
+        onClear={() => {
+          if (!editingProduct) return;
+          clearOverride(editingProduct.item);
+          setEditingProduct(null);
+        }}
+      />
     </Box>
   );
 }

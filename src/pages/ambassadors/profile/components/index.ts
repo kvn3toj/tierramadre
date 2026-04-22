@@ -24,6 +24,10 @@ export { ExclusiveCollectionSection } from './ExclusiveCollectionSection';
 
 export { CollectionProductDialog } from './CollectionProductDialog';
 
+export { ViewAllTreasuresFAB } from './ViewAllTreasuresFAB';
+
+export { EditProductOverrideDialog } from './EditProductOverrideDialog';
+
 // Museum experience components
 export { CategoryGrid } from './CategoryGrid';
 export { FavoritesRow } from './FavoritesRow';

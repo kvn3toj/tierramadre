@@ -454,6 +454,11 @@ const LAST_ACTIVITY_KEY = STORAGE_KEYS.LAST_ACTIVITY;
 const INACTIVITY_THRESHOLD = 30 * 60 * 1000; // 30 minutes
 
 function shouldShowSplash(): boolean {
+  // Video generation mode — always show splash so the animation can be recorded
+  if (new URLSearchParams(window.location.search).get('video') === 'true') {
+    return true;
+  }
+
   // Public routes that have their own splash — skip the main app splash
   const path = window.location.pathname;
   if (path.startsWith('/c/') || path.startsWith('/invite/') || path.startsWith('/g/')) {

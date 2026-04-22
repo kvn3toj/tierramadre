@@ -208,7 +208,7 @@ export const zh = {
       withoutPrices: '不含价格',
       share: '分享',
       shareTitle: 'Tierra Madre - 邀请',
-      shareText: '你好 {name}，邀请您探索我们的哥伦比亚祖母绿系列。此链接24小时内有效。',
+      shareText: '你好 {name}，邀请您探索我们 Tierra Mädre 的哥伦比亚祖母绿系列。',
       sharePinLine: '您的访问PIN：{pin}',
       newLink: '新链接',
       nameRequired: '姓名为必填项',
@@ -472,6 +472,7 @@ export const zh = {
     searchCatalog: '在目录中搜索...',
     category: '类别',
     exclusiveCollection: '独家收藏',
+    viewAllTreasures: '查看所有珍宝',
     profile: {
       basicInfo: '基本信息',
       saveError: '保存出错，请重试。',

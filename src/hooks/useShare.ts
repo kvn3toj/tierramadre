@@ -95,8 +95,9 @@ function formatProductShareText(product: TreasureItem, productUrl: string, inclu
   const weight = typeof product.peso === 'number' ? `${formatCarats(product.peso)} ct` : '';
 
   // Build share text with emoji for visual appeal
+  // Brand identity: green heart instead of diamond for the share preview header.
   const lines = [
-    `💎 ${displayName}`,
+    `💚 ${displayName}`,
     ``,
     `✨ ${product.calidad} - ${product.color}`,
   ];

@@ -208,7 +208,7 @@ export const es = {
       withoutPrices: 'Sin precios',
       share: 'Compartir',
       shareTitle: 'Tierra Madre - Invitación',
-      shareText: 'Hola {name}, te invito a explorar nuestra colección de esmeraldas colombianas. Este enlace es válido por 24 horas.',
+      shareText: 'Hola {name}, te invito a explorar nuestra colección de esmeraldas colombianas Tierra Mädre.',
       sharePinLine: 'Tu PIN de acceso: {pin}',
       newLink: 'Nuevo Enlace',
       nameRequired: 'El nombre es requerido',
@@ -472,6 +472,7 @@ export const es = {
     searchCatalog: 'Buscar en catálogo...',
     category: 'Categoría',
     exclusiveCollection: 'Colección Exclusiva',
+    viewAllTreasures: 'Ver todos los tesoros',
     profile: {
       basicInfo: 'Información Básica',
       saveError: 'Error al guardar. Intenta de nuevo.',

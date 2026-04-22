@@ -105,6 +105,11 @@ export const STORAGE_KEYS = {
   VAULT_ATTEMPTS: 'vault-attempts',
   VAULT_COOLDOWN: 'vault-cooldown',
 
+  // Per-ambassador product overrides (custom name / price). MVP: localStorage,
+  // future: server-side via api/ambassador-product-override.
+  // Final key resolved as: `${AMBASSADOR_OVERRIDES_PREFIX}${slug}`.
+  AMBASSADOR_OVERRIDES_PREFIX: 'tm:ambassador-overrides:',
+
   // =============================================================================
   // ONBOARDING
   // =============================================================================
