@@ -1,24 +1,57 @@
 /**
  * VaultPage Component
  *
- * Bóveda Secreta - Exclusive space for rare and unique gems
- * NOT the regular treasure. This is a curated collection managed
- * exclusively by admin via Google Drive uploads.
- *
- * Currently: Empty placeholder with description
- * Future: Will display exclusive gems uploaded by admin
+ * Bóveda Secreta — Gate de acceso con dos anillos concéntricos (T9.1).
+ * Si el usuario no ha desbloqueado, muestra VaultLockScreen.
+ * Tras desbloquear, renderiza el contenido actual (placeholder hasta T9.2).
  */
 
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Typography, Paper, alpha } from '@mui/material';
 import { Lock, Sparkles, Crown, Shield, Upload } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { emeraldCore, goldAccent } from '../design-system/tokens/colors';
 import { iosTypographyScale } from '../design-system';
+import { VaultLockScreen } from '../components/vault';
+import { VAULT_STORAGE } from '../config/vault';
+import { useAsesores } from '../hooks/useAsesores';
+import type { UnlockMethod } from '../types/vault';
 
 const VaultPage: React.FC = () => {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+
+  const { ambassadorVaultCodes } = useAsesores();
+
+  const [unlocked, setUnlocked] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(VAULT_STORAGE.UNLOCKED) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  // Revalidate on tab focus in case admin reset unlock in another tab.
+  useEffect(() => {
+    const onFocus = () => {
+      try {
+        setUnlocked(localStorage.getItem(VAULT_STORAGE.UNLOCKED) === 'true');
+      } catch {
+        /* no-op */
+      }
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
+
+  const handleUnlock = useCallback((_meta: UnlockMethod) => {
+    setUnlocked(true);
+    // TODO(T9.3 analytics): track _meta.method with TrackingContext
+  }, []);
+
+  if (!unlocked) {
+    return <VaultLockScreen onUnlock={handleUnlock} ambassadorCodes={ambassadorVaultCodes} />;
+  }
 
   return (
     <Box>
