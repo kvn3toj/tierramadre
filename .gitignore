@@ -93,3 +93,4 @@ public/gallery/
 *.plugin
 .claude/settings.local.json
 .env*.local
+.superpowers/
