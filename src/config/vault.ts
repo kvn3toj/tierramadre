@@ -1,4 +1,4 @@
-import { emeraldCore, goldAccent } from '../design-system';
+import { emeraldCore, goldAccent, goldAlpha } from '../design-system';
 import type { VaultCombination, VaultSymbolMeta } from '../types/vault';
 
 export const VAULT_STORAGE = {
@@ -31,15 +31,15 @@ export const VAULT_UNIVERSAL: VaultCombination = {
 
 export const VAULT_SYMBOLS: readonly VaultSymbolMeta[] = [
   { id: 'esmeralda', name: 'Esmeralda', color: goldAccent.primary },
-  { id: 'sol', name: 'Sol', color: '#E5C866' },
+  { id: 'sol', name: 'Sol', color: goldAccent.light },
   { id: 'luna', name: 'Luna', color: '#C0C0C0' },
   { id: 'montana', name: 'Montaña', color: emeraldCore.primary },
   { id: 'rio', name: 'Río', color: '#4A90E2' },
   { id: 'arbol', name: 'Árbol', color: emeraldCore.dark },
   { id: 'ojo', name: 'Ojo', color: goldAccent.dark },
-  { id: 'estrella', name: 'Estrella', color: '#E5C866' },
+  { id: 'estrella', name: 'Estrella', color: goldAccent.light },
   { id: 'condor', name: 'Cóndor', color: '#8B7355' },
-  { id: 'jaguar', name: 'Jaguar', color: '#D4AF37' },
+  { id: 'jaguar', name: 'Jaguar', color: goldAccent.primary },
   { id: 'espiral', name: 'Espiral', color: emeraldCore.light },
   { id: 'corazon_verde', name: 'Corazón Verde', color: emeraldCore.primary },
 ] as const;
@@ -50,7 +50,7 @@ export const vaultPalette = {
   steel: '#2E2823',
   steelLight: '#5C5148',
   gold: goldAccent.primary,
-  goldGlow: 'rgba(212, 175, 55, 0.55)',
+  goldGlow: goldAlpha(0.55),
   emerald: emeraldCore.primary,
   error: '#C94C4C',
   textMuted: 'rgba(255, 255, 255, 0.55)',
