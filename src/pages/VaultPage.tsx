@@ -24,25 +24,23 @@ const VaultPage: React.FC = () => {
 
   const { ambassadorVaultCodes } = useAsesores();
 
-  const [unlocked, setUnlocked] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(VAULT_STORAGE.UNLOCKED) === 'true';
-    } catch {
-      return false;
-    }
-  });
+  // Each visit requires re-entering the combination. The unlock lives only
+  // in this component's memory for the current mount; it is NOT persisted.
+  const [unlocked, setUnlocked] = useState<boolean>(false);
 
-  // Revalidate on tab focus in case admin reset unlock in another tab.
+  // Clear any stale persisted unlock on mount AND on unmount so a refresh /
+  // back-and-forth navigation always starts with the lockscreen.
   useEffect(() => {
-    const onFocus = () => {
+    const clear = () => {
       try {
-        setUnlocked(localStorage.getItem(VAULT_STORAGE.UNLOCKED) === 'true');
+        localStorage.removeItem(VAULT_STORAGE.UNLOCKED);
+        localStorage.removeItem(VAULT_STORAGE.UNLOCK_METHOD);
       } catch {
         /* no-op */
       }
     };
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
+    clear();
+    return clear;
   }, []);
 
   const handleUnlock = useCallback((_meta: UnlockMethod) => {
