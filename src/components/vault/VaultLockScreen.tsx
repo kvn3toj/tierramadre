@@ -1,19 +1,29 @@
-import { Box, Button, Typography, alpha } from '@mui/material';
+// src/components/vault/VaultLockScreen.tsx
+import { Box, Button } from '@mui/material';
 import { motion, type MotionValue } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Lock } from 'lucide-react';
-import { VAULT_CONFIG, VAULT_STORAGE, VAULT_SYMBOLS, vaultPalette } from '../../config/vault';
+import { Lock, Volume2, VolumeX } from 'lucide-react';
+import { vaultCinema, vaultDurations, vaultEasing } from '../../design-system';
+import { VAULT_CONFIG, VAULT_STORAGE, VAULT_SYMBOLS } from '../../config/vault';
 import { useVaultUnlock } from '../../hooks/useVaultUnlock';
-import type { UnlockMethod, VaultCombination, VaultSymbolMeta } from '../../types/vault';
-import { VaultCenter } from './VaultCenter';
+import { useVaultReducedMotion } from '../../hooks/useVaultReducedMotion';
+import type { UnlockMethod, VaultCombination } from '../../types/vault';
 import { VaultDial, type VaultDialItem } from './VaultDial';
 import { VaultDialLabel } from './VaultDialLabel';
-import { VaultSymbol } from './VaultSymbol';
+import { VaultDoorFrame } from './cinematic/VaultDoorFrame';
+import { VaultGemPointer } from './cinematic/VaultGemPointer';
+import { VaultMonumentCenter } from './cinematic/VaultMonumentCenter';
+import { VaultCardinalRelease } from './cinematic/VaultCardinalRelease';
+import { VaultInterior } from './cinematic/VaultInterior';
+import { useVaultCinematicSequence } from './cinematic/useVaultCinematicSequence';
+import { useVaultAudio } from './audio/useVaultAudio';
 
 export interface VaultLockScreenProps {
   onUnlock: (meta: UnlockMethod) => void;
   ambassadorCodes?: Map<string, VaultCombination>;
 }
+
+const { color, alpha, typography } = vaultCinema;
 
 export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenProps) {
   const {
@@ -27,28 +37,22 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
     tryUnlock,
   } = useVaultUnlock({ ambassadorCodes });
 
-  const outerSymbol: VaultSymbolMeta = VAULT_SYMBOLS[outerIdx];
-
+  const { reducedMotion, idleAnimationsAllowed } = useVaultReducedMotion();
+  // For idle loops we want to pause when EITHER reduced-motion is on OR the tab is hidden.
+  const pauseIdleLoops = !idleAnimationsAllowed;
+  const audio = useVaultAudio();
   const wheelRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const [fadeOut, setFadeOut] = useState(false);
+  const [containerOpacity, setContainerOpacity] = useState(1);
+  const lastUnlockAttempt = useRef<number>(0);
 
-  // Responsive scale.
-  useEffect(() => {
-    const el = wheelRef.current;
-    if (!el) return;
-    const obs = new ResizeObserver(([entry]) => {
-      setScale(Math.min(1, entry.contentRect.width / VAULT_CONFIG.WHEEL_BASE));
-    });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
+  const outerSymbol = VAULT_SYMBOLS[outerIdx];
 
-  // Fire onUnlock after glow + fade.
-  useEffect(() => {
-    if (state !== 'unlocking') return;
-    const glow = setTimeout(() => setFadeOut(true), VAULT_CONFIG.UNLOCK_ANIMATION_MS);
-    const finish = setTimeout(() => {
+  const sequence = useVaultCinematicSequence({
+    state,
+    reducedMotion,
+    onSequenceComplete: useCallback(() => {
+      setContainerOpacity(0);
       const raw = (() => {
         try {
           return localStorage.getItem(VAULT_STORAGE.UNLOCK_METHOD);
@@ -63,36 +67,41 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
       } else {
         onUnlock({ method: 'universal' });
       }
-    }, VAULT_CONFIG.UNLOCK_ANIMATION_MS + VAULT_CONFIG.FADE_OUT_MS);
-    return () => {
-      clearTimeout(glow);
-      clearTimeout(finish);
-    };
-  }, [state, onUnlock]);
+    }, [onUnlock]),
+  });
 
-  // Outer items (symbols).
+  // Trigger audio per phase
+  useEffect(() => {
+    if (sequence.phase === 'confirm') void audio.play('click-suizo');
+    if (sequence.phase === 'release') void audio.play('thunk-mecanico');
+    if (sequence.phase === 'swing') void audio.play('crujido-swing');
+    if (sequence.phase === 'reveal') void audio.play('pad-reveal');
+    if (sequence.phase === 'failure') void audio.play('shake-error');
+  }, [sequence.phase, audio]);
+
+  // Responsive scale (keep existing behaviour from previous version)
+  useEffect(() => {
+    const el = wheelRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(([entry]) => {
+      setScale(Math.min(1, entry.contentRect.width / VAULT_CONFIG.WHEEL_BASE));
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   const outerItems: VaultDialItem[] = useMemo(
-    () =>
-      VAULT_SYMBOLS.map((s) => ({
-        id: s.id,
-        label: s.name,
-        color: s.color,
-      })),
+    () => VAULT_SYMBOLS.map((s) => ({ id: s.id, label: s.name, color: s.color })),
     [],
   );
-
-  // Inner items (digits 0-9).
   const innerItems: VaultDialItem[] = useMemo(
-    () =>
-      Array.from({ length: VAULT_CONFIG.INNER_STEPS }, (_, i) => ({
-        id: String(i),
-        label: i,
-      })),
+    () => Array.from({ length: VAULT_CONFIG.INNER_STEPS }, (_, i) => ({ id: String(i), label: i })),
     [],
   );
 
+  // Render labels: vertical Playfair, opacity from focusMode
   const renderOuterLabel = useCallback(
-    (item: VaultDialItem, i: number, ringRotate: MotionValue<number>) => (
+    (item: VaultDialItem, i: number, ringRotate: MotionValue<number>, opacity: number) => (
       <VaultDialLabel
         key={item.id}
         index={i}
@@ -100,18 +109,27 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
         radius={VAULT_CONFIG.OUTER_RADIUS}
         ringRotate={ringRotate}
         width={72}
+        opacity={opacity}
       >
-        <VaultSymbol id={VAULT_SYMBOLS[i].id} size={22} color={item.color} />
         <Box
           component="span"
           sx={{
-            mt: 0.3,
-            fontSize: { xs: '9px', md: '10px' },
-            fontWeight: 600,
+            fontFamily: typography.family,
+            fontStyle: 'italic',
+            fontSize:
+              opacity === 1
+                ? typography.dialSymbolSizeActive
+                : typography.dialSymbolSize,
+            color:
+              opacity === 1
+                ? color.emeraldLight
+                : `rgba(201, 169, 97, ${alpha.rimMedium})`,
             textAlign: 'center',
-            lineHeight: 1.1,
-            color: item.color,
-            textShadow: '0 1px 4px rgba(0, 0, 0, 0.8)',
+            textShadow:
+              opacity === 1
+                ? '0 0 8px rgba(0, 174, 122, 0.5)'
+                : 'none',
+            whiteSpace: 'nowrap',
           }}
         >
           {VAULT_SYMBOLS[i].name}
@@ -122,7 +140,7 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
   );
 
   const renderInnerLabel = useCallback(
-    (item: VaultDialItem, i: number, ringRotate: MotionValue<number>) => (
+    (item: VaultDialItem, i: number, ringRotate: MotionValue<number>, opacity: number) => (
       <VaultDialLabel
         key={item.id}
         index={i}
@@ -130,15 +148,18 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
         radius={VAULT_CONFIG.INNER_RADIUS}
         ringRotate={ringRotate}
         width={40}
+        opacity={opacity}
       >
         <Box
           component="span"
           sx={{
-            fontFamily: '"Playfair Display", serif',
-            fontSize: { xs: '18px', md: '20px' },
-            fontWeight: 700,
-            color: vaultPalette.gold,
-            textShadow: '0 1px 6px rgba(0, 0, 0, 0.8)',
+            fontFamily: typography.family,
+            fontSize:
+              opacity === 1
+                ? typography.dialDigitSizeActive
+                : typography.dialDigitSize,
+            fontWeight: opacity === 1 ? 500 : 400,
+            color: opacity === 1 ? color.champagneBright : color.champagne,
             fontVariantNumeric: 'tabular-nums',
           }}
         >
@@ -149,14 +170,42 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
     [],
   );
 
-  const disabled = state === 'unlocking' || state === 'cooldown';
+  const isInteractive =
+    state === 'idle' && sequence.phase === 'idle';
+  const isCooldown = state === 'cooldown';
 
-  const combinationLabel = `Combinación: ${outerSymbol.name}, ${innerIdx}`;
+  const onConfirmClick = useCallback(() => {
+    const now = Date.now();
+    if (now - lastUnlockAttempt.current < vaultDurations.unlockDebounceMs) return;
+    lastUnlockAttempt.current = now;
+    if (!isInteractive) return;
+    (document.activeElement as HTMLElement | null)?.blur?.();
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(10);
+      } catch {
+        /* no-op */
+      }
+    }
+    tryUnlock();
+  }, [tryUnlock, isInteractive]);
+
+  const isFailure = sequence.phase === 'failure';
+  const isUnlocking = ['anticipate', 'confirm', 'release', 'swing', 'reveal', 'dolly'].includes(
+    sequence.phase,
+  );
+  const isCenterHighlighted = ['confirm', 'release'].includes(sequence.phase);
+  const isCardinalActive = ['release', 'swing', 'reveal', 'dolly'].includes(sequence.phase);
+  const isInteriorActive = ['reveal', 'dolly'].includes(sequence.phase);
+  const isPointerPulsing = sequence.phase === 'confirm';
 
   return (
     <motion.div
-      animate={fadeOut ? { opacity: 0, scale: 1.06 } : { opacity: 1, scale: 1 }}
-      transition={{ duration: VAULT_CONFIG.FADE_OUT_MS / 1000, ease: 'easeIn' }}
+      animate={{ opacity: containerOpacity, scale: containerOpacity === 0 ? 1.06 : 1 }}
+      transition={{
+        duration: vaultDurations.dollyMs / 1000,
+        ease: vaultEasing.silk,
+      }}
       style={{
         position: 'fixed',
         inset: 0,
@@ -165,196 +214,203 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
+        background: color.ink,
       }}
     >
-      {/* Background layers */}
       <Box
-        aria-hidden
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          background: `radial-gradient(circle at center, ${vaultPalette.bg} 0%, #000 70%)`,
-        }}
-      />
-      <Box
-        aria-hidden
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: vaultPalette.bgOverlay,
-          backdropFilter: 'blur(4px)',
-          WebkitBackdropFilter: 'blur(4px)',
-        }}
-      />
-
-      {/* Content */}
-      <Box
+        // inert is a valid HTML attribute (React 18 supports it via spread); MUI Box types lag behind.
+        {...({ inert: isUnlocking ? '' : undefined } as Record<string, unknown>)}
+        aria-hidden={isUnlocking ? true : undefined}
         sx={{
           position: 'relative',
           zIndex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 0.5,
+          gap: 1,
           px: 2,
           py: 2.5,
           width: '100%',
-          maxWidth: 460,
+          maxWidth: 480,
           paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 0px))',
           paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))',
         }}
       >
-        <Typography
+        <Box
           component="h1"
           sx={{
-            fontFamily: '"Playfair Display", serif',
+            fontFamily: typography.family,
             fontSize: '2.25rem',
-            fontWeight: 700,
-            color: '#fff',
-            textShadow: '0 2px 12px rgba(0, 0, 0, 0.5)',
+            fontWeight: 400,
+            color: color.champagneBright,
             letterSpacing: '-0.02em',
+            margin: 0,
           }}
         >
           Bóveda Secreta
-        </Typography>
-        <Typography
+        </Box>
+        <Box
+          component="p"
           sx={{
-            fontSize: '0.75rem',
-            color: vaultPalette.textMuted,
-            mt: -0.5,
-            mb: 1,
+            fontSize: '0.7rem',
+            color: `rgba(201, 169, 97, 0.55)`,
+            margin: 0,
             textTransform: 'uppercase',
-            letterSpacing: '0.1em',
+            letterSpacing: '0.18em',
+            fontFamily: typography.metaFamily,
           }}
         >
           Gira las ruedas y abre
-        </Typography>
+        </Box>
 
-        {/* Wheel container */}
+        {/* Cinematic door frame */}
         <Box
           ref={wheelRef}
-          role="group"
-          aria-label={combinationLabel}
           sx={{
             position: 'relative',
             aspectRatio: '1 / 1',
             width: '100%',
             maxWidth: `min(92vw, ${VAULT_CONFIG.WHEEL_BASE}px)`,
+            mt: 1.5,
           }}
         >
-          {/* Top pointer */}
-          <Box
-            aria-hidden
-            sx={{
-              position: 'absolute',
-              left: '50%',
-              top: 0,
-              transform: 'translateX(-50%)',
-              zIndex: 20,
-              pointerEvents: 'none',
-              filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6))',
-              width: 0,
-              height: 0,
-              borderLeft: '12px solid transparent',
-              borderRight: '12px solid transparent',
-              borderTop: `20px solid ${vaultPalette.gold}`,
-            }}
-          />
-
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transform: `scale(${scale})`,
-            }}
+          <VaultDoorFrame
+            ariaLabel={`Combinación: ${outerSymbol.name}, ${innerIdx}`}
+            makerMark={isFailure ? `${attemptsLeft} intentos restantes` : 'Tierra Madre · Esencia y Poder'}
           >
-            <VaultDial
-              items={outerItems}
-              value={outerIdx}
-              onChange={setOuterIdx}
-              size={VAULT_CONFIG.OUTER_SIZE}
-              radius={VAULT_CONFIG.OUTER_RADIUS}
-              disabled={disabled}
-              ariaLabel="Anillo exterior: símbolo"
-              renderLabel={renderOuterLabel}
+            {/* Dials */}
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transform: `scale(${scale})`,
+              }}
+            >
+              <VaultDial
+                items={outerItems}
+                value={outerIdx}
+                onChange={setOuterIdx}
+                size={VAULT_CONFIG.OUTER_SIZE}
+                radius={VAULT_CONFIG.OUTER_RADIUS}
+                disabled={!isInteractive}
+                ariaLabel="Anillo exterior: símbolo"
+                renderLabel={renderOuterLabel}
+                focusMode
+              />
+              <VaultDial
+                items={innerItems}
+                value={innerIdx}
+                onChange={setInnerIdx}
+                size={VAULT_CONFIG.INNER_SIZE}
+                radius={VAULT_CONFIG.INNER_RADIUS}
+                disabled={!isInteractive}
+                ariaLabel="Anillo interior: dígito"
+                renderLabel={renderInnerLabel}
+                focusMode
+              />
+            </Box>
+
+            {/* Center display */}
+            <VaultMonumentCenter
+              symbolName={outerSymbol.name}
+              digit={innerIdx}
+              highlighted={isCenterHighlighted}
+              reducedMotion={pauseIdleLoops}
+              cooldownText={
+                isCooldown ? formatCooldown(cooldownSecondsLeft) : undefined
+              }
             />
-            <VaultDial
-              items={innerItems}
-              value={innerIdx}
-              onChange={setInnerIdx}
-              size={VAULT_CONFIG.INNER_SIZE}
-              radius={VAULT_CONFIG.INNER_RADIUS}
-              disabled={disabled}
-              ariaLabel="Anillo interior: dígito"
-              renderLabel={renderInnerLabel}
+
+            {/* Cardinal release */}
+            <VaultCardinalRelease active={isCardinalActive} reducedMotion={reducedMotion} />
+
+            {/* Interior reveal */}
+            <VaultInterior active={isInteriorActive} reducedMotion={reducedMotion} />
+
+            {/* Top pointer + gem */}
+            <VaultGemPointer
+              reducedMotion={pauseIdleLoops}
+              pulse={isPointerPulsing}
+              gemColor={isFailure ? color.coral : undefined}
             />
-            <VaultCenter
-              outerSymbol={outerSymbol}
-              innerDigit={innerIdx}
-              state={state}
-              cooldownSecondsLeft={cooldownSecondsLeft}
-            />
-          </Box>
+          </VaultDoorFrame>
         </Box>
 
-        {/* Error / attempt feedback */}
+        {/* Status line */}
         <Box
-          aria-live="polite"
+          aria-live={isFailure ? 'polite' : 'off'}
           sx={{
             height: 20,
             mt: 0.5,
             fontSize: '0.75rem',
-            color: vaultPalette.error,
+            color: color.coral,
             textAlign: 'center',
           }}
         >
-          {state === 'error' &&
+          {isFailure &&
             (attemptsLeft > 0
               ? `Combinación incorrecta. ${attemptsLeft} intento${attemptsLeft === 1 ? '' : 's'} restante${attemptsLeft === 1 ? '' : 's'}.`
               : 'Demasiados intentos. Bóveda bloqueada.')}
         </Box>
 
-        {/* Confirm */}
+        {/* Confirm button */}
         <Button
-          onClick={tryUnlock}
-          disabled={disabled}
+          onClick={onConfirmClick}
+          disabled={!isInteractive}
           aria-label="Confirmar combinación"
           sx={{
             minWidth: 130,
             height: 46,
             borderRadius: '14px',
-            fontFamily: '"DM Sans", system-ui, sans-serif',
+            fontFamily: typography.metaFamily,
             fontSize: '0.85rem',
             fontWeight: 600,
-            letterSpacing: '0.1em',
+            letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: 'rgba(255, 255, 255, 0.85)',
-            backgroundColor: alpha(vaultPalette.gold, 0.12),
-            border: `1px solid ${alpha(vaultPalette.gold, 0.3)}`,
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            transition: 'all 0.2s ease',
+            color: color.champagneBright,
+            background: 'transparent',
+            border: `1px solid rgba(201, 169, 97, ${alpha.rimMedium})`,
+            transition: 'all 200ms cubic-bezier(0.22, 1, 0.36, 1)',
             mt: 1,
             '&:hover': {
-              backgroundColor: alpha(vaultPalette.gold, 0.2),
-              borderColor: alpha(vaultPalette.gold, 0.45),
+              background: `rgba(201, 169, 97, 0.08)`,
+              borderColor: `rgba(201, 169, 97, 0.5)`,
             },
-            '&:active': {
-              backgroundColor: alpha(vaultPalette.gold, 0.25),
-            },
-            '&.Mui-disabled': {
-              color: 'rgba(255, 255, 255, 0.4)',
-              borderColor: alpha(vaultPalette.gold, 0.2),
-              backgroundColor: alpha(vaultPalette.gold, 0.05),
+            '&:disabled': {
+              color: `rgba(201, 169, 97, 0.4)`,
+              borderColor: `rgba(201, 169, 97, 0.15)`,
             },
           }}
         >
-          {state === 'unlocking' ? <Lock size={16} color={vaultPalette.gold} /> : 'Abrir'}
+          {isUnlocking ? <Lock size={16} color={color.champagne} /> : 'Abrir'}
+        </Button>
+
+        {/* Audio toggle */}
+        <Button
+          onClick={audio.toggle}
+          aria-label={audio.enabled ? 'Silenciar audio' : 'Activar audio'}
+          sx={{
+            minWidth: 0,
+            width: 36,
+            height: 36,
+            mt: 0.5,
+            borderRadius: '50%',
+            color: `rgba(201, 169, 97, 0.5)`,
+            '&:hover': { background: 'rgba(201, 169, 97, 0.08)' },
+          }}
+        >
+          {audio.enabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
         </Button>
       </Box>
     </motion.div>
   );
+}
+
+function formatCooldown(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }

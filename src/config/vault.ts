@@ -1,4 +1,4 @@
-import { emeraldCore, goldAccent, goldAlpha } from '../design-system';
+import { emeraldCore, goldAccent, vaultCinema } from '../design-system';
 import type { VaultCombination, VaultSymbolMeta } from '../types/vault';
 
 export const VAULT_STORAGE = {
@@ -44,15 +44,20 @@ export const VAULT_SYMBOLS: readonly VaultSymbolMeta[] = [
   { id: 'corazon_verde', name: 'Corazón Verde', color: emeraldCore.primary },
 ] as const;
 
+/**
+ * @deprecated Use `vaultCinema` from `@/design-system` instead.
+ * Preserved as a shim for legacy consumers (VaultCenter, VaultSymbol, etc.).
+ * Will be removed in a future minor release.
+ */
 export const vaultPalette = {
-  bg: '#0A0604',
+  bg: vaultCinema.color.nightDeep,
   bgOverlay: 'rgba(0, 0, 0, 0.82)',
   steel: '#2E2823',
   steelLight: '#5C5148',
-  gold: goldAccent.primary,
-  goldGlow: goldAlpha(0.55),
-  emerald: emeraldCore.primary,
-  error: '#C94C4C',
+  gold: vaultCinema.color.champagne,
+  goldGlow: 'rgba(212, 175, 55, 0.55)',
+  emerald: vaultCinema.color.emerald,
+  error: vaultCinema.color.coral,
   textMuted: 'rgba(255, 255, 255, 0.55)',
-  textOnGold: '#0A0604',
+  textOnGold: vaultCinema.color.nightDeep,
 } as const;

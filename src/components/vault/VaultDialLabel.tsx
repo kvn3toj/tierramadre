@@ -1,24 +1,21 @@
+// src/components/vault/VaultDialLabel.tsx
 import { motion, useTransform, type MotionValue } from 'framer-motion';
 import type { ReactNode } from 'react';
 
 interface VaultDialLabelProps {
-  /** Contenido a renderizar (símbolo, dígito, lo que sea). */
   children: ReactNode;
-  /** Índice de este label en el anillo. */
   index: number;
-  /** Total de labels en el anillo (usado para calcular ángulo). */
   totalItems: number;
-  /** Distancia del centro del anillo al label (px). */
   radius: number;
-  /** MotionValue de la rotación del anillo padre. */
   ringRotate: MotionValue<number>;
-  /** Ancho fijo del label (px). */
   width?: number;
+  /** Opacidad del label (foco suave: 1 active, 0.6 vecinos, 0.28 resto). */
+  opacity?: number;
 }
 
 /**
  * Posiciona el label en un punto del círculo y lo contrarrota con el spring del anillo
- * para que siempre quede horizontal al lector.
+ * para que siempre quede horizontal al lector. Acepta opacity para implementar el foco suave.
  */
 export function VaultDialLabel({
   children,
@@ -27,6 +24,7 @@ export function VaultDialLabel({
   radius,
   ringRotate,
   width = 64,
+  opacity = 1,
 }: VaultDialLabelProps) {
   const itemDeg = 360 / totalItems;
   const rot = index * itemDeg;
@@ -56,6 +54,8 @@ export function VaultDialLabel({
           flexDirection: 'column',
           alignItems: 'center',
           gap: 2,
+          opacity,
+          transition: 'opacity 200ms cubic-bezier(0.22, 1, 0.36, 1)',
         }}
       >
         {children}
