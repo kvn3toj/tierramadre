@@ -8,10 +8,11 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Typography, Paper, alpha } from '@mui/material';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Lock, Sparkles, Crown, Shield, Upload } from 'lucide-react';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { emeraldCore, goldAccent } from '../design-system/tokens/colors';
-import { iosTypographyScale } from '../design-system';
+import { iosTypographyScale, vaultEasing } from '../design-system';
 import { VaultLockScreen } from '../components/vault';
 import { VAULT_STORAGE } from '../config/vault';
 import { useAsesores } from '../hooks/useAsesores';
@@ -49,13 +50,25 @@ const VaultPage: React.FC = () => {
     // TODO(T9.3 analytics): track _meta.method with TrackingContext
   }, []);
 
-  if (!unlocked) {
-    return <VaultLockScreen onUnlock={handleUnlock} ambassadorCodes={ambassadorVaultCodes} />;
-  }
-
   return (
-    <Box>
-      <Box sx={{ maxWidth: 600, mx: 'auto', px: 2, py: 4 }}>
+    <AnimatePresence mode="wait">
+      {!unlocked ? (
+        <motion.div
+          key="vault-lock"
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25, ease: vaultEasing.silk }}
+        >
+          <VaultLockScreen onUnlock={handleUnlock} ambassadorCodes={ambassadorVaultCodes} />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="vault-content"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, ease: vaultEasing.silk, delay: 0.05 }}
+        >
+          <Box>
+            <Box sx={{ maxWidth: 600, mx: 'auto', px: 2, py: 4 }}>
           {/* Header */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Box
@@ -202,7 +215,10 @@ const VaultPage: React.FC = () => {
             </Typography>
           </Paper>
         </Box>
-    </Box>
+          </Box>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

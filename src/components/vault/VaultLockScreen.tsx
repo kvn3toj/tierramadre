@@ -52,6 +52,9 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
     state,
     reducedMotion,
     onSequenceComplete: useCallback(() => {
+      // Start the dolly fade-out, THEN hand off to the parent after the fade
+      // completes — otherwise the parent unmounts us mid-fade and the user
+      // sees a hard cut instead of the cinematic transition.
       setContainerOpacity(0);
       const raw = (() => {
         try {
@@ -60,13 +63,19 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
           return null;
         }
       })();
-      if (raw === 'universal') {
-        onUnlock({ method: 'universal' });
-      } else if (raw && raw.startsWith('ambassador:')) {
-        onUnlock({ method: 'ambassador', ambassadorSlug: raw.slice('ambassador:'.length) });
-      } else {
-        onUnlock({ method: 'universal' });
-      }
+      const fireUnlock = () => {
+        if (raw === 'universal') {
+          onUnlock({ method: 'universal' });
+        } else if (raw && raw.startsWith('ambassador:')) {
+          onUnlock({
+            method: 'ambassador',
+            ambassadorSlug: raw.slice('ambassador:'.length),
+          });
+        } else {
+          onUnlock({ method: 'universal' });
+        }
+      };
+      window.setTimeout(fireUnlock, vaultDurations.dollyMs);
     }, [onUnlock]),
   });
 
