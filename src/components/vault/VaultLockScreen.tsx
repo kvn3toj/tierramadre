@@ -37,7 +37,9 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
     tryUnlock,
   } = useVaultUnlock({ ambassadorCodes });
 
-  const { reducedMotion } = useVaultReducedMotion();
+  const { reducedMotion, idleAnimationsAllowed } = useVaultReducedMotion();
+  // For idle loops we want to pause when EITHER reduced-motion is on OR the tab is hidden.
+  const pauseIdleLoops = !idleAnimationsAllowed;
   const audio = useVaultAudio();
   const wheelRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -316,7 +318,7 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
               symbolName={outerSymbol.name}
               digit={innerIdx}
               highlighted={isCenterHighlighted}
-              reducedMotion={reducedMotion}
+              reducedMotion={pauseIdleLoops}
               cooldownText={
                 isCooldown ? formatCooldown(cooldownSecondsLeft) : undefined
               }
@@ -330,7 +332,7 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
 
             {/* Top pointer + gem */}
             <VaultGemPointer
-              reducedMotion={reducedMotion}
+              reducedMotion={pauseIdleLoops}
               pulse={isPointerPulsing}
               gemColor={isFailure ? color.coral : undefined}
             />
