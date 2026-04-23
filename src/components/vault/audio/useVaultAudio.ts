@@ -1,5 +1,5 @@
 // src/components/vault/audio/useVaultAudio.ts
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { VAULT_AUDIO_STORAGE_KEY, VAULT_SAMPLES, type VaultSampleId } from './samples';
 
 export interface UseVaultAudioReturn {
@@ -120,5 +120,5 @@ export function useVaultAudio(): UseVaultAudioReturn {
     [enabled, loadBuffer],
   );
 
-  return { enabled, toggle, play };
+  return useMemo(() => ({ enabled, toggle, play }), [enabled, toggle, play]);
 }
