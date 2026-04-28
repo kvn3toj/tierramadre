@@ -40,6 +40,7 @@ import { surfacesLight, surfacesDark, goldAccent, emeraldCore } from '../../../d
 import { buttonGradients } from '../../../design-system/tokens/gradients';
 import { accentColors, lightTokens, zIndex } from '../../../design-system';
 import { SpecificationsList, AdditionalInfo, ProductActions } from './components';
+import { EsmereogenesisCTA } from '../../../components/esmereogenesis/EsmereogenesisCTA';
 import Breadcrumbs from '../../../components/shared/Breadcrumbs';
 import { scrollMainTo } from '../../../utils/mainScroll';
 
@@ -505,6 +506,13 @@ export default function ProductDetail() {
                 onShare={handleShareProduct}
                 onContact={handleContact}
               />
+            )}
+
+            {/* Esmereogénesis - savings-with-purpose method */}
+            {!isProvider && product && (
+              <Box sx={{ mt: 1.5 }}>
+                <EsmereogenesisCTA product={product} disabled={!isAvailable} />
+              </Box>
             )}
 
             {/* Member Benefits Teaser - Only for Guest Users */}

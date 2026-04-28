@@ -105,6 +105,12 @@ export const STORAGE_KEYS = {
   VAULT_ATTEMPTS: 'vault-attempts',
   VAULT_COOLDOWN: 'vault-cooldown',
 
+  // Esmereogénesis (savings-with-purpose method)
+  ESMEREO_PLANS: 'tierra-madre-esmereo-plans',
+  ESMEREO_AUDIO_ENABLED: 'tierra-madre-esmereo-audio',
+  ESMEREO_HAPTIC_ENABLED: 'tierra-madre-esmereo-haptic',
+  ESMEREO_DEMO_DISMISSED: 'tierra-madre-esmereo-demo-dismissed',
+
   // Per-ambassador product overrides (custom name / price). MVP: localStorage,
   // future: server-side via api/ambassador-product-override.
   // Final key resolved as: `${AMBASSADOR_OVERRIDES_PREFIX}${slug}`.

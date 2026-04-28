@@ -1,0 +1,435 @@
+/**
+ * AbonoCinematic
+ *
+ * Full-screen cinematic takeover that plays when the user confirms an aporte.
+ * Renders the LivingEmerald at center and orchestrates phased visual layers
+ * (droplet, wash, reveal, bloom, progress count-up, confirmation, release).
+ *
+ * The state mutation (addAporte) MUST already have happened by the time this
+ * component is mounted with `active=true`. This component only renders the
+ * ceremony based on the new plan state.
+ */
+
+import React, { useEffect, useMemo, useState } from 'react';
+import { Box, Typography, alpha } from '@mui/material';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { Droplet, Sparkles, Check } from 'lucide-react';
+import { LivingEmerald } from '../LivingEmerald';
+import type { EsmereoPlan } from '../../../types/esmereogenesis';
+import { useAbonoSequence } from './useAbonoSequence';
+import { emeraldCore, goldAccent } from '../../../design-system/tokens/colors';
+import {
+  emeraldGradients,
+  meshGradients,
+  radialGradients,
+} from '../../../design-system/tokens/gradients';
+import { useCurrencyFormat } from '../../../contexts/CurrencyContext';
+import { useEsmereogenesis } from '../../../contexts/EsmereogenesisContext';
+import { useTrackingDispatch } from '../../../contexts/TrackingContext';
+
+interface AbonoCinematicProps {
+  /** Plan AFTER the aporte has been applied. */
+  plan: EsmereoPlan;
+  /** Aporte that was just added (used for amount display). */
+  aporteAmount: number;
+  /** True when this aporte crossed the 100% threshold. */
+  isCompletion: boolean;
+  /** Show the cinematic. When false → idle. */
+  open: boolean;
+  /** Called once the release phase finishes. */
+  onComplete: () => void;
+  /** Optional pre-aporte progress for animating the count-up correctly. */
+  previousProgress?: number;
+}
+
+export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
+  plan,
+  aporteAmount,
+  isCompletion,
+  open,
+  onComplete,
+  previousProgress,
+}) => {
+  const reducedMotion = useReducedMotion();
+  const { hapticEnabled } = useEsmereogenesis();
+  const { track } = useTrackingDispatch();
+  const { formatCurrency } = useCurrencyFormat();
+
+  const targetProgress = plan.targetCOP > 0 ? plan.totalAbonadoCOP / plan.targetCOP : 0;
+  const fromProgress = useMemo(
+    () => previousProgress ?? Math.max(0, targetProgress - aporteAmount / plan.targetCOP),
+    [previousProgress, targetProgress, aporteAmount, plan.targetCOP],
+  );
+  const [animatedProgress, setAnimatedProgress] = useState(fromProgress);
+  const [animatedAbonado, setAnimatedAbonado] = useState(plan.totalAbonadoCOP - aporteAmount);
+
+  const triggerHaptic = (pattern: number | number[]) => {
+    if (!hapticEnabled) return;
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+        navigator.vibrate(pattern);
+      }
+    } catch {
+      /* swallow */
+    }
+  };
+
+  const { phase, skip } = useAbonoSequence({
+    active: open,
+    reducedMotion: !!reducedMotion,
+    isCompletion,
+    onComplete,
+    onPhaseChange: (next) => {
+      switch (next) {
+        case 'anticipate':
+          triggerHaptic(5);
+          break;
+        case 'wash':
+          triggerHaptic(15);
+          break;
+        case 'progress':
+          // Count-up animation 800 ms — matches phase duration
+          rampProgress();
+          break;
+        case 'confirm':
+        case 'eclosion':
+          triggerHaptic(isCompletion ? [25, 30, 35] : 25);
+          break;
+      }
+    },
+  });
+
+  const rampProgress = () => {
+    const start = performance.now();
+    const duration = 850;
+    const startProg = fromProgress;
+    const endProg = targetProgress;
+    const startAbon = plan.totalAbonadoCOP - aporteAmount;
+    const endAbon = plan.totalAbonadoCOP;
+
+    const tick = (now: number) => {
+      const elapsed = now - start;
+      const t = Math.max(0, Math.min(1, elapsed / duration));
+      const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // easeInOutQuad
+      setAnimatedProgress(startProg + (endProg - startProg) * eased);
+      setAnimatedAbonado(Math.round(startAbon + (endAbon - startAbon) * eased));
+      if (t < 1) {
+        requestAnimationFrame(tick);
+      }
+    };
+    requestAnimationFrame(tick);
+  };
+
+  const handleSkip = () => {
+    if (phase === 'idle' || phase === 'release') return;
+    track('esmereo_animation_skipped', { phase });
+    setAnimatedProgress(targetProgress);
+    setAnimatedAbonado(plan.totalAbonadoCOP);
+    skip();
+  };
+
+  // Reset internal progress when sequence starts
+  useEffect(() => {
+    if (open) {
+      setAnimatedProgress(fromProgress);
+      setAnimatedAbonado(plan.totalAbonadoCOP - aporteAmount);
+    }
+  }, [open, fromProgress, plan.totalAbonadoCOP, aporteAmount]);
+
+  if (!open) return null;
+
+  // Phase visibility helpers
+  const isVisible = phase !== 'idle';
+  const showDroplet = phase === 'droplet';
+  const showWash = phase === 'wash' || phase === 'reveal';
+  const showBloomBoost = phase === 'bloom';
+  const showProgressNumbers = phase === 'progress' || phase === 'confirm' || phase === 'eclosion' || phase === 'release';
+  const showConfirmation = phase === 'confirm' || phase === 'release';
+  const showEclosion = phase === 'eclosion' || (phase === 'release' && isCompletion);
+
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <Box
+          component={motion.div}
+          role="dialog"
+          aria-label="Animación de aporte en curso"
+          aria-live="polite"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          onClick={handleSkip}
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1500,
+            background: meshGradients.emerald,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Backdrop dimming */}
+          <Box
+            aria-hidden
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              background: `radial-gradient(circle at 50% 45%, ${alpha(emeraldCore.dark, 0.05)} 0%, ${alpha(emeraldCore.dark, 0.65)} 75%)`,
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* Spotlight */}
+          <Box
+            aria-hidden
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: 520,
+              height: 520,
+              transform: 'translate(-50%, -50%)',
+              background: radialGradients.emeraldSpotlight,
+              filter: 'blur(20px)',
+              opacity: showEclosion ? 1 : 0.7,
+              transition: 'opacity 0.6s ease-out',
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* Center stage */}
+          <Box
+            sx={{
+              position: 'relative',
+              width: 360,
+              maxWidth: '90vw',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+              textAlign: 'center',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Eclosion halo (only if completing) */}
+            {showEclosion && (
+              <Box
+                component={motion.div}
+                aria-hidden
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: [0.6, 1.4, 1.2], opacity: [0, 1, 0.8] }}
+                transition={{ duration: 1.5, ease: 'easeOut' }}
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  width: 320,
+                  height: 320,
+                  transform: 'translate(-50%, -50%)',
+                  borderRadius: '50%',
+                  background: `radial-gradient(circle, ${alpha(goldAccent.primary, 0.6)} 0%, ${alpha(goldAccent.primary, 0)} 70%)`,
+                  filter: 'blur(8px)',
+                  pointerEvents: 'none',
+                }}
+              />
+            )}
+
+            {/* Droplet */}
+            <AnimatePresence>
+              {showDroplet && (
+                <Box
+                  component={motion.div}
+                  initial={{ y: -160, opacity: 0, scale: 0.6 }}
+                  animate={{ y: -40, opacity: 1, scale: 1 }}
+                  exit={{ y: 40, opacity: 0, scale: 0.4 }}
+                  transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
+                  sx={{
+                    position: 'absolute',
+                    top: '15%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    color: goldAccent.primary,
+                    filter: `drop-shadow(0 0 14px ${alpha(goldAccent.primary, 0.7)})`,
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <Droplet size={36} fill={goldAccent.primary} />
+                </Box>
+              )}
+            </AnimatePresence>
+
+            {/* Wash splash */}
+            <AnimatePresence>
+              {showWash && (
+                <Box
+                  component={motion.div}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1.6, opacity: [0, 1, 0] }}
+                  transition={{ duration: 0.9 }}
+                  sx={{
+                    position: 'absolute',
+                    top: '38%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: 240,
+                    height: 240,
+                    borderRadius: '50%',
+                    background: `radial-gradient(circle, ${alpha(goldAccent.light, 0.5)} 0%, ${alpha(emeraldCore.primary, 0.25)} 50%, transparent 80%)`,
+                    pointerEvents: 'none',
+                  }}
+                />
+              )}
+            </AnimatePresence>
+
+            {/* Center: LivingEmerald */}
+            <Box
+              component={motion.div}
+              animate={{
+                scale: showBloomBoost ? [1, 1.05, 1] : showEclosion ? [1, 1.08, 1.04] : 1,
+              }}
+              transition={{ duration: showEclosion ? 1.6 : 0.8, ease: 'easeInOut' }}
+            >
+              <LivingEmerald
+                imageSrc={plan.productSnapshot.imagen}
+                progress={animatedProgress}
+                state={isCompletion && phase === 'eclosion' ? 'completed' : plan.state}
+                size="lg"
+                isPulsing={false}
+                recentAporteAt={Date.now()}
+              />
+            </Box>
+
+            {/* Progress numbers */}
+            <AnimatePresence>
+              {showProgressNumbers && (
+                <Box
+                  component={motion.div}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.4 }}
+                  sx={{
+                    color: '#FFFFFF',
+                  }}
+                >
+                  <Typography
+                    variant="h2"
+                    sx={{
+                      fontFamily: '"Playfair Display", serif',
+                      fontWeight: 700,
+                      lineHeight: 1,
+                      textShadow: `0 4px 18px ${alpha(emeraldCore.dark, 0.7)}`,
+                    }}
+                  >
+                    {Math.round(animatedProgress * 100)}%
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{ opacity: 0.85, mt: 0.5, fontWeight: 600 }}
+                  >
+                    {formatCurrency(animatedAbonado)} / {formatCurrency(plan.targetCOP)}
+                  </Typography>
+                </Box>
+              )}
+            </AnimatePresence>
+
+            {/* Confirmation chip */}
+            <AnimatePresence>
+              {showConfirmation && !isCompletion && (
+                <Box
+                  component={motion.div}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    px: 2,
+                    py: 1,
+                    borderRadius: 999,
+                    background: emeraldGradients.intense,
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    boxShadow: `0 12px 28px ${alpha(emeraldCore.dark, 0.5)}`,
+                  }}
+                >
+                  <Check size={16} />
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'inherit' }}>
+                    + {formatCurrency(aporteAmount)} abonado
+                  </Typography>
+                </Box>
+              )}
+            </AnimatePresence>
+
+            {/* Eclosion message */}
+            <AnimatePresence>
+              {showEclosion && (
+                <Box
+                  component={motion.div}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
+                  sx={{
+                    color: '#FFFFFF',
+                    textAlign: 'center',
+                  }}
+                >
+                  <Box
+                    component={motion.div}
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                    sx={{ display: 'inline-flex', mb: 1, color: goldAccent.primary }}
+                  >
+                    <Sparkles size={32} />
+                  </Box>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontFamily: '"Playfair Display", serif',
+                      fontWeight: 700,
+                      textShadow: `0 4px 18px ${alpha(emeraldCore.dark, 0.7)}`,
+                    }}
+                  >
+                    Tu Esmeralda ha cobrado vida
+                  </Typography>
+                </Box>
+              )}
+            </AnimatePresence>
+          </Box>
+
+          {/* Skip hint */}
+          {phase !== 'release' && (
+            <Box
+              component={motion.div}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.65 }}
+              transition={{ delay: 1.5, duration: 0.6 }}
+              sx={{
+                position: 'absolute',
+                bottom: 'calc(env(safe-area-inset-bottom, 0) + 24px)',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                color: alpha('#FFFFFF', 0.85),
+                pointerEvents: 'none',
+                fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: 1,
+              }}
+            >
+              Toca para continuar
+            </Box>
+          )}
+        </Box>
+      )}
+    </AnimatePresence>
+  );
+};
+
+export default AbonoCinematic;

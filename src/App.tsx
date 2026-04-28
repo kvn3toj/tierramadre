@@ -35,6 +35,8 @@ const AmbassadorsPage = lazyWithRetry(() => import('./pages/ambassadors/Ambassad
 const AsesorProfilePage = lazyWithRetry(() => import('./pages/ambassadors/profile/AsesorProfilePage'), 'AsesorProfilePage');
 const AccountsHub = lazyWithRetry(() => import('./components/accounts/AccountsHub'), 'AccountsHub');
 const VaultPage = lazyWithRetry(() => import('./pages/VaultPage'), 'VaultPage');
+const EsmereogenesisHubPage = lazyWithRetry(() => import('./pages/esmereogenesis/EsmereogenesisHubPage'), 'EsmereogenesisHubPage');
+const EsmereogenesisGardenPage = lazyWithRetry(() => import('./pages/esmereogenesis/EsmereogenesisGardenPage'), 'EsmereogenesisGardenPage');
 
 // Cuentas sub-pages (accessed from AccountsHub)
 const PriceSimulator = lazyWithRetry(() => import('./components/price-simulator/PriceSimulator'), 'PriceSimulator');
@@ -213,6 +215,18 @@ function AppContent() {
           <Route path="/boveda-secreta" element={
             <Suspense fallback={<LocalizedLoading messageKey="vault" />}>
               <VaultPage />
+            </Suspense>
+          } />
+
+          {/* Esmereogénesis - savings-with-purpose method */}
+          <Route path="/esmereogenesis" element={
+            <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+              <EsmereogenesisHubPage />
+            </Suspense>
+          } />
+          <Route path="/esmereogenesis/:planId" element={
+            <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+              <EsmereogenesisGardenPage />
             </Suspense>
           } />
 
