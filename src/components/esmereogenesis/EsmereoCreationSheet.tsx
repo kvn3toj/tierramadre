@@ -9,13 +9,11 @@ import React, { useMemo, useState } from 'react';
 import {
   Box,
   Button,
-  Dialog,
+  Drawer,
   IconButton,
-  Slide,
   Typography,
   alpha,
 } from '@mui/material';
-import type { TransitionProps } from '@mui/material/transitions';
 import { X, Sprout } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -27,13 +25,6 @@ import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { calcWeeklySuggested } from '../../data/esmereo-mock';
 import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
 import { emeraldGradients, meshGradients } from '../../design-system/tokens/gradients';
-
-const SlideUp = React.forwardRef(function Transition(
-  props: TransitionProps & { children: React.ReactElement },
-  ref: React.Ref<unknown>,
-) {
-  return <Slide direction="up" ref={ref} {...props} />;
-});
 
 const DURATION_OPTIONS: { value: DurationMonths; label: string }[] = [
   { value: 3, label: '3 meses' },
@@ -80,26 +71,40 @@ export const EsmereoCreationSheet: React.FC<EsmereoCreationSheetProps> = ({
   const productName = product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
 
   return (
-    <Dialog
+    // Drawer anchor="bottom" is the canonical MUI primitive for bottom sheets.
+    // It manages scroll-lock, focus trap, transition and safe-area for us
+    // without the jumpy layout shift Dialog produced when combined with the
+    // global bottom navigation. Paper is constrained in width and gets the
+    // organic emerald mesh as its surface.
+    <Drawer
+      anchor="bottom"
       open={open}
       onClose={onClose}
-      TransitionComponent={SlideUp}
       keepMounted
-      maxWidth="sm"
-      fullWidth
+      ModalProps={{
+        // Disable MUI's default body padding-right compensation that was
+        // pushing the underlying page when the scrollbar was hidden.
+        disableScrollLock: false,
+      }}
       PaperProps={{
+        elevation: 0,
         sx: {
-          position: 'fixed',
-          bottom: 0,
-          m: 0,
+          mx: 'auto',
           width: '100%',
           maxWidth: 600,
+          maxHeight: 'calc(100vh - env(safe-area-inset-top, 0px) - 24px)',
           borderRadius: '24px 24px 0 0',
           background: meshGradients.emerald,
-          overflow: 'hidden',
+          backgroundColor: emeraldCore.dark,
+          // Inner content scrolls if the device is short — sheet itself
+          // never expands past the viewport.
+          overflowY: 'auto',
+          overscrollBehavior: 'contain',
+          // Honour iOS home indicator so the primary CTA never gets eaten.
+          pb: 'env(safe-area-inset-bottom, 0px)',
+          boxShadow: `0 -16px 40px ${alpha('#000000', 0.45)}`,
         },
       }}
-      sx={{ '& .MuiDialog-container': { alignItems: 'flex-end' } }}
       aria-labelledby="esmereo-create-title"
     >
       <Box sx={{ position: 'relative', p: 3, pb: 4 }}>
@@ -155,14 +160,15 @@ export const EsmereoCreationSheet: React.FC<EsmereoCreationSheetProps> = ({
             variant="h5"
             sx={{
               fontFamily: '"Playfair Display", serif',
-              fontWeight: 600,
-              color: emeraldCore.dark,
+              fontWeight: 700,
+              color: '#F4FAF6',
               mb: 0.5,
+              textShadow: `0 2px 14px ${alpha(emeraldCore.dark, 0.6)}`,
             }}
           >
             Sembrar Esmereogénesis
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          <Typography variant="body2" sx={{ color: alpha('#FFFFFF', 0.78) }}>
             Tu <strong>{productName}</strong> tomará vida con cada aporte
           </Typography>
         </Box>
@@ -172,10 +178,11 @@ export const EsmereoCreationSheet: React.FC<EsmereoCreationSheetProps> = ({
             variant="overline"
             sx={{
               display: 'block',
-              color: emeraldCore.dark,
+              color: emeraldCore.light,
               fontWeight: 700,
               letterSpacing: 1.2,
               mb: 1,
+              opacity: 0.85,
             }}
           >
             Duración del cuidado
@@ -202,15 +209,15 @@ export const EsmereoCreationSheet: React.FC<EsmereoCreationSheetProps> = ({
                     fontSize: 14,
                     textTransform: 'none',
                     borderRadius: 2,
-                    background: isActive ? emeraldGradients.intense : 'transparent',
-                    color: isActive ? '#FFFFFF' : emeraldCore.dark,
-                    borderColor: isActive ? 'transparent' : alpha(emeraldCore.primary, 0.3),
-                    boxShadow: isActive ? `0 6px 16px ${alpha(emeraldCore.dark, 0.3)}` : 'none',
+                    background: isActive ? emeraldGradients.intense : alpha('#000000', 0.18),
+                    color: isActive ? '#FFFFFF' : emeraldCore.light,
+                    borderColor: isActive ? 'transparent' : alpha(emeraldCore.light, 0.35),
+                    boxShadow: isActive ? `0 6px 16px ${alpha(emeraldCore.dark, 0.4)}` : 'none',
                     '&:hover': {
                       background: isActive
                         ? emeraldGradients.deep
-                        : alpha(emeraldCore.primary, 0.08),
-                      borderColor: emeraldCore.primary,
+                        : alpha(emeraldCore.light, 0.12),
+                      borderColor: emeraldCore.light,
                     },
                   }}
                 >
@@ -225,13 +232,13 @@ export const EsmereoCreationSheet: React.FC<EsmereoCreationSheetProps> = ({
           sx={{
             p: 2,
             borderRadius: 2,
-            border: `1px dashed ${alpha(emeraldCore.primary, 0.4)}`,
-            bgcolor: alpha('#FFFFFF', 0.4),
+            border: `1px dashed ${alpha(emeraldCore.light, 0.45)}`,
+            bgcolor: alpha('#000000', 0.22),
             mb: 3,
             textAlign: 'center',
           }}
         >
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.72) }}>
             Aporte sugerido semanal
           </Typography>
           <Typography
@@ -244,12 +251,13 @@ export const EsmereoCreationSheet: React.FC<EsmereoCreationSheetProps> = ({
             sx={{
               fontFamily: '"Playfair Display", serif',
               fontWeight: 700,
-              color: emeraldCore.dark,
+              color: '#F4FAF6',
+              textShadow: `0 2px 14px ${alpha(emeraldCore.dark, 0.5)}`,
             }}
           >
             {formatCurrency(weeklySuggested)}
           </Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }}>
+          <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.62), display: 'block', mt: 0.5 }}>
             Total objetivo · {formatCurrency(product.precioCOP)}
           </Typography>
         </Box>
@@ -284,7 +292,7 @@ export const EsmereoCreationSheet: React.FC<EsmereoCreationSheetProps> = ({
           </Typography>
         </Box>
       </Box>
-    </Dialog>
+    </Drawer>
   );
 };
 

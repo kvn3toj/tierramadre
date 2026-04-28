@@ -26,6 +26,11 @@ export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
   const progress = plan.targetCOP > 0 ? plan.totalAbonadoCOP / plan.targetCOP : 0;
   const progressPct = Math.round(progress * 100);
   const isComplete = plan.state === 'completed' || plan.state === 'claimed';
+  // Strip the inventory "L:..." prefix so the gem name reads as a name, not a SKU.
+  const productName = plan.productSnapshot.nombre
+    .replace(/^L:.*?\s/, '')
+    .replace(/^L:/, '')
+    .trim();
 
   return (
     <Box
@@ -35,7 +40,7 @@ export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
       whileHover={{ y: -4 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      aria-label={`Abrir jardín de ${plan.productSnapshot.nombre} · ${progressPct}% completo`}
+      aria-label={`Abrir jardín de ${productName} · ${progressPct}% completo`}
       sx={{
         position: 'relative',
         background: meshGradients.emerald,
@@ -81,7 +86,7 @@ export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
           whiteSpace: 'nowrap',
         }}
       >
-        {plan.productSnapshot.nombre}
+        {productName}
       </Typography>
 
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>

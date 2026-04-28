@@ -495,7 +495,10 @@ export default function ProductDetail() {
             {/* Additional Info */}
             <AdditionalInfo product={product} isAdmin={isAdmin} />
 
-            {/* CTA Buttons (hidden for providers) */}
+            {/* CTA Buttons (hidden for providers) — Esmereogénesis CTA is
+                rendered via the middleSlot so it sits between the primary
+                "Agregar a Selección" and the secondary Compartir/Consultar
+                row, per spec §8.3. */}
             {!isProvider && (
               <ProductActions
                 isAvailable={isAvailable}
@@ -505,14 +508,12 @@ export default function ProductDetail() {
                 onAddToCart={handleAddToCart}
                 onShare={handleShareProduct}
                 onContact={handleContact}
+                middleSlot={
+                  product ? (
+                    <EsmereogenesisCTA product={product} disabled={!isAvailable} />
+                  ) : null
+                }
               />
-            )}
-
-            {/* Esmereogénesis - savings-with-purpose method */}
-            {!isProvider && product && (
-              <Box sx={{ mt: 1.5 }}>
-                <EsmereogenesisCTA product={product} disabled={!isAvailable} />
-              </Box>
             )}
 
             {/* Member Benefits Teaser - Only for Guest Users */}

@@ -17,6 +17,7 @@ import {
   Slider,
   Typography,
   alpha,
+  useTheme,
 } from '@mui/material';
 import {
   ChevronLeft,
@@ -25,7 +26,7 @@ import {
   HandHeart,
   Trash2,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEsmereogenesis } from '../../contexts/EsmereogenesisContext';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -57,6 +58,34 @@ const EsmereogenesisGardenPage: React.FC = () => {
   const { formatCurrency } = useCurrencyFormat();
   const { getPlanById, deletePlan } = useEsmereogenesis();
   const { trigger, isProcessing } = useAbonoSimulation();
+  const reducedMotion = useReducedMotion();
+  const theme = useTheme();
+  const isLight = theme.palette.mode === 'light';
+  // Theme-aware tokens — consistent recipe with the Hub so both routes share
+  // a coherent palette in either mode.
+  const headerBg = isLight
+    ? `linear-gradient(180deg, ${alpha(emeraldCore.light, 0.16)} 0%, ${alpha(emeraldCore.primary, 0.08)} 100%), ${alpha('#F4FAF6', 0.78)}`
+    : `linear-gradient(180deg, ${alpha(emeraldCore.dark, 0.78)} 0%, ${alpha(emeraldCore.dark, 0.62)} 100%)`;
+  const cardBg = isLight
+    ? `linear-gradient(135deg, ${alpha(emeraldCore.light, 0.18)} 0%, ${alpha(emeraldCore.primary, 0.1)} 100%), ${alpha('#F4FAF6', 0.78)}`
+    : `linear-gradient(135deg, ${alpha(emeraldCore.primary, 0.32)} 0%, ${alpha(emeraldCore.dark, 0.55)} 100%)`;
+  const sliderCardBg = isLight
+    ? `linear-gradient(135deg, ${alpha(emeraldCore.light, 0.22)} 0%, ${alpha(emeraldCore.primary, 0.14)} 100%), ${alpha('#F4FAF6', 0.82)}`
+    : `linear-gradient(135deg, ${alpha(emeraldCore.primary, 0.32)} 0%, ${alpha(emeraldCore.dark, 0.6)} 100%)`;
+  const completedCardBg = isLight
+    ? `linear-gradient(135deg, ${alpha(goldAccent.light, 0.22)} 0%, ${alpha(emeraldCore.light, 0.18)} 100%), ${alpha('#F8FBF6', 0.82)}`
+    : `linear-gradient(135deg, ${alpha(emeraldCore.primary, 0.32)} 0%, ${alpha(emeraldCore.dark, 0.65)} 100%)`;
+  const cardBorder = isLight ? alpha(emeraldCore.primary, 0.3) : alpha(emeraldCore.light, 0.22);
+  const headerBorder = isLight ? alpha(emeraldCore.primary, 0.24) : alpha(emeraldCore.light, 0.18);
+  const cardShadow = isLight
+    ? `0 10px 26px ${alpha(emeraldCore.dark, 0.18)}, 0 1px 0 ${alpha('#FFFFFF', 0.42)} inset`
+    : `0 10px 26px ${alpha('#000000', 0.32)}, 0 1px 0 ${alpha(emeraldCore.light, 0.16)} inset`;
+  const titleColor = isLight ? emeraldCore.dark : '#F4FAF6';
+  const overlineColor = isLight ? emeraldCore.dark : emeraldCore.light;
+  const headlineColor = isLight ? emeraldCore.dark : '#F4FAF6';
+  const bodyColor = isLight ? alpha(emeraldCore.dark, 0.78) : alpha('#FFFFFF', 0.78);
+  const mutedColor = isLight ? alpha(emeraldCore.dark, 0.6) : alpha('#FFFFFF', 0.62);
+  const accentColor = isLight ? emeraldCore.primary : emeraldCore.light;
 
   const plan = planId ? getPlanById(planId) : undefined;
 
@@ -142,61 +171,130 @@ const EsmereogenesisGardenPage: React.FC = () => {
   return (
     <Box
       sx={{
+        position: 'relative',
         minHeight: '100vh',
         background: meshGradients.emerald,
-        pb: 6,
+        // Honour bottom navigation + iOS home indicator so the timeline never
+        // hides behind the global tab bar.
+        pb: 'calc(env(safe-area-inset-bottom, 0px) + 96px)',
       }}
     >
-      {/* Header */}
+      {/* Header — feature identity strip, theme-aware glass. */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           px: 2,
-          py: 2,
+          pt: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+          pb: 1.5,
           position: 'sticky',
           top: 0,
-          background: alpha('#FFFFFF', 0.4),
-          backdropFilter: 'blur(16px) saturate(140%)',
-          WebkitBackdropFilter: 'blur(16px) saturate(140%)',
-          borderBottom: `1px solid ${alpha(emeraldCore.primary, 0.12)}`,
+          background: headerBg,
+          backdropFilter: 'blur(22px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(22px) saturate(160%)',
+          borderBottom: `1px solid ${headerBorder}`,
+          boxShadow: isLight
+            ? `0 1px 0 ${alpha('#FFFFFF', 0.32)} inset`
+            : `0 1px 0 ${alpha(emeraldCore.light, 0.12)} inset`,
           zIndex: 10,
         }}
       >
-        <IconButton onClick={() => navigate('/esmereogenesis')} aria-label="Volver al jardín">
+        <IconButton
+          onClick={() => navigate('/esmereogenesis')}
+          aria-label="Volver al jardín"
+          sx={{ color: titleColor }}
+        >
           <ChevronLeft />
         </IconButton>
         <Typography
-          variant="subtitle1"
+          variant="h6"
           sx={{
             fontFamily: '"Playfair Display", serif',
-            fontWeight: 600,
-            color: emeraldCore.dark,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            mx: 1,
+            fontWeight: 700,
+            color: titleColor,
+            letterSpacing: 0.4,
+            textShadow: isLight ? 'none' : `0 2px 12px ${alpha(emeraldCore.dark, 0.6)}`,
           }}
         >
-          {productName}
+          Esmereogénesis
         </Typography>
-        <IconButton onClick={handleDelete} aria-label="Eliminar plan" sx={{ color: 'text.secondary' }}>
+        <IconButton
+          onClick={handleDelete}
+          aria-label="Eliminar plan"
+          sx={{ color: alpha(titleColor, 0.78) }}
+        >
           <Trash2 size={18} />
         </IconButton>
       </Box>
 
       <Box sx={{ maxWidth: 720, mx: 'auto', px: { xs: 2, md: 3 }, py: 3 }}>
-        {/* LivingEmerald centerpiece with ring */}
+        {/* Hero — product name as the protagonist, sits between the feature
+            strip ("Esmereogénesis") and the LivingEmerald so the gem feels
+            named, owned, personal. */}
         <Box
+          component={motion.div}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          sx={{ textAlign: 'center', mb: { xs: 2.5, md: 3 } }}
+        >
+          <Typography
+            variant="overline"
+            sx={{
+              display: 'block',
+              color: overlineColor,
+              fontWeight: 700,
+              letterSpacing: 2,
+              opacity: isLight ? 0.85 : 0.72,
+              mb: 0.5,
+            }}
+          >
+            Tu esmeralda
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: '"Playfair Display", serif',
+              fontWeight: 700,
+              fontStyle: 'italic',
+              color: headlineColor,
+              fontSize: { xs: 32, sm: 40, md: 44 },
+              lineHeight: 1.1,
+              letterSpacing: -0.4,
+              textShadow: isLight
+                ? `0 2px 12px ${alpha(emeraldCore.primary, 0.18)}`
+                : `0 4px 22px ${alpha(emeraldCore.dark, 0.6)}`,
+            }}
+          >
+            {productName}
+          </Typography>
+        </Box>
+
+        {/* Centerpiece — LivingEmerald + ring + numbers welded into a single
+            stat group so the ring, the gem and the percentage read as one
+            coherent ceremony, not three stacked widgets. */}
+        <Box
+          component={motion.section}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
           sx={{
-            position: 'relative',
-            width: 'fit-content',
-            mx: 'auto',
-            mb: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            mb: { xs: 3, md: 4 },
           }}
         >
-          <Box sx={{ position: 'relative', width: 320, height: 320 }}>
+          <Box
+            sx={{
+              position: 'relative',
+              // Fluid sizing so the ring breathes on phones (≤360 px) without
+              // blowing past the viewport, and never goes bigger than the spec.
+              width: 'clamp(260px, 78vw, 320px)',
+              aspectRatio: '1 / 1',
+              mb: 2,
+            }}
+          >
             <ProgressGardenRing
               progress={progress}
               size={320}
@@ -221,85 +319,188 @@ const EsmereogenesisGardenPage: React.FC = () => {
               />
             </Box>
           </Box>
-        </Box>
 
-        {/* Numbers */}
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          {/* Numbers — overline + dramatic % + amount stay tight to the gem
+              so they read as the gem's own caption rather than dead space. */}
           <Typography
-            variant="h2"
+            variant="overline"
+            sx={{
+              color: overlineColor,
+              fontWeight: 700,
+              letterSpacing: 1.6,
+              opacity: isLight ? 0.85 : 0.78,
+              mb: 0.25,
+            }}
+          >
+            {isCompleted ? 'Eclosionada' : 'Tu progreso'}
+          </Typography>
+          <Typography
             sx={{
               fontFamily: '"Playfair Display", serif',
               fontWeight: 700,
-              color: emeraldCore.dark,
-              lineHeight: 1,
+              color: headlineColor,
+              lineHeight: 0.95,
+              fontSize: { xs: 56, sm: 64, md: 72 },
+              fontVariantNumeric: 'tabular-nums',
+              letterSpacing: -1,
+              textShadow: isLight
+                ? `0 4px 18px ${alpha(emeraldCore.primary, 0.18)}`
+                : `0 4px 22px ${alpha(emeraldCore.dark, 0.7)}`,
             }}
           >
             {Math.round(progress * 100)}%
           </Typography>
-          <Typography variant="body1" sx={{ color: 'text.secondary', mt: 0.5 }}>
-            {formatCurrency(plan.totalAbonadoCOP)} / {formatCurrency(plan.targetCOP)}
+          <Typography
+            variant="body2"
+            sx={{
+              color: bodyColor,
+              mt: 0.75,
+              fontWeight: 600,
+              fontVariantNumeric: 'tabular-nums',
+              letterSpacing: 0.2,
+              textAlign: 'center',
+            }}
+          >
+            {formatCurrency(plan.totalAbonadoCOP)}{' '}
+            <Box component="span" sx={{ opacity: 0.7 }}>
+              / {formatCurrency(plan.targetCOP)}
+            </Box>
           </Typography>
         </Box>
 
         {!isCompleted ? (
           <>
-            {/* Rhythm + streak */}
+            {/* Rhythm + streak — theme-aware glass. */}
             <Box
               sx={{
-                background: alpha('#FFFFFF', 0.6),
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                border: `1px solid ${alpha(emeraldCore.primary, 0.18)}`,
+                background: cardBg,
+                backdropFilter: 'blur(16px) saturate(160%)',
+                WebkitBackdropFilter: 'blur(16px) saturate(160%)',
+                border: `1px solid ${cardBorder}`,
                 borderRadius: 3,
-                p: 2.5,
-                mb: 3,
+                p: { xs: 2, md: 2.5 },
+                mb: { xs: 2.5, md: 3 },
                 display: 'flex',
-                flexWrap: 'wrap',
-                gap: 1.5,
-                alignItems: 'center',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: { xs: 1.5, sm: 2 },
+                alignItems: { xs: 'stretch', sm: 'center' },
                 justifyContent: 'space-between',
+                boxShadow: cardShadow,
               }}
             >
-              <Box>
+              <Box sx={{ minWidth: 0 }}>
                 <Typography
                   variant="overline"
-                  sx={{ color: emeraldCore.dark, fontWeight: 700, letterSpacing: 1.4 }}
+                  sx={{
+                    color: overlineColor,
+                    fontWeight: 700,
+                    letterSpacing: 1.4,
+                    opacity: isLight ? 0.85 : 0.78,
+                  }}
                 >
                   Ritmo sugerido
                 </Typography>
-                <Typography variant="h6" sx={{ color: emeraldCore.dark, fontWeight: 700 }}>
-                  {formatCurrency(plan.weeklySuggestedCOP)} <Typography component="span" variant="body2" sx={{ color: 'text.secondary' }}>/ semana</Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: headlineColor,
+                    fontWeight: 700,
+                    fontVariantNumeric: 'tabular-nums',
+                    lineHeight: 1.2,
+                    textShadow: isLight ? 'none' : `0 2px 12px ${alpha(emeraldCore.dark, 0.5)}`,
+                  }}
+                >
+                  {formatCurrency(plan.weeklySuggestedCOP)}{' '}
+                  <Typography
+                    component="span"
+                    variant="body2"
+                    sx={{ color: mutedColor, fontWeight: 500 }}
+                  >
+                    / semana
+                  </Typography>
                 </Typography>
               </Box>
-              <StreakIndicator weeks={plan.streak.currentWeeks} longest={plan.streak.longestWeeks} />
+              <Box sx={{ alignSelf: { xs: 'flex-start', sm: 'center' } }}>
+                <StreakIndicator
+                  weeks={plan.streak.currentWeeks}
+                  longest={plan.streak.longestWeeks}
+                />
+              </Box>
             </Box>
 
-            {/* Regar CTA */}
+            {/* Regar CTA — wrapped in an emerald glow halo so it reads as
+                the sacred act of the page, not just another pill button. */}
             {!aporteOpen ? (
-              <Box sx={{ textAlign: 'center', mb: 3 }}>
+              <Box
+                sx={{
+                  position: 'relative',
+                  textAlign: 'center',
+                  mb: { xs: 3, md: 4 },
+                }}
+              >
+                {/* Soft ambient halo behind the button */}
+                <Box
+                  aria-hidden
+                  component={motion.div}
+                  animate={
+                    reducedMotion
+                      ? undefined
+                      : { scale: [1, 1.08, 1], opacity: [0.5, 0.75, 0.5] }
+                  }
+                  transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
+                  sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    width: 'min(78%, 320px)',
+                    height: 64,
+                    transform: 'translate(-50%, -50%)',
+                    borderRadius: 999,
+                    background: `radial-gradient(ellipse at center, ${alpha(emeraldCore.primary, 0.45)} 0%, ${alpha(emeraldCore.primary, 0)} 70%)`,
+                    filter: 'blur(18px)',
+                    pointerEvents: 'none',
+                    zIndex: 0,
+                  }}
+                />
                 <Button
                   onClick={() => setAporteOpen(true)}
                   variant="contained"
                   size="large"
-                  startIcon={<Droplet size={20} />}
+                  startIcon={<Droplet size={22} />}
                   sx={{
+                    position: 'relative',
+                    zIndex: 1,
                     background: emeraldGradients.intense,
                     color: '#FFFFFF',
-                    py: 1.75,
-                    px: 4,
-                    minHeight: 56,
-                    fontSize: 16,
+                    py: 2,
+                    px: { xs: 4, sm: 5 },
+                    minHeight: 60,
+                    fontSize: 17,
                     fontWeight: 700,
                     borderRadius: 999,
                     textTransform: 'none',
-                    boxShadow: `0 16px 32px ${alpha(emeraldCore.dark, 0.35)}`,
-                    '&:hover': { background: emeraldGradients.deep },
+                    letterSpacing: 0.3,
+                    boxShadow: `0 18px 40px ${alpha(emeraldCore.dark, 0.4)}, 0 0 0 1px ${alpha('#FFFFFF', 0.12)} inset`,
+                    '&:hover': {
+                      background: emeraldGradients.deep,
+                      boxShadow: `0 22px 46px ${alpha(emeraldCore.dark, 0.45)}, 0 0 0 1px ${alpha('#FFFFFF', 0.16)} inset`,
+                    },
                     '&:active': { transform: 'scale(0.98)' },
                   }}
                 >
                   Regar mi esmeralda
                 </Button>
-                <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mt: 1 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    position: 'relative',
+                    zIndex: 1,
+                    display: 'block',
+                    color: mutedColor,
+                    mt: 1.25,
+                    fontWeight: 500,
+                  }}
+                >
                   Aporte sugerido {formatCurrency(plan.weeklySuggestedCOP)} · monto editable
                 </Typography>
               </Box>
@@ -310,16 +511,24 @@ const EsmereogenesisGardenPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
                 sx={{
-                  background: alpha('#FFFFFF', 0.65),
-                  border: `1px solid ${alpha(emeraldCore.primary, 0.25)}`,
+                  background: sliderCardBg,
+                  backdropFilter: 'blur(16px) saturate(160%)',
+                  WebkitBackdropFilter: 'blur(16px) saturate(160%)',
+                  border: `1px solid ${cardBorder}`,
                   borderRadius: 3,
                   p: 2.5,
                   mb: 3,
+                  boxShadow: cardShadow,
                 }}
               >
                 <Typography
                   variant="overline"
-                  sx={{ color: emeraldCore.dark, fontWeight: 700, letterSpacing: 1.4 }}
+                  sx={{
+                    color: overlineColor,
+                    fontWeight: 700,
+                    letterSpacing: 1.4,
+                    opacity: isLight ? 0.85 : 0.85,
+                  }}
                 >
                   Cuánto vas a regar
                 </Typography>
@@ -328,8 +537,9 @@ const EsmereogenesisGardenPage: React.FC = () => {
                   sx={{
                     fontFamily: '"Playfair Display", serif',
                     fontWeight: 700,
-                    color: emeraldCore.dark,
+                    color: headlineColor,
                     mb: 1,
+                    textShadow: isLight ? 'none' : `0 2px 14px ${alpha(emeraldCore.dark, 0.6)}`,
                   }}
                 >
                   {formatCurrency(aporteAmount)}
@@ -345,9 +555,16 @@ const EsmereogenesisGardenPage: React.FC = () => {
                     { value: remaining, label: 'Restante' },
                   ]}
                   sx={{
-                    color: emeraldCore.primary,
+                    color: accentColor,
                     mb: 2,
-                    '& .MuiSlider-markLabel': { fontSize: 12 },
+                    '& .MuiSlider-rail': {
+                      opacity: 0.4,
+                      bgcolor: isLight ? alpha(emeraldCore.dark, 0.18) : alpha('#000000', 0.5),
+                    },
+                    '& .MuiSlider-markLabel': { fontSize: 12, color: mutedColor },
+                    '& .MuiSlider-mark': {
+                      bgcolor: isLight ? alpha(emeraldCore.dark, 0.45) : alpha('#FFFFFF', 0.4),
+                    },
                   }}
                 />
                 <Box sx={{ display: 'flex', gap: 1 }}>
@@ -363,9 +580,12 @@ const EsmereogenesisGardenPage: React.FC = () => {
                       minHeight: 48,
                       borderRadius: 2,
                       textTransform: 'none',
-                      color: emeraldCore.dark,
-                      borderColor: alpha(emeraldCore.primary, 0.3),
-                      '&:hover': { borderColor: emeraldCore.primary, bgcolor: alpha(emeraldCore.primary, 0.06) },
+                      color: titleColor,
+                      borderColor: alpha(accentColor, 0.45),
+                      '&:hover': {
+                        borderColor: accentColor,
+                        bgcolor: alpha(accentColor, 0.1),
+                      },
                     }}
                   >
                     Cancelar
@@ -401,15 +621,26 @@ const EsmereogenesisGardenPage: React.FC = () => {
               mb: 3,
               p: 3,
               borderRadius: 3,
-              background: alpha('#FFFFFF', 0.6),
-              border: `1px solid ${alpha(goldAccent.primary, 0.3)}`,
+              // Eclosionada — theme-aware, gold-rimmed glass for the ceremony.
+              background: completedCardBg,
+              backdropFilter: 'blur(18px) saturate(160%)',
+              WebkitBackdropFilter: 'blur(18px) saturate(160%)',
+              border: `1px solid ${alpha(goldAccent.primary, 0.55)}`,
+              boxShadow: isLight
+                ? `0 14px 32px ${alpha(emeraldCore.dark, 0.18)}, 0 0 24px ${alpha(goldAccent.primary, 0.18)}, 0 0 0 1px ${alpha(goldAccent.primary, 0.22)} inset`
+                : `0 14px 32px ${alpha('#000000', 0.4)}, 0 0 24px ${alpha(goldAccent.primary, 0.18)}, 0 0 0 1px ${alpha(goldAccent.primary, 0.22)} inset`,
             }}
           >
             <Box
               component={motion.div}
               animate={{ rotate: [0, 360] }}
               transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-              sx={{ display: 'inline-flex', mb: 1, color: goldAccent.primary }}
+              sx={{
+                display: 'inline-flex',
+                mb: 1,
+                color: goldAccent.primary,
+                filter: `drop-shadow(0 0 12px ${alpha(goldAccent.primary, 0.6)})`,
+              }}
             >
               <Sparkles size={28} />
             </Box>
@@ -417,14 +648,16 @@ const EsmereogenesisGardenPage: React.FC = () => {
               variant="h5"
               sx={{
                 fontFamily: '"Playfair Display", serif',
-                fontWeight: 600,
-                color: emeraldCore.dark,
+                fontWeight: 700,
+                fontStyle: 'italic',
+                color: headlineColor,
                 mb: 0.5,
+                textShadow: isLight ? 'none' : `0 2px 14px ${alpha(emeraldCore.dark, 0.6)}`,
               }}
             >
               Tu Esmeralda ha cobrado vida
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+            <Typography variant="body2" sx={{ color: bodyColor, mb: 2 }}>
               {isClaimed
                 ? 'Ya solicitaste su entrega. Tu asesor te contactará pronto.'
                 : 'Coordina con tu asesor para recibir tu Esmeralda Tierra Madre.'}
@@ -454,23 +687,27 @@ const EsmereogenesisGardenPage: React.FC = () => {
           </Box>
         )}
 
-        {/* History */}
+        {/* History — theme-aware glass. */}
         <Box
           sx={{
-            background: alpha('#FFFFFF', 0.55),
-            border: `1px solid ${alpha(emeraldCore.primary, 0.16)}`,
+            background: cardBg,
+            backdropFilter: 'blur(14px) saturate(150%)',
+            WebkitBackdropFilter: 'blur(14px) saturate(150%)',
+            border: `1px solid ${cardBorder}`,
             borderRadius: 3,
             p: 2.5,
+            boxShadow: cardShadow,
           }}
         >
           <Typography
             variant="overline"
             sx={{
               display: 'block',
-              color: emeraldCore.dark,
+              color: overlineColor,
               fontWeight: 700,
               letterSpacing: 1.4,
               mb: 1.5,
+              opacity: isLight ? 0.85 : 0.85,
             }}
           >
             Tus aportes ({plan.aportes.length})

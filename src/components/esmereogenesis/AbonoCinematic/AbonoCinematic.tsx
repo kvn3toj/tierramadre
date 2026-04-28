@@ -201,17 +201,22 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
             }}
           />
 
-          {/* Center stage */}
+          {/* Center stage — anchored to the LivingEmerald wrapper so
+              droplet/wash/numbers compose around the gem instead of around
+              arbitrary % of the takeover. Gap is tightened so the gem stays
+              the dominant subject of every phase. */}
           <Box
             sx={{
               position: 'relative',
-              width: 360,
-              maxWidth: '90vw',
+              width: 'min(360px, 90vw)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 3,
+              gap: { xs: 2, sm: 2.5 },
               textAlign: 'center',
+              // Pad-top reserves space for the droplet so it doesn't get
+              // chopped on short viewports.
+              pt: { xs: 8, sm: 10 },
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -238,18 +243,20 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
               />
             )}
 
-            {/* Droplet */}
+            {/* Droplet — falls from above the stage and lands just at the
+                top of the LivingEmerald. Sized in pixel offsets so it lands
+                on the gem regardless of viewport height. */}
             <AnimatePresence>
               {showDroplet && (
                 <Box
                   component={motion.div}
-                  initial={{ y: -160, opacity: 0, scale: 0.6 }}
-                  animate={{ y: -40, opacity: 1, scale: 1 }}
-                  exit={{ y: 40, opacity: 0, scale: 0.4 }}
+                  initial={{ y: -120, opacity: 0, scale: 0.6 }}
+                  animate={{ y: 0, opacity: 1, scale: 1 }}
+                  exit={{ y: 30, opacity: 0, scale: 0.4 }}
                   transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
                   sx={{
                     position: 'absolute',
-                    top: '15%',
+                    top: 0,
                     left: '50%',
                     transform: 'translateX(-50%)',
                     color: goldAccent.primary,
@@ -262,7 +269,8 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
               )}
             </AnimatePresence>
 
-            {/* Wash splash */}
+            {/* Wash splash — perfectly centered over the LivingEmerald
+                (which lives at the visual middle of the center stage). */}
             <AnimatePresence>
               {showWash && (
                 <Box
@@ -272,14 +280,15 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
                   transition={{ duration: 0.9 }}
                   sx={{
                     position: 'absolute',
-                    top: '38%',
+                    top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
-                    width: 240,
-                    height: 240,
+                    width: 'min(260px, 78vw)',
+                    aspectRatio: '1 / 1',
                     borderRadius: '50%',
-                    background: `radial-gradient(circle, ${alpha(goldAccent.light, 0.5)} 0%, ${alpha(emeraldCore.primary, 0.25)} 50%, transparent 80%)`,
+                    background: `radial-gradient(circle, ${alpha(goldAccent.light, 0.55)} 0%, ${alpha(emeraldCore.primary, 0.28)} 45%, transparent 80%)`,
                     pointerEvents: 'none',
+                    zIndex: 0,
                   }}
                 />
               )}
@@ -367,7 +376,9 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
               )}
             </AnimatePresence>
 
-            {/* Eclosion message */}
+            {/* Eclosion message — the climax of the entire feature, so it
+                gets a softer overline + Playfair italic headline that breathes
+                instead of competing with the gem. */}
             <AnimatePresence>
               {showEclosion && (
                 <Box
@@ -379,25 +390,42 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
                   sx={{
                     color: '#FFFFFF',
                     textAlign: 'center',
+                    px: 1,
                   }}
                 >
                   <Box
                     component={motion.div}
                     animate={{ rotate: [0, 360] }}
                     transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                    sx={{ display: 'inline-flex', mb: 1, color: goldAccent.primary }}
+                    sx={{ display: 'inline-flex', mb: 1.25, color: goldAccent.primary }}
                   >
-                    <Sparkles size={32} />
+                    <Sparkles size={36} />
                   </Box>
                   <Typography
-                    variant="h4"
+                    variant="overline"
+                    sx={{
+                      display: 'block',
+                      color: alpha(goldAccent.light, 0.95),
+                      fontWeight: 700,
+                      letterSpacing: 2.4,
+                      mb: 0.75,
+                    }}
+                  >
+                    Eclosión
+                  </Typography>
+                  <Typography
                     sx={{
                       fontFamily: '"Playfair Display", serif',
                       fontWeight: 700,
-                      textShadow: `0 4px 18px ${alpha(emeraldCore.dark, 0.7)}`,
+                      fontStyle: 'italic',
+                      fontSize: { xs: 28, sm: 34 },
+                      lineHeight: 1.15,
+                      textShadow: `0 4px 22px ${alpha(emeraldCore.dark, 0.75)}`,
                     }}
                   >
-                    Tu Esmeralda ha cobrado vida
+                    Tu Esmeralda
+                    <br />
+                    ha cobrado vida
                   </Typography>
                 </Box>
               )}

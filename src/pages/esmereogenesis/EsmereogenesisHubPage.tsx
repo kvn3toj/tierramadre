@@ -17,6 +17,7 @@ import {
   Typography,
   alpha,
   useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   ChevronLeft,
@@ -37,7 +38,7 @@ import { EsmereoEmptyState } from '../../components/esmereogenesis/EsmereoEmptyS
 import { EsmereoPlanCard } from '../../components/esmereogenesis/EsmereoPlanCard';
 import { StreakIndicator } from '../../components/esmereogenesis/StreakIndicator';
 import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
-import { meshGradients } from '../../design-system/tokens/gradients';
+import { emeraldGradients, meshGradients } from '../../design-system/tokens/gradients';
 
 const EsmereogenesisHubPage: React.FC = () => {
   const navigate = useNavigate();
@@ -45,6 +46,33 @@ const EsmereogenesisHubPage: React.FC = () => {
   const { track } = useTrackingDispatch();
   const { formatCurrency } = useCurrencyFormat();
   const isWide = useMediaQuery('(min-width: 720px)');
+  const theme = useTheme();
+  const isLight = theme.palette.mode === 'light';
+  // Theme-aware tokens — both modes share the emerald soul, but light mode
+  // uses pearl-mint glass with dark emerald typography, while dark mode uses
+  // deep emerald glass with cream-white typography. Computed once so the
+  // markup below stays declarative.
+  const headerBg = isLight
+    ? `linear-gradient(180deg, ${alpha(emeraldCore.light, 0.16)} 0%, ${alpha(emeraldCore.primary, 0.08)} 100%), ${alpha('#F4FAF6', 0.78)}`
+    : `linear-gradient(180deg, ${alpha(emeraldCore.dark, 0.78)} 0%, ${alpha(emeraldCore.dark, 0.62)} 100%)`;
+  const cardBg = isLight
+    ? `linear-gradient(140deg, ${alpha(emeraldCore.light, 0.18)} 0%, ${alpha(emeraldCore.primary, 0.1)} 100%), ${alpha('#F4FAF6', 0.78)}`
+    : `linear-gradient(140deg, ${alpha(emeraldCore.primary, 0.32)} 0%, ${alpha(emeraldCore.dark, 0.55)} 100%)`;
+  const titleColor = isLight ? emeraldCore.dark : '#F4FAF6';
+  const overlineColor = isLight ? emeraldCore.dark : emeraldCore.light;
+  const headlineColor = isLight ? emeraldCore.dark : '#F4FAF6';
+  const bodyColor = isLight ? alpha(emeraldCore.dark, 0.78) : alpha('#FFFFFF', 0.78);
+  const accentColor = isLight ? emeraldCore.primary : emeraldCore.light;
+  const cardBorder = isLight
+    ? alpha(emeraldCore.primary, 0.3)
+    : alpha(emeraldCore.light, 0.22);
+  const headerBorder = isLight
+    ? alpha(emeraldCore.primary, 0.24)
+    : alpha(emeraldCore.light, 0.18);
+  const cardShadow = isLight
+    ? `0 12px 28px ${alpha(emeraldCore.dark, 0.18)}, 0 1px 0 ${alpha('#FFFFFF', 0.42)} inset`
+    : `0 14px 32px ${alpha('#000000', 0.32)}, 0 1px 0 ${alpha(emeraldCore.light, 0.16)} inset`;
+  const progressTrack = isLight ? alpha(emeraldCore.primary, 0.16) : alpha('#000000', 0.32);
 
   const {
     activePlans,
@@ -77,32 +105,40 @@ const EsmereogenesisHubPage: React.FC = () => {
         pb: 6,
       }}
     >
-      {/* Header */}
+      {/* Header — feature identity strip. Theme-aware glass: pearl-mint in
+          light mode, deep emerald in dark mode. Title stays serif & high
+          contrast for either surface. */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           px: 2,
-          py: 2,
+          pt: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+          pb: 1.5,
           position: 'sticky',
           top: 0,
-          background: alpha('#FFFFFF', 0.4),
-          backdropFilter: 'blur(16px) saturate(140%)',
-          WebkitBackdropFilter: 'blur(16px) saturate(140%)',
-          borderBottom: `1px solid ${alpha(emeraldCore.primary, 0.12)}`,
+          background: headerBg,
+          backdropFilter: 'blur(22px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(22px) saturate(160%)',
+          borderBottom: `1px solid ${headerBorder}`,
+          boxShadow: isLight
+            ? `0 1px 0 ${alpha('#FFFFFF', 0.32)} inset`
+            : `0 1px 0 ${alpha(emeraldCore.light, 0.12)} inset`,
           zIndex: 10,
         }}
       >
-        <IconButton onClick={() => navigate(-1)} aria-label="Volver">
+        <IconButton onClick={() => navigate(-1)} aria-label="Volver" sx={{ color: titleColor }}>
           <ChevronLeft />
         </IconButton>
         <Typography
           variant="h6"
           sx={{
             fontFamily: '"Playfair Display", serif',
-            fontWeight: 600,
-            color: emeraldCore.dark,
+            fontWeight: 700,
+            color: titleColor,
+            letterSpacing: 0.4,
+            textShadow: isLight ? 'none' : `0 2px 12px ${alpha(emeraldCore.dark, 0.6)}`,
           }}
         >
           Esmereogénesis
@@ -110,6 +146,7 @@ const EsmereogenesisHubPage: React.FC = () => {
         <IconButton
           onClick={(e) => setMenuAnchor(e.currentTarget)}
           aria-label="Ajustes de Esmereogénesis"
+          sx={{ color: titleColor }}
         >
           <Settings />
         </IconButton>
@@ -154,54 +191,130 @@ const EsmereogenesisHubPage: React.FC = () => {
       {!hasPlans ? (
         <EsmereoEmptyState />
       ) : (
-        <Box sx={{ maxWidth: 960, mx: 'auto', px: { xs: 2, md: 3 }, py: 3 }}>
-          {/* Global metrics card */}
+        <Box
+          sx={{
+            maxWidth: 960,
+            mx: 'auto',
+            px: { xs: 2, md: 3 },
+            pt: 3,
+            // Reserve room for the bottom navigation + iOS home indicator.
+            pb: 'calc(env(safe-area-inset-bottom, 0px) + 96px)',
+          }}
+        >
+          {/* Global metrics card — theme-aware glass + typography. */}
           <Box
             component={motion.section}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
             sx={{
-              background: alpha('#FFFFFF', 0.55),
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              border: `1px solid ${alpha(emeraldCore.primary, 0.18)}`,
+              background: cardBg,
+              backdropFilter: 'blur(18px) saturate(160%)',
+              WebkitBackdropFilter: 'blur(18px) saturate(160%)',
+              border: `1px solid ${cardBorder}`,
               borderRadius: 3,
-              p: { xs: 2, md: 3 },
+              p: { xs: 2.25, md: 3 },
               mb: 3,
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 2,
-              justifyContent: 'space-between',
-              alignItems: 'center',
+              boxShadow: cardShadow,
             }}
           >
-            <Box>
-              <Typography
-                variant="overline"
-                sx={{ color: emeraldCore.dark, fontWeight: 700, letterSpacing: 1.4 }}
-              >
-                Tu jardín
-              </Typography>
-              <Typography
-                variant="h5"
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                justifyContent: 'space-between',
+                gap: 1.5,
+                flexWrap: 'wrap',
+              }}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Typography
+                  variant="overline"
+                  sx={{
+                    color: overlineColor,
+                    fontWeight: 700,
+                    letterSpacing: 1.4,
+                    opacity: isLight ? 0.85 : 0.78,
+                  }}
+                >
+                  Tu jardín
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontFamily: '"Playfair Display", serif',
+                    fontWeight: 700,
+                    color: headlineColor,
+                    lineHeight: 1.15,
+                    textShadow: isLight ? 'none' : `0 2px 14px ${alpha(emeraldCore.dark, 0.5)}`,
+                  }}
+                >
+                  {hubMetrics.activeCount}{' '}
+                  {hubMetrics.activeCount === 1 ? 'esmeralda' : 'esmeraldas'} en proceso
+                </Typography>
+              </Box>
+              <StreakIndicator weeks={hubMetrics.globalStreak} />
+            </Box>
+
+            {/* Global progress signifier — each stat reads on its own row. */}
+            <Box sx={{ mt: 2 }}>
+              <Box
                 sx={{
-                  fontFamily: '"Playfair Display", serif',
-                  fontWeight: 600,
-                  color: emeraldCore.dark,
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'space-between',
+                  gap: 1,
+                  mb: 0.75,
                 }}
               >
-                {hubMetrics.activeCount} {hubMetrics.activeCount === 1 ? 'esmeralda' : 'esmeraldas'}{' '}
-                en proceso · {Math.round(hubMetrics.globalProgress * 100)}%
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-                {formatCurrency(hubMetrics.totalAbonadoCOP)} aportado
-                {hubMetrics.totalTargetCOP > 0
-                  ? ` de ${formatCurrency(hubMetrics.totalTargetCOP)}`
-                  : ''}
-              </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: bodyColor,
+                    fontWeight: 600,
+                    letterSpacing: 0.4,
+                  }}
+                >
+                  {formatCurrency(hubMetrics.totalAbonadoCOP)} aportado
+                  {hubMetrics.totalTargetCOP > 0
+                    ? ` · meta ${formatCurrency(hubMetrics.totalTargetCOP)}`
+                    : ''}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: accentColor,
+                    fontWeight: 800,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {Math.round(hubMetrics.globalProgress * 100)}%
+                </Typography>
+              </Box>
+              <Box
+                aria-hidden
+                sx={{
+                  height: 6,
+                  borderRadius: 999,
+                  bgcolor: progressTrack,
+                  overflow: 'hidden',
+                  border: isLight ? 'none' : `1px solid ${alpha(emeraldCore.light, 0.12)}`,
+                }}
+              >
+                <Box
+                  sx={{
+                    height: '100%',
+                    width: `${Math.max(2, Math.round(hubMetrics.globalProgress * 100))}%`,
+                    background: emeraldGradients.intense,
+                    borderRadius: 999,
+                    transition: 'width 0.6s ease-out',
+                    boxShadow: isLight
+                      ? `0 0 8px ${alpha(emeraldCore.primary, 0.35)}`
+                      : `0 0 12px ${alpha(emeraldCore.light, 0.45)}`,
+                  }}
+                />
+              </Box>
             </Box>
-            <StreakIndicator weeks={hubMetrics.globalStreak} />
           </Box>
 
           {/* Active garden grid */}
@@ -209,10 +322,11 @@ const EsmereogenesisHubPage: React.FC = () => {
             <Box
               sx={{
                 display: 'grid',
+                // 2 cols on phones, fluid auto-fill once we hit a tablet width.
                 gridTemplateColumns: isWide
-                  ? 'repeat(auto-fill, minmax(220px, 1fr))'
-                  : 'repeat(2, 1fr)',
-                gap: 2,
+                  ? 'repeat(auto-fill, minmax(200px, 1fr))'
+                  : 'repeat(2, minmax(0, 1fr))',
+                gap: { xs: 1.5, md: 2 },
                 mb: 3,
               }}
             >
@@ -222,53 +336,82 @@ const EsmereogenesisHubPage: React.FC = () => {
             </Box>
           )}
 
+          {/* Sembrar nueva — promoted to a contained pill so it carries the
+              weight of the next intentional action when the garden already
+              exists, instead of disappearing as a faded outline. */}
           <Box sx={{ display: 'flex', justifyContent: 'center', mb: completedPlans.length > 0 ? 4 : 2 }}>
             <Button
-              variant="outlined"
+              variant="contained"
               startIcon={<Plus size={18} />}
               onClick={() => navigate('/treasure')}
               sx={{
-                color: emeraldCore.dark,
-                borderColor: alpha(emeraldCore.primary, 0.4),
+                color: '#FFFFFF',
+                background: emeraldGradients.intense,
                 py: 1.25,
-                px: 3,
-                fontWeight: 600,
+                px: 3.25,
+                minHeight: 48,
+                fontWeight: 700,
                 borderRadius: 999,
                 textTransform: 'none',
-                background: alpha('#FFFFFF', 0.5),
+                letterSpacing: 0.2,
+                boxShadow: `0 10px 24px ${alpha(emeraldCore.dark, 0.28)}`,
                 '&:hover': {
-                  borderColor: emeraldCore.primary,
-                  background: alpha(emeraldCore.primary, 0.08),
+                  background: emeraldGradients.deep,
+                  boxShadow: `0 14px 30px ${alpha(emeraldCore.dark, 0.36)}`,
                 },
+                '&:active': { transform: 'scale(0.98)' },
               }}
             >
               Sembrar nueva Esmereogénesis
             </Button>
           </Box>
 
-          {/* Completed section */}
+          {/* Completed section — separated by a soft gold rule so it reads as
+              a different garden bed (ceremonial, not a continuation grid). */}
           {completedPlans.length > 0 && (
             <Box>
-              <Typography
-                variant="overline"
+              <Box
                 sx={{
-                  display: 'block',
-                  color: goldAccent.dark,
-                  fontWeight: 700,
-                  letterSpacing: 1.4,
-                  mb: 1.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  mb: 2,
                   pl: 1,
                 }}
               >
-                Adquiridas
-              </Typography>
+                <Box
+                  sx={{
+                    height: 1,
+                    flex: 1,
+                    background: `linear-gradient(90deg, transparent 0%, ${alpha(goldAccent.primary, 0.55)} 100%)`,
+                  }}
+                />
+                <Typography
+                  variant="overline"
+                  sx={{
+                    color: goldAccent.dark,
+                    fontWeight: 700,
+                    letterSpacing: 1.6,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Adquiridas
+                </Typography>
+                <Box
+                  sx={{
+                    height: 1,
+                    flex: 1,
+                    background: `linear-gradient(90deg, ${alpha(goldAccent.primary, 0.55)} 0%, transparent 100%)`,
+                  }}
+                />
+              </Box>
               <Box
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: isWide
-                    ? 'repeat(auto-fill, minmax(220px, 1fr))'
-                    : 'repeat(2, 1fr)',
-                  gap: 2,
+                    ? 'repeat(auto-fill, minmax(200px, 1fr))'
+                    : 'repeat(2, minmax(0, 1fr))',
+                  gap: { xs: 1.5, md: 2 },
                 }}
               >
                 {completedPlans.map((plan) => (

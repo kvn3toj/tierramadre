@@ -19,7 +19,6 @@ import type { TreasureItem } from '../../types';
 import { useEsmereogenesis } from '../../contexts/EsmereogenesisContext';
 import { EsmereoCreationSheet } from './EsmereoCreationSheet';
 import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
-import { emeraldGradients } from '../../design-system/tokens/gradients';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 
 interface EsmereogenesisCTAProps {
@@ -91,6 +90,9 @@ export const EsmereogenesisCTA: React.FC<EsmereogenesisCTAProps> = ({ product, d
 
   return (
     <>
+      {/* Visual stance: glassy emerald-tinted surface with a gold breathing
+          accent — distinct enough from the primary "Agregar a Selección"
+          (solid emerald gradient) so they read as siblings, not rivals. */}
       <Box
         component={motion.button}
         onClick={handleClick}
@@ -105,18 +107,18 @@ export const EsmereogenesisCTA: React.FC<EsmereogenesisCTAProps> = ({ product, d
           alignItems: 'center',
           gap: 1.5,
           width: '100%',
-          minHeight: 64,
-          py: 1.5,
+          minHeight: 60,
+          py: 1.25,
           px: 2,
           borderRadius: 2,
-          border: 'none',
+          border: `1px solid ${alpha(goldAccent.primary, 0.45)}`,
           color: '#FFFFFF',
-          background: emeraldGradients.intense,
+          background: `linear-gradient(135deg, ${alpha(emeraldCore.dark, 0.92)} 0%, ${alpha(emeraldCore.primary, 0.85)} 60%, ${alpha(emeraldCore.dark, 0.92)} 100%)`,
           cursor: 'pointer',
           textAlign: 'left',
           font: 'inherit',
           overflow: 'hidden',
-          boxShadow: `0 12px 28px ${alpha(emeraldCore.dark, 0.3)}`,
+          boxShadow: `0 8px 22px ${alpha(emeraldCore.dark, 0.22)}, 0 0 0 1px ${alpha(goldAccent.primary, 0.08)} inset`,
           '&:focus-visible': {
             outline: `2px solid ${goldAccent.primary}`,
             outlineOffset: 2,
@@ -125,22 +127,25 @@ export const EsmereogenesisCTA: React.FC<EsmereogenesisCTAProps> = ({ product, d
             content: '""',
             position: 'absolute',
             inset: 0,
-            background: `linear-gradient(120deg, ${alpha(goldAccent.primary, 0)} 0%, ${alpha(goldAccent.primary, 0.25)} 50%, ${alpha(goldAccent.primary, 0)} 100%)`,
+            background: `linear-gradient(120deg, ${alpha(goldAccent.primary, 0)} 0%, ${alpha(goldAccent.primary, 0.18)} 50%, ${alpha(goldAccent.primary, 0)} 100%)`,
             transform: 'translateX(-100%)',
-            animation: 'esmereoShine 3.6s ease-in-out infinite',
+            animation: 'esmereoShine 6s ease-in-out infinite',
             pointerEvents: 'none',
           },
           '@keyframes esmereoShine': {
-            '0%': { transform: 'translateX(-100%)' },
-            '60%': { transform: 'translateX(100%)' },
+            '0%, 35%': { transform: 'translateX(-100%)' },
+            '70%': { transform: 'translateX(100%)' },
             '100%': { transform: 'translateX(100%)' },
+          },
+          '@media (prefers-reduced-motion: reduce)': {
+            '&:before': { animation: 'none', display: 'none' },
           },
         }}
       >
         <Box
           component={motion.span}
-          animate={{ scale: [1, 1.08, 1] }}
-          transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ scale: [1, 1.06, 1] }}
+          transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
           sx={{
             width: 36,
             height: 36,
@@ -148,9 +153,10 @@ export const EsmereogenesisCTA: React.FC<EsmereogenesisCTAProps> = ({ product, d
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: alpha('#FFFFFF', 0.18),
+            background: `radial-gradient(circle, ${alpha(goldAccent.primary, 0.35)} 0%, ${alpha(goldAccent.primary, 0)} 70%)`,
             color: goldAccent.light,
             flexShrink: 0,
+            boxShadow: `0 0 12px ${alpha(goldAccent.primary, 0.45)}`,
           }}
         >
           {icon}
@@ -162,6 +168,7 @@ export const EsmereogenesisCTA: React.FC<EsmereogenesisCTAProps> = ({ product, d
               fontWeight: 700,
               color: 'inherit',
               lineHeight: 1.2,
+              letterSpacing: 0.2,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -172,7 +179,7 @@ export const EsmereogenesisCTA: React.FC<EsmereogenesisCTAProps> = ({ product, d
           <Typography
             variant="caption"
             sx={{
-              color: alpha('#FFFFFF', 0.85),
+              color: alpha('#FFFFFF', 0.78),
               display: 'block',
               whiteSpace: 'nowrap',
               overflow: 'hidden',

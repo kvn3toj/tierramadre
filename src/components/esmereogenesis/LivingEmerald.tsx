@@ -12,7 +12,7 @@
  *   7. Sparkle field (only when progress > 0.5)
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Box, alpha } from '@mui/material';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Sprout } from 'lucide-react';
@@ -81,6 +81,10 @@ export const LivingEmerald: React.FC<LivingEmeraldProps> = ({
   const isComplete = state === 'completed' || state === 'claimed';
   const showSparkles = clampedProgress >= 0.5 || isComplete;
   const dustOpacity = isComplete ? 0 : Math.max(0, 1 - clampedProgress * 1.05);
+  // When the image proxy fails (dev env / missing fileId) we fall back to the
+  // emerald gradient — never leave the user staring at a black sphere.
+  const [imageFailed, setImageFailed] = useState(false);
+  const useImage = Boolean(imageSrc) && !imageFailed;
 
   const recentBoost = useMemo(() => {
     if (!recentAporteAt) return 0;
@@ -178,17 +182,20 @@ export const LivingEmerald: React.FC<LivingEmeraldProps> = ({
             borderRadius: '50%',
             overflow: 'hidden',
             position: 'relative',
-            background: imageSrc ? '#000' : emeraldGradients.intense,
+            // Always use the emerald gradient as the underlying surface so a
+            // failed image (dev env, missing fileId) never reveals raw black.
+            background: emeraldGradients.intense,
             boxShadow: `0 ${px * 0.05}px ${px * 0.18}px ${alpha(emeraldCore.dark, 0.35 + recentBoost * 0.2)}, 0 0 ${px * 0.12 + recentBoost * 30}px ${alpha(emeraldCore.primary, 0.3 + recentBoost * 0.4)}`,
             transition: 'box-shadow 0.6s ease-out',
           }}
         >
-          {imageSrc ? (
+          {useImage ? (
             <Box
               component="img"
               src={imageSrc}
               alt=""
               loading="lazy"
+              onError={() => setImageFailed(true)}
               sx={{
                 width: '100%',
                 height: '100%',

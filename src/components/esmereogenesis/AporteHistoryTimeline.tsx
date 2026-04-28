@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Box, Typography, alpha } from '@mui/material';
+import { Box, Typography, alpha, useTheme } from '@mui/material';
 import { Droplet } from 'lucide-react';
 import type { Aporte } from '../../types/esmereogenesis';
 import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
@@ -43,6 +43,11 @@ export const AporteHistoryTimeline: React.FC<AporteHistoryTimelineProps> = ({
   onShowAll,
 }) => {
   const { formatCurrency } = useCurrencyFormat();
+  const theme = useTheme();
+  const isLight = theme.palette.mode === 'light';
+  const amountColor = isLight ? emeraldCore.dark : '#F4FAF6';
+  const subtitleColor = isLight ? alpha(emeraldCore.dark, 0.6) : alpha('#FFFFFF', 0.62);
+  const linkColor = isLight ? emeraldCore.primary : emeraldCore.light;
 
   if (aportes.length === 0) {
     return (
@@ -116,13 +121,14 @@ export const AporteHistoryTimeline: React.FC<AporteHistoryTimelineProps> = ({
                   variant="body2"
                   sx={{
                     fontWeight: 700,
-                    color: emeraldCore.dark,
+                    color: amountColor,
                     lineHeight: 1.2,
+                    textShadow: isLight ? 'none' : `0 1px 8px ${alpha(emeraldCore.dark, 0.45)}`,
                   }}
                 >
                   + {formatCurrency(aporte.amountCOP)}
                 </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                <Typography variant="caption" sx={{ color: subtitleColor }}>
                   {relativeLabel(aporte.createdAt)} ·{' '}
                   {aporte.type === 'suggested' ? 'Aporte sugerido' : 'Aporte libre'}
                 </Typography>
@@ -140,13 +146,13 @@ export const AporteHistoryTimeline: React.FC<AporteHistoryTimelineProps> = ({
             sx={{
               background: 'transparent',
               border: 'none',
-              color: emeraldCore.dark,
+              color: linkColor,
               fontWeight: 600,
               cursor: 'pointer',
               textDecoration: 'underline',
               fontSize: 14,
               padding: 0,
-              '&:hover': { color: emeraldCore.primary },
+              '&:hover': { color: isLight ? emeraldCore.dark : '#FFFFFF' },
             }}
           >
             Ver historial completo ({ordered.length})
