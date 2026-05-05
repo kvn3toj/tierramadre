@@ -8,8 +8,10 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
 import type * as invitations from "../invitations.js";
 import type * as productViews from "../productViews.js";
+import type * as products from "../products.js";
 
 import type {
   ApiFromModules,
@@ -18,8 +20,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
   invitations: typeof invitations;
   productViews: typeof productViews;
+  products: typeof products;
 }>;
 
 /**

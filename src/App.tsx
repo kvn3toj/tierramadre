@@ -111,6 +111,10 @@ const CotizacionProductsPage = lazyWithRetry(
   () => import("./pages/admin/CotizacionProductsPage"),
   "CotizacionProductsPage",
 );
+const AdminProductManagementPage = lazyWithRetry(
+  () => import("./pages/admin/ProductManagement/ProductManagementPage"),
+  "AdminProductManagementPage",
+);
 const FeedbackDashboard = lazyWithRetry(
   () => import("./pages/admin/FeedbackDashboard"),
   "FeedbackDashboard",
@@ -449,6 +453,18 @@ function AppContent() {
               <AdminRoute>
                 <Suspense fallback={<LocalizedLoading messageKey="products" />}>
                   <CotizacionProductsPage />
+                </Suspense>
+              </AdminRoute>
+            }
+          />
+
+          {/* Admin Product Management — atelier */}
+          <Route
+            path="/admin/products"
+            element={
+              <AdminRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="products" />}>
+                  <AdminProductManagementPage />
                 </Suspense>
               </AdminRoute>
             }
