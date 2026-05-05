@@ -1,95 +1,207 @@
-import { useCallback, useEffect, useState, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { IOSLayout } from './components/ios';
-import { WelcomeScreen, AdminRoute, ProviderRoute, StaffRoute } from './components/auth';
-import { useAuth } from './hooks/useAuth';
-import { useIsProvider } from './hooks/usePermissions';
-import { Asesor } from './hooks/useAsesores';
-import { initPWA } from './utils/pwa';
-import { LoadingFallback, SplashScreen, ChunkErrorBoundary } from './components/shared';
-import { useLanguage } from './contexts/LanguageContext';
+import { useCallback, useEffect, useState, Suspense } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
+import { IOSLayout } from "./components/ios";
+import {
+  WelcomeScreen,
+  AdminRoute,
+  ProviderRoute,
+  StaffRoute,
+} from "./components/auth";
+import { useAuth } from "./hooks/useAuth";
+import { useIsProvider } from "./hooks/usePermissions";
+import { Asesor } from "./hooks/useAsesores";
+import { initPWA } from "./utils/pwa";
+import {
+  LoadingFallback,
+  SplashScreen,
+  ChunkErrorBoundary,
+} from "./components/shared";
+import { useLanguage } from "./contexts/LanguageContext";
 // PWA update toast (version check on visibility change)
-import UpdateToast from './components/pwa/UpdateToast';
-import { usePWAUpdate } from './hooks/usePWAUpdate';
-import { AppShellProviders } from './contexts/AppShellProviders';
-import { AchievementToast } from './components/gamification';
-import { useViewportHeight } from './hooks/useViewportHeight';
-import { lazyWithRetry } from './utils/lazyWithRetry';
-import { STORAGE_KEYS } from './constants/storage-keys';
+import UpdateToast from "./components/pwa/UpdateToast";
+import { usePWAUpdate } from "./hooks/usePWAUpdate";
+import { AppShellProviders } from "./contexts/AppShellProviders";
+import { AchievementToast } from "./components/gamification";
+import { useViewportHeight } from "./hooks/useViewportHeight";
+import { lazyWithRetry } from "./utils/lazyWithRetry";
+import { STORAGE_KEYS } from "./constants/storage-keys";
 
 /**
  * Localized Loading Component
  * Uses useLanguage hook to retrieve translated loading messages
  * Supports nested key paths (e.g., "loading.treasures")
  */
-function LocalizedLoading({ messageKey }: { messageKey: keyof typeof import('./locales/es').es.loading }) {
+function LocalizedLoading({
+  messageKey,
+}: {
+  messageKey: keyof typeof import("./locales/es").es.loading;
+}) {
   const { t } = useLanguage();
   return <LoadingFallback message={t.loading[messageKey]} />;
 }
 
 // All routes lazy loaded with retry for optimal bundle splitting
-const Home = lazyWithRetry(() => import('./components/home'), 'Home');
-const TreasureBrowser = lazyWithRetry(() => import('./components/treasure/TreasureBrowser'), 'TreasureBrowser');
-const ProductDetail = lazyWithRetry(() => import('./pages/treasure/ProductDetail/ProductDetailPage'), 'ProductDetail');
-const AmbassadorsPage = lazyWithRetry(() => import('./pages/ambassadors/AmbassadorsPage'), 'AmbassadorsPage');
-const AsesorProfilePage = lazyWithRetry(() => import('./pages/ambassadors/profile/AsesorProfilePage'), 'AsesorProfilePage');
-const AccountsHub = lazyWithRetry(() => import('./components/accounts/AccountsHub'), 'AccountsHub');
-const VaultPage = lazyWithRetry(() => import('./pages/VaultPage'), 'VaultPage');
+const Home = lazyWithRetry(() => import("./components/home"), "Home");
+const TreasureBrowser = lazyWithRetry(
+  () => import("./components/treasure/TreasureBrowser"),
+  "TreasureBrowser",
+);
+const ProductDetail = lazyWithRetry(
+  () => import("./pages/treasure/ProductDetail/ProductDetailPage"),
+  "ProductDetail",
+);
+const AmbassadorsPage = lazyWithRetry(
+  () => import("./pages/ambassadors/AmbassadorsPage"),
+  "AmbassadorsPage",
+);
+const AsesorProfilePage = lazyWithRetry(
+  () => import("./pages/ambassadors/profile/AsesorProfilePage"),
+  "AsesorProfilePage",
+);
+const AccountsHub = lazyWithRetry(
+  () => import("./components/accounts/AccountsHub"),
+  "AccountsHub",
+);
+const VaultPage = lazyWithRetry(() => import("./pages/VaultPage"), "VaultPage");
 
 // Cuentas sub-pages (accessed from AccountsHub)
-const PriceSimulator = lazyWithRetry(() => import('./components/price-simulator/PriceSimulator'), 'PriceSimulator');
-const ReceiptGenerator = lazyWithRetry(() => import('./pages/cuentas/recibos/ReceiptGenerator'), 'ReceiptGenerator');
-const CotizacionGenerator = lazyWithRetry(() => import('./components/cotizacion/CotizacionGenerator'), 'CotizacionGenerator');
-const QuotationPreview = lazyWithRetry(() => import('./pages/cuentas/cotizaciones/QuotationPreviewPage'), 'QuotationPreview');
-const AdminAnalyticsPage = lazyWithRetry(() => import('./pages/admin/analytics/AdminAnalyticsPage'), 'AdminAnalyticsPage');
-const NameGeneratorPage = lazyWithRetry(() => import('./pages/admin/name-generator/NameGeneratorPage'), 'NameGeneratorPage');
-const ActivityPage = lazyWithRetry(() => import('./pages/admin/ActivityPage'), 'ActivityPage');
-const ProductViewersPage = lazyWithRetry(() => import('./pages/admin/ProductViewers'), 'ProductViewersPage');
-const UserViewsPage = lazyWithRetry(() => import('./pages/admin/UserViewsPage'), 'UserViewsPage');
-const CotizacionProductsPage = lazyWithRetry(() => import('./pages/admin/CotizacionProductsPage'), 'CotizacionProductsPage');
-const FeedbackDashboard = lazyWithRetry(() => import('./pages/admin/FeedbackDashboard'), 'FeedbackDashboard');
-const ValuationPage = lazyWithRetry(() => import('./pages/valuation/ValuationPage'), 'ValuationPage');
+const PriceSimulator = lazyWithRetry(
+  () => import("./components/price-simulator/PriceSimulator"),
+  "PriceSimulator",
+);
+const ReceiptGenerator = lazyWithRetry(
+  () => import("./pages/cuentas/recibos/ReceiptGenerator"),
+  "ReceiptGenerator",
+);
+const CotizacionGenerator = lazyWithRetry(
+  () => import("./components/cotizacion/CotizacionGenerator"),
+  "CotizacionGenerator",
+);
+const QuotationPreview = lazyWithRetry(
+  () => import("./pages/cuentas/cotizaciones/QuotationPreviewPage"),
+  "QuotationPreview",
+);
+const AdminAnalyticsPage = lazyWithRetry(
+  () => import("./pages/admin/analytics/AdminAnalyticsPage"),
+  "AdminAnalyticsPage",
+);
+const NameGeneratorPage = lazyWithRetry(
+  () => import("./pages/admin/name-generator/NameGeneratorPage"),
+  "NameGeneratorPage",
+);
+const ActivityPage = lazyWithRetry(
+  () => import("./pages/admin/ActivityPage"),
+  "ActivityPage",
+);
+const ProductViewersPage = lazyWithRetry(
+  () => import("./pages/admin/ProductViewers"),
+  "ProductViewersPage",
+);
+const UserViewsPage = lazyWithRetry(
+  () => import("./pages/admin/UserViewsPage"),
+  "UserViewsPage",
+);
+const CotizacionProductsPage = lazyWithRetry(
+  () => import("./pages/admin/CotizacionProductsPage"),
+  "CotizacionProductsPage",
+);
+const FeedbackDashboard = lazyWithRetry(
+  () => import("./pages/admin/FeedbackDashboard"),
+  "FeedbackDashboard",
+);
+const ValuationPage = lazyWithRetry(
+  () => import("./pages/valuation/ValuationPage"),
+  "ValuationPage",
+);
 
 // Provider Portal pages
-const ProviderDashboard = lazyWithRetry(() => import('./components/provider/ProviderDashboard'), 'ProviderDashboard');
-const ProviderRequestList = lazyWithRetry(() => import('./components/provider/ProviderRequestList'), 'ProviderRequestList');
-const ProviderQuotationForm = lazyWithRetry(() => import('./components/provider/ProviderQuotationForm'), 'ProviderQuotationForm');
-const ProviderInventory = lazyWithRetry(() => import('./components/provider/ProviderInventory'), 'ProviderInventory');
+const ProviderDashboard = lazyWithRetry(
+  () => import("./components/provider/ProviderDashboard"),
+  "ProviderDashboard",
+);
+const ProviderRequestList = lazyWithRetry(
+  () => import("./components/provider/ProviderRequestList"),
+  "ProviderRequestList",
+);
+const ProviderQuotationForm = lazyWithRetry(
+  () => import("./components/provider/ProviderQuotationForm"),
+  "ProviderQuotationForm",
+);
+const ProviderInventory = lazyWithRetry(
+  () => import("./components/provider/ProviderInventory"),
+  "ProviderInventory",
+);
 
 // Admin Quotation Management
-const QuotationRequestForm = lazyWithRetry(() => import('./components/admin/QuotationRequestForm'), 'QuotationRequestForm');
-const QuotationRequestList = lazyWithRetry(() => import('./components/admin/QuotationRequestList'), 'QuotationRequestList');
-const ProviderQuotationsList = lazyWithRetry(() => import('./components/admin/ProviderQuotationsList'), 'ProviderQuotationsList');
+const QuotationRequestForm = lazyWithRetry(
+  () => import("./components/admin/QuotationRequestForm"),
+  "QuotationRequestForm",
+);
+const QuotationRequestList = lazyWithRetry(
+  () => import("./components/admin/QuotationRequestList"),
+  "QuotationRequestList",
+);
+const ProviderQuotationsList = lazyWithRetry(
+  () => import("./components/admin/ProviderQuotationsList"),
+  "ProviderQuotationsList",
+);
 
 // My Profile (Ambassador personal dashboard)
-const MyProfilePage = lazyWithRetry(() => import('./pages/mi-perfil/MyProfilePage'), 'MyProfilePage');
-const AllActivityPage = lazyWithRetry(() => import('./pages/mi-perfil/AllActivityPage'), 'AllActivityPage');
-const GuestDetailPage = lazyWithRetry(() => import('./pages/mi-perfil/GuestDetailPage'), 'GuestDetailPage');
+const MyProfilePage = lazyWithRetry(
+  () => import("./pages/mi-perfil/MyProfilePage"),
+  "MyProfilePage",
+);
+const AllActivityPage = lazyWithRetry(
+  () => import("./pages/mi-perfil/AllActivityPage"),
+  "AllActivityPage",
+);
+const GuestDetailPage = lazyWithRetry(
+  () => import("./pages/mi-perfil/GuestDetailPage"),
+  "GuestDetailPage",
+);
 
 // Product Requests (Asesor/Embajador -> Admin)
-const ProductRequestsHub = lazyWithRetry(() => import('./pages/staff/requests/ProductRequestsHub'), 'ProductRequestsHub');
-const AdminProductRequestList = lazyWithRetry(() => import('./components/requests/AdminProductRequestList'), 'AdminProductRequestList');
+const ProductRequestsHub = lazyWithRetry(
+  () => import("./pages/staff/requests/ProductRequestsHub"),
+  "ProductRequestsHub",
+);
+const AdminProductRequestList = lazyWithRetry(
+  () => import("./components/requests/AdminProductRequestList"),
+  "AdminProductRequestList",
+);
 
 // Invitation Page (public route - accessible without auth)
-const InvitationPage = lazyWithRetry(() => import('./pages/InvitationPage'), 'InvitationPage');
+const InvitationPage = lazyWithRetry(
+  () => import("./pages/InvitationPage"),
+  "InvitationPage",
+);
 
 // Public Collection Page (shareable without auth)
-const CollectionPage = lazyWithRetry(() => import('./pages/collection/CollectionPage'), 'CollectionPage');
+const CollectionPage = lazyWithRetry(
+  () => import("./pages/collection/CollectionPage"),
+  "CollectionPage",
+);
 
 // Cart Page
-const CartPage = lazyWithRetry(() => import('./pages/CartPage'), 'CartPage');
+const CartPage = lazyWithRetry(() => import("./pages/CartPage"), "CartPage");
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
-export type TabValue = 'home' | 'treasure' | 'ambassadors';
+export type TabValue = "home" | "treasure" | "ambassadors";
 
 // Tab categories for navigation logic
-export const PRIMARY_TABS: TabValue[] = ['home', 'treasure', 'ambassadors'];
+export const PRIMARY_TABS: TabValue[] = ["home", "treasure", "ambassadors"];
 export const SECONDARY_TABS: TabValue[] = [];
 
 // Smart redirect based on user role
 function RoleBasedRedirect() {
   const isProvider = useIsProvider();
-  return <Navigate to={isProvider ? '/provider' : '/home'} replace />;
+  return <Navigate to={isProvider ? "/provider" : "/home"} replace />;
 }
 
 // Redirect providers away from regular home to provider dashboard
@@ -109,9 +221,12 @@ function HomeOrProviderRedirect() {
 function AppContent() {
   const navigate = useNavigate();
   // Navigate to asesor profile page
-  const handleViewAsesorProducts = useCallback((asesor: Asesor) => {
-    navigate(`/ambassadors/${asesor.slug}`);
-  }, [navigate]);
+  const handleViewAsesorProducts = useCallback(
+    (asesor: Asesor) => {
+      navigate(`/ambassadors/${asesor.slug}`);
+    },
+    [navigate],
+  );
 
   return (
     <>
@@ -120,259 +235,377 @@ function AppContent() {
           {/* Primary routes - smart redirect based on role */}
           <Route path="/" element={<RoleBasedRedirect />} />
           <Route path="/home" element={<HomeOrProviderRedirect />} />
-          <Route path="/treasure" element={
-            <Suspense fallback={<LocalizedLoading messageKey="treasures" />}>
-              <TreasureBrowser />
-            </Suspense>
-          } />
+          <Route
+            path="/treasure"
+            element={
+              <Suspense fallback={<LocalizedLoading messageKey="treasures" />}>
+                <TreasureBrowser />
+              </Suspense>
+            }
+          />
           {/* Redirect from old /inventory route for backward compatibility */}
-          <Route path="/inventory" element={<Navigate to="/treasure" replace />} />
+          <Route
+            path="/inventory"
+            element={<Navigate to="/treasure" replace />}
+          />
 
           {/* Product detail */}
-          <Route path="/product/:itemId" element={
-            <Suspense fallback={<LocalizedLoading messageKey="product" />}>
-              <ProductDetail />
-            </Suspense>
-          } />
+          <Route
+            path="/product/:itemId"
+            element={
+              <Suspense fallback={<LocalizedLoading messageKey="product" />}>
+                <ProductDetail />
+              </Suspense>
+            }
+          />
 
           {/* Cart / Selection */}
-          <Route path="/cart" element={
-            <Suspense fallback={<LocalizedLoading messageKey="selection" />}>
-              <CartPage />
-            </Suspense>
-          } />
+          <Route
+            path="/cart"
+            element={
+              <Suspense fallback={<LocalizedLoading messageKey="selection" />}>
+                <CartPage />
+              </Suspense>
+            }
+          />
 
           {/* Ambassadors (Embajadores) */}
           <Route
             path="/ambassadors"
             element={
-              <Suspense fallback={<LocalizedLoading messageKey="ambassadors" />}>
-                <AmbassadorsPage
-                  onViewProducts={handleViewAsesorProducts}
-                />
+              <Suspense
+                fallback={<LocalizedLoading messageKey="ambassadors" />}
+              >
+                <AmbassadorsPage onViewProducts={handleViewAsesorProducts} />
               </Suspense>
             }
           />
-          <Route path="/ambassadors/:slug" element={
-            <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
-              <AsesorProfilePage />
-            </Suspense>
-          } />
-          <Route path="/ambassadors/:slug/product/:itemId" element={
-            <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
-              <AsesorProfilePage />
-            </Suspense>
-          } />
+          <Route
+            path="/ambassadors/:slug"
+            element={
+              <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
+                <AsesorProfilePage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/ambassadors/:slug/product/:itemId"
+            element={
+              <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
+                <AsesorProfilePage />
+              </Suspense>
+            }
+          />
 
           {/* Valuation Page - Emerald investment information */}
-          <Route path="/valuation" element={
-            <Suspense fallback={<LocalizedLoading messageKey="information" />}>
-              <ValuationPage />
-            </Suspense>
-          } />
+          <Route
+            path="/valuation"
+            element={
+              <Suspense
+                fallback={<LocalizedLoading messageKey="information" />}
+              >
+                <ValuationPage />
+              </Suspense>
+            }
+          />
 
           {/* Cuentas Hub - Staff access (Admin, Embajador, Asesor) */}
-          <Route path="/cuentas" element={
-            <StaffRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="accounts" />}>
-                <AccountsHub />
-              </Suspense>
-            </StaffRoute>
-          } />
-          <Route path="/cuentas/simulador" element={
-            <AdminRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="simulator" />}>
-                <PriceSimulator />
-              </Suspense>
-            </AdminRoute>
-          } />
-          <Route path="/cuentas/recibos" element={
-            <AdminRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="receipts" />}>
-                <ReceiptGenerator />
-              </Suspense>
-            </AdminRoute>
-          } />
+          <Route
+            path="/cuentas"
+            element={
+              <StaffRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="accounts" />}>
+                  <AccountsHub />
+                </Suspense>
+              </StaffRoute>
+            }
+          />
+          <Route
+            path="/cuentas/simulador"
+            element={
+              <AdminRoute>
+                <Suspense
+                  fallback={<LocalizedLoading messageKey="simulator" />}
+                >
+                  <PriceSimulator />
+                </Suspense>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/cuentas/recibos"
+            element={
+              <AdminRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="receipts" />}>
+                  <ReceiptGenerator />
+                </Suspense>
+              </AdminRoute>
+            }
+          />
           {/* Cotizaciones - Staff access (Admin, Embajador, Asesor) */}
-          <Route path="/cuentas/cotizaciones" element={
-            <StaffRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="quotations" />}>
-                <CotizacionGenerator />
-              </Suspense>
-            </StaffRoute>
-          } />
-          <Route path="/cuentas/cotizaciones/preview" element={
-            <StaffRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="quotation" />}>
-                <QuotationPreview />
-              </Suspense>
-            </StaffRoute>
-          } />
+          <Route
+            path="/cuentas/cotizaciones"
+            element={
+              <StaffRoute>
+                <Suspense
+                  fallback={<LocalizedLoading messageKey="quotations" />}
+                >
+                  <CotizacionGenerator />
+                </Suspense>
+              </StaffRoute>
+            }
+          />
+          <Route
+            path="/cuentas/cotizaciones/preview"
+            element={
+              <StaffRoute>
+                <Suspense
+                  fallback={<LocalizedLoading messageKey="quotation" />}
+                >
+                  <QuotationPreview />
+                </Suspense>
+              </StaffRoute>
+            }
+          />
 
           {/* Bóveda Secreta */}
-          <Route path="/boveda-secreta" element={
-            <Suspense fallback={<LocalizedLoading messageKey="vault" />}>
-              <VaultPage />
-            </Suspense>
-          } />
+          <Route
+            path="/boveda-secreta"
+            element={
+              <Suspense fallback={<LocalizedLoading messageKey="vault" />}>
+                <VaultPage />
+              </Suspense>
+            }
+          />
 
           {/* Admin Analytics Dashboard */}
-          <Route path="/admin/analytics" element={
-            <AdminRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="analytics" />}>
-                <AdminAnalyticsPage />
-              </Suspense>
-            </AdminRoute>
-          } />
+          <Route
+            path="/admin/analytics"
+            element={
+              <AdminRoute>
+                <Suspense
+                  fallback={<LocalizedLoading messageKey="analytics" />}
+                >
+                  <AdminAnalyticsPage />
+                </Suspense>
+              </AdminRoute>
+            }
+          />
 
           {/* Admin Name Generator */}
-          <Route path="/admin/name-generator" element={
-            <AdminRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="generator" />}>
-                <NameGeneratorPage />
-              </Suspense>
-            </AdminRoute>
-          } />
+          <Route
+            path="/admin/name-generator"
+            element={
+              <AdminRoute>
+                <Suspense
+                  fallback={<LocalizedLoading messageKey="generator" />}
+                >
+                  <NameGeneratorPage />
+                </Suspense>
+              </AdminRoute>
+            }
+          />
 
           {/* Product Viewers Analytics */}
-          <Route path="/admin/analytics/item/:itemId" element={
-            <AdminRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="views" />}>
-                <ProductViewersPage />
-              </Suspense>
-            </AdminRoute>
-          } />
+          <Route
+            path="/admin/analytics/item/:itemId"
+            element={
+              <AdminRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="views" />}>
+                  <ProductViewersPage />
+                </Suspense>
+              </AdminRoute>
+            }
+          />
 
           {/* User Views Analytics */}
-          <Route path="/admin/analytics/user" element={
-            <AdminRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="history" />}>
-                <UserViewsPage />
-              </Suspense>
-            </AdminRoute>
-          } />
+          <Route
+            path="/admin/analytics/user"
+            element={
+              <AdminRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="history" />}>
+                  <UserViewsPage />
+                </Suspense>
+              </AdminRoute>
+            }
+          />
 
           {/* All Users Activity Feed */}
-          <Route path="/admin/analytics/activity" element={
-            <AdminRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="activity" />}>
-                <ActivityPage />
-              </Suspense>
-            </AdminRoute>
-          } />
+          <Route
+            path="/admin/analytics/activity"
+            element={
+              <AdminRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="activity" />}>
+                  <ActivityPage />
+                </Suspense>
+              </AdminRoute>
+            }
+          />
 
           {/* Cotización Products Analytics */}
-          <Route path="/admin/cotizacion-products" element={
-            <AdminRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="products" />}>
-                <CotizacionProductsPage />
-              </Suspense>
-            </AdminRoute>
-          } />
+          <Route
+            path="/admin/cotizacion-products"
+            element={
+              <AdminRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="products" />}>
+                  <CotizacionProductsPage />
+                </Suspense>
+              </AdminRoute>
+            }
+          />
 
           {/* Admin Feedback Dashboard */}
-          <Route path="/admin/feedback" element={
-            <AdminRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="feedback" />}>
-                <FeedbackDashboard />
-              </Suspense>
-            </AdminRoute>
-          } />
+          <Route
+            path="/admin/feedback"
+            element={
+              <AdminRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="feedback" />}>
+                  <FeedbackDashboard />
+                </Suspense>
+              </AdminRoute>
+            }
+          />
 
           {/* Admin Quotation Management */}
-          <Route path="/cuentas/solicitudes" element={
-            <AdminRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="requests" />}>
-                <QuotationRequestList />
-              </Suspense>
-            </AdminRoute>
-          } />
-          <Route path="/cuentas/solicitudes/nueva" element={
-            <AdminRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="form" />}>
-                <QuotationRequestForm />
-              </Suspense>
-            </AdminRoute>
-          } />
-          <Route path="/cuentas/cotizaciones-proveedor" element={
-            <AdminRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="quotations" />}>
-                <ProviderQuotationsList />
-              </Suspense>
-            </AdminRoute>
-          } />
+          <Route
+            path="/cuentas/solicitudes"
+            element={
+              <AdminRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="requests" />}>
+                  <QuotationRequestList />
+                </Suspense>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/cuentas/solicitudes/nueva"
+            element={
+              <AdminRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="form" />}>
+                  <QuotationRequestForm />
+                </Suspense>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/cuentas/cotizaciones-proveedor"
+            element={
+              <AdminRoute>
+                <Suspense
+                  fallback={<LocalizedLoading messageKey="quotations" />}
+                >
+                  <ProviderQuotationsList />
+                </Suspense>
+              </AdminRoute>
+            }
+          />
 
           {/* My Profile - Staff only */}
-          <Route path="/mi-perfil" element={
-            <StaffRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
-                <MyProfilePage />
-              </Suspense>
-            </StaffRoute>
-          } />
-          <Route path="/mi-perfil/actividad" element={
-            <StaffRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
-                <AllActivityPage />
-              </Suspense>
-            </StaffRoute>
-          } />
-          <Route path="/mi-perfil/invitado/:guestName" element={
-            <StaffRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
-                <GuestDetailPage />
-              </Suspense>
-            </StaffRoute>
-          } />
+          <Route
+            path="/mi-perfil"
+            element={
+              <StaffRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
+                  <MyProfilePage />
+                </Suspense>
+              </StaffRoute>
+            }
+          />
+          <Route
+            path="/mi-perfil/actividad"
+            element={
+              <StaffRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
+                  <AllActivityPage />
+                </Suspense>
+              </StaffRoute>
+            }
+          />
+          <Route
+            path="/mi-perfil/invitado/:guestName"
+            element={
+              <StaffRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
+                  <GuestDetailPage />
+                </Suspense>
+              </StaffRoute>
+            }
+          />
 
           {/* Product Requests (Asesor/Embajador -> Admin) - Staff only */}
-          <Route path="/solicitudes" element={
-            <StaffRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="requests" />}>
-                <ProductRequestsHub />
-              </Suspense>
-            </StaffRoute>
-          } />
+          <Route
+            path="/solicitudes"
+            element={
+              <StaffRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="requests" />}>
+                  <ProductRequestsHub />
+                </Suspense>
+              </StaffRoute>
+            }
+          />
           {/* Legacy routes - redirect to unified view */}
-          <Route path="/solicitar-producto" element={<Navigate to="/solicitudes?tab=nueva" replace />} />
-          <Route path="/mis-solicitudes" element={<Navigate to="/solicitudes" replace />} />
-          <Route path="/cuentas/solicitudes-asesores" element={
-            <AdminRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="requests" />}>
-                <AdminProductRequestList />
-              </Suspense>
-            </AdminRoute>
-          } />
+          <Route
+            path="/solicitar-producto"
+            element={<Navigate to="/solicitudes?tab=nueva" replace />}
+          />
+          <Route
+            path="/mis-solicitudes"
+            element={<Navigate to="/solicitudes" replace />}
+          />
+          <Route
+            path="/cuentas/solicitudes-asesores"
+            element={
+              <AdminRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="requests" />}>
+                  <AdminProductRequestList />
+                </Suspense>
+              </AdminRoute>
+            }
+          />
 
           {/* Provider Portal Routes */}
-          <Route path="/provider" element={
-            <ProviderRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="portal" />}>
-                <ProviderDashboard />
-              </Suspense>
-            </ProviderRoute>
-          } />
-          <Route path="/provider/requests" element={
-            <ProviderRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="requests" />}>
-                <ProviderRequestList />
-              </Suspense>
-            </ProviderRoute>
-          } />
-          <Route path="/provider/submit" element={
-            <ProviderRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="form" />}>
-                <ProviderQuotationForm />
-              </Suspense>
-            </ProviderRoute>
-          } />
-          <Route path="/provider/inventory" element={
-            <ProviderRoute>
-              <Suspense fallback={<LocalizedLoading messageKey="inventory" />}>
-                <ProviderInventory />
-              </Suspense>
-            </ProviderRoute>
-          } />
+          <Route
+            path="/provider"
+            element={
+              <ProviderRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="portal" />}>
+                  <ProviderDashboard />
+                </Suspense>
+              </ProviderRoute>
+            }
+          />
+          <Route
+            path="/provider/requests"
+            element={
+              <ProviderRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="requests" />}>
+                  <ProviderRequestList />
+                </Suspense>
+              </ProviderRoute>
+            }
+          />
+          <Route
+            path="/provider/submit"
+            element={
+              <ProviderRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="form" />}>
+                  <ProviderQuotationForm />
+                </Suspense>
+              </ProviderRoute>
+            }
+          />
+          <Route
+            path="/provider/inventory"
+            element={
+              <ProviderRoute>
+                <Suspense
+                  fallback={<LocalizedLoading messageKey="inventory" />}
+                >
+                  <ProviderInventory />
+                </Suspense>
+              </ProviderRoute>
+            }
+          />
         </Routes>
       </IOSLayout>
     </>
@@ -426,11 +659,14 @@ function AuthenticatedApp() {
   useEffect(() => {
     if (isAuthenticated) return;
     const params = new URLSearchParams(window.location.search);
-    const inviteCode = params.get('invite');
+    const inviteCode = params.get("invite");
     if (inviteCode) {
       // Preserve the intended destination (e.g. /product/32)
       const returnTo = window.location.pathname;
-      navigate(`/invite/${inviteCode}?redirect=${encodeURIComponent(returnTo)}`, { replace: true });
+      navigate(
+        `/invite/${inviteCode}?redirect=${encodeURIComponent(returnTo)}`,
+        { replace: true },
+      );
     }
   }, [isAuthenticated, navigate]);
 
@@ -455,13 +691,17 @@ const INACTIVITY_THRESHOLD = 30 * 60 * 1000; // 30 minutes
 
 function shouldShowSplash(): boolean {
   // Video generation mode — always show splash so the animation can be recorded
-  if (new URLSearchParams(window.location.search).get('video') === 'true') {
+  if (new URLSearchParams(window.location.search).get("video") === "true") {
     return true;
   }
 
   // Public routes that have their own splash — skip the main app splash
   const path = window.location.pathname;
-  if (path.startsWith('/c/') || path.startsWith('/invite/') || path.startsWith('/g/')) {
+  if (
+    path.startsWith("/c/") ||
+    path.startsWith("/invite/") ||
+    path.startsWith("/g/")
+  ) {
     return false;
   }
 
@@ -502,7 +742,7 @@ function App() {
   // Mark session as active and track activity
   useEffect(() => {
     // Mark this session as active (survives refresh, clears on browser close)
-    sessionStorage.setItem(SPLASH_SESSION_KEY, 'true');
+    sessionStorage.setItem(SPLASH_SESSION_KEY, "true");
 
     // Update last activity timestamp
     const updateActivity = () => {
@@ -519,21 +759,21 @@ function App() {
       activityTimeout = setTimeout(updateActivity, 5000); // Update at most every 5s
     };
 
-    window.addEventListener('click', throttledActivity);
-    window.addEventListener('keydown', throttledActivity);
-    window.addEventListener('touchstart', throttledActivity);
+    window.addEventListener("click", throttledActivity);
+    window.addEventListener("keydown", throttledActivity);
+    window.addEventListener("touchstart", throttledActivity);
 
     // Scroll activity: target main-content container (fixed viewport shell)
-    const mainEl = document.getElementById('main-content');
+    const mainEl = document.getElementById("main-content");
     const scrollTarget = mainEl || window;
-    scrollTarget.addEventListener('scroll', throttledActivity);
+    scrollTarget.addEventListener("scroll", throttledActivity);
 
     return () => {
       clearTimeout(activityTimeout);
-      window.removeEventListener('click', throttledActivity);
-      window.removeEventListener('keydown', throttledActivity);
-      window.removeEventListener('touchstart', throttledActivity);
-      scrollTarget.removeEventListener('scroll', throttledActivity);
+      window.removeEventListener("click", throttledActivity);
+      window.removeEventListener("keydown", throttledActivity);
+      window.removeEventListener("touchstart", throttledActivity);
+      scrollTarget.removeEventListener("scroll", throttledActivity);
     };
   }, []);
 
