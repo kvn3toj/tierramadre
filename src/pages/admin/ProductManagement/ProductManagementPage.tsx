@@ -1,8 +1,8 @@
 /**
- * ProductManagementPage — atelier admin panel.
+ * ProductManagementPage — atelier admin panel ("Fotosíntesis").
  *
  * Composition:
- *   - Page header: breadcrumb + title (left) + sync stats (right)
+ *   - LedgerHero: breadcrumb + display title + wax-stamp count + meter
  *   - AdminToolbar (sticky): search, filter, resync
  *   - InventoryRow list (virtualized-ready, currently flat)
  *   - EditDrawer (slides in from the right when a row is selected)
@@ -29,7 +29,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Box, ButtonBase, Typography, Skeleton } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { Link as RouterLink } from "react-router-dom";
 
 import { getAtelier } from "../../../design-system";
 import {
@@ -59,6 +58,7 @@ import {
   type EditDrawerProduct,
   type EditDrawerPatch,
 } from "./EditDrawer";
+import { LedgerHero } from "./LedgerHero";
 import type { EstadoValue } from "./StatusPip";
 
 // =============================================================================
@@ -575,6 +575,20 @@ export default function ProductManagementPage() {
         color: atelier.ink.primary,
       }}
     >
+      {/* Editorial hero — full-bleed, breathes outside the content gutter */}
+      <LedgerHero
+        atelier={atelier}
+        total={stats?.total ?? products?.length ?? 0}
+        available={statusCounts.available}
+        consigned={statusCounts.consigned}
+        sold={statusCounts.sold}
+        pending={stats?.pending ?? 0}
+        errored={stats?.errored ?? 0}
+        lastPull={stats?.lastPull ?? null}
+        isResyncing={isResyncing}
+        onResync={handleResync}
+      />
+
       <Box
         sx={{
           maxWidth: `${atelier.spacing.contentMaxWidth}px`,
@@ -582,135 +596,6 @@ export default function ProductManagementPage() {
           px: { xs: 2, md: 3 },
         }}
       >
-        {/* Page header — atelier ledger heading */}
-        <Box
-          sx={{
-            pt: 4,
-            pb: 3,
-            borderBottom: `1px solid ${atelier.surfaces.edge}`,
-          }}
-        >
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: "1fr auto",
-              alignItems: "flex-start",
-              gap: 3,
-            }}
-          >
-            <Box sx={{ minWidth: 0 }}>
-              <Typography
-                component="nav"
-                aria-label="Migas de pan"
-                sx={{
-                  ...atelier.type.label,
-                  color: atelier.ink.tertiary,
-                  mb: 1,
-                }}
-              >
-                <RouterLink
-                  to="/cuentas"
-                  style={{ color: "inherit", textDecoration: "none" }}
-                >
-                  Cuentas
-                </RouterLink>
-                {" · "}
-                <span aria-current="page">Inventario</span>
-              </Typography>
-              <Typography
-                component="h1"
-                sx={{
-                  ...atelier.type.headline,
-                  fontSize: "28px",
-                  color: atelier.ink.primary,
-                }}
-              >
-                Atelier · Inventario
-              </Typography>
-              <Typography
-                sx={{
-                  ...atelier.type.meta,
-                  color: atelier.ink.tertiary,
-                  mt: "4px",
-                  maxWidth: "560px",
-                }}
-              >
-                Espejo reactivo de la hoja Inventario. Los cambios se escriben
-                de vuelta a la hoja al guardar.
-              </Typography>
-            </Box>
-
-            {/* Inventory stamp — total count framed like a parcel mark */}
-            <Box
-              sx={{
-                border: `1px solid ${atelier.brass.soft}`,
-                borderRadius: "4px",
-                px: 2,
-                py: 1,
-                textAlign: "center",
-                backgroundColor: atelier.surfaces.panel,
-                minWidth: "92px",
-              }}
-              aria-label={`${stats?.total ?? 0} piezas en el espejo`}
-            >
-              <Typography
-                component="div"
-                sx={{
-                  ...atelier.type.data,
-                  fontSize: "26px",
-                  lineHeight: 1.1,
-                  color: atelier.ink.primary,
-                }}
-              >
-                {(stats?.total ?? products?.length ?? 0).toLocaleString(
-                  "es-CO",
-                )}
-              </Typography>
-              <Typography
-                component="div"
-                sx={{
-                  ...atelier.type.label,
-                  color: atelier.ink.tertiary,
-                  mt: "2px",
-                }}
-              >
-                Piezas
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Status distribution — three pips with counts */}
-          <Box
-            role="list"
-            aria-label="Distribución por estado"
-            sx={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: { xs: 2, md: 3 },
-              mt: 2,
-            }}
-          >
-            <StatusTally
-              label="Disponibles"
-              count={statusCounts.available}
-              color={atelier.status.available.pip}
-              atelier={atelier}
-            />
-            <StatusTally
-              label="Con asesor"
-              count={statusCounts.consigned}
-              color={atelier.status.consigned.pip}
-              atelier={atelier}
-            />
-            <StatusTally
-              label="Vendidas"
-              count={statusCounts.sold}
-              color={atelier.status.sold.pip}
-              atelier={atelier}
-            />
-          </Box>
-        </Box>
-
         {/* Toolbar */}
         <AdminToolbar
           search={search}
@@ -730,22 +615,18 @@ export default function ProductManagementPage() {
           advancedOptions={advancedOptions}
           total={stats?.total ?? products?.length ?? 0}
           filteredCount={filteredRows.length}
-          pending={stats?.pending ?? 0}
-          errored={stats?.errored ?? 0}
-          lastPull={stats?.lastPull ?? null}
-          isResyncing={isResyncing}
-          onResync={handleResync}
         />
 
         {/* List */}
         <Box
           role="list"
-          aria-label="Productos en inventario"
+          aria-label="Productos en el espejo"
           sx={{
             backgroundColor: atelier.surfaces.canvas,
             borderLeft: `1px solid ${atelier.surfaces.edge}`,
             borderRight: `1px solid ${atelier.surfaces.edge}`,
             borderBottom: `1px solid ${atelier.surfaces.edge}`,
+            overflow: "hidden",
           }}
         >
           {isLoading && <ListSkeletons atelier={atelier} count={8} />}
@@ -826,66 +707,6 @@ export default function ProductManagementPage() {
 // SUB-COMPONENTS
 // =============================================================================
 
-/**
- * StatusTally — pip + count + label, used in the page header to give a
- * one-glance read of the inventory's status distribution.
- *
- * Only the pip carries color; the rest is ledger-neutral so the eye lands
- * on the proportions, not the labels.
- */
-function StatusTally({
-  label,
-  count,
-  color,
-  atelier,
-}: {
-  label: string;
-  count: number;
-  color: string;
-  atelier: ReturnType<typeof getAtelier>;
-}) {
-  return (
-    <Box
-      role="listitem"
-      sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "8px",
-      }}
-    >
-      <Box
-        aria-hidden
-        sx={{
-          width: "8px",
-          height: "8px",
-          borderRadius: "1px",
-          backgroundColor: color,
-          flexShrink: 0,
-        }}
-      />
-      <Typography
-        component="span"
-        sx={{
-          ...atelier.type.data,
-          fontSize: "15px",
-          color: atelier.ink.primary,
-        }}
-      >
-        {count.toLocaleString("es-CO")}
-      </Typography>
-      <Typography
-        component="span"
-        sx={{
-          ...atelier.type.label,
-          color: atelier.ink.tertiary,
-        }}
-      >
-        {label}
-      </Typography>
-    </Box>
-  );
-}
-
 function ListSkeletons({
   atelier,
   count,
@@ -903,9 +724,13 @@ function ListSkeletons({
             py: `${atelier.spacing.rowPaddingY}px`,
             borderBottom: `1px solid ${atelier.surfaces.edge}`,
             display: "grid",
-            gridTemplateColumns: "20px 72px 16px 1fr 88px 120px 12px",
+            gridTemplateColumns: {
+              xs: "16px 56px 12px 32px minmax(0, 1fr) 84px 116px 10px",
+              sm: "16px 64px 14px 32px minmax(0, 1fr) 92px 128px 12px",
+              md: "20px 72px 16px 36px minmax(0, 1fr) 96px 136px 12px",
+            },
             alignItems: "center",
-            gap: 2,
+            gap: { xs: 1.25, md: 1.75 },
           }}
         >
           <Skeleton
@@ -916,6 +741,12 @@ function ListSkeletons({
           />
           <Skeleton variant="text" width={48} sx={{ ml: "auto" }} />
           <Skeleton variant="rectangular" width={6} height={26} />
+          <Skeleton
+            variant="rectangular"
+            width={32}
+            height={32}
+            sx={{ borderRadius: "3px" }}
+          />
           <Skeleton variant="text" width="60%" />
           <Skeleton variant="text" width={56} sx={{ ml: "auto" }} />
           <Skeleton variant="text" width={88} sx={{ ml: "auto" }} />

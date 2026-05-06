@@ -20,7 +20,7 @@
 
 import { Box, ButtonBase, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { getAtelier } from "../../../design-system";
+import { fontFamilies, getAtelier } from "../../../design-system";
 import { StatusPip, type EstadoValue } from "./StatusPip";
 
 export interface InventoryRowData {
@@ -123,9 +123,18 @@ export function InventoryRow({
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "20px 72px 16px 32px 1fr auto auto 12px",
+          // Explicit track widths so weight/price columns don't grow with
+          // content and shove the row past `contentMaxWidth`. The name
+          // column uses `minmax(0, 1fr)` so it can shrink below its
+          // intrinsic size and let the ellipsis kick in.
+          gridTemplateColumns: {
+            xs: "16px 56px 12px 32px minmax(0, 1fr) 84px 116px 10px",
+            sm: "16px 64px 14px 32px minmax(0, 1fr) 92px 128px 12px",
+            md: "20px 72px 16px 36px minmax(0, 1fr) 96px 136px 12px",
+          },
           alignItems: "center",
-          gap: 2,
+          gap: { xs: 1.25, md: 1.75 },
+          minWidth: 0,
         }}
       >
         {/* Selection checkbox — bulk-action toggle */}
@@ -186,6 +195,8 @@ export function InventoryRow({
             component="div"
             sx={{
               ...atelier.type.rowTitle,
+              fontFamily: fontFamilies.system,
+              fontWeight: 600,
               color: atelier.ink.primary,
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -200,6 +211,9 @@ export function InventoryRow({
               component="div"
               sx={{
                 ...atelier.type.meta,
+                fontFamily: fontFamilies.system,
+                fontSize: "12px",
+                fontWeight: 400,
                 color: atelier.ink.tertiary,
                 mt: "2px",
                 overflow: "hidden",
@@ -221,7 +235,10 @@ export function InventoryRow({
             ...atelier.type.data,
             color: atelier.ink.secondary,
             textAlign: "right",
-            minWidth: "88px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            minWidth: 0,
           }}
         >
           {formatWeight(row.peso)}
@@ -234,7 +251,10 @@ export function InventoryRow({
             ...atelier.type.data,
             color: atelier.ink.primary,
             textAlign: "right",
-            minWidth: "120px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            minWidth: 0,
           }}
         >
           {formatPriceCOP(row.precioCOP)}

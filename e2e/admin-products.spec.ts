@@ -116,11 +116,11 @@ test.describe("/admin/products — atelier inventory", () => {
       timeout: 10_000,
     });
 
-    // Atelier ledger header rendered.
+    // Editorial LedgerHero rendered — h1 carries the italic display title.
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "Atelier · Inventario",
+        name: "Fotosíntesis",
       }),
     ).toBeVisible();
 

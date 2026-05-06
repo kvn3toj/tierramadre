@@ -179,10 +179,10 @@ const buildMenuSections = (
       tools: [
         {
           id: "atelier-products",
-          label: t.tools.atelierProducts?.label || "Atelier · Inventario",
+          label: t.tools.atelierProducts?.label || "Atelier · Fotosíntesis",
           subtitle:
             t.tools.atelierProducts?.subtitle ||
-            "Edita productos del espejo y sincroniza con la hoja",
+            "Donde la hoja maestra se vuelve catálogo vivo",
           icon: Package as any,
           route: "/admin/products",
           color: emeraldCore.primary,

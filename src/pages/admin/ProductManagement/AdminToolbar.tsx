@@ -5,7 +5,9 @@
  *   1. Search input — icon left, result count + clear right; ⌘K / Ctrl+K
  *      focuses; "/" focuses unless already typing in another input
  *   2. Status filter chip-group (signature pip echoed beside each label)
- *   3. Sync controls — last-pull timestamp + Resync button + pending count
+ *
+ * Sync controls (last-pull timestamp, Resync button, pending/errored counts)
+ * live in the LedgerHero. The toolbar focuses purely on search + scope.
  *
  * Second row (scope filters):
  *   - Colección select (native)
@@ -22,7 +24,7 @@
  */
 
 import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { Box, ButtonBase, InputBase, Tooltip, Typography } from "@mui/material";
+import { Box, ButtonBase, InputBase, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { getAtelier } from "../../../design-system";
 import { type EstadoValue } from "./StatusPip";
@@ -81,11 +83,6 @@ interface AdminToolbarProps {
   advancedOptions: AdvancedFilterOptions;
   total: number;
   filteredCount: number;
-  pending: number;
-  errored: number;
-  lastPull: string | null;
-  isResyncing: boolean;
-  onResync: () => void;
 }
 
 const FILTERS: Array<{
@@ -98,20 +95,6 @@ const FILTERS: Array<{
   { key: "consigned", label: "Con asesor", estado: "ASESOR" },
   { key: "sold", label: "Vendidas", estado: "VENDIDA" },
 ];
-
-function relativeTime(iso: string | null): string {
-  if (!iso) return "sin sincronizar";
-  const then = new Date(iso).getTime();
-  if (!Number.isFinite(then)) return "sin sincronizar";
-  const diffSec = Math.max(0, Math.round((Date.now() - then) / 1000));
-  if (diffSec < 60) return "hace segundos";
-  const diffMin = Math.round(diffSec / 60);
-  if (diffMin < 60) return `hace ${diffMin} min`;
-  const diffH = Math.round(diffMin / 60);
-  if (diffH < 24) return `hace ${diffH} h`;
-  const diffD = Math.round(diffH / 24);
-  return `hace ${diffD} d`;
-}
 
 export function AdminToolbar({
   search,
@@ -131,11 +114,6 @@ export function AdminToolbar({
   advancedOptions,
   total,
   filteredCount,
-  pending,
-  errored,
-  lastPull,
-  isResyncing,
-  onResync,
 }: AdminToolbarProps) {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
@@ -195,14 +173,14 @@ export function AdminToolbar({
         borderBottom: `1px solid ${atelier.surfaces.edgeStrong}`,
       }}
     >
-      {/* TOP ROW — search + status filter + sync */}
+      {/* TOP ROW — search + status filter (sync moved to hero) */}
       <Box
         sx={{
           px: `${atelier.spacing.rowPaddingX}px`,
-          py: "12px",
+          py: "14px",
           display: "grid",
-          gridTemplateColumns: "minmax(220px, 1fr) auto auto",
-          gap: 2,
+          gridTemplateColumns: { xs: "1fr", md: "minmax(220px, 1fr) auto" },
+          gap: { xs: 1.5, md: 2 },
           alignItems: "center",
         }}
       >
@@ -404,70 +382,6 @@ export function AdminToolbar({
               </ButtonBase>
             );
           })}
-        </Box>
-
-        {/* Sync block */}
-        <Box sx={{ display: "inline-flex", alignItems: "center", gap: "12px" }}>
-          <Box sx={{ textAlign: "right" }}>
-            <Typography
-              component="div"
-              sx={{
-                ...atelier.type.label,
-                color: atelier.ink.tertiary,
-              }}
-            >
-              {total} en espejo · {relativeTime(lastPull)}
-            </Typography>
-            {(pending > 0 || errored > 0) && (
-              <Typography
-                component="div"
-                sx={{
-                  ...atelier.type.meta,
-                  color:
-                    errored > 0
-                      ? atelier.status.sold.pip
-                      : atelier.status.consigned.pip,
-                  mt: "2px",
-                }}
-              >
-                {errored > 0 && `${errored} con error`}
-                {errored > 0 && pending > 0 && " · "}
-                {pending > 0 &&
-                  `${pending} pendiente${pending === 1 ? "" : "s"}`}
-              </Typography>
-            )}
-          </Box>
-          <Tooltip title="Sincronizar desde la hoja" arrow>
-            <ButtonBase
-              onClick={onResync}
-              disabled={isResyncing}
-              disableRipple
-              sx={{
-                ...atelier.type.label,
-                color: atelier.ink.inverse,
-                backgroundColor: isResyncing
-                  ? atelier.ink.muted
-                  : atelier.focus.ring,
-                borderRadius: "4px",
-                px: "14px",
-                py: "8px",
-                transition: atelier.motion.rowHover,
-                "&:hover": {
-                  backgroundColor: isResyncing
-                    ? atelier.ink.muted
-                    : atelier.status.available.pip,
-                  opacity: 0.92,
-                },
-                "&:focus-visible": {
-                  outline: `2px solid ${atelier.focus.ring}`,
-                  outlineOffset: "2px",
-                },
-              }}
-              aria-label="Resincronizar inventario desde la hoja"
-            >
-              {isResyncing ? "Sincronizando…" : "Resync"}
-            </ButtonBase>
-          </Tooltip>
         </Box>
       </Box>
 
