@@ -39,8 +39,11 @@ export interface InventoryRowData {
 interface InventoryRowProps {
   row: InventoryRowData;
   isActive: boolean;
+  isSelected: boolean;
   thumbnailUrl?: string;
   onOpen: (itemId: string) => void;
+  /** Toggle the row's checkbox for the bulk action bar. */
+  onToggleSelect: (itemId: string, next: boolean) => void;
   /** Click-to-retry handler for the sync mark when status === "error". */
   onRetry?: (itemId: string) => void;
 }
@@ -67,8 +70,10 @@ function formatWeight(peso?: string): string {
 export function InventoryRow({
   row,
   isActive,
+  isSelected,
   thumbnailUrl,
   onOpen,
+  onToggleSelect,
   onRetry,
 }: InventoryRowProps) {
   const theme = useTheme();
@@ -99,6 +104,9 @@ export function InventoryRow({
         backgroundColor: baseBg,
         backgroundImage: `linear-gradient(${tint}, ${tint})`,
         borderBottom: `1px solid ${atelier.surfaces.edge}`,
+        // Selection mark — brass left border, kept transparent when not
+        // selected so the row doesn't shift horizontally.
+        borderLeft: `2px solid ${isSelected ? atelier.brass.base : "transparent"}`,
         transition: atelier.motion.rowHover,
         minHeight: `${atelier.spacing.rowMinHeight}px`,
         px: `${atelier.spacing.rowPaddingX}px`,
@@ -115,11 +123,19 @@ export function InventoryRow({
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "72px 16px 32px 1fr auto auto 12px",
+          gridTemplateColumns: "20px 72px 16px 32px 1fr auto auto 12px",
           alignItems: "center",
           gap: 2,
         }}
       >
+        {/* Selection checkbox — bulk-action toggle */}
+        <SelectionCheckbox
+          checked={isSelected}
+          onToggle={(next) => onToggleSelect(row.itemId, next)}
+          atelier={atelier}
+          itemLabel={row.nombre || `Item ${row.itemId}`}
+        />
+
         {/* Item number — parcel stamp */}
         <Typography
           component="span"
@@ -335,5 +351,77 @@ function SyncMark({
         },
       }}
     />
+  );
+}
+
+/**
+ * SelectionCheckbox — atelier checkbox for the row's bulk-select column.
+ *
+ * Stops propagation on click so toggling doesn't also open the drawer.
+ * Resting state is the canvas surface with a hairline edge; checked
+ * state fills with the focus ring (the only saturated emerald moment in
+ * the panel) and an iron-gall (inverse) check mark.
+ */
+function SelectionCheckbox({
+  checked,
+  onToggle,
+  atelier,
+  itemLabel,
+}: {
+  checked: boolean;
+  onToggle: (next: boolean) => void;
+  atelier: ReturnType<typeof getAtelier>;
+  itemLabel: string;
+}) {
+  return (
+    <ButtonBase
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={`Seleccionar ${itemLabel}`}
+      disableRipple
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggle(!checked);
+      }}
+      sx={{
+        width: "16px",
+        height: "16px",
+        borderRadius: "3px",
+        border: `1px solid ${
+          checked ? atelier.focus.ring : atelier.surfaces.edgeStrong
+        }`,
+        backgroundColor: checked ? atelier.focus.ring : "transparent",
+        transition: atelier.motion.rowHover,
+        flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        "&:hover": {
+          borderColor: checked ? atelier.focus.ring : atelier.brass.base,
+        },
+        "&:focus-visible": {
+          outline: `2px solid ${atelier.focus.ring}`,
+          outlineOffset: "2px",
+        },
+      }}
+    >
+      {checked && (
+        <Box
+          component="svg"
+          viewBox="0 0 12 12"
+          sx={{ width: "10px", height: "10px", color: atelier.ink.inverse }}
+          aria-hidden
+        >
+          <path
+            d="M2.5 6.2L5 8.5L9.5 4"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+        </Box>
+      )}
+    </ButtonBase>
   );
 }
