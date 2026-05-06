@@ -23,6 +23,8 @@ import {
 } from "../../../design-system";
 import { StatusPip, type EstadoValue } from "./StatusPip";
 import { ChromaBar } from "./ChromaBar";
+// === Phase H — inline edit ===
+import { InlineEditCell } from "./InlineEditCell";
 
 export interface InventoryRowData {
   itemId: string;
@@ -51,6 +53,15 @@ interface InventoryRowProps {
   onToggleSelect: (itemId: string, next: boolean) => void;
   /** Click-to-retry handler for the sync mark when status === "error". */
   onRetry?: (itemId: string) => void;
+  // === Phase H — inline edit ===
+  /** Fired when an inline-edited cell commits. The page wires this to
+   *  `saveEdit` so the patch persists optimistically + flushes to the
+   *  sheet. Optional so existing call-sites without the handler still
+   *  render (the inline cells fall back to display-only). */
+  onInlineEdit?: (
+    itemId: string,
+    patch: Record<string, unknown>,
+  ) => Promise<void>;
 }
 
 function formatPriceCOP(n?: number): string {
@@ -60,21 +71,6 @@ function formatPriceCOP(n?: number): string {
     currency: "COP",
     maximumFractionDigits: 0,
   }).format(n);
-}
-
-/**
- * Procedencia heuristic — collection names in the inventory often start
- * with the source (e.g., "Muzo Bold", "Coscuez Esmeralda"). We surface
- * the leading word as a procedencia label; if the collection is empty
- * or single-word we drop the segment.
- */
-function parseProcedencia(coleccion?: string): string | null {
-  if (!coleccion) return null;
-  const trimmed = coleccion.trim();
-  if (!trimmed) return null;
-  const firstSpace = trimmed.indexOf(" ");
-  if (firstSpace <= 0) return null;
-  return trimmed.slice(0, firstSpace);
 }
 
 export function InventoryRow({
@@ -87,6 +83,7 @@ export function InventoryRow({
   onOpen,
   onToggleSelect,
   onRetry,
+  onInlineEdit,
 }: InventoryRowProps) {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
@@ -103,19 +100,15 @@ export function InventoryRow({
 
   const baseBg = isActive ? atelier.surfaces.rowActive : atelier.surfaces.row;
   const showCheckbox = isSelected || isActive;
-  const procedencia = parseProcedencia(row.coleccion);
   const caratNum = row.peso ? Number(row.peso) : NaN;
   const isCarat = Number.isFinite(caratNum) && caratNum > 0;
 
-  // Meta line — itemId · procedencia · calidad · talla
-  const metaSegments = [
-    row.itemId.padStart(4, "0"),
-    procedencia,
-    row.calidad,
-    // talla isn't on the row data type today; the inline list keeps
-    // a slot for it via row.color (which the prior layout displayed).
-    row.color,
-  ].filter((s): s is string => Boolean(s && String(s).trim()));
+  // === Phase H — inline edit ===
+  // Trim-or-null parser shared by the ubicacion + coleccion cells.
+  const trimOrNull = (s: string): string | null => {
+    const t = String(s).trim();
+    return t.length > 0 ? t : null;
+  };
 
   return (
     <ButtonBase
@@ -258,41 +251,131 @@ export function InventoryRow({
           >
             {row.nombre || `Item ${row.itemId}`}
           </Typography>
-          {metaSegments.length > 0 && (
+          {/* === Phase H — inline edit ===
+              Meta line as discrete cells:
+              [itemId] · [coleccion (inline)] · [calidad] · [ubicacion (inline)]
+              The two inline cells use `parse=trimOrNull` and dispatch to
+              `onInlineEdit`. The dot separators are non-interactive
+              spans painted in tertiary ink. */}
+          <Box
+            sx={{
+              ...atelier.type.meta,
+              fontFamily: fontFamilies.system,
+              fontSize: "12px",
+              fontWeight: 400,
+              color: foto.ink.tertiary,
+              mt: "2px",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              minWidth: 0,
+            }}
+          >
+            <Box component="span" sx={{ color: foto.ink.tertiary }}>
+              {row.itemId.padStart(4, "0")}
+            </Box>
+            <Box component="span" aria-hidden sx={{ color: foto.ink.tertiary }}>
+              ·
+            </Box>
+            {/* Colección — inline-edit cell. Display falls back to "—". */}
+            <Box sx={{ minWidth: 0, flexShrink: 1, maxWidth: "40%" }}>
+              {onInlineEdit ? (
+                <InlineEditCell
+                  foto={foto}
+                  display={row.coleccion ?? ""}
+                  rawValue={row.coleccion ?? ""}
+                  parse={trimOrNull}
+                  onSave={(next) =>
+                    onInlineEdit(row.itemId, { coleccion: next })
+                  }
+                  ariaLabel={`Colección de ${row.nombre ?? row.itemId}`}
+                  type="text"
+                />
+              ) : (
+                <Box component="span">{row.coleccion ?? "—"}</Box>
+              )}
+            </Box>
+            {row.calidad && (
+              <>
+                <Box
+                  component="span"
+                  aria-hidden
+                  sx={{ color: foto.ink.tertiary }}
+                >
+                  ·
+                </Box>
+                <Box component="span" sx={{ color: foto.ink.tertiary }}>
+                  {row.calidad}
+                </Box>
+              </>
+            )}
+            <Box component="span" aria-hidden sx={{ color: foto.ink.tertiary }}>
+              ·
+            </Box>
+            {/* Ubicación — inline-edit cell. */}
+            <Box sx={{ minWidth: 0, flexShrink: 1, maxWidth: "30%" }}>
+              {onInlineEdit ? (
+                <InlineEditCell
+                  foto={foto}
+                  display={row.ubicacion ?? ""}
+                  rawValue={row.ubicacion ?? ""}
+                  parse={trimOrNull}
+                  onSave={(next) =>
+                    onInlineEdit(row.itemId, { ubicacion: next })
+                  }
+                  ariaLabel={`Ubicación de ${row.nombre ?? row.itemId}`}
+                  type="text"
+                />
+              ) : (
+                <Box component="span">{row.ubicacion ?? "—"}</Box>
+              )}
+            </Box>
+          </Box>
+        </Box>
+
+        {/* === Phase H — inline edit ===
+            Price — inline-edit cell. Display formats COP; raw is the
+            numeric string. `parse` strips non-numeric chars and rejects
+            non-positive values (returning `null` clears the field). */}
+        <Box sx={{ minWidth: 0, textAlign: "right" }}>
+          {onInlineEdit ? (
+            <InlineEditCell
+              foto={foto}
+              display={formatPriceCOP(row.precioCOP)}
+              rawValue={
+                typeof row.precioCOP === "number" ? String(row.precioCOP) : ""
+              }
+              parse={(s) => {
+                const n = Number(String(s).replace(/[^0-9.]/g, ""));
+                return Number.isFinite(n) && n > 0 ? n : null;
+              }}
+              onSave={(next) =>
+                onInlineEdit(row.itemId, {
+                  precioCOP: next as number | null,
+                })
+              }
+              ariaLabel={`Precio de ${row.nombre ?? row.itemId}`}
+              type="number"
+            />
+          ) : (
             <Typography
-              component="div"
+              component="span"
               sx={{
-                ...atelier.type.meta,
-                fontFamily: fontFamilies.system,
-                fontSize: "12px",
-                fontWeight: 400,
-                color: foto.ink.tertiary,
-                mt: "2px",
+                ...atelier.type.data,
+                color: foto.ink.primary,
+                textAlign: "right",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
+                minWidth: 0,
               }}
             >
-              {metaSegments.join(" · ")}
+              {formatPriceCOP(row.precioCOP)}
             </Typography>
           )}
         </Box>
-
-        {/* Price — tabular mono */}
-        <Typography
-          component="span"
-          sx={{
-            ...atelier.type.data,
-            color: foto.ink.primary,
-            textAlign: "right",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            minWidth: 0,
-          }}
-        >
-          {formatPriceCOP(row.precioCOP)}
-        </Typography>
 
         {/* Status pip — the signature, kept at the row's right edge */}
         <Box

@@ -658,6 +658,32 @@ export default function ProductManagementPage() {
     }
   }, [claimLock, selectedBandejaId, user?.email, user?.name, notify]);
 
+  // === Phase H — inline edit ===
+  // Forward a single-field patch from a row's InlineEditCell to the
+  // saveEdit mutation. Mirrors the drawer's save path but skips the
+  // toast on success — the row updates optimistically, which is its
+  // own confirmation. Errors still surface via the notification system.
+  const handleInlineEdit = useCallback(
+    async (itemId: string, patch: Record<string, unknown>) => {
+      if (!user?.email) {
+        notify("Tu sesión no tiene email. Vuelve a iniciar sesión.", "error");
+        return;
+      }
+      try {
+        await saveEdit({
+          itemId,
+          editorEmail: user.email,
+          editorName: user.name,
+          patch,
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Error desconocido";
+        notify(`No se pudo guardar: ${msg}`, "error");
+      }
+    },
+    [saveEdit, user?.email, user?.name, notify],
+  );
+
   const handleRetry = useCallback(
     async (itemId: string) => {
       try {
@@ -852,6 +878,8 @@ export default function ProductManagementPage() {
                       onOpen={setSelectedBandejaId}
                       onToggleSelect={toggleSelect}
                       onRetry={handleRetry}
+                      // === Phase H — inline edit ===
+                      onInlineEdit={handleInlineEdit}
                     />
                   </Box>
                 );
