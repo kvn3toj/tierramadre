@@ -16,7 +16,7 @@
  * so the spec can seed products before navigation.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Estado = "DISPONIBLE" | "VENDIDA" | "ASESOR" | "";
 type SyncStatus = "synced" | "pending" | "error";
@@ -105,6 +105,7 @@ const apiRefToScope: Record<string, Scope> = {
   "products.syncStats": "products",
   "products.editHistory": "audits",
   "products.lockStatus": "locks",
+  "products.listActiveLocks": "locks",
   "products.patronesFor": "products",
   "products.patronesGlobalTop": "products",
   "products.recentEdits": "audits",
@@ -331,6 +332,11 @@ function lockStatusFor(itemId: string) {
   };
 }
 
+function listActiveLocks() {
+  const now = new Date().toISOString();
+  return store.locks.filter((l) => l.expiresAt > now);
+}
+
 export function useConvexQuery(apiRef: unknown, args: unknown): unknown {
   const ref = apiRef as string;
   // Each query subscribes to its own scope so unrelated mutations
@@ -357,6 +363,8 @@ export function useConvexQuery(apiRef: unknown, args: unknown): unknown {
         return editHistory((args as { itemId: string }).itemId);
       case "products.lockStatus":
         return lockStatusFor((args as { itemId: string }).itemId);
+      case "products.listActiveLocks":
+        return listActiveLocks();
       case "products.patronesFor":
         return patronesFor((args as { itemId: string }).itemId);
       case "products.patronesGlobalTop":
@@ -642,22 +650,32 @@ function applyReleaseLock({ itemId, holderEmail }: ReleaseLockArgs) {
 
 export function useConvexMutation(apiRef: unknown) {
   const ref = apiRef as string;
-  return async (args: unknown) => {
-    switch (ref) {
-      case "products.saveEdit":
-        return applySaveEdit(args as SaveEditArgs);
-      case "products.saveEditMany":
-        return applySaveEditMany(args as SaveEditManyArgs);
-      case "products.createProduct":
-        return applyCreateProduct(args as CreateProductArgs);
-      case "products.claimLock":
-        return applyClaimLock(args as ClaimLockArgs);
-      case "products.releaseLock":
-        return applyReleaseLock(args as ReleaseLockArgs);
-      default:
-        throw new Error(`Test stub: mutation '${ref}' not implemented`);
-    }
-  };
+  // Phase I — stabilize the returned callback. Real Convex's
+  // `useMutation` returns a referentially stable function; the stub
+  // previously rebuilt one per render, which combined with the new
+  // page-level `listActiveLocks` subscription caused an infinite
+  // claim/release loop in EditDrawer (its useEffect deps include
+  // claimLock + releaseLock). useCallback keyed on `ref` matches
+  // real Convex behavior and prevents the bounce.
+  return useCallback(
+    async (args: unknown) => {
+      switch (ref) {
+        case "products.saveEdit":
+          return applySaveEdit(args as SaveEditArgs);
+        case "products.saveEditMany":
+          return applySaveEditMany(args as SaveEditManyArgs);
+        case "products.createProduct":
+          return applyCreateProduct(args as CreateProductArgs);
+        case "products.claimLock":
+          return applyClaimLock(args as ClaimLockArgs);
+        case "products.releaseLock":
+          return applyReleaseLock(args as ReleaseLockArgs);
+        default:
+          throw new Error(`Test stub: mutation '${ref}' not implemented`);
+      }
+    },
+    [ref],
+  );
 }
 
 export function useConvexAction(apiRef: unknown) {

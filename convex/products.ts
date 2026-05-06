@@ -687,6 +687,24 @@ export const lockStatus = query({
 });
 
 /**
+ * List all active (non-expired) soft locks.
+ *
+ * The page-level Bandeja subscribes to this so each row can render a
+ * small gold dot when another editor currently holds the lock. Filtering
+ * to non-expired locks happens client-side after `collect()` because the
+ * lock TTL is small (5 min) and the row cardinality is bounded by the
+ * number of admins editing concurrently — no index needed.
+ */
+export const listActiveLocks = query({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("productLocks").collect();
+    const now = new Date().toISOString();
+    return all.filter((l) => l.expiresAt > now);
+  },
+});
+
+/**
  * Pull the full inventory from the Google Sheet into the mirror.
  *
  * Strategy: fetch the existing public endpoint /api/get-treasure-sheets

@@ -7,7 +7,7 @@
  *   2. Status filter chip-group (signature pip echoed beside each label)
  *
  * Sync controls (last-pull timestamp, Resync button, pending/errored counts)
- * live in the LedgerHero. The toolbar focuses purely on search + scope.
+ * live in the FotoHero. The toolbar focuses purely on search + scope.
  *
  * Second row (scope filters):
  *   - Colección select (native)

@@ -62,6 +62,12 @@ interface InventoryRowProps {
     itemId: string,
     patch: Record<string, unknown>,
   ) => Promise<void>;
+  // === Phase I — lock indicator ===
+  /** When `true`, render a small gold dot after the status pip — the
+   *  row is currently held open by another editor (drawer claim). The
+   *  page-level `listActiveLocks` query feeds this; self-held locks
+   *  are filtered out so it only fires on peer holds. */
+  isLockedByOther?: boolean;
 }
 
 function formatPriceCOP(n?: number): string {
@@ -84,6 +90,7 @@ export function InventoryRow({
   onToggleSelect,
   onRetry,
   onInlineEdit,
+  isLockedByOther,
 }: InventoryRowProps) {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
@@ -175,35 +182,65 @@ export function InventoryRow({
         {/* Chroma bar — sampled hue or emerald fallback */}
         <ChromaBar hex={chromaHex} foto={foto} />
 
-        {/* Carat — primary read */}
-        <Typography
-          component="span"
+        {/* Carat — primary read. The image-health indicator (⊘) sits to
+            the left of the carat number when no thumbnail is available,
+            keeping the right-aligned carat as the dominant glyph. */}
+        <Box
           sx={{
-            ...atelier.type.data,
-            color: foto.ink.primary,
-            textAlign: "right",
-            whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "flex-end",
+            gap: "4px",
+            minWidth: 0,
           }}
         >
-          {isCarat ? (
-            <>
-              {caratNum.toFixed(2)}
-              <Box
-                component="span"
-                sx={{
-                  ml: "3px",
-                  fontSize: "10px",
-                  letterSpacing: "0.08em",
-                  color: foto.ink.tertiary,
-                }}
-              >
-                CT
-              </Box>
-            </>
-          ) : (
-            (row.peso ?? "—")
+          {!thumbnailUrl && (
+            <Box
+              component="span"
+              role="img"
+              aria-label="Sin imagen"
+              title="Sin imagen"
+              data-image-health="missing"
+              sx={{
+                fontSize: "11px",
+                lineHeight: 1,
+                color: foto.ink.tertiary,
+                opacity: 0.7,
+                userSelect: "none",
+              }}
+            >
+              {"⊘"}
+            </Box>
           )}
-        </Typography>
+          <Typography
+            component="span"
+            sx={{
+              ...atelier.type.data,
+              color: foto.ink.primary,
+              textAlign: "right",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {isCarat ? (
+              <>
+                {caratNum.toFixed(2)}
+                <Box
+                  component="span"
+                  sx={{
+                    ml: "3px",
+                    fontSize: "10px",
+                    letterSpacing: "0.08em",
+                    color: foto.ink.tertiary,
+                  }}
+                >
+                  CT
+                </Box>
+              </>
+            ) : (
+              (row.peso ?? "—")
+            )}
+          </Typography>
+        </Box>
 
         {/* Thumbnail — 44×44 parcel stamp */}
         <Box
@@ -377,7 +414,9 @@ export function InventoryRow({
           )}
         </Box>
 
-        {/* Status pip — the signature, kept at the row's right edge */}
+        {/* Status pip — the signature, kept at the row's right edge.
+            Phase I: a 4×4 px gold dot follows the pip when another
+            editor currently holds the soft lock for this row. */}
         <Box
           sx={{
             display: "flex",
@@ -387,6 +426,21 @@ export function InventoryRow({
           }}
         >
           <StatusPip estado={row.estado} foto={foto} />
+          {isLockedByOther && (
+            <Box
+              role="img"
+              aria-label="Bloqueada por otra persona editora"
+              title="Bloqueada por otra persona editora"
+              data-lock-state="held-by-other"
+              sx={{
+                width: "4px",
+                height: "4px",
+                borderRadius: "50%",
+                backgroundColor: atelier.brass.base,
+                flexShrink: 0,
+              }}
+            />
+          )}
           <SyncMark
             status={row.syncStatus}
             onRetry={onRetry ? () => onRetry(row.itemId) : undefined}
