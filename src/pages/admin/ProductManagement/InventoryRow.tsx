@@ -175,35 +175,65 @@ export function InventoryRow({
         {/* Chroma bar — sampled hue or emerald fallback */}
         <ChromaBar hex={chromaHex} foto={foto} />
 
-        {/* Carat — primary read */}
-        <Typography
-          component="span"
+        {/* Carat — primary read. The image-health indicator (⊘) sits to
+            the left of the carat number when no thumbnail is available,
+            keeping the right-aligned carat as the dominant glyph. */}
+        <Box
           sx={{
-            ...atelier.type.data,
-            color: foto.ink.primary,
-            textAlign: "right",
-            whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "flex-end",
+            gap: "4px",
+            minWidth: 0,
           }}
         >
-          {isCarat ? (
-            <>
-              {caratNum.toFixed(2)}
-              <Box
-                component="span"
-                sx={{
-                  ml: "3px",
-                  fontSize: "10px",
-                  letterSpacing: "0.08em",
-                  color: foto.ink.tertiary,
-                }}
-              >
-                CT
-              </Box>
-            </>
-          ) : (
-            (row.peso ?? "—")
+          {!thumbnailUrl && (
+            <Box
+              component="span"
+              role="img"
+              aria-label="Sin imagen"
+              title="Sin imagen"
+              data-image-health="missing"
+              sx={{
+                fontSize: "11px",
+                lineHeight: 1,
+                color: foto.ink.tertiary,
+                opacity: 0.7,
+                userSelect: "none",
+              }}
+            >
+              {"⊘"}
+            </Box>
           )}
-        </Typography>
+          <Typography
+            component="span"
+            sx={{
+              ...atelier.type.data,
+              color: foto.ink.primary,
+              textAlign: "right",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {isCarat ? (
+              <>
+                {caratNum.toFixed(2)}
+                <Box
+                  component="span"
+                  sx={{
+                    ml: "3px",
+                    fontSize: "10px",
+                    letterSpacing: "0.08em",
+                    color: foto.ink.tertiary,
+                  }}
+                >
+                  CT
+                </Box>
+              </>
+            ) : (
+              (row.peso ?? "—")
+            )}
+          </Typography>
+        </Box>
 
         {/* Thumbnail — 44×44 parcel stamp */}
         <Box
