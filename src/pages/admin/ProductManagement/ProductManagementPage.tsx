@@ -27,7 +27,7 @@
  */
 
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Box, ButtonBase, Typography, Skeleton } from "@mui/material";
+import { Box, Typography, Skeleton } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
 import { getAtelier, getFoto } from "../../../design-system";
@@ -59,6 +59,7 @@ import {
   type EditDrawerPatch,
 } from "./EditDrawer";
 import { FotoHero } from "./FotoHero";
+import { BulkActionBar, type BulkPriceMode } from "./BulkActionBar";
 import { Bandeja, type BandejaSelectedProduct } from "./Bandeja";
 import { StoneHero } from "./StoneHero";
 import { BloqueoCard } from "./BloqueoCard";
@@ -761,6 +762,135 @@ export default function ProductManagementPage() {
     ],
   );
 
+  // === Phase H — bulk price / coleccion / ubicacion ===
+  // For "absolute" we can use saveEditMany (single shared patch).
+  // For "delta" / "percent" we need per-item math, so iterate with
+  // saveEdit and Promise.all the calls.
+  const handleBulkChangePrice = useCallback(
+    async ({ mode, value }: { mode: BulkPriceMode; value: number }) => {
+      if (!user?.email || selectedIds.size === 0) return;
+      setIsBulkSaving(true);
+      try {
+        if (mode === "absolute") {
+          await saveEditMany({
+            itemIds: Array.from(selectedIds),
+            editorEmail: user.email,
+            editorName: user.name,
+            patch: { precioCOP: value },
+          });
+        } else {
+          const ops = Array.from(selectedIds).map(async (id) => {
+            const p = products?.find((q) => q.itemId === id);
+            if (!p || typeof p.precioCOP !== "number") return;
+            const next =
+              mode === "delta"
+                ? p.precioCOP + value
+                : Math.round(p.precioCOP * (1 + value / 100));
+            await saveEdit({
+              itemId: id,
+              editorEmail: user.email!,
+              editorName: user.name,
+              patch: { precioCOP: next },
+            });
+          });
+          await Promise.all(ops);
+        }
+        notify(
+          `Precio actualizado en ${selectedIds.size} piedra${
+            selectedIds.size === 1 ? "" : "s"
+          }`,
+          "success",
+        );
+        clearSelection();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "error";
+        notify(`No se pudo actualizar precio: ${msg}`, "error");
+      } finally {
+        setIsBulkSaving(false);
+      }
+    },
+    [
+      selectedIds,
+      user?.email,
+      user?.name,
+      products,
+      saveEdit,
+      saveEditMany,
+      notify,
+      clearSelection,
+    ],
+  );
+
+  const handleBulkChangeColeccion = useCallback(
+    async (value: string) => {
+      if (!user?.email || selectedIds.size === 0) return;
+      setIsBulkSaving(true);
+      try {
+        await saveEditMany({
+          itemIds: Array.from(selectedIds),
+          editorEmail: user.email,
+          editorName: user.name,
+          patch: { coleccion: value },
+        });
+        notify(
+          `Colección actualizada en ${selectedIds.size} piedra${
+            selectedIds.size === 1 ? "" : "s"
+          }`,
+          "success",
+        );
+        clearSelection();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "error";
+        notify(`No se pudo actualizar colección: ${msg}`, "error");
+      } finally {
+        setIsBulkSaving(false);
+      }
+    },
+    [
+      selectedIds,
+      user?.email,
+      user?.name,
+      saveEditMany,
+      notify,
+      clearSelection,
+    ],
+  );
+
+  const handleBulkChangeUbicacion = useCallback(
+    async (value: string) => {
+      if (!user?.email || selectedIds.size === 0) return;
+      setIsBulkSaving(true);
+      try {
+        await saveEditMany({
+          itemIds: Array.from(selectedIds),
+          editorEmail: user.email,
+          editorName: user.name,
+          patch: { ubicacion: value },
+        });
+        notify(
+          `Ubicación actualizada en ${selectedIds.size} piedra${
+            selectedIds.size === 1 ? "" : "s"
+          }`,
+          "success",
+        );
+        clearSelection();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "error";
+        notify(`No se pudo actualizar ubicación: ${msg}`, "error");
+      } finally {
+        setIsBulkSaving(false);
+      }
+    },
+    [
+      selectedIds,
+      user?.email,
+      user?.name,
+      saveEditMany,
+      notify,
+      clearSelection,
+    ],
+  );
+
   // ─── Render ──────────────────────────────────────────────────────────
 
   if (!convexReady) {
@@ -960,9 +1090,13 @@ export default function ProductManagementPage() {
         visible={selectedIds.size > 0}
         count={selectedIds.size}
         isSaving={isBulkSaving}
-        atelier={atelier}
+        foto={foto}
+        collections={collections}
         onMarkAvailable={() => void handleBulkMark("DISPONIBLE")}
         onMarkSold={() => void handleBulkMark("VENDIDA")}
+        onChangePrice={(next) => void handleBulkChangePrice(next)}
+        onChangeColeccion={(v) => void handleBulkChangeColeccion(v)}
+        onChangeUbicacion={(v) => void handleBulkChangeUbicacion(v)}
         onClear={clearSelection}
       />
     </Box>
@@ -1132,198 +1266,7 @@ function ConvexUnavailable({
   );
 }
 
-/**
- * BulkActionBar — fixed-bottom action bar for the row checkbox selection.
- *
- * Visible only while at least one row is checked. Atelier-pure: panel
- * surface, hairline top edge, no shadows. Two primary actions echo the
- * status pip palette so the bar reads as an extension of the ledger,
- * not a notification.
- *
- * Always mounted (toggling visibility via transform) so the slide-out
- * runs on the last unselect and the buttons can finish a click animation
- * even as the count hits zero.
- */
-function BulkActionBar({
-  visible,
-  count,
-  isSaving,
-  atelier,
-  onMarkAvailable,
-  onMarkSold,
-  onClear,
-}: {
-  visible: boolean;
-  count: number;
-  isSaving: boolean;
-  atelier: ReturnType<typeof getAtelier>;
-  onMarkAvailable: () => void;
-  onMarkSold: () => void;
-  onClear: () => void;
-}) {
-  return (
-    <Box
-      role="region"
-      aria-label="Acciones en lote"
-      aria-hidden={!visible}
-      sx={{
-        position: "fixed",
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 12,
-        backgroundColor: atelier.surfaces.panel,
-        borderTop: `1px solid ${atelier.surfaces.edgeStrong}`,
-        transform: visible ? "translateY(0)" : "translateY(100%)",
-        transition:
-          "transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 200ms linear",
-        opacity: visible ? 1 : 0,
-        pointerEvents: visible ? "auto" : "none",
-      }}
-    >
-      <Box
-        sx={{
-          maxWidth: `${atelier.spacing.contentMaxWidth}px`,
-          mx: "auto",
-          px: { xs: 2, md: 3 },
-          py: "12px",
-          display: "flex",
-          alignItems: "center",
-          gap: 2,
-          flexWrap: "wrap",
-        }}
-      >
-        <Typography
-          sx={{
-            ...atelier.type.label,
-            color: atelier.ink.tertiary,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <Box
-            aria-hidden
-            sx={{
-              width: "8px",
-              height: "8px",
-              borderRadius: "1px",
-              backgroundColor: atelier.brass.base,
-              flexShrink: 0,
-            }}
-          />
-          <Box
-            component="span"
-            sx={{ ...atelier.type.data, color: atelier.ink.primary }}
-          >
-            {count.toLocaleString("es-CO")}
-          </Box>
-          {count === 1 ? "seleccionada" : "seleccionadas"}
-        </Typography>
-
-        <Box sx={{ flex: 1 }} />
-
-        <BulkActionButton
-          atelier={atelier}
-          onClick={onMarkAvailable}
-          disabled={isSaving || count === 0}
-          pipColor={atelier.status.available.pip}
-        >
-          Marcar como disponible ({count})
-        </BulkActionButton>
-        <BulkActionButton
-          atelier={atelier}
-          onClick={onMarkSold}
-          disabled={isSaving || count === 0}
-          pipColor={atelier.status.sold.pip}
-        >
-          Marcar como vendida ({count})
-        </BulkActionButton>
-
-        <ButtonBase
-          onClick={onClear}
-          disabled={isSaving || count === 0}
-          disableRipple
-          sx={{
-            ...atelier.type.label,
-            color: atelier.ink.secondary,
-            px: "12px",
-            py: "8px",
-            borderRadius: "4px",
-            border: `1px solid ${atelier.surfaces.edgeStrong}`,
-            transition: atelier.motion.rowHover,
-            "&:hover": { backgroundColor: atelier.surfaces.rowHover },
-            "&:focus-visible": {
-              outline: `2px solid ${atelier.focus.ring}`,
-              outlineOffset: "2px",
-            },
-            "&:disabled": { opacity: 0.5, cursor: "default" },
-          }}
-        >
-          Limpiar
-        </ButtonBase>
-      </Box>
-    </Box>
-  );
-}
-
-/**
- * Atelier-styled bulk action button. The pip color appears as a small
- * square mark to the left of the label so the action's status outcome
- * is legible at a glance without painting the whole button.
- */
-function BulkActionButton({
-  atelier,
-  onClick,
-  disabled,
-  pipColor,
-  children,
-}: {
-  atelier: ReturnType<typeof getAtelier>;
-  onClick: () => void;
-  disabled: boolean;
-  pipColor: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <ButtonBase
-      onClick={onClick}
-      disabled={disabled}
-      disableRipple
-      sx={{
-        ...atelier.type.label,
-        color: atelier.ink.primary,
-        backgroundColor: atelier.surfaces.canvas,
-        border: `1px solid ${atelier.surfaces.edgeStrong}`,
-        borderRadius: "4px",
-        px: "14px",
-        py: "8px",
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "8px",
-        transition: atelier.motion.rowHover,
-        "&:hover": {
-          backgroundColor: atelier.surfaces.rowHover,
-          borderColor: atelier.brass.base,
-        },
-        "&:focus-visible": {
-          outline: `2px solid ${atelier.focus.ring}`,
-          outlineOffset: "2px",
-        },
-        "&:disabled": { opacity: 0.5, cursor: "default" },
-      }}
-    >
-      <Box
-        aria-hidden
-        sx={{
-          width: "8px",
-          height: "8px",
-          borderRadius: "1px",
-          backgroundColor: pipColor,
-          flexShrink: 0,
-        }}
-      />
-      <Box component="span">{children}</Box>
-    </ButtonBase>
-  );
-}
+// === Phase H — BulkActionBar moved to its own module ===
+// See `./BulkActionBar.tsx`. The new component receives Fotosíntesis
+// tokens (`foto`) instead of atelier and exposes additional callbacks
+// for inline price / colección / ubicación editing in lote.

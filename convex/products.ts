@@ -466,11 +466,30 @@ export const saveEditMany = mutation({
     itemIds: v.array(v.string()),
     editorEmail: v.string(),
     editorName: v.optional(v.string()),
+    // Phase H — broadened from `{ estado }` to a saveEdit-compatible
+    // patch so the bulk action bar can also change precioCOP / coleccion
+    // / ubicacion in a single mutation. Each row still gets a per-field
+    // diff in its audit row (only fields whose value actually changes).
     patch: v.object({
-      estado: v.union(
-        v.literal("DISPONIBLE"),
-        v.literal("VENDIDA"),
-        v.literal("ASESOR"),
+      nombre: v.optional(v.string()),
+      peso: v.optional(v.string()),
+      color: v.optional(v.string()),
+      calidad: v.optional(v.string()),
+      cantidad: v.optional(v.number()),
+      talla: v.optional(v.string()),
+      medidas: v.optional(v.string()),
+      categoria: v.optional(v.string()),
+      precioCOP: v.optional(v.number()),
+      ubicacion: v.optional(v.string()),
+      coleccion: v.optional(v.string()),
+      caja: v.optional(v.string()),
+      estado: v.optional(
+        v.union(
+          v.literal("DISPONIBLE"),
+          v.literal("VENDIDA"),
+          v.literal("ASESOR"),
+          v.literal(""),
+        ),
       ),
     }),
   },
@@ -489,13 +508,33 @@ export const saveEditMany = mutation({
         missingCount++;
         continue;
       }
-      if (existing.estado === patch.estado) {
+
+      // Per-row diff — skip rows where every patched field already
+      // matches the mirror (mirrors saveEdit's "Sin cambios" path).
+      const changes: Array<{
+        field: string;
+        before: string | number | null;
+        after: string | number | null;
+      }> = [];
+      for (const [field, after] of Object.entries(patch)) {
+        if (after === undefined) continue;
+        const before = (existing as Record<string, unknown>)[field];
+        if (before === after) continue;
+        const beforeNorm =
+          typeof before === "string" || typeof before === "number"
+            ? before
+            : null;
+        const afterNorm =
+          typeof after === "string" || typeof after === "number" ? after : null;
+        changes.push({ field, before: beforeNorm, after: afterNorm });
+      }
+      if (changes.length === 0) {
         unchangedCount++;
         continue;
       }
 
       await ctx.db.patch(existing._id, {
-        estado: patch.estado,
+        ...patch,
         syncStatus: "pending" as const,
         syncError: undefined,
       });
@@ -505,13 +544,7 @@ export const saveEditMany = mutation({
         editorEmail,
         editorName,
         editedAt,
-        changes: [
-          {
-            field: "estado",
-            before: existing.estado,
-            after: patch.estado,
-          },
-        ],
+        changes,
         status: "pending" as const,
       });
 

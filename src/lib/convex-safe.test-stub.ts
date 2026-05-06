@@ -381,7 +381,10 @@ interface SaveEditManyArgs {
   itemIds: string[];
   editorEmail: string;
   editorName?: string;
-  patch: { estado: Exclude<Estado, ""> };
+  // Phase H — broadened to mirror saveEdit's patch shape (precioCOP,
+  // coleccion, ubicacion, etc.) so the bulk action bar can apply more
+  // than just an estado change.
+  patch: Record<string, unknown>;
 }
 
 interface ClaimLockArgs {
@@ -552,13 +555,32 @@ function applySaveEditMany({
       continue;
     }
     const before = store.products[idx];
-    if (before.estado === patch.estado) {
+    // Phase H — per-row diff so unchanged rows are reported as
+    // unchanged regardless of which field is being patched.
+    const changes: Array<{
+      field: string;
+      before: string | number | null;
+      after: string | number | null;
+    }> = [];
+    for (const [field, after] of Object.entries(patch)) {
+      if (after === undefined) continue;
+      const beforeVal = (before as unknown as Record<string, unknown>)[field];
+      if (beforeVal === after) continue;
+      const beforeNorm =
+        typeof beforeVal === "string" || typeof beforeVal === "number"
+          ? beforeVal
+          : null;
+      const afterNorm =
+        typeof after === "string" || typeof after === "number" ? after : null;
+      changes.push({ field, before: beforeNorm, after: afterNorm });
+    }
+    if (changes.length === 0) {
       unchangedCount++;
       continue;
     }
     store.products[idx] = {
       ...before,
-      estado: patch.estado,
+      ...(patch as Partial<typeof before>),
       syncStatus: "pending",
       syncError: undefined,
     };
@@ -569,13 +591,7 @@ function applySaveEditMany({
       editorEmail,
       editorName,
       editedAt,
-      changes: [
-        {
-          field: "estado",
-          before: before.estado,
-          after: patch.estado,
-        },
-      ],
+      changes,
       status: "pending",
     });
     updatedCount++;
