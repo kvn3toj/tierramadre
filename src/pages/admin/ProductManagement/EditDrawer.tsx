@@ -41,6 +41,8 @@ import {
 } from "../../../lib/convex-safe";
 import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
 import { StatusPip, type EstadoValue } from "./StatusPip";
+// Phase G — create mode: typed payload for the "+ Nueva piedra" flow.
+import type { NewProductInput } from "../../../utils/createProduct-validate";
 
 interface DriveMedia {
   id: string;
@@ -107,7 +109,22 @@ interface EditDrawerProps {
   product: EditDrawerProduct | null;
   isSaving: boolean;
   onClose: () => void;
-  onSave: (itemId: string, patch: EditDrawerPatch) => Promise<void>;
+  /**
+   * Phase G — create mode. In edit mode, `onSave(itemId, patch, "edit")`
+   * passes only the diffed fields. In create mode the drawer hands the
+   * full draft as a NewProductInput with `itemId` set from the dedicated
+   * "Número" field; the parent calls `validateNewProduct` + the Convex
+   * createProduct mutation. The single signature lets the parent keep one
+   * handler for both flows and dispatch on `mode`.
+   */
+  onSave: (
+    itemId: string | undefined,
+    payloadOrPatch: EditDrawerPatch | NewProductInput,
+    mode: "edit" | "create",
+  ) => Promise<void> | void;
+  /** "edit" (default) opens the drawer on an existing product; "create"
+   *  opens an empty drawer for the "+ Nueva piedra" flow. */
+  mode?: "edit" | "create";
   /** Triggered by the in-drawer "Resync ahora" button when a 409
    *  conflict ("sheet was reordered") is detected on the open product. */
   onResync?: () => Promise<void> | void;
@@ -124,6 +141,11 @@ interface EditDrawerProps {
 const CONFLICT_MARKER = "re-ordered";
 
 interface DraftState {
+  /** Phase G — create mode: itemId lives in the draft so the user can
+   *  type a number for a new piece. In edit mode it's seeded from the
+   *  product but never read out (the existing `product.itemId` is used
+   *  by `onSave` directly). */
+  itemId: string;
   nombre: string;
   peso: string;
   color: string;
@@ -141,6 +163,7 @@ interface DraftState {
 
 function toDraft(p: EditDrawerProduct | null): DraftState {
   return {
+    itemId: p?.itemId ?? "",
     nombre: p?.nombre ?? "",
     peso: p?.peso ?? "",
     color: p?.color ?? "",
@@ -154,6 +177,36 @@ function toDraft(p: EditDrawerProduct | null): DraftState {
     coleccion: p?.coleccion ?? "",
     caja: p?.caja ?? "",
     estado: p?.estado ?? "DISPONIBLE",
+  };
+}
+
+// Phase G — create mode: shape the draft into a NewProductInput. Empty
+// strings are passed through (validateNewProduct trims + drops them).
+function draftToNewProduct(draft: DraftState): NewProductInput {
+  const cantidadNum =
+    draft.cantidad === "" ? undefined : Number(draft.cantidad);
+  const precioNum =
+    draft.precioCOP === "" ? undefined : Number(draft.precioCOP);
+  return {
+    itemId: draft.itemId,
+    nombre: draft.nombre,
+    peso: draft.peso,
+    color: draft.color,
+    calidad: draft.calidad,
+    cantidad:
+      cantidadNum !== undefined && Number.isFinite(cantidadNum)
+        ? cantidadNum
+        : undefined,
+    talla: draft.talla,
+    medidas: draft.medidas,
+    categoria: draft.categoria,
+    precioCOP:
+      precioNum !== undefined && Number.isFinite(precioNum)
+        ? precioNum
+        : undefined,
+    ubicacion: draft.ubicacion,
+    coleccion: draft.coleccion,
+    caja: draft.caja,
   };
 }
 
@@ -210,6 +263,8 @@ export function EditDrawer({
   isSaving,
   onClose,
   onSave,
+  // Phase G — create mode
+  mode = "edit",
   onResync,
   isResyncing = false,
 }: EditDrawerProps) {
@@ -341,7 +396,12 @@ export function EditDrawer({
   const patch = useMemo(() => diffDraft(draft, product), [draft, product]);
   const hasChanges = Object.keys(patch).length > 0;
 
-  if (!product) {
+  // Phase G — create mode: in create mode the drawer renders without a
+  // product (we synthesize headers/footer from the draft). The empty
+  // fallback only applies when *neither* a product nor create mode is
+  // active — i.e. the drawer is mounted but has nothing to do.
+  const isCreate = mode === "create";
+  if (!product && !isCreate) {
     return (
       <Drawer
         anchor="right"
@@ -358,8 +418,9 @@ export function EditDrawer({
     );
   }
 
-  const headerTint =
-    product.estado === "DISPONIBLE"
+  const headerTint = !product
+    ? "transparent"
+    : product.estado === "DISPONIBLE"
       ? atelier.status.available.rowTint
       : product.estado === "VENDIDA"
         ? atelier.status.sold.rowTint
@@ -403,42 +464,74 @@ export function EditDrawer({
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "auto auto 1fr auto",
+              gridTemplateColumns: isCreate ? "1fr auto" : "auto auto 1fr auto",
               alignItems: "center",
               gap: 2,
             }}
           >
-            <Typography
-              component="span"
-              sx={{
-                ...atelier.type.data,
-                color: atelier.ink.tertiary,
-                fontSize: "14px",
-              }}
-            >
-              {product.itemId.padStart(4, "0")}
-            </Typography>
-            <StatusPip estado={product.estado} foto={foto} />
-            <Typography
-              component="div"
-              sx={{
-                ...atelier.type.headline,
-                color: atelier.ink.primary,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-              title={product.nombre || `Item ${product.itemId}`}
-            >
-              {product.nombre || `Item ${product.itemId}`}
-            </Typography>
+            {isCreate ? (
+              <Typography
+                component="div"
+                sx={{
+                  ...atelier.type.headline,
+                  color: atelier.ink.primary,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Nueva piedra
+              </Typography>
+            ) : (
+              <>
+                <Typography
+                  component="span"
+                  sx={{
+                    ...atelier.type.data,
+                    color: atelier.ink.tertiary,
+                    fontSize: "14px",
+                  }}
+                >
+                  {product!.itemId.padStart(4, "0")}
+                </Typography>
+                <StatusPip estado={product!.estado} foto={foto} />
+                <Typography
+                  component="div"
+                  sx={{
+                    ...atelier.type.headline,
+                    color: atelier.ink.primary,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                  title={product!.nombre || `Item ${product!.itemId}`}
+                >
+                  {product!.nombre || `Item ${product!.itemId}`}
+                </Typography>
+              </>
+            )}
             <CloseButton
               onClose={onClose}
               disabled={isSaving}
               atelier={atelier}
             />
           </Box>
-          <SyncMeta product={product} atelier={atelier} />
+          {!isCreate && product && (
+            <SyncMeta product={product} atelier={atelier} />
+          )}
+          {isCreate && (
+            <Typography
+              sx={{
+                ...atelier.type.meta,
+                fontSize: "11px",
+                color: atelier.ink.tertiary,
+                mt: "8px",
+              }}
+            >
+              Asigna un número y rellena los datos esenciales. Se anexará a la
+              hoja al guardar.
+            </Typography>
+          )}
         </Box>
 
         {/* BODY (scrollable) */}
@@ -451,6 +544,21 @@ export function EditDrawer({
           }}
         >
           <Section title="Identidad" atelier={atelier}>
+            {/* Phase G — create mode: itemId field. Required & monospaced
+                so the user types a clean numeric tag. */}
+            {isCreate && (
+              <Field
+                label="Número"
+                value={draft.itemId}
+                onChange={(v) =>
+                  setDraft({ ...draft, itemId: v.replace(/[^0-9]/g, "") })
+                }
+                hint="Número único de la piedra en la hoja"
+                atelier={atelier}
+                monospace
+                inputMode="numeric"
+              />
+            )}
             <Field
               label="Nombre"
               value={draft.nombre}
@@ -561,31 +669,44 @@ export function EditDrawer({
             />
           </Section>
 
-          <Section title="Estado" atelier={atelier}>
-            <EstadoRadio
-              value={draft.estado}
-              onChange={(v) => setDraft({ ...draft, estado: v })}
-              atelier={atelier}
-              foto={foto}
-            />
-          </Section>
+          {/* Phase G — create mode skips the Estado radio: new pieces
+              always start as DISPONIBLE (the createProduct mutation
+              hardcodes that estado). */}
+          {!isCreate && (
+            <Section title="Estado" atelier={atelier}>
+              <EstadoRadio
+                value={draft.estado}
+                onChange={(v) => setDraft({ ...draft, estado: v })}
+                atelier={atelier}
+                foto={foto}
+              />
+            </Section>
+          )}
 
-          {lockedByOther && (
+          {/* Phase G — create mode: no lock banner, no Drive folder, no
+              audit history (none of these exist for an unsaved row). */}
+          {!isCreate && lockedByOther && (
             <LockBanner lockedBy={lockedByOther} atelier={atelier} />
           )}
 
-          <Section title="Archivos" atelier={atelier}>
-            <DriveFolderBlock state={driveState} atelier={atelier} />
-          </Section>
+          {!isCreate && (
+            <Section title="Archivos" atelier={atelier}>
+              <DriveFolderBlock state={driveState} atelier={atelier} />
+            </Section>
+          )}
 
-          <Section title="Historial" atelier={atelier}>
-            <HistorialBlock itemId={product.itemId} atelier={atelier} />
-          </Section>
+          {!isCreate && product && (
+            <Section title="Historial" atelier={atelier}>
+              <HistorialBlock itemId={product.itemId} atelier={atelier} />
+            </Section>
+          )}
         </Box>
 
         {/* Conflict banner — appears just above the footer when the
-            push failed because the sheet was re-ordered. */}
-        {product.syncStatus === "error" &&
+            push failed because the sheet was re-ordered. Edit mode only. */}
+        {!isCreate &&
+          product &&
+          product.syncStatus === "error" &&
           (product.syncError ?? "").includes(CONFLICT_MARKER) &&
           onResync && (
             <ConflictBanner
@@ -609,12 +730,20 @@ export function EditDrawer({
             gap: 2,
           }}
         >
+          {/* Phase G — create mode: footer status text + button label
+              flip to "create" semantics. Save is gated on a non-empty
+              itemId; in edit mode it's gated on hasChanges + no foreign
+              lock as before. */}
           <Typography
             sx={{ ...atelier.type.label, color: atelier.ink.tertiary }}
           >
-            {hasChanges
-              ? `${Object.keys(patch).length} cambio${Object.keys(patch).length === 1 ? "" : "s"} sin guardar`
-              : "Sin cambios"}
+            {isCreate
+              ? draft.itemId.trim()
+                ? `Nueva piedra · ${draft.itemId.trim()}`
+                : "Asigna un número para crear"
+              : hasChanges
+                ? `${Object.keys(patch).length} cambio${Object.keys(patch).length === 1 ? "" : "s"} sin guardar`
+                : "Sin cambios"}
           </Typography>
           <Box sx={{ display: "inline-flex", gap: 1 }}>
             <ButtonBase
@@ -639,14 +768,28 @@ export function EditDrawer({
               Cancelar
             </ButtonBase>
             <ButtonBase
-              onClick={() => void onSave(product.itemId, patch)}
-              disabled={!hasChanges || isSaving || !!lockedByOther}
+              onClick={() => {
+                if (isCreate) {
+                  void onSave(undefined, draftToNewProduct(draft), "create");
+                } else if (product) {
+                  void onSave(product.itemId, patch, "edit");
+                }
+              }}
+              disabled={
+                isSaving ||
+                (isCreate
+                  ? !draft.itemId.trim()
+                  : !hasChanges || !!lockedByOther)
+              }
               disableRipple
               sx={{
                 ...atelier.type.label,
                 color: atelier.ink.inverse,
                 backgroundColor:
-                  !hasChanges || isSaving || !!lockedByOther
+                  isSaving ||
+                  (isCreate
+                    ? !draft.itemId.trim()
+                    : !hasChanges || !!lockedByOther)
                     ? atelier.ink.muted
                     : atelier.focus.ring,
                 px: "14px",
@@ -655,7 +798,10 @@ export function EditDrawer({
                 transition: atelier.motion.rowHover,
                 "&:hover": {
                   backgroundColor:
-                    !hasChanges || isSaving || !!lockedByOther
+                    isSaving ||
+                    (isCreate
+                      ? !draft.itemId.trim()
+                      : !hasChanges || !!lockedByOther)
                       ? atelier.ink.muted
                       : atelier.status.available.pip,
                 },
@@ -665,7 +811,13 @@ export function EditDrawer({
                 },
               }}
             >
-              {isSaving ? "Guardando…" : "Guardar"}
+              {isSaving
+                ? isCreate
+                  ? "Creando…"
+                  : "Guardando…"
+                : isCreate
+                  ? "Crear y sincronizar"
+                  : "Guardar"}
             </ButtonBase>
           </Box>
         </Box>
