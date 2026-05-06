@@ -59,6 +59,8 @@ import {
   type EditDrawerPatch,
 } from "./EditDrawer";
 import { FotoHero } from "./FotoHero";
+import { Bandeja, type BandejaSelectedProduct } from "./Bandeja";
+import { useChromaSamples } from "../../../hooks/useChromaSamples";
 import type { EstadoValue } from "./StatusPip";
 
 // =============================================================================
@@ -216,7 +218,14 @@ export default function ProductManagementPage() {
     });
   }, []);
 
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  // selectedBandejaId — driven by row click. Populates the right-hand
+  // Bandeja inspector. editingItemId — driven by Bandeja's "Abrir editor"
+  // button (wired in Phase D), opens the EditDrawer. Decoupling these
+  // states is the central UX change of Phase C.
+  const [selectedBandejaId, setSelectedBandejaId] = useState<string | null>(
+    null,
+  );
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isResyncing, setIsResyncing] = useState(false);
 
@@ -247,6 +256,10 @@ export default function ProductManagementPage() {
 
   // Drive thumbnails — single batched call, cached in localStorage for 24h
   const { thumbnails } = useBatchThumbnails();
+
+  // Per-thumbnail dominant chroma — drives the row's left-edge
+  // ChromaBar. Lazy 1×1 canvas sample, persisted in localStorage 7d.
+  const { samples: chromaSamples } = useChromaSamples(thumbnails);
 
   // ─── Derived state ───────────────────────────────────────────────────
 
@@ -412,25 +425,59 @@ export default function ProductManagementPage() {
     thumbnails,
   ]);
 
-  const selected = useMemo(
+  // Drawer-target product — looked up by editingItemId (Bandeja's
+  // "Abrir editor" button, wired in Phase D).
+  const editing = useMemo(
     () =>
-      selectedItemId && products
-        ? (products.find((p) => p.itemId === selectedItemId) ?? null)
+      editingItemId && products
+        ? (products.find((p) => p.itemId === editingItemId) ?? null)
         : null,
-    [selectedItemId, products],
+    [editingItemId, products],
   );
+
+  // Bandeja-target product — looked up by selectedBandejaId (row click).
+  const selectedForBandeja = useMemo(
+    () =>
+      selectedBandejaId && products
+        ? (products.find((p) => p.itemId === selectedBandejaId) ?? null)
+        : null,
+    [selectedBandejaId, products],
+  );
+
+  // Shape the Bandeja's input — adds the resolved thumbnail + chroma
+  // sample alongside the doc's data so the inspector can render
+  // immediately, without re-querying the thumbnail map per child card.
+  const selectedBandeja: BandejaSelectedProduct | null = useMemo(() => {
+    if (!selectedForBandeja) return null;
+    const itemNumber = Number(selectedForBandeja.itemId);
+    return {
+      itemId: selectedForBandeja.itemId,
+      nombre: selectedForBandeja.nombre,
+      peso: selectedForBandeja.peso,
+      color: selectedForBandeja.color,
+      calidad: selectedForBandeja.calidad,
+      coleccion: selectedForBandeja.coleccion,
+      precioCOP: selectedForBandeja.precioCOP,
+      thumbnailUrl: Number.isFinite(itemNumber)
+        ? thumbnails[itemNumber]?.url
+        : undefined,
+      chromaHex: Number.isFinite(itemNumber)
+        ? chromaSamples[itemNumber]
+        : undefined,
+    };
+  }, [selectedForBandeja, thumbnails, chromaSamples]);
 
   // Close drawer with Escape when not saving
   useEffect(() => {
-    if (!selectedItemId) return;
+    if (!editingItemId) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isSaving) {
-        setSelectedItemId(null);
+        setEditingItemId(null);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedItemId, isSaving]);
+  }, [editingItemId, isSaving]);
 
   // ─── Handlers ────────────────────────────────────────────────────────
 
@@ -455,7 +502,7 @@ export default function ProductManagementPage() {
           } en la hoja en breve`,
           "success",
         );
-        setSelectedItemId(null);
+        setEditingItemId(null);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Error desconocido";
         notify(`No se pudo guardar: ${msg}`, "error");
@@ -590,99 +637,118 @@ export default function ProductManagementPage() {
         onCreateNew={() => console.log("create-new clicked — wired in Phase G")}
       />
 
+      {/* Workbench split — ledger on the left, Bandeja inspector on
+          the right. Below `lg`, Bandeja stacks under the ledger so the
+          mobile experience stays single-column. */}
       <Box
         sx={{
-          maxWidth: `${atelier.spacing.contentMaxWidth}px`,
+          maxWidth: 1280,
           mx: "auto",
-          px: { xs: 2, md: 3 },
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            lg: "minmax(0, 1.6fr) minmax(0, 1fr)",
+          },
         }}
       >
-        {/* Toolbar */}
-        <AdminToolbar
-          search={search}
-          onSearchChange={setSearch}
-          filter={filter}
-          onFilterChange={setFilter}
-          collection={collection}
-          onCollectionChange={setCollection}
-          collections={collections}
-          onlyWithImages={onlyWithImages}
-          onOnlyWithImagesChange={setOnlyWithImages}
-          onlyMissingPrice={onlyMissingPrice}
-          onOnlyMissingPriceChange={setOnlyMissingPrice}
-          advanced={advanced}
-          onAdvancedChange={updateAdvanced}
-          onAdvancedReset={resetAdvanced}
-          advancedOptions={advancedOptions}
-          total={stats?.total ?? products?.length ?? 0}
-          filteredCount={filteredRows.length}
-        />
-
-        {/* List */}
         <Box
-          role="list"
-          aria-label="Productos en el espejo"
           sx={{
-            backgroundColor: atelier.surfaces.canvas,
-            borderLeft: `1px solid ${atelier.surfaces.edge}`,
-            borderRight: `1px solid ${atelier.surfaces.edge}`,
-            borderBottom: `1px solid ${atelier.surfaces.edge}`,
-            overflow: "hidden",
+            borderRight: { lg: `1px solid ${foto.surfaces.edge}` },
+            minWidth: 0,
+            px: { xs: 2, md: 3 },
           }}
         >
-          {isLoading && <ListSkeletons atelier={atelier} count={8} />}
-          {!isLoading && isEmpty && (
-            <EmptyState
-              atelier={atelier}
-              hasFilter={!!search.trim() || filter !== "all"}
-              onResync={handleResync}
-              isResyncing={isResyncing}
-            />
-          )}
-          {!isLoading &&
-            filteredRows.map((doc) => {
-              const itemNumber = Number(doc.itemId);
-              const thumb = Number.isFinite(itemNumber)
-                ? thumbnails[itemNumber]?.url
-                : undefined;
-              return (
-                <Box key={doc.itemId} role="listitem">
-                  <InventoryRow
-                    row={toRow(doc)}
-                    isActive={selectedItemId === doc.itemId}
-                    isSelected={selectedIds.has(doc.itemId)}
-                    thumbnailUrl={thumb}
-                    onOpen={setSelectedItemId}
-                    onToggleSelect={toggleSelect}
-                    onRetry={handleRetry}
-                  />
-                </Box>
-              );
-            })}
-        </Box>
+          {/* Toolbar */}
+          <AdminToolbar
+            foto={foto}
+            search={search}
+            onSearchChange={setSearch}
+            filter={filter}
+            onFilterChange={setFilter}
+            collection={collection}
+            onCollectionChange={setCollection}
+            collections={collections}
+            onlyWithImages={onlyWithImages}
+            onOnlyWithImagesChange={setOnlyWithImages}
+            onlyMissingPrice={onlyMissingPrice}
+            onOnlyMissingPriceChange={setOnlyMissingPrice}
+            advanced={advanced}
+            onAdvancedChange={updateAdvanced}
+            onAdvancedReset={resetAdvanced}
+            advancedOptions={advancedOptions}
+            total={stats?.total ?? products?.length ?? 0}
+            filteredCount={filteredRows.length}
+          />
 
-        {/* Footer count */}
-        {!isLoading && !isEmpty && (
-          <Typography
+          {/* List */}
+          <Box
+            role="list"
+            aria-label="Productos en el espejo"
             sx={{
-              ...atelier.type.label,
-              color: atelier.ink.tertiary,
-              py: 3,
-              textAlign: "center",
+              backgroundColor: atelier.surfaces.canvas,
+              borderLeft: `1px solid ${atelier.surfaces.edge}`,
+              borderRight: `1px solid ${atelier.surfaces.edge}`,
+              borderBottom: `1px solid ${atelier.surfaces.edge}`,
+              overflow: "hidden",
             }}
           >
-            {filteredRows.length} de {stats?.total ?? products?.length ?? 0} en
-            el espejo
-          </Typography>
-        )}
+            {isLoading && <ListSkeletons atelier={atelier} count={8} />}
+            {!isLoading && isEmpty && (
+              <EmptyState
+                atelier={atelier}
+                hasFilter={!!search.trim() || filter !== "all"}
+                onResync={handleResync}
+                isResyncing={isResyncing}
+              />
+            )}
+            {!isLoading &&
+              filteredRows.map((doc) => {
+                const itemNumber = Number(doc.itemId);
+                const thumb = Number.isFinite(itemNumber)
+                  ? thumbnails[itemNumber]?.url
+                  : undefined;
+                return (
+                  <Box key={doc.itemId} role="listitem">
+                    <InventoryRow
+                      row={toRow(doc)}
+                      isActive={selectedBandejaId === doc.itemId}
+                      isSelected={selectedIds.has(doc.itemId)}
+                      thumbnailUrl={thumb}
+                      onOpen={setSelectedBandejaId}
+                      onToggleSelect={toggleSelect}
+                      onRetry={handleRetry}
+                    />
+                  </Box>
+                );
+              })}
+          </Box>
+
+          {/* Footer count */}
+          {!isLoading && !isEmpty && (
+            <Typography
+              sx={{
+                ...atelier.type.label,
+                color: atelier.ink.tertiary,
+                py: 3,
+                textAlign: "center",
+              }}
+            >
+              {filteredRows.length} de {stats?.total ?? products?.length ?? 0}{" "}
+              en el espejo
+            </Typography>
+          )}
+        </Box>
+
+        {/* Bandeja — Phase D wires StoneHero/PatronCard cards inside */}
+        <Bandeja foto={foto} selected={selectedBandeja} />
       </Box>
 
-      {/* Drawer */}
+      {/* Drawer — opened by Bandeja's "Abrir editor" button (Phase D). */}
       <EditDrawer
-        open={!!selectedItemId}
-        product={selected ? toDrawerProduct(selected) : null}
+        open={!!editingItemId}
+        product={editing ? toDrawerProduct(editing) : null}
         isSaving={isSaving}
-        onClose={() => setSelectedItemId(null)}
+        onClose={() => setEditingItemId(null)}
         onSave={handleSave}
         onResync={handleResync}
         isResyncing={isResyncing}
