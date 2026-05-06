@@ -106,7 +106,20 @@ interface EditDrawerProps {
   isSaving: boolean;
   onClose: () => void;
   onSave: (itemId: string, patch: EditDrawerPatch) => Promise<void>;
+  /** Triggered by the in-drawer "Resync ahora" button when a 409
+   *  conflict ("sheet was reordered") is detected on the open product. */
+  onResync?: () => Promise<void> | void;
+  /** True while the parent's pullFromSheet is in flight. */
+  isResyncing?: boolean;
 }
+
+/**
+ * The api/admin-product-update endpoint throws this exact phrase
+ * when the rowIndex no longer matches the column-A item id (sheet
+ * was re-ordered between cron pulls). Used to flip the drawer footer
+ * into the conflict-recovery banner.
+ */
+const CONFLICT_MARKER = "re-ordered";
 
 interface DraftState {
   nombre: string;
@@ -195,6 +208,8 @@ export function EditDrawer({
   isSaving,
   onClose,
   onSave,
+  onResync,
+  isResyncing = false,
 }: EditDrawerProps) {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
@@ -499,6 +514,19 @@ export function EditDrawer({
             <HistorialBlock itemId={product.itemId} atelier={atelier} />
           </Section>
         </Box>
+
+        {/* Conflict banner — appears just above the footer when the
+            push failed because the sheet was re-ordered. */}
+        {product.syncStatus === "error" &&
+          (product.syncError ?? "").includes(CONFLICT_MARKER) &&
+          onResync && (
+            <ConflictBanner
+              message={product.syncError ?? ""}
+              isResyncing={isResyncing}
+              onResync={onResync}
+              atelier={atelier}
+            />
+          )}
 
         {/* FOOTER */}
         <Box
@@ -1463,6 +1491,114 @@ function HistorialEntry({
             </Box>
           ))}
         </Box>
+      </Box>
+    </Box>
+  );
+}
+
+/**
+ * ConflictBanner — appears just above the footer when admin-product-update
+ * returned 409 ("sheet was re-ordered, resync first"). Surfaces the error
+ * message inline with a "Resync ahora" call-to-action that fires the
+ * parent's pullFromSheet. Borders-only depth, oxblood-tinted top edge to
+ * match the row's error pip without introducing a new color.
+ */
+function ConflictBanner({
+  message,
+  isResyncing,
+  onResync,
+  atelier,
+}: {
+  message: string;
+  isResyncing: boolean;
+  onResync: () => Promise<void> | void;
+  atelier: ReturnType<typeof getAtelier>;
+}) {
+  return (
+    <Box
+      role="status"
+      aria-live="polite"
+      sx={{
+        borderTop: `1px solid ${atelier.status.sold.pip}`,
+        borderBottom: `1px solid ${atelier.surfaces.edge}`,
+        backgroundColor: atelier.status.sold.rowTint,
+        px: `${atelier.spacing.drawerPaddingX}px`,
+        py: "12px",
+        display: "flex",
+        gap: "12px",
+        alignItems: "flex-start",
+      }}
+    >
+      <Box
+        aria-hidden
+        sx={{
+          width: "8px",
+          height: "8px",
+          borderRadius: "1px",
+          backgroundColor: atelier.status.sold.pip,
+          flexShrink: 0,
+          mt: "5px",
+        }}
+      />
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography
+          component="div"
+          sx={{
+            ...atelier.type.label,
+            color: atelier.ink.primary,
+            mb: "4px",
+          }}
+        >
+          Resync necesario
+        </Typography>
+        <Typography
+          sx={{
+            ...atelier.type.meta,
+            fontSize: "11px",
+            color: atelier.ink.secondary,
+            mb: "8px",
+          }}
+        >
+          La hoja se reordenó después de la última sincronización. Vuelve a
+          sincronizar antes de guardar.
+        </Typography>
+        <Typography
+          sx={{
+            ...atelier.type.data,
+            fontSize: "11px",
+            color: atelier.ink.tertiary,
+            mb: "10px",
+          }}
+        >
+          {message}
+        </Typography>
+        <ButtonBase
+          onClick={() => void onResync()}
+          disabled={isResyncing}
+          disableRipple
+          sx={{
+            ...atelier.type.label,
+            color: atelier.ink.inverse,
+            backgroundColor: isResyncing
+              ? atelier.ink.muted
+              : atelier.focus.ring,
+            borderRadius: "4px",
+            px: "12px",
+            py: "6px",
+            transition: atelier.motion.rowHover,
+            "&:hover": {
+              backgroundColor: isResyncing
+                ? atelier.ink.muted
+                : atelier.status.available.pip,
+            },
+            "&:focus-visible": {
+              outline: `2px solid ${atelier.focus.ring}`,
+              outlineOffset: "2px",
+            },
+          }}
+        >
+          {isResyncing ? "Sincronizando…" : "Resync ahora"}
+        </ButtonBase>
       </Box>
     </Box>
   );

@@ -41,6 +41,8 @@ interface InventoryRowProps {
   isActive: boolean;
   thumbnailUrl?: string;
   onOpen: (itemId: string) => void;
+  /** Click-to-retry handler for the sync mark when status === "error". */
+  onRetry?: (itemId: string) => void;
 }
 
 function formatPriceCOP(n?: number): string {
@@ -67,6 +69,7 @@ export function InventoryRow({
   isActive,
   thumbnailUrl,
   onOpen,
+  onRetry,
 }: InventoryRowProps) {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
@@ -222,23 +225,94 @@ export function InventoryRow({
         </Typography>
 
         {/* Sync mark — tiny indicator at the very edge */}
-        <SyncMark status={row.syncStatus} />
+        <SyncMark
+          status={row.syncStatus}
+          onRetry={onRetry ? () => onRetry(row.itemId) : undefined}
+        />
       </Box>
     </ButtonBase>
   );
 }
 
-/** A single dot indicating sync state. 4×4 px, no label, lives at the row edge. */
-function SyncMark({ status }: { status: InventoryRowData["syncStatus"] }) {
+/**
+ * SyncMark — a single dot indicating sync state at the row's edge.
+ *
+ * synced  → invisible spacer
+ * pending → amber dot, gentle 1.4s opacity pulse (respects
+ *           prefers-reduced-motion)
+ * error   → oxblood dot. If `onRetry` is provided, the dot becomes a
+ *           focusable button with a "Reintentar" tooltip; click stops
+ *           propagation so the row's drawer doesn't also open.
+ */
+function SyncMark({
+  status,
+  onRetry,
+}: {
+  status: InventoryRowData["syncStatus"];
+  onRetry?: () => void;
+}) {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
+
   if (status === "synced") {
     return <Box sx={{ width: "4px", height: "4px", opacity: 0 }} aria-hidden />;
   }
-  const color =
-    status === "error" ? atelier.status.sold.pip : atelier.status.consigned.pip;
-  const label =
-    status === "error" ? "Error de sincronización" : "Pendiente de sincronizar";
+
+  const isError = status === "error";
+  const color = isError
+    ? atelier.status.sold.pip
+    : atelier.status.consigned.pip;
+  const label = isError
+    ? onRetry
+      ? "Error de sincronización · click para reintentar"
+      : "Error de sincronización"
+    : "Pendiente de sincronizar";
+
+  if (isError && onRetry) {
+    return (
+      <ButtonBase
+        component="span"
+        role="button"
+        aria-label={label}
+        title={label}
+        disableRipple
+        onClick={(e) => {
+          e.stopPropagation();
+          onRetry();
+        }}
+        sx={{
+          width: "12px",
+          height: "12px",
+          borderRadius: "50%",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          transition: atelier.motion.rowHover,
+          "&:hover .atelier-sync-dot": {
+            transform: "scale(1.5)",
+          },
+          "&:focus-visible": {
+            outline: `2px solid ${atelier.focus.ring}`,
+            outlineOffset: "1px",
+          },
+        }}
+      >
+        <Box
+          className="atelier-sync-dot"
+          sx={{
+            width: "5px",
+            height: "5px",
+            borderRadius: "50%",
+            backgroundColor: color,
+            transition: "transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+          }}
+        />
+      </ButtonBase>
+    );
+  }
+
+  // Non-interactive dot (pending, or error without retry handler)
   return (
     <Box
       role="img"
@@ -248,6 +322,17 @@ function SyncMark({ status }: { status: InventoryRowData["syncStatus"] }) {
         height: "4px",
         borderRadius: "50%",
         backgroundColor: color,
+        animation:
+          status === "pending"
+            ? "atelierSyncPulse 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+            : "none",
+        "@media (prefers-reduced-motion: reduce)": {
+          animation: "none",
+        },
+        "@keyframes atelierSyncPulse": {
+          "0%, 100%": { opacity: 1 },
+          "50%": { opacity: 0.35 },
+        },
       }}
     />
   );

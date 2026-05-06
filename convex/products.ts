@@ -1,4 +1,10 @@
-import { query, mutation, action, internalMutation, internalQuery } from "./_generated/server";
+import {
+  query,
+  mutation,
+  action,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 
@@ -17,8 +23,8 @@ export const list = query({
         v.literal("DISPONIBLE"),
         v.literal("VENDIDA"),
         v.literal("ASESOR"),
-        v.literal("")
-      )
+        v.literal(""),
+      ),
     ),
     search: v.optional(v.string()),
   },
@@ -93,7 +99,7 @@ export const syncStats = query({
     const errored = all.filter((r) => r.syncStatus === "error").length;
     const lastPull = all.reduce<string | null>(
       (acc, r) => (acc === null || r.lastPulledAt > acc ? r.lastPulledAt : acc),
-      null
+      null,
     );
     return { total, pending, errored, lastPull };
   },
@@ -130,8 +136,8 @@ export const saveEdit = mutation({
           v.literal("DISPONIBLE"),
           v.literal("VENDIDA"),
           v.literal("ASESOR"),
-          v.literal("")
-        )
+          v.literal(""),
+        ),
       ),
     }),
   },
@@ -143,13 +149,19 @@ export const saveEdit = mutation({
     if (!existing) throw new Error(`Producto ${itemId} no está en el espejo`);
 
     // Compute changes for the audit log (only fields that actually changed)
-    const changes: Array<{ field: string; before: string | number | null; after: string | number | null }> = [];
+    const changes: Array<{
+      field: string;
+      before: string | number | null;
+      after: string | number | null;
+    }> = [];
     for (const [field, after] of Object.entries(patch)) {
       if (after === undefined) continue;
       const before = (existing as Record<string, unknown>)[field];
       if (before === after) continue;
       const beforeNorm =
-        typeof before === "string" || typeof before === "number" ? before : null;
+        typeof before === "string" || typeof before === "number"
+          ? before
+          : null;
       const afterNorm =
         typeof after === "string" || typeof after === "number" ? after : null;
       changes.push({ field, before: beforeNorm, after: afterNorm });
@@ -211,7 +223,11 @@ export const _markPushed = internalMutation({
  * Internal: record a push failure.
  */
 export const _markPushFailed = internalMutation({
-  args: { itemId: v.string(), auditId: v.id("productEdits"), error: v.string() },
+  args: {
+    itemId: v.string(),
+    auditId: v.id("productEdits"),
+    error: v.string(),
+  },
   handler: async (ctx, { itemId, auditId, error }) => {
     const row = await ctx.db
       .query("productInventory")
@@ -223,7 +239,10 @@ export const _markPushFailed = internalMutation({
         syncError: error.slice(0, 500),
       });
     }
-    await ctx.db.patch(auditId, { status: "failed" as const, error: error.slice(0, 500) });
+    await ctx.db.patch(auditId, {
+      status: "failed" as const,
+      error: error.slice(0, 500),
+    });
   },
 });
 
@@ -259,7 +278,10 @@ export const _getInternal = internalQuery({
  */
 export const pushToSheet = action({
   args: { itemId: v.string(), auditId: v.id("productEdits") },
-  handler: async (ctx, { itemId, auditId }): Promise<{ ok: boolean; message: string }> => {
+  handler: async (
+    ctx,
+    { itemId, auditId },
+  ): Promise<{ ok: boolean; message: string }> => {
     const appUrl: string | undefined = process.env.APP_URL;
     const syncToken: string | undefined = process.env.ADMIN_SYNC_TOKEN;
     if (!appUrl || !syncToken) {
@@ -337,6 +359,77 @@ export const pushToSheet = action({
 });
 
 /**
+ * Internal: latest audit row for an item (any status). Used by retryPush.
+ */
+export const _latestAudit = internalQuery({
+  args: { itemId: v.string() },
+  handler: async (ctx, { itemId }) => {
+    return await ctx.db
+      .query("productEdits")
+      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .order("desc")
+      .first();
+  },
+});
+
+/**
+ * Internal: reset mirror + audit row for a retry attempt. Flips
+ * syncStatus back to "pending", clears the error, and marks the audit
+ * row as "pending" again.
+ */
+export const _resetForRetry = internalMutation({
+  args: { itemId: v.string(), auditId: v.id("productEdits") },
+  handler: async (ctx, { itemId, auditId }) => {
+    const row = await ctx.db
+      .query("productInventory")
+      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .first();
+    if (row) {
+      await ctx.db.patch(row._id, {
+        syncStatus: "pending" as const,
+        syncError: undefined,
+      });
+    }
+    await ctx.db.patch(auditId, {
+      status: "pending" as const,
+      error: undefined,
+    });
+  },
+});
+
+/**
+ * Retry the most recent failed/pending push for a given item. Looks up
+ * the latest audit row, resets mirror+audit state to pending, and fires
+ * pushToSheet again. Surfaced from the InventoryRow's clickable error
+ * dot ("click to retry").
+ */
+export const retryPush = action({
+  args: { itemId: v.string() },
+  handler: async (
+    ctx,
+    { itemId },
+  ): Promise<{ ok: boolean; message: string }> => {
+    const audit = await ctx.runQuery(internal.products._latestAudit, {
+      itemId,
+    });
+    if (!audit) {
+      return {
+        ok: false,
+        message: "Sin historial de ediciones para reintentar",
+      };
+    }
+    await ctx.runMutation(internal.products._resetForRetry, {
+      itemId,
+      auditId: audit._id,
+    });
+    return await ctx.runAction(api.products.pushToSheet, {
+      itemId,
+      auditId: audit._id,
+    });
+  },
+});
+
+/**
  * Pull the full inventory from the Google Sheet into the mirror.
  *
  * Strategy: fetch the existing public endpoint /api/get-treasure-sheets
@@ -348,7 +441,9 @@ export const pushToSheet = action({
  */
 export const pullFromSheet = action({
   args: {},
-  handler: async (ctx): Promise<{ pulled: number; upserted: number; rebased: number }> => {
+  handler: async (
+    ctx,
+  ): Promise<{ pulled: number; upserted: number; rebased: number }> => {
     const appUrl: string | undefined = process.env.APP_URL;
     if (!appUrl) {
       throw new Error("APP_URL missing on Convex deployment");
@@ -428,7 +523,7 @@ export const _upsertFromSheet = internalMutation({
         v.literal("DISPONIBLE"),
         v.literal("VENDIDA"),
         v.literal("ASESOR"),
-        v.literal("")
+        v.literal(""),
       ),
       qr: v.union(v.string(), v.null()),
       coleccion: v.union(v.string(), v.null()),
@@ -537,7 +632,9 @@ function nullableNum(v: unknown): number | null {
 }
 
 function normalizeEstado(v: unknown): "DISPONIBLE" | "VENDIDA" | "ASESOR" | "" {
-  const s = String(v ?? "").trim().toUpperCase();
+  const s = String(v ?? "")
+    .trim()
+    .toUpperCase();
   if (s === "DISPONIBLE" || s === "VENDIDA" || s === "ASESOR") return s;
   if (s === "") return "DISPONIBLE"; // mirror the legacy default in get-treasure-sheets
   return "";
