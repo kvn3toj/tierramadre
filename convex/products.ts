@@ -430,6 +430,92 @@ export const retryPush = action({
 });
 
 // =============================================================================
+// BULK EDITS — multi-select operations from the InventoryRow checkbox column
+// =============================================================================
+
+/**
+ * Apply a single estado change to many products at once. Used by the
+ * sticky bulk action bar ("Marcar como disponible (N) / Marcar como
+ * vendida (N)"). Each row gets the standard treatment: mirror patch,
+ * audit row insert, and a scheduled `pushToSheet` action.
+ *
+ * Rows that are missing from the mirror or already at the requested
+ * estado are skipped — `unchangedCount` distinguishes "nothing to do"
+ * from "applied". The mutation never throws on a missing row; it just
+ * counts it as missing so the toolbar can report partial successes.
+ */
+export const saveEditMany = mutation({
+  args: {
+    itemIds: v.array(v.string()),
+    editorEmail: v.string(),
+    editorName: v.optional(v.string()),
+    patch: v.object({
+      estado: v.union(
+        v.literal("DISPONIBLE"),
+        v.literal("VENDIDA"),
+        v.literal("ASESOR"),
+      ),
+    }),
+  },
+  handler: async (ctx, { itemIds, editorEmail, editorName, patch }) => {
+    let updatedCount = 0;
+    let unchangedCount = 0;
+    let missingCount = 0;
+    const editedAt = new Date().toISOString();
+
+    for (const itemId of itemIds) {
+      const existing = await ctx.db
+        .query("productInventory")
+        .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+        .first();
+      if (!existing) {
+        missingCount++;
+        continue;
+      }
+      if (existing.estado === patch.estado) {
+        unchangedCount++;
+        continue;
+      }
+
+      await ctx.db.patch(existing._id, {
+        estado: patch.estado,
+        syncStatus: "pending" as const,
+        syncError: undefined,
+      });
+
+      const auditId = await ctx.db.insert("productEdits", {
+        itemId,
+        editorEmail,
+        editorName,
+        editedAt,
+        changes: [
+          {
+            field: "estado",
+            before: existing.estado,
+            after: patch.estado,
+          },
+        ],
+        status: "pending" as const,
+      });
+
+      await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+        itemId,
+        auditId,
+      });
+
+      updatedCount++;
+    }
+
+    return {
+      total: itemIds.length,
+      updatedCount,
+      unchangedCount,
+      missingCount,
+    };
+  },
+});
+
+// =============================================================================
 // SOFT LOCKS — drawer-open coordination between concurrent admins
 // =============================================================================
 
