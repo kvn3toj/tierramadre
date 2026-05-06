@@ -30,7 +30,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { Box, ButtonBase, Typography, Skeleton } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
-import { getAtelier } from "../../../design-system";
+import { getAtelier, getFoto } from "../../../design-system";
 import {
   useConvexQuery,
   useConvexMutation,
@@ -58,7 +58,7 @@ import {
   type EditDrawerProduct,
   type EditDrawerPatch,
 } from "./EditDrawer";
-import { LedgerHero } from "./LedgerHero";
+import { FotoHero } from "./FotoHero";
 import type { EstadoValue } from "./StatusPip";
 
 // =============================================================================
@@ -175,6 +175,7 @@ function toDrawerProduct(doc: ConvexProductDoc): EditDrawerProduct {
 export default function ProductManagementPage() {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
+  const foto = getFoto(theme.palette.mode === "dark" ? "dark" : "light");
   const { user } = useGoogleAuth();
   const { notify } = useNotification();
 
@@ -576,17 +577,17 @@ export default function ProductManagementPage() {
       }}
     >
       {/* Editorial hero — full-bleed, breathes outside the content gutter */}
-      <LedgerHero
-        atelier={atelier}
+      <FotoHero
+        foto={foto}
         total={stats?.total ?? products?.length ?? 0}
         available={statusCounts.available}
         consigned={statusCounts.consigned}
         sold={statusCounts.sold}
-        pending={stats?.pending ?? 0}
-        errored={stats?.errored ?? 0}
+        sparkline={[3, 5, 4, 7, 5, 9, 7, 10]} // placeholder until Phase E wires patronesGlobalTop weekly buckets
         lastPull={stats?.lastPull ?? null}
         isResyncing={isResyncing}
         onResync={handleResync}
+        onCreateNew={() => console.log("create-new clicked — wired in Phase G")}
       />
 
       <Box
