@@ -60,7 +60,12 @@ import {
 } from "./EditDrawer";
 import { FotoHero } from "./FotoHero";
 import { Bandeja, type BandejaSelectedProduct } from "./Bandeja";
+import { StoneHero } from "./StoneHero";
+import { BloqueoCard } from "./BloqueoCard";
+import { HistorialCard } from "./HistorialCard";
+import { PatronCard } from "./PatronCard";
 import { useChromaSamples } from "../../../hooks/useChromaSamples";
+import { usePatrones, usePatronesGlobalTop } from "../../../hooks/usePatrones";
 import type { EstadoValue } from "./StatusPip";
 
 // =============================================================================
@@ -251,8 +256,14 @@ export default function ProductManagementPage() {
 
   const saveEdit = useConvexMutation(convexApi.products.saveEdit);
   const saveEditMany = useConvexMutation(convexApi.products.saveEditMany);
+  const claimLock = useConvexMutation(convexApi.products.claimLock);
   const pullFromSheet = useConvexAction(convexApi.products.pullFromSheet);
   const retryPush = useConvexAction(convexApi.products.retryPush);
+
+  // Patrones — selected stone's combos when a row is active, else
+  // the catalog-wide top combos (rendered in the no-selection Bandeja).
+  const patrones = usePatrones(selectedBandejaId);
+  const patronesGlobal = usePatronesGlobalTop();
 
   // Drive thumbnails — single batched call, cached in localStorage for 24h
   const { thumbnails } = useBatchThumbnails();
@@ -529,6 +540,36 @@ export default function ProductManagementPage() {
     }
   }, [pullFromSheet, notify]);
 
+  // Bandeja takeover — claimLock for the selected stone. The mutation
+  // doesn't accept a `force` flag yet (Phase J/I will add it); when it
+  // fails because someone else holds an unexpired lock, surface the
+  // holder's identity in the toast.
+  const handleClaimLock = useCallback(async () => {
+    if (!selectedBandejaId) return;
+    if (!user?.email) {
+      notify("Tu sesión no tiene email. Vuelve a iniciar sesión.", "error");
+      return;
+    }
+    try {
+      const result = await claimLock({
+        itemId: selectedBandejaId,
+        holderEmail: user.email,
+        holderName: user.name,
+      });
+      if (result?.ok) {
+        notify("Control reclamado", "success");
+      } else if (result && "holder" in result) {
+        const who = result.holder.name ?? result.holder.email;
+        notify(`No se pudo reclamar el bloqueo: ${who} aún edita`, "error");
+      } else {
+        notify("No se pudo reclamar el bloqueo", "error");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "error";
+      notify(`No se pudo reclamar el bloqueo: ${msg}`, "error");
+    }
+  }, [claimLock, selectedBandejaId, user?.email, user?.name, notify]);
+
   const handleRetry = useCallback(
     async (itemId: string) => {
       try {
@@ -744,8 +785,41 @@ export default function ProductManagementPage() {
           )}
         </Box>
 
-        {/* Bandeja — Phase D wires StoneHero/PatronCard cards inside */}
-        <Bandeja foto={foto} selected={selectedBandeja} />
+        {/* Bandeja — StoneHero, PatronCard, HistorialCard, BloqueoCard
+            for the selected row; global patrones + read-only historial
+            when nothing is selected. */}
+        <Bandeja foto={foto} selected={selectedBandeja}>
+          {selectedBandeja && (
+            <>
+              <StoneHero
+                foto={foto}
+                itemId={selectedBandeja.itemId}
+                nombre={selectedBandeja.nombre}
+                peso={selectedBandeja.peso}
+                coleccion={selectedBandeja.coleccion}
+                calidad={selectedBandeja.calidad}
+                precioCOP={selectedBandeja.precioCOP}
+                thumbnailUrl={selectedBandeja.thumbnailUrl}
+                chromaHex={selectedBandeja.chromaHex}
+                onOpenEditor={() => setEditingItemId(selectedBandeja.itemId)}
+              />
+              <PatronCard foto={foto} data={patrones} variant="selected" />
+              <HistorialCard foto={foto} itemId={selectedBandeja.itemId} />
+              <BloqueoCard
+                foto={foto}
+                itemId={selectedBandeja.itemId}
+                currentEmail={user?.email ?? null}
+                onClaim={handleClaimLock}
+              />
+            </>
+          )}
+          {!selectedBandeja && (
+            <>
+              <PatronCard foto={foto} data={patronesGlobal} variant="global" />
+              <HistorialCard foto={foto} itemId={null} />
+            </>
+          )}
+        </Bandeja>
       </Box>
 
       {/* Drawer — opened by Bandeja's "Abrir editor" button (Phase D). */}

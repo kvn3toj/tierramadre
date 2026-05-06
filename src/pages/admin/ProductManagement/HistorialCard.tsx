@@ -1,10 +1,10 @@
 /**
- * HistorialCard — surfaces recent edits for the selected stone.
+ * HistorialCard — surfaces recent edits for the selected stone, or
+ * the catalog-wide recent activity in "global" mode (no row selected).
  *
- * Backed by the existing `products.editHistory` query (returns up to
- * 20 rows by `itemId`). The card collapses to the 5 most recent and
- * exposes a "Ver más" toggle to show the full set client-side. The
- * existing query does not accept a `limit`, so the slice happens here.
+ * Selected mode: backed by `products.editHistory` (up to 20 rows by
+ * itemId). The card collapses to 5 and exposes "Ver más" client-side.
+ * Global mode: backed by `products.recentEdits` (limit 5), read-only.
  */
 
 import { Box, Typography } from "@mui/material";
@@ -20,6 +20,8 @@ const SANS = fontFamilies.system;
 
 interface HistorialCardProps {
   foto: FotoTokens;
+  /** When non-null, query editHistory(itemId). When null, fall back to
+   *  catalog-wide `recentEdits` so the no-selection Bandeja still reads. */
   itemId: string | null;
 }
 
@@ -61,11 +63,22 @@ function relDays(iso: string): string {
 
 export function HistorialCard({ foto, itemId }: HistorialCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const history = useConvexQuery(
+  // Selected mode: per-itemId history (up to 20). Global mode: latest
+  // 5 across the whole catalog. Hooks are called unconditionally so
+  // React's call order stays stable across the no-selection toggle.
+  const itemHistory = useConvexQuery(
     convexApi.products.editHistory,
     convexReady && itemId ? { itemId } : "skip",
   ) as AuditRow[] | undefined;
-  const visible = history ? history.slice(0, expanded ? 20 : 5) : history;
+  const globalHistory = useConvexQuery(
+    convexApi.products.recentEdits,
+    convexReady && !itemId ? { limit: 5 } : "skip",
+  ) as AuditRow[] | undefined;
+  const history = itemId ? itemHistory : globalHistory;
+  const allowExpand = !!itemId;
+  const visible = history
+    ? history.slice(0, allowExpand && expanded ? 20 : 5)
+    : history;
   return (
     <Box
       sx={{
@@ -87,31 +100,23 @@ export function HistorialCard({ foto, itemId }: HistorialCardProps) {
           mb: 1,
         }}
       >
-        Historial
+        {itemId ? "Historial" : "Actividad reciente"}
       </Typography>
-      {!itemId && (
-        <Typography
-          sx={{ fontFamily: SANS, fontSize: 10, color: foto.ink.secondary }}
-        >
-          Selecciona una piedra para ver su historial
-        </Typography>
-      )}
-      {itemId && history === undefined && (
+      {history === undefined && (
         <Typography
           sx={{ fontFamily: SANS, fontSize: 10, color: foto.ink.tertiary }}
         >
           Cargando…
         </Typography>
       )}
-      {itemId && history && history.length === 0 && (
+      {history && history.length === 0 && (
         <Typography
           sx={{ fontFamily: SANS, fontSize: 10, color: foto.ink.tertiary }}
         >
-          Sin historial todavía
+          {itemId ? "Sin historial todavía" : "Sin actividad reciente"}
         </Typography>
       )}
-      {itemId &&
-        visible &&
+      {visible &&
         visible.length > 0 &&
         visible.map((h) => (
           <Box
@@ -133,7 +138,7 @@ export function HistorialCard({ foto, itemId }: HistorialCardProps) {
             </Typography>
           </Box>
         ))}
-      {itemId && history && history.length > 5 && !expanded && (
+      {allowExpand && history && history.length > 5 && !expanded && (
         <Box
           component="button"
           type="button"

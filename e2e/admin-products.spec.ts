@@ -46,6 +46,11 @@ async function primeAdminSession(page: Page) {
         "tierra-madre-auth",
         JSON.stringify({ isAuthenticated: true, accessLevel: "admin" }),
       );
+      // Skip the 4s SplashScreen (App.tsx checks `tm_session_active`
+      // before showing it). Without this, the splash burns the test
+      // timeout before the inventory rows ever render.
+      window.sessionStorage.setItem("tm_session_active", "true");
+      window.localStorage.setItem("tm_last_activity", String(Date.now()));
     } catch {
       // Ignore quota or access errors — the mock will fall through and
       // the test will fail visibly on the AdminRoute gate.
@@ -135,10 +140,7 @@ test.describe("/admin/products — atelier inventory", () => {
     expect(await chromaBars.count()).toBeGreaterThan(0);
   });
 
-  // re-enabled in Phase D when Bandeja gets StoneHero with Abrir editor button
-  test.skip("edits a row via the Bandeja Abrir-editor button", async ({
-    page,
-  }) => {
+  test("edits a row via the Bandeja Abrir-editor button", async ({ page }) => {
     await page.goto("/admin/products");
 
     const list = page.getByRole("list", {
@@ -149,17 +151,21 @@ test.describe("/admin/products — atelier inventory", () => {
     });
 
     // Select the first seeded row ("Esmeralda Venus") — populates the
-    // Bandeja inspector. Drawer no longer opens on row click; an
-    // explicit "Abrir editor" button inside the Bandeja's StoneHero
-    // (Phase D) is the entry point for the edit flow.
+    // Bandeja inspector. Drawer no longer opens on row click; the
+    // "Abrir editor" button inside the Bandeja's StoneHero (Phase D)
+    // is the explicit entry point for the edit flow.
     const venusRow = list.getByRole("listitem").filter({
       hasText: "Esmeralda Venus",
     });
     await expect(venusRow).toHaveCount(1);
     await venusRow.getByText("Esmeralda Venus").click();
 
-    // TODO (Phase D): click Bandeja's "Abrir editor" button to open
-    // the EditDrawer, then exercise the edit + audit flow as before.
+    const bandeja = page.getByRole("complementary", { name: /Bandeja/i });
+    await expect(bandeja).toBeVisible();
+    const openEditorButton = bandeja.locator("[data-bandeja-open-editor]");
+    await expect(openEditorButton).toBeVisible();
+    await openEditorButton.click();
+
     const drawer = page.locator(".MuiDrawer-paper");
     await expect(drawer).toBeVisible();
     await expect(drawer.getByText("Sin cambios")).toBeVisible();
@@ -182,6 +188,8 @@ test.describe("/admin/products — atelier inventory", () => {
       .getByText("Esmeralda Venus Renombrada")
       .first()
       .click();
+    await expect(openEditorButton).toBeVisible();
+    await openEditorButton.click();
     const reopenedDrawer = page.locator(".MuiDrawer-paper");
     await expect(reopenedDrawer).toBeVisible();
     await expect(reopenedDrawer.getByText("Historial")).toBeVisible();
