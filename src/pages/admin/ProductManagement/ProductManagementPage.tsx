@@ -266,6 +266,15 @@ export default function ProductManagementPage() {
     convexReady ? {} : "skip",
   );
 
+  // Phase I — active soft locks across the catalog. Drives the small
+  // gold dot beside the status pip on rows held by another editor.
+  // Reactive: claimLock/releaseLock notify the "locks" scope, so the
+  // dot appears/vanishes the moment a peer opens or closes a drawer.
+  const activeLocks = useConvexQuery(
+    convexApi.products.listActiveLocks,
+    convexReady ? {} : "skip",
+  ) as Array<{ itemId: string; holderEmail: string }> | undefined;
+
   const saveEdit = useConvexMutation(convexApi.products.saveEdit);
   const saveEditMany = useConvexMutation(convexApi.products.saveEditMany);
   // Phase G — create flow mutation
@@ -286,6 +295,19 @@ export default function ProductManagementPage() {
   // the catalog-wide top combos (rendered in the no-selection Bandeja).
   const patrones = usePatrones(selectedBandejaId);
   const patronesGlobal = usePatronesGlobalTop();
+
+  // Phase I — set of itemIds currently locked by someone other than the
+  // current editor. We exclude self-held locks so a user editing in one
+  // tab doesn't see a "locked by another" dot on their own row.
+  const lockedByOtherSet = useMemo(() => {
+    const out = new Set<string>();
+    if (!activeLocks) return out;
+    const myEmail = user?.email ?? "";
+    for (const lock of activeLocks) {
+      if (lock.holderEmail !== myEmail) out.add(lock.itemId);
+    }
+    return out;
+  }, [activeLocks, user?.email]);
 
   // Drive thumbnails — single batched call, cached in localStorage for 24h
   const { thumbnails } = useBatchThumbnails();
@@ -1010,6 +1032,8 @@ export default function ProductManagementPage() {
                       onRetry={handleRetry}
                       // === Phase H — inline edit ===
                       onInlineEdit={handleInlineEdit}
+                      // === Phase I — lock indicator ===
+                      isLockedByOther={lockedByOtherSet.has(doc.itemId)}
                     />
                   </Box>
                 );

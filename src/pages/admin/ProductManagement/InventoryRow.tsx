@@ -62,6 +62,12 @@ interface InventoryRowProps {
     itemId: string,
     patch: Record<string, unknown>,
   ) => Promise<void>;
+  // === Phase I — lock indicator ===
+  /** When `true`, render a small gold dot after the status pip — the
+   *  row is currently held open by another editor (drawer claim). The
+   *  page-level `listActiveLocks` query feeds this; self-held locks
+   *  are filtered out so it only fires on peer holds. */
+  isLockedByOther?: boolean;
 }
 
 function formatPriceCOP(n?: number): string {
@@ -84,6 +90,7 @@ export function InventoryRow({
   onToggleSelect,
   onRetry,
   onInlineEdit,
+  isLockedByOther,
 }: InventoryRowProps) {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
@@ -407,7 +414,9 @@ export function InventoryRow({
           )}
         </Box>
 
-        {/* Status pip — the signature, kept at the row's right edge */}
+        {/* Status pip — the signature, kept at the row's right edge.
+            Phase I: a 4×4 px gold dot follows the pip when another
+            editor currently holds the soft lock for this row. */}
         <Box
           sx={{
             display: "flex",
@@ -417,6 +426,21 @@ export function InventoryRow({
           }}
         >
           <StatusPip estado={row.estado} foto={foto} />
+          {isLockedByOther && (
+            <Box
+              role="img"
+              aria-label="Bloqueada por otra persona editora"
+              title="Bloqueada por otra persona editora"
+              data-lock-state="held-by-other"
+              sx={{
+                width: "4px",
+                height: "4px",
+                borderRadius: "50%",
+                backgroundColor: atelier.brass.base,
+                flexShrink: 0,
+              }}
+            />
+          )}
           <SyncMark
             status={row.syncStatus}
             onRetry={onRetry ? () => onRetry(row.itemId) : undefined}
