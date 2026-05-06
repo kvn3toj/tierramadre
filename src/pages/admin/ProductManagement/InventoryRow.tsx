@@ -1,27 +1,28 @@
 /**
- * InventoryRow — one entry in the atelier ledger.
+ * InventoryRow — one entry in the Fotosíntesis ledger.
  *
- * Layout (left → right):
- *   [item #] [pip column] [name + collection] ............ [weight] [price] [sync mark]
+ * New column order (left → right), per the jeweler's reading sequence:
  *
- * The whole row is the click target. There is no "Edit" button — the row
- * itself opens the drawer, like turning a leather-bound ledger to a
- * marked page. Edit/delete is intentionally implicit: the gesture matches
- * the back-of-house feel.
+ *   [bulk] [chroma] [carat] [thumb] [name + meta] [price] [pip]
  *
- * Per Interface Design mandate:
- *   Intent — scan and select. Find a stone fast, open it.
- *   Palette — canvas surfaces only; status tint is a 4% wash.
- *   Depth — borders-only; 1px bottom hairline; hover is color-only.
- *   Surfaces — atelier.surfaces.row / rowHover / rowActive (whisper-quiet).
- *   Typography — data mono for itemId/peso/precio; rowTitle for nombre.
- *   Spacing — atelier.spacing.rowPaddingY/X; min-height 48; pip column 16px.
+ * The chroma bar is a thin colored band sampled from the thumbnail's
+ * dominant hue. The carat reads first (decision-driving), the thumbnail
+ * confirms identity, and the status pip lives at the right edge as the
+ * row's signature. The bulk checkbox column reserves space at the very
+ * left and only fades in on hover/active so resting rows stay clean.
+ *
+ * Spec: docs/superpowers/specs/2026-05-06-fotosintesis-admin-redesign-design.md
  */
 
 import { Box, ButtonBase, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { fontFamilies, getAtelier } from "../../../design-system";
+import {
+  fontFamilies,
+  getAtelier,
+  type FotoTokens,
+} from "../../../design-system";
 import { StatusPip, type EstadoValue } from "./StatusPip";
+import { ChromaBar } from "./ChromaBar";
 
 export interface InventoryRowData {
   itemId: string;
@@ -41,6 +42,10 @@ interface InventoryRowProps {
   isActive: boolean;
   isSelected: boolean;
   thumbnailUrl?: string;
+  /** Dominant hex from `useChromaSamples` — colors the chroma bar. */
+  chromaHex?: string;
+  /** Fotosíntesis tokens — drives chroma fallback + status pip. */
+  foto: FotoTokens;
   onOpen: (itemId: string) => void;
   /** Toggle the row's checkbox for the bulk action bar. */
   onToggleSelect: (itemId: string, next: boolean) => void;
@@ -57,14 +62,19 @@ function formatPriceCOP(n?: number): string {
   }).format(n);
 }
 
-function formatWeight(peso?: string): string {
-  if (!peso) return "—";
-  const trimmed = peso.trim();
-  if (!trimmed) return "—";
-  // Numeric carats — show as "1.85 ct"
-  const n = Number(trimmed);
-  if (Number.isFinite(n)) return `${n.toFixed(2)} ct`;
-  return trimmed; // e.g., "Plata", "Oro 18k"
+/**
+ * Procedencia heuristic — collection names in the inventory often start
+ * with the source (e.g., "Muzo Bold", "Coscuez Esmeralda"). We surface
+ * the leading word as a procedencia label; if the collection is empty
+ * or single-word we drop the segment.
+ */
+function parseProcedencia(coleccion?: string): string | null {
+  if (!coleccion) return null;
+  const trimmed = coleccion.trim();
+  if (!trimmed) return null;
+  const firstSpace = trimmed.indexOf(" ");
+  if (firstSpace <= 0) return null;
+  return trimmed.slice(0, firstSpace);
 }
 
 export function InventoryRow({
@@ -72,6 +82,8 @@ export function InventoryRow({
   isActive,
   isSelected,
   thumbnailUrl,
+  chromaHex,
+  foto,
   onOpen,
   onToggleSelect,
   onRetry,
@@ -90,6 +102,20 @@ export function InventoryRow({
           : "transparent";
 
   const baseBg = isActive ? atelier.surfaces.rowActive : atelier.surfaces.row;
+  const showCheckbox = isSelected || isActive;
+  const procedencia = parseProcedencia(row.coleccion);
+  const caratNum = row.peso ? Number(row.peso) : NaN;
+  const isCarat = Number.isFinite(caratNum) && caratNum > 0;
+
+  // Meta line — itemId · procedencia · calidad · talla
+  const metaSegments = [
+    row.itemId.padStart(4, "0"),
+    procedencia,
+    row.calidad,
+    // talla isn't on the row data type today; the inline list keeps
+    // a slot for it via row.color (which the prior layout displayed).
+    row.color,
+  ].filter((s): s is string => Boolean(s && String(s).trim()));
 
   return (
     <ButtonBase
@@ -104,15 +130,15 @@ export function InventoryRow({
         backgroundColor: baseBg,
         backgroundImage: `linear-gradient(${tint}, ${tint})`,
         borderBottom: `1px solid ${atelier.surfaces.edge}`,
-        // Selection mark — brass left border, kept transparent when not
-        // selected so the row doesn't shift horizontally.
-        borderLeft: `2px solid ${isSelected ? atelier.brass.base : "transparent"}`,
         transition: atelier.motion.rowHover,
         minHeight: `${atelier.spacing.rowMinHeight}px`,
         px: `${atelier.spacing.rowPaddingX}px`,
         py: `${atelier.spacing.rowPaddingY}px`,
         "&:hover": {
           backgroundColor: atelier.surfaces.rowHover,
+        },
+        "&:hover .tm-row-bulk": {
+          opacity: 1,
         },
         "&:focus-visible": {
           outline: `2px solid ${atelier.focus.ring}`,
@@ -123,51 +149,77 @@ export function InventoryRow({
       <Box
         sx={{
           display: "grid",
-          // Explicit track widths so weight/price columns don't grow with
-          // content and shove the row past `contentMaxWidth`. The name
-          // column uses `minmax(0, 1fr)` so it can shrink below its
-          // intrinsic size and let the ellipsis kick in.
+          // Column order: bulk | chroma | carat | thumb | name+meta | price | pip
           gridTemplateColumns: {
-            xs: "16px 56px 12px 32px minmax(0, 1fr) 84px 116px 10px",
-            sm: "16px 64px 14px 32px minmax(0, 1fr) 92px 128px 12px",
-            md: "20px 72px 16px 36px minmax(0, 1fr) 96px 136px 12px",
+            xs: "20px 5px 56px 40px minmax(0, 1fr) 80px 56px",
+            md: "20px 5px 64px 44px minmax(0, 1fr) 96px 60px",
           },
           alignItems: "center",
           gap: { xs: 1.25, md: 1.75 },
           minWidth: 0,
         }}
       >
-        {/* Selection checkbox — bulk-action toggle */}
-        <SelectionCheckbox
-          checked={isSelected}
-          onToggle={(next) => onToggleSelect(row.itemId, next)}
-          atelier={atelier}
-          itemLabel={row.nombre || `Item ${row.itemId}`}
-        />
+        {/* Bulk checkbox — fades in on hover/active so resting rows stay
+            clean. The reserved column keeps row width stable. */}
+        <Box
+          className="tm-row-bulk"
+          sx={{
+            opacity: showCheckbox ? 1 : 0,
+            transition: "opacity 120ms ease",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <SelectionCheckbox
+            checked={isSelected}
+            onToggle={(next) => onToggleSelect(row.itemId, next)}
+            atelier={atelier}
+            itemLabel={row.nombre || `Item ${row.itemId}`}
+          />
+        </Box>
 
-        {/* Item number — parcel stamp */}
+        {/* Chroma bar — sampled hue or emerald fallback */}
+        <ChromaBar hex={chromaHex} foto={foto} />
+
+        {/* Carat — primary read */}
         <Typography
           component="span"
           sx={{
             ...atelier.type.data,
-            color: atelier.ink.tertiary,
+            color: foto.ink.primary,
             textAlign: "right",
+            whiteSpace: "nowrap",
           }}
         >
-          {row.itemId.padStart(4, "0")}
+          {isCarat ? (
+            <>
+              {caratNum.toFixed(2)}
+              <Box
+                component="span"
+                sx={{
+                  ml: "3px",
+                  fontSize: "10px",
+                  letterSpacing: "0.08em",
+                  color: foto.ink.tertiary,
+                }}
+              >
+                CT
+              </Box>
+            </>
+          ) : (
+            (row.peso ?? "—")
+          )}
         </Typography>
 
-        {/* Status pip column — the signature */}
-        <StatusPip estado={row.estado} />
-
-        {/* Thumbnail — square parcel stamp */}
+        {/* Thumbnail — 44×44 parcel stamp */}
         <Box
           sx={{
-            width: "32px",
-            height: "32px",
+            width: "44px",
+            height: "44px",
             borderRadius: "3px",
-            border: `1px solid ${atelier.surfaces.edge}`,
-            backgroundColor: atelier.surfaces.inset,
+            border: `1px solid ${foto.surfaces.edge}`,
+            backgroundColor: foto.surfaces.inset,
             overflow: "hidden",
             flexShrink: 0,
           }}
@@ -189,7 +241,7 @@ export function InventoryRow({
           ) : null}
         </Box>
 
-        {/* Name + collection */}
+        {/* Name + meta line */}
         <Box sx={{ minWidth: 0 }}>
           <Typography
             component="div"
@@ -197,7 +249,7 @@ export function InventoryRow({
               ...atelier.type.rowTitle,
               fontFamily: fontFamilies.system,
               fontWeight: 600,
-              color: atelier.ink.primary,
+              color: foto.ink.primary,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -206,7 +258,7 @@ export function InventoryRow({
           >
             {row.nombre || `Item ${row.itemId}`}
           </Typography>
-          {(row.coleccion || row.color || row.calidad) && (
+          {metaSegments.length > 0 && (
             <Typography
               component="div"
               sx={{
@@ -214,42 +266,24 @@ export function InventoryRow({
                 fontFamily: fontFamilies.system,
                 fontSize: "12px",
                 fontWeight: 400,
-                color: atelier.ink.tertiary,
+                color: foto.ink.tertiary,
                 mt: "2px",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
               }}
             >
-              {[row.coleccion, row.color, row.calidad]
-                .filter(Boolean)
-                .join(" · ")}
+              {metaSegments.join(" · ")}
             </Typography>
           )}
         </Box>
-
-        {/* Weight — tabular mono */}
-        <Typography
-          component="span"
-          sx={{
-            ...atelier.type.data,
-            color: atelier.ink.secondary,
-            textAlign: "right",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            minWidth: 0,
-          }}
-        >
-          {formatWeight(row.peso)}
-        </Typography>
 
         {/* Price — tabular mono */}
         <Typography
           component="span"
           sx={{
             ...atelier.type.data,
-            color: atelier.ink.primary,
+            color: foto.ink.primary,
             textAlign: "right",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -260,11 +294,21 @@ export function InventoryRow({
           {formatPriceCOP(row.precioCOP)}
         </Typography>
 
-        {/* Sync mark — tiny indicator at the very edge */}
-        <SyncMark
-          status={row.syncStatus}
-          onRetry={onRetry ? () => onRetry(row.itemId) : undefined}
-        />
+        {/* Status pip — the signature, kept at the row's right edge */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: "8px",
+          }}
+        >
+          <StatusPip estado={row.estado} foto={foto} />
+          <SyncMark
+            status={row.syncStatus}
+            onRetry={onRetry ? () => onRetry(row.itemId) : undefined}
+          />
+        </Box>
       </Box>
     </ButtonBase>
   );

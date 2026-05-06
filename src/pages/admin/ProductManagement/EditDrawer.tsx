@@ -32,7 +32,7 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { Box, ButtonBase, Drawer, InputBase, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { getAtelier } from "../../../design-system";
+import { getAtelier, getFoto } from "../../../design-system";
 import {
   convexApi,
   convexReady,
@@ -215,6 +215,7 @@ export function EditDrawer({
 }: EditDrawerProps) {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
+  const foto = getFoto(theme.palette.mode === "dark" ? "dark" : "light");
   const { user } = useGoogleAuth();
   const claimLock = useConvexMutation(convexApi.products.claimLock);
   const releaseLock = useConvexMutation(convexApi.products.releaseLock);
@@ -417,7 +418,7 @@ export function EditDrawer({
             >
               {product.itemId.padStart(4, "0")}
             </Typography>
-            <StatusPip estado={product.estado} />
+            <StatusPip estado={product.estado} foto={foto} />
             <Typography
               component="div"
               sx={{
@@ -565,6 +566,7 @@ export function EditDrawer({
               value={draft.estado}
               onChange={(v) => setDraft({ ...draft, estado: v })}
               atelier={atelier}
+              foto={foto}
             />
           </Section>
 
@@ -823,10 +825,12 @@ function EstadoRadio({
   value,
   onChange,
   atelier,
+  foto,
 }: {
   value: EstadoValue;
   onChange: (v: EstadoValue) => void;
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
 }) {
   const options: Array<{
     key: EstadoValue;
@@ -888,7 +892,7 @@ function EstadoRadio({
               },
             }}
           >
-            <StatusPip estado={opt.key} muted={!isSelected} />
+            <StatusPip estado={opt.key} foto={foto} muted={!isSelected} />
             <Box>
               <Typography
                 sx={{ ...atelier.type.label, color: atelier.ink.primary }}

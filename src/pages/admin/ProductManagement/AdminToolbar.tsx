@@ -26,7 +26,7 @@
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Box, ButtonBase, InputBase, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { getAtelier } from "../../../design-system";
+import { getAtelier, type FotoTokens } from "../../../design-system";
 import { type EstadoValue } from "./StatusPip";
 
 type FilterKey = "all" | "available" | "consigned" | "sold";
@@ -58,6 +58,8 @@ export interface AdvancedFilterOptions {
 }
 
 interface AdminToolbarProps {
+  /** Fotosíntesis design tokens — surfaces, ink, motion, status. */
+  foto: FotoTokens;
   search: string;
   onSearchChange: (value: string) => void;
   filter: FilterKey;
@@ -97,6 +99,7 @@ const FILTERS: Array<{
 ];
 
 export function AdminToolbar({
+  foto,
   search,
   onSearchChange,
   filter,
@@ -169,8 +172,8 @@ export function AdminToolbar({
         position: "sticky",
         top: 0,
         zIndex: 2,
-        backgroundColor: atelier.surfaces.panel,
-        borderBottom: `1px solid ${atelier.surfaces.edgeStrong}`,
+        backgroundColor: foto.surfaces.panel,
+        borderBottom: `1px solid ${foto.surfaces.edgeStrong}`,
       }}
     >
       {/* TOP ROW — search + status filter (sync moved to hero) */}
@@ -187,8 +190,8 @@ export function AdminToolbar({
         {/* Search */}
         <Box
           sx={{
-            backgroundColor: atelier.surfaces.inset,
-            border: `1px solid ${atelier.surfaces.edge}`,
+            backgroundColor: foto.surfaces.inset,
+            border: `1px solid ${foto.surfaces.edge}`,
             borderRadius: "4px",
             px: "10px",
             py: "6px",
@@ -210,7 +213,7 @@ export function AdminToolbar({
             sx={{
               width: "14px",
               height: "14px",
-              color: atelier.ink.tertiary,
+              color: foto.ink.tertiary,
               flexShrink: 0,
             }}
           >
@@ -240,7 +243,7 @@ export function AdminToolbar({
             inputProps={{ "aria-label": "Buscar producto en inventario" }}
             sx={{
               ...atelier.type.meta,
-              color: atelier.ink.primary,
+              color: foto.ink.primary,
               "& input::placeholder": {
                 color: atelier.ink.muted,
                 opacity: 1,
@@ -254,7 +257,7 @@ export function AdminToolbar({
               sx={{
                 ...atelier.type.data,
                 fontSize: "11px",
-                color: atelier.ink.tertiary,
+                color: foto.ink.tertiary,
                 whiteSpace: "nowrap",
                 flexShrink: 0,
               }}
@@ -276,12 +279,12 @@ export function AdminToolbar({
                 width: "20px",
                 height: "20px",
                 borderRadius: "50%",
-                color: atelier.ink.tertiary,
+                color: foto.ink.tertiary,
                 flexShrink: 0,
-                transition: atelier.motion.rowHover,
+                transition: foto.motion.rowHover,
                 "&:hover": {
                   backgroundColor: atelier.surfaces.rowHover,
-                  color: atelier.ink.primary,
+                  color: foto.ink.primary,
                 },
                 "&:focus-visible": {
                   outline: `2px solid ${atelier.focus.ring}`,
@@ -312,14 +315,14 @@ export function AdminToolbar({
                 ...atelier.type.label,
                 fontSize: "10px",
                 color: atelier.ink.muted,
-                border: `1px solid ${atelier.surfaces.edge}`,
+                border: `1px solid ${foto.surfaces.edge}`,
                 borderRadius: "3px",
                 px: "5px",
                 py: "1px",
                 lineHeight: 1.4,
                 whiteSpace: "nowrap",
                 flexShrink: 0,
-                backgroundColor: atelier.surfaces.panel,
+                backgroundColor: foto.surfaces.panel,
               }}
             >
               ⌘K
@@ -334,7 +337,7 @@ export function AdminToolbar({
           sx={{
             display: "inline-flex",
             gap: 0,
-            border: `1px solid ${atelier.surfaces.edgeStrong}`,
+            border: `1px solid ${foto.surfaces.edgeStrong}`,
             borderRadius: "4px",
             overflow: "hidden",
           }}
@@ -350,19 +353,15 @@ export function AdminToolbar({
                 disableRipple
                 sx={{
                   ...atelier.type.label,
-                  color: isSelected
-                    ? atelier.ink.primary
-                    : atelier.ink.tertiary,
+                  color: isSelected ? foto.ink.primary : foto.ink.tertiary,
                   backgroundColor: isSelected
                     ? atelier.surfaces.rowActive
                     : "transparent",
                   px: "12px",
                   py: "8px",
                   borderLeft:
-                    i === 0
-                      ? "none"
-                      : `1px solid ${atelier.surfaces.edgeStrong}`,
-                  transition: atelier.motion.rowHover,
+                    i === 0 ? "none" : `1px solid ${foto.surfaces.edgeStrong}`,
+                  transition: foto.motion.rowHover,
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "8px",
@@ -390,7 +389,7 @@ export function AdminToolbar({
         sx={{
           px: `${atelier.spacing.rowPaddingX}px`,
           py: "8px",
-          borderTop: `1px solid ${atelier.surfaces.edge}`,
+          borderTop: `1px solid ${foto.surfaces.edge}`,
           display: "flex",
           alignItems: "center",
           gap: "12px",
@@ -401,7 +400,7 @@ export function AdminToolbar({
           component="span"
           sx={{
             ...atelier.type.label,
-            color: atelier.ink.tertiary,
+            color: foto.ink.tertiary,
             mr: "4px",
           }}
         >
@@ -438,21 +437,19 @@ export function AdminToolbar({
           sx={{
             ...atelier.type.label,
             color:
-              advancedActiveCount > 0
-                ? atelier.ink.primary
-                : atelier.ink.tertiary,
+              advancedActiveCount > 0 ? foto.ink.primary : foto.ink.tertiary,
             backgroundColor:
               advancedActiveCount > 0
                 ? atelier.surfaces.rowActive
                 : atelier.surfaces.inset,
-            border: `1px solid ${advancedActiveCount > 0 ? atelier.brass.soft : atelier.surfaces.edge}`,
+            border: `1px solid ${advancedActiveCount > 0 ? atelier.brass.soft : foto.surfaces.edge}`,
             borderRadius: "4px",
             px: "10px",
             py: "5px",
             display: "inline-flex",
             alignItems: "center",
             gap: "6px",
-            transition: atelier.motion.rowHover,
+            transition: foto.motion.rowHover,
             "&:hover": {
               backgroundColor: atelier.surfaces.rowHover,
               borderColor: atelier.brass.soft,
@@ -474,7 +471,7 @@ export function AdminToolbar({
                 ...atelier.type.data,
                 fontSize: "10px",
                 lineHeight: 1.4,
-                color: atelier.ink.inverse,
+                color: foto.ink.inverse,
                 backgroundColor: atelier.focus.ring,
                 borderRadius: "2px",
                 px: "5px",
@@ -492,7 +489,7 @@ export function AdminToolbar({
             sx={{
               width: "10px",
               height: "10px",
-              color: atelier.ink.tertiary,
+              color: foto.ink.tertiary,
               transform: showAdvanced ? "rotate(180deg)" : "rotate(0deg)",
               transition: "transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1)",
             }}
@@ -527,17 +524,17 @@ export function AdminToolbar({
             disableRipple
             sx={{
               ...atelier.type.label,
-              color: atelier.ink.tertiary,
+              color: foto.ink.tertiary,
               ml: "auto",
               px: "10px",
               py: "6px",
               borderRadius: "4px",
-              transition: atelier.motion.rowHover,
+              transition: foto.motion.rowHover,
               textDecoration: "underline",
               textUnderlineOffset: "2px",
               textDecorationColor: atelier.brass.soft,
               "&:hover": {
-                color: atelier.ink.primary,
+                color: foto.ink.primary,
                 textDecorationColor: atelier.ink.primary,
               },
               "&:focus-visible": {
