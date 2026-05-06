@@ -36,8 +36,10 @@ import { getAtelier } from "../../../design-system";
 import {
   convexApi,
   convexReady,
+  useConvexMutation,
   useConvexQuery,
 } from "../../../lib/convex-safe";
+import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
 import { StatusPip, type EstadoValue } from "./StatusPip";
 
 interface DriveMedia {
@@ -213,6 +215,9 @@ export function EditDrawer({
 }: EditDrawerProps) {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
+  const { user } = useGoogleAuth();
+  const claimLock = useConvexMutation(convexApi.products.claimLock);
+  const releaseLock = useConvexMutation(convexApi.products.releaseLock);
   const [draft, setDraft] = useState<DraftState>(() => toDraft(product));
   const [driveState, setDriveState] =
     useState<DriveFolderState>(EMPTY_DRIVE_STATE);
@@ -274,6 +279,63 @@ export function EditDrawer({
       cancelled = true;
     };
   }, [open, product?.itemId]);
+
+  // ─── Soft lock ──────────────────────────────────────────────────────
+  // Claim a 5-min lock on drawer open; release on close. If the claim
+  // is rejected (another admin holds), we never release — that admin
+  // owns the row. The `claimedHere` closure flag covers the race where
+  // the claim resolves *after* the user already closed the drawer.
+  useEffect(() => {
+    if (!convexReady || !open || !product?.itemId || !user?.email) return;
+
+    const itemId = product.itemId;
+    const email = user.email;
+    const name = user.name;
+    let cancelled = false;
+    let claimedHere = false;
+
+    void claimLock({ itemId, holderEmail: email, holderName: name })
+      .then((result) => {
+        if (cancelled) {
+          if (result.ok) {
+            void releaseLock({ itemId, holderEmail: email }).catch(() => {});
+          }
+          return;
+        }
+        if (result.ok) {
+          claimedHere = true;
+        }
+      })
+      .catch(() => {
+        // Silent — the lockStatus subscription will surface the conflict
+      });
+
+    return () => {
+      cancelled = true;
+      if (claimedHere) {
+        void releaseLock({ itemId, holderEmail: email }).catch(() => {});
+        claimedHere = false;
+      }
+    };
+  }, [open, product?.itemId, user?.email, user?.name, claimLock, releaseLock]);
+
+  // Reactive lock state. Filters self out — only "someone else holds"
+  // matters for banner + Save gating.
+  const lockStatus = useConvexQuery(
+    convexApi.products.lockStatus,
+    convexReady && open && product?.itemId
+      ? { itemId: product.itemId }
+      : "skip",
+  ) as
+    | { holderEmail: string; holderName?: string; expiresAt: string }
+    | null
+    | undefined;
+
+  const lockedByOther = useMemo(() => {
+    if (!lockStatus || !user?.email) return null;
+    if (lockStatus.holderEmail === user.email) return null;
+    return lockStatus;
+  }, [lockStatus, user?.email]);
 
   const patch = useMemo(() => diffDraft(draft, product), [draft, product]);
   const hasChanges = Object.keys(patch).length > 0;
@@ -506,6 +568,10 @@ export function EditDrawer({
             />
           </Section>
 
+          {lockedByOther && (
+            <LockBanner lockedBy={lockedByOther} atelier={atelier} />
+          )}
+
           <Section title="Archivos" atelier={atelier}>
             <DriveFolderBlock state={driveState} atelier={atelier} />
           </Section>
@@ -572,13 +638,13 @@ export function EditDrawer({
             </ButtonBase>
             <ButtonBase
               onClick={() => void onSave(product.itemId, patch)}
-              disabled={!hasChanges || isSaving}
+              disabled={!hasChanges || isSaving || !!lockedByOther}
               disableRipple
               sx={{
                 ...atelier.type.label,
                 color: atelier.ink.inverse,
                 backgroundColor:
-                  !hasChanges || isSaving
+                  !hasChanges || isSaving || !!lockedByOther
                     ? atelier.ink.muted
                     : atelier.focus.ring,
                 px: "14px",
@@ -587,7 +653,7 @@ export function EditDrawer({
                 transition: atelier.motion.rowHover,
                 "&:hover": {
                   backgroundColor:
-                    !hasChanges || isSaving
+                    !hasChanges || isSaving || !!lockedByOther
                       ? atelier.ink.muted
                       : atelier.status.available.pip,
                 },
@@ -1599,6 +1665,99 @@ function ConflictBanner({
         >
           {isResyncing ? "Sincronizando…" : "Resync ahora"}
         </ButtonBase>
+      </Box>
+    </Box>
+  );
+}
+
+/**
+ * LockBanner — advisory mark that another admin currently holds the
+ * 5-min soft lock on this row. Sits above the "Archivos" section so the
+ * editor sees it before scrolling into the metadata. Atelier-pure: amber
+ * (consigned) pip color borrowed from the status palette, hairline
+ * border with an emphasized left edge, ledger meta typography. The
+ * minute counter ticks every 30s so the "expires in N min" stays
+ * roughly honest while the drawer is open.
+ */
+function LockBanner({
+  lockedBy,
+  atelier,
+}: {
+  lockedBy: { holderEmail: string; holderName?: string; expiresAt: string };
+  atelier: ReturnType<typeof getAtelier>;
+}) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const name = lockedBy.holderName?.trim() || lockedBy.holderEmail;
+  const expiresAtMs = Date.parse(lockedBy.expiresAt);
+  const minutesLeft = Number.isFinite(expiresAtMs)
+    ? Math.max(0, Math.ceil((expiresAtMs - now) / 60_000))
+    : 0;
+  const expiryText =
+    minutesLeft >= 1
+      ? `expira en ${minutesLeft} min`
+      : "expira en menos de 1 min";
+
+  return (
+    <Box
+      role="status"
+      aria-live="polite"
+      sx={{
+        mb: `${atelier.spacing.sectionGap}px`,
+        border: `1px solid ${atelier.surfaces.edgeStrong}`,
+        borderLeft: `2px solid ${atelier.status.consigned.pip}`,
+        backgroundColor: atelier.status.consigned.rowTint,
+        borderRadius: "4px",
+        px: "14px",
+        py: "10px",
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "10px",
+      }}
+    >
+      <Box
+        aria-hidden
+        sx={{
+          width: "8px",
+          height: "8px",
+          borderRadius: "1px",
+          backgroundColor: atelier.status.consigned.pip,
+          flexShrink: 0,
+          mt: "5px",
+        }}
+      />
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography
+          sx={{
+            ...atelier.type.label,
+            color: atelier.ink.tertiary,
+            mb: "2px",
+          }}
+        >
+          En edición
+        </Typography>
+        <Typography
+          sx={{
+            ...atelier.type.meta,
+            color: atelier.ink.primary,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+          title={`${name} · ${expiryText}`}
+        >
+          <Box component="span" sx={{ fontWeight: 600 }}>
+            {name}
+          </Box>{" "}
+          está editando ·{" "}
+          <Box component="span" sx={{ color: atelier.ink.tertiary }}>
+            {expiryText}
+          </Box>
+        </Typography>
       </Box>
     </Box>
   );

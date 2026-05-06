@@ -429,6 +429,126 @@ export const retryPush = action({
   },
 });
 
+// =============================================================================
+// SOFT LOCKS — drawer-open coordination between concurrent admins
+// =============================================================================
+
+/** Lock TTL: 5 minutes. */
+const LOCK_TTL_MS = 5 * 60 * 1000;
+
+/**
+ * Claim a soft lock on a product. Multiple admins can hit
+ * `/admin/products` at once; the lock signals "X has the drawer open"
+ * so peers see a banner instead of stomping on the same edit.
+ *
+ * Returns `{ ok: true }` when the lock is now held by `holderEmail`
+ * (fresh insert, expired-takeover, or refresh by the same holder).
+ *
+ * Returns `{ ok: false, holder, expiresAt }` when a non-expired lock
+ * is already held by a different admin — the caller surfaces a banner
+ * and skips the release-on-cleanup path.
+ */
+export const claimLock = mutation({
+  args: {
+    itemId: v.string(),
+    holderEmail: v.string(),
+    holderName: v.optional(v.string()),
+  },
+  handler: async (ctx, { itemId, holderEmail, holderName }) => {
+    const now = Date.now();
+    const claimedAt = new Date(now).toISOString();
+    const expiresAt = new Date(now + LOCK_TTL_MS).toISOString();
+
+    const existing = await ctx.db
+      .query("productLocks")
+      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .first();
+
+    if (!existing) {
+      await ctx.db.insert("productLocks", {
+        itemId,
+        holderEmail,
+        holderName,
+        claimedAt,
+        expiresAt,
+      });
+      return { ok: true as const };
+    }
+
+    const existingExpiresMs = Date.parse(existing.expiresAt);
+    const isExpired =
+      !Number.isFinite(existingExpiresMs) || existingExpiresMs <= now;
+
+    if (existing.holderEmail === holderEmail || isExpired) {
+      await ctx.db.patch(existing._id, {
+        holderEmail,
+        holderName,
+        claimedAt,
+        expiresAt,
+      });
+      return { ok: true as const };
+    }
+
+    return {
+      ok: false as const,
+      holder: {
+        email: existing.holderEmail,
+        name: existing.holderName,
+      },
+      expiresAt: existing.expiresAt,
+    };
+  },
+});
+
+/**
+ * Release a soft lock. Only deletes the row if the caller's email
+ * matches the current holder; no-op otherwise. Defensive against
+ * interleaved cleanups that could otherwise kill another admin's
+ * legitimate lock.
+ */
+export const releaseLock = mutation({
+  args: {
+    itemId: v.string(),
+    holderEmail: v.string(),
+  },
+  handler: async (ctx, { itemId, holderEmail }) => {
+    const existing = await ctx.db
+      .query("productLocks")
+      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .first();
+    if (!existing) return { released: false };
+    if (existing.holderEmail !== holderEmail) return { released: false };
+    await ctx.db.delete(existing._id);
+    return { released: true };
+  },
+});
+
+/**
+ * Read the current lock state for a product. Returns `null` when free
+ * or expired; otherwise the holder identity + expiry. The drawer
+ * subscribes to this reactively so a "X está editando" banner appears
+ * the moment another admin claims (or drops away when they release).
+ */
+export const lockStatus = query({
+  args: { itemId: v.string() },
+  handler: async (ctx, { itemId }) => {
+    const existing = await ctx.db
+      .query("productLocks")
+      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .first();
+    if (!existing) return null;
+    const expiresAtMs = Date.parse(existing.expiresAt);
+    if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now()) {
+      return null;
+    }
+    return {
+      holderEmail: existing.holderEmail,
+      holderName: existing.holderName,
+      expiresAt: existing.expiresAt,
+    };
+  },
+});
+
 /**
  * Pull the full inventory from the Google Sheet into the mirror.
  *
