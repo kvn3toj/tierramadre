@@ -105,12 +105,12 @@ test.describe("/admin/products — atelier inventory", () => {
     await page.goto("/admin/products");
 
     // Wait for the seeded inventory to land — three rows render under
-    // the "Productos en inventario" list. We use this as the readiness
+    // the "Productos en el espejo" list. We use this as the readiness
     // signal because it's a stronger guarantee than the page title:
     // products only show up once the Convex stub's React subscriptions
     // have settled.
     const list = page.getByRole("list", {
-      name: "Productos en inventario",
+      name: "Productos en el espejo",
     });
     await expect(list.getByRole("listitem")).toHaveCount(3, {
       timeout: 10_000,
@@ -123,7 +123,7 @@ test.describe("/admin/products — atelier inventory", () => {
         name: /Fotosíntesis/i,
       }),
     ).toBeVisible();
-    await expect(page.getByText("en el espejo")).toBeVisible();
+    await expect(page.getByText("en el espejo", { exact: true })).toBeVisible();
     await expect(page.locator("[data-foto-create]")).toBeVisible();
     await expect(page.locator("[data-foto-resync]")).toBeVisible();
 
