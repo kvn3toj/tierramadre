@@ -237,6 +237,7 @@ export default function ProductManagementPage() {
 
   const saveEdit = useConvexMutation(convexApi.products.saveEdit);
   const pullFromSheet = useConvexAction(convexApi.products.pullFromSheet);
+  const retryPush = useConvexAction(convexApi.products.retryPush);
 
   // Drive thumbnails — single batched call, cached in localStorage for 24h
   const { thumbnails } = useBatchThumbnails();
@@ -475,6 +476,23 @@ export default function ProductManagementPage() {
     }
   }, [pullFromSheet, notify]);
 
+  const handleRetry = useCallback(
+    async (itemId: string) => {
+      try {
+        const result = await retryPush({ itemId });
+        if (result.ok) {
+          notify(`Reintento exitoso · ${itemId}`, "success");
+        } else {
+          notify(`Reintento falló · ${result.message}`, "error");
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Error desconocido";
+        notify(`Reintento falló · ${msg}`, "error");
+      }
+    },
+    [retryPush, notify],
+  );
+
   // ─── Render ──────────────────────────────────────────────────────────
 
   if (!convexReady) {
@@ -687,6 +705,7 @@ export default function ProductManagementPage() {
                     isActive={selectedItemId === doc.itemId}
                     thumbnailUrl={thumb}
                     onOpen={setSelectedItemId}
+                    onRetry={handleRetry}
                   />
                 </Box>
               );
@@ -716,6 +735,8 @@ export default function ProductManagementPage() {
         isSaving={isSaving}
         onClose={() => setSelectedItemId(null)}
         onSave={handleSave}
+        onResync={handleResync}
+        isResyncing={isResyncing}
       />
     </Box>
   );
