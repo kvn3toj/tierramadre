@@ -62,6 +62,11 @@ import { FotoHero } from "./FotoHero";
 import { Bandeja, type BandejaSelectedProduct } from "./Bandeja";
 import { useChromaSamples } from "../../../hooks/useChromaSamples";
 import type { EstadoValue } from "./StatusPip";
+// Phase G — create flow
+import {
+  validateNewProduct,
+  type NewProductInput,
+} from "../../../utils/createProduct-validate";
 
 // =============================================================================
 // HELPERS — Convex doc → row / drawer-product
@@ -229,6 +234,12 @@ export default function ProductManagementPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isResyncing, setIsResyncing] = useState(false);
 
+  // === Phase G — create flow ===
+  // drawerMode dispatches the EditDrawer between "edit" and "create".
+  // editingItemId === "__new__" is the sentinel used while the create
+  // drawer is open (the drawer renders with product = null in this case).
+  const [drawerMode, setDrawerMode] = useState<"edit" | "create">("edit");
+
   // Bulk selection — set of itemIds checked in the row checkboxes.
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkSaving, setIsBulkSaving] = useState(false);
@@ -251,6 +262,15 @@ export default function ProductManagementPage() {
 
   const saveEdit = useConvexMutation(convexApi.products.saveEdit);
   const saveEditMany = useConvexMutation(convexApi.products.saveEditMany);
+  // Phase G — create flow mutation
+  const createProduct = useConvexMutation(
+    convexApi.products.createProduct,
+  ) as (args: {
+    itemId: string;
+    editorEmail: string;
+    editorName?: string;
+    fields: Omit<NewProductInput, "itemId">;
+  }) => Promise<{ itemId: string; productId: string; rowIndex: number }>;
   const pullFromSheet = useConvexAction(convexApi.products.pullFromSheet);
   const retryPush = useConvexAction(convexApi.products.retryPush);
 
@@ -426,14 +446,24 @@ export default function ProductManagementPage() {
   ]);
 
   // Drawer-target product — looked up by editingItemId (Bandeja's
-  // "Abrir editor" button, wired in Phase D).
+  // "Abrir editor" button, wired in Phase D). The "__new__" sentinel
+  // (Phase G) opens the drawer in create mode with no underlying doc.
   const editing = useMemo(
     () =>
-      editingItemId && products
+      editingItemId && editingItemId !== "__new__" && products
         ? (products.find((p) => p.itemId === editingItemId) ?? null)
         : null,
     [editingItemId, products],
   );
+
+  // === Phase G — create flow ===
+  // Set of every itemId currently in the mirror — fed to validateNewProduct
+  // for the duplicate-id check. Recomputed on every products refresh.
+  const existingItemIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (products) for (const p of products) ids.add(p.itemId);
+    return ids;
+  }, [products]);
 
   // Bandeja-target product — looked up by selectedBandejaId (row click).
   const selectedForBandeja = useMemo(
@@ -472,7 +502,10 @@ export default function ProductManagementPage() {
     if (!editingItemId) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isSaving) {
+        // Phase G — also reset drawerMode so a follow-up open isn't
+        // stuck in create mode.
         setEditingItemId(null);
+        setDrawerMode("edit");
       }
     };
     window.addEventListener("keydown", onKey);
@@ -481,15 +514,57 @@ export default function ProductManagementPage() {
 
   // ─── Handlers ────────────────────────────────────────────────────────
 
+  // === Phase G — create flow ===
+  // Open the drawer in create mode by setting both the sentinel id and
+  // drawerMode together so the EditDrawer renders empty in a single tick.
+  const handleCreateNew = useCallback(() => {
+    setDrawerMode("create");
+    setEditingItemId("__new__");
+  }, []);
+
+  // Unified save handler — dispatches on mode. Edit path mirrors the
+  // pre-Phase-G handler unchanged (saveEdit + diff-based notify). Create
+  // path validates with validateNewProduct, then fires createProduct.
   const handleSave = useCallback(
-    async (itemId: string, patch: EditDrawerPatch) => {
+    async (
+      itemId: string | undefined,
+      payload: EditDrawerPatch | NewProductInput,
+      mode: "edit" | "create",
+    ) => {
       if (!user?.email) {
         notify("Tu sesión no tiene email. Vuelve a iniciar sesión.", "error");
         return;
       }
-      if (Object.keys(patch).length === 0) return;
       setIsSaving(true);
       try {
+        if (mode === "create") {
+          const validated = validateNewProduct(
+            payload as NewProductInput,
+            existingItemIds,
+          );
+          if (!validated.ok) {
+            notify(validated.error, "error");
+            return;
+          }
+          const { itemId: createdId, ...fields } = validated.value;
+          const result = await createProduct({
+            itemId: createdId,
+            editorEmail: user.email,
+            editorName: user.name,
+            fields,
+          });
+          notify(
+            `Creada · ${result.itemId} · sincronizando con la hoja`,
+            "success",
+          );
+          setDrawerMode("edit");
+          setEditingItemId(null);
+          return;
+        }
+
+        // mode === "edit"
+        const patch = payload as EditDrawerPatch;
+        if (!itemId || Object.keys(patch).length === 0) return;
         const result = await saveEdit({
           itemId,
           editorEmail: user.email,
@@ -505,13 +580,25 @@ export default function ProductManagementPage() {
         setEditingItemId(null);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Error desconocido";
-        notify(`No se pudo guardar: ${msg}`, "error");
+        notify(
+          mode === "create"
+            ? `No se pudo crear: ${msg}`
+            : `No se pudo guardar: ${msg}`,
+          "error",
+        );
       } finally {
         setIsSaving(false);
       }
     },
-    [saveEdit, user?.email, user?.name, notify],
+    [saveEdit, createProduct, existingItemIds, user?.email, user?.name, notify],
   );
+
+  // Close drawer on cancel — also reset drawerMode so the next open
+  // starts in edit mode unless explicitly entered via handleCreateNew.
+  const handleCloseDrawer = useCallback(() => {
+    setEditingItemId(null);
+    setDrawerMode("edit");
+  }, []);
 
   const handleResync = useCallback(async () => {
     setIsResyncing(true);
@@ -634,7 +721,8 @@ export default function ProductManagementPage() {
         lastPull={stats?.lastPull ?? null}
         isResyncing={isResyncing}
         onResync={handleResync}
-        onCreateNew={() => console.log("create-new clicked — wired in Phase G")}
+        // Phase G — wired
+        onCreateNew={handleCreateNew}
       />
 
       {/* Workbench split — ledger on the left, Bandeja inspector on
@@ -748,12 +836,15 @@ export default function ProductManagementPage() {
         <Bandeja foto={foto} selected={selectedBandeja} />
       </Box>
 
-      {/* Drawer — opened by Bandeja's "Abrir editor" button (Phase D). */}
+      {/* Drawer — opened by Bandeja's "Abrir editor" button (Phase D)
+          or the FotoHero "+ Nueva piedra" button (Phase G, mode="create"). */}
       <EditDrawer
         open={!!editingItemId}
         product={editing ? toDrawerProduct(editing) : null}
         isSaving={isSaving}
-        onClose={() => setEditingItemId(null)}
+        // Phase G — create mode
+        mode={drawerMode}
+        onClose={handleCloseDrawer}
         onSave={handleSave}
         onResync={handleResync}
         isResyncing={isResyncing}
