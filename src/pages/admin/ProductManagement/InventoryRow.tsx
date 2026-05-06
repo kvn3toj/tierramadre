@@ -110,13 +110,6 @@ export function InventoryRow({
   const caratNum = row.peso ? Number(row.peso) : NaN;
   const isCarat = Number.isFinite(caratNum) && caratNum > 0;
 
-  // === Phase H — inline edit ===
-  // Trim-or-null parser shared by the ubicacion + coleccion cells.
-  const trimOrNull = (s: string): string | null => {
-    const t = String(s).trim();
-    return t.length > 0 ? t : null;
-  };
-
   return (
     <ButtonBase
       onClick={() => onOpen(row.itemId)}
@@ -289,12 +282,12 @@ export function InventoryRow({
           >
             {row.nombre || `Item ${row.itemId}`}
           </Typography>
-          {/* === Phase H — inline edit ===
-              Meta line as discrete cells:
-              [itemId] · [coleccion (inline)] · [calidad] · [ubicacion (inline)]
-              The two inline cells use `parse=trimOrNull` and dispatch to
-              `onInlineEdit`. The dot separators are non-interactive
-              spans painted in tertiary ink. */}
+          {/* Meta line — read-only summary. Inline editing for
+              colección + ubicación was overlapping the static
+              "[itemId] · CALIDAD · ASESOR" segments at narrow split
+              widths (the editable cells were stretching beyond their
+              grid slot). Both fields are now editable via the
+              EditDrawer; only the price stays inline below. */}
           <Box
             sx={{
               ...atelier.type.meta,
@@ -303,73 +296,29 @@ export function InventoryRow({
               fontWeight: 400,
               color: foto.ink.tertiary,
               mt: "2px",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
+              display: "block",
               overflow: "hidden",
+              textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               minWidth: 0,
             }}
+            title={[
+              row.itemId.padStart(4, "0"),
+              row.coleccion,
+              row.calidad,
+              row.ubicacion,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           >
-            <Box component="span" sx={{ color: foto.ink.tertiary }}>
-              {row.itemId.padStart(4, "0")}
-            </Box>
-            <Box component="span" aria-hidden sx={{ color: foto.ink.tertiary }}>
-              ·
-            </Box>
-            {/* Colección — inline-edit cell. Display falls back to "—". */}
-            <Box sx={{ minWidth: 0, flexShrink: 1, maxWidth: "40%" }}>
-              {onInlineEdit ? (
-                <InlineEditCell
-                  foto={foto}
-                  display={row.coleccion ?? ""}
-                  rawValue={row.coleccion ?? ""}
-                  parse={trimOrNull}
-                  onSave={(next) =>
-                    onInlineEdit(row.itemId, { coleccion: next })
-                  }
-                  ariaLabel={`Colección de ${row.nombre ?? row.itemId}`}
-                  type="text"
-                />
-              ) : (
-                <Box component="span">{row.coleccion ?? "—"}</Box>
-              )}
-            </Box>
-            {row.calidad && (
-              <>
-                <Box
-                  component="span"
-                  aria-hidden
-                  sx={{ color: foto.ink.tertiary }}
-                >
-                  ·
-                </Box>
-                <Box component="span" sx={{ color: foto.ink.tertiary }}>
-                  {row.calidad}
-                </Box>
-              </>
-            )}
-            <Box component="span" aria-hidden sx={{ color: foto.ink.tertiary }}>
-              ·
-            </Box>
-            {/* Ubicación — inline-edit cell. */}
-            <Box sx={{ minWidth: 0, flexShrink: 1, maxWidth: "30%" }}>
-              {onInlineEdit ? (
-                <InlineEditCell
-                  foto={foto}
-                  display={row.ubicacion ?? ""}
-                  rawValue={row.ubicacion ?? ""}
-                  parse={trimOrNull}
-                  onSave={(next) =>
-                    onInlineEdit(row.itemId, { ubicacion: next })
-                  }
-                  ariaLabel={`Ubicación de ${row.nombre ?? row.itemId}`}
-                  type="text"
-                />
-              ) : (
-                <Box component="span">{row.ubicacion ?? "—"}</Box>
-              )}
-            </Box>
+            {[
+              row.itemId.padStart(4, "0"),
+              row.coleccion,
+              row.calidad,
+              row.ubicacion,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </Box>
         </Box>
 
