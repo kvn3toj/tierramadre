@@ -940,3 +940,70 @@ function median(arr: number[]): number {
     ? sorted[mid]
     : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
 }
+
+/**
+ * Top-5 global patrones combos across all VENDIDA rows in the
+ * lookback window. Used by the FotoHero "patrones del semestre"
+ * sparkline / chip stack.
+ */
+export const patronesGlobalTop = query({
+  args: { lookbackDays: v.optional(v.number()) },
+  handler: async (ctx, { lookbackDays }) => {
+    const days = lookbackDays ?? 90;
+    const horizon = new Date(Date.now() - days * 86400000).toISOString();
+    const sold = await ctx.db
+      .query("productInventory")
+      .withIndex("by_estado", (q) => q.eq("estado", "VENDIDA"))
+      .collect();
+    const buckets = new Map<
+      string,
+      { count: number; prices: number[]; label: string }
+    >();
+    for (const p of sold) {
+      const ts = p.lastPushedAt ?? p.lastPulledAt;
+      if (ts < horizon) continue;
+      const proc = procedenciaBucket(p.coleccion);
+      const qual = qualityBucket(p.calidad);
+      const c = caratBucket(Number(p.peso));
+      if (!proc || !qual || !c) continue;
+      const key = comboKey({
+        procedencia: proc,
+        quality: qual,
+        caratLo: c[0],
+        caratHi: c[1],
+      });
+      const entry = buckets.get(key) ?? {
+        count: 0,
+        prices: [],
+        label: `${proc} · ${qual} · ${c[0].toFixed(1)}–${c[1].toFixed(1)} ct`,
+      };
+      entry.count += 1;
+      if (typeof p.precioCOP === "number" && p.precioCOP > 0)
+        entry.prices.push(p.precioCOP);
+      buckets.set(key, entry);
+    }
+    const combos = Array.from(buckets.entries())
+      .map(([key, v]) => ({
+        key,
+        label: v.label,
+        count: v.count,
+        medianPriceCOP: v.prices.length ? median(v.prices) : null,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+    return { combos, total: combos.reduce((s, c) => s + c.count, 0) };
+  },
+});
+
+/**
+ * N most recent edits across all products. Powers the
+ * Bandeja "Historial reciente" card.
+ */
+export const recentEdits = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit }) => {
+    const cap = Math.min(limit ?? 5, 50);
+    const edits = await ctx.db.query("productEdits").order("desc").take(cap);
+    return edits;
+  },
+});
