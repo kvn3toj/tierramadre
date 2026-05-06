@@ -33,6 +33,11 @@ import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { Box, ButtonBase, Drawer, InputBase, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { getAtelier } from "../../../design-system";
+import {
+  convexApi,
+  convexReady,
+  useConvexQuery,
+} from "../../../lib/convex-safe";
 import { StatusPip, type EstadoValue } from "./StatusPip";
 
 interface DriveMedia {
@@ -488,6 +493,10 @@ export function EditDrawer({
 
           <Section title="Archivos" atelier={atelier}>
             <DriveFolderBlock state={driveState} atelier={atelier} />
+          </Section>
+
+          <Section title="Historial" atelier={atelier}>
+            <HistorialBlock itemId={product.itemId} atelier={atelier} />
           </Section>
         </Box>
 
@@ -1089,6 +1098,372 @@ function DriveFolderBlock({
           ))}
         </Box>
       )}
+    </Box>
+  );
+}
+
+/**
+ * HistorialBlock — vertical ledger of recent edits for the open product.
+ *
+ * Sources `convex/products.ts → editHistory({ itemId })`. The mirror keeps
+ * the last 20 audit rows; we render the last 5 by default with a
+ * "Mostrar más" toggle to expand. Each entry: status mark + editor name
+ * (or email) + relative timestamp + a tabular `field: before → after`
+ * stack of the changes recorded in that edit.
+ */
+function HistorialBlock({
+  itemId,
+  atelier,
+}: {
+  itemId: string;
+  atelier: ReturnType<typeof getAtelier>;
+}) {
+  const [showAll, setShowAll] = useState(false);
+  const history = useConvexQuery(
+    convexApi.products.editHistory,
+    convexReady ? { itemId } : "skip",
+  ) as Array<HistoryEntry> | undefined;
+
+  if (!convexReady) {
+    return (
+      <Typography sx={{ ...atelier.type.meta, color: atelier.ink.tertiary }}>
+        Convex no está configurado.
+      </Typography>
+    );
+  }
+
+  if (history === undefined) {
+    return (
+      <Typography sx={{ ...atelier.type.meta, color: atelier.ink.tertiary }}>
+        Cargando historial…
+      </Typography>
+    );
+  }
+
+  if (history.length === 0) {
+    return (
+      <Typography sx={{ ...atelier.type.meta, color: atelier.ink.tertiary }}>
+        Aún no hay ediciones registradas para esta pieza.
+      </Typography>
+    );
+  }
+
+  const visible = showAll ? history : history.slice(0, 5);
+  const hiddenCount = history.length - visible.length;
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+          position: "relative",
+        }}
+      >
+        {visible.map((entry, idx) => (
+          <HistorialEntry
+            key={entry._id}
+            entry={entry}
+            isLast={idx === visible.length - 1}
+            atelier={atelier}
+          />
+        ))}
+      </Box>
+      {hiddenCount > 0 && !showAll && (
+        <ButtonBase
+          onClick={() => setShowAll(true)}
+          disableRipple
+          sx={{
+            ...atelier.type.label,
+            color: atelier.ink.tertiary,
+            alignSelf: "flex-start",
+            px: "8px",
+            py: "4px",
+            borderRadius: "4px",
+            transition: atelier.motion.rowHover,
+            textDecoration: "underline",
+            textUnderlineOffset: "2px",
+            textDecorationColor: atelier.brass.soft,
+            "&:hover": {
+              color: atelier.ink.primary,
+              textDecorationColor: atelier.ink.primary,
+            },
+            "&:focus-visible": {
+              outline: `2px solid ${atelier.focus.ring}`,
+              outlineOffset: "2px",
+            },
+          }}
+        >
+          Mostrar {hiddenCount} más
+        </ButtonBase>
+      )}
+      {showAll && history.length > 5 && (
+        <ButtonBase
+          onClick={() => setShowAll(false)}
+          disableRipple
+          sx={{
+            ...atelier.type.label,
+            color: atelier.ink.tertiary,
+            alignSelf: "flex-start",
+            px: "8px",
+            py: "4px",
+            borderRadius: "4px",
+            transition: atelier.motion.rowHover,
+            textDecoration: "underline",
+            textUnderlineOffset: "2px",
+            textDecorationColor: atelier.brass.soft,
+            "&:hover": {
+              color: atelier.ink.primary,
+              textDecorationColor: atelier.ink.primary,
+            },
+            "&:focus-visible": {
+              outline: `2px solid ${atelier.focus.ring}`,
+              outlineOffset: "2px",
+            },
+          }}
+        >
+          Ocultar
+        </ButtonBase>
+      )}
+    </Box>
+  );
+}
+
+interface HistoryChange {
+  field: string;
+  before: string | number | null;
+  after: string | number | null;
+}
+
+interface HistoryEntry {
+  _id: string;
+  _creationTime: number;
+  itemId: string;
+  editorEmail: string;
+  editorName?: string;
+  editedAt: string;
+  changes: HistoryChange[];
+  status: "saved" | "pending" | "failed";
+  error?: string;
+}
+
+const FIELD_LABELS: Record<string, string> = {
+  nombre: "Nombre",
+  peso: "Peso",
+  color: "Color",
+  calidad: "Calidad",
+  cantidad: "Cantidad",
+  talla: "Talla",
+  medidas: "Medidas",
+  categoria: "Categoría",
+  precioCOP: "Precio COP",
+  ubicacion: "Ubicación",
+  coleccion: "Colección",
+  caja: "Caja",
+  estado: "Estado",
+};
+
+function relativeFromNow(iso: string): string {
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return "—";
+  const sec = Math.max(0, Math.round((Date.now() - t) / 1000));
+  if (sec < 60) return "hace segundos";
+  const min = Math.round(sec / 60);
+  if (min < 60) return `hace ${min} min`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `hace ${hr} h`;
+  const day = Math.round(hr / 24);
+  if (day < 30) return `hace ${day} d`;
+  return new Date(iso).toLocaleDateString("es-CO");
+}
+
+function formatHistoryValue(v: string | number | null): string {
+  if (v === null || v === undefined || v === "") return "—";
+  if (typeof v === "number") return v.toLocaleString("es-CO");
+  return v;
+}
+
+function HistorialEntry({
+  entry,
+  isLast,
+  atelier,
+}: {
+  entry: HistoryEntry;
+  isLast: boolean;
+  atelier: ReturnType<typeof getAtelier>;
+}) {
+  const statusColor =
+    entry.status === "saved"
+      ? atelier.status.available.pip
+      : entry.status === "pending"
+        ? atelier.status.consigned.pip
+        : atelier.status.sold.pip;
+  const editorLabel = entry.editorName?.trim() || entry.editorEmail;
+
+  return (
+    <Box
+      role="listitem"
+      sx={{
+        display: "grid",
+        gridTemplateColumns: "auto 1fr",
+        columnGap: "10px",
+      }}
+    >
+      {/* Timeline rail: marker + connecting line */}
+      <Box
+        aria-hidden
+        sx={{
+          position: "relative",
+          width: "10px",
+          minHeight: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <Box
+          sx={{
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            backgroundColor: statusColor,
+            mt: "5px",
+            flexShrink: 0,
+          }}
+        />
+        {!isLast && (
+          <Box
+            sx={{
+              flex: 1,
+              width: "1px",
+              backgroundColor: atelier.surfaces.edge,
+              mt: "4px",
+            }}
+          />
+        )}
+      </Box>
+
+      {/* Entry content */}
+      <Box sx={{ pb: "10px", minWidth: 0 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: 1,
+          }}
+        >
+          <Typography
+            component="span"
+            sx={{
+              ...atelier.type.label,
+              color: atelier.ink.primary,
+              textTransform: "none",
+              letterSpacing: 0,
+              fontWeight: 600,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+            title={editorLabel}
+          >
+            {editorLabel}
+          </Typography>
+          <Typography
+            component="span"
+            sx={{
+              ...atelier.type.meta,
+              fontSize: "11px",
+              color: atelier.ink.tertiary,
+              flexShrink: 0,
+            }}
+            title={new Date(entry.editedAt).toLocaleString("es-CO")}
+          >
+            {relativeFromNow(entry.editedAt)}
+          </Typography>
+        </Box>
+
+        {entry.status === "failed" && entry.error && (
+          <Typography
+            sx={{
+              ...atelier.type.meta,
+              fontSize: "11px",
+              color: atelier.status.sold.pip,
+              mt: "2px",
+            }}
+          >
+            {entry.error}
+          </Typography>
+        )}
+
+        <Box
+          component="ul"
+          sx={{
+            listStyle: "none",
+            p: 0,
+            m: 0,
+            mt: "6px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "2px",
+          }}
+        >
+          {entry.changes.map((c, i) => (
+            <Box
+              component="li"
+              key={`${entry._id}-${c.field}-${i}`}
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "minmax(72px, auto) 1fr",
+                columnGap: "8px",
+                alignItems: "baseline",
+              }}
+            >
+              <Typography
+                component="span"
+                sx={{
+                  ...atelier.type.label,
+                  color: atelier.ink.tertiary,
+                }}
+              >
+                {FIELD_LABELS[c.field] ?? c.field}
+              </Typography>
+              <Typography
+                component="span"
+                sx={{
+                  ...atelier.type.data,
+                  fontSize: "11px",
+                  color: atelier.ink.secondary,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+                title={`${formatHistoryValue(c.before)} → ${formatHistoryValue(c.after)}`}
+              >
+                <Box
+                  component="span"
+                  sx={{
+                    color: atelier.ink.muted,
+                    textDecoration: "line-through",
+                  }}
+                >
+                  {formatHistoryValue(c.before)}
+                </Box>
+                <Box
+                  component="span"
+                  sx={{ mx: "6px", color: atelier.ink.tertiary }}
+                >
+                  →
+                </Box>
+                <Box component="span" sx={{ color: atelier.ink.primary }}>
+                  {formatHistoryValue(c.after)}
+                </Box>
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      </Box>
     </Box>
   );
 }
