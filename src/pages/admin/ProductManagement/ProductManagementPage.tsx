@@ -946,22 +946,23 @@ export default function ProductManagementPage() {
       />
 
       {/* Workbench split — ledger on the left, Bandeja inspector on
-          the right. Below `lg`, Bandeja stacks under the ledger so the
-          mobile experience stays single-column. */}
+          the right. Below `md` (900px), Bandeja stacks under the
+          ledger so phones / narrow tablets stay single-column. */}
       <Box
         sx={{
-          maxWidth: 1280,
+          maxWidth: 1440,
           mx: "auto",
           display: "grid",
           gridTemplateColumns: {
             xs: "1fr",
+            md: "minmax(0, 1.7fr) minmax(0, 1fr)",
             lg: "minmax(0, 1.6fr) minmax(0, 1fr)",
           },
         }}
       >
         <Box
           sx={{
-            borderRight: { lg: `1px solid ${foto.surfaces.edge}` },
+            borderRight: { md: `1px solid ${foto.surfaces.edge}` },
             minWidth: 0,
             px: { xs: 2, md: 3 },
           }}

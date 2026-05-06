@@ -151,7 +151,13 @@ export function useChromaSamples(thumbnails: ThumbMap): UseChromaSamplesResult {
 
     for (const { id, url } of todo) {
       const img = new Image();
-      img.crossOrigin = "anonymous";
+      // Note: don't set `crossOrigin = "anonymous"`. For same-origin
+      // thumbnails (served by /api/serve-drive-image) it forces a CORS
+      // preflight whose headers the proxy doesn't reliably set, making
+      // `img.onerror` fire and we never sample. Without it, the image
+      // loads; canvas may be tainted; `getImageData` throws — the
+      // catch below handles that case and the row falls back to the
+      // emerald-at-40% accent in `ChromaBar`.
       img.onload = () => {
         try {
           const canvas = document.createElement("canvas");

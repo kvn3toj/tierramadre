@@ -42,12 +42,12 @@ export function Bandeja({ foto, selected, children }: BandejaProps) {
       aria-label="Bandeja"
       sx={{
         backgroundColor: foto.surfaces.panel,
-        borderLeft: { xs: "none", lg: `1px solid ${foto.surfaces.edge}` },
+        borderLeft: { xs: "none", md: `1px solid ${foto.surfaces.edge}` },
         p: 2.25,
         display: "flex",
         flexDirection: "column",
         gap: 1.5,
-        minHeight: { lg: 560 },
+        minHeight: { md: 560 },
       }}
     >
       <Typography
@@ -65,6 +65,22 @@ export function Bandeja({ foto, selected, children }: BandejaProps) {
           ? `Bandeja · ${selected.itemId}${selected.nombre ? ` ${selected.nombre}` : ""}`
           : "Bandeja · resumen"}
       </Typography>
+      {!selected && (
+        <Typography
+          component="div"
+          sx={{
+            fontFamily: SANS,
+            fontSize: 11,
+            color: foto.ink.tertiary,
+            mt: -0.5,
+            mb: 0.5,
+            letterSpacing: "-0.005em",
+          }}
+        >
+          Selecciona una piedra de la lista para ver su detalle, patrones e
+          historial.
+        </Typography>
+      )}
       {children}
     </Box>
   );
