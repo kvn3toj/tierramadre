@@ -116,13 +116,16 @@ test.describe("/admin/products — atelier inventory", () => {
       timeout: 10_000,
     });
 
-    // Editorial LedgerHero rendered — h1 carries the italic display title.
+    // FotoHero rendered — h1 + "en el espejo" caption + create/resync controls.
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "Fotosíntesis",
+        name: /Fotosíntesis/i,
       }),
     ).toBeVisible();
+    await expect(page.getByText("en el espejo")).toBeVisible();
+    await expect(page.locator("[data-foto-create]")).toBeVisible();
+    await expect(page.locator("[data-foto-resync]")).toBeVisible();
 
     // Open the first seeded row ("Esmeralda Venus"). The row's main
     // click target is the row itself, but we click the row title so
