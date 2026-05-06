@@ -2,7 +2,7 @@
  * ProductManagementPage — atelier admin panel ("Fotosíntesis").
  *
  * Composition:
- *   - LedgerHero: breadcrumb + display title + wax-stamp count + meter
+ *   - FotoHero: breadcrumb + display title + wax-stamp count + meter
  *   - AdminToolbar (sticky): search, filter, resync
  *   - InventoryRow list (virtualized-ready, currently flat)
  *   - EditDrawer (slides in from the right when a row is selected)
