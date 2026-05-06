@@ -132,6 +132,22 @@ export {
 // CSS Transition helpers & Microinteraction tokens
 export { cssTransition, microinteraction } from './tokens/motion';
 
+// Atelier (admin product-management tokens — back-of-house, parchment + ink)
+export {
+  atelierSurfaces,
+  atelierInk,
+  atelierBrass,
+  atelierStatus,
+  atelierFocus,
+  atelierGrid,
+  atelierSpacing,
+  atelierType,
+  atelierMotion,
+  getAtelier,
+  type Atelier,
+  type AtelierMode,
+} from './tokens/atelier';
+
 // Vault Cinema (cinematic lockscreen tokens)
 export {
   vaultCinema,
