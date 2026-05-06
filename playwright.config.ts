@@ -42,6 +42,14 @@ export default defineConfig({
     env: {
       ...(process.env as Record<string, string>),
       VITE_TEST_MODE: "1",
+      // GoogleWrapper in main.tsx mounts GoogleAuthProvider only when
+      // VITE_GOOGLE_CLIENT_ID looks like a real client id (>10 chars).
+      // Without it the provider stub returns isGoogleSignedIn=false &
+      // isGoogleLoading=false, which trips AuthContext's effect into
+      // clearing the seeded auth state. Provide a synthetic id so the
+      // real provider mounts and waits for the /api/validate mock.
+      VITE_GOOGLE_CLIENT_ID:
+        process.env.VITE_GOOGLE_CLIENT_ID ?? "playwright-stub-client-id",
     },
   },
 });

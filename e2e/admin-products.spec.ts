@@ -193,4 +193,39 @@ test.describe("/admin/products — atelier inventory", () => {
       reopenedDrawer.getByText("Esmeralda Venus Renombrada").first(),
     ).toBeVisible();
   });
+
+  /**
+   * Phase G — create flow. Clicks the FotoHero "+ Nueva piedra"
+   * button, fills the Número + Nombre fields in the create-mode
+   * drawer, presses "Crear y sincronizar", and asserts (a) the toast
+   * with the new itemId, and (b) the row landing in the espejo list.
+   */
+  test("creates a new product via + Nueva piedra", async ({ page }) => {
+    await page.goto("/admin/products");
+
+    const list = page.getByRole("list", {
+      name: "Productos en el espejo",
+    });
+    // Wait for the seeded rows so we know the stub has hydrated before
+    // we exercise the create mutation.
+    await expect(list.getByRole("listitem")).toHaveCount(3, {
+      timeout: 10_000,
+    });
+
+    await page.locator("[data-foto-create]").click();
+
+    const drawer = page.locator(".MuiDrawer-paper");
+    await expect(drawer).toBeVisible();
+    await expect(drawer.getByText(/Nueva piedra/i).first()).toBeVisible();
+
+    await drawer.getByLabel(/Número/i).fill("999");
+    await drawer.getByLabel(/Nombre/i).fill("Test E2E");
+
+    await drawer.getByRole("button", { name: /Crear y sincronizar/i }).click();
+
+    await expect(page.getByText(/Creada · 999/i)).toBeVisible({
+      timeout: 5_000,
+    });
+    await expect(list.getByText("Test E2E")).toBeVisible({ timeout: 5_000 });
+  });
 });

@@ -396,6 +396,86 @@ interface ReleaseLockArgs {
 
 const LOCK_TTL_MS = 5 * 60 * 1000;
 
+interface CreateProductArgs {
+  itemId: string;
+  editorEmail: string;
+  editorName?: string;
+  fields: Partial<
+    Omit<
+      Product,
+      | "_id"
+      | "_creationTime"
+      | "itemId"
+      | "rowIndex"
+      | "estado"
+      | "lastPulledAt"
+      | "syncStatus"
+    >
+  >;
+}
+
+function applyCreateProduct({
+  itemId,
+  editorEmail,
+  editorName,
+  fields,
+}: CreateProductArgs): {
+  itemId: string;
+  productId: string;
+  rowIndex: number;
+} {
+  const itemIdTrim = itemId.trim();
+  if (!itemIdTrim) throw new Error("El número de la piedra es obligatorio");
+  if (store.products.some((p) => p.itemId === itemIdTrim)) {
+    throw new Error(`Ya existe una piedra con el número ${itemIdTrim}`);
+  }
+  const nextRow =
+    store.products.reduce((m, p) => Math.max(m, p.rowIndex), 1) + 1;
+  const now = new Date().toISOString();
+  const productId = makeId("prod");
+  const product: Product = {
+    _id: productId,
+    _creationTime: Date.now(),
+    itemId: itemIdTrim,
+    rowIndex: nextRow,
+    ...fields,
+    estado: "DISPONIBLE",
+    lastPulledAt: now,
+    syncStatus: "pending",
+  };
+  store.products.push(product);
+  const auditId = makeId("audit");
+  store.audits.push({
+    _id: auditId,
+    _creationTime: Date.now(),
+    itemId: itemIdTrim,
+    editorEmail,
+    editorName,
+    editedAt: now,
+    changes: Object.entries(fields)
+      .filter(([, value]) => value !== undefined)
+      .map(([field, after]) => ({
+        field,
+        before: null,
+        after: (after as string | number | null) ?? null,
+      })),
+    status: "pending",
+  });
+  notify("products", "audits");
+  // Mirror the real pushToSheet ack — flip to synced/saved after a tick.
+  setTimeout(() => {
+    const target = store.products.find((p) => p.itemId === itemIdTrim);
+    if (target) {
+      target.syncStatus = "synced";
+      target.lastPushedAt = new Date().toISOString();
+    }
+    const audit = store.audits.find((a) => a._id === auditId);
+    if (audit) audit.status = "saved";
+    notify("products", "audits");
+  }, 50);
+  return { itemId: itemIdTrim, productId, rowIndex: nextRow };
+}
+
 function applySaveEdit({
   itemId,
   editorEmail,
@@ -551,6 +631,8 @@ export function useConvexMutation(apiRef: unknown) {
         return applySaveEdit(args as SaveEditArgs);
       case "products.saveEditMany":
         return applySaveEditMany(args as SaveEditManyArgs);
+      case "products.createProduct":
+        return applyCreateProduct(args as CreateProductArgs);
       case "products.claimLock":
         return applyClaimLock(args as ClaimLockArgs);
       case "products.releaseLock":

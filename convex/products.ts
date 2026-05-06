@@ -283,11 +283,21 @@ export const _getInternal = internalQuery({
  *   ADMIN_SYNC_TOKEN — shared secret matching the Vercel-side token
  */
 export const pushToSheet = action({
-  args: { itemId: v.string(), auditId: v.id("productEdits") },
+  args: {
+    itemId: v.string(),
+    auditId: v.id("productEdits"),
+    // Phase G — create flow: "append" tells the Vercel endpoint that the
+    // row is new (no existing column-A item to validate against and the
+    // sheet must `values.append` rather than `values.update`). Defaults
+    // to "patch" so all existing callers (saveEdit, saveEditMany,
+    // retryPush) keep their semantics.
+    mode: v.optional(v.union(v.literal("patch"), v.literal("append"))),
+  },
   handler: async (
     ctx,
-    { itemId, auditId },
+    { itemId, auditId, mode },
   ): Promise<{ ok: boolean; message: string }> => {
+    const pushMode: "patch" | "append" = mode ?? "patch";
     const appUrl: string | undefined = process.env.APP_URL;
     const syncToken: string | undefined = process.env.ADMIN_SYNC_TOKEN;
     if (!appUrl || !syncToken) {
@@ -322,6 +332,7 @@ export const pushToSheet = action({
         body: JSON.stringify({
           itemId,
           rowIndex: row.rowIndex,
+          mode: pushMode,
           fields: {
             nombre: row.nombre ?? "",
             peso: row.peso ?? "",
@@ -1005,5 +1016,95 @@ export const recentEdits = query({
     const cap = Math.min(limit ?? 5, 50);
     const edits = await ctx.db.query("productEdits").order("desc").take(cap);
     return edits;
+  },
+});
+
+// =============================================================================
+// CREATE — "+ Nueva piedra" flow (Phase G)
+// =============================================================================
+
+/**
+ * createProduct — insert a new piece into the mirror and append it to
+ * the Google Sheet.
+ *
+ * Validates that `itemId` is non-empty and unique against the mirror
+ * (the same constraints `validateNewProduct` enforces in the UI), then:
+ *   1. Inserts a productInventory doc with rowIndex = max(existing) + 1
+ *      and syncStatus "pending" (mirrors the saveEdit pattern).
+ *   2. Inserts a productEdits audit row with `before: null` for every
+ *      provided field — the history reads "created with these values".
+ *   3. Schedules pushToSheet with `mode: "append"` so the Vercel
+ *      endpoint appends a new row instead of patching an existing one.
+ *
+ * Returns `{ itemId, productId, rowIndex }` so the caller can route the
+ * Bandeja inspector to the new row immediately (Convex reactivity will
+ * surface it in the list one tick later).
+ */
+export const createProduct = mutation({
+  args: {
+    itemId: v.string(),
+    editorEmail: v.string(),
+    editorName: v.optional(v.string()),
+    fields: v.object({
+      nombre: v.optional(v.string()),
+      peso: v.optional(v.string()),
+      color: v.optional(v.string()),
+      calidad: v.optional(v.string()),
+      cantidad: v.optional(v.number()),
+      talla: v.optional(v.string()),
+      medidas: v.optional(v.string()),
+      categoria: v.optional(v.string()),
+      precioCOP: v.optional(v.number()),
+      ubicacion: v.optional(v.string()),
+      coleccion: v.optional(v.string()),
+      caja: v.optional(v.string()),
+    }),
+  },
+  handler: async (ctx, { itemId, editorEmail, editorName, fields }) => {
+    const itemIdTrim = itemId.trim();
+    if (!itemIdTrim) throw new Error("El número de la piedra es obligatorio");
+    const dup = await ctx.db
+      .query("productInventory")
+      .withIndex("by_itemId", (q) => q.eq("itemId", itemIdTrim))
+      .first();
+    if (dup)
+      throw new Error(`Ya existe una piedra con el número ${itemIdTrim}`);
+
+    const all = await ctx.db.query("productInventory").collect();
+    const maxRow = all.reduce((m, p) => Math.max(m, p.rowIndex), 1);
+    const nextRow = maxRow + 1;
+    const now = new Date().toISOString();
+
+    const productId = await ctx.db.insert("productInventory", {
+      itemId: itemIdTrim,
+      rowIndex: nextRow,
+      ...fields,
+      estado: "DISPONIBLE" as const,
+      lastPulledAt: now,
+      syncStatus: "pending" as const,
+    });
+
+    const auditId = await ctx.db.insert("productEdits", {
+      itemId: itemIdTrim,
+      editorEmail,
+      editorName,
+      editedAt: now,
+      changes: Object.entries(fields)
+        .filter(([, value]) => value !== undefined)
+        .map(([field, after]) => ({
+          field,
+          before: null,
+          after: (after as string | number | null) ?? null,
+        })),
+      status: "pending" as const,
+    });
+
+    await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+      itemId: itemIdTrim,
+      auditId,
+      mode: "append" as const,
+    });
+
+    return { itemId: itemIdTrim, productId, rowIndex: nextRow };
   },
 });
