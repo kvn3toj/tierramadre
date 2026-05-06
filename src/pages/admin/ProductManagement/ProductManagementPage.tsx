@@ -707,6 +707,9 @@ export default function ProductManagementPage() {
                 const thumb = Number.isFinite(itemNumber)
                   ? thumbnails[itemNumber]?.url
                   : undefined;
+                const chromaHex = Number.isFinite(itemNumber)
+                  ? chromaSamples[itemNumber]
+                  : undefined;
                 return (
                   <Box key={doc.itemId} role="listitem">
                     <InventoryRow
@@ -714,6 +717,8 @@ export default function ProductManagementPage() {
                       isActive={selectedBandejaId === doc.itemId}
                       isSelected={selectedIds.has(doc.itemId)}
                       thumbnailUrl={thumb}
+                      chromaHex={chromaHex}
+                      foto={foto}
                       onOpen={setSelectedBandejaId}
                       onToggleSelect={toggleSelect}
                       onRetry={handleRetry}
