@@ -236,4 +236,51 @@ test.describe("/admin/products — atelier inventory", () => {
     });
     await expect(list.getByText("Test E2E")).toBeVisible({ timeout: 5_000 });
   });
+
+  /**
+   * Phase H — quick-inline edit. The first seeded row ("Esmeralda
+   * Venus", itemId 32) starts at precioCOP 12_500_000. We click its
+   * inline price cell, type a new value, press Enter, and assert the
+   * row's price renders the new COP-formatted amount. The optimistic
+   * mirror patch should land in the row within a tick.
+   */
+  test("inline-edits price from a row", async ({ page }) => {
+    await page.goto("/admin/products");
+
+    const list = page.getByRole("list", {
+      name: "Productos en el espejo",
+    });
+    await expect(list.getByRole("listitem")).toHaveCount(3, {
+      timeout: 10_000,
+    });
+
+    const venusRow = list.getByRole("listitem").filter({
+      hasText: "Esmeralda Venus",
+    });
+    await expect(venusRow).toHaveCount(1);
+
+    // The price cell is the InlineEditCell with aria-label
+    // "Precio de Esmeralda Venus". Use `exact: true` so we don't also
+    // match the outer row button (whose accessible name concatenates
+    // every cell's label, including the price label).
+    const priceCell = venusRow.getByRole("button", {
+      name: "Precio de Esmeralda Venus",
+      exact: true,
+    });
+    await expect(priceCell).toBeVisible();
+    await priceCell.click();
+
+    const priceInput = venusRow.locator('input[type="number"]');
+    await expect(priceInput).toBeVisible();
+    await priceInput.fill("13000000");
+    await priceInput.press("Enter");
+
+    // The InlineEditCell collapses back to display state and the new
+    // formatted value lands on the row. Intl.NumberFormat("es-CO") with
+    // currency "COP" emits "$ 13.000.000" (NBSP after $). Match the
+    // digit groups loosely to avoid coupling to whitespace specifics.
+    await expect(venusRow.getByText(/13\.000\.000/)).toBeVisible({
+      timeout: 5_000,
+    });
+  });
 });
