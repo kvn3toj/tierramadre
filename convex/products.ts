@@ -647,6 +647,7 @@ export const lockStatus = query({
     return {
       holderEmail: existing.holderEmail,
       holderName: existing.holderName,
+      claimedAt: existing.claimedAt,
       expiresAt: existing.expiresAt,
     };
   },

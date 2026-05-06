@@ -326,6 +326,7 @@ function lockStatusFor(itemId: string) {
   return {
     holderEmail: lock.holderEmail,
     holderName: lock.holderName,
+    claimedAt: lock.claimedAt,
     expiresAt: lock.expiresAt,
   };
 }
