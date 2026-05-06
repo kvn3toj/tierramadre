@@ -105,7 +105,7 @@ export function InventoryRow({
           ? atelier.status.consigned.rowTint
           : "transparent";
 
-  const baseBg = isActive ? atelier.surfaces.rowActive : atelier.surfaces.row;
+  const baseBg = isActive ? foto.surfaces.rowActive : foto.surfaces.row;
   const showCheckbox = isSelected || isActive;
   const caratNum = row.peso ? Number(row.peso) : NaN;
   const isCarat = Number.isFinite(caratNum) && caratNum > 0;
@@ -129,13 +129,13 @@ export function InventoryRow({
         cursor: "pointer",
         backgroundColor: baseBg,
         backgroundImage: `linear-gradient(${tint}, ${tint})`,
-        borderBottom: `1px solid ${atelier.surfaces.edge}`,
+        borderBottom: `1px solid ${foto.surfaces.edge}`,
         transition: atelier.motion.rowHover,
         minHeight: `${atelier.spacing.rowMinHeight}px`,
         px: `${atelier.spacing.rowPaddingX}px`,
         py: `${atelier.spacing.rowPaddingY}px`,
         "&:hover": {
-          backgroundColor: atelier.surfaces.rowHover,
+          backgroundColor: foto.surfaces.rowHover,
         },
         "&:hover .tm-row-bulk": {
           opacity: 1,
@@ -175,6 +175,7 @@ export function InventoryRow({
             checked={isSelected}
             onToggle={(next) => onToggleSelect(row.itemId, next)}
             atelier={atelier}
+            foto={foto}
             itemLabel={row.nombre || `Item ${row.itemId}`}
           />
         </Box>
@@ -443,6 +444,7 @@ export function InventoryRow({
           )}
           <SyncMark
             status={row.syncStatus}
+            foto={foto}
             onRetry={onRetry ? () => onRetry(row.itemId) : undefined}
           />
         </Box>
@@ -463,9 +465,11 @@ export function InventoryRow({
  */
 function SyncMark({
   status,
+  foto,
   onRetry,
 }: {
   status: InventoryRowData["syncStatus"];
+  foto: FotoTokens;
   onRetry?: () => void;
 }) {
   const theme = useTheme();
@@ -476,9 +480,7 @@ function SyncMark({
   }
 
   const isError = status === "error";
-  const color = isError
-    ? atelier.status.sold.pip
-    : atelier.status.consigned.pip;
+  const color = isError ? foto.status.sold : foto.status.consigned;
   const label = isError
     ? onRetry
       ? "Error de sincronización · click para reintentar"
@@ -567,11 +569,13 @@ function SelectionCheckbox({
   checked,
   onToggle,
   atelier,
+  foto,
   itemLabel,
 }: {
   checked: boolean;
   onToggle: (next: boolean) => void;
   atelier: ReturnType<typeof getAtelier>;
+  foto: FotoTokens;
   itemLabel: string;
 }) {
   return (
@@ -589,7 +593,7 @@ function SelectionCheckbox({
         height: "16px",
         borderRadius: "3px",
         border: `1px solid ${
-          checked ? atelier.focus.ring : atelier.surfaces.edgeStrong
+          checked ? atelier.focus.ring : foto.surfaces.edgeStrong
         }`,
         backgroundColor: checked ? atelier.focus.ring : "transparent",
         transition: atelier.motion.rowHover,

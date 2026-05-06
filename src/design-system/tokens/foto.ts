@@ -21,6 +21,12 @@ export interface FotoTokens {
     panel: string;
     /** Inputs, cards inside Bandeja. Two steps softer than canvas. */
     inset: string;
+    /** Row resting state. Same as canvas — rows live ON the page. */
+    row: string;
+    /** Row hover — whisper-quiet shift. Same as panel. */
+    rowHover: string;
+    /** Row active (selected for Bandeja). Soft emerald wash. */
+    rowActive: string;
     /** 1px hairline — barely visible separator. */
     edge: string;
     /** 1px standard rule — section breaks. */
@@ -62,6 +68,9 @@ const LIGHT: FotoTokens = {
     canvas: "#FFFFFF",
     panel: "#FAFAFA",
     inset: "#F4F5F4",
+    row: "#FFFFFF",
+    rowHover: "#FAFAFA",
+    rowActive: "rgba(0, 92, 66, 0.06)",
     edge: "rgba(11, 16, 14, 0.06)",
     rule: "rgba(11, 16, 14, 0.10)",
     edgeStrong: "rgba(11, 16, 14, 0.18)",
@@ -95,6 +104,9 @@ const DARK: FotoTokens = {
     canvas: "#0B0D0C",
     panel: "#131614",
     inset: "#1B1F1D",
+    row: "#0B0D0C",
+    rowHover: "#131614",
+    rowActive: "rgba(124, 205, 169, 0.08)",
     edge: "rgba(255, 255, 255, 0.05)",
     rule: "rgba(255, 255, 255, 0.09)",
     edgeStrong: "rgba(255, 255, 255, 0.18)",

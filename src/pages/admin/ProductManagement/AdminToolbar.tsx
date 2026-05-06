@@ -18,7 +18,7 @@
  *   Intent — find / scope / verify sync state without leaving the list.
  *   Palette — panel surface; inset surface for inputs; brass-whisper borders.
  *   Depth — borders-only; 1px hairlines between rows + below toolbar.
- *   Surfaces — atelier.surfaces.panel (one notch lighter than canvas).
+ *   Surfaces — foto.surfaces.panel (cool-neutral, one notch lighter than canvas).
  *   Typography — atelier.type.meta for inputs; atelier.type.label for chips.
  *   Spacing — atelier.spacing.toolbarHeight; atelier.spacing.rowPaddingX.
  */
@@ -283,7 +283,7 @@ export function AdminToolbar({
                 flexShrink: 0,
                 transition: foto.motion.rowHover,
                 "&:hover": {
-                  backgroundColor: atelier.surfaces.rowHover,
+                  backgroundColor: foto.surfaces.rowHover,
                   color: foto.ink.primary,
                 },
                 "&:focus-visible": {
@@ -355,7 +355,7 @@ export function AdminToolbar({
                   ...atelier.type.label,
                   color: isSelected ? foto.ink.primary : foto.ink.tertiary,
                   backgroundColor: isSelected
-                    ? atelier.surfaces.rowActive
+                    ? foto.surfaces.rowActive
                     : "transparent",
                   px: "12px",
                   py: "8px",
@@ -366,7 +366,7 @@ export function AdminToolbar({
                   alignItems: "center",
                   gap: "8px",
                   "&:hover": {
-                    backgroundColor: atelier.surfaces.rowHover,
+                    backgroundColor: foto.surfaces.rowHover,
                   },
                   "&:focus-visible": {
                     outline: `2px solid ${atelier.focus.ring}`,
@@ -412,6 +412,7 @@ export function AdminToolbar({
           collections={collections}
           onChange={onCollectionChange}
           atelier={atelier}
+          foto={foto}
         />
 
         <ToggleChip
@@ -419,6 +420,7 @@ export function AdminToolbar({
           active={onlyWithImages}
           onChange={onOnlyWithImagesChange}
           atelier={atelier}
+          foto={foto}
         />
 
         <ToggleChip
@@ -426,6 +428,7 @@ export function AdminToolbar({
           active={onlyMissingPrice}
           onChange={onOnlyMissingPriceChange}
           atelier={atelier}
+          foto={foto}
         />
 
         {/* Disclosure → advanced filters panel */}
@@ -440,8 +443,8 @@ export function AdminToolbar({
               advancedActiveCount > 0 ? foto.ink.primary : foto.ink.tertiary,
             backgroundColor:
               advancedActiveCount > 0
-                ? atelier.surfaces.rowActive
-                : atelier.surfaces.inset,
+                ? foto.surfaces.rowActive
+                : foto.surfaces.inset,
             border: `1px solid ${advancedActiveCount > 0 ? atelier.brass.soft : foto.surfaces.edge}`,
             borderRadius: "4px",
             px: "10px",
@@ -451,7 +454,7 @@ export function AdminToolbar({
             gap: "6px",
             transition: foto.motion.rowHover,
             "&:hover": {
-              backgroundColor: atelier.surfaces.rowHover,
+              backgroundColor: foto.surfaces.rowHover,
               borderColor: atelier.brass.soft,
             },
             "&:focus-visible": {
@@ -555,6 +558,7 @@ export function AdminToolbar({
           onChange={onAdvancedChange}
           options={advancedOptions}
           atelier={atelier}
+          foto={foto}
         />
       )}
     </Box>
@@ -604,11 +608,13 @@ function CollectionSelect({
   collections,
   onChange,
   atelier,
+  foto,
 }: {
   collection: string | null;
   collections: string[];
   onChange: (value: string | null) => void;
   atelier: ReturnType<typeof getAtelier>;
+  foto: FotoTokens;
 }) {
   return (
     <Box
@@ -646,9 +652,9 @@ function CollectionSelect({
             ...atelier.type.meta,
             color: atelier.ink.primary,
             backgroundColor: collection
-              ? atelier.surfaces.rowActive
-              : atelier.surfaces.inset,
-            border: `1px solid ${collection ? atelier.brass.soft : atelier.surfaces.edge}`,
+              ? foto.surfaces.rowActive
+              : foto.surfaces.inset,
+            border: `1px solid ${collection ? atelier.brass.soft : foto.surfaces.edge}`,
             borderRadius: "4px",
             pl: "10px",
             pr: "26px",
@@ -709,11 +715,13 @@ function ToggleChip({
   active,
   onChange,
   atelier,
+  foto,
 }: {
   label: string;
   active: boolean;
   onChange: (value: boolean) => void;
   atelier: ReturnType<typeof getAtelier>;
+  foto: FotoTokens;
 }) {
   return (
     <ButtonBase
@@ -724,10 +732,8 @@ function ToggleChip({
       sx={{
         ...atelier.type.label,
         color: active ? atelier.ink.primary : atelier.ink.tertiary,
-        backgroundColor: active
-          ? atelier.surfaces.rowActive
-          : atelier.surfaces.inset,
-        border: `1px solid ${active ? atelier.brass.soft : atelier.surfaces.edge}`,
+        backgroundColor: active ? foto.surfaces.rowActive : foto.surfaces.inset,
+        border: `1px solid ${active ? atelier.brass.soft : foto.surfaces.edge}`,
         borderRadius: "4px",
         px: "10px",
         py: "5px",
@@ -736,7 +742,7 @@ function ToggleChip({
         gap: "6px",
         transition: atelier.motion.rowHover,
         "&:hover": {
-          backgroundColor: atelier.surfaces.rowHover,
+          backgroundColor: foto.surfaces.rowHover,
           borderColor: atelier.brass.soft,
         },
         "&:focus-visible": {
@@ -751,7 +757,7 @@ function ToggleChip({
           width: "10px",
           height: "10px",
           borderRadius: "2px",
-          border: `1px solid ${active ? atelier.focus.ring : atelier.surfaces.edgeStrong}`,
+          border: `1px solid ${active ? atelier.focus.ring : foto.surfaces.edgeStrong}`,
           backgroundColor: active ? atelier.focus.ring : "transparent",
           flexShrink: 0,
         }}
@@ -775,6 +781,7 @@ function AdvancedFiltersPanel({
   onChange,
   options,
   atelier,
+  foto,
 }: {
   advanced: AdvancedScopeFilters;
   onChange: <K extends keyof AdvancedScopeFilters>(
@@ -783,6 +790,7 @@ function AdvancedFiltersPanel({
   ) => void;
   options: AdvancedFilterOptions;
   atelier: ReturnType<typeof getAtelier>;
+  foto: FotoTokens;
 }) {
   return (
     <Box
@@ -792,8 +800,8 @@ function AdvancedFiltersPanel({
       sx={{
         px: `${atelier.spacing.rowPaddingX}px`,
         py: "12px",
-        borderTop: `1px solid ${atelier.surfaces.edge}`,
-        backgroundColor: atelier.surfaces.canvas,
+        borderTop: `1px solid ${foto.surfaces.edge}`,
+        backgroundColor: foto.surfaces.canvas,
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
         gap: "12px 16px",
@@ -807,7 +815,7 @@ function AdvancedFiltersPanel({
           aria-label="Filtrar por tipo"
           sx={{
             display: "inline-flex",
-            border: `1px solid ${atelier.surfaces.edge}`,
+            border: `1px solid ${foto.surfaces.edge}`,
             borderRadius: "4px",
             overflow: "hidden",
           }}
@@ -833,14 +841,14 @@ function AdvancedFiltersPanel({
                     ? atelier.ink.primary
                     : atelier.ink.tertiary,
                   backgroundColor: isSelected
-                    ? atelier.surfaces.rowActive
+                    ? foto.surfaces.rowActive
                     : "transparent",
                   px: "10px",
                   py: "6px",
                   borderLeft:
-                    i === 0 ? "none" : `1px solid ${atelier.surfaces.edge}`,
+                    i === 0 ? "none" : `1px solid ${foto.surfaces.edge}`,
                   transition: atelier.motion.rowHover,
-                  "&:hover": { backgroundColor: atelier.surfaces.rowHover },
+                  "&:hover": { backgroundColor: foto.surfaces.rowHover },
                   "&:focus-visible": {
                     outline: `2px solid ${atelier.focus.ring}`,
                     outlineOffset: "-2px",
@@ -861,6 +869,7 @@ function AdvancedFiltersPanel({
           onChange={(v) => onChange("color", v || null)}
           ariaLabel="Filtrar por color"
           atelier={atelier}
+          foto={foto}
         >
           <option value="">Todos</option>
           {options.colors.map((c) => (
@@ -878,6 +887,7 @@ function AdvancedFiltersPanel({
           onChange={(v) => onChange("quality", v || null)}
           ariaLabel="Filtrar por calidad"
           atelier={atelier}
+          foto={foto}
         >
           <option value="">Todas</option>
           {options.qualities.map((q) => (
@@ -895,6 +905,7 @@ function AdvancedFiltersPanel({
           onChange={(v) => onChange("shape", v || null)}
           ariaLabel="Filtrar por talla"
           atelier={atelier}
+          foto={foto}
         >
           <option value="">Todas</option>
           {options.shapes.map((s) => (
@@ -912,6 +923,7 @@ function AdvancedFiltersPanel({
           onChange={(v) => onChange("category", v || null)}
           ariaLabel="Filtrar por categoría"
           atelier={atelier}
+          foto={foto}
         >
           <option value="">Todas</option>
           {options.categories.map((c) => (
@@ -929,7 +941,7 @@ function AdvancedFiltersPanel({
           aria-label="Filtrar por cantidad"
           sx={{
             display: "inline-flex",
-            border: `1px solid ${atelier.surfaces.edge}`,
+            border: `1px solid ${foto.surfaces.edge}`,
             borderRadius: "4px",
             overflow: "hidden",
           }}
@@ -955,14 +967,14 @@ function AdvancedFiltersPanel({
                     ? atelier.ink.primary
                     : atelier.ink.tertiary,
                   backgroundColor: isSelected
-                    ? atelier.surfaces.rowActive
+                    ? foto.surfaces.rowActive
                     : "transparent",
                   px: "10px",
                   py: "6px",
                   borderLeft:
-                    i === 0 ? "none" : `1px solid ${atelier.surfaces.edge}`,
+                    i === 0 ? "none" : `1px solid ${foto.surfaces.edge}`,
                   transition: atelier.motion.rowHover,
-                  "&:hover": { backgroundColor: atelier.surfaces.rowHover },
+                  "&:hover": { backgroundColor: foto.surfaces.rowHover },
                   "&:focus-visible": {
                     outline: `2px solid ${atelier.focus.ring}`,
                     outlineOffset: "-2px",
@@ -993,6 +1005,7 @@ function AdvancedFiltersPanel({
           ariaLabelMin="Precio mínimo"
           ariaLabelMax="Precio máximo"
           atelier={atelier}
+          foto={foto}
         />
       </FilterField>
 
@@ -1014,6 +1027,7 @@ function AdvancedFiltersPanel({
           ariaLabelMin="Peso mínimo (ct)"
           ariaLabelMax="Peso máximo (ct)"
           atelier={atelier}
+          foto={foto}
         />
       </FilterField>
     </Box>
@@ -1074,12 +1088,14 @@ function NativeSelect({
   ariaLabel,
   children,
   atelier,
+  foto,
 }: {
   value: string;
   onChange: (v: string) => void;
   ariaLabel: string;
   children: React.ReactNode;
   atelier: ReturnType<typeof getAtelier>;
+  foto: FotoTokens;
 }) {
   const isActive = value !== "";
   return (
@@ -1103,9 +1119,9 @@ function NativeSelect({
           width: "100%",
           color: atelier.ink.primary,
           backgroundColor: isActive
-            ? atelier.surfaces.rowActive
-            : atelier.surfaces.inset,
-          border: `1px solid ${isActive ? atelier.brass.soft : atelier.surfaces.edge}`,
+            ? foto.surfaces.rowActive
+            : foto.surfaces.inset,
+          border: `1px solid ${isActive ? atelier.brass.soft : foto.surfaces.edge}`,
           borderRadius: "4px",
           pl: "10px",
           pr: "26px",
@@ -1158,6 +1174,7 @@ function RangeInputs({
   ariaLabelMin,
   ariaLabelMax,
   atelier,
+  foto,
 }: {
   range: [number, number] | null;
   bounds: [number, number];
@@ -1166,6 +1183,7 @@ function RangeInputs({
   ariaLabelMin: string;
   ariaLabelMax: string;
   atelier: ReturnType<typeof getAtelier>;
+  foto: FotoTokens;
 }) {
   const [minVal, maxVal] = range ?? bounds;
   const isActive = range !== null;
@@ -1193,10 +1211,8 @@ function RangeInputs({
     ...atelier.type.data,
     fontSize: "12px",
     color: atelier.ink.primary,
-    backgroundColor: isActive
-      ? atelier.surfaces.rowActive
-      : atelier.surfaces.inset,
-    border: `1px solid ${isActive ? atelier.brass.soft : atelier.surfaces.edge}`,
+    backgroundColor: isActive ? foto.surfaces.rowActive : foto.surfaces.inset,
+    border: `1px solid ${isActive ? atelier.brass.soft : foto.surfaces.edge}`,
     borderRadius: "4px",
     px: "8px",
     py: "5px",

@@ -21,7 +21,8 @@
  *   Intent — find / open / edit / save without leaving the ledger.
  *   Palette — canvas (page) / panel (toolbar + drawer) / inset (inputs).
  *   Depth — borders-only across the whole page.
- *   Surfaces — atelier.surfaces.* only; no shadows, no glass.
+ *   Surfaces — foto.surfaces.* (cool-neutral white) for the page chrome;
+ *   atelier.* still drives type, spacing, motion, brass + focus accents.
  *   Typography — atelier.type.headline for page title; .meta for crumbs.
  *   Spacing — contentMaxWidth 1240, centered with 16px gutter on small.
  */
@@ -916,7 +917,7 @@ export default function ProductManagementPage() {
   // ─── Render ──────────────────────────────────────────────────────────
 
   if (!convexReady) {
-    return <ConvexUnavailable atelier={atelier} />;
+    return <ConvexUnavailable atelier={atelier} foto={foto} />;
   }
 
   const isLoading = products === undefined;
@@ -926,7 +927,7 @@ export default function ProductManagementPage() {
     <Box
       sx={{
         minHeight: "100vh",
-        backgroundColor: atelier.surfaces.canvas,
+        backgroundColor: foto.surfaces.canvas,
         color: atelier.ink.primary,
       }}
     >
@@ -994,17 +995,20 @@ export default function ProductManagementPage() {
             role="list"
             aria-label="Productos en el espejo"
             sx={{
-              backgroundColor: atelier.surfaces.canvas,
-              borderLeft: `1px solid ${atelier.surfaces.edge}`,
-              borderRight: `1px solid ${atelier.surfaces.edge}`,
-              borderBottom: `1px solid ${atelier.surfaces.edge}`,
+              backgroundColor: foto.surfaces.canvas,
+              borderLeft: `1px solid ${foto.surfaces.edge}`,
+              borderRight: `1px solid ${foto.surfaces.edge}`,
+              borderBottom: `1px solid ${foto.surfaces.edge}`,
               overflow: "hidden",
             }}
           >
-            {isLoading && <ListSkeletons atelier={atelier} count={8} />}
+            {isLoading && (
+              <ListSkeletons atelier={atelier} foto={foto} count={8} />
+            )}
             {!isLoading && isEmpty && (
               <EmptyState
                 atelier={atelier}
+                foto={foto}
                 hasFilter={!!search.trim() || filter !== "all"}
                 onResync={handleResync}
                 isResyncing={isResyncing}
@@ -1134,9 +1138,11 @@ export default function ProductManagementPage() {
 
 function ListSkeletons({
   atelier,
+  foto,
   count,
 }: {
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
   count: number;
 }) {
   return (
@@ -1147,7 +1153,7 @@ function ListSkeletons({
           sx={{
             px: `${atelier.spacing.rowPaddingX}px`,
             py: `${atelier.spacing.rowPaddingY}px`,
-            borderBottom: `1px solid ${atelier.surfaces.edge}`,
+            borderBottom: `1px solid ${foto.surfaces.edge}`,
             display: "grid",
             gridTemplateColumns: {
               xs: "16px 56px 12px 32px minmax(0, 1fr) 84px 116px 10px",
@@ -1184,11 +1190,13 @@ function ListSkeletons({
 
 function EmptyState({
   atelier,
+  foto: _foto,
   hasFilter,
   onResync,
   isResyncing,
 }: {
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
   hasFilter: boolean;
   onResync: () => void;
   isResyncing: boolean;
@@ -1255,14 +1263,16 @@ function EmptyState({
 
 function ConvexUnavailable({
   atelier,
+  foto,
 }: {
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
 }) {
   return (
     <Box
       sx={{
         minHeight: "100vh",
-        backgroundColor: atelier.surfaces.canvas,
+        backgroundColor: foto.surfaces.canvas,
         color: atelier.ink.primary,
         display: "flex",
         alignItems: "center",
