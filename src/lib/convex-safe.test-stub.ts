@@ -105,6 +105,9 @@ const apiRefToScope: Record<string, Scope> = {
   "products.syncStats": "products",
   "products.editHistory": "audits",
   "products.lockStatus": "locks",
+  "products.patronesFor": "products",
+  "products.patronesGlobalTop": "products",
+  "products.recentEdits": "audits",
 };
 
 let nextId = 1;
@@ -256,6 +259,66 @@ function editHistory(itemId: string) {
     .slice(0, 20);
 }
 
+function patronesFor(itemId: string) {
+  const target = store.products.find((p) => p.itemId === itemId);
+  if (!target) return { combos: [], total: 0 };
+  return {
+    combos: [
+      {
+        key: "Cosquez·AA·3.00–3.50",
+        label: "Cosquez · AA · 3.0–3.5 ct",
+        count: 5,
+        medianPriceCOP: 4_800_000,
+      },
+      {
+        key: "Cosquez·AA·2.50–3.00",
+        label: "Cosquez · AA · 2.5–3.0 ct",
+        count: 3,
+        medianPriceCOP: 3_900_000,
+      },
+      {
+        key: "Muzo·AA·3.00–3.50",
+        label: "Muzo · AA · 3.0–3.5 ct",
+        count: 2,
+        medianPriceCOP: 5_200_000,
+      },
+    ],
+    total: 10,
+  };
+}
+
+function patronesGlobalTop() {
+  return {
+    combos: [
+      {
+        key: "Muzo·AAA·2.00–3.00",
+        label: "Muzo · AAA · 2–3 ct",
+        count: 12,
+        medianPriceCOP: 5_500_000,
+      },
+      {
+        key: "Cosquez·AA·3.00–4.00",
+        label: "Cosquez · AA · 3–4 ct",
+        count: 9,
+        medianPriceCOP: 4_300_000,
+      },
+      {
+        key: "Muzo·AA·1.00–2.00",
+        label: "Muzo · AA · 1–2 ct",
+        count: 7,
+        medianPriceCOP: 1_900_000,
+      },
+    ],
+    total: 28,
+  };
+}
+
+function recentEdits(limit?: number) {
+  return [...store.audits]
+    .sort((a, b) => b._creationTime - a._creationTime)
+    .slice(0, limit ?? 5);
+}
+
 function lockStatusFor(itemId: string) {
   const lock = store.locks.find((l) => l.itemId === itemId);
   if (!lock) return null;
@@ -293,6 +356,12 @@ export function useConvexQuery(apiRef: unknown, args: unknown): unknown {
         return editHistory((args as { itemId: string }).itemId);
       case "products.lockStatus":
         return lockStatusFor((args as { itemId: string }).itemId);
+      case "products.patronesFor":
+        return patronesFor((args as { itemId: string }).itemId);
+      case "products.patronesGlobalTop":
+        return patronesGlobalTop();
+      case "products.recentEdits":
+        return recentEdits((args as { limit?: number } | undefined)?.limit);
       default:
         return undefined;
     }

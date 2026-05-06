@@ -7,6 +7,12 @@ import {
 } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
+import {
+  qualityBucket,
+  caratBucket,
+  procedenciaBucket,
+  comboKey,
+} from "../src/utils/patron-buckets";
 
 // =============================================================================
 // QUERIES — read the mirror
@@ -845,3 +851,159 @@ function normalizeEstado(v: unknown): "DISPONIBLE" | "VENDIDA" | "ASESOR" | "" {
   if (s === "") return "DISPONIBLE"; // mirror the legacy default in get-treasure-sheets
   return "";
 }
+
+// =============================================================================
+// PATRONES — sold-stone aggregations grouped by procedencia × quality × carat
+// =============================================================================
+
+/**
+ * Patrones similar to a target item: scans VENDIDA rows over the
+ * lookback window, groups by procedencia × quality × carat-bucket,
+ * filters to combos that overlap the target stone, and returns the
+ * top 5 by count with median price.
+ */
+export const patronesFor = query({
+  args: { itemId: v.string(), lookbackDays: v.optional(v.number()) },
+  handler: async (ctx, { itemId, lookbackDays }) => {
+    const days = lookbackDays ?? 90;
+    const horizon = new Date(Date.now() - days * 86400000).toISOString();
+    const target = await ctx.db
+      .query("productInventory")
+      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .first();
+    if (!target) return { combos: [], total: 0 };
+
+    const targetProc = procedenciaBucket(target.coleccion);
+    const targetQual = qualityBucket(target.calidad);
+    const peso = Number(target.peso);
+    const targetCarat = caratBucket(peso);
+
+    const sold = await ctx.db
+      .query("productInventory")
+      .withIndex("by_estado", (q) => q.eq("estado", "VENDIDA"))
+      .collect();
+
+    const buckets = new Map<
+      string,
+      { count: number; prices: number[]; label: string }
+    >();
+    for (const p of sold) {
+      const ts = p.lastPushedAt ?? p.lastPulledAt;
+      if (ts < horizon) continue;
+      const proc = procedenciaBucket(p.coleccion);
+      const qual = qualityBucket(p.calidad);
+      const c = caratBucket(Number(p.peso));
+      if (!proc || !qual || !c) continue;
+      // Match if procedencia matches AND quality matches AND carat windows overlap.
+      if (targetProc && targetQual && targetCarat) {
+        if (proc !== targetProc) continue;
+        if (qual !== targetQual) continue;
+        const [tlo, thi] = targetCarat;
+        const [plo, phi] = c;
+        if (phi < tlo || plo > thi) continue;
+      }
+      const key = comboKey({
+        procedencia: proc,
+        quality: qual,
+        caratLo: c[0],
+        caratHi: c[1],
+      });
+      const entry = buckets.get(key) ?? {
+        count: 0,
+        prices: [],
+        label: `${proc} · ${qual} · ${c[0].toFixed(1)}–${c[1].toFixed(1)} ct`,
+      };
+      entry.count += 1;
+      if (typeof p.precioCOP === "number" && p.precioCOP > 0)
+        entry.prices.push(p.precioCOP);
+      buckets.set(key, entry);
+    }
+
+    const combos = Array.from(buckets.entries())
+      .map(([key, v]) => ({
+        key,
+        label: v.label,
+        count: v.count,
+        medianPriceCOP: v.prices.length ? median(v.prices) : null,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return { combos, total: combos.reduce((s, c) => s + c.count, 0) };
+  },
+});
+
+function median(arr: number[]): number {
+  const sorted = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2
+    ? sorted[mid]
+    : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+}
+
+/**
+ * Top-5 global patrones combos across all VENDIDA rows in the
+ * lookback window. Used by the FotoHero "patrones del semestre"
+ * sparkline / chip stack.
+ */
+export const patronesGlobalTop = query({
+  args: { lookbackDays: v.optional(v.number()) },
+  handler: async (ctx, { lookbackDays }) => {
+    const days = lookbackDays ?? 90;
+    const horizon = new Date(Date.now() - days * 86400000).toISOString();
+    const sold = await ctx.db
+      .query("productInventory")
+      .withIndex("by_estado", (q) => q.eq("estado", "VENDIDA"))
+      .collect();
+    const buckets = new Map<
+      string,
+      { count: number; prices: number[]; label: string }
+    >();
+    for (const p of sold) {
+      const ts = p.lastPushedAt ?? p.lastPulledAt;
+      if (ts < horizon) continue;
+      const proc = procedenciaBucket(p.coleccion);
+      const qual = qualityBucket(p.calidad);
+      const c = caratBucket(Number(p.peso));
+      if (!proc || !qual || !c) continue;
+      const key = comboKey({
+        procedencia: proc,
+        quality: qual,
+        caratLo: c[0],
+        caratHi: c[1],
+      });
+      const entry = buckets.get(key) ?? {
+        count: 0,
+        prices: [],
+        label: `${proc} · ${qual} · ${c[0].toFixed(1)}–${c[1].toFixed(1)} ct`,
+      };
+      entry.count += 1;
+      if (typeof p.precioCOP === "number" && p.precioCOP > 0)
+        entry.prices.push(p.precioCOP);
+      buckets.set(key, entry);
+    }
+    const combos = Array.from(buckets.entries())
+      .map(([key, v]) => ({
+        key,
+        label: v.label,
+        count: v.count,
+        medianPriceCOP: v.prices.length ? median(v.prices) : null,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+    return { combos, total: combos.reduce((s, c) => s + c.count, 0) };
+  },
+});
+
+/**
+ * N most recent edits across all products. Powers the
+ * Bandeja "Historial reciente" card.
+ */
+export const recentEdits = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit }) => {
+    const cap = Math.min(limit ?? 5, 50);
+    const edits = await ctx.db.query("productEdits").order("desc").take(cap);
+    return edits;
+  },
+});
