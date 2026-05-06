@@ -99,9 +99,7 @@ test.describe("/admin/products — atelier inventory", () => {
     await primeAdminSession(page);
   });
 
-  test("renders the seeded inventory and lets an admin edit a row", async ({
-    page,
-  }) => {
+  test("renders the seeded inventory rows", async ({ page }) => {
     await page.goto("/admin/products");
 
     // Wait for the seeded inventory to land — three rows render under
@@ -127,43 +125,57 @@ test.describe("/admin/products — atelier inventory", () => {
     await expect(page.locator("[data-foto-create]")).toBeVisible();
     await expect(page.locator("[data-foto-resync]")).toBeVisible();
 
-    // Open the first seeded row ("Esmeralda Venus"). The row's main
-    // click target is the row itself, but we click the row title so
-    // the click misses the leading checkbox column.
+    // Workbench split is rendered — Bandeja is visible at desktop widths.
+    await expect(
+      page.getByRole("complementary", { name: /Bandeja/i }),
+    ).toBeVisible();
+    // Each row has a chroma bar (data attribute set in ChromaBar).
+    const chromaBars = page.locator("[data-chroma-bar]");
+    await expect(chromaBars.first()).toBeVisible();
+    expect(await chromaBars.count()).toBeGreaterThan(0);
+  });
+
+  // re-enabled in Phase D when Bandeja gets StoneHero with Abrir editor button
+  test.skip("edits a row via the Bandeja Abrir-editor button", async ({
+    page,
+  }) => {
+    await page.goto("/admin/products");
+
+    const list = page.getByRole("list", {
+      name: "Productos en el espejo",
+    });
+    await expect(list.getByRole("listitem")).toHaveCount(3, {
+      timeout: 10_000,
+    });
+
+    // Select the first seeded row ("Esmeralda Venus") — populates the
+    // Bandeja inspector. Drawer no longer opens on row click; an
+    // explicit "Abrir editor" button inside the Bandeja's StoneHero
+    // (Phase D) is the entry point for the edit flow.
     const venusRow = list.getByRole("listitem").filter({
       hasText: "Esmeralda Venus",
     });
     await expect(venusRow).toHaveCount(1);
     await venusRow.getByText("Esmeralda Venus").click();
 
-    // Drawer paper appears in the DOM. Use the MUI Drawer paper class
-    // as the scope for follow-up queries.
+    // TODO (Phase D): click Bandeja's "Abrir editor" button to open
+    // the EditDrawer, then exercise the edit + audit flow as before.
     const drawer = page.locator(".MuiDrawer-paper");
     await expect(drawer).toBeVisible();
     await expect(drawer.getByText("Sin cambios")).toBeVisible();
 
-    // Edit the Nombre field. The drawer uses MUI's `InputBase` with
-    // `inputProps.aria-label = "Nombre"`, so the textbox role lookup
-    // finds the underlying <input>; getByLabel can match the <label>
-    // first because the Typography label has no `for` attribute.
     const nombreInput = drawer.getByRole("textbox", { name: "Nombre" });
     await nombreInput.click();
     await nombreInput.fill("Esmeralda Venus Renombrada");
     await expect(nombreInput).toHaveValue("Esmeralda Venus Renombrada");
 
-    // The footer flips to count the unsaved change.
     await expect(drawer.getByText("1 cambio sin guardar")).toBeVisible();
 
-    // Save — drawer paper unmounts when the close transition finishes.
     await drawer.getByRole("button", { name: "Guardar" }).click();
     await expect(drawer).toHaveCount(0, { timeout: 5_000 });
 
-    // Optimistic update — the row in the ledger reflects the new name
-    // before the (stubbed) "Sheets push" resolves.
     await expect(list.getByText("Esmeralda Venus Renombrada")).toBeVisible();
 
-    // Reopen the renamed row and assert the audit log captured the
-    // before/after pair.
     await list
       .getByRole("listitem")
       .filter({ hasText: "Esmeralda Venus Renombrada" })
@@ -174,8 +186,6 @@ test.describe("/admin/products — atelier inventory", () => {
     await expect(reopenedDrawer).toBeVisible();
     await expect(reopenedDrawer.getByText("Historial")).toBeVisible();
     await expect(reopenedDrawer.getByText(ADMIN_USER.name)).toBeVisible();
-    // Audit row contains both the previous and new name in the
-    // "before → after" stack.
     await expect(
       reopenedDrawer.getByText("Esmeralda Venus", { exact: true }),
     ).toBeVisible();
