@@ -265,7 +265,7 @@ export function FotoHero({
             onClick={onCreateNew}
             disableRipple
             sx={{
-              backgroundColor: foto.ink.primary,
+              backgroundColor: foto.accent.primary,
               color: foto.ink.inverse,
               borderRadius: "10px",
               px: "18px",
@@ -274,6 +274,11 @@ export function FotoHero({
               fontSize: "11px",
               fontWeight: 600,
               letterSpacing: "-0.005em",
+              transition: "background-color 120ms ease, transform 120ms ease",
+              "&:hover": {
+                // Subtle elevation — slightly darker emerald, no shadow.
+                filter: "brightness(0.94)",
+              },
               "&:focus-visible": {
                 outline: `2px solid ${foto.accent.primary}`,
                 outlineOffset: "2px",
