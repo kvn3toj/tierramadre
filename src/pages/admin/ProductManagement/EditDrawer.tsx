@@ -24,7 +24,7 @@
  *   Intent — read context, edit precisely, save without leaving the ledger.
  *   Palette — panel/canvas/inset; status tint on header echoes the row.
  *   Depth — borders-only; hairlines for left edge, sections, footer.
- *   Surfaces — atelier.surfaces.panel (drawer), .canvas (header), .inset (inputs).
+ *   Surfaces — foto.surfaces.panel (drawer), .canvas (header), .inset (inputs).
  *   Typography — atelier.type.headline / .section / .label / .data.
  *   Spacing — 480px width; 24/20 padding; 32px section gap; 16px field gap.
  */
@@ -32,7 +32,7 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { Box, ButtonBase, Drawer, InputBase, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { getAtelier } from "../../../design-system";
+import { getAtelier, getFoto } from "../../../design-system";
 import {
   convexApi,
   convexReady,
@@ -41,6 +41,8 @@ import {
 } from "../../../lib/convex-safe";
 import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
 import { StatusPip, type EstadoValue } from "./StatusPip";
+// Phase G — create mode: typed payload for the "+ Nueva piedra" flow.
+import type { NewProductInput } from "../../../utils/createProduct-validate";
 
 interface DriveMedia {
   id: string;
@@ -107,7 +109,22 @@ interface EditDrawerProps {
   product: EditDrawerProduct | null;
   isSaving: boolean;
   onClose: () => void;
-  onSave: (itemId: string, patch: EditDrawerPatch) => Promise<void>;
+  /**
+   * Phase G — create mode. In edit mode, `onSave(itemId, patch, "edit")`
+   * passes only the diffed fields. In create mode the drawer hands the
+   * full draft as a NewProductInput with `itemId` set from the dedicated
+   * "Número" field; the parent calls `validateNewProduct` + the Convex
+   * createProduct mutation. The single signature lets the parent keep one
+   * handler for both flows and dispatch on `mode`.
+   */
+  onSave: (
+    itemId: string | undefined,
+    payloadOrPatch: EditDrawerPatch | NewProductInput,
+    mode: "edit" | "create",
+  ) => Promise<void> | void;
+  /** "edit" (default) opens the drawer on an existing product; "create"
+   *  opens an empty drawer for the "+ Nueva piedra" flow. */
+  mode?: "edit" | "create";
   /** Triggered by the in-drawer "Resync ahora" button when a 409
    *  conflict ("sheet was reordered") is detected on the open product. */
   onResync?: () => Promise<void> | void;
@@ -124,6 +141,11 @@ interface EditDrawerProps {
 const CONFLICT_MARKER = "re-ordered";
 
 interface DraftState {
+  /** Phase G — create mode: itemId lives in the draft so the user can
+   *  type a number for a new piece. In edit mode it's seeded from the
+   *  product but never read out (the existing `product.itemId` is used
+   *  by `onSave` directly). */
+  itemId: string;
   nombre: string;
   peso: string;
   color: string;
@@ -141,6 +163,7 @@ interface DraftState {
 
 function toDraft(p: EditDrawerProduct | null): DraftState {
   return {
+    itemId: p?.itemId ?? "",
     nombre: p?.nombre ?? "",
     peso: p?.peso ?? "",
     color: p?.color ?? "",
@@ -154,6 +177,36 @@ function toDraft(p: EditDrawerProduct | null): DraftState {
     coleccion: p?.coleccion ?? "",
     caja: p?.caja ?? "",
     estado: p?.estado ?? "DISPONIBLE",
+  };
+}
+
+// Phase G — create mode: shape the draft into a NewProductInput. Empty
+// strings are passed through (validateNewProduct trims + drops them).
+function draftToNewProduct(draft: DraftState): NewProductInput {
+  const cantidadNum =
+    draft.cantidad === "" ? undefined : Number(draft.cantidad);
+  const precioNum =
+    draft.precioCOP === "" ? undefined : Number(draft.precioCOP);
+  return {
+    itemId: draft.itemId,
+    nombre: draft.nombre,
+    peso: draft.peso,
+    color: draft.color,
+    calidad: draft.calidad,
+    cantidad:
+      cantidadNum !== undefined && Number.isFinite(cantidadNum)
+        ? cantidadNum
+        : undefined,
+    talla: draft.talla,
+    medidas: draft.medidas,
+    categoria: draft.categoria,
+    precioCOP:
+      precioNum !== undefined && Number.isFinite(precioNum)
+        ? precioNum
+        : undefined,
+    ubicacion: draft.ubicacion,
+    coleccion: draft.coleccion,
+    caja: draft.caja,
   };
 }
 
@@ -210,11 +263,14 @@ export function EditDrawer({
   isSaving,
   onClose,
   onSave,
+  // Phase G — create mode
+  mode = "edit",
   onResync,
   isResyncing = false,
 }: EditDrawerProps) {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
+  const foto = getFoto(theme.palette.mode === "dark" ? "dark" : "light");
   const { user } = useGoogleAuth();
   const claimLock = useConvexMutation(convexApi.products.claimLock);
   const releaseLock = useConvexMutation(convexApi.products.releaseLock);
@@ -340,7 +396,12 @@ export function EditDrawer({
   const patch = useMemo(() => diffDraft(draft, product), [draft, product]);
   const hasChanges = Object.keys(patch).length > 0;
 
-  if (!product) {
+  // Phase G — create mode: in create mode the drawer renders without a
+  // product (we synthesize headers/footer from the draft). The empty
+  // fallback only applies when *neither* a product nor create mode is
+  // active — i.e. the drawer is mounted but has nothing to do.
+  const isCreate = mode === "create";
+  if (!product && !isCreate) {
     return (
       <Drawer
         anchor="right"
@@ -349,16 +410,17 @@ export function EditDrawer({
         PaperProps={{
           sx: {
             width: `${atelier.spacing.drawerWidth}px`,
-            backgroundColor: atelier.surfaces.panel,
-            borderLeft: `1px solid ${atelier.surfaces.edgeStrong}`,
+            backgroundColor: foto.surfaces.panel,
+            borderLeft: `1px solid ${foto.surfaces.edgeStrong}`,
           },
         }}
       />
     );
   }
 
-  const headerTint =
-    product.estado === "DISPONIBLE"
+  const headerTint = !product
+    ? "transparent"
+    : product.estado === "DISPONIBLE"
       ? atelier.status.available.rowTint
       : product.estado === "VENDIDA"
         ? atelier.status.sold.rowTint
@@ -375,8 +437,8 @@ export function EditDrawer({
         sx: {
           width: `${atelier.spacing.drawerWidth}px`,
           maxWidth: "100vw",
-          backgroundColor: atelier.surfaces.panel,
-          borderLeft: `1px solid ${atelier.surfaces.edgeStrong}`,
+          backgroundColor: foto.surfaces.panel,
+          borderLeft: `1px solid ${foto.surfaces.edgeStrong}`,
           boxShadow: "none",
         },
       }}
@@ -391,9 +453,9 @@ export function EditDrawer({
         {/* HEADER */}
         <Box
           sx={{
-            backgroundColor: atelier.surfaces.canvas,
+            backgroundColor: foto.surfaces.canvas,
             backgroundImage: `linear-gradient(${headerTint}, ${headerTint})`,
-            borderBottom: `1px solid ${atelier.surfaces.edgeStrong}`,
+            borderBottom: `1px solid ${foto.surfaces.edgeStrong}`,
             px: `${atelier.spacing.drawerPaddingX}px`,
             pt: `${atelier.spacing.drawerPaddingY}px`,
             pb: `${atelier.spacing.drawerPaddingY}px`,
@@ -402,42 +464,75 @@ export function EditDrawer({
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "auto auto 1fr auto",
+              gridTemplateColumns: isCreate ? "1fr auto" : "auto auto 1fr auto",
               alignItems: "center",
               gap: 2,
             }}
           >
-            <Typography
-              component="span"
-              sx={{
-                ...atelier.type.data,
-                color: atelier.ink.tertiary,
-                fontSize: "14px",
-              }}
-            >
-              {product.itemId.padStart(4, "0")}
-            </Typography>
-            <StatusPip estado={product.estado} />
-            <Typography
-              component="div"
-              sx={{
-                ...atelier.type.headline,
-                color: atelier.ink.primary,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-              title={product.nombre || `Item ${product.itemId}`}
-            >
-              {product.nombre || `Item ${product.itemId}`}
-            </Typography>
+            {isCreate ? (
+              <Typography
+                component="div"
+                sx={{
+                  ...atelier.type.headline,
+                  color: atelier.ink.primary,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Nueva piedra
+              </Typography>
+            ) : (
+              <>
+                <Typography
+                  component="span"
+                  sx={{
+                    ...atelier.type.data,
+                    color: atelier.ink.tertiary,
+                    fontSize: "14px",
+                  }}
+                >
+                  {product!.itemId.padStart(4, "0")}
+                </Typography>
+                <StatusPip estado={product!.estado} foto={foto} />
+                <Typography
+                  component="div"
+                  sx={{
+                    ...atelier.type.headline,
+                    color: atelier.ink.primary,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                  title={product!.nombre || `Item ${product!.itemId}`}
+                >
+                  {product!.nombre || `Item ${product!.itemId}`}
+                </Typography>
+              </>
+            )}
             <CloseButton
               onClose={onClose}
               disabled={isSaving}
               atelier={atelier}
+              foto={foto}
             />
           </Box>
-          <SyncMeta product={product} atelier={atelier} />
+          {!isCreate && product && (
+            <SyncMeta product={product} atelier={atelier} />
+          )}
+          {isCreate && (
+            <Typography
+              sx={{
+                ...atelier.type.meta,
+                fontSize: "11px",
+                color: atelier.ink.tertiary,
+                mt: "8px",
+              }}
+            >
+              Asigna un número y rellena los datos esenciales. Se anexará a la
+              hoja al guardar.
+            </Typography>
+          )}
         </Box>
 
         {/* BODY (scrollable) */}
@@ -449,12 +544,29 @@ export function EditDrawer({
             py: `${atelier.spacing.drawerPaddingY}px`,
           }}
         >
-          <Section title="Identidad" atelier={atelier}>
+          <Section title="Identidad" atelier={atelier} foto={foto}>
+            {/* Phase G — create mode: itemId field. Required & monospaced
+                so the user types a clean numeric tag. */}
+            {isCreate && (
+              <Field
+                label="Número"
+                value={draft.itemId}
+                onChange={(v) =>
+                  setDraft({ ...draft, itemId: v.replace(/[^0-9]/g, "") })
+                }
+                hint="Número único de la piedra en la hoja"
+                atelier={atelier}
+                foto={foto}
+                monospace
+                inputMode="numeric"
+              />
+            )}
             <Field
               label="Nombre"
               value={draft.nombre}
               onChange={(v) => setDraft({ ...draft, nombre: v })}
               atelier={atelier}
+              foto={foto}
               monospace={false}
             />
             <FieldGrid>
@@ -463,6 +575,7 @@ export function EditDrawer({
                 value={draft.coleccion}
                 onChange={(v) => setDraft({ ...draft, coleccion: v })}
                 atelier={atelier}
+                foto={foto}
                 monospace={false}
               />
               <Field
@@ -470,6 +583,7 @@ export function EditDrawer({
                 value={draft.caja}
                 onChange={(v) => setDraft({ ...draft, caja: v })}
                 atelier={atelier}
+                foto={foto}
                 monospace
               />
             </FieldGrid>
@@ -478,11 +592,12 @@ export function EditDrawer({
               value={draft.ubicacion}
               onChange={(v) => setDraft({ ...draft, ubicacion: v })}
               atelier={atelier}
+              foto={foto}
               monospace={false}
             />
           </Section>
 
-          <Section title="Especificaciones" atelier={atelier}>
+          <Section title="Especificaciones" atelier={atelier} foto={foto}>
             <FieldGrid>
               <Field
                 label="Peso"
@@ -490,6 +605,7 @@ export function EditDrawer({
                 onChange={(v) => setDraft({ ...draft, peso: v })}
                 hint="Quilates o «Plata» / «Oro 18k»"
                 atelier={atelier}
+                foto={foto}
                 monospace
               />
               <Field
@@ -499,6 +615,7 @@ export function EditDrawer({
                   setDraft({ ...draft, cantidad: v.replace(/[^0-9]/g, "") })
                 }
                 atelier={atelier}
+                foto={foto}
                 monospace
                 inputMode="numeric"
               />
@@ -509,6 +626,7 @@ export function EditDrawer({
                 value={draft.color}
                 onChange={(v) => setDraft({ ...draft, color: v })}
                 atelier={atelier}
+                foto={foto}
                 monospace={false}
               />
               <Field
@@ -516,6 +634,7 @@ export function EditDrawer({
                 value={draft.calidad}
                 onChange={(v) => setDraft({ ...draft, calidad: v })}
                 atelier={atelier}
+                foto={foto}
                 monospace={false}
               />
             </FieldGrid>
@@ -525,6 +644,7 @@ export function EditDrawer({
                 value={draft.talla}
                 onChange={(v) => setDraft({ ...draft, talla: v })}
                 atelier={atelier}
+                foto={foto}
                 monospace
               />
               <Field
@@ -532,6 +652,7 @@ export function EditDrawer({
                 value={draft.categoria}
                 onChange={(v) => setDraft({ ...draft, categoria: v })}
                 atelier={atelier}
+                foto={foto}
                 monospace={false}
               />
             </FieldGrid>
@@ -541,11 +662,12 @@ export function EditDrawer({
               onChange={(v) => setDraft({ ...draft, medidas: v })}
               hint="Largo × Ancho · descripción libre"
               atelier={atelier}
+              foto={foto}
               monospace={false}
             />
           </Section>
 
-          <Section title="Precio" atelier={atelier}>
+          <Section title="Precio" atelier={atelier} foto={foto}>
             <Field
               label="Precio COP"
               value={draft.precioCOP}
@@ -554,36 +676,63 @@ export function EditDrawer({
               }
               hint="Solo número entero, sin separadores"
               atelier={atelier}
+              foto={foto}
               monospace
               inputMode="numeric"
               prefix="$"
             />
           </Section>
 
-          <Section title="Estado" atelier={atelier}>
-            <EstadoRadio
-              value={draft.estado}
-              onChange={(v) => setDraft({ ...draft, estado: v })}
-              atelier={atelier}
-            />
-          </Section>
-
-          {lockedByOther && (
-            <LockBanner lockedBy={lockedByOther} atelier={atelier} />
+          {/* Phase G — create mode skips the Estado radio: new pieces
+              always start as DISPONIBLE (the createProduct mutation
+              hardcodes that estado). */}
+          {!isCreate && (
+            <Section title="Estado" atelier={atelier} foto={foto}>
+              <EstadoRadio
+                value={draft.estado}
+                onChange={(v) => setDraft({ ...draft, estado: v })}
+                atelier={atelier}
+                foto={foto}
+              />
+            </Section>
           )}
 
-          <Section title="Archivos" atelier={atelier}>
-            <DriveFolderBlock state={driveState} atelier={atelier} />
-          </Section>
+          {/* Phase G — create mode: no lock banner, no Drive folder, no
+              audit history (none of these exist for an unsaved row). */}
+          {!isCreate && lockedByOther && (
+            <LockBanner
+              lockedBy={lockedByOther}
+              atelier={atelier}
+              foto={foto}
+            />
+          )}
 
-          <Section title="Historial" atelier={atelier}>
-            <HistorialBlock itemId={product.itemId} atelier={atelier} />
-          </Section>
+          {!isCreate && (
+            <Section title="Archivos" atelier={atelier} foto={foto}>
+              <DriveFolderBlock
+                state={driveState}
+                atelier={atelier}
+                foto={foto}
+              />
+            </Section>
+          )}
+
+          {!isCreate && product && (
+            <Section title="Historial" atelier={atelier} foto={foto}>
+              <HistorialBlock
+                itemId={product.itemId}
+                atelier={atelier}
+                foto={foto}
+              />
+            </Section>
+          )}
         </Box>
 
         {/* Conflict banner — appears just above the footer when the
-            push failed because the sheet was re-ordered. */}
-        {product.syncStatus === "error" &&
+            push failed because the sheet was re-ordered. Edit mode only. */}
+        {!isCreate &&
+          product &&
+          product.syncStatus === "error" &&
           (product.syncError ?? "").includes(CONFLICT_MARKER) &&
           onResync && (
             <ConflictBanner
@@ -591,14 +740,15 @@ export function EditDrawer({
               isResyncing={isResyncing}
               onResync={onResync}
               atelier={atelier}
+              foto={foto}
             />
           )}
 
         {/* FOOTER */}
         <Box
           sx={{
-            borderTop: `1px solid ${atelier.surfaces.edgeStrong}`,
-            backgroundColor: atelier.surfaces.canvas,
+            borderTop: `1px solid ${foto.surfaces.edgeStrong}`,
+            backgroundColor: foto.surfaces.canvas,
             px: `${atelier.spacing.drawerPaddingX}px`,
             py: "14px",
             display: "flex",
@@ -607,12 +757,20 @@ export function EditDrawer({
             gap: 2,
           }}
         >
+          {/* Phase G — create mode: footer status text + button label
+              flip to "create" semantics. Save is gated on a non-empty
+              itemId; in edit mode it's gated on hasChanges + no foreign
+              lock as before. */}
           <Typography
             sx={{ ...atelier.type.label, color: atelier.ink.tertiary }}
           >
-            {hasChanges
-              ? `${Object.keys(patch).length} cambio${Object.keys(patch).length === 1 ? "" : "s"} sin guardar`
-              : "Sin cambios"}
+            {isCreate
+              ? draft.itemId.trim()
+                ? `Nueva piedra · ${draft.itemId.trim()}`
+                : "Asigna un número para crear"
+              : hasChanges
+                ? `${Object.keys(patch).length} cambio${Object.keys(patch).length === 1 ? "" : "s"} sin guardar`
+                : "Sin cambios"}
           </Typography>
           <Box sx={{ display: "inline-flex", gap: 1 }}>
             <ButtonBase
@@ -625,9 +783,9 @@ export function EditDrawer({
                 px: "14px",
                 py: "8px",
                 borderRadius: "4px",
-                border: `1px solid ${atelier.surfaces.edgeStrong}`,
+                border: `1px solid ${foto.surfaces.edgeStrong}`,
                 transition: atelier.motion.rowHover,
-                "&:hover": { backgroundColor: atelier.surfaces.rowHover },
+                "&:hover": { backgroundColor: foto.surfaces.rowHover },
                 "&:focus-visible": {
                   outline: `2px solid ${atelier.focus.ring}`,
                   outlineOffset: "2px",
@@ -637,14 +795,28 @@ export function EditDrawer({
               Cancelar
             </ButtonBase>
             <ButtonBase
-              onClick={() => void onSave(product.itemId, patch)}
-              disabled={!hasChanges || isSaving || !!lockedByOther}
+              onClick={() => {
+                if (isCreate) {
+                  void onSave(undefined, draftToNewProduct(draft), "create");
+                } else if (product) {
+                  void onSave(product.itemId, patch, "edit");
+                }
+              }}
+              disabled={
+                isSaving ||
+                (isCreate
+                  ? !draft.itemId.trim()
+                  : !hasChanges || !!lockedByOther)
+              }
               disableRipple
               sx={{
                 ...atelier.type.label,
                 color: atelier.ink.inverse,
                 backgroundColor:
-                  !hasChanges || isSaving || !!lockedByOther
+                  isSaving ||
+                  (isCreate
+                    ? !draft.itemId.trim()
+                    : !hasChanges || !!lockedByOther)
                     ? atelier.ink.muted
                     : atelier.focus.ring,
                 px: "14px",
@@ -653,7 +825,10 @@ export function EditDrawer({
                 transition: atelier.motion.rowHover,
                 "&:hover": {
                   backgroundColor:
-                    !hasChanges || isSaving || !!lockedByOther
+                    isSaving ||
+                    (isCreate
+                      ? !draft.itemId.trim()
+                      : !hasChanges || !!lockedByOther)
                       ? atelier.ink.muted
                       : atelier.status.available.pip,
                 },
@@ -663,7 +838,13 @@ export function EditDrawer({
                 },
               }}
             >
-              {isSaving ? "Guardando…" : "Guardar"}
+              {isSaving
+                ? isCreate
+                  ? "Creando…"
+                  : "Guardando…"
+                : isCreate
+                  ? "Crear y sincronizar"
+                  : "Guardar"}
             </ButtonBase>
           </Box>
         </Box>
@@ -679,10 +860,12 @@ export function EditDrawer({
 function Section({
   title,
   atelier,
+  foto,
   children,
 }: {
   title: string;
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
   children: React.ReactNode;
 }) {
   return (
@@ -694,7 +877,7 @@ function Section({
           color: atelier.ink.tertiary,
           mb: "12px",
           pb: "6px",
-          borderBottom: `1px solid ${atelier.surfaces.edge}`,
+          borderBottom: `1px solid ${foto.surfaces.edge}`,
         }}
       >
         {title}
@@ -732,6 +915,7 @@ function Field({
   onChange,
   hint,
   atelier,
+  foto,
   monospace,
   inputMode,
   prefix,
@@ -741,6 +925,7 @@ function Field({
   onChange: (v: string) => void;
   hint?: string;
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
   monospace?: boolean;
   inputMode?: "numeric" | "decimal" | "text";
   prefix?: string;
@@ -771,8 +956,8 @@ function Field({
       </Typography>
       <Box
         sx={{
-          backgroundColor: atelier.surfaces.inset,
-          border: `1px solid ${atelier.surfaces.edge}`,
+          backgroundColor: foto.surfaces.inset,
+          border: `1px solid ${foto.surfaces.edge}`,
           borderRadius: "4px",
           px: "10px",
           py: "8px",
@@ -823,10 +1008,12 @@ function EstadoRadio({
   value,
   onChange,
   atelier,
+  foto,
 }: {
   value: EstadoValue;
   onChange: (v: EstadoValue) => void;
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
 }) {
   const options: Array<{
     key: EstadoValue;
@@ -872,15 +1059,15 @@ function EstadoRadio({
               px: "12px",
               py: "10px",
               backgroundColor: isSelected
-                ? atelier.surfaces.rowActive
-                : atelier.surfaces.inset,
-              border: `1px solid ${isSelected ? atelier.focus.ring : atelier.surfaces.edge}`,
+                ? foto.surfaces.rowActive
+                : foto.surfaces.inset,
+              border: `1px solid ${isSelected ? atelier.focus.ring : foto.surfaces.edge}`,
               borderRadius: "4px",
               transition: atelier.motion.rowHover,
               textAlign: "left",
               cursor: "pointer",
               "&:hover": {
-                backgroundColor: atelier.surfaces.rowHover,
+                backgroundColor: foto.surfaces.rowHover,
               },
               "&:focus-visible": {
                 outline: `2px solid ${atelier.focus.ring}`,
@@ -888,7 +1075,7 @@ function EstadoRadio({
               },
             }}
           >
-            <StatusPip estado={opt.key} muted={!isSelected} />
+            <StatusPip estado={opt.key} foto={foto} muted={!isSelected} />
             <Box>
               <Typography
                 sx={{ ...atelier.type.label, color: atelier.ink.primary }}
@@ -917,10 +1104,12 @@ function CloseButton({
   onClose,
   disabled,
   atelier,
+  foto,
 }: {
   onClose: () => void;
   disabled: boolean;
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
 }) {
   return (
     <ButtonBase
@@ -935,7 +1124,7 @@ function CloseButton({
         color: atelier.ink.secondary,
         transition: atelier.motion.rowHover,
         "&:hover": {
-          backgroundColor: atelier.surfaces.rowHover,
+          backgroundColor: foto.surfaces.rowHover,
           color: atelier.ink.primary,
         },
         "&:focus-visible": {
@@ -1005,9 +1194,11 @@ function SyncMeta({
 function DriveFolderBlock({
   state,
   atelier,
+  foto,
 }: {
   state: DriveFolderState;
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
 }) {
   const folderUrl = state.folderId
     ? `https://drive.google.com/drive/folders/${state.folderId}`
@@ -1031,8 +1222,8 @@ function DriveFolderBlock({
           sx={{
             ...atelier.type.label,
             color: atelier.ink.primary,
-            backgroundColor: atelier.surfaces.inset,
-            border: `1px solid ${atelier.surfaces.edge}`,
+            backgroundColor: foto.surfaces.inset,
+            border: `1px solid ${foto.surfaces.edge}`,
             borderRadius: "4px",
             px: "12px",
             py: "10px",
@@ -1043,7 +1234,7 @@ function DriveFolderBlock({
             textTransform: "none",
             transition: atelier.motion.rowHover,
             "&:hover": {
-              backgroundColor: atelier.surfaces.rowHover,
+              backgroundColor: foto.surfaces.rowHover,
               borderColor: atelier.brass.soft,
             },
             "&:focus-visible": {
@@ -1136,9 +1327,9 @@ function DriveFolderBlock({
                 position: "relative",
                 aspectRatio: "1 / 1",
                 overflow: "hidden",
-                border: `1px solid ${atelier.surfaces.edge}`,
+                border: `1px solid ${foto.surfaces.edge}`,
                 borderRadius: "4px",
-                backgroundColor: atelier.surfaces.inset,
+                backgroundColor: foto.surfaces.inset,
                 display: "block",
                 transition: atelier.motion.rowHover,
                 "&:hover": { borderColor: atelier.brass.soft },
@@ -1169,8 +1360,8 @@ function DriveFolderBlock({
                     width: "20px",
                     height: "20px",
                     borderRadius: "2px",
-                    border: `1px solid ${atelier.surfaces.edgeStrong}`,
-                    backgroundColor: atelier.surfaces.panel,
+                    border: `1px solid ${foto.surfaces.edgeStrong}`,
+                    backgroundColor: foto.surfaces.panel,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -1208,9 +1399,11 @@ function DriveFolderBlock({
 function HistorialBlock({
   itemId,
   atelier,
+  foto,
 }: {
   itemId: string;
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
 }) {
   const [showAll, setShowAll] = useState(false);
   const history = useConvexQuery(
@@ -1261,6 +1454,7 @@ function HistorialBlock({
             entry={entry}
             isLast={idx === visible.length - 1}
             atelier={atelier}
+            foto={foto}
           />
         ))}
       </Box>
@@ -1382,10 +1576,12 @@ function HistorialEntry({
   entry,
   isLast,
   atelier,
+  foto,
 }: {
   entry: HistoryEntry;
   isLast: boolean;
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
 }) {
   const statusColor =
     entry.status === "saved"
@@ -1431,7 +1627,7 @@ function HistorialEntry({
             sx={{
               flex: 1,
               width: "1px",
-              backgroundColor: atelier.surfaces.edge,
+              backgroundColor: foto.surfaces.edge,
               mt: "4px",
             }}
           />
@@ -1574,11 +1770,13 @@ function ConflictBanner({
   isResyncing,
   onResync,
   atelier,
+  foto,
 }: {
   message: string;
   isResyncing: boolean;
   onResync: () => Promise<void> | void;
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
 }) {
   return (
     <Box
@@ -1586,7 +1784,7 @@ function ConflictBanner({
       aria-live="polite"
       sx={{
         borderTop: `1px solid ${atelier.status.sold.pip}`,
-        borderBottom: `1px solid ${atelier.surfaces.edge}`,
+        borderBottom: `1px solid ${foto.surfaces.edge}`,
         backgroundColor: atelier.status.sold.rowTint,
         px: `${atelier.spacing.drawerPaddingX}px`,
         py: "12px",
@@ -1682,9 +1880,11 @@ function ConflictBanner({
 function LockBanner({
   lockedBy,
   atelier,
+  foto,
 }: {
   lockedBy: { holderEmail: string; holderName?: string; expiresAt: string };
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
 }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -1708,7 +1908,7 @@ function LockBanner({
       aria-live="polite"
       sx={{
         mb: `${atelier.spacing.sectionGap}px`,
-        border: `1px solid ${atelier.surfaces.edgeStrong}`,
+        border: `1px solid ${foto.surfaces.edgeStrong}`,
         borderLeft: `2px solid ${atelier.status.consigned.pip}`,
         backgroundColor: atelier.status.consigned.rowTint,
         borderRadius: "4px",

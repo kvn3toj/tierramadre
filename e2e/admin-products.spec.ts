@@ -46,6 +46,11 @@ async function primeAdminSession(page: Page) {
         "tierra-madre-auth",
         JSON.stringify({ isAuthenticated: true, accessLevel: "admin" }),
       );
+      // Skip the 4s SplashScreen (App.tsx checks `tm_session_active`
+      // before showing it). Without this, the splash burns the test
+      // timeout before the inventory rows ever render.
+      window.sessionStorage.setItem("tm_session_active", "true");
+      window.localStorage.setItem("tm_last_activity", String(Date.now()));
     } catch {
       // Ignore quota or access errors — the mock will fall through and
       // the test will fail visibly on the AdminRoute gate.
@@ -99,85 +104,183 @@ test.describe("/admin/products — atelier inventory", () => {
     await primeAdminSession(page);
   });
 
-  test("renders the seeded inventory and lets an admin edit a row", async ({
-    page,
-  }) => {
+  test("renders the seeded inventory rows", async ({ page }) => {
     await page.goto("/admin/products");
 
     // Wait for the seeded inventory to land — three rows render under
-    // the "Productos en inventario" list. We use this as the readiness
+    // the "Productos en el espejo" list. We use this as the readiness
     // signal because it's a stronger guarantee than the page title:
     // products only show up once the Convex stub's React subscriptions
     // have settled.
     const list = page.getByRole("list", {
-      name: "Productos en inventario",
+      name: "Productos en el espejo",
     });
     await expect(list.getByRole("listitem")).toHaveCount(3, {
       timeout: 10_000,
     });
 
-    // Editorial LedgerHero rendered — h1 carries the italic display title.
+    // FotoHero rendered — h1 + "en el espejo" caption + create/resync controls.
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "Fotosíntesis",
+        name: /Fotosíntesis/i,
       }),
     ).toBeVisible();
+    await expect(page.getByText("en el espejo", { exact: true })).toBeVisible();
+    await expect(page.locator("[data-foto-create]")).toBeVisible();
+    await expect(page.locator("[data-foto-resync]")).toBeVisible();
 
-    // Open the first seeded row ("Esmeralda Venus"). The row's main
-    // click target is the row itself, but we click the row title so
-    // the click misses the leading checkbox column.
+    // Workbench split is rendered — Bandeja is visible at desktop widths.
+    await expect(
+      page.getByRole("complementary", { name: /Bandeja/i }),
+    ).toBeVisible();
+    // Each row has a chroma bar (data attribute set in ChromaBar).
+    const chromaBars = page.locator("[data-chroma-bar]");
+    await expect(chromaBars.first()).toBeVisible();
+    expect(await chromaBars.count()).toBeGreaterThan(0);
+  });
+
+  test("edits a row via the Bandeja Abrir-editor button", async ({ page }) => {
+    await page.goto("/admin/products");
+
+    const list = page.getByRole("list", {
+      name: "Productos en el espejo",
+    });
+    await expect(list.getByRole("listitem")).toHaveCount(3, {
+      timeout: 10_000,
+    });
+
+    // Select the first seeded row ("Esmeralda Venus") — populates the
+    // Bandeja inspector. Drawer no longer opens on row click; the
+    // "Abrir editor" button inside the Bandeja's StoneHero (Phase D)
+    // is the explicit entry point for the edit flow.
     const venusRow = list.getByRole("listitem").filter({
       hasText: "Esmeralda Venus",
     });
     await expect(venusRow).toHaveCount(1);
     await venusRow.getByText("Esmeralda Venus").click();
 
-    // Drawer paper appears in the DOM. Use the MUI Drawer paper class
-    // as the scope for follow-up queries.
+    const bandeja = page.getByRole("complementary", { name: /Bandeja/i });
+    await expect(bandeja).toBeVisible();
+    const openEditorButton = bandeja.locator("[data-bandeja-open-editor]");
+    await expect(openEditorButton).toBeVisible();
+    await openEditorButton.click();
+
     const drawer = page.locator(".MuiDrawer-paper");
     await expect(drawer).toBeVisible();
     await expect(drawer.getByText("Sin cambios")).toBeVisible();
 
-    // Edit the Nombre field. The drawer uses MUI's `InputBase` with
-    // `inputProps.aria-label = "Nombre"`, so the textbox role lookup
-    // finds the underlying <input>; getByLabel can match the <label>
-    // first because the Typography label has no `for` attribute.
     const nombreInput = drawer.getByRole("textbox", { name: "Nombre" });
     await nombreInput.click();
     await nombreInput.fill("Esmeralda Venus Renombrada");
     await expect(nombreInput).toHaveValue("Esmeralda Venus Renombrada");
 
-    // The footer flips to count the unsaved change.
     await expect(drawer.getByText("1 cambio sin guardar")).toBeVisible();
 
-    // Save — drawer paper unmounts when the close transition finishes.
     await drawer.getByRole("button", { name: "Guardar" }).click();
     await expect(drawer).toHaveCount(0, { timeout: 5_000 });
 
-    // Optimistic update — the row in the ledger reflects the new name
-    // before the (stubbed) "Sheets push" resolves.
     await expect(list.getByText("Esmeralda Venus Renombrada")).toBeVisible();
 
-    // Reopen the renamed row and assert the audit log captured the
-    // before/after pair.
     await list
       .getByRole("listitem")
       .filter({ hasText: "Esmeralda Venus Renombrada" })
       .getByText("Esmeralda Venus Renombrada")
       .first()
       .click();
+    await expect(openEditorButton).toBeVisible();
+    await openEditorButton.click();
     const reopenedDrawer = page.locator(".MuiDrawer-paper");
     await expect(reopenedDrawer).toBeVisible();
     await expect(reopenedDrawer.getByText("Historial")).toBeVisible();
     await expect(reopenedDrawer.getByText(ADMIN_USER.name)).toBeVisible();
-    // Audit row contains both the previous and new name in the
-    // "before → after" stack.
     await expect(
       reopenedDrawer.getByText("Esmeralda Venus", { exact: true }),
     ).toBeVisible();
     await expect(
       reopenedDrawer.getByText("Esmeralda Venus Renombrada").first(),
     ).toBeVisible();
+  });
+
+  /**
+   * Phase G — create flow. Clicks the FotoHero "+ Nueva piedra"
+   * button, fills the Número + Nombre fields in the create-mode
+   * drawer, presses "Crear y sincronizar", and asserts (a) the toast
+   * with the new itemId, and (b) the row landing in the espejo list.
+   */
+  test("creates a new product via + Nueva piedra", async ({ page }) => {
+    await page.goto("/admin/products");
+
+    const list = page.getByRole("list", {
+      name: "Productos en el espejo",
+    });
+    // Wait for the seeded rows so we know the stub has hydrated before
+    // we exercise the create mutation.
+    await expect(list.getByRole("listitem")).toHaveCount(3, {
+      timeout: 10_000,
+    });
+
+    await page.locator("[data-foto-create]").click();
+
+    const drawer = page.locator(".MuiDrawer-paper");
+    await expect(drawer).toBeVisible();
+    await expect(drawer.getByText(/Nueva piedra/i).first()).toBeVisible();
+
+    await drawer.getByLabel(/Número/i).fill("999");
+    await drawer.getByLabel(/Nombre/i).fill("Test E2E");
+
+    await drawer.getByRole("button", { name: /Crear y sincronizar/i }).click();
+
+    await expect(page.getByText(/Creada · 999/i)).toBeVisible({
+      timeout: 5_000,
+    });
+    await expect(list.getByText("Test E2E")).toBeVisible({ timeout: 5_000 });
+  });
+
+  /**
+   * Phase H — quick-inline edit. The first seeded row ("Esmeralda
+   * Venus", itemId 32) starts at precioCOP 12_500_000. We click its
+   * inline price cell, type a new value, press Enter, and assert the
+   * row's price renders the new COP-formatted amount. The optimistic
+   * mirror patch should land in the row within a tick.
+   */
+  test("inline-edits price from a row", async ({ page }) => {
+    await page.goto("/admin/products");
+
+    const list = page.getByRole("list", {
+      name: "Productos en el espejo",
+    });
+    await expect(list.getByRole("listitem")).toHaveCount(3, {
+      timeout: 10_000,
+    });
+
+    const venusRow = list.getByRole("listitem").filter({
+      hasText: "Esmeralda Venus",
+    });
+    await expect(venusRow).toHaveCount(1);
+
+    // The price cell is the InlineEditCell with aria-label
+    // "Precio de Esmeralda Venus". Use `exact: true` so we don't also
+    // match the outer row button (whose accessible name concatenates
+    // every cell's label, including the price label).
+    const priceCell = venusRow.getByRole("button", {
+      name: "Precio de Esmeralda Venus",
+      exact: true,
+    });
+    await expect(priceCell).toBeVisible();
+    await priceCell.click();
+
+    const priceInput = venusRow.locator('input[type="number"]');
+    await expect(priceInput).toBeVisible();
+    await priceInput.fill("13000000");
+    await priceInput.press("Enter");
+
+    // The InlineEditCell collapses back to display state and the new
+    // formatted value lands on the row. Intl.NumberFormat("es-CO") with
+    // currency "COP" emits "$ 13.000.000" (NBSP after $). Match the
+    // digit groups loosely to avoid coupling to whitespace specifics.
+    await expect(venusRow.getByText(/13\.000\.000/)).toBeVisible({
+      timeout: 5_000,
+    });
   });
 });

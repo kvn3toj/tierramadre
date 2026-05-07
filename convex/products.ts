@@ -7,6 +7,12 @@ import {
 } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
+import {
+  qualityBucket,
+  caratBucket,
+  procedenciaBucket,
+  comboKey,
+} from "../src/utils/patron-buckets";
 
 // =============================================================================
 // QUERIES — read the mirror
@@ -277,11 +283,21 @@ export const _getInternal = internalQuery({
  *   ADMIN_SYNC_TOKEN — shared secret matching the Vercel-side token
  */
 export const pushToSheet = action({
-  args: { itemId: v.string(), auditId: v.id("productEdits") },
+  args: {
+    itemId: v.string(),
+    auditId: v.id("productEdits"),
+    // Phase G — create flow: "append" tells the Vercel endpoint that the
+    // row is new (no existing column-A item to validate against and the
+    // sheet must `values.append` rather than `values.update`). Defaults
+    // to "patch" so all existing callers (saveEdit, saveEditMany,
+    // retryPush) keep their semantics.
+    mode: v.optional(v.union(v.literal("patch"), v.literal("append"))),
+  },
   handler: async (
     ctx,
-    { itemId, auditId },
+    { itemId, auditId, mode },
   ): Promise<{ ok: boolean; message: string }> => {
+    const pushMode: "patch" | "append" = mode ?? "patch";
     const appUrl: string | undefined = process.env.APP_URL;
     const syncToken: string | undefined = process.env.ADMIN_SYNC_TOKEN;
     if (!appUrl || !syncToken) {
@@ -316,6 +332,7 @@ export const pushToSheet = action({
         body: JSON.stringify({
           itemId,
           rowIndex: row.rowIndex,
+          mode: pushMode,
           fields: {
             nombre: row.nombre ?? "",
             peso: row.peso ?? "",
@@ -449,11 +466,30 @@ export const saveEditMany = mutation({
     itemIds: v.array(v.string()),
     editorEmail: v.string(),
     editorName: v.optional(v.string()),
+    // Phase H — broadened from `{ estado }` to a saveEdit-compatible
+    // patch so the bulk action bar can also change precioCOP / coleccion
+    // / ubicacion in a single mutation. Each row still gets a per-field
+    // diff in its audit row (only fields whose value actually changes).
     patch: v.object({
-      estado: v.union(
-        v.literal("DISPONIBLE"),
-        v.literal("VENDIDA"),
-        v.literal("ASESOR"),
+      nombre: v.optional(v.string()),
+      peso: v.optional(v.string()),
+      color: v.optional(v.string()),
+      calidad: v.optional(v.string()),
+      cantidad: v.optional(v.number()),
+      talla: v.optional(v.string()),
+      medidas: v.optional(v.string()),
+      categoria: v.optional(v.string()),
+      precioCOP: v.optional(v.number()),
+      ubicacion: v.optional(v.string()),
+      coleccion: v.optional(v.string()),
+      caja: v.optional(v.string()),
+      estado: v.optional(
+        v.union(
+          v.literal("DISPONIBLE"),
+          v.literal("VENDIDA"),
+          v.literal("ASESOR"),
+          v.literal(""),
+        ),
       ),
     }),
   },
@@ -472,13 +508,33 @@ export const saveEditMany = mutation({
         missingCount++;
         continue;
       }
-      if (existing.estado === patch.estado) {
+
+      // Per-row diff — skip rows where every patched field already
+      // matches the mirror (mirrors saveEdit's "Sin cambios" path).
+      const changes: Array<{
+        field: string;
+        before: string | number | null;
+        after: string | number | null;
+      }> = [];
+      for (const [field, after] of Object.entries(patch)) {
+        if (after === undefined) continue;
+        const before = (existing as Record<string, unknown>)[field];
+        if (before === after) continue;
+        const beforeNorm =
+          typeof before === "string" || typeof before === "number"
+            ? before
+            : null;
+        const afterNorm =
+          typeof after === "string" || typeof after === "number" ? after : null;
+        changes.push({ field, before: beforeNorm, after: afterNorm });
+      }
+      if (changes.length === 0) {
         unchangedCount++;
         continue;
       }
 
       await ctx.db.patch(existing._id, {
-        estado: patch.estado,
+        ...patch,
         syncStatus: "pending" as const,
         syncError: undefined,
       });
@@ -488,13 +544,7 @@ export const saveEditMany = mutation({
         editorEmail,
         editorName,
         editedAt,
-        changes: [
-          {
-            field: "estado",
-            before: existing.estado,
-            after: patch.estado,
-          },
-        ],
+        changes,
         status: "pending" as const,
       });
 
@@ -630,8 +680,27 @@ export const lockStatus = query({
     return {
       holderEmail: existing.holderEmail,
       holderName: existing.holderName,
+      claimedAt: existing.claimedAt,
       expiresAt: existing.expiresAt,
     };
+  },
+});
+
+/**
+ * List all active (non-expired) soft locks.
+ *
+ * The page-level Bandeja subscribes to this so each row can render a
+ * small gold dot when another editor currently holds the lock. Filtering
+ * to non-expired locks happens client-side after `collect()` because the
+ * lock TTL is small (5 min) and the row cardinality is bounded by the
+ * number of admins editing concurrently — no index needed.
+ */
+export const listActiveLocks = query({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("productLocks").collect();
+    const now = new Date().toISOString();
+    return all.filter((l) => l.expiresAt > now);
   },
 });
 
@@ -845,3 +914,249 @@ function normalizeEstado(v: unknown): "DISPONIBLE" | "VENDIDA" | "ASESOR" | "" {
   if (s === "") return "DISPONIBLE"; // mirror the legacy default in get-treasure-sheets
   return "";
 }
+
+// =============================================================================
+// PATRONES — sold-stone aggregations grouped by procedencia × quality × carat
+// =============================================================================
+
+/**
+ * Patrones similar to a target item: scans VENDIDA rows over the
+ * lookback window, groups by procedencia × quality × carat-bucket,
+ * filters to combos that overlap the target stone, and returns the
+ * top 5 by count with median price.
+ */
+export const patronesFor = query({
+  args: { itemId: v.string(), lookbackDays: v.optional(v.number()) },
+  handler: async (ctx, { itemId, lookbackDays }) => {
+    const days = lookbackDays ?? 90;
+    const horizon = new Date(Date.now() - days * 86400000).toISOString();
+    const target = await ctx.db
+      .query("productInventory")
+      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .first();
+    if (!target) return { combos: [], total: 0 };
+
+    const targetProc = procedenciaBucket(target.coleccion);
+    const targetQual = qualityBucket(target.calidad);
+    const peso = Number(target.peso);
+    const targetCarat = caratBucket(peso);
+
+    const sold = await ctx.db
+      .query("productInventory")
+      .withIndex("by_estado", (q) => q.eq("estado", "VENDIDA"))
+      .collect();
+
+    const buckets = new Map<
+      string,
+      { count: number; prices: number[]; label: string }
+    >();
+    for (const p of sold) {
+      const ts = p.lastPushedAt ?? p.lastPulledAt;
+      if (ts < horizon) continue;
+      const proc = procedenciaBucket(p.coleccion);
+      const qual = qualityBucket(p.calidad);
+      const c = caratBucket(Number(p.peso));
+      if (!proc || !qual || !c) continue;
+      // Match if procedencia matches AND quality matches AND carat windows overlap.
+      if (targetProc && targetQual && targetCarat) {
+        if (proc !== targetProc) continue;
+        if (qual !== targetQual) continue;
+        const [tlo, thi] = targetCarat;
+        const [plo, phi] = c;
+        if (phi < tlo || plo > thi) continue;
+      }
+      const key = comboKey({
+        procedencia: proc,
+        quality: qual,
+        caratLo: c[0],
+        caratHi: c[1],
+      });
+      const entry = buckets.get(key) ?? {
+        count: 0,
+        prices: [],
+        label: `${proc} · ${qual} · ${c[0].toFixed(1)}–${c[1].toFixed(1)} ct`,
+      };
+      entry.count += 1;
+      if (typeof p.precioCOP === "number" && p.precioCOP > 0)
+        entry.prices.push(p.precioCOP);
+      buckets.set(key, entry);
+    }
+
+    const combos = Array.from(buckets.entries())
+      .map(([key, v]) => ({
+        key,
+        label: v.label,
+        count: v.count,
+        medianPriceCOP: v.prices.length ? median(v.prices) : null,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return { combos, total: combos.reduce((s, c) => s + c.count, 0) };
+  },
+});
+
+function median(arr: number[]): number {
+  const sorted = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2
+    ? sorted[mid]
+    : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+}
+
+/**
+ * Top-5 global patrones combos across all VENDIDA rows in the
+ * lookback window. Used by the FotoHero "patrones del semestre"
+ * sparkline / chip stack.
+ */
+export const patronesGlobalTop = query({
+  args: { lookbackDays: v.optional(v.number()) },
+  handler: async (ctx, { lookbackDays }) => {
+    const days = lookbackDays ?? 90;
+    const horizon = new Date(Date.now() - days * 86400000).toISOString();
+    const sold = await ctx.db
+      .query("productInventory")
+      .withIndex("by_estado", (q) => q.eq("estado", "VENDIDA"))
+      .collect();
+    const buckets = new Map<
+      string,
+      { count: number; prices: number[]; label: string }
+    >();
+    for (const p of sold) {
+      const ts = p.lastPushedAt ?? p.lastPulledAt;
+      if (ts < horizon) continue;
+      const proc = procedenciaBucket(p.coleccion);
+      const qual = qualityBucket(p.calidad);
+      const c = caratBucket(Number(p.peso));
+      if (!proc || !qual || !c) continue;
+      const key = comboKey({
+        procedencia: proc,
+        quality: qual,
+        caratLo: c[0],
+        caratHi: c[1],
+      });
+      const entry = buckets.get(key) ?? {
+        count: 0,
+        prices: [],
+        label: `${proc} · ${qual} · ${c[0].toFixed(1)}–${c[1].toFixed(1)} ct`,
+      };
+      entry.count += 1;
+      if (typeof p.precioCOP === "number" && p.precioCOP > 0)
+        entry.prices.push(p.precioCOP);
+      buckets.set(key, entry);
+    }
+    const combos = Array.from(buckets.entries())
+      .map(([key, v]) => ({
+        key,
+        label: v.label,
+        count: v.count,
+        medianPriceCOP: v.prices.length ? median(v.prices) : null,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+    return { combos, total: combos.reduce((s, c) => s + c.count, 0) };
+  },
+});
+
+/**
+ * N most recent edits across all products. Powers the
+ * Bandeja "Historial reciente" card.
+ */
+export const recentEdits = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit }) => {
+    const cap = Math.min(limit ?? 5, 50);
+    const edits = await ctx.db.query("productEdits").order("desc").take(cap);
+    return edits;
+  },
+});
+
+// =============================================================================
+// CREATE — "+ Nueva piedra" flow (Phase G)
+// =============================================================================
+
+/**
+ * createProduct — insert a new piece into the mirror and append it to
+ * the Google Sheet.
+ *
+ * Validates that `itemId` is non-empty and unique against the mirror
+ * (the same constraints `validateNewProduct` enforces in the UI), then:
+ *   1. Inserts a productInventory doc with rowIndex = max(existing) + 1
+ *      and syncStatus "pending" (mirrors the saveEdit pattern).
+ *   2. Inserts a productEdits audit row with `before: null` for every
+ *      provided field — the history reads "created with these values".
+ *   3. Schedules pushToSheet with `mode: "append"` so the Vercel
+ *      endpoint appends a new row instead of patching an existing one.
+ *
+ * Returns `{ itemId, productId, rowIndex }` so the caller can route the
+ * Bandeja inspector to the new row immediately (Convex reactivity will
+ * surface it in the list one tick later).
+ */
+export const createProduct = mutation({
+  args: {
+    itemId: v.string(),
+    editorEmail: v.string(),
+    editorName: v.optional(v.string()),
+    fields: v.object({
+      nombre: v.optional(v.string()),
+      peso: v.optional(v.string()),
+      color: v.optional(v.string()),
+      calidad: v.optional(v.string()),
+      cantidad: v.optional(v.number()),
+      talla: v.optional(v.string()),
+      medidas: v.optional(v.string()),
+      categoria: v.optional(v.string()),
+      precioCOP: v.optional(v.number()),
+      ubicacion: v.optional(v.string()),
+      coleccion: v.optional(v.string()),
+      caja: v.optional(v.string()),
+    }),
+  },
+  handler: async (ctx, { itemId, editorEmail, editorName, fields }) => {
+    const itemIdTrim = itemId.trim();
+    if (!itemIdTrim) throw new Error("El número de la piedra es obligatorio");
+    const dup = await ctx.db
+      .query("productInventory")
+      .withIndex("by_itemId", (q) => q.eq("itemId", itemIdTrim))
+      .first();
+    if (dup)
+      throw new Error(`Ya existe una piedra con el número ${itemIdTrim}`);
+
+    const all = await ctx.db.query("productInventory").collect();
+    const maxRow = all.reduce((m, p) => Math.max(m, p.rowIndex), 1);
+    const nextRow = maxRow + 1;
+    const now = new Date().toISOString();
+
+    const productId = await ctx.db.insert("productInventory", {
+      itemId: itemIdTrim,
+      rowIndex: nextRow,
+      ...fields,
+      estado: "DISPONIBLE" as const,
+      lastPulledAt: now,
+      syncStatus: "pending" as const,
+    });
+
+    const auditId = await ctx.db.insert("productEdits", {
+      itemId: itemIdTrim,
+      editorEmail,
+      editorName,
+      editedAt: now,
+      changes: Object.entries(fields)
+        .filter(([, value]) => value !== undefined)
+        .map(([field, after]) => ({
+          field,
+          before: null,
+          after: (after as string | number | null) ?? null,
+        })),
+      status: "pending" as const,
+    });
+
+    await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+      itemId: itemIdTrim,
+      auditId,
+      mode: "append" as const,
+    });
+
+    return { itemId: itemIdTrim, productId, rowIndex: nextRow };
+  },
+});

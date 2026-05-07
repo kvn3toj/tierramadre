@@ -2,7 +2,7 @@
  * ProductManagementPage — atelier admin panel ("Fotosíntesis").
  *
  * Composition:
- *   - LedgerHero: breadcrumb + display title + wax-stamp count + meter
+ *   - FotoHero: breadcrumb + display title + wax-stamp count + meter
  *   - AdminToolbar (sticky): search, filter, resync
  *   - InventoryRow list (virtualized-ready, currently flat)
  *   - EditDrawer (slides in from the right when a row is selected)
@@ -21,16 +21,17 @@
  *   Intent — find / open / edit / save without leaving the ledger.
  *   Palette — canvas (page) / panel (toolbar + drawer) / inset (inputs).
  *   Depth — borders-only across the whole page.
- *   Surfaces — atelier.surfaces.* only; no shadows, no glass.
+ *   Surfaces — foto.surfaces.* (cool-neutral white) for the page chrome;
+ *   atelier.* still drives type, spacing, motion, brass + focus accents.
  *   Typography — atelier.type.headline for page title; .meta for crumbs.
  *   Spacing — contentMaxWidth 1240, centered with 16px gutter on small.
  */
 
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Box, ButtonBase, Typography, Skeleton } from "@mui/material";
+import { Box, Typography, Skeleton } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
-import { getAtelier } from "../../../design-system";
+import { getAtelier, getFoto } from "../../../design-system";
 import {
   useConvexQuery,
   useConvexMutation,
@@ -58,8 +59,21 @@ import {
   type EditDrawerProduct,
   type EditDrawerPatch,
 } from "./EditDrawer";
-import { LedgerHero } from "./LedgerHero";
+import { FotoHero } from "./FotoHero";
+import { BulkActionBar, type BulkPriceMode } from "./BulkActionBar";
+import { Bandeja, type BandejaSelectedProduct } from "./Bandeja";
+import { StoneHero } from "./StoneHero";
+import { BloqueoCard } from "./BloqueoCard";
+import { HistorialCard } from "./HistorialCard";
+import { PatronCard } from "./PatronCard";
+import { useChromaSamples } from "../../../hooks/useChromaSamples";
+import { usePatrones, usePatronesGlobalTop } from "../../../hooks/usePatrones";
 import type { EstadoValue } from "./StatusPip";
+// Phase G — create flow
+import {
+  validateNewProduct,
+  type NewProductInput,
+} from "../../../utils/createProduct-validate";
 
 // =============================================================================
 // HELPERS — Convex doc → row / drawer-product
@@ -175,6 +189,7 @@ function toDrawerProduct(doc: ConvexProductDoc): EditDrawerProduct {
 export default function ProductManagementPage() {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
+  const foto = getFoto(theme.palette.mode === "dark" ? "dark" : "light");
   const { user } = useGoogleAuth();
   const { notify } = useNotification();
 
@@ -215,9 +230,22 @@ export default function ProductManagementPage() {
     });
   }, []);
 
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  // selectedBandejaId — driven by row click. Populates the right-hand
+  // Bandeja inspector. editingItemId — driven by Bandeja's "Abrir editor"
+  // button (wired in Phase D), opens the EditDrawer. Decoupling these
+  // states is the central UX change of Phase C.
+  const [selectedBandejaId, setSelectedBandejaId] = useState<string | null>(
+    null,
+  );
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isResyncing, setIsResyncing] = useState(false);
+
+  // === Phase G — create flow ===
+  // drawerMode dispatches the EditDrawer between "edit" and "create".
+  // editingItemId === "__new__" is the sentinel used while the create
+  // drawer is open (the drawer renders with product = null in this case).
+  const [drawerMode, setDrawerMode] = useState<"edit" | "create">("edit");
 
   // Bulk selection — set of itemIds checked in the row checkboxes.
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -239,13 +267,55 @@ export default function ProductManagementPage() {
     convexReady ? {} : "skip",
   );
 
+  // Phase I — active soft locks across the catalog. Drives the small
+  // gold dot beside the status pip on rows held by another editor.
+  // Reactive: claimLock/releaseLock notify the "locks" scope, so the
+  // dot appears/vanishes the moment a peer opens or closes a drawer.
+  const activeLocks = useConvexQuery(
+    convexApi.products.listActiveLocks,
+    convexReady ? {} : "skip",
+  ) as Array<{ itemId: string; holderEmail: string }> | undefined;
+
   const saveEdit = useConvexMutation(convexApi.products.saveEdit);
   const saveEditMany = useConvexMutation(convexApi.products.saveEditMany);
+  // Phase G — create flow mutation
+  const createProduct = useConvexMutation(
+    convexApi.products.createProduct,
+  ) as (args: {
+    itemId: string;
+    editorEmail: string;
+    editorName?: string;
+    fields: Omit<NewProductInput, "itemId">;
+  }) => Promise<{ itemId: string; productId: string; rowIndex: number }>;
+  // Phase D — lock takeover from Bandeja's Bloqueo card
+  const claimLock = useConvexMutation(convexApi.products.claimLock);
   const pullFromSheet = useConvexAction(convexApi.products.pullFromSheet);
   const retryPush = useConvexAction(convexApi.products.retryPush);
 
+  // Patrones — selected stone's combos when a row is active, else
+  // the catalog-wide top combos (rendered in the no-selection Bandeja).
+  const patrones = usePatrones(selectedBandejaId);
+  const patronesGlobal = usePatronesGlobalTop();
+
+  // Phase I — set of itemIds currently locked by someone other than the
+  // current editor. We exclude self-held locks so a user editing in one
+  // tab doesn't see a "locked by another" dot on their own row.
+  const lockedByOtherSet = useMemo(() => {
+    const out = new Set<string>();
+    if (!activeLocks) return out;
+    const myEmail = user?.email ?? "";
+    for (const lock of activeLocks) {
+      if (lock.holderEmail !== myEmail) out.add(lock.itemId);
+    }
+    return out;
+  }, [activeLocks, user?.email]);
+
   // Drive thumbnails — single batched call, cached in localStorage for 24h
   const { thumbnails } = useBatchThumbnails();
+
+  // Per-thumbnail dominant chroma — drives the row's left-edge
+  // ChromaBar. Lazy 1×1 canvas sample, persisted in localStorage 7d.
+  const { samples: chromaSamples } = useChromaSamples(thumbnails);
 
   // ─── Derived state ───────────────────────────────────────────────────
 
@@ -411,37 +481,126 @@ export default function ProductManagementPage() {
     thumbnails,
   ]);
 
-  const selected = useMemo(
+  // Drawer-target product — looked up by editingItemId (Bandeja's
+  // "Abrir editor" button, wired in Phase D). The "__new__" sentinel
+  // (Phase G) opens the drawer in create mode with no underlying doc.
+  const editing = useMemo(
     () =>
-      selectedItemId && products
-        ? (products.find((p) => p.itemId === selectedItemId) ?? null)
+      editingItemId && editingItemId !== "__new__" && products
+        ? (products.find((p) => p.itemId === editingItemId) ?? null)
         : null,
-    [selectedItemId, products],
+    [editingItemId, products],
   );
+
+  // === Phase G — create flow ===
+  // Set of every itemId currently in the mirror — fed to validateNewProduct
+  // for the duplicate-id check. Recomputed on every products refresh.
+  const existingItemIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (products) for (const p of products) ids.add(p.itemId);
+    return ids;
+  }, [products]);
+
+  // Bandeja-target product — looked up by selectedBandejaId (row click).
+  const selectedForBandeja = useMemo(
+    () =>
+      selectedBandejaId && products
+        ? (products.find((p) => p.itemId === selectedBandejaId) ?? null)
+        : null,
+    [selectedBandejaId, products],
+  );
+
+  // Shape the Bandeja's input — adds the resolved thumbnail + chroma
+  // sample alongside the doc's data so the inspector can render
+  // immediately, without re-querying the thumbnail map per child card.
+  const selectedBandeja: BandejaSelectedProduct | null = useMemo(() => {
+    if (!selectedForBandeja) return null;
+    const itemNumber = Number(selectedForBandeja.itemId);
+    return {
+      itemId: selectedForBandeja.itemId,
+      nombre: selectedForBandeja.nombre,
+      peso: selectedForBandeja.peso,
+      color: selectedForBandeja.color,
+      calidad: selectedForBandeja.calidad,
+      coleccion: selectedForBandeja.coleccion,
+      precioCOP: selectedForBandeja.precioCOP,
+      thumbnailUrl: Number.isFinite(itemNumber)
+        ? thumbnails[itemNumber]?.url
+        : undefined,
+      chromaHex: Number.isFinite(itemNumber)
+        ? chromaSamples[itemNumber]
+        : undefined,
+    };
+  }, [selectedForBandeja, thumbnails, chromaSamples]);
 
   // Close drawer with Escape when not saving
   useEffect(() => {
-    if (!selectedItemId) return;
+    if (!editingItemId) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isSaving) {
-        setSelectedItemId(null);
+        // Phase G — also reset drawerMode so a follow-up open isn't
+        // stuck in create mode.
+        setEditingItemId(null);
+        setDrawerMode("edit");
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedItemId, isSaving]);
+  }, [editingItemId, isSaving]);
 
   // ─── Handlers ────────────────────────────────────────────────────────
 
+  // === Phase G — create flow ===
+  // Open the drawer in create mode by setting both the sentinel id and
+  // drawerMode together so the EditDrawer renders empty in a single tick.
+  const handleCreateNew = useCallback(() => {
+    setDrawerMode("create");
+    setEditingItemId("__new__");
+  }, []);
+
+  // Unified save handler — dispatches on mode. Edit path mirrors the
+  // pre-Phase-G handler unchanged (saveEdit + diff-based notify). Create
+  // path validates with validateNewProduct, then fires createProduct.
   const handleSave = useCallback(
-    async (itemId: string, patch: EditDrawerPatch) => {
+    async (
+      itemId: string | undefined,
+      payload: EditDrawerPatch | NewProductInput,
+      mode: "edit" | "create",
+    ) => {
       if (!user?.email) {
         notify("Tu sesión no tiene email. Vuelve a iniciar sesión.", "error");
         return;
       }
-      if (Object.keys(patch).length === 0) return;
       setIsSaving(true);
       try {
+        if (mode === "create") {
+          const validated = validateNewProduct(
+            payload as NewProductInput,
+            existingItemIds,
+          );
+          if (!validated.ok) {
+            notify(validated.error, "error");
+            return;
+          }
+          const { itemId: createdId, ...fields } = validated.value;
+          const result = await createProduct({
+            itemId: createdId,
+            editorEmail: user.email,
+            editorName: user.name,
+            fields,
+          });
+          notify(
+            `Creada · ${result.itemId} · sincronizando con la hoja`,
+            "success",
+          );
+          setDrawerMode("edit");
+          setEditingItemId(null);
+          return;
+        }
+
+        // mode === "edit"
+        const patch = payload as EditDrawerPatch;
+        if (!itemId || Object.keys(patch).length === 0) return;
         const result = await saveEdit({
           itemId,
           editorEmail: user.email,
@@ -454,16 +613,28 @@ export default function ProductManagementPage() {
           } en la hoja en breve`,
           "success",
         );
-        setSelectedItemId(null);
+        setEditingItemId(null);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Error desconocido";
-        notify(`No se pudo guardar: ${msg}`, "error");
+        notify(
+          mode === "create"
+            ? `No se pudo crear: ${msg}`
+            : `No se pudo guardar: ${msg}`,
+          "error",
+        );
       } finally {
         setIsSaving(false);
       }
     },
-    [saveEdit, user?.email, user?.name, notify],
+    [saveEdit, createProduct, existingItemIds, user?.email, user?.name, notify],
   );
+
+  // Close drawer on cancel — also reset drawerMode so the next open
+  // starts in edit mode unless explicitly entered via handleCreateNew.
+  const handleCloseDrawer = useCallback(() => {
+    setEditingItemId(null);
+    setDrawerMode("edit");
+  }, []);
 
   const handleResync = useCallback(async () => {
     setIsResyncing(true);
@@ -480,6 +651,62 @@ export default function ProductManagementPage() {
       setIsResyncing(false);
     }
   }, [pullFromSheet, notify]);
+
+  // Bandeja takeover — claimLock for the selected stone. The mutation
+  // doesn't accept a `force` flag yet (Phase J/I will add it); when it
+  // fails because someone else holds an unexpired lock, surface the
+  // holder's identity in the toast.
+  const handleClaimLock = useCallback(async () => {
+    if (!selectedBandejaId) return;
+    if (!user?.email) {
+      notify("Tu sesión no tiene email. Vuelve a iniciar sesión.", "error");
+      return;
+    }
+    try {
+      const result = await claimLock({
+        itemId: selectedBandejaId,
+        holderEmail: user.email,
+        holderName: user.name,
+      });
+      if (result?.ok) {
+        notify("Control reclamado", "success");
+      } else if (result && "holder" in result) {
+        const who = result.holder.name ?? result.holder.email;
+        notify(`No se pudo reclamar el bloqueo: ${who} aún edita`, "error");
+      } else {
+        notify("No se pudo reclamar el bloqueo", "error");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "error";
+      notify(`No se pudo reclamar el bloqueo: ${msg}`, "error");
+    }
+  }, [claimLock, selectedBandejaId, user?.email, user?.name, notify]);
+
+  // === Phase H — inline edit ===
+  // Forward a single-field patch from a row's InlineEditCell to the
+  // saveEdit mutation. Mirrors the drawer's save path but skips the
+  // toast on success — the row updates optimistically, which is its
+  // own confirmation. Errors still surface via the notification system.
+  const handleInlineEdit = useCallback(
+    async (itemId: string, patch: Record<string, unknown>) => {
+      if (!user?.email) {
+        notify("Tu sesión no tiene email. Vuelve a iniciar sesión.", "error");
+        return;
+      }
+      try {
+        await saveEdit({
+          itemId,
+          editorEmail: user.email,
+          editorName: user.name,
+          patch,
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Error desconocido";
+        notify(`No se pudo guardar: ${msg}`, "error");
+      }
+    },
+    [saveEdit, user?.email, user?.name, notify],
+  );
 
   const handleRetry = useCallback(
     async (itemId: string) => {
@@ -558,10 +785,139 @@ export default function ProductManagementPage() {
     ],
   );
 
+  // === Phase H — bulk price / coleccion / ubicacion ===
+  // For "absolute" we can use saveEditMany (single shared patch).
+  // For "delta" / "percent" we need per-item math, so iterate with
+  // saveEdit and Promise.all the calls.
+  const handleBulkChangePrice = useCallback(
+    async ({ mode, value }: { mode: BulkPriceMode; value: number }) => {
+      if (!user?.email || selectedIds.size === 0) return;
+      setIsBulkSaving(true);
+      try {
+        if (mode === "absolute") {
+          await saveEditMany({
+            itemIds: Array.from(selectedIds),
+            editorEmail: user.email,
+            editorName: user.name,
+            patch: { precioCOP: value },
+          });
+        } else {
+          const ops = Array.from(selectedIds).map(async (id) => {
+            const p = products?.find((q) => q.itemId === id);
+            if (!p || typeof p.precioCOP !== "number") return;
+            const next =
+              mode === "delta"
+                ? p.precioCOP + value
+                : Math.round(p.precioCOP * (1 + value / 100));
+            await saveEdit({
+              itemId: id,
+              editorEmail: user.email!,
+              editorName: user.name,
+              patch: { precioCOP: next },
+            });
+          });
+          await Promise.all(ops);
+        }
+        notify(
+          `Precio actualizado en ${selectedIds.size} piedra${
+            selectedIds.size === 1 ? "" : "s"
+          }`,
+          "success",
+        );
+        clearSelection();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "error";
+        notify(`No se pudo actualizar precio: ${msg}`, "error");
+      } finally {
+        setIsBulkSaving(false);
+      }
+    },
+    [
+      selectedIds,
+      user?.email,
+      user?.name,
+      products,
+      saveEdit,
+      saveEditMany,
+      notify,
+      clearSelection,
+    ],
+  );
+
+  const handleBulkChangeColeccion = useCallback(
+    async (value: string) => {
+      if (!user?.email || selectedIds.size === 0) return;
+      setIsBulkSaving(true);
+      try {
+        await saveEditMany({
+          itemIds: Array.from(selectedIds),
+          editorEmail: user.email,
+          editorName: user.name,
+          patch: { coleccion: value },
+        });
+        notify(
+          `Colección actualizada en ${selectedIds.size} piedra${
+            selectedIds.size === 1 ? "" : "s"
+          }`,
+          "success",
+        );
+        clearSelection();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "error";
+        notify(`No se pudo actualizar colección: ${msg}`, "error");
+      } finally {
+        setIsBulkSaving(false);
+      }
+    },
+    [
+      selectedIds,
+      user?.email,
+      user?.name,
+      saveEditMany,
+      notify,
+      clearSelection,
+    ],
+  );
+
+  const handleBulkChangeUbicacion = useCallback(
+    async (value: string) => {
+      if (!user?.email || selectedIds.size === 0) return;
+      setIsBulkSaving(true);
+      try {
+        await saveEditMany({
+          itemIds: Array.from(selectedIds),
+          editorEmail: user.email,
+          editorName: user.name,
+          patch: { ubicacion: value },
+        });
+        notify(
+          `Ubicación actualizada en ${selectedIds.size} piedra${
+            selectedIds.size === 1 ? "" : "s"
+          }`,
+          "success",
+        );
+        clearSelection();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "error";
+        notify(`No se pudo actualizar ubicación: ${msg}`, "error");
+      } finally {
+        setIsBulkSaving(false);
+      }
+    },
+    [
+      selectedIds,
+      user?.email,
+      user?.name,
+      saveEditMany,
+      notify,
+      clearSelection,
+    ],
+  );
+
   // ─── Render ──────────────────────────────────────────────────────────
 
   if (!convexReady) {
-    return <ConvexUnavailable atelier={atelier} />;
+    return <ConvexUnavailable atelier={atelier} foto={foto} />;
   }
 
   const isLoading = products === undefined;
@@ -571,117 +927,186 @@ export default function ProductManagementPage() {
     <Box
       sx={{
         minHeight: "100vh",
-        backgroundColor: atelier.surfaces.canvas,
+        backgroundColor: foto.surfaces.canvas,
         color: atelier.ink.primary,
       }}
     >
       {/* Editorial hero — full-bleed, breathes outside the content gutter */}
-      <LedgerHero
-        atelier={atelier}
+      <FotoHero
+        foto={foto}
         total={stats?.total ?? products?.length ?? 0}
         available={statusCounts.available}
         consigned={statusCounts.consigned}
         sold={statusCounts.sold}
-        pending={stats?.pending ?? 0}
-        errored={stats?.errored ?? 0}
+        sparkline={[3, 5, 4, 7, 5, 9, 7, 10]} // placeholder until Phase E wires patronesGlobalTop weekly buckets
         lastPull={stats?.lastPull ?? null}
         isResyncing={isResyncing}
         onResync={handleResync}
+        // Phase G — wired
+        onCreateNew={handleCreateNew}
       />
 
+      {/* Workbench split — ledger on the left, Bandeja inspector on
+          the right. Below `md` (900px), Bandeja stacks under the
+          ledger so phones / narrow tablets stay single-column. */}
       <Box
         sx={{
-          maxWidth: `${atelier.spacing.contentMaxWidth}px`,
+          maxWidth: 1440,
           mx: "auto",
-          px: { xs: 2, md: 3 },
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            md: "minmax(0, 1.7fr) minmax(0, 1fr)",
+            lg: "minmax(0, 1.6fr) minmax(0, 1fr)",
+          },
         }}
       >
-        {/* Toolbar */}
-        <AdminToolbar
-          search={search}
-          onSearchChange={setSearch}
-          filter={filter}
-          onFilterChange={setFilter}
-          collection={collection}
-          onCollectionChange={setCollection}
-          collections={collections}
-          onlyWithImages={onlyWithImages}
-          onOnlyWithImagesChange={setOnlyWithImages}
-          onlyMissingPrice={onlyMissingPrice}
-          onOnlyMissingPriceChange={setOnlyMissingPrice}
-          advanced={advanced}
-          onAdvancedChange={updateAdvanced}
-          onAdvancedReset={resetAdvanced}
-          advancedOptions={advancedOptions}
-          total={stats?.total ?? products?.length ?? 0}
-          filteredCount={filteredRows.length}
-        />
-
-        {/* List */}
         <Box
-          role="list"
-          aria-label="Productos en el espejo"
           sx={{
-            backgroundColor: atelier.surfaces.canvas,
-            borderLeft: `1px solid ${atelier.surfaces.edge}`,
-            borderRight: `1px solid ${atelier.surfaces.edge}`,
-            borderBottom: `1px solid ${atelier.surfaces.edge}`,
-            overflow: "hidden",
+            borderRight: { md: `1px solid ${foto.surfaces.edge}` },
+            minWidth: 0,
+            px: { xs: 2, md: 3 },
           }}
         >
-          {isLoading && <ListSkeletons atelier={atelier} count={8} />}
-          {!isLoading && isEmpty && (
-            <EmptyState
-              atelier={atelier}
-              hasFilter={!!search.trim() || filter !== "all"}
-              onResync={handleResync}
-              isResyncing={isResyncing}
-            />
-          )}
-          {!isLoading &&
-            filteredRows.map((doc) => {
-              const itemNumber = Number(doc.itemId);
-              const thumb = Number.isFinite(itemNumber)
-                ? thumbnails[itemNumber]?.url
-                : undefined;
-              return (
-                <Box key={doc.itemId} role="listitem">
-                  <InventoryRow
-                    row={toRow(doc)}
-                    isActive={selectedItemId === doc.itemId}
-                    isSelected={selectedIds.has(doc.itemId)}
-                    thumbnailUrl={thumb}
-                    onOpen={setSelectedItemId}
-                    onToggleSelect={toggleSelect}
-                    onRetry={handleRetry}
-                  />
-                </Box>
-              );
-            })}
-        </Box>
+          {/* Toolbar */}
+          <AdminToolbar
+            foto={foto}
+            search={search}
+            onSearchChange={setSearch}
+            filter={filter}
+            onFilterChange={setFilter}
+            collection={collection}
+            onCollectionChange={setCollection}
+            collections={collections}
+            onlyWithImages={onlyWithImages}
+            onOnlyWithImagesChange={setOnlyWithImages}
+            onlyMissingPrice={onlyMissingPrice}
+            onOnlyMissingPriceChange={setOnlyMissingPrice}
+            advanced={advanced}
+            onAdvancedChange={updateAdvanced}
+            onAdvancedReset={resetAdvanced}
+            advancedOptions={advancedOptions}
+            total={stats?.total ?? products?.length ?? 0}
+            filteredCount={filteredRows.length}
+          />
 
-        {/* Footer count */}
-        {!isLoading && !isEmpty && (
-          <Typography
+          {/* List */}
+          <Box
+            role="list"
+            aria-label="Productos en el espejo"
             sx={{
-              ...atelier.type.label,
-              color: atelier.ink.tertiary,
-              py: 3,
-              textAlign: "center",
+              backgroundColor: foto.surfaces.canvas,
+              borderLeft: `1px solid ${foto.surfaces.edge}`,
+              borderRight: `1px solid ${foto.surfaces.edge}`,
+              borderBottom: `1px solid ${foto.surfaces.edge}`,
+              overflow: "hidden",
             }}
           >
-            {filteredRows.length} de {stats?.total ?? products?.length ?? 0} en
-            el espejo
-          </Typography>
-        )}
+            {isLoading && (
+              <ListSkeletons atelier={atelier} foto={foto} count={8} />
+            )}
+            {!isLoading && isEmpty && (
+              <EmptyState
+                atelier={atelier}
+                foto={foto}
+                hasFilter={!!search.trim() || filter !== "all"}
+                onResync={handleResync}
+                isResyncing={isResyncing}
+              />
+            )}
+            {!isLoading &&
+              filteredRows.map((doc) => {
+                const itemNumber = Number(doc.itemId);
+                const thumb = Number.isFinite(itemNumber)
+                  ? thumbnails[itemNumber]?.url
+                  : undefined;
+                const chromaHex = Number.isFinite(itemNumber)
+                  ? chromaSamples[itemNumber]
+                  : undefined;
+                return (
+                  <Box key={doc.itemId} role="listitem">
+                    <InventoryRow
+                      row={toRow(doc)}
+                      isActive={selectedBandejaId === doc.itemId}
+                      isSelected={selectedIds.has(doc.itemId)}
+                      thumbnailUrl={thumb}
+                      chromaHex={chromaHex}
+                      foto={foto}
+                      onOpen={setSelectedBandejaId}
+                      onToggleSelect={toggleSelect}
+                      onRetry={handleRetry}
+                      // === Phase H — inline edit ===
+                      onInlineEdit={handleInlineEdit}
+                      // === Phase I — lock indicator ===
+                      isLockedByOther={lockedByOtherSet.has(doc.itemId)}
+                    />
+                  </Box>
+                );
+              })}
+          </Box>
+
+          {/* Footer count */}
+          {!isLoading && !isEmpty && (
+            <Typography
+              sx={{
+                ...atelier.type.label,
+                color: atelier.ink.tertiary,
+                py: 3,
+                textAlign: "center",
+              }}
+            >
+              {filteredRows.length} de {stats?.total ?? products?.length ?? 0}{" "}
+              en el espejo
+            </Typography>
+          )}
+        </Box>
+
+        {/* Bandeja — StoneHero, PatronCard, HistorialCard, BloqueoCard
+            for the selected row; global patrones + read-only historial
+            when nothing is selected. */}
+        <Bandeja foto={foto} selected={selectedBandeja}>
+          {selectedBandeja && (
+            <>
+              <StoneHero
+                foto={foto}
+                itemId={selectedBandeja.itemId}
+                nombre={selectedBandeja.nombre}
+                peso={selectedBandeja.peso}
+                coleccion={selectedBandeja.coleccion}
+                calidad={selectedBandeja.calidad}
+                precioCOP={selectedBandeja.precioCOP}
+                thumbnailUrl={selectedBandeja.thumbnailUrl}
+                chromaHex={selectedBandeja.chromaHex}
+                onOpenEditor={() => setEditingItemId(selectedBandeja.itemId)}
+              />
+              <PatronCard foto={foto} data={patrones} variant="selected" />
+              <HistorialCard foto={foto} itemId={selectedBandeja.itemId} />
+              <BloqueoCard
+                foto={foto}
+                itemId={selectedBandeja.itemId}
+                currentEmail={user?.email ?? null}
+                onClaim={handleClaimLock}
+              />
+            </>
+          )}
+          {!selectedBandeja && (
+            <>
+              <PatronCard foto={foto} data={patronesGlobal} variant="global" />
+              <HistorialCard foto={foto} itemId={null} />
+            </>
+          )}
+        </Bandeja>
       </Box>
 
-      {/* Drawer */}
+      {/* Drawer — opened by Bandeja's "Abrir editor" button (Phase D)
+          or the FotoHero "+ Nueva piedra" button (Phase G, mode="create"). */}
       <EditDrawer
-        open={!!selectedItemId}
-        product={selected ? toDrawerProduct(selected) : null}
+        open={!!editingItemId}
+        product={editing ? toDrawerProduct(editing) : null}
         isSaving={isSaving}
-        onClose={() => setSelectedItemId(null)}
+        // Phase G — create mode
+        mode={drawerMode}
+        onClose={handleCloseDrawer}
         onSave={handleSave}
         onResync={handleResync}
         isResyncing={isResyncing}
@@ -694,9 +1119,13 @@ export default function ProductManagementPage() {
         visible={selectedIds.size > 0}
         count={selectedIds.size}
         isSaving={isBulkSaving}
-        atelier={atelier}
+        foto={foto}
+        collections={collections}
         onMarkAvailable={() => void handleBulkMark("DISPONIBLE")}
         onMarkSold={() => void handleBulkMark("VENDIDA")}
+        onChangePrice={(next) => void handleBulkChangePrice(next)}
+        onChangeColeccion={(v) => void handleBulkChangeColeccion(v)}
+        onChangeUbicacion={(v) => void handleBulkChangeUbicacion(v)}
         onClear={clearSelection}
       />
     </Box>
@@ -709,9 +1138,11 @@ export default function ProductManagementPage() {
 
 function ListSkeletons({
   atelier,
+  foto,
   count,
 }: {
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
   count: number;
 }) {
   return (
@@ -722,7 +1153,7 @@ function ListSkeletons({
           sx={{
             px: `${atelier.spacing.rowPaddingX}px`,
             py: `${atelier.spacing.rowPaddingY}px`,
-            borderBottom: `1px solid ${atelier.surfaces.edge}`,
+            borderBottom: `1px solid ${foto.surfaces.edge}`,
             display: "grid",
             gridTemplateColumns: {
               xs: "16px 56px 12px 32px minmax(0, 1fr) 84px 116px 10px",
@@ -759,11 +1190,13 @@ function ListSkeletons({
 
 function EmptyState({
   atelier,
+  foto: _foto,
   hasFilter,
   onResync,
   isResyncing,
 }: {
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
   hasFilter: boolean;
   onResync: () => void;
   isResyncing: boolean;
@@ -830,14 +1263,16 @@ function EmptyState({
 
 function ConvexUnavailable({
   atelier,
+  foto,
 }: {
   atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
 }) {
   return (
     <Box
       sx={{
         minHeight: "100vh",
-        backgroundColor: atelier.surfaces.canvas,
+        backgroundColor: foto.surfaces.canvas,
         color: atelier.ink.primary,
         display: "flex",
         alignItems: "center",
@@ -866,198 +1301,7 @@ function ConvexUnavailable({
   );
 }
 
-/**
- * BulkActionBar — fixed-bottom action bar for the row checkbox selection.
- *
- * Visible only while at least one row is checked. Atelier-pure: panel
- * surface, hairline top edge, no shadows. Two primary actions echo the
- * status pip palette so the bar reads as an extension of the ledger,
- * not a notification.
- *
- * Always mounted (toggling visibility via transform) so the slide-out
- * runs on the last unselect and the buttons can finish a click animation
- * even as the count hits zero.
- */
-function BulkActionBar({
-  visible,
-  count,
-  isSaving,
-  atelier,
-  onMarkAvailable,
-  onMarkSold,
-  onClear,
-}: {
-  visible: boolean;
-  count: number;
-  isSaving: boolean;
-  atelier: ReturnType<typeof getAtelier>;
-  onMarkAvailable: () => void;
-  onMarkSold: () => void;
-  onClear: () => void;
-}) {
-  return (
-    <Box
-      role="region"
-      aria-label="Acciones en lote"
-      aria-hidden={!visible}
-      sx={{
-        position: "fixed",
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 12,
-        backgroundColor: atelier.surfaces.panel,
-        borderTop: `1px solid ${atelier.surfaces.edgeStrong}`,
-        transform: visible ? "translateY(0)" : "translateY(100%)",
-        transition:
-          "transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 200ms linear",
-        opacity: visible ? 1 : 0,
-        pointerEvents: visible ? "auto" : "none",
-      }}
-    >
-      <Box
-        sx={{
-          maxWidth: `${atelier.spacing.contentMaxWidth}px`,
-          mx: "auto",
-          px: { xs: 2, md: 3 },
-          py: "12px",
-          display: "flex",
-          alignItems: "center",
-          gap: 2,
-          flexWrap: "wrap",
-        }}
-      >
-        <Typography
-          sx={{
-            ...atelier.type.label,
-            color: atelier.ink.tertiary,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <Box
-            aria-hidden
-            sx={{
-              width: "8px",
-              height: "8px",
-              borderRadius: "1px",
-              backgroundColor: atelier.brass.base,
-              flexShrink: 0,
-            }}
-          />
-          <Box
-            component="span"
-            sx={{ ...atelier.type.data, color: atelier.ink.primary }}
-          >
-            {count.toLocaleString("es-CO")}
-          </Box>
-          {count === 1 ? "seleccionada" : "seleccionadas"}
-        </Typography>
-
-        <Box sx={{ flex: 1 }} />
-
-        <BulkActionButton
-          atelier={atelier}
-          onClick={onMarkAvailable}
-          disabled={isSaving || count === 0}
-          pipColor={atelier.status.available.pip}
-        >
-          Marcar como disponible ({count})
-        </BulkActionButton>
-        <BulkActionButton
-          atelier={atelier}
-          onClick={onMarkSold}
-          disabled={isSaving || count === 0}
-          pipColor={atelier.status.sold.pip}
-        >
-          Marcar como vendida ({count})
-        </BulkActionButton>
-
-        <ButtonBase
-          onClick={onClear}
-          disabled={isSaving || count === 0}
-          disableRipple
-          sx={{
-            ...atelier.type.label,
-            color: atelier.ink.secondary,
-            px: "12px",
-            py: "8px",
-            borderRadius: "4px",
-            border: `1px solid ${atelier.surfaces.edgeStrong}`,
-            transition: atelier.motion.rowHover,
-            "&:hover": { backgroundColor: atelier.surfaces.rowHover },
-            "&:focus-visible": {
-              outline: `2px solid ${atelier.focus.ring}`,
-              outlineOffset: "2px",
-            },
-            "&:disabled": { opacity: 0.5, cursor: "default" },
-          }}
-        >
-          Limpiar
-        </ButtonBase>
-      </Box>
-    </Box>
-  );
-}
-
-/**
- * Atelier-styled bulk action button. The pip color appears as a small
- * square mark to the left of the label so the action's status outcome
- * is legible at a glance without painting the whole button.
- */
-function BulkActionButton({
-  atelier,
-  onClick,
-  disabled,
-  pipColor,
-  children,
-}: {
-  atelier: ReturnType<typeof getAtelier>;
-  onClick: () => void;
-  disabled: boolean;
-  pipColor: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <ButtonBase
-      onClick={onClick}
-      disabled={disabled}
-      disableRipple
-      sx={{
-        ...atelier.type.label,
-        color: atelier.ink.primary,
-        backgroundColor: atelier.surfaces.canvas,
-        border: `1px solid ${atelier.surfaces.edgeStrong}`,
-        borderRadius: "4px",
-        px: "14px",
-        py: "8px",
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "8px",
-        transition: atelier.motion.rowHover,
-        "&:hover": {
-          backgroundColor: atelier.surfaces.rowHover,
-          borderColor: atelier.brass.base,
-        },
-        "&:focus-visible": {
-          outline: `2px solid ${atelier.focus.ring}`,
-          outlineOffset: "2px",
-        },
-        "&:disabled": { opacity: 0.5, cursor: "default" },
-      }}
-    >
-      <Box
-        aria-hidden
-        sx={{
-          width: "8px",
-          height: "8px",
-          borderRadius: "1px",
-          backgroundColor: pipColor,
-          flexShrink: 0,
-        }}
-      />
-      <Box component="span">{children}</Box>
-    </ButtonBase>
-  );
-}
+// === Phase H — BulkActionBar moved to its own module ===
+// See `./BulkActionBar.tsx`. The new component receives Fotosíntesis
+// tokens (`foto`) instead of atelier and exposes additional callbacks
+// for inline price / colección / ubicación editing in lote.
