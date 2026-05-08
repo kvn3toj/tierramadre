@@ -201,6 +201,12 @@ export default defineSchema({
       v.literal("otros"),
     ),
     notas: v.optional(v.string()),
+    /**
+     * Set when a rename is in flight: holds the prior natural-key value so
+     * the Sheets safety check can validate column A against the OLD name
+     * before overwriting it. Cleared on successful push.
+     */
+    pendingPreviousIdValue: v.optional(v.string()),
     ...syncFields,
   })
     .index("by_nit", ["nit"])
@@ -263,6 +269,8 @@ export default defineSchema({
     tipo: v.union(v.literal("embajador"), v.literal("final")),
     /** Free-form id pointing to the asesores directory (when tipo = "embajador"). */
     asesorId: v.optional(v.string()),
+    /** See providers.pendingPreviousIdValue — same rename-safety mechanism. */
+    pendingPreviousIdValue: v.optional(v.string()),
     ...syncFields,
   })
     .index("by_nit", ["nit"])

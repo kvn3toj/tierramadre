@@ -17,9 +17,17 @@ export async function pushTableRowToVercel(args: {
   rowIndex: number;
   mode: "patch" | "append";
   idValue: string;
+  /**
+   * When the natural-key column is being renamed (providers.nombreORazonSocial,
+   * clients.nombre), pass the OLD value here. The Vercel endpoint validates
+   * column A of the target sheet row against `previousIdValue` (the OLD name
+   * still in the sheet), then overwrites column A with `idValue` (the NEW
+   * name). Without this, the safety check would 409 on every rename.
+   */
+  previousIdValue?: string;
   fields: Record<string, string>;
 }): Promise<{ ok: boolean; message: string }> {
-  const { table, rowIndex, mode, idValue, fields } = args;
+  const { table, rowIndex, mode, idValue, previousIdValue, fields } = args;
 
   const appUrl = process.env.APP_URL;
   const syncToken = process.env.ADMIN_SYNC_TOKEN;
@@ -37,7 +45,14 @@ export async function pushTableRowToVercel(args: {
         "content-type": "application/json",
         "x-admin-sync-token": syncToken,
       },
-      body: JSON.stringify({ table, rowIndex, mode, idValue, fields }),
+      body: JSON.stringify({
+        table,
+        rowIndex,
+        mode,
+        idValue,
+        previousIdValue,
+        fields,
+      }),
     });
     if (!res.ok) {
       const text = await res.text();

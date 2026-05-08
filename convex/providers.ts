@@ -91,8 +91,19 @@ export const update = mutation({
   handler: async (ctx, { id, patch }) => {
     const existing = await ctx.db.get(id);
     if (!existing) throw new Error(`Provider ${id} not found`);
+
+    // Detect a rename of the natural-key column: stash the prior value so
+    // _pushToSheet can hand it to the Sheets safety check (column A still
+    // holds the old name until the push lands). _markPushed clears it.
+    const renaming =
+      patch.nombreORazonSocial !== undefined &&
+      patch.nombreORazonSocial !== existing.nombreORazonSocial;
+
     await ctx.db.patch(id, {
       ...patch,
+      ...(renaming
+        ? { pendingPreviousIdValue: existing.nombreORazonSocial }
+        : {}),
       syncStatus: "pending" as const,
       syncError: undefined,
     });
@@ -116,6 +127,9 @@ export const _markPushed = internalMutation({
       syncStatus: "synced" as const,
       lastPushedAt: new Date().toISOString(),
       syncError: undefined,
+      // Clear the rename-safety stash now that column A in the sheet
+      // matches the new value.
+      pendingPreviousIdValue: undefined,
     });
   },
 });
@@ -153,6 +167,7 @@ export const _pushToSheet = action({
       rowIndex: row.rowIndex,
       mode,
       idValue: row.nombreORazonSocial,
+      previousIdValue: row.pendingPreviousIdValue,
       fields: marshalRow("providers", row),
     });
     if (result.ok) {

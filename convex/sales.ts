@@ -94,6 +94,9 @@ export const create = mutation({
     if (args.itemIds.length === 0) {
       throw new Error("Una venta debe incluir al menos un ítem");
     }
+    if (new Set(args.itemIds).size !== args.itemIds.length) {
+      throw new Error("itemIds duplicados en la venta");
+    }
     if (args.totalCOP <= 0) throw new Error("totalCOP debe ser > 0");
     if (args.formaPago === "credito" && !args.fechaVencimiento) {
       throw new Error("Crédito requiere fechaVencimiento");

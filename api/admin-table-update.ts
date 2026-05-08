@@ -44,6 +44,12 @@ interface UpdateBody {
   rowIndex?: number;
   mode?: "patch" | "append";
   idValue?: string;
+  /**
+   * On a rename, the OLD natural-key value still in column A of the sheet.
+   * The safety check uses this (instead of `idValue`) to detect a row-shift
+   * conflict, then column A is overwritten with `idValue` in the merge.
+   */
+  previousIdValue?: string;
   fields?: Record<string, unknown>;
 }
 
@@ -69,7 +75,7 @@ export default withApiHandler(
     }
 
     const body = (req.body ?? {}) as UpdateBody;
-    const { table, rowIndex, mode, idValue, fields } = body;
+    const { table, rowIndex, mode, idValue, previousIdValue, fields } = body;
 
     if (!table || !isFotoTable(table)) {
       return sendError(
@@ -117,12 +123,16 @@ export default withApiHandler(
     const existingRow = (existing.data.values?.[0] ?? []) as string[];
 
     if (mode === "patch") {
+      // On a rename the sheet still holds the OLD value in column A; validate
+      // against `previousIdValue` (when provided) so the rename can land.
+      // For non-rename patches both sides match, so the fallback is safe.
+      const expectedIdValue = previousIdValue ?? idValue;
       const sheetIdValue = s(existingRow[0]).trim();
-      if (sheetIdValue && sheetIdValue !== idValue) {
+      if (sheetIdValue && sheetIdValue !== expectedIdValue) {
         return sendError(
           res,
           409,
-          `Row ${rowIndex} of ${targetSheet} is "${sheetIdValue}", not "${idValue}". The sheet may have been re-ordered. Resync from sheet before retrying.`,
+          `Row ${rowIndex} of ${targetSheet} is "${sheetIdValue}", not "${expectedIdValue}". The sheet may have been re-ordered. Resync from sheet before retrying.`,
         );
       }
     }

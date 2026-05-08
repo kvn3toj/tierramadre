@@ -81,8 +81,15 @@ export const update = mutation({
   handler: async (ctx, { id, patch }) => {
     const existing = await ctx.db.get(id);
     if (!existing) throw new Error(`Client ${id} not found`);
+
+    // Same rename-safety stash as providers — `nombre` is the natural key
+    // and column A in the Clientes sheet still holds the old value.
+    const renaming =
+      patch.nombre !== undefined && patch.nombre !== existing.nombre;
+
     await ctx.db.patch(id, {
       ...patch,
+      ...(renaming ? { pendingPreviousIdValue: existing.nombre } : {}),
       syncStatus: "pending" as const,
       syncError: undefined,
     });
@@ -106,6 +113,7 @@ export const _markPushed = internalMutation({
       syncStatus: "synced" as const,
       lastPushedAt: new Date().toISOString(),
       syncError: undefined,
+      pendingPreviousIdValue: undefined,
     });
   },
 });
@@ -143,6 +151,7 @@ export const _pushToSheet = action({
       rowIndex: row.rowIndex,
       mode,
       idValue: row.nombre,
+      previousIdValue: row.pendingPreviousIdValue,
       fields: marshalRow("clients", row),
     });
     if (result.ok) {
