@@ -11,7 +11,14 @@ crons.interval(
   "pull inventory from sheet",
   { minutes: 5 },
   api.products.pullFromSheet,
-  {}
+  {},
 );
+
+// Fotosíntesis v2 — `providers`, `lots`, `clients`, `sales` rely on the
+// generic /api/get-table.ts primitive but their per-table pullFromSheet
+// actions are not yet implemented. The capture flow goes Convex →
+// Sheets (push), which doesn't need pull. Manual sheet edits won't
+// reflect into Convex until pull actions land — schedule them here
+// when implementing.
 
 export default crons;
