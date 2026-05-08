@@ -1,30 +1,48 @@
-import { internalMutation, internalQuery } from "./_generated/server";
+import {
+  internalMutation,
+  internalQuery,
+  type MutationCtx,
+} from "./_generated/server";
 import { v } from "convex/values";
 
 /**
- * Race-safe monotonic counter allocator.
+ * Inline allocator — call from another mutation's handler so the
+ * sequence read+patch happens in the SAME Convex transaction as the
+ * caller's writes. If the caller throws after this returns, both the
+ * allocator's patch and the caller's writes roll back together —
+ * preserving the "sin saltos" invariant (PRD §7 BR-1).
  *
- * Convex serializes mutations that touch overlapping documents within a
- * single function — and any two `allocate` calls for the same `name` end
- * up reading and patching the same row, so they cannot interleave. The
- * second caller observes the first's incremented `nextValue` and returns
- * the next number.
- *
- * First call for an unseen name returns 1 and seeds `nextValue: 2`.
+ * Do NOT swap this for `ctx.runMutation(internal.sequences.allocate)`
+ * from inside another mutation: that call commits in its own
+ * transaction and a gap leaks if the outer mutation later fails.
+ */
+export async function allocateNext(
+  ctx: MutationCtx,
+  name: string,
+): Promise<number> {
+  const row = await ctx.db
+    .query("sequences")
+    .withIndex("by_name", (q) => q.eq("name", name))
+    .first();
+  if (!row) {
+    await ctx.db.insert("sequences", { name, nextValue: 2 });
+    return 1;
+  }
+  const value = row.nextValue;
+  await ctx.db.patch(row._id, { nextValue: value + 1 });
+  return value;
+}
+
+/**
+ * Stand-alone allocator. Useful for tests or one-off CLI invocations
+ * that aren't part of a domain-write transaction. Domain mutations
+ * (lots.create, sales.create) MUST use `allocateNext` instead so the
+ * sequence and the domain write share one transaction.
  */
 export const allocate = internalMutation({
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
-    const row = await ctx.db
-      .query("sequences")
-      .withIndex("by_name", (q) => q.eq("name", name))
-      .first();
-    if (!row) {
-      await ctx.db.insert("sequences", { name, nextValue: 2 });
-      return { value: 1 };
-    }
-    const value = row.nextValue;
-    await ctx.db.patch(row._id, { nextValue: value + 1 });
+    const value = await allocateNext(ctx, name);
     return { value };
   },
 });

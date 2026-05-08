@@ -9,7 +9,7 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { pushTableRowToVercel } from "./_lib/sheetSync";
 import { COLUMN_MAPS } from "./_lib/columnMaps";
-import { formatLotId } from "./sequences";
+import { allocateNext, formatLotId } from "./sequences";
 
 const formaPagoValidator = v.union(
   v.literal("contado"),
@@ -114,10 +114,8 @@ export const create = mutation({
     const provider = await ctx.db.get(args.providerId);
     if (!provider) throw new Error("Proveedor no encontrado");
 
-    const seq = await ctx.runMutation(internal.sequences.allocate, {
-      name: "lot",
-    });
-    const loteId = formatLotId(seq.value);
+    const seqValue = await allocateNext(ctx, "lot");
+    const loteId = formatLotId(seqValue);
 
     const now = new Date().toISOString();
     const all = await ctx.db.query("lots").collect();

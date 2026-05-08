@@ -9,7 +9,7 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { pushTableRowToVercel } from "./_lib/sheetSync";
 import { COLUMN_MAPS } from "./_lib/columnMaps";
-import { formatSaleId } from "./sequences";
+import { allocateNext, formatSaleId } from "./sequences";
 
 const formaPagoValidator = v.union(
   v.literal("contado"),
@@ -121,10 +121,8 @@ export const create = mutation({
       products.push(product);
     }
 
-    const seq = await ctx.runMutation(internal.sequences.allocate, {
-      name: "sale",
-    });
-    const saleId = formatSaleId(seq.value);
+    const seqValue = await allocateNext(ctx, "sale");
+    const saleId = formatSaleId(seqValue);
 
     const now = new Date().toISOString();
     const all = await ctx.db.query("sales").collect();

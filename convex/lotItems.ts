@@ -160,7 +160,10 @@ export const create = mutation({
       syncStatus: "pending" as const,
     });
 
-    await ctx.db.insert("productEdits", {
+    // Single audit row captures the wizard creation. The same auditId
+    // feeds api.products.pushToSheet so the audit moves from "pending"
+    // to "saved" once Sheets confirms the row.
+    const auditId = await ctx.db.insert("productEdits", {
       itemId,
       editorEmail: "fotosintesis-wizard",
       editedAt: now,
@@ -176,17 +179,6 @@ export const create = mutation({
       ordenEnLote: existing.length + 1,
     });
 
-    // Schedule the productInventory push using the existing endpoint.
-    // We synthesize a minimal audit row so pushToSheet has the right
-    // contract (it expects an auditId); the audit captures "created via
-    // wizard" rather than a per-field diff.
-    const auditId = await ctx.db.insert("productEdits", {
-      itemId,
-      editorEmail: "fotosintesis-wizard",
-      editedAt: now,
-      changes: [],
-      status: "pending" as const,
-    });
     await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
       itemId,
       auditId,
