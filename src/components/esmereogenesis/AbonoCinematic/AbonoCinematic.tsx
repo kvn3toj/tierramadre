@@ -68,6 +68,10 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
   const [animatedAbonado, setAnimatedAbonado] = useState(
     plan.totalAbonadoCOP - aporteAmount,
   );
+  // a11y: text fed into a visually-hidden aria-live region. Updated only at
+  // the phases that carry meaningful new information — keeps announcements
+  // sparse so screen readers don't read every frame.
+  const [announcement, setAnnouncement] = useState("");
 
   const triggerHaptic = (pattern: number | number[]) => {
     if (!hapticEnabled) return;
@@ -93,16 +97,40 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
         case "anticipate":
           triggerHaptic(5);
           break;
+        case "droplet":
+          // First meaningful announcement — sets the SR-user's expectation
+          // about what amount is being watered before the visual splash.
+          setAnnouncement(
+            `Regando ${formatCurrency(aporteAmount)} en tu esmeralda.`,
+          );
+          break;
         case "wash":
           triggerHaptic(15);
           break;
         case "progress":
-          // Count-up animation 800 ms — matches phase duration
+          // Count-up animation 800 ms — matches phase duration. For reduced
+          // motion this is also the first phase, so seed the announcement
+          // here in case droplet never fired.
           rampProgress();
+          if (!announcement) {
+            setAnnouncement(
+              `Regando ${formatCurrency(aporteAmount)} en tu esmeralda.`,
+            );
+          }
           break;
         case "confirm":
+          triggerHaptic(25);
+          setAnnouncement(
+            `${formatCurrency(aporteAmount)} aportado. ${Math.round(
+              targetProgress * 100,
+            )} por ciento completado.`,
+          );
+          break;
         case "eclosion":
           triggerHaptic(isCompletion ? [25, 30, 35] : 25);
+          setAnnouncement(
+            "Tu esmeralda ha cobrado vida. Está lista para reclamar.",
+          );
           break;
       }
     },
@@ -142,6 +170,8 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
     if (open) {
       setAnimatedProgress(fromProgress);
       setAnimatedAbonado(plan.totalAbonadoCOP - aporteAmount);
+      // Clear stale announcement so the new sequence reads fresh.
+      setAnnouncement("");
     }
   }, [open, fromProgress, plan.totalAbonadoCOP, aporteAmount]);
 
@@ -167,8 +197,7 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
         <Box
           component={motion.div}
           role="dialog"
-          aria-label="Animación de aporte en curso"
-          aria-live="polite"
+          aria-label="Animación de aporte en curso. Toca para saltar."
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -186,6 +215,28 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
             overflow: "hidden",
           }}
         >
+          {/* a11y: visually-hidden live region that announces the meaningful
+              phase transitions to screen readers. Lives at the top so the
+              announcement node mounts before any visual layer. */}
+          <Box
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            sx={{
+              position: "absolute",
+              width: 1,
+              height: 1,
+              padding: 0,
+              margin: -1,
+              overflow: "hidden",
+              clip: "rect(0 0 0 0)",
+              whiteSpace: "nowrap",
+              border: 0,
+            }}
+          >
+            {announcement}
+          </Box>
+
           {/* Backdrop dimming */}
           <Box
             aria-hidden

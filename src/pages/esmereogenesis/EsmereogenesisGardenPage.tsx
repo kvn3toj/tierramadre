@@ -39,7 +39,9 @@ import { StreakIndicator } from "../../components/esmereogenesis/StreakIndicator
 import { AporteHistoryTimeline } from "../../components/esmereogenesis/AporteHistoryTimeline";
 import { ClaimSheet } from "../../components/esmereogenesis/ClaimSheet";
 import { AbonoCinematic } from "../../components/esmereogenesis/AbonoCinematic";
+import { OnboardingCoachmarks } from "../../components/esmereogenesis/OnboardingCoachmarks";
 import ConfirmDialog from "../../components/shared/ConfirmDialog";
+import { STORAGE_KEYS } from "../../constants/storage-keys";
 import { emeraldCore, goldAccent } from "../../design-system/tokens/colors";
 import {
   emeraldGradients,
@@ -113,6 +115,24 @@ const EsmereogenesisGardenPage: React.FC = () => {
   const [cinematic, setCinematic] = useState<CinematicData | null>(null);
   const [claimOpen, setClaimOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  // First-visit onboarding — initialised synchronously from localStorage so
+  // the dialog doesn't pop in a frame late (consistent with the rest of the
+  // app's anti-blink pattern).
+  const [onboardingOpen, setOnboardingOpen] = useState<boolean>(() => {
+    try {
+      return !localStorage.getItem(STORAGE_KEYS.ESMEREO_ONBOARDING_SEEN);
+    } catch {
+      return false;
+    }
+  });
+  const dismissOnboarding = () => {
+    setOnboardingOpen(false);
+    try {
+      localStorage.setItem(STORAGE_KEYS.ESMEREO_ONBOARDING_SEEN, "1");
+    } catch {
+      /* private mode etc. — silent */
+    }
+  };
 
   // Sync slider value with current remaining whenever plan progress changes
   useEffect(() => {
@@ -160,30 +180,48 @@ const EsmereogenesisGardenPage: React.FC = () => {
     .replace(/^L:/, "")
     .trim();
 
-  const handleAporteConfirm = async () => {
-    if (aporteAmount <= 0 || aporteAmount > remaining) {
-      notify("Ajusta el monto antes de regar tu esmeralda", "warning");
-      return;
-    }
+  // Extracted so the failure toast can re-fire the exact same aporte via its
+  // "Reintentar" action — the user shouldn't have to re-open the slider and
+  // re-pick the amount after a transient error.
+  const submitAporte = async (amount: number) => {
     const previousProgress = progress;
-    const willComplete = plan.totalAbonadoCOP + aporteAmount >= plan.targetCOP;
-    const isSuggested = aporteAmount === plan.weeklySuggestedCOP;
+    const willComplete = plan.totalAbonadoCOP + amount >= plan.targetCOP;
+    const isSuggested = amount === plan.weeklySuggestedCOP;
     const result = await trigger({
       planId: plan.id,
-      amountCOP: aporteAmount,
+      amountCOP: amount,
       type: isSuggested ? "suggested" : "free",
     });
     if (!result) {
-      notify("No pudimos procesar el aporte. Intenta de nuevo.", "error");
+      notify(
+        "No pudimos regar tu esmeralda. Algo falló en el proceso.",
+        "error",
+        {
+          action: {
+            label: "Reintentar",
+            onClick: () => {
+              void submitAporte(amount);
+            },
+          },
+        },
+      );
       return;
     }
     setCinematic({
       plan: result.plan,
-      amount: aporteAmount,
+      amount,
       isCompletion: result.justCompleted || willComplete,
       previousProgress,
     });
     setAporteOpen(false);
+  };
+
+  const handleAporteConfirm = () => {
+    if (aporteAmount <= 0 || aporteAmount > remaining) {
+      notify("Ajusta el monto antes de regar tu esmeralda", "warning");
+      return;
+    }
+    void submitAporte(aporteAmount);
   };
 
   const handleCinematicComplete = () => {
@@ -596,6 +634,99 @@ const EsmereogenesisGardenPage: React.FC = () => {
                 >
                   {formatCurrency(aporteAmount)}
                 </Typography>
+
+                {/* Quick-amount chips — Acorns-style shortcuts so the user
+                    can land on a meaningful aporte without dragging. Each
+                    chip clamps to the slider's [min, remaining] range so
+                    selecting "2× Sugerido" near completion still works. */}
+                {(() => {
+                  const min = Math.min(10_000, remaining);
+                  const clamp = (n: number) =>
+                    Math.max(min, Math.min(remaining, Math.round(n)));
+                  const suggestion = plan.weeklySuggestedCOP;
+                  const chips: Array<{
+                    label: string;
+                    value: number;
+                    aria: string;
+                  }> = [
+                    {
+                      label: "½ Sugerido",
+                      value: clamp(suggestion / 2),
+                      aria: "Medio aporte sugerido",
+                    },
+                    {
+                      label: "Sugerido",
+                      value: clamp(suggestion),
+                      aria: "Aporte sugerido",
+                    },
+                    {
+                      label: "2× Sugerido",
+                      value: clamp(suggestion * 2),
+                      aria: "Doble del aporte sugerido",
+                    },
+                    {
+                      label: "Restante",
+                      value: remaining,
+                      aria: "Completar el plan",
+                    },
+                  ];
+                  return (
+                    <Box
+                      role="group"
+                      aria-label="Montos rápidos"
+                      sx={{
+                        display: "flex",
+                        gap: 0.75,
+                        mb: 1.5,
+                        overflowX: "auto",
+                        // Hide the scrollbar on phones but keep keyboard
+                        // tabbing across all chips functional.
+                        scrollbarWidth: "none",
+                        "&::-webkit-scrollbar": { display: "none" },
+                      }}
+                    >
+                      {chips.map((chip) => {
+                        const isActive = aporteAmount === chip.value;
+                        return (
+                          <Button
+                            key={chip.label}
+                            onClick={() => setAporteAmount(chip.value)}
+                            aria-pressed={isActive}
+                            aria-label={chip.aria}
+                            size="small"
+                            sx={{
+                              flexShrink: 0,
+                              py: 0.5,
+                              px: 1.5,
+                              minHeight: 32,
+                              fontSize: 12,
+                              fontWeight: 600,
+                              borderRadius: 999,
+                              textTransform: "none",
+                              letterSpacing: 0.2,
+                              border: `1px solid ${
+                                isActive
+                                  ? accentColor
+                                  : alpha(accentColor, 0.35)
+                              }`,
+                              color: isActive ? "#FFFFFF" : titleColor,
+                              bgcolor: isActive ? accentColor : "transparent",
+                              "&:hover": {
+                                bgcolor: isActive
+                                  ? accentColor
+                                  : alpha(accentColor, 0.1),
+                                borderColor: accentColor,
+                              },
+                            }}
+                          >
+                            {chip.label}
+                          </Button>
+                        );
+                      })}
+                    </Box>
+                  );
+                })()}
+
                 <Slider
                   value={aporteAmount}
                   min={Math.min(10_000, remaining)}
@@ -817,6 +948,10 @@ const EsmereogenesisGardenPage: React.FC = () => {
         onConfirm={confirmDelete}
         onCancel={() => setDeleteConfirmOpen(false)}
       />
+
+      {/* First-visit 3-step explainer (aporte sugerido · racha · eclosión).
+          Dismiss persists to localStorage so it never reappears. */}
+      <OnboardingCoachmarks open={onboardingOpen} onClose={dismissOnboarding} />
     </Box>
   );
 };

@@ -10,7 +10,14 @@
  */
 
 import React, { useState } from "react";
-import { Box, Button, TextField, Typography, alpha } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  TextField,
+  Typography,
+  alpha,
+} from "@mui/material";
 import { MessageCircle, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { EsmereoPlan } from "../../types/esmereogenesis";
@@ -36,19 +43,48 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
   const { track } = useTrackingDispatch();
   const [phone, setPhone] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  /** Soft validation: accept anything that could be a phone number once
+   *  punctuation is stripped. We don't want to lock out international users
+   *  with stricter locale-aware checks. Empty is always valid (optional). */
+  const validatePhone = (raw: string): string | null => {
+    const trimmed = raw.trim();
+    if (trimmed.length === 0) return null;
+    const digits = trimmed.replace(/[^\d]/g, "");
+    if (digits.length < 7) return "El número se ve incompleto.";
+    if (digits.length > 15) return "Demasiados dígitos para ser un teléfono.";
+    return null;
+  };
 
   const handleClaim = () => {
-    claimPlan(plan.id);
-    track("esmereo_claimed", {
-      planId: plan.id,
-      hasPhone: phone.trim().length > 0,
-    });
-    setConfirmed(true);
+    const validationError = validatePhone(phone);
+    if (validationError) {
+      setPhoneError(validationError);
+      return;
+    }
+    setPhoneError(null);
+    setSubmitting(true);
+    // Simulate a short backend round-trip so the user sees feedback before the
+    // confirmation card appears. When the real claim API ships, swap this
+    // setTimeout for the actual request and surface failures via notify().
+    window.setTimeout(() => {
+      claimPlan(plan.id);
+      track("esmereo_claimed", {
+        planId: plan.id,
+        hasPhone: phone.trim().length > 0,
+      });
+      setSubmitting(false);
+      setConfirmed(true);
+    }, 600);
   };
 
   const handleClose = () => {
+    if (submitting) return;
     setConfirmed(false);
     setPhone("");
+    setPhoneError(null);
     onClose();
   };
 
@@ -111,11 +147,17 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
               <TextField
                 fullWidth
                 label="Tu número de WhatsApp (opcional)"
-                placeholder="+57 300 123 4567"
+                placeholder="Con código de país, ej. +57 300 123 4567"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  if (phoneError) setPhoneError(null);
+                }}
                 inputMode="tel"
                 autoComplete="tel"
+                error={Boolean(phoneError)}
+                helperText={phoneError ?? undefined}
+                disabled={submitting}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 2,
@@ -142,6 +184,16 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
               variant="contained"
               size="large"
               fullWidth
+              disabled={submitting}
+              startIcon={
+                submitting ? (
+                  <CircularProgress
+                    size={18}
+                    thickness={5}
+                    sx={{ color: "inherit" }}
+                  />
+                ) : undefined
+              }
               sx={{
                 background: emeraldGradients.intense,
                 color: "#FFFFFF",
@@ -154,9 +206,14 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
                 boxShadow: `0 12px 28px ${alpha(emeraldCore.dark, 0.35)}`,
                 "&:hover": { background: emeraldGradients.deep },
                 "&:active": { transform: "scale(0.98)" },
+                "&.Mui-disabled": {
+                  color: whiteAlpha(0.85),
+                  background: emeraldGradients.intense,
+                  opacity: 0.85,
+                },
               }}
             >
-              Confirmar reclamación
+              {submitting ? "Enviando…" : "Confirmar reclamación"}
             </Button>
           </motion.div>
         ) : (

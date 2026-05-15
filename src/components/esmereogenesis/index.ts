@@ -11,6 +11,7 @@ export { EsmereoEmptyState } from "./EsmereoEmptyState";
 export { EsmereoPlanCard } from "./EsmereoPlanCard";
 export { BottomSheetShell } from "./BottomSheetShell";
 export type { BottomSheetShellProps } from "./BottomSheetShell";
+export { OnboardingCoachmarks } from "./OnboardingCoachmarks";
 export { EsmereoCreationSheet } from "./EsmereoCreationSheet";
 export { AporteHistoryTimeline } from "./AporteHistoryTimeline";
 export { ClaimSheet } from "./ClaimSheet";
