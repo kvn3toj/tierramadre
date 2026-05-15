@@ -1,17 +1,24 @@
-import React, { ReactNode, useState } from 'react';
-import ReactDOM from 'react-dom/client';
-import { GoogleOAuthProvider } from '@react-oauth/google';
-import { ConvexProvider, ConvexReactClient } from 'convex/react';
-import App from './App';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { LanguageProvider } from './contexts/LanguageContext';
-import { AuthProvider } from './contexts/AuthContext';
-import { GoogleAuthProvider } from './contexts/GoogleAuthContext';
-import { PriceShareProvider } from './contexts/PriceShareContext';
-import { CurrencyProvider } from './contexts/CurrencyContext';
-import { checkAndInvalidateCaches } from './utils/cacheInvalidation';
-import { STORAGE_KEYS } from './constants/storage-keys';
-import './design-system/tokens/css-variables.css';
+import React, { ReactNode, useState } from "react";
+import ReactDOM from "react-dom/client";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import App from "./App";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
+import { AuthProvider } from "./contexts/AuthContext";
+import { GoogleAuthProvider } from "./contexts/GoogleAuthContext";
+import { PriceShareProvider } from "./contexts/PriceShareContext";
+import { CurrencyProvider } from "./contexts/CurrencyContext";
+import { checkAndInvalidateCaches } from "./utils/cacheInvalidation";
+import { installBodyFilterSanitizer } from "./utils/sanitizeBodyFilter";
+import { STORAGE_KEYS } from "./constants/storage-keys";
+import "./design-system/tokens/css-variables.css";
+
+// Strip the `filter: blur(0px)` that the third-party noprint.js stamps onto
+// `<body>` on every click. The filter creates a containing block that breaks
+// `position: fixed` for portaled MUI Drawers/Modals when the inner scroll
+// container has moved (drawers ended up off-screen on scrolled product pages).
+installBodyFilterSanitizer();
 
 // Initialize Convex client once at module load.
 // Must wrap everything that depends on useQuery (e.g. CurrencyProvider's live-sync).
@@ -37,8 +44,10 @@ declare global {
 }
 
 // Google OAuth Client ID - set in Vercel environment variables
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-const isGoogleConfigured = Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length > 10);
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const isGoogleConfigured = Boolean(
+  GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length > 10,
+);
 
 // Check if user is already stored (skip GSI script load to avoid 403 on localhost)
 function hasStoredUser(): boolean {
@@ -99,23 +108,23 @@ function waitForVersionReady(): Promise<void> {
 
 // Initialize app only after version is confirmed
 waitForVersionReady().then(() => {
-  ReactDOM.createRoot(document.getElementById('root')!).render(
+  ReactDOM.createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
       <ConvexWrapper>
         <LanguageProvider>
           <ThemeProvider>
             <GoogleWrapper>
               <AuthProvider>
-                  <PriceShareProvider>
-                    <CurrencyProvider>
-                      <App />
-                    </CurrencyProvider>
-                  </PriceShareProvider>
-                </AuthProvider>
+                <PriceShareProvider>
+                  <CurrencyProvider>
+                    <App />
+                  </CurrencyProvider>
+                </PriceShareProvider>
+              </AuthProvider>
             </GoogleWrapper>
           </ThemeProvider>
         </LanguageProvider>
       </ConvexWrapper>
-    </React.StrictMode>
+    </React.StrictMode>,
   );
 });

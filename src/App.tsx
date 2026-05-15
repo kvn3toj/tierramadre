@@ -6,6 +6,7 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
+import { RouteScrollReset } from "./components/shared/RouteScrollReset";
 import { IOSLayout } from "./components/ios";
 import {
   WelcomeScreen,
@@ -828,6 +829,7 @@ function App() {
     <ChunkErrorBoundary>
       <AppShellProviders>
         <BrowserRouter>
+          <RouteScrollReset />
           <InvitationRouter />
           {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
           {/* PWA disabled - service worker not generating correctly */}
