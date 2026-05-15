@@ -43,8 +43,8 @@ import {
   emeraldGradients,
   meshGradients,
 } from "../../design-system/tokens/gradients";
-import { whiteAlpha, blackAlpha } from "../../design-system/utils/colorUtils";
-import { PEARL_SURFACE } from "../../components/esmereogenesis/tokens";
+import { whiteAlpha } from "../../design-system/utils/colorUtils";
+import { useEsmereoThemeTokens } from "../../hooks/useEsmereoThemeTokens";
 
 const EsmereogenesisHubPage: React.FC = () => {
   const navigate = useNavigate();
@@ -57,34 +57,20 @@ const EsmereogenesisHubPage: React.FC = () => {
   // width. Using the theme breakpoint keeps the rule aligned with the rest of
   // the app and lets MUI's SSR-safe matcher resolve it.
   const isWide = useMediaQuery(theme.breakpoints.up("sm"));
-  const isLight = theme.palette.mode === "light";
-  // Theme-aware tokens — both modes share the emerald soul, but light mode
-  // uses pearl-mint glass with dark emerald typography, while dark mode uses
-  // deep emerald glass with cream-white typography. Computed once so the
-  // markup below stays declarative.
-  const headerBg = isLight
-    ? `linear-gradient(180deg, ${alpha(emeraldCore.light, 0.16)} 0%, ${alpha(emeraldCore.primary, 0.08)} 100%), ${alpha(PEARL_SURFACE, 0.78)}`
-    : `linear-gradient(180deg, ${alpha(emeraldCore.dark, 0.78)} 0%, ${alpha(emeraldCore.dark, 0.62)} 100%)`;
-  const cardBg = isLight
-    ? `linear-gradient(140deg, ${alpha(emeraldCore.light, 0.18)} 0%, ${alpha(emeraldCore.primary, 0.1)} 100%), ${alpha(PEARL_SURFACE, 0.78)}`
-    : `linear-gradient(140deg, ${alpha(emeraldCore.primary, 0.32)} 0%, ${alpha(emeraldCore.dark, 0.55)} 100%)`;
-  const titleColor = isLight ? emeraldCore.dark : PEARL_SURFACE;
-  const overlineColor = isLight ? emeraldCore.dark : emeraldCore.light;
-  const headlineColor = isLight ? emeraldCore.dark : PEARL_SURFACE;
-  const bodyColor = isLight ? alpha(emeraldCore.dark, 0.78) : whiteAlpha(0.78);
-  const accentColor = isLight ? emeraldCore.primary : emeraldCore.light;
-  const cardBorder = isLight
-    ? alpha(emeraldCore.primary, 0.3)
-    : alpha(emeraldCore.light, 0.22);
-  const headerBorder = isLight
-    ? alpha(emeraldCore.primary, 0.24)
-    : alpha(emeraldCore.light, 0.18);
-  const cardShadow = isLight
-    ? `0 12px 28px ${alpha(emeraldCore.dark, 0.18)}, 0 1px 0 ${whiteAlpha(0.42)} inset`
-    : `0 14px 32px ${blackAlpha(0.32)}, 0 1px 0 ${alpha(emeraldCore.light, 0.16)} inset`;
-  const progressTrack = isLight
-    ? alpha(emeraldCore.primary, 0.16)
-    : blackAlpha(0.32);
+  const {
+    isLight,
+    headerBg,
+    cardBg,
+    titleColor,
+    overlineColor,
+    headlineColor,
+    bodyColor,
+    accentColor,
+    cardBorder,
+    headerBorder,
+    cardShadow,
+    progressTrack,
+  } = useEsmereoThemeTokens();
 
   const {
     activePlans,

@@ -48,10 +48,7 @@ import {
   meshGradients,
 } from "../../design-system/tokens/gradients";
 import { whiteAlpha, blackAlpha } from "../../design-system/utils/colorUtils";
-import {
-  PEARL_SURFACE,
-  PEARL_SURFACE_BRIGHT,
-} from "../../components/esmereogenesis/tokens";
+import { useEsmereoThemeTokens } from "../../hooks/useEsmereoThemeTokens";
 import type { EsmereoPlan } from "../../types/esmereogenesis";
 
 const VISIBLE_HISTORY = 4;
@@ -75,41 +72,27 @@ const EsmereogenesisGardenPage: React.FC = () => {
   const { trigger, isProcessing } = useAbonoSimulation();
   const reducedMotion = useReducedMotion();
   const theme = useTheme();
-  const isLight = theme.palette.mode === "light";
   // Desktop gets a larger centerpiece so the gem doesn't drown in white space
   // when the container expands to its lg/xl maxWidth.
   const isLargeUp = useMediaQuery(theme.breakpoints.up("lg"));
   const emeraldSize = isLargeUp ? "xl" : "lg";
   const ringSize = isLargeUp ? 400 : 320;
-  // Theme-aware tokens — consistent recipe with the Hub so both routes share
-  // a coherent palette in either mode.
-  const headerBg = isLight
-    ? `linear-gradient(180deg, ${alpha(emeraldCore.light, 0.16)} 0%, ${alpha(emeraldCore.primary, 0.08)} 100%), ${alpha(PEARL_SURFACE, 0.78)}`
-    : `linear-gradient(180deg, ${alpha(emeraldCore.dark, 0.78)} 0%, ${alpha(emeraldCore.dark, 0.62)} 100%)`;
-  const cardBg = isLight
-    ? `linear-gradient(135deg, ${alpha(emeraldCore.light, 0.18)} 0%, ${alpha(emeraldCore.primary, 0.1)} 100%), ${alpha(PEARL_SURFACE, 0.78)}`
-    : `linear-gradient(135deg, ${alpha(emeraldCore.primary, 0.32)} 0%, ${alpha(emeraldCore.dark, 0.55)} 100%)`;
-  const sliderCardBg = isLight
-    ? `linear-gradient(135deg, ${alpha(emeraldCore.light, 0.22)} 0%, ${alpha(emeraldCore.primary, 0.14)} 100%), ${alpha(PEARL_SURFACE, 0.82)}`
-    : `linear-gradient(135deg, ${alpha(emeraldCore.primary, 0.32)} 0%, ${alpha(emeraldCore.dark, 0.6)} 100%)`;
-  const completedCardBg = isLight
-    ? `linear-gradient(135deg, ${alpha(goldAccent.light, 0.22)} 0%, ${alpha(emeraldCore.light, 0.18)} 100%), ${alpha(PEARL_SURFACE_BRIGHT, 0.82)}`
-    : `linear-gradient(135deg, ${alpha(emeraldCore.primary, 0.32)} 0%, ${alpha(emeraldCore.dark, 0.65)} 100%)`;
-  const cardBorder = isLight
-    ? alpha(emeraldCore.primary, 0.3)
-    : alpha(emeraldCore.light, 0.22);
-  const headerBorder = isLight
-    ? alpha(emeraldCore.primary, 0.24)
-    : alpha(emeraldCore.light, 0.18);
-  const cardShadow = isLight
-    ? `0 10px 26px ${alpha(emeraldCore.dark, 0.18)}, 0 1px 0 ${whiteAlpha(0.42)} inset`
-    : `0 10px 26px ${blackAlpha(0.32)}, 0 1px 0 ${alpha(emeraldCore.light, 0.16)} inset`;
-  const titleColor = isLight ? emeraldCore.dark : PEARL_SURFACE;
-  const overlineColor = isLight ? emeraldCore.dark : emeraldCore.light;
-  const headlineColor = isLight ? emeraldCore.dark : PEARL_SURFACE;
-  const bodyColor = isLight ? alpha(emeraldCore.dark, 0.78) : whiteAlpha(0.78);
-  const mutedColor = isLight ? alpha(emeraldCore.dark, 0.6) : whiteAlpha(0.62);
-  const accentColor = isLight ? emeraldCore.primary : emeraldCore.light;
+  const {
+    isLight,
+    headerBg,
+    cardBg,
+    sliderCardBg,
+    completedCardBg,
+    cardBorder,
+    headerBorder,
+    cardShadow,
+    titleColor,
+    overlineColor,
+    headlineColor,
+    bodyColor,
+    mutedColor,
+    accentColor,
+  } = useEsmereoThemeTokens();
 
   const plan = planId ? getPlanById(planId) : undefined;
 
