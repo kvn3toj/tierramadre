@@ -384,570 +384,593 @@ const EsmereogenesisGardenPage: React.FC = () => {
           )}
         </Box>
 
-        {/* Centerpiece — LivingEmerald + ring + numbers welded into a single
-            stat group so the ring, the gem and the percentage read as one
-            coherent ceremony, not three stacked widgets. */}
+        {/* Two-column body at lg+ so the wider container actually breathes
+            instead of leaving a single 920-px column stranded in the middle
+            of a 1920-px screen. Below lg, everything stacks single-column. */}
         <Box
-          component={motion.section}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            mb: { xs: 3, md: 4 },
+            display: { xs: "block", lg: "grid" },
+            gridTemplateColumns: { lg: "minmax(0, 1fr) minmax(0, 1fr)" },
+            columnGap: { lg: 4 },
+            alignItems: { lg: "start" },
           }}
         >
+          {/* Centerpiece — LivingEmerald + ring + numbers welded into a single
+            stat group so the ring, the gem and the percentage read as one
+            coherent ceremony, not three stacked widgets. */}
           <Box
+            component={motion.section}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
             sx={{
-              position: "relative",
-              // Fluid sizing so the ring breathes on phones (≤360 px) without
-              // blowing past the viewport, and never goes bigger than the spec.
-              width: "clamp(260px, 78vw, 320px)",
-              aspectRatio: "1 / 1",
-              mb: 2,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              mb: { xs: 3, md: 4, lg: 0 },
             }}
           >
-            <ProgressGardenRing
-              progress={progress}
-              size={ringSize}
-              strokeWidth={10}
-              isComplete={isCompleted}
-            />
             <Box
               sx={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                position: "relative",
+                // Fluid sizing so the ring breathes on phones (≤360 px) without
+                // blowing past the viewport, and never goes bigger than the spec.
+                width: "clamp(260px, 78vw, 320px)",
+                aspectRatio: "1 / 1",
+                mb: 2,
               }}
             >
-              <LivingEmerald
-                imageSrc={plan.productSnapshot.imagen}
+              <ProgressGardenRing
                 progress={progress}
-                state={plan.state}
-                size={emeraldSize}
-                isPulsing={!isCompleted}
+                size={ringSize}
+                strokeWidth={10}
+                isComplete={isCompleted}
               />
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <LivingEmerald
+                  imageSrc={plan.productSnapshot.imagen}
+                  progress={progress}
+                  state={plan.state}
+                  size={emeraldSize}
+                  isPulsing={!isCompleted}
+                />
+              </Box>
             </Box>
+
+            {/* Numbers — overline + dramatic % + amount stay tight to the gem
+              so they read as the gem's own caption rather than dead space. */}
+            <Typography
+              variant="overline"
+              sx={{
+                color: overlineColor,
+                fontWeight: 700,
+                letterSpacing: 1.6,
+                opacity: isLight ? 0.85 : 0.78,
+                mb: 0.25,
+              }}
+            >
+              {isCompleted ? "Eclosionada" : "Tu progreso"}
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: '"Playfair Display", serif',
+                fontWeight: 700,
+                color: headlineColor,
+                lineHeight: 0.95,
+                fontSize: { xs: 56, sm: 64, md: 72 },
+                fontVariantNumeric: "tabular-nums",
+                letterSpacing: -1,
+                textShadow: isLight
+                  ? `0 4px 18px ${alpha(emeraldCore.primary, 0.18)}`
+                  : `0 4px 22px ${alpha(emeraldCore.dark, 0.7)}`,
+              }}
+            >
+              {Math.round(progress * 100)}%
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: bodyColor,
+                mt: 0.75,
+                fontWeight: 600,
+                fontVariantNumeric: "tabular-nums",
+                letterSpacing: 0.2,
+                textAlign: "center",
+              }}
+            >
+              {formatCurrency(plan.totalAbonadoCOP)}{" "}
+              <Box component="span" sx={{ opacity: 0.7 }}>
+                / {formatCurrency(plan.targetCOP)}
+              </Box>
+            </Typography>
           </Box>
 
-          {/* Numbers — overline + dramatic % + amount stay tight to the gem
-              so they read as the gem's own caption rather than dead space. */}
-          <Typography
-            variant="overline"
-            sx={{
-              color: overlineColor,
-              fontWeight: 700,
-              letterSpacing: 1.6,
-              opacity: isLight ? 0.85 : 0.78,
-              mb: 0.25,
-            }}
-          >
-            {isCompleted ? "Eclosionada" : "Tu progreso"}
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: '"Playfair Display", serif',
-              fontWeight: 700,
-              color: headlineColor,
-              lineHeight: 0.95,
-              fontSize: { xs: 56, sm: 64, md: 72 },
-              fontVariantNumeric: "tabular-nums",
-              letterSpacing: -1,
-              textShadow: isLight
-                ? `0 4px 18px ${alpha(emeraldCore.primary, 0.18)}`
-                : `0 4px 22px ${alpha(emeraldCore.dark, 0.7)}`,
-            }}
-          >
-            {Math.round(progress * 100)}%
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: bodyColor,
-              mt: 0.75,
-              fontWeight: 600,
-              fontVariantNumeric: "tabular-nums",
-              letterSpacing: 0.2,
-              textAlign: "center",
-            }}
-          >
-            {formatCurrency(plan.totalAbonadoCOP)}{" "}
-            <Box component="span" sx={{ opacity: 0.7 }}>
-              / {formatCurrency(plan.targetCOP)}
-            </Box>
-          </Typography>
-        </Box>
-
-        {!isCompleted ? (
-          <>
-            {/* Rhythm + streak — theme-aware glass. */}
-            <Box
-              sx={{
-                background: cardBg,
-                backdropFilter: "blur(16px) saturate(160%)",
-                WebkitBackdropFilter: "blur(16px) saturate(160%)",
-                border: `1px solid ${cardBorder}`,
-                borderRadius: 3,
-                p: { xs: 2, md: 2.5 },
-                mb: { xs: 2.5, md: 3 },
-                display: "flex",
-                flexDirection: { xs: "column", sm: "row" },
-                gap: { xs: 1.5, sm: 2 },
-                alignItems: { xs: "stretch", sm: "center" },
-                justifyContent: "space-between",
-                boxShadow: cardShadow,
-              }}
-            >
-              <Box sx={{ minWidth: 0 }}>
-                <Typography
-                  variant="overline"
-                  sx={{
-                    color: overlineColor,
-                    fontWeight: 700,
-                    letterSpacing: 1.4,
-                    opacity: isLight ? 0.85 : 0.78,
-                  }}
-                >
-                  Ritmo sugerido
-                </Typography>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: headlineColor,
-                    fontWeight: 700,
-                    fontVariantNumeric: "tabular-nums",
-                    lineHeight: 1.2,
-                    textShadow: isLight
-                      ? "none"
-                      : `0 2px 12px ${alpha(emeraldCore.dark, 0.5)}`,
-                  }}
-                >
-                  {formatCurrency(plan.weeklySuggestedCOP)}{" "}
-                  <Typography
-                    component="span"
-                    variant="body2"
-                    sx={{ color: mutedColor, fontWeight: 500 }}
-                  >
-                    / semana
-                  </Typography>
-                </Typography>
-              </Box>
-              <Box sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}>
-                <StreakIndicator
-                  weeks={plan.streak.currentWeeks}
-                  longest={plan.streak.longestWeeks}
-                />
-              </Box>
-            </Box>
-
-            {/* Regar CTA — wrapped in an emerald glow halo so it reads as
-                the sacred act of the page, not just another pill button. */}
-            {!aporteOpen ? (
-              <Box
-                sx={{
-                  position: "relative",
-                  textAlign: "center",
-                  mb: { xs: 3, md: 4 },
-                }}
-              >
-                {/* Soft ambient halo behind the button */}
+          {/* Right column at lg+ — controls (rhythm, streak, regar/slider OR
+            eclosionada) plus history. Below lg, this Box is just a passthrough
+            so the visual flow stays vertical. */}
+          <Box>
+            {!isCompleted ? (
+              <>
+                {/* Rhythm + streak — theme-aware glass. */}
                 <Box
-                  aria-hidden
-                  component={motion.div}
-                  animate={
-                    reducedMotion
-                      ? undefined
-                      : { scale: [1, 1.08, 1], opacity: [0.5, 0.75, 0.5] }
-                  }
-                  transition={{
-                    duration: 3.6,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
                   sx={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    width: "min(78%, 320px)",
-                    height: 64,
-                    transform: "translate(-50%, -50%)",
-                    borderRadius: 999,
-                    background: `radial-gradient(ellipse at center, ${alpha(emeraldCore.primary, 0.45)} 0%, ${alpha(emeraldCore.primary, 0)} 70%)`,
-                    filter: "blur(18px)",
-                    pointerEvents: "none",
-                    zIndex: 0,
-                  }}
-                />
-                <Button
-                  onClick={() => setAporteOpen(true)}
-                  variant="contained"
-                  size="large"
-                  startIcon={<Droplet size={22} />}
-                  sx={{
-                    position: "relative",
-                    zIndex: 1,
-                    background: emeraldGradients.intense,
-                    color: "#FFFFFF",
-                    py: 2,
-                    px: { xs: 4, sm: 5 },
-                    minHeight: 60,
-                    fontSize: 17,
-                    fontWeight: 700,
-                    borderRadius: 999,
-                    textTransform: "none",
-                    letterSpacing: 0.3,
-                    boxShadow: `0 18px 40px ${alpha(emeraldCore.dark, 0.4)}, 0 0 0 1px ${whiteAlpha(0.12)} inset`,
-                    "&:hover": {
-                      background: emeraldGradients.deep,
-                      boxShadow: `0 22px 46px ${alpha(emeraldCore.dark, 0.45)}, 0 0 0 1px ${whiteAlpha(0.16)} inset`,
-                    },
-                    "&:active": { transform: "scale(0.98)" },
+                    background: cardBg,
+                    backdropFilter: "blur(16px) saturate(160%)",
+                    WebkitBackdropFilter: "blur(16px) saturate(160%)",
+                    border: `1px solid ${cardBorder}`,
+                    borderRadius: 3,
+                    p: { xs: 2, md: 2.5 },
+                    mb: { xs: 2.5, md: 3 },
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    gap: { xs: 1.5, sm: 2 },
+                    alignItems: { xs: "stretch", sm: "center" },
+                    justifyContent: "space-between",
+                    boxShadow: cardShadow,
                   }}
                 >
-                  Regar mi esmeralda
-                </Button>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    position: "relative",
-                    zIndex: 1,
-                    display: "block",
-                    color: mutedColor,
-                    mt: 1.25,
-                    fontWeight: 500,
-                  }}
-                >
-                  Aporte sugerido {formatCurrency(plan.weeklySuggestedCOP)} ·
-                  monto editable
-                </Typography>
-              </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
+                      variant="overline"
+                      sx={{
+                        color: overlineColor,
+                        fontWeight: 700,
+                        letterSpacing: 1.4,
+                        opacity: isLight ? 0.85 : 0.78,
+                      }}
+                    >
+                      Ritmo sugerido
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        color: headlineColor,
+                        fontWeight: 700,
+                        fontVariantNumeric: "tabular-nums",
+                        lineHeight: 1.2,
+                        textShadow: isLight
+                          ? "none"
+                          : `0 2px 12px ${alpha(emeraldCore.dark, 0.5)}`,
+                      }}
+                    >
+                      {formatCurrency(plan.weeklySuggestedCOP)}{" "}
+                      <Typography
+                        component="span"
+                        variant="body2"
+                        sx={{ color: mutedColor, fontWeight: 500 }}
+                      >
+                        / semana
+                      </Typography>
+                    </Typography>
+                  </Box>
+                  <Box sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}>
+                    <StreakIndicator
+                      weeks={plan.streak.currentWeeks}
+                      longest={plan.streak.longestWeeks}
+                    />
+                  </Box>
+                </Box>
+
+                {/* Regar CTA — wrapped in an emerald glow halo so it reads as
+                the sacred act of the page, not just another pill button. */}
+                {!aporteOpen ? (
+                  <Box
+                    sx={{
+                      position: "relative",
+                      textAlign: "center",
+                      mb: { xs: 3, md: 4 },
+                    }}
+                  >
+                    {/* Soft ambient halo behind the button */}
+                    <Box
+                      aria-hidden
+                      component={motion.div}
+                      animate={
+                        reducedMotion
+                          ? undefined
+                          : { scale: [1, 1.08, 1], opacity: [0.5, 0.75, 0.5] }
+                      }
+                      transition={{
+                        duration: 3.6,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                      sx={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        width: "min(78%, 320px)",
+                        height: 64,
+                        transform: "translate(-50%, -50%)",
+                        borderRadius: 999,
+                        background: `radial-gradient(ellipse at center, ${alpha(emeraldCore.primary, 0.45)} 0%, ${alpha(emeraldCore.primary, 0)} 70%)`,
+                        filter: "blur(18px)",
+                        pointerEvents: "none",
+                        zIndex: 0,
+                      }}
+                    />
+                    <Button
+                      onClick={() => setAporteOpen(true)}
+                      variant="contained"
+                      size="large"
+                      startIcon={<Droplet size={22} />}
+                      sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        background: emeraldGradients.intense,
+                        color: "#FFFFFF",
+                        py: 2,
+                        px: { xs: 4, sm: 5 },
+                        minHeight: 60,
+                        fontSize: 17,
+                        fontWeight: 700,
+                        borderRadius: 999,
+                        textTransform: "none",
+                        letterSpacing: 0.3,
+                        boxShadow: `0 18px 40px ${alpha(emeraldCore.dark, 0.4)}, 0 0 0 1px ${whiteAlpha(0.12)} inset`,
+                        "&:hover": {
+                          background: emeraldGradients.deep,
+                          boxShadow: `0 22px 46px ${alpha(emeraldCore.dark, 0.45)}, 0 0 0 1px ${whiteAlpha(0.16)} inset`,
+                        },
+                        "&:active": { transform: "scale(0.98)" },
+                      }}
+                    >
+                      Regar mi esmeralda
+                    </Button>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        display: "block",
+                        color: mutedColor,
+                        mt: 1.25,
+                        fontWeight: 500,
+                      }}
+                    >
+                      Aporte sugerido {formatCurrency(plan.weeklySuggestedCOP)}{" "}
+                      · monto editable
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Box
+                    component={motion.div}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    sx={{
+                      background: sliderCardBg,
+                      backdropFilter: "blur(16px) saturate(160%)",
+                      WebkitBackdropFilter: "blur(16px) saturate(160%)",
+                      border: `1px solid ${cardBorder}`,
+                      borderRadius: 3,
+                      p: 2.5,
+                      mb: 3,
+                      boxShadow: cardShadow,
+                    }}
+                  >
+                    <Typography
+                      variant="overline"
+                      sx={{
+                        color: overlineColor,
+                        fontWeight: 700,
+                        letterSpacing: 1.4,
+                        opacity: isLight ? 0.85 : 0.85,
+                      }}
+                    >
+                      Cuánto vas a regar
+                    </Typography>
+                    <Typography
+                      variant="h4"
+                      sx={{
+                        fontFamily: '"Playfair Display", serif',
+                        fontWeight: 700,
+                        color: headlineColor,
+                        mb: 1,
+                        textShadow: isLight
+                          ? "none"
+                          : `0 2px 14px ${alpha(emeraldCore.dark, 0.6)}`,
+                      }}
+                    >
+                      {formatCurrency(aporteAmount)}
+                    </Typography>
+
+                    {/* Quick-amount chips — Acorns-style shortcuts so the user
+                    can land on a meaningful aporte without dragging. Each
+                    chip clamps to the slider's [min, remaining] range so
+                    selecting "2× Sugerido" near completion still works. */}
+                    {(() => {
+                      const min = Math.min(10_000, remaining);
+                      const clamp = (n: number) =>
+                        Math.max(min, Math.min(remaining, Math.round(n)));
+                      const suggestion = plan.weeklySuggestedCOP;
+                      const chips: Array<{
+                        label: string;
+                        value: number;
+                        aria: string;
+                      }> = [
+                        {
+                          label: "½ Sugerido",
+                          value: clamp(suggestion / 2),
+                          aria: "Medio aporte sugerido",
+                        },
+                        {
+                          label: "Sugerido",
+                          value: clamp(suggestion),
+                          aria: "Aporte sugerido",
+                        },
+                        {
+                          label: "2× Sugerido",
+                          value: clamp(suggestion * 2),
+                          aria: "Doble del aporte sugerido",
+                        },
+                        {
+                          label: "Restante",
+                          value: remaining,
+                          aria: "Completar el plan",
+                        },
+                      ];
+                      return (
+                        <Box
+                          role="group"
+                          aria-label="Montos rápidos"
+                          sx={{
+                            display: "flex",
+                            gap: 0.75,
+                            mb: 1.5,
+                            overflowX: "auto",
+                            // Hide the scrollbar on phones but keep keyboard
+                            // tabbing across all chips functional.
+                            scrollbarWidth: "none",
+                            "&::-webkit-scrollbar": { display: "none" },
+                          }}
+                        >
+                          {chips.map((chip) => {
+                            const isActive = aporteAmount === chip.value;
+                            return (
+                              <Button
+                                key={chip.label}
+                                onClick={() => setAporteAmount(chip.value)}
+                                aria-pressed={isActive}
+                                aria-label={chip.aria}
+                                size="small"
+                                sx={{
+                                  flexShrink: 0,
+                                  py: 0.5,
+                                  px: 1.5,
+                                  minHeight: 32,
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  borderRadius: 999,
+                                  textTransform: "none",
+                                  letterSpacing: 0.2,
+                                  border: `1px solid ${
+                                    isActive
+                                      ? accentColor
+                                      : alpha(accentColor, 0.35)
+                                  }`,
+                                  color: isActive ? "#FFFFFF" : titleColor,
+                                  bgcolor: isActive
+                                    ? accentColor
+                                    : "transparent",
+                                  "&:hover": {
+                                    bgcolor: isActive
+                                      ? accentColor
+                                      : alpha(accentColor, 0.1),
+                                    borderColor: accentColor,
+                                  },
+                                }}
+                              >
+                                {chip.label}
+                              </Button>
+                            );
+                          })}
+                        </Box>
+                      );
+                    })()}
+
+                    <Slider
+                      value={aporteAmount}
+                      min={Math.min(10_000, remaining)}
+                      max={remaining}
+                      step={Math.max(
+                        10_000,
+                        Math.round(plan.weeklySuggestedCOP / 5),
+                      )}
+                      onChange={(_, value) =>
+                        setAporteAmount(
+                          typeof value === "number" ? value : value[0],
+                        )
+                      }
+                      marks={[
+                        { value: plan.weeklySuggestedCOP, label: "Sugerido" },
+                        { value: remaining, label: "Restante" },
+                      ]}
+                      sx={{
+                        color: accentColor,
+                        mb: 2,
+                        "& .MuiSlider-rail": {
+                          opacity: 0.4,
+                          bgcolor: isLight
+                            ? alpha(emeraldCore.dark, 0.18)
+                            : blackAlpha(0.5),
+                        },
+                        "& .MuiSlider-markLabel": {
+                          fontSize: 12,
+                          color: mutedColor,
+                        },
+                        "& .MuiSlider-mark": {
+                          bgcolor: isLight
+                            ? alpha(emeraldCore.dark, 0.45)
+                            : whiteAlpha(0.4),
+                        },
+                      }}
+                    />
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          setAporteOpen(false);
+                          setAporteAmount(plan.weeklySuggestedCOP);
+                        }}
+                        sx={{
+                          flex: 1,
+                          py: 1.25,
+                          minHeight: 48,
+                          borderRadius: 2,
+                          textTransform: "none",
+                          color: titleColor,
+                          borderColor: alpha(accentColor, 0.45),
+                          "&:hover": {
+                            borderColor: accentColor,
+                            bgcolor: alpha(accentColor, 0.1),
+                          },
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        variant="contained"
+                        onClick={handleAporteConfirm}
+                        disabled={isProcessing}
+                        startIcon={<Droplet size={18} />}
+                        sx={{
+                          flex: 2,
+                          py: 1.25,
+                          minHeight: 48,
+                          background: emeraldGradients.intense,
+                          color: "#FFFFFF",
+                          borderRadius: 2,
+                          textTransform: "none",
+                          fontWeight: 700,
+                          boxShadow: `0 8px 18px ${alpha(emeraldCore.dark, 0.3)}`,
+                          "&:hover": { background: emeraldGradients.deep },
+                        }}
+                      >
+                        Regar {formatCurrency(aporteAmount)}
+                      </Button>
+                    </Box>
+                  </Box>
+                )}
+              </>
             ) : (
               <Box
-                component={motion.div}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
                 sx={{
-                  background: sliderCardBg,
-                  backdropFilter: "blur(16px) saturate(160%)",
-                  WebkitBackdropFilter: "blur(16px) saturate(160%)",
-                  border: `1px solid ${cardBorder}`,
-                  borderRadius: 3,
-                  p: 2.5,
+                  textAlign: "center",
                   mb: 3,
-                  boxShadow: cardShadow,
+                  p: 3,
+                  borderRadius: 3,
+                  // Eclosionada — theme-aware, gold-rimmed glass for the ceremony.
+                  background: completedCardBg,
+                  backdropFilter: "blur(18px) saturate(160%)",
+                  WebkitBackdropFilter: "blur(18px) saturate(160%)",
+                  border: `1px solid ${alpha(goldAccent.primary, 0.55)}`,
+                  boxShadow: isLight
+                    ? `0 14px 32px ${alpha(emeraldCore.dark, 0.18)}, 0 0 24px ${alpha(goldAccent.primary, 0.18)}, 0 0 0 1px ${alpha(goldAccent.primary, 0.22)} inset`
+                    : `0 14px 32px ${blackAlpha(0.4)}, 0 0 24px ${alpha(goldAccent.primary, 0.18)}, 0 0 0 1px ${alpha(goldAccent.primary, 0.22)} inset`,
                 }}
               >
-                <Typography
-                  variant="overline"
+                <Box
+                  component={motion.div}
+                  animate={{ rotate: [0, 360] }}
+                  transition={{
+                    duration: 12,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
                   sx={{
-                    color: overlineColor,
-                    fontWeight: 700,
-                    letterSpacing: 1.4,
-                    opacity: isLight ? 0.85 : 0.85,
+                    display: "inline-flex",
+                    mb: 1,
+                    color: goldAccent.primary,
+                    filter: `drop-shadow(0 0 12px ${alpha(goldAccent.primary, 0.6)})`,
                   }}
                 >
-                  Cuánto vas a regar
-                </Typography>
+                  <Sparkles size={28} />
+                </Box>
                 <Typography
-                  variant="h4"
+                  variant="h5"
                   sx={{
                     fontFamily: '"Playfair Display", serif',
                     fontWeight: 700,
+                    fontStyle: "italic",
                     color: headlineColor,
-                    mb: 1,
+                    mb: 0.5,
                     textShadow: isLight
                       ? "none"
                       : `0 2px 14px ${alpha(emeraldCore.dark, 0.6)}`,
                   }}
                 >
-                  {formatCurrency(aporteAmount)}
+                  Tu Esmeralda ha cobrado vida
                 </Typography>
-
-                {/* Quick-amount chips — Acorns-style shortcuts so the user
-                    can land on a meaningful aporte without dragging. Each
-                    chip clamps to the slider's [min, remaining] range so
-                    selecting "2× Sugerido" near completion still works. */}
-                {(() => {
-                  const min = Math.min(10_000, remaining);
-                  const clamp = (n: number) =>
-                    Math.max(min, Math.min(remaining, Math.round(n)));
-                  const suggestion = plan.weeklySuggestedCOP;
-                  const chips: Array<{
-                    label: string;
-                    value: number;
-                    aria: string;
-                  }> = [
-                    {
-                      label: "½ Sugerido",
-                      value: clamp(suggestion / 2),
-                      aria: "Medio aporte sugerido",
-                    },
-                    {
-                      label: "Sugerido",
-                      value: clamp(suggestion),
-                      aria: "Aporte sugerido",
-                    },
-                    {
-                      label: "2× Sugerido",
-                      value: clamp(suggestion * 2),
-                      aria: "Doble del aporte sugerido",
-                    },
-                    {
-                      label: "Restante",
-                      value: remaining,
-                      aria: "Completar el plan",
-                    },
-                  ];
-                  return (
-                    <Box
-                      role="group"
-                      aria-label="Montos rápidos"
-                      sx={{
-                        display: "flex",
-                        gap: 0.75,
-                        mb: 1.5,
-                        overflowX: "auto",
-                        // Hide the scrollbar on phones but keep keyboard
-                        // tabbing across all chips functional.
-                        scrollbarWidth: "none",
-                        "&::-webkit-scrollbar": { display: "none" },
-                      }}
-                    >
-                      {chips.map((chip) => {
-                        const isActive = aporteAmount === chip.value;
-                        return (
-                          <Button
-                            key={chip.label}
-                            onClick={() => setAporteAmount(chip.value)}
-                            aria-pressed={isActive}
-                            aria-label={chip.aria}
-                            size="small"
-                            sx={{
-                              flexShrink: 0,
-                              py: 0.5,
-                              px: 1.5,
-                              minHeight: 32,
-                              fontSize: 12,
-                              fontWeight: 600,
-                              borderRadius: 999,
-                              textTransform: "none",
-                              letterSpacing: 0.2,
-                              border: `1px solid ${
-                                isActive
-                                  ? accentColor
-                                  : alpha(accentColor, 0.35)
-                              }`,
-                              color: isActive ? "#FFFFFF" : titleColor,
-                              bgcolor: isActive ? accentColor : "transparent",
-                              "&:hover": {
-                                bgcolor: isActive
-                                  ? accentColor
-                                  : alpha(accentColor, 0.1),
-                                borderColor: accentColor,
-                              },
-                            }}
-                          >
-                            {chip.label}
-                          </Button>
-                        );
-                      })}
-                    </Box>
-                  );
-                })()}
-
-                <Slider
-                  value={aporteAmount}
-                  min={Math.min(10_000, remaining)}
-                  max={remaining}
-                  step={Math.max(
-                    10_000,
-                    Math.round(plan.weeklySuggestedCOP / 5),
-                  )}
-                  onChange={(_, value) =>
-                    setAporteAmount(
-                      typeof value === "number" ? value : value[0],
-                    )
-                  }
-                  marks={[
-                    { value: plan.weeklySuggestedCOP, label: "Sugerido" },
-                    { value: remaining, label: "Restante" },
-                  ]}
-                  sx={{
-                    color: accentColor,
-                    mb: 2,
-                    "& .MuiSlider-rail": {
-                      opacity: 0.4,
-                      bgcolor: isLight
-                        ? alpha(emeraldCore.dark, 0.18)
-                        : blackAlpha(0.5),
-                    },
-                    "& .MuiSlider-markLabel": {
-                      fontSize: 12,
-                      color: mutedColor,
-                    },
-                    "& .MuiSlider-mark": {
-                      bgcolor: isLight
-                        ? alpha(emeraldCore.dark, 0.45)
-                        : whiteAlpha(0.4),
-                    },
-                  }}
-                />
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => {
-                      setAporteOpen(false);
-                      setAporteAmount(plan.weeklySuggestedCOP);
-                    }}
-                    sx={{
-                      flex: 1,
-                      py: 1.25,
-                      minHeight: 48,
-                      borderRadius: 2,
-                      textTransform: "none",
-                      color: titleColor,
-                      borderColor: alpha(accentColor, 0.45),
-                      "&:hover": {
-                        borderColor: accentColor,
-                        bgcolor: alpha(accentColor, 0.1),
-                      },
-                    }}
-                  >
-                    Cancelar
-                  </Button>
+                <Typography variant="body2" sx={{ color: bodyColor, mb: 2 }}>
+                  {isClaimed
+                    ? "Ya solicitaste su entrega. Tu asesor te contactará pronto."
+                    : "Coordina con tu asesor para recibir tu Esmeralda Tierra Madre."}
+                </Typography>
+                {!isClaimed && (
                   <Button
                     variant="contained"
-                    onClick={handleAporteConfirm}
-                    disabled={isProcessing}
-                    startIcon={<Droplet size={18} />}
+                    size="large"
+                    startIcon={<HandHeart size={18} />}
+                    onClick={() => setClaimOpen(true)}
                     sx={{
-                      flex: 2,
-                      py: 1.25,
-                      minHeight: 48,
                       background: emeraldGradients.intense,
                       color: "#FFFFFF",
-                      borderRadius: 2,
-                      textTransform: "none",
+                      py: 1.5,
+                      px: 3,
+                      minHeight: 52,
                       fontWeight: 700,
-                      boxShadow: `0 8px 18px ${alpha(emeraldCore.dark, 0.3)}`,
+                      borderRadius: 999,
+                      textTransform: "none",
+                      boxShadow: `0 12px 28px ${alpha(emeraldCore.dark, 0.35)}`,
                       "&:hover": { background: emeraldGradients.deep },
                     }}
                   >
-                    Regar {formatCurrency(aporteAmount)}
+                    Reclamar tu Esmeralda
                   </Button>
-                </Box>
+                )}
               </Box>
             )}
-          </>
-        ) : (
-          <Box
-            sx={{
-              textAlign: "center",
-              mb: 3,
-              p: 3,
-              borderRadius: 3,
-              // Eclosionada — theme-aware, gold-rimmed glass for the ceremony.
-              background: completedCardBg,
-              backdropFilter: "blur(18px) saturate(160%)",
-              WebkitBackdropFilter: "blur(18px) saturate(160%)",
-              border: `1px solid ${alpha(goldAccent.primary, 0.55)}`,
-              boxShadow: isLight
-                ? `0 14px 32px ${alpha(emeraldCore.dark, 0.18)}, 0 0 24px ${alpha(goldAccent.primary, 0.18)}, 0 0 0 1px ${alpha(goldAccent.primary, 0.22)} inset`
-                : `0 14px 32px ${blackAlpha(0.4)}, 0 0 24px ${alpha(goldAccent.primary, 0.18)}, 0 0 0 1px ${alpha(goldAccent.primary, 0.22)} inset`,
-            }}
-          >
+
+            {/* History — theme-aware glass. */}
             <Box
-              component={motion.div}
-              animate={{ rotate: [0, 360] }}
-              transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
               sx={{
-                display: "inline-flex",
-                mb: 1,
-                color: goldAccent.primary,
-                filter: `drop-shadow(0 0 12px ${alpha(goldAccent.primary, 0.6)})`,
+                background: cardBg,
+                backdropFilter: "blur(14px) saturate(150%)",
+                WebkitBackdropFilter: "blur(14px) saturate(150%)",
+                border: `1px solid ${cardBorder}`,
+                borderRadius: 3,
+                p: 2.5,
+                boxShadow: cardShadow,
               }}
             >
-              <Sparkles size={28} />
-            </Box>
-            <Typography
-              variant="h5"
-              sx={{
-                fontFamily: '"Playfair Display", serif',
-                fontWeight: 700,
-                fontStyle: "italic",
-                color: headlineColor,
-                mb: 0.5,
-                textShadow: isLight
-                  ? "none"
-                  : `0 2px 14px ${alpha(emeraldCore.dark, 0.6)}`,
-              }}
-            >
-              Tu Esmeralda ha cobrado vida
-            </Typography>
-            <Typography variant="body2" sx={{ color: bodyColor, mb: 2 }}>
-              {isClaimed
-                ? "Ya solicitaste su entrega. Tu asesor te contactará pronto."
-                : "Coordina con tu asesor para recibir tu Esmeralda Tierra Madre."}
-            </Typography>
-            {!isClaimed && (
-              <Button
-                variant="contained"
-                size="large"
-                startIcon={<HandHeart size={18} />}
-                onClick={() => setClaimOpen(true)}
+              <Typography
+                variant="overline"
                 sx={{
-                  background: emeraldGradients.intense,
-                  color: "#FFFFFF",
-                  py: 1.5,
-                  px: 3,
-                  minHeight: 52,
+                  display: "block",
+                  color: overlineColor,
                   fontWeight: 700,
-                  borderRadius: 999,
-                  textTransform: "none",
-                  boxShadow: `0 12px 28px ${alpha(emeraldCore.dark, 0.35)}`,
-                  "&:hover": { background: emeraldGradients.deep },
+                  letterSpacing: 1.4,
+                  mb: 1.5,
+                  opacity: isLight ? 0.85 : 0.85,
                 }}
               >
-                Reclamar tu Esmeralda
-              </Button>
-            )}
+                Tus aportes ({plan.aportes.length})
+              </Typography>
+              <AporteHistoryTimeline
+                aportes={plan.aportes}
+                limit={VISIBLE_HISTORY}
+              />
+            </Box>
           </Box>
-        )}
-
-        {/* History — theme-aware glass. */}
-        <Box
-          sx={{
-            background: cardBg,
-            backdropFilter: "blur(14px) saturate(150%)",
-            WebkitBackdropFilter: "blur(14px) saturate(150%)",
-            border: `1px solid ${cardBorder}`,
-            borderRadius: 3,
-            p: 2.5,
-            boxShadow: cardShadow,
-          }}
-        >
-          <Typography
-            variant="overline"
-            sx={{
-              display: "block",
-              color: overlineColor,
-              fontWeight: 700,
-              letterSpacing: 1.4,
-              mb: 1.5,
-              opacity: isLight ? 0.85 : 0.85,
-            }}
-          >
-            Tus aportes ({plan.aportes.length})
-          </Typography>
-          <AporteHistoryTimeline
-            aportes={plan.aportes}
-            limit={VISIBLE_HISTORY}
-          />
         </Box>
       </Box>
 
