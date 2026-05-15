@@ -12,22 +12,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
-  Button,
   IconButton,
-  Slider,
   Typography,
   alpha,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import {
-  ChevronLeft,
-  Droplet,
-  Sparkles,
-  HandHeart,
-  Trash2,
-} from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { ChevronLeft, Trash2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEsmereogenesis } from "../../contexts/EsmereogenesisContext";
 import { useNotification } from "../../contexts/NotificationContext";
@@ -40,14 +32,14 @@ import { AporteHistoryTimeline } from "../../components/esmereogenesis/AporteHis
 import { ClaimSheet } from "../../components/esmereogenesis/ClaimSheet";
 import { AbonoCinematic } from "../../components/esmereogenesis/AbonoCinematic";
 import { OnboardingCoachmarks } from "../../components/esmereogenesis/OnboardingCoachmarks";
+import { GardenHero } from "../../components/esmereogenesis/GardenHero";
+import { AporteSlider } from "../../components/esmereogenesis/AporteSlider";
+import { CompletedCelebration } from "../../components/esmereogenesis/CompletedCelebration";
 import ConfirmDialog from "../../components/shared/ConfirmDialog";
 import { STORAGE_KEYS } from "../../constants/storage-keys";
-import { emeraldCore, goldAccent } from "../../design-system/tokens/colors";
-import {
-  emeraldGradients,
-  meshGradients,
-} from "../../design-system/tokens/gradients";
-import { whiteAlpha, blackAlpha } from "../../design-system/utils/colorUtils";
+import { emeraldCore } from "../../design-system/tokens/colors";
+import { meshGradients } from "../../design-system/tokens/gradients";
+import { whiteAlpha } from "../../design-system/utils/colorUtils";
 import { useEsmereoThemeTokens } from "../../hooks/useEsmereoThemeTokens";
 import type { EsmereoPlan } from "../../types/esmereogenesis";
 
@@ -70,7 +62,6 @@ const EsmereogenesisGardenPage: React.FC = () => {
   const { formatCurrency } = useCurrencyFormat();
   const { getPlanById, deletePlan } = useEsmereogenesis();
   const { trigger, isProcessing } = useAbonoSimulation();
-  const reducedMotion = useReducedMotion();
   const theme = useTheme();
   // Desktop gets a larger centerpiece so the gem doesn't drown in white space
   // when the container expands to its lg/xl maxWidth.
@@ -81,8 +72,6 @@ const EsmereogenesisGardenPage: React.FC = () => {
     isLight,
     headerBg,
     cardBg,
-    sliderCardBg,
-    completedCardBg,
     cardBorder,
     headerBorder,
     cardShadow,
@@ -91,7 +80,6 @@ const EsmereogenesisGardenPage: React.FC = () => {
     headlineColor,
     bodyColor,
     mutedColor,
-    accentColor,
   } = useEsmereoThemeTokens();
 
   const plan = planId ? getPlanById(planId) : undefined;
@@ -165,8 +153,6 @@ const EsmereogenesisGardenPage: React.FC = () => {
     .replace(/^L:.*?\s/, "")
     .replace(/^L:/, "")
     .trim();
-  // Prefer the user-given nickname when present.
-  const displayName = plan.nickname ?? productName;
 
   // Extracted so the failure toast can re-fire the exact same aporte via its
   // "Reintentar" action — the user shouldn't have to re-open the slider and
@@ -310,62 +296,7 @@ const EsmereogenesisGardenPage: React.FC = () => {
           py: 3,
         }}
       >
-        {/* Hero — product name as the protagonist, sits between the feature
-            strip ("Esmereogénesis") and the LivingEmerald so the gem feels
-            named, owned, personal. */}
-        <Box
-          component={motion.div}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          sx={{ textAlign: "center", mb: { xs: 2.5, md: 3 } }}
-        >
-          <Typography
-            variant="overline"
-            sx={{
-              display: "block",
-              color: overlineColor,
-              fontWeight: 700,
-              letterSpacing: 2,
-              opacity: isLight ? 0.85 : 0.72,
-              mb: 0.5,
-            }}
-          >
-            Tu esmeralda
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: '"Playfair Display", serif',
-              fontWeight: 700,
-              fontStyle: "italic",
-              color: headlineColor,
-              fontSize: { xs: 32, sm: 40, md: 44 },
-              lineHeight: 1.1,
-              letterSpacing: -0.4,
-              textShadow: isLight
-                ? `0 2px 12px ${alpha(emeraldCore.primary, 0.18)}`
-                : `0 4px 22px ${alpha(emeraldCore.dark, 0.6)}`,
-            }}
-          >
-            {displayName}
-          </Typography>
-          {plan.nickname && (
-            // Surface the product name as a quiet sub-line so the user can
-            // still recognise the source gem under their chosen nickname.
-            <Typography
-              variant="caption"
-              sx={{
-                display: "block",
-                mt: 0.5,
-                color: mutedColor,
-                fontStyle: "italic",
-                letterSpacing: 0.3,
-              }}
-            >
-              {productName}
-            </Typography>
-          )}
-        </Box>
+        <GardenHero nickname={plan.nickname} productName={productName} />
 
         {/* Two-column body at lg+ so the wider container actually breathes
             instead of leaving a single 920-px column stranded in the middle
@@ -544,383 +475,26 @@ const EsmereogenesisGardenPage: React.FC = () => {
 
                 {/* Regar CTA — wrapped in an emerald glow halo so it reads as
                 the sacred act of the page, not just another pill button. */}
-                {!aporteOpen ? (
-                  <Box
-                    sx={{
-                      position: "relative",
-                      textAlign: "center",
-                      mb: { xs: 3, md: 4 },
-                    }}
-                  >
-                    {/* Soft ambient halo behind the button */}
-                    <Box
-                      aria-hidden
-                      component={motion.div}
-                      animate={
-                        reducedMotion
-                          ? undefined
-                          : { scale: [1, 1.08, 1], opacity: [0.5, 0.75, 0.5] }
-                      }
-                      transition={{
-                        duration: 3.6,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
-                      sx={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        width: "min(78%, 320px)",
-                        height: 64,
-                        transform: "translate(-50%, -50%)",
-                        borderRadius: 999,
-                        background: `radial-gradient(ellipse at center, ${alpha(emeraldCore.primary, 0.45)} 0%, ${alpha(emeraldCore.primary, 0)} 70%)`,
-                        filter: "blur(18px)",
-                        pointerEvents: "none",
-                        zIndex: 0,
-                      }}
-                    />
-                    <Button
-                      onClick={() => setAporteOpen(true)}
-                      variant="contained"
-                      size="large"
-                      startIcon={<Droplet size={22} />}
-                      sx={{
-                        position: "relative",
-                        zIndex: 1,
-                        background: emeraldGradients.intense,
-                        color: "#FFFFFF",
-                        py: 2,
-                        px: { xs: 4, sm: 5 },
-                        minHeight: 60,
-                        fontSize: 17,
-                        fontWeight: 700,
-                        borderRadius: 999,
-                        textTransform: "none",
-                        letterSpacing: 0.3,
-                        boxShadow: `0 18px 40px ${alpha(emeraldCore.dark, 0.4)}, 0 0 0 1px ${whiteAlpha(0.12)} inset`,
-                        "&:hover": {
-                          background: emeraldGradients.deep,
-                          boxShadow: `0 22px 46px ${alpha(emeraldCore.dark, 0.45)}, 0 0 0 1px ${whiteAlpha(0.16)} inset`,
-                        },
-                        "&:active": { transform: "scale(0.98)" },
-                      }}
-                    >
-                      Regar mi esmeralda
-                    </Button>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        position: "relative",
-                        zIndex: 1,
-                        display: "block",
-                        color: mutedColor,
-                        mt: 1.25,
-                        fontWeight: 500,
-                      }}
-                    >
-                      Aporte sugerido {formatCurrency(plan.weeklySuggestedCOP)}{" "}
-                      · monto editable
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Box
-                    component={motion.div}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    sx={{
-                      background: sliderCardBg,
-                      backdropFilter: "blur(16px) saturate(160%)",
-                      WebkitBackdropFilter: "blur(16px) saturate(160%)",
-                      border: `1px solid ${cardBorder}`,
-                      borderRadius: 3,
-                      p: 2.5,
-                      mb: 3,
-                      boxShadow: cardShadow,
-                    }}
-                  >
-                    <Typography
-                      variant="overline"
-                      sx={{
-                        color: overlineColor,
-                        fontWeight: 700,
-                        letterSpacing: 1.4,
-                        opacity: isLight ? 0.85 : 0.85,
-                      }}
-                    >
-                      Cuánto vas a regar
-                    </Typography>
-                    <Typography
-                      variant="h4"
-                      sx={{
-                        fontFamily: '"Playfair Display", serif',
-                        fontWeight: 700,
-                        color: headlineColor,
-                        mb: 1,
-                        textShadow: isLight
-                          ? "none"
-                          : `0 2px 14px ${alpha(emeraldCore.dark, 0.6)}`,
-                      }}
-                    >
-                      {formatCurrency(aporteAmount)}
-                    </Typography>
-
-                    {/* Quick-amount chips — Acorns-style shortcuts so the user
-                    can land on a meaningful aporte without dragging. Each
-                    chip clamps to the slider's [min, remaining] range so
-                    selecting "2× Sugerido" near completion still works. */}
-                    {(() => {
-                      const min = Math.min(10_000, remaining);
-                      const clamp = (n: number) =>
-                        Math.max(min, Math.min(remaining, Math.round(n)));
-                      const suggestion = plan.weeklySuggestedCOP;
-                      const chips: Array<{
-                        label: string;
-                        value: number;
-                        aria: string;
-                      }> = [
-                        {
-                          label: "½ Sugerido",
-                          value: clamp(suggestion / 2),
-                          aria: "Medio aporte sugerido",
-                        },
-                        {
-                          label: "Sugerido",
-                          value: clamp(suggestion),
-                          aria: "Aporte sugerido",
-                        },
-                        {
-                          label: "2× Sugerido",
-                          value: clamp(suggestion * 2),
-                          aria: "Doble del aporte sugerido",
-                        },
-                        {
-                          label: "Restante",
-                          value: remaining,
-                          aria: "Completar el plan",
-                        },
-                      ];
-                      return (
-                        <Box
-                          role="group"
-                          aria-label="Montos rápidos"
-                          sx={{
-                            display: "flex",
-                            gap: 0.75,
-                            mb: 1.5,
-                            overflowX: "auto",
-                            // Hide the scrollbar on phones but keep keyboard
-                            // tabbing across all chips functional.
-                            scrollbarWidth: "none",
-                            "&::-webkit-scrollbar": { display: "none" },
-                          }}
-                        >
-                          {chips.map((chip) => {
-                            const isActive = aporteAmount === chip.value;
-                            return (
-                              <Button
-                                key={chip.label}
-                                onClick={() => setAporteAmount(chip.value)}
-                                aria-pressed={isActive}
-                                aria-label={chip.aria}
-                                size="small"
-                                sx={{
-                                  flexShrink: 0,
-                                  py: 0.5,
-                                  px: 1.5,
-                                  minHeight: 32,
-                                  fontSize: 12,
-                                  fontWeight: 600,
-                                  borderRadius: 999,
-                                  textTransform: "none",
-                                  letterSpacing: 0.2,
-                                  border: `1px solid ${
-                                    isActive
-                                      ? accentColor
-                                      : alpha(accentColor, 0.35)
-                                  }`,
-                                  color: isActive ? "#FFFFFF" : titleColor,
-                                  bgcolor: isActive
-                                    ? accentColor
-                                    : "transparent",
-                                  "&:hover": {
-                                    bgcolor: isActive
-                                      ? accentColor
-                                      : alpha(accentColor, 0.1),
-                                    borderColor: accentColor,
-                                  },
-                                }}
-                              >
-                                {chip.label}
-                              </Button>
-                            );
-                          })}
-                        </Box>
-                      );
-                    })()}
-
-                    <Slider
-                      value={aporteAmount}
-                      min={Math.min(10_000, remaining)}
-                      max={remaining}
-                      step={Math.max(
-                        10_000,
-                        Math.round(plan.weeklySuggestedCOP / 5),
-                      )}
-                      onChange={(_, value) =>
-                        setAporteAmount(
-                          typeof value === "number" ? value : value[0],
-                        )
-                      }
-                      marks={[
-                        { value: plan.weeklySuggestedCOP, label: "Sugerido" },
-                        { value: remaining, label: "Restante" },
-                      ]}
-                      sx={{
-                        color: accentColor,
-                        mb: 2,
-                        "& .MuiSlider-rail": {
-                          opacity: 0.4,
-                          bgcolor: isLight
-                            ? alpha(emeraldCore.dark, 0.18)
-                            : blackAlpha(0.5),
-                        },
-                        "& .MuiSlider-markLabel": {
-                          fontSize: 12,
-                          color: mutedColor,
-                        },
-                        "& .MuiSlider-mark": {
-                          bgcolor: isLight
-                            ? alpha(emeraldCore.dark, 0.45)
-                            : whiteAlpha(0.4),
-                        },
-                      }}
-                    />
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                      <Button
-                        variant="outlined"
-                        onClick={() => {
-                          setAporteOpen(false);
-                          setAporteAmount(plan.weeklySuggestedCOP);
-                        }}
-                        sx={{
-                          flex: 1,
-                          py: 1.25,
-                          minHeight: 48,
-                          borderRadius: 2,
-                          textTransform: "none",
-                          color: titleColor,
-                          borderColor: alpha(accentColor, 0.45),
-                          "&:hover": {
-                            borderColor: accentColor,
-                            bgcolor: alpha(accentColor, 0.1),
-                          },
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        variant="contained"
-                        onClick={handleAporteConfirm}
-                        disabled={isProcessing}
-                        startIcon={<Droplet size={18} />}
-                        sx={{
-                          flex: 2,
-                          py: 1.25,
-                          minHeight: 48,
-                          background: emeraldGradients.intense,
-                          color: "#FFFFFF",
-                          borderRadius: 2,
-                          textTransform: "none",
-                          fontWeight: 700,
-                          boxShadow: `0 8px 18px ${alpha(emeraldCore.dark, 0.3)}`,
-                          "&:hover": { background: emeraldGradients.deep },
-                        }}
-                      >
-                        Regar {formatCurrency(aporteAmount)}
-                      </Button>
-                    </Box>
-                  </Box>
-                )}
+                <AporteSlider
+                  open={aporteOpen}
+                  plan={plan}
+                  aporteAmount={aporteAmount}
+                  setAporteAmount={setAporteAmount}
+                  remaining={remaining}
+                  isProcessing={isProcessing}
+                  onOpen={() => setAporteOpen(true)}
+                  onCancel={() => {
+                    setAporteOpen(false);
+                    setAporteAmount(plan.weeklySuggestedCOP);
+                  }}
+                  onConfirm={handleAporteConfirm}
+                />
               </>
             ) : (
-              <Box
-                sx={{
-                  textAlign: "center",
-                  mb: 3,
-                  p: 3,
-                  borderRadius: 3,
-                  // Eclosionada — theme-aware, gold-rimmed glass for the ceremony.
-                  background: completedCardBg,
-                  backdropFilter: "blur(18px) saturate(160%)",
-                  WebkitBackdropFilter: "blur(18px) saturate(160%)",
-                  border: `1px solid ${alpha(goldAccent.primary, 0.55)}`,
-                  boxShadow: isLight
-                    ? `0 14px 32px ${alpha(emeraldCore.dark, 0.18)}, 0 0 24px ${alpha(goldAccent.primary, 0.18)}, 0 0 0 1px ${alpha(goldAccent.primary, 0.22)} inset`
-                    : `0 14px 32px ${blackAlpha(0.4)}, 0 0 24px ${alpha(goldAccent.primary, 0.18)}, 0 0 0 1px ${alpha(goldAccent.primary, 0.22)} inset`,
-                }}
-              >
-                <Box
-                  component={motion.div}
-                  animate={{ rotate: [0, 360] }}
-                  transition={{
-                    duration: 12,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                  sx={{
-                    display: "inline-flex",
-                    mb: 1,
-                    color: goldAccent.primary,
-                    filter: `drop-shadow(0 0 12px ${alpha(goldAccent.primary, 0.6)})`,
-                  }}
-                >
-                  <Sparkles size={28} />
-                </Box>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontFamily: '"Playfair Display", serif',
-                    fontWeight: 700,
-                    fontStyle: "italic",
-                    color: headlineColor,
-                    mb: 0.5,
-                    textShadow: isLight
-                      ? "none"
-                      : `0 2px 14px ${alpha(emeraldCore.dark, 0.6)}`,
-                  }}
-                >
-                  Tu Esmeralda ha cobrado vida
-                </Typography>
-                <Typography variant="body2" sx={{ color: bodyColor, mb: 2 }}>
-                  {isClaimed
-                    ? "Ya solicitaste su entrega. Tu asesor te contactará pronto."
-                    : "Coordina con tu asesor para recibir tu Esmeralda Tierra Madre."}
-                </Typography>
-                {!isClaimed && (
-                  <Button
-                    variant="contained"
-                    size="large"
-                    startIcon={<HandHeart size={18} />}
-                    onClick={() => setClaimOpen(true)}
-                    sx={{
-                      background: emeraldGradients.intense,
-                      color: "#FFFFFF",
-                      py: 1.5,
-                      px: 3,
-                      minHeight: 52,
-                      fontWeight: 700,
-                      borderRadius: 999,
-                      textTransform: "none",
-                      boxShadow: `0 12px 28px ${alpha(emeraldCore.dark, 0.35)}`,
-                      "&:hover": { background: emeraldGradients.deep },
-                    }}
-                  >
-                    Reclamar tu Esmeralda
-                  </Button>
-                )}
-              </Box>
+              <CompletedCelebration
+                isClaimed={isClaimed}
+                onClaim={() => setClaimOpen(true)}
+              />
             )}
 
             {/* History — theme-aware glass. */}
