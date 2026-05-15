@@ -7,15 +7,45 @@
  * Nielsen H5: Error prevention (confirm before destructive actions)
  */
 
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { registerFetchFailureHandler } from '../utils/fetchFailureBridge';
-import { Snackbar, Alert, AlertColor } from '@mui/material';
-import { fontSizes, fontWeights, radius, semanticColors, whiteAlpha } from '../design-system';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo,
+} from "react";
+import { registerFetchFailureHandler } from "../utils/fetchFailureBridge";
+import { Button, Snackbar, Alert, AlertColor } from "@mui/material";
+import {
+  fontSizes,
+  fontWeights,
+  radius,
+  semanticColors,
+  whiteAlpha,
+} from "../design-system";
+
+/** Optional action attached to a notification — renders a button inside the
+ *  Alert. Used for actionable error recovery ("Reintentar"). */
+export interface NotificationAction {
+  label: string;
+  onClick: () => void;
+}
+
+export interface NotifyOptions {
+  /** Action button rendered inside the Alert. */
+  action?: NotificationAction;
+  /** Override auto-hide duration (ms). Defaults to 4000 / 6000 for errors. */
+  durationMs?: number;
+}
 
 interface NotificationState {
   open: boolean;
   message: string;
   severity: AlertColor;
+  action?: NotificationAction;
+  durationMs?: number;
 }
 
 interface ConfirmState {
@@ -25,39 +55,66 @@ interface ConfirmState {
 }
 
 interface NotificationContextValue {
-  /** Show an in-UI notification (replaces alert()) */
-  notify: (message: string, severity?: AlertColor) => void;
+  /** Show an in-UI notification (replaces alert()).
+   *  Optional `options.action` renders an actionable button inside the Alert. */
+  notify: (
+    message: string,
+    severity?: AlertColor,
+    options?: NotifyOptions,
+  ) => void;
   /** Show a confirm dialog (replaces confirm()) — returns Promise<boolean> */
   confirmAction: (message: string) => Promise<boolean>;
 }
 
-const NotificationContext = createContext<NotificationContextValue | null>(null);
+const NotificationContext = createContext<NotificationContextValue | null>(
+  null,
+);
 
-export function NotificationProvider({ children }: { children: React.ReactNode }) {
+export function NotificationProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [notification, setNotification] = useState<NotificationState>({
     open: false,
-    message: '',
-    severity: 'info',
+    message: "",
+    severity: "info",
   });
   const [confirm, setConfirm] = useState<ConfirmState>({
     open: false,
-    message: '',
+    message: "",
     resolve: null,
   });
 
   // Auto-dismiss timer ref
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const notify = useCallback((message: string, severity: AlertColor = 'info') => {
-    // Clear any pending timer
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setNotification({ open: true, message, severity });
-  }, []);
+  const notify = useCallback(
+    (
+      message: string,
+      severity: AlertColor = "info",
+      options?: NotifyOptions,
+    ) => {
+      // Clear any pending timer
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setNotification({
+        open: true,
+        message,
+        severity,
+        action: options?.action,
+        durationMs: options?.durationMs,
+      });
+    },
+    [],
+  );
 
-  const handleClose = useCallback((_?: React.SyntheticEvent | Event, reason?: string) => {
-    if (reason === 'clickaway') return;
-    setNotification(prev => ({ ...prev, open: false }));
-  }, []);
+  const handleClose = useCallback(
+    (_?: React.SyntheticEvent | Event, reason?: string) => {
+      if (reason === "clickaway") return;
+      setNotification((prev) => ({ ...prev, open: false }));
+    },
+    [],
+  );
 
   const confirmAction = useCallback((message: string): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -66,18 +123,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, []);
 
   useEffect(() => {
-    registerFetchFailureHandler((message) => notify(message, 'error'));
+    registerFetchFailureHandler((message) => notify(message, "error"));
     return () => registerFetchFailureHandler(null);
   }, [notify]);
 
-  const handleConfirm = useCallback((accepted: boolean) => {
-    confirm.resolve?.(accepted);
-    setConfirm({ open: false, message: '', resolve: null });
-  }, [confirm.resolve]);
+  const handleConfirm = useCallback(
+    (accepted: boolean) => {
+      confirm.resolve?.(accepted);
+      setConfirm({ open: false, message: "", resolve: null });
+    },
+    [confirm.resolve],
+  );
 
   const contextValue = useMemo(
     () => ({ notify, confirmAction }),
-    [notify, confirmAction]
+    [notify, confirmAction],
   );
 
   return (
@@ -87,16 +147,42 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       {/* Snackbar notification (replaces alert()) */}
       <Snackbar
         open={notification.open}
-        autoHideDuration={notification.severity === 'error' ? 6000 : 4000}
+        autoHideDuration={
+          notification.durationMs ??
+          (notification.severity === "error" ? 6000 : 4000)
+        }
         onClose={handleClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        sx={{ mb: 'env(safe-area-inset-bottom)' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        sx={{ mb: "env(safe-area-inset-bottom)" }}
       >
         <Alert
           onClose={handleClose}
           severity={notification.severity}
           variant="filled"
-          sx={{ width: '100%', borderRadius: 2 }}
+          sx={{ width: "100%", borderRadius: 2, alignItems: "center" }}
+          action={
+            notification.action ? (
+              <Button
+                size="small"
+                onClick={() => {
+                  notification.action?.onClick();
+                  setNotification((prev) => ({ ...prev, open: false }));
+                }}
+                sx={{
+                  color: "inherit",
+                  fontWeight: fontWeights.semibold,
+                  textTransform: "none",
+                  borderRadius: radius.sm,
+                  px: 1.5,
+                  py: 0.25,
+                  border: `1px solid ${whiteAlpha(0.5)}`,
+                  "&:hover": { bgcolor: whiteAlpha(0.12) },
+                }}
+              >
+                {notification.action.label}
+              </Button>
+            ) : undefined
+          }
         >
           {notification.message}
         </Alert>
@@ -106,24 +192,24 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       {confirm.open && (
         <Snackbar
           open={confirm.open}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          sx={{ mb: 'env(safe-area-inset-bottom)' }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          sx={{ mb: "env(safe-area-inset-bottom)" }}
         >
           <Alert
             severity="warning"
             variant="filled"
-            sx={{ width: '100%', borderRadius: 2, alignItems: 'center' }}
+            sx={{ width: "100%", borderRadius: 2, alignItems: "center" }}
             action={
               <>
                 <button
                   onClick={() => handleConfirm(false)}
                   style={{
-                    background: 'transparent',
+                    background: "transparent",
                     border: `1px solid ${whiteAlpha(0.5)}`,
-                    color: 'white',
+                    color: "white",
                     borderRadius: radius.sm,
-                    padding: '4px 12px',
-                    cursor: 'pointer',
+                    padding: "4px 12px",
+                    cursor: "pointer",
                     marginRight: 8,
                     fontSize: fontSizes.sm,
                     fontWeight: fontWeights.semibold,
@@ -134,12 +220,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 <button
                   onClick={() => handleConfirm(true)}
                   style={{
-                    background: 'white',
-                    border: 'none',
+                    background: "white",
+                    border: "none",
                     color: semanticColors.error.dark,
                     borderRadius: radius.sm,
-                    padding: '4px 12px',
-                    cursor: 'pointer',
+                    padding: "4px 12px",
+                    cursor: "pointer",
                     fontSize: fontSizes.sm,
                     fontWeight: fontWeights.semibold,
                   }}
@@ -162,8 +248,13 @@ export function useNotification(): NotificationContextValue {
   if (!ctx) {
     // Fallback for components outside the provider (e.g., hooks used standalone)
     return {
-      notify: (message: string) => console.warn('[Notification fallback]', message),
-      confirmAction: (message: string) => Promise.resolve(window.confirm(message)),
+      notify: (
+        message: string,
+        _severity?: AlertColor,
+        _options?: NotifyOptions,
+      ) => console.warn("[Notification fallback]", message),
+      confirmAction: (message: string) =>
+        Promise.resolve(window.confirm(message)),
     };
   }
   return ctx;

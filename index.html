@@ -1,25 +1,52 @@
-<!DOCTYPE html>
-<html lang="es" style="background-color: #000000;">
+<!doctype html>
+<html lang="es" style="background-color: #000000">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/icon-inicio-gris-512.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-inicio-gris-192.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/icon-inicio-gris-192.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="512x512"
+      href="/icon-inicio-gris-512.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="/icon-inicio-gris-192.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/icon-inicio-gris-192.png"
+    />
     <link rel="manifest" href="/manifest.json" />
     <!-- WCAG 2.1 AA: Enable zoom for accessibility (up to 5x) -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover"
+    />
     <title>Tierra Mädre Collections</title>
 
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#00AE7A" />
-    <meta name="description" content="Tierra Mädre Collections - Emeralds with DNA of Peace" />
+    <meta
+      name="description"
+      content="Tierra Mädre Collections - Emeralds with DNA of Peace"
+    />
 
     <!-- Open Graph / WhatsApp / Social -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://tierra-madre-studio.vercel.app/" />
     <meta property="og:title" content="Tierra Mädre Collections" />
-    <meta property="og:description" content="Esmeraldas colombianas con ADN de Paz — Coleccion exclusiva" />
-    <meta property="og:image" content="https://tierra-madre-studio.vercel.app/og-image.png" />
+    <meta
+      property="og:description"
+      content="Esmeraldas colombianas con ADN de Paz — Coleccion exclusiva"
+    />
+    <meta
+      property="og:image"
+      content="https://tierra-madre-studio.vercel.app/og-image.png"
+    />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type" content="image/png" />
@@ -28,15 +55,36 @@
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Tierra Mädre Collections" />
-    <meta name="twitter:description" content="Esmeraldas colombianas con ADN de Paz — Coleccion exclusiva" />
-    <meta name="twitter:image" content="https://tierra-madre-studio.vercel.app/og-image.png" />
+    <meta
+      name="twitter:description"
+      content="Esmeraldas colombianas con ADN de Paz — Coleccion exclusiva"
+    />
+    <meta
+      name="twitter:image"
+      content="https://tierra-madre-studio.vercel.app/og-image.png"
+    />
 
     <!-- iOS PWA Meta Tags -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/icon-inicio-gris-180.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="/icon-inicio-gris-180.png" />
-    <link rel="apple-touch-icon" sizes="167x167" href="/icon-inicio-gris-180.png" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/icon-inicio-gris-180.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="152x152"
+      href="/icon-inicio-gris-180.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="167x167"
+      href="/icon-inicio-gris-180.png"
+    />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <meta name="apple-mobile-web-app-title" content="TM Studio" />
     <meta name="mobile-web-app-capable" content="yes" />
 
@@ -51,15 +99,23 @@
     <meta name="apple-mobile-web-app-navigation" content="same-origin" />
 
     <!-- Prevent browser chrome from hiding on scroll (Android Chrome) -->
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#00AE7A" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#00AE7A" />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: light)"
+      content="#00AE7A"
+    />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: dark)"
+      content="#00AE7A"
+    />
 
     <!-- CRITICAL: Blocking version check - MUST run before React loads -->
     <script>
-      (function() {
-        var APP_VERSION = '2026.05.08.895';
-        var VERSION_KEY = 'tm_app_version';
-        var RELOAD_KEY = 'tm_reload_pending';
+      (function () {
+        var APP_VERSION = "2026.05.15.1";
+        var VERSION_KEY = "tm_app_version";
+        var RELOAD_KEY = "tm_reload_pending";
 
         // Expose for main.tsx to check
         window.__TM_VERSION__ = APP_VERSION;
@@ -85,11 +141,13 @@
 
         // Version mismatch - reload BEFORE React starts
         if (storedVersion && storedVersion !== APP_VERSION) {
-          sessionStorage.setItem(RELOAD_KEY, '1');
+          sessionStorage.setItem(RELOAD_KEY, "1");
           localStorage.setItem(VERSION_KEY, APP_VERSION);
-          window.location.replace(window.location.pathname + '?_v=' + APP_VERSION + '&_t=' + now);
+          window.location.replace(
+            window.location.pathname + "?_v=" + APP_VERSION + "&_t=" + now,
+          );
           // Halt script execution
-          throw new Error('Reloading for new version');
+          throw new Error("Reloading for new version");
         }
 
         // First visit - store version
@@ -99,34 +157,50 @@
     </script>
 
     <!-- Google Fonts - Luxury Typography System -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap"
+      rel="stylesheet"
+    />
 
     <!-- Preconnect to API and image sources for faster loading (Chrome optimization) -->
-    <link rel="preconnect" href="https://tierra-madre-studio.vercel.app" crossorigin>
-    <link rel="dns-prefetch" href="https://tierra-madre-studio.vercel.app">
-    <link rel="preconnect" href="https://www.googleapis.com" crossorigin>
-    <link rel="dns-prefetch" href="https://www.googleapis.com">
-    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
-    <link rel="dns-prefetch" href="https://res.cloudinary.com">
+    <link
+      rel="preconnect"
+      href="https://tierra-madre-studio.vercel.app"
+      crossorigin
+    />
+    <link rel="dns-prefetch" href="https://tierra-madre-studio.vercel.app" />
+    <link rel="preconnect" href="https://www.googleapis.com" crossorigin />
+    <link rel="dns-prefetch" href="https://www.googleapis.com" />
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
+    <link rel="dns-prefetch" href="https://res.cloudinary.com" />
 
     <!-- Preload hero carousel images for instant display -->
-    <link rel="preload" as="image" href="https://res.cloudinary.com/dyam6g2os/image/upload/v1765621976/tierramadre/gallery/gems/koso3gazzgfiakzg867r.jpg" fetchpriority="high">
+    <link
+      rel="preload"
+      as="image"
+      href="https://res.cloudinary.com/dyam6g2os/image/upload/v1765621976/tierramadre/gallery/gems/koso3gazzgfiakzg867r.jpg"
+      fetchpriority="high"
+    />
   </head>
   <body>
     <div id="root"></div>
 
     <!-- Service worker cleanup (non-blocking) -->
     <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(r) {
-          r.forEach(function(reg) { reg.unregister(); });
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (r) {
+          r.forEach(function (reg) {
+            reg.unregister();
+          });
         });
       }
-      if ('caches' in window) {
-        caches.keys().then(function(n) {
-          n.forEach(function(k) { caches.delete(k); });
+      if ("caches" in window) {
+        caches.keys().then(function (n) {
+          n.forEach(function (k) {
+            caches.delete(k);
+          });
         });
       }
     </script>
@@ -134,55 +208,70 @@
     <!-- Screenshot Deterrent: NoPrint.js with error handling -->
     <script>
       // Pre-define noCopy and noPrint to prevent ReferenceError from external script
-      if (typeof noCopy === 'undefined') {
-        window.noCopy = function(options) {
-          console.log('[NoPrint] Using fallback protection');
+      if (typeof noCopy === "undefined") {
+        window.noCopy = function (options) {
+          console.log("[NoPrint] Using fallback protection");
         };
       }
-      if (typeof noPrint === 'undefined') {
-        window.noPrint = function(options) {
-          console.log('[NoPrint] Using fallback protection');
+      if (typeof noPrint === "undefined") {
+        window.noPrint = function (options) {
+          console.log("[NoPrint] Using fallback protection");
         };
       }
     </script>
-    <script src="https://pdfanticopy.com/noprint.js" id="noprint-script" onerror="console.warn('[NoPrint] Failed to load external script')"></script>
+    <script
+      src="https://pdfanticopy.com/noprint.js"
+      id="noprint-script"
+      onerror="console.warn('[NoPrint] Failed to load external script')"
+    ></script>
     <script>
       try {
         // The library may expose noPrint OR noCopy - check both
-        var protectionFn = typeof noPrint === 'function' ? noPrint :
-                           typeof noCopy === 'function' ? noCopy : null;
+        var protectionFn =
+          typeof noPrint === "function"
+            ? noPrint
+            : typeof noCopy === "function"
+              ? noCopy
+              : null;
         if (protectionFn) {
           protectionFn({
             disablePrint: true,
             disableCopy: true,
             disableRightClick: true,
-            autoblur: false
+            autoblur: false,
           });
         }
       } catch (e) {
-        console.warn('[NoPrint] Protection script unavailable:', e.message);
+        console.warn("[NoPrint] Protection script unavailable:", e.message);
       }
     </script>
 
     <!-- Safari async version check (backup for server-side updates between page loads) -->
     <script>
-      (function() {
+      (function () {
         var APP_VERSION = window.__TM_VERSION__;
-        var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) ||
-                       /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                       navigator.standalone === true;
+        var isSafari =
+          /^((?!chrome|android).)*safari/i.test(navigator.userAgent) ||
+          /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+          navigator.standalone === true;
 
         if (isSafari && window.__TM_VERSION_READY__) {
-          fetch('/version.json?_t=' + Date.now(), { cache: 'no-store' })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
+          fetch("/version.json?_t=" + Date.now(), { cache: "no-store" })
+            .then(function (r) {
+              return r.json();
+            })
+            .then(function (data) {
               if (data.version && data.version !== APP_VERSION) {
-                sessionStorage.setItem('tm_reload_pending', '1');
-                localStorage.setItem('tm_app_version', data.version);
-                window.location.replace(window.location.pathname + '?_v=' + data.version);
+                sessionStorage.setItem("tm_reload_pending", "1");
+                localStorage.setItem("tm_app_version", data.version);
+                window.location.replace(
+                  window.location.pathname + "?_v=" + data.version,
+                );
               }
             })
-            .catch(function() { /* Offline - ignore */ });
+            .catch(function () {
+              /* Offline - ignore */
+            });
         }
       })();
     </script>

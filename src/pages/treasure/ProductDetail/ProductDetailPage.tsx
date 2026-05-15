@@ -40,6 +40,7 @@ import { surfacesLight, surfacesDark, goldAccent, emeraldCore } from '../../../d
 import { buttonGradients } from '../../../design-system/tokens/gradients';
 import { accentColors, lightTokens, zIndex } from '../../../design-system';
 import { SpecificationsList, AdditionalInfo, ProductActions } from './components';
+import { EsmereogenesisCTA } from '../../../components/esmereogenesis/EsmereogenesisCTA';
 import Breadcrumbs from '../../../components/shared/Breadcrumbs';
 import { scrollMainTo } from '../../../utils/mainScroll';
 
@@ -494,7 +495,10 @@ export default function ProductDetail() {
             {/* Additional Info */}
             <AdditionalInfo product={product} isAdmin={isAdmin} />
 
-            {/* CTA Buttons (hidden for providers) */}
+            {/* CTA Buttons (hidden for providers) — Esmereogénesis CTA is
+                rendered via the middleSlot so it sits between the primary
+                "Agregar a Selección" and the secondary Compartir/Consultar
+                row, per spec §8.3. */}
             {!isProvider && (
               <ProductActions
                 isAvailable={isAvailable}
@@ -504,6 +508,11 @@ export default function ProductDetail() {
                 onAddToCart={handleAddToCart}
                 onShare={handleShareProduct}
                 onContact={handleContact}
+                middleSlot={
+                  product ? (
+                    <EsmereogenesisCTA product={product} disabled={!isAvailable} />
+                  ) : null
+                }
               />
             )}
 
