@@ -5,7 +5,7 @@
  * completed plan. Mock-only — real flow would coordinate with asesor backend.
  */
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -15,15 +15,19 @@ import {
   TextField,
   Typography,
   alpha,
-} from '@mui/material';
-import type { TransitionProps } from '@mui/material/transitions';
-import { X, MessageCircle, Check } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import type { EsmereoPlan } from '../../types/esmereogenesis';
-import { useEsmereogenesis } from '../../contexts/EsmereogenesisContext';
-import { useTrackingDispatch } from '../../contexts/TrackingContext';
-import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
-import { emeraldGradients, meshGradients } from '../../design-system/tokens/gradients';
+} from "@mui/material";
+import type { TransitionProps } from "@mui/material/transitions";
+import { X, MessageCircle, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import type { EsmereoPlan } from "../../types/esmereogenesis";
+import { useEsmereogenesis } from "../../contexts/EsmereogenesisContext";
+import { useTrackingDispatch } from "../../contexts/TrackingContext";
+import { emeraldCore, goldAccent } from "../../design-system/tokens/colors";
+import {
+  emeraldGradients,
+  meshGradients,
+} from "../../design-system/tokens/gradients";
+import { whiteAlpha } from "../../design-system/utils/colorUtils";
 
 const SlideUp = React.forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -38,25 +42,35 @@ interface ClaimSheetProps {
   plan: EsmereoPlan;
 }
 
-export const ClaimSheet: React.FC<ClaimSheetProps> = ({ open, onClose, plan }) => {
+export const ClaimSheet: React.FC<ClaimSheetProps> = ({
+  open,
+  onClose,
+  plan,
+}) => {
   const { claimPlan } = useEsmereogenesis();
   const { track } = useTrackingDispatch();
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState("");
   const [confirmed, setConfirmed] = useState(false);
 
   const handleClaim = () => {
     claimPlan(plan.id);
-    track('esmereo_claimed', { planId: plan.id, hasPhone: phone.trim().length > 0 });
+    track("esmereo_claimed", {
+      planId: plan.id,
+      hasPhone: phone.trim().length > 0,
+    });
     setConfirmed(true);
   };
 
   const handleClose = () => {
     setConfirmed(false);
-    setPhone('');
+    setPhone("");
     onClose();
   };
 
-  const productName = plan.productSnapshot.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
+  const productName = plan.productSnapshot.nombre
+    .replace(/^L:.*?\s/, "")
+    .replace(/^L:/, "")
+    .trim();
 
   return (
     <Dialog
@@ -68,20 +82,20 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({ open, onClose, plan }) =
       fullWidth
       PaperProps={{
         sx: {
-          position: 'fixed',
+          position: "fixed",
           bottom: 0,
           m: 0,
-          width: '100%',
+          width: "100%",
           maxWidth: 600,
-          borderRadius: '24px 24px 0 0',
+          borderRadius: "24px 24px 0 0",
           background: meshGradients.emerald,
-          overflow: 'hidden',
+          overflow: "hidden",
         },
       }}
-      sx={{ '& .MuiDialog-container': { alignItems: 'flex-end' } }}
+      sx={{ "& .MuiDialog-container": { alignItems: "flex-end" } }}
       aria-labelledby="esmereo-claim-title"
     >
-      <Box sx={{ position: 'relative', p: 3, pb: 4 }}>
+      <Box sx={{ position: "relative", p: 3, pb: 4 }}>
         <Box
           aria-hidden
           sx={{
@@ -89,14 +103,19 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({ open, onClose, plan }) =
             height: 4,
             borderRadius: 2,
             bgcolor: alpha(emeraldCore.primary, 0.25),
-            mx: 'auto',
+            mx: "auto",
             mb: 2,
           }}
         />
         <IconButton
           onClick={handleClose}
           aria-label="Cerrar"
-          sx={{ position: 'absolute', top: 12, right: 12, color: 'text.secondary' }}
+          sx={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            color: "text.secondary",
+          }}
         >
           <X size={20} />
         </IconButton>
@@ -110,17 +129,17 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({ open, onClose, plan }) =
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
             >
-              <Box sx={{ textAlign: 'center', mb: 3 }}>
+              <Box sx={{ textAlign: "center", mb: 3 }}>
                 <Box
                   sx={{
                     width: 64,
                     height: 64,
-                    borderRadius: '50%',
+                    borderRadius: "50%",
                     background: emeraldGradients.intense,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#FFFFFF',
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#FFFFFF",
                     mb: 2,
                     boxShadow: `0 12px 28px ${alpha(emeraldCore.dark, 0.3)}`,
                   }}
@@ -139,9 +158,9 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({ open, onClose, plan }) =
                 >
                   Reclamar tu Esmeralda
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  Tu <strong>{productName}</strong> está lista. Un asesor de Tierra Madre
-                  coordinará contigo la entrega y certificación.
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  Tu <strong>{productName}</strong> está lista. Un asesor de
+                  Tierra Madre coordinará contigo la entrega y certificación.
                 </Typography>
               </Box>
 
@@ -155,22 +174,23 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({ open, onClose, plan }) =
                   inputMode="tel"
                   autoComplete="tel"
                   sx={{
-                    '& .MuiOutlinedInput-root': {
+                    "& .MuiOutlinedInput-root": {
                       borderRadius: 2,
-                      bgcolor: alpha('#FFFFFF', 0.5),
+                      bgcolor: whiteAlpha(0.5),
                     },
                   }}
                 />
                 <Typography
                   variant="caption"
                   sx={{
-                    display: 'block',
-                    color: 'text.secondary',
+                    display: "block",
+                    color: "text.secondary",
                     mt: 1,
-                    textAlign: 'center',
+                    textAlign: "center",
                   }}
                 >
-                  Si lo dejas vacío, te contactaremos por el medio que tengas registrado.
+                  Si lo dejas vacío, te contactaremos por el medio que tengas
+                  registrado.
                 </Typography>
               </Box>
 
@@ -181,16 +201,16 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({ open, onClose, plan }) =
                 fullWidth
                 sx={{
                   background: emeraldGradients.intense,
-                  color: '#FFFFFF',
+                  color: "#FFFFFF",
                   py: 1.5,
                   minHeight: 52,
                   fontWeight: 700,
                   fontSize: 16,
                   borderRadius: 2,
-                  textTransform: 'none',
+                  textTransform: "none",
                   boxShadow: `0 12px 28px ${alpha(emeraldCore.dark, 0.35)}`,
-                  '&:hover': { background: emeraldGradients.deep },
-                  '&:active': { transform: 'scale(0.98)' },
+                  "&:hover": { background: emeraldGradients.deep },
+                  "&:active": { transform: "scale(0.98)" },
                 }}
               >
                 Confirmar reclamación
@@ -204,21 +224,21 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({ open, onClose, plan }) =
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4 }}
             >
-              <Box sx={{ textAlign: 'center', py: 2 }}>
+              <Box sx={{ textAlign: "center", py: 2 }}>
                 <Box
                   component={motion.div}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 250, damping: 18 }}
+                  transition={{ type: "spring", stiffness: 250, damping: 18 }}
                   sx={{
                     width: 80,
                     height: 80,
-                    borderRadius: '50%',
+                    borderRadius: "50%",
                     bgcolor: alpha(goldAccent.primary, 0.15),
                     border: `2px solid ${goldAccent.primary}`,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     color: goldAccent.primary,
                     mb: 2,
                   }}
@@ -236,9 +256,12 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({ open, onClose, plan }) =
                 >
                   Reclamación enviada
                 </Typography>
-                <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3, lineHeight: 1.6 }}>
-                  Tu asesor de Tierra Madre te contactará pronto para coordinar la entrega
-                  de tu <strong>{productName}</strong>.
+                <Typography
+                  variant="body1"
+                  sx={{ color: "text.secondary", mb: 3, lineHeight: 1.6 }}
+                >
+                  Tu asesor de Tierra Madre te contactará pronto para coordinar
+                  la entrega de tu <strong>{productName}</strong>.
                 </Typography>
                 <Button
                   onClick={handleClose}
@@ -252,8 +275,8 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({ open, onClose, plan }) =
                     minHeight: 48,
                     fontWeight: 600,
                     borderRadius: 2,
-                    textTransform: 'none',
-                    '&:hover': {
+                    textTransform: "none",
+                    "&:hover": {
                       borderColor: emeraldCore.primary,
                       bgcolor: alpha(emeraldCore.primary, 0.08),
                     },

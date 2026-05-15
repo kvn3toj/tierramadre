@@ -6,7 +6,7 @@
  * Shows empty state, active garden grid, completed sealed cards, and a settings menu.
  */
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -18,7 +18,7 @@ import {
   alpha,
   useMediaQuery,
   useTheme,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ChevronLeft,
   Settings,
@@ -27,41 +27,51 @@ import {
   VolumeX,
   Trash2,
   Vibrate,
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { useEsmereogenesis } from '../../contexts/EsmereogenesisContext';
-import { useNotification } from '../../contexts/NotificationContext';
-import { useTrackingDispatch } from '../../contexts/TrackingContext';
-import { useCurrencyFormat } from '../../contexts/CurrencyContext';
-import { EsmereoEmptyState } from '../../components/esmereogenesis/EsmereoEmptyState';
-import { EsmereoPlanCard } from '../../components/esmereogenesis/EsmereoPlanCard';
-import { StreakIndicator } from '../../components/esmereogenesis/StreakIndicator';
-import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
-import { emeraldGradients, meshGradients } from '../../design-system/tokens/gradients';
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useEsmereogenesis } from "../../contexts/EsmereogenesisContext";
+import { useNotification } from "../../contexts/NotificationContext";
+import { useTrackingDispatch } from "../../contexts/TrackingContext";
+import { useCurrencyFormat } from "../../contexts/CurrencyContext";
+import { EsmereoEmptyState } from "../../components/esmereogenesis/EsmereoEmptyState";
+import { EsmereoPlanCard } from "../../components/esmereogenesis/EsmereoPlanCard";
+import { StreakIndicator } from "../../components/esmereogenesis/StreakIndicator";
+import ConfirmDialog from "../../components/shared/ConfirmDialog";
+import { emeraldCore, goldAccent } from "../../design-system/tokens/colors";
+import {
+  emeraldGradients,
+  meshGradients,
+} from "../../design-system/tokens/gradients";
+import { whiteAlpha, blackAlpha } from "../../design-system/utils/colorUtils";
+import { PEARL_SURFACE } from "../../components/esmereogenesis/tokens";
 
 const EsmereogenesisHubPage: React.FC = () => {
   const navigate = useNavigate();
   const { notify } = useNotification();
   const { track } = useTrackingDispatch();
   const { formatCurrency } = useCurrencyFormat();
-  const isWide = useMediaQuery('(min-width: 720px)');
   const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
+  // sm (≥600px) is the design-system breakpoint where the garden grid switches
+  // from the phone 2-col layout to a fluid auto-fill that uses real tablet
+  // width. Using the theme breakpoint keeps the rule aligned with the rest of
+  // the app and lets MUI's SSR-safe matcher resolve it.
+  const isWide = useMediaQuery(theme.breakpoints.up("sm"));
+  const isLight = theme.palette.mode === "light";
   // Theme-aware tokens — both modes share the emerald soul, but light mode
   // uses pearl-mint glass with dark emerald typography, while dark mode uses
   // deep emerald glass with cream-white typography. Computed once so the
   // markup below stays declarative.
   const headerBg = isLight
-    ? `linear-gradient(180deg, ${alpha(emeraldCore.light, 0.16)} 0%, ${alpha(emeraldCore.primary, 0.08)} 100%), ${alpha('#F4FAF6', 0.78)}`
+    ? `linear-gradient(180deg, ${alpha(emeraldCore.light, 0.16)} 0%, ${alpha(emeraldCore.primary, 0.08)} 100%), ${alpha(PEARL_SURFACE, 0.78)}`
     : `linear-gradient(180deg, ${alpha(emeraldCore.dark, 0.78)} 0%, ${alpha(emeraldCore.dark, 0.62)} 100%)`;
   const cardBg = isLight
-    ? `linear-gradient(140deg, ${alpha(emeraldCore.light, 0.18)} 0%, ${alpha(emeraldCore.primary, 0.1)} 100%), ${alpha('#F4FAF6', 0.78)}`
+    ? `linear-gradient(140deg, ${alpha(emeraldCore.light, 0.18)} 0%, ${alpha(emeraldCore.primary, 0.1)} 100%), ${alpha(PEARL_SURFACE, 0.78)}`
     : `linear-gradient(140deg, ${alpha(emeraldCore.primary, 0.32)} 0%, ${alpha(emeraldCore.dark, 0.55)} 100%)`;
-  const titleColor = isLight ? emeraldCore.dark : '#F4FAF6';
+  const titleColor = isLight ? emeraldCore.dark : PEARL_SURFACE;
   const overlineColor = isLight ? emeraldCore.dark : emeraldCore.light;
-  const headlineColor = isLight ? emeraldCore.dark : '#F4FAF6';
-  const bodyColor = isLight ? alpha(emeraldCore.dark, 0.78) : alpha('#FFFFFF', 0.78);
+  const headlineColor = isLight ? emeraldCore.dark : PEARL_SURFACE;
+  const bodyColor = isLight ? alpha(emeraldCore.dark, 0.78) : whiteAlpha(0.78);
   const accentColor = isLight ? emeraldCore.primary : emeraldCore.light;
   const cardBorder = isLight
     ? alpha(emeraldCore.primary, 0.3)
@@ -70,9 +80,11 @@ const EsmereogenesisHubPage: React.FC = () => {
     ? alpha(emeraldCore.primary, 0.24)
     : alpha(emeraldCore.light, 0.18);
   const cardShadow = isLight
-    ? `0 12px 28px ${alpha(emeraldCore.dark, 0.18)}, 0 1px 0 ${alpha('#FFFFFF', 0.42)} inset`
-    : `0 14px 32px ${alpha('#000000', 0.32)}, 0 1px 0 ${alpha(emeraldCore.light, 0.16)} inset`;
-  const progressTrack = isLight ? alpha(emeraldCore.primary, 0.16) : alpha('#000000', 0.32);
+    ? `0 12px 28px ${alpha(emeraldCore.dark, 0.18)}, 0 1px 0 ${whiteAlpha(0.42)} inset`
+    : `0 14px 32px ${blackAlpha(0.32)}, 0 1px 0 ${alpha(emeraldCore.light, 0.16)} inset`;
+  const progressTrack = isLight
+    ? alpha(emeraldCore.primary, 0.16)
+    : blackAlpha(0.32);
 
   const {
     activePlans,
@@ -87,20 +99,23 @@ const EsmereogenesisHubPage: React.FC = () => {
   } = useEsmereogenesis();
 
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   const handleReset = () => {
     setMenuAnchor(null);
-    if (window.confirm('¿Borrar todo tu jardín de Esmereogénesis? Esta acción no se puede deshacer.')) {
-      resetAll();
-      notify('Tu jardín se reinició', 'info');
-      track('esmereo_reset_all', {});
-    }
+    setResetConfirmOpen(true);
+  };
+  const confirmReset = () => {
+    setResetConfirmOpen(false);
+    resetAll();
+    notify("Tu jardín se reinició", "info");
+    track("esmereo_reset_all", {});
   };
 
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        minHeight: "100vh",
         background: meshGradients.emerald,
         pb: 6,
       }}
@@ -110,25 +125,29 @@ const EsmereogenesisHubPage: React.FC = () => {
           contrast for either surface. */}
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           px: 2,
-          pt: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+          pt: "calc(env(safe-area-inset-top, 0px) + 12px)",
           pb: 1.5,
-          position: 'sticky',
+          position: "sticky",
           top: 0,
           background: headerBg,
-          backdropFilter: 'blur(22px) saturate(160%)',
-          WebkitBackdropFilter: 'blur(22px) saturate(160%)',
+          backdropFilter: "blur(22px) saturate(160%)",
+          WebkitBackdropFilter: "blur(22px) saturate(160%)",
           borderBottom: `1px solid ${headerBorder}`,
           boxShadow: isLight
-            ? `0 1px 0 ${alpha('#FFFFFF', 0.32)} inset`
+            ? `0 1px 0 ${whiteAlpha(0.32)} inset`
             : `0 1px 0 ${alpha(emeraldCore.light, 0.12)} inset`,
           zIndex: 10,
         }}
       >
-        <IconButton onClick={() => navigate(-1)} aria-label="Volver" sx={{ color: titleColor }}>
+        <IconButton
+          onClick={() => navigate(-1)}
+          aria-label="Volver"
+          sx={{ color: titleColor }}
+        >
           <ChevronLeft />
         </IconButton>
         <Typography
@@ -138,7 +157,9 @@ const EsmereogenesisHubPage: React.FC = () => {
             fontWeight: 700,
             color: titleColor,
             letterSpacing: 0.4,
-            textShadow: isLight ? 'none' : `0 2px 12px ${alpha(emeraldCore.dark, 0.6)}`,
+            textShadow: isLight
+              ? "none"
+              : `0 2px 12px ${alpha(emeraldCore.dark, 0.6)}`,
           }}
         >
           Esmereogénesis
@@ -158,9 +179,13 @@ const EsmereogenesisHubPage: React.FC = () => {
         >
           <MenuItem
             onClick={() => setAudioEnabled(!audioEnabled)}
-            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               {audioEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
               <Typography variant="body2">Sonidos</Typography>
             </Box>
@@ -168,9 +193,13 @@ const EsmereogenesisHubPage: React.FC = () => {
           </MenuItem>
           <MenuItem
             onClick={() => setHapticEnabled(!hapticEnabled)}
-            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Vibrate size={18} />
               <Typography variant="body2">Vibración</Typography>
             </Box>
@@ -179,7 +208,12 @@ const EsmereogenesisHubPage: React.FC = () => {
           {hasPlans && (
             <MenuItem
               onClick={handleReset}
-              sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: 'error.main' }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                color: "error.main",
+              }}
             >
               <Trash2 size={18} />
               <Typography variant="body2">Reiniciar jardín</Typography>
@@ -194,11 +228,11 @@ const EsmereogenesisHubPage: React.FC = () => {
         <Box
           sx={{
             maxWidth: 960,
-            mx: 'auto',
+            mx: "auto",
             px: { xs: 2, md: 3 },
             pt: 3,
             // Reserve room for the bottom navigation + iOS home indicator.
-            pb: 'calc(env(safe-area-inset-bottom, 0px) + 96px)',
+            pb: "calc(env(safe-area-inset-bottom, 0px) + 96px)",
           }}
         >
           {/* Global metrics card — theme-aware glass + typography. */}
@@ -209,8 +243,8 @@ const EsmereogenesisHubPage: React.FC = () => {
             transition={{ duration: 0.4 }}
             sx={{
               background: cardBg,
-              backdropFilter: 'blur(18px) saturate(160%)',
-              WebkitBackdropFilter: 'blur(18px) saturate(160%)',
+              backdropFilter: "blur(18px) saturate(160%)",
+              WebkitBackdropFilter: "blur(18px) saturate(160%)",
               border: `1px solid ${cardBorder}`,
               borderRadius: 3,
               p: { xs: 2.25, md: 3 },
@@ -220,11 +254,11 @@ const EsmereogenesisHubPage: React.FC = () => {
           >
             <Box
               sx={{
-                display: 'flex',
-                alignItems: { xs: 'flex-start', sm: 'center' },
-                justifyContent: 'space-between',
+                display: "flex",
+                alignItems: { xs: "flex-start", sm: "center" },
+                justifyContent: "space-between",
                 gap: 1.5,
-                flexWrap: 'wrap',
+                flexWrap: "wrap",
               }}
             >
               <Box sx={{ minWidth: 0 }}>
@@ -246,11 +280,14 @@ const EsmereogenesisHubPage: React.FC = () => {
                     fontWeight: 700,
                     color: headlineColor,
                     lineHeight: 1.15,
-                    textShadow: isLight ? 'none' : `0 2px 14px ${alpha(emeraldCore.dark, 0.5)}`,
+                    textShadow: isLight
+                      ? "none"
+                      : `0 2px 14px ${alpha(emeraldCore.dark, 0.5)}`,
                   }}
                 >
-                  {hubMetrics.activeCount}{' '}
-                  {hubMetrics.activeCount === 1 ? 'esmeralda' : 'esmeraldas'} en proceso
+                  {hubMetrics.activeCount}{" "}
+                  {hubMetrics.activeCount === 1 ? "esmeralda" : "esmeraldas"} en
+                  proceso
                 </Typography>
               </Box>
               <StreakIndicator weeks={hubMetrics.globalStreak} />
@@ -260,9 +297,9 @@ const EsmereogenesisHubPage: React.FC = () => {
             <Box sx={{ mt: 2 }}>
               <Box
                 sx={{
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  justifyContent: 'space-between',
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
                   gap: 1,
                   mb: 0.75,
                 }}
@@ -278,14 +315,14 @@ const EsmereogenesisHubPage: React.FC = () => {
                   {formatCurrency(hubMetrics.totalAbonadoCOP)} aportado
                   {hubMetrics.totalTargetCOP > 0
                     ? ` · meta ${formatCurrency(hubMetrics.totalTargetCOP)}`
-                    : ''}
+                    : ""}
                 </Typography>
                 <Typography
                   variant="caption"
                   sx={{
                     color: accentColor,
                     fontWeight: 800,
-                    fontVariantNumeric: 'tabular-nums',
+                    fontVariantNumeric: "tabular-nums",
                   }}
                 >
                   {Math.round(hubMetrics.globalProgress * 100)}%
@@ -297,17 +334,19 @@ const EsmereogenesisHubPage: React.FC = () => {
                   height: 6,
                   borderRadius: 999,
                   bgcolor: progressTrack,
-                  overflow: 'hidden',
-                  border: isLight ? 'none' : `1px solid ${alpha(emeraldCore.light, 0.12)}`,
+                  overflow: "hidden",
+                  border: isLight
+                    ? "none"
+                    : `1px solid ${alpha(emeraldCore.light, 0.12)}`,
                 }}
               >
                 <Box
                   sx={{
-                    height: '100%',
+                    height: "100%",
                     width: `${Math.max(2, Math.round(hubMetrics.globalProgress * 100))}%`,
                     background: emeraldGradients.intense,
                     borderRadius: 999,
-                    transition: 'width 0.6s ease-out',
+                    transition: "width 0.6s ease-out",
                     boxShadow: isLight
                       ? `0 0 8px ${alpha(emeraldCore.primary, 0.35)}`
                       : `0 0 12px ${alpha(emeraldCore.light, 0.45)}`,
@@ -321,11 +360,11 @@ const EsmereogenesisHubPage: React.FC = () => {
           {activePlans.length > 0 && (
             <Box
               sx={{
-                display: 'grid',
+                display: "grid",
                 // 2 cols on phones, fluid auto-fill once we hit a tablet width.
                 gridTemplateColumns: isWide
-                  ? 'repeat(auto-fill, minmax(200px, 1fr))'
-                  : 'repeat(2, minmax(0, 1fr))',
+                  ? "repeat(auto-fill, minmax(200px, 1fr))"
+                  : "repeat(2, minmax(0, 1fr))",
                 gap: { xs: 1.5, md: 2 },
                 mb: 3,
               }}
@@ -339,27 +378,33 @@ const EsmereogenesisHubPage: React.FC = () => {
           {/* Sembrar nueva — promoted to a contained pill so it carries the
               weight of the next intentional action when the garden already
               exists, instead of disappearing as a faded outline. */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: completedPlans.length > 0 ? 4 : 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              mb: completedPlans.length > 0 ? 4 : 2,
+            }}
+          >
             <Button
               variant="contained"
               startIcon={<Plus size={18} />}
-              onClick={() => navigate('/treasure')}
+              onClick={() => navigate("/treasure")}
               sx={{
-                color: '#FFFFFF',
+                color: "#FFFFFF",
                 background: emeraldGradients.intense,
                 py: 1.25,
                 px: 3.25,
                 minHeight: 48,
                 fontWeight: 700,
                 borderRadius: 999,
-                textTransform: 'none',
+                textTransform: "none",
                 letterSpacing: 0.2,
                 boxShadow: `0 10px 24px ${alpha(emeraldCore.dark, 0.28)}`,
-                '&:hover': {
+                "&:hover": {
                   background: emeraldGradients.deep,
                   boxShadow: `0 14px 30px ${alpha(emeraldCore.dark, 0.36)}`,
                 },
-                '&:active': { transform: 'scale(0.98)' },
+                "&:active": { transform: "scale(0.98)" },
               }}
             >
               Sembrar nueva Esmereogénesis
@@ -372,8 +417,8 @@ const EsmereogenesisHubPage: React.FC = () => {
             <Box>
               <Box
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
+                  display: "flex",
+                  alignItems: "center",
                   gap: 1.5,
                   mb: 2,
                   pl: 1,
@@ -392,7 +437,7 @@ const EsmereogenesisHubPage: React.FC = () => {
                     color: goldAccent.dark,
                     fontWeight: 700,
                     letterSpacing: 1.6,
-                    whiteSpace: 'nowrap',
+                    whiteSpace: "nowrap",
                   }}
                 >
                   Adquiridas
@@ -407,10 +452,10 @@ const EsmereogenesisHubPage: React.FC = () => {
               </Box>
               <Box
                 sx={{
-                  display: 'grid',
+                  display: "grid",
                   gridTemplateColumns: isWide
-                    ? 'repeat(auto-fill, minmax(200px, 1fr))'
-                    : 'repeat(2, minmax(0, 1fr))',
+                    ? "repeat(auto-fill, minmax(200px, 1fr))"
+                    : "repeat(2, minmax(0, 1fr))",
                   gap: { xs: 1.5, md: 2 },
                 }}
               >
@@ -422,6 +467,17 @@ const EsmereogenesisHubPage: React.FC = () => {
           )}
         </Box>
       )}
+      {/* Destructive confirmation — focus-managed, styled, a11y-correct.
+          Replaces window.confirm which broke focus trap + bypassed theme. */}
+      <ConfirmDialog
+        open={resetConfirmOpen}
+        title="¿Borrar todo tu jardín?"
+        message="Perderás todos tus planes, aportes y rachas. Esta acción no se puede deshacer."
+        confirmLabel="Borrar jardín"
+        cancelLabel="Cancelar"
+        onConfirm={confirmReset}
+        onCancel={() => setResetConfirmOpen(false)}
+      />
     </Box>
   );
 };

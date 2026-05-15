@@ -5,16 +5,21 @@
  * Shows the LivingEmerald in small size + ring + product name + progress.
  */
 
-import React from 'react';
-import { Box, Typography, alpha } from '@mui/material';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { Flame, Sparkles } from 'lucide-react';
-import type { EsmereoPlan } from '../../types/esmereogenesis';
-import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
-import { emeraldGradients, goldGradients, meshGradients } from '../../design-system/tokens/gradients';
-import { useCurrencyFormat } from '../../contexts/CurrencyContext';
-import { LivingEmerald } from './LivingEmerald';
+import React from "react";
+import { Box, Typography, alpha } from "@mui/material";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { Flame, Sparkles } from "lucide-react";
+import type { EsmereoPlan } from "../../types/esmereogenesis";
+import { emeraldCore, goldAccent } from "../../design-system/tokens/colors";
+import {
+  emeraldGradients,
+  goldGradients,
+  meshGradients,
+} from "../../design-system/tokens/gradients";
+import { whiteAlpha } from "../../design-system/utils/colorUtils";
+import { useCurrencyFormat } from "../../contexts/CurrencyContext";
+import { LivingEmerald } from "./LivingEmerald";
 
 interface EsmereoPlanCardProps {
   plan: EsmereoPlan;
@@ -23,13 +28,14 @@ interface EsmereoPlanCardProps {
 export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
   const navigate = useNavigate();
   const { formatCurrency } = useCurrencyFormat();
-  const progress = plan.targetCOP > 0 ? plan.totalAbonadoCOP / plan.targetCOP : 0;
+  const progress =
+    plan.targetCOP > 0 ? plan.totalAbonadoCOP / plan.targetCOP : 0;
   const progressPct = Math.round(progress * 100);
-  const isComplete = plan.state === 'completed' || plan.state === 'claimed';
+  const isComplete = plan.state === "completed" || plan.state === "claimed";
   // Strip the inventory "L:..." prefix so the gem name reads as a name, not a SKU.
   const productName = plan.productSnapshot.nombre
-    .replace(/^L:.*?\s/, '')
-    .replace(/^L:/, '')
+    .replace(/^L:.*?\s/, "")
+    .replace(/^L:/, "")
     .trim();
 
   return (
@@ -39,31 +45,31 @@ export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
       type="button"
       whileHover={{ y: -4 }}
       whileTap={{ scale: 0.98 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
       aria-label={`Abrir jardín de ${productName} · ${progressPct}% completo`}
       sx={{
-        position: 'relative',
+        position: "relative",
         background: meshGradients.emerald,
         border: `1px solid ${alpha(emeraldCore.primary, 0.18)}`,
         borderRadius: 3,
         p: 2,
-        cursor: 'pointer',
-        textAlign: 'left',
-        font: 'inherit',
-        color: 'inherit',
+        cursor: "pointer",
+        textAlign: "left",
+        font: "inherit",
+        color: "inherit",
         boxShadow: `0 6px 18px ${alpha(emeraldCore.dark, 0.12)}`,
-        overflow: 'hidden',
-        '&:hover': {
+        overflow: "hidden",
+        "&:hover": {
           boxShadow: `0 10px 28px ${alpha(emeraldCore.dark, 0.22)}`,
           borderColor: alpha(emeraldCore.primary, 0.35),
         },
-        '&:focus-visible': {
+        "&:focus-visible": {
           outline: `2px solid ${emeraldCore.primary}`,
           outlineOffset: 2,
         },
       }}
     >
-      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", mb: 1.5 }}>
         <LivingEmerald
           imageSrc={plan.productSnapshot.imagen}
           progress={progress}
@@ -80,31 +86,33 @@ export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
           fontWeight: 600,
           color: emeraldCore.dark,
           mb: 0.5,
-          textAlign: 'center',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
+          textAlign: "center",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
         }}
       >
         {productName}
       </Typography>
 
-      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
         <Box
           sx={{
             height: 6,
-            width: '85%',
+            width: "85%",
             borderRadius: 999,
             bgcolor: alpha(emeraldCore.primary, 0.1),
-            overflow: 'hidden',
+            overflow: "hidden",
           }}
         >
           <Box
             sx={{
-              height: '100%',
+              height: "100%",
               width: `${progressPct}%`,
-              background: isComplete ? goldGradients.medium : emeraldGradients.intense,
-              transition: 'width 0.6s ease-out',
+              background: isComplete
+                ? goldGradients.medium
+                : emeraldGradients.intense,
+              transition: "width 0.6s ease-out",
             }}
           />
         </Box>
@@ -112,9 +120,9 @@ export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
 
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           gap: 1,
           fontSize: 12,
         }}
@@ -129,7 +137,7 @@ export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
         <Typography
           component="span"
           variant="caption"
-          sx={{ color: 'text.secondary', flex: 1, textAlign: 'right' }}
+          sx={{ color: "text.secondary", flex: 1, textAlign: "right" }}
         >
           {formatCurrency(plan.totalAbonadoCOP)}
         </Typography>
@@ -138,9 +146,9 @@ export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
       {plan.streak.currentWeeks > 0 && !isComplete && (
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             gap: 0.5,
             mt: 1,
             color: goldAccent.dark,
@@ -156,14 +164,14 @@ export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
       {isComplete && (
         <Box
           sx={{
-            position: 'absolute',
+            position: "absolute",
             top: 8,
             right: 8,
             color: goldAccent.primary,
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 0.25,
-            background: alpha('#FFFFFF', 0.85),
+            background: whiteAlpha(0.85),
             borderRadius: 999,
             px: 0.75,
             py: 0.25,
