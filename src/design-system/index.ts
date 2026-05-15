@@ -22,7 +22,7 @@ export {
   surfacesDark,
   priceTiers,
   colors,
-} from './tokens/colors';
+} from "./tokens/colors";
 
 // Spacing
 export {
@@ -36,7 +36,7 @@ export {
   safeArea,
   gaps,
   spacingSystem,
-} from './tokens/spacing';
+} from "./tokens/spacing";
 
 // Typography
 export {
@@ -47,7 +47,7 @@ export {
   letterSpacing,
   typography,
   typographySystem,
-} from './tokens/typography';
+} from "./tokens/typography";
 
 // Shadows
 export {
@@ -60,7 +60,7 @@ export {
   floatingLayerShadows,
   specularShadows,
   shadows,
-} from './tokens/shadows';
+} from "./tokens/shadows";
 
 // Glassmorphism
 export {
@@ -73,7 +73,7 @@ export {
   applyGlass,
   glass,
   type GlassEffect,
-} from './tokens/glass';
+} from "./tokens/glass";
 
 // Gradients
 export {
@@ -87,71 +87,68 @@ export {
   originGradients,
   meshGradients,
   gradients,
-} from './tokens/gradients';
+} from "./tokens/gradients";
 
 // Opacity
-export { opacity, type OpacityLevel } from './tokens/opacity';
+export { opacity, type OpacityLevel } from "./tokens/opacity";
 
 // Overlays
-export {
-  overlays,
-  glassStyle,
-  thumbnailStates,
-} from './tokens/overlays';
+export { overlays, glassStyle, thumbnailStates } from "./tokens/overlays";
 
 // Charts / Data Visualization
-export {
-  chartTokens,
-  chartColors,
-  chartBadge,
-} from './tokens/charts';
+export { chartTokens, chartColors, chartBadge } from "./tokens/charts";
 
 // Accents & Status Colors
-export {
-  accentColors,
-  medalColors,
-  getAccentColor,
-} from './tokens/accents';
+export { accentColors, medalColors, getAccentColor } from "./tokens/accents";
 
 // iOS Semantic Colors
-export {
-  iosSemanticColors,
-  getIOSColor,
-} from './tokens/ios-semantic';
+export { iosSemanticColors, getIOSColor } from "./tokens/ios-semantic";
 
 // iOS Typography Scale
-export { iosTypographyScale } from './tokens/ios-typography';
+export { iosTypographyScale } from "./tokens/ios-typography";
 
 // Layout Constants & Border Radius
-export {
-  layoutConstants,
-  radius,
-  zIndex,
-} from './tokens/layout';
+export { layoutConstants, radius, zIndex } from "./tokens/layout";
 
 // CSS Transition helpers & Microinteraction tokens
-export { cssTransition, microinteraction } from './tokens/motion';
+export { cssTransition, microinteraction } from "./tokens/motion";
+
+// Atelier (admin product-management tokens — back-of-house, parchment + ink)
+export {
+  atelierSurfaces,
+  atelierInk,
+  atelierBrass,
+  atelierStatus,
+  atelierFocus,
+  atelierGrid,
+  atelierSpacing,
+  atelierType,
+  atelierMotion,
+  getAtelier,
+  type Atelier,
+  type AtelierMode,
+} from "./tokens/atelier";
+
+// Fotosíntesis admin tokens (cool-neutral surfaces + emerald accent)
+export { getFoto, type FotoMode, type FotoTokens } from "./tokens/foto";
 
 // Vault Cinema (cinematic lockscreen tokens)
-export {
-  vaultCinema,
-  type VaultCinemaTokens,
-} from './tokens/vault-cinema';
+export { vaultCinema, type VaultCinemaTokens } from "./tokens/vault-cinema";
 export {
   vaultEasing,
   vaultEasingCss,
   vaultDurations,
   type VaultEasing,
   type VaultDurations,
-} from './tokens/vault-motion';
+} from "./tokens/vault-motion";
 
 // Primitives (re-exported for consistent import paths)
-export { primitiveColors } from './tokens/primitives/colors';
+export { primitiveColors } from "./tokens/primitives/colors";
 export {
   spacing as primitiveSpacing,
   iosDimensions,
-} from './tokens/primitives/spacing';
-export { easingCurves, durations } from './tokens/primitives/motion';
+} from "./tokens/primitives/spacing";
+export { easingCurves, durations } from "./tokens/primitives/motion";
 
 // Legacy palette tokens (migrated from monolithic design-system.ts)
 export {
@@ -167,7 +164,7 @@ export {
   studioCardStyles,
   animation,
   disabledButton,
-} from './tokens/legacy-compat';
+} from "./tokens/legacy-compat";
 
 // =============================================================================
 // UTILITIES
@@ -191,14 +188,19 @@ export {
   getContrastText,
   iosFills,
   iosSeparators,
-} from './utils/colorUtils';
+} from "./utils/colorUtils";
 
 // =============================================================================
 // COMPONENTS
 // =============================================================================
 
 // Button
-export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './components/Button';
+export {
+  Button,
+  type ButtonProps,
+  type ButtonVariant,
+  type ButtonSize,
+} from "./components/Button";
 
 // Card
 export {
@@ -211,7 +213,7 @@ export {
   type CardHeaderProps,
   type CardContentProps,
   type CardFooterProps,
-} from './components/Card';
+} from "./components/Card";
 
 // Layout
 export {
@@ -228,4 +230,4 @@ export {
   type StackAlign,
   type StackJustify,
   type ContainerMaxWidth,
-} from './components/Layout';
+} from "./components/Layout";
