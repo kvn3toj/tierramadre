@@ -53,6 +53,9 @@ interface CinematicData {
   /** True when this aporte just consumed a Lluvia generosa grace — surfaces
    *  as a celebratory toast once the cinematic finishes. */
   graceApplied: boolean;
+  /** ID of the aporte that just landed — threaded through so the post-
+   *  cinematic snackbar can offer "Deshacer" without re-deriving it. */
+  aporteId: string;
 }
 
 const EsmereogenesisGardenPage: React.FC = () => {
@@ -60,7 +63,7 @@ const EsmereogenesisGardenPage: React.FC = () => {
   const navigate = useNavigate();
   const { notify } = useNotification();
   const { formatCurrency } = useCurrencyFormat();
-  const { getPlanById, deletePlan } = useEsmereogenesis();
+  const { getPlanById, deletePlan, removeAporte } = useEsmereogenesis();
   const { trigger, isProcessing } = useAbonoSimulation();
   const theme = useTheme();
   // Desktop gets a larger centerpiece so the gem doesn't drown in white space
@@ -187,6 +190,7 @@ const EsmereogenesisGardenPage: React.FC = () => {
       isCompletion: result.justCompleted || willComplete,
       previousProgress,
       graceApplied: result.graceApplied,
+      aporteId: result.aporte.id,
     });
     setAporteOpen(false);
   };
@@ -210,6 +214,22 @@ const EsmereogenesisGardenPage: React.FC = () => {
         "success",
         { durationMs: 5000 },
       );
+    } else if (cinematic && !cinematic.isCompletion) {
+      // Aporte undo — Forest-style 10-second window. Suppressed on completion
+      // (you can't undo eclosión, the ceremony has happened) and on grace
+      // (the grace toast already owns this slot; double-toast would be noisy).
+      const planId = cinematic.plan.id;
+      const aporteId = cinematic.aporteId;
+      notify("Aporte registrado", "success", {
+        durationMs: 10000,
+        action: {
+          label: "Deshacer",
+          onClick: () => {
+            removeAporte(planId, aporteId);
+            notify("Aporte revertido", "info", { durationMs: 4000 });
+          },
+        },
+      });
     }
     setCinematic(null);
     setAporteOpen(false);
@@ -258,7 +278,7 @@ const EsmereogenesisGardenPage: React.FC = () => {
       >
         <IconButton
           onClick={() => navigate("/esmereogenesis")}
-          aria-label="Volver al jardín"
+          aria-label="Volver al hub de Esmereogénesis"
           sx={{ color: titleColor }}
         >
           <ChevronLeft />

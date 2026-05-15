@@ -27,6 +27,7 @@ import {
   VolumeX,
   Trash2,
   Vibrate,
+  HelpCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -37,6 +38,7 @@ import { useCurrencyFormat } from "../../contexts/CurrencyContext";
 import { EsmereoEmptyState } from "../../components/esmereogenesis/EsmereoEmptyState";
 import { EsmereoPlanCard } from "../../components/esmereogenesis/EsmereoPlanCard";
 import { StreakIndicator } from "../../components/esmereogenesis/StreakIndicator";
+import { OnboardingCoachmarks } from "../../components/esmereogenesis/OnboardingCoachmarks";
 import ConfirmDialog from "../../components/shared/ConfirmDialog";
 import { emeraldCore, goldAccent } from "../../design-system/tokens/colors";
 import {
@@ -85,6 +87,7 @@ const EsmereogenesisHubPage: React.FC = () => {
   } = useEsmereogenesis();
 
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   const handleReset = () => {
@@ -130,7 +133,15 @@ const EsmereogenesisHubPage: React.FC = () => {
         }}
       >
         <IconButton
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            // navigate(-1) fails on direct/share/refresh loads (no history to
+            // pop). Fall back to /home so the user is never stranded.
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate("/home");
+            }
+          }}
           aria-label="Volver"
           sx={{ color: titleColor }}
         >
@@ -190,6 +201,16 @@ const EsmereogenesisHubPage: React.FC = () => {
               <Typography variant="body2">Vibración</Typography>
             </Box>
             <Switch checked={hapticEnabled} size="small" />
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setMenuAnchor(null);
+              setOnboardingOpen(true);
+            }}
+            sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+          >
+            <HelpCircle size={18} />
+            <Typography variant="body2">Ver explicación</Typography>
           </MenuItem>
           {hasPlans && (
             <MenuItem
@@ -492,6 +513,14 @@ const EsmereogenesisHubPage: React.FC = () => {
         cancelLabel="Cancelar"
         onConfirm={confirmReset}
         onCancel={() => setResetConfirmOpen(false)}
+      />
+      {/* Re-openable from the settings menu — same component the Garden uses
+          on first visit, just controlled manually here so users can review
+          the explanation any time. We don't reset the localStorage flag, so
+          the auto-open contract on first Garden visit stays intact. */}
+      <OnboardingCoachmarks
+        open={onboardingOpen}
+        onClose={() => setOnboardingOpen(false)}
       />
     </Box>
   );

@@ -76,6 +76,11 @@ interface EsmereogenesisContextValue {
     justCompleted: boolean;
     graceApplied: boolean;
   }>;
+  /** Reverse a single aporte by id. Recomputes total + streak from scratch.
+   *  If the plan was 'completed' and the removal drops total below target, the
+   *  plan reverts to 'growing'. Refuses if the plan is already 'claimed'
+   *  (the asesor handoff has happened, undoing would be dishonest). */
+  removeAporte: (planId: string, aporteId: string) => void;
   /** Mark a completed plan as claimed (mock asesor handoff) */
   claimPlan: (planId: string) => void;
   /** Permanently remove a plan */
@@ -276,6 +281,42 @@ export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({
     [plans],
   );
 
+  const removeAporte = useCallback((planId: string, aporteId: string) => {
+    setPlans((prev) =>
+      prev.map((p) => {
+        if (p.id !== planId) return p;
+        if (p.state === "claimed") {
+          log.warn("removeAporte refused — plan already claimed", { planId });
+          return p;
+        }
+        const idx = p.aportes.findIndex((a) => a.id === aporteId);
+        if (idx === -1) {
+          log.warn("removeAporte: aporte not found", { planId, aporteId });
+          return p;
+        }
+        const newAportes = p.aportes.filter((a) => a.id !== aporteId);
+        const newTotal = newAportes.reduce((sum, a) => sum + a.amountCOP, 0);
+        // Recompute streak from scratch (no prevState carry — undoing the
+        // aporte that consumed grace must also free the cooldown).
+        const { state: streak } = computeStreak(newAportes);
+        const wasCompleted = p.state === "completed";
+        const stillCompleted = newTotal >= p.targetCOP;
+        const nextState = wasCompleted && !stillCompleted ? "growing" : p.state;
+        return {
+          ...p,
+          aportes: newAportes,
+          totalAbonadoCOP: newTotal,
+          streak,
+          state: nextState,
+          updatedAt: new Date().toISOString(),
+          completedAt:
+            wasCompleted && !stillCompleted ? undefined : p.completedAt,
+        };
+      }),
+    );
+    log.info("Aporte removed", { planId, aporteId });
+  }, []);
+
   const claimPlan = useCallback((planId: string) => {
     setPlans((prev) =>
       prev.map((p) =>
@@ -353,6 +394,7 @@ export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({
       getLatestPlanForItem,
       createPlan,
       addAporte,
+      removeAporte,
       claimPlan,
       deletePlan,
       seedDemo,
@@ -372,6 +414,7 @@ export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({
       getLatestPlanForItem,
       createPlan,
       addAporte,
+      removeAporte,
       claimPlan,
       deletePlan,
       seedDemo,
