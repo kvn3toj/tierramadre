@@ -37,6 +37,9 @@ export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
     .replace(/^L:.*?\s/, "")
     .replace(/^L:/, "")
     .trim();
+  // Prefer the user-given nickname when present — the product name still
+  // surfaces in the aria-label so SR users hear the source product too.
+  const displayName = plan.nickname ?? productName;
 
   return (
     <Box
@@ -46,7 +49,9 @@ export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
       whileHover={{ y: -4 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      aria-label={`Abrir jardín de ${productName} · ${progressPct}% completo`}
+      aria-label={`Abrir jardín de ${displayName}${
+        plan.nickname ? ` (${productName})` : ""
+      } · ${progressPct}% completo`}
       sx={{
         position: "relative",
         background: meshGradients.emerald,
@@ -92,7 +97,7 @@ export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
           whiteSpace: "nowrap",
         }}
       >
-        {productName}
+        {displayName}
       </Typography>
 
       <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>

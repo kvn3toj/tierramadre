@@ -61,6 +61,9 @@ interface CinematicData {
   amount: number;
   isCompletion: boolean;
   previousProgress: number;
+  /** True when this aporte just consumed a Lluvia generosa grace — surfaces
+   *  as a celebratory toast once the cinematic finishes. */
+  graceApplied: boolean;
 }
 
 const EsmereogenesisGardenPage: React.FC = () => {
@@ -179,6 +182,8 @@ const EsmereogenesisGardenPage: React.FC = () => {
     .replace(/^L:.*?\s/, "")
     .replace(/^L:/, "")
     .trim();
+  // Prefer the user-given nickname when present.
+  const displayName = plan.nickname ?? productName;
 
   // Extracted so the failure toast can re-fire the exact same aporte via its
   // "Reintentar" action — the user shouldn't have to re-open the slider and
@@ -212,6 +217,7 @@ const EsmereogenesisGardenPage: React.FC = () => {
       amount,
       isCompletion: result.justCompleted || willComplete,
       previousProgress,
+      graceApplied: result.graceApplied,
     });
     setAporteOpen(false);
   };
@@ -225,6 +231,17 @@ const EsmereogenesisGardenPage: React.FC = () => {
   };
 
   const handleCinematicComplete = () => {
+    // Forest-style streak forgiveness — fire the celebratory toast once the
+    // cinematic returns the user to the garden, so the two moments don't
+    // collide. Suppressed on completion (the eclosion ceremony is its own
+    // climax; a "rain delay" toast would dilute it).
+    if (cinematic?.graceApplied && !cinematic.isCompletion) {
+      notify(
+        "Lluvia generosa · esta semana cuenta. Tu racha sigue creciendo.",
+        "success",
+        { durationMs: 5000 },
+      );
+    }
     setCinematic(null);
     setAporteOpen(false);
     // Slider value will auto-reset via the useEffect that watches plan.totalAbonadoCOP
@@ -347,8 +364,24 @@ const EsmereogenesisGardenPage: React.FC = () => {
                 : `0 4px 22px ${alpha(emeraldCore.dark, 0.6)}`,
             }}
           >
-            {productName}
+            {displayName}
           </Typography>
+          {plan.nickname && (
+            // Surface the product name as a quiet sub-line so the user can
+            // still recognise the source gem under their chosen nickname.
+            <Typography
+              variant="caption"
+              sx={{
+                display: "block",
+                mt: 0.5,
+                color: mutedColor,
+                fontStyle: "italic",
+                letterSpacing: 0.3,
+              }}
+            >
+              {productName}
+            </Typography>
+          )}
         </Box>
 
         {/* Centerpiece — LivingEmerald + ring + numbers welded into a single

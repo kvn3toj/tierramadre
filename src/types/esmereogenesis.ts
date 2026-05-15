@@ -9,15 +9,15 @@
  */
 
 export type EsmereoState =
-  | 'empty'      // freshly created, no aportes yet
-  | 'seeded'     // first aporte received
-  | 'growing'    // active progress
-  | 'completed'  // 100% reached
-  | 'claimed';   // user requested asesor contact
+  | "empty" // freshly created, no aportes yet
+  | "seeded" // first aporte received
+  | "growing" // active progress
+  | "completed" // 100% reached
+  | "claimed"; // user requested asesor contact
 
 export type DurationMonths = 3 | 6 | 9 | 12;
 
-export type AporteType = 'suggested' | 'free';
+export type AporteType = "suggested" | "free";
 
 export interface ProductSnapshot {
   /** Frozen at plan creation — protects against catalog changes */
@@ -43,12 +43,18 @@ export interface StreakState {
   longestWeeks: number;
   /** ISO timestamp of Monday of last aporte's week */
   lastAporteWeekStart: string;
+  /** ISO of the week-start where a "Lluvia generosa" grace was last consumed.
+   *  One grace allowed per 30 days — protects a streak through a single
+   *  missed week without erasing momentum. */
+  lastGraceAt?: string;
 }
 
 export interface EsmereoPlan {
   id: string;
   itemId: number;
   productSnapshot: ProductSnapshot;
+  /** Optional user-given nickname; UI falls back to the product name. */
+  nickname?: string;
   /** Original target = precioCOP at creation */
   targetCOP: number;
   totalAbonadoCOP: number;
@@ -83,13 +89,13 @@ export interface EsmereoHubMetrics {
 
 /** Phases of the cinematic abono sequence (kept here for cross-import safety) */
 export type AbonoPhase =
-  | 'idle'
-  | 'anticipate'
-  | 'droplet'
-  | 'wash'
-  | 'reveal'
-  | 'bloom'
-  | 'progress'
-  | 'confirm'
-  | 'release'
-  | 'eclosion';
+  | "idle"
+  | "anticipate"
+  | "droplet"
+  | "wash"
+  | "reveal"
+  | "bloom"
+  | "progress"
+  | "confirm"
+  | "release"
+  | "eclosion";

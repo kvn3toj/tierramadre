@@ -10,13 +10,15 @@ import type {
   DurationMonths,
   EsmereoPlan,
   ProductSnapshot,
-} from '../types/esmereogenesis';
-import type { TreasureItem } from '../types';
+} from "../types/esmereogenesis";
+import type { TreasureItem } from "../types";
 
 const MS_IN_WEEK = 7 * 24 * 60 * 60 * 1000;
 
 /** Returns the ISO timestamp of the Monday 00:00 of the week containing `date`. */
-export function weekStartISO(date: Date | string | number = Date.now()): string {
+export function weekStartISO(
+  date: Date | string | number = Date.now(),
+): string {
   const d = new Date(date);
   const day = d.getDay(); // 0=Sun
   const diff = day === 0 ? -6 : 1 - day; // shift back to Monday
@@ -37,36 +39,48 @@ export function makeAporteId(): string {
 export function snapshotProduct(item: TreasureItem): ProductSnapshot {
   return {
     nombre: item.nombre,
-    imagen: item.imagen ?? item.thumbnailUrl ?? '',
+    imagen: item.imagen ?? item.thumbnailUrl ?? "",
     precioCOP: item.precioCOP,
     peso: item.peso,
     color: item.color,
   };
 }
 
-export function calcWeeklySuggested(targetCOP: number, durationMonths: DurationMonths): number {
+export function calcWeeklySuggested(
+  targetCOP: number,
+  durationMonths: DurationMonths,
+): number {
   // Approximate 4 weeks per month for the rhythm suggestion
   return Math.round(targetCOP / (durationMonths * 4));
 }
 
-export function buildEmptyPlan(item: TreasureItem, durationMonths: DurationMonths): EsmereoPlan {
+export function buildEmptyPlan(
+  item: TreasureItem,
+  durationMonths: DurationMonths,
+  nickname?: string,
+): EsmereoPlan {
   const now = new Date().toISOString();
+  const trimmedNickname = nickname?.trim();
   return {
     id: makePlanId(),
     itemId: item.item,
     productSnapshot: snapshotProduct(item),
+    nickname:
+      trimmedNickname && trimmedNickname.length > 0
+        ? trimmedNickname
+        : undefined,
     targetCOP: item.precioCOP,
     totalAbonadoCOP: 0,
     durationMonths,
     weeklySuggestedCOP: calcWeeklySuggested(item.precioCOP, durationMonths),
     createdAt: now,
     updatedAt: now,
-    state: 'empty',
+    state: "empty",
     aportes: [],
     streak: {
       currentWeeks: 0,
       longestWeeks: 0,
-      lastAporteWeekStart: '',
+      lastAporteWeekStart: "",
     },
   };
 }
@@ -97,7 +111,7 @@ function buildSyntheticAportes({
   for (let i = 0; i < count; i++) {
     const ts = endTimestamp - (count - 1 - i) * stepMs;
     const amount = i === count - 1 ? baseAmount + remainder : baseAmount;
-    const type: AporteType = i % 3 === 0 ? 'free' : 'suggested';
+    const type: AporteType = i % 3 === 0 ? "free" : "suggested";
     aportes.push({
       id: `${planId}_synth_${i}`,
       planId,
@@ -109,10 +123,35 @@ function buildSyntheticAportes({
   return aportes;
 }
 
-/** Compute streak state given a sorted list of aportes (older→newer). */
-export function computeStreak(aportes: Aporte[]): EsmereoPlan['streak'] {
+/** 30-day window during which a single grace can save a streak. */
+const GRACE_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
+export interface ComputeStreakResult {
+  state: EsmereoPlan["streak"];
+  /** True when this computation crossed a 2-week gap and *just* consumed a
+   *  grace for it (i.e., the most recent aporte saved a streak). */
+  graceApplied: boolean;
+}
+
+/** Compute streak state given a sorted list of aportes (older→newer).
+ *
+ *  `prevState.lastGraceAt` carries forward the cooldown of any previously
+ *  consumed grace — without it, refreshing the page would let the next
+ *  computation grant grace again for a gap that already used one. */
+export function computeStreak(
+  aportes: Aporte[],
+  prevState?: { lastGraceAt?: string },
+): ComputeStreakResult {
   if (aportes.length === 0) {
-    return { currentWeeks: 0, longestWeeks: 0, lastAporteWeekStart: '' };
+    return {
+      state: {
+        currentWeeks: 0,
+        longestWeeks: 0,
+        lastAporteWeekStart: "",
+        lastGraceAt: prevState?.lastGraceAt,
+      },
+      graceApplied: false,
+    };
   }
   const weekStarts = Array.from(
     new Set(aportes.map((a) => weekStartISO(a.createdAt))),
@@ -120,13 +159,33 @@ export function computeStreak(aportes: Aporte[]): EsmereoPlan['streak'] {
 
   let longest = 1;
   let current = 1;
+  let lastGraceAt = prevState?.lastGraceAt;
+  let graceJustApplied = false;
+
   for (let i = 1; i < weekStarts.length; i++) {
     const prev = new Date(weekStarts[i - 1]).getTime();
     const cur = new Date(weekStarts[i]).getTime();
-    if (Math.round((cur - prev) / MS_IN_WEEK) === 1) {
+    const gapWeeks = Math.round((cur - prev) / MS_IN_WEEK);
+
+    if (gapWeeks === 1) {
       current += 1;
       longest = Math.max(longest, current);
+    } else if (gapWeeks === 2) {
+      // Single missed week — eligible for Lluvia generosa if no grace was
+      // consumed within the last 30 days (relative to the saved week).
+      const graceAvailable =
+        !lastGraceAt ||
+        cur - new Date(lastGraceAt).getTime() >= GRACE_WINDOW_MS;
+      if (graceAvailable) {
+        current += 1;
+        longest = Math.max(longest, current);
+        lastGraceAt = weekStarts[i];
+        if (i === weekStarts.length - 1) graceJustApplied = true;
+      } else {
+        current = 1;
+      }
     } else {
+      // Gap larger than 2 weeks — grace can't bridge it.
       current = 1;
     }
   }
@@ -139,9 +198,13 @@ export function computeStreak(aportes: Aporte[]): EsmereoPlan['streak'] {
   const weeksSince = Math.round((thisWeekTs - lastWeekTs) / MS_IN_WEEK);
 
   return {
-    currentWeeks: weeksSince <= 1 ? current : 0,
-    longestWeeks: longest,
-    lastAporteWeekStart: lastWeek,
+    state: {
+      currentWeeks: weeksSince <= 1 ? current : 0,
+      longestWeeks: longest,
+      lastAporteWeekStart: lastWeek,
+      lastGraceAt,
+    },
+    graceApplied: graceJustApplied,
   };
 }
 
@@ -156,11 +219,29 @@ interface DemoPlanRecipe {
 
 const DEMO_RECIPES: DemoPlanRecipe[] = [
   // Just sown
-  { progress: 0.05, durationMonths: 6, aporteCount: 1, spreadWeeks: 1, endingDaysAgo: 1 },
+  {
+    progress: 0.05,
+    durationMonths: 6,
+    aporteCount: 1,
+    spreadWeeks: 1,
+    endingDaysAgo: 1,
+  },
   // Mid-progress, healthy streak
-  { progress: 0.47, durationMonths: 6, aporteCount: 6, spreadWeeks: 5, endingDaysAgo: 0 },
+  {
+    progress: 0.47,
+    durationMonths: 6,
+    aporteCount: 6,
+    spreadWeeks: 5,
+    endingDaysAgo: 0,
+  },
   // Almost there
-  { progress: 0.92, durationMonths: 9, aporteCount: 14, spreadWeeks: 13, endingDaysAgo: 2 },
+  {
+    progress: 0.92,
+    durationMonths: 9,
+    aporteCount: 14,
+    spreadWeeks: 13,
+    endingDaysAgo: 2,
+  },
 ];
 
 /**
@@ -169,7 +250,7 @@ const DEMO_RECIPES: DemoPlanRecipe[] = [
  */
 function pickDemoItems(items: TreasureItem[]): TreasureItem[] {
   const usable = items.filter(
-    (it) => !!it.imagen && it.precioCOP > 0 && it.estado === 'DISPONIBLE',
+    (it) => !!it.imagen && it.precioCOP > 0 && it.estado === "DISPONIBLE",
   );
   if (usable.length === 0) return [];
   // Shuffle deterministically by item number
@@ -196,11 +277,11 @@ export function seedDemoPlans(items: TreasureItem[]): EsmereoPlan[] {
       spreadWeeks: recipe.spreadWeeks,
       endingDaysAgo: recipe.endingDaysAgo,
     });
-    const streak = computeStreak(aportes);
+    const { state: streak } = computeStreak(aportes);
     return {
       ...plan,
       totalAbonadoCOP: totalAbonado,
-      state: totalAbonado === 0 ? 'empty' : 'growing',
+      state: totalAbonado === 0 ? "empty" : "growing",
       aportes,
       streak,
       updatedAt: aportes[aportes.length - 1]?.createdAt ?? plan.updatedAt,
@@ -218,6 +299,6 @@ export async function simulateAbonoBackend(
 ): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, delayMs));
   if (shouldFail) {
-    throw new Error('mock_failure');
+    throw new Error("mock_failure");
   }
 }

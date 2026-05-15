@@ -10,22 +10,22 @@
  * This hook only deals with state mutation + side effects orchestration.
  */
 
-import { useCallback, useState } from 'react';
-import { useEsmereogenesis } from '../contexts/EsmereogenesisContext';
-import { useTrackingDispatch } from '../contexts/TrackingContext';
-import type {
-  Aporte,
-  AporteType,
-  EsmereoPlan,
-} from '../types/esmereogenesis';
-import { createLogger } from '../utils/logger';
+import { useCallback, useState } from "react";
+import { useEsmereogenesis } from "../contexts/EsmereogenesisContext";
+import { useTrackingDispatch } from "../contexts/TrackingContext";
+import type { Aporte, AporteType, EsmereoPlan } from "../types/esmereogenesis";
+import { createLogger } from "../utils/logger";
 
-const log = createLogger('AbonoSim');
+const log = createLogger("AbonoSim");
 
 export interface AbonoOutcome {
   plan: EsmereoPlan;
   aporte: Aporte;
   justCompleted: boolean;
+  /** True when this aporte consumed a "Lluvia generosa" grace to keep the
+   *  streak alive through a missed week. Propagated from
+   *  EsmereogenesisContext.addAporte. */
+  graceApplied: boolean;
 }
 
 export interface AbonoTriggerInput {
@@ -44,7 +44,7 @@ export interface UseAbonoSimulationReturn {
 
 function shouldForceFail(): boolean {
   try {
-    return new URLSearchParams(window.location.search).get('mockFail') === '1';
+    return new URLSearchParams(window.location.search).get("mockFail") === "1";
   } catch {
     return false;
   }
@@ -61,7 +61,10 @@ export function useAbonoSimulation(): UseAbonoSimulationReturn {
     (pattern: number | number[]) => {
       if (!hapticEnabled) return;
       try {
-        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+        if (
+          typeof navigator !== "undefined" &&
+          typeof navigator.vibrate === "function"
+        ) {
           navigator.vibrate(pattern);
         }
       } catch {
@@ -72,17 +75,17 @@ export function useAbonoSimulation(): UseAbonoSimulationReturn {
   );
 
   const trigger = useCallback(
-    async ({ planId, amountCOP, type = 'free' }: AbonoTriggerInput) => {
+    async ({ planId, amountCOP, type = "free" }: AbonoTriggerInput) => {
       setIsProcessing(true);
       setLastError(null);
       try {
         if (shouldForceFail()) {
-          throw new Error('mock_failure_via_url_flag');
+          throw new Error("mock_failure_via_url_flag");
         }
         const outcome = await addAporte(planId, amountCOP, type);
         setLastOutcome(outcome);
 
-        track('esmereo_aporte_added', {
+        track("esmereo_aporte_added", {
           planId,
           amountCOP,
           type,
@@ -92,10 +95,11 @@ export function useAbonoSimulation(): UseAbonoSimulationReturn {
         });
 
         if (outcome.justCompleted) {
-          track('esmereo_completed', {
+          track("esmereo_completed", {
             planId,
             durationDays: Math.round(
-              (Date.now() - new Date(outcome.plan.createdAt).getTime()) / (1000 * 60 * 60 * 24),
+              (Date.now() - new Date(outcome.plan.createdAt).getTime()) /
+                (1000 * 60 * 60 * 24),
             ),
             totalAportes: outcome.plan.aportes.length,
             longestStreak: outcome.plan.streak.longestWeeks,
@@ -105,7 +109,7 @@ export function useAbonoSimulation(): UseAbonoSimulationReturn {
         return outcome;
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
-        log.error('Abono simulation failed', error);
+        log.error("Abono simulation failed", error);
         setLastError(error);
         return null;
       } finally {

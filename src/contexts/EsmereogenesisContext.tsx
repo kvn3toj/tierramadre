@@ -17,8 +17,8 @@ import React, {
   useMemo,
   useState,
   ReactNode,
-} from 'react';
-import { STORAGE_KEYS } from '../constants/storage-keys';
+} from "react";
+import { STORAGE_KEYS } from "../constants/storage-keys";
 import type {
   Aporte,
   AporteType,
@@ -26,7 +26,7 @@ import type {
   EsmereoHubMetrics,
   EsmereoPlan,
   EsmereoStorage,
-} from '../types/esmereogenesis';
+} from "../types/esmereogenesis";
 import {
   buildEmptyPlan,
   computeStreak,
@@ -34,11 +34,11 @@ import {
   seedDemoPlans,
   simulateAbonoBackend,
   weekStartISO,
-} from '../data/esmereo-mock';
-import type { TreasureItem } from '../types';
-import { createLogger } from '../utils/logger';
+} from "../data/esmereo-mock";
+import type { TreasureItem } from "../types";
+import { createLogger } from "../utils/logger";
 
-const log = createLogger('Esmereo');
+const log = createLogger("Esmereo");
 
 interface EsmereogenesisContextValue {
   plans: EsmereoPlan[];
@@ -56,14 +56,26 @@ interface EsmereogenesisContextValue {
   /** Get the most-recent plan for a given product regardless of state */
   getLatestPlanForItem: (itemId: number) => EsmereoPlan | undefined;
 
-  /** Create and persist a new plan rooted on a product */
-  createPlan: (item: TreasureItem, durationMonths: DurationMonths) => EsmereoPlan;
-  /** Add an aporte. Returns the new total and triggers completion if threshold crossed. */
+  /** Create and persist a new plan rooted on a product. Optional nickname
+   *  surfaces in the hub card + garden header. */
+  createPlan: (
+    item: TreasureItem,
+    durationMonths: DurationMonths,
+    nickname?: string,
+  ) => EsmereoPlan;
+  /** Add an aporte. Returns the new total, completion flag, and graceApplied
+   *  (true when this aporte just consumed a "Lluvia generosa" to save the
+   *  streak through a missed week). */
   addAporte: (
     planId: string,
     amountCOP: number,
     type?: AporteType,
-  ) => Promise<{ plan: EsmereoPlan; aporte: Aporte; justCompleted: boolean }>;
+  ) => Promise<{
+    plan: EsmereoPlan;
+    aporte: Aporte;
+    justCompleted: boolean;
+    graceApplied: boolean;
+  }>;
   /** Mark a completed plan as claimed (mock asesor handoff) */
   claimPlan: (planId: string) => void;
   /** Permanently remove a plan */
@@ -77,7 +89,9 @@ interface EsmereogenesisContextValue {
   setHapticEnabled: (next: boolean) => void;
 }
 
-const EsmereogenesisContext = createContext<EsmereogenesisContextValue | undefined>(undefined);
+const EsmereogenesisContext = createContext<
+  EsmereogenesisContextValue | undefined
+>(undefined);
 
 const STORAGE_VERSION = 1 as const;
 
@@ -86,10 +100,11 @@ function readStoredPlans(): EsmereoPlan[] {
     const raw = localStorage.getItem(STORAGE_KEYS.ESMEREO_PLANS);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as EsmereoStorage;
-    if (parsed.version !== STORAGE_VERSION || !Array.isArray(parsed.plans)) return [];
+    if (parsed.version !== STORAGE_VERSION || !Array.isArray(parsed.plans))
+      return [];
     return parsed.plans;
   } catch (err) {
-    log.error('Failed to read stored esmereo plans', err);
+    log.error("Failed to read stored esmereo plans", err);
     return [];
   }
 }
@@ -98,7 +113,7 @@ function readBoolPref(key: string, defaultValue: boolean): boolean {
   try {
     const raw = localStorage.getItem(key);
     if (raw === null) return defaultValue;
-    return raw === 'true';
+    return raw === "true";
   } catch {
     return defaultValue;
   }
@@ -106,7 +121,7 @@ function readBoolPref(key: string, defaultValue: boolean): boolean {
 
 function writeBoolPref(key: string, value: boolean): void {
   try {
-    localStorage.setItem(key, value ? 'true' : 'false');
+    localStorage.setItem(key, value ? "true" : "false");
   } catch {
     /* swallow quota errors */
   }
@@ -117,11 +132,13 @@ function persistPlans(plans: EsmereoPlan[]): void {
     const data: EsmereoStorage = { version: STORAGE_VERSION, plans };
     localStorage.setItem(STORAGE_KEYS.ESMEREO_PLANS, JSON.stringify(data));
   } catch (err) {
-    log.error('Failed to persist esmereo plans', err);
+    log.error("Failed to persist esmereo plans", err);
   }
 }
 
-export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [plans, setPlans] = useState<EsmereoPlan[]>(() => readStoredPlans());
   const [audioEnabled, setAudioEnabledState] = useState<boolean>(() =>
     readBoolPref(STORAGE_KEYS.ESMEREO_AUDIO_ENABLED, true),
@@ -153,7 +170,12 @@ export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({ chil
   const getActivePlanForItem = useCallback(
     (itemId: number) =>
       plans
-        .filter((p) => p.itemId === itemId && p.state !== 'completed' && p.state !== 'claimed')
+        .filter(
+          (p) =>
+            p.itemId === itemId &&
+            p.state !== "completed" &&
+            p.state !== "claimed",
+        )
         .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))[0],
     [plans],
   );
@@ -167,10 +189,19 @@ export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({ chil
   );
 
   const createPlan = useCallback(
-    (item: TreasureItem, durationMonths: DurationMonths): EsmereoPlan => {
-      const fresh = buildEmptyPlan(item, durationMonths);
+    (
+      item: TreasureItem,
+      durationMonths: DurationMonths,
+      nickname?: string,
+    ): EsmereoPlan => {
+      const fresh = buildEmptyPlan(item, durationMonths, nickname);
       setPlans((prev) => [...prev, fresh]);
-      log.info('Plan created', { id: fresh.id, itemId: fresh.itemId, durationMonths });
+      log.info("Plan created", {
+        id: fresh.id,
+        itemId: fresh.itemId,
+        durationMonths,
+        hasNickname: Boolean(fresh.nickname),
+      });
       return fresh;
     },
     [],
@@ -180,13 +211,18 @@ export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({ chil
     async (
       planId: string,
       amountCOP: number,
-      type: AporteType = 'free',
-    ): Promise<{ plan: EsmereoPlan; aporte: Aporte; justCompleted: boolean }> => {
+      type: AporteType = "free",
+    ): Promise<{
+      plan: EsmereoPlan;
+      aporte: Aporte;
+      justCompleted: boolean;
+      graceApplied: boolean;
+    }> => {
       const existing = plans.find((p) => p.id === planId);
       if (!existing) {
         throw new Error(`Plan ${planId} not found`);
       }
-      if (existing.state === 'claimed') {
+      if (existing.state === "claimed") {
         throw new Error(`Plan ${planId} already claimed`);
       }
 
@@ -202,12 +238,20 @@ export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({ chil
       };
 
       const newAportes = [...existing.aportes, aporte];
-      const newTotal = Math.min(existing.totalAbonadoCOP + amountCOP, existing.targetCOP);
+      const newTotal = Math.min(
+        existing.totalAbonadoCOP + amountCOP,
+        existing.targetCOP,
+      );
       const justCompleted =
-        existing.totalAbonadoCOP < existing.targetCOP && newTotal >= existing.targetCOP;
-      const nextState = justCompleted ? 'completed' : 'growing';
+        existing.totalAbonadoCOP < existing.targetCOP &&
+        newTotal >= existing.targetCOP;
+      const nextState = justCompleted ? "completed" : "growing";
       const nowISO = new Date().toISOString();
-      const streak = computeStreak(newAportes);
+      // Carry the previous grace cooldown forward so the same gap can't keep
+      // re-consuming grace on every recompute (e.g., after a page refresh).
+      const { state: streak, graceApplied } = computeStreak(newAportes, {
+        lastGraceAt: existing.streak.lastGraceAt,
+      });
 
       const updated: EsmereoPlan = {
         ...existing,
@@ -220,13 +264,14 @@ export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({ chil
       };
 
       setPlans((prev) => prev.map((p) => (p.id === planId ? updated : p)));
-      log.info('Aporte added', {
+      log.info("Aporte added", {
         planId,
         amountCOP,
         progress: newTotal / existing.targetCOP,
         justCompleted,
+        graceApplied,
       });
-      return { plan: updated, aporte, justCompleted };
+      return { plan: updated, aporte, justCompleted, graceApplied };
     },
     [plans],
   );
@@ -235,22 +280,22 @@ export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({ chil
     setPlans((prev) =>
       prev.map((p) =>
         p.id === planId
-          ? { ...p, state: 'claimed', claimedAt: new Date().toISOString() }
+          ? { ...p, state: "claimed", claimedAt: new Date().toISOString() }
           : p,
       ),
     );
-    log.info('Plan claimed', { planId });
+    log.info("Plan claimed", { planId });
   }, []);
 
   const deletePlan = useCallback((planId: string) => {
     setPlans((prev) => prev.filter((p) => p.id !== planId));
-    log.info('Plan deleted', { planId });
+    log.info("Plan deleted", { planId });
   }, []);
 
   const seedDemo = useCallback((items: TreasureItem[]): EsmereoPlan[] => {
     const demos = seedDemoPlans(items);
     if (demos.length === 0) {
-      log.warn('seedDemo aborted: no usable treasure items');
+      log.warn("seedDemo aborted: no usable treasure items");
       return [];
     }
     setPlans((prev) => [...prev, ...demos]);
@@ -259,22 +304,26 @@ export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({ chil
 
   const resetAll = useCallback(() => {
     setPlans([]);
-    log.info('Esmereo state reset');
+    log.info("Esmereo state reset");
   }, []);
 
   const activePlans = useMemo(
-    () => plans.filter((p) => p.state !== 'completed' && p.state !== 'claimed'),
+    () => plans.filter((p) => p.state !== "completed" && p.state !== "claimed"),
     [plans],
   );
   const completedPlans = useMemo(
-    () => plans.filter((p) => p.state === 'completed' || p.state === 'claimed'),
+    () => plans.filter((p) => p.state === "completed" || p.state === "claimed"),
     [plans],
   );
 
   const hubMetrics = useMemo<EsmereoHubMetrics>(() => {
-    const totalAbonadoCOP = plans.reduce((sum, p) => sum + p.totalAbonadoCOP, 0);
+    const totalAbonadoCOP = plans.reduce(
+      (sum, p) => sum + p.totalAbonadoCOP,
+      0,
+    );
     const totalTargetCOP = plans.reduce((sum, p) => sum + p.targetCOP, 0);
-    const globalProgress = totalTargetCOP > 0 ? totalAbonadoCOP / totalTargetCOP : 0;
+    const globalProgress =
+      totalTargetCOP > 0 ? totalAbonadoCOP / totalTargetCOP : 0;
     const thisWeek = weekStartISO();
     const globalStreak = activePlans
       .filter((p) => p.streak.lastAporteWeekStart === thisWeek)
@@ -342,7 +391,9 @@ export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({ chil
 export function useEsmereogenesis(): EsmereogenesisContextValue {
   const ctx = useContext(EsmereogenesisContext);
   if (!ctx) {
-    throw new Error('useEsmereogenesis must be used within EsmereogenesisProvider');
+    throw new Error(
+      "useEsmereogenesis must be used within EsmereogenesisProvider",
+    );
   }
   return ctx;
 }

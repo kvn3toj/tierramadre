@@ -9,7 +9,7 @@
  */
 
 import React, { useMemo, useState } from "react";
-import { Box, Button, Typography, alpha } from "@mui/material";
+import { Box, Button, TextField, Typography, alpha } from "@mui/material";
 import { Sprout } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -48,6 +48,9 @@ export const EsmereoCreationSheet: React.FC<EsmereoCreationSheetProps> = ({
   const { track } = useTrackingDispatch();
   const { formatCurrency } = useCurrencyFormat();
   const [selectedDuration, setSelectedDuration] = useState<DurationMonths>(6);
+  const [nickname, setNickname] = useState("");
+
+  const NICKNAME_MAX = 24;
 
   const weeklySuggested = useMemo(
     () => calcWeeklySuggested(product.precioCOP, selectedDuration),
@@ -55,12 +58,18 @@ export const EsmereoCreationSheet: React.FC<EsmereoCreationSheetProps> = ({
   );
 
   const handleSeed = () => {
-    const plan = createPlan(product, selectedDuration);
+    const trimmedNickname = nickname.trim().slice(0, NICKNAME_MAX);
+    const plan = createPlan(
+      product,
+      selectedDuration,
+      trimmedNickname.length > 0 ? trimmedNickname : undefined,
+    );
     track("esmereo_plan_created", {
       itemId: product.item,
       durationMonths: selectedDuration,
       weeklySuggestedCOP: plan.weeklySuggestedCOP,
       totalCOP: plan.targetCOP,
+      hasNickname: Boolean(plan.nickname),
     });
     onClose();
     // Slight delay to let the sheet close animation start.
@@ -114,6 +123,60 @@ export const EsmereoCreationSheet: React.FC<EsmereoCreationSheetProps> = ({
         </Typography>
         <Typography variant="body2" sx={{ color: whiteAlpha(0.78) }}>
           Tu <strong>{productName}</strong> tomará vida con cada aporte
+        </Typography>
+      </Box>
+
+      {/* Optional nickname — Finch-style ownership. Skippable; falls back to
+          the product name everywhere in the UI when left blank. */}
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant="overline"
+          sx={{
+            display: "block",
+            color: emeraldCore.light,
+            fontWeight: 700,
+            letterSpacing: 1.2,
+            mb: 1,
+            opacity: 0.85,
+          }}
+        >
+          Dale un nombre (opcional)
+        </Typography>
+        <TextField
+          fullWidth
+          size="small"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value.slice(0, NICKNAME_MAX))}
+          placeholder={`Ej. Aurora Verde · ${productName}`}
+          inputProps={{
+            maxLength: NICKNAME_MAX,
+            "aria-label": "Nombre cariñoso para tu Esmereogénesis",
+          }}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 2,
+              bgcolor: blackAlpha(0.18),
+              color: PEARL_SURFACE,
+              "& fieldset": { borderColor: alpha(emeraldCore.light, 0.35) },
+              "&:hover fieldset": { borderColor: emeraldCore.light },
+              "&.Mui-focused fieldset": { borderColor: emeraldCore.light },
+            },
+            "& .MuiOutlinedInput-input::placeholder": {
+              color: whiteAlpha(0.5),
+              opacity: 1,
+            },
+          }}
+        />
+        <Typography
+          variant="caption"
+          sx={{
+            color: whiteAlpha(0.55),
+            display: "block",
+            mt: 0.5,
+            textAlign: "right",
+          }}
+        >
+          {nickname.length}/{NICKNAME_MAX}
         </Typography>
       </Box>
 

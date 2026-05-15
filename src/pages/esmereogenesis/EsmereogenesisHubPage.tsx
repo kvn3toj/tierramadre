@@ -356,7 +356,11 @@ const EsmereogenesisHubPage: React.FC = () => {
             </Box>
           </Box>
 
-          {/* Active garden grid */}
+          {/* Active garden grid. With 3+ plans the cards adopt an offset
+              composition — alternating vertical lift + a hair of rotation —
+              so the hub reads as a planted garden, not a spreadsheet. Below
+              that count, the offsets disappear: 1-2 plans look stranded if
+              rotated. Honours prefers-reduced-motion via the inline check. */}
           {activePlans.length > 0 && (
             <Box
               sx={{
@@ -367,11 +371,36 @@ const EsmereogenesisHubPage: React.FC = () => {
                   : "repeat(2, minmax(0, 1fr))",
                 gap: { xs: 1.5, md: 2 },
                 mb: 3,
+                // Extra vertical breathing so the offset cards don't clip
+                // against the section above/below them.
+                pt: activePlans.length >= 3 ? 1.5 : 0,
+                pb: activePlans.length >= 3 ? 1.5 : 0,
               }}
             >
-              {activePlans.map((plan) => (
-                <EsmereoPlanCard key={plan.id} plan={plan} />
-              ))}
+              {activePlans.map((plan, index) => {
+                const compose = activePlans.length >= 3;
+                // Three offset positions cycled by index — gives a deliberate
+                // rhythm rather than randomness, which would look glitchy on
+                // re-render. Reduced-motion users get flat layout.
+                const liftPx = compose ? [0, -10, 6, -4, 10, -8][index % 6] : 0;
+                const rotateDeg = compose
+                  ? [-0.8, 1.1, -0.4, 0.7, -1.0, 0.5][index % 6]
+                  : 0;
+                return (
+                  <Box
+                    key={plan.id}
+                    sx={{
+                      transform: `translateY(${liftPx}px) rotate(${rotateDeg}deg)`,
+                      transition: "transform 0.4s ease-out",
+                      "@media (prefers-reduced-motion: reduce)": {
+                        transform: "none",
+                      },
+                    }}
+                  >
+                    <EsmereoPlanCard plan={plan} />
+                  </Box>
+                );
+              })}
             </Box>
           )}
 
