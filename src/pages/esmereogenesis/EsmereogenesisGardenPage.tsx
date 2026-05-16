@@ -92,16 +92,24 @@ const EsmereogenesisGardenPage: React.FC = () => {
   const [cinematic, setCinematic] = useState<CinematicData | null>(null);
   const [claimOpen, setClaimOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  // First-visit onboarding — initialised synchronously from localStorage so
-  // the dialog doesn't pop in a frame late (consistent with the rest of the
-  // app's anti-blink pattern).
-  const [onboardingOpen, setOnboardingOpen] = useState<boolean>(() => {
+  // First-visit onboarding — held closed for 1500ms after mount so the gem
+  // entrance ceremony plays without the modal stealing the reveal. The flag
+  // is still read synchronously so we don't render a dialog flash for users
+  // who have already seen it.
+  const [onboardingOpen, setOnboardingOpen] = useState<boolean>(false);
+  useEffect(() => {
+    let seen = false;
     try {
-      return !localStorage.getItem(STORAGE_KEYS.ESMEREO_ONBOARDING_SEEN);
+      seen = Boolean(
+        localStorage.getItem(STORAGE_KEYS.ESMEREO_ONBOARDING_SEEN),
+      );
     } catch {
-      return false;
+      seen = false;
     }
-  });
+    if (seen) return;
+    const t = window.setTimeout(() => setOnboardingOpen(true), 1500);
+    return () => window.clearTimeout(t);
+  }, []);
   const dismissOnboarding = () => {
     setOnboardingOpen(false);
     try {
@@ -135,6 +143,22 @@ const EsmereogenesisGardenPage: React.FC = () => {
       navigate("/esmereogenesis", { replace: true });
     }
   }, [planId, plan, navigate, notify]);
+
+  // Per-plan document.title so the browser tab is identifiable when several
+  // gardens are open. Restores the global title on unmount.
+  useEffect(() => {
+    if (!plan) return;
+    const cleanedName = plan.productSnapshot.nombre
+      .replace(/^L:.*?\s/, "")
+      .replace(/^L:/, "")
+      .trim();
+    const display = plan.nickname ?? cleanedName;
+    const prev = document.title;
+    document.title = `${display} · Esmereogénesis`;
+    return () => {
+      document.title = prev;
+    };
+  }, [plan]);
 
   const progress = useMemo(
     () =>
@@ -251,8 +275,9 @@ const EsmereogenesisGardenPage: React.FC = () => {
         minHeight: "100vh",
         background: meshGradients.emerald,
         // Honour bottom navigation + iOS home indicator so the timeline never
-        // hides behind the global tab bar.
-        pb: "calc(env(safe-area-inset-bottom, 0px) + 96px)",
+        // hides behind the global tab bar. 120 = nav height (~64) + nav bottom
+        // gap (~16) + breathing margin so the streak chip never grazes the nav.
+        pb: "calc(env(safe-area-inset-bottom, 0px) + 120px)",
       }}
     >
       {/* Header — feature identity strip, theme-aware glass. */}

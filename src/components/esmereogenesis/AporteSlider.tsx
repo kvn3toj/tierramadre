@@ -210,7 +210,9 @@ export const AporteSlider: React.FC<AporteSliderProps> = ({
       </Typography>
 
       {/* Quick-amount chips — Acorns-style shortcuts so the user can land on
-          a meaningful aporte without dragging. */}
+          a meaningful aporte without dragging. Phones overflow-scroll (room
+          is too tight to wrap without truncating "2× Sugerido"); tablets and
+          desktop wrap to a second row so "Restante" never clips off-screen. */}
       <Box
         role="group"
         aria-label="Montos rápidos"
@@ -218,7 +220,8 @@ export const AporteSlider: React.FC<AporteSliderProps> = ({
           display: "flex",
           gap: 0.75,
           mb: 1.5,
-          overflowX: "auto",
+          flexWrap: { xs: "nowrap", sm: "wrap" },
+          overflowX: { xs: "auto", sm: "visible" },
           scrollbarWidth: "none",
           "&::-webkit-scrollbar": { display: "none" },
         }}
@@ -234,10 +237,10 @@ export const AporteSlider: React.FC<AporteSliderProps> = ({
               size="small"
               sx={{
                 flexShrink: 0,
-                py: 0.5,
-                px: 1.5,
-                minHeight: 32,
-                fontSize: 12,
+                py: 1,
+                px: 2,
+                minHeight: 44,
+                fontSize: 13,
                 fontWeight: 600,
                 borderRadius: 999,
                 textTransform: "none",

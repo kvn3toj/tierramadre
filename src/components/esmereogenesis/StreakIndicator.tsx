@@ -30,7 +30,7 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({
   const theme = useTheme();
   const isLight = theme.palette.mode === "light";
 
-  const ariaLabel = `Racha de ${weeks} ${weeks === 1 ? "semana" : "semanas"}. ${STREAK_TOOLTIP}`;
+  const ariaLabel = `Racha de ${weeks} ${weeks === 1 ? "semana" : "semanas"} regando. ${STREAK_TOOLTIP}`;
 
   if (variant === "compact") {
     return (
@@ -110,7 +110,7 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({
         </Box>
         <Typography variant="body2" sx={{ fontWeight: 700, color: "inherit" }}>
           {weeks > 0
-            ? `${weeks} ${weeks === 1 ? "semana" : "semanas"}`
+            ? `${weeks} ${weeks === 1 ? "semana" : "semanas"} regando`
             : "Sin racha aún"}
         </Typography>
         {typeof longest === "number" && longest > weeks && (

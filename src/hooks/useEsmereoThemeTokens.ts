@@ -47,8 +47,12 @@ export interface EsmereoThemeTokens {
   headlineColor: string;
   /** Body copy color. */
   bodyColor: string;
-  /** Muted text — sub-labels, totals fractions. */
+  /** Muted text — sub-labels, totals fractions. Brand-tinted. */
   mutedColor: string;
+  /** Neutral-toned muted text — financial readouts, footnotes, anywhere the
+   *  copy should read as data rather than brand. Use this when you'd otherwise
+   *  reach for mutedColor but the content isn't part of the ritual voice. */
+  bodyNeutralColor: string;
   /** Accent color — slider thumb, focus rings. */
   accentColor: string;
   /** Hub-only: hero progress bar track. */
@@ -99,6 +103,7 @@ export function useEsmereoThemeTokens(): EsmereoThemeTokens {
       headlineColor: isLight ? emeraldCore.dark : PEARL_SURFACE,
       bodyColor: isLight ? alpha(emeraldCore.dark, 0.78) : whiteAlpha(0.78),
       mutedColor: isLight ? alpha(emeraldCore.dark, 0.6) : whiteAlpha(0.62),
+      bodyNeutralColor: isLight ? alpha("#1a1a1a", 0.62) : whiteAlpha(0.7),
       accentColor: isLight ? emeraldCore.primary : emeraldCore.light,
       progressTrack,
     };

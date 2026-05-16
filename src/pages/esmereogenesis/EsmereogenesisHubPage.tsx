@@ -29,7 +29,7 @@ import {
   Vibrate,
   HelpCircle,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useEsmereogenesis } from "../../contexts/EsmereogenesisContext";
 import { useNotification } from "../../contexts/NotificationContext";
@@ -54,6 +54,7 @@ const EsmereogenesisHubPage: React.FC = () => {
   const { track } = useTrackingDispatch();
   const { formatCurrency } = useCurrencyFormat();
   const theme = useTheme();
+  const reducedMotion = useReducedMotion();
   // sm (≥600px) is the design-system breakpoint where the garden grid switches
   // from the phone 2-col layout to a fluid auto-fill that uses real tablet
   // width. Using the theme breakpoint keeps the rule aligned with the rest of
@@ -66,7 +67,7 @@ const EsmereogenesisHubPage: React.FC = () => {
     titleColor,
     overlineColor,
     headlineColor,
-    bodyColor,
+    bodyNeutralColor,
     accentColor,
     cardBorder,
     headerBorder,
@@ -238,8 +239,10 @@ const EsmereogenesisHubPage: React.FC = () => {
             mx: "auto",
             px: { xs: 2, md: 3 },
             pt: 3,
-            // Reserve room for the bottom navigation + iOS home indicator.
-            pb: "calc(env(safe-area-inset-bottom, 0px) + 96px)",
+            // Reserve room for the floating bottom navigation + iOS home
+            // indicator + breathing margin so the streak chip on the last
+            // plan card never grazes the nav.
+            pb: "calc(env(safe-area-inset-bottom, 0px) + 120px)",
           }}
         >
           {/* Global metrics card — theme-aware glass + typography. */}
@@ -281,14 +284,16 @@ const EsmereogenesisHubPage: React.FC = () => {
                   Tu jardín
                 </Typography>
                 <Typography
-                  variant="h5"
                   sx={{
                     fontFamily: '"Playfair Display", serif',
                     fontWeight: 700,
+                    fontStyle: "italic",
                     color: headlineColor,
-                    lineHeight: 1.15,
+                    fontSize: { xs: 28, sm: 32, md: 36 },
+                    lineHeight: 1.1,
+                    letterSpacing: -0.3,
                     textShadow: isLight
-                      ? "none"
+                      ? `0 2px 12px ${alpha(emeraldCore.primary, 0.18)}`
                       : `0 2px 14px ${alpha(emeraldCore.dark, 0.5)}`,
                   }}
                 >
@@ -314,9 +319,12 @@ const EsmereogenesisHubPage: React.FC = () => {
                 <Typography
                   variant="caption"
                   sx={{
-                    color: bodyColor,
+                    // Neutral muted — the COP amounts are data, not part of
+                    // the brand ritual voice. Keep this off the emerald tint.
+                    color: bodyNeutralColor,
                     fontWeight: 600,
                     letterSpacing: 0.4,
+                    fontVariantNumeric: "tabular-nums",
                   }}
                 >
                   {formatCurrency(hubMetrics.totalAbonadoCOP)} aportado
@@ -413,19 +421,51 @@ const EsmereogenesisHubPage: React.FC = () => {
 
           {/* Sembrar nueva — promoted to a contained pill so it carries the
               weight of the next intentional action when the garden already
-              exists, instead of disappearing as a faded outline. */}
+              exists, instead of disappearing as a faded outline. The ambient
+              halo mirrors AporteSlider's closed launcher: same brand heartbeat
+              for "plant" and "water". */}
           <Box
             sx={{
+              position: "relative",
               display: "flex",
               justifyContent: "center",
               mb: completedPlans.length > 0 ? 4 : 2,
             }}
           >
+            <Box
+              aria-hidden
+              component={motion.div}
+              animate={
+                reducedMotion
+                  ? undefined
+                  : { scale: [1, 1.08, 1], opacity: [0.5, 0.75, 0.5] }
+              }
+              transition={{
+                duration: 3.6,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                width: "min(78%, 320px)",
+                height: 64,
+                transform: "translate(-50%, -50%)",
+                borderRadius: 999,
+                background: `radial-gradient(ellipse at center, ${alpha(emeraldCore.primary, 0.45)} 0%, ${alpha(emeraldCore.primary, 0)} 70%)`,
+                filter: "blur(18px)",
+                pointerEvents: "none",
+                zIndex: 0,
+              }}
+            />
             <Button
               variant="contained"
               startIcon={<Plus size={18} />}
               onClick={() => navigate("/treasure")}
               sx={{
+                position: "relative",
+                zIndex: 1,
                 color: "#FFFFFF",
                 background: emeraldGradients.intense,
                 py: 1.25,

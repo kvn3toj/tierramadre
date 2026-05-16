@@ -47,7 +47,7 @@ export const GardenHero: React.FC<GardenHeroProps> = ({
           fontWeight: 700,
           letterSpacing: 2,
           opacity: isLight ? 0.85 : 0.72,
-          mb: 0.5,
+          mb: 0.25,
         }}
       >
         Tu esmeralda
