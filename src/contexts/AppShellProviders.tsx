@@ -14,6 +14,7 @@ import { LiveRegionProvider } from '../components/shared/LiveRegion';
 import { NotificationProvider } from './NotificationContext';
 import { NetworkStatusProvider } from './NetworkStatusContext';
 import { GlobalLoadingProvider } from './GlobalLoadingContext';
+import { EsmereogenesisProvider } from './EsmereogenesisContext';
 
 export function AppShellProviders({ children }: { children: ReactNode }) {
   return (
@@ -23,7 +24,9 @@ export function AppShellProviders({ children }: { children: ReactNode }) {
           <LiveRegionProvider>
             <NotificationProvider>
               <NetworkStatusProvider>
-                <GlobalLoadingProvider>{children}</GlobalLoadingProvider>
+                <GlobalLoadingProvider>
+                  <EsmereogenesisProvider>{children}</EsmereogenesisProvider>
+                </GlobalLoadingProvider>
               </NetworkStatusProvider>
             </NotificationProvider>
           </LiveRegionProvider>

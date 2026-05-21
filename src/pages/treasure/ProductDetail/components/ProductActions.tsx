@@ -18,6 +18,13 @@ interface ProductActionsProps {
   onAddToCart: () => void;
   onShare: () => void;
   onContact: () => void;
+  /**
+   * Optional slot rendered between the primary CTA and the secondary
+   * (Compartir / Consultar) row. Used by Esmereogénesis to surface the
+   * savings-with-purpose CTA in its specced position without breaking the
+   * existing API for any other caller.
+   */
+  middleSlot?: React.ReactNode;
 }
 
 export const ProductActions: React.FC<ProductActionsProps> = ({
@@ -28,6 +35,7 @@ export const ProductActions: React.FC<ProductActionsProps> = ({
   onAddToCart,
   onShare,
   onContact,
+  middleSlot,
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -72,6 +80,10 @@ export const ProductActions: React.FC<ProductActionsProps> = ({
             ? 'Ver Seleccion'
             : 'Agregar a Seleccion'}
       </Button>
+
+      {/* Optional middle slot — used for the Esmereogénesis CTA so it lives
+          between the primary action and the secondary row (per spec §8.3). */}
+      {middleSlot}
 
       {/* Secondary CTAs - Horizontal layout */}
       <Box sx={{ display: 'flex', gap: 1 }}>
