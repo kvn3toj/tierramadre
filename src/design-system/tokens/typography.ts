@@ -14,6 +14,8 @@ export const fontFamilies = {
   system: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Roboto, Arial, sans-serif',
   /** Brand font for headings */
   brand: '"Libre Baskerville", Georgia, serif',
+  /** Editorial serif for printed/document contexts (e.g. Kardex). Alias of brand. */
+  serif: '"Libre Baskerville", Georgia, serif',
   /** Monospace for prices and data */
   mono: '"SF Mono", "Fira Code", "Monaco", Consolas, monospace',
 } as const;
