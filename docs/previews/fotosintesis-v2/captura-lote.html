@@ -1,0 +1,1059 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fotosíntesis · Captura B-008</title>
+<style>
+  :root {
+    /* tokens foto */
+    --canvas:#FFFFFF;
+    --panel:#FAFAF9;
+    --inset:#F3F4F2;
+    --inset-2:#ECEDEA;
+    --edge:rgba(11,16,14,0.06);
+    --rule:rgba(11,16,14,0.10);
+    --edge-strong:rgba(11,16,14,0.18);
+    --ink-primary:#0B100E;
+    --ink-secondary:#454C4A;
+    --ink-tertiary:#8B9290;
+    --ink-mute:#B7BCBA;
+    --ink-inverse:#FFFFFF;
+    --accent:#008C62;
+    --accent-deep:#006B4A;
+    --accent-soft:rgba(0,140,98,0.07);
+    --accent-glow:rgba(0,140,98,0.15);
+    --warn:#B68B2F;
+    --warn-soft:rgba(182,139,47,0.10);
+    --err:#B33A2F;
+    --err-soft:rgba(179,58,47,0.08);
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --shadow-card:0 1px 2px rgba(11,16,14,0.04), 0 6px 16px rgba(11,16,14,0.04);
+    --shadow-focus:0 0 0 3px var(--accent-glow);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { height:100%; }
+  body {
+    font-family:var(--sans);
+    background:var(--canvas);
+    color:var(--ink-primary);
+    font-size:13px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  ::selection { background:var(--accent-glow); color:var(--ink-primary); }
+
+  /* TYPE */
+  .h-meta { font-size:9px; letter-spacing:0.2em; text-transform:uppercase; font-weight:500; color:var(--ink-tertiary); }
+  .h-title { font-size:15px; font-weight:600; letter-spacing:-0.015em; color:var(--ink-primary); }
+  .num { font-family:var(--mono); font-variant-numeric:tabular-nums; letter-spacing:-0.005em; }
+
+  /* TOPBAR */
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:13px 28px;
+    background:var(--canvas);
+    border-bottom:1px solid var(--edge);
+    position:sticky; top:0; z-index:50;
+    backdrop-filter:saturate(140%) blur(8px);
+  }
+  .topbar-left { display:flex; align-items:center; gap:18px; }
+  .crumbs { display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--ink-tertiary); }
+  .crumbs a { color:var(--ink-tertiary); text-decoration:none; }
+  .crumbs a:hover { color:var(--ink-secondary); }
+  .crumbs .sep { color:var(--ink-mute); }
+  .crumbs .here { color:var(--ink-primary); font-weight:600; }
+  .topbar-right { display:flex; align-items:center; gap:8px; }
+  .chip {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 10px; border-radius:6px;
+    border:1px solid var(--edge);
+    font-size:10.5px; color:var(--ink-secondary); font-weight:500;
+    background:var(--canvas);
+  }
+  .chip .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  .chip .dot.pulse { animation:dot-pulse 1.8s ease-in-out infinite; }
+  @keyframes dot-pulse { 50% { opacity:0.4; } }
+  .chip kbd {
+    font-family:var(--mono); font-size:9.5px; font-weight:500;
+    background:var(--inset); border:1px solid var(--edge);
+    padding:1.5px 5px; border-radius:3px;
+    color:var(--ink-secondary);
+  }
+  .av {
+    width:26px; height:26px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:#3a5b4a; color:#fff;
+    font-size:10.5px; font-weight:600; letter-spacing:-0.02em;
+  }
+
+  /* TICKET (sticky context header) */
+  .ticket {
+    background:linear-gradient(180deg, var(--panel) 0%, var(--canvas) 100%);
+    border-bottom:1px solid var(--rule);
+    padding:20px 28px 22px;
+  }
+  .ticket-inner {
+    max-width:1320px; margin:0 auto;
+    display:grid; grid-template-columns:auto 1fr auto; gap:28px; align-items:stretch;
+  }
+  .ticket-id-block {
+    border-right:1px solid var(--rule);
+    padding-right:28px;
+    display:flex; flex-direction:column; justify-content:space-between;
+  }
+  .ticket-label { font-size:9px; letter-spacing:0.2em; text-transform:uppercase; font-weight:500; color:var(--ink-tertiary); margin-bottom:4px; }
+  .ticket-id {
+    font-family:var(--mono);
+    font-size:42px; font-weight:300; letter-spacing:-0.055em;
+    color:var(--ink-primary); line-height:0.9;
+    font-variant-numeric:tabular-nums;
+  }
+  .ticket-id-sub {
+    font-size:12px; color:var(--ink-secondary); margin-top:6px;
+  }
+  .ticket-id-sub strong { color:var(--ink-primary); font-weight:600; }
+
+  .ticket-meta {
+    display:grid; grid-template-columns:repeat(4, auto); justify-content:start;
+    align-items:end; gap:28px;
+  }
+  .ticket-meta .m-block { }
+  .ticket-meta .m-lab {
+    font-size:9px; letter-spacing:0.2em; text-transform:uppercase; font-weight:500;
+    color:var(--ink-tertiary); margin-bottom:3px;
+  }
+  .ticket-meta .m-val {
+    font-family:var(--mono); font-size:16px; font-weight:400;
+    color:var(--ink-primary); font-variant-numeric:tabular-nums;
+    letter-spacing:-0.015em;
+  }
+  .ticket-meta .m-val .unit {
+    font-family:var(--sans); font-size:11px; font-weight:400;
+    color:var(--ink-tertiary); margin-left:3px;
+  }
+  .ticket-meta .pay-pill {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 10px; border-radius:6px;
+    background:var(--accent-soft); color:var(--accent-deep);
+    font-size:11px; font-weight:600;
+  }
+
+  .ticket-progress {
+    display:flex; flex-direction:column; gap:9px;
+    min-width:260px; align-self:end;
+  }
+  .ticket-progress .row {
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:11px; color:var(--ink-secondary);
+  }
+  .ticket-progress .row .lab { letter-spacing:0.02em; }
+  .ticket-progress .row .val { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+  .ticket-progress .row .val strong { font-weight:600; color:var(--accent); }
+  .bar {
+    height:5px; background:var(--inset); border-radius:2.5px;
+    position:relative; overflow:hidden;
+  }
+  .bar .fill {
+    position:absolute; left:0; top:0; bottom:0;
+    background:linear-gradient(90deg, var(--accent), var(--accent-deep));
+    border-radius:2.5px;
+  }
+  .bar .mark {
+    position:absolute; top:-2px; bottom:-2px; width:2px;
+    background:var(--ink-primary);
+    border-radius:1px;
+  }
+
+  /* MAIN GRID */
+  .main {
+    max-width:1320px; margin:0 auto;
+    display:grid; grid-template-columns:minmax(0, 1fr) 380px;
+    gap:0;
+    min-height:calc(100vh - 256px);
+  }
+  .pane { background:var(--canvas); padding:24px 28px 80px; }
+  .pane.right {
+    background:var(--panel);
+    border-left:1px solid var(--rule);
+    padding:24px 24px 80px;
+    position:sticky;
+    top:56px;
+    align-self:start;
+    max-height:calc(100vh - 56px);
+    overflow-y:auto;
+  }
+
+  /* item card head */
+  .item-head {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:20px;
+  }
+  .item-head .left {
+    display:flex; align-items:baseline; gap:14px;
+  }
+  .item-head h2 {
+    font-size:18px; font-weight:600; letter-spacing:-0.02em;
+    color:var(--ink-primary);
+  }
+  .item-head .of {
+    font-size:11px; color:var(--ink-tertiary);
+    letter-spacing:0.04em;
+  }
+  .item-head .right {
+    display:flex; align-items:center; gap:10px;
+    font-size:11px; color:var(--ink-tertiary);
+  }
+  .savedot {
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11px; color:var(--ink-tertiary);
+  }
+  .savedot::before {
+    content:""; width:6px; height:6px; border-radius:50%;
+    background:var(--accent); animation:dot-pulse 2s ease-in-out infinite;
+  }
+
+  /* Type selector — tactile */
+  .group-label {
+    font-size:9px; letter-spacing:0.2em; text-transform:uppercase; font-weight:500;
+    color:var(--ink-tertiary);
+    margin-bottom:10px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .group-label .hint {
+    font-family:var(--mono); font-size:9.5px;
+    color:var(--ink-mute); letter-spacing:0.04em;
+    text-transform:none;
+  }
+  .type-row {
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;
+    margin-bottom:26px;
+  }
+  .type-btn {
+    border:1px solid var(--rule); border-radius:10px;
+    padding:12px 14px; text-align:left;
+    background:var(--canvas); cursor:pointer;
+    transition:border-color 120ms ease, background-color 120ms ease;
+    display:flex; align-items:center; gap:11px;
+    position:relative;
+  }
+  .type-btn:hover { border-color:var(--edge-strong); }
+  .type-btn .glyph {
+    width:32px; height:32px; border-radius:8px;
+    background:var(--inset); color:var(--ink-secondary);
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px;
+  }
+  .type-btn .text { flex:1; min-width:0; }
+  .type-btn .lbl {
+    font-size:12.5px; font-weight:600; color:var(--ink-primary);
+    letter-spacing:-0.01em;
+  }
+  .type-btn .key {
+    font-family:var(--mono); font-size:10px;
+    color:var(--ink-tertiary); letter-spacing:0.04em;
+    margin-top:1px;
+  }
+  .type-btn.active {
+    background:var(--accent-soft);
+    border-color:var(--accent);
+  }
+  .type-btn.active .glyph { background:var(--accent); color:#fff; }
+  .type-btn.active .lbl { color:var(--accent-deep); }
+  .type-btn.active .key { color:var(--accent); }
+  .type-btn.active::after {
+    content:""; position:absolute; right:-1px; top:-1px;
+    width:6px; height:6px; border-radius:50%;
+    background:var(--accent);
+  }
+
+  /* form layout */
+  .form-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:18px;
+  }
+  .field { display:flex; flex-direction:column; gap:6px; }
+  .field.full { grid-column:1/-1; }
+  .field-label {
+    font-size:9px; letter-spacing:0.2em; text-transform:uppercase; font-weight:500;
+    color:var(--ink-tertiary);
+    display:flex; justify-content:space-between; align-items:baseline;
+  }
+  .field-label .opt {
+    font-family:var(--sans); font-size:10px; font-weight:500;
+    text-transform:none; letter-spacing:0;
+    color:var(--ink-mute);
+  }
+  .input {
+    border:1px solid var(--rule); border-radius:9px;
+    background:var(--canvas);
+    padding:11px 13px;
+    font-family:var(--sans); font-size:13.5px;
+    color:var(--ink-primary);
+    transition:border-color 120ms ease, box-shadow 120ms ease;
+    width:100%;
+  }
+  .input::placeholder { color:var(--ink-mute); }
+  .input:focus, .input:focus-within {
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:var(--shadow-focus);
+  }
+  .input.mono { font-family:var(--mono); font-variant-numeric:tabular-nums; letter-spacing:-0.005em; }
+  .input.with-suffix { display:flex; align-items:stretch; padding:0; overflow:hidden; }
+  .input.with-suffix input {
+    flex:1; min-width:0; border:none; outline:none;
+    padding:11px 13px;
+    font:inherit; color:inherit; background:transparent;
+  }
+  .input.with-suffix .calc-suffix {
+    padding:11px 14px;
+    background:var(--accent-soft);
+    color:var(--accent-deep);
+    font-family:var(--mono); font-size:12.5px; font-weight:600;
+    font-variant-numeric:tabular-nums;
+    border-left:1px solid var(--accent);
+    display:flex; align-items:center;
+    white-space:nowrap;
+  }
+  .field-help {
+    font-size:11px; color:var(--ink-tertiary); margin-top:1px;
+    line-height:1.45;
+  }
+  .field-help strong { color:var(--accent-deep); font-weight:600; }
+  .field-help.warn { color:var(--warn); }
+  .field-help.err { color:var(--err); }
+
+  /* suggestions inline */
+  .suggest {
+    display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;
+  }
+  .suggest-item {
+    font-size:11px; color:var(--ink-secondary);
+    padding:3px 8px; border-radius:5px;
+    background:var(--inset); cursor:pointer;
+    transition:background-color 120ms ease;
+  }
+  .suggest-item:hover { background:var(--inset-2); }
+  .suggest-item kbd {
+    font-family:var(--mono); font-size:9.5px; opacity:0.6;
+    margin-left:5px;
+  }
+
+  /* quality segmented */
+  .seg {
+    display:grid; grid-template-columns:repeat(4, 1fr);
+    border:1px solid var(--rule); border-radius:9px; overflow:hidden;
+    background:var(--canvas);
+  }
+  .seg-btn {
+    padding:10px 0; text-align:center;
+    font-family:var(--sans); font-size:12px; font-weight:500;
+    color:var(--ink-secondary); cursor:pointer;
+    border-right:1px solid var(--rule);
+    transition:background-color 120ms ease, color 120ms ease;
+  }
+  .seg-btn:last-child { border-right:none; }
+  .seg-btn:hover { background:var(--inset); }
+  .seg-btn.active {
+    background:var(--ink-primary); color:var(--ink-inverse);
+    font-weight:600;
+  }
+
+  /* chips */
+  .chips {
+    display:flex; flex-wrap:wrap; gap:8px;
+    padding:8px 8px 8px 10px;
+    border:1px solid var(--rule); border-radius:9px;
+    min-height:46px; align-items:center;
+    background:var(--canvas);
+    transition:border-color 120ms ease;
+  }
+  .chips:focus-within { border-color:var(--accent); box-shadow:var(--shadow-focus); }
+  .chip-item {
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--inset);
+    padding:5px 4px 5px 10px; border-radius:6px;
+    font-size:12px; font-weight:500;
+    color:var(--ink-primary);
+    border:1px solid var(--edge);
+  }
+  .chip-item .x {
+    color:var(--ink-tertiary); cursor:pointer; font-size:11px;
+    padding:2px 6px;
+    border-radius:4px;
+  }
+  .chip-item .x:hover { background:var(--inset-2); color:var(--err); }
+  .chip-input {
+    flex:1; min-width:120px;
+    border:none; outline:none;
+    padding:5px 4px;
+    font-family:var(--sans); font-size:12.5px;
+    color:var(--ink-primary); background:transparent;
+  }
+
+  /* dropzone */
+  .dropzone {
+    border:1.5px dashed var(--edge-strong); border-radius:11px;
+    padding:24px; text-align:center;
+    background:var(--inset);
+    transition:background-color 120ms ease, border-color 120ms ease;
+    cursor:pointer;
+  }
+  .dropzone:hover {
+    background:var(--accent-soft);
+    border-color:var(--accent);
+  }
+  .dropzone .ic {
+    width:32px; height:32px; margin:0 auto 8px;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--ink-secondary);
+  }
+  .dropzone .ic svg { width:24px; height:24px; }
+  .dropzone .t {
+    font-size:12.5px; color:var(--ink-secondary); font-weight:500;
+  }
+  .dropzone .s {
+    font-size:10.5px; color:var(--ink-tertiary); margin-top:5px;
+  }
+  .photo-strip {
+    display:flex; gap:8px; margin-top:12px;
+    align-items:center;
+  }
+  .photo-thumb {
+    width:56px; height:56px; border-radius:8px;
+    background-size:cover; background-position:center;
+    border:1px solid var(--rule);
+    position:relative;
+    flex-shrink:0;
+  }
+  .photo-thumb.primary::after {
+    content:"portada"; position:absolute; bottom:3px; left:3px;
+    font-size:8px; letter-spacing:0.12em; text-transform:uppercase;
+    background:rgba(11,16,14,0.75); color:#fff;
+    padding:2px 5px; border-radius:3px;
+    backdrop-filter:blur(4px);
+    font-weight:600;
+  }
+  .photo-thumb.empty {
+    background:var(--inset);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--ink-mute); font-size:22px;
+    border:1px dashed var(--edge-strong);
+    cursor:pointer;
+  }
+  .photo-thumb.empty:hover { border-color:var(--accent); color:var(--accent); }
+
+  /* observation w/ voice */
+  .obs-wrap {
+    border:1px solid var(--rule); border-radius:9px;
+    background:var(--canvas);
+    padding:0;
+    transition:border-color 120ms ease, box-shadow 120ms ease;
+    display:flex; gap:0;
+  }
+  .obs-wrap:focus-within { border-color:var(--accent); box-shadow:var(--shadow-focus); }
+  .obs-wrap textarea {
+    flex:1; border:none; outline:none; resize:none;
+    padding:12px 14px;
+    font-family:var(--sans); font-size:13px;
+    line-height:1.55;
+    background:transparent; color:var(--ink-primary);
+    min-height:58px;
+  }
+  .obs-wrap .voice {
+    display:flex; align-items:flex-start;
+    padding:10px 12px;
+    color:var(--ink-tertiary);
+    cursor:pointer;
+    border-left:1px solid var(--rule);
+    font-size:14px;
+  }
+  .obs-wrap .voice:hover { color:var(--accent); }
+
+  /* color sample */
+  .color-sample {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:3px 8px 3px 4px; border-radius:5px;
+    background:var(--inset);
+    font-size:11px; color:var(--ink-secondary);
+  }
+  .color-sample .swatch {
+    width:14px; height:14px; border-radius:3px;
+    border:1px solid var(--edge-strong);
+  }
+  .color-sample .hex {
+    font-family:var(--mono); font-variant-numeric:tabular-nums;
+    color:var(--ink-primary); font-weight:600;
+  }
+
+  /* publish toggle */
+  .toggle-row {
+    display:flex; align-items:center; justify-content:space-between;
+    gap:14px;
+    padding:14px 16px;
+    background:var(--inset); border-radius:11px;
+    margin-top:20px;
+    border:1px solid var(--edge);
+  }
+  .toggle-row .label { font-size:13px; color:var(--ink-primary); font-weight:600; letter-spacing:-0.005em; }
+  .toggle-row .sub { font-size:11.5px; color:var(--ink-tertiary); margin-top:2px; line-height:1.45; }
+  .toggle {
+    width:36px; height:21px; border-radius:999px;
+    background:var(--ink-mute);
+    position:relative; cursor:pointer;
+    flex-shrink:0;
+    transition:background-color 200ms ease;
+  }
+  .toggle::after {
+    content:""; position:absolute; top:2px; left:2px;
+    width:17px; height:17px; border-radius:50%;
+    background:#fff; transition:transform 200ms cubic-bezier(0.3, 0.7, 0.4, 1);
+    box-shadow:0 1px 2px rgba(0,0,0,0.15);
+  }
+  .toggle.on { background:var(--accent); }
+  .toggle.on::after { transform:translateX(15px); }
+
+  /* sticky footer actions */
+  .item-footer {
+    position:sticky; bottom:0;
+    background:linear-gradient(180deg, rgba(255,255,255,0) 0%, var(--canvas) 30%);
+    padding:24px 0 16px;
+    margin-top:32px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:14px;
+  }
+  .btn {
+    font-family:var(--sans); font-size:12.5px; font-weight:600;
+    padding:11px 18px; border-radius:9px;
+    cursor:pointer; border:1px solid transparent;
+    letter-spacing:-0.005em;
+    display:inline-flex; align-items:center; gap:8px;
+    transition:transform 120ms ease, background-color 120ms ease, border-color 120ms ease;
+  }
+  .btn:hover { transform:translateY(-1px); }
+  .btn:active { transform:translateY(0); }
+  .btn-primary { background:var(--ink-primary); color:var(--ink-inverse); }
+  .btn-primary:hover { background:#000; }
+  .btn-accent { background:var(--accent); color:#fff; }
+  .btn-accent:hover { background:var(--accent-deep); }
+  .btn-ghost {
+    background:transparent; color:var(--ink-secondary);
+    border:1px solid var(--edge-strong);
+  }
+  .btn-ghost:hover { background:var(--inset); color:var(--ink-primary); }
+  .btn-text {
+    background:transparent; color:var(--ink-secondary);
+    padding:11px 12px;
+  }
+  .btn-text:hover { color:var(--ink-primary); }
+  .btn .k {
+    font-family:var(--mono); font-size:10px; opacity:0.6;
+    background:rgba(255,255,255,0.12); padding:1px 5px; border-radius:3px;
+    margin-left:4px;
+  }
+  .btn-ghost .k { background:var(--inset); color:var(--ink-tertiary); opacity:1; }
+  .footer-cluster { display:flex; gap:8px; align-items:center; }
+
+  /* SIDE — bandeja */
+  .side h3 {
+    font-size:9px; letter-spacing:0.2em; text-transform:uppercase;
+    color:var(--ink-tertiary); font-weight:500;
+    margin-bottom:11px;
+    display:flex; justify-content:space-between; align-items:baseline;
+  }
+  .side h3 .count {
+    font-family:var(--mono); font-size:10.5px;
+    color:var(--ink-secondary); font-variant-numeric:tabular-nums;
+  }
+  .side-section + .side-section { margin-top:26px; }
+
+  .lot-meta {
+    background:var(--canvas);
+    border:1px solid var(--rule); border-radius:11px;
+    overflow:hidden;
+  }
+  .lot-meta-row {
+    display:grid; grid-template-columns:auto 1fr;
+    align-items:center; gap:12px;
+    padding:9px 14px;
+    font-size:12px;
+  }
+  .lot-meta-row + .lot-meta-row { border-top:1px solid var(--edge); }
+  .lot-meta-row .k {
+    color:var(--ink-tertiary); font-size:11px;
+    letter-spacing:0.04em;
+  }
+  .lot-meta-row .v {
+    color:var(--ink-primary); font-weight:500;
+    text-align:right;
+    font-family:var(--mono); font-variant-numeric:tabular-nums;
+  }
+  .lot-meta-row .v.plain { font-family:var(--sans); }
+  .lot-meta-row .v.muted { color:var(--ink-tertiary); font-style:italic; font-weight:400; }
+
+  /* bandeja items */
+  .item-card {
+    background:var(--canvas);
+    border:1px solid var(--rule); border-radius:11px;
+    padding:11px 13px;
+    margin-bottom:8px;
+    display:grid; grid-template-columns:24px 1fr auto; gap:11px;
+    align-items:center;
+    transition:border-color 120ms ease, box-shadow 120ms ease;
+    cursor:pointer;
+    position:relative;
+  }
+  .item-card:hover {
+    border-color:var(--edge-strong);
+  }
+  .item-card.active {
+    border-color:var(--accent);
+    box-shadow:var(--shadow-focus);
+    background:var(--accent-soft);
+  }
+  .item-card.active::before {
+    content:""; position:absolute; left:-1px; top:14px; bottom:14px;
+    width:3px; background:var(--accent); border-radius:0 2px 2px 0;
+  }
+  .item-card .check {
+    width:20px; height:20px; border-radius:50%;
+    background:var(--accent); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px;
+  }
+  .item-card .check.pending {
+    background:transparent; border:1.5px dashed var(--accent);
+    color:transparent;
+  }
+  .item-card .name {
+    font-size:13px; font-weight:600; color:var(--ink-primary);
+    letter-spacing:-0.01em;
+  }
+  .item-card .meta {
+    font-size:11px; color:var(--ink-tertiary);
+    margin-top:2px; line-height:1.4;
+  }
+  .item-card .meta .num {
+    font-family:var(--mono); color:var(--ink-secondary);
+    font-variant-numeric:tabular-nums;
+  }
+  .item-card .pct-block {
+    text-align:right;
+  }
+  .item-card .pct {
+    font-family:var(--mono); font-size:13.5px; font-weight:600;
+    color:var(--ink-primary); font-variant-numeric:tabular-nums;
+    letter-spacing:-0.01em;
+  }
+  .item-card .pct-sub {
+    font-family:var(--mono); font-size:10px; color:var(--ink-tertiary);
+    font-variant-numeric:tabular-nums; margin-top:1px;
+  }
+  .item-card.pending .pct { color:var(--ink-tertiary); }
+
+  /* preponderance ring */
+  .preponderance-ring {
+    width:100%;
+    background:var(--canvas);
+    border:1px solid var(--rule); border-radius:11px;
+    padding:14px 16px;
+  }
+  .preponderance-ring .ring-row {
+    display:flex; align-items:center; gap:14px;
+  }
+  .preponderance-ring svg { width:54px; height:54px; flex-shrink:0; }
+  .preponderance-ring .ring-circ { fill:none; stroke:var(--inset); stroke-width:5; }
+  .preponderance-ring .ring-fg {
+    fill:none; stroke:var(--accent); stroke-width:5;
+    stroke-linecap:round;
+    transform:rotate(-90deg); transform-origin:50% 50%;
+  }
+  .preponderance-ring .ring-text {
+    font-size:24px; font-weight:500; letter-spacing:-0.025em;
+    font-family:var(--mono); font-variant-numeric:tabular-nums;
+    color:var(--ink-primary);
+    line-height:1;
+  }
+  .preponderance-ring .ring-label {
+    font-size:11px; color:var(--ink-secondary); margin-top:3px;
+  }
+  .preponderance-ring .ring-label strong { color:var(--accent-deep); font-weight:600; }
+
+  /* shortcuts */
+  .shortcuts {
+    display:grid; grid-template-columns:1fr auto; gap:6px 12px;
+    font-size:11.5px; color:var(--ink-secondary);
+  }
+  .shortcuts .lbl { padding:4px 0; }
+  .shortcuts kbd {
+    font-family:var(--mono); font-size:10px;
+    background:var(--canvas); border:1px solid var(--edge);
+    padding:2.5px 6px; border-radius:4px;
+    color:var(--ink-secondary);
+    box-shadow:0 1px 0 var(--rule);
+  }
+  .shortcuts .row {
+    display:contents;
+  }
+
+  /* alert when over 100% */
+  .preponderance-ring.over .ring-fg { stroke:var(--err); }
+  .preponderance-ring.over .ring-text { color:var(--err); }
+  .preponderance-ring.over .ring-label strong { color:var(--err); }
+
+  @media (max-width: 1100px) {
+    .main { grid-template-columns:1fr; }
+    .pane.right { position:static; max-height:none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="crumbs">
+      <a href="home.html">Atelier</a><span class="sep">›</span>
+      <a href="home.html">Fotosíntesis</a><span class="sep">›</span>
+      <span class="here">Captura B-008</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="chip"><span class="dot pulse"></span>Convex · Sheets <em style="font-style:normal;opacity:0.6;margin-left:3px">synced</em></span>
+    <span class="chip"><kbd>⌘K</kbd> buscar</span>
+    <span class="av">M</span>
+  </div>
+</header>
+
+<!-- TICKET persistente -->
+<section class="ticket">
+  <div class="ticket-inner">
+
+    <div class="ticket-id-block">
+      <div>
+        <div class="ticket-label">Lote en captura</div>
+        <div class="ticket-id">B-008</div>
+      </div>
+      <div class="ticket-id-sub">
+        <strong>Mauro Confederados</strong> · NIT 900.123.456-7
+      </div>
+    </div>
+
+    <div class="ticket-meta">
+      <div class="m-block">
+        <div class="m-lab">Recibido</div>
+        <div class="m-val">21 may 2026</div>
+      </div>
+      <div class="m-block">
+        <div class="m-lab">Peso</div>
+        <div class="m-val">40,00 <span class="unit">ct</span></div>
+      </div>
+      <div class="m-block">
+        <div class="m-lab">Costo total</div>
+        <div class="m-val">$500.000 <span class="unit">COP</span></div>
+      </div>
+      <div class="m-block">
+        <div class="m-lab">Pago</div>
+        <div class="m-val plain" style="font-family:var(--sans);font-size:13px"><span class="pay-pill">contado · efectivo</span></div>
+      </div>
+    </div>
+
+    <div class="ticket-progress">
+      <div class="row">
+        <span class="lab">Preponderancia</span>
+        <span class="val"><strong>67%</strong> de 100%</span>
+      </div>
+      <div class="bar">
+        <div class="fill" style="width:67%"></div>
+        <div class="mark" style="left:100%"></div>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <span class="lab">Ítems creados</span>
+        <span class="val"><strong>2</strong> de 3 · falta Aurora</span>
+      </div>
+      <div class="bar">
+        <div class="fill" style="width:66.6%"></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- Carta del ítem actual -->
+  <div class="pane">
+
+    <div class="item-head">
+      <div class="left">
+        <h2>Aurora</h2>
+        <span class="of">ítem 3 de 3 · siguiendo a Esperanza</span>
+      </div>
+      <div class="right">
+        <span class="savedot">borrador guardado · hace 4 s</span>
+      </div>
+    </div>
+
+    <!-- Tipo -->
+    <div class="group-label">
+      Tipo de ítem
+      <span class="hint">tecla rápida 1–4</span>
+    </div>
+    <div class="type-row">
+      <div class="type-btn">
+        <span class="glyph">◆</span>
+        <span class="text">
+          <span class="lbl">Gema</span>
+          <span class="key">tecla 1</span>
+        </span>
+      </div>
+      <div class="type-btn active">
+        <span class="glyph">●</span>
+        <span class="text">
+          <span class="lbl">Joya</span>
+          <span class="key">tecla 2 · seleccionado</span>
+        </span>
+      </div>
+      <div class="type-btn">
+        <span class="glyph">□</span>
+        <span class="text">
+          <span class="lbl">Insumo</span>
+          <span class="key">tecla 3</span>
+        </span>
+      </div>
+      <div class="type-btn">
+        <span class="glyph">▦</span>
+        <span class="text">
+          <span class="lbl">Sub-lote</span>
+          <span class="key">tecla 4</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Nombre + Preponderancia -->
+    <div class="form-grid" style="margin-bottom:24px">
+      <div class="field">
+        <label class="field-label">Nombre <span class="opt">requerido</span></label>
+        <input class="input" value="Aurora" />
+        <div class="suggest">
+          <span class="suggest-item">Aurora <kbd>↵</kbd></span>
+          <span class="suggest-item">Amanecer</span>
+          <span class="suggest-item">Verdiana</span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Preponderancia <span class="opt">% del costo del lote</span></label>
+        <div class="input with-suffix">
+          <input value="33" inputmode="decimal" />
+          <span class="calc-suffix">= $165.000 COP</span>
+        </div>
+        <div class="field-help">
+          <strong>33%</strong> es justo lo que falta para 100% — sugerido automáticamente.
+        </div>
+      </div>
+    </div>
+
+    <!-- Datos según tipo: JOYA -->
+    <div class="group-label">Joya · datos</div>
+    <div class="form-grid">
+      <div class="field">
+        <label class="field-label">Tipo de joya</label>
+        <select class="input" style="appearance:none;-webkit-appearance:none;background:var(--canvas) url('data:image/svg+xml;utf8,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22 fill=%22none%22&gt;&lt;path d=%22M1 1l4 4 4-4%22 stroke=%22%23454C4A%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/&gt;&lt;/svg&gt;') no-repeat right 14px center">
+          <option>Anillo</option>
+          <option>Pulsera</option>
+          <option>Dije</option>
+          <option>Aretes</option>
+          <option>Topitos</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">Peso</label>
+        <div class="input with-suffix">
+          <input class="mono" value="12,4" inputmode="decimal" />
+          <span class="calc-suffix" style="background:var(--inset);color:var(--ink-secondary);border-left-color:var(--rule);font-weight:500">gramos</span>
+        </div>
+      </div>
+      <div class="field full">
+        <label class="field-label">Técnica</label>
+        <input class="input" value="Tejido inglés" />
+        <div class="suggest">
+          <span class="suggest-item">Tejido inglés</span>
+          <span class="suggest-item">Tejido tradicional</span>
+          <span class="suggest-item">Oro fundido</span>
+          <span class="suggest-item">Engaste</span>
+        </div>
+      </div>
+      <div class="field full">
+        <label class="field-label">Materiales <span class="opt">al menos uno</span></label>
+        <div class="chips">
+          <span class="chip-item">Plata 925 <span class="x">×</span></span>
+          <span class="chip-item">Esmeralda Muzo <span class="x">×</span></span>
+          <input class="chip-input" placeholder="agregar material y enter…" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Foto y observación -->
+    <div class="group-label" style="margin-top:28px">Foto y observación</div>
+    <div class="dropzone">
+      <div class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      </div>
+      <div class="t">Arrastra fotos aquí o pega desde el portapapeles</div>
+      <div class="s">Mínimo 1, recomendado 3 · la primera será la portada</div>
+    </div>
+    <div class="photo-strip">
+      <div class="photo-thumb primary" style="background-image:linear-gradient(135deg,#2a5b4a,#0b3d2a)"></div>
+      <div class="photo-thumb empty">+</div>
+      <div class="photo-thumb empty">+</div>
+      <span class="color-sample">
+        <span class="swatch" style="background:#2a5b4a"></span>
+        color dominante <span class="hex">#2a5b4a</span>
+      </span>
+    </div>
+
+    <div class="field full" style="margin-top:18px">
+      <label class="field-label">Observación <span class="opt">descripción humana, opcional</span></label>
+      <div class="obs-wrap">
+        <textarea placeholder="ojo de aceite, suave brisa, características únicas…">ojo de aceite suave, jardín bien marcado en la cara visible</textarea>
+        <span class="voice" title="Dictar por voz">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+        </span>
+      </div>
+    </div>
+
+    <!-- publicar -->
+    <div class="toggle-row">
+      <div>
+        <div class="label">Mantener en reserva oculta</div>
+        <div class="sub">No se publica en el catálogo público. Lo activas cuando comercialmente decidan lanzarlo.</div>
+      </div>
+      <div class="toggle on"></div>
+    </div>
+
+    <!-- footer -->
+    <div class="item-footer">
+      <button class="btn btn-text">← volver al ítem 2</button>
+      <div class="footer-cluster">
+        <button class="btn btn-ghost">Duplicar este ítem <span class="k">⌘D</span></button>
+        <button class="btn btn-ghost">Guardar y siguiente</button>
+        <button class="btn btn-accent">Guardar y cerrar lote <span class="k">⌘↵</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BANDEJA -->
+  <aside class="pane right side">
+
+    <div class="side-section">
+      <h3>Progreso del lote</h3>
+      <div class="preponderance-ring">
+        <div class="ring-row">
+          <svg viewBox="0 0 60 60">
+            <circle class="ring-circ" cx="30" cy="30" r="25"/>
+            <circle class="ring-fg" cx="30" cy="30" r="25"
+              stroke-dasharray="157" stroke-dashoffset="51.81" />
+          </svg>
+          <div>
+            <div class="ring-text">67%</div>
+            <div class="ring-label">de <strong>100% requerido</strong> · falta 33</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-section">
+      <h3>Resumen del lote</h3>
+      <div class="lot-meta">
+        <div class="lot-meta-row">
+          <span class="k">Proveedor</span>
+          <span class="v plain"><strong style="color:var(--ink-primary);font-weight:600">Mauro Confederados</strong></span>
+        </div>
+        <div class="lot-meta-row">
+          <span class="k">Recibido</span>
+          <span class="v">21 may 2026</span>
+        </div>
+        <div class="lot-meta-row">
+          <span class="k">Costo total</span>
+          <span class="v">$500.000</span>
+        </div>
+        <div class="lot-meta-row">
+          <span class="k">Peso</span>
+          <span class="v">40,00 ct</span>
+        </div>
+        <div class="lot-meta-row">
+          <span class="k">Pago</span>
+          <span class="v plain">contado · efectivo</span>
+        </div>
+        <div class="lot-meta-row">
+          <span class="k">Factura</span>
+          <span class="v muted">por adjuntar</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-section">
+      <h3>Ítems del lote <span class="count">2 / 3</span></h3>
+
+      <div class="item-card">
+        <span class="check">✓</span>
+        <div>
+          <div class="name">Sagrada Familia</div>
+          <div class="meta"><span class="num">#047</span> · gema · A · 10 ct · ojo de aceite</div>
+        </div>
+        <div class="pct-block">
+          <div class="pct">50%</div>
+          <div class="pct-sub">$250.000</div>
+        </div>
+      </div>
+
+      <div class="item-card">
+        <span class="check">✓</span>
+        <div>
+          <div class="name">Esperanza</div>
+          <div class="meta"><span class="num">#048</span> · joya · anillo · 11,2 g</div>
+        </div>
+        <div class="pct-block">
+          <div class="pct">30%</div>
+          <div class="pct-sub">$150.000</div>
+        </div>
+      </div>
+
+      <div class="item-card active pending">
+        <span class="check pending"></span>
+        <div>
+          <div class="name">Aurora</div>
+          <div class="meta"><span class="num">#049</span> · joya · anillo · en captura</div>
+        </div>
+        <div class="pct-block">
+          <div class="pct">33%</div>
+          <div class="pct-sub">$165.000</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-section">
+      <h3>Atajos de teclado</h3>
+      <div class="shortcuts">
+        <span class="lbl">Cambiar tipo de ítem</span>
+        <span><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></span>
+        <span class="lbl">Paleta universal</span>
+        <span><kbd>⌘</kbd> <kbd>K</kbd></span>
+        <span class="lbl">Guardar y siguiente</span>
+        <span><kbd>⌘</kbd> <kbd>↵</kbd></span>
+        <span class="lbl">Duplicar el ítem actual</span>
+        <span><kbd>⌘</kbd> <kbd>D</kbd></span>
+        <span class="lbl">Voz para observación</span>
+        <span><kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>V</kbd></span>
+        <span class="lbl">Cancelar edición</span>
+        <span><kbd>Esc</kbd></span>
+      </div>
+    </div>
+
+  </aside>
+</main>
+
+</body>
+</html>

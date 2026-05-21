@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fotosíntesis v2 · Previews</title>
+<style>
+  :root {
+    --canvas:#FFFFFF;
+    --panel:#FAFAFA;
+    --inset:#F4F5F4;
+    --edge:rgba(11,16,14,0.06);
+    --rule:rgba(11,16,14,0.10);
+    --ink-primary:#0B100E;
+    --ink-secondary:#4A5251;
+    --ink-tertiary:#8B9290;
+    --accent:#008C62;
+    --accent-soft:rgba(0,140,98,0.07);
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    --mono:"SF Mono",Monaco,Inconsolata,"Roboto Mono",monospace;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:var(--sans);
+    background:var(--canvas);
+    color:var(--ink-primary);
+    font-size:13px;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding:60px 32px;
+  }
+  .wrap { max-width:1100px; margin:0 auto; }
+  .label {
+    font-size:9px; letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--ink-tertiary); font-weight:500;
+  }
+  h1 {
+    font-size:38px; font-weight:600; letter-spacing:-0.035em;
+    margin-top:6px; line-height:1.1;
+  }
+  .lede {
+    font-size:15px; color:var(--ink-secondary);
+    margin-top:14px; max-width:680px; line-height:1.6;
+  }
+  .lede strong { color:var(--ink-primary); font-weight:600; }
+  .grid {
+    margin-top:40px;
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));
+    gap:18px;
+  }
+  .card {
+    border:1px solid var(--rule); border-radius:14px;
+    overflow:hidden;
+    transition:border-color 120ms ease, transform 200ms ease;
+    background:var(--canvas);
+    text-decoration:none; color:inherit;
+    display:flex; flex-direction:column;
+  }
+  .card:hover {
+    border-color:var(--accent);
+    transform:translateY(-2px);
+  }
+  .card .preview {
+    aspect-ratio:16/10;
+    background-size:cover; background-position:top center;
+    background-color:var(--panel);
+    border-bottom:1px solid var(--edge);
+    position:relative;
+    overflow:hidden;
+  }
+  .card .preview .pid {
+    position:absolute; top:14px; left:14px;
+    font-family:var(--mono); font-size:10px;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    padding:4px 9px; border-radius:5px;
+    color:var(--ink-secondary); font-weight:500;
+  }
+  .card .body {
+    padding:16px 18px;
+  }
+  .card .title {
+    font-size:16px; font-weight:600;
+    letter-spacing:-0.015em; color:var(--ink-primary);
+  }
+  .card .desc {
+    font-size:12.5px; color:var(--ink-secondary);
+    margin-top:5px; line-height:1.55;
+  }
+  /* Render tiny mockup illustrations as background SVGs */
+  .pv-home {
+    background:linear-gradient(180deg,#fff,#fafafa);
+    position:relative;
+  }
+  .pv-home::after {
+    content:""; position:absolute; inset:14px 14px 14px 14px;
+    background:
+      linear-gradient(180deg, transparent 0 22px, var(--edge) 22px 23px, transparent 23px 60px,
+        var(--accent-soft) 60px 100px, transparent 100px 105px,
+        var(--edge) 105px 106px, transparent 106px),
+      linear-gradient(90deg, #fff 0 60%, var(--panel) 60% 100%);
+    border-radius:6px;
+  }
+  .pv-capture {
+    background:linear-gradient(180deg,#fff,#fafafa);
+    position:relative;
+  }
+  .pv-capture::after {
+    content:""; position:absolute; inset:14px;
+    background:
+      linear-gradient(180deg, var(--accent-soft) 0 24%, transparent 24% 28%, #fff 28% 100%);
+    border-radius:6px;
+  }
+  .pv-capture::before {
+    content:""; position:absolute; top:36%; right:14px; bottom:14px; width:34%;
+    background:var(--panel);
+    border-radius:6px;
+    border-left:1px solid var(--edge);
+    z-index:1;
+  }
+  .pv-spotlight {
+    background:#1a1d1c;
+    position:relative;
+  }
+  .pv-spotlight::after {
+    content:""; position:absolute; inset:18px;
+    background:#fff;
+    border-radius:8px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.3);
+  }
+  .pv-venta {
+    background:linear-gradient(90deg,#fff 0 56%, #fcfaf6 56% 100%);
+    position:relative;
+  }
+  .pv-venta::after {
+    content:""; position:absolute; inset:18px;
+    background:
+      linear-gradient(180deg,
+        var(--accent) 0 4px, transparent 4px 22%, var(--inset) 22% 26%, transparent 26%);
+    border-radius:4px;
+    opacity:0.6;
+  }
+  .pv-directorio {
+    background:linear-gradient(180deg,#fff,#fafafa);
+    position:relative;
+  }
+  .pv-directorio::after {
+    content:""; position:absolute; inset:14px;
+    background:
+      repeating-linear-gradient(180deg,
+        transparent 0 12px, var(--edge) 12px 13px, transparent 13px 30px),
+      linear-gradient(90deg, #fff 0 64%, var(--panel) 64% 100%);
+    border-radius:6px;
+  }
+
+  .meta {
+    padding:32px 0;
+    border-top:1px solid var(--edge);
+    margin-top:60px;
+    font-size:12px; color:var(--ink-tertiary);
+    line-height:1.7;
+  }
+  .meta strong { color:var(--ink-secondary); font-weight:600; }
+  .meta code {
+    font-family:var(--mono); font-size:11px;
+    background:var(--inset); padding:2px 6px; border-radius:4px;
+    color:var(--ink-secondary);
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="label">Fotosíntesis v2 · 21 may 2026</div>
+  <h1>Previews del rediseño</h1>
+  <p class="lede">
+    Concepto <strong>"cinta de captura"</strong>: una sola sesión que recorre proveedor → compra → ítems → venta, con un <strong>ticket persistente</strong> arriba y una <strong>bandeja contextual</strong> al lado. Lo abajo son cinco pantallas estáticas para validar la dirección antes de meter Convex y MUI.
+  </p>
+
+  <div class="grid">
+
+    <a href="home.html" class="card">
+      <div class="preview pv-home"><span class="pid">home.html</span></div>
+      <div class="body">
+        <div class="title">Inicio · "Buenos días, Maritza"</div>
+        <div class="desc">Saludo contextual, salud del sistema, tres acciones rápidas, lotes abiertos esperando ítems, ventas por embajador y ritmo semanal.</div>
+      </div>
+    </a>
+
+    <a href="captura-lote.html" class="card">
+      <div class="preview pv-capture"><span class="pid">captura-lote.html</span></div>
+      <div class="body">
+        <div class="title">Captura de lote · B-008</div>
+        <div class="desc">El corazón del rediseño. Ticket persistente arriba, carta del ítem 3 de 3 al centro, bandeja lateral con los ya capturados. Preponderancia calculada en vivo.</div>
+      </div>
+    </a>
+
+    <a href="spotlight-buscador.html" class="card">
+      <div class="preview pv-spotlight"><span class="pid">spotlight-buscador.html</span></div>
+      <div class="body">
+        <div class="title">Buscador de producto · ⌘K</div>
+        <div class="desc">Modal estilo Spotlight para vender. Galería filtrable por estado, calidad, procedencia y lote. Solo muestra DISPONIBLE o ASESOR (BR-6).</div>
+      </div>
+    </a>
+
+    <a href="venta-kardex.html" class="card">
+      <div class="preview pv-venta"><span class="pid">venta-kardex.html</span></div>
+      <div class="body">
+        <div class="title">Venta · V-0042 con Kardex</div>
+        <div class="desc">Cierre de venta a embajador, esmereogénesis 6 cuotas, totales con comisión, y preview en vivo del Kardex listo para PDF + envío por email.</div>
+      </div>
+    </a>
+
+    <a href="directorio.html" class="card">
+      <div class="preview pv-directorio"><span class="pid">directorio.html</span></div>
+      <div class="body">
+        <div class="title">Directorio · proveedores, embajadores, clientes</div>
+        <div class="desc">Lista con búsqueda fuzzy, sample cromático en la barra lateral de cada fila, drawer derecho con ficha + timeline de compras.</div>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="meta">
+    <p><strong>Principios aplicados.</strong> Un evento físico = una sesión continua · contexto siempre visible en cabecera · cálculos en vivo (preponderancia → costo) · validación predictiva, no post-mortem · teclado primero (Tab, Enter, ⌘ K, números 1–4) · autosave por paso.</p>
+    <p style="margin-top:12px"><strong>Pendiente de decidir antes de codear.</strong> El nombre del documento final (<code>Kardex</code> vs <code>carnet</code>), si la numeración <code>B-{NNN}</code> es continua o por año, y la plantilla legal del certificado de origen.</p>
+    <p style="margin-top:12px"><strong>Tokens fuente.</strong> <code>foto</code> (paper/vault + emerald accent) — los mismos que el admin existente <code>/admin/products</code>. Sin nuevas dependencias.</p>
+  </div>
+
+</div>
+
+</body>
+</html>

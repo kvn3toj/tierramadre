@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fotosíntesis · Venta V-0042</title>
+<style>
+  :root {
+    --canvas:#FFFFFF;
+    --panel:#FAFAF9;
+    --inset:#F3F4F2;
+    --inset-2:#ECEDEA;
+    --edge:rgba(11,16,14,0.06);
+    --rule:rgba(11,16,14,0.10);
+    --edge-strong:rgba(11,16,14,0.18);
+    --ink-primary:#0B100E;
+    --ink-secondary:#454C4A;
+    --ink-tertiary:#8B9290;
+    --ink-mute:#B7BCBA;
+    --accent:#008C62;
+    --accent-deep:#006B4A;
+    --accent-soft:rgba(0,140,98,0.07);
+    --accent-glow:rgba(0,140,98,0.15);
+    --gold:#9A7029;
+    --gold-soft:rgba(154,112,41,0.10);
+    --paper:#FBF8F1;
+    --paper-edge:#E6DDC9;
+    --paper-ink:#1F1A14;
+    --paper-mute:#7A6D5C;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    --serif:"Iowan Old Style","Hoefler Text","Times New Roman",Georgia,serif;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:var(--sans);
+    background:var(--canvas);
+    color:var(--ink-primary);
+    font-size:13px; line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  ::selection { background:var(--accent-glow); }
+
+  /* TOPBAR */
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:13px 28px;
+    border-bottom:1px solid var(--edge);
+    position:sticky; top:0; z-index:50;
+    background:rgba(255,255,255,0.86);
+    backdrop-filter:saturate(140%) blur(8px);
+  }
+  .crumbs { font-size:11.5px; color:var(--ink-tertiary); }
+  .crumbs .here { color:var(--ink-primary); font-weight:600; }
+  .crumbs .sep { margin:0 6px; color:var(--ink-mute); }
+  .crumbs a { color:var(--ink-tertiary); text-decoration:none; }
+  .crumbs a:hover { color:var(--ink-secondary); }
+  .topbar-right { display:flex; align-items:center; gap:8px; }
+  .chip {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 10px; border-radius:6px;
+    border:1px solid var(--edge);
+    font-size:10.5px; color:var(--ink-secondary); font-weight:500;
+  }
+  .chip .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity:0.4; } }
+  .av {
+    width:26px; height:26px; border-radius:50%;
+    background:#3a5b4a; color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:10.5px; font-weight:600;
+  }
+
+  /* TICKET */
+  .ticket {
+    background:linear-gradient(180deg, var(--panel) 0%, var(--canvas) 100%);
+    border-bottom:1px solid var(--rule);
+    padding:22px 28px;
+  }
+  .ticket-inner {
+    max-width:1320px; margin:0 auto;
+    display:grid; grid-template-columns:auto 1fr auto; gap:28px;
+    align-items:end;
+  }
+  .ticket-id-block {
+    border-right:1px solid var(--rule); padding-right:28px;
+  }
+  .ticket-label {
+    font-size:9px; letter-spacing:0.2em; text-transform:uppercase;
+    color:var(--ink-tertiary); font-weight:500; margin-bottom:4px;
+  }
+  .ticket-id {
+    font-family:var(--mono);
+    font-size:42px; font-weight:300; letter-spacing:-0.055em;
+    color:var(--ink-primary); line-height:0.9;
+    font-variant-numeric:tabular-nums;
+  }
+  .ticket-sub {
+    margin-top:8px;
+    font-size:12.5px; color:var(--ink-secondary);
+  }
+  .ticket-sub strong { color:var(--ink-primary); font-weight:600; }
+
+  .step-pills {
+    display:flex; gap:8px; align-items:center;
+    margin-left:auto;
+  }
+  .step {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 14px; border-radius:999px;
+    font-size:11.5px; font-weight:500;
+    background:var(--inset); color:var(--ink-tertiary);
+    border:1px solid var(--edge);
+  }
+  .step.done { background:var(--accent-soft); color:var(--accent-deep); border-color:rgba(0,140,98,0.2); }
+  .step.done .num::before { content:"✓ "; font-weight:700; }
+  .step.active {
+    background:var(--ink-primary); color:#fff; font-weight:600;
+    border-color:var(--ink-primary);
+  }
+  .step .num {
+    font-family:var(--mono); font-size:10.5px; opacity:0.7;
+    font-weight:500;
+  }
+  .step.active .num { opacity:0.9; }
+  .step.done .num { opacity:1; }
+
+  /* MAIN GRID */
+  .main {
+    max-width:1320px; margin:0 auto;
+    display:grid; grid-template-columns:minmax(0, 1.2fr) 480px;
+    gap:0;
+    min-height:calc(100vh - 220px);
+  }
+  .pane { background:var(--canvas); padding:24px 28px 60px; }
+  .pane.right {
+    background:linear-gradient(180deg, #2a2522 0%, #1a1714 100%);
+    padding:28px 24px;
+    position:sticky; top:56px;
+    align-self:start;
+    max-height:calc(100vh - 56px);
+    overflow-y:auto;
+  }
+
+  /* form sections */
+  .section { margin-bottom:32px; }
+  .section h3 {
+    font-size:9px; letter-spacing:0.2em; text-transform:uppercase;
+    color:var(--ink-tertiary); font-weight:500;
+    margin-bottom:14px;
+  }
+  .segmented {
+    display:grid; grid-template-columns:1fr 1fr;
+    background:var(--inset); padding:4px; border-radius:11px;
+    margin-bottom:18px;
+  }
+  .segmented.three { grid-template-columns:repeat(3, 1fr); }
+  .segmented .opt {
+    text-align:center; padding:10px 12px;
+    border-radius:8px; font-weight:500; font-size:12.5px;
+    color:var(--ink-secondary); cursor:pointer;
+    transition:background 120ms ease, color 120ms ease, box-shadow 120ms ease;
+  }
+  .segmented .opt:hover { color:var(--ink-primary); }
+  .segmented .opt.active {
+    background:var(--canvas); color:var(--ink-primary); font-weight:600;
+    box-shadow:0 1px 2px rgba(11,16,14,0.04), 0 0 0 1px var(--edge);
+  }
+
+  /* form */
+  .form-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:14px;
+  }
+  .field { display:flex; flex-direction:column; gap:6px; }
+  .field.full { grid-column:1/-1; }
+  .field-label {
+    font-size:9px; letter-spacing:0.2em; text-transform:uppercase;
+    color:var(--ink-tertiary); font-weight:500;
+    display:flex; justify-content:space-between; align-items:baseline;
+  }
+  .field-label .opt {
+    font-family:var(--sans); font-size:10px; font-weight:500;
+    text-transform:none; letter-spacing:0;
+    color:var(--ink-mute);
+  }
+  .input {
+    border:1px solid var(--rule); border-radius:9px;
+    background:var(--canvas);
+    padding:11px 13px;
+    font-family:var(--sans); font-size:13.5px;
+    color:var(--ink-primary);
+    transition:border-color 120ms ease, box-shadow 120ms ease;
+    width:100%;
+  }
+  .input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+  .input.mono { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+
+  /* embajador card */
+  .person-card {
+    display:grid; grid-template-columns:48px 1fr auto;
+    align-items:center; gap:14px;
+    padding:13px 15px;
+    border:1px solid var(--rule); border-radius:11px;
+    background:var(--inset);
+  }
+  .avatar {
+    width:48px; height:48px; border-radius:50%;
+    background-size:cover; background-position:center;
+    background-color:var(--ink-mute);
+    flex-shrink:0;
+  }
+  .person-card .name {
+    font-size:14.5px; font-weight:600; color:var(--ink-primary);
+    letter-spacing:-0.01em;
+  }
+  .person-card .meta {
+    font-size:11.5px; color:var(--ink-tertiary); margin-top:2px;
+    line-height:1.4;
+  }
+  .person-card .meta .num {
+    font-family:var(--mono); color:var(--ink-secondary);
+    font-variant-numeric:tabular-nums;
+  }
+  .person-card .stats {
+    text-align:right;
+    font-size:10.5px; color:var(--ink-tertiary);
+    font-weight:500; letter-spacing:0.04em;
+  }
+  .person-card .stats .big {
+    font-family:var(--mono); font-size:18px; font-weight:600; color:var(--ink-primary);
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-0.02em;
+    line-height:1;
+    margin-bottom:3px;
+  }
+
+  /* PRODUCT card */
+  .product-card {
+    display:grid; grid-template-columns:96px 1fr;
+    gap:18px; padding:16px;
+    border:1px solid var(--rule); border-radius:12px;
+    background:var(--canvas);
+    box-shadow:0 1px 2px rgba(11,16,14,0.03);
+  }
+  .product-img {
+    width:96px; height:96px; border-radius:9px;
+    background-size:cover; background-position:center;
+    background-color:var(--inset);
+    position:relative;
+    overflow:hidden;
+  }
+  .product-img .ct {
+    position:absolute; bottom:6px; right:6px;
+    font-family:var(--mono); font-size:9.5px;
+    background:rgba(11,16,14,0.8); color:#fff;
+    padding:2px 6px; border-radius:4px;
+    font-weight:600;
+    backdrop-filter:blur(4px);
+  }
+  .product-card .name {
+    font-size:17px; font-weight:600;
+    color:var(--ink-primary); letter-spacing:-0.018em;
+  }
+  .product-card .obs {
+    font-size:11.5px; color:var(--ink-tertiary);
+    font-style:italic; margin-top:1px;
+  }
+  .lineage {
+    margin-top:10px;
+    display:grid; grid-template-columns:1fr 1fr; gap:4px 14px;
+  }
+  .lineage-row {
+    font-size:11.5px; color:var(--ink-secondary);
+  }
+  .lineage-row .l {
+    font-family:var(--mono); font-size:9.5px;
+    color:var(--ink-tertiary); letter-spacing:0.04em;
+    text-transform:uppercase; margin-right:5px;
+  }
+  .lineage-row strong { color:var(--ink-primary); font-weight:600; }
+
+  /* totals */
+  .totals {
+    background:var(--inset); border-radius:11px;
+    padding:14px 16px;
+    margin-top:18px;
+  }
+  .totals-row {
+    display:flex; justify-content:space-between;
+    padding:6px 0; font-size:12.5px;
+    color:var(--ink-secondary);
+  }
+  .totals-row .v {
+    font-family:var(--mono); font-variant-numeric:tabular-nums;
+    letter-spacing:-0.005em;
+  }
+  .totals-row.grand {
+    border-top:1px solid var(--rule);
+    margin-top:10px; padding-top:14px;
+    font-size:14.5px; font-weight:600;
+    color:var(--ink-primary);
+  }
+  .totals-row.grand .v {
+    font-size:20px; font-weight:500;
+    color:var(--accent-deep);
+    letter-spacing:-0.02em;
+  }
+  .totals-row.commission .v {
+    color:var(--gold);
+  }
+
+  /* will happen */
+  .will-happen {
+    background:var(--accent-soft);
+    border:1px solid rgba(0,140,98,0.18);
+    border-radius:11px;
+    padding:14px 16px;
+    margin-top:20px;
+  }
+  .will-happen h4 {
+    font-size:11px; font-weight:600; color:var(--accent-deep);
+    letter-spacing:-0.005em;
+    margin-bottom:6px;
+    display:flex; align-items:center; gap:7px;
+  }
+  .will-happen h4 svg { width:14px; height:14px; }
+  .will-happen ul {
+    list-style:none; margin:0; padding:0;
+  }
+  .will-happen li {
+    font-size:11.5px; color:var(--accent-deep);
+    padding:2px 0 2px 18px;
+    position:relative;
+  }
+  .will-happen li::before {
+    content:"·"; position:absolute; left:6px; top:1px;
+    color:var(--accent);
+    font-size:14px; font-weight:600;
+  }
+  .will-happen li .num { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+
+  /* privacy toggle */
+  .privacy-row {
+    display:flex; align-items:center; justify-content:space-between;
+    gap:14px;
+    padding:13px 16px;
+    background:var(--inset); border-radius:11px;
+    margin-top:14px;
+    border:1px solid var(--edge);
+  }
+  .privacy-row .label {
+    font-size:12.5px; font-weight:600; color:var(--ink-primary);
+  }
+  .privacy-row .sub {
+    font-size:11px; color:var(--ink-tertiary); margin-top:2px;
+  }
+  .toggle {
+    width:36px; height:21px; border-radius:999px;
+    background:var(--ink-mute);
+    position:relative; cursor:pointer; flex-shrink:0;
+    transition:background-color 200ms ease;
+  }
+  .toggle::after {
+    content:""; position:absolute; top:2px; left:2px;
+    width:17px; height:17px; border-radius:50%;
+    background:#fff;
+    transition:transform 200ms cubic-bezier(0.3, 0.7, 0.4, 1);
+    box-shadow:0 1px 2px rgba(0,0,0,0.15);
+  }
+  .toggle.on { background:var(--accent); }
+  .toggle.on::after { transform:translateX(15px); }
+
+  /* footer actions */
+  .footer {
+    margin-top:28px;
+    padding-top:20px;
+    border-top:1px solid var(--edge);
+    display:flex; align-items:center; justify-content:space-between;
+    gap:14px;
+  }
+  .btn {
+    font-family:var(--sans); font-size:12.5px; font-weight:600;
+    padding:11px 18px; border-radius:9px;
+    cursor:pointer; border:1px solid transparent;
+    letter-spacing:-0.005em;
+    display:inline-flex; align-items:center; gap:8px;
+    transition:transform 120ms ease, background-color 120ms ease;
+  }
+  .btn:hover { transform:translateY(-1px); }
+  .btn-primary { background:var(--ink-primary); color:#fff; }
+  .btn-accent { background:var(--accent); color:#fff; }
+  .btn-accent:hover { background:var(--accent-deep); }
+  .btn-ghost { background:transparent; color:var(--ink-secondary); border-color:var(--edge-strong); }
+  .btn-ghost:hover { background:var(--inset); color:var(--ink-primary); }
+  .btn-text { background:transparent; color:var(--ink-secondary); padding:11px 12px; }
+  .btn-text:hover { color:var(--ink-primary); }
+  .btn .k {
+    font-family:var(--mono); font-size:10px; opacity:0.7;
+    background:rgba(255,255,255,0.15); padding:1px 5px; border-radius:3px;
+    margin-left:4px;
+  }
+
+  /* KARDEX preview */
+  .kardex-wrap {
+    position:sticky; top:24px;
+    padding-bottom:24px;
+  }
+  .kardex-label {
+    font-size:9px; letter-spacing:0.2em; text-transform:uppercase;
+    color:rgba(255,255,255,0.5); font-weight:500;
+    margin-bottom:12px;
+    display:flex; justify-content:space-between; align-items:baseline;
+  }
+  .kardex-label .savedot {
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:10px; color:rgba(255,255,255,0.4);
+    text-transform:none; letter-spacing:0;
+    font-weight:400;
+  }
+  .kardex-label .savedot::before {
+    content:""; width:6px; height:6px; border-radius:50%;
+    background:rgba(255,255,255,0.4);
+  }
+  .kardex-paper {
+    background:var(--paper);
+    border-radius:6px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    padding:32px 30px 26px;
+    font-family:var(--serif);
+    color:var(--paper-ink);
+    font-size:11px;
+    line-height:1.5;
+    position:relative;
+    overflow:hidden;
+  }
+  .kardex-paper::before {
+    content:""; position:absolute;
+    top:0; left:0; right:0; height:5px;
+    background:linear-gradient(90deg, var(--accent) 0%, var(--gold) 50%, var(--accent-deep) 100%);
+  }
+  /* perforated edge */
+  .kardex-paper::after {
+    content:""; position:absolute;
+    left:0; right:0; bottom:0;
+    height:14px;
+    background:
+      radial-gradient(circle at 8px 14px, transparent 6px, var(--paper) 6.5px) 0 0 / 16px 14px,
+      radial-gradient(circle at 8px 14px, transparent 6px, transparent 6.5px) 0 0 / 16px 14px;
+    pointer-events:none;
+  }
+  .kardex-head {
+    display:grid; grid-template-columns:1fr auto;
+    gap:14px; align-items:start;
+    padding-bottom:14px;
+    border-bottom:2px solid var(--paper-ink);
+  }
+  .kardex-head .brand {
+    font-family:var(--sans);
+    font-size:11.5px; letter-spacing:0.22em; text-transform:uppercase;
+    font-weight:700;
+    color:var(--paper-ink);
+  }
+  .kardex-head .brand-sub {
+    font-family:var(--serif);
+    font-size:10.5px;
+    color:var(--paper-mute);
+    margin-top:3px;
+    font-style:italic;
+  }
+  .kardex-head .meta {
+    text-align:right;
+    font-family:var(--sans);
+    font-size:10px; color:var(--paper-mute);
+  }
+  .kardex-head .meta .doc {
+    font-size:9px; letter-spacing:0.18em; text-transform:uppercase;
+    font-weight:500;
+  }
+  .kardex-head .meta .id {
+    font-family:var(--mono); font-size:14px; font-weight:600;
+    color:var(--paper-ink); letter-spacing:-0.015em;
+    margin-top:3px;
+  }
+  .kardex-head .meta .date {
+    margin-top:2px;
+  }
+
+  .kardex-title {
+    font-family:var(--sans);
+    font-size:9px; letter-spacing:0.2em; text-transform:uppercase;
+    color:var(--paper-mute); margin-top:14px;
+    text-align:center;
+    font-weight:500;
+  }
+  .kardex-product {
+    display:grid; grid-template-columns:108px 1fr;
+    gap:16px; margin-top:14px;
+  }
+  .kardex-photo {
+    width:108px; height:108px; border-radius:5px;
+    background-size:cover; background-position:center;
+    background-image:linear-gradient(135deg,#2a5b4a,#0b3d2a);
+    border:1px solid var(--paper-edge);
+  }
+  .kardex-product .name {
+    font-family:var(--serif);
+    font-size:22px; font-weight:500;
+    letter-spacing:-0.02em;
+    color:var(--paper-ink);
+    line-height:1.1;
+  }
+  .kardex-product .sub {
+    font-family:var(--sans);
+    font-size:10.5px;
+    color:var(--paper-mute);
+    margin-top:7px; line-height:1.55;
+  }
+  .kardex-product .sub strong { color:var(--paper-ink); font-weight:600; }
+
+  .kardex-grid {
+    display:grid; grid-template-columns:1fr 1fr;
+    margin-top:16px;
+    border-top:1px solid var(--paper-edge);
+  }
+  .kardex-row {
+    padding:9px 12px 9px 0;
+    border-bottom:1px solid var(--paper-edge);
+  }
+  .kardex-row:nth-child(even) {
+    padding-left:14px; padding-right:0;
+    border-left:1px solid var(--paper-edge);
+  }
+  .kardex-row .k {
+    font-family:var(--sans);
+    font-size:8.5px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--paper-mute); font-weight:500;
+    margin-bottom:2px;
+  }
+  .kardex-row .v {
+    font-family:var(--serif);
+    font-size:12.5px; color:var(--paper-ink); font-weight:500;
+  }
+  .kardex-row .v.mono {
+    font-family:var(--mono); font-variant-numeric:tabular-nums;
+    letter-spacing:-0.005em;
+  }
+  .kardex-row .v.private {
+    color:var(--paper-mute); font-style:italic;
+  }
+
+  /* certificate footer */
+  .kardex-cert {
+    margin-top:18px; padding-top:14px;
+    border-top:2px solid var(--paper-ink);
+    display:grid; grid-template-columns:1fr auto auto;
+    align-items:center; gap:14px;
+  }
+  .kardex-cert .text {
+    font-family:var(--sans);
+    font-size:9.5px; color:var(--paper-mute);
+    line-height:1.5;
+  }
+  .kardex-cert .text strong { color:var(--paper-ink); font-weight:600; }
+  .kardex-cert .text .url {
+    font-family:var(--mono); font-size:9px;
+    color:var(--paper-ink); margin-top:3px;
+  }
+  .kardex-cert .seal {
+    width:54px; height:54px; border-radius:50%;
+    border:1.5px solid var(--paper-ink);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--paper-ink);
+    font-family:var(--sans);
+    font-size:8px; letter-spacing:0.12em; text-transform:uppercase;
+    font-weight:700;
+    text-align:center;
+    position:relative;
+  }
+  .kardex-cert .seal::before {
+    content:""; position:absolute; inset:3px;
+    border-radius:50%;
+    border:1px dashed var(--paper-ink);
+  }
+  .kardex-cert .qr {
+    width:50px; height:50px;
+    background:
+      repeating-linear-gradient(0deg,  var(--paper-ink) 0 3px, transparent 3px 6px),
+      repeating-linear-gradient(90deg, var(--paper-ink) 0 3px, transparent 3px 6px);
+    background-blend-mode:darken;
+    background-color:var(--paper);
+    border:1px solid var(--paper-ink);
+  }
+
+  /* actions row */
+  .kardex-actions {
+    display:flex; gap:8px; margin-top:18px;
+  }
+  .kardex-actions .btn { flex:1; padding:10px 12px; font-size:11.5px; }
+  .kardex-actions .btn-paper {
+    background:rgba(255,255,255,0.08);
+    color:rgba(255,255,255,0.9);
+    border:1px solid rgba(255,255,255,0.16);
+  }
+  .kardex-actions .btn-paper:hover { background:rgba(255,255,255,0.14); }
+  .kardex-actions .btn-paper-strong {
+    background:#fff; color:var(--paper-ink);
+  }
+  .kardex-actions .btn-paper-strong:hover { background:var(--paper); }
+
+  /* dark legend below kardex */
+  .kardex-legend {
+    margin-top:18px; padding:12px 14px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:9px;
+    font-size:10.5px; color:rgba(255,255,255,0.55);
+    line-height:1.55;
+  }
+  .kardex-legend strong { color:#fff; font-weight:600; }
+  .kardex-legend .row {
+    display:flex; justify-content:space-between;
+    padding:3px 0;
+  }
+  .kardex-legend .row .v {
+    color:rgba(255,255,255,0.8);
+    font-family:var(--mono); font-variant-numeric:tabular-nums;
+  }
+
+  @media (max-width: 1100px) {
+    .main { grid-template-columns:1fr; }
+    .pane.right { position:static; max-height:none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="crumbs">
+    <a href="home.html">Atelier</a><span class="sep">›</span>
+    <a href="home.html">Fotosíntesis</a><span class="sep">›</span>
+    <span>Ventas</span><span class="sep">›</span>
+    <span class="here">V-0042</span>
+  </div>
+  <div class="topbar-right">
+    <span class="chip"><span class="dot"></span>Borrador guardado</span>
+    <span class="av">M</span>
+  </div>
+</header>
+
+<section class="ticket">
+  <div class="ticket-inner">
+    <div class="ticket-id-block">
+      <div class="ticket-label">Venta en construcción</div>
+      <div class="ticket-id">V-0042</div>
+      <div class="ticket-sub">Ítem <strong>#047 Sagrada Familia</strong> · esmereogénesis 6 cuotas</div>
+    </div>
+    <div></div>
+    <div class="step-pills">
+      <span class="step done"><span class="num">1</span> Comprador</span>
+      <span class="step done"><span class="num">2</span> Producto</span>
+      <span class="step active"><span class="num">3</span> Cierre y Kardex</span>
+    </div>
+  </div>
+</section>
+
+<main class="main">
+
+  <!-- FORM -->
+  <div class="pane">
+
+    <div class="section">
+      <h3>Comprador</h3>
+      <div class="segmented">
+        <div class="opt active">Embajador</div>
+        <div class="opt">Cliente final</div>
+      </div>
+      <div class="person-card">
+        <div class="avatar" style="background-image:linear-gradient(135deg,#c5a06a,#7a4d2c)"></div>
+        <div>
+          <div class="name">Paola Sosa</div>
+          <div class="meta">
+            <span class="num">CC 1.024.563.870</span> · Bogotá · embajadora desde mar 2024
+          </div>
+        </div>
+        <div class="stats">
+          <div class="big">12</div>
+          ventas / 6 m
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Producto vendido</h3>
+      <div class="product-card">
+        <div class="product-img" style="background-image:linear-gradient(135deg,#3a7a5a,#103820)">
+          <span class="ct">10 ct</span>
+        </div>
+        <div>
+          <div class="name">Sagrada Familia</div>
+          <div class="obs">"ojo de aceite suave, jardín bien marcado"</div>
+          <div class="lineage">
+            <div class="lineage-row"><span class="l">Ítem</span><strong>#047</strong> · esmeralda · AAA</div>
+            <div class="lineage-row"><span class="l">Lote</span><strong>B-008</strong> · 8 may 2026</div>
+            <div class="lineage-row"><span class="l">Proveedor</span>Mauro Confederados</div>
+            <div class="lineage-row"><span class="l">Procedencia</span>Muzo, Boyacá</div>
+            <div class="lineage-row"><span class="l">Peso</span><strong>10,00 ct</strong></div>
+            <div class="lineage-row"><span class="l">Medidas</span>12 × 8 × 6 mm</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Forma de pago</h3>
+      <div class="segmented three">
+        <div class="opt active">Esmereogénesis</div>
+        <div class="opt">Contado</div>
+        <div class="opt">Crédito</div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label class="field-label">Plazo total</label>
+          <input class="input mono" value="6 meses" />
+        </div>
+        <div class="field">
+          <label class="field-label">Cuotas <span class="opt">cada 30 días</span></label>
+          <input class="input mono" value="6 cuotas · $750.000 c/u" />
+        </div>
+        <div class="field full">
+          <label class="field-label">Notas internas <span class="opt">no aparecen en el Kardex</span></label>
+          <input class="input" value="Paola confirma cobro automático con tarjeta Bancolombia" />
+        </div>
+      </div>
+
+      <div class="totals">
+        <div class="totals-row"><span>Precio acordado</span><span class="v">$4.500.000</span></div>
+        <div class="totals-row"><span>Descuento aplicado</span><span class="v" style="color:var(--ink-tertiary)">—</span></div>
+        <div class="totals-row commission">
+          <span>Comisión Paola (12%)</span>
+          <span class="v">$540.000</span>
+        </div>
+        <div class="totals-row grand">
+          <span>Total a cobrar</span>
+          <span class="v">$4.500.000</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Privacidad del Kardex</h3>
+      <div class="privacy-row">
+        <div>
+          <div class="label">Ocultar identificación del comprador en el certificado público</div>
+          <div class="sub">El nombre se muestra; la cédula/NIT solo en la copia interna</div>
+        </div>
+        <div class="toggle on"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Resumen — qué pasará al confirmar</h3>
+      <div class="will-happen">
+        <h4>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          5 acciones encadenadas
+        </h4>
+        <ul>
+          <li>Ítem <span class="num">#047</span> pasa de <strong>DISPONIBLE</strong> → <strong>VENDIDA</strong></li>
+          <li>Se asigna venta <span class="num">V-0042</span> a embajador <strong>Paola Sosa</strong></li>
+          <li>Se generan dos PDF: Kardex + certificado de origen</li>
+          <li>Se suben a Drive en <span class="num">ventas/2026/may/047-paola.pdf</span></li>
+          <li>Sincronización Convex → Sheets · pestañas <strong>Ventas</strong> e <strong>Inventario</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="btn btn-text">← volver al producto</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost">Guardar como reservada</button>
+        <button class="btn btn-accent">Confirmar venta · generar Kardex <span class="k">⌘↵</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KARDEX preview -->
+  <aside class="pane right">
+    <div class="kardex-wrap">
+      <div class="kardex-label">
+        <span>Vista previa del Kardex</span>
+        <span class="savedot">se actualiza con tus cambios</span>
+      </div>
+
+      <div class="kardex-paper">
+        <div class="kardex-head">
+          <div>
+            <div class="brand">Tierra Mädre Studio</div>
+            <div class="brand-sub">Esencia y poder · Colombia</div>
+          </div>
+          <div class="meta">
+            <div class="doc">Carnet de adquisición</div>
+            <div class="id">V-0042</div>
+            <div class="date">21 mayo 2026</div>
+          </div>
+        </div>
+
+        <div class="kardex-title">Documento del producto</div>
+
+        <div class="kardex-product">
+          <div class="kardex-photo"></div>
+          <div>
+            <div class="name">Sagrada Familia</div>
+            <div class="sub">
+              Esmeralda colombiana · ítem <strong>#047</strong> · lote <strong>B-008</strong><br>
+              Procedente de <strong>Muzo, Boyacá</strong><br>
+              Capturada el 8 de mayo de 2026
+            </div>
+          </div>
+        </div>
+
+        <div class="kardex-grid">
+          <div class="kardex-row"><div class="k">Peso</div><div class="v mono">10,00 ct</div></div>
+          <div class="kardex-row"><div class="k">Calidad</div><div class="v">AAA</div></div>
+          <div class="kardex-row"><div class="k">Color</div><div class="v">Ojo de aceite</div></div>
+          <div class="kardex-row"><div class="k">Medidas</div><div class="v mono">12 × 8 × 6 mm</div></div>
+          <div class="kardex-row"><div class="k">Comprador</div><div class="v">Paola Sosa</div></div>
+          <div class="kardex-row"><div class="k">Identificación</div><div class="v private">— oculta en versión pública —</div></div>
+          <div class="kardex-row"><div class="k">Precio</div><div class="v mono">$4.500.000 COP</div></div>
+          <div class="kardex-row"><div class="k">Pago</div><div class="v">Esmereogénesis · 6 cuotas</div></div>
+        </div>
+
+        <div class="kardex-cert">
+          <div class="text">
+            <strong>Certificado de origen adjunto</strong> — esmeralda extraída en Muzo, registrada en cadena de custodia Tierra Mädre.
+            <div class="url">tierra-madre-studio.vercel.app/v/V-0042</div>
+          </div>
+          <div class="seal">
+            TM<br>2026
+          </div>
+          <div class="qr"></div>
+        </div>
+      </div>
+
+      <div class="kardex-actions">
+        <button class="btn btn-paper">⤓ PDF</button>
+        <button class="btn btn-paper">✉ enviar</button>
+        <button class="btn btn-paper-strong">Guardar en Drive</button>
+      </div>
+
+      <div class="kardex-legend">
+        <div class="row">
+          <span>Carnet · 1 página</span>
+          <span class="v">PDF · 240 KB</span>
+        </div>
+        <div class="row">
+          <span>Certificado de origen · 2 páginas</span>
+          <span class="v">PDF · 410 KB</span>
+        </div>
+        <div class="row">
+          <span>Destino · Google Drive</span>
+          <span class="v">ventas/2026/may/</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+</main>
+
+</body>
+</html>

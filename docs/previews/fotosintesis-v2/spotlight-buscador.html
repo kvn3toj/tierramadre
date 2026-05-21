@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fotosíntesis · Buscador ⌘K</title>
+<style>
+  :root {
+    --canvas:#FFFFFF;
+    --panel:#FAFAF9;
+    --inset:#F3F4F2;
+    --inset-2:#ECEDEA;
+    --edge:rgba(11,16,14,0.06);
+    --rule:rgba(11,16,14,0.10);
+    --edge-strong:rgba(11,16,14,0.18);
+    --ink-primary:#0B100E;
+    --ink-secondary:#454C4A;
+    --ink-tertiary:#8B9290;
+    --ink-mute:#B7BCBA;
+    --accent:#008C62;
+    --accent-deep:#006B4A;
+    --accent-soft:rgba(0,140,98,0.08);
+    --accent-glow:rgba(0,140,98,0.18);
+    --warn:#B68B2F;
+    --warn-soft:rgba(182,139,47,0.13);
+    --sold:#B33A2F;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:var(--sans);
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,140,98,0.06), transparent 70%),
+      #0e110f;
+    color:var(--ink-primary);
+    font-size:13px;
+    min-height:100vh;
+    padding:60px 20px;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  ::selection { background:var(--accent-glow); color:var(--ink-primary); }
+
+  /* Context hint above modal */
+  .ctx-hint {
+    text-align:center;
+    margin-bottom:30px;
+  }
+  .ctx-hint .pill {
+    display:inline-flex; align-items:center; gap:8px;
+    color:rgba(255,255,255,0.55);
+    font-size:11px; letter-spacing:0.06em;
+    padding:7px 14px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:999px;
+  }
+  .ctx-hint .pill kbd {
+    font-family:var(--mono); font-size:10px;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.1);
+    padding:2px 6px; border-radius:4px;
+    color:#fff;
+  }
+
+  /* MODAL */
+  .modal {
+    max-width:920px; margin:0 auto;
+    background:var(--canvas);
+    border-radius:18px;
+    box-shadow:
+      0 1px 2px rgba(0,0,0,0.05),
+      0 8px 24px rgba(0,0,0,0.15),
+      0 36px 80px rgba(0,0,0,0.3);
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.06);
+  }
+
+  /* search bar */
+  .search {
+    display:flex; align-items:center; gap:14px;
+    padding:18px 22px;
+    border-bottom:1px solid var(--edge);
+  }
+  .search .icon { color:var(--ink-tertiary); flex-shrink:0; }
+  .search .icon svg { width:20px; height:20px; }
+  .search input {
+    flex:1; border:none; outline:none;
+    font-family:var(--sans);
+    font-size:19px; font-weight:500;
+    color:var(--ink-primary);
+    background:transparent;
+    letter-spacing:-0.02em;
+  }
+  .search input::placeholder { color:var(--ink-mute); font-weight:400; }
+  .search .scope-chip {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:4px 10px; border-radius:6px;
+    background:var(--accent-soft); color:var(--accent-deep);
+    font-size:11px; font-weight:600;
+  }
+  .search .scope-chip .x {
+    color:var(--accent-deep); cursor:pointer; opacity:0.5;
+  }
+  .search .scope-chip .x:hover { opacity:1; }
+  .search .esc-key {
+    font-family:var(--mono); font-size:10.5px;
+    background:var(--inset); border:1px solid var(--edge);
+    padding:4px 9px; border-radius:5px;
+    color:var(--ink-tertiary);
+  }
+
+  /* body */
+  .body {
+    display:grid; grid-template-columns:210px 1fr;
+    min-height:540px;
+    max-height:540px;
+  }
+
+  /* filters */
+  .filters {
+    background:var(--panel);
+    border-right:1px solid var(--edge);
+    padding:18px 14px;
+    overflow-y:auto;
+  }
+  .filter-group + .filter-group { margin-top:20px; }
+  .filter-group h4 {
+    font-size:9px; letter-spacing:0.2em; text-transform:uppercase;
+    color:var(--ink-tertiary); font-weight:500;
+    margin-bottom:8px;
+    padding:0 8px;
+  }
+  .filter-item {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:5.5px 8px; border-radius:6px;
+    font-size:12px; color:var(--ink-secondary);
+    cursor:pointer;
+    transition:background-color 80ms ease, color 80ms ease;
+  }
+  .filter-item:hover { background:var(--inset); color:var(--ink-primary); }
+  .filter-item.active {
+    background:var(--ink-primary); color:#fff;
+    font-weight:600;
+  }
+  .filter-item.active .ct { color:rgba(255,255,255,0.7); }
+  .filter-item .nm { display:flex; align-items:center; gap:7px; }
+  .filter-item .swatch {
+    width:8px; height:8px; border-radius:50%;
+    background:var(--accent);
+  }
+  .filter-item .ct {
+    font-family:var(--mono); font-size:10.5px;
+    color:var(--ink-tertiary);
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* RESULTS */
+  .results {
+    overflow-y:auto;
+  }
+  .result-section + .result-section { border-top:1px solid var(--edge); }
+  .result-header {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 22px 8px;
+    font-size:9px; letter-spacing:0.2em; text-transform:uppercase;
+    color:var(--ink-tertiary); font-weight:500;
+  }
+  .result-header .ct {
+    font-family:var(--mono); color:var(--ink-secondary);
+    font-variant-numeric:tabular-nums;
+  }
+  .result-row {
+    display:grid; grid-template-columns:52px 1fr auto auto;
+    align-items:center; gap:16px;
+    padding:10px 22px;
+    cursor:pointer;
+    border-left:3px solid transparent;
+    transition:background-color 80ms ease;
+  }
+  .result-row:hover { background:var(--inset); }
+  .result-row.focused {
+    background:var(--accent-soft);
+    border-left-color:var(--accent);
+  }
+  .result-row.focused .price { color:var(--accent-deep); }
+  .thumb {
+    width:52px; height:52px; border-radius:9px;
+    background-size:cover; background-position:center;
+    background-color:var(--inset);
+    flex-shrink:0;
+    position:relative;
+    overflow:hidden;
+  }
+  .thumb .chip-ct {
+    position:absolute; bottom:3px; right:3px;
+    font-family:var(--mono); font-size:8.5px;
+    background:rgba(11,16,14,0.78); color:#fff;
+    padding:1px 4px; border-radius:3px;
+    font-weight:600; letter-spacing:0;
+    backdrop-filter:blur(4px);
+  }
+  .result-text .name {
+    font-size:14px; font-weight:600; color:var(--ink-primary);
+    letter-spacing:-0.015em;
+    display:flex; align-items:center; gap:8px;
+  }
+  .result-text .name .obs {
+    font-size:10px; color:var(--ink-tertiary); font-weight:400;
+    font-style:italic;
+  }
+  .result-text .meta {
+    font-size:11.5px; color:var(--ink-tertiary);
+    margin-top:3px; line-height:1.4;
+    display:flex; align-items:center; gap:8px;
+  }
+  .result-text .meta .pipe { color:var(--ink-mute); }
+  .result-text .meta .num {
+    font-family:var(--mono); color:var(--ink-secondary);
+    font-variant-numeric:tabular-nums;
+  }
+  .price {
+    font-family:var(--mono); font-size:13.5px; font-weight:600;
+    color:var(--ink-primary);
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-0.005em;
+    text-align:right;
+    min-width:96px;
+  }
+  .badge {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:3px 9px; border-radius:999px;
+    font-size:9.5px; font-weight:600;
+    text-transform:uppercase; letter-spacing:0.08em;
+    white-space:nowrap;
+  }
+  .badge-disp { background:var(--accent-soft); color:var(--accent-deep); }
+  .badge-ases { background:var(--warn-soft); color:var(--warn); }
+
+  /* recent / empty / create-new section */
+  .recent-row {
+    display:grid; grid-template-columns:32px 1fr auto;
+    align-items:center; gap:14px;
+    padding:9px 22px;
+    cursor:pointer;
+    font-size:12.5px; color:var(--ink-secondary);
+  }
+  .recent-row:hover { background:var(--inset); color:var(--ink-primary); }
+  .recent-row .ic {
+    color:var(--ink-tertiary);
+  }
+  .recent-row .ic svg { width:14px; height:14px; }
+  .recent-row .time {
+    font-family:var(--mono); font-size:10.5px;
+    color:var(--ink-tertiary); font-variant-numeric:tabular-nums;
+  }
+
+  /* create new row */
+  .create-row {
+    display:grid; grid-template-columns:52px 1fr auto;
+    align-items:center; gap:16px;
+    padding:14px 22px;
+    cursor:pointer;
+    border-top:1px solid var(--edge);
+    background:linear-gradient(90deg, var(--accent-soft), transparent 60%);
+  }
+  .create-row:hover { background:linear-gradient(90deg, var(--accent-glow), var(--accent-soft) 70%); }
+  .create-row .ic-square {
+    width:52px; height:52px; border-radius:9px;
+    background:var(--accent); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .create-row .ic-square svg { width:24px; height:24px; }
+  .create-row .text .title {
+    font-size:13.5px; font-weight:600; color:var(--ink-primary);
+    letter-spacing:-0.01em;
+  }
+  .create-row .text .sub {
+    font-size:11.5px; color:var(--ink-secondary);
+    margin-top:2px;
+  }
+  .create-row .kbd {
+    font-family:var(--mono); font-size:10.5px;
+    background:var(--canvas); border:1px solid var(--edge);
+    padding:3px 7px; border-radius:5px;
+    color:var(--ink-secondary);
+  }
+
+  /* footer */
+  .modal-footer {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:11px 22px;
+    border-top:1px solid var(--edge);
+    background:var(--panel);
+    font-size:11px; color:var(--ink-tertiary);
+  }
+  .kbd-row { display:flex; gap:16px; align-items:center; }
+  .kbd-row span { display:inline-flex; align-items:center; gap:5px; }
+  kbd {
+    font-family:var(--mono); font-size:10px;
+    background:var(--canvas); border:1px solid var(--edge);
+    padding:3px 6px; border-radius:4px;
+    color:var(--ink-secondary);
+    box-shadow:0 1px 0 var(--rule);
+  }
+  .modal-footer .right {
+    color:var(--ink-secondary);
+    font-size:11px;
+  }
+  .modal-footer .right strong { color:var(--ink-primary); font-weight:600; }
+</style>
+</head>
+<body>
+
+<div class="ctx-hint">
+  <span class="pill">
+    <kbd>⌘</kbd><kbd>K</kbd> · Buscar producto del inventario
+  </span>
+</div>
+
+<div class="modal" role="dialog" aria-label="Buscador de producto">
+
+  <!-- search -->
+  <div class="search">
+    <span class="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </span>
+    <input value="esmeralda muzo aaa" placeholder="Buscar por nombre, ítem, lote, proveedor o color…" />
+    <span class="scope-chip">Solo vendibles <span class="x">×</span></span>
+    <span class="esc-key">esc</span>
+  </div>
+
+  <div class="body">
+
+    <!-- FILTERS -->
+    <aside class="filters">
+      <div class="filter-group">
+        <h4>Estado</h4>
+        <div class="filter-item active">
+          <span class="nm"><span class="swatch"></span>Disponible</span>
+          <span class="ct">42</span>
+        </div>
+        <div class="filter-item">
+          <span class="nm"><span class="swatch" style="background:var(--warn)"></span>Con asesor</span>
+          <span class="ct">17</span>
+        </div>
+      </div>
+      <div class="filter-group">
+        <h4>Calidad</h4>
+        <div class="filter-item"><span class="nm">Extra</span><span class="ct">3</span></div>
+        <div class="filter-item active"><span class="nm">AAA</span><span class="ct">9</span></div>
+        <div class="filter-item"><span class="nm">AA</span><span class="ct">22</span></div>
+        <div class="filter-item"><span class="nm">A</span><span class="ct">25</span></div>
+      </div>
+      <div class="filter-group">
+        <h4>Procedencia</h4>
+        <div class="filter-item active"><span class="nm">Muzo</span><span class="ct">28</span></div>
+        <div class="filter-item"><span class="nm">Chivor</span><span class="ct">14</span></div>
+        <div class="filter-item"><span class="nm">Coscuez</span><span class="ct">11</span></div>
+        <div class="filter-item"><span class="nm">Otros</span><span class="ct">6</span></div>
+      </div>
+      <div class="filter-group">
+        <h4>Lote</h4>
+        <div class="filter-item"><span class="nm">B-008 · Mauro</span><span class="ct">3</span></div>
+        <div class="filter-item"><span class="nm">B-007 · Lucho</span><span class="ct">5</span></div>
+        <div class="filter-item"><span class="nm">B-006 · Mauro</span><span class="ct">4</span></div>
+        <div class="filter-item"><span class="nm">B-005 · Mauro</span><span class="ct">2</span></div>
+      </div>
+      <div class="filter-group">
+        <h4>Rango de precio</h4>
+        <div class="filter-item"><span class="nm">&lt; $2M</span><span class="ct">8</span></div>
+        <div class="filter-item active"><span class="nm">$2M – $5M</span><span class="ct">14</span></div>
+        <div class="filter-item"><span class="nm">$5M – $10M</span><span class="ct">5</span></div>
+      </div>
+    </aside>
+
+    <!-- RESULTS -->
+    <div class="results">
+
+      <div class="result-section">
+        <div class="result-header">
+          <span>Coincidencias</span>
+          <span class="ct">5 de 9 ítems</span>
+        </div>
+
+        <div class="result-row focused">
+          <div class="thumb" style="background-image:linear-gradient(135deg,#2a5b4a,#0b3d2a)"><span class="chip-ct">10ct</span></div>
+          <div class="result-text">
+            <div class="name">Sagrada Familia <span class="obs">"ojo de aceite"</span></div>
+            <div class="meta">
+              <span class="num">#047</span><span class="pipe">·</span>
+              B-008<span class="pipe">·</span>
+              Mauro Confederados<span class="pipe">·</span>
+              Muzo<span class="pipe">·</span>
+              AAA
+            </div>
+          </div>
+          <span class="badge badge-disp">disponible</span>
+          <span class="price">$3.250.000</span>
+        </div>
+
+        <div class="result-row">
+          <div class="thumb" style="background-image:linear-gradient(135deg,#3a7a5a,#103820)"><span class="chip-ct">18ct</span></div>
+          <div class="result-text">
+            <div class="name">Aurora <span class="obs">"jardín marcado"</span></div>
+            <div class="meta">
+              <span class="num">#049</span><span class="pipe">·</span>
+              B-008<span class="pipe">·</span>
+              Mauro Confederados<span class="pipe">·</span>
+              Muzo<span class="pipe">·</span>
+              AAA
+            </div>
+          </div>
+          <span class="badge badge-disp">disponible</span>
+          <span class="price">$4.500.000</span>
+        </div>
+
+        <div class="result-row">
+          <div class="thumb" style="background-image:linear-gradient(135deg,#4a8a6a,#1a4a30)"><span class="chip-ct">12ct</span></div>
+          <div class="result-text">
+            <div class="name">Estrella del Norte <span class="obs">"suave brisa"</span></div>
+            <div class="meta">
+              <span class="num">#031</span><span class="pipe">·</span>
+              B-007<span class="pipe">·</span>
+              Lucho Banco<span class="pipe">·</span>
+              Muzo<span class="pipe">·</span>
+              AAA
+            </div>
+          </div>
+          <span class="badge badge-ases">con Paola Sosa</span>
+          <span class="price">$5.100.000</span>
+        </div>
+
+        <div class="result-row">
+          <div class="thumb" style="background-image:linear-gradient(135deg,#356a4f,#0e3a25)"><span class="chip-ct">14ct</span></div>
+          <div class="result-text">
+            <div class="name">Verdiana <span class="obs">"ojo de gato"</span></div>
+            <div class="meta">
+              <span class="num">#019</span><span class="pipe">·</span>
+              B-005<span class="pipe">·</span>
+              Mauro Confederados<span class="pipe">·</span>
+              Muzo<span class="pipe">·</span>
+              AAA
+            </div>
+          </div>
+          <span class="badge badge-disp">disponible</span>
+          <span class="price">$6.800.000</span>
+        </div>
+
+        <div class="result-row">
+          <div class="thumb" style="background-image:linear-gradient(135deg,#2d5a45,#082d1b)"><span class="chip-ct">8ct</span></div>
+          <div class="result-text">
+            <div class="name">Esperanza</div>
+            <div class="meta">
+              <span class="num">#012</span><span class="pipe">·</span>
+              B-004<span class="pipe">·</span>
+              Mauro Confederados<span class="pipe">·</span>
+              Muzo<span class="pipe">·</span>
+              AAA
+            </div>
+          </div>
+          <span class="badge badge-disp">disponible</span>
+          <span class="price">$2.900.000</span>
+        </div>
+      </div>
+
+      <!-- Recent searches -->
+      <div class="result-section">
+        <div class="result-header">
+          <span>Búsquedas recientes</span>
+        </div>
+        <div class="recent-row">
+          <span class="ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </span>
+          <span>"ojo de aceite" · 14 resultados</span>
+          <span class="time">hace 12 min</span>
+        </div>
+        <div class="recent-row">
+          <span class="ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </span>
+          <span>"anillo plata 925" · 7 resultados</span>
+          <span class="time">ayer 16:48</span>
+        </div>
+      </div>
+
+      <!-- create new -->
+      <div class="create-row">
+        <span class="ic-square">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </span>
+        <div class="text">
+          <div class="title">¿No encuentras lo que buscas?</div>
+          <div class="sub">Crea un ítem nuevo · abre el wizard de captura en un lote nuevo o existente</div>
+        </div>
+        <span class="kbd">⌘ N</span>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <div class="kbd-row">
+      <span><kbd>↑↓</kbd> navegar</span>
+      <span><kbd>↵</kbd> seleccionar</span>
+      <span><kbd>⇥</kbd> próximo filtro</span>
+      <span><kbd>Espacio</kbd> previsualizar</span>
+    </div>
+    <div class="right">
+      Solo muestra ítems <strong>disponibles</strong> o <strong>con asesor</strong>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

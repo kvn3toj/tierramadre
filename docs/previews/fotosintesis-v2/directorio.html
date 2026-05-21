@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fotosíntesis · Directorio</title>
+<style>
+  :root {
+    --canvas:#FFFFFF;
+    --panel:#FAFAFA;
+    --inset:#F4F5F4;
+    --edge:rgba(11,16,14,0.06);
+    --rule:rgba(11,16,14,0.10);
+    --edge-strong:rgba(11,16,14,0.18);
+    --ink-primary:#0B100E;
+    --ink-secondary:#4A5251;
+    --ink-tertiary:#8B9290;
+    --ink-mute:#B7BCBA;
+    --accent:#008C62;
+    --accent-soft:rgba(0,140,98,0.07);
+    --gold:#B68B2F;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    --mono:"SF Mono",Monaco,Inconsolata,"Roboto Mono",monospace;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:var(--sans);
+    background:var(--canvas);
+    color:var(--ink-primary);
+    font-size:13px;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 28px;
+    border-bottom:1px solid var(--edge);
+  }
+  .breadcrumb {
+    font-size:9px; letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--ink-tertiary); font-weight:500;
+  }
+  .topbar-title { font-size:15px; font-weight:600; letter-spacing:-0.015em; }
+  /* HEADER */
+  .header {
+    padding:28px 28px 22px;
+    border-bottom:1px solid var(--rule);
+  }
+  .header-grid {
+    max-width:1280px; margin:0 auto;
+    display:grid; grid-template-columns:1fr auto; gap:24px; align-items:end;
+  }
+  .header h1 {
+    font-size:30px; font-weight:600; letter-spacing:-0.03em;
+    color:var(--ink-primary); line-height:1.1;
+  }
+  .header .sub {
+    font-size:13px; color:var(--ink-secondary); margin-top:6px;
+  }
+  .header-actions { display:flex; gap:8px; }
+  .btn {
+    font-family:var(--sans); font-size:12px; font-weight:600;
+    padding:10px 16px; border-radius:9px;
+    cursor:pointer; border:none;
+    letter-spacing:-0.005em;
+  }
+  .btn-primary { background:var(--ink-primary); color:#fff; }
+  .btn-accent { background:var(--accent); color:#fff; }
+  .btn-ghost { background:transparent; color:var(--ink-secondary); border:1px solid var(--edge-strong); }
+  /* TABS */
+  .tabs {
+    max-width:1280px; margin:18px auto 0;
+    padding:0 28px;
+    display:flex; gap:6px;
+  }
+  .tab {
+    padding:9px 16px; border-radius:9px 9px 0 0;
+    font-size:12.5px; font-weight:500;
+    color:var(--ink-secondary); cursor:pointer;
+    border-bottom:2px solid transparent;
+  }
+  .tab.active {
+    color:var(--ink-primary); font-weight:600;
+    border-bottom-color:var(--accent);
+  }
+  .tab .ct {
+    font-family:var(--mono); font-size:10.5px;
+    color:var(--ink-tertiary); margin-left:6px;
+    font-variant-numeric:tabular-nums;
+  }
+  /* MAIN GRID */
+  .main {
+    max-width:1280px; margin:0 auto;
+    display:grid; grid-template-columns:minmax(0, 1fr) 420px;
+    gap:1px; background:var(--edge);
+    min-height:calc(100vh - 240px);
+  }
+  .pane { background:var(--canvas); padding:0; }
+  .pane-side { background:var(--panel); padding:24px; }
+
+  /* SEARCH bar */
+  .searchbar {
+    display:flex; align-items:center; gap:12px;
+    padding:14px 24px;
+    border-bottom:1px solid var(--edge);
+  }
+  .searchbar input {
+    flex:1; border:none; outline:none;
+    background:transparent;
+    font-family:var(--sans); font-size:14px;
+    color:var(--ink-primary);
+  }
+  .searchbar input::placeholder { color:var(--ink-mute); }
+  .searchbar .icon { color:var(--ink-tertiary); font-size:16px; }
+  .filter-chip {
+    display:inline-flex; gap:6px; align-items:center;
+    padding:4px 10px; border-radius:999px;
+    background:var(--inset);
+    font-size:11px; color:var(--ink-secondary); font-weight:500;
+  }
+
+  /* table */
+  .col-headers {
+    display:grid; grid-template-columns:5px 36px 1.6fr 1.2fr 0.8fr 0.6fr 0.6fr;
+    gap:14px; padding:11px 24px;
+    font-size:9px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--ink-tertiary); font-weight:500;
+    border-bottom:1px solid var(--edge);
+  }
+  .col-headers .text-right { text-align:right; }
+  .row {
+    display:grid; grid-template-columns:5px 36px 1.6fr 1.2fr 0.8fr 0.6fr 0.6fr;
+    gap:14px; padding:12px 24px;
+    align-items:center;
+    border-bottom:1px solid var(--edge);
+    cursor:pointer;
+  }
+  .row:hover { background:var(--inset); }
+  .row.selected { background:var(--accent-soft); }
+  .row .chroma {
+    width:5px; height:32px;
+    border-radius:0 3px 3px 0;
+  }
+  .row .avatar {
+    width:36px; height:36px; border-radius:50%;
+    background-size:cover; background-position:center;
+    background-color:var(--ink-mute);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:600; font-size:13px;
+    letter-spacing:-0.02em;
+  }
+  .row .name {
+    font-size:13.5px; font-weight:600; color:var(--ink-primary);
+    letter-spacing:-0.01em;
+  }
+  .row .meta {
+    font-size:11.5px; color:var(--ink-tertiary);
+    margin-top:2px;
+  }
+  .row .id {
+    font-family:var(--mono); font-size:11.5px;
+    color:var(--ink-secondary);
+    font-variant-numeric:tabular-nums;
+  }
+  .row .tag {
+    font-size:9.5px; padding:3px 7px; border-radius:999px;
+    background:var(--accent-soft); color:var(--accent);
+    font-weight:600; letter-spacing:0.06em;
+    text-transform:uppercase;
+    display:inline-block;
+  }
+  .row .tag.j { background:rgba(182,139,47,0.13); color:var(--gold); }
+  .row .tag.i { background:rgba(11,16,14,0.06); color:var(--ink-secondary); }
+  .row .ct {
+    font-family:var(--mono); font-size:13px; font-weight:500;
+    color:var(--ink-primary);
+    font-variant-numeric:tabular-nums;
+    text-align:right;
+  }
+  .row .cv {
+    font-family:var(--mono); font-size:12px; color:var(--ink-tertiary);
+    font-variant-numeric:tabular-nums;
+    text-align:right;
+  }
+
+  /* DRAWER */
+  .drawer h2 {
+    font-size:22px; font-weight:600; letter-spacing:-0.02em;
+  }
+  .drawer .sub {
+    font-size:12px; color:var(--ink-tertiary); margin-top:4px;
+  }
+  .meta-grid {
+    margin-top:20px;
+    display:grid; grid-template-columns:1fr 1fr; gap:14px 18px;
+    padding:18px 0;
+    border-top:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);
+  }
+  .meta-row .label {
+    font-size:9px; letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--ink-tertiary); font-weight:500; margin-bottom:4px;
+  }
+  .meta-row .value {
+    font-size:13px; color:var(--ink-primary); font-weight:500;
+  }
+  .meta-row .value.mono { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+  /* history */
+  .history { margin-top:22px; }
+  .history h3 {
+    font-size:9px; letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--ink-tertiary); font-weight:500;
+    margin-bottom:10px;
+  }
+  .timeline {
+    position:relative;
+    padding-left:18px;
+  }
+  .timeline::before {
+    content:""; position:absolute;
+    left:5px; top:6px; bottom:6px;
+    width:1px; background:var(--rule);
+  }
+  .tl-item {
+    position:relative;
+    padding:8px 0;
+  }
+  .tl-item::before {
+    content:""; position:absolute;
+    left:-18px; top:13px;
+    width:11px; height:11px; border-radius:50%;
+    background:var(--canvas);
+    border:2px solid var(--accent);
+  }
+  .tl-item .title {
+    font-size:12.5px; font-weight:600;
+    color:var(--ink-primary);
+  }
+  .tl-item .sub {
+    font-size:11px; color:var(--ink-tertiary); margin-top:2px;
+  }
+  .tl-item .v {
+    font-family:var(--mono); color:var(--ink-secondary);
+    font-variant-numeric:tabular-nums;
+  }
+  .drawer-actions {
+    display:flex; gap:8px; margin-top:22px;
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div>
+    <div class="breadcrumb">Fotosíntesis</div>
+    <div class="topbar-title">Directorio</div>
+  </div>
+  <span style="font-size:11px;color:var(--ink-tertiary)">Maritza</span>
+</header>
+
+<section class="header">
+  <div class="header-grid">
+    <div>
+      <h1>Directorio</h1>
+      <div class="sub">Proveedores, clientes y embajadores que están en el flujo de Fotosíntesis</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost">Importar CSV</button>
+      <button class="btn btn-accent">+ Nuevo proveedor</button>
+    </div>
+  </div>
+</section>
+
+<nav class="tabs">
+  <div class="tab active">Proveedores<span class="ct">8</span></div>
+  <div class="tab">Embajadores<span class="ct">14</span></div>
+  <div class="tab">Clientes finales<span class="ct">23</span></div>
+</nav>
+
+<main class="main">
+
+  <div class="pane">
+    <div class="searchbar">
+      <span class="icon">🔍</span>
+      <input value="mau" placeholder="Buscar por nombre, NIT o teléfono…" />
+      <span class="filter-chip">tipo: gemas</span>
+      <span class="filter-chip">solo activos</span>
+    </div>
+
+    <div class="col-headers">
+      <span></span>
+      <span></span>
+      <span>Nombre / Razón social</span>
+      <span>NIT · contacto</span>
+      <span>Tipo</span>
+      <span class="text-right">Compras</span>
+      <span class="text-right">Última</span>
+    </div>
+
+    <div class="row selected">
+      <div class="chroma" style="background:#3a7a5a"></div>
+      <div class="avatar" style="background:#2a5b4a">M</div>
+      <div>
+        <div class="name">Mauro Confederados</div>
+        <div class="meta">Bogotá · activo desde 2022</div>
+      </div>
+      <div>
+        <div class="id">NIT 900.123.456-7</div>
+        <div class="meta">+57 311 555 8801</div>
+      </div>
+      <div><span class="tag">gemas</span></div>
+      <div class="ct">8</div>
+      <div class="cv">8 may</div>
+    </div>
+
+    <div class="row">
+      <div class="chroma" style="background:#7a5a3c"></div>
+      <div class="avatar" style="background:#5b3a22">L</div>
+      <div>
+        <div class="name">Lucho Banco</div>
+        <div class="meta">Bogotá · activo desde 2024</div>
+      </div>
+      <div>
+        <div class="id">CC 79.451.220</div>
+        <div class="meta">+57 322 401 9920</div>
+      </div>
+      <div><span class="tag">gemas</span></div>
+      <div class="ct">5</div>
+      <div class="cv">14 abr</div>
+    </div>
+
+    <div class="row">
+      <div class="chroma" style="background:#b68b2f"></div>
+      <div class="avatar" style="background:#7a4d2c">P</div>
+      <div>
+        <div class="name">Paola Sosa</div>
+        <div class="meta">Bogotá · embajadora · joyas</div>
+      </div>
+      <div>
+        <div class="id">NIT 901.034.555-3</div>
+        <div class="meta">paola@joyaspaola.co</div>
+      </div>
+      <div><span class="tag j">joyas</span></div>
+      <div class="ct">3</div>
+      <div class="cv">2 may</div>
+    </div>
+
+    <div class="row">
+      <div class="chroma" style="background:#5b4d3c"></div>
+      <div class="avatar" style="background:#3c3225">M</div>
+      <div>
+        <div class="name">M. Negocios Birla</div>
+        <div class="meta">Medellín</div>
+      </div>
+      <div>
+        <div class="id">NIT 900.778.211-2</div>
+        <div class="meta">birla@mneg.com</div>
+      </div>
+      <div><span class="tag">gemas</span></div>
+      <div class="ct">2</div>
+      <div class="cv">11 mar</div>
+    </div>
+
+    <div class="row">
+      <div class="chroma" style="background:#8B9290"></div>
+      <div class="avatar" style="background:#4A5251">G</div>
+      <div>
+        <div class="name">Grup Pion</div>
+        <div class="meta">Manizales</div>
+      </div>
+      <div>
+        <div class="id">NIT 901.456.012-8</div>
+        <div class="meta">grup@pion.co</div>
+      </div>
+      <div><span class="tag i">insumos</span></div>
+      <div class="ct">12</div>
+      <div class="cv">18 may</div>
+    </div>
+
+    <div class="row">
+      <div class="chroma" style="background:#5a786a"></div>
+      <div class="avatar" style="background:#3c5547">Y</div>
+      <div>
+        <div class="name">Yuanda</div>
+        <div class="meta">Cali · activo desde 2023</div>
+      </div>
+      <div>
+        <div class="id">CC 41.220.876</div>
+        <div class="meta">+57 318 332 1145</div>
+      </div>
+      <div><span class="tag">gemas</span></div>
+      <div class="ct">4</div>
+      <div class="cv">29 abr</div>
+    </div>
+
+    <div class="row">
+      <div class="chroma" style="background:#9a8470"></div>
+      <div class="avatar" style="background:#6b5a48">V</div>
+      <div>
+        <div class="name">Viaje Tikals Moli</div>
+        <div class="meta">externo · viaje 2025</div>
+      </div>
+      <div>
+        <div class="id">—</div>
+        <div class="meta">contacto vía WhatsApp</div>
+      </div>
+      <div><span class="tag">gemas</span></div>
+      <div class="ct">1</div>
+      <div class="cv">12 dic</div>
+    </div>
+
+  </div>
+
+  <!-- DRAWER -->
+  <aside class="pane pane-side">
+    <div class="drawer">
+      <h2>Mauro Confederados</h2>
+      <div class="sub">Proveedor de gemas · activo desde 2022 · 8 compras registradas</div>
+
+      <div class="meta-grid">
+        <div class="meta-row">
+          <div class="label">NIT</div>
+          <div class="value mono">900.123.456-7</div>
+        </div>
+        <div class="meta-row">
+          <div class="label">Tipo</div>
+          <div class="value">Gemas</div>
+        </div>
+        <div class="meta-row">
+          <div class="label">Teléfono</div>
+          <div class="value mono">+57 311 555 8801</div>
+        </div>
+        <div class="meta-row">
+          <div class="label">Email</div>
+          <div class="value">mauro@confederados.co</div>
+        </div>
+        <div class="meta-row" style="grid-column:1/-1">
+          <div class="label">Dirección</div>
+          <div class="value">Calle 73 #11-22, of. 401 · Bogotá</div>
+        </div>
+        <div class="meta-row" style="grid-column:1/-1">
+          <div class="label">Notas</div>
+          <div class="value" style="color:var(--ink-secondary);font-size:12.5px;line-height:1.5">
+            Llama los miércoles. Acepta crédito a 30 días sobre lotes &gt; $1M.
+          </div>
+        </div>
+      </div>
+
+      <div class="history">
+        <h3>Historial de compras</h3>
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="title">Lote <span class="v">B-008</span> · $500.000 · 3 unidades</div>
+            <div class="sub">8 may 2026 · contado · efectivo · 🟡 abierto · 2/3 ítems</div>
+          </div>
+          <div class="tl-item">
+            <div class="title">Lote <span class="v">B-006</span> · $1.200.000 · 4 unidades</div>
+            <div class="sub">3 abr 2026 · crédito · venc 3 may · ✓ cerrado</div>
+          </div>
+          <div class="tl-item">
+            <div class="title">Lote <span class="v">B-005</span> · $850.000 · 2 unidades</div>
+            <div class="sub">14 mar 2026 · contado · transferencia · ✓ cerrado</div>
+          </div>
+          <div class="tl-item">
+            <div class="title">Lote <span class="v">B-002</span> · $620.000 · 1 unidad</div>
+            <div class="sub">22 ene 2026 · contado · efectivo · ✓ cerrado</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="drawer-actions">
+        <button class="btn btn-ghost">Editar</button>
+        <button class="btn btn-ghost">Ver ventas derivadas</button>
+        <button class="btn btn-accent">+ Nueva compra</button>
+      </div>
+    </div>
+  </aside>
+
+</main>
+
+</body>
+</html>
