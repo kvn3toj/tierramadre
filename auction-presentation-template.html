@@ -1,0 +1,3071 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>
+      Tierra Madre · Plantilla de Subasta · Esmeraldas con ADN de PAZ
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=Cinzel:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+      :root {
+        /* === Tierra Madre brand tokens (mirrored from src/design-system) === */
+        --emerald-primary: #00ae7a;
+        --emerald-dark: #008c61;
+        --emerald-darker: #006a48;
+        --emerald-darkest: #004830;
+        --emerald-abyss: #001f14;
+        --gold: #d4af37;
+        --gold-light: #e5c866;
+        --gold-lighter: #f5e6a3;
+        --gold-dark: #b8941f;
+        --paper: #f8f4e8;
+        --ink: #0b1c16;
+
+        /* Slide dimensions (true source — output PNGs will match) */
+        --slide-16-9-w: 1920px;
+        --slide-16-9-h: 1080px;
+        --slide-9-16-w: 1080px;
+        --slide-9-16-h: 1920px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #0b1c16;
+        color: #f8f4e8;
+        font-family: "Inter", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      body {
+        background:
+          radial-gradient(
+            1200px 800px at 20% -10%,
+            rgba(0, 174, 122, 0.15),
+            transparent 60%
+          ),
+          radial-gradient(
+            1000px 700px at 100% 100%,
+            rgba(212, 175, 55, 0.08),
+            transparent 60%
+          ),
+          #0b1c16;
+        min-height: 100vh;
+      }
+
+      /* ───────────────────────────── Toolbar ───────────────────────────── */
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: center;
+        padding: 18px 28px;
+        background: rgba(11, 28, 22, 0.85);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border-bottom: 1px solid rgba(212, 175, 55, 0.18);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: "Cinzel", serif;
+        letter-spacing: 0.18em;
+        font-size: 13px;
+        color: var(--gold-light);
+        text-transform: uppercase;
+      }
+      .brand-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--gold);
+        box-shadow: 0 0 12px var(--gold);
+      }
+      .toolbar-spacer {
+        flex: 1;
+      }
+      .btn {
+        appearance: none;
+        border: 1px solid rgba(212, 175, 55, 0.35);
+        background: linear-gradient(
+          180deg,
+          rgba(212, 175, 55, 0.15),
+          rgba(212, 175, 55, 0.05)
+        );
+        color: var(--gold-light);
+        font-family: "Inter", sans-serif;
+        font-size: 12.5px;
+        font-weight: 500;
+        letter-spacing: 0.05em;
+        padding: 9px 16px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition:
+          background 200ms ease,
+          color 200ms ease,
+          border-color 200ms ease,
+          transform 80ms ease;
+      }
+      .btn:hover {
+        background: linear-gradient(
+          180deg,
+          rgba(212, 175, 55, 0.28),
+          rgba(212, 175, 55, 0.1)
+        );
+        color: #fff6d2;
+        border-color: rgba(212, 175, 55, 0.6);
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .btn.primary {
+        background: linear-gradient(180deg, var(--gold-light), var(--gold));
+        color: #2a1f00;
+        border-color: var(--gold);
+      }
+      .btn.primary:hover {
+        background: linear-gradient(180deg, #fff6d2, var(--gold-light));
+        color: #2a1f00;
+      }
+      .btn.ghost {
+        background: transparent;
+      }
+      .filter {
+        display: inline-flex;
+        gap: 0;
+        border: 1px solid rgba(212, 175, 55, 0.35);
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.2);
+      }
+      .filter button {
+        appearance: none;
+        background: transparent;
+        border: 0;
+        color: var(--gold-light);
+        padding: 8px 14px;
+        font-family: "Inter", sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+        transition:
+          background 180ms ease,
+          color 180ms ease;
+      }
+      .filter button.active {
+        background: var(--gold);
+        color: #2a1f00;
+      }
+      .hint {
+        color: rgba(248, 244, 232, 0.55);
+        font-size: 11.5px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      /* ───────────────────────────── Layout ───────────────────────────── */
+      .page-title {
+        padding: 48px 28px 8px;
+        text-align: center;
+      }
+      .page-title h1 {
+        font-family: "Cormorant Garamond", serif;
+        font-weight: 300;
+        font-size: 42px;
+        letter-spacing: 0.04em;
+        margin: 0;
+        color: var(--paper);
+      }
+      .page-title h1 em {
+        font-style: italic;
+        color: var(--gold-light);
+      }
+      .page-title p {
+        margin: 8px 0 0;
+        color: rgba(248, 244, 232, 0.6);
+        font-size: 14px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        font-weight: 400;
+      }
+
+      .product-section {
+        padding: 32px 24px 56px;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.08);
+      }
+      .product-section h2 {
+        text-align: center;
+        font-family: "Cinzel", serif;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        font-size: 13px;
+        color: var(--gold);
+        font-weight: 500;
+        margin: 0 0 24px;
+      }
+      .slides-row {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        gap: 28px;
+        align-items: start;
+        max-width: 1600px;
+        margin: 0 auto;
+      }
+      @media (max-width: 1200px) {
+        .slides-row {
+          grid-template-columns: 1fr;
+          justify-items: center;
+        }
+      }
+
+      /* Each slide is rendered at 1:1 scale of its design size, then visually scaled to fit. */
+      .slide-shell {
+        position: relative;
+        width: 100%;
+        background: transparent;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow:
+          0 30px 80px -30px rgba(0, 0, 0, 0.7),
+          0 1px 0 rgba(212, 175, 55, 0.12) inset;
+      }
+      .slide-shell .ratio-tag {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        z-index: 30;
+        background: rgba(11, 28, 22, 0.55);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(212, 175, 55, 0.35);
+        border-radius: 999px;
+        color: var(--gold-light);
+        font-size: 10.5px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        padding: 5px 11px;
+        font-weight: 500;
+      }
+      .slide-shell .slide-tools {
+        position: absolute;
+        bottom: 14px;
+        right: 14px;
+        z-index: 30;
+        display: flex;
+        gap: 8px;
+        opacity: 0;
+        transition: opacity 200ms ease;
+      }
+      .slide-shell:hover .slide-tools {
+        opacity: 1;
+      }
+      .slide-shell .slide-tools .btn {
+        font-size: 11px;
+        padding: 6px 11px;
+      }
+
+      .slide {
+        position: relative;
+        display: block;
+        transform-origin: top left;
+        color: #f8f4e8;
+        font-family: "Cormorant Garamond", serif;
+      }
+      .slide.s16x9 {
+        width: var(--slide-16-9-w);
+        height: var(--slide-16-9-h);
+      }
+      .slide.s9x16 {
+        width: var(--slide-9-16-w);
+        height: var(--slide-9-16-h);
+      }
+
+      /* Background — luxury Magnific-style gradient with two atmospheric light pools */
+      .slide-bg {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background:
+          radial-gradient(
+            60% 90% at 30% 50%,
+            rgba(14, 90, 64, 0.55),
+            transparent 70%
+          ),
+          radial-gradient(
+            50% 80% at 78% 55%,
+            rgba(20, 110, 75, 0.6),
+            transparent 70%
+          ),
+          linear-gradient(
+            108deg,
+            #00150d 0%,
+            #03241a 22%,
+            #074026 48%,
+            #0a5236 68%,
+            #0b4a35 88%,
+            #051e14 100%
+          );
+      }
+      .slide.s9x16 .slide-bg {
+        background:
+          radial-gradient(
+            80% 50% at 50% 32%,
+            rgba(14, 90, 64, 0.55),
+            transparent 70%
+          ),
+          radial-gradient(
+            70% 50% at 50% 78%,
+            rgba(20, 110, 75, 0.55),
+            transparent 70%
+          ),
+          linear-gradient(
+            190deg,
+            #00150d 0%,
+            #03241a 22%,
+            #074026 48%,
+            #0a5236 68%,
+            #0b4a35 88%,
+            #051e14 100%
+          );
+      }
+      .slide-bg::after {
+        /* Subtle film grain via SVG noise */
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.83  0 0 0 0 0.69  0 0 0 0 0.21  0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+        opacity: 0.55;
+        mix-blend-mode: overlay;
+        pointer-events: none;
+      }
+      .slide-vignette {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background: radial-gradient(
+          circle at 50% 50%,
+          transparent 35%,
+          rgba(0, 0, 0, 0.45) 85%,
+          rgba(0, 0, 0, 0.65) 100%
+        );
+      }
+
+      /* === LEFT CIRCLE FRAME (bleeds off left edge) === */
+      .left-circle-wrap {
+        position: absolute;
+        z-index: 3;
+        pointer-events: none;
+        top: 50%;
+        left: -12%;
+        transform: translateY(-50%);
+        width: 78%;
+        aspect-ratio: 1/1;
+        filter: drop-shadow(0 20px 60px rgba(0, 0, 0, 0.35));
+      }
+      .left-circle-wrap svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+        opacity: 0.95;
+      }
+      .slide.s9x16 .left-circle-wrap {
+        top: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 92%;
+      }
+
+      /* === RIGHT GEOMETRIC ORNAMENT (concentric lens stack) === */
+      .right-orn-wrap {
+        position: absolute;
+        z-index: 2;
+        pointer-events: none;
+        top: 0;
+        right: -4%;
+        bottom: 0;
+        width: 55%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        filter: drop-shadow(0 0 30px rgba(212, 175, 55, 0.18));
+      }
+      .right-orn-wrap svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+        opacity: 0.92;
+      }
+      .slide.s9x16 .right-orn-wrap {
+        top: auto;
+        right: 0;
+        left: 0;
+        bottom: 30px;
+        width: 100%;
+        height: 36%;
+      }
+      .slide.s9x16 .right-orn-wrap svg {
+        transform: rotate(-90deg);
+        width: 80%;
+        height: 80%;
+      }
+
+      /* Corner ornaments — small, only on outer corners */
+      .corner {
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        z-index: 4;
+        pointer-events: none;
+        opacity: 0.7;
+      }
+      .corner.tl {
+        top: 40px;
+        left: 40px;
+      }
+      .corner.br {
+        bottom: 40px;
+        right: 40px;
+        transform: scale(-1, -1);
+      }
+      .slide.s9x16 .corner {
+        width: 100px;
+        height: 100px;
+      }
+
+      /* Content stack — sits inside the LEFT CIRCLE area for 16:9, top half for 9:16 */
+      .slide-content {
+        position: absolute;
+        z-index: 6;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: var(--paper);
+      }
+      .slide.s16x9 .slide-content {
+        top: 50%;
+        left: 5%;
+        transform: translateY(-50%);
+        width: 54%;
+        height: 78%;
+        padding: 0 4%;
+      }
+      .slide.s9x16 .slide-content {
+        top: 80px;
+        left: 5%;
+        right: 5%;
+        height: 54%;
+      }
+
+      /* Top flourish above the lote tag */
+      .flourish-top {
+        display: block;
+        margin: 0 auto 14px;
+        width: 140px;
+        height: 18px;
+        opacity: 0.85;
+      }
+      .slide.s9x16 .flourish-top {
+        width: 160px;
+        height: 20px;
+        margin-bottom: 18px;
+      }
+
+      .lote-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        font-family: "Cinzel", serif;
+        font-weight: 500;
+        color: var(--gold);
+        letter-spacing: 0.46em;
+        text-transform: uppercase;
+        margin: 0 0 18px;
+        font-size: 18px;
+      }
+      .lote-tag::before,
+      .lote-tag::after {
+        content: "";
+        display: inline-block;
+        width: 36px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--gold));
+      }
+      .lote-tag::after {
+        background: linear-gradient(90deg, var(--gold), transparent);
+      }
+      .slide.s9x16 .lote-tag {
+        font-size: 17px;
+        letter-spacing: 0.42em;
+        margin-bottom: 14px;
+      }
+
+      .product-name {
+        font-family: "Cormorant Garamond", serif;
+        font-weight: 300;
+        font-style: italic;
+        font-size: 76px;
+        line-height: 1.02;
+        margin: 0 0 18px;
+        letter-spacing: 0.005em;
+        color: #fffbe6;
+        text-shadow: 0 0 50px rgba(212, 175, 55, 0.28);
+      }
+      .slide.s9x16 .product-name {
+        font-size: 84px;
+        margin-bottom: 18px;
+      }
+
+      /* Overline beneath the name */
+      .overline {
+        display: inline-block;
+        font-family: "Cinzel", serif;
+        font-weight: 400;
+        font-size: 11px;
+        letter-spacing: 0.5em;
+        color: rgba(245, 230, 163, 0.78);
+        text-transform: uppercase;
+        margin: 0 0 22px;
+      }
+      .slide.s9x16 .overline {
+        font-size: 12px;
+        letter-spacing: 0.46em;
+      }
+
+      .name-rule {
+        margin: 0 auto 22px;
+        width: 120px;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--gold),
+          transparent
+        );
+        position: relative;
+      }
+      .name-rule::before,
+      .name-rule::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--gold);
+        transform: translateY(-50%);
+        box-shadow: 0 0 10px var(--gold);
+      }
+      .name-rule::before {
+        left: -12px;
+      }
+      .name-rule::after {
+        right: -12px;
+      }
+
+      /* Product photo medallion — solid emerald + double-gold rim + inner etching */
+      .product-photo-wrap {
+        position: relative;
+        border-radius: 50%;
+        width: 340px;
+        height: 340px;
+        background: radial-gradient(
+          circle at 30% 25%,
+          #0e5a40 0%,
+          #053524 65%,
+          #021a11 100%
+        );
+        box-shadow:
+          0 0 0 1px rgba(212, 175, 55, 0.6),
+          0 0 0 6px rgba(2, 26, 17, 0.95),
+          0 0 0 7px rgba(212, 175, 55, 0.45),
+          0 20px 60px rgba(0, 0, 0, 0.55),
+          0 0 90px rgba(212, 175, 55, 0.22);
+        overflow: hidden;
+        cursor: pointer;
+        margin: 8px auto 0;
+        transition:
+          box-shadow 280ms ease,
+          transform 280ms ease;
+      }
+      .slide.s9x16 .product-photo-wrap {
+        width: 520px;
+        height: 520px;
+      }
+      .product-photo-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      /* Inner gold etching ring — sits *inside* the medallion */
+      .product-photo-wrap::after {
+        content: "";
+        position: absolute;
+        inset: 8px;
+        border-radius: 50%;
+        border: 0.5px solid rgba(212, 175, 55, 0.45);
+        box-shadow:
+          inset 0 0 0 1px rgba(11, 28, 22, 0.4),
+          inset 0 0 30px rgba(0, 0, 0, 0.45);
+        pointer-events: none;
+        z-index: 2;
+      }
+      body.edit-mode .product-photo-wrap:hover {
+        box-shadow:
+          0 0 0 1px rgba(245, 230, 163, 0.85),
+          0 0 0 6px rgba(2, 26, 17, 0.95),
+          0 0 0 7px rgba(245, 230, 163, 0.6),
+          0 20px 60px rgba(0, 0, 0, 0.55),
+          0 0 110px rgba(212, 175, 55, 0.35);
+      }
+      .product-photo-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 10px;
+        color: rgba(245, 230, 163, 0.7);
+        font-family: "Cinzel", serif;
+        letter-spacing: 0.3em;
+        font-size: 12px;
+        text-transform: uppercase;
+        position: relative;
+        z-index: 1;
+      }
+      .product-photo-placeholder svg {
+        opacity: 0.7;
+      }
+
+      /* Specs row — bottom strip across the slide width */
+      .specs {
+        position: absolute;
+        left: 0;
+        right: 0;
+        z-index: 7;
+        text-align: center;
+        color: var(--paper);
+      }
+      .slide.s16x9 .specs {
+        bottom: 80px;
+      }
+      .slide.s9x16 .specs {
+        bottom: 160px;
+      }
+      .specs-rule {
+        width: 46%;
+        max-width: 520px;
+        height: 1px;
+        margin: 0 auto 24px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(212, 175, 55, 0.6),
+          transparent
+        );
+        position: relative;
+      }
+      /* Center diamond on the rule */
+      .specs-rule::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 6px;
+        height: 6px;
+        background: var(--gold);
+        transform: translate(-50%, -50%) rotate(45deg);
+        box-shadow: 0 0 10px var(--gold);
+      }
+      .specs-row {
+        display: flex;
+        justify-content: center;
+        align-items: baseline;
+        gap: 40px;
+        flex-wrap: wrap;
+        padding: 0 80px;
+      }
+      .slide.s9x16 .specs-row {
+        gap: 28px;
+        padding: 0 60px;
+      }
+      .spec {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        min-width: 110px;
+      }
+      .spec-label {
+        font-family: "Cinzel", serif;
+        font-size: 11px;
+        letter-spacing: 0.36em;
+        text-transform: uppercase;
+        color: var(--gold);
+        font-weight: 500;
+        opacity: 0.92;
+      }
+      .slide.s9x16 .spec-label {
+        font-size: 12px;
+      }
+      .spec-value {
+        font-family: "Cormorant Garamond", serif;
+        font-weight: 400;
+        font-size: 32px;
+        color: #fffbe6;
+        line-height: 1.05;
+      }
+      .slide.s9x16 .spec-value {
+        font-size: 36px;
+      }
+      .spec-divider {
+        width: 1px;
+        height: 34px;
+        background: linear-gradient(
+          180deg,
+          transparent 10%,
+          rgba(212, 175, 55, 0.45) 50%,
+          transparent 90%
+        );
+      }
+
+      /* Footer — hairline rule above the signature */
+      .slide-footer {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 30px;
+        z-index: 5;
+        text-align: center;
+        color: rgba(245, 230, 163, 0.72);
+        font-family: "Cinzel", serif;
+        font-size: 13px;
+        letter-spacing: 0.42em;
+        text-transform: uppercase;
+        font-weight: 500;
+      }
+      .slide-footer::before {
+        content: "";
+        display: block;
+        margin: 0 auto 14px;
+        width: 38%;
+        max-width: 380px;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(212, 175, 55, 0.4),
+          transparent
+        );
+      }
+      .slide.s9x16 .slide-footer {
+        bottom: 60px;
+        font-size: 13px;
+        letter-spacing: 0.3em;
+        padding: 0 30px;
+      }
+      .slide-footer .sep {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--gold);
+        vertical-align: middle;
+        margin: 0 16px;
+        box-shadow: 0 0 8px var(--gold);
+      }
+      .slide.s9x16 .slide-footer .sep {
+        margin: 0 10px;
+        width: 5px;
+        height: 5px;
+      }
+
+      /* Editable affordance */
+      [contenteditable="true"] {
+        outline: none;
+        border-radius: 6px;
+        transition:
+          box-shadow 180ms ease,
+          background 180ms ease;
+      }
+      body.edit-mode [contenteditable="true"]:hover {
+        background: rgba(212, 175, 55, 0.08);
+        box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.35);
+      }
+      body.edit-mode [contenteditable="true"]:focus {
+        background: rgba(212, 175, 55, 0.12);
+        box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.7);
+      }
+      body:not(.edit-mode) [contenteditable] {
+        pointer-events: none;
+      }
+      body:not(.edit-mode) .product-photo-wrap {
+        cursor: default;
+      }
+      body.edit-mode .product-photo-wrap {
+        outline: 1px dashed rgba(212, 175, 55, 0.5);
+        outline-offset: 6px;
+      }
+
+      /* Hidden file inputs */
+      .hidden-file {
+        display: none;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 32px;
+        transform: translate(-50%, 20px);
+        background: rgba(11, 28, 22, 0.92);
+        color: var(--gold-light);
+        border: 1px solid rgba(212, 175, 55, 0.45);
+        border-radius: 999px;
+        padding: 10px 22px;
+        font-family: "Inter", sans-serif;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
+        z-index: 200;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 240ms ease,
+          transform 240ms ease;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      /* Per-slide controls */
+      .slide-shell .reset-photo {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        z-index: 30;
+        display: none;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(11, 28, 22, 0.7);
+        color: var(--gold-light);
+        border: 1px solid rgba(212, 175, 55, 0.5);
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        line-height: 1;
+      }
+      .slide-shell.has-photo .reset-photo {
+        display: flex;
+      }
+      .slide-shell .reset-photo:hover {
+        color: #fff6d2;
+        border-color: var(--gold);
+      }
+
+      /* Reduce motion */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition: none !important;
+          animation: none !important;
+        }
+      }
+
+      /* ═══════════════════════════════════════════════════════════════════════
+     PER-VARIANT OVERRIDES
+     ═══════════════════════════════════════════════════════════════════════ */
+
+      /* ART DÉCO — geometric, champagne */
+      body[data-variant="deco"] .product-name {
+        font-family: "Cinzel", serif;
+        font-style: normal;
+        font-weight: 500;
+        font-size: 60px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      body[data-variant="deco"] .slide.s9x16 .product-name {
+        font-size: 64px;
+      }
+      body[data-variant="deco"] .lote-tag {
+        letter-spacing: 0.6em;
+        font-size: 16px;
+      }
+      body[data-variant="deco"] .overline {
+        letter-spacing: 0.7em;
+        font-size: 10px;
+      }
+      body[data-variant="deco"] .name-rule {
+        width: 60px;
+        height: 0;
+        background: transparent;
+        border-top: 1px solid var(--gold);
+        border-bottom: 1px solid var(--gold);
+        padding-top: 6px;
+      }
+      body[data-variant="deco"] .name-rule::before,
+      body[data-variant="deco"] .name-rule::after {
+        display: none;
+      }
+      body[data-variant="deco"] .specs-rule::after {
+        width: 8px;
+        height: 8px;
+        background: transparent;
+        border: 1px solid var(--gold);
+      }
+
+      /* BOTÁNICO — italic, classical, refined */
+      body[data-variant="botanico"] .product-name {
+        font-family: "Cormorant Garamond", serif;
+        font-weight: 300;
+        font-style: italic;
+        font-size: 80px;
+      }
+      body[data-variant="botanico"] .lote-tag {
+        font-family: "Cormorant Garamond", serif;
+        font-style: italic;
+        text-transform: none;
+        letter-spacing: 0.1em;
+        font-size: 24px;
+      }
+      body[data-variant="botanico"] .lote-tag::before,
+      body[data-variant="botanico"] .lote-tag::after {
+        display: none;
+      }
+      body[data-variant="botanico"] .overline {
+        font-family: "Cormorant Garamond", serif;
+        font-style: italic;
+        text-transform: none;
+        letter-spacing: 0.1em;
+        font-size: 18px;
+        color: rgba(245, 230, 163, 0.85);
+      }
+
+      /* EDITORIAL — Vogue minimal, monumental ghost numerals */
+      body[data-variant="editorial"] .product-name {
+        font-family: "Cormorant Garamond", serif;
+        font-weight: 300;
+        font-style: normal;
+        font-size: 64px;
+        letter-spacing: 0.005em;
+      }
+      body[data-variant="editorial"] .slide.s9x16 .product-name {
+        font-size: 72px;
+      }
+      body[data-variant="editorial"] .lote-tag {
+        font-size: 14px;
+        letter-spacing: 0.6em;
+      }
+      body[data-variant="editorial"] .lote-tag::before,
+      body[data-variant="editorial"] .lote-tag::after {
+        width: 60px;
+      }
+      body[data-variant="editorial"] .overline {
+        font-size: 10px;
+        letter-spacing: 0.6em;
+      }
+      /* Huge ghost numeral behind the photo — uses the lote text */
+      body[data-variant="editorial"] .ghost-numeral {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 4;
+        pointer-events: none;
+        font-family: "Cormorant Garamond", serif;
+        font-weight: 200;
+        font-style: italic;
+        font-size: 520px;
+        line-height: 1;
+        color: rgba(212, 175, 55, 0.06);
+        letter-spacing: -0.05em;
+      }
+      body:not([data-variant="editorial"]) .ghost-numeral {
+        display: none;
+      }
+      body[data-variant="editorial"] .product-photo-wrap {
+        box-shadow:
+          0 0 0 1px rgba(212, 175, 55, 0.5),
+          0 20px 60px rgba(0, 0, 0, 0.55);
+      }
+      body[data-variant="editorial"] .product-photo-wrap::after {
+        display: none;
+      }
+
+      /* MUISCA — heritage, slightly warmer gold */
+      body[data-variant="muisca"] {
+        --gold: #e5a547;
+        --gold-light: #f2c775;
+        --gold-lighter: #f8dda8;
+        --gold-dark: #a8762a;
+      }
+      body[data-variant="muisca"] .product-name {
+        font-family: "Cinzel", serif;
+        font-weight: 400;
+        font-style: normal;
+        font-size: 64px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      body[data-variant="muisca"] .slide.s9x16 .product-name {
+        font-size: 70px;
+      }
+      body[data-variant="muisca"] .lote-tag {
+        letter-spacing: 0.5em;
+      }
+
+      /* Theme: Esmeralda (lighter, brighter) */
+      body.theme-esmeralda .slide-bg {
+        background:
+          radial-gradient(
+            60% 90% at 30% 50%,
+            rgba(34, 140, 100, 0.55),
+            transparent 70%
+          ),
+          radial-gradient(
+            50% 80% at 78% 55%,
+            rgba(40, 160, 110, 0.6),
+            transparent 70%
+          ),
+          linear-gradient(
+            108deg,
+            #042b1d 0%,
+            #0a4a33 22%,
+            #0f623f 48%,
+            #1a7a52 68%,
+            #156947 88%,
+            #062b1d 100%
+          ) !important;
+      }
+      body.theme-esmeralda .slide.s9x16 .slide-bg {
+        background:
+          radial-gradient(
+            80% 50% at 50% 32%,
+            rgba(34, 140, 100, 0.55),
+            transparent 70%
+          ),
+          radial-gradient(
+            70% 50% at 50% 78%,
+            rgba(40, 160, 110, 0.55),
+            transparent 70%
+          ),
+          linear-gradient(
+            190deg,
+            #042b1d 0%,
+            #0a4a33 22%,
+            #0f623f 48%,
+            #1a7a52 68%,
+            #156947 88%,
+            #062b1d 100%
+          ) !important;
+      }
+      body.theme-esmeralda .product-photo-wrap {
+        background: radial-gradient(
+          circle at 30% 25%,
+          #1a7a52 0%,
+          #0a4a33 65%,
+          #042b1d 100%
+        );
+      }
+
+      /* Visibility filters */
+      body.show-16x9 .product-section .slide-shell.shell-9x16 {
+        display: none;
+      }
+      body.show-16x9 .slides-row {
+        grid-template-columns: 1fr;
+      }
+      body.show-9x16 .product-section .slide-shell.shell-16x9 {
+        display: none;
+      }
+      body.show-9x16 .slides-row {
+        grid-template-columns: 1fr;
+        max-width: 520px;
+      }
+
+      /* Print: each slide on its own page (16:9 only by default) */
+      @media print {
+        .toolbar,
+        .page-title,
+        .product-section h2,
+        .slide-tools,
+        .ratio-tag,
+        .reset-photo,
+        .toast {
+          display: none !important;
+        }
+        body {
+          background: #000;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .product-section {
+          padding: 0;
+          border: 0;
+          page-break-after: always;
+        }
+        .slides-row {
+          display: block;
+          max-width: none;
+        }
+        .slide-shell {
+          box-shadow: none;
+          border-radius: 0;
+          margin: 0;
+          page-break-after: always;
+        }
+        .slide-shell.shell-9x16 {
+          display: none;
+        }
+        @page {
+          size: landscape;
+          margin: 0;
+        }
+      }
+
+      /* Subtle entrance animation on the slide-shell — respects reduced-motion via global rule above */
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .slide-shell {
+        animation: slideIn 420ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+      }
+    </style>
+  </head>
+  <body class="edit-mode show-both">
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <!-- TOOLBAR                                                                -->
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <header class="toolbar">
+      <div class="brand">
+        <span class="brand-dot"></span> Tierra Madre · Subasta · Esmeraldas con
+        ADN de PAZ
+      </div>
+      <div class="toolbar-spacer"></div>
+
+      <div
+        class="filter"
+        role="tablist"
+        aria-label="Filtro de relación de aspecto"
+      >
+        <button data-filter="both" class="active">Ambos</button>
+        <button data-filter="16x9">16:9</button>
+        <button data-filter="9x16">9:16</button>
+      </div>
+
+      <div class="filter" role="tablist" aria-label="Plantilla">
+        <button
+          data-variant="magnific"
+          class="active"
+          title="Atmosférica con lentes concéntricas"
+        >
+          Magnific
+        </button>
+        <button data-variant="deco" title="Geométrica escalonada">
+          Art Déco
+        </button>
+        <button data-variant="botanico" title="Corona de laurel + olivo">
+          Botánico
+        </button>
+        <button data-variant="editorial" title="Minimalista editorial">
+          Editorial
+        </button>
+        <button data-variant="muisca" title="Patrón precolombino">
+          Muisca
+        </button>
+      </div>
+
+      <div class="filter" role="tablist" aria-label="Tema visual">
+        <button data-theme="profundo" class="active">Verde Profundo</button>
+        <button data-theme="esmeralda">Esmeralda</button>
+      </div>
+
+      <label
+        class="hint"
+        for="auction-date"
+        style="display: flex; align-items: center; gap: 8px"
+      >
+        Fecha
+        <input
+          id="auction-date"
+          type="text"
+          value="Subasta 2026"
+          style="
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            border-radius: 999px;
+            color: var(--gold-light);
+            padding: 7px 14px;
+            font-size: 12px;
+            letter-spacing: 0.06em;
+            width: 160px;
+            outline: none;
+            font-family: inherit;
+          "
+        />
+      </label>
+
+      <button
+        class="btn ghost"
+        id="toggle-edit"
+        aria-pressed="true"
+        title="Atajo: E"
+      >
+        ✎ Edición ON
+      </button>
+      <button
+        class="btn ghost"
+        id="reset-state"
+        title="Restaura productos demo"
+      >
+        ⟲ Reset
+      </button>
+      <button class="btn" id="export-current" title="Atajo: P">
+        Exportar slide visible
+      </button>
+      <button class="btn primary" id="export-all">Exportar los 12 PNG</button>
+    </header>
+
+    <!-- Toast container -->
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <section class="page-title">
+      <h1>Subasta <em>Esmeraldas con ADN de PAZ</em></h1>
+      <p>Plantilla de presentación · 6 piezas · 16:9 + 9:16</p>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <!-- REUSABLE SVG ASSETS (defs)                                             -->
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <!-- Gold gradient -->
+        <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#F5E6A3" />
+          <stop offset="35%" stop-color="#E5C866" />
+          <stop offset="70%" stop-color="#D4AF37" />
+          <stop offset="100%" stop-color="#8F7318" />
+        </linearGradient>
+        <radialGradient id="goldRadial" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#FFF6D2" />
+          <stop offset="40%" stop-color="#E5C866" />
+          <stop offset="80%" stop-color="#D4AF37" />
+          <stop offset="100%" stop-color="#8F7318" />
+        </radialGradient>
+
+        <!-- ────── LEFT CIRCLE FRAME — main rim + hairline + faint dotted inner ring ────── -->
+        <symbol id="leftCircle" viewBox="0 0 1000 1000">
+          <circle
+            cx="500"
+            cy="500"
+            r="494"
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-width="2.6"
+          />
+          <circle
+            cx="500"
+            cy="500"
+            r="484"
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-width="0.7"
+            opacity=".55"
+          />
+          <circle
+            cx="500"
+            cy="500"
+            r="472"
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-width="0.4"
+            opacity=".3"
+          />
+          <!-- subtle dotted ring for premium printlike detail -->
+          <circle
+            cx="500"
+            cy="500"
+            r="462"
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-width="0.6"
+            stroke-dasharray="1 8"
+            opacity=".55"
+          />
+          <!-- top + bottom small jewel marks on the rim -->
+          <circle cx="500" cy="14" r="3" fill="url(#goldRadial)" />
+          <circle cx="500" cy="986" r="3" fill="url(#goldRadial)" />
+        </symbol>
+
+        <!-- ────── RIGHT ORNAMENT — denser concentric lens stack with center jewel + glow ────── -->
+        <symbol id="rightOrnament" viewBox="0 0 600 1000">
+          <!-- soft gold light pool behind the jewel -->
+          <radialGradient id="ornGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(245,230,163,.35)" />
+            <stop offset="60%" stop-color="rgba(212,175,55,.05)" />
+            <stop offset="100%" stop-color="rgba(212,175,55,0)" />
+          </radialGradient>
+          <circle cx="300" cy="500" r="220" fill="url(#ornGlow)" />
+          <g
+            id="lensStack"
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+          >
+            <!-- 18 nested lens shapes generated at runtime -->
+          </g>
+          <!-- central vertical axis hairline -->
+          <line
+            x1="300"
+            y1="20"
+            x2="300"
+            y2="980"
+            stroke="url(#goldGrad)"
+            stroke-width="0.3"
+            opacity=".22"
+          />
+          <!-- compass marks on axis -->
+          <circle cx="300" cy="20" r="2.5" fill="url(#goldRadial)" />
+          <circle cx="300" cy="980" r="2.5" fill="url(#goldRadial)" />
+          <!-- center jewel composition -->
+          <circle
+            cx="300"
+            cy="500"
+            r="34"
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-width="0.4"
+            opacity=".4"
+          />
+          <circle
+            cx="300"
+            cy="500"
+            r="22"
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-width="0.6"
+            opacity=".55"
+          />
+          <circle
+            cx="300"
+            cy="500"
+            r="14"
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-width="0.9"
+            opacity=".75"
+          />
+          <circle cx="300" cy="500" r="6.5" fill="url(#goldRadial)" />
+          <circle cx="300" cy="500" r="2.4" fill="#0B1C16" />
+        </symbol>
+
+        <!-- ────── (legacy) MANDALA — kept hidden, no longer used ────── -->
+        <symbol id="mandala" viewBox="0 0 1000 1000">
+          <g
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <!-- L1: outer dotted ring -->
+            <g stroke="none" fill="url(#goldGrad)">
+              <g id="dotRing">
+                <!-- 60 dots around circle r=470 -->
+                <!-- generated below at runtime via <use transform>  -->
+              </g>
+            </g>
+
+            <!-- L2: outer thin ring -->
+            <circle
+              cx="500"
+              cy="500"
+              r="455"
+              stroke-width="1.2"
+              opacity=".75"
+            />
+            <circle
+              cx="500"
+              cy="500"
+              r="445"
+              stroke-width="0.7"
+              opacity=".55"
+            />
+
+            <!-- L3: 24 outer triangular tips -->
+            <g id="outerTips" opacity=".85">
+              <!-- one petal at top, repeated 24 times -->
+              <g>
+                <path
+                  d="M500,40 L506,80 L500,88 L494,80 Z"
+                  fill="url(#goldGrad)"
+                  stroke="none"
+                />
+              </g>
+            </g>
+
+            <!-- L4: 12 large lotus-shape petals -->
+            <g id="bigPetals" opacity=".95">
+              <g>
+                <path
+                  d="
+              M500,110
+              C540,170 560,210 555,265
+              C550,310 525,335 500,355
+              C475,335 450,310 445,265
+              C440,210 460,170 500,110 Z"
+                  fill="url(#goldRadial)"
+                  stroke="url(#goldGrad)"
+                  stroke-width="1.5"
+                  opacity=".85"
+                />
+                <path
+                  d="M500,140 C518,200 522,260 500,330 C478,260 482,200 500,140 Z"
+                  fill="rgba(11,28,22,.55)"
+                  stroke="url(#goldGrad)"
+                  stroke-width="0.8"
+                />
+                <circle
+                  cx="500"
+                  cy="240"
+                  r="6"
+                  fill="url(#goldRadial)"
+                  stroke="none"
+                />
+              </g>
+            </g>
+
+            <!-- L5: middle ring 380px -->
+            <circle
+              cx="500"
+              cy="500"
+              r="380"
+              stroke-width="1.2"
+              opacity=".65"
+            />
+            <circle cx="500" cy="500" r="368" stroke-width="0.6" opacity=".4" />
+
+            <!-- L6: 24 small connecting florets -->
+            <g id="smallFlorets">
+              <g>
+                <path
+                  d="M500,365 C510,380 510,400 500,410 C490,400 490,380 500,365 Z"
+                  fill="url(#goldGrad)"
+                  stroke="none"
+                  opacity=".75"
+                />
+              </g>
+            </g>
+
+            <!-- L7: 8 paisley/teardrop forms -->
+            <g id="paisleys" opacity=".95">
+              <g>
+                <path
+                  d="
+              M500,170
+              C545,200 575,250 565,310
+              C555,355 520,380 500,395
+              C480,380 445,355 435,310
+              C425,250 455,200 500,170 Z"
+                  fill="none"
+                  stroke="url(#goldGrad)"
+                  stroke-width="1.6"
+                />
+                <path
+                  d="M500,205 C525,230 535,275 525,310 C515,335 500,350 500,355
+                     C500,350 485,335 475,310 C465,275 475,230 500,205 Z"
+                  fill="rgba(212,175,55,.18)"
+                  stroke="url(#goldGrad)"
+                  stroke-width="0.9"
+                />
+                <circle
+                  cx="500"
+                  cy="270"
+                  r="9"
+                  fill="url(#goldRadial)"
+                  stroke="none"
+                />
+                <circle cx="500" cy="270" r="3" fill="#0B1C16" stroke="none" />
+              </g>
+            </g>
+
+            <!-- L8: inner ring 240 -->
+            <circle cx="500" cy="500" r="240" stroke-width="1.4" />
+            <circle
+              cx="500"
+              cy="500"
+              r="228"
+              stroke-width="0.6"
+              opacity=".55"
+            />
+            <!-- inner dot ring -->
+            <g id="innerDots" stroke="none" fill="url(#goldGrad)">
+              <g><circle cx="500" cy="266" r="2.6" /></g>
+            </g>
+
+            <!-- L9: 8-pointed inner star -->
+            <g
+              opacity=".95"
+              stroke="url(#goldGrad)"
+              stroke-width="1.2"
+              fill="none"
+            >
+              <polygon
+                points="500,310 540,500 500,690 460,500"
+                fill="rgba(212,175,55,.10)"
+              />
+              <polygon
+                points="310,500 500,460 690,500 500,540"
+                fill="rgba(212,175,55,.10)"
+              />
+              <polygon
+                points="365,365 500,440 635,365 560,500 635,635 500,560 365,635 440,500"
+                fill="rgba(212,175,55,.06)"
+              />
+            </g>
+
+            <!-- L10: 6-petal lotus -->
+            <g id="lotus6">
+              <g>
+                <path
+                  d="M500,420 C520,440 530,470 500,500 C470,470 480,440 500,420 Z"
+                  fill="url(#goldRadial)"
+                  stroke="url(#goldGrad)"
+                  stroke-width="0.8"
+                  opacity=".95"
+                />
+              </g>
+            </g>
+
+            <!-- L11: central rosette -->
+            <g>
+              <circle
+                cx="500"
+                cy="500"
+                r="60"
+                stroke="url(#goldGrad)"
+                stroke-width="1.2"
+                fill="rgba(0,140,97,.35)"
+              />
+              <circle
+                cx="500"
+                cy="500"
+                r="44"
+                stroke="url(#goldGrad)"
+                stroke-width="0.8"
+                fill="none"
+                opacity=".7"
+              />
+              <g id="centerPetals">
+                <g>
+                  <path
+                    d="M500,452 C508,468 508,486 500,500 C492,486 492,468 500,452 Z"
+                    fill="url(#goldRadial)"
+                    stroke="none"
+                  />
+                </g>
+              </g>
+              <circle
+                cx="500"
+                cy="500"
+                r="14"
+                fill="url(#goldRadial)"
+                stroke="#8F7318"
+                stroke-width="0.6"
+              />
+              <circle cx="500" cy="500" r="5" fill="#0B1C16" />
+            </g>
+          </g>
+        </symbol>
+
+        <!-- Corner ornament — refined: L-bracket + delicate fan + dot rhythm -->
+        <symbol id="cornerOrn" viewBox="0 0 200 200">
+          <g
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <!-- L bracket -->
+            <path d="M10,10 L10,70" stroke-width="1.2" />
+            <path d="M10,10 L70,10" stroke-width="1.2" />
+            <!-- inner parallel hairline -->
+            <path d="M16,16 L16,52" stroke-width="0.5" opacity=".55" />
+            <path d="M16,16 L52,16" stroke-width="0.5" opacity=".55" />
+            <!-- corner jewel -->
+            <circle
+              cx="10"
+              cy="10"
+              r="3.6"
+              fill="url(#goldRadial)"
+              stroke="none"
+            />
+            <circle
+              cx="10"
+              cy="10"
+              r="6"
+              fill="none"
+              stroke="url(#goldGrad)"
+              stroke-width="0.4"
+              opacity=".5"
+            />
+            <!-- end caps -->
+            <circle cx="76" cy="10" r="2" fill="url(#goldGrad)" stroke="none" />
+            <circle cx="10" cy="76" r="2" fill="url(#goldGrad)" stroke="none" />
+            <!-- delicate diagonal fan -->
+            <g transform="translate(10,10) rotate(45)" opacity=".75">
+              <line x1="14" y1="0" x2="56" y2="0" stroke-width="0.5" />
+              <line
+                x1="14"
+                y1="0"
+                x2="50"
+                y2="-12"
+                stroke-width="0.4"
+                opacity=".7"
+              />
+              <line
+                x1="14"
+                y1="0"
+                x2="50"
+                y2="12"
+                stroke-width="0.4"
+                opacity=".7"
+              />
+              <line
+                x1="14"
+                y1="0"
+                x2="42"
+                y2="-22"
+                stroke-width="0.35"
+                opacity=".55"
+              />
+              <line
+                x1="14"
+                y1="0"
+                x2="42"
+                y2="22"
+                stroke-width="0.35"
+                opacity=".55"
+              />
+              <circle
+                cx="14"
+                cy="0"
+                r="2.2"
+                fill="url(#goldRadial)"
+                stroke="none"
+              />
+            </g>
+            <!-- micro arc -->
+            <path
+              d="M30,90 A60,60 0 0 1 90,30"
+              stroke-width="0.6"
+              opacity=".5"
+            />
+          </g>
+        </symbol>
+
+        <!-- ═══════════════════════════════════════════════════════════════════════
+         VARIANT — ART DÉCO
+         Stepped concentric rings + sunburst fan with diamond steps.
+         ═══════════════════════════════════════════════════════════════════════ -->
+        <symbol id="leftCircle_deco" viewBox="0 0 1000 1000">
+          <g fill="none" stroke="url(#goldGrad)" stroke-linecap="round">
+            <!-- main rim -->
+            <circle cx="500" cy="500" r="494" stroke-width="2.4" />
+            <!-- stepped inner rings -->
+            <circle cx="500" cy="500" r="478" stroke-width="0.6" opacity=".5" />
+            <circle
+              cx="500"
+              cy="500"
+              r="462"
+              stroke-width="0.6"
+              opacity=".35"
+            />
+            <!-- 4 compass jewel marks (N E S W) -->
+            <g fill="url(#goldRadial)" stroke="none">
+              <circle cx="500" cy="6" r="6" />
+              <circle cx="994" cy="500" r="6" />
+              <circle cx="500" cy="994" r="6" />
+              <circle cx="6" cy="500" r="6" />
+            </g>
+            <!-- 4 diamond accents at 45° positions -->
+            <g fill="url(#goldGrad)" stroke="none">
+              <rect
+                x="848"
+                y="148"
+                width="6"
+                height="6"
+                transform="rotate(45 851 151)"
+              />
+              <rect
+                x="848"
+                y="846"
+                width="6"
+                height="6"
+                transform="rotate(45 851 849)"
+              />
+              <rect
+                x="148"
+                y="148"
+                width="6"
+                height="6"
+                transform="rotate(45 151 151)"
+              />
+              <rect
+                x="148"
+                y="846"
+                width="6"
+                height="6"
+                transform="rotate(45 151 849)"
+              />
+            </g>
+          </g>
+        </symbol>
+
+        <symbol id="rightOrn_deco" viewBox="0 0 600 1000">
+          <g
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-linecap="round"
+            stroke-linejoin="miter"
+          >
+            <!-- vertical axis -->
+            <line
+              x1="300"
+              y1="20"
+              x2="300"
+              y2="980"
+              stroke-width="0.4"
+              opacity=".25"
+            />
+            <!-- 12 stepped diamond outlines -->
+            <g id="decoDiamonds"></g>
+            <!-- sunburst rays from center horizontally -->
+            <g id="decoRays" opacity=".7"></g>
+            <!-- center jewel composition -->
+            <polygon
+              points="300,460 320,500 300,540 280,500"
+              fill="url(#goldRadial)"
+              stroke="url(#goldGrad)"
+              stroke-width="0.6"
+            />
+            <polygon
+              points="300,476 312,500 300,524 288,500"
+              fill="rgba(11,28,22,.7)"
+              stroke="url(#goldGrad)"
+              stroke-width="0.4"
+            />
+            <circle cx="300" cy="500" r="3" fill="url(#goldRadial)" />
+            <!-- top + bottom chevrons -->
+            <polyline
+              points="260,80 300,40 340,80"
+              stroke-width="1"
+              fill="none"
+            />
+            <polyline
+              points="260,920 300,960 340,920"
+              stroke-width="1"
+              fill="none"
+            />
+            <circle cx="300" cy="40" r="3.5" fill="url(#goldRadial)" />
+            <circle cx="300" cy="960" r="3.5" fill="url(#goldRadial)" />
+          </g>
+        </symbol>
+
+        <!-- ═══════════════════════════════════════════════════════════════════════
+         VARIANT — BOTÁNICO
+         Laurel wreath frame + olive sprig vertical ornament.
+         ═══════════════════════════════════════════════════════════════════════ -->
+        <symbol id="leafSeed" viewBox="0 0 24 12">
+          <path
+            d="M0,6 C4,0 16,0 24,6 C16,12 4,12 0,6 Z"
+            fill="url(#goldRadial)"
+            stroke="url(#goldGrad)"
+            stroke-width="0.4"
+            opacity=".9"
+          />
+          <path
+            d="M2,6 L22,6"
+            stroke="url(#goldGrad)"
+            stroke-width="0.3"
+            opacity=".6"
+          />
+        </symbol>
+
+        <symbol id="leftCircle_botanico" viewBox="0 0 1000 1000">
+          <!-- delicate base ring -->
+          <circle
+            cx="500"
+            cy="500"
+            r="494"
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-width="0.8"
+            opacity=".55"
+          />
+          <!-- left + right laurel branches (open at top + bottom) -->
+          <g id="laurelBranches"></g>
+          <!-- top + bottom bow knots -->
+          <g
+            transform="translate(500 16)"
+            fill="url(#goldRadial)"
+            stroke="url(#goldGrad)"
+            stroke-width="0.5"
+          >
+            <circle r="6" />
+            <path
+              d="M-14,4 C-8,8 -2,8 0,2 C2,8 8,8 14,4"
+              fill="none"
+              stroke-width="0.7"
+            />
+          </g>
+          <g
+            transform="translate(500 984)"
+            fill="url(#goldRadial)"
+            stroke="url(#goldGrad)"
+            stroke-width="0.5"
+          >
+            <circle r="6" />
+            <path
+              d="M-14,-4 C-8,-8 -2,-8 0,-2 C2,-8 8,-8 14,-4"
+              fill="none"
+              stroke-width="0.7"
+            />
+          </g>
+        </symbol>
+
+        <symbol id="rightOrn_botanico" viewBox="0 0 600 1000">
+          <g fill="none" stroke="url(#goldGrad)" stroke-linecap="round">
+            <!-- central trunk hairline -->
+            <line
+              x1="300"
+              y1="40"
+              x2="300"
+              y2="960"
+              stroke-width="0.5"
+              opacity=".4"
+            />
+            <!-- olive sprig leaves (generated) -->
+            <g id="oliveSprig"></g>
+            <!-- center jewel cluster -->
+            <circle
+              cx="300"
+              cy="500"
+              r="14"
+              fill="url(#goldRadial)"
+              stroke="url(#goldGrad)"
+              stroke-width="0.6"
+            />
+            <circle cx="300" cy="500" r="4" fill="#0B1C16" />
+            <circle cx="300" cy="468" r="2.5" fill="url(#goldGrad)" />
+            <circle cx="300" cy="532" r="2.5" fill="url(#goldGrad)" />
+            <!-- top + bottom small fruits -->
+            <circle
+              cx="300"
+              cy="60"
+              r="4"
+              fill="url(#goldRadial)"
+              stroke="url(#goldGrad)"
+              stroke-width="0.4"
+            />
+            <circle
+              cx="300"
+              cy="940"
+              r="4"
+              fill="url(#goldRadial)"
+              stroke="url(#goldGrad)"
+              stroke-width="0.4"
+            />
+          </g>
+        </symbol>
+
+        <!-- ═══════════════════════════════════════════════════════════════════════
+         VARIANT — EDITORIAL (Vogue-style minimalist)
+         Hairline circle + huge ghost numeral on left, single axis on right.
+         ═══════════════════════════════════════════════════════════════════════ -->
+        <symbol id="leftCircle_editorial" viewBox="0 0 1000 1000">
+          <circle
+            cx="500"
+            cy="500"
+            r="494"
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-width="0.8"
+            opacity=".75"
+          />
+          <!-- single small mark at top -->
+          <circle cx="500" cy="6" r="3" fill="url(#goldRadial)" />
+        </symbol>
+
+        <symbol id="rightOrn_editorial" viewBox="0 0 600 1000">
+          <g fill="none" stroke="url(#goldGrad)" stroke-linecap="round">
+            <!-- one full-height vertical line -->
+            <line
+              x1="300"
+              y1="60"
+              x2="300"
+              y2="940"
+              stroke-width="0.5"
+              opacity=".5"
+            />
+            <!-- horizontal compass mark only at center -->
+            <line
+              x1="220"
+              y1="500"
+              x2="380"
+              y2="500"
+              stroke-width="0.4"
+              opacity=".4"
+            />
+            <!-- one elegant star jewel at center -->
+            <g transform="translate(300 500)">
+              <circle
+                r="8"
+                fill="url(#goldRadial)"
+                stroke="url(#goldGrad)"
+                stroke-width="0.4"
+              />
+              <circle r="3" fill="#0B1C16" />
+            </g>
+            <!-- top + bottom hairline tick -->
+            <line x1="280" y1="60" x2="320" y2="60" stroke-width="0.5" />
+            <line x1="280" y1="940" x2="320" y2="940" stroke-width="0.5" />
+          </g>
+        </symbol>
+
+        <!-- ═══════════════════════════════════════════════════════════════════════
+         VARIANT — MUISCA (Pre-Columbian heritage)
+         Concentric dotted rings on the circle (tunjo gold disc) + stepped pyramid lattice.
+         ═══════════════════════════════════════════════════════════════════════ -->
+        <symbol id="leftCircle_muisca" viewBox="0 0 1000 1000">
+          <g fill="none" stroke="url(#goldGrad)">
+            <circle cx="500" cy="500" r="494" stroke-width="2.2" />
+            <circle cx="500" cy="500" r="478" stroke-width="0.5" opacity=".5" />
+            <!-- 3 concentric dotted bands (tunjo style) -->
+            <circle
+              cx="500"
+              cy="500"
+              r="466"
+              stroke-width="0.7"
+              stroke-dasharray="2 6"
+              opacity=".7"
+            />
+            <circle
+              cx="500"
+              cy="500"
+              r="456"
+              stroke-width="0.5"
+              stroke-dasharray="1 4"
+              opacity=".55"
+            />
+          </g>
+          <!-- 8 jewel marks at compass + 45° positions -->
+          <g id="muiscaJewels" fill="url(#goldRadial)" stroke="none"></g>
+        </symbol>
+
+        <symbol id="rightOrn_muisca" viewBox="0 0 600 1000">
+          <g
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-linecap="square"
+            stroke-linejoin="miter"
+          >
+            <!-- vertical axis with stepped notches -->
+            <line
+              x1="300"
+              y1="40"
+              x2="300"
+              y2="960"
+              stroke-width="0.5"
+              opacity=".4"
+            />
+            <!-- nested stepped rhombi (Muisca-style) -->
+            <g id="muiscaSteps"></g>
+            <!-- rectangular jewel at center -->
+            <rect
+              x="288"
+              y="488"
+              width="24"
+              height="24"
+              fill="url(#goldRadial)"
+              stroke="url(#goldGrad)"
+              stroke-width="0.6"
+            />
+            <rect
+              x="294"
+              y="494"
+              width="12"
+              height="12"
+              fill="rgba(11,28,22,.7)"
+            />
+            <!-- top + bottom small pyramids -->
+            <polygon points="285,80 300,50 315,80" fill="url(#goldGrad)" />
+            <polygon points="285,920 300,950 315,920" fill="url(#goldGrad)" />
+          </g>
+        </symbol>
+
+        <!-- Tiny ornamental flourish (used above lote tag and around footer) -->
+        <symbol id="flourish" viewBox="0 0 120 16">
+          <g
+            fill="none"
+            stroke="url(#goldGrad)"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="0.9"
+          >
+            <path d="M2,8 L40,8" opacity=".7" />
+            <path d="M80,8 L118,8" opacity=".7" />
+            <path d="M40,8 C46,3 54,3 60,8 C66,13 74,13 80,8" opacity=".9" />
+            <circle
+              cx="60"
+              cy="8"
+              r="2"
+              fill="url(#goldRadial)"
+              stroke="none"
+            />
+            <circle
+              cx="40"
+              cy="8"
+              r="1.2"
+              fill="url(#goldGrad)"
+              stroke="none"
+            />
+            <circle
+              cx="80"
+              cy="8"
+              r="1.2"
+              fill="url(#goldGrad)"
+              stroke="none"
+            />
+          </g>
+        </symbol>
+      </defs>
+    </svg>
+
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <!-- TEMPLATE for one product (cloned by JS)                                -->
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <template id="productSectionTpl">
+      <section class="product-section" data-product-index="">
+        <h2>
+          <span class="lote-label">Lote</span> ·
+          <span class="product-label">Producto</span>
+        </h2>
+        <div class="slides-row">
+          <!-- 16:9 slide -->
+          <div class="slide-shell shell-16x9" data-ratio="16x9">
+            <span class="ratio-tag">16 : 9</span>
+            <button
+              class="reset-photo"
+              data-action="reset-photo"
+              aria-label="Quitar foto"
+              title="Quitar foto"
+            >
+              ×
+            </button>
+            <div class="slide-tools">
+              <button class="btn" data-action="upload">Subir foto</button>
+              <button class="btn primary" data-action="export">PNG</button>
+            </div>
+            <input type="file" accept="image/*" class="hidden-file" />
+            <div class="slide s16x9">
+              <div class="slide-bg"></div>
+              <div class="slide-vignette"></div>
+              <div class="right-orn-wrap">
+                <svg viewBox="0 0 600 1000" preserveAspectRatio="xMidYMid meet">
+                  <use class="right-orn-use" href="#rightOrnament" />
+                </svg>
+              </div>
+              <div class="left-circle-wrap">
+                <svg viewBox="0 0 1000 1000">
+                  <use class="left-circle-use" href="#leftCircle" />
+                </svg>
+              </div>
+              <div class="ghost-numeral" aria-hidden="true">01</div>
+              <svg class="corner tl"><use href="#cornerOrn" /></svg>
+              <svg class="corner br"><use href="#cornerOrn" /></svg>
+
+              <div class="slide-content">
+                <svg class="flourish-top" aria-hidden="true">
+                  <use href="#flourish" />
+                </svg>
+                <div class="lote-tag" contenteditable="true">Lote 00</div>
+                <h3 class="product-name" contenteditable="true">
+                  Nombre de la pieza
+                </h3>
+                <div class="overline" contenteditable="true">
+                  Esmeralda · Origen Colombia
+                </div>
+                <div class="name-rule"></div>
+                <div class="product-photo-wrap" data-role="photo">
+                  <div class="product-photo-placeholder">
+                    <svg
+                      width="44"
+                      height="44"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.2"
+                    >
+                      <path
+                        d="M3 7l3-3h12l3 3v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7z"
+                      />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    <span>Click para subir foto</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="specs">
+                <div class="specs-rule"></div>
+                <div class="specs-row">
+                  <div class="spec">
+                    <span class="spec-label">Quilates</span
+                    ><span class="spec-value" contenteditable="true"
+                      >0.00 ct</span
+                    >
+                  </div>
+                  <div class="spec-divider"></div>
+                  <div class="spec">
+                    <span class="spec-label">Color</span
+                    ><span class="spec-value" contenteditable="true"
+                      >Verde Intenso</span
+                    >
+                  </div>
+                  <div class="spec-divider"></div>
+                  <div class="spec">
+                    <span class="spec-label">Claridad</span
+                    ><span class="spec-value" contenteditable="true">VS</span>
+                  </div>
+                  <div class="spec-divider"></div>
+                  <div class="spec">
+                    <span class="spec-label">Origen</span
+                    ><span class="spec-value" contenteditable="true"
+                      >Muzo, Colombia</span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <div class="slide-footer">
+                Tierra Madre Studio<span class="sep"></span>Esmeraldas con ADN
+                de PAZ<span class="sep"></span
+                ><span contenteditable="true">Subasta 2026</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 9:16 slide -->
+          <div class="slide-shell shell-9x16" data-ratio="9x16">
+            <span class="ratio-tag">9 : 16</span>
+            <button
+              class="reset-photo"
+              data-action="reset-photo"
+              aria-label="Quitar foto"
+              title="Quitar foto"
+            >
+              ×
+            </button>
+            <div class="slide-tools">
+              <button class="btn" data-action="upload">Subir foto</button>
+              <button class="btn primary" data-action="export">PNG</button>
+            </div>
+            <input type="file" accept="image/*" class="hidden-file" />
+            <div class="slide s9x16">
+              <div class="slide-bg"></div>
+              <div class="slide-vignette"></div>
+              <div class="right-orn-wrap">
+                <svg viewBox="0 0 600 1000" preserveAspectRatio="xMidYMid meet">
+                  <use class="right-orn-use" href="#rightOrnament" />
+                </svg>
+              </div>
+              <div class="left-circle-wrap">
+                <svg viewBox="0 0 1000 1000">
+                  <use class="left-circle-use" href="#leftCircle" />
+                </svg>
+              </div>
+              <div class="ghost-numeral" aria-hidden="true">01</div>
+              <svg class="corner tl"><use href="#cornerOrn" /></svg>
+              <svg class="corner br"><use href="#cornerOrn" /></svg>
+
+              <div class="slide-content">
+                <svg class="flourish-top" aria-hidden="true">
+                  <use href="#flourish" />
+                </svg>
+                <div class="lote-tag" contenteditable="true">Lote 00</div>
+                <h3 class="product-name" contenteditable="true">
+                  Nombre de la pieza
+                </h3>
+                <div class="overline" contenteditable="true">
+                  Esmeralda · Origen Colombia
+                </div>
+                <div class="name-rule"></div>
+                <div class="product-photo-wrap" data-role="photo">
+                  <div class="product-photo-placeholder">
+                    <svg
+                      width="60"
+                      height="60"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.2"
+                    >
+                      <path
+                        d="M3 7l3-3h12l3 3v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7z"
+                      />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    <span>Click para subir foto</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="specs">
+                <div class="specs-rule"></div>
+                <div class="specs-row">
+                  <div class="spec">
+                    <span class="spec-label">Quilates</span
+                    ><span class="spec-value" contenteditable="true"
+                      >0.00 ct</span
+                    >
+                  </div>
+                  <div class="spec-divider"></div>
+                  <div class="spec">
+                    <span class="spec-label">Color</span
+                    ><span class="spec-value" contenteditable="true"
+                      >Verde Intenso</span
+                    >
+                  </div>
+                  <div class="spec-divider"></div>
+                  <div class="spec">
+                    <span class="spec-label">Claridad</span
+                    ><span class="spec-value" contenteditable="true">VS</span>
+                  </div>
+                  <div class="spec-divider"></div>
+                  <div class="spec">
+                    <span class="spec-label">Origen</span
+                    ><span class="spec-value" contenteditable="true"
+                      >Muzo, Colombia</span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <div class="slide-footer">
+                Tierra Madre Studio<span class="sep"></span>Esmeraldas con ADN
+                de PAZ<span class="sep"></span
+                ><span contenteditable="true">Subasta 2026</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </template>
+
+    <main id="root"></main>
+
+    <script>
+      /* ────────────────────────────────────────────────────────────────────────────
+   1. Build the right-side ornament: nested lens (almond) shapes radiating
+      outward from a central axis. Inspired by the Magnific reference.
+   ──────────────────────────────────────────────────────────────────────────── */
+      (function buildLensStack() {
+        const svgNS = "http://www.w3.org/2000/svg";
+        const stack = document.getElementById("lensStack");
+        if (!stack) return;
+        // Center of viewBox 600x1000
+        const cx = 300,
+          cy = 500;
+        // 18 nested lens shapes from small (inner) to large (outer) — denser feel
+        const layers = 18;
+        for (let i = 0; i < layers; i++) {
+          const t = i / (layers - 1); // 0 → 1
+          const w = 80 + t * 480; // horizontal extent (axis-aligned width)
+          const h = 160 + t * 760; // vertical extent (lens tall axis)
+          const sw = (1.6 - t * 0.8).toFixed(2); // outer rings slightly thinner
+          const op = (0.95 - t * 0.25).toFixed(2);
+
+          const path = document.createElementNS(svgNS, "path");
+          // Lens path: smooth almond. Top→right→bottom→left, two cubic curves.
+          // Top point (cx, cy-h/2)  control bias toward right side
+          const top = `${cx},${cy - h / 2}`;
+          const right = `${cx + w / 2},${cy}`;
+          const bottom = `${cx},${cy + h / 2}`;
+          const left = `${cx - w / 2},${cy}`;
+          // Cubic bezier control points to bow each side outward
+          const k = 0.55; // arc fullness
+          const cp1 = `${cx + (w / 2) * k},${cy - h / 2}`;
+          const cp2 = `${cx + w / 2},${cy - (h / 2) * k}`;
+          const cp3 = `${cx + w / 2},${cy + (h / 2) * k}`;
+          const cp4 = `${cx + (w / 2) * k},${cy + h / 2}`;
+          const cp5 = `${cx - (w / 2) * k},${cy + h / 2}`;
+          const cp6 = `${cx - w / 2},${cy + (h / 2) * k}`;
+          const cp7 = `${cx - w / 2},${cy - (h / 2) * k}`;
+          const cp8 = `${cx - (w / 2) * k},${cy - h / 2}`;
+          const d = `M ${top} C ${cp1} ${cp2} ${right} C ${cp3} ${cp4} ${bottom} C ${cp5} ${cp6} ${left} C ${cp7} ${cp8} ${top} Z`;
+          path.setAttribute("d", d);
+          path.setAttribute("stroke-width", sw);
+          path.setAttribute("opacity", op);
+          stack.appendChild(path);
+        }
+      })();
+
+      /* ────────────────────────────────────────────────────────────────────────────
+   2. Seed the 6 product sections with placeholder data.
+   ──────────────────────────────────────────────────────────────────────────── */
+      const seedProducts = [
+        {
+          lote: "Lote 01",
+          name: "Verde Eterno",
+          carats: "3.42 ct",
+          color: "Verde Intenso",
+          clarity: "VS1",
+          origin: "Muzo, Colombia",
+        },
+        {
+          lote: "Lote 02",
+          name: "Aurora Muzo",
+          carats: "2.18 ct",
+          color: "Verde Vivo",
+          clarity: "VVS",
+          origin: "Muzo, Colombia",
+        },
+        {
+          lote: "Lote 03",
+          name: "Esperanza",
+          carats: "4.05 ct",
+          color: "Verde Profundo",
+          clarity: "VS",
+          origin: "Coscuez, Colombia",
+        },
+        {
+          lote: "Lote 04",
+          name: "Corazón de los Andes",
+          carats: "5.66 ct",
+          color: "Verde Real",
+          clarity: "VS2",
+          origin: "Chivor, Colombia",
+        },
+        {
+          lote: "Lote 05",
+          name: "Aliento del Bosque",
+          carats: "1.94 ct",
+          color: "Verde Hierba",
+          clarity: "VVS",
+          origin: "Muzo, Colombia",
+        },
+        {
+          lote: "Lote 06",
+          name: "Reina Esmeralda",
+          carats: "7.20 ct",
+          color: "Verde Imperial",
+          clarity: "IF",
+          origin: "Muzo, Colombia",
+        },
+      ];
+
+      const tpl = document.getElementById("productSectionTpl");
+      const root = document.getElementById("root");
+
+      seedProducts.forEach((p, idx) => {
+        const node = tpl.content.cloneNode(true);
+        const section = node.querySelector(".product-section");
+        section.dataset.productIndex = idx;
+        section.querySelector(".lote-label").textContent = p.lote;
+        section.querySelector(".product-label").textContent = p.name;
+
+        section
+          .querySelectorAll(".lote-tag")
+          .forEach((el) => (el.textContent = p.lote.toUpperCase()));
+        section
+          .querySelectorAll(".product-name")
+          .forEach((el) => (el.textContent = p.name));
+        // ghost numeral = the lote number (01, 02, …) for editorial variant
+        const num = (p.lote.match(/\d+/) || [""])[0];
+        section
+          .querySelectorAll(".ghost-numeral")
+          .forEach((el) => (el.textContent = num));
+
+        section.querySelectorAll(".slide").forEach((slide) => {
+          const specs = slide.querySelectorAll(".spec-value");
+          if (specs.length >= 4) {
+            specs[0].textContent = p.carats;
+            specs[1].textContent = p.color;
+            specs[2].textContent = p.clarity;
+            specs[3].textContent = p.origin;
+          }
+        });
+
+        root.appendChild(node);
+      });
+
+      /* ────────────────────────────────────────────────────────────────────────────
+   1b. Build per-variant procedural details (laurel, olive, rays, steps).
+   ──────────────────────────────────────────────────────────────────────────── */
+      (function buildVariants() {
+        const svgNS = "http://www.w3.org/2000/svg";
+
+        // ART DÉCO — 12 stepped diamond outlines, scaled
+        (function decoDiamonds() {
+          const parent = document.getElementById("decoDiamonds");
+          if (!parent) return;
+          const cx = 300,
+            cy = 500;
+          const layers = 12;
+          for (let i = 0; i < layers; i++) {
+            const t = i / (layers - 1);
+            const w = 60 + t * 460;
+            const h = 120 + t * 700;
+            const sw = (1.4 - t * 0.7).toFixed(2);
+            const op = (0.95 - t * 0.3).toFixed(2);
+            const poly = document.createElementNS(svgNS, "polygon");
+            poly.setAttribute(
+              "points",
+              `${cx},${cy - h / 2} ${cx + w / 2},${cy} ${cx},${cy + h / 2} ${cx - w / 2},${cy}`,
+            );
+            poly.setAttribute("fill", "none");
+            poly.setAttribute("stroke", "url(#goldGrad)");
+            poly.setAttribute("stroke-width", sw);
+            poly.setAttribute("opacity", op);
+            parent.appendChild(poly);
+          }
+        })();
+
+        // ART DÉCO — sunburst rays (24 rays from center)
+        (function decoRays() {
+          const parent = document.getElementById("decoRays");
+          if (!parent) return;
+          const cx = 300,
+            cy = 500;
+          const inner = 40,
+            outer = 290;
+          const count = 24;
+          for (let i = 0; i < count; i++) {
+            const a = (i / count) * Math.PI * 2;
+            const x1 = cx + Math.cos(a) * inner,
+              y1 = cy + Math.sin(a) * inner;
+            const x2 = cx + Math.cos(a) * outer,
+              y2 = cy + Math.sin(a) * outer;
+            const line = document.createElementNS(svgNS, "line");
+            line.setAttribute("x1", x1.toFixed(2));
+            line.setAttribute("y1", y1.toFixed(2));
+            line.setAttribute("x2", x2.toFixed(2));
+            line.setAttribute("y2", y2.toFixed(2));
+            line.setAttribute("stroke", "url(#goldGrad)");
+            line.setAttribute("stroke-width", i % 4 === 0 ? "0.6" : "0.3");
+            line.setAttribute("opacity", i % 4 === 0 ? ".7" : ".35");
+            parent.appendChild(line);
+          }
+        })();
+
+        // BOTÁNICO — laurel branches: 14 leaves on each side, alternating up/down
+        (function laurelBranches() {
+          const parent = document.getElementById("laurelBranches");
+          if (!parent) return;
+          const cx = 500,
+            cy = 500,
+            r = 465;
+          // Two arcs: left side (-180° to -10° going down/up around the circle) and right side
+          // Leaves arranged along arc from top (10°) to bottom (170°) on each side
+          const sides = [
+            { startA: -170, endA: -10, leafSide: -1 }, // LEFT branch
+            { startA: 10, endA: 170, leafSide: 1 }, // RIGHT branch
+          ];
+          sides.forEach((side) => {
+            const leaves = 14;
+            for (let i = 0; i < leaves; i++) {
+              const t = i / (leaves - 1);
+              const ang =
+                ((side.startA + (side.endA - side.startA) * t) * Math.PI) / 180;
+              const lx = cx + Math.cos(ang) * r;
+              const ly = cy + Math.sin(ang) * r;
+              // Leaf orientation tangent to the circle
+              const tangent = (ang + Math.PI / 2) * (180 / Math.PI);
+              const flip = i % 2 === 0 ? 1 : -1;
+              const offset = 12 * flip;
+              const leaf = document.createElementNS(svgNS, "use");
+              leaf.setAttribute("href", "#leafSeed");
+              leaf.setAttribute("x", "-12");
+              leaf.setAttribute("y", "-6");
+              leaf.setAttribute("width", "24");
+              leaf.setAttribute("height", "12");
+              const g = document.createElementNS(svgNS, "g");
+              g.setAttribute(
+                "transform",
+                `translate(${lx.toFixed(1)} ${ly.toFixed(1)}) rotate(${tangent.toFixed(1)}) translate(0 ${offset})`,
+              );
+              g.appendChild(leaf);
+              parent.appendChild(g);
+            }
+          });
+        })();
+
+        // BOTÁNICO — olive sprig along vertical trunk
+        (function oliveSprig() {
+          const parent = document.getElementById("oliveSprig");
+          if (!parent) return;
+          const cx = 300,
+            top = 120,
+            bottom = 880;
+          const count = 18;
+          for (let i = 0; i < count; i++) {
+            const t = i / (count - 1);
+            const y = top + (bottom - top) * t;
+            const side = i % 2 === 0 ? -1 : 1;
+            // skip the center 4 leaves to leave room for the central jewel
+            if (y > 460 && y < 540) continue;
+            const angle = side > 0 ? -25 : 25; // tilt outward
+            const dx = side * 14;
+            const g = document.createElementNS(svgNS, "g");
+            g.setAttribute(
+              "transform",
+              `translate(${cx + dx} ${y.toFixed(1)}) rotate(${angle})`,
+            );
+            const leaf = document.createElementNS(svgNS, "use");
+            leaf.setAttribute("href", "#leafSeed");
+            leaf.setAttribute("x", side > 0 ? "0" : "-24");
+            leaf.setAttribute("y", "-6");
+            leaf.setAttribute("width", "24");
+            leaf.setAttribute("height", "12");
+            g.appendChild(leaf);
+            parent.appendChild(g);
+            // small dot/twig at base
+            const dot = document.createElementNS(svgNS, "circle");
+            dot.setAttribute("cx", cx);
+            dot.setAttribute("cy", y);
+            dot.setAttribute("r", "1.2");
+            dot.setAttribute("fill", "url(#goldGrad)");
+            dot.setAttribute("stroke", "none");
+            parent.appendChild(dot);
+          }
+        })();
+
+        // MUISCA — 8 jewel marks at compass + 45° positions on the rim
+        (function muiscaJewels() {
+          const parent = document.getElementById("muiscaJewels");
+          if (!parent) return;
+          const cx = 500,
+            cy = 500,
+            r = 494;
+          for (let i = 0; i < 8; i++) {
+            const a = (i / 8) * Math.PI * 2 - Math.PI / 2;
+            const x = cx + Math.cos(a) * r;
+            const y = cy + Math.sin(a) * r;
+            const big = i % 2 === 0;
+            const c = document.createElementNS(svgNS, "circle");
+            c.setAttribute("cx", x.toFixed(1));
+            c.setAttribute("cy", y.toFixed(1));
+            c.setAttribute("r", big ? "6" : "4");
+            parent.appendChild(c);
+            if (big) {
+              const inner = document.createElementNS(svgNS, "circle");
+              inner.setAttribute("cx", x.toFixed(1));
+              inner.setAttribute("cy", y.toFixed(1));
+              inner.setAttribute("r", "2");
+              inner.setAttribute("fill", "#0B1C16");
+              parent.appendChild(inner);
+            }
+          }
+        })();
+
+        // MUISCA — 10 stepped rhombi (precolombino lattice)
+        (function muiscaSteps() {
+          const parent = document.getElementById("muiscaSteps");
+          if (!parent) return;
+          const cx = 300,
+            cy = 500;
+          const layers = 10;
+          for (let i = 0; i < layers; i++) {
+            const t = i / (layers - 1);
+            const w = 80 + t * 440;
+            const h = 200 + t * 720;
+            // Step pattern: rectangle with notched corners (octagon-ish)
+            const cw = w / 2,
+              ch = h / 2,
+              notch = Math.min(20, cw * 0.25);
+            const points = [
+              `${cx - cw + notch},${cy - ch}`,
+              `${cx + cw - notch},${cy - ch}`,
+              `${cx + cw},${cy - ch + notch}`,
+              `${cx + cw},${cy + ch - notch}`,
+              `${cx + cw - notch},${cy + ch}`,
+              `${cx - cw + notch},${cy + ch}`,
+              `${cx - cw},${cy + ch - notch}`,
+              `${cx - cw},${cy - ch + notch}`,
+            ].join(" ");
+            const poly = document.createElementNS(svgNS, "polygon");
+            poly.setAttribute("points", points);
+            poly.setAttribute("fill", "none");
+            poly.setAttribute("stroke", "url(#goldGrad)");
+            poly.setAttribute("stroke-width", (1.4 - t * 0.7).toFixed(2));
+            poly.setAttribute("opacity", (0.95 - t * 0.3).toFixed(2));
+            parent.appendChild(poly);
+          }
+        })();
+      })();
+
+      /* ────────────────────────────────────────────────────────────────────────────
+   3. Toast — quick visual feedback for export / save / reset.
+   ──────────────────────────────────────────────────────────────────────────── */
+      const toastEl = document.getElementById("toast");
+      let toastTimer;
+      function toast(msg) {
+        if (!toastEl) return;
+        toastEl.textContent = msg;
+        toastEl.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2200);
+      }
+
+      /* ────────────────────────────────────────────────────────────────────────────
+   4. Wire up: photo upload, edit toggle, ratio filter, PNG export, persistence.
+   ──────────────────────────────────────────────────────────────────────────── */
+      const STORAGE_KEY = "tierramadre.auction.template.v1";
+
+      function persistState() {
+        const state = {
+          theme: document.body.classList.contains("theme-esmeralda")
+            ? "esmeralda"
+            : "profundo",
+          variant: document.body.dataset.variant || "magnific",
+          date: document.getElementById("auction-date").value,
+          sections: [],
+        };
+        document.querySelectorAll(".product-section").forEach((section) => {
+          const lote = section.querySelector(".lote-tag").textContent.trim();
+          const name = section
+            .querySelector(".product-name")
+            .textContent.trim();
+          const overline = section
+            .querySelector(".overline")
+            .textContent.trim();
+          const specVals = [
+            ...section.querySelectorAll(".slide.s16x9 .spec-value"),
+          ].map((v) => v.textContent.trim());
+          const photo = section.querySelector(
+            ".slide.s16x9 .product-photo-wrap img",
+          );
+          state.sections.push({
+            lote,
+            name,
+            overline,
+            specs: specVals,
+            photo: photo ? photo.src : null,
+          });
+        });
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (_) {}
+      }
+
+      function restoreState() {
+        let raw;
+        try {
+          raw = localStorage.getItem(STORAGE_KEY);
+        } catch (_) {}
+        if (!raw) return false;
+        let state;
+        try {
+          state = JSON.parse(raw);
+        } catch (_) {
+          return false;
+        }
+        if (!state) return false;
+        if (state.theme === "esmeralda") {
+          document.body.classList.add("theme-esmeralda");
+          document
+            .querySelectorAll("[data-theme]")
+            .forEach((b) =>
+              b.classList.toggle("active", b.dataset.theme === "esmeralda"),
+            );
+        }
+        if (state.variant) {
+          setVariant(state.variant);
+        }
+        if (state.date) {
+          document.getElementById("auction-date").value = state.date;
+          applyDateToAll(state.date);
+        }
+        (state.sections || []).forEach((s, idx) => {
+          const section = document.querySelectorAll(".product-section")[idx];
+          if (!section) return;
+          section
+            .querySelectorAll(".lote-tag")
+            .forEach((el) => (el.textContent = s.lote || el.textContent));
+          section
+            .querySelectorAll(".product-name")
+            .forEach((el) => (el.textContent = s.name || el.textContent));
+          section
+            .querySelectorAll(".overline")
+            .forEach((el) => (el.textContent = s.overline || el.textContent));
+          section.querySelectorAll(".slide").forEach((slide) => {
+            const vals = slide.querySelectorAll(".spec-value");
+            (s.specs || []).forEach((v, i) => {
+              if (vals[i]) vals[i].textContent = v;
+            });
+          });
+          if (s.photo) {
+            section.querySelectorAll(".slide-shell").forEach((shell) => {
+              const wrap = shell.querySelector(".product-photo-wrap");
+              wrap.innerHTML = `<img src="${s.photo}" alt="${s.name || ""}" />`;
+              shell.classList.add("has-photo");
+            });
+          }
+        });
+        return true;
+      }
+
+      function applyDateToAll(text) {
+        document
+          .querySelectorAll(".slide-footer [contenteditable]")
+          .forEach((el) => {
+            el.textContent = text;
+          });
+      }
+
+      function setShellPhoto(shell, dataUrl, alt) {
+        const wrap = shell.querySelector(".product-photo-wrap");
+        wrap.innerHTML = `<img src="${dataUrl}" alt="${alt || ""}" />`;
+        shell.classList.add("has-photo");
+      }
+
+      function clearShellPhoto(shell) {
+        const wrap = shell.querySelector(".product-photo-wrap");
+        const altSvg = `
+    <div class="product-photo-placeholder">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M3 7l3-3h12l3 3v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+      <span>Click para subir foto</span>
+    </div>`;
+        wrap.innerHTML = altSvg;
+        shell.classList.remove("has-photo");
+      }
+
+      function attachInteractions() {
+        document.querySelectorAll(".slide-shell").forEach((shell) => {
+          const fileInput = shell.querySelector(".hidden-file");
+          const photoWrap = shell.querySelector(".product-photo-wrap");
+          const uploadBtn = shell.querySelector('[data-action="upload"]');
+          const exportBtn = shell.querySelector('[data-action="export"]');
+          const resetBtn = shell.querySelector('[data-action="reset-photo"]');
+
+          function openPicker() {
+            fileInput.click();
+          }
+          photoWrap.addEventListener("click", openPicker);
+          uploadBtn.addEventListener("click", openPicker);
+
+          fileInput.addEventListener("change", (e) => {
+            const f = e.target.files && e.target.files[0];
+            if (!f) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+              // mirror photo to BOTH ratio shells of the same product so 16:9 + 9:16 stay in sync
+              const productSection = shell.closest(".product-section");
+              const altText = productSection
+                .querySelector(".product-name")
+                .textContent.trim();
+              productSection
+                .querySelectorAll(".slide-shell")
+                .forEach((s) => setShellPhoto(s, reader.result, altText));
+              persistState();
+              toast("Foto subida — sincronizada en 16:9 y 9:16");
+            };
+            reader.readAsDataURL(f);
+          });
+
+          if (resetBtn) {
+            resetBtn.addEventListener("click", () => {
+              const productSection = shell.closest(".product-section");
+              productSection
+                .querySelectorAll(".slide-shell")
+                .forEach(clearShellPhoto);
+              persistState();
+              toast("Foto removida");
+            });
+          }
+
+          exportBtn.addEventListener("click", () => exportShell(shell));
+        });
+
+        // Persist on edit blur
+        document.addEventListener(
+          "blur",
+          (e) => {
+            if (e.target && e.target.matches('[contenteditable="true"]'))
+              persistState();
+          },
+          true,
+        );
+      }
+
+      function setEditMode(on) {
+        document.body.classList.toggle("edit-mode", on);
+        const btn = document.getElementById("toggle-edit");
+        btn.textContent = on ? "✎ Edición ON" : "✎ Edición OFF";
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+      }
+
+      document.getElementById("toggle-edit").addEventListener("click", () => {
+        setEditMode(!document.body.classList.contains("edit-mode"));
+      });
+
+      document.querySelectorAll("[data-filter]").forEach((b) => {
+        b.addEventListener("click", () => {
+          document
+            .querySelectorAll("[data-filter]")
+            .forEach((x) => x.classList.remove("active"));
+          b.classList.add("active");
+          const f = b.dataset.filter;
+          document.body.classList.remove("show-both", "show-16x9", "show-9x16");
+          document.body.classList.add(f === "both" ? "show-both" : `show-${f}`);
+        });
+      });
+
+      // Theme toggle
+      document.querySelectorAll("[data-theme]").forEach((b) => {
+        b.addEventListener("click", () => {
+          document
+            .querySelectorAll("[data-theme]")
+            .forEach((x) => x.classList.remove("active"));
+          b.classList.add("active");
+          document.body.classList.toggle(
+            "theme-esmeralda",
+            b.dataset.theme === "esmeralda",
+          );
+          persistState();
+          toast(`Tema: ${b.textContent}`);
+        });
+      });
+
+      // Variant (template) switcher
+      const VARIANT_MAP = {
+        magnific: { left: "#leftCircle", right: "#rightOrnament" },
+        deco: { left: "#leftCircle_deco", right: "#rightOrn_deco" },
+        botanico: { left: "#leftCircle_botanico", right: "#rightOrn_botanico" },
+        editorial: {
+          left: "#leftCircle_editorial",
+          right: "#rightOrn_editorial",
+        },
+        muisca: { left: "#leftCircle_muisca", right: "#rightOrn_muisca" },
+      };
+      function setVariant(name) {
+        const v = VARIANT_MAP[name] || VARIANT_MAP.magnific;
+        document.body.dataset.variant = name;
+        document
+          .querySelectorAll(".left-circle-use")
+          .forEach((u) => u.setAttribute("href", v.left));
+        document
+          .querySelectorAll(".right-orn-use")
+          .forEach((u) => u.setAttribute("href", v.right));
+        document
+          .querySelectorAll("[data-variant]")
+          .forEach((b) =>
+            b.classList.toggle("active", b.dataset.variant === name),
+          );
+      }
+      document.querySelectorAll("[data-variant]").forEach((b) => {
+        b.addEventListener("click", () => {
+          setVariant(b.dataset.variant);
+          persistState();
+          toast(`Plantilla: ${b.textContent}`);
+        });
+      });
+
+      // Auction date — applies to all footers in real time
+      const dateInput = document.getElementById("auction-date");
+      dateInput.addEventListener("input", () => {
+        applyDateToAll(dateInput.value);
+        persistState();
+      });
+
+      // Reset all to demo
+      document.getElementById("reset-state").addEventListener("click", () => {
+        if (
+          !confirm(
+            "¿Restaurar la plantilla a los valores demo? Esto borra tus ediciones y fotos.",
+          )
+        )
+          return;
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+        } catch (_) {}
+        location.reload();
+      });
+
+      /* ─── PNG export via html2canvas (waits for fonts to be ready) ─── */
+      async function exportShell(shell) {
+        const slide = shell.querySelector(".slide");
+        if (!slide) return;
+        if (document.fonts && document.fonts.ready) {
+          try {
+            await document.fonts.ready;
+          } catch (_) {}
+        }
+        const w = slide.offsetWidth;
+        const h = slide.offsetHeight;
+        const ratio = shell.dataset.ratio;
+        const productSection = shell.closest(".product-section");
+        const lote = productSection
+          .querySelector(".lote-tag")
+          .textContent.trim()
+          .replace(/\s+/g, "_")
+          .replace(/[^\w-]/g, "");
+        const name = productSection
+          .querySelector(".product-name")
+          .textContent.trim()
+          .replace(/\s+/g, "_")
+          .replace(/[^\w-]/g, "");
+
+        // Disable edit affordances during capture
+        const wasEdit = document.body.classList.contains("edit-mode");
+        if (wasEdit) document.body.classList.remove("edit-mode");
+
+        try {
+          const canvas = await html2canvas(slide, {
+            width: w,
+            height: h,
+            windowWidth: w,
+            windowHeight: h,
+            scale: 1,
+            backgroundColor: null,
+            useCORS: true,
+            logging: false,
+          });
+          const link = document.createElement("a");
+          link.download = `tierramadre_${lote}_${name}_${ratio}.png`;
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+          toast(`Exportado: ${lote} · ${name} · ${ratio}`);
+        } catch (err) {
+          console.error(err);
+          toast("Error al exportar — ver consola");
+        } finally {
+          if (wasEdit) document.body.classList.add("edit-mode");
+        }
+      }
+
+      document
+        .getElementById("export-current")
+        .addEventListener("click", async () => {
+          // Export the first visible slide-shell in viewport
+          const shells = [...document.querySelectorAll(".slide-shell")].filter(
+            (s) => s.offsetParent !== null,
+          );
+          if (!shells.length) return;
+          const vh = window.innerHeight;
+          let target = shells[0],
+            bestDist = Infinity;
+          shells.forEach((s) => {
+            const r = s.getBoundingClientRect();
+            const dist = Math.abs(r.top + r.height / 2 - vh / 2);
+            if (dist < bestDist) {
+              bestDist = dist;
+              target = s;
+            }
+          });
+          await exportShell(target);
+        });
+
+      document
+        .getElementById("export-all")
+        .addEventListener("click", async () => {
+          const shells = [...document.querySelectorAll(".slide-shell")].filter(
+            (s) => s.offsetParent !== null,
+          );
+          toast(`Exportando ${shells.length} slides…`);
+          for (const s of shells) {
+            await exportShell(s);
+            await new Promise((r) => setTimeout(r, 300));
+          }
+          toast("Listo — los PNG están en tu carpeta de descargas");
+        });
+
+      /* Keyboard shortcuts */
+      document.addEventListener("keydown", (e) => {
+        // Ignore when typing in editable fields or inputs
+        const t = e.target;
+        const typing =
+          t && (t.matches("input,textarea") || t.isContentEditable);
+        if (typing) return;
+        if (e.key.toLowerCase() === "e") {
+          document.getElementById("toggle-edit").click();
+        }
+        if (e.key.toLowerCase() === "p") {
+          document.getElementById("export-current").click();
+        }
+        if (e.key === "1") {
+          document.querySelector('[data-filter="both"]').click();
+        }
+        if (e.key === "2") {
+          document.querySelector('[data-filter="16x9"]').click();
+        }
+        if (e.key === "3") {
+          document.querySelector('[data-filter="9x16"]').click();
+        }
+      });
+
+      attachInteractions();
+      setVariant("magnific"); // default
+      restoreState(); // restores variant if persisted
+
+      /* ────────────────────────────────────────────────────────────────────────────
+   4. Visual scaling: each slide is rendered at full design size (1920×1080
+      or 1080×1920) inside .slide-shell, then scaled down to fit the shell's
+      width with CSS transform. The shell uses aspect-ratio so it reserves
+      vertical space correctly.
+   ──────────────────────────────────────────────────────────────────────────── */
+      function fitSlides() {
+        document.querySelectorAll(".slide-shell").forEach((shell) => {
+          const slide = shell.querySelector(".slide");
+          if (!slide) return;
+          const ratio = shell.dataset.ratio;
+          const designW = ratio === "16x9" ? 1920 : 1080;
+          const designH = ratio === "16x9" ? 1080 : 1920;
+          shell.style.aspectRatio = `${designW} / ${designH}`;
+          const shellW = shell.clientWidth;
+          const scale = shellW / designW;
+          slide.style.transform = `scale(${scale})`;
+          // height is implicit via aspect-ratio
+        });
+      }
+
+      window.addEventListener("resize", fitSlides);
+      window.addEventListener("load", fitSlides);
+      fitSlides();
+    </script>
+  </body>
+</html>

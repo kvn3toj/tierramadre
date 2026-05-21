@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800">
+  <title>Pear-Cut Ruby</title>
+  <defs>
+    <!-- Base body gradient -->
+    <radialGradient id="bodyGrad" cx="50%" cy="58%" r="55%">
+      <stop offset="0%" stop-color="#FF2A4E"/>
+      <stop offset="35%" stop-color="#E0103A"/>
+      <stop offset="70%" stop-color="#A8052A"/>
+      <stop offset="100%" stop-color="#5C0118"/>
+    </radialGradient>
+
+    <!-- Bright highlight on upper crown -->
+    <radialGradient id="highlightTop" cx="50%" cy="20%" r="40%">
+      <stop offset="0%" stop-color="#FFE8EE" stop-opacity="0.95"/>
+      <stop offset="40%" stop-color="#FF6F8A" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#FF2A4E" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Soft inner glow -->
+    <radialGradient id="innerGlow" cx="48%" cy="55%" r="35%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="60%" stop-color="#FF3050" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Facet shading gradients -->
+    <linearGradient id="facetLight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FF7088" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#FF7088" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="facetMid" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="facetDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3A0010" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#3A0010" stop-opacity="0.55"/>
+    </linearGradient>
+    <linearGradient id="facetDeep" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1A0008" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#1A0008" stop-opacity="0.75"/>
+    </linearGradient>
+
+    <!-- Outer pear silhouette used as clip -->
+    <clipPath id="pearClip">
+      <path d="M 300 60
+               C 460 60 540 280 540 470
+               C 540 660 430 740 300 740
+               C 170 740 60 660 60 470
+               C 60 280 140 60 300 60 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Body fill -->
+  <g clip-path="url(#pearClip)">
+    <rect x="0" y="0" width="600" height="800" fill="url(#bodyGrad)"/>
+
+    <!-- Pavilion (bottom) facets radiating to point -->
+    <g opacity="0.9">
+      <polygon points="300,470 60,470 200,740" fill="url(#facetDark)"/>
+      <polygon points="300,470 200,740 300,760" fill="url(#facetDeep)"/>
+      <polygon points="300,470 300,760 400,740" fill="url(#facetDark)"/>
+      <polygon points="300,470 400,740 540,470" fill="url(#facetDeep)"/>
+      <polygon points="300,470 200,740 300,720" fill="url(#facetMid)" opacity="0.6"/>
+    </g>
+
+    <!-- Girdle line shimmer (widest part) -->
+    <path d="M 60 470 Q 300 440 540 470" fill="none" stroke="#FFB0BF" stroke-width="2" opacity="0.5"/>
+    <path d="M 60 470 Q 300 500 540 470" fill="none" stroke="#2E0010" stroke-width="2" opacity="0.6"/>
+
+    <!-- Crown facets (upper) -->
+    <g>
+      <!-- Left crown facets -->
+      <polygon points="300,60 60,470 220,260" fill="url(#facetDark)" opacity="0.55"/>
+      <polygon points="300,60 220,260 280,200" fill="url(#facetLight)" opacity="0.7"/>
+      <polygon points="220,260 60,470 200,360" fill="url(#facetDark)" opacity="0.45"/>
+
+      <!-- Right crown facets -->
+      <polygon points="300,60 540,470 380,260" fill="url(#facetDark)" opacity="0.4"/>
+      <polygon points="300,60 380,260 320,200" fill="url(#facetLight)" opacity="0.55"/>
+      <polygon points="380,260 540,470 400,360" fill="url(#facetDark)" opacity="0.4"/>
+    </g>
+
+    <!-- Central table (hexagonal) -->
+    <polygon points="300,180 360,260 360,360 300,420 240,360 240,260" fill="#C20A30" opacity="0.55"/>
+    <polygon points="300,180 360,260 300,290 240,260" fill="url(#facetLight)" opacity="0.55"/>
+    <polygon points="300,290 360,260 360,360 300,360" fill="#FF3852" opacity="0.35"/>
+    <polygon points="300,290 240,260 240,360 300,360" fill="#A20525" opacity="0.4"/>
+    <polygon points="300,360 360,360 300,420" fill="url(#facetDark)" opacity="0.5"/>
+    <polygon points="300,360 240,360 300,420" fill="url(#facetDeep)" opacity="0.45"/>
+
+    <!-- Bright apex highlight -->
+    <ellipse cx="300" cy="160" rx="80" ry="120" fill="url(#highlightTop)"/>
+    <path d="M 270 90 Q 290 70 320 80 Q 340 110 320 160 Q 295 145 280 130 Z"
+          fill="#FFEBEF" opacity="0.85"/>
+    <path d="M 285 110 Q 305 95 325 115 Q 320 145 305 150 Q 290 135 285 110 Z"
+          fill="#FFFFFF" opacity="0.65"/>
+
+    <!-- Inner soft glow -->
+    <ellipse cx="290" cy="430" rx="220" ry="170" fill="url(#innerGlow)"/>
+
+    <!-- Subtle facet edge lines -->
+    <g stroke="#FFB0BF" stroke-width="1.2" fill="none" opacity="0.35">
+      <line x1="300" y1="60" x2="220" y2="260"/>
+      <line x1="300" y1="60" x2="380" y2="260"/>
+      <line x1="220" y1="260" x2="60" y2="470"/>
+      <line x1="380" y1="260" x2="540" y2="470"/>
+      <line x1="240" y1="260" x2="60" y2="470"/>
+      <line x1="360" y1="260" x2="540" y2="470"/>
+    </g>
+    <g stroke="#3A0010" stroke-width="1.2" fill="none" opacity="0.55">
+      <line x1="60" y1="470" x2="300" y2="760"/>
+      <line x1="540" y1="470" x2="300" y2="760"/>
+      <line x1="200" y1="740" x2="300" y2="470"/>
+      <line x1="400" y1="740" x2="300" y2="470"/>
+    </g>
+    <g stroke="#5C0118" stroke-width="1.4" fill="none" opacity="0.7">
+      <polygon points="300,180 360,260 360,360 300,420 240,360 240,260"/>
+    </g>
+
+    <!-- Specular sparkle accents -->
+    <circle cx="260" cy="220" r="5" fill="#FFFFFF" opacity="0.85"/>
+    <circle cx="345" cy="300" r="3.5" fill="#FFFFFF" opacity="0.7"/>
+    <circle cx="190" cy="420" r="4" fill="#FFE0E6" opacity="0.65"/>
+    <circle cx="420" cy="500" r="3" fill="#FFE0E6" opacity="0.55"/>
+    <circle cx="320" cy="610" r="2.5" fill="#FFCFD7" opacity="0.5"/>
+  </g>
+
+  <!-- Crisp outer edge for definition -->
+  <path d="M 300 60
+           C 460 60 540 280 540 470
+           C 540 660 430 740 300 740
+           C 170 740 60 660 60 470
+           C 60 280 140 60 300 60 Z"
+        fill="none" stroke="#3A0010" stroke-width="1.5" opacity="0.55"/>
+</svg>
