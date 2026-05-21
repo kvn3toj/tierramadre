@@ -822,7 +822,8 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
   // Mutations ------------------------------------------------------------------
   const createLotItem = useConvexMutation(convexApi.lotItems.create);
-  const updateLot = useConvexMutation(convexApi.lots.update);
+  // `lots.update` mutation will be re-wired in Slice 2 once the patch
+  // validator accepts providerId (see drawer onSuccess below).
 
   // Form state -----------------------------------------------------------------
   const [tipo, setTipo] = useState<TipoItem>("gema");
@@ -896,6 +897,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const canCloseLot =
     !!lot &&
     lot.estado === "abierto" &&
+    itemsCount > 0 &&
     itemsCount === unidadesDeclaradas &&
     Math.abs(prepTotal.sum - 100) <= 0.01;
 
@@ -1049,7 +1051,22 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     setPhotos((prev) => [...prev, ...next]);
   };
   const removePhoto = (id: string) =>
-    setPhotos((prev) => prev.filter((p) => p.id !== id));
+    setPhotos((prev) => {
+      const target = prev.find((p) => p.id === id);
+      if (target) URL.revokeObjectURL(target.url);
+      return prev.filter((p) => p.id !== id);
+    });
+
+  // Revoke any remaining object URLs on unmount or when the loteId changes so
+  // we don't leak blob handles in long sessions or hot navigations.
+  useEffect(() => {
+    return () => {
+      for (const p of photos) {
+        if (p.url.startsWith("blob:")) URL.revokeObjectURL(p.url);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loteId]);
 
   // Loading state --------------------------------------------------------------
   if (!lot) {
@@ -1502,24 +1519,25 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
       <ProveedorNuevoDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        onSuccess={async (newProviderId) => {
+        onSuccess={(newProviderId) => {
+          // The active-lot "create provider" drawer is a legacy fallback for
+          // lots that were created without a provider. The new-lot intro
+          // already requires a provider at `lots.create` time, so this branch
+          // should rarely fire. `lots.update`'s patch validator does not yet
+          // accept `providerId`, so we cannot persist the linkage from the
+          // client today. Surface that loud-and-clear instead of silently
+          // round-tripping an empty patch (reviewer flagged the no-op).
+          //
+          // TODO(slice-2): extend `lotPatchValidator` in convex/lots.ts to
+          // accept `providerId: v.optional(v.id("providers"))`, then patch
+          // here with `{ providerId: newProviderId }`.
           setDrawerOpen(false);
-          if (!lot) return;
-          try {
-            await updateLot({
-              id: lot._id,
-              patch: {
-                /* provider linkage is patched server-side via _id lookup */
-              },
-            });
-            // The lots.update mutation surface doesn't currently accept
-            // providerId in the patch validator. Slice 2 will widen it; for
-            // now we surface a TODO so this branch isn't silently broken.
-            // TODO(slice-2): extend lots.update patch to include providerId
-            // and call updateLot({ id: lot._id, patch: { providerId: ... } }).
-            void newProviderId;
-          } catch {
-            /* surfaced via banner on next render */
+          void newProviderId;
+          if (typeof window !== "undefined") {
+            // eslint-disable-next-line no-alert
+            window.alert(
+              `Proveedor creado, pero el enlace al lote ${loteId} requiere extender lots.update en el servidor (Slice 2). Por ahora abrí el lote de nuevo desde Inicio para volver a empezar con este proveedor.`,
+            );
           }
         }}
         contextLabel={`${loteId} · sin salir de la captura`}

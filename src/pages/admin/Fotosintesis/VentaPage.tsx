@@ -30,6 +30,7 @@ import { KbdKey } from "./components/KbdKey";
 import { KardexPreview } from "./components/KardexPreview";
 import { useFotosintesisLayout } from "./FotosintesisLayoutContext";
 import { exportCarnet } from "./exportCarnet";
+import type { Id } from "../../../../convex/_generated/dataModel";
 
 type CompradorTipo = "embajador" | "final";
 type FormaPago = "contado" | "esmereogenesis" | "credito";
@@ -64,7 +65,7 @@ export default function FotosintesisVentaPage() {
   // ─── Selection state ───────────────────────────────────────────────────
   const initialItemId = searchParams.get("itemId") ?? null;
   const [itemId, setItemId] = useState<string | null>(initialItemId);
-  const [clientId, setClientId] = useState<string | null>(null);
+  const [clientId, setClientId] = useState<Id<"clients"> | null>(null);
   const [compradorTipo, setCompradorTipo] =
     useState<CompradorTipo>("embajador");
   const [formaPago, setFormaPago] = useState<FormaPago>("contado");
@@ -108,7 +109,7 @@ export default function FotosintesisVentaPage() {
   // Auto-select first embajador if none chosen
   useEffect(() => {
     if (!clientId && embajadores.length > 0) {
-      setClientId(embajadores[0]._id as string);
+      setClientId(embajadores[0]._id);
     }
   }, [clientId, embajadores]);
 
@@ -170,7 +171,7 @@ export default function FotosintesisVentaPage() {
     try {
       const res = await createSale({
         itemIds: [itemId],
-        clientId: clientId as never,
+        clientId,
         fechaVenta,
         precioAcordadoCOP: precioCop,
         totalCOP: totalCop,
@@ -389,7 +390,11 @@ export default function FotosintesisVentaPage() {
                   value={clientId ?? ""}
                   onChange={(e) => {
                     const next = (e.target as HTMLSelectElement).value;
-                    setClientId(next || null);
+                    // Convex Id<"clients"> is a branded string at the type level
+                    // but a plain string at runtime; the value came from a
+                    // server-issued `_id` we rendered as an <option>, so it's
+                    // safe to cast it back.
+                    setClientId(next ? (next as Id<"clients">) : null);
                   }}
                   sx={{
                     position: "absolute",

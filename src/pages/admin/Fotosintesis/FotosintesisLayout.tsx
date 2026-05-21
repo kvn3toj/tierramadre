@@ -9,6 +9,7 @@ import {
   type SpotlightOpenOptions,
 } from "./FotosintesisLayoutContext";
 import { ProductoSpotlight } from "./components/ProductoSpotlight";
+import { FotosintesisGuideFab } from "./components/FotosintesisGuideFab";
 
 /**
  * Shared shell for every /admin/fotosintesis route. Owns the sticky topbar,
@@ -80,6 +81,7 @@ export default function FotosintesisLayout() {
       >
         <FotoTopbar crumbs={crumbs} syncStatus="synced" userInitial="M" />
         <Outlet />
+        <FotosintesisGuideFab />
       </Box>
 
       <ProductoSpotlight

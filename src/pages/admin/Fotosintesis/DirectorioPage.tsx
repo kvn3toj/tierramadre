@@ -39,12 +39,17 @@ export default function FotosintesisDirectorioPage() {
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
+  // Synchronous init — avoids a "desktop-then-mobile" flash on first paint
+  // for narrow viewports (CLAUDE.md anti-blinking guidance).
+  const [isMobile, setIsMobile] = useState<boolean>(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 899px)").matches
+      : false,
+  );
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 899px)");
     const onChange = () => setIsMobile(mq.matches);
-    onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
@@ -427,7 +432,6 @@ export default function FotosintesisDirectorioPage() {
                     key={row.id}
                     component="button"
                     type="button"
-                    role="listitem"
                     aria-pressed={isSelected}
                     onClick={() => setSelectedId(row.id)}
                     sx={{
