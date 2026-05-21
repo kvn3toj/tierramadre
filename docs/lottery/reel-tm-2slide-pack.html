@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TM · 2-slide stories — H + K hybrids</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.min.js"></script>
+<style>
+  :root {
+    /* TM real tokens */
+    --emerald-primary: #00AE7A;
+    --emerald-light:   #33C194;
+    --emerald-lighter: #66D4AE;
+    --emerald-lightest:#E6F7F1;
+    --emerald-dark:    #008C61;
+    --emerald-darker:  #006A48;
+    --emerald-darkest: #004830;
+    --emerald-text:    #0B6E4F;
+
+    --gold-primary:    #D4AF37;
+    --gold-light:      #E5C866;
+    --gold-lightest:   #FDF8E8;
+    --gold-dark:       #B8941F;
+    --gold-darker:     #8F7318;
+    --gold-darkest:    #665210;
+
+    --pure-white:      #FFFFFF;
+    --natural-white:   #FDFDFB;
+    --paper-warm:      #FBF6EC;
+    --off-white:       #FAFAFA;
+    --charcoal:        #2C2C2C;
+    --text-secondary:  #4A4A4A;
+    --hairline:        #E5DFCF;
+
+    --f-brand:   'Libre Baskerville', Georgia, serif;
+    --f-display: 'Playfair Display', Georgia, serif;
+    --f-elegant: 'Cormorant Garamond', Georgia, serif;
+    --f-sans:    'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+    --f-mono:    'SF Mono', 'Fira Code', Monaco, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #07090A; color: #fff; font-family: var(--f-sans); min-height: 100vh; }
+
+  /* App chrome */
+  .app { min-height: 100vh; padding: 32px 16px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+  .app-header { text-align: center; max-width: 620px; }
+  .app-header h1 {
+    font-family: var(--f-display); font-weight: 600;
+    font-size: 36px; letter-spacing: -0.01em;
+    background: linear-gradient(120deg, var(--gold-light), var(--gold-primary), var(--emerald-light));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 10px;
+  }
+  .app-header p { color: rgba(255,255,255,0.6); font-size: 14px; line-height: 1.5; }
+  .app-header em { color: var(--gold-light); font-style: italic; }
+
+  .toolbar {
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    padding: 6px; border-radius: 999px; backdrop-filter: blur(8px);
+  }
+  .toolbar button {
+    padding: 10px 14px; border-radius: 999px; border: none;
+    background: transparent; color: rgba(255,255,255,0.7);
+    font-family: inherit; font-size: 12px; font-weight: 500; letter-spacing: 0.04em;
+    cursor: pointer; transition: all 200ms ease;
+  }
+  .toolbar button:hover { color: white; }
+  .toolbar button.active {
+    background: linear-gradient(120deg, var(--emerald-primary), var(--gold-primary));
+    color: white;
+  }
+  .toolbar .divider { width: 1px; background: rgba(255,255,255,0.1); margin: 0 4px; }
+  .toolbar .download-btn { background: rgba(212,175,55,0.15); color: var(--gold-light); }
+  .toolbar .download-btn:hover { background: rgba(212,175,55,0.25); }
+
+  .meta-row {
+    display: flex; gap: 14px; align-items: center;
+    color: rgba(255,255,255,0.5); font-size: 11px;
+    flex-wrap: wrap; justify-content: center; letter-spacing: 0.06em;
+  }
+  .meta-row strong { color: var(--gold-light); font-weight: 500; }
+
+  .strategy-line {
+    color: rgba(255,255,255,0.7);
+    font-family: var(--f-elegant);
+    font-style: italic;
+    font-size: 18px;
+    text-align: center;
+    max-width: 560px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 14px 24px;
+  }
+  .strategy-line strong { color: var(--gold-light); font-style: normal; font-weight: 500; letter-spacing: 0.06em; }
+
+  /* Stage 9:16 */
+  .stage { width: 100%; max-width: 420px; aspect-ratio: 9/16; position: relative; }
+  .frame {
+    position: absolute; inset: 0; border-radius: 28px; overflow: hidden;
+    box-shadow: 0 40px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+  }
+  .canvas {
+    position: absolute;
+    width: 1080px; height: 1920px;
+    top: 0; left: 0;
+    transform-origin: top left;
+    display: none; overflow: hidden;
+  }
+  .canvas.show { display: block; }
+
+  /* Common shell */
+  .progress-bars {
+    position: absolute; top: 36px; left: 36px; right: 36px;
+    display: flex; gap: 8px; z-index: 6;
+  }
+  .progress-bars .seg {
+    flex: 1; height: 4px; border-radius: 999px;
+    overflow: hidden; position: relative;
+  }
+  .progress-bars .seg::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 0%; }
+  .progress-bars .seg.done::after { width: 100%; }
+  .progress-bars .seg.active::after { animation: segfill 5s linear forwards; }
+  @keyframes segfill { from { width: 0%; } to { width: 100%; } }
+
+  .story-handle {
+    position: absolute; top: 60px; left: 36px;
+    z-index: 6; display: flex; align-items: center; gap: 12px;
+  }
+  .story-handle .avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    border: 2px solid;
+    display: grid; place-items: center;
+    font-family: var(--f-display); font-weight: 600; font-size: 24px;
+  }
+  .story-handle .meta { display: flex; flex-direction: column; line-height: 1.2; }
+  .story-handle .name { font-weight: 600; font-size: 26px; font-family: var(--f-brand); }
+  .story-handle .timeago { font-size: 14px; letter-spacing: 0.04em; }
+
+  .slide {
+    position: absolute; inset: 0;
+    opacity: 0; pointer-events: none;
+    transition: opacity 600ms ease;
+    padding: 200px 80px 180px;
+    display: flex; flex-direction: column;
+  }
+  .slide.active { opacity: 1; pointer-events: auto; }
+
+  .cta-bar {
+    position: absolute; left: 36px; right: 36px; bottom: 36px;
+    backdrop-filter: blur(12px); border-radius: 999px;
+    padding: 22px 32px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 22px; letter-spacing: 0.06em; z-index: 6;
+  }
+  .cta-bar .right::after { content: " ↗"; }
+
+  .tap-zones {
+    position: absolute; inset: 0;
+    display: grid; grid-template-columns: 1fr 1fr; z-index: 5;
+  }
+  .tap-zones button { background: transparent; border: none; cursor: pointer; }
+
+  /* Default themes for canvas-* — light TM brand */
+  .canvas { background: var(--natural-white); color: var(--charcoal); font-family: var(--f-sans); }
+  .canvas .progress-bars .seg { background: rgba(0, 140, 97, 0.18); }
+  .canvas .progress-bars .seg::after { background: var(--emerald-primary); }
+  .canvas .story-handle .avatar { background: var(--natural-white); color: var(--emerald-primary); border-color: var(--emerald-primary); }
+  .canvas .story-handle .name { color: var(--charcoal); }
+  .canvas .story-handle .timeago { color: var(--text-secondary); }
+  .canvas .cta-bar { background: rgba(255,255,255,0.92); color: var(--charcoal); border: 1px solid var(--gold-primary); }
+  .canvas .cta-bar .left { font-family: var(--f-brand); font-weight: 700; font-size: 22px; color: var(--emerald-primary); }
+  .canvas .cta-bar .right { font-weight: 600; font-size: 18px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold-darker); }
+
+  /* Hairline ornaments */
+  .hairline {
+    width: 80px; height: 1px; background: var(--gold-primary);
+    margin: 0 auto;
+  }
+  .ornament-row {
+    display: flex; align-items: center; gap: 12px; justify-content: center;
+    color: var(--gold-primary); font-size: 14px; letter-spacing: 0.4em;
+    margin: 16px 0;
+  }
+  .ornament-row::before, .ornament-row::after {
+    content: ""; flex: 1; max-width: 80px; height: 1px; background: currentColor;
+  }
+
+  /* ===========================================================
+     L · CLARO + ORIGEN
+     H minimalism + K's terroir stamp · pure white, gem hero, grid
+     Strategy: Hook (gem) → Mechanics (grid)
+     =========================================================== */
+
+  /* L-1 Gem hero */
+  .L-hero { padding-top: 200px; align-items: center; text-align: center; }
+  .L-hero .top-stamp {
+    display: inline-flex; gap: 12px; align-items: center;
+    border: 1px solid var(--emerald-darker);
+    padding: 6px 14px;
+    font-family: var(--f-mono);
+    font-size: 11px; letter-spacing: 0.32em;
+    color: var(--emerald-darker); font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+    background: var(--natural-white);
+  }
+  .L-hero .top-stamp::before { content: "◇"; color: var(--gold-primary); }
+  .L-hero .gem-wrap {
+    width: 600px; height: 600px;
+    margin: 0 auto 56px;
+    position: relative;
+  }
+  .L-hero .gem-stage {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(255,255,255,0.85), transparent 35%),
+      radial-gradient(circle at 65% 65%, rgba(212,175,55,0.18), transparent 50%),
+      conic-gradient(from 200deg, var(--emerald-light), var(--emerald-primary), var(--emerald-darker), var(--emerald-primary), var(--emerald-light));
+    box-shadow:
+      0 0 0 1px var(--gold-primary),
+      0 0 0 8px rgba(212,175,55,0.08),
+      0 40px 80px -20px rgba(0,140,97,0.25);
+    will-change: transform;
+  }
+  /* Inner ring on the gem face (sits above shimmer) */
+  .L-hero .gem-stage::after {
+    content: ""; position: absolute; inset: 36px;
+    border-radius: 50%; border: 1px solid rgba(255,255,255,0.55);
+    z-index: 3;
+  }
+  /* Shimmer sweep — light catching the stone */
+  .L-hero .gem-stage::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.5) 50%, transparent 70%);
+    transform: translateX(-160%);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .L-hero h1 {
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 100px; line-height: 1; letter-spacing: -0.01em;
+    color: var(--charcoal); margin-bottom: 18px;
+  }
+  .L-hero h1 em { font-style: italic; color: var(--emerald-primary); font-weight: 400; }
+  .L-hero h1 .line {
+    display: block; overflow: hidden;
+    line-height: 1; padding: 0.05em 0 0.08em;
+  }
+  .L-hero h1 .line > span { display: inline-block; }
+  .L-hero .specs {
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 32px; color: var(--gold-darker);
+    letter-spacing: 0.04em;
+  }
+  .L-hero .coord {
+    margin-top: auto;
+    display: flex; justify-content: space-between;
+    position: relative;
+    padding-top: 24px;
+    font-family: var(--f-mono); font-size: 13px;
+    letter-spacing: 0.18em; color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+  .L-hero .coord-line {
+    position: absolute; top: 0; left: 50%;
+    height: 1px; width: 0;
+    background: var(--hairline);
+    transform: translateX(-50%);
+  }
+  .L-hero .coord .left { color: var(--emerald-darker); font-weight: 600; }
+
+  /* ---------------------------------------------------------------
+     L-1 cinematic transitions · 5 layers, ~2.6s choreography
+     --------------------------------------------------------------- */
+  /* Initial states (before animation kicks in) */
+  .L-hero .top-stamp,
+  .L-hero .gem-wrap,
+  .L-hero .specs { opacity: 0; }
+  .L-hero .gem-wrap { transform: scale(0.7); }
+  .L-hero h1 .line > span { transform: translateY(110%); opacity: 0; }
+  .L-hero .specs { transform: translateY(20px); }
+  .L-hero .coord > span { opacity: 0; transform: translateY(8px); }
+
+  /* Entrance animations — only when slide is active */
+  .L-hero.active .top-stamp     { animation: tm-stamp-press   800ms  200ms forwards; }
+  .L-hero.active .gem-wrap      { animation: tm-gem-enter    1200ms  450ms forwards; }
+  .L-hero.active .gem-stage     { animation: tm-gem-rotate     90s 1700ms linear infinite; }
+  .L-hero.active .gem-stage::before { animation: tm-shimmer  6500ms 3200ms infinite; }
+  .L-hero.active h1 .line:nth-child(1) > span { animation: tm-line-rise 800ms  900ms forwards; }
+  .L-hero.active h1 .line:nth-child(2) > span { animation: tm-line-rise 800ms 1100ms forwards; }
+  .L-hero.active h1 .line:nth-child(3) > span { animation: tm-line-rise 800ms 1300ms forwards; }
+  .L-hero.active .specs         { animation: tm-fade-up      700ms 1700ms forwards; }
+  .L-hero.active .coord-line    { animation: tm-hairline-grow 900ms 1900ms forwards; }
+  .L-hero.active .coord > span:first-child { animation: tm-fade-up 600ms 2300ms forwards; }
+  .L-hero.active .coord > span:last-child  { animation: tm-fade-up 600ms 2400ms forwards; }
+
+  /* Keyframes */
+  @keyframes tm-stamp-press {
+    0%   { opacity: 0; transform: translateY(-18px) scale(0.92); letter-spacing: 0.6em; }
+    60%  { opacity: 1; letter-spacing: 0.42em; }
+    100% { opacity: 1; transform: translateY(0) scale(1); letter-spacing: 0.32em; }
+  }
+  @keyframes tm-gem-enter {
+    0%   { opacity: 0; transform: scale(0.7); filter: blur(16px); }
+    60%  { filter: blur(0); }
+    100% { opacity: 1; transform: scale(1); filter: blur(0); }
+  }
+  @keyframes tm-gem-rotate {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  @keyframes tm-shimmer {
+    0%, 35%, 100% { transform: translateX(-160%); }
+    14%           { transform: translateX(160%); }
+  }
+  @keyframes tm-line-rise {
+    from { transform: translateY(110%); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes tm-fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes tm-hairline-grow {
+    from { width: 0; }
+    to   { width: 100%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .L-hero .top-stamp,
+    .L-hero .gem-wrap,
+    .L-hero .gem-stage,
+    .L-hero .gem-stage::before,
+    .L-hero h1 .line > span,
+    .L-hero .specs,
+    .L-hero .coord-line,
+    .L-hero .coord > span {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+      filter: none !important;
+      letter-spacing: normal !important;
+    }
+    .L-hero .coord-line { width: 100% !important; }
+  }
+
+  /* L-2 Grid */
+  .L-grid { padding-top: 200px; align-items: stretch; text-align: center; }
+  .L-grid .top-meta {
+    display: flex; justify-content: space-between; align-items: end;
+    margin-bottom: 36px;
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 18px;
+  }
+  .L-grid .top-meta .l { font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px; }
+  .L-grid .top-meta .v { font-family: var(--f-brand); font-weight: 700; font-size: 36px; color: var(--charcoal); line-height: 1; }
+  .L-grid h2 {
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 80px; line-height: 1.05;
+    color: var(--charcoal); margin-bottom: 18px;
+  }
+  .L-grid h2 em { font-style: italic; color: var(--emerald-primary); }
+  .L-grid .lead {
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 26px; color: var(--gold-darker);
+    margin-bottom: 36px;
+  }
+  .L-grid .grid {
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px;
+  }
+  .L-grid .tile {
+    aspect-ratio: 1; border-radius: 6px;
+    background: var(--natural-white);
+    border: 1px solid var(--hairline);
+    color: var(--charcoal);
+    display: grid; place-items: center;
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 20px; font-variant-numeric: tabular-nums;
+  }
+  .L-grid .tile.sold { background: var(--emerald-primary); color: white; border-color: var(--emerald-primary); }
+  .L-grid .tile.target {
+    background: var(--natural-white); color: var(--emerald-primary);
+    border: 2px solid var(--gold-primary); font-weight: 700;
+    box-shadow: 0 0 0 4px rgba(212,175,55,0.18);
+  }
+  .L-grid .terroir-seal {
+    position: absolute; bottom: 130px; right: 80px;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    border: 2px solid var(--emerald-darker);
+    background: var(--natural-white);
+    display: grid; place-items: center;
+    text-align: center;
+    transform: rotate(-8deg);
+    box-shadow: 0 8px 16px rgba(0,140,97,0.12);
+  }
+  .L-grid .terroir-seal::before {
+    content: ""; position: absolute; inset: 8px;
+    border-radius: 50%; border: 1px dashed var(--emerald-darker);
+  }
+  .L-grid .terroir-seal .seal-inner {
+    font-family: var(--f-brand); font-weight: 700;
+    font-size: 13px; letter-spacing: 0.18em;
+    color: var(--emerald-darker); text-transform: uppercase;
+    line-height: 1.2;
+    padding: 0 8px;
+  }
+  .L-grid .terroir-seal .seal-inner em { display: block; font-style: italic; color: var(--gold-darker); margin-top: 2px; }
+
+  /* ===========================================================
+     M · LOTE / SUBASTA
+     Auction lot card · catalog feel
+     Strategy: Specs (lot card) → Grid (the lots ledger)
+     =========================================================== */
+
+  /* M-1 Lot card */
+  .M-lot { background: var(--paper-warm); padding-top: 180px; }
+  .canvas-M .progress-bars .seg { background: rgba(143, 115, 24, 0.2); }
+  .canvas-M .progress-bars .seg::after { background: var(--gold-darker); }
+  .canvas-M .story-handle .avatar { background: var(--paper-warm); color: var(--gold-darker); border-color: var(--gold-darker); }
+  .canvas-M .story-handle .timeago { color: var(--gold-darker); letter-spacing: 0.18em; text-transform: uppercase; }
+
+  .M-lot .frame-card {
+    flex: 1;
+    background: var(--natural-white);
+    border: 1px solid var(--gold-primary);
+    padding: 56px 48px;
+    position: relative;
+    box-shadow: 0 12px 32px rgba(143, 115, 24, 0.12);
+    display: flex; flex-direction: column;
+  }
+  .M-lot .frame-card::before, .M-lot .frame-card::after {
+    content: ""; position: absolute; width: 28px; height: 28px;
+    border: 2px solid var(--gold-darker);
+  }
+  .M-lot .frame-card::before { top: 12px; left: 12px; border-right: none; border-bottom: none; }
+  .M-lot .frame-card::after { bottom: 12px; right: 12px; border-left: none; border-top: none; }
+  .M-lot .lot-row {
+    display: flex; justify-content: space-between; align-items: start;
+    margin-bottom: 32px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .M-lot .lot-row .lot-num {
+    font-family: var(--f-mono); font-weight: 600;
+    font-size: 14px; letter-spacing: 0.4em;
+    color: var(--gold-darker); text-transform: uppercase;
+  }
+  .M-lot .lot-row .lot-num strong {
+    display: block; font-family: var(--f-display); font-style: italic;
+    font-size: 96px; color: var(--charcoal); letter-spacing: 0; line-height: 1;
+    margin-top: 4px;
+  }
+  .M-lot .lot-row .right {
+    text-align: right;
+  }
+  .M-lot .lot-row .right .l {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.32em;
+    text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;
+  }
+  .M-lot .lot-row .right .v {
+    font-family: var(--f-brand); font-style: italic; font-weight: 400;
+    font-size: 22px; color: var(--charcoal);
+  }
+  .M-lot .gem-mini {
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(255,255,255,0.85), transparent 35%),
+      conic-gradient(from 200deg, var(--emerald-light), var(--emerald-primary), var(--emerald-darker), var(--emerald-primary), var(--emerald-light));
+    margin: 0 auto 32px;
+    box-shadow: 0 0 0 1px var(--gold-primary), 0 0 0 6px rgba(212,175,55,0.08), 0 20px 32px rgba(0,140,97,0.18);
+    position: relative;
+  }
+  .M-lot .gem-mini::after { content: ""; position: absolute; inset: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); }
+  .M-lot h1 {
+    font-family: var(--f-display); font-weight: 600; font-style: italic;
+    font-size: 84px; line-height: 1; letter-spacing: -0.01em;
+    color: var(--charcoal); text-align: center;
+    margin-bottom: 8px;
+  }
+  .M-lot .subtitle {
+    text-align: center;
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 24px; color: var(--gold-darker);
+    margin-bottom: 32px;
+  }
+  .M-lot .specs-table {
+    border-top: 1px solid var(--hairline);
+    margin-top: auto;
+  }
+  .M-lot .spec {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 14px 0; border-bottom: 1px solid var(--hairline);
+    font-family: var(--f-brand); font-size: 18px;
+  }
+  .M-lot .spec .key { font-style: italic; color: var(--text-secondary); }
+  .M-lot .spec .val { font-weight: 700; color: var(--charcoal); font-style: normal; }
+  .M-lot .spec .val em { color: var(--emerald-primary); font-style: italic; font-weight: 400; }
+  .M-lot .opening {
+    margin-top: 24px;
+    text-align: center;
+  }
+  .M-lot .opening .l {
+    font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.42em;
+    color: var(--gold-darker); text-transform: uppercase; font-weight: 600;
+  }
+  .M-lot .opening .v {
+    font-family: var(--f-display); font-weight: 700;
+    font-size: 96px; color: var(--charcoal);
+    line-height: 1;
+    margin-top: 4px;
+  }
+  .M-lot .opening .v em { color: var(--gold-darker); font-style: italic; }
+
+  /* M-2 Ledger */
+  .M-ledger { background: var(--paper-warm); padding-top: 200px; }
+  .M-ledger h2 {
+    font-family: var(--f-display); font-weight: 600; font-style: italic;
+    font-size: 80px; line-height: 1.05; color: var(--charcoal);
+    margin-bottom: 12px;
+  }
+  .M-ledger h2 em { color: var(--gold-darker); }
+  .M-ledger .lead {
+    font-family: var(--f-elegant); font-style: italic; font-size: 24px;
+    color: var(--text-secondary); margin-bottom: 40px;
+    border-bottom: 1px solid var(--gold-darker);
+    padding-bottom: 18px;
+  }
+  .M-ledger .ledger-meta {
+    display: flex; justify-content: space-between;
+    font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.32em;
+    text-transform: uppercase; color: var(--gold-darker); font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .M-ledger .grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px;
+    flex: 1; align-content: center;
+    border: 1px solid var(--gold-primary);
+    padding: 16px;
+    background: var(--natural-white);
+  }
+  .M-ledger .tile {
+    aspect-ratio: 1; border-radius: 2px;
+    background: transparent;
+    border: 1px solid var(--hairline);
+    color: var(--charcoal);
+    display: grid; place-items: center;
+    font-family: var(--f-mono); font-weight: 500;
+    font-size: 16px; font-variant-numeric: tabular-nums;
+  }
+  .M-ledger .tile.sold { background: var(--gold-darker); color: var(--paper-warm); border-color: var(--gold-darker); }
+  .M-ledger .tile.target {
+    background: var(--emerald-primary); color: white; border-color: var(--emerald-darker);
+    box-shadow: 0 0 0 2px var(--gold-primary);
+    font-weight: 700;
+  }
+  .M-ledger .draw-row {
+    margin-top: 36px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid var(--gold-darker);
+    padding-top: 18px;
+  }
+  .M-ledger .draw-row .l { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.42em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px; }
+  .M-ledger .draw-row .v { font-family: var(--f-display); font-style: italic; font-weight: 600; font-size: 36px; color: var(--charcoal); line-height: 1; }
+  .M-ledger .draw-row .v.gold { color: var(--gold-darker); }
+
+  .canvas-M .cta-bar { background: rgba(255,255,255,0.92); color: var(--charcoal); border: 1px solid var(--gold-darker); }
+  .canvas-M .cta-bar .left { font-family: var(--f-display); font-style: italic; font-weight: 600; font-size: 22px; color: var(--gold-darker); }
+  .canvas-M .cta-bar .right { color: var(--gold-darker); }
+
+  /* ===========================================================
+     N · CARTA INVITACIÓN
+     Personal letter feel · invitation aesthetic
+     Strategy: Personal tone (letter) → Reveal (envelope opens)
+     =========================================================== */
+
+  .canvas-N .progress-bars .seg { background: rgba(0, 140, 97, 0.18); }
+  .canvas-N .progress-bars .seg::after { background: var(--emerald-primary); }
+  .canvas-N .story-handle .avatar { background: var(--paper-warm); color: var(--emerald-primary); border-color: var(--emerald-primary); }
+
+  /* N-1 Letter */
+  .N-letter { background: var(--paper-warm); padding-top: 200px; }
+  .N-letter::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(0deg, transparent 0px, transparent 47px, rgba(0,140,97,0.04) 48px);
+    pointer-events: none;
+  }
+  .N-letter .letter-paper {
+    flex: 1;
+    background: rgba(253, 250, 240, 0.95);
+    border: 1px solid var(--hairline);
+    padding: 56px 56px 80px;
+    position: relative;
+    box-shadow: 0 8px 32px rgba(143, 115, 24, 0.1);
+    display: flex; flex-direction: column;
+  }
+  .N-letter .letter-head {
+    display: flex; justify-content: space-between; align-items: start;
+    margin-bottom: 36px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .N-letter .letterhead-name {
+    font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 36px; color: var(--emerald-primary);
+    line-height: 1;
+  }
+  .N-letter .letterhead-name small {
+    display: block;
+    font-family: var(--f-mono); font-style: normal;
+    font-size: 11px; letter-spacing: 0.4em;
+    color: var(--gold-darker); text-transform: uppercase;
+    margin-top: 6px;
+  }
+  .N-letter .letter-meta {
+    text-align: right;
+    font-family: var(--f-mono); font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--text-secondary); text-transform: uppercase;
+    line-height: 1.6;
+  }
+  .N-letter .salutation {
+    font-family: var(--f-brand); font-style: italic;
+    font-size: 28px; color: var(--charcoal);
+    margin-bottom: 22px;
+  }
+  .N-letter .body-text {
+    font-family: var(--f-brand); font-size: 24px;
+    line-height: 1.7; color: var(--charcoal);
+    text-indent: 2em;
+    margin-bottom: 18px;
+  }
+  .N-letter .body-text em { color: var(--emerald-primary); font-style: italic; }
+  .N-letter .body-text strong {
+    font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 30px; color: var(--gold-darker);
+  }
+  .N-letter .signature-block {
+    margin-top: auto;
+    text-align: right;
+  }
+  .N-letter .signature {
+    font-family: var(--f-display); font-style: italic; font-weight: 500;
+    font-size: 56px; color: var(--emerald-primary);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .N-letter .sig-line {
+    width: 200px; height: 1px; background: var(--charcoal);
+    margin-left: auto; margin-bottom: 6px;
+  }
+  .N-letter .sig-meta {
+    font-family: var(--f-mono); font-size: 11px;
+    letter-spacing: 0.2em; color: var(--text-secondary); text-transform: uppercase;
+  }
+  .N-letter .wax-seal {
+    position: absolute; bottom: 56px; left: 56px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, var(--emerald-light) 0%, var(--emerald-darker) 60%, var(--emerald-darkest) 100%);
+    display: grid; place-items: center;
+    box-shadow: 0 6px 12px rgba(0,72,48,0.4), inset -4px -4px 8px rgba(0,0,0,0.3), inset 4px 4px 8px rgba(255,255,255,0.15);
+    transform: rotate(-12deg);
+  }
+  .N-letter .wax-seal::before {
+    content: ""; position: absolute; inset: 8px;
+    border-radius: 50%; border: 1px dashed rgba(255,255,255,0.4);
+  }
+  .N-letter .wax-seal .seal-letters {
+    font-family: var(--f-display); font-style: italic; font-weight: 700;
+    font-size: 36px; color: var(--gold-light);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+
+  /* N-2 Envelope opens */
+  .N-envelope { background: var(--natural-white); padding-top: 200px; align-items: center; text-align: center; }
+  .N-envelope .top-stamp {
+    display: inline-flex; gap: 8px;
+    border: 1px solid var(--emerald-darker);
+    padding: 6px 14px;
+    font-family: var(--f-mono);
+    font-size: 11px; letter-spacing: 0.32em;
+    color: var(--emerald-darker); font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .N-envelope h2 {
+    font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 88px; line-height: 0.95; letter-spacing: -0.01em;
+    color: var(--charcoal); margin-bottom: 14px;
+  }
+  .N-envelope h2 em { color: var(--emerald-primary); }
+  .N-envelope .lead {
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 26px; color: var(--gold-darker);
+    margin-bottom: 40px;
+  }
+  .N-envelope .grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px;
+    width: 100%; align-content: center;
+    margin-bottom: 36px;
+  }
+  .N-envelope .tile {
+    aspect-ratio: 1; border-radius: 4px;
+    background: var(--natural-white);
+    border: 1px solid var(--hairline);
+    color: var(--charcoal);
+    display: grid; place-items: center;
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 16px; font-variant-numeric: tabular-nums;
+  }
+  .N-envelope .tile.sold { background: var(--emerald-primary); color: white; border-color: var(--emerald-primary); }
+  .N-envelope .tile.target {
+    background: var(--gold-primary); color: var(--emerald-darkest);
+    border: 2px solid var(--emerald-darker); font-weight: 700;
+    box-shadow: 0 0 0 3px rgba(212,175,55,0.3);
+    transform: scale(1.08);
+  }
+  .N-envelope .closing {
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 32px; color: var(--gold-darker);
+    margin-top: auto;
+  }
+  .N-envelope .closing strong {
+    display: block;
+    font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 56px; color: var(--emerald-primary);
+    margin-top: 6px;
+  }
+
+  .canvas-N .cta-bar { background: rgba(255,255,255,0.92); color: var(--charcoal); border: 1px solid var(--emerald-primary); }
+  .canvas-N .cta-bar .left { font-family: var(--f-brand); font-weight: 700; font-size: 22px; color: var(--emerald-primary); }
+  .canvas-N .cta-bar .right { color: var(--gold-darker); }
+
+  /* ===========================================================
+     O · ANVERSO / REVERSO
+     Two faces of a single certificate · coin-like
+     Strategy: Front (prize artifact) → Back (validation block)
+     =========================================================== */
+
+  .canvas-O .progress-bars .seg { background: rgba(0, 140, 97, 0.18); }
+  .canvas-O .progress-bars .seg::after { background: var(--emerald-primary); }
+  .canvas-O .story-handle .avatar { background: var(--natural-white); color: var(--emerald-primary); border-color: var(--gold-primary); }
+
+  /* O-1 Anverso */
+  .O-front { background: var(--natural-white); padding-top: 180px; }
+  .O-front .cert-frame {
+    flex: 1;
+    border: 2px solid var(--emerald-darker);
+    padding: 48px 40px;
+    background: var(--natural-white);
+    position: relative;
+    display: flex; flex-direction: column;
+    box-shadow: 0 8px 24px rgba(0,140,97,0.1);
+  }
+  .O-front .cert-frame::before, .O-front .cert-frame::after {
+    content: ""; position: absolute;
+    width: 32px; height: 32px;
+    border: 2px solid var(--gold-primary);
+  }
+  .O-front .cert-frame::before { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+  .O-front .cert-frame::after { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+  .O-front .face-label {
+    position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+    background: var(--natural-white); padding: 0 18px;
+    font-family: var(--f-mono); font-size: 13px; letter-spacing: 0.5em;
+    color: var(--emerald-darker); text-transform: uppercase; font-weight: 700;
+  }
+  .O-front .top-meta {
+    display: flex; justify-content: space-between; align-items: start;
+    border-bottom: 1px solid var(--hairline); padding-bottom: 16px; margin-bottom: 32px;
+  }
+  .O-front .brand {
+    font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 36px; color: var(--emerald-primary); line-height: 1;
+  }
+  .O-front .brand small {
+    display: block;
+    font-family: var(--f-mono); font-style: normal;
+    font-size: 11px; letter-spacing: 0.42em;
+    color: var(--gold-darker); text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .O-front .edition {
+    font-family: var(--f-mono); font-size: 12px;
+    letter-spacing: 0.42em; text-align: right;
+    color: var(--text-secondary); text-transform: uppercase;
+    line-height: 1.8;
+  }
+  .O-front .edition strong {
+    display: block; font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 40px; color: var(--charcoal); letter-spacing: 0;
+  }
+  .O-front .gem-stage {
+    width: 380px; height: 380px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(255,255,255,0.85), transparent 35%),
+      radial-gradient(circle at 65% 65%, rgba(212,175,55,0.18), transparent 50%),
+      conic-gradient(from 200deg, var(--emerald-light), var(--emerald-primary), var(--emerald-darker), var(--emerald-primary), var(--emerald-light));
+    margin: 0 auto 32px;
+    box-shadow: 0 0 0 1px var(--gold-primary), 0 0 0 6px rgba(212,175,55,0.08), 0 20px 40px rgba(0,140,97,0.18);
+    position: relative;
+  }
+  .O-front .gem-stage::after { content: ""; position: absolute; inset: 24px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); }
+  .O-front .prize-name {
+    text-align: center;
+    font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 80px; line-height: 1; letter-spacing: -0.01em;
+    color: var(--charcoal); margin-bottom: 18px;
+  }
+  .O-front .prize-name em { color: var(--emerald-primary); }
+  .O-front .specs {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    border-top: 1px solid var(--hairline);
+    padding-top: 18px; margin-top: auto;
+  }
+  .O-front .spec { text-align: center; }
+  .O-front .spec .l { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.42em; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; font-weight: 600; }
+  .O-front .spec .v { font-family: var(--f-brand); font-weight: 700; font-size: 22px; color: var(--charcoal); line-height: 1.2; }
+  .O-front .spec .v em { font-style: italic; color: var(--emerald-primary); font-weight: 400; }
+  .O-front .seal-bottom {
+    margin-top: 18px;
+    display: flex; justify-content: center; gap: 14px; align-items: center;
+    border-top: 1px solid var(--gold-primary);
+    padding-top: 14px;
+  }
+  .O-front .seal-bottom .seal-coin {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: 1px solid var(--gold-primary);
+    background:
+      radial-gradient(circle, var(--gold-light) 0%, var(--gold-primary) 100%);
+    display: grid; place-items: center;
+    font-family: var(--f-display); font-style: italic; font-weight: 700;
+    font-size: 22px; color: var(--emerald-darkest);
+  }
+  .O-front .seal-bottom .seal-text {
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 22px; color: var(--gold-darker);
+  }
+
+  /* O-2 Reverso */
+  .O-back { background: var(--natural-white); padding-top: 180px; }
+  .O-back .cert-frame {
+    flex: 1;
+    border: 2px solid var(--gold-primary);
+    padding: 48px 40px;
+    background: var(--natural-white);
+    position: relative;
+    display: flex; flex-direction: column;
+    box-shadow: 0 8px 24px rgba(143,115,24,0.1);
+  }
+  .O-back .cert-frame::before, .O-back .cert-frame::after {
+    content: ""; position: absolute;
+    width: 32px; height: 32px;
+    border: 2px solid var(--emerald-darker);
+  }
+  .O-back .cert-frame::before { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+  .O-back .cert-frame::after { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+  .O-back .face-label {
+    position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+    background: var(--natural-white); padding: 0 18px;
+    font-family: var(--f-mono); font-size: 13px; letter-spacing: 0.5em;
+    color: var(--gold-darker); text-transform: uppercase; font-weight: 700;
+  }
+  .O-back h2 {
+    font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 64px; line-height: 1; color: var(--charcoal);
+    text-align: center; margin-bottom: 8px;
+  }
+  .O-back h2 em { color: var(--emerald-primary); }
+  .O-back .verify-line {
+    text-align: center;
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 22px; color: var(--gold-darker);
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 18px;
+  }
+  .O-back .grid-meta {
+    display: flex; justify-content: space-between;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.34em;
+    text-transform: uppercase; color: var(--text-secondary); font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .O-back .grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px;
+    flex: 1; align-content: center;
+    border: 1px solid var(--hairline);
+    padding: 12px;
+    background: var(--off-white);
+  }
+  .O-back .tile {
+    aspect-ratio: 1; border-radius: 2px;
+    background: var(--natural-white);
+    border: 1px solid var(--hairline);
+    color: var(--charcoal);
+    display: grid; place-items: center;
+    font-family: var(--f-mono); font-weight: 500;
+    font-size: 13px; font-variant-numeric: tabular-nums;
+  }
+  .O-back .tile.sold { background: var(--emerald-primary); color: white; border-color: var(--emerald-primary); }
+  .O-back .tile.target {
+    background: var(--gold-primary); color: var(--emerald-darkest);
+    border: 2px solid var(--emerald-darker); font-weight: 700;
+  }
+  .O-back .signature-block {
+    margin-top: 32px;
+    border-top: 1px solid var(--gold-primary);
+    padding-top: 18px;
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 24px; align-items: center;
+  }
+  .O-back .signature-block .left {
+    font-family: var(--f-mono); font-size: 11px;
+    letter-spacing: 0.18em; color: var(--text-secondary); text-transform: uppercase;
+    line-height: 1.8;
+  }
+  .O-back .signature-block .left strong {
+    display: block; font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 22px; color: var(--charcoal); letter-spacing: 0;
+    text-transform: none; margin-bottom: 4px;
+  }
+  .O-back .signature-block .signature {
+    font-family: var(--f-display); font-style: italic; font-weight: 500;
+    font-size: 44px; color: var(--emerald-primary);
+    line-height: 1;
+    transform: rotate(-2deg);
+  }
+  .O-back .footer-meta {
+    margin-top: 18px;
+    text-align: center;
+    font-family: var(--f-mono); font-size: 10px;
+    letter-spacing: 0.34em; color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .canvas-O .cta-bar { background: rgba(255,255,255,0.92); color: var(--charcoal); border: 1px solid var(--emerald-primary); }
+  .canvas-O .cta-bar .left { font-family: var(--f-brand); font-weight: 700; font-size: 22px; color: var(--emerald-primary); }
+  .canvas-O .cta-bar .right { color: var(--gold-darker); }
+
+  .export-tip {
+    color: rgba(255,255,255,0.55);
+    font-size: 13px; line-height: 1.6;
+    max-width: 540px; text-align: center;
+  }
+  .export-tip code {
+    background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px;
+    font-family: monospace; font-size: 12px; color: var(--gold-light);
+  }
+  .export-tip strong { color: white; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="app-header">
+    <h1>2 slides · 4 hibridaciones de H + K</h1>
+    <p>Cuando bajás de 4 slides a 2, cada uno tiene que <em>funcionar como póster autónomo</em>. Hay 4 maneras estratégicamente distintas de hacerlo. Mismo brand TM real (emerald <em>#00AE7A</em>, gold <em>#D4AF37</em>, Libre Baskerville).</p>
+  </header>
+
+  <div class="toolbar" role="tablist">
+    <button class="prop-btn active" data-prop="L" role="tab">L · Claro + Origen</button>
+    <button class="prop-btn" data-prop="M" role="tab">M · Lote / Subasta</button>
+    <button class="prop-btn" data-prop="N" role="tab">N · Carta lacrada</button>
+    <button class="prop-btn" data-prop="O" role="tab">O · Anverso / Reverso</button>
+    <span class="divider"></span>
+    <button class="download-btn" id="exportPng">↓ PNG</button>
+    <button class="download-btn" id="exportAll">↓ 2 PNGs</button>
+  </div>
+
+  <p class="strategy-line" id="strategy">
+    <strong>L · Hook → Mecánica.</strong> El gem hipnotiza, el grid responde "cómo participar". El más universal.
+  </p>
+
+  <div class="meta-row">
+    <span>Formato <strong>1080 × 1920</strong></span>
+    <span>·</span>
+    <span>Aspect <strong>9:16</strong></span>
+    <span>·</span>
+    <span>Slide <strong id="slideIndicator">1 / 2</strong></span>
+    <span>·</span>
+    <span>Auto-advance <strong>5s</strong></span>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="frame" id="frame">
+
+      <!-- ============ L · CLARO + ORIGEN ============ -->
+      <div class="canvas canvas-L show" id="canvasL" data-prop="L">
+        <div class="progress-bars">
+          <div class="seg active"></div><div class="seg"></div>
+        </div>
+        <div class="story-handle">
+          <div class="avatar">tm</div>
+          <div class="meta"><span class="name">Tierra Madre</span><span class="timeago">esmeraldas con adn de paz</span></div>
+        </div>
+
+        <!-- L-1 -->
+        <div class="slide L-hero active">
+          <div class="top-stamp">Origen Muzo · Boyacá</div>
+          <div class="gem-wrap"><div class="gem-stage"></div></div>
+          <h1>
+            <span class="line"><span>Una piedra,</span></span>
+            <span class="line"><span><em>cien posibles</em></span></span>
+            <span class="line"><span>destinos.</span></span>
+          </h1>
+          <p class="specs">— Esmeralda Venus · 1.85 ct —</p>
+          <div class="coord">
+            <div class="coord-line"></div>
+            <span class="left">5°32′N · 74°06′W</span>
+            <span>Edición vii · 2026</span>
+          </div>
+        </div>
+
+        <!-- L-2 -->
+        <div class="slide L-grid">
+          <div class="top-meta">
+            <div><div class="l">Por número</div><div class="v">$50K COP</div></div>
+            <div style="text-align:right;"><div class="l">Vendidos</div><div class="v">23 / 100</div></div>
+          </div>
+          <h2>Elige tu <em>número.</em></h2>
+          <p class="lead">— y tu pieza certificada te buscará —</p>
+          <div class="grid" id="lGrid"></div>
+          <div class="terroir-seal">
+            <div class="seal-inner">Adn de Paz<em>certificado</em></div>
+          </div>
+        </div>
+
+        <div class="cta-bar">
+          <span class="left">tierramadre.studio</span>
+          <span class="right">Reserva ya</span>
+        </div>
+        <div class="tap-zones">
+          <button data-go="0"></button><button data-go="1"></button>
+        </div>
+      </div>
+
+      <!-- ============ M · LOTE / SUBASTA ============ -->
+      <div class="canvas canvas-M" id="canvasM" data-prop="M">
+        <div class="progress-bars">
+          <div class="seg active"></div><div class="seg"></div>
+        </div>
+        <div class="story-handle">
+          <div class="avatar">tm</div>
+          <div class="meta"><span class="name">Tierra Madre</span><span class="timeago">catálogo · vii</span></div>
+        </div>
+
+        <!-- M-1 -->
+        <div class="slide M-lot active">
+          <div class="frame-card">
+            <div class="lot-row">
+              <div class="lot-num">Lote · n°<strong>07</strong></div>
+              <div class="right">
+                <div class="l">Edition</div>
+                <div class="v">Mayo · 2026</div>
+              </div>
+            </div>
+            <div class="gem-mini"></div>
+            <h1>Esmeralda<br/><em>Venus</em></h1>
+            <p class="subtitle">— Origen Muzo, Boyacá —</p>
+            <div class="specs-table">
+              <div class="spec"><span class="key">Peso</span><span class="val">1.85 ct</span></div>
+              <div class="spec"><span class="key">Calidad</span><span class="val"><em>fina</em></span></div>
+              <div class="spec"><span class="key">Origen</span><span class="val">Muzo</span></div>
+              <div class="spec"><span class="key">Certificación</span><span class="val">Adn de Paz</span></div>
+              <div class="spec"><span class="key">Sorteo</span><span class="val">16 / 05</span></div>
+            </div>
+            <div class="opening">
+              <div class="l">Apertura por número</div>
+              <div class="v">$50<em>K</em> COP</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- M-2 -->
+        <div class="slide M-ledger">
+          <h2>El <em>libro</em><br/>de números.</h2>
+          <p class="lead">— cien líneas, una se firma con tu nombre —</p>
+          <div class="ledger-meta">
+            <span>· Lote 07 · 100 entradas ·</span>
+            <span>23 vendidas · 77 disponibles</span>
+          </div>
+          <div class="grid" id="mGrid"></div>
+          <div class="draw-row">
+            <div><div class="l">Sorteo</div><div class="v">16 / 05 / 2026</div></div>
+            <div style="text-align:right;"><div class="l">Cierre</div><div class="v gold">15 / 05 · 23:59</div></div>
+          </div>
+        </div>
+
+        <div class="cta-bar">
+          <span class="left">tierramadre.studio</span>
+          <span class="right">Reserva tu lote</span>
+        </div>
+        <div class="tap-zones">
+          <button data-go="0"></button><button data-go="1"></button>
+        </div>
+      </div>
+
+      <!-- ============ N · CARTA LACRADA ============ -->
+      <div class="canvas canvas-N" id="canvasN" data-prop="N">
+        <div class="progress-bars">
+          <div class="seg active"></div><div class="seg"></div>
+        </div>
+        <div class="story-handle">
+          <div class="avatar">tm</div>
+          <div class="meta"><span class="name">Tierra Madre</span><span class="timeago">una invitación personal</span></div>
+        </div>
+
+        <!-- N-1 -->
+        <div class="slide N-letter active">
+          <div class="letter-paper">
+            <div class="letter-head">
+              <div class="letterhead-name">Tierra Madre<small>esmeraldas con adn de paz</small></div>
+              <div class="letter-meta">Bogotá · Colombia<br/>5 mayo 2026</div>
+            </div>
+            <p class="salutation">Estimada amiga, estimado amigo,</p>
+            <p class="body-text">Esta vez la pieza que sale del taller no se vende <em>como siempre</em>. Sale a la luz a través de una rifa de cien números. Una sola persona la llevará a casa.</p>
+            <p class="body-text">El premio es <strong>la Esmeralda Venus</strong>, 1.85 ct, recién certificada con nuestro ADN de PAZ. Una piedra de Muzo, clara, con ese verde que solo da Boyacá.</p>
+            <p class="body-text">Si quieres ser una de las cien posibilidades, te dejo el grid en la siguiente nota. Cada número cuesta cincuenta mil pesos. Tu reserva dura treinta minutos.</p>
+            <div class="signature-block">
+              <div class="signature">Tierra Madre</div>
+              <div class="sig-line"></div>
+              <div class="sig-meta">Por la pieza · por la paz</div>
+            </div>
+            <div class="wax-seal"><span class="seal-letters">tm</span></div>
+          </div>
+        </div>
+
+        <!-- N-2 -->
+        <div class="slide N-envelope">
+          <div class="top-stamp">Lote 07 · 100 invitaciones</div>
+          <h2>El sobre<br/><em>se abre.</em></h2>
+          <p class="lead">— cien números esperan respuesta —</p>
+          <div class="grid" id="nGrid"></div>
+          <p class="closing">tu número podría ser<strong>cualquiera.</strong></p>
+        </div>
+
+        <div class="cta-bar">
+          <span class="left">tierramadre.studio</span>
+          <span class="right">Acepta la invitación</span>
+        </div>
+        <div class="tap-zones">
+          <button data-go="0"></button><button data-go="1"></button>
+        </div>
+      </div>
+
+      <!-- ============ O · ANVERSO / REVERSO ============ -->
+      <div class="canvas canvas-O" id="canvasO" data-prop="O">
+        <div class="progress-bars">
+          <div class="seg active"></div><div class="seg"></div>
+        </div>
+        <div class="story-handle">
+          <div class="avatar">tm</div>
+          <div class="meta"><span class="name">Tierra Madre</span><span class="timeago">certificado · doble cara</span></div>
+        </div>
+
+        <!-- O-1 Anverso -->
+        <div class="slide O-front active">
+          <div class="cert-frame">
+            <span class="face-label">Anverso</span>
+            <div class="top-meta">
+              <div class="brand">Tierra Madre<small>certificado de rifa · vii</small></div>
+              <div class="edition">Edition<strong>07</strong>Mayo 2026</div>
+            </div>
+            <div class="gem-stage"></div>
+            <p class="prize-name">Esmeralda<br/><em>Venus</em></p>
+            <div class="specs">
+              <div class="spec"><div class="l">Peso</div><div class="v">1.85 <em>ct</em></div></div>
+              <div class="spec"><div class="l">Origen</div><div class="v">Muzo · <em>Boyacá</em></div></div>
+              <div class="spec"><div class="l">Calidad</div><div class="v"><em>Fina</em></div></div>
+              <div class="spec"><div class="l">Por número</div><div class="v">$50<em>K</em> COP</div></div>
+            </div>
+            <div class="seal-bottom">
+              <div class="seal-coin">tm</div>
+              <div class="seal-text">— certificado con ADN de PAZ —</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- O-2 Reverso -->
+        <div class="slide O-back">
+          <div class="cert-frame">
+            <span class="face-label">Reverso</span>
+            <h2>Bloque de <em>validación.</em></h2>
+            <p class="verify-line">— cien entradas, registro auditable —</p>
+            <div class="grid-meta">
+              <span>00 · 99 · grid</span>
+              <span>vendidos: 23/100</span>
+            </div>
+            <div class="grid" id="oGrid"></div>
+            <div class="signature-block">
+              <div class="left">
+                <strong>Pre-seed</strong>
+                5xT9 · Q2P7 · 8mK4
+              </div>
+              <div class="signature">tm.</div>
+            </div>
+            <p class="footer-meta">tierra-madre-studio.vercel.app · sorteo 16 / 05 / 2026</p>
+          </div>
+        </div>
+
+        <div class="cta-bar">
+          <span class="left">tierramadre.studio</span>
+          <span class="right">Reserva ya</span>
+        </div>
+        <div class="tap-zones">
+          <button data-go="0"></button><button data-go="1"></button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="export-tip">
+    <strong>Tips:</strong> tocá una mitad del frame para saltar entre slides. <code>↓ PNG</code> exporta el slide actual a 1080×1920. <code>↓ 2 PNGs</code> exporta los 2 slides de la propuesta visible — perfecto para subir como carrusel de IG.
+  </p>
+</div>
+
+<script>
+  function scaleCanvases() {
+    const frame = document.getElementById('frame'); if (!frame) return;
+    const w = frame.clientWidth; const scale = w / 1080;
+    document.querySelectorAll('.canvas').forEach(c => c.style.transform = `scale(${scale})`);
+  }
+  window.addEventListener('resize', scaleCanvases);
+
+  function buildGrid(wrapId, opts) {
+    const wrap = document.getElementById(wrapId);
+    if (!wrap || wrap.dataset.built) return;
+    wrap.dataset.built = '1';
+    const sold = new Set(opts.sold || []);
+    for (let i = 1; i <= opts.count; i++) {
+      const t = document.createElement('div');
+      t.className = 'tile';
+      if (i === opts.target) t.classList.add(opts.targetClass);
+      else if (sold.has(i)) t.classList.add('sold');
+      t.textContent = String(i).padStart(opts.pad || 2, '0');
+      wrap.appendChild(t);
+    }
+  }
+  buildGrid('lGrid', { count: 56, sold: [3,7,12,18,22,27,8,14,19,24,33,37,40,46,50], target: 42, targetClass: 'target' });
+  buildGrid('mGrid', { count: 100, sold: [3,7,12,18,22,27,8,14,19,24,33,37,40,46,50,53,58,61,67,72,77,80,88,95], target: 42, targetClass: 'target' });
+  buildGrid('nGrid', { count: 100, sold: [3,7,12,18,22,27,8,14,19,24,33,37,40,46,50,53,58,61,67,72,77,80,88,95], target: 42, targetClass: 'target' });
+  buildGrid('oGrid', { count: 100, sold: [3,7,12,18,22,27,8,14,19,24,33,37,40,46,50,53,58,61,67,72,77,80,88,95], target: 42, targetClass: 'target' });
+
+  const STRATEGIES = {
+    L: '<strong>L · Hook → Mecánica.</strong> El gem hipnotiza, el grid responde "cómo participar". El más universal — funciona en cualquier audiencia.',
+    M: '<strong>M · Especificaciones → Inventario.</strong> Habla a coleccionistas. La rifa como subasta curada con un lote único. Posiciona la pieza como artefacto, no producto.',
+    N: '<strong>N · Tono personal → Reveal.</strong> Una invitación íntima. Funciona genial en stories de WhatsApp, audiencias warm que ya conocen TM.',
+    O: '<strong>O · Anverso → Reverso.</strong> Un certificado físico de doble cara. Comunica trazabilidad y seriedad. Ideal para ediciones de mayor valor o lotes premium.'
+  };
+
+  let currentProp = 'L';
+  document.querySelectorAll('.prop-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.prop-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentProp = btn.dataset.prop;
+      ['L','M','N','O'].forEach(p => document.getElementById('canvas' + p).classList.toggle('show', p === currentProp));
+      document.getElementById('strategy').innerHTML = STRATEGIES[currentProp];
+      restartStory();
+      scaleCanvases();
+    });
+  });
+
+  let activeIdx = 0; let timer = null;
+  function setSlide(idx) {
+    activeIdx = idx;
+    const canvas = document.getElementById('canvas' + currentProp); if (!canvas) return;
+    // Force animation restart by removing then re-adding active after a reflow
+    canvas.querySelectorAll('.slide').forEach((el) => el.classList.remove('active'));
+    void canvas.offsetWidth; // reflow — guarantees CSS animations replay on re-activation
+    const target = canvas.querySelectorAll('.slide')[idx];
+    if (target) target.classList.add('active');
+    canvas.querySelectorAll('.progress-bars .seg').forEach((seg, i) => {
+      seg.classList.remove('active', 'done');
+      if (i < idx) seg.classList.add('done');
+      else if (i === idx) seg.classList.add('active');
+    });
+    document.getElementById('slideIndicator').textContent = `${idx + 1} / 2`;
+  }
+  function restartStory() {
+    if (timer) clearInterval(timer);
+    setSlide(0);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 2), 5000);
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-go]'); if (!btn) return;
+    e.stopPropagation();
+    const idx = parseInt(btn.dataset.go, 10);
+    if (timer) clearInterval(timer);
+    setSlide(idx);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 2), 5000);
+  });
+
+  async function exportSlide(prop, slideIdx) {
+    const canvas = document.getElementById('canvas' + prop);
+    canvas.querySelectorAll('.slide').forEach((el, i) => el.classList.toggle('active', i === slideIdx));
+    canvas.querySelectorAll('.progress-bars .seg').forEach((seg, i) => {
+      seg.classList.remove('active', 'done');
+      if (i < slideIdx) seg.classList.add('done');
+      else if (i === slideIdx) seg.classList.add('active');
+    });
+    const prevTransform = canvas.style.transform;
+    const prevDisplay = canvas.style.display;
+    canvas.style.transform = 'scale(1)';
+    canvas.style.display = 'block';
+    await new Promise(r => setTimeout(r, 80));
+    try {
+      const dataUrl = await htmlToImage.toPng(canvas, {
+        width: 1080, height: 1920, pixelRatio: 1, cacheBust: true,
+        style: { transform: 'scale(1)', transformOrigin: 'top left' }
+      });
+      const link = document.createElement('a');
+      link.download = `tm-rifa-2slide-${prop}-slide${slideIdx + 1}.png`;
+      link.href = dataUrl; link.click();
+    } finally {
+      canvas.style.transform = prevTransform;
+      canvas.style.display = prevDisplay;
+      scaleCanvases();
+    }
+  }
+
+  document.getElementById('exportPng').addEventListener('click', async () => {
+    if (timer) clearInterval(timer);
+    await exportSlide(currentProp, activeIdx);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 2), 5000);
+  });
+
+  document.getElementById('exportAll').addEventListener('click', async () => {
+    if (timer) clearInterval(timer);
+    const btn = document.getElementById('exportAll');
+    btn.disabled = true; btn.style.opacity = '0.6';
+    const original = btn.textContent;
+    for (let i = 0; i < 2; i++) {
+      btn.textContent = `Exportando ${i+1}/2...`;
+      await exportSlide(currentProp, i);
+      await new Promise(r => setTimeout(r, 600));
+    }
+    setSlide(activeIdx);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 2), 5000);
+    btn.textContent = original; btn.disabled = false; btn.style.opacity = '';
+  });
+
+  scaleCanvases();
+  restartStory();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(scaleCanvases);
+</script>
+</body>
+</html>

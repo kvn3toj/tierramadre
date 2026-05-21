@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TM · L variants — 5 dominios del mismo Claro+Origen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@300;400;500;600;700&family=Italianno&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.min.js"></script>
+<style>
+  :root {
+    /* TM real tokens */
+    --emerald-primary: #00AE7A;
+    --emerald-light:   #33C194;
+    --emerald-lighter: #66D4AE;
+    --emerald-dark:    #008C61;
+    --emerald-darker:  #006A48;
+    --emerald-darkest: #004830;
+    --emerald-text:    #0B6E4F;
+
+    --gold-primary:    #D4AF37;
+    --gold-light:      #E5C866;
+    --gold-darker:     #8F7318;
+    --gold-darkest:    #665210;
+    --gold-aged:       #8a7329;
+
+    /* Domain-specific colors (from TM world exploration) */
+    --muzo-mist:       #FDFDFB;
+    --paper-deed:      #FBF6EC;
+    --paper-herbarium: #F5EFE0;
+    --shale:           #0A0E0C;
+    --shale-soft:      #0D1B1E;
+    --sage:            #9DAB8B;
+    --clay-itoco:      #A18560;
+    --ink:             #2C2C2C;
+    --ink-soft:        #4A4A4A;
+    --hairline:        #E5DFCF;
+    --hairline-soft:   #EFEAD9;
+
+    /* fonts */
+    --f-brand:   'Libre Baskerville', Georgia, serif;
+    --f-display: 'Playfair Display', Georgia, serif;
+    --f-elegant: 'Cormorant Garamond', Georgia, serif;
+    --f-script:  'Italianno', cursive;
+    --f-sans:    'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+    --f-mono:    'SF Mono', 'Fira Code', Monaco, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #07090A; color: #fff; font-family: var(--f-sans); min-height: 100vh; }
+
+  .app { min-height: 100vh; padding: 32px 16px 48px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+  .app-header { text-align: center; max-width: 680px; }
+  .app-header h1 {
+    font-family: var(--f-display); font-weight: 600;
+    font-size: 36px; letter-spacing: -0.01em;
+    background: linear-gradient(120deg, var(--gold-light), var(--gold-primary), var(--emerald-light));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 10px;
+  }
+  .app-header p { color: rgba(255,255,255,0.6); font-size: 14px; line-height: 1.6; }
+  .app-header em { color: var(--gold-light); font-style: italic; }
+  .app-header strong { color: white; font-weight: 500; }
+
+  .toolbar {
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    padding: 6px; border-radius: 999px; backdrop-filter: blur(8px);
+  }
+  .toolbar button {
+    padding: 10px 16px; border-radius: 999px; border: none;
+    background: transparent; color: rgba(255,255,255,0.7);
+    font-family: inherit; font-size: 12px; font-weight: 500; letter-spacing: 0.04em;
+    cursor: pointer; transition: all 200ms ease;
+  }
+  .toolbar button:hover { color: white; }
+  .toolbar button.active {
+    background: linear-gradient(120deg, var(--emerald-primary), var(--gold-primary));
+    color: white;
+  }
+  .toolbar .divider { width: 1px; background: rgba(255,255,255,0.1); margin: 0 4px; }
+  .toolbar .download-btn { background: rgba(212,175,55,0.15); color: var(--gold-light); }
+
+  .strategy-line {
+    color: rgba(255,255,255,0.78);
+    font-family: var(--f-elegant);
+    font-style: italic;
+    font-size: 17px;
+    text-align: center;
+    max-width: 640px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 16px 24px;
+    line-height: 1.6;
+  }
+  .strategy-line strong { color: var(--gold-light); font-style: normal; font-weight: 500; letter-spacing: 0.06em; }
+  .strategy-line em { color: var(--emerald-light); font-style: italic; }
+
+  .meta-row {
+    display: flex; gap: 14px; align-items: center;
+    color: rgba(255,255,255,0.5); font-size: 11px;
+    flex-wrap: wrap; justify-content: center; letter-spacing: 0.06em;
+  }
+  .meta-row strong { color: var(--gold-light); font-weight: 500; }
+
+  /* === Stage === */
+  .stage { width: 100%; max-width: 440px; aspect-ratio: 9/16; position: relative; }
+  .frame {
+    position: absolute; inset: 0; border-radius: 28px; overflow: hidden;
+    box-shadow: 0 40px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
+  }
+  .canvas {
+    position: absolute;
+    width: 1080px; height: 1920px;
+    top: 0; left: 0;
+    transform-origin: top left;
+    display: none; overflow: hidden;
+    background: var(--muzo-mist); color: var(--ink);
+    font-family: var(--f-sans);
+  }
+  .canvas.show { display: block; }
+
+  /* === Common shell === */
+  .progress-bars {
+    position: absolute; top: 36px; left: 36px; right: 36px;
+    display: flex; gap: 8px; z-index: 6;
+  }
+  .progress-bars .seg {
+    flex: 1; height: 4px; border-radius: 999px;
+    background: rgba(0, 140, 97, 0.2);
+    overflow: hidden; position: relative;
+  }
+  .progress-bars .seg::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: var(--emerald-primary); }
+  .progress-bars .seg.done::after { width: 100%; }
+  .progress-bars .seg.active::after { animation: segfill 5s linear forwards; }
+  @keyframes segfill { from { width: 0%; } to { width: 100%; } }
+
+  .story-handle {
+    position: absolute; top: 60px; left: 36px;
+    z-index: 6; display: flex; align-items: center; gap: 12px;
+  }
+  .story-handle .avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--muzo-mist); color: var(--emerald-primary); border: 2px solid var(--emerald-primary);
+    display: grid; place-items: center;
+    font-family: var(--f-display); font-weight: 600; font-size: 24px;
+  }
+  .story-handle .meta { display: flex; flex-direction: column; line-height: 1.2; }
+  .story-handle .name { font-family: var(--f-brand); font-weight: 700; font-size: 24px; color: var(--ink); }
+  .story-handle .timeago { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.18em; color: var(--ink-soft); text-transform: uppercase; }
+
+  .slide {
+    position: absolute; inset: 0;
+    opacity: 0; pointer-events: none;
+    transition: opacity 600ms ease;
+    padding: 200px 80px 180px;
+    display: flex; flex-direction: column;
+  }
+  .slide.active { opacity: 1; pointer-events: auto; }
+
+  .cta-bar {
+    position: absolute; left: 36px; right: 36px; bottom: 36px;
+    background: rgba(255,255,255,0.92);
+    border: 1px solid var(--gold-primary);
+    color: var(--ink);
+    backdrop-filter: blur(12px); border-radius: 999px;
+    padding: 22px 32px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 22px; letter-spacing: 0.06em; z-index: 6;
+  }
+  .cta-bar .left { font-family: var(--f-brand); font-weight: 700; font-size: 22px; color: var(--emerald-primary); }
+  .cta-bar .right { font-family: var(--f-mono); font-weight: 600; font-size: 14px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold-darker); }
+  .cta-bar .right::after { content: " ↗"; }
+
+  .tap-zones {
+    position: absolute; inset: 0;
+    display: grid; grid-template-columns: 1fr 1fr; z-index: 5;
+  }
+  .tap-zones button { background: transparent; border: none; cursor: pointer; }
+
+  /* === Shared gem-stage === */
+  .gem-stage {
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(255,255,255,0.85), transparent 35%),
+      radial-gradient(circle at 65% 65%, rgba(212,175,55,0.18), transparent 50%),
+      conic-gradient(from 200deg, var(--emerald-light), var(--emerald-primary), var(--emerald-darker), var(--emerald-primary), var(--emerald-light));
+    box-shadow:
+      0 0 0 1px var(--gold-primary),
+      0 0 0 6px rgba(212,175,55,0.08),
+      0 24px 60px -10px rgba(0,140,97,0.25);
+    position: relative;
+    overflow: hidden;
+    will-change: transform;
+  }
+  .gem-stage::after {
+    content: ""; position: absolute; inset: 14%;
+    border-radius: 50%; border: 1px solid rgba(255,255,255,0.55);
+    z-index: 3;
+  }
+  .gem-stage::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.5) 50%, transparent 70%);
+    transform: translateX(-160%);
+    pointer-events: none; z-index: 2;
+  }
+  .canvas.show .slide.active .gem-stage { animation: tm-gem-rotate 90s linear infinite; }
+  .canvas.show .slide.active .gem-stage::before { animation: tm-shimmer 7s 2s infinite; }
+  @keyframes tm-gem-rotate { to { transform: rotate(360deg); } }
+  @keyframes tm-shimmer {
+    0%, 35%, 100% { transform: translateX(-160%); }
+    14%           { transform: translateX(160%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .canvas.show .slide.active .gem-stage,
+    .canvas.show .slide.active .gem-stage::before { animation: none !important; }
+  }
+
+  /* === Shared hero entrance choreography === */
+  .hero-stage [data-anim="stamp"]    { opacity: 0; transform: translateY(-18px) scale(0.92); letter-spacing: 0.6em; }
+  .hero-stage [data-anim="gem"]      { opacity: 0; transform: scale(0.7); filter: blur(16px); }
+  .hero-stage [data-anim="line"] > span { display: inline-block; transform: translateY(110%); opacity: 0; }
+  .hero-stage [data-anim="fade-up"]  { opacity: 0; transform: translateY(20px); }
+  .hero-stage [data-anim="grow"]     { width: 0; }
+
+  .hero-stage.active [data-anim="stamp"]      { animation: tm-stamp-press 800ms 200ms forwards; }
+  .hero-stage.active [data-anim="gem"]        { animation: tm-gem-enter 1200ms 450ms forwards; }
+  .hero-stage.active [data-anim="line"]:nth-of-type(1) > span { animation: tm-line-rise 800ms 900ms forwards; }
+  .hero-stage.active [data-anim="line"]:nth-of-type(2) > span { animation: tm-line-rise 800ms 1100ms forwards; }
+  .hero-stage.active [data-anim="line"]:nth-of-type(3) > span { animation: tm-line-rise 800ms 1300ms forwards; }
+  .hero-stage.active [data-anim="fade-up"]    { animation: tm-fade-up 700ms 1700ms forwards; }
+  .hero-stage.active [data-anim="grow"]       { animation: tm-grow 900ms 1900ms forwards; }
+  .hero-stage.active [data-anim="late"]       { animation: tm-fade-up 600ms 2300ms forwards; }
+
+  @keyframes tm-stamp-press {
+    0%   { opacity: 0; transform: translateY(-18px) scale(0.92); letter-spacing: 0.6em; }
+    60%  { opacity: 1; letter-spacing: 0.42em; }
+    100% { opacity: 1; transform: translateY(0) scale(1); letter-spacing: 0.32em; }
+  }
+  @keyframes tm-gem-enter {
+    0%   { opacity: 0; transform: scale(0.7); filter: blur(16px); }
+    60%  { filter: blur(0); }
+    100% { opacity: 1; transform: scale(1); filter: blur(0); }
+  }
+  @keyframes tm-line-rise { from { transform: translateY(110%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes tm-fade-up   { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes tm-grow      { from { width: 0; } to { width: 100%; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-stage.active [data-anim] {
+      animation: none !important;
+      opacity: 1 !important; transform: none !important; filter: none !important;
+      letter-spacing: normal !important; width: 100% !important;
+    }
+  }
+
+  /* === Type lockup utilities === */
+  .line-clip { display: block; overflow: hidden; line-height: 1; padding: 0.05em 0 0.08em; }
+
+  /* ===========================================================
+     L1 · ESPECIMEN GEMOLÓGICO  (refined original — centered, museum case)
+     =========================================================== */
+  .canvas-L1 .slide { padding: 200px 80px 180px; }
+
+  .L1-hero { align-items: center; text-align: center; }
+  .L1-hero .top-stamp {
+    display: inline-flex; gap: 12px; align-items: center;
+    border: 1px solid var(--emerald-darker);
+    padding: 6px 14px;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.32em;
+    color: var(--emerald-darker); font-weight: 600; text-transform: uppercase;
+    margin-bottom: 36px; background: var(--muzo-mist);
+  }
+  .L1-hero .top-stamp::before { content: "◇"; color: var(--gold-primary); }
+  .L1-hero .gem-wrap { width: 600px; height: 600px; margin: 0 auto 56px; position: relative; }
+  .L1-hero .gem-stage { position: absolute; inset: 0; }
+  .L1-hero h1 {
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 100px; line-height: 1; letter-spacing: -0.01em;
+    color: var(--ink); margin-bottom: 18px;
+  }
+  .L1-hero h1 em { font-style: italic; color: var(--emerald-primary); font-weight: 400; }
+  .L1-hero .specs {
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 32px; color: var(--gold-darker); letter-spacing: 0.04em;
+  }
+  .L1-hero .coord {
+    margin-top: auto; display: flex; justify-content: space-between;
+    position: relative; padding-top: 24px;
+    font-family: var(--f-mono); font-size: 13px; letter-spacing: 0.18em;
+    color: var(--ink-soft); text-transform: uppercase;
+  }
+  .L1-hero .coord-line {
+    position: absolute; top: 0; left: 50%;
+    height: 1px; background: var(--hairline);
+    transform: translateX(-50%);
+  }
+  .L1-hero .coord .left { color: var(--emerald-darker); font-weight: 600; }
+
+  .L1-grid {}
+  .L1-grid .top-meta {
+    display: flex; justify-content: space-between; align-items: end;
+    margin-bottom: 36px; border-bottom: 1px solid var(--hairline); padding-bottom: 18px;
+  }
+  .L1-grid .top-meta .l { font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 4px; }
+  .L1-grid .top-meta .v { font-family: var(--f-brand); font-weight: 700; font-size: 36px; color: var(--ink); line-height: 1; }
+  .L1-grid h2 {
+    font-family: var(--f-brand); font-weight: 400; font-size: 80px; line-height: 1.05;
+    color: var(--ink); margin-bottom: 18px;
+  }
+  .L1-grid h2 em { font-style: italic; color: var(--emerald-primary); }
+  .L1-grid .lead {
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 26px; color: var(--gold-darker); margin-bottom: 36px;
+  }
+  .L1-grid .grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+  .L1-grid .tile {
+    aspect-ratio: 1; border-radius: 6px;
+    background: var(--muzo-mist); border: 1px solid var(--hairline);
+    color: var(--ink);
+    display: grid; place-items: center;
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 20px; font-variant-numeric: tabular-nums;
+  }
+  .L1-grid .tile.sold { background: var(--emerald-primary); color: white; border-color: var(--emerald-primary); }
+  .L1-grid .tile.target {
+    background: var(--muzo-mist); color: var(--emerald-primary);
+    border: 2px solid var(--gold-primary); font-weight: 700;
+    box-shadow: 0 0 0 4px rgba(212,175,55,0.18);
+  }
+
+  /* ===========================================================
+     L2 · ACTA DE ESCRITURA  (asymmetric — notarial deed)
+     =========================================================== */
+  .canvas-L2 { background: var(--paper-deed); }
+  .canvas-L2 .slide { padding: 180px 64px 160px; }
+
+  .L2-hero {
+    display: grid; grid-template-columns: 38% 1fr;
+    gap: 36px; align-content: stretch;
+  }
+  .L2-hero .col-left {
+    border-right: 1px solid var(--gold-primary);
+    padding-right: 28px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .L2-hero .col-left .heading {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.5em;
+    color: var(--gold-darker); font-weight: 700; text-transform: uppercase;
+    border-bottom: 1px solid var(--gold-primary); padding-bottom: 16px;
+    margin-bottom: 20px;
+  }
+  .L2-hero .registry {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.32em;
+    color: var(--ink-soft); text-transform: uppercase; line-height: 1.9;
+  }
+  .L2-hero .registry strong {
+    display: block;
+    font-family: var(--f-display); font-style: italic; font-weight: 700;
+    font-size: 96px; color: var(--ink); letter-spacing: -0.02em;
+    line-height: 0.85; margin-top: 4px; text-transform: none;
+  }
+  .L2-hero .registry strong em { color: var(--emerald-primary); font-style: italic; }
+  .L2-hero .seal {
+    width: 120px; height: 120px; border-radius: 50%;
+    border: 2px solid var(--emerald-darker);
+    display: grid; place-items: center;
+    text-align: center; padding: 0 10px;
+    font-family: var(--f-brand); font-weight: 700;
+    font-size: 11px; letter-spacing: 0.18em;
+    color: var(--emerald-darker); text-transform: uppercase;
+    line-height: 1.3;
+    transform: rotate(-6deg);
+    background: var(--paper-deed);
+    position: relative;
+    margin-top: 16px;
+  }
+  .L2-hero .seal::before {
+    content: ""; position: absolute; inset: 6px; border-radius: 50%;
+    border: 1px dashed var(--emerald-darker);
+  }
+  .L2-hero .seal em {
+    display: block; font-style: italic; color: var(--gold-darker);
+    font-family: var(--f-elegant); font-size: 14px;
+    letter-spacing: 0; margin-top: 2px; text-transform: none;
+  }
+
+  .L2-hero .signature-block {
+    border-top: 1px solid var(--hairline);
+    padding-top: 14px;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.34em;
+    color: var(--ink-soft); text-transform: uppercase;
+  }
+  .L2-hero .signature-block .sig {
+    font-family: var(--f-display); font-style: italic; font-weight: 500;
+    font-size: 56px; color: var(--emerald-primary);
+    line-height: 1; letter-spacing: 0; text-transform: none;
+    margin-bottom: 4px; transform: rotate(-2deg);
+  }
+  .L2-hero .signature-block .sig-line {
+    width: 100%; height: 1px; background: var(--ink); margin-bottom: 6px;
+  }
+
+  .L2-hero .col-right {
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .L2-hero .col-right .gem-wrap {
+    width: 100%; aspect-ratio: 1; position: relative;
+    margin-bottom: 18px;
+  }
+  .L2-hero .col-right .gem-stage { position: absolute; inset: 0; }
+  .L2-hero .col-right h1 {
+    font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 76px; line-height: 0.95; color: var(--ink);
+    letter-spacing: -0.02em; margin-bottom: 10px;
+  }
+  .L2-hero .col-right h1 em { color: var(--emerald-primary); }
+  .L2-hero .col-right .preamble {
+    font-family: var(--f-brand); font-style: italic;
+    font-size: 18px; line-height: 1.5; color: var(--ink-soft);
+    margin-bottom: 14px;
+  }
+  .L2-hero .col-right .preamble strong { font-style: normal; font-weight: 700; color: var(--ink); }
+  .L2-hero .col-right .specs {
+    border-top: 1px dashed var(--hairline); padding-top: 12px;
+    display: flex; flex-direction: column; gap: 6px;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.18em;
+    color: var(--ink-soft); text-transform: uppercase;
+  }
+  .L2-hero .col-right .specs .row { display: flex; justify-content: space-between; }
+  .L2-hero .col-right .specs .row strong { color: var(--ink); font-family: var(--f-brand); font-weight: 700; font-size: 13px; letter-spacing: 0; text-transform: none; }
+  .L2-hero .col-right .specs .row strong em { color: var(--emerald-primary); font-style: italic; font-weight: 400; }
+
+  /* L2 grid as registry */
+  .L2-grid {}
+  .L2-grid .heading {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.42em;
+    color: var(--gold-darker); font-weight: 700; text-transform: uppercase;
+    border-bottom: 1px solid var(--gold-primary); padding-bottom: 14px;
+    margin-bottom: 24px;
+    display: flex; justify-content: space-between;
+  }
+  .L2-grid h2 {
+    font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 72px; line-height: 1; color: var(--ink);
+    margin-bottom: 12px; letter-spacing: -0.02em;
+  }
+  .L2-grid h2 em { color: var(--emerald-primary); }
+  .L2-grid .lead {
+    font-family: var(--f-brand); font-style: italic; font-size: 18px;
+    color: var(--ink-soft); margin-bottom: 32px; line-height: 1.5;
+  }
+  .L2-grid .registry-table {
+    border: 1px solid var(--gold-primary);
+    background: var(--muzo-mist);
+    padding: 18px;
+  }
+  .L2-grid .table-head {
+    display: grid; grid-template-columns: 60px 1fr 80px;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.34em;
+    color: var(--gold-darker); text-transform: uppercase; font-weight: 700;
+    border-bottom: 1px solid var(--hairline); padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+  .L2-grid .grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px;
+  }
+  .L2-grid .tile {
+    aspect-ratio: 1; border-radius: 2px;
+    background: var(--muzo-mist); border: 1px solid var(--hairline);
+    color: var(--ink); display: grid; place-items: center;
+    font-family: var(--f-mono); font-size: 14px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .L2-grid .tile.sold { background: var(--emerald-primary); color: white; border-color: var(--emerald-primary); }
+  .L2-grid .tile.target { background: var(--gold-primary); color: var(--ink); border: 1.5px solid var(--emerald-darker); font-weight: 700; box-shadow: 0 0 0 2px rgba(212,175,55,0.3); }
+  .L2-grid .signature-row {
+    margin-top: 24px; padding-top: 18px;
+    border-top: 1px solid var(--gold-primary);
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 24px; align-items: center;
+  }
+  .L2-grid .signature-row .left {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.18em;
+    color: var(--ink-soft); text-transform: uppercase; line-height: 1.8;
+  }
+  .L2-grid .signature-row .left strong {
+    display: block; font-family: var(--f-display); font-style: italic;
+    font-size: 22px; color: var(--ink); letter-spacing: 0; text-transform: none;
+  }
+  .L2-grid .signature-row .sig {
+    font-family: var(--f-display); font-style: italic; font-weight: 500;
+    font-size: 48px; color: var(--emerald-primary); transform: rotate(-3deg);
+  }
+
+  /* ===========================================================
+     L3 · LÁMINA DE HERBARIO  (specimen mount)
+     =========================================================== */
+  .canvas-L3 { background: var(--paper-herbarium); }
+  .canvas-L3 .slide { padding: 180px 64px 160px; }
+
+  .L3-hero {
+    align-items: stretch;
+    display: flex; flex-direction: column;
+  }
+  .L3-hero .specimen-card {
+    flex: 1;
+    background: var(--muzo-mist);
+    border: 1px solid var(--hairline);
+    padding: 56px 48px 40px;
+    position: relative;
+    box-shadow: 0 12px 32px rgba(143,115,24,0.1);
+    display: flex; flex-direction: column;
+  }
+  .L3-hero .corner-bracket {
+    position: absolute; width: 36px; height: 36px;
+    border: 2px solid var(--gold-primary);
+  }
+  .L3-hero .corner-bracket.tl { top: 14px; left: 14px; border-right: none; border-bottom: none; }
+  .L3-hero .corner-bracket.tr { top: 14px; right: 14px; border-left: none; border-bottom: none; }
+  .L3-hero .corner-bracket.bl { bottom: 14px; left: 14px; border-right: none; border-top: none; }
+  .L3-hero .corner-bracket.br { bottom: 14px; right: 14px; border-left: none; border-top: none; }
+
+  .L3-hero .top-row {
+    display: flex; justify-content: space-between; align-items: start;
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 14px; margin-bottom: 24px;
+  }
+  .L3-hero .classification {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.34em;
+    color: var(--gold-darker); text-transform: uppercase; font-weight: 700;
+    line-height: 1.6;
+  }
+  .L3-hero .classification strong {
+    display: block; font-family: var(--f-display); font-weight: 600;
+    font-size: 28px; color: var(--ink); letter-spacing: 0; text-transform: none;
+  }
+  .L3-hero .accession {
+    text-align: right;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.32em;
+    color: var(--ink-soft); text-transform: uppercase;
+    line-height: 1.8;
+  }
+  .L3-hero .accession strong {
+    display: block; font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 36px; color: var(--charcoal); letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .L3-hero .gem-wrap {
+    width: 460px; height: 460px; margin: 16px auto 24px;
+    position: relative;
+  }
+  .L3-hero .gem-stage { position: absolute; inset: 0; }
+
+  .L3-hero .latin-name {
+    text-align: center;
+    font-family: var(--f-elegant); font-style: italic; font-weight: 500;
+    font-size: 44px; color: var(--emerald-text);
+    line-height: 1; letter-spacing: 0.02em;
+    margin-bottom: 6px;
+  }
+  .L3-hero .common-name {
+    text-align: center;
+    font-family: var(--f-display); font-weight: 600;
+    font-size: 64px; line-height: 1; color: var(--ink);
+    letter-spacing: -0.01em;
+    margin-bottom: 24px;
+  }
+  .L3-hero .common-name em { font-style: italic; color: var(--gold-darker); }
+
+  .L3-hero .label-table {
+    border-top: 1px solid var(--hairline);
+    padding-top: 14px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .L3-hero .label-row {
+    display: grid; grid-template-columns: 130px 1fr;
+    gap: 14px;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.18em;
+    color: var(--ink-soft); text-transform: uppercase; line-height: 1.4;
+  }
+  .L3-hero .label-row .key { font-style: italic; }
+  .L3-hero .label-row .val {
+    font-family: var(--f-brand); font-weight: 700; font-size: 13px;
+    letter-spacing: 0; text-transform: none; color: var(--ink);
+  }
+  .L3-hero .label-row .val em { color: var(--emerald-primary); font-style: italic; font-weight: 400; }
+
+  .L3-hero .collector-line {
+    margin-top: 18px;
+    border-top: 1px dashed var(--hairline);
+    padding-top: 10px;
+    text-align: right;
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 22px; color: var(--gold-darker);
+  }
+
+  /* L3 grid */
+  .L3-grid {}
+  .L3-grid .heading {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.42em;
+    color: var(--gold-darker); text-transform: uppercase; font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .L3-grid h2 {
+    font-family: var(--f-display); font-weight: 600;
+    font-size: 76px; line-height: 1; color: var(--ink);
+    margin-bottom: 8px; letter-spacing: -0.01em;
+  }
+  .L3-grid h2 em { font-style: italic; color: var(--emerald-text); }
+  .L3-grid .lead {
+    font-family: var(--f-elegant); font-style: italic; font-size: 24px;
+    color: var(--gold-darker); margin-bottom: 32px;
+  }
+  .L3-grid .collection {
+    background: var(--muzo-mist);
+    border: 1px solid var(--hairline);
+    padding: 14px;
+    position: relative;
+  }
+  .L3-grid .collection .corner-bracket {
+    position: absolute; width: 16px; height: 16px;
+    border: 1.5px solid var(--gold-primary);
+  }
+  .L3-grid .collection .corner-bracket.tl { top: 6px; left: 6px; border-right: none; border-bottom: none; }
+  .L3-grid .collection .corner-bracket.tr { top: 6px; right: 6px; border-left: none; border-bottom: none; }
+  .L3-grid .collection .corner-bracket.bl { bottom: 6px; left: 6px; border-right: none; border-top: none; }
+  .L3-grid .collection .corner-bracket.br { bottom: 6px; right: 6px; border-left: none; border-top: none; }
+  .L3-grid .grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px;
+    padding: 16px 8px;
+  }
+  .L3-grid .tile {
+    aspect-ratio: 1; border-radius: 4px;
+    background: var(--paper-herbarium); border: 1px solid var(--hairline);
+    color: var(--ink); display: grid; place-items: center;
+    font-family: var(--f-mono); font-size: 14px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .L3-grid .tile.sold { background: var(--sage); color: var(--muzo-mist); border-color: var(--sage); }
+  .L3-grid .tile.target {
+    background: var(--gold-primary); color: var(--ink); border: 1.5px solid var(--emerald-darker); font-weight: 700;
+    box-shadow: 0 0 0 2px rgba(212,175,55,0.3);
+  }
+  .L3-grid .stats-row {
+    margin-top: 24px; display: flex; justify-content: space-between;
+    border-top: 1px dashed var(--hairline); padding-top: 14px;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.18em;
+    color: var(--ink-soft); text-transform: uppercase;
+  }
+  .L3-grid .stats-row strong {
+    font-family: var(--f-brand); font-weight: 700; font-size: 14px;
+    color: var(--ink); letter-spacing: 0; text-transform: none;
+  }
+  .L3-grid .stats-row strong em { color: var(--emerald-primary); font-style: italic; }
+
+  /* ===========================================================
+     L4 · CARTOGRAFÍA MINERA  (topographic — concentric rings, cardinals)
+     =========================================================== */
+  .canvas-L4 { background: var(--muzo-mist); }
+
+  .L4-hero { align-items: center; text-align: center; }
+
+  .L4-hero .top-stamp {
+    display: inline-flex; align-items: center; gap: 10px;
+    border: 1px solid var(--ink);
+    padding: 8px 14px; background: var(--muzo-mist);
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.4em;
+    color: var(--ink); font-weight: 700; text-transform: uppercase;
+    margin-bottom: 36px;
+  }
+  .L4-hero .top-stamp::before { content: "▲"; color: var(--emerald-darker); font-size: 14px; }
+  .L4-hero .top-stamp small { color: var(--gold-darker); margin-left: 6px; }
+
+  .L4-hero .map-stage {
+    width: 700px; height: 700px;
+    margin: 0 auto 40px;
+    position: relative;
+  }
+  /* Concentric topographic rings */
+  .L4-hero .map-stage::before, .L4-hero .map-stage::after {
+    content: ""; position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%; border: 1px dashed var(--hairline);
+    pointer-events: none;
+  }
+  .L4-hero .map-stage::before { width: 100%; height: 100%; }
+  .L4-hero .map-stage::after { width: 84%; height: 84%; border-style: solid; border-color: var(--hairline-soft); }
+  /* Add more rings via gradient on the wrap */
+  .L4-hero .map-stage .ring-3, .L4-hero .map-stage .ring-4 {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%; border: 1px dashed var(--hairline-soft);
+  }
+  .L4-hero .map-stage .ring-3 { width: 68%; height: 68%; }
+  .L4-hero .map-stage .ring-4 { width: 52%; height: 52%; border-style: solid; border-color: var(--hairline); }
+
+  .L4-hero .map-stage .gem-wrap {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 380px; height: 380px;
+  }
+  .L4-hero .map-stage .gem-stage { position: absolute; inset: 0; }
+
+  /* Cardinal markers */
+  .L4-hero .card-mark {
+    position: absolute;
+    font-family: var(--f-mono); font-size: 18px; font-weight: 700;
+    letter-spacing: 0.18em; color: var(--ink);
+  }
+  .L4-hero .card-mark.n { top: -8px; left: 50%; transform: translateX(-50%); color: var(--emerald-darker); }
+  .L4-hero .card-mark.s { bottom: -8px; left: 50%; transform: translateX(-50%); }
+  .L4-hero .card-mark.e { right: -8px; top: 50%; transform: translateY(-50%); }
+  .L4-hero .card-mark.w { left: -8px; top: 50%; transform: translateY(-50%); }
+  .L4-hero .card-mark small {
+    display: block;
+    font-size: 9px; letter-spacing: 0.32em; color: var(--ink-soft); font-weight: 500;
+    margin-top: 2px;
+  }
+
+  .L4-hero h1 {
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 88px; line-height: 1; color: var(--ink);
+    letter-spacing: -0.01em; margin-bottom: 16px;
+  }
+  .L4-hero h1 em { font-style: italic; color: var(--emerald-primary); }
+  .L4-hero .specs {
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 28px; color: var(--gold-darker);
+    letter-spacing: 0.04em; margin-bottom: 24px;
+  }
+  .L4-hero .grid-meta {
+    margin-top: auto;
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink);
+    padding: 14px 0;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.32em;
+    color: var(--ink-soft); text-transform: uppercase;
+  }
+  .L4-hero .grid-meta .col { text-align: center; border-right: 1px solid var(--hairline); padding: 0 8px; }
+  .L4-hero .grid-meta .col:last-child { border-right: 0; }
+  .L4-hero .grid-meta .col strong {
+    display: block; font-family: var(--f-brand); font-weight: 700;
+    font-size: 18px; color: var(--ink); letter-spacing: 0; text-transform: none;
+    margin-top: 4px;
+  }
+  .L4-hero .grid-meta .col strong em { color: var(--emerald-primary); font-style: italic; }
+
+  /* L4 grid as topographic survey */
+  .L4-grid {}
+  .L4-grid .heading {
+    display: flex; justify-content: space-between;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.4em;
+    color: var(--ink); font-weight: 700; text-transform: uppercase;
+    border-bottom: 1px solid var(--ink); padding-bottom: 14px;
+    margin-bottom: 32px;
+  }
+  .L4-grid h2 {
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 72px; line-height: 1.05; color: var(--ink);
+    margin-bottom: 12px; letter-spacing: -0.01em;
+  }
+  .L4-grid h2 em { font-style: italic; color: var(--emerald-primary); }
+  .L4-grid .lead {
+    font-family: var(--f-elegant); font-style: italic; font-size: 24px;
+    color: var(--gold-darker); margin-bottom: 28px;
+  }
+  .L4-grid .grid-stage {
+    flex: 1;
+    border: 1px solid var(--ink);
+    background: var(--muzo-mist);
+    padding: 14px;
+    position: relative;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,140,97,0.04) 0 1px, transparent 1px 24px),
+      repeating-linear-gradient(90deg, rgba(0,140,97,0.04) 0 1px, transparent 1px 24px);
+  }
+  .L4-grid .grid-stage::before, .L4-grid .grid-stage::after {
+    content: ""; position: absolute; width: 14px; height: 14px;
+    background: repeating-linear-gradient(0deg, var(--ink) 0 1px, transparent 1px 4px),
+                repeating-linear-gradient(90deg, var(--ink) 0 1px, transparent 1px 4px);
+  }
+  .L4-grid .grid-stage::before { top: -7px; left: -7px; }
+  .L4-grid .grid-stage::after { bottom: -7px; right: -7px; }
+  .L4-grid .grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px;
+  }
+  .L4-grid .tile {
+    aspect-ratio: 1; border-radius: 0;
+    background: var(--muzo-mist); border: 1px solid var(--hairline);
+    color: var(--ink); display: grid; place-items: center;
+    font-family: var(--f-mono); font-size: 13px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .L4-grid .tile.sold { background: var(--emerald-darker); color: white; border-color: var(--emerald-darker); }
+  .L4-grid .tile.target {
+    background: var(--gold-primary); color: var(--ink); border: 1.5px solid var(--ink); font-weight: 700;
+    position: relative; z-index: 1;
+  }
+  .L4-grid .tile.target::after {
+    content: ""; position: absolute; inset: -3px;
+    border: 1.5px solid var(--emerald-darker);
+  }
+  .L4-grid .legend {
+    margin-top: 18px;
+    display: flex; gap: 18px; flex-wrap: wrap;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.32em;
+    color: var(--ink-soft); text-transform: uppercase;
+  }
+  .L4-grid .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .L4-grid .legend .swatch { width: 12px; height: 12px; border: 1px solid currentColor; }
+  .L4-grid .legend .swatch.sold { background: var(--emerald-darker); border-color: var(--emerald-darker); }
+  .L4-grid .legend .swatch.target { background: var(--gold-primary); border-color: var(--ink); }
+
+  /* ===========================================================
+     L5 · CHIAROSCURO  (dark version of L — same architecture, inverted)
+     =========================================================== */
+  .canvas-L5 { background: var(--shale-soft); color: var(--paper-herbarium); }
+  .canvas-L5 .progress-bars .seg { background: rgba(212, 175, 55, 0.18); }
+  .canvas-L5 .progress-bars .seg::after { background: var(--gold-light); }
+  .canvas-L5 .story-handle .avatar { background: var(--shale-soft); color: var(--gold-light); border-color: var(--gold-primary); }
+  .canvas-L5 .story-handle .name { color: var(--paper-herbarium); }
+  .canvas-L5 .story-handle .timeago { color: rgba(212, 175, 55, 0.65); }
+  .canvas-L5 .cta-bar {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid var(--gold-primary); color: var(--paper-herbarium);
+  }
+  .canvas-L5 .cta-bar .left { color: var(--gold-light); }
+  .canvas-L5 .cta-bar .right { color: var(--emerald-light); }
+
+  .L5-hero { align-items: center; text-align: center; }
+  .L5-hero::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 40%, rgba(0, 174, 122, 0.18), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 50% 70%, rgba(212, 175, 55, 0.08), transparent 70%);
+    pointer-events: none;
+  }
+  .L5-hero > * { position: relative; z-index: 2; }
+
+  .L5-hero .top-stamp {
+    display: inline-flex; gap: 12px; align-items: center;
+    border: 1px solid var(--gold-primary);
+    padding: 6px 14px;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.4em;
+    color: var(--gold-light); font-weight: 600; text-transform: uppercase;
+    margin-bottom: 36px;
+    background: rgba(212, 175, 55, 0.06);
+  }
+  .L5-hero .top-stamp::before { content: "◇"; color: var(--gold-primary); }
+  .L5-hero .gem-wrap { width: 600px; height: 600px; margin: 0 auto 56px; position: relative; }
+  .L5-hero .gem-stage {
+    position: absolute; inset: 0;
+    /* Stronger glow on dark */
+    box-shadow:
+      0 0 0 1px var(--gold-primary),
+      0 0 0 8px rgba(212, 175, 55, 0.15),
+      0 0 80px rgba(0, 174, 122, 0.4);
+  }
+  .L5-hero h1 {
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 88px; line-height: 1; letter-spacing: -0.01em;
+    color: var(--paper-herbarium); margin-bottom: 18px;
+  }
+  .L5-hero h1 em { font-style: italic; color: var(--gold-light); font-weight: 400; }
+  .L5-hero .specs {
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 30px; color: var(--emerald-light); letter-spacing: 0.04em;
+  }
+  .L5-hero .coord {
+    margin-top: auto; display: flex; justify-content: space-between;
+    position: relative; padding-top: 24px;
+    font-family: var(--f-mono); font-size: 13px; letter-spacing: 0.22em;
+    color: rgba(212, 175, 55, 0.65); text-transform: uppercase;
+  }
+  .L5-hero .coord-line {
+    position: absolute; top: 0; left: 50%;
+    height: 1px; background: var(--gold-primary);
+    transform: translateX(-50%);
+  }
+  .L5-hero .coord .left { color: var(--gold-light); font-weight: 600; }
+
+  .L5-grid {}
+  .L5-grid .top-meta {
+    display: flex; justify-content: space-between; align-items: end;
+    margin-bottom: 36px; border-bottom: 1px solid var(--gold-primary); padding-bottom: 18px;
+  }
+  .L5-grid .top-meta .l { font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(212,175,55,0.65); margin-bottom: 4px; }
+  .L5-grid .top-meta .v { font-family: var(--f-brand); font-weight: 700; font-size: 36px; color: var(--paper-herbarium); line-height: 1; }
+  .L5-grid h2 {
+    font-family: var(--f-brand); font-weight: 400; font-size: 80px; line-height: 1.05;
+    color: var(--paper-herbarium); margin-bottom: 18px;
+  }
+  .L5-grid h2 em { font-style: italic; color: var(--gold-light); }
+  .L5-grid .lead {
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 26px; color: var(--emerald-light); margin-bottom: 36px;
+  }
+  .L5-grid .grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+  .L5-grid .tile {
+    aspect-ratio: 1; border-radius: 6px;
+    background: rgba(212,175,55,0.04); border: 1px solid rgba(212,175,55,0.18);
+    color: var(--paper-herbarium);
+    display: grid; place-items: center;
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 20px; font-variant-numeric: tabular-nums;
+  }
+  .L5-grid .tile.sold {
+    background: var(--emerald-primary); color: var(--shale-soft);
+    border-color: var(--emerald-primary);
+    box-shadow: 0 0 12px rgba(0,174,122,0.4);
+  }
+  .L5-grid .tile.target {
+    background: var(--gold-primary); color: var(--shale-soft);
+    border: 2px solid var(--gold-light); font-weight: 700;
+    box-shadow: 0 0 0 4px rgba(212,175,55,0.3), 0 0 24px rgba(212,175,55,0.5);
+  }
+
+  .export-tip {
+    color: rgba(255,255,255,0.55);
+    font-size: 13px; line-height: 1.6;
+    max-width: 580px; text-align: center;
+  }
+  .export-tip code {
+    background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px;
+    font-family: monospace; font-size: 12px; color: var(--gold-light);
+  }
+  .export-tip strong { color: white; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="app-header">
+    <h1>L · 5 dominios del mismo Claro+Origen</h1>
+    <p>Cinco variantes que conservan el ADN de L (blanco, gem hero, 2 slides, ADN de PAZ, coordenadas) pero <em>anclan en un dominio distinto del mundo TM</em>: parte gemológico, escritura pública, lámina de herbario, cartografía minera, chiaroscuro de mina. Cada una tiene <strong>silueta única</strong> al squint test.</p>
+  </header>
+
+  <div class="toolbar" role="tablist">
+    <button class="prop-btn active" data-prop="L1">L1 · Espécimen</button>
+    <button class="prop-btn" data-prop="L2">L2 · Acta de escritura</button>
+    <button class="prop-btn" data-prop="L3">L3 · Lámina de herbario</button>
+    <button class="prop-btn" data-prop="L4">L4 · Cartografía minera</button>
+    <button class="prop-btn" data-prop="L5">L5 · Chiaroscuro</button>
+    <span class="divider"></span>
+    <button class="download-btn" id="exportPng">↓ PNG</button>
+    <button class="download-btn" id="exportAll">↓ 2 PNGs</button>
+  </div>
+
+  <p class="strategy-line" id="strategy">
+    <strong>L1 · Espécimen gemológico.</strong> El gem como objeto en vitrina de museo. Composición centrada simétrica. <em>El más universal</em> — funciona en cualquier audiencia porque la lectura sigue gravedad.
+  </p>
+
+  <div class="meta-row">
+    <span>Formato <strong>1080 × 1920</strong></span>
+    <span>·</span>
+    <span>Slide <strong id="slideIndicator">1 / 2</strong></span>
+    <span>·</span>
+    <span>Auto-advance <strong>5s</strong></span>
+    <span>·</span>
+    <span>Brand <strong>TM real</strong></span>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="frame" id="frame">
+
+      <!-- ============ L1 · ESPÉCIMEN ============ -->
+      <div class="canvas canvas-L1 show" id="canvasL1" data-prop="L1">
+        <div class="progress-bars"><div class="seg active"></div><div class="seg"></div></div>
+        <div class="story-handle"><div class="avatar">tm</div><div class="meta"><span class="name">Tierra Madre</span><span class="timeago">esmeraldas con adn de paz</span></div></div>
+
+        <div class="slide L1-hero hero-stage active">
+          <div class="top-stamp" data-anim="stamp">Origen Muzo · Boyacá</div>
+          <div class="gem-wrap" data-anim="gem"><div class="gem-stage"></div></div>
+          <h1>
+            <span class="line-clip" data-anim="line"><span>Una piedra,</span></span>
+            <span class="line-clip" data-anim="line"><span><em>cien posibles</em></span></span>
+            <span class="line-clip" data-anim="line"><span>destinos.</span></span>
+          </h1>
+          <p class="specs" data-anim="fade-up">— Esmeralda Venus · 1.85 ct —</p>
+          <div class="coord">
+            <div class="coord-line" data-anim="grow"></div>
+            <span class="left" data-anim="late">5°32′N · 74°06′W</span>
+            <span data-anim="late">Edición vii · 2026</span>
+          </div>
+        </div>
+
+        <div class="slide L1-grid">
+          <div class="top-meta">
+            <div><div class="l">Por número</div><div class="v">$50K COP</div></div>
+            <div style="text-align:right;"><div class="l">Vendidos</div><div class="v">23 / 100</div></div>
+          </div>
+          <h2>Elige tu <em>número.</em></h2>
+          <p class="lead">— y tu pieza certificada te buscará —</p>
+          <div class="grid" id="L1Grid"></div>
+        </div>
+
+        <div class="cta-bar"><span class="left">tierramadre.studio</span><span class="right">Reserva ya</span></div>
+        <div class="tap-zones"><button data-go="0"></button><button data-go="1"></button></div>
+      </div>
+
+      <!-- ============ L2 · ACTA DE ESCRITURA ============ -->
+      <div class="canvas canvas-L2" id="canvasL2" data-prop="L2">
+        <div class="progress-bars"><div class="seg active"></div><div class="seg"></div></div>
+        <div class="story-handle"><div class="avatar">tm</div><div class="meta"><span class="name">Tierra Madre</span><span class="timeago">acta · folio vii · 2026</span></div></div>
+
+        <div class="slide L2-hero hero-stage active">
+          <div class="col-left">
+            <div>
+              <div class="heading" data-anim="stamp">Acta de Rifa</div>
+              <div class="registry" data-anim="fade-up">
+                Folio<br/>
+                <strong>n°<em>07</em></strong>
+              </div>
+              <div class="seal" data-anim="fade-up">
+                Tierra<br/>Madre
+                <em>· vii ·</em>
+              </div>
+            </div>
+            <div class="signature-block" data-anim="late">
+              <div class="sig">Tierra Madre</div>
+              <div class="sig-line"></div>
+              <div>Bogotá · 5 / 05 / 2026</div>
+            </div>
+          </div>
+          <div class="col-right">
+            <div class="gem-wrap" data-anim="gem"><div class="gem-stage"></div></div>
+            <h1>
+              <span class="line-clip" data-anim="line"><span>Esmeralda</span></span>
+              <span class="line-clip" data-anim="line"><span><em>Venus.</em></span></span>
+            </h1>
+            <p class="preamble" data-anim="fade-up">Por la presente, <strong>Tierra Madre S.A.S.</strong> registra el sorteo de una pieza única entre cien números.</p>
+            <div class="specs" data-anim="late">
+              <div class="row"><span>Peso</span><strong>1.85 <em>ct</em></strong></div>
+              <div class="row"><span>Origen</span><strong>Muzo · Boyacá</strong></div>
+              <div class="row"><span>Calidad</span><strong><em>fina</em></strong></div>
+              <div class="row"><span>Cert.</span><strong>ADN de PAZ</strong></div>
+              <div class="row"><span>Sorteo</span><strong>16 / 05 / 2026</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide L2-grid">
+          <div class="heading">
+            <span>Cláusula segunda · Bloque registro</span>
+            <span>23 / 100</span>
+          </div>
+          <h2>Cien <em>folios.</em><br/>Uno se firma con tu nombre.</h2>
+          <p class="lead">— elige el folio que ha de quedar a tu cuidado —</p>
+          <div class="registry-table">
+            <div class="table-head">
+              <span>n°</span>
+              <span>folio</span>
+              <span>estado</span>
+            </div>
+            <div class="grid" id="L2Grid"></div>
+            <div class="signature-row">
+              <div class="left">
+                <strong>Folio reservado</strong>
+                pre-seed: 5xT9 · Q2P7
+              </div>
+              <div class="sig">tm.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cta-bar"><span class="left">tierramadre.studio</span><span class="right">Firma tu folio</span></div>
+        <div class="tap-zones"><button data-go="0"></button><button data-go="1"></button></div>
+      </div>
+
+      <!-- ============ L3 · LÁMINA DE HERBARIO ============ -->
+      <div class="canvas canvas-L3" id="canvasL3" data-prop="L3">
+        <div class="progress-bars"><div class="seg active"></div><div class="seg"></div></div>
+        <div class="story-handle"><div class="avatar">tm</div><div class="meta"><span class="name">Tierra Madre</span><span class="timeago">colección · vii · esmeraldae</span></div></div>
+
+        <div class="slide L3-hero hero-stage active">
+          <div class="specimen-card">
+            <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+            <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+
+            <div class="top-row" data-anim="fade-up">
+              <div class="classification">Familia<strong>Beryllidae</strong></div>
+              <div class="accession">Acc.<strong>n° 07</strong>2026</div>
+            </div>
+
+            <div class="gem-wrap" data-anim="gem"><div class="gem-stage"></div></div>
+
+            <p class="latin-name" data-anim="fade-up">Beryllus smaragdus</p>
+            <h1 class="common-name">
+              <span class="line-clip" data-anim="line"><span>Esmeralda <em>Venus</em></span></span>
+            </h1>
+
+            <div class="label-table" data-anim="late">
+              <div class="label-row"><span class="key">Loc.</span><span class="val">Muzo · Boyacá · <em>Colombia</em></span></div>
+              <div class="label-row"><span class="key">Coord.</span><span class="val">5°32′N · 74°06′W</span></div>
+              <div class="label-row"><span class="key">Pondus</span><span class="val">1.85 <em>ct</em></span></div>
+              <div class="label-row"><span class="key">Quality</span><span class="val"><em>fina</em></span></div>
+              <div class="label-row"><span class="key">Cert.</span><span class="val">ADN <em>de</em> PAZ</span></div>
+            </div>
+
+            <div class="collector-line" data-anim="late">— recolectada por Tierra Madre, mayo 2026 —</div>
+          </div>
+        </div>
+
+        <div class="slide L3-grid">
+          <div class="heading">— Catálogo · 100 especímenes ·</div>
+          <h2>Una pieza,<br/>cien <em>posibilidades.</em></h2>
+          <p class="lead">— elige el espécimen que prefieras conservar —</p>
+          <div class="collection">
+            <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+            <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+            <div class="grid" id="L3Grid"></div>
+          </div>
+          <div class="stats-row">
+            <span>Por entrada · <strong>$50K COP</strong></span>
+            <span>Vendidas · <strong>23 / 100</strong></span>
+            <span>Sorteo · <strong>16 / <em>05</em></strong></span>
+          </div>
+        </div>
+
+        <div class="cta-bar"><span class="left">tierramadre.studio</span><span class="right">Reserva tu espécimen</span></div>
+        <div class="tap-zones"><button data-go="0"></button><button data-go="1"></button></div>
+      </div>
+
+      <!-- ============ L4 · CARTOGRAFÍA MINERA ============ -->
+      <div class="canvas canvas-L4" id="canvasL4" data-prop="L4">
+        <div class="progress-bars"><div class="seg active"></div><div class="seg"></div></div>
+        <div class="story-handle"><div class="avatar">tm</div><div class="meta"><span class="name">Tierra Madre</span><span class="timeago">levantamiento · muzo · vii</span></div></div>
+
+        <div class="slide L4-hero hero-stage active">
+          <div class="top-stamp" data-anim="stamp">Levantamiento<small>Cuadrícula 07</small></div>
+
+          <div class="map-stage" data-anim="gem">
+            <div class="ring-3"></div>
+            <div class="ring-4"></div>
+            <span class="card-mark n">N<small>5°32′</small></span>
+            <span class="card-mark s">S<small>5°31′</small></span>
+            <span class="card-mark e">E<small>74°05′</small></span>
+            <span class="card-mark w">W<small>74°06′</small></span>
+            <div class="gem-wrap"><div class="gem-stage"></div></div>
+          </div>
+
+          <h1>
+            <span class="line-clip" data-anim="line"><span>Una pieza</span></span>
+            <span class="line-clip" data-anim="line"><span><em>extraída del</em></span></span>
+            <span class="line-clip" data-anim="line"><span>Río Itoco.</span></span>
+          </h1>
+          <p class="specs" data-anim="fade-up">— Esmeralda Venus · 1.85 ct —</p>
+
+          <div class="grid-meta" data-anim="late">
+            <div class="col"><div>Altitud</div><strong>820 <em>m</em></strong></div>
+            <div class="col"><div>Locality</div><strong>Muzo</strong></div>
+            <div class="col"><div>Edición</div><strong>vii · <em>2026</em></strong></div>
+          </div>
+        </div>
+
+        <div class="slide L4-grid">
+          <div class="heading">
+            <span>· Cuadrícula UTM · 100 parcelas ·</span>
+            <span>23 / 100 levantadas</span>
+          </div>
+          <h2>Cien <em>parcelas.</em><br/>Una piedra.</h2>
+          <p class="lead">— el bloque que elijas determina tu suerte —</p>
+          <div class="grid-stage">
+            <div class="grid" id="L4Grid"></div>
+          </div>
+          <div class="legend">
+            <span><span class="swatch"></span> disponible</span>
+            <span><span class="swatch sold"></span> levantada</span>
+            <span><span class="swatch target"></span> tu cuadro</span>
+          </div>
+        </div>
+
+        <div class="cta-bar"><span class="left">tierramadre.studio</span><span class="right">Levanta tu cuadro</span></div>
+        <div class="tap-zones"><button data-go="0"></button><button data-go="1"></button></div>
+      </div>
+
+      <!-- ============ L5 · CHIAROSCURO ============ -->
+      <div class="canvas canvas-L5" id="canvasL5" data-prop="L5">
+        <div class="progress-bars"><div class="seg active"></div><div class="seg"></div></div>
+        <div class="story-handle"><div class="avatar">tm</div><div class="meta"><span class="name">Tierra Madre</span><span class="timeago">de la mina · vii</span></div></div>
+
+        <div class="slide L5-hero hero-stage active">
+          <div class="top-stamp" data-anim="stamp">Origen Muzo · Boyacá</div>
+          <div class="gem-wrap" data-anim="gem"><div class="gem-stage"></div></div>
+          <h1>
+            <span class="line-clip" data-anim="line"><span>En la oscuridad</span></span>
+            <span class="line-clip" data-anim="line"><span><em>de la mina,</em></span></span>
+            <span class="line-clip" data-anim="line"><span>el verde nace.</span></span>
+          </h1>
+          <p class="specs" data-anim="fade-up">— Esmeralda Venus · 1.85 ct —</p>
+          <div class="coord">
+            <div class="coord-line" data-anim="grow"></div>
+            <span class="left" data-anim="late">5°32′N · 74°06′W</span>
+            <span data-anim="late">Edición vii · 2026</span>
+          </div>
+        </div>
+
+        <div class="slide L5-grid">
+          <div class="top-meta">
+            <div><div class="l">Por número</div><div class="v">$50K COP</div></div>
+            <div style="text-align:right;"><div class="l">Vendidos</div><div class="v">23 / 100</div></div>
+          </div>
+          <h2>Elige tu <em>número.</em></h2>
+          <p class="lead">— en lo oscuro, una piedra te buscará —</p>
+          <div class="grid" id="L5Grid"></div>
+        </div>
+
+        <div class="cta-bar"><span class="left">tierramadre.studio</span><span class="right">Reserva ya</span></div>
+        <div class="tap-zones"><button data-go="0"></button><button data-go="1"></button></div>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="export-tip">
+    <strong>Tips:</strong> tocá una mitad del frame para saltar entre slides. Cada variante tiene transiciones cinematográficas en slide 1 (stamp press, gem entrance + rotación + shimmer, type-block reveal). <code>↓ PNG</code> exporta el slide actual; <code>↓ 2 PNGs</code> exporta el carrusel de la propuesta visible.
+  </p>
+</div>
+
+<script>
+  function scaleCanvases() {
+    const frame = document.getElementById('frame'); if (!frame) return;
+    const w = frame.clientWidth; const scale = w / 1080;
+    document.querySelectorAll('.canvas').forEach(c => c.style.transform = `scale(${scale})`);
+  }
+  window.addEventListener('resize', scaleCanvases);
+
+  const SOLD = [3,7,12,18,22,27,8,14,19,24,33,37,40,46,50,53,58,61,67,72,77,80,88];
+  function buildGrid(wrapId, opts) {
+    const wrap = document.getElementById(wrapId);
+    if (!wrap || wrap.dataset.built) return;
+    wrap.dataset.built = '1';
+    const sold = new Set(opts.sold || SOLD);
+    for (let i = 1; i <= opts.count; i++) {
+      const t = document.createElement('div');
+      t.className = 'tile';
+      if (i === opts.target) t.classList.add('target');
+      else if (sold.has(i)) t.classList.add('sold');
+      t.textContent = String(i).padStart(opts.pad || 2, '0');
+      wrap.appendChild(t);
+    }
+  }
+  buildGrid('L1Grid', { count: 56, target: 42 });
+  buildGrid('L2Grid', { count: 100, target: 42 });
+  buildGrid('L3Grid', { count: 100, target: 42 });
+  buildGrid('L4Grid', { count: 100, target: 42 });
+  buildGrid('L5Grid', { count: 56, target: 42 });
+
+  const STRATEGIES = {
+    L1: '<strong>L1 · Espécimen gemológico.</strong> El gem como objeto en vitrina de museo. Composición centrada simétrica. <em>El más universal</em> — funciona en cualquier audiencia porque la lectura sigue gravedad.',
+    L2: '<strong>L2 · Acta de escritura pública.</strong> El gem como cosa registrada en folio notarial. Composición asimétrica φ. <em>Comunica seriedad legal</em> — para audiencia que valora la trazabilidad escrita.',
+    L3: '<strong>L3 · Lámina de herbario.</strong> El gem como espécimen montado con corchetes y nombre latino <em>Beryllus smaragdus</em>. <em>Conexión académica/coleccionista</em> — habla a quien aprecia la naturalidad clasificada.',
+    L4: '<strong>L4 · Cartografía minera.</strong> El gem en el centro de un mapa topográfico con cardinales. <em>Origen como territorio</em> — apela a la audiencia que quiere saber DE DÓNDE viene exactamente.',
+    L5: '<strong>L5 · Chiaroscuro de mina.</strong> Misma arquitectura de L1 pero invertida — fondo negro shale, gem brillando como en la oscuridad de la mina. <em>Drama y profundidad</em> — para edición especial o audiencia nocturna.'
+  };
+
+  let currentProp = 'L1';
+  document.querySelectorAll('.prop-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.prop-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentProp = btn.dataset.prop;
+      ['L1','L2','L3','L4','L5'].forEach(p => document.getElementById('canvas' + p).classList.toggle('show', p === currentProp));
+      document.getElementById('strategy').innerHTML = STRATEGIES[currentProp];
+      restartStory();
+      scaleCanvases();
+    });
+  });
+
+  let activeIdx = 0; let timer = null;
+  function setSlide(idx) {
+    activeIdx = idx;
+    const canvas = document.getElementById('canvas' + currentProp); if (!canvas) return;
+    canvas.querySelectorAll('.slide').forEach((el) => el.classList.remove('active'));
+    void canvas.offsetWidth;
+    const target = canvas.querySelectorAll('.slide')[idx];
+    if (target) target.classList.add('active');
+    canvas.querySelectorAll('.progress-bars .seg').forEach((seg, i) => {
+      seg.classList.remove('active', 'done');
+      if (i < idx) seg.classList.add('done');
+      else if (i === idx) seg.classList.add('active');
+    });
+    document.getElementById('slideIndicator').textContent = `${idx + 1} / 2`;
+  }
+  function restartStory() {
+    if (timer) clearInterval(timer);
+    setSlide(0);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 2), 5000);
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-go]'); if (!btn) return;
+    e.stopPropagation();
+    const idx = parseInt(btn.dataset.go, 10);
+    if (timer) clearInterval(timer);
+    setSlide(idx);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 2), 5000);
+  });
+
+  async function exportSlide(prop, slideIdx) {
+    const canvas = document.getElementById('canvas' + prop);
+    canvas.querySelectorAll('.slide').forEach((el, i) => el.classList.toggle('active', i === slideIdx));
+    canvas.querySelectorAll('.progress-bars .seg').forEach((seg, i) => {
+      seg.classList.remove('active', 'done');
+      if (i < slideIdx) seg.classList.add('done');
+      else if (i === slideIdx) seg.classList.add('active');
+    });
+    const prevTransform = canvas.style.transform;
+    const prevDisplay = canvas.style.display;
+    canvas.style.transform = 'scale(1)';
+    canvas.style.display = 'block';
+    await new Promise(r => setTimeout(r, 80));
+    try {
+      const dataUrl = await htmlToImage.toPng(canvas, {
+        width: 1080, height: 1920, pixelRatio: 1, cacheBust: true,
+        style: { transform: 'scale(1)', transformOrigin: 'top left' }
+      });
+      const link = document.createElement('a');
+      link.download = `tm-rifa-${prop}-slide${slideIdx + 1}.png`;
+      link.href = dataUrl; link.click();
+    } finally {
+      canvas.style.transform = prevTransform;
+      canvas.style.display = prevDisplay;
+      scaleCanvases();
+    }
+  }
+
+  document.getElementById('exportPng').addEventListener('click', async () => {
+    if (timer) clearInterval(timer);
+    await exportSlide(currentProp, activeIdx);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 2), 5000);
+  });
+
+  document.getElementById('exportAll').addEventListener('click', async () => {
+    if (timer) clearInterval(timer);
+    const btn = document.getElementById('exportAll');
+    btn.disabled = true; btn.style.opacity = '0.6';
+    const original = btn.textContent;
+    for (let i = 0; i < 2; i++) {
+      btn.textContent = `Exportando ${i+1}/2...`;
+      await exportSlide(currentProp, i);
+      await new Promise(r => setTimeout(r, 600));
+    }
+    setSlide(activeIdx);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 2), 5000);
+    btn.textContent = original; btn.disabled = false; btn.style.opacity = '';
+  });
+
+  scaleCanvases();
+  restartStory();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(scaleCanvases);
+</script>
+</body>
+</html>

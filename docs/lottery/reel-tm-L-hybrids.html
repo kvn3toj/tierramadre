@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TM · L hybrids — combinaciones más fuertes que cualquier L pura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.min.js"></script>
+<style>
+  :root {
+    /* TM real tokens */
+    --emerald-primary: #00AE7A;
+    --emerald-light:   #33C194;
+    --emerald-lighter: #66D4AE;
+    --emerald-lightest:#E6F7F1;
+    --emerald-dark:    #008C61;
+    --emerald-darker:  #006A48;
+    --emerald-darkest: #004830;
+    --emerald-text:    #0B6E4F;
+
+    --gold-primary:    #D4AF37;
+    --gold-light:      #E5C866;
+    --gold-darker:     #8F7318;
+    --gold-darkest:    #665210;
+    --gold-aged:       #8a7329;
+    --champagne:       #c9a961;
+    --champagne-bright:#dfc383;
+
+    --muzo-mist:       #FDFDFB;
+    --paper-deed:      #FBF6EC;
+    --paper-herbarium: #F5EFE0;
+    --shale:           #0A0E0C;
+    --shale-soft:      #0D1B1E;
+    --night-deep:      #030808;
+    --sage:            #9DAB8B;
+    --clay-itoco:      #A18560;
+    --ink:             #2C2C2C;
+    --ink-soft:        #4A4A4A;
+    --hairline:        #E5DFCF;
+    --hairline-soft:   #EFEAD9;
+
+    --f-brand:   'Libre Baskerville', Georgia, serif;
+    --f-display: 'Playfair Display', Georgia, serif;
+    --f-elegant: 'Cormorant Garamond', Georgia, serif;
+    --f-sans:    'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+    --f-mono:    'SF Mono', 'Fira Code', Monaco, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #07090A; color: #fff; font-family: var(--f-sans); min-height: 100vh; }
+
+  .app { min-height: 100vh; padding: 32px 16px 48px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+  .app-header { text-align: center; max-width: 720px; }
+  .app-header h1 {
+    font-family: var(--f-display); font-weight: 600;
+    font-size: 36px; letter-spacing: -0.01em;
+    background: linear-gradient(120deg, var(--gold-light), var(--gold-primary), var(--emerald-light));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 10px;
+  }
+  .app-header p { color: rgba(255,255,255,0.65); font-size: 14px; line-height: 1.6; }
+  .app-header em { color: var(--gold-light); font-style: italic; }
+  .app-header strong { color: white; font-weight: 500; }
+
+  .toolbar {
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    padding: 6px; border-radius: 999px; backdrop-filter: blur(8px);
+  }
+  .toolbar button {
+    padding: 10px 14px; border-radius: 999px; border: none;
+    background: transparent; color: rgba(255,255,255,0.7);
+    font-family: inherit; font-size: 12px; font-weight: 500; letter-spacing: 0.04em;
+    cursor: pointer; transition: all 200ms ease;
+  }
+  .toolbar button:hover { color: white; }
+  .toolbar button.active {
+    background: linear-gradient(120deg, var(--emerald-primary), var(--gold-primary));
+    color: white;
+  }
+  .toolbar .divider { width: 1px; background: rgba(255,255,255,0.1); margin: 0 4px; }
+  .toolbar .download-btn { background: rgba(212,175,55,0.15); color: var(--gold-light); }
+
+  .strategy-line {
+    color: rgba(255,255,255,0.78);
+    font-family: var(--f-elegant);
+    font-style: italic;
+    font-size: 17px;
+    text-align: center;
+    max-width: 660px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 16px 24px;
+    line-height: 1.6;
+  }
+  .strategy-line strong { color: var(--gold-light); font-style: normal; font-weight: 500; letter-spacing: 0.06em; }
+  .strategy-line em { color: var(--emerald-light); font-style: italic; }
+  .strategy-line .formula {
+    display: block; margin-top: 6px;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.5); text-transform: uppercase;
+  }
+
+  .meta-row {
+    display: flex; gap: 14px; align-items: center;
+    color: rgba(255,255,255,0.5); font-size: 11px;
+    flex-wrap: wrap; justify-content: center; letter-spacing: 0.06em;
+  }
+  .meta-row strong { color: var(--gold-light); font-weight: 500; }
+
+  .stage { width: 100%; max-width: 440px; aspect-ratio: 9/16; position: relative; }
+  .frame {
+    position: absolute; inset: 0; border-radius: 28px; overflow: hidden;
+    box-shadow: 0 40px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
+  }
+  .canvas {
+    position: absolute;
+    width: 1080px; height: 1920px;
+    top: 0; left: 0;
+    transform-origin: top left;
+    display: none; overflow: hidden;
+    background: var(--muzo-mist); color: var(--ink);
+    font-family: var(--f-sans);
+  }
+  .canvas.show { display: block; }
+
+  /* === Common shell === */
+  .progress-bars {
+    position: absolute; top: 36px; left: 36px; right: 36px;
+    display: flex; gap: 8px; z-index: 6;
+  }
+  .progress-bars .seg {
+    flex: 1; height: 4px; border-radius: 999px;
+    background: rgba(0, 140, 97, 0.2);
+    overflow: hidden; position: relative;
+  }
+  .progress-bars .seg::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: var(--emerald-primary); }
+  .progress-bars .seg.done::after { width: 100%; }
+  .progress-bars .seg.active::after { animation: segfill 5s linear forwards; }
+  @keyframes segfill { from { width: 0%; } to { width: 100%; } }
+
+  .story-handle {
+    position: absolute; top: 60px; left: 36px;
+    z-index: 6; display: flex; align-items: center; gap: 12px;
+  }
+  .story-handle .avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--muzo-mist); color: var(--emerald-primary); border: 2px solid var(--emerald-primary);
+    display: grid; place-items: center;
+    font-family: var(--f-display); font-weight: 600; font-size: 24px;
+  }
+  .story-handle .meta { display: flex; flex-direction: column; line-height: 1.2; }
+  .story-handle .name { font-family: var(--f-brand); font-weight: 700; font-size: 24px; color: var(--ink); }
+  .story-handle .timeago { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.18em; color: var(--ink-soft); text-transform: uppercase; }
+
+  .slide {
+    position: absolute; inset: 0;
+    opacity: 0; pointer-events: none;
+    transition: opacity 600ms ease;
+    padding: 200px 80px 180px;
+    display: flex; flex-direction: column;
+  }
+  .slide.active { opacity: 1; pointer-events: auto; }
+
+  .cta-bar {
+    position: absolute; left: 36px; right: 36px; bottom: 36px;
+    background: rgba(255,255,255,0.92);
+    border: 1px solid var(--gold-primary);
+    color: var(--ink);
+    backdrop-filter: blur(12px); border-radius: 999px;
+    padding: 22px 32px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 22px; letter-spacing: 0.06em; z-index: 6;
+  }
+  .cta-bar .left { font-family: var(--f-brand); font-weight: 700; font-size: 22px; color: var(--emerald-primary); }
+  .cta-bar .right { font-family: var(--f-mono); font-weight: 600; font-size: 14px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold-darker); }
+  .cta-bar .right::after { content: " ↗"; }
+
+  .tap-zones {
+    position: absolute; inset: 0;
+    display: grid; grid-template-columns: 1fr 1fr; z-index: 5;
+  }
+  .tap-zones button { background: transparent; border: none; cursor: pointer; }
+
+  /* === Shared gem-stage === */
+  .gem-stage {
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(255,255,255,0.85), transparent 35%),
+      radial-gradient(circle at 65% 65%, rgba(212,175,55,0.18), transparent 50%),
+      conic-gradient(from 200deg, var(--emerald-light), var(--emerald-primary), var(--emerald-darker), var(--emerald-primary), var(--emerald-light));
+    box-shadow:
+      0 0 0 1px var(--gold-primary),
+      0 0 0 6px rgba(212,175,55,0.08),
+      0 24px 60px -10px rgba(0,140,97,0.25);
+    position: relative;
+    overflow: hidden;
+    will-change: transform;
+  }
+  .gem-stage::after {
+    content: ""; position: absolute; inset: 14%;
+    border-radius: 50%; border: 1px solid rgba(255,255,255,0.55);
+    z-index: 3;
+  }
+  .gem-stage::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.5) 50%, transparent 70%);
+    transform: translateX(-160%);
+    pointer-events: none; z-index: 2;
+  }
+  .canvas.show .slide.active .gem-stage { animation: tm-gem-rotate 90s linear infinite; }
+  .canvas.show .slide.active .gem-stage::before { animation: tm-shimmer 7s 2s infinite; }
+  @keyframes tm-gem-rotate { to { transform: rotate(360deg); } }
+  @keyframes tm-shimmer {
+    0%, 35%, 100% { transform: translateX(-160%); }
+    14%           { transform: translateX(160%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .canvas.show .slide.active .gem-stage,
+    .canvas.show .slide.active .gem-stage::before { animation: none !important; }
+  }
+
+  .line-clip { display: block; overflow: hidden; line-height: 1; padding: 0.05em 0 0.08em; }
+
+  /* ===========================================================
+     M1 · ESPÉCIMEN CARTOGRAFIADO  (L1 × L4)
+     centered specimen + topographic concentric rings
+     =========================================================== */
+  .canvas-M1 .slide { padding: 200px 80px 180px; }
+
+  .M1-hero { align-items: center; text-align: center; }
+
+  .M1-hero .top-stamp {
+    display: inline-flex; gap: 12px; align-items: center;
+    border: 1px solid var(--emerald-darker);
+    padding: 7px 14px;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.32em;
+    color: var(--emerald-darker); font-weight: 600; text-transform: uppercase;
+    margin-bottom: 36px; background: var(--muzo-mist);
+  }
+  .M1-hero .top-stamp::before { content: "◇"; color: var(--gold-primary); }
+  .M1-hero .top-stamp small { color: var(--gold-darker); margin-left: 8px; }
+
+  /* Map-stage with concentric rings */
+  .M1-hero .map-stage {
+    width: 720px; height: 720px;
+    margin: 0 auto 48px;
+    position: relative;
+  }
+  .M1-hero .map-stage .ring {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%; border: 1px dashed var(--hairline);
+    pointer-events: none;
+  }
+  .M1-hero .map-stage .ring-1 { width: 100%; height: 100%; border-style: solid; border-color: var(--hairline); }
+  .M1-hero .map-stage .ring-2 { width: 84%; height: 84%; border-style: dashed; border-color: var(--hairline-soft); }
+  .M1-hero .map-stage .ring-3 { width: 68%; height: 68%; border-style: dashed; border-color: var(--hairline-soft); }
+  .M1-hero .map-stage .ring-4 { width: 52%; height: 52%; border-style: solid; border-color: var(--hairline); }
+  /* Cardinal markers */
+  .M1-hero .card-mark {
+    position: absolute;
+    font-family: var(--f-mono); font-size: 14px; font-weight: 700;
+    letter-spacing: 0.18em; color: var(--ink);
+  }
+  .M1-hero .card-mark.n { top: -4px; left: 50%; transform: translateX(-50%); color: var(--emerald-darker); }
+  .M1-hero .card-mark.s { bottom: -4px; left: 50%; transform: translateX(-50%); }
+  .M1-hero .card-mark.e { right: -4px; top: 50%; transform: translateY(-50%); }
+  .M1-hero .card-mark.w { left: -4px; top: 50%; transform: translateY(-50%); }
+  .M1-hero .card-mark small {
+    display: block; font-size: 9px; letter-spacing: 0.32em;
+    color: var(--ink-soft); font-weight: 500; margin-top: 2px;
+  }
+  /* Gem at center */
+  .M1-hero .map-stage .gem-wrap {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 360px; height: 360px;
+  }
+  .M1-hero .map-stage .gem-stage { position: absolute; inset: 0; }
+
+  .M1-hero h1 {
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 88px; line-height: 1; letter-spacing: -0.01em;
+    color: var(--ink); margin-bottom: 16px;
+  }
+  .M1-hero h1 em { font-style: italic; color: var(--emerald-primary); }
+  .M1-hero .specs {
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 28px; color: var(--gold-darker); letter-spacing: 0.04em;
+  }
+  .M1-hero .coord {
+    margin-top: auto; padding-top: 24px;
+    border-top: 1px solid var(--hairline);
+    display: flex; justify-content: space-between;
+    font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.22em;
+    color: var(--ink-soft); text-transform: uppercase;
+  }
+  .M1-hero .coord .left { color: var(--emerald-darker); font-weight: 600; }
+
+  .M1-grid h2 {
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 76px; line-height: 1.05; color: var(--ink);
+    margin-bottom: 14px; letter-spacing: -0.01em;
+  }
+  .M1-grid h2 em { font-style: italic; color: var(--emerald-primary); }
+  .M1-grid .lead { font-family: var(--f-elegant); font-style: italic; font-size: 24px; color: var(--gold-darker); margin-bottom: 36px; }
+  .M1-grid .grid-stage {
+    flex: 1;
+    border: 1px solid var(--ink);
+    background: var(--muzo-mist);
+    padding: 14px;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,140,97,0.04) 0 1px, transparent 1px 24px),
+      repeating-linear-gradient(90deg, rgba(0,140,97,0.04) 0 1px, transparent 1px 24px);
+    position: relative;
+  }
+  .M1-grid .grid-stage::before {
+    content: "MUZO · MINE GRID · 2026"; position: absolute; top: -10px; left: 24px;
+    background: var(--muzo-mist); padding: 2px 12px;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.4em;
+    color: var(--emerald-darker); font-weight: 600;
+  }
+  .M1-grid .grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px;
+    align-content: center; height: 100%;
+  }
+  .M1-grid .tile {
+    aspect-ratio: 1; border-radius: 0;
+    background: var(--muzo-mist); border: 1px solid var(--hairline);
+    color: var(--ink); display: grid; place-items: center;
+    font-family: var(--f-mono); font-weight: 500; font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .M1-grid .tile.sold { background: var(--emerald-darker); color: white; border-color: var(--emerald-darker); }
+  .M1-grid .tile.target {
+    background: var(--gold-primary); color: var(--ink); border: 1.5px solid var(--ink);
+    box-shadow: 0 0 0 2px rgba(212,175,55,0.3); font-weight: 700;
+    z-index: 1; position: relative;
+  }
+  .M1-grid .price-row {
+    margin-top: 24px; padding-top: 18px;
+    border-top: 1px solid var(--ink);
+    display: flex; justify-content: space-between;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.32em;
+    color: var(--ink-soft); text-transform: uppercase;
+  }
+  .M1-grid .price-row strong { font-family: var(--f-brand); font-weight: 700; font-size: 14px; color: var(--ink); letter-spacing: 0; text-transform: none; }
+  .M1-grid .price-row strong em { color: var(--emerald-primary); font-style: italic; }
+
+  /* ===========================================================
+     M2 · LÁMINA NOCTURNA  (L3 × L5)
+     herbarium specimen mounted on chiaroscuro dark
+     =========================================================== */
+  .canvas-M2 { background: var(--shale-soft); color: var(--paper-herbarium); }
+  .canvas-M2 .progress-bars .seg { background: rgba(212, 175, 55, 0.18); }
+  .canvas-M2 .progress-bars .seg::after { background: var(--gold-light); }
+  .canvas-M2 .story-handle .avatar { background: var(--shale-soft); color: var(--gold-light); border-color: var(--gold-primary); }
+  .canvas-M2 .story-handle .name { color: var(--paper-herbarium); }
+  .canvas-M2 .story-handle .timeago { color: rgba(212,175,55,0.65); }
+  .canvas-M2 .cta-bar { background: rgba(212,175,55,0.1); border-color: var(--gold-primary); color: var(--paper-herbarium); }
+  .canvas-M2 .cta-bar .left { color: var(--gold-light); }
+  .canvas-M2 .cta-bar .right { color: var(--emerald-light); }
+
+  .M2-hero { align-items: stretch; }
+  .M2-hero::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,174,122,0.12), transparent 65%),
+      radial-gradient(ellipse 40% 30% at 50% 80%, rgba(212,175,55,0.08), transparent 70%);
+    pointer-events: none;
+  }
+  .M2-hero > * { position: relative; z-index: 2; }
+
+  .M2-hero .specimen-card {
+    flex: 1;
+    background: rgba(212, 175, 55, 0.04);
+    border: 1px solid var(--gold-primary);
+    padding: 56px 48px 40px;
+    position: relative;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 80px rgba(0,174,122,0.18);
+    display: flex; flex-direction: column;
+  }
+  .M2-hero .corner-bracket {
+    position: absolute; width: 36px; height: 36px;
+    border: 2px solid var(--gold-light);
+  }
+  .M2-hero .corner-bracket.tl { top: 14px; left: 14px; border-right: none; border-bottom: none; }
+  .M2-hero .corner-bracket.tr { top: 14px; right: 14px; border-left: none; border-bottom: none; }
+  .M2-hero .corner-bracket.bl { bottom: 14px; left: 14px; border-right: none; border-top: none; }
+  .M2-hero .corner-bracket.br { bottom: 14px; right: 14px; border-left: none; border-top: none; }
+
+  .M2-hero .top-row {
+    display: flex; justify-content: space-between; align-items: start;
+    border-bottom: 1px solid rgba(212,175,55,0.3);
+    padding-bottom: 14px; margin-bottom: 24px;
+  }
+  .M2-hero .classification {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.34em;
+    color: rgba(212,175,55,0.6); text-transform: uppercase; font-weight: 700;
+    line-height: 1.6;
+  }
+  .M2-hero .classification strong {
+    display: block; font-family: var(--f-display); font-weight: 600; font-style: italic;
+    font-size: 28px; color: var(--paper-herbarium); letter-spacing: 0; text-transform: none;
+  }
+  .M2-hero .accession {
+    text-align: right;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.32em;
+    color: rgba(212,175,55,0.6); text-transform: uppercase;
+    line-height: 1.8;
+  }
+  .M2-hero .accession strong {
+    display: block; font-family: var(--f-display); font-style: italic; font-weight: 700;
+    font-size: 36px; color: var(--gold-light); letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .M2-hero .gem-wrap {
+    width: 460px; height: 460px; margin: 16px auto 24px;
+    position: relative;
+  }
+  .M2-hero .gem-stage {
+    position: absolute; inset: 0;
+    /* Stronger emerald glow for chiaroscuro */
+    box-shadow:
+      0 0 0 1px var(--gold-primary),
+      0 0 0 8px rgba(212,175,55,0.18),
+      0 0 100px rgba(0, 174, 122, 0.5);
+  }
+
+  .M2-hero .latin-name {
+    text-align: center;
+    font-family: var(--f-elegant); font-style: italic; font-weight: 500;
+    font-size: 44px; color: var(--emerald-light);
+    line-height: 1; letter-spacing: 0.02em; margin-bottom: 6px;
+  }
+  .M2-hero .common-name {
+    text-align: center;
+    font-family: var(--f-display); font-weight: 600;
+    font-size: 64px; line-height: 1; color: var(--paper-herbarium);
+    letter-spacing: -0.01em; margin-bottom: 24px;
+  }
+  .M2-hero .common-name em { font-style: italic; color: var(--gold-light); }
+
+  .M2-hero .label-table {
+    border-top: 1px solid rgba(212,175,55,0.25);
+    padding-top: 14px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .M2-hero .label-row {
+    display: grid; grid-template-columns: 130px 1fr;
+    gap: 14px;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.18em;
+    color: rgba(212,175,55,0.6); text-transform: uppercase; line-height: 1.4;
+  }
+  .M2-hero .label-row .key { font-style: italic; }
+  .M2-hero .label-row .val {
+    font-family: var(--f-brand); font-weight: 700; font-size: 13px;
+    letter-spacing: 0; text-transform: none; color: var(--paper-herbarium);
+  }
+  .M2-hero .label-row .val em { color: var(--emerald-light); font-style: italic; font-weight: 400; }
+
+  .M2-hero .collector-line {
+    margin-top: 18px;
+    border-top: 1px dashed rgba(212,175,55,0.25);
+    padding-top: 10px;
+    text-align: right;
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 22px; color: var(--gold-light);
+  }
+
+  .M2-grid h2 {
+    font-family: var(--f-display); font-weight: 600;
+    font-size: 76px; line-height: 1; color: var(--paper-herbarium);
+    margin-bottom: 8px; letter-spacing: -0.01em;
+  }
+  .M2-grid h2 em { font-style: italic; color: var(--gold-light); }
+  .M2-grid .lead { font-family: var(--f-elegant); font-style: italic; font-size: 24px; color: var(--emerald-light); margin-bottom: 32px; }
+  .M2-grid .collection {
+    background: rgba(212,175,55,0.04);
+    border: 1px solid var(--gold-primary);
+    padding: 14px;
+    position: relative;
+  }
+  .M2-grid .collection .corner-bracket {
+    position: absolute; width: 16px; height: 16px;
+    border: 1.5px solid var(--gold-light);
+  }
+  .M2-grid .collection .corner-bracket.tl { top: 6px; left: 6px; border-right: none; border-bottom: none; }
+  .M2-grid .collection .corner-bracket.tr { top: 6px; right: 6px; border-left: none; border-bottom: none; }
+  .M2-grid .collection .corner-bracket.bl { bottom: 6px; left: 6px; border-right: none; border-top: none; }
+  .M2-grid .collection .corner-bracket.br { bottom: 6px; right: 6px; border-left: none; border-top: none; }
+  .M2-grid .grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px;
+    padding: 16px 8px;
+  }
+  .M2-grid .tile {
+    aspect-ratio: 1; border-radius: 4px;
+    background: rgba(212,175,55,0.04); border: 1px solid rgba(212,175,55,0.18);
+    color: var(--paper-herbarium); display: grid; place-items: center;
+    font-family: var(--f-mono); font-size: 14px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .M2-grid .tile.sold {
+    background: var(--emerald-primary); color: var(--shale-soft); border-color: var(--emerald-primary);
+    box-shadow: 0 0 12px rgba(0,174,122,0.4);
+  }
+  .M2-grid .tile.target {
+    background: var(--gold-primary); color: var(--shale-soft); border: 1.5px solid var(--gold-light); font-weight: 700;
+    box-shadow: 0 0 0 2px rgba(212,175,55,0.4), 0 0 20px rgba(212,175,55,0.4);
+  }
+  .M2-grid .stats-row {
+    margin-top: 24px; display: flex; justify-content: space-between;
+    border-top: 1px dashed rgba(212,175,55,0.25); padding-top: 14px;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.18em;
+    color: rgba(212,175,55,0.6); text-transform: uppercase;
+  }
+  .M2-grid .stats-row strong {
+    font-family: var(--f-brand); font-weight: 700; font-size: 14px;
+    color: var(--paper-herbarium); letter-spacing: 0; text-transform: none;
+  }
+  .M2-grid .stats-row strong em { color: var(--gold-light); font-style: italic; }
+
+  /* ===========================================================
+     M3 · ACTA CARTOGRÁFICA  (L2 × L4)
+     notarial asymmetric + mining map embedded
+     =========================================================== */
+  .canvas-M3 { background: var(--paper-deed); }
+  .canvas-M3 .slide { padding: 180px 64px 160px; }
+
+  .M3-hero { display: grid; grid-template-columns: 38% 1fr; gap: 36px; }
+  .M3-hero .col-left {
+    border-right: 1px solid var(--gold-primary);
+    padding-right: 28px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .M3-hero .col-left .heading {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.5em;
+    color: var(--gold-darker); font-weight: 700; text-transform: uppercase;
+    border-bottom: 1px solid var(--gold-primary); padding-bottom: 16px; margin-bottom: 20px;
+  }
+  .M3-hero .registry {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.32em;
+    color: var(--ink-soft); text-transform: uppercase; line-height: 1.9;
+    margin-bottom: 24px;
+  }
+  .M3-hero .registry strong {
+    display: block;
+    font-family: var(--f-display); font-style: italic; font-weight: 700;
+    font-size: 80px; color: var(--ink); letter-spacing: -0.02em;
+    line-height: 0.85; margin-top: 4px; text-transform: none;
+  }
+  .M3-hero .registry strong em { color: var(--emerald-primary); font-style: italic; }
+
+  /* Mini map in left column */
+  .M3-hero .mini-map {
+    aspect-ratio: 1;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,140,97,0.06) 0 1px, transparent 1px 18px),
+      repeating-linear-gradient(90deg, rgba(0,140,97,0.06) 0 1px, transparent 1px 18px),
+      var(--muzo-mist);
+    border: 1px solid var(--ink);
+    position: relative;
+    margin-bottom: 18px;
+  }
+  .M3-hero .mini-map::before, .M3-hero .mini-map::after {
+    content: ""; position: absolute; width: 10px; height: 10px;
+    background: repeating-linear-gradient(0deg, var(--ink) 0 1px, transparent 1px 3px),
+                repeating-linear-gradient(90deg, var(--ink) 0 1px, transparent 1px 3px);
+  }
+  .M3-hero .mini-map::before { top: -5px; left: -5px; }
+  .M3-hero .mini-map::after { bottom: -5px; right: -5px; }
+  .M3-hero .mini-map .pin {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--emerald-primary);
+    border: 3px solid var(--gold-primary);
+    box-shadow: 0 0 0 4px rgba(0,174,122,0.18);
+  }
+  .M3-hero .mini-map .pin-label {
+    position: absolute; top: 56%; left: 56%;
+    font-family: var(--f-display); font-style: italic;
+    font-size: 22px; color: var(--ink);
+    background: var(--paper-deed); padding: 2px 8px;
+    border: 1px solid var(--ink);
+    transform: rotate(-3deg);
+  }
+  .M3-hero .mini-map .compass {
+    position: absolute; top: 6px; left: 6px;
+    width: 28px; height: 28px;
+    border: 1px solid var(--ink); border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: var(--f-brand); font-weight: 700;
+    color: var(--emerald-darker); font-size: 12px;
+    background: var(--paper-deed);
+  }
+  .M3-hero .mini-map .coord {
+    position: absolute; bottom: 6px; right: 6px;
+    font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.18em;
+    color: var(--ink-soft);
+    background: var(--paper-deed); padding: 1px 4px;
+  }
+
+  .M3-hero .signature-block {
+    border-top: 1px solid var(--hairline); padding-top: 12px;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.3em;
+    color: var(--ink-soft); text-transform: uppercase;
+  }
+  .M3-hero .signature-block .sig {
+    font-family: var(--f-display); font-style: italic; font-weight: 500;
+    font-size: 48px; color: var(--emerald-primary);
+    line-height: 1; letter-spacing: 0; text-transform: none;
+    margin-bottom: 4px; transform: rotate(-2deg);
+  }
+  .M3-hero .signature-block .sig-line {
+    width: 100%; height: 1px; background: var(--ink); margin-bottom: 6px;
+  }
+
+  .M3-hero .col-right {
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .M3-hero .col-right .gem-wrap {
+    width: 100%; aspect-ratio: 1; position: relative; margin-bottom: 18px;
+  }
+  .M3-hero .col-right .gem-stage { position: absolute; inset: 0; }
+  .M3-hero .col-right h1 {
+    font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 68px; line-height: 0.95; color: var(--ink);
+    letter-spacing: -0.02em; margin-bottom: 10px;
+  }
+  .M3-hero .col-right h1 em { color: var(--emerald-primary); }
+  .M3-hero .col-right .preamble {
+    font-family: var(--f-brand); font-style: italic;
+    font-size: 16px; line-height: 1.5; color: var(--ink-soft);
+    margin-bottom: 14px;
+  }
+  .M3-hero .col-right .preamble strong { font-style: normal; font-weight: 700; color: var(--ink); }
+  .M3-hero .col-right .specs {
+    border-top: 1px dashed var(--hairline); padding-top: 12px;
+    display: flex; flex-direction: column; gap: 6px;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.18em;
+    color: var(--ink-soft); text-transform: uppercase;
+  }
+  .M3-hero .col-right .specs .row { display: flex; justify-content: space-between; }
+  .M3-hero .col-right .specs .row strong { color: var(--ink); font-family: var(--f-brand); font-weight: 700; font-size: 13px; letter-spacing: 0; text-transform: none; }
+  .M3-hero .col-right .specs .row strong em { color: var(--emerald-primary); font-style: italic; font-weight: 400; }
+
+  .M3-grid h2 {
+    font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 64px; line-height: 1; color: var(--ink);
+    margin-bottom: 12px; letter-spacing: -0.02em;
+  }
+  .M3-grid h2 em { color: var(--emerald-primary); }
+  .M3-grid .lead { font-family: var(--f-brand); font-style: italic; font-size: 18px; color: var(--ink-soft); margin-bottom: 28px; }
+  .M3-grid .grid-stage {
+    flex: 1;
+    border: 1px solid var(--gold-primary);
+    background:
+      repeating-linear-gradient(0deg, rgba(0,140,97,0.04) 0 1px, transparent 1px 18px),
+      repeating-linear-gradient(90deg, rgba(0,140,97,0.04) 0 1px, transparent 1px 18px),
+      var(--muzo-mist);
+    padding: 16px;
+    position: relative;
+  }
+  .M3-grid .grid-stage::before {
+    content: "ACTA · CUADRÍCULA UTM · 100 PARCELAS"; position: absolute; top: -10px; left: 24px;
+    background: var(--paper-deed); padding: 2px 12px;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.4em;
+    color: var(--gold-darker); font-weight: 700;
+  }
+  .M3-grid .grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px;
+  }
+  .M3-grid .tile {
+    aspect-ratio: 1; border-radius: 0;
+    background: var(--muzo-mist); border: 1px solid var(--hairline);
+    color: var(--ink); display: grid; place-items: center;
+    font-family: var(--f-mono); font-size: 13px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .M3-grid .tile.sold { background: var(--emerald-darker); color: white; border-color: var(--emerald-darker); }
+  .M3-grid .tile.target {
+    background: var(--gold-primary); color: var(--ink); border: 1.5px solid var(--ink); font-weight: 700;
+    z-index: 1; position: relative;
+  }
+  .M3-grid .signature-row {
+    margin-top: 24px; padding-top: 18px;
+    border-top: 1px solid var(--gold-primary);
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 24px; align-items: center;
+  }
+  .M3-grid .signature-row .left {
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.18em;
+    color: var(--ink-soft); text-transform: uppercase; line-height: 1.8;
+  }
+  .M3-grid .signature-row .left strong {
+    display: block; font-family: var(--f-display); font-style: italic;
+    font-size: 22px; color: var(--ink); letter-spacing: 0; text-transform: none;
+  }
+  .M3-grid .signature-row .sig {
+    font-family: var(--f-display); font-style: italic; font-weight: 500;
+    font-size: 44px; color: var(--emerald-primary); transform: rotate(-3deg);
+  }
+
+  .canvas-M3 .cta-bar { background: rgba(255,255,255,0.92); border-color: var(--gold-darker); }
+  .canvas-M3 .cta-bar .left { font-family: var(--f-display); font-style: italic; font-weight: 600; color: var(--gold-darker); font-size: 22px; }
+  .canvas-M3 .cta-bar .right { color: var(--gold-darker); }
+
+  /* ===========================================================
+     M4 · CARTOGRAFÍA NOCTURNA  (L4 × L5)
+     full topographic in chiaroscuro — mine at night, gem as light source
+     =========================================================== */
+  .canvas-M4 { background: var(--night-deep); color: var(--paper-herbarium); }
+  .canvas-M4::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 40%, rgba(0,174,122,0.22), transparent 65%),
+      radial-gradient(ellipse 40% 30% at 50% 75%, rgba(212,175,55,0.1), transparent 70%);
+    pointer-events: none;
+  }
+  .canvas-M4 > * { position: relative; z-index: 2; }
+  .canvas-M4 .progress-bars .seg { background: rgba(212,175,55,0.15); }
+  .canvas-M4 .progress-bars .seg::after { background: var(--gold-light); }
+  .canvas-M4 .story-handle .avatar { background: var(--night-deep); color: var(--gold-light); border-color: var(--gold-primary); }
+  .canvas-M4 .story-handle .name { color: var(--paper-herbarium); }
+  .canvas-M4 .story-handle .timeago { color: rgba(212,175,55,0.6); }
+  .canvas-M4 .cta-bar { background: rgba(212,175,55,0.1); border-color: var(--gold-primary); color: var(--paper-herbarium); }
+  .canvas-M4 .cta-bar .left { color: var(--gold-light); }
+  .canvas-M4 .cta-bar .right { color: var(--emerald-light); }
+
+  .M4-hero { align-items: center; text-align: center; }
+
+  .M4-hero .top-stamp {
+    display: inline-flex; align-items: center; gap: 10px;
+    border: 1px solid var(--gold-primary);
+    padding: 8px 14px; background: rgba(212,175,55,0.06);
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.4em;
+    color: var(--gold-light); font-weight: 700; text-transform: uppercase;
+    margin-bottom: 36px;
+  }
+  .M4-hero .top-stamp::before { content: "▲"; color: var(--emerald-light); font-size: 14px; }
+  .M4-hero .top-stamp small { color: var(--emerald-light); margin-left: 6px; }
+
+  .M4-hero .map-stage {
+    width: 720px; height: 720px;
+    margin: 0 auto 40px;
+    position: relative;
+  }
+  .M4-hero .map-stage .ring {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%; pointer-events: none;
+  }
+  .M4-hero .map-stage .ring-1 { width: 100%; height: 100%; border: 1px solid rgba(212,175,55,0.4); }
+  .M4-hero .map-stage .ring-2 { width: 84%; height: 84%; border: 1px dashed rgba(212,175,55,0.25); }
+  .M4-hero .map-stage .ring-3 { width: 68%; height: 68%; border: 1px dashed rgba(212,175,55,0.2); }
+  .M4-hero .map-stage .ring-4 { width: 52%; height: 52%; border: 1px solid rgba(212,175,55,0.35); }
+  .M4-hero .card-mark {
+    position: absolute;
+    font-family: var(--f-mono); font-size: 14px; font-weight: 700;
+    letter-spacing: 0.18em; color: var(--paper-herbarium);
+  }
+  .M4-hero .card-mark.n { top: -4px; left: 50%; transform: translateX(-50%); color: var(--gold-light); }
+  .M4-hero .card-mark.s { bottom: -4px; left: 50%; transform: translateX(-50%); }
+  .M4-hero .card-mark.e { right: -4px; top: 50%; transform: translateY(-50%); }
+  .M4-hero .card-mark.w { left: -4px; top: 50%; transform: translateY(-50%); }
+  .M4-hero .card-mark small {
+    display: block; font-size: 9px; letter-spacing: 0.32em;
+    color: rgba(212,175,55,0.6); font-weight: 500; margin-top: 2px;
+  }
+  .M4-hero .map-stage .gem-wrap {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 360px; height: 360px;
+  }
+  .M4-hero .map-stage .gem-stage {
+    position: absolute; inset: 0;
+    /* Light source feel: emerald glow radiating */
+    box-shadow:
+      0 0 0 1px var(--gold-primary),
+      0 0 0 8px rgba(212,175,55,0.18),
+      0 0 120px rgba(0, 174, 122, 0.6),
+      0 0 200px rgba(0, 174, 122, 0.3);
+  }
+
+  .M4-hero h1 {
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 80px; line-height: 1; color: var(--paper-herbarium);
+    letter-spacing: -0.01em; margin-bottom: 14px;
+  }
+  .M4-hero h1 em { font-style: italic; color: var(--gold-light); }
+  .M4-hero .specs {
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 26px; color: var(--emerald-light); letter-spacing: 0.04em;
+    margin-bottom: 24px;
+  }
+  .M4-hero .grid-meta {
+    margin-top: auto;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0;
+    border-top: 1px solid var(--gold-primary); border-bottom: 1px solid var(--gold-primary);
+    padding: 14px 0;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.32em;
+    color: rgba(212,175,55,0.6); text-transform: uppercase;
+  }
+  .M4-hero .grid-meta .col { text-align: center; border-right: 1px solid rgba(212,175,55,0.18); padding: 0 8px; }
+  .M4-hero .grid-meta .col:last-child { border-right: 0; }
+  .M4-hero .grid-meta .col strong {
+    display: block; font-family: var(--f-brand); font-weight: 700;
+    font-size: 18px; color: var(--paper-herbarium); letter-spacing: 0; text-transform: none;
+    margin-top: 4px;
+  }
+  .M4-hero .grid-meta .col strong em { color: var(--gold-light); font-style: italic; }
+
+  .M4-grid h2 {
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 72px; line-height: 1.05; color: var(--paper-herbarium);
+    margin-bottom: 12px; letter-spacing: -0.01em;
+  }
+  .M4-grid h2 em { font-style: italic; color: var(--gold-light); }
+  .M4-grid .lead { font-family: var(--f-elegant); font-style: italic; font-size: 24px; color: var(--emerald-light); margin-bottom: 28px; }
+  .M4-grid .grid-stage {
+    flex: 1;
+    border: 1px solid var(--gold-primary);
+    background:
+      repeating-linear-gradient(0deg, rgba(212,175,55,0.04) 0 1px, transparent 1px 24px),
+      repeating-linear-gradient(90deg, rgba(212,175,55,0.04) 0 1px, transparent 1px 24px);
+    padding: 14px;
+    position: relative;
+  }
+  .M4-grid .grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px;
+    align-content: center; height: 100%;
+  }
+  .M4-grid .tile {
+    aspect-ratio: 1; border-radius: 0;
+    background: rgba(212,175,55,0.04); border: 1px solid rgba(212,175,55,0.18);
+    color: var(--paper-herbarium); display: grid; place-items: center;
+    font-family: var(--f-mono); font-size: 13px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .M4-grid .tile.sold {
+    background: var(--emerald-primary); color: var(--night-deep);
+    border-color: var(--emerald-primary);
+    box-shadow: 0 0 12px rgba(0,174,122,0.4);
+  }
+  .M4-grid .tile.target {
+    background: var(--gold-primary); color: var(--night-deep); border: 1.5px solid var(--gold-light); font-weight: 700;
+    box-shadow: 0 0 0 2px rgba(212,175,55,0.4), 0 0 24px rgba(212,175,55,0.6);
+    z-index: 1; position: relative;
+  }
+  .M4-grid .legend {
+    margin-top: 18px;
+    display: flex; gap: 18px; flex-wrap: wrap;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.32em;
+    color: rgba(212,175,55,0.6); text-transform: uppercase;
+  }
+  .M4-grid .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .M4-grid .legend .swatch { width: 12px; height: 12px; border: 1px solid currentColor; }
+  .M4-grid .legend .swatch.sold { background: var(--emerald-primary); border-color: var(--emerald-primary); }
+  .M4-grid .legend .swatch.target { background: var(--gold-primary); border-color: var(--gold-light); }
+
+  /* ===========================================================
+     M5 · ESPÉCIMEN MINERALÓGICO  (L1 × L3 × L4 — TRIPLE)
+     centered specimen + corner brackets + topographic rings
+     "the most academic-luxe combo possible"
+     =========================================================== */
+  .canvas-M5 { background: var(--paper-herbarium); }
+
+  .M5-hero { align-items: stretch; }
+  .M5-hero .specimen-card {
+    flex: 1;
+    background: var(--muzo-mist);
+    border: 1px solid var(--hairline);
+    padding: 56px 48px 40px;
+    position: relative;
+    box-shadow: 0 12px 32px rgba(143,115,24,0.1);
+    display: flex; flex-direction: column;
+  }
+  .M5-hero .corner-bracket {
+    position: absolute; width: 40px; height: 40px;
+    border: 2px solid var(--gold-primary);
+  }
+  .M5-hero .corner-bracket.tl { top: 14px; left: 14px; border-right: none; border-bottom: none; }
+  .M5-hero .corner-bracket.tr { top: 14px; right: 14px; border-left: none; border-bottom: none; }
+  .M5-hero .corner-bracket.bl { bottom: 14px; left: 14px; border-right: none; border-top: none; }
+  .M5-hero .corner-bracket.br { bottom: 14px; right: 14px; border-left: none; border-top: none; }
+
+  .M5-hero .top-row {
+    display: flex; justify-content: space-between; align-items: start;
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 12px; margin-bottom: 18px;
+  }
+  .M5-hero .classification {
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.34em;
+    color: var(--gold-darker); text-transform: uppercase; font-weight: 700;
+    line-height: 1.6;
+  }
+  .M5-hero .classification strong {
+    display: block; font-family: var(--f-display); font-weight: 600;
+    font-size: 24px; color: var(--ink); letter-spacing: 0; text-transform: none;
+  }
+  .M5-hero .accession {
+    text-align: right;
+    font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.32em;
+    color: var(--ink-soft); text-transform: uppercase;
+    line-height: 1.8;
+  }
+  .M5-hero .accession strong {
+    display: block; font-family: var(--f-display); font-style: italic; font-weight: 600;
+    font-size: 32px; color: var(--ink); letter-spacing: 0;
+    text-transform: none;
+  }
+
+  /* Map-stage WITH herbarium card framing */
+  .M5-hero .map-stage {
+    width: 100%; aspect-ratio: 1;
+    margin: 8px auto 16px;
+    position: relative;
+  }
+  .M5-hero .map-stage .ring {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%; pointer-events: none;
+  }
+  .M5-hero .map-stage .ring-1 { width: 100%; height: 100%; border: 1px solid var(--hairline); }
+  .M5-hero .map-stage .ring-2 { width: 80%; height: 80%; border: 1px dashed var(--hairline-soft); }
+  .M5-hero .map-stage .ring-3 { width: 60%; height: 60%; border: 1px dashed var(--hairline-soft); }
+  .M5-hero .map-stage .card-mark {
+    position: absolute;
+    font-family: var(--f-mono); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.18em; color: var(--ink);
+  }
+  .M5-hero .map-stage .card-mark.n { top: -4px; left: 50%; transform: translateX(-50%); color: var(--emerald-darker); }
+  .M5-hero .map-stage .card-mark.s { bottom: -4px; left: 50%; transform: translateX(-50%); }
+  .M5-hero .map-stage .card-mark.e { right: -4px; top: 50%; transform: translateY(-50%); }
+  .M5-hero .map-stage .card-mark.w { left: -4px; top: 50%; transform: translateY(-50%); }
+  .M5-hero .map-stage .gem-wrap {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50%; aspect-ratio: 1;
+  }
+  .M5-hero .map-stage .gem-stage { position: absolute; inset: 0; }
+
+  .M5-hero .latin-name {
+    text-align: center;
+    font-family: var(--f-elegant); font-style: italic; font-weight: 500;
+    font-size: 36px; color: var(--emerald-text); line-height: 1; margin-bottom: 4px;
+  }
+  .M5-hero .common-name {
+    text-align: center;
+    font-family: var(--f-display); font-weight: 600;
+    font-size: 56px; line-height: 1; color: var(--ink);
+    letter-spacing: -0.01em; margin-bottom: 20px;
+  }
+  .M5-hero .common-name em { font-style: italic; color: var(--gold-darker); }
+
+  .M5-hero .label-table {
+    border-top: 1px solid var(--hairline);
+    padding-top: 12px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 6px 18px;
+  }
+  .M5-hero .label-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.18em;
+    color: var(--ink-soft); text-transform: uppercase; line-height: 1.4;
+    padding-bottom: 4px; border-bottom: 1px dotted var(--hairline-soft);
+  }
+  .M5-hero .label-row .key { font-style: italic; }
+  .M5-hero .label-row .val {
+    font-family: var(--f-brand); font-weight: 700; font-size: 12px;
+    letter-spacing: 0; text-transform: none; color: var(--ink);
+  }
+  .M5-hero .label-row .val em { color: var(--emerald-primary); font-style: italic; font-weight: 400; }
+
+  .M5-hero .collector-line {
+    margin-top: 12px;
+    text-align: right;
+    font-family: var(--f-elegant); font-style: italic;
+    font-size: 18px; color: var(--gold-darker);
+  }
+
+  .M5-grid h2 {
+    font-family: var(--f-brand); font-weight: 400;
+    font-size: 76px; line-height: 1; color: var(--ink);
+    margin-bottom: 8px; letter-spacing: -0.01em;
+  }
+  .M5-grid h2 em { font-style: italic; color: var(--emerald-primary); }
+  .M5-grid .lead { font-family: var(--f-elegant); font-style: italic; font-size: 24px; color: var(--gold-darker); margin-bottom: 32px; }
+  .M5-grid .collection {
+    background: var(--muzo-mist);
+    border: 1px solid var(--hairline);
+    padding: 14px;
+    position: relative;
+  }
+  .M5-grid .collection .corner-bracket {
+    position: absolute; width: 16px; height: 16px;
+    border: 1.5px solid var(--gold-primary);
+  }
+  .M5-grid .collection .corner-bracket.tl { top: 6px; left: 6px; border-right: none; border-bottom: none; }
+  .M5-grid .collection .corner-bracket.tr { top: 6px; right: 6px; border-left: none; border-bottom: none; }
+  .M5-grid .collection .corner-bracket.bl { bottom: 6px; left: 6px; border-right: none; border-top: none; }
+  .M5-grid .collection .corner-bracket.br { bottom: 6px; right: 6px; border-left: none; border-top: none; }
+  .M5-grid .collection-label {
+    position: absolute; top: -10px; left: 24px;
+    background: var(--paper-herbarium); padding: 2px 12px;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.4em;
+    color: var(--gold-darker); font-weight: 700;
+  }
+  .M5-grid .grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px;
+    padding: 14px 8px;
+  }
+  .M5-grid .tile {
+    aspect-ratio: 1; border-radius: 2px;
+    background: var(--paper-herbarium); border: 1px solid var(--hairline);
+    color: var(--ink); display: grid; place-items: center;
+    font-family: var(--f-mono); font-size: 13px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .M5-grid .tile.sold { background: var(--sage); color: var(--muzo-mist); border-color: var(--sage); }
+  .M5-grid .tile.target {
+    background: var(--gold-primary); color: var(--ink); border: 1.5px solid var(--emerald-darker); font-weight: 700;
+    box-shadow: 0 0 0 2px rgba(212,175,55,0.3);
+  }
+  .M5-grid .stats-row {
+    margin-top: 24px; display: flex; justify-content: space-between;
+    border-top: 1px dashed var(--hairline); padding-top: 14px;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.18em;
+    color: var(--ink-soft); text-transform: uppercase;
+  }
+  .M5-grid .stats-row strong {
+    font-family: var(--f-brand); font-weight: 700; font-size: 14px;
+    color: var(--ink); letter-spacing: 0; text-transform: none;
+  }
+  .M5-grid .stats-row strong em { color: var(--emerald-primary); font-style: italic; }
+
+  .export-tip {
+    color: rgba(255,255,255,0.55);
+    font-size: 13px; line-height: 1.6;
+    max-width: 580px; text-align: center;
+  }
+  .export-tip code {
+    background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px;
+    font-family: monospace; font-size: 12px; color: var(--gold-light);
+  }
+  .export-tip strong { color: white; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="app-header">
+    <h1>L hybrids · combinaciones más fuertes que cualquier L pura</h1>
+    <p>Cruzar dos (o tres) dominios L crea siluetas únicas que ninguna variante individual logra. Cada hibridación toma <em>elementos esenciales</em> de su parent variants y los <em>fusiona</em> en una nueva propuesta — más que la suma de partes.</p>
+  </header>
+
+  <div class="toolbar" role="tablist">
+    <button class="prop-btn active" data-prop="M1">M1 · Espécimen Cartografiado</button>
+    <button class="prop-btn" data-prop="M2">M2 · Lámina Nocturna</button>
+    <button class="prop-btn" data-prop="M3">M3 · Acta Cartográfica</button>
+    <button class="prop-btn" data-prop="M4">M4 · Cartografía Nocturna</button>
+    <button class="prop-btn" data-prop="M5">M5 · Espécimen Mineralógico</button>
+    <span class="divider"></span>
+    <button class="download-btn" id="exportPng">↓ PNG</button>
+    <button class="download-btn" id="exportAll">↓ 2 PNGs</button>
+  </div>
+
+  <p class="strategy-line" id="strategy">
+    <strong>M1 · Espécimen Cartografiado.</strong> Centered specimen + topographic concentric rings con cardinales N/S/E/W marcando coordenadas reales de Muzo. El gem es el centro del territorio. <em>Lo más fuerte:</em> mantiene la limpieza de L1 pero gana especificidad geográfica de L4.
+    <span class="formula">L1 (Espécimen) × L4 (Cartografía)</span>
+  </p>
+
+  <div class="meta-row">
+    <span>Formato <strong>1080 × 1920</strong></span>
+    <span>·</span>
+    <span>Slide <strong id="slideIndicator">1 / 2</strong></span>
+    <span>·</span>
+    <span>Hibridaciones <strong>5</strong></span>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="frame" id="frame">
+
+      <!-- ============ M1 · ESPÉCIMEN CARTOGRAFIADO (L1 × L4) ============ -->
+      <div class="canvas canvas-M1 show" id="canvasM1" data-prop="M1">
+        <div class="progress-bars"><div class="seg active"></div><div class="seg"></div></div>
+        <div class="story-handle"><div class="avatar">tm</div><div class="meta"><span class="name">Tierra Madre</span><span class="timeago">muzo · cuadrícula vii</span></div></div>
+
+        <div class="slide M1-hero active">
+          <div class="top-stamp">Origen Muzo<small>· cuadrícula 07 ·</small></div>
+
+          <div class="map-stage">
+            <div class="ring ring-1"></div>
+            <div class="ring ring-2"></div>
+            <div class="ring ring-3"></div>
+            <div class="ring ring-4"></div>
+            <span class="card-mark n">N<small>5°32′</small></span>
+            <span class="card-mark s">S<small>5°31′</small></span>
+            <span class="card-mark e">E<small>74°05′</small></span>
+            <span class="card-mark w">W<small>74°06′</small></span>
+            <div class="gem-wrap"><div class="gem-stage"></div></div>
+          </div>
+
+          <h1>Una pieza,<br/><em>cien posibles</em><br/>destinos.</h1>
+          <p class="specs">— Esmeralda Venus · 1.85 ct —</p>
+
+          <div class="coord">
+            <span class="left">5°32′N · 74°06′W · 820m</span>
+            <span>Edición vii · 2026</span>
+          </div>
+        </div>
+
+        <div class="slide M1-grid">
+          <h2>Cien <em>parcelas.</em><br/>Una piedra.</h2>
+          <p class="lead">— el bloque que elijas determina tu suerte —</p>
+          <div class="grid-stage">
+            <div class="grid" id="m1Grid"></div>
+          </div>
+          <div class="price-row">
+            <span>Por parcela · <strong>$50<em>K</em> COP</strong></span>
+            <span>Levantadas · <strong>23 / 100</strong></span>
+            <span>Sorteo · <strong>16 / 05</strong></span>
+          </div>
+        </div>
+
+        <div class="cta-bar"><span class="left">tierramadre.studio</span><span class="right">Levanta tu cuadro</span></div>
+        <div class="tap-zones"><button data-go="0"></button><button data-go="1"></button></div>
+      </div>
+
+      <!-- ============ M2 · LÁMINA NOCTURNA (L3 × L5) ============ -->
+      <div class="canvas canvas-M2" id="canvasM2" data-prop="M2">
+        <div class="progress-bars"><div class="seg active"></div><div class="seg"></div></div>
+        <div class="story-handle"><div class="avatar">tm</div><div class="meta"><span class="name">Tierra Madre</span><span class="timeago">colección · vii · nocturna</span></div></div>
+
+        <div class="slide M2-hero active">
+          <div class="specimen-card">
+            <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+            <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+
+            <div class="top-row">
+              <div class="classification">Familia<strong>Beryllidae</strong></div>
+              <div class="accession">Acc.<strong>n° 07</strong>2026</div>
+            </div>
+
+            <div class="gem-wrap"><div class="gem-stage"></div></div>
+
+            <p class="latin-name">Beryllus smaragdus</p>
+            <h1 class="common-name">Esmeralda <em>Venus</em></h1>
+
+            <div class="label-table">
+              <div class="label-row"><span class="key">Loc.</span><span class="val">Muzo · Boyacá · <em>Colombia</em></span></div>
+              <div class="label-row"><span class="key">Coord.</span><span class="val">5°32′N · 74°06′W</span></div>
+              <div class="label-row"><span class="key">Pondus</span><span class="val">1.85 <em>ct</em></span></div>
+              <div class="label-row"><span class="key">Quality</span><span class="val"><em>fina</em></span></div>
+              <div class="label-row"><span class="key">Cert.</span><span class="val">ADN <em>de</em> PAZ</span></div>
+            </div>
+
+            <div class="collector-line">— recolectada en mayo · iluminada en oscuro —</div>
+          </div>
+        </div>
+
+        <div class="slide M2-grid">
+          <h2>Una pieza,<br/><em>cien</em> ejemplares.</h2>
+          <p class="lead">— elige tu espécimen y bríllalo en lo oscuro —</p>
+          <div class="collection">
+            <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+            <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+            <div class="grid" id="m2Grid"></div>
+          </div>
+          <div class="stats-row">
+            <span>Por entrada · <strong>$50<em>K</em> COP</strong></span>
+            <span>Vendidas · <strong>23 / 100</strong></span>
+            <span>Sorteo · <strong>16 / 05</strong></span>
+          </div>
+        </div>
+
+        <div class="cta-bar"><span class="left">tierramadre.studio</span><span class="right">Reserva tu espécimen</span></div>
+        <div class="tap-zones"><button data-go="0"></button><button data-go="1"></button></div>
+      </div>
+
+      <!-- ============ M3 · ACTA CARTOGRÁFICA (L2 × L4) ============ -->
+      <div class="canvas canvas-M3" id="canvasM3" data-prop="M3">
+        <div class="progress-bars"><div class="seg active"></div><div class="seg"></div></div>
+        <div class="story-handle"><div class="avatar">tm</div><div class="meta"><span class="name">Tierra Madre</span><span class="timeago">acta · folio vii · 2026</span></div></div>
+
+        <div class="slide M3-hero active">
+          <div class="col-left">
+            <div>
+              <div class="heading">Acta de Concesión</div>
+              <div class="registry">Folio<strong>n°<em>07</em></strong></div>
+              <div class="mini-map">
+                <div class="compass">N</div>
+                <div class="pin"></div>
+                <div class="pin-label">Muzo</div>
+                <div class="coord">5°32′N · 74°06′W</div>
+              </div>
+            </div>
+            <div class="signature-block">
+              <div class="sig">Tierra Madre</div>
+              <div class="sig-line"></div>
+              <div>Bogotá · 5 / 05 / 2026</div>
+            </div>
+          </div>
+          <div class="col-right">
+            <div class="gem-wrap"><div class="gem-stage"></div></div>
+            <h1>Esmeralda<br/><em>Venus.</em></h1>
+            <p class="preamble">Por la presente, <strong>Tierra Madre S.A.S.</strong> registra el sorteo de una pieza extraída de la cuadrícula 07 de Muzo entre cien parcelas.</p>
+            <div class="specs">
+              <div class="row"><span>Peso</span><strong>1.85 <em>ct</em></strong></div>
+              <div class="row"><span>Origen</span><strong>Muzo · 820m</strong></div>
+              <div class="row"><span>Calidad</span><strong><em>fina</em></strong></div>
+              <div class="row"><span>Cert.</span><strong>ADN de PAZ</strong></div>
+              <div class="row"><span>Sorteo</span><strong>16 / 05 / 2026</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide M3-grid">
+          <h2>Cláusula segunda · <em>las parcelas.</em></h2>
+          <p class="lead">— elige el bloque sobre el cual ha de quedar tu firma —</p>
+          <div class="grid-stage">
+            <div class="grid" id="m3Grid"></div>
+          </div>
+          <div class="signature-row">
+            <div class="left">
+              <strong>Folio reservado</strong>
+              pre-seed: 5xT9 · Q2P7
+            </div>
+            <div class="sig">tm.</div>
+          </div>
+        </div>
+
+        <div class="cta-bar"><span class="left">tierramadre.studio</span><span class="right">Firma tu folio</span></div>
+        <div class="tap-zones"><button data-go="0"></button><button data-go="1"></button></div>
+      </div>
+
+      <!-- ============ M4 · CARTOGRAFÍA NOCTURNA (L4 × L5) ============ -->
+      <div class="canvas canvas-M4" id="canvasM4" data-prop="M4">
+        <div class="progress-bars"><div class="seg active"></div><div class="seg"></div></div>
+        <div class="story-handle"><div class="avatar">tm</div><div class="meta"><span class="name">Tierra Madre</span><span class="timeago">de la mina · vii · nocturna</span></div></div>
+
+        <div class="slide M4-hero active">
+          <div class="top-stamp">Cuadrícula<small>· 07 · nocturna ·</small></div>
+
+          <div class="map-stage">
+            <div class="ring ring-1"></div>
+            <div class="ring ring-2"></div>
+            <div class="ring ring-3"></div>
+            <div class="ring ring-4"></div>
+            <span class="card-mark n">N<small>5°32′</small></span>
+            <span class="card-mark s">S<small>5°31′</small></span>
+            <span class="card-mark e">E<small>74°05′</small></span>
+            <span class="card-mark w">W<small>74°06′</small></span>
+            <div class="gem-wrap"><div class="gem-stage"></div></div>
+          </div>
+
+          <h1>En lo <em>oscuro</em><br/>de la mina,<br/>el verde nace.</h1>
+          <p class="specs">— Esmeralda Venus · 1.85 ct · Muzo —</p>
+
+          <div class="grid-meta">
+            <div class="col"><div>Altitud</div><strong>820 <em>m</em></strong></div>
+            <div class="col"><div>Locality</div><strong>Muzo</strong></div>
+            <div class="col"><div>Edición</div><strong>vii · <em>2026</em></strong></div>
+          </div>
+        </div>
+
+        <div class="slide M4-grid">
+          <h2>Cien <em>parcelas.</em><br/>Una piedra.</h2>
+          <p class="lead">— en lo oscuro, una se ilumina —</p>
+          <div class="grid-stage">
+            <div class="grid" id="m4Grid"></div>
+          </div>
+          <div class="legend">
+            <span><span class="swatch"></span> disponible</span>
+            <span><span class="swatch sold"></span> levantada</span>
+            <span><span class="swatch target"></span> tu cuadro</span>
+          </div>
+        </div>
+
+        <div class="cta-bar"><span class="left">tierramadre.studio</span><span class="right">Levanta tu cuadro</span></div>
+        <div class="tap-zones"><button data-go="0"></button><button data-go="1"></button></div>
+      </div>
+
+      <!-- ============ M5 · ESPÉCIMEN MINERALÓGICO (L1 × L3 × L4 TRIPLE) ============ -->
+      <div class="canvas canvas-M5" id="canvasM5" data-prop="M5">
+        <div class="progress-bars"><div class="seg active"></div><div class="seg"></div></div>
+        <div class="story-handle"><div class="avatar">tm</div><div class="meta"><span class="name">Tierra Madre</span><span class="timeago">museo mineralógico · vii</span></div></div>
+
+        <div class="slide M5-hero active">
+          <div class="specimen-card">
+            <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+            <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+
+            <div class="top-row">
+              <div class="classification">Mineral<strong>Beryllidae</strong></div>
+              <div class="accession">Acc.<strong>n° 07</strong>2026</div>
+            </div>
+
+            <div class="map-stage">
+              <div class="ring ring-1"></div>
+              <div class="ring ring-2"></div>
+              <div class="ring ring-3"></div>
+              <span class="card-mark n">N</span>
+              <span class="card-mark s">S</span>
+              <span class="card-mark e">E</span>
+              <span class="card-mark w">W</span>
+              <div class="gem-wrap"><div class="gem-stage"></div></div>
+            </div>
+
+            <p class="latin-name">Beryllus smaragdus</p>
+            <h1 class="common-name">Esmeralda <em>Venus</em></h1>
+
+            <div class="label-table">
+              <div class="label-row"><span class="key">Loc.</span><span class="val">Muzo · <em>BO</em></span></div>
+              <div class="label-row"><span class="key">Coord.</span><span class="val">5°32′N</span></div>
+              <div class="label-row"><span class="key">Alt.</span><span class="val">820 <em>m</em></span></div>
+              <div class="label-row"><span class="key">Pondus</span><span class="val">1.85 <em>ct</em></span></div>
+              <div class="label-row"><span class="key">Quality</span><span class="val"><em>fina</em></span></div>
+              <div class="label-row"><span class="key">Cert.</span><span class="val">ADN <em>de</em> PAZ</span></div>
+            </div>
+
+            <div class="collector-line">— museo mineralógico TM · pieza única —</div>
+          </div>
+        </div>
+
+        <div class="slide M5-grid">
+          <h2>Una pieza,<br/><em>cien</em> registros.</h2>
+          <p class="lead">— el catálogo mineralógico te espera —</p>
+          <div class="collection">
+            <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+            <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+            <span class="collection-label">CAT · MUZO · 100</span>
+            <div class="grid" id="m5Grid"></div>
+          </div>
+          <div class="stats-row">
+            <span>Por registro · <strong>$50<em>K</em> COP</strong></span>
+            <span>Catalogados · <strong>23 / 100</strong></span>
+            <span>Sorteo · <strong>16 / 05</strong></span>
+          </div>
+        </div>
+
+        <div class="cta-bar"><span class="left">tierramadre.studio</span><span class="right">Cataloga tu pieza</span></div>
+        <div class="tap-zones"><button data-go="0"></button><button data-go="1"></button></div>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="export-tip">
+    <strong>Tips:</strong> tocá una mitad del frame para saltar entre slides. <code>↓ PNG</code> exporta el slide actual a 1080×1920. <code>↓ 2 PNGs</code> exporta el carrusel de la propuesta visible.
+  </p>
+</div>
+
+<script>
+  function scaleCanvases() {
+    const frame = document.getElementById('frame'); if (!frame) return;
+    const w = frame.clientWidth; const scale = w / 1080;
+    document.querySelectorAll('.canvas').forEach(c => c.style.transform = `scale(${scale})`);
+  }
+  window.addEventListener('resize', scaleCanvases);
+
+  const SOLD = [3,7,12,18,22,27,8,14,19,24,33,37,40,46,50,53,58,61,67,72,77,80,88];
+  function buildGrid(wrapId, opts) {
+    const wrap = document.getElementById(wrapId);
+    if (!wrap || wrap.dataset.built) return;
+    wrap.dataset.built = '1';
+    const sold = new Set(opts.sold || SOLD);
+    for (let i = 1; i <= opts.count; i++) {
+      const t = document.createElement('div');
+      t.className = 'tile';
+      if (i === opts.target) t.classList.add('target');
+      else if (sold.has(i)) t.classList.add('sold');
+      t.textContent = String(i).padStart(opts.pad || 2, '0');
+      wrap.appendChild(t);
+    }
+  }
+  buildGrid('m1Grid', { count: 100, target: 42 });
+  buildGrid('m2Grid', { count: 100, target: 42 });
+  buildGrid('m3Grid', { count: 100, target: 42 });
+  buildGrid('m4Grid', { count: 100, target: 42 });
+  buildGrid('m5Grid', { count: 100, target: 42 });
+
+  const STRATEGIES = {
+    M1: '<strong>M1 · Espécimen Cartografiado.</strong> Centered specimen + topographic concentric rings con cardinales N/S/E/W marcando coordenadas reales de Muzo. El gem es el centro del territorio. <em>Lo más fuerte:</em> mantiene la limpieza de L1 pero gana especificidad geográfica de L4.<span class="formula">L1 (Espécimen) × L4 (Cartografía)</span>',
+    M2: '<strong>M2 · Lámina Nocturna.</strong> Herbarium specimen card con corner brackets dorados sobre chiaroscuro shale. La gema irradia luz desde lo oscuro mientras el nombre latino y la classification table aportan rigor académico. <em>Para edición especial premium</em> — luxe nocturno con anclaje científico.<span class="formula">L3 (Herbario) × L5 (Chiaroscuro)</span>',
+    M3: '<strong>M3 · Acta Cartográfica.</strong> Notarial asymmetric split con un mini-mapa Muzo embedded en la columna izquierda. La rifa se vuelve concesión minera registrada legalmente. <em>Comunica trazabilidad institucional</em> — para audiencia que valora documentación oficial + origen específico.<span class="formula">L2 (Acta) × L4 (Cartografía)</span>',
+    M4: '<strong>M4 · Cartografía Nocturna.</strong> Topographic rings + cardinales sobre shale-deep. El gem como única fuente de luz en la mina nocturna. Aurora glow expansivo. <em>Drama máximo + origen literal</em> — para lanzamientos importantes que necesitan parar el scroll.<span class="formula">L4 (Cartografía) × L5 (Chiaroscuro)</span>',
+    M5: '<strong>M5 · Espécimen Mineralógico (TRIPLE).</strong> Centered (L1) + corner brackets (L3) + topographic rings inside (L4) + Latin name. La rifa se vuelve <em>página de museo mineralógico</em>. Tres dominios converging. <em>Para el cliente más sofisticado</em> — coleccionistas, museos, audiencia académica.<span class="formula">L1 × L3 × L4 — triple combo</span>'
+  };
+
+  let currentProp = 'M1';
+  document.querySelectorAll('.prop-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.prop-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentProp = btn.dataset.prop;
+      ['M1','M2','M3','M4','M5'].forEach(p => document.getElementById('canvas' + p).classList.toggle('show', p === currentProp));
+      document.getElementById('strategy').innerHTML = STRATEGIES[currentProp];
+      restartStory();
+      scaleCanvases();
+    });
+  });
+
+  let activeIdx = 0; let timer = null;
+  function setSlide(idx) {
+    activeIdx = idx;
+    const canvas = document.getElementById('canvas' + currentProp); if (!canvas) return;
+    canvas.querySelectorAll('.slide').forEach((el) => el.classList.remove('active'));
+    void canvas.offsetWidth;
+    const target = canvas.querySelectorAll('.slide')[idx];
+    if (target) target.classList.add('active');
+    canvas.querySelectorAll('.progress-bars .seg').forEach((seg, i) => {
+      seg.classList.remove('active', 'done');
+      if (i < idx) seg.classList.add('done');
+      else if (i === idx) seg.classList.add('active');
+    });
+    document.getElementById('slideIndicator').textContent = `${idx + 1} / 2`;
+  }
+  function restartStory() {
+    if (timer) clearInterval(timer);
+    setSlide(0);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 2), 5000);
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-go]'); if (!btn) return;
+    e.stopPropagation();
+    const idx = parseInt(btn.dataset.go, 10);
+    if (timer) clearInterval(timer);
+    setSlide(idx);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 2), 5000);
+  });
+
+  async function exportSlide(prop, slideIdx) {
+    const canvas = document.getElementById('canvas' + prop);
+    canvas.querySelectorAll('.slide').forEach((el, i) => el.classList.toggle('active', i === slideIdx));
+    canvas.querySelectorAll('.progress-bars .seg').forEach((seg, i) => {
+      seg.classList.remove('active', 'done');
+      if (i < slideIdx) seg.classList.add('done');
+      else if (i === slideIdx) seg.classList.add('active');
+    });
+    const prevTransform = canvas.style.transform;
+    const prevDisplay = canvas.style.display;
+    canvas.style.transform = 'scale(1)';
+    canvas.style.display = 'block';
+    await new Promise(r => setTimeout(r, 80));
+    try {
+      const dataUrl = await htmlToImage.toPng(canvas, {
+        width: 1080, height: 1920, pixelRatio: 1, cacheBust: true,
+        style: { transform: 'scale(1)', transformOrigin: 'top left' }
+      });
+      const link = document.createElement('a');
+      link.download = `tm-rifa-hybrid-${prop}-slide${slideIdx + 1}.png`;
+      link.href = dataUrl; link.click();
+    } finally {
+      canvas.style.transform = prevTransform;
+      canvas.style.display = prevDisplay;
+      scaleCanvases();
+    }
+  }
+
+  document.getElementById('exportPng').addEventListener('click', async () => {
+    if (timer) clearInterval(timer);
+    await exportSlide(currentProp, activeIdx);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 2), 5000);
+  });
+
+  document.getElementById('exportAll').addEventListener('click', async () => {
+    if (timer) clearInterval(timer);
+    const btn = document.getElementById('exportAll');
+    btn.disabled = true; btn.style.opacity = '0.6';
+    const original = btn.textContent;
+    for (let i = 0; i < 2; i++) {
+      btn.textContent = `Exportando ${i+1}/2...`;
+      await exportSlide(currentProp, i);
+      await new Promise(r => setTimeout(r, 600));
+    }
+    setSlide(activeIdx);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 2), 5000);
+    btn.textContent = original; btn.disabled = false; btn.style.opacity = '';
+  });
+
+  scaleCanvases();
+  restartStory();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(scaleCanvases);
+</script>
+</body>
+</html>

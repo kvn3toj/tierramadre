@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TM · Story Reels Pack — 4 estilos gráficos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Italianno&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.min.js"></script>
+<style>
+  :root {
+    --emerald-core:  #0E5E47;
+    --emerald-dark:  #083A2E;
+    --emerald-deep:  #052016;
+    --gold:          #C9A24A;
+    --gold-bright:   #E0B85C;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #07090A; color: #fff; font-family: Inter, system-ui, sans-serif; min-height: 100vh; }
+
+  .app { min-height: 100vh; padding: 32px 16px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+  .app-header { text-align: center; max-width: 580px; }
+  .app-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px; font-weight: 600;
+    background: linear-gradient(120deg, var(--gold-bright), var(--gold), #B8E0B8);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 10px;
+  }
+  .app-header p { color: rgba(255,255,255,0.6); font-size: 14px; line-height: 1.5; }
+
+  .toolbar {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    justify-content: center;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 6px;
+    border-radius: 999px;
+    backdrop-filter: blur(8px);
+  }
+  .toolbar button {
+    padding: 10px 16px;
+    border-radius: 999px; border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.7);
+    font-family: inherit; font-size: 12px; font-weight: 500;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 200ms ease;
+  }
+  .toolbar button:hover { color: white; }
+  .toolbar button.active {
+    background: linear-gradient(120deg, var(--emerald-core), var(--gold));
+    color: white;
+  }
+  .toolbar .divider { width: 1px; background: rgba(255,255,255,0.1); margin: 0 4px; }
+  .toolbar .download-btn { background: rgba(201, 162, 74, 0.15); color: var(--gold); }
+  .toolbar .download-btn:hover { background: rgba(201, 162, 74, 0.25); }
+
+  .meta-row {
+    display: flex; gap: 14px; align-items: center;
+    color: rgba(255,255,255,0.5); font-size: 11px;
+    flex-wrap: wrap; justify-content: center;
+    letter-spacing: 0.06em;
+  }
+  .meta-row strong { color: var(--gold); font-weight: 500; }
+
+  /* ============ Stage 9:16 ============ */
+  .stage { width: 100%; max-width: 420px; aspect-ratio: 9/16; position: relative; }
+  .frame {
+    position: absolute; inset: 0; border-radius: 28px; overflow: hidden;
+    box-shadow: 0 40px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+  }
+  .canvas {
+    position: absolute;
+    width: 1080px; height: 1920px;
+    top: 0; left: 0;
+    transform-origin: top left;
+    display: none;
+    overflow: hidden;
+  }
+  .canvas.show { display: block; }
+
+  /* === Common story shell === */
+  .progress-bars {
+    position: absolute; top: 36px; left: 36px; right: 36px;
+    display: flex; gap: 6px; z-index: 6;
+  }
+  .progress-bars .seg {
+    flex: 1; height: 4px; background: rgba(255,255,255,0.25); border-radius: 999px;
+    overflow: hidden; position: relative;
+  }
+  .progress-bars .seg::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; background: white; width: 0%; }
+  .progress-bars .seg.done::after { width: 100%; }
+  .progress-bars .seg.active::after { animation: segfill 4s linear forwards; }
+  @keyframes segfill { from { width: 0%; } to { width: 100%; } }
+
+  .story-handle {
+    position: absolute; top: 60px; left: 36px;
+    z-index: 6;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .story-handle .avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    border: 2px solid white;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 22px;
+  }
+  .story-handle .meta { display: flex; flex-direction: column; line-height: 1.2; color: white; }
+  .story-handle .name { font-weight: 600; font-size: 26px; }
+  .story-handle .timeago { font-size: 14px; color: rgba(255,255,255,0.6); letter-spacing: 0.04em; }
+
+  .slide {
+    position: absolute; inset: 0;
+    opacity: 0; pointer-events: none;
+    transition: opacity 600ms ease;
+    padding: 200px 80px 180px;
+    display: flex; flex-direction: column;
+  }
+  .slide.active { opacity: 1; pointer-events: auto; }
+
+  .cta-bar {
+    position: absolute; left: 36px; right: 36px; bottom: 36px;
+    backdrop-filter: blur(12px);
+    border-radius: 999px;
+    padding: 22px 32px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 22px; letter-spacing: 0.06em;
+    z-index: 6;
+  }
+  .cta-bar .right::after { content: " ↗"; }
+
+  .tap-zones {
+    position: absolute; inset: 0;
+    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
+    z-index: 5;
+  }
+  .tap-zones button { background: transparent; border: none; cursor: pointer; }
+
+  /* ===========================================================
+     D · VOGUE EDITORIAL  — magazine cover, b/w + crimson
+     =========================================================== */
+  .canvas-D {
+    background: #ECE5D8;
+    color: #0A0A0A;
+    font-family: 'Playfair Display', serif;
+  }
+  .canvas-D .progress-bars .seg { background: rgba(0,0,0,0.18); }
+  .canvas-D .progress-bars .seg::after { background: #0A0A0A; }
+  .canvas-D .story-handle .avatar { background: #0A0A0A; color: #ECE5D8; border-color: #0A0A0A; }
+  .canvas-D .story-handle .meta .name { color: #0A0A0A; }
+  .canvas-D .story-handle .meta .timeago { color: rgba(0,0,0,0.55); }
+
+  /* Slide D-1: Cover */
+  .D-cover { background: #0A0A0A; padding: 0; color: #ECE5D8; }
+  .D-cover .masthead {
+    position: absolute; top: 130px; left: 0; right: 0;
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 110px;
+    letter-spacing: 0.04em;
+    line-height: 0.95;
+    color: #ECE5D8;
+  }
+  .D-cover .issue {
+    position: absolute; top: 330px; left: 0; right: 0;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.5em;
+    color: #C2402F;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .D-cover .photo {
+    position: absolute; left: 80px; right: 80px; top: 410px; bottom: 320px;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(201, 162, 74, 0.45), transparent 50%),
+      linear-gradient(135deg, #0F4A38 0%, #0A2A22 60%, #050a08 100%);
+    border-radius: 8px;
+  }
+  .D-cover .photo::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(10,10,10,0.6) 100%);
+    border-radius: 8px;
+  }
+  .D-cover .photo-tag {
+    position: absolute; top: 32px; left: 32px;
+    background: #C2402F; color: #ECE5D8;
+    padding: 8px 16px; border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px; letter-spacing: 0.32em; font-weight: 700;
+  }
+  .D-cover .feature {
+    position: absolute; left: 80px; right: 80px; bottom: 200px;
+    z-index: 2;
+  }
+  .D-cover .feature .label {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px; letter-spacing: 0.42em; color: #C2402F;
+    text-transform: uppercase; font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .D-cover .feature .title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700; font-style: italic;
+    font-size: 132px; line-height: 0.92; letter-spacing: -0.02em;
+    color: #ECE5D8;
+  }
+  .D-cover .barcode {
+    position: absolute; bottom: 130px; right: 80px;
+    width: 200px; height: 80px;
+    background: repeating-linear-gradient(90deg, #ECE5D8 0 3px, transparent 3px 7px, #ECE5D8 7px 9px, transparent 9px 14px);
+  }
+  .D-cover .barcode-meta {
+    position: absolute; bottom: 110px; right: 80px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px; letter-spacing: 0.2em; color: rgba(236,229,216,0.7);
+  }
+
+  /* Slide D-2: Editorial spread */
+  .D-spread { background: #ECE5D8; }
+  .D-spread .col-grid { display: grid; grid-template-columns: 1fr; gap: 48px; flex: 1; align-content: start; padding-top: 40px; }
+  .D-spread .col-grid .photo {
+    aspect-ratio: 4/3;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(201, 162, 74, 0.35), transparent 55%),
+      linear-gradient(135deg, #0F4A38, #052016);
+    border-radius: 4px;
+    position: relative;
+  }
+  .D-spread .col-grid .photo::after {
+    content: "";
+    position: absolute; inset: 16px;
+    border: 1px solid rgba(236,229,216,0.18);
+  }
+  .D-spread .heading {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 122px;
+    line-height: 0.9;
+    letter-spacing: -0.025em;
+    color: #0A0A0A;
+  }
+  .D-spread .heading em { color: #C2402F; font-style: italic; }
+  .D-spread .body {
+    font-family: 'Lora', serif;
+    font-size: 28px;
+    line-height: 1.5;
+    color: #2A2622;
+    column-count: 2; column-gap: 40px;
+    text-align: justify;
+    margin-top: 32px;
+  }
+  .D-spread .body::first-letter {
+    font-family: 'Playfair Display', serif;
+    font-size: 96px; font-weight: 700; font-style: italic;
+    float: left; line-height: 0.85; padding-right: 12px; padding-top: 8px;
+    color: #C2402F;
+  }
+  .D-spread .pullquote {
+    margin-top: 28px;
+    border-top: 1px solid #0A0A0A;
+    border-bottom: 1px solid #0A0A0A;
+    padding: 22px 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px; letter-spacing: 0.38em; text-transform: uppercase;
+    color: #C2402F; font-weight: 600;
+    text-align: center;
+  }
+
+  /* Slide D-3: Index */
+  .D-index { background: #ECE5D8; padding-top: 220px; }
+  .D-index .index-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px; letter-spacing: 0.46em; text-transform: uppercase;
+    color: #C2402F; font-weight: 700;
+    margin-bottom: 24px;
+  }
+  .D-index .index-h {
+    font-family: 'Playfair Display', serif;
+    font-style: italic; font-weight: 700;
+    font-size: 156px; line-height: 0.9; letter-spacing: -0.02em;
+    color: #0A0A0A; margin-bottom: 56px;
+  }
+  .D-index .index-list { border-top: 2px solid #0A0A0A; }
+  .D-index .index-row {
+    display: grid; grid-template-columns: 110px 1fr auto;
+    align-items: baseline;
+    padding: 28px 0;
+    border-bottom: 1px solid rgba(10,10,10,0.18);
+    color: #0A0A0A;
+  }
+  .D-index .index-row .num {
+    font-family: 'Playfair Display', serif;
+    font-style: italic; font-weight: 700;
+    font-size: 64px; line-height: 1;
+    color: #C2402F;
+  }
+  .D-index .index-row .ttl {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    font-size: 56px; line-height: 1.05;
+  }
+  .D-index .index-row .pg {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px; letter-spacing: 0.32em;
+    color: rgba(10,10,10,0.55);
+  }
+
+  /* Slide D-4: Back cover */
+  .D-back { background: #0A0A0A; color: #ECE5D8; padding: 0; }
+  .D-back .label {
+    position: absolute; top: 200px; left: 0; right: 0;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 18px; letter-spacing: 0.5em; color: #C2402F;
+    text-transform: uppercase; font-weight: 700;
+  }
+  .D-back .price {
+    position: absolute; top: 320px; left: 0; right: 0;
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 540px;
+    line-height: 0.85;
+    letter-spacing: -0.04em;
+    color: #ECE5D8;
+  }
+  .D-back .price em { color: #C2402F; font-style: italic; }
+  .D-back .meta {
+    position: absolute; left: 80px; right: 80px; bottom: 240px;
+    text-align: center;
+  }
+  .D-back .meta .name {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600; font-style: italic;
+    font-size: 72px; line-height: 1; letter-spacing: -0.02em;
+  }
+  .D-back .meta .deadline {
+    margin-top: 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 18px; letter-spacing: 0.34em; text-transform: uppercase;
+    color: rgba(236,229,216,0.7);
+  }
+
+  .canvas-D .cta-bar {
+    background: rgba(236,229,216,0.92);
+    color: #0A0A0A;
+    border: 1px solid #0A0A0A;
+  }
+  .canvas-D .cta-bar .left {
+    font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600;
+    font-size: 28px; color: #C2402F;
+  }
+  .canvas-D .cta-bar .right { font-weight: 600; font-size: 18px; letter-spacing: 0.18em; text-transform: uppercase; }
+
+  /* ===========================================================
+     E · CYBER NEON  — terminal, glitch, neon
+     =========================================================== */
+  .canvas-E {
+    background: #050708;
+    color: #00FF88;
+    font-family: 'JetBrains Mono', 'Space Mono', monospace;
+  }
+  .canvas-E::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,255,136,0.04) 0px, rgba(0,255,136,0.04) 1px, transparent 1px, transparent 4px);
+    pointer-events: none; z-index: 1;
+  }
+  .canvas-E .progress-bars .seg { background: rgba(0,255,136,0.15); }
+  .canvas-E .progress-bars .seg::after { background: #00FF88; }
+  .canvas-E .story-handle .avatar { background: #00FF88; color: #050708; border-color: #00FF88; }
+  .canvas-E .story-handle .name { color: #00FF88; font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+  .canvas-E .story-handle .timeago { color: #FF00DD; font-family: 'JetBrains Mono', monospace; }
+
+  /* Slide E-1: Boot */
+  .E-boot { background: #050708; }
+  .E-boot .term-window {
+    margin-top: 60px;
+    border: 2px solid #00FF88;
+    background: rgba(0, 255, 136, 0.04);
+    border-radius: 4px;
+    padding: 36px;
+    font-size: 28px;
+    line-height: 1.6;
+    color: #00FF88;
+    flex: 1;
+    position: relative;
+  }
+  .E-boot .term-window::before {
+    content: "▲ tierramadre@lottery: ~/rifa07";
+    position: absolute; top: -36px; left: 0;
+    font-size: 18px; letter-spacing: 0.16em;
+    color: #00FF88;
+    font-weight: 500;
+  }
+  .E-boot .term-line { display: block; margin-bottom: 6px; }
+  .E-boot .prompt { color: #FF00DD; }
+  .E-boot .key { color: #FFB800; }
+  .E-boot .ok { color: #00FF88; }
+  .E-boot .ascii {
+    font-size: 22px; line-height: 1.0; letter-spacing: 0;
+    color: #FF00DD;
+    margin-top: 24px;
+    white-space: pre; font-family: monospace;
+  }
+  .E-boot .cursor {
+    display: inline-block;
+    width: 14px; height: 32px;
+    background: #00FF88; vertical-align: middle;
+    margin-left: 8px;
+    animation: e-blink 0.7s infinite steps(2, start);
+  }
+  @keyframes e-blink { to { visibility: hidden; } }
+  .E-boot .glitch-title {
+    margin-top: 56px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700; font-size: 132px; letter-spacing: -0.02em;
+    color: white;
+    text-shadow:
+      3px 0 0 #FF00DD,
+      -3px 0 0 #00FF88,
+      0 0 30px rgba(0,255,136,0.4);
+    line-height: 0.95;
+  }
+
+  /* Slide E-2: Grid scan */
+  .E-grid-scan { background: #050708; padding-top: 200px; }
+  .E-grid-scan .top-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    color: #00FF88; font-size: 22px; margin-bottom: 36px;
+    letter-spacing: 0.08em;
+  }
+  .E-grid-scan .top-meta .key { color: #FF00DD; }
+  .E-grid-scan h2 {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700; font-size: 96px;
+    color: white; line-height: 1; letter-spacing: -0.02em;
+    margin-bottom: 28px;
+  }
+  .E-grid-scan h2 em { color: #00FF88; font-style: normal; }
+  .E-grid-scan .grid {
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px;
+    flex: 1; align-content: center;
+    position: relative;
+  }
+  .E-grid-scan .tile {
+    aspect-ratio: 1; border-radius: 2px;
+    background: rgba(0,255,136,0.04);
+    border: 1px solid rgba(0,255,136,0.25);
+    color: #00FF88;
+    display: grid; place-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500; font-size: 26px;
+    font-variant-numeric: tabular-nums;
+  }
+  .E-grid-scan .tile.sold {
+    background: rgba(255,0,221,0.08); color: rgba(255,255,255,0.4);
+    border-color: rgba(255,255,255,0.18);
+    text-decoration: line-through;
+  }
+  .E-grid-scan .tile.target {
+    background: #00FF88; color: #050708;
+    border-color: #FFB800;
+    box-shadow: 0 0 32px rgba(0,255,136,0.7);
+    font-weight: 700;
+  }
+  .E-grid-scan .scan-line {
+    position: absolute; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, #FF00DD, #00FF88, #FF00DD, transparent);
+    top: 0;
+    animation: e-scan 4s infinite linear;
+    box-shadow: 0 0 16px #FF00DD;
+  }
+  @keyframes e-scan { 0% { top: 0; } 100% { top: 100%; } }
+  .E-grid-scan .legend {
+    margin-top: 36px;
+    display: flex; gap: 20px; flex-wrap: wrap;
+    color: #00FF88; font-size: 18px; letter-spacing: 0.1em;
+  }
+  .E-grid-scan .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .E-grid-scan .legend .dot { width: 14px; height: 14px; border: 1px solid currentColor; }
+  .E-grid-scan .legend .dot.sold { background: rgba(255,0,221,0.4); }
+  .E-grid-scan .legend .dot.target { background: #00FF88; }
+
+  /* Slide E-3: command sequence */
+  .E-cmd { background: #050708; padding-top: 200px; }
+  .E-cmd h2 {
+    font-family: 'Space Mono', monospace; font-weight: 700;
+    font-size: 88px; line-height: 1; letter-spacing: -0.02em; color: white;
+    margin-bottom: 56px;
+  }
+  .E-cmd h2 em { color: #FF00DD; font-style: normal; }
+  .E-cmd .cmd-list { display: flex; flex-direction: column; gap: 24px; flex: 1; }
+  .E-cmd .cmd {
+    background: rgba(0,255,136,0.06);
+    border: 1px solid rgba(0,255,136,0.3);
+    padding: 28px 32px;
+    border-radius: 2px;
+    font-size: 28px;
+  }
+  .E-cmd .cmd .line { color: #00FF88; margin-bottom: 12px; }
+  .E-cmd .cmd .line .prompt { color: #FF00DD; margin-right: 8px; }
+  .E-cmd .cmd .out { color: rgba(255,255,255,0.65); font-size: 22px; margin-bottom: 14px; }
+  .E-cmd .progress-line {
+    height: 6px; background: rgba(0,255,136,0.15); border-radius: 999px;
+    overflow: hidden; position: relative;
+  }
+  .E-cmd .progress-line::after {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    background: linear-gradient(90deg, #00FF88, #FFB800);
+  }
+  .E-cmd .cmd:nth-child(1) .progress-line::after { width: 100%; }
+  .E-cmd .cmd:nth-child(2) .progress-line::after { width: 100%; }
+  .E-cmd .cmd:nth-child(3) .progress-line::after { width: 65%; }
+
+  /* Slide E-4: Winner */
+  .E-winner {
+    background:
+      radial-gradient(circle at 50% 50%, rgba(0,255,136,0.25), transparent 60%),
+      #050708;
+    padding-top: 240px;
+    text-align: center;
+    align-items: center;
+  }
+  .E-winner .label {
+    color: #FF00DD; font-size: 22px; letter-spacing: 0.5em;
+    text-transform: uppercase; font-weight: 700; margin-bottom: 36px;
+  }
+  .E-winner .num-frame {
+    width: 480px; height: 480px;
+    border: 3px solid #00FF88;
+    background: rgba(0,255,136,0.08);
+    display: grid; place-items: center;
+    margin-bottom: 56px;
+    box-shadow:
+      0 0 0 8px rgba(0,255,136,0.15),
+      0 0 80px rgba(0,255,136,0.6),
+      inset 0 0 60px rgba(0,255,136,0.2);
+    animation: e-pulse 2.4s infinite ease-in-out;
+    position: relative;
+  }
+  .E-winner .num-frame::before, .E-winner .num-frame::after {
+    content: ""; position: absolute; width: 24px; height: 24px;
+    border: 3px solid #FF00DD;
+  }
+  .E-winner .num-frame::before { top: -12px; left: -12px; border-right: none; border-bottom: none; }
+  .E-winner .num-frame::after { bottom: -12px; right: -12px; border-left: none; border-top: none; }
+  @keyframes e-pulse {
+    0%, 100% { box-shadow: 0 0 0 8px rgba(0,255,136,0.15), 0 0 80px rgba(0,255,136,0.6), inset 0 0 60px rgba(0,255,136,0.2); }
+    50% { box-shadow: 0 0 0 16px rgba(0,255,136,0.2), 0 0 120px rgba(0,255,136,0.9), inset 0 0 80px rgba(0,255,136,0.3); }
+  }
+  .E-winner .num-frame span {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700; font-size: 320px;
+    color: white;
+    text-shadow: 4px 0 0 #FF00DD, -4px 0 0 #00FF88;
+    line-height: 1;
+  }
+  .E-winner .stamp {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700; font-size: 38px; letter-spacing: 0.2em;
+    color: #00FF88;
+    border: 2px solid #00FF88; padding: 18px 44px;
+    transform: rotate(-3deg);
+    background: rgba(0,255,136,0.08);
+  }
+  .E-winner .footer-meta {
+    margin-top: 48px;
+    color: rgba(255,255,255,0.6);
+    font-size: 18px; letter-spacing: 0.34em;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .canvas-E .cta-bar {
+    background: rgba(0,255,136,0.08);
+    color: white;
+    border: 1px solid #00FF88;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .canvas-E .cta-bar .left { color: #FF00DD; font-weight: 700; font-size: 24px; }
+  .canvas-E .cta-bar .right { color: #00FF88; font-weight: 700; font-size: 18px; letter-spacing: 0.2em; text-transform: uppercase; }
+
+  /* ===========================================================
+     F · BOTANICAL SOFT  — cream, sage, brushed gold, hand-drawn
+     =========================================================== */
+  .canvas-F {
+    background: #F8F1E4;
+    color: #3D3527;
+    font-family: 'Lora', serif;
+    position: relative;
+  }
+  .canvas-F .progress-bars .seg { background: rgba(61,53,39,0.18); }
+  .canvas-F .progress-bars .seg::after { background: #5A6845; }
+  .canvas-F .story-handle .avatar { background: #5A6845; color: #F8F1E4; border-color: #F8F1E4; font-family: 'Italianno', cursive; font-weight: 400; }
+  .canvas-F .story-handle .name { color: #3D3527; font-family: 'Italianno', cursive; font-weight: 400; font-size: 36px; }
+  .canvas-F .story-handle .timeago { color: #8A7E6A; }
+
+  .F-leaves {
+    position: absolute; pointer-events: none;
+    color: #B8C7A5;
+  }
+  .F-leaves svg { width: 100%; height: 100%; }
+
+  /* Slide F-1: Floral hero */
+  .F-hero { background: #F8F1E4; padding-top: 240px; }
+  .F-hero::before, .F-hero::after {
+    content: ""; position: absolute;
+    width: 380px; height: 380px;
+    background-repeat: no-repeat;
+    background-size: contain;
+  }
+  .F-hero .leaf-tl { position: absolute; top: 140px; left: -60px; width: 320px; height: 320px; opacity: 0.7; }
+  .F-hero .leaf-br { position: absolute; bottom: -40px; right: -40px; width: 380px; height: 380px; opacity: 0.55; transform: rotate(150deg); }
+  .F-hero .label {
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px; letter-spacing: 0.46em; color: #B89060;
+    text-transform: uppercase; font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .F-hero .ornament { text-align: center; margin: 0 auto 20px; color: #C9A24A; font-size: 24px; letter-spacing: 0.4em; }
+  .F-hero h1 {
+    font-family: 'Italianno', cursive;
+    font-weight: 400;
+    font-size: 240px;
+    line-height: 0.85;
+    color: #3D3527;
+    text-align: center;
+    letter-spacing: 0.01em;
+  }
+  .F-hero h1 em { color: #5A6845; }
+  .F-hero .ct {
+    text-align: center;
+    font-family: 'Lora', serif; font-style: italic;
+    font-size: 36px;
+    color: #5A6845;
+    margin-top: 16px;
+    letter-spacing: 0.04em;
+  }
+  .F-hero .invite {
+    margin-top: auto;
+    text-align: center;
+    font-family: 'Lora', serif;
+    font-size: 26px;
+    line-height: 1.5;
+    color: #5A4D3A;
+    max-width: 720px;
+    margin-left: auto; margin-right: auto;
+  }
+  .F-hero .invite em {
+    font-family: 'Italianno', cursive;
+    font-style: normal;
+    color: #B89060;
+    font-size: 36px;
+  }
+
+  /* Slide F-2: Garden grid */
+  .F-garden { background: #F8F1E4; padding-top: 220px; }
+  .F-garden h2 {
+    text-align: center;
+    font-family: 'Italianno', cursive;
+    font-weight: 400;
+    font-size: 156px; line-height: 1; color: #3D3527;
+    margin-bottom: 8px;
+  }
+  .F-garden h2 em { color: #B89060; }
+  .F-garden .lead {
+    text-align: center;
+    font-family: 'Lora', serif; font-style: italic;
+    font-size: 26px; color: #5A4D3A;
+    margin-bottom: 56px;
+    letter-spacing: 0.02em;
+  }
+  .F-garden .grid {
+    display: grid; grid-template-columns: repeat(8, 1fr);
+    gap: 10px; flex: 1;
+    align-content: center;
+  }
+  .F-garden .tile {
+    aspect-ratio: 1; border-radius: 12px;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(184,144,96,0.3);
+    color: #3D3527;
+    display: grid; place-items: center;
+    font-family: 'Lora', serif; font-weight: 500;
+    font-size: 22px;
+    font-variant-numeric: tabular-nums;
+    box-shadow: 0 1px 2px rgba(61,53,39,0.06);
+  }
+  .F-garden .tile.sold {
+    background: #5A6845; color: #F8F1E4; border-color: #5A6845;
+  }
+  .F-garden .tile.bloom {
+    background: #B89060; color: #F8F1E4; border-color: #C9A24A;
+    box-shadow: 0 0 0 4px rgba(201,162,74,0.3), 0 8px 16px rgba(184,144,96,0.4);
+    transform: scale(1.06);
+  }
+  .F-garden .price-line {
+    margin-top: 56px;
+    text-align: center;
+    font-family: 'Italianno', cursive;
+    font-size: 80px;
+    color: #B89060;
+  }
+  .F-garden .price-line small {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px; letter-spacing: 0.34em;
+    color: #5A4D3A; text-transform: uppercase;
+    display: block; margin-top: 6px;
+    font-weight: 500;
+  }
+
+  /* Slide F-3: Petals as steps */
+  .F-petals { background: #F8F1E4; padding-top: 220px; align-items: center; text-align: center; }
+  .F-petals h2 {
+    font-family: 'Italianno', cursive; font-weight: 400;
+    font-size: 156px; line-height: 1; color: #3D3527;
+    margin-bottom: 12px;
+  }
+  .F-petals h2 em { color: #5A6845; }
+  .F-petals .sub {
+    font-family: 'Lora', serif; font-style: italic;
+    font-size: 26px; color: #5A4D3A;
+    margin-bottom: 72px;
+  }
+  .F-petals .flower-wrap {
+    width: 720px; height: 720px;
+    position: relative;
+    margin: 0 auto 24px;
+  }
+  .F-petals .petal {
+    position: absolute;
+    width: 280px; height: 280px;
+    background: linear-gradient(135deg, rgba(184,144,96,0.18), rgba(184,144,96,0.05));
+    border: 1.5px solid rgba(184,144,96,0.5);
+    border-radius: 60% 40% 70% 30%;
+    display: grid; place-items: center;
+    text-align: center; padding: 32px;
+  }
+  .F-petals .petal.p1 { top: 0; left: 50%; transform: translateX(-50%) rotate(0deg); border-radius: 60% 60% 30% 30%; }
+  .F-petals .petal.p2 { bottom: 60px; left: 0; transform: rotate(-45deg); border-radius: 50% 50% 80% 20%; }
+  .F-petals .petal.p3 { bottom: 60px; right: 0; transform: rotate(45deg); border-radius: 50% 50% 20% 80%; }
+  .F-petals .petal-content { transform: rotate(0deg); }
+  .F-petals .petal.p2 .petal-content { transform: rotate(45deg); }
+  .F-petals .petal.p3 .petal-content { transform: rotate(-45deg); }
+  .F-petals .petal .num {
+    font-family: 'Italianno', cursive; font-size: 96px;
+    color: #B89060; line-height: 0.8; margin-bottom: 4px;
+  }
+  .F-petals .petal .label {
+    font-family: 'Lora', serif; font-weight: 500; font-style: italic;
+    font-size: 26px; color: #3D3527;
+  }
+  .F-petals .center {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle, #C9A24A 50%, #B89060 100%);
+    box-shadow: 0 0 0 8px rgba(184,144,96,0.18), 0 4px 12px rgba(61,53,39,0.18);
+  }
+  .F-petals .timer-line {
+    margin-top: auto;
+    font-family: 'Italianno', cursive;
+    font-size: 56px; color: #5A6845;
+  }
+  .F-petals .timer-line strong { color: #B89060; }
+
+  /* Slide F-4: Bloom winner */
+  .F-bloom {
+    background:
+      radial-gradient(circle at 50% 60%, rgba(184,144,96,0.25), transparent 65%),
+      #F8F1E4;
+    padding-top: 220px; align-items: center; text-align: center;
+  }
+  .F-bloom .label {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px; letter-spacing: 0.5em; color: #B89060;
+    text-transform: uppercase; font-weight: 600; margin-bottom: 32px;
+  }
+  .F-bloom .bloom-stage {
+    width: 600px; height: 600px;
+    position: relative;
+    margin: 0 auto 48px;
+  }
+  .F-bloom .bloom-stage svg.flower {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    color: #C9A24A;
+    animation: f-spin 24s linear infinite;
+  }
+  @keyframes f-spin { to { transform: rotate(360deg); } }
+  .F-bloom .bloom-stage .num-circle {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #B89060, #C9A24A);
+    display: grid; place-items: center;
+    box-shadow: 0 0 0 8px rgba(248,241,228,0.6), 0 0 80px rgba(184,144,96,0.4);
+  }
+  .F-bloom .bloom-stage .num-circle span {
+    font-family: 'Italianno', cursive;
+    font-size: 220px; color: #F8F1E4;
+    line-height: 0.85;
+  }
+  .F-bloom .winner-msg {
+    font-family: 'Italianno', cursive;
+    font-size: 124px;
+    line-height: 1; color: #3D3527;
+  }
+  .F-bloom .winner-msg em { color: #5A6845; }
+  .F-bloom .winner-meta {
+    margin-top: 24px;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px; letter-spacing: 0.36em;
+    color: #B89060; text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .canvas-F .cta-bar {
+    background: rgba(255,255,255,0.7);
+    color: #3D3527;
+    border: 1px solid rgba(184,144,96,0.5);
+  }
+  .canvas-F .cta-bar .left {
+    font-family: 'Italianno', cursive; font-weight: 400;
+    font-size: 36px; color: #5A6845;
+  }
+  .canvas-F .cta-bar .right { font-weight: 600; font-size: 18px; letter-spacing: 0.18em; text-transform: uppercase; color: #B89060; }
+
+  /* ===========================================================
+     G · LIQUID CHROME / HOLO  — iridescent, futuristic luxe
+     =========================================================== */
+  .canvas-G {
+    background: #07090C;
+    color: white;
+    font-family: 'Manrope', sans-serif;
+  }
+  .canvas-G .progress-bars .seg { background: rgba(255,255,255,0.2); }
+  .canvas-G .progress-bars .seg::after {
+    background: linear-gradient(90deg, #87E2D6, #B8A2E8, #FF8FB1);
+  }
+  .canvas-G .story-handle .avatar {
+    background: linear-gradient(135deg, #87E2D6, #B8A2E8 50%, #FF8FB1);
+    color: #07090C;
+    border-color: white;
+  }
+  .canvas-G .story-handle .name { color: white; font-weight: 700; }
+  .canvas-G .story-handle .timeago { color: rgba(255,255,255,0.55); }
+
+  .holo-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 30% 20%, rgba(135,226,214,0.6), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 70% 30%, rgba(255,143,177,0.45), transparent 60%),
+      radial-gradient(ellipse 70% 60% at 50% 80%, rgba(184,162,232,0.55), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 70%, rgba(79,143,255,0.4), transparent 60%),
+      linear-gradient(180deg, #0F1218 0%, #07090C 100%);
+    filter: saturate(1.1);
+  }
+
+  /* Slide G-1: Chrome cover */
+  .G-cover { padding-top: 220px; }
+  .G-cover .label {
+    text-align: center;
+    font-family: 'Manrope', sans-serif;
+    font-size: 18px; letter-spacing: 0.5em;
+    text-transform: uppercase; font-weight: 600;
+    background: linear-gradient(120deg, #87E2D6, #FF8FB1);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 24px;
+  }
+  .G-cover h1 {
+    text-align: center;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 280px; line-height: 0.85;
+    letter-spacing: -0.04em;
+    background:
+      linear-gradient(180deg,
+        #FFFFFF 0%,
+        #C7D9F0 25%,
+        #B8A2E8 50%,
+        #87E2D6 75%,
+        #FF8FB1 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 8px 24px rgba(184,162,232,0.4);
+    margin-bottom: 36px;
+  }
+  .G-cover .prize-card {
+    margin-top: 24px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 28px;
+    padding: 36px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    text-align: center;
+  }
+  .G-cover .prize-card .l {
+    font-size: 14px; letter-spacing: 0.42em; color: rgba(255,255,255,0.6);
+    text-transform: uppercase; font-weight: 600; margin-bottom: 14px;
+  }
+  .G-cover .prize-card .n {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 300; font-size: 80px;
+    color: white; line-height: 1; letter-spacing: -0.02em;
+  }
+  .G-cover .prize-card .ct { font-size: 22px; color: #87E2D6; margin-top: 12px; letter-spacing: 0.06em; }
+  .G-cover .swipe {
+    margin-top: auto;
+    text-align: center;
+    font-size: 16px; letter-spacing: 0.4em; text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    font-weight: 600;
+  }
+
+  /* Slide G-2: Hologram grid */
+  .G-grid { padding-top: 220px; }
+  .G-grid h2 {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800; font-size: 96px;
+    line-height: 0.95; letter-spacing: -0.03em;
+    background: linear-gradient(120deg, white, #B8A2E8);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 12px;
+  }
+  .G-grid .lead { color: rgba(255,255,255,0.65); font-size: 24px; margin-bottom: 56px; letter-spacing: 0.02em; }
+  .G-grid .grid {
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px;
+    flex: 1; align-content: center;
+  }
+  .G-grid .tile {
+    aspect-ratio: 1; border-radius: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+    color: rgba(255,255,255,0.7);
+    display: grid; place-items: center;
+    font-weight: 600; font-size: 22px;
+    font-variant-numeric: tabular-nums;
+  }
+  .G-grid .tile.sold {
+    background: linear-gradient(135deg, rgba(135,226,214,0.2), rgba(184,162,232,0.2));
+    color: rgba(255,255,255,0.4);
+    border-color: rgba(255,255,255,0.1);
+  }
+  .G-grid .tile.holo {
+    background: linear-gradient(135deg, #87E2D6, #B8A2E8 50%, #FF8FB1);
+    color: #07090C; font-weight: 800;
+    border-color: white;
+    box-shadow:
+      0 0 0 4px rgba(255,255,255,0.18),
+      0 12px 32px rgba(184,162,232,0.5),
+      inset 0 0 20px rgba(255,255,255,0.4);
+    transform: scale(1.1) translateZ(0);
+  }
+  .G-grid .stats {
+    margin-top: 56px;
+    display: flex; justify-content: space-between;
+    color: white;
+  }
+  .G-grid .stat .l { font-size: 14px; letter-spacing: 0.32em; color: rgba(255,255,255,0.55); text-transform: uppercase; font-weight: 600; }
+  .G-grid .stat .v {
+    font-family: 'Manrope', sans-serif; font-weight: 800;
+    font-size: 64px; line-height: 1;
+    background: linear-gradient(120deg, #87E2D6, #FF8FB1);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .G-grid .stat .v small { font-weight: 500; font-size: 18px; color: rgba(255,255,255,0.55); margin-left: 4px; -webkit-text-fill-color: rgba(255,255,255,0.55); }
+
+  /* Slide G-3: Glass cards */
+  .G-cards { padding-top: 220px; }
+  .G-cards h2 {
+    font-family: 'Manrope', sans-serif; font-weight: 800;
+    font-size: 92px; line-height: 0.95; letter-spacing: -0.03em;
+    color: white; margin-bottom: 56px;
+  }
+  .G-cards h2 em {
+    background: linear-gradient(120deg, #87E2D6, #FF8FB1);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-style: normal;
+  }
+  .G-cards .cards { display: flex; flex-direction: column; gap: 24px; flex: 1; }
+  .G-cards .card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 28px;
+    padding: 36px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 28px; align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .G-cards .card::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%);
+    pointer-events: none;
+  }
+  .G-cards .card .icon {
+    width: 96px; height: 96px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #87E2D6, #B8A2E8 50%, #FF8FB1);
+    display: grid; place-items: center;
+    font-family: 'Manrope', sans-serif; font-weight: 800;
+    font-size: 48px; color: #07090C;
+  }
+  .G-cards .card .text .t { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 40px; line-height: 1.05; margin-bottom: 4px; color: white; }
+  .G-cards .card .text .d { color: rgba(255,255,255,0.65); font-size: 22px; }
+  .G-cards .timer-pill {
+    margin-top: 28px;
+    background: linear-gradient(120deg, rgba(135,226,214,0.18), rgba(255,143,177,0.18));
+    border: 1px solid rgba(255,255,255,0.18);
+    color: white;
+    border-radius: 999px;
+    padding: 22px 32px;
+    text-align: center;
+    font-size: 20px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600;
+  }
+  .G-cards .timer-pill strong {
+    font-size: 36px; letter-spacing: 0.04em; margin: 0 6px; vertical-align: middle;
+    background: linear-gradient(120deg, #87E2D6, #FF8FB1);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-weight: 800;
+  }
+
+  /* Slide G-4: Aurora winner */
+  .G-winner {
+    padding-top: 240px;
+    align-items: center; text-align: center;
+  }
+  .G-winner::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 30% 40%, rgba(135,226,214,0.35), transparent 50%),
+      radial-gradient(circle at 70% 60%, rgba(255,143,177,0.35), transparent 50%),
+      radial-gradient(circle at 50% 80%, rgba(184,162,232,0.4), transparent 50%);
+    animation: g-aurora 8s ease-in-out infinite alternate;
+    z-index: 0;
+  }
+  @keyframes g-aurora {
+    0% { transform: translateX(-2%) translateY(-1%) scale(1); }
+    100% { transform: translateX(2%) translateY(2%) scale(1.05); }
+  }
+  .G-winner > * { position: relative; z-index: 2; }
+  .G-winner .label {
+    font-size: 18px; letter-spacing: 0.5em; text-transform: uppercase; font-weight: 700;
+    background: linear-gradient(120deg, #87E2D6, #FF8FB1);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 36px;
+  }
+  .G-winner .num-frame {
+    width: 540px; height: 540px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, white 5%, transparent 30%),
+      conic-gradient(from 0deg, #87E2D6, #B8A2E8, #FF8FB1, #87E2D6);
+    display: grid; place-items: center;
+    margin-bottom: 56px;
+    box-shadow: 0 0 80px rgba(184,162,232,0.6);
+    position: relative;
+    animation: g-rotate 20s linear infinite;
+  }
+  @keyframes g-rotate { to { transform: rotate(360deg); } }
+  .G-winner .num-frame::after {
+    content: ""; position: absolute; inset: 24px;
+    border-radius: 50%;
+    background: rgba(7, 9, 12, 0.92);
+    backdrop-filter: blur(8px);
+  }
+  .G-winner .num-frame span {
+    position: relative; z-index: 2;
+    font-family: 'Manrope', sans-serif; font-weight: 800;
+    font-size: 320px; line-height: 1;
+    background: linear-gradient(180deg, white 30%, #87E2D6 60%, #FF8FB1 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: g-counter-rotate 20s linear infinite;
+  }
+  @keyframes g-counter-rotate { to { transform: rotate(-360deg); } }
+  .G-winner .winner-msg {
+    font-family: 'Manrope', sans-serif; font-weight: 800;
+    font-size: 80px; line-height: 1; letter-spacing: -0.03em;
+    color: white; margin-bottom: 14px;
+  }
+  .G-winner .winner-msg em {
+    background: linear-gradient(120deg, #87E2D6, #FF8FB1);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-style: normal;
+  }
+  .G-winner .winner-meta { font-size: 18px; letter-spacing: 0.34em; color: rgba(255,255,255,0.6); text-transform: uppercase; font-weight: 500; }
+
+  .canvas-G .cta-bar {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+  }
+  .canvas-G .cta-bar .left {
+    font-weight: 700; font-size: 24px;
+    background: linear-gradient(120deg, #87E2D6, #FF8FB1);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .canvas-G .cta-bar .right { font-weight: 700; font-size: 18px; letter-spacing: 0.2em; text-transform: uppercase; }
+
+  /* ============ Tip ============ */
+  .export-tip {
+    color: rgba(255,255,255,0.55);
+    font-size: 13px;
+    line-height: 1.6;
+    max-width: 460px; text-align: center;
+    margin-top: 4px;
+  }
+  .export-tip code {
+    background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px;
+    font-family: monospace; font-size: 12px; color: var(--gold);
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="app-header">
+    <h1>Story Reels Pack · 4 estilos gráficos</h1>
+    <p>Mismo formato que la propuesta C: 4 slides 9:16 con auto-advance, barras de progreso tipo IG, handle y CTA bar. Cada variante propone una identidad visual distinta para el mismo guión.</p>
+  </header>
+
+  <div class="toolbar" role="tablist">
+    <button class="prop-btn active" data-prop="D" role="tab">D · Vogue Editorial</button>
+    <button class="prop-btn" data-prop="E" role="tab">E · Cyber Neon</button>
+    <button class="prop-btn" data-prop="F" role="tab">F · Botanical</button>
+    <button class="prop-btn" data-prop="G" role="tab">G · Liquid Chrome</button>
+    <span class="divider"></span>
+    <button class="download-btn" id="exportPng">↓ PNG</button>
+    <button class="download-btn" id="exportAll">↓ 4 PNGs (slide actual)</button>
+  </div>
+
+  <div class="meta-row">
+    <span>Formato <strong>1080 × 1920</strong></span>
+    <span>·</span>
+    <span>Aspect <strong>9:16</strong></span>
+    <span>·</span>
+    <span>Slide <strong id="slideIndicator">1 / 4</strong></span>
+    <span>·</span>
+    <span>Auto-advance <strong>4s</strong></span>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="frame" id="frame">
+
+      <!-- ============ D · VOGUE EDITORIAL ============ -->
+      <div class="canvas canvas-D show" id="canvasD" data-prop="D">
+        <div class="progress-bars">
+          <div class="seg active"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+        </div>
+        <div class="story-handle">
+          <div class="avatar">TM</div>
+          <div class="meta"><span class="name">tierramadre.studio</span><span class="timeago">vol. 07 · mayo</span></div>
+        </div>
+
+        <!-- D-1 Cover -->
+        <div class="slide D-cover active">
+          <div class="masthead">TIERRA · MADRE</div>
+          <div class="issue">VOL. 07 / MAYO / 2026</div>
+          <div class="photo">
+            <div class="photo-tag">RIFA · 100 NÚMEROS</div>
+          </div>
+          <div class="feature">
+            <div class="label">El sorteo de la temporada</div>
+            <div class="title">Esmeralda<br/>Venus.</div>
+          </div>
+          <div class="barcode-meta">$50K · COP · 1.85 ct</div>
+          <div class="barcode"></div>
+        </div>
+
+        <!-- D-2 Spread -->
+        <div class="slide D-spread">
+          <div class="col-grid">
+            <div>
+              <div class="heading">Una pieza,<br/><em>cien posibles</em><br/>destinos.</div>
+              <div class="body">Una esmeralda colombiana certificada con ADN de PAZ se sortea entre cien números. Reservas tu número, completas el pago en treinta minutos y subes el comprobante. Un asesor lo verifica y lo confirma. El resto es esperar.</div>
+              <div class="pullquote">— Un solo ganador real —</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- D-3 Index -->
+        <div class="slide D-index">
+          <div class="index-label">Cómo funciona</div>
+          <div class="index-h"><em>Índice.</em></div>
+          <div class="index-list">
+            <div class="index-row"><div class="num">01</div><div class="ttl">Reserva tu número</div><div class="pg">P. 042</div></div>
+            <div class="index-row"><div class="num">02</div><div class="ttl">Confirma el pago</div><div class="pg">P. 087</div></div>
+            <div class="index-row"><div class="num">03</div><div class="ttl">Sube el comprobante</div><div class="pg">P. 124</div></div>
+            <div class="index-row"><div class="num">04</div><div class="ttl">Espera el sorteo</div><div class="pg">P. 168</div></div>
+          </div>
+        </div>
+
+        <!-- D-4 Back -->
+        <div class="slide D-back">
+          <div class="label">Edition closes · 16 / 05</div>
+          <div class="price">$50<em>K</em></div>
+          <div class="meta">
+            <div class="name">Cien números. Un ganador.</div>
+            <div class="deadline">tierra-madre-studio.vercel.app</div>
+          </div>
+        </div>
+
+        <div class="cta-bar">
+          <span class="left">@tierramadre.studio</span>
+          <span class="right">Reserva ya</span>
+        </div>
+        <div class="tap-zones">
+          <button data-go="0"></button><button data-go="1"></button><button data-go="2"></button><button data-go="3"></button>
+        </div>
+      </div>
+
+      <!-- ============ E · CYBER NEON ============ -->
+      <div class="canvas canvas-E" id="canvasE" data-prop="E">
+        <div class="progress-bars">
+          <div class="seg active"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+        </div>
+        <div class="story-handle">
+          <div class="avatar">TM</div>
+          <div class="meta"><span class="name">tm_lottery.exe</span><span class="timeago">build_07 · uptime 02h</span></div>
+        </div>
+
+        <!-- E-1 Boot -->
+        <div class="slide E-boot active">
+          <div class="term-window">
+            <span class="term-line"><span class="prompt">$</span> ./init_lottery.sh --id=07</span>
+            <span class="term-line ok">[OK] connecting to TM_DRIVE...</span>
+            <span class="term-line ok">[OK] loading inventory.sheet</span>
+            <span class="term-line"><span class="key">> </span>prize.set("Esmeralda Venus")</span>
+            <span class="term-line"><span class="key">> </span>grid.size = <span class="key">100</span></span>
+            <span class="term-line"><span class="key">> </span>price.set(<span class="key">50000</span>, <span class="key">"COP"</span>)</span>
+            <span class="term-line ok">[OK] system_online<span class="cursor"></span></span>
+          </div>
+          <div class="glitch-title">RIFA_07.</div>
+        </div>
+
+        <!-- E-2 Grid scan -->
+        <div class="slide E-grid-scan">
+          <div class="top-meta">
+            <span><span class="key">$</span> grid.scan()</span>
+            <span>23/100 · sold</span>
+          </div>
+          <h2>SELECT <em>NUMBER</em></h2>
+          <div class="grid" id="eGrid">
+            <div class="scan-line"></div>
+          </div>
+          <div class="legend">
+            <span><span class="dot"></span> available</span>
+            <span><span class="dot sold"></span> sold</span>
+            <span><span class="dot target"></span> target</span>
+          </div>
+        </div>
+
+        <!-- E-3 Commands -->
+        <div class="slide E-cmd">
+          <h2>EXEC <em>3 STEPS</em></h2>
+          <div class="cmd-list">
+            <div class="cmd">
+              <div class="line"><span class="prompt">$</span>reserve.number(<span style="color:#FFB800;">42</span>)</div>
+              <div class="out">[OK] reserved · 30:00 timer started</div>
+              <div class="progress-line"></div>
+            </div>
+            <div class="cmd">
+              <div class="line"><span class="prompt">$</span>pay.transfer(<span style="color:#FFB800;">"$50K_COP"</span>)</div>
+              <div class="out">[OK] nequi · bancolombia · pse</div>
+              <div class="progress-line"></div>
+            </div>
+            <div class="cmd">
+              <div class="line"><span class="prompt">$</span>upload.receipt(<span style="color:#FFB800;">screenshot.jpg</span>)</div>
+              <div class="out">[...] pending_review</div>
+              <div class="progress-line"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- E-4 Winner -->
+        <div class="slide E-winner">
+          <div class="label">[ ACCESS_GRANTED ]</div>
+          <div class="num-frame"><span>42</span></div>
+          <div class="stamp">WINNER_FOUND</div>
+          <div class="footer-meta">tierra-madre-studio.vercel.app</div>
+        </div>
+
+        <div class="cta-bar">
+          <span class="left">> @tm_lottery</span>
+          <span class="right">$ run rifa</span>
+        </div>
+        <div class="tap-zones">
+          <button data-go="0"></button><button data-go="1"></button><button data-go="2"></button><button data-go="3"></button>
+        </div>
+      </div>
+
+      <!-- ============ F · BOTANICAL ============ -->
+      <div class="canvas canvas-F" id="canvasF" data-prop="F">
+        <div class="progress-bars">
+          <div class="seg active"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+        </div>
+        <div class="story-handle">
+          <div class="avatar">tm</div>
+          <div class="meta"><span class="name">tierra madre</span><span class="timeago">una pieza · un ganador</span></div>
+        </div>
+
+        <!-- F-1 -->
+        <div class="slide F-hero active">
+          <svg class="leaf-tl" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#9DAB8B;">
+            <path d="M40 180 Q60 100 130 50 Q140 30 130 20 M40 180 Q90 160 140 90 M40 180 Q70 130 110 110 M40 180 Q110 170 160 130"/>
+          </svg>
+          <svg class="leaf-br" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#B89060;">
+            <path d="M40 180 Q60 100 130 50 Q140 30 130 20 M40 180 Q90 160 140 90 M40 180 Q70 130 110 110 M40 180 Q110 170 160 130"/>
+          </svg>
+          <div class="label">Rifa · Mayo 2026</div>
+          <div class="ornament">· ❀ ·</div>
+          <h1>Esmeralda<br/><em>Venus</em></h1>
+          <div class="ct">— mil ochocientos cincuenta puntos —</div>
+          <div class="invite">Una pieza colombiana certificada<br/>se sortea entre <em>cien</em> almas afortunadas.</div>
+        </div>
+
+        <!-- F-2 -->
+        <div class="slide F-garden">
+          <h2>Elige tu <em>número</em></h2>
+          <div class="lead">— cien posibilidades, una flor —</div>
+          <div class="grid" id="fGrid"></div>
+          <div class="price-line">$50.000 COP<small>· por número ·</small></div>
+        </div>
+
+        <!-- F-3 -->
+        <div class="slide F-petals">
+          <h2>Tres <em>pétalos.</em></h2>
+          <div class="sub">— treinta minutos —</div>
+          <div class="flower-wrap">
+            <div class="petal p1"><div class="petal-content"><div class="num">i</div><div class="label">Reserva</div></div></div>
+            <div class="petal p2"><div class="petal-content"><div class="num">ii</div><div class="label">Paga</div></div></div>
+            <div class="petal p3"><div class="petal-content"><div class="num">iii</div><div class="label">Confirma</div></div></div>
+            <div class="center"></div>
+          </div>
+          <div class="timer-line">tiempo · <strong>30:00</strong></div>
+        </div>
+
+        <!-- F-4 -->
+        <div class="slide F-bloom">
+          <div class="label">Sorteo</div>
+          <div class="bloom-stage">
+            <svg class="flower" viewBox="0 0 600 600" fill="none" stroke="currentColor" stroke-width="2">
+              <g>
+                <ellipse cx="300" cy="160" rx="80" ry="120"/>
+                <ellipse cx="300" cy="440" rx="80" ry="120"/>
+                <ellipse cx="160" cy="300" rx="120" ry="80"/>
+                <ellipse cx="440" cy="300" rx="120" ry="80"/>
+                <ellipse cx="200" cy="200" rx="80" ry="120" transform="rotate(-45 200 200)"/>
+                <ellipse cx="400" cy="200" rx="80" ry="120" transform="rotate(45 400 200)"/>
+                <ellipse cx="200" cy="400" rx="80" ry="120" transform="rotate(45 200 400)"/>
+                <ellipse cx="400" cy="400" rx="80" ry="120" transform="rotate(-45 400 400)"/>
+              </g>
+            </svg>
+            <div class="num-circle"><span>42</span></div>
+          </div>
+          <div class="winner-msg">Tu número<br/><em>te encontró.</em></div>
+          <div class="winner-meta">tierra-madre-studio.vercel.app</div>
+        </div>
+
+        <div class="cta-bar">
+          <span class="left">@tierramadre.studio</span>
+          <span class="right">Reserva</span>
+        </div>
+        <div class="tap-zones">
+          <button data-go="0"></button><button data-go="1"></button><button data-go="2"></button><button data-go="3"></button>
+        </div>
+      </div>
+
+      <!-- ============ G · LIQUID CHROME ============ -->
+      <div class="canvas canvas-G" id="canvasG" data-prop="G">
+        <div class="holo-bg"></div>
+        <div class="progress-bars">
+          <div class="seg active"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+        </div>
+        <div class="story-handle">
+          <div class="avatar">tm</div>
+          <div class="meta"><span class="name">tierra madre · holo</span><span class="timeago">edition 07 · live</span></div>
+        </div>
+
+        <!-- G-1 -->
+        <div class="slide G-cover active">
+          <div class="label">Edition · Mayo</div>
+          <h1>RIFA<br/>07</h1>
+          <div class="prize-card">
+            <div class="l">El premio</div>
+            <div class="n">Esmeralda Venus</div>
+            <div class="ct">1.85 ct · Origen Colombia</div>
+          </div>
+          <div class="swipe">Desliza ↑</div>
+        </div>
+
+        <!-- G-2 -->
+        <div class="slide G-grid">
+          <h2>Elige tu<br/>número.</h2>
+          <div class="lead">100 disponibles · uno se vuelve historia</div>
+          <div class="grid" id="gGrid"></div>
+          <div class="stats">
+            <div class="stat"><div class="l">Por número</div><div class="v">$50K<small>COP</small></div></div>
+            <div class="stat"><div class="l">Vendidos</div><div class="v">23<small>/100</small></div></div>
+          </div>
+        </div>
+
+        <!-- G-3 -->
+        <div class="slide G-cards">
+          <h2>Tres pasos.<br/><em>30 minutos.</em></h2>
+          <div class="cards">
+            <div class="card"><div class="icon">1</div><div class="text"><div class="t">Reserva</div><div class="d">Tu número se aparta al instante</div></div></div>
+            <div class="card"><div class="icon">2</div><div class="text"><div class="t">Paga</div><div class="d">Nequi · Bancolombia · PSE</div></div></div>
+            <div class="card"><div class="icon">3</div><div class="text"><div class="t">Confirma</div><div class="d">Sube tu comprobante · listo</div></div></div>
+          </div>
+          <div class="timer-pill">Confirmar antes de · <strong>30:00</strong></div>
+        </div>
+
+        <!-- G-4 -->
+        <div class="slide G-winner">
+          <div class="label">El sorteo</div>
+          <div class="num-frame"><span>42</span></div>
+          <div class="winner-msg">Tu número<br/><em>brilló.</em></div>
+          <div class="winner-meta">tierra-madre-studio.vercel.app</div>
+        </div>
+
+        <div class="cta-bar">
+          <span class="left">@tierramadre.studio</span>
+          <span class="right">Reserva ya</span>
+        </div>
+        <div class="tap-zones">
+          <button data-go="0"></button><button data-go="1"></button><button data-go="2"></button><button data-go="3"></button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="export-tip">
+    <strong style="color:#fff;">Tips:</strong> tocá zonas del frame para saltar entre slides. <code>↓ PNG</code> exporta el slide visible a 1080×1920. <code>↓ 4 PNGs</code> exporta los 4 slides de la propuesta actual (uno por uno con pausa de 600ms).
+  </p>
+</div>
+
+<script>
+  /* ============ Scaling ============ */
+  function scaleCanvases() {
+    const frame = document.getElementById('frame');
+    if (!frame) return;
+    const w = frame.clientWidth;
+    const scale = w / 1080;
+    document.querySelectorAll('.canvas').forEach(c => { c.style.transform = `scale(${scale})`; });
+  }
+  window.addEventListener('resize', scaleCanvases);
+
+  /* ============ Build small grids ============ */
+  function buildGrid(wrapId, opts) {
+    const wrap = document.getElementById(wrapId);
+    if (!wrap || wrap.dataset.built) return;
+    wrap.dataset.built = '1';
+    const sold = new Set(opts.sold || []);
+    for (let i = 1; i <= opts.count; i++) {
+      const t = document.createElement('div');
+      t.className = 'tile';
+      if (i === opts.target) t.classList.add(opts.targetClass || 'target');
+      else if (sold.has(i)) t.classList.add('sold');
+      t.textContent = String(i).padStart(opts.pad || 0, '0');
+      wrap.appendChild(t);
+    }
+  }
+  buildGrid('eGrid', {
+    count: 56, sold: [3,7,12,18,22,27,8,14,19,24,33,37,40,46,50],
+    target: 42, targetClass: 'target', pad: 2
+  });
+  buildGrid('fGrid', {
+    count: 48, sold: [3,7,12,18,22,27,8,14,19,24,33,37,40,46],
+    target: 42, targetClass: 'bloom'
+  });
+  buildGrid('gGrid', {
+    count: 48, sold: [3,7,12,18,22,27,8,14,19,24,33,37,40,46],
+    target: 42, targetClass: 'holo'
+  });
+
+  /* ============ Switcher ============ */
+  let currentProp = 'D';
+  const slidesByProp = { D: 4, E: 4, F: 4, G: 4 };
+
+  document.querySelectorAll('.prop-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.prop-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentProp = btn.dataset.prop;
+      ['D','E','F','G'].forEach(p => {
+        document.getElementById('canvas' + p).classList.toggle('show', p === currentProp);
+      });
+      restartStory();
+      scaleCanvases();
+    });
+  });
+
+  /* ============ Story progression ============ */
+  let activeIdx = 0;
+  let timer = null;
+  function setSlide(idx) {
+    activeIdx = idx;
+    const canvas = document.getElementById('canvas' + currentProp);
+    if (!canvas) return;
+    canvas.querySelectorAll('.slide').forEach((el, i) => el.classList.toggle('active', i === idx));
+    canvas.querySelectorAll('.progress-bars .seg').forEach((seg, i) => {
+      seg.classList.remove('active', 'done');
+      if (i < idx) seg.classList.add('done');
+      else if (i === idx) seg.classList.add('active');
+    });
+    document.getElementById('slideIndicator').textContent = `${idx + 1} / 4`;
+  }
+  function restartStory() {
+    if (timer) clearInterval(timer);
+    setSlide(0);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 4), 4000);
+  }
+
+  // tap zones (delegate)
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-go]');
+    if (!btn) return;
+    e.stopPropagation();
+    const idx = parseInt(btn.dataset.go, 10);
+    if (timer) clearInterval(timer);
+    setSlide(idx);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 4), 4000);
+  });
+
+  /* ============ Export PNG ============ */
+  async function exportSlide(prop, slideIdx) {
+    const canvas = document.getElementById('canvas' + prop);
+    // Force-show the slide we want
+    canvas.querySelectorAll('.slide').forEach((el, i) => el.classList.toggle('active', i === slideIdx));
+    canvas.querySelectorAll('.progress-bars .seg').forEach((seg, i) => {
+      seg.classList.remove('active', 'done');
+      if (i < slideIdx) seg.classList.add('done');
+      else if (i === slideIdx) seg.classList.add('active');
+    });
+
+    const prevTransform = canvas.style.transform;
+    const prevDisplay = canvas.style.display;
+    canvas.style.transform = 'scale(1)';
+    canvas.style.display = 'block';
+
+    // Wait for any layout/animations to settle
+    await new Promise(r => setTimeout(r, 80));
+
+    try {
+      const dataUrl = await htmlToImage.toPng(canvas, {
+        width: 1080, height: 1920, pixelRatio: 1, cacheBust: true,
+        style: { transform: 'scale(1)', transformOrigin: 'top left' }
+      });
+      const link = document.createElement('a');
+      link.download = `tm-rifa-${prop}-slide${slideIdx + 1}.png`;
+      link.href = dataUrl;
+      link.click();
+    } finally {
+      canvas.style.transform = prevTransform;
+      canvas.style.display = prevDisplay;
+      scaleCanvases();
+    }
+  }
+
+  document.getElementById('exportPng').addEventListener('click', async () => {
+    if (timer) clearInterval(timer);
+    await exportSlide(currentProp, activeIdx);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 4), 4000);
+  });
+
+  document.getElementById('exportAll').addEventListener('click', async () => {
+    if (timer) clearInterval(timer);
+    const btn = document.getElementById('exportAll');
+    btn.disabled = true; btn.style.opacity = '0.6';
+    const original = btn.textContent;
+    for (let i = 0; i < 4; i++) {
+      btn.textContent = `Exportando ${i+1}/4...`;
+      await exportSlide(currentProp, i);
+      await new Promise(r => setTimeout(r, 600));
+    }
+    setSlide(activeIdx);
+    timer = setInterval(() => setSlide((activeIdx + 1) % 4), 4000);
+    btn.textContent = original; btn.disabled = false; btn.style.opacity = '';
+  });
+
+  /* ============ Boot ============ */
+  scaleCanvases();
+  restartStory();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(scaleCanvases);
+</script>
+</body>
+</html>

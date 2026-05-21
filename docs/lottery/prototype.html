@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tierra Madre · Lottery Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* === TM REAL BRAND TOKENS · L1 Espécimen Gemológico (light) === */
+    /* Emerald (logo #00AE7A) */
+    --emerald-core:    #00AE7A;
+    --emerald-light:   #33C194;
+    --emerald-lighter: #66D4AE;
+    --emerald-lightest:#E6F7F1;
+    --emerald-dark:    #008C61;
+    --emerald-darker:  #006A48;
+    --emerald-darkest: #004830;
+    --emerald-text:    #0B6E4F;     /* WCAG AA accessible */
+
+    /* Gold (Pre-Columbian #D4AF37) — accent only, never as background */
+    --gold:            #D4AF37;
+    --gold-light:      #E5C866;
+    --gold-lightest:   #FDF8E8;
+    --gold-dark:       #B8941F;
+    --gold-deep:       #8F7318;
+    --gold-darkest:    #665210;
+
+    --danger:          #C94C4C;
+
+    /* === SURFACES · Emerald-undertone whites (NO creams, NO grays, NO browns) ===
+       Like TM app: white with the slightest mineral-emerald tint.
+       Think: museum gallery wall under emerald lighting reflection. */
+    --bg:              #F6FAF8;     /* Mineral-emerald white · "TM app feel" */
+    --bg-soft:         #F0F6F3;     /* Subtle emerald mist for sections */
+    --surface:         #FFFFFF;     /* Pure white only for elevated cards/modals */
+    --surface-soft:    #EDF5F0;     /* Soft emerald-mist for chips/pills */
+    --surface-elev:    #FFFFFF;     /* Same as surface, semantic alias */
+    --border:          #DDE6E1;     /* Cool mineral hairline (NOT cream) */
+    --border-soft:     #E8EFEB;     /* Whisper hairline */
+    --text:            #1A2521;     /* Deep emerald-charcoal ink */
+    --text-muted:      #4A5852;     /* Emerald-cool muted */
+
+    --shadow-sm:       0 1px 2px rgba(0, 140, 97, 0.06);
+    --shadow-md:       0 6px 24px rgba(0, 140, 97, 0.08);
+    --shadow-gem:      0 0 0 1px var(--gold), 0 0 0 6px rgba(212,175,55,0.08), 0 24px 60px -10px rgba(0, 140, 97, 0.25);
+
+    --radius-tile:   12px;
+    --radius-card:   18px;
+    --gap-tile:      8px;
+
+    /* Typography — Libre Baskerville brand + Playfair display + Cormorant elegant + Inter system */
+    --font-brand:    'Libre Baskerville', Georgia, serif;
+    --font-display:  'Playfair Display', Georgia, serif;
+    --font-elegant:  'Cormorant Garamond', Georgia, serif;
+    --font-body:     'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+    --font-mono:     'SF Mono', 'Fira Code', Monaco, monospace;
+
+    --transition:    cubic-bezier(0.4, 0.0, 0.2, 1);
+  }
+
+  /* === L5 Chiaroscuro · Dark mode con emerald undertone (no warm cream) === */
+  [data-theme="dark"] {
+    --emerald-core:    #00AE7A;
+    --emerald-light:   #4de0b0;     /* brighter for readability on dark */
+    --emerald-lightest:#A0EBC8;
+    --emerald-darker:  #004a33;
+    --emerald-darkest: #002a1c;
+
+    /* Gold stays as TM accent — but used sparingly on dark, no warm fields */
+    --gold:            #D4AF37;
+    --gold-light:      #E5C866;
+    --gold-deep:       #B8941F;
+    --gold-dark:       #8F7318;
+
+    /* Surfaces · vault-cinema with emerald undertone (NOT warm cream/champagne) */
+    --bg:              #030808;     /* night-deep */
+    --bg-soft:         #06100C;
+    --surface:         #0a1a14;     /* night-shadow — already emerald-tinted */
+    --surface-soft:    #0F2820;     /* night-hint cooler */
+    --surface-elev:    #102921;
+    --border:          rgba(102, 212, 174, 0.16);   /* emerald-tinted hairline */
+    --border-soft:     rgba(102, 212, 174, 0.08);
+    --text:            #ECF5F1;     /* emerald-tinted off-white (no warm cream) */
+    --text-muted:      rgba(160, 235, 200, 0.55);    /* emerald-cool muted */
+
+    --shadow-sm:       0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md:       0 6px 24px rgba(0, 0, 0, 0.5);
+    --shadow-gem:      0 0 0 1px var(--gold), 0 0 0 6px rgba(212,175,55,0.12), 0 0 80px rgba(0, 174, 122, 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+    background: var(--bg);
+    font-feature-settings: "tnum" 1;
+    transition: background 240ms var(--transition), color 240ms var(--transition);
+  }
+
+  /* === Ambient · emerald glow only · cool · no warm tones ===
+     Light: very subtle emerald mist at top.
+     Dark: emerald glow at top + cooler depth at bottom (no champagne/cream). */
+  body::before {
+    content: "";
+    position: fixed; inset: 0; pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 90% 40% at 50% 0%, rgba(0, 174, 122, 0.04), transparent 60%);
+  }
+  [data-theme="dark"] body::before {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0, 174, 122, 0.10), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 50% 100%, rgba(0, 140, 97, 0.06), transparent 70%);
+  }
+  .topbar, .hero, .grid-section, .faq, .foot, .admin-card { position: relative; z-index: 1; }
+
+  @media (max-width: 480px) {
+    body { font-size: 17px; }
+  }
+
+  button { font-family: inherit; cursor: pointer; }
+  input, select, textarea { font-family: inherit; font-size: inherit; }
+
+  /* ============ HEADER ============ */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    background: color-mix(in oklab, var(--bg) 78%, transparent);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar-inner {
+    max-width: 1240px; margin: 0 auto;
+    padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+  }
+  .brand {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    color: var(--emerald-core);
+    display: inline-flex; align-items: baseline; gap: 8px;
+  }
+  .brand::after {
+    content: "esmeraldas con adn de paz";
+    font-family: var(--font-mono); font-style: normal;
+    font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase;
+    color: var(--gold-deep); font-weight: 600;
+  }
+  @media (max-width: 600px) {
+    .brand::after { display: none; }
+  }
+  [data-theme="dark"] .brand { color: var(--gold-light); }
+  [data-theme="dark"] .brand::after { color: var(--gold); }
+  .controls { display: flex; gap: 8px; align-items: center; }
+  .icon-btn {
+    width: 38px; height: 38px;
+    display: inline-grid; place-items: center;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    transition: all 180ms var(--transition);
+  }
+  .icon-btn:hover { border-color: var(--emerald-core); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .lang-toggle {
+    height: 38px; padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 500; font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ============ HERO · L1 light · L5 dark chiaroscuro ============ */
+  .hero {
+    max-width: 1240px; margin: 0 auto;
+    padding: 64px 20px 32px;
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 64px;
+    align-items: center;
+  }
+  @media (max-width: 880px) {
+    .hero { grid-template-columns: 1fr; gap: 32px; padding: 32px 20px; }
+  }
+
+  /* === Gem-stage (signature L1/L5) === */
+  .hero-image {
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.85), transparent 35%),
+      radial-gradient(circle at 65% 65%, rgba(212, 175, 55, 0.18), transparent 50%),
+      conic-gradient(from 200deg, var(--emerald-light), var(--emerald-core), var(--emerald-darker), var(--emerald-core), var(--emerald-light));
+    box-shadow: var(--shadow-gem);
+    position: relative;
+    overflow: hidden;
+    will-change: transform;
+    animation: tm-gem-rotate 90s linear infinite;
+    max-width: 520px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .hero-image::after {
+    content: ""; position: absolute; inset: 14%;
+    border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.55);
+    z-index: 3;
+  }
+  .hero-image::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.5) 50%, transparent 70%);
+    transform: translateX(-160%);
+    pointer-events: none; z-index: 2;
+    animation: tm-shimmer 7s 2s infinite;
+  }
+  @keyframes tm-gem-rotate { to { transform: rotate(360deg); } }
+  @keyframes tm-shimmer {
+    0%, 35%, 100% { transform: translateX(-160%); }
+    14%           { transform: translateX(160%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-image, .hero-image::before { animation: none !important; }
+  }
+  .hero-image-label {
+    position: absolute; bottom: 22%; left: 50%; transform: translateX(-50%);
+    font-family: var(--font-mono);
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 11px; letter-spacing: 0.34em; text-transform: uppercase;
+    text-align: center; font-weight: 600;
+    z-index: 4;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  /* === Top stamp · "Origen Muzo" L1 signature === */
+  .hero-stamp {
+    display: inline-flex; gap: 12px; align-items: center;
+    border: 1px solid var(--emerald-darker);
+    padding: 7px 14px;
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.32em;
+    color: var(--emerald-darker); font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    background: var(--surface);
+  }
+  .hero-stamp::before { content: "◇"; color: var(--gold); font-style: normal; }
+  [data-theme="dark"] .hero-stamp { background: rgba(0, 174, 122, 0.08); border-color: var(--emerald-light); color: var(--emerald-lightest); }
+
+  .hero-meta { font-family: var(--font-brand); }
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: var(--gold-deep);
+    margin: 0 0 12px;
+    font-weight: 600;
+  }
+  [data-theme="dark"] .hero-eyebrow { color: var(--gold-light); }
+  .hero-title {
+    font-family: var(--font-brand);
+    font-weight: 400;
+    font-size: clamp(32px, 5.5vw, 60px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 0 0 16px;
+    color: var(--text);
+  }
+  .hero-prize {
+    color: var(--emerald-core);
+    font-style: italic;
+    font-weight: 400;
+  }
+  [data-theme="dark"] .hero-prize { color: var(--gold-light); }
+  .hero-sub {
+    font-family: var(--font-elegant); font-style: italic;
+    color: var(--gold-deep);
+    font-size: 22px; line-height: 1.4;
+    margin: 0 0 28px;
+    letter-spacing: 0.02em;
+  }
+  [data-theme="dark"] .hero-sub { color: var(--gold-light); }
+  .hero-stats {
+    display: flex; gap: 36px; flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 6px;
+    font-weight: 600;
+  }
+  .stat-value {
+    font-family: var(--font-brand);
+    font-weight: 700;
+    font-size: 30px;
+    color: var(--text);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-value em { color: var(--emerald-core); font-style: italic; font-weight: 400; }
+  [data-theme="dark"] .stat-value em { color: var(--gold-light); }
+
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--emerald-core), var(--gold));
+    border-radius: 999px;
+    transition: width 600ms var(--transition);
+  }
+  .progress-meta {
+    display: flex; justify-content: space-between;
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em;
+    color: var(--text-muted); text-transform: uppercase;
+  }
+
+  /* === Coordinate footer · L signature === */
+  .hero-coord {
+    margin-top: 24px;
+    display: flex; justify-content: space-between;
+    position: relative;
+    padding-top: 18px;
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em;
+    color: var(--text-muted); text-transform: uppercase;
+    border-top: 1px solid var(--border);
+  }
+  .hero-coord .left { color: var(--emerald-darker); font-weight: 600; }
+  [data-theme="dark"] .hero-coord .left { color: var(--gold-light); }
+  [data-theme="dark"] .hero-coord { border-color: var(--gold); }
+
+  /* ============ ADMIN PANEL (config) ============ */
+  .admin-card {
+    max-width: 1240px; margin: 24px auto 0;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+  }
+  .admin-card label {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .admin-card select, .admin-card input[type="number"], .admin-card input[type="text"] {
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    min-width: 120px;
+  }
+  .admin-card .pill-toggle {
+    display: inline-flex; gap: 0;
+    border: 1px solid var(--border); border-radius: 999px;
+    overflow: hidden;
+  }
+  .admin-card .pill-toggle button {
+    height: 38px; padding: 0 14px;
+    border: none; background: transparent;
+    color: var(--text-muted);
+    font-weight: 500; font-size: 13px;
+  }
+  .admin-card .pill-toggle button.active {
+    background: var(--emerald-core); color: white;
+  }
+  .admin-card .preset-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .admin-card .preset-btns button {
+    height: 32px; padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--text);
+    font-size: 13px; font-weight: 500;
+    transition: all 150ms var(--transition);
+  }
+  .admin-card .preset-btns button.active {
+    background: var(--emerald-core); color: white; border-color: var(--emerald-core);
+  }
+  .admin-card .preset-btns button:hover:not(.active) {
+    border-color: var(--emerald-core);
+  }
+
+  /* ============ GRID SECTION ============ */
+  .grid-section {
+    max-width: 1240px; margin: 32px auto 96px;
+    padding: 0 20px;
+  }
+  .grid-header {
+    display: flex; justify-content: space-between; align-items: end;
+    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+  }
+  .grid-title {
+    font-family: var(--font-brand);
+    font-weight: 400;
+    font-size: clamp(28px, 4vw, 44px);
+    margin: 0;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+  }
+  .grid-title em { font-style: italic; color: var(--emerald-core); }
+  [data-theme="dark"] .grid-title em { color: var(--gold-light); }
+
+  .legend {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    font-size: 13px;
+  }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); }
+  .legend-swatch {
+    width: 14px; height: 14px; border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .swatch-available { background: var(--surface); }
+  .swatch-reserved-other { background: var(--surface-soft); border-color: var(--gold); }
+  .swatch-mine { background: var(--emerald-core); border-color: var(--gold); }
+  .swatch-sold { background: var(--emerald-darkest); }
+  [data-theme="dark"] .swatch-sold { background: var(--emerald-core); }
+  .swatch-winner { background: var(--gold); border-color: var(--emerald-darker); }
+
+  /* === Grid de números === */
+  .grid {
+    display: grid;
+    gap: var(--gap-tile);
+    grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr));
+  }
+
+  .tile {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    display: grid; place-items: center;
+    border-radius: var(--radius-tile);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-brand);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    transition:
+      background 200ms var(--transition),
+      border-color 200ms var(--transition),
+      transform 150ms var(--transition),
+      box-shadow 150ms var(--transition),
+      color 200ms var(--transition);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tile-num {
+    font-size: clamp(13px, 2.4vw, 20px);
+  }
+  .tile.size-compact .tile-num {
+    font-size: clamp(10px, 1.5vw, 13px);
+    font-family: var(--font-mono);
+  }
+
+  .tile.available { cursor: pointer; }
+  .tile.available:hover {
+    transform: translateY(-2px);
+    border-color: var(--emerald-core);
+    box-shadow: var(--shadow-md);
+  }
+  .tile.available:active { transform: scale(0.96); }
+
+  .tile.reserved-other {
+    background: var(--surface-soft);
+    color: var(--gold-deep);
+    border-color: var(--gold);
+    cursor: not-allowed;
+  }
+  [data-theme="dark"] .tile.reserved-other { background: rgba(212, 175, 55, 0.10); color: var(--gold-light); border-color: rgba(212, 175, 55, 0.4); }
+
+  .tile.reserved-mine {
+    background: var(--emerald-core);
+    color: var(--surface);
+    border-color: var(--gold);
+    border-width: 2px;
+    font-weight: 700;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--gold) 28%, transparent);
+  }
+  .tile.reserved-mine::after {
+    content: "";
+    position: absolute; top: 4px; right: 4px;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 0 0 var(--gold);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--gold) 70%, transparent); }
+    70%  { box-shadow: 0 0 0 8px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+
+  .tile.sold {
+    background: var(--emerald-darkest);
+    color: var(--gold-light);
+    border-color: var(--emerald-darkest);
+    cursor: not-allowed;
+  }
+  [data-theme="dark"] .tile.sold {
+    background: var(--emerald-core); color: var(--bg);
+    border-color: var(--emerald-core);
+    box-shadow: 0 0 12px rgba(0, 174, 122, 0.4);
+  }
+
+  .tile.winner {
+    background: var(--gold);
+    color: var(--emerald-darkest);
+    border-color: var(--emerald-darker);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--gold) 35%, transparent);
+    animation: winner-glow 2.4s ease-in-out infinite;
+    font-weight: 700;
+  }
+  [data-theme="dark"] .tile.winner {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--gold) 35%, transparent), 0 0 32px rgba(212, 175, 55, 0.5);
+  }
+  @keyframes winner-glow {
+    0%, 100% { box-shadow: 0 0 0 4px color-mix(in oklab, var(--gold) 35%, transparent); transform: scale(1.04); }
+    50%      { box-shadow: 0 0 0 12px color-mix(in oklab, var(--gold) 0%, transparent); transform: scale(1.08); }
+  }
+
+  .tile:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--emerald-core);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tile, .tile.winner, .tile.reserved-mine::after { animation: none !important; transition-duration: 80ms !important; }
+  }
+
+  /* ============ MODAL ============ */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: color-mix(in oklab, var(--emerald-darkest) 70%, transparent);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  [data-theme="dark"] .modal-backdrop { background: rgba(0, 0, 0, 0.7); }
+  .modal-backdrop.open {
+    display: flex;
+    animation: fade-in 200ms var(--transition);
+  }
+  @media (min-width: 720px) {
+    .modal-backdrop { align-items: center; }
+  }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal {
+    background: var(--surface);
+    width: 100%;
+    max-width: 520px;
+    border-radius: 24px 24px 0 0;
+    padding: 28px 24px 32px;
+    color: var(--text);
+    animation: slide-up 280ms var(--transition);
+    max-height: 92vh; overflow-y: auto;
+  }
+  @media (min-width: 720px) {
+    .modal { border-radius: 24px; }
+  }
+  @keyframes slide-up { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .modal-head { display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; }
+  .modal-title {
+    font-family: var(--font-brand);
+    font-size: 30px; font-weight: 700;
+    margin: 0;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+  }
+  .modal-title em { font-style: italic; color: var(--emerald-core); font-weight: 400; }
+  [data-theme="dark"] .modal-title em { color: var(--gold-light); }
+  .modal-sub {
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 6px 0 0;
+  }
+  .modal-close {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .field input[type="text"], .field input[type="email"], .field input[type="tel"] {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color 150ms var(--transition);
+  }
+  .field input:focus {
+    outline: none;
+    border-color: var(--emerald-core);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--emerald-core) 18%, transparent);
+  }
+  .checkbox-row {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 13px; color: var(--text-muted);
+    margin: 6px 0 18px;
+  }
+  .checkbox-row input { margin-top: 4px; }
+
+  .btn-primary {
+    width: 100%;
+    height: 56px;
+    border-radius: 999px;
+    border: none;
+    background: var(--emerald-core);
+    color: var(--surface);
+    font-family: var(--font-brand);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    font-size: 15px;
+    transition: background 200ms var(--transition), box-shadow 200ms var(--transition);
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 12px rgba(0, 140, 97, 0.18);
+  }
+  .btn-primary:hover { background: var(--emerald-darker); box-shadow: 0 6px 16px rgba(0, 140, 97, 0.3); }
+  .btn-primary:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; box-shadow: none; }
+  [data-theme="dark"] .btn-primary { color: var(--bg); box-shadow: 0 0 24px rgba(0, 174, 122, 0.3); }
+  [data-theme="dark"] .btn-primary:hover { background: var(--emerald-light); }
+
+  .modal-tip {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  /* ============ PAYMENT VIEW ============ */
+  .pay-tabs {
+    display: flex; gap: 6px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .pay-tabs button {
+    background: transparent;
+    border: none;
+    padding: 10px 14px;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-weight: 500;
+    transition: all 150ms var(--transition);
+  }
+  .pay-tabs button.active {
+    color: var(--emerald-core); border-color: var(--emerald-core);
+  }
+
+  .pay-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 18px;
+    align-items: center;
+  }
+  .pay-qr {
+    width: 110px; height: 110px;
+    border-radius: 12px;
+    background:
+      repeating-conic-gradient(var(--emerald-darkest) 0% 25%, white 0% 50%) 50% / 14px 14px;
+    border: 6px solid white;
+    box-shadow: 0 0 0 1px var(--border);
+  }
+  .pay-info .pay-line { display: flex; justify-content: space-between; align-items: center; margin: 4px 0; }
+  .pay-info .pay-label { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-muted); }
+  .pay-info .pay-value { font-weight: 600; color: var(--text); }
+  .copy-btn {
+    height: 28px; padding: 0 10px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid var(--emerald-core);
+    color: var(--emerald-core);
+    font-size: 12px; font-weight: 600;
+  }
+  .copy-btn.copied { background: var(--emerald-core); color: white; }
+
+  .timer-card {
+    margin: 18px 0;
+    padding: 14px;
+    border-radius: 14px;
+    background: color-mix(in oklab, var(--emerald-core) 8%, transparent);
+    border: 1px solid color-mix(in oklab, var(--emerald-core) 25%, var(--border));
+    text-align: center;
+  }
+  .timer-card.warning {
+    background: color-mix(in oklab, var(--gold) 14%, transparent);
+    border-color: var(--gold);
+  }
+  .timer-card.danger {
+    background: color-mix(in oklab, var(--danger) 12%, transparent);
+    border-color: var(--danger);
+    animation: timer-pulse 1s infinite;
+  }
+  @keyframes timer-pulse {
+    0%, 100% { border-color: var(--danger); }
+    50%      { border-color: color-mix(in oklab, var(--danger) 60%, transparent); }
+  }
+  .timer-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .timer-value {
+    font-family: var(--font-brand);
+    font-size: 42px; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--emerald-core);
+    line-height: 1;
+    margin-top: 6px;
+    letter-spacing: -0.01em;
+  }
+  .timer-card.warning .timer-value { color: var(--gold-deep); }
+  .timer-card.danger .timer-value { color: var(--danger); }
+  [data-theme="dark"] .timer-card.warning .timer-value { color: var(--gold); }
+
+  /* ============ UPLOAD ============ */
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 32px 18px;
+    text-align: center;
+    color: var(--text-muted);
+    transition: all 150ms var(--transition);
+    cursor: pointer;
+  }
+  .dropzone:hover, .dropzone.dragover {
+    border-color: var(--emerald-core);
+    background: color-mix(in oklab, var(--emerald-core) 6%, transparent);
+    color: var(--text);
+  }
+  .dropzone svg { width: 32px; height: 32px; margin-bottom: 8px; color: var(--emerald-core); }
+  .dropzone-strong { color: var(--text); font-weight: 600; }
+  .dropzone-meta { font-size: 12px; margin-top: 6px; }
+
+  .preview {
+    margin: 12px 0;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg);
+    display: flex; gap: 12px; align-items: center;
+  }
+  .preview img {
+    width: 56px; height: 56px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .preview .preview-meta { flex: 1; min-width: 0; }
+  .preview .preview-name { font-weight: 600; font-size: 14px; truncate: ellipsis; overflow: hidden; white-space: nowrap; }
+  .preview .preview-size { font-size: 12px; color: var(--text-muted); }
+  .preview .remove-btn {
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 8px; width: 32px; height: 32px;
+    color: var(--text-muted);
+  }
+
+  /* ============ SUCCESS STATE ============ */
+  .success-card {
+    text-align: center;
+    padding: 16px 8px;
+  }
+  .success-icon {
+    width: 64px; height: 64px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: var(--emerald-core);
+    display: grid; place-items: center;
+    color: white;
+  }
+  .success-icon svg { width: 32px; height: 32px; }
+
+  /* ============ TOAST ============ */
+  .toast-stack {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    display: flex; flex-direction: column; gap: 8px;
+    pointer-events: none;
+    width: min(92vw, 420px);
+  }
+  .toast {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--emerald-core);
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: var(--shadow-md);
+    font-size: 14px;
+    animation: toast-in 240ms var(--transition);
+    pointer-events: auto;
+    color: var(--text);
+  }
+  .toast.warning { border-left-color: var(--gold); }
+  .toast.danger { border-left-color: var(--danger); }
+  @keyframes toast-in {
+    from { transform: translateY(8px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+
+  /* ============ FAQ ============ */
+  .faq {
+    max-width: 760px; margin: 0 auto 80px;
+    padding: 0 20px;
+  }
+  .faq h2 {
+    font-family: var(--font-brand);
+    font-size: clamp(28px, 4vw, 42px);
+    font-weight: 400;
+    margin: 0 0 32px;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+  }
+  .faq h2 em { font-style: italic; color: var(--emerald-core); }
+  [data-theme="dark"] .faq h2 em { color: var(--gold-light); }
+  .faq-item {
+    border-bottom: 1px solid var(--border);
+    padding: 22px 0;
+  }
+  .faq-q {
+    font-family: var(--font-brand);
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--text);
+    cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    list-style: none;
+    line-height: 1.4;
+  }
+  .faq-q::-webkit-details-marker { display: none; }
+  .faq-q::after {
+    content: "+";
+    font-size: 22px;
+    color: var(--gold);
+    transition: transform 200ms var(--transition);
+  }
+  details[open] .faq-q::after { transform: rotate(45deg); }
+  .faq-a { padding-top: 8px; color: var(--text-muted); font-size: 15px; }
+
+  /* ============ FOOTER ============ */
+  .foot {
+    border-top: 1px solid var(--border);
+    padding: 32px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.32em; text-transform: uppercase;
+  }
+  .foot em {
+    display: block;
+    font-family: var(--font-elegant); font-style: italic;
+    font-size: 22px; letter-spacing: 0.04em;
+    color: var(--gold-deep); margin-bottom: 6px;
+    text-transform: none;
+  }
+  [data-theme="dark"] .foot em { color: var(--gold-light); }
+
+  /* ============ STICKY MOBILE CTA ============ */
+  .floating-cta {
+    position: fixed; bottom: 16px; right: 16px;
+    z-index: 40;
+    display: none;
+    background: var(--emerald-core);
+    color: var(--surface);
+    border: none;
+    border-radius: 999px;
+    padding: 14px 22px;
+    font-family: var(--font-brand);
+    font-weight: 700;
+    box-shadow: 0 4px 16px rgba(0, 140, 97, 0.3);
+  }
+  [data-theme="dark"] .floating-cta { color: var(--bg); box-shadow: 0 0 24px rgba(0, 174, 122, 0.4); }
+  .floating-cta.visible { display: inline-flex; align-items: center; gap: 8px; }
+  @media (max-width: 720px) {
+    .floating-cta { padding: 14px 20px; font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">Tierra Madre</div>
+    <div class="controls">
+      <button class="lang-toggle" id="langToggle" aria-label="Cambiar idioma">ES / EN</button>
+      <button class="icon-btn" id="themeToggle" aria-label="Cambiar tema">
+        <svg id="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-linecap="round"/></svg>
+      </button>
+      <button class="icon-btn" id="adminToggle" aria-label="Vista admin" title="Toggle admin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 4l8 4v6c0 4-3.5 6-8 6s-8-2-8-6V8l8-4z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-image">
+    <div class="hero-image-label" id="heroPrize">Esmeralda Venus · 1.85 ct</div>
+  </div>
+  <div class="hero-meta">
+    <div class="hero-stamp" data-i18n="hero.stamp">Origen Muzo · Boyacá</div>
+    <p class="hero-eyebrow" id="heroEyebrow">Rifa Vii · Mayo 2026</p>
+    <h1 class="hero-title" id="heroTitle">
+      Una piedra,<br/><span class="hero-prize" id="heroPrizeName">cien posibles</span><br/>destinos.
+    </h1>
+    <p class="hero-sub" id="heroSub">— pieza colombiana certificada con ADN de PAZ · un solo ganador —</p>
+
+    <div class="hero-stats">
+      <div>
+        <p class="stat-label" id="statSoldLabel">Vendidos</p>
+        <p class="stat-value" id="statSold">23 / 100</p>
+      </div>
+      <div>
+        <p class="stat-label" id="statPriceLabel">Por número</p>
+        <p class="stat-value" id="statPrice">$50.000 COP</p>
+      </div>
+      <div>
+        <p class="stat-label" id="statDrawLabel">Sorteo en</p>
+        <p class="stat-value" id="statDraw">11d · 04h · 23m</p>
+      </div>
+    </div>
+
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:23%"></div></div>
+    <div class="progress-meta">
+      <span id="progressMetaSold">23 vendidos</span>
+      <span id="progressMetaLeft">77 disponibles</span>
+    </div>
+
+    <div class="hero-coord">
+      <span class="left">5°32′N · 74°06′W</span>
+      <span>Edición vii · 2026</span>
+    </div>
+  </div>
+</section>
+
+<!-- Admin/config card (visible to user for prototype demo) -->
+<div class="admin-card" id="adminCard" role="region" aria-label="Configuración de rifa (admin)">
+  <label>
+    <span data-i18n="admin.size">Tamaño del grid</span>
+    <div class="preset-btns" id="sizePresets">
+      <button data-size="10">1-10</button>
+      <button data-size="25">1-25</button>
+      <button data-size="50">1-50</button>
+      <button data-size="100" class="active">1-100</button>
+      <button data-size="500">1-500</button>
+      <button data-size="1000">1-1000</button>
+    </div>
+  </label>
+  <label>
+    <span data-i18n="admin.custom">Custom (5-9999)</span>
+    <input type="number" id="customSize" min="5" max="9999" placeholder="ej. 75" />
+  </label>
+  <label>
+    <span data-i18n="admin.price">Precio (COP)</span>
+    <input type="number" id="priceInput" value="50000" min="1000" step="1000" />
+  </label>
+  <label>
+    <span data-i18n="admin.density">Vista</span>
+    <div class="pill-toggle">
+      <button id="modeRoomy" class="active" data-mode="roomy">Roomy</button>
+      <button id="modeCompact" data-mode="compact">Compact</button>
+    </div>
+  </label>
+  <label>
+    <span data-i18n="admin.demo">Demo data</span>
+    <div class="pill-toggle">
+      <button id="seedDemo" data-seed="true" class="active">Sí</button>
+      <button id="seedClean" data-seed="false">Limpio</button>
+    </div>
+  </label>
+  <label>
+    <span data-i18n="admin.draw">Acción</span>
+    <div class="preset-btns">
+      <button id="runDraw" type="button" data-i18n="admin.runDraw">Ejecutar sorteo</button>
+      <button id="resetGrid" type="button" data-i18n="admin.reset">Reset</button>
+    </div>
+  </label>
+</div>
+
+<section class="grid-section">
+  <div class="grid-header">
+    <h2 class="grid-title" data-i18n="grid.title">Elige tu número</h2>
+    <div class="legend" aria-hidden="true">
+      <span class="legend-item"><span class="legend-swatch swatch-available"></span> <span data-i18n="legend.available">Disponible</span></span>
+      <span class="legend-item"><span class="legend-swatch swatch-reserved-other"></span> <span data-i18n="legend.reserved">Reservado</span></span>
+      <span class="legend-item"><span class="legend-swatch swatch-mine"></span> <span data-i18n="legend.mine">Tuyo</span></span>
+      <span class="legend-item"><span class="legend-swatch swatch-sold"></span> <span data-i18n="legend.sold">Vendido</span></span>
+      <span class="legend-item"><span class="legend-swatch swatch-winner"></span> <span data-i18n="legend.winner">Ganador</span></span>
+    </div>
+  </div>
+  <div class="grid" id="grid" role="grid" aria-label="Grid de números"></div>
+</section>
+
+<section class="faq">
+  <h2 data-i18n="faq.title">Preguntas frecuentes</h2>
+  <details class="faq-item">
+    <summary class="faq-q" data-i18n="faq.q1">¿Qué pasa si no completo el pago en los 30 minutos?</summary>
+    <div class="faq-a" data-i18n="faq.a1">Tu reserva expira automáticamente y el número vuelve a estar disponible para que otra persona lo tome. Puedes intentar reservarlo de nuevo si sigue libre.</div>
+  </details>
+  <details class="faq-item">
+    <summary class="faq-q" data-i18n="faq.q2">¿Cómo se elige al ganador?</summary>
+    <div class="faq-a" data-i18n="faq.a2">Usamos un generador aleatorio criptográfico con un seed que se publica después del sorteo. Cualquiera puede verificar que el número ganador no fue manipulado.</div>
+  </details>
+  <details class="faq-item">
+    <summary class="faq-q" data-i18n="faq.q3">¿Mis datos son públicos?</summary>
+    <div class="faq-a" data-i18n="faq.a3">Solo mostramos las iniciales del comprador en el grid público. Tu email, teléfono y nombre completo nunca se publican.</div>
+  </details>
+</section>
+
+<footer class="foot">
+  <em data-i18n="foot.tag">Esmeraldas con ADN de PAZ</em>
+  © Tierra Madre · 5°32′N · 74°06′W · Bogotá · Colombia
+</footer>
+
+<button class="floating-cta" id="floatingCta">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+  <span data-i18n="cta.float">Reserva tu número</span>
+</button>
+
+<!-- ============ MODAL: RESERVATION ============ -->
+<div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal" id="modalBox">
+    <!-- contenido inyectado por JS -->
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<script>
+/* =====================================================
+   STATE
+===================================================== */
+const STATE = {
+  size: 100,
+  mode: 'roomy',           // roomy | compact
+  pricePerNumber: 50000,   // COP
+  lang: 'es',              // es | en
+  theme: 'light',          // light | dark
+  numbers: [],             // [{n, status, initials?}]
+  myReservation: null,     // {number, expiresAt}
+  timerInterval: null,
+};
+
+const STATUS = {
+  AVAILABLE: 'available',
+  RESERVED_MINE: 'reserved-mine',
+  RESERVED_OTHER: 'reserved-other',
+  SOLD: 'sold',
+  WINNER: 'winner',
+};
+
+const I18N = {
+  es: {
+    'hero.stamp': 'Origen Muzo · Boyacá',
+    'admin.size': 'Tamaño del grid',
+    'admin.custom': 'Custom (5-9999)',
+    'admin.price': 'Precio (COP)',
+    'admin.density': 'Vista',
+    'admin.demo': 'Demo data',
+    'admin.draw': 'Acción',
+    'admin.runDraw': 'Ejecutar sorteo',
+    'admin.reset': 'Reset',
+    'grid.title': 'Elige tu <em>número</em>',
+    'legend.available': 'Disponible',
+    'legend.reserved': 'Reservado',
+    'legend.mine': 'Tuyo',
+    'legend.sold': 'Vendido',
+    'legend.winner': 'Ganador',
+    'faq.title': 'Preguntas <em>frecuentes</em>',
+    'faq.q1': '¿Qué pasa si no completo el pago en los 30 minutos?',
+    'faq.a1': 'Tu reserva expira automáticamente y el número vuelve a estar disponible para que otra persona lo tome.',
+    'faq.q2': '¿Cómo se elige al ganador?',
+    'faq.a2': 'Usamos un generador aleatorio criptográfico con un seed que se publica después del sorteo.',
+    'faq.q3': '¿Mis datos son públicos?',
+    'faq.a3': 'Solo mostramos las iniciales del comprador en el grid público.',
+    'foot.tag': 'Esmeraldas con ADN de PAZ',
+    'cta.float': 'Reserva tu número',
+    'toast.taken': 'Este número fue reservado en este momento.',
+    'toast.suggest': 'Prueba con #{a}, #{b} o #{c}',
+    'toast.activeReservation': 'Ya tienes una reserva activa.',
+    'toast.copied': 'Copiado al portapapeles',
+    'toast.uploaded': 'Comprobante recibido. Te avisaremos cuando se apruebe.',
+    'toast.expired': 'Tu reserva expiró. El número volvió a disponible.',
+    'modal.reserve.title': 'Reservar #{n}',
+    'modal.reserve.sub': '${price} COP · 30 min para confirmar',
+    'modal.field.name': 'Nombre completo',
+    'modal.field.whatsapp': 'WhatsApp (con código país)',
+    'modal.field.email': 'Email',
+    'modal.field.terms': 'Acepto los términos y la política de privacidad',
+    'modal.cta.reserve': 'Reservar y ver datos de pago',
+    'modal.tip': 'Si no completas el pago en 30 min, tu número vuelve a disponible.',
+    'pay.title': 'Confirma tu pago',
+    'pay.sub': 'Reserva activa para #{n}',
+    'pay.tab.nequi': 'Nequi',
+    'pay.tab.banco': 'Bancolombia',
+    'pay.tab.pse': 'PSE',
+    'pay.label.account': 'Cuenta',
+    'pay.label.holder': 'Titular',
+    'pay.label.amount': 'Monto',
+    'pay.label.copy': 'Copiar',
+    'pay.label.copied': 'OK',
+    'pay.timer': 'Tiempo restante',
+    'pay.cta.upload': 'Ya pagué — Subir comprobante',
+    'upload.title': 'Sube tu comprobante',
+    'upload.dropzone.strong': 'Arrastra el comprobante aquí',
+    'upload.dropzone.or': 'o haz click para seleccionar',
+    'upload.constraints': 'JPG · PNG · HEIC · PDF · máx 10MB',
+    'upload.cta': 'Confirmar y enviar a revisión',
+    'upload.remove': '✕',
+    'success.title': '¡Comprobante recibido!',
+    'success.body': 'Tu número #{n} queda reservado mientras un asesor confirma el pago. Te enviaremos un email a {email} cuando esté aprobado.',
+    'success.cta': 'Volver al grid',
+    'admin.draw.confirm': '¿Ejecutar el sorteo entre los {sold} números vendidos? Esta acción no se puede deshacer.',
+    'admin.draw.title': '¡Tenemos ganador!',
+    'admin.draw.body': 'El número #{n} resultó ganador. Seed: {seed}',
+  },
+  en: {
+    'hero.stamp': 'Origin Muzo · Boyacá',
+    'admin.size': 'Grid size',
+    'admin.custom': 'Custom (5-9999)',
+    'admin.price': 'Price (COP)',
+    'admin.density': 'View',
+    'admin.demo': 'Demo data',
+    'admin.draw': 'Action',
+    'admin.runDraw': 'Run draw',
+    'admin.reset': 'Reset',
+    'grid.title': 'Pick your <em>number</em>',
+    'legend.available': 'Available',
+    'legend.reserved': 'Reserved',
+    'legend.mine': 'Yours',
+    'legend.sold': 'Sold',
+    'legend.winner': 'Winner',
+    'faq.title': 'Frequently <em>asked</em>',
+    'faq.q1': 'What if I don\'t complete payment in 30 minutes?',
+    'faq.a1': 'Your reservation expires and the number goes back to available so anyone else can take it.',
+    'faq.q2': 'How is the winner picked?',
+    'faq.a2': 'We use a cryptographic RNG with a seed that\'s published after the draw, so anyone can verify it.',
+    'faq.q3': 'Are my details public?',
+    'faq.a3': 'Only the buyer\'s initials are shown in the public grid. Your email, phone and full name are never published.',
+    'foot.tag': 'Emeralds with PEACE DNA',
+    'cta.float': 'Reserve your number',
+    'toast.taken': 'That number was just reserved.',
+    'toast.suggest': 'Try #{a}, #{b} or #{c}',
+    'toast.activeReservation': 'You already have an active reservation.',
+    'toast.copied': 'Copied to clipboard',
+    'toast.uploaded': 'Receipt received. We\'ll notify you once it\'s approved.',
+    'toast.expired': 'Your reservation expired. The number is available again.',
+    'modal.reserve.title': 'Reserve #{n}',
+    'modal.reserve.sub': '${price} COP · 30 min to confirm',
+    'modal.field.name': 'Full name',
+    'modal.field.whatsapp': 'WhatsApp (with country code)',
+    'modal.field.email': 'Email',
+    'modal.field.terms': 'I accept the terms and privacy policy',
+    'modal.cta.reserve': 'Reserve & see payment details',
+    'modal.tip': 'If you don\'t complete payment in 30 min, your number goes back to available.',
+    'pay.title': 'Confirm your payment',
+    'pay.sub': 'Active reservation for #{n}',
+    'pay.tab.nequi': 'Nequi',
+    'pay.tab.banco': 'Bancolombia',
+    'pay.tab.pse': 'PSE',
+    'pay.label.account': 'Account',
+    'pay.label.holder': 'Holder',
+    'pay.label.amount': 'Amount',
+    'pay.label.copy': 'Copy',
+    'pay.label.copied': 'OK',
+    'pay.timer': 'Time remaining',
+    'pay.cta.upload': 'I paid — Upload receipt',
+    'upload.title': 'Upload your receipt',
+    'upload.dropzone.strong': 'Drop the receipt here',
+    'upload.dropzone.or': 'or click to choose a file',
+    'upload.constraints': 'JPG · PNG · HEIC · PDF · max 10MB',
+    'upload.cta': 'Confirm & send for review',
+    'upload.remove': '✕',
+    'success.title': 'Receipt received!',
+    'success.body': 'Your number #{n} is held while an agent confirms the payment. We\'ll email {email} when it\'s approved.',
+    'success.cta': 'Back to the grid',
+    'admin.draw.confirm': 'Run the draw among the {sold} sold numbers? This cannot be undone.',
+    'admin.draw.title': 'We have a winner!',
+    'admin.draw.body': 'Number #{n} won. Seed: {seed}',
+  },
+};
+
+function t(key, vars = {}) {
+  let s = (I18N[STATE.lang] && I18N[STATE.lang][key]) || key;
+  Object.entries(vars).forEach(([k, v]) => { s = s.replaceAll('{' + k + '}', v); });
+  return s;
+}
+
+/* =====================================================
+   INIT
+===================================================== */
+function applyI18nStatic() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const value = t(key);
+    // Allow inline <em> for editorial emphasis (TM brand voice)
+    if (/<em>/.test(value)) el.innerHTML = value;
+    else el.textContent = value;
+  });
+  document.documentElement.lang = STATE.lang;
+}
+
+function fmtCOP(n) {
+  return '$' + n.toLocaleString('es-CO') + ' COP';
+}
+
+function seedDemo(numbers, soldRatio = 0.23, reservedRatio = 0.06) {
+  const total = numbers.length;
+  const soldCount = Math.floor(total * soldRatio);
+  const reservedCount = Math.floor(total * reservedRatio);
+  const indices = Array.from({length: total}, (_, i) => i);
+  // shuffle
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  for (let i = 0; i < soldCount; i++) {
+    numbers[indices[i]].status = STATUS.SOLD;
+    numbers[indices[i]].initials = ['MA', 'JL', 'SR', 'KP', 'AC', 'NB'][Math.floor(Math.random()*6)];
+  }
+  for (let i = soldCount; i < soldCount + reservedCount; i++) {
+    numbers[indices[i]].status = STATUS.RESERVED_OTHER;
+  }
+  return numbers;
+}
+
+function buildNumbers(size, withDemo) {
+  const arr = Array.from({length: size}, (_, i) => ({n: i + 1, status: STATUS.AVAILABLE}));
+  return withDemo ? seedDemo(arr) : arr;
+}
+
+function calcCols(size, mode) {
+  const w = window.innerWidth;
+  if (mode === 'compact') {
+    if (w < 480) return 8;
+    if (w < 720) return 12;
+    if (w < 1024) return 18;
+    return 25;
+  }
+  // roomy
+  if (size <= 10) return Math.min(size, w < 720 ? 5 : 10);
+  if (size <= 25) return w < 720 ? 5 : 8;
+  if (size <= 100) return w < 720 ? 5 : 10;
+  if (size <= 500) return w < 720 ? 6 : 20;
+  return w < 720 ? 8 : 25;
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  grid.style.setProperty('--cols', calcCols(STATE.size, STATE.mode));
+  grid.innerHTML = '';
+  const useCompact = STATE.size > 200 || STATE.mode === 'compact';
+
+  const fragment = document.createDocumentFragment();
+  STATE.numbers.forEach((num, i) => {
+    const tile = document.createElement('button');
+    tile.type = 'button';
+    tile.className = 'tile ' + num.status + (useCompact ? ' size-compact' : '');
+    tile.dataset.n = num.n;
+    tile.setAttribute('role', 'gridcell');
+    tile.setAttribute('aria-label', getTileAria(num));
+    if (num.status !== STATUS.AVAILABLE) tile.tabIndex = -1;
+    tile.innerHTML = '<span class="tile-num">' + num.n + '</span>';
+    tile.addEventListener('click', () => onTileClick(num));
+    fragment.appendChild(tile);
+  });
+  grid.appendChild(fragment);
+  updateProgress();
+}
+
+function getTileAria(num) {
+  const states = {
+    [STATUS.AVAILABLE]: STATE.lang === 'es' ? 'disponible' : 'available',
+    [STATUS.RESERVED_MINE]: STATE.lang === 'es' ? 'reservado por ti' : 'reserved by you',
+    [STATUS.RESERVED_OTHER]: STATE.lang === 'es' ? 'reservado' : 'reserved',
+    [STATUS.SOLD]: STATE.lang === 'es' ? 'vendido' : 'sold',
+    [STATUS.WINNER]: STATE.lang === 'es' ? 'ganador' : 'winner',
+  };
+  return (STATE.lang === 'es' ? 'Número ' : 'Number ') + num.n + ', ' + states[num.status];
+}
+
+function updateProgress() {
+  const sold = STATE.numbers.filter(n => n.status === STATUS.SOLD || n.status === STATUS.WINNER).length;
+  const total = STATE.numbers.length;
+  const pct = total > 0 ? (sold / total) * 100 : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressMetaSold').textContent = sold + (STATE.lang === 'es' ? ' vendidos' : ' sold');
+  document.getElementById('progressMetaLeft').textContent = (total - sold) + (STATE.lang === 'es' ? ' disponibles' : ' available');
+  document.getElementById('statSold').textContent = sold + ' / ' + total;
+  document.getElementById('statPrice').textContent = fmtCOP(STATE.pricePerNumber);
+}
+
+/* =====================================================
+   TILE CLICK
+===================================================== */
+function onTileClick(num) {
+  if (num.status === STATUS.SOLD || num.status === STATUS.WINNER) {
+    showToast(STATE.lang === 'es'
+      ? 'Vendido. Mira los disponibles.'
+      : 'Already sold. Check the available ones.', 'warning');
+    return;
+  }
+  if (num.status === STATUS.RESERVED_OTHER) {
+    showToast(t('toast.taken'), 'warning');
+    suggestAlternatives();
+    return;
+  }
+  if (num.status === STATUS.RESERVED_MINE) {
+    openPaymentView(num.n);
+    return;
+  }
+  // AVAILABLE
+  if (STATE.myReservation) {
+    showToast(t('toast.activeReservation'), 'warning');
+    openPaymentView(STATE.myReservation.number);
+    return;
+  }
+  openReservationModal(num.n);
+}
+
+function suggestAlternatives() {
+  const available = STATE.numbers.filter(n => n.status === STATUS.AVAILABLE).map(n => n.n);
+  if (available.length < 3) return;
+  const picks = [];
+  while (picks.length < 3) {
+    const r = available[Math.floor(Math.random() * available.length)];
+    if (!picks.includes(r)) picks.push(r);
+  }
+  showToast(t('toast.suggest', {a: picks[0], b: picks[1], c: picks[2]}));
+}
+
+/* =====================================================
+   RESERVATION MODAL
+===================================================== */
+function openReservationModal(n) {
+  const modal = document.getElementById('modal');
+  const box = document.getElementById('modalBox');
+  box.innerHTML = `
+    <div class="modal-head">
+      <div>
+        <h3 class="modal-title" id="modalTitle">${t('modal.reserve.title', {n})}</h3>
+        <p class="modal-sub">${t('modal.reserve.sub', {price: STATE.pricePerNumber.toLocaleString('es-CO')})}</p>
+      </div>
+      <button class="modal-close" id="modalClose" aria-label="Cerrar">✕</button>
+    </div>
+    <form id="reserveForm">
+      <div class="field">
+        <label for="rName">${t('modal.field.name')}</label>
+        <input id="rName" type="text" required autocomplete="name" />
+      </div>
+      <div class="field">
+        <label for="rWhats">${t('modal.field.whatsapp')}</label>
+        <input id="rWhats" type="tel" placeholder="+57 300 000 0000" required />
+      </div>
+      <div class="field">
+        <label for="rEmail">${t('modal.field.email')}</label>
+        <input id="rEmail" type="email" required autocomplete="email" />
+      </div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="rTerms" required />
+        <span>${t('modal.field.terms')}</span>
+      </label>
+      <button class="btn-primary" id="rSubmit" type="submit" disabled>${t('modal.cta.reserve')} →</button>
+      <p class="modal-tip">${t('modal.tip')}</p>
+    </form>
+  `;
+  modal.classList.add('open');
+  setTimeout(() => document.getElementById('rName').focus(), 100);
+
+  // Wire up close
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+  // Validation
+  const form = document.getElementById('reserveForm');
+  const submit = document.getElementById('rSubmit');
+  function validate() {
+    const ok = form.rName.value.trim().length > 1
+      && form.rWhats.value.trim().length > 6
+      && /\S+@\S+\.\S+/.test(form.rEmail.value)
+      && form.rTerms.checked;
+    submit.disabled = !ok;
+  }
+  form.addEventListener('input', validate);
+  form.addEventListener('change', validate);
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    confirmReservation(n, {
+      name: form.rName.value.trim(),
+      whats: form.rWhats.value.trim(),
+      email: form.rEmail.value.trim(),
+    });
+  });
+}
+
+function confirmReservation(n, data) {
+  // Mark in state
+  const num = STATE.numbers.find(x => x.n === n);
+  if (!num) return;
+  num.status = STATUS.RESERVED_MINE;
+  num.initials = data.name.split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+  STATE.myReservation = {
+    number: n,
+    expiresAt: Date.now() + 30 * 60 * 1000,
+    buyer: data,
+  };
+  renderGrid();
+  openPaymentView(n);
+  startTimer();
+  updateFloatingCta();
+}
+
+/* =====================================================
+   PAYMENT VIEW
+===================================================== */
+function openPaymentView(n) {
+  const modal = document.getElementById('modal');
+  const box = document.getElementById('modalBox');
+  box.innerHTML = `
+    <div class="modal-head">
+      <div>
+        <h3 class="modal-title">${t('pay.title')}</h3>
+        <p class="modal-sub">${t('pay.sub', {n})}</p>
+      </div>
+      <button class="modal-close" id="modalClose" aria-label="Cerrar">✕</button>
+    </div>
+
+    <div class="pay-tabs" role="tablist">
+      <button class="active" data-tab="nequi">${t('pay.tab.nequi')}</button>
+      <button data-tab="banco">${t('pay.tab.banco')}</button>
+      <button data-tab="pse">${t('pay.tab.pse')}</button>
+    </div>
+
+    <div class="pay-card" id="payCardContent">
+      <div class="pay-qr" aria-hidden="true"></div>
+      <div class="pay-info">
+        <div class="pay-line">
+          <span class="pay-label">${t('pay.label.account')}</span>
+          <span class="pay-value" id="payAccount">300 123 4567</span>
+        </div>
+        <div class="pay-line">
+          <span class="pay-label">${t('pay.label.holder')}</span>
+          <span class="pay-value">Tierra Madre S.A.S.</span>
+        </div>
+        <div class="pay-line">
+          <span class="pay-label">${t('pay.label.amount')}</span>
+          <span class="pay-value">${fmtCOP(STATE.pricePerNumber)}</span>
+        </div>
+        <div style="margin-top:8px;">
+          <button class="copy-btn" id="copyAccount">${t('pay.label.copy')}</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="timer-card" id="timerCard">
+      <div class="timer-label">${t('pay.timer')}</div>
+      <div class="timer-value" id="timerValue">30:00</div>
+    </div>
+
+    <button class="btn-primary" id="goUpload">${t('pay.cta.upload')} →</button>
+  `;
+  modal.classList.add('open');
+
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+
+  // Tabs
+  const tabAccounts = {nequi: '300 123 4567', banco: '123-456789-01 (Bancolombia ahorros)', pse: 'Davivienda · Cuenta 0123-4567'};
+  modal.querySelectorAll('.pay-tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      modal.querySelectorAll('.pay-tabs button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('payAccount').textContent = tabAccounts[btn.dataset.tab];
+    });
+  });
+
+  // Copy
+  document.getElementById('copyAccount').addEventListener('click', async (e) => {
+    const text = document.getElementById('payAccount').textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      e.target.textContent = t('pay.label.copied') + ' ✓';
+      e.target.classList.add('copied');
+      showToast(t('toast.copied'));
+      setTimeout(() => {
+        e.target.textContent = t('pay.label.copy');
+        e.target.classList.remove('copied');
+      }, 1400);
+    } catch (err) {
+      showToast(STATE.lang === 'es' ? 'No se pudo copiar' : 'Could not copy', 'danger');
+    }
+  });
+
+  document.getElementById('goUpload').addEventListener('click', () => openUploadView(n));
+}
+
+/* =====================================================
+   TIMER
+===================================================== */
+function startTimer() {
+  if (STATE.timerInterval) clearInterval(STATE.timerInterval);
+  STATE.timerInterval = setInterval(updateTimer, 250);
+  updateTimer();
+}
+
+function updateTimer() {
+  if (!STATE.myReservation) return;
+  const remaining = STATE.myReservation.expiresAt - Date.now();
+  if (remaining <= 0) return expireReservation();
+  const mins = Math.floor(remaining / 60000);
+  const secs = Math.floor((remaining % 60000) / 1000);
+  const tv = document.getElementById('timerValue');
+  if (tv) tv.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+  const card = document.getElementById('timerCard');
+  if (card) {
+    card.classList.toggle('warning', remaining <= 10 * 60000 && remaining > 5 * 60000);
+    card.classList.toggle('danger', remaining <= 5 * 60000);
+  }
+}
+
+function expireReservation() {
+  clearInterval(STATE.timerInterval);
+  const r = STATE.myReservation;
+  if (!r) return;
+  const num = STATE.numbers.find(x => x.n === r.number);
+  if (num) { num.status = STATUS.AVAILABLE; delete num.initials; }
+  STATE.myReservation = null;
+  closeModal();
+  renderGrid();
+  updateFloatingCta();
+  showToast(t('toast.expired'), 'danger');
+}
+
+/* =====================================================
+   UPLOAD VIEW
+===================================================== */
+function openUploadView(n) {
+  const box = document.getElementById('modalBox');
+  box.innerHTML = `
+    <div class="modal-head">
+      <div>
+        <h3 class="modal-title">${t('upload.title')}</h3>
+        <p class="modal-sub">#${n} · ${fmtCOP(STATE.pricePerNumber)}</p>
+      </div>
+      <button class="modal-close" id="modalClose" aria-label="Cerrar">✕</button>
+    </div>
+
+    <div class="dropzone" id="dropzone" tabindex="0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <path d="M12 4v12m0 0l-4-4m4 4l4-4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round"/>
+      </svg>
+      <div class="dropzone-strong">${t('upload.dropzone.strong')}</div>
+      <div>${t('upload.dropzone.or')}</div>
+      <div class="dropzone-meta">${t('upload.constraints')}</div>
+    </div>
+    <input id="fileInput" type="file" accept="image/*,application/pdf,.heic" style="display:none" />
+
+    <div id="previewArea"></div>
+
+    <div class="timer-card" id="timerCard" style="margin-top:14px;">
+      <div class="timer-label">${t('pay.timer')}</div>
+      <div class="timer-value" id="timerValue">--:--</div>
+    </div>
+
+    <button class="btn-primary" id="confirmUpload" disabled style="margin-top:14px;">${t('upload.cta')} →</button>
+  `;
+
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  let chosenFile = null;
+
+  function setFile(file) {
+    chosenFile = file;
+    const preview = document.getElementById('previewArea');
+    preview.innerHTML = '';
+    const isImage = file.type.startsWith('image/');
+    const sizeLabel = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+    const card = document.createElement('div');
+    card.className = 'preview';
+    if (isImage) {
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(file);
+      card.appendChild(img);
+    } else {
+      const ph = document.createElement('div');
+      ph.style.cssText = 'width:56px;height:56px;border-radius:8px;background:var(--surface-soft);display:grid;place-items:center;font-weight:600;color:var(--gold-deep);font-size:11px;';
+      ph.textContent = 'PDF';
+      card.appendChild(ph);
+    }
+    const meta = document.createElement('div');
+    meta.className = 'preview-meta';
+    meta.innerHTML = `<div class="preview-name">${file.name}</div><div class="preview-size">${sizeLabel}</div>`;
+    card.appendChild(meta);
+    const remove = document.createElement('button');
+    remove.className = 'remove-btn';
+    remove.textContent = '✕';
+    remove.addEventListener('click', () => {
+      chosenFile = null;
+      preview.innerHTML = '';
+      document.getElementById('confirmUpload').disabled = true;
+    });
+    card.appendChild(remove);
+    preview.appendChild(card);
+    document.getElementById('confirmUpload').disabled = false;
+  }
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', (e) => { if (e.target.files[0]) setFile(e.target.files[0]); });
+
+  document.getElementById('confirmUpload').addEventListener('click', () => {
+    if (!chosenFile) return;
+    finalizeUpload(n);
+  });
+
+  // resume timer
+  if (STATE.myReservation) updateTimer();
+}
+
+function finalizeUpload(n) {
+  const box = document.getElementById('modalBox');
+  const email = STATE.myReservation?.buyer?.email || 'tu correo';
+  box.innerHTML = `
+    <div class="success-card">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3 class="modal-title" style="text-align:center; margin-bottom:8px;">${t('success.title')}</h3>
+      <p style="color: var(--text-muted); margin-bottom:24px;">${t('success.body', {n, email})}</p>
+      <button class="btn-primary" id="successClose">${t('success.cta')}</button>
+    </div>
+  `;
+  document.getElementById('successClose').addEventListener('click', closeModal);
+  showToast(t('toast.uploaded'));
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+/* =====================================================
+   FLOATING CTA
+===================================================== */
+function updateFloatingCta() {
+  const cta = document.getElementById('floatingCta');
+  if (STATE.myReservation) {
+    cta.classList.add('visible');
+    cta.querySelector('span').textContent = (STATE.lang === 'es' ? 'Tu reserva: #' : 'Your reservation: #') + STATE.myReservation.number;
+  } else {
+    cta.classList.remove('visible');
+  }
+}
+document.getElementById('floatingCta').addEventListener('click', () => {
+  if (STATE.myReservation) openPaymentView(STATE.myReservation.number);
+});
+
+/* =====================================================
+   ADMIN: CONTROLS
+===================================================== */
+document.querySelectorAll('#sizePresets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#sizePresets button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('customSize').value = '';
+    setSize(parseInt(btn.dataset.size, 10));
+  });
+});
+document.getElementById('customSize').addEventListener('change', (e) => {
+  let v = parseInt(e.target.value, 10);
+  if (!isFinite(v)) return;
+  v = Math.max(5, Math.min(9999, v));
+  e.target.value = v;
+  document.querySelectorAll('#sizePresets button').forEach(b => b.classList.remove('active'));
+  setSize(v);
+});
+document.querySelectorAll('[data-mode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    STATE.mode = btn.dataset.mode;
+    renderGrid();
+  });
+});
+document.querySelectorAll('[data-seed]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-seed]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    setSize(STATE.size, btn.dataset.seed === 'true');
+  });
+});
+document.getElementById('priceInput').addEventListener('change', (e) => {
+  STATE.pricePerNumber = parseInt(e.target.value, 10) || 50000;
+  updateProgress();
+});
+document.getElementById('resetGrid').addEventListener('click', () => {
+  STATE.myReservation = null;
+  if (STATE.timerInterval) clearInterval(STATE.timerInterval);
+  closeModal();
+  setSize(STATE.size, true);
+  updateFloatingCta();
+});
+document.getElementById('runDraw').addEventListener('click', () => runDraw());
+
+function setSize(size, withDemo = true) {
+  STATE.size = size;
+  STATE.numbers = buildNumbers(size, withDemo);
+  STATE.myReservation = null;
+  if (STATE.timerInterval) clearInterval(STATE.timerInterval);
+  renderGrid();
+  updateFloatingCta();
+}
+
+/* =====================================================
+   DRAW
+===================================================== */
+function runDraw() {
+  const sold = STATE.numbers.filter(n => n.status === STATUS.SOLD);
+  if (sold.length === 0) {
+    showToast(STATE.lang === 'es' ? 'No hay números vendidos.' : 'No sold numbers yet.', 'warning');
+    return;
+  }
+  if (!confirm(t('admin.draw.confirm', {sold: sold.length}))) return;
+
+  const seed = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+  const winner = sold[Math.floor(Math.random() * sold.length)];
+
+  // dim animation
+  document.querySelectorAll('.tile').forEach(t => t.style.opacity = '0.3');
+  setTimeout(() => {
+    winner.status = STATUS.WINNER;
+    renderGrid();
+    setTimeout(() => {
+      const winTile = document.querySelector('.tile[data-n="' + winner.n + '"]');
+      if (winTile) winTile.scrollIntoView({behavior: 'smooth', block: 'center'});
+      showToast(t('admin.draw.title') + ' #' + winner.n, 'warning');
+      setTimeout(() => alert(t('admin.draw.body', {n: winner.n, seed})), 800);
+    }, 50);
+  }, 600);
+}
+
+/* =====================================================
+   THEME / LANG
+===================================================== */
+document.getElementById('themeToggle').addEventListener('click', () => {
+  STATE.theme = STATE.theme === 'light' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = STATE.theme;
+});
+document.getElementById('langToggle').addEventListener('click', () => {
+  STATE.lang = STATE.lang === 'es' ? 'en' : 'es';
+  applyI18nStatic();
+  // Refresh i18n-dependent UI elements
+  document.getElementById('langToggle').textContent = STATE.lang === 'es' ? 'ES / EN' : 'EN / ES';
+  renderGrid();
+  if (STATE.myReservation) {
+    updateFloatingCta();
+  }
+});
+document.getElementById('adminToggle').addEventListener('click', () => {
+  const card = document.getElementById('adminCard');
+  card.style.display = card.style.display === 'none' ? '' : 'none';
+});
+
+/* =====================================================
+   TOASTS
+===================================================== */
+function showToast(msg, kind) {
+  const stack = document.getElementById('toastStack');
+  const el = document.createElement('div');
+  el.className = 'toast' + (kind ? ' ' + kind : '');
+  el.textContent = msg;
+  stack.appendChild(el);
+  setTimeout(() => {
+    el.style.transition = 'opacity 240ms';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 260);
+  }, 3200);
+}
+
+/* =====================================================
+   BOOT
+===================================================== */
+window.addEventListener('resize', renderGrid);
+applyI18nStatic();
+setSize(100, true);
+</script>
+</body>
+</html>
