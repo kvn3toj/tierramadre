@@ -94,3 +94,4 @@ public/gallery/
 .claude/settings.local.json
 .env*.local
 .superpowers/
+.gstack/
