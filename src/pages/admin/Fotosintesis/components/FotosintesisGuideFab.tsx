@@ -164,9 +164,12 @@ export function FotosintesisGuideFab({
           onClick={() => setOpen(true)}
           sx={{
             position: "fixed",
-            bottom: { xs: 20, md: 28 },
+            // Lifted above the global iOS bottom tab bar (~80px) AND the
+            // "nueva versión disponible" update banner that stacks on top of
+            // it (~70px). Total clearance: ~170px + breathing room.
+            bottom: { xs: 180, md: 188 },
             right: { xs: 20, md: 28 },
-            zIndex: 1200,
+            zIndex: 1300,
             width: 56,
             height: 56,
             borderRadius: "50%",

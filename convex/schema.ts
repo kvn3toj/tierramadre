@@ -126,6 +126,8 @@ export default defineSchema({
     ),
     /** Last sync error message (if syncStatus === "error") */
     syncError: v.optional(v.string()),
+    /** Legacy hash from older sync writer — kept optional so existing docs validate. */
+    fieldsHash: v.optional(v.string()),
   })
     .index("by_itemId", ["itemId"])
     .index("by_rowIndex", ["rowIndex"])
