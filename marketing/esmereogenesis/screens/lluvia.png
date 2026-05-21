@@ -1,0 +1,17 @@
+{
+  "alerts": [
+    "Sin conexion a internet",
+    "Sin conexion a internet",
+    "Lluvia generosa · esta semana cuenta. Tu racha sigue creciendo.",
+    "Lluvia generosa · esta semana cuenta. Tu racha sigue creciendo.",
+    "Lluvia generosa · esta semana cuenta. Tu racha sigue creciendo."
+  ],
+  "streak": {
+    "currentWeeks": 2,
+    "longestWeeks": 2,
+    "lastAporteWeekStart": "2026-05-11T05:00:00.000Z",
+    "lastGraceAt": "2026-05-11T05:00:00.000Z"
+  },
+  "totalAbonado": 120000,
+  "aporteCount": 2
+}

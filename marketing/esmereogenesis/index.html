@@ -1,0 +1,1179 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Esmereogénesis · Marketing Screenshots</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.min.js"></script>
+    <style>
+      :root {
+        --emerald: #00ae7a;
+        --emerald-dark: #008c62;
+        --emerald-deep: #06513a;
+        --emerald-night: #0c2a22;
+        --emerald-light: #33c194;
+        --mint-50: #f1f8f2;
+        --mint-100: #e5f0e5;
+        --mint-200: #d3e8d7;
+        --mint-300: #bbddbe;
+        --gold: #d4af37;
+        --gold-light: #e5c866;
+        --gold-deep: #8e6a12;
+        --paper: #f6f1ea;
+        --paper-deep: #ece3d4;
+        --ink: #18221c;
+        --ink-soft: #3a4a40;
+        --ink-muted: #6e7a72;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Inter", system-ui, sans-serif;
+        background: #1a1d1c;
+        color: #e8e6e1;
+        overflow-x: hidden;
+      }
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 22px;
+        background: rgba(20, 24, 22, 0.94);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .toolbar .brand {
+        font-family: "Cinzel", serif;
+        letter-spacing: 0.18em;
+        font-weight: 600;
+        font-size: 13px;
+        color: #cfe9d9;
+      }
+      .toolbar .brand em {
+        font-family: "Cormorant Garamond", serif;
+        font-style: italic;
+        font-weight: 500;
+        color: var(--emerald-light);
+        letter-spacing: 0;
+        margin-left: 6px;
+      }
+      .toolbar .actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .btn {
+        padding: 8px 18px;
+        font:
+          600 12px "Inter",
+          sans-serif;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: transparent;
+        color: #e8e6e1;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: all 200ms ease;
+      }
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+      .btn.primary {
+        background: var(--emerald);
+        color: white;
+        border-color: var(--emerald);
+      }
+      .btn.primary:hover {
+        background: var(--emerald-light);
+        border-color: var(--emerald-light);
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .status {
+        font-size: 11px;
+        color: var(--gold-light);
+        letter-spacing: 0.05em;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 28px;
+        padding: 36px;
+        max-width: 1700px;
+        margin: 0 auto;
+      }
+      .card {
+        position: relative;
+        background: #0e1110;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
+      }
+      .card-stage {
+        position: relative;
+        aspect-ratio: 1320 / 2868;
+        width: 100%;
+        overflow: hidden;
+        background: #000;
+        --scale: 1;
+      }
+      .card-stage .slide {
+        transform: scale(var(--scale));
+      }
+      .card-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 11px;
+        color: #c9c4b8;
+        letter-spacing: 0.05em;
+      }
+      .card-meta .num {
+        font-family: "Cormorant Garamond", serif;
+        font-style: italic;
+        color: var(--emerald-light);
+        font-size: 15px;
+      }
+      .card-meta button {
+        padding: 5px 14px;
+        font:
+          600 10px "Inter",
+          sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: transparent;
+        color: #e8e6e1;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .card-meta button:hover {
+        background: var(--emerald);
+        border-color: var(--emerald);
+      }
+
+      .slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1320px;
+        height: 2868px;
+        transform-origin: top left;
+        overflow: hidden;
+        font-family: "Inter", system-ui, sans-serif;
+      }
+
+      .slide-bg-paper {
+        background: radial-gradient(
+          ellipse at 20% 0%,
+          #f4eedf 0%,
+          var(--paper) 45%,
+          var(--paper-deep) 100%
+        );
+      }
+      .slide-bg-mint {
+        background: linear-gradient(
+          165deg,
+          #f0f7f1 0%,
+          var(--mint-100) 38%,
+          var(--mint-200) 100%
+        );
+      }
+      .slide-bg-emerald-dark {
+        background: radial-gradient(
+          ellipse at 30% 110%,
+          #154534 0%,
+          var(--emerald-night) 55%,
+          #050c09 100%
+        );
+      }
+      .slide-bg-emerald-mid {
+        background: linear-gradient(
+          160deg,
+          #07372a 0%,
+          #0e5740 45%,
+          var(--emerald) 130%
+        );
+      }
+      .slide-bg-emerald-night {
+        background:
+          radial-gradient(
+            ellipse at 50% -10%,
+            rgba(212, 175, 55, 0.14) 0%,
+            transparent 55%
+          ),
+          radial-gradient(
+            ellipse at 30% 110%,
+            #0e3326 0%,
+            #061610 60%,
+            #020706 100%
+          );
+      }
+      .slide-bg-moss-dark {
+        background:
+          radial-gradient(
+            ellipse at 70% 30%,
+            rgba(212, 175, 55, 0.16) 0%,
+            transparent 50%
+          ),
+          linear-gradient(165deg, #142820 0%, #0a1814 50%, #050c09 100%);
+      }
+      .slide-bg-night-mist {
+        background:
+          radial-gradient(
+            ellipse at 50% 60%,
+            rgba(51, 193, 148, 0.12) 0%,
+            transparent 55%
+          ),
+          linear-gradient(180deg, #0a1a14 0%, #061008 60%, #020503 100%);
+      }
+
+      .brand-mark {
+        font-family: "Cinzel", serif;
+        letter-spacing: 0.22em;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .ornament {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        letter-spacing: 0.32em;
+        font-size: 26px;
+        font-weight: 500;
+        font-family: "Cinzel", serif;
+      }
+      .ornament:before,
+      .ornament:after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: currentColor;
+        opacity: 0.4;
+        min-width: 60px;
+      }
+      .headline {
+        font-family: "Cormorant Garamond", serif;
+        font-weight: 500;
+        font-style: italic;
+        line-height: 0.92;
+        letter-spacing: -0.01em;
+      }
+      .headline strong {
+        font-style: italic;
+        font-weight: 600;
+      }
+      .kicker {
+        font-family: "Cinzel", serif;
+        text-transform: uppercase;
+        letter-spacing: 0.32em;
+        font-size: 28px;
+        font-weight: 600;
+      }
+
+      /* iPhone 14 frame (midnight aluminum, notch) */
+      .iphone {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 68px;
+        background:
+          linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.08) 0%,
+            transparent 6%,
+            transparent 94%,
+            rgba(255, 255, 255, 0.08) 100%
+          ),
+          linear-gradient(
+            160deg,
+            #2a2e32 0%,
+            #1a1d20 35%,
+            #0d1012 70%,
+            #050608 100%
+          );
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+          inset 0 0 0 2.5px #050608,
+          inset 0 0 0 13px #0a0b0c,
+          0 60px 120px rgba(0, 0, 0, 0.55),
+          0 20px 60px rgba(0, 0, 0, 0.4);
+        padding: 14px;
+      }
+      /* iPhone 14 notch — narrower than iPhone 13, pill shape */
+      .iphone .notch {
+        position: absolute;
+        top: 17px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 31.5%;
+        height: 34px;
+        background: #030305;
+        border-radius: 20px;
+        z-index: 4;
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+          inset 0 2px 4px rgba(0, 0, 0, 0.6);
+      }
+      .iphone .notch::before {
+        /* speaker grille */
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 22%;
+        width: 36%;
+        height: 4px;
+        transform: translateY(-50%);
+        background: #0a0c0e;
+        border-radius: 4px;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+      }
+      .iphone .notch::after {
+        /* front camera */
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 16%;
+        width: 14px;
+        height: 14px;
+        transform: translateY(-50%);
+        background: radial-gradient(
+          circle at 35% 35%,
+          #1a4d6b 0%,
+          #050a12 60%,
+          #000 100%
+        );
+        border-radius: 50%;
+        box-shadow:
+          inset 0 0 0 1px rgba(80, 140, 180, 0.18),
+          inset 0 0 6px rgba(0, 0, 0, 0.9);
+      }
+      .iphone .screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 54px;
+        overflow: hidden;
+        background: #000;
+        box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.55);
+      }
+      .iphone .screen img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top;
+        display: block;
+      }
+      /* iPhone 14 side buttons (left: mute, vol-up, vol-down · right: power) */
+      .iphone .side-button {
+        position: absolute;
+        background: linear-gradient(
+          90deg,
+          #15181a 0%,
+          #0a0c0e 50%,
+          #15181a 100%
+        );
+        border-radius: 2px;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.05),
+          0 1px 2px rgba(0, 0, 0, 0.4);
+      }
+      .iphone .mute {
+        left: -5px;
+        top: 11.8%;
+        width: 6px;
+        height: 30px;
+      }
+      .iphone .vol-up {
+        left: -5px;
+        top: 17.5%;
+        width: 6px;
+        height: 78px;
+      }
+      .iphone .vol-down {
+        left: -5px;
+        top: 24.2%;
+        width: 6px;
+        height: 78px;
+      }
+      .iphone .power {
+        right: -5px;
+        top: 20%;
+        width: 6px;
+        height: 124px;
+      }
+
+      .orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(60px);
+        opacity: 0.55;
+        pointer-events: none;
+      }
+      .orb.emerald {
+        background: radial-gradient(circle, var(--emerald) 0%, transparent 70%);
+      }
+      .orb.gold {
+        background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
+      }
+      .orb.mint {
+        background: radial-gradient(
+          circle,
+          var(--mint-300) 0%,
+          transparent 70%
+        );
+      }
+
+      /* Slide 1 HERO */
+      .slide-1 .stack {
+        position: absolute;
+        top: 130px;
+        left: 100px;
+        right: 100px;
+        color: #f4ebd0;
+      }
+      .slide-1 .kicker {
+        color: var(--gold-light);
+        margin-bottom: 60px;
+      }
+      .slide-1 .headline {
+        font-size: 178px;
+        color: #f4ebd0;
+      }
+      .slide-1 .sub {
+        margin-top: 70px;
+        font-family: "Cormorant Garamond", serif;
+        font-style: italic;
+        font-size: 44px;
+        font-weight: 400;
+        color: rgba(244, 235, 208, 0.72);
+        max-width: 880px;
+        line-height: 1.35;
+      }
+      .slide-1 .phone-wrap {
+        position: absolute;
+        bottom: -190px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 880px;
+        aspect-ratio: 9 / 19.5;
+      }
+
+      /* Slide 2 RITUAL */
+      .slide-2 .stack {
+        position: absolute;
+        top: 200px;
+        right: 100px;
+        width: 580px;
+        text-align: right;
+        color: #f2ede3;
+      }
+      .slide-2 .kicker {
+        color: var(--gold-light);
+        margin-bottom: 50px;
+        font-size: 26px;
+      }
+      .slide-2 .headline {
+        font-size: 156px;
+        color: #f8f1dd;
+      }
+      .slide-2 .sub {
+        margin-top: 60px;
+        font-family: "Cormorant Garamond", serif;
+        font-style: italic;
+        font-size: 42px;
+        color: rgba(248, 241, 221, 0.78);
+        line-height: 1.4;
+      }
+      .slide-2 .phone-wrap {
+        position: absolute;
+        bottom: 80px;
+        left: -120px;
+        width: 880px;
+        aspect-ratio: 9 / 19.5;
+        transform: rotate(-6deg);
+      }
+
+      /* Slide 3 STREAK */
+      .slide-3 .stack {
+        position: absolute;
+        top: 160px;
+        left: 100px;
+        right: 100px;
+        text-align: center;
+        color: #f4ebd0;
+      }
+      .slide-3 .kicker {
+        color: var(--gold-light);
+        margin-bottom: 40px;
+        font-size: 26px;
+      }
+      .slide-3 .headline {
+        font-size: 164px;
+        color: #f4ebd0;
+      }
+      .slide-3 .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 18px;
+        margin-top: 60px;
+        padding: 24px 48px;
+        border-radius: 999px;
+        background: linear-gradient(160deg, #fff4d6 0%, #f5d87e 100%);
+        color: var(--gold-deep);
+        font-family: "Cinzel", serif;
+        letter-spacing: 0.2em;
+        font-weight: 600;
+        font-size: 28px;
+        box-shadow: 0 12px 30px rgba(212, 175, 55, 0.35);
+      }
+      .slide-3 .badge .flame {
+        width: 38px;
+        height: 38px;
+        background: radial-gradient(
+          circle at 50% 60%,
+          #f8b233 0%,
+          #d97706 100%
+        );
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        box-shadow: 0 0 24px rgba(255, 178, 51, 0.5);
+      }
+      .slide-3 .phone-wrap {
+        position: absolute;
+        bottom: -180px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 860px;
+        aspect-ratio: 9 / 19.5;
+      }
+
+      /* Slide 4 GARDEN */
+      .slide-4 .stack {
+        position: absolute;
+        top: 180px;
+        left: 100px;
+        width: 600px;
+        color: #f2ede3;
+      }
+      .slide-4 .kicker {
+        color: var(--mint-300);
+        margin-bottom: 50px;
+        font-size: 26px;
+      }
+      .slide-4 .headline {
+        font-size: 154px;
+        color: #f4ebd0;
+      }
+      .slide-4 .sub {
+        margin-top: 60px;
+        font-family: "Cormorant Garamond", serif;
+        font-style: italic;
+        font-size: 42px;
+        color: rgba(244, 235, 208, 0.75);
+        line-height: 1.4;
+      }
+      .slide-4 .phone-wrap {
+        position: absolute;
+        right: -120px;
+        top: 50%;
+        transform: translateY(-50%) rotate(5deg);
+        width: 820px;
+        aspect-ratio: 9 / 19.5;
+      }
+
+      /* Slide 5 LLUVIA */
+      .slide-5 .stack {
+        position: absolute;
+        top: 160px;
+        left: 100px;
+        right: 100px;
+        text-align: center;
+        color: #f4ebd0;
+      }
+      .slide-5 .kicker {
+        color: var(--emerald-light);
+        margin-bottom: 50px;
+        font-size: 26px;
+      }
+      .slide-5 .headline {
+        font-size: 152px;
+        color: #f4ebd0;
+      }
+      .slide-5 .sub {
+        margin: 70px auto 0;
+        font-family: "Cormorant Garamond", serif;
+        font-style: italic;
+        font-size: 44px;
+        color: rgba(244, 235, 208, 0.72);
+        line-height: 1.42;
+        max-width: 920px;
+      }
+      .slide-5 .phone-wrap {
+        position: absolute;
+        bottom: -160px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 880px;
+        aspect-ratio: 9 / 19.5;
+      }
+      .drop {
+        position: absolute;
+        width: 14px;
+        height: 22px;
+        background: linear-gradient(
+          180deg,
+          transparent 0%,
+          rgba(51, 193, 148, 0.85) 100%
+        );
+        border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+        transform: rotate(8deg);
+        opacity: 0.65;
+        box-shadow: 0 0 12px rgba(51, 193, 148, 0.25);
+      }
+
+      /* Slide 6 CIERRE */
+      .slide-6 .stack {
+        position: absolute;
+        top: 50%;
+        left: 100px;
+        right: 100px;
+        transform: translateY(-58%);
+        text-align: center;
+        color: #f2e9c5;
+      }
+      .slide-6 .ornament {
+        color: var(--gold-light);
+        margin-bottom: 80px;
+        font-size: 24px;
+      }
+      .slide-6 .headline {
+        font-size: 172px;
+        color: #f8f1dd;
+        line-height: 0.96;
+      }
+      .slide-6 .headline .accent {
+        color: var(--gold-light);
+        font-style: italic;
+      }
+      .slide-6 .sub {
+        margin-top: 70px;
+        font-family: "Cinzel", serif;
+        letter-spacing: 0.32em;
+        font-size: 22px;
+        color: rgba(248, 241, 221, 0.7);
+        text-transform: uppercase;
+      }
+      .slide-6 .gem {
+        position: absolute;
+        bottom: 320px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background:
+          radial-gradient(
+            circle at 35% 30%,
+            rgba(255, 255, 255, 0.55) 0%,
+            transparent 28%
+          ),
+          radial-gradient(circle at 60% 70%, #1a7a55 0%, #06321f 70%);
+        box-shadow:
+          inset 0 0 60px rgba(0, 0, 0, 0.4),
+          inset 0 0 0 6px rgba(255, 255, 255, 0.06),
+          0 30px 80px rgba(0, 174, 122, 0.35),
+          0 0 120px rgba(0, 174, 122, 0.18);
+      }
+      .slide-6 .gem-foot {
+        position: absolute;
+        bottom: 210px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: "Cormorant Garamond", serif;
+        font-style: italic;
+        color: var(--gold-light);
+        letter-spacing: 0.16em;
+        font-size: 28px;
+        text-transform: uppercase;
+      }
+
+      .loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #1a1d1c;
+        z-index: 1000;
+        font-family: "Cormorant Garamond", serif;
+        font-style: italic;
+        color: var(--emerald-light);
+        font-size: 22px;
+        letter-spacing: 0.08em;
+      }
+      .loader.hidden {
+        display: none;
+      }
+
+      .footer-credit {
+        position: absolute;
+        bottom: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: "Cinzel", serif;
+        font-size: 18px;
+        letter-spacing: 0.42em;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .slide-1 .footer-credit {
+        color: var(--gold-light);
+        opacity: 0.65;
+      }
+
+      .spark {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: var(--gold-light);
+        border-radius: 50%;
+        box-shadow: 0 0 24px var(--gold-light);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loader" id="loader">Cultivando la presentación…</div>
+
+    <div class="toolbar">
+      <div class="brand">TIERRA MADRE <em>Esmereogénesis · Marketing</em></div>
+      <div class="actions">
+        <span class="status" id="status"></span>
+        <button class="btn" id="zoom-out">−</button>
+        <button class="btn" id="zoom-in">+</button>
+        <button class="btn primary" id="export-all">Exportar todo</button>
+      </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <div
+      id="export-host"
+      style="
+        position: fixed;
+        left: -99999px;
+        top: 0;
+        width: 1320px;
+        height: 2868px;
+        pointer-events: none;
+      "
+    ></div>
+
+    <script>
+      // Slide definitions — Tierra Madre brand voice, one idea each
+      const SLIDES = [
+        {
+          id: "hero",
+          title: "Hero",
+          bgClass: "slide-bg-emerald-night",
+          copy: {
+            kicker: "ESMEREOGÉNESIS",
+            headline: "<strong>Cultiva</strong><br/>tu esmeralda.",
+            sub: "No es un pago.<br/>Es una semilla que vas regando.",
+          },
+          screen: "screens/hub.png",
+          layout: "hero",
+        },
+        {
+          id: "ritual",
+          title: "Ritual",
+          bgClass: "slide-bg-emerald-dark",
+          copy: {
+            kicker: "EL APORTE",
+            headline: "Cada gota<br/>cuenta.",
+            sub: "Aporta lo que quieras,<br/>cuando puedas.",
+          },
+          screen: "screens/creation.png",
+          layout: "right-text-left-phone",
+        },
+        {
+          id: "streak",
+          title: "Racha",
+          bgClass: "slide-bg-moss-dark",
+          copy: {
+            kicker: "LA RACHA",
+            headline: "Catorce semanas<br/>sin saltar<br/>un riego.",
+            badge: "14 SEMANAS",
+          },
+          screen: "screens/hub.png",
+          layout: "centered-top",
+        },
+        {
+          id: "garden",
+          title: "Jardín",
+          bgClass: "slide-bg-emerald-mid",
+          copy: {
+            kicker: "TU JARDÍN",
+            headline: "Crece<br/>cuando<br/>lo riegas.",
+            sub: "Mira tu progreso<br/>echar raíces.",
+          },
+          screen: "screens/garden.png",
+          layout: "left-text-right-phone",
+        },
+        {
+          id: "lluvia",
+          title: "Lluvia generosa",
+          bgClass: "slide-bg-night-mist",
+          copy: {
+            kicker: "LLUVIA GENEROSA",
+            headline: "Si la vida<br/>riega por ti,<br/>no perdiste nada.",
+            sub: "Treinta días de gracia<br/>para tu racha.",
+          },
+          screen: "screens/garden.png",
+          layout: "centered-top",
+          decoration: "drops",
+        },
+        {
+          id: "cierre",
+          title: "Cierre",
+          bgClass: "slide-bg-emerald-dark",
+          copy: {
+            ornament: "TIERRA MADRE",
+            headline:
+              'Una esmeralda<br/>no se compra.<br/><span class="accent">Brota.</span>',
+            sub: "Esmereogénesis",
+          },
+          layout: "gem",
+        },
+      ];
+
+      // Safe HTML-to-fragment helper (avoids the property we cannot use)
+      function frag(htmlString) {
+        return document.createRange().createContextualFragment(htmlString);
+      }
+      function setContent(el, htmlString) {
+        while (el.firstChild) el.removeChild(el.firstChild);
+        el.appendChild(frag(htmlString));
+      }
+
+      // SVG decorations (gold-tinted line work for dark canvases)
+      function botanicalCorner(side, accent = "#D4AF37") {
+        const flipped = side === "right" ? "transform: scaleX(-1);" : "";
+        return `<svg viewBox="0 0 400 400" style="position:absolute;top:0;${side}:0;width:380px;height:380px;opacity:0.32;${flipped}">
+        <g fill="none" stroke="${accent}" stroke-width="1.4" stroke-linecap="round">
+          <path d="M30 30 Q120 80 140 200 Q160 320 60 360"/>
+          <path d="M50 60 Q100 90 110 160" />
+          <path d="M70 100 Q110 130 120 180" />
+          <ellipse cx="120" cy="200" rx="42" ry="18" transform="rotate(-30 120 200)"/>
+          <ellipse cx="100" cy="160" rx="36" ry="14" transform="rotate(-50 100 160)"/>
+          <ellipse cx="140" cy="240" rx="40" ry="16" transform="rotate(-10 140 240)"/>
+        </g>
+      </svg>`;
+      }
+
+      function rainDrops() {
+        const positions = [
+          [180, 220],
+          [340, 160],
+          [520, 280],
+          [720, 180],
+          [900, 240],
+          [1120, 200],
+          [240, 480],
+          [460, 540],
+          [680, 460],
+          [900, 520],
+          [1100, 480],
+          [140, 760],
+          [380, 820],
+          [620, 760],
+          [860, 820],
+          [1080, 780],
+        ];
+        return positions
+          .map(
+            ([x, y], i) =>
+              `<div class="drop" style="left:${x}px;top:${y}px;opacity:${0.25 + (i % 3) * 0.18};transform:rotate(${-4 + (i % 4)}deg) scale(${1 + (i % 3) * 0.3})"></div>`,
+          )
+          .join("");
+      }
+
+      function sparks() {
+        const positions = [
+          [120, 280],
+          [1180, 380],
+          [200, 920],
+          [1140, 1080],
+          [160, 1700],
+          [1100, 1820],
+        ];
+        return positions
+          .map(
+            ([x, y]) =>
+              `<div class="spark" style="left:${x}px;top:${y}px"></div>`,
+          )
+          .join("");
+      }
+
+      // iPhone 14 — midnight body, notch + speaker + camera, full side-button set
+      function iphoneFrame(src) {
+        return `<div class="iphone">
+        <div class="side-button mute"></div>
+        <div class="side-button vol-up"></div>
+        <div class="side-button vol-down"></div>
+        <div class="side-button power"></div>
+        <div class="notch"></div>
+        <div class="screen"><img src="${src}" alt=""/></div>
+      </div>`;
+      }
+
+      function gemSlide(slide) {
+        return `
+        <div class="orb gold" style="width:900px;height:900px;top:-200px;left:-200px;"></div>
+        <div class="orb emerald" style="width:1100px;height:1100px;bottom:-300px;right:-300px;opacity:0.4;"></div>
+        ${sparks()}
+        <div class="gem"></div>
+        <div class="gem-foot">— de Boyacá al mundo —</div>
+        <div class="stack">
+          <div class="ornament">${slide.copy.ornament}</div>
+          <div class="headline">${slide.copy.headline}</div>
+          <div class="sub">${slide.copy.sub}</div>
+        </div>
+      `;
+      }
+
+      function heroLayout(slide) {
+        return `
+        ${botanicalCorner("left")}
+        ${botanicalCorner("right")}
+        <div class="orb gold" style="width:760px;height:760px;top:-280px;right:-220px;opacity:0.38;"></div>
+        <div class="orb emerald" style="width:680px;height:680px;bottom:-200px;left:-160px;opacity:0.35;"></div>
+        <div class="stack">
+          <div class="kicker">${slide.copy.kicker}</div>
+          <div class="headline">${slide.copy.headline}</div>
+          <div class="sub">${slide.copy.sub}</div>
+        </div>
+        <div class="phone-wrap">${iphoneFrame(slide.screen)}</div>
+        <div class="footer-credit">Tierra Madre</div>
+      `;
+      }
+
+      function rightTextLeftPhone(slide) {
+        return `
+        <div class="orb emerald" style="width:780px;height:780px;top:-200px;left:-260px;"></div>
+        <div class="orb gold" style="width:520px;height:520px;bottom:-150px;right:-150px;opacity:0.35;"></div>
+        <div class="phone-wrap">${iphoneFrame(slide.screen)}</div>
+        <div class="stack">
+          <div class="kicker">${slide.copy.kicker}</div>
+          <div class="headline">${slide.copy.headline}</div>
+          <div class="sub">${slide.copy.sub}</div>
+        </div>
+      `;
+      }
+
+      function leftTextRightPhone(slide) {
+        return `
+        <div class="orb emerald" style="width:600px;height:600px;top:-180px;right:-180px;opacity:0.45;"></div>
+        <div class="orb gold" style="width:480px;height:480px;bottom:-160px;left:-160px;opacity:0.3;"></div>
+        <div class="phone-wrap">${iphoneFrame(slide.screen)}</div>
+        <div class="stack">
+          <div class="kicker">${slide.copy.kicker}</div>
+          <div class="headline">${slide.copy.headline}</div>
+          <div class="sub">${slide.copy.sub}</div>
+        </div>
+      `;
+      }
+
+      function centeredTopStreak(slide) {
+        return `
+        ${botanicalCorner("left")}
+        ${botanicalCorner("right")}
+        <div class="orb emerald" style="width:900px;height:900px;top:300px;left:-200px;opacity:0.28;"></div>
+        <div class="orb gold" style="width:580px;height:580px;top:-100px;right:-150px;opacity:0.45;"></div>
+        <div class="stack">
+          <div class="kicker">${slide.copy.kicker}</div>
+          <div class="headline">${slide.copy.headline}</div>
+          <div class="badge"><span class="flame"></span>${slide.copy.badge}</div>
+        </div>
+        <div class="phone-wrap">${iphoneFrame(slide.screen)}</div>
+      `;
+      }
+
+      function centeredTopLluvia(slide) {
+        return `
+        ${botanicalCorner("left", "#33C194")}
+        ${botanicalCorner("right", "#33C194")}
+        ${rainDrops()}
+        <div class="orb emerald" style="width:800px;height:800px;top:600px;left:-200px;opacity:0.32;"></div>
+        <div class="stack">
+          <div class="kicker">${slide.copy.kicker}</div>
+          <div class="headline">${slide.copy.headline}</div>
+          <div class="sub">${slide.copy.sub}</div>
+        </div>
+        <div class="phone-wrap">${iphoneFrame(slide.screen)}</div>
+      `;
+      }
+
+      const LAYOUTS = {
+        hero: heroLayout,
+        "right-text-left-phone": rightTextLeftPhone,
+        "left-text-right-phone": leftTextRightPhone,
+        "centered-top": (slide) =>
+          slide.id === "lluvia"
+            ? centeredTopLluvia(slide)
+            : centeredTopStreak(slide),
+        gem: gemSlide,
+      };
+
+      function buildSlide(slide, idx) {
+        const inner = LAYOUTS[slide.layout](slide);
+        return `<div class="slide slide-${idx + 1} ${slide.bgClass}">${inner}</div>`;
+      }
+
+      const grid = document.getElementById("grid");
+      const exportHost = document.getElementById("export-host");
+
+      SLIDES.forEach((slide, idx) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        setContent(
+          card,
+          `
+        <div class="card-stage" id="stage-${idx}">${buildSlide(slide, idx)}</div>
+        <div class="card-meta">
+          <span><span class="num">0${idx + 1}</span> · ${slide.title}</span>
+          <button data-export="${idx}">Exportar PNG</button>
+        </div>
+      `,
+        );
+        grid.appendChild(card);
+      });
+
+      function applyScale() {
+        const stages = document.querySelectorAll(".card-stage");
+        stages.forEach((stage) => {
+          const w = stage.getBoundingClientRect().width;
+          const scale = w / 1320;
+          stage.style.setProperty("--scale", scale);
+        });
+      }
+      window.addEventListener("resize", applyScale);
+
+      async function ready() {
+        try {
+          await document.fonts.ready;
+        } catch {}
+        await new Promise((r) => setTimeout(r, 400));
+        applyScale();
+        document.getElementById("loader").classList.add("hidden");
+      }
+      ready();
+
+      let colMin = 280;
+      const updateGrid = () =>
+        (grid.style.gridTemplateColumns = `repeat(auto-fill, minmax(${colMin}px, 1fr))`);
+      document.getElementById("zoom-in").onclick = () => {
+        colMin = Math.min(640, colMin + 60);
+        updateGrid();
+        requestAnimationFrame(applyScale);
+      };
+      document.getElementById("zoom-out").onclick = () => {
+        colMin = Math.max(200, colMin - 60);
+        updateGrid();
+        requestAnimationFrame(applyScale);
+      };
+
+      const statusEl = document.getElementById("status");
+
+      async function exportSlide(idx) {
+        const slide = SLIDES[idx];
+        setContent(exportHost, buildSlide(slide, idx));
+        const node = exportHost.querySelector(".slide");
+        node.style.transform = "none";
+        node.style.position = "absolute";
+        node.style.top = "0";
+        node.style.left = "0";
+
+        await new Promise((r) => requestAnimationFrame(r));
+        await new Promise((r) => setTimeout(r, 150));
+
+        const opts = {
+          width: 1320,
+          height: 2868,
+          pixelRatio: 1,
+          cacheBust: true,
+          backgroundColor: "#000",
+        };
+        await htmlToImage.toPng(node, opts);
+        const dataUrl = await htmlToImage.toPng(node, opts);
+
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = `${String(idx + 1).padStart(2, "0")}-esmereogenesis-${slide.id}-1320x2868.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        setContent(exportHost, "");
+      }
+
+      grid.addEventListener("click", async (e) => {
+        const btn = e.target.closest("[data-export]");
+        if (!btn) return;
+        const idx = parseInt(btn.dataset.export, 10);
+        btn.disabled = true;
+        btn.textContent = "Exportando…";
+        statusEl.textContent = `Slide ${idx + 1}/${SLIDES.length}`;
+        try {
+          await exportSlide(idx);
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = "Error: " + err.message;
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Exportar PNG";
+          statusEl.textContent = "";
+        }
+      });
+
+      document.getElementById("export-all").onclick = async () => {
+        const btn = document.getElementById("export-all");
+        btn.disabled = true;
+        try {
+          for (let i = 0; i < SLIDES.length; i++) {
+            statusEl.textContent = `Exportando ${i + 1}/${SLIDES.length}…`;
+            await exportSlide(i);
+            await new Promise((r) => setTimeout(r, 400));
+          }
+          statusEl.textContent = "✓ Listo";
+          setTimeout(() => (statusEl.textContent = ""), 2500);
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = "Error: " + err.message;
+        } finally {
+          btn.disabled = false;
+        }
+      };
+    </script>
+  </body>
+</html>
