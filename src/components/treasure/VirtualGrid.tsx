@@ -14,12 +14,20 @@
  * Uses CSS custom property (--vh) for viewport height instead of 100vh.
  * This prevents layout shift when the address bar hides/shows on iOS Safari.
  */
-import React, { useCallback, useMemo, ReactElement, CSSProperties, useState, useEffect, useRef } from 'react';
-import { Grid } from 'react-window';
-import { Box, useMediaQuery, useTheme } from '@mui/material';
-import { TreasureItem } from '../../types';
-import { vhCalc } from '../../hooks/useViewportHeight';
-import { usePriceShare } from '../../contexts/PriceShareContext';
+import React, {
+  useCallback,
+  useMemo,
+  ReactElement,
+  CSSProperties,
+  useState,
+  useLayoutEffect,
+  useRef,
+} from "react";
+import { Grid } from "react-window";
+import { Box, useMediaQuery, useTheme } from "@mui/material";
+import { TreasureItem } from "../../types";
+import { vhCalc } from "../../hooks/useViewportHeight";
+import { usePriceShare } from "../../contexts/PriceShareContext";
 
 interface VirtualGridProps {
   items: TreasureItem[];
@@ -48,7 +56,7 @@ interface VirtualGridProps {
   /** Minimum height for the grid container */
   minHeight?: number;
   /** Callback when scroll direction changes */
-  onScrollDirectionChange?: (direction: 'up' | 'down') => void;
+  onScrollDirectionChange?: (direction: "up" | "down") => void;
 }
 
 /**
@@ -60,8 +68,8 @@ interface VirtualGridProps {
  */
 
 // Gap sizes following 8pt grid (iOS HIG)
-const MOBILE_GAP = 8;   // 8pt - iOS standard for compact layouts
-const TABLET_GAP = 12;  // 12pt - 1.5x base for tablet
+const MOBILE_GAP = 8; // 8pt - iOS standard for compact layouts
+const TABLET_GAP = 12; // 12pt - 1.5x base for tablet
 const DESKTOP_GAP = 16; // 16pt - 2x base for desktop
 
 // Cell props passed via cellProps in react-window 2.x
@@ -74,7 +82,7 @@ interface GridCellProps {
   onItemClick: (item: TreasureItem) => void;
   onCertClick: (item: TreasureItem) => void;
   onToggleFavorite: (itemId: number) => void;
-  renderCard: VirtualGridProps['renderCard'];
+  renderCard: VirtualGridProps["renderCard"];
   isMobile: boolean;
   gap: number;
 }
@@ -82,8 +90,8 @@ interface GridCellProps {
 // Props received by the cell component from react-window 2.x
 interface CellRendererProps extends GridCellProps {
   ariaAttributes: {
-    'aria-colindex': number;
-    role: 'gridcell';
+    "aria-colindex": number;
+    role: "gridcell";
   };
   columnIndex: number;
   rowIndex: number;
@@ -131,7 +139,7 @@ function CellRenderer({
         paddingRight: columnIndex === columnCount - 1 ? 0 : gap / 2,
         paddingBottom: gap,
         paddingLeft: columnIndex === 0 ? 0 : gap / 2,
-        boxSizing: 'border-box',
+        boxSizing: "border-box",
       }}
     >
       {renderCard({
@@ -178,36 +186,52 @@ export default function VirtualGrid({
   // This avoids guessing scrollbar widths and parent padding from viewport width.
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(
-    typeof window !== 'undefined' ? document.documentElement.clientWidth : 390
+    typeof window !== "undefined" ? document.documentElement.clientWidth : 390,
   );
 
   // Track scroll position for direction detection
   const lastScrollTop = React.useRef(0);
-  const lastDirection = React.useRef<'up' | 'down' | null>(null);
+  const lastDirection = React.useRef<"up" | "down" | null>(null);
 
-  // Observe actual container width via ResizeObserver
-  useEffect(() => {
+  // Observe actual container width via ResizeObserver.
+  // useLayoutEffect ensures the initial measurement runs after layout and
+  // before paint, so the first frame already has the correct cardHeight.
+  //
+  // Bug guard: transient layout reflows (filter Collapse animations, scrollbar
+  // appear/disappear, route remounts) can briefly report widths of 0 or near-0
+  // via the observer. Storing those values collapses the cards (because
+  // cardHeight is derived from containerWidth) and the state stays stuck if
+  // the element's final width matches a prior value, since ResizeObserver
+  // only fires on actual size changes. We reject suspicious widths and prefer
+  // offsetWidth (the layout box width, immune to transient sub-pixel reports).
+  useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    // Initial measurement
-    setContainerWidth(el.clientWidth);
+    const MIN_VALID_WIDTH = 100; // anything narrower than this is a transient
 
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        // contentBoxSize gives us width without padding
-        const width = entry.contentBoxSize?.[0]?.inlineSize ?? entry.contentRect.width;
+    const measure = () => {
+      const width = el.offsetWidth;
+      if (width >= MIN_VALID_WIDTH) {
         setContainerWidth(width);
       }
+    };
+
+    measure();
+
+    const ro = new ResizeObserver(() => {
+      // Read offsetWidth (not contentBoxSize) for stability across browsers
+      // and to ignore zero-width readings during reflow.
+      measure();
     });
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
   // Responsive breakpoint detection
-  const isXs = useMediaQuery(theme.breakpoints.down('sm'));  // < 600px
-  const isSm = useMediaQuery(theme.breakpoints.between('sm', 'md')); // 600-900px
-  const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg')); // 900-1200px
+  const isXs = useMediaQuery(theme.breakpoints.down("sm")); // < 600px
+  const isSm = useMediaQuery(theme.breakpoints.between("sm", "md")); // 600-900px
+  const isMd = useMediaQuery(theme.breakpoints.between("md", "lg")); // 900-1200px
 
   // Calculate column count based on breakpoints
   // iOS HIG: 2 columns is optimal for scanning on mobile
@@ -227,8 +251,14 @@ export default function VirtualGrid({
     // This already excludes the Box's own padding (px: {xs:1, sm:1, md:2, lg:0}).
     // The Grid inside takes 100% of this, and its scrollbar reduces content area further.
     // react-window Grid scrollbar: mobile uses overlay (0px), desktop ~15px
-    const scrollbarWidth = (isXs || isSm) ? 0 : 15;
-    const currentGap = isXs ? MOBILE_GAP : isSm ? MOBILE_GAP : isMd ? TABLET_GAP : DESKTOP_GAP;
+    const scrollbarWidth = isXs || isSm ? 0 : 15;
+    const currentGap = isXs
+      ? MOBILE_GAP
+      : isSm
+        ? MOBILE_GAP
+        : isMd
+          ? TABLET_GAP
+          : DESKTOP_GAP;
     const gridContentWidth = containerWidth - scrollbarWidth;
 
     // Row height must accommodate the WIDEST card (edge columns: first/last).
@@ -240,8 +270,12 @@ export default function VirtualGrid({
     // Card border: 1px on each side reduces the inner width for the image
     const cardInnerWidth = maxCardWidth - 2;
 
-    // Image height with 4:5 aspect ratio (width:height = 4:5)
-    const imageHeight = Math.round(cardInnerWidth * 1.25);
+    // Image height with 4:5 aspect ratio (width:height = 4:5).
+    // Floor at 120px so a transiently bad containerWidth (e.g., during a
+    // route remount or filter Collapse animation) can never collapse the
+    // image area to zero — the cards stay visually intact until the next
+    // ResizeObserver measurement corrects the width.
+    const imageHeight = Math.max(120, Math.round(cardInnerWidth * 1.25));
 
     // Content area breakdown (vertical layout):
     // - Padding: 10px top + 10px bottom (mobile) or 12px + 12px (desktop)
@@ -257,45 +291,69 @@ export default function VirtualGrid({
   }, [containerWidth, columnCount, isXs, isSm, isMd, shouldShowPrices]);
 
   // Gap based on device - larger gaps for bigger screens
-  const gap = isXs ? MOBILE_GAP : isSm ? MOBILE_GAP : isMd ? TABLET_GAP : DESKTOP_GAP;
+  const gap = isXs
+    ? MOBILE_GAP
+    : isSm
+      ? MOBILE_GAP
+      : isMd
+        ? TABLET_GAP
+        : DESKTOP_GAP;
 
   // Determine if mobile for card rendering optimization
   const isMobile = isXs || isSm;
 
   // Memoize cell props to prevent unnecessary re-renders
   // Convert favorites/comparison arrays to Sets for O(1) lookups per cell
-  const cellProps = useMemo<GridCellProps>(() => ({
-    items,
-    columnCount,
-    favoritesSet: new Set(favorites),
-    comparisonIdsSet: new Set(comparisonIds || []),
-    canAddToComparison,
-    onItemClick,
-    onCertClick,
-    onToggleFavorite,
-    renderCard,
-    isMobile,
-    gap,
-  }), [items, columnCount, favorites, comparisonIds, canAddToComparison, onItemClick, onCertClick, onToggleFavorite, renderCard, isMobile, gap]);
+  const cellProps = useMemo<GridCellProps>(
+    () => ({
+      items,
+      columnCount,
+      favoritesSet: new Set(favorites),
+      comparisonIdsSet: new Set(comparisonIds || []),
+      canAddToComparison,
+      onItemClick,
+      onCertClick,
+      onToggleFavorite,
+      renderCard,
+      isMobile,
+      gap,
+    }),
+    [
+      items,
+      columnCount,
+      favorites,
+      comparisonIds,
+      canAddToComparison,
+      onItemClick,
+      onCertClick,
+      onToggleFavorite,
+      renderCard,
+      isMobile,
+      gap,
+    ],
+  );
 
   // Stable onScroll handler for react-window Grid
-  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
-    if (!onScrollDirectionChange) return;
+  const handleScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      if (!onScrollDirectionChange) return;
 
-    const target = event.currentTarget;
-    const scrollTop = target.scrollTop;
-    const scrollThreshold = 10;
-    const delta = scrollTop - lastScrollTop.current;
+      const target = event.currentTarget;
+      const scrollTop = target.scrollTop;
+      const scrollThreshold = 10;
+      const delta = scrollTop - lastScrollTop.current;
 
-    if (Math.abs(delta) > scrollThreshold) {
-      const direction = delta > 0 ? 'down' : 'up';
-      if (direction !== lastDirection.current) {
-        lastDirection.current = direction;
-        onScrollDirectionChange(direction);
+      if (Math.abs(delta) > scrollThreshold) {
+        const direction = delta > 0 ? "down" : "up";
+        if (direction !== lastDirection.current) {
+          lastDirection.current = direction;
+          onScrollDirectionChange(direction);
+        }
+        lastScrollTop.current = scrollTop;
       }
-      lastScrollTop.current = scrollTop;
-    }
-  }, [onScrollDirectionChange]);
+    },
+    [onScrollDirectionChange],
+  );
 
   if (items.length === 0) {
     return null;
@@ -320,20 +378,20 @@ export default function VirtualGrid({
         // iOS Safari fix: Use --vh custom property instead of 100vh
         height: vhCalc(100, HEADER_OFFSET),
         minHeight,
-        width: '100%',
+        width: "100%",
         // Responsive horizontal padding
         px: { xs: 1, sm: 1, md: 2, lg: 0 },
-        boxSizing: 'border-box',
-        position: 'relative',
-        isolation: 'isolate',
+        boxSizing: "border-box",
+        position: "relative",
+        isolation: "isolate",
         // Grid container styles
-        '& > div': {
-          overflowX: 'hidden !important',
-          width: '100% !important',
-          boxSizing: 'border-box',
+        "& > div": {
+          overflowX: "hidden !important",
+          width: "100% !important",
+          boxSizing: "border-box",
         },
         // PWA standalone mode consistency
-        '@media (display-mode: standalone)': {
+        "@media (display-mode: standalone)": {
           px: 1,
         },
       }}
@@ -348,8 +406,8 @@ export default function VirtualGrid({
         overscanCount={3}
         onScroll={handleScroll}
         style={{
-          height: '100%',
-          width: '100%',
+          height: "100%",
+          width: "100%",
         }}
       />
     </Box>
