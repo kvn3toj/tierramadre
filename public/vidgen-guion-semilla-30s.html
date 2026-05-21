@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Semilla · Guion 30 s · Voice over · Tierra Mädre</title>
+  <style>
+    :root {
+      --bg: #0a0f0c;
+      --surface: #121a16;
+      --border: rgba(0, 168, 107, 0.22);
+      --emerald: #00a86b;
+      --emerald-dim: #0a6e3c;
+      --gold: #d4a437;
+      --text: #e8f0ec;
+      --muted: #8fa89a;
+      --accent-soft: rgba(0, 168, 107, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+      background: radial-gradient(1200px 800px at 50% -10%, rgba(0, 168, 107, 0.14), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap {
+      max-width: 52rem;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .brand {
+      font-size: 0.8rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.35rem;
+    }
+
+    h1 {
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 600;
+      margin: 0 0 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .tagline {
+      color: var(--muted);
+      font-size: 1rem;
+      margin: 0 0 1.25rem;
+    }
+
+    .meta {
+      display: grid;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .meta strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.75rem 1.5rem;
+      margin-top: 0.75rem;
+      padding: 1rem 1.1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .meta-grid span {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 0.15rem;
+    }
+
+    .vo-hero {
+      background: linear-gradient(145deg, var(--accent-soft), transparent 60%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem 1.5rem 2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .vo-hero h2 {
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--emerald);
+      margin: 0 0 1rem;
+      font-weight: 600;
+    }
+
+    .vo-hero .hint {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+      font-style: italic;
+    }
+
+    .vo-text {
+      font-size: clamp(1.2rem, 2.4vw, 1.45rem);
+      line-height: 1.75;
+    }
+
+    .vo-text p {
+      margin: 0 0 1.35rem;
+    }
+
+    .vo-text p:last-child {
+      margin-bottom: 0;
+    }
+
+    .vo-text .mark {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    section.cues {
+      margin-bottom: 2.5rem;
+    }
+
+    section.cues h2 {
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 1rem;
+      font-weight: 600;
+    }
+
+    .cue {
+      border-left: 3px solid var(--emerald-dim);
+      padding: 0.85rem 0 0.85rem 1rem;
+      margin-bottom: 1rem;
+      background: rgba(10, 15, 12, 0.6);
+      border-radius: 0 10px 10px 0;
+    }
+
+    .cue time {
+      display: inline-block;
+      font-family: ui-monospace, "Cascadia Code", monospace;
+      font-size: 0.8rem;
+      color: var(--gold);
+      margin-bottom: 0.35rem;
+    }
+
+    .cue .visual {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+      line-height: 1.45;
+    }
+
+    .cue .lines {
+      font-size: 1.05rem;
+      line-height: 1.65;
+    }
+
+    .notes {
+      padding: 1.25rem 1.25rem 1.35rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .notes h2 {
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin: 0 0 0.75rem;
+    }
+
+    .notes ul {
+      margin: 0;
+      padding-left: 1.15rem;
+    }
+
+    .notes li {
+      margin-bottom: 0.5rem;
+    }
+
+    footer {
+      margin-top: 2.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        color: #111;
+      }
+      .brand,
+      .tagline,
+      .meta,
+      .cue time,
+      .cue .visual,
+      .notes,
+      footer {
+        color: #444;
+      }
+      .vo-hero,
+      .cue,
+      .meta-grid,
+      .notes {
+        border-color: #ccc;
+        background: #fafafa;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="brand">Tierra Mädre · Esmeraldas con ADN de Paz</p>
+      <h1>Guion: Esmeralda Semilla · 30 segundos</h1>
+      <p class="tagline">Del Corazón de la Tierra a la Luz de una Comunidad</p>
+      <div class="meta">
+        <p><strong>Identidad:</strong> Kira (Tejedora de Palabras) · <strong>Tono:</strong> elegancia natural, calidez profesional, inspirador y directo</p>
+        <div class="meta-grid">
+          <div><span>Pieza</span><strong>Semilla</strong> · Corazón · 0,56 ct</div>
+          <div><span>Calidad / color</span><strong>Extrafina · NO Oil</strong> · Verde Chivor</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="vo-hero" id="locucion">
+      <h2>Texto para locución (leer en continuo)</h2>
+      <p class="hint">Pausas naturales entre párrafos. Este bloque es la referencia principal para grabación.</p>
+      <div class="vo-text">
+        <p>Todo comienza con una semilla. Pequeña, silenciosa... pero capaz de dar vida a un árbol monumental.</p>
+        <p>Te presentamos la Esmeralda <span class="mark">Semilla</span>. Un tesoro de Tierra Mädre que no es solo lujo; es el inicio de una transformación.</p>
+        <p>Al elegirla, estás encendiendo la luz en la cancha de los niños de la vereda Chánares. Un pequeño aporte que ilumina a toda una comunidad minera.</p>
+        <p>Tú eres el jardinero de este cambio. Lleva en tu piel una promesa de vida. Tierra Mädre: Esmeraldas con ADN de Paz.</p>
+      </div>
+    </div>
+
+    <section class="cues" aria-label="Cues por tiempo">
+      <h2>Cues por segmento (referencia)</h2>
+
+      <article class="cue">
+        <time>(0:00 – 0:05)</time>
+        <p class="visual"><strong>Visual:</strong> Macro de la semilla germinando que transiciona a la Esmeralda Corazón brillante.</p>
+        <p class="lines">Todo comienza con una semilla. Pequeña, silenciosa... pero capaz de dar vida a un árbol monumental.</p>
+      </article>
+
+      <article class="cue">
+        <time>(0:05 – 0:12)</time>
+        <p class="visual"><strong>Visual:</strong> Manos sosteniendo la esmeralda, destellos de luz verde.</p>
+        <p class="lines">Te presentamos la Esmeralda Semilla. Un tesoro de Tierra Mädre que no es solo lujo; es el inicio de una transformación.</p>
+      </article>
+
+      <article class="cue">
+        <time>(0:12 – 0:22)</time>
+        <p class="visual"><strong>Visual:</strong> Niños en la vereda Chánares (descendientes Muzos) jugando; la cancha oscura se ilumina con un tono cálido.</p>
+        <p class="lines">Al elegirla, estás encendiendo la luz en la cancha de los niños de la vereda Chánares. Un pequeño aporte que ilumina a toda una comunidad minera.</p>
+      </article>
+
+      <article class="cue">
+        <time>(0:22 – 0:30)</time>
+        <p class="visual"><strong>Visual:</strong> La esmeralda brilla en el pecho de una mujer; transición al monograma de Tierra Mädre.</p>
+        <p class="lines">Tú eres el jardinero de este cambio. Lleva en tu piel una promesa de vida. Tierra Mädre: Esmeraldas con ADN de Paz.</p>
+      </article>
+    </section>
+
+    <div class="notes">
+      <h2>Notas para editor / producción</h2>
+      <ul>
+        <li><strong>Ritmo:</strong> Locución pausada en los primeros 5 s (intrigante); más calidez y esperanza desde el segundo 12.</li>
+        <li><strong>Música:</strong> Naturaleza (viento, tierra) al inicio; cuerdas cálidas (guitarra o tiple colombiano) desde ~0:12.</li>
+        <li><strong>RRSS (opcional):</strong> Subtítulos elegantes, resaltando «Semilla», «Transformación» y «Comunidad».</li>
+      </ul>
+    </div>
+
+    <footer>
+      Guion alineado con <code>vidgen-guion-semilla-30s.md</code>. Abre este archivo en el navegador (doble clic) o vía <code>/vidgen-guion-semilla-30s.html</code> con el servidor de desarrollo.
+    </footer>
+  </div>
+</body>
+</html>
