@@ -27,6 +27,7 @@ import { useConvexMutation, convexApi } from "../../../../lib/convex-safe";
 import { verifyNit } from "../../../../utils/nitVerify";
 import { FieldLabel } from "./FieldLabel";
 import { SegmentedControl } from "./SegmentedControl";
+import { EntityPicker } from "./EntityPicker";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
 type TipoDoc = "NIT" | "Cédula";
@@ -82,6 +83,11 @@ export function ClienteFinalForm({
   const foto = getFoto("light");
 
   // ── State ────────────────────────────────────────────────────────────
+  // Mode toggles the inline UI between the searchable picker (default) and
+  // the full creation form. The form is only shown after the operator clicks
+  // "+ Crear «typed»" inside the picker, or "Crear cliente nuevo" from the
+  // empty-picker fallback button.
+  const [mode, setMode] = useState<"picker" | "creating">("picker");
   const [nombre, setNombre] = useState("");
   const [tipoDoc, setTipoDoc] = useState<TipoDoc>("Cédula");
   const [documento, setDocumento] = useState("");
@@ -95,9 +101,24 @@ export function ClienteFinalForm({
   const nombreRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    if (selectedClient) return;
+    if (selectedClient || mode !== "creating") return;
     const t = window.setTimeout(() => nombreRef.current?.focus(), 40);
     return () => window.clearTimeout(t);
+  }, [selectedClient, mode]);
+
+  // When the parent clears the selection (operator clicked "Cambiar"),
+  // return to picker mode and discard any half-typed creation form so the
+  // next session starts at the directory, not at a stale form.
+  useEffect(() => {
+    if (selectedClient) return;
+    setMode("picker");
+    setNombre("");
+    setDocumento("");
+    setDireccion("");
+    setTelefono("");
+    setEmail("");
+    setDupDismissed(false);
+    setSubmitError(null);
   }, [selectedClient]);
 
   // ── Convex wiring ────────────────────────────────────────────────────
@@ -274,6 +295,70 @@ export function ClienteFinalForm({
     );
   }
 
+  // ── Picker (default when nothing is selected and we're not creating) ──
+  if (mode === "picker") {
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <EntityPicker<ClienteRow>
+          label="Cliente final"
+          placeholder="Buscar por nombre o documento…"
+          options={finalClients}
+          value={null}
+          onChange={(next) => {
+            if (next) onCreated(next._id);
+          }}
+          getOptionId={(c) => c._id as string}
+          getOptionLabel={(c) => c.nombre}
+          getOptionMeta={(c) =>
+            [
+              c.nit ? `NIT ${c.nit}` : c.cedula ? `CC ${c.cedula}` : null,
+              c.email ?? c.telefono ?? null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || null
+          }
+          getOptionAvatar={(c) => c.nombre.slice(0, 1).toUpperCase()}
+          onCreateRequest={(typed) => {
+            setNombre(typed);
+            setMode("creating");
+          }}
+          createLabel={(t) => `Crear «${t}» como nuevo cliente`}
+        />
+        {finalClients.length === 0 ? (
+          <Box
+            sx={{
+              fontSize: 11.5,
+              color: foto.ink.tertiary,
+              lineHeight: 1.5,
+              padding: "0 2px",
+            }}
+          >
+            Todavía no hay clientes finales registrados.{" "}
+            <Box
+              component="button"
+              type="button"
+              onClick={() => setMode("creating")}
+              sx={{
+                background: "transparent",
+                border: "none",
+                color: foto.accent.deep,
+                fontWeight: 600,
+                fontSize: "inherit",
+                cursor: "pointer",
+                textDecoration: "underline",
+                padding: 0,
+                fontFamily: "inherit",
+              }}
+            >
+              Crear el primero
+            </Box>
+            .
+          </Box>
+        ) : null}
+      </Box>
+    );
+  }
+
   // ── Form ──────────────────────────────────────────────────────────────
   return (
     <Box
@@ -287,6 +372,52 @@ export function ClienteFinalForm({
         gap: "16px",
       }}
     >
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          gap: "12px",
+        }}
+      >
+        <Box
+          sx={{
+            fontSize: 9,
+            fontWeight: 500,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: foto.ink.tertiary,
+          }}
+        >
+          Crear cliente final
+        </Box>
+        <Box
+          component="button"
+          type="button"
+          onClick={() => {
+            setMode("picker");
+            setNombre("");
+            setDocumento("");
+            setDireccion("");
+            setTelefono("");
+            setEmail("");
+            setDupDismissed(false);
+            setSubmitError(null);
+          }}
+          sx={{
+            background: "transparent",
+            border: "none",
+            color: foto.accent.deep,
+            fontSize: 11.5,
+            fontWeight: 600,
+            cursor: "pointer",
+            padding: 0,
+            fontFamily: "inherit",
+          }}
+        >
+          ← Volver a buscar
+        </Box>
+      </Box>
       <Box
         sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}
       >

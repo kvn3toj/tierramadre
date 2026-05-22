@@ -31,9 +31,21 @@ type TipoDocumento = "NIT" | "Cédula" | "Pasaporte" | "Otro";
 interface ProveedorNuevoDrawerProps {
   open: boolean;
   onClose: () => void;
-  onSuccess: (providerId: string) => void;
+  /**
+   * Fired after a successful create OR after the operator picks an existing
+   * provider via the duplicate-detection banner. Returns both the id and the
+   * canonical name so the caller can render the selection without round-trip
+   * `providers.get`.
+   */
+  onSuccess: (provider: { id: string; nombre: string }) => void;
   /** Optional breadcrumb shown in the header, e.g. "B-008 · sin salir de la captura". */
   contextLabel?: string;
+  /**
+   * Optional pre-fill for the "Nombre o razón social" field. Used when the
+   * drawer is opened from EntityPicker's inline "+ Crear «typed»" row, so the
+   * operator doesn't retype what they already typed in the picker.
+   */
+  initialName?: string;
 }
 
 // Loose shape — the canonical type lives in convex/_generated/dataModel but we
@@ -95,6 +107,7 @@ export function ProveedorNuevoDrawer({
   onClose,
   onSuccess,
   contextLabel,
+  initialName,
 }: ProveedorNuevoDrawerProps) {
   const foto = getFoto("light");
   const titleId = useId();
@@ -114,11 +127,14 @@ export function ProveedorNuevoDrawer({
 
   const nombreInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Reset when drawer reopens so the next session starts clean.
+  // Reset when drawer reopens so the next session starts clean. If an
+  // `initialName` was passed (typically from EntityPicker's "+ Crear «typed»"
+  // row), prefill the nombre field so the operator continues where they left
+  // off in the picker.
   useEffect(() => {
     if (open) {
       setTipo("gemas");
-      setNombre("");
+      setNombre(initialName ?? "");
       setTipoDocumento("NIT");
       setDocumento("");
       setTelefono("");
@@ -129,7 +145,7 @@ export function ProveedorNuevoDrawer({
       setSubmitError(null);
       setDupDismissed(false);
     }
-  }, [open]);
+  }, [open, initialName]);
 
   // Focus the name input after MUI's Dialog finishes its enter transition.
   useEffect(() => {
@@ -237,7 +253,7 @@ export function ProveedorNuevoDrawer({
       )) as { id: string } | string;
       const providerId =
         typeof result === "string" ? result : (result?.id ?? "");
-      onSuccess(providerId);
+      onSuccess({ id: providerId, nombre: nombre.trim() });
       onClose();
     } catch (err) {
       const message =
@@ -273,7 +289,7 @@ export function ProveedorNuevoDrawer({
 
   const handlePickDuplicate = useCallback(() => {
     if (!duplicate) return;
-    onSuccess(duplicate._id);
+    onSuccess({ id: duplicate._id, nombre: duplicate.nombreORazonSocial });
     onClose();
   }, [duplicate, onSuccess, onClose]);
 

@@ -13,6 +13,12 @@ interface FotoTopbarProps {
   crumbs: Crumb[];
   syncStatus?: SyncStatus;
   userInitial?: string;
+  /**
+   * Fires when the operator taps the "Buscar ⌘K" chip. Hotkey users already
+   * have ⌘K wired via `useFotosintesisHotkeys`; this wires the visible chip
+   * so click/tap users (especially on touch) can actually open the spotlight.
+   */
+  onSearchClick?: () => void;
 }
 
 /**
@@ -23,6 +29,7 @@ export function FotoTopbar({
   crumbs,
   syncStatus = "synced",
   userInitial = "M",
+  onSearchClick,
 }: FotoTopbarProps) {
   const foto = getFoto("light");
 
@@ -154,7 +161,11 @@ export function FotoTopbar({
           {sync.label}
         </Box>
         <Box
-          aria-label="Atajo: Buscar"
+          component="button"
+          type="button"
+          onClick={onSearchClick}
+          disabled={!onSearchClick}
+          aria-label="Abrir buscador (⌘K)"
           sx={{
             // Same rationale as the sync chip — the ⌘K shortcut is also
             // discoverable from the FAB / page hints on narrow viewports.
@@ -164,9 +175,23 @@ export function FotoTopbar({
             padding: "5px 10px",
             borderRadius: "6px",
             border: `1px solid ${foto.surfaces.edge}`,
+            background: "transparent",
             fontSize: 10.5,
             color: foto.ink.secondary,
             fontWeight: 500,
+            fontFamily: "inherit",
+            cursor: onSearchClick ? "pointer" : "default",
+            transition: "background 120ms ease, border-color 120ms ease",
+            "&:hover": onSearchClick
+              ? {
+                  background: foto.surfaces.inset,
+                  borderColor: foto.surfaces.edgeStrong,
+                }
+              : undefined,
+            "&:focus-visible": {
+              outline: `2px solid ${foto.accent.primary}`,
+              outlineOffset: 2,
+            },
           }}
         >
           Buscar

@@ -9,7 +9,7 @@ import {
 } from "react";
 import { Box, Switch } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, Check, Diamond, Gem, Package, Tag } from "lucide-react";
+import { AlertTriangle, Diamond, Gem, Package, Tag } from "lucide-react";
 
 import { getFoto, fontFamilies } from "../../../design-system";
 import {
@@ -27,6 +27,7 @@ import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
 import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
 import { ShortcutTable } from "./components/ShortcutTable";
 import { ProveedorNuevoDrawer } from "./components/ProveedorNuevoDrawer";
+import { EntityPicker } from "./components/EntityPicker";
 import {
   GemaFields,
   EMPTY_GEMA_DRAFT,
@@ -258,11 +259,25 @@ interface NewLotIntroProps {
   previewLoteId: string | null;
 }
 
+interface ProviderRow {
+  _id: string;
+  nombreORazonSocial: string;
+  nit?: string;
+  cedula?: string;
+  tipo?: "gemas" | "joyas" | "insumos" | "otros";
+}
+
 function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
   const foto = getFoto("light");
   const navigate = useNavigate();
 
   const createLot = useConvexMutation(convexApi.lots.create);
+  // Provider directory — already loaded by the drawer below; surface it at
+  // the parent so the EntityPicker can render the list as options instead of
+  // forcing the operator to retype a name they've already registered.
+  const providers = useConvexQuery(convexApi.providers.list, { search: "" }) as
+    | ProviderRow[]
+    | undefined;
 
   // Local form state
   const [providerId, setProviderId] = useState<string | null>(null);
@@ -277,12 +292,23 @@ function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerInitialName, setDrawerInitialName] = useState<string>("");
 
-  // Provider drawer no longer auto-opens on the new-lot intro: the QA
-  // pass at 360/768 showed it covered the entire form on first load, so
-  // we let the user click "Elegir proveedor" explicitly. The auto-open
-  // behaviour still applies inside `<ActiveLotPage>` for legacy lots
-  // that lack a providerId (handoff §4.2).
+  // Resolve the selected provider object once so the EntityPicker can render
+  // avatar + meta without re-scanning the list on every keystroke. When the
+  // operator has just created a provider, the Convex `providers.list` query
+  // may revalidate one frame later — fall back to a synthetic row built from
+  // `providerName` so the picker doesn't blink between the create row and
+  // the new selection.
+  const selectedProvider = useMemo<ProviderRow | null>(() => {
+    if (!providerId) return null;
+    const fromList = providers?.find((p) => p._id === providerId);
+    if (fromList) return fromList;
+    if (providerName) {
+      return { _id: providerId, nombreORazonSocial: providerName };
+    }
+    return null;
+  }, [providerId, providerName, providers]);
 
   const canSubmit =
     !!providerId &&
@@ -409,55 +435,35 @@ function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
         }}
       >
         {/* Proveedor */}
-        <Box>
-          <FieldLabel>Proveedor</FieldLabel>
-          <Box
-            component="button"
-            type="button"
-            onClick={() => setDrawerOpen(true)}
-            sx={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "12px 14px",
-              border: `1px solid ${
-                providerId ? foto.surfaces.rule : foto.status.sold
-              }`,
-              background: providerId
-                ? foto.surfaces.inset
-                : "rgba(179,58,47,0.04)",
-              borderRadius: "9px",
-              fontSize: 13,
-              color: providerId ? foto.ink.primary : foto.status.sold,
-              cursor: "pointer",
-              font: "inherit",
-              transition: "border-color 120ms ease, background 120ms ease",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              {providerId ? (
-                <Check
-                  size={14}
-                  color={foto.accent.primary}
-                  strokeWidth={2.5}
-                />
-              ) : (
-                <AlertTriangle size={14} />
-              )}
-              <span>{providerName ?? "Elegir o crear proveedor"}</span>
-            </Box>
-            <Box
-              sx={{
-                fontSize: 10.5,
-                color: foto.ink.tertiary,
-                letterSpacing: "0.02em",
-              }}
-            >
-              {providerId ? "cambiar" : "abrir"}
-            </Box>
-          </Box>
-        </Box>
+        <EntityPicker<ProviderRow>
+          label="Proveedor"
+          placeholder="Buscar por nombre o NIT…"
+          options={providers ?? []}
+          loading={providers === undefined}
+          value={selectedProvider}
+          onChange={(next) => {
+            setProviderId(next?._id ?? null);
+            setProviderName(next?.nombreORazonSocial ?? null);
+          }}
+          getOptionId={(p) => p._id}
+          getOptionLabel={(p) => p.nombreORazonSocial}
+          getOptionMeta={(p) =>
+            [
+              p.nit ? `NIT ${p.nit}` : p.cedula ? `CC ${p.cedula}` : null,
+              p.tipo,
+            ]
+              .filter(Boolean)
+              .join(" · ") || null
+          }
+          getOptionAvatar={(p) =>
+            p.nombreORazonSocial.slice(0, 1).toUpperCase()
+          }
+          onCreateRequest={(typed) => {
+            setDrawerInitialName(typed);
+            setDrawerOpen(true);
+          }}
+          createLabel={(t) => `Crear «${t}» como nuevo proveedor`}
+        />
 
         {/* Fecha + Costo total */}
         <Box
@@ -608,20 +614,22 @@ function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
 
       <ProveedorNuevoDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        onSuccess={(newProviderId) => {
-          setProviderId(newProviderId);
-          // We don't know the name from the drawer payload alone — leave a
-          // gentle placeholder; the topbar of the captura screen will hydrate
-          // the real name via providers.get once we navigate.
-          setProviderName("Proveedor creado");
+        onClose={() => {
           setDrawerOpen(false);
+          setDrawerInitialName("");
+        }}
+        onSuccess={({ id, nombre }) => {
+          setProviderId(id);
+          setProviderName(nombre);
+          setDrawerOpen(false);
+          setDrawerInitialName("");
         }}
         contextLabel={
           previewLoteId
             ? `${previewLoteId} · sin salir de la captura`
             : undefined
         }
+        initialName={drawerInitialName || undefined}
       />
     </Box>
   );
@@ -1515,7 +1523,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
       <ProveedorNuevoDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        onSuccess={(newProviderId) => {
+        onSuccess={({ id }) => {
           // The active-lot "create provider" drawer is a legacy fallback for
           // lots that were created without a provider. The new-lot intro
           // already requires a provider at `lots.create` time, so this branch
@@ -1526,9 +1534,9 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
           //
           // TODO(slice-2): extend `lotPatchValidator` in convex/lots.ts to
           // accept `providerId: v.optional(v.id("providers"))`, then patch
-          // here with `{ providerId: newProviderId }`.
+          // here with `{ providerId: id }`.
           setDrawerOpen(false);
-          void newProviderId;
+          void id;
           if (typeof window !== "undefined") {
             // eslint-disable-next-line no-alert
             window.alert(
