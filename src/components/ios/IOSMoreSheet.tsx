@@ -29,6 +29,7 @@ import {
   LightMode,
   BugReport,
   AutoAwesome,
+  Person,
   PersonAdd,
 } from "@mui/icons-material";
 
@@ -212,17 +213,37 @@ const buildMenuSections = (
 };
 
 // Bottom items (always visible, not in sections)
-const getBottomTools = (t: any, isStaff: boolean): MoreToolConfig[] => {
-  const tools: MoreToolConfig[] = [
-    {
-      id: "settings",
-      label: t.tools.settings.label,
-      subtitle: t.tools.settings.subtitle,
-      icon: Settings,
-      action: "settings",
-      color: primitiveColors.metallic.silver[500],
-    },
-  ];
+const getBottomTools = (
+  t: any,
+  isStaff: boolean,
+  isSignedIn: boolean,
+): MoreToolConfig[] => {
+  const tools: MoreToolConfig[] = [];
+
+  // "Mi Perfil" is the universal entry point to the user's account page.
+  // The profile *card* at the top of the sheet only renders when the user is
+  // staff AND has an asesor record — anyone outside that intersection was
+  // previously stranded without a visible path to their profile. The bottom
+  // entry closes that gap for everyone who is signed in.
+  if (isSignedIn) {
+    tools.push({
+      id: "profile",
+      label: t.tools.profile.label,
+      subtitle: t.tools.profile.subtitle,
+      icon: Person,
+      route: "/mi-perfil",
+      color: emeraldCore.primary,
+    });
+  }
+
+  tools.push({
+    id: "settings",
+    label: t.tools.settings.label,
+    subtitle: t.tools.settings.subtitle,
+    icon: Settings,
+    action: "settings",
+    color: primitiveColors.metallic.silver[500],
+  });
 
   if (isStaff) {
     tools.push({
@@ -284,7 +305,10 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
     [t, isAdmin, isStaff, canCreateInvitations],
   );
 
-  const bottomTools = useMemo(() => getBottomTools(t, isStaff), [t, isStaff]);
+  const bottomTools = useMemo(
+    () => getBottomTools(t, isStaff, !!googleUser),
+    [t, isStaff, googleUser],
+  );
 
   // Liquid Glass styles for the sheet
   const sheetStyles = useMemo(() => {
