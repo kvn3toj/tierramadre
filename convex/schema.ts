@@ -122,6 +122,17 @@ export default defineSchema({
     preponderancia: v.optional(v.number()),
     costoBaseCOP: v.optional(v.number()),
     mostrarEnCatalogo: v.optional(v.boolean()),
+    // Convex-only metadata (not synced to Sheets yet — extending the legacy
+    // sheet with two new columns is its own slice). Captured at lotItems.create
+    // and editable via lotItems.updateGemaFields. Surfaced in admin UI only.
+    procedencia: v.optional(v.string()),
+    observacion: v.optional(v.string()),
+    // Bruto (rough/unworked parcel) metadata — populated only for tipo "bruto"
+    // lotItems. `cantidadEstimada` is a rough piece-count; `rendimientoEsperado`
+    // is the % yield Maritza expects after sorting. Both informational only;
+    // costoBaseCOP still derives from lot.costoTotalCOP × preponderancia.
+    rendimientoEsperado: v.optional(v.number()),
+    cantidadEstimada: v.optional(v.number()),
 
     // Sync metadata
     /** ISO timestamp of last successful pull from Sheets */

@@ -9,7 +9,15 @@ import {
 } from "react";
 import { Box, Switch } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, Diamond, Gem, Package, Tag } from "lucide-react";
+import {
+  AlertTriangle,
+  Diamond,
+  Gem,
+  Mountain,
+  Package,
+  Pencil,
+  Tag,
+} from "lucide-react";
 
 import { getFoto, fontFamilies } from "../../../design-system";
 import {
@@ -30,6 +38,8 @@ import { ProveedorNuevoDrawer } from "./components/ProveedorNuevoDrawer";
 import { EntityPicker } from "./components/EntityPicker";
 import { LotSwitcher } from "./components/LotSwitcher";
 import { EditableMetaValue } from "./components/EditableMetaValue";
+import { EditItemDrawer } from "./components/EditItemDrawer";
+import { EditLotDrawer } from "./components/EditLotDrawer";
 import { useNotification } from "../../../contexts/NotificationContext";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import {
@@ -37,6 +47,11 @@ import {
   EMPTY_GEMA_DRAFT,
   type GemaDraft,
 } from "./components/GemaFields";
+import {
+  BrutoFields,
+  EMPTY_BRUTO_DRAFT,
+  type BrutoDraft,
+} from "./components/BrutoFields";
 import { CreditoFields } from "./components/CreditoFields";
 import { useNextLoteId } from "./hooks/useNextLoteId";
 import { usePreponderanciaTotal } from "./hooks/usePreponderanciaTotal";
@@ -72,7 +87,7 @@ const fmtDateEs = (iso: string): string => {
 // Type selector (custom radios — Slice 1 disables joya/insumo/lote)
 // -----------------------------------------------------------------------------
 
-type TipoItem = "gema" | "joya" | "insumo" | "lote";
+type TipoItem = "gema" | "bruto" | "joya" | "insumo" | "lote";
 
 interface TypeOption {
   value: TipoItem;
@@ -84,9 +99,10 @@ interface TypeOption {
 
 const TYPE_OPTIONS: TypeOption[] = [
   { value: "gema", label: "Gema", key: "1", Icon: Gem },
-  { value: "joya", label: "Joya", key: "2", Icon: Diamond, disabled: true },
-  { value: "insumo", label: "Insumo", key: "3", Icon: Package, disabled: true },
-  { value: "lote", label: "Lote/Otros", key: "4", Icon: Tag, disabled: true },
+  { value: "bruto", label: "Bruto", key: "2", Icon: Mountain },
+  { value: "joya", label: "Joya", key: "3", Icon: Diamond, disabled: true },
+  { value: "insumo", label: "Insumo", key: "4", Icon: Package, disabled: true },
+  { value: "lote", label: "Lote/Otros", key: "5", Icon: Tag, disabled: true },
 ];
 
 interface TypeSelectorProps {
@@ -125,7 +141,10 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+          gridTemplateColumns: {
+            xs: "repeat(2, minmax(0, 1fr))",
+            sm: `repeat(${TYPE_OPTIONS.length}, minmax(0, 1fr))`,
+          },
           gap: "8px",
         }}
       >
@@ -824,9 +843,11 @@ function StickyFooter({
 
 interface LotMetaCardProps {
   rows: Array<{ label: string; value: React.ReactNode; alert?: boolean }>;
+  /** Optional inline action rendered in the top-right corner — used for "Editar lote". */
+  action?: { label: string; onClick: () => void; disabled?: boolean };
 }
 
-function LotMetaCard({ rows }: LotMetaCardProps) {
+function LotMetaCard({ rows, action }: LotMetaCardProps) {
   const foto = getFoto("light");
   return (
     <Box
@@ -839,8 +860,52 @@ function LotMetaCard({ rows }: LotMetaCardProps) {
         gridTemplateColumns: "auto 1fr",
         rowGap: "8px",
         columnGap: "12px",
+        position: "relative",
       }}
     >
+      {action ? (
+        <Box
+          component="button"
+          type="button"
+          onClick={action.onClick}
+          disabled={action.disabled}
+          aria-label={action.label}
+          sx={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "5px 9px",
+            border: `1px solid ${foto.surfaces.edge}`,
+            background: foto.surfaces.canvas,
+            borderRadius: "7px",
+            cursor: action.disabled ? "not-allowed" : "pointer",
+            color: foto.ink.secondary,
+            fontSize: 10.5,
+            fontWeight: 500,
+            letterSpacing: "0.04em",
+            transition:
+              "background 120ms ease, color 120ms ease, border-color 120ms ease",
+            opacity: action.disabled ? 0.5 : 1,
+            "&:hover": action.disabled
+              ? undefined
+              : {
+                  background: foto.accent.soft,
+                  color: foto.accent.deep,
+                  borderColor: foto.accent.primary,
+                },
+            "&:focus-visible": {
+              outline: "none",
+              boxShadow: `0 0 0 2px ${foto.accent.glow}`,
+            },
+          }}
+        >
+          <Pencil size={11} strokeWidth={1.8} aria-hidden />
+          {action.label}
+        </Box>
+      ) : null}
       {rows.map((row) => (
         <Box key={row.label} sx={{ display: "contents" }}>
           <Box
@@ -904,8 +969,12 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   );
 
   // Form state -----------------------------------------------------------------
+  // Tipo gates which draft is active; we hold both side-by-side so flipping
+  // between Gema and Bruto doesn't wipe in-progress fields for the other type.
+  // Each draft is reset independently on save.
   const [tipo, setTipo] = useState<TipoItem>("gema");
   const [gema, setGema] = useState<GemaDraft>(EMPTY_GEMA_DRAFT);
+  const [bruto, setBruto] = useState<BrutoDraft>(EMPTY_BRUTO_DRAFT);
   const [observacion, setObservacion] = useState("");
   // Slice plan: items default to hidden from catalog (reserve). The Switch is
   // "Reserva oculta" ON → `mostrarEnCatalogo: false`.
@@ -914,6 +983,11 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Edit drawers ---------------------------------------------------------------
+  const [editLotOpen, setEditLotOpen] = useState(false);
+  const [editingLotItemId, setEditingLotItemId] =
+    useState<Id<"lotItems"> | null>(null);
 
   // Provider drawer ------------------------------------------------------------
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -934,8 +1008,14 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const isLastItem =
     unidadesDeclaradas > 0 && itemsCount === unidadesDeclaradas - 1;
 
+  // Active draft surface — the form fields below dispatch off `tipo`, but
+  // preponderancia + nombre validations are uniform across types.
+  const activeDraft = tipo === "bruto" ? bruto : gema;
+  const activePreponderancia = activeDraft.preponderancia;
+  const activeNombre = activeDraft.nombre;
+
   const prepNumeric =
-    typeof gema.preponderancia === "number" ? gema.preponderancia : 0;
+    typeof activePreponderancia === "number" ? activePreponderancia : 0;
   const projectedSum = prepTotal.sum + prepNumeric;
   const overflow = projectedSum - 100;
   const prepHelper = useMemo<{
@@ -950,7 +1030,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     }
     if (
       isLastItem &&
-      gema.preponderancia === "" &&
+      activePreponderancia === "" &&
       prepTotal.remaining > 0.01
     ) {
       return {
@@ -959,15 +1039,15 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
       };
     }
     return null;
-  }, [overflow, isLastItem, gema.preponderancia, prepTotal.remaining]);
+  }, [overflow, isLastItem, activePreponderancia, prepTotal.remaining]);
 
   // Save handlers --------------------------------------------------------------
   const canSave =
     !!lot &&
     lot.estado === "abierto" &&
-    gema.nombre.trim().length > 0 &&
-    typeof gema.preponderancia === "number" &&
-    gema.preponderancia > 0 &&
+    activeNombre.trim().length > 0 &&
+    typeof activePreponderancia === "number" &&
+    activePreponderancia > 0 &&
     overflow <= 0.01 &&
     itemsCount < unidadesDeclaradas &&
     !saving;
@@ -981,6 +1061,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
   const resetItemDraft = useCallback(() => {
     setGema(EMPTY_GEMA_DRAFT);
+    setBruto(EMPTY_BRUTO_DRAFT);
     setObservacion("");
     setPhotos([]);
     setReservaOculta(true);
@@ -992,19 +1073,47 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     setError(null);
     try {
       // TODO Slice 2: upload photos to Drive first, attach URL on create.
-      await createLotItem({
-        loteId,
-        tipo,
-        nombre: gema.nombre.trim(),
-        preponderancia: gema.preponderancia as number,
-        color: gema.color || undefined,
-        calidad: gema.calidad,
-        peso: gema.peso || undefined,
-        observacion: observacion.trim() || undefined,
-        mostrarEnCatalogo: !reservaOculta,
-        // procedencia + precioPublicoCOP are not in lotItems.create's
-        // surface yet — Slice 2 extends the mutation to capture them.
-      });
+      if (tipo === "bruto") {
+        await createLotItem({
+          loteId,
+          tipo,
+          nombre: bruto.nombre.trim(),
+          preponderancia: bruto.preponderancia as number,
+          peso: bruto.pesoTotal || undefined,
+          procedencia: bruto.procedencia || undefined,
+          cantidadEstimada:
+            typeof bruto.cantidadEstimada === "number"
+              ? bruto.cantidadEstimada
+              : undefined,
+          rendimientoEsperado:
+            typeof bruto.rendimientoEsperado === "number"
+              ? bruto.rendimientoEsperado
+              : undefined,
+          precioPublicoCOP:
+            typeof bruto.precioPublicoCOP === "number"
+              ? bruto.precioPublicoCOP
+              : undefined,
+          observacion: observacion.trim() || undefined,
+          mostrarEnCatalogo: !reservaOculta,
+        });
+      } else {
+        await createLotItem({
+          loteId,
+          tipo,
+          nombre: gema.nombre.trim(),
+          preponderancia: gema.preponderancia as number,
+          color: gema.color || undefined,
+          calidad: gema.calidad,
+          peso: gema.peso || undefined,
+          procedencia: gema.procedencia || undefined,
+          precioPublicoCOP:
+            typeof gema.precioPublicoCOP === "number"
+              ? gema.precioPublicoCOP
+              : undefined,
+          observacion: observacion.trim() || undefined,
+          mostrarEnCatalogo: !reservaOculta,
+        });
+      }
       resetItemDraft();
     } catch (err) {
       setError(
@@ -1020,6 +1129,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     loteId,
     tipo,
     gema,
+    bruto,
     observacion,
     reservaOculta,
     resetItemDraft,
@@ -1031,15 +1141,23 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   }, [canCloseLot, navigate, loteId]);
 
   const handleDuplicate = useCallback(() => {
-    // ⌘D — clone type/calidad/procedencia/color/materiales; reset
-    // nombre/peso/preponderancia for the next ítem.
-    setGema((prev) => ({
-      ...EMPTY_GEMA_DRAFT,
-      color: prev.color,
-      calidad: prev.calidad,
-      procedencia: prev.procedencia,
-    }));
-  }, []);
+    // ⌘D — clone type-shared fields (procedencia, plus type-specific
+    // contextual ones); reset nombre/peso/preponderancia for the next ítem.
+    if (tipo === "bruto") {
+      setBruto((prev) => ({
+        ...EMPTY_BRUTO_DRAFT,
+        procedencia: prev.procedencia,
+        rendimientoEsperado: prev.rendimientoEsperado,
+      }));
+    } else {
+      setGema((prev) => ({
+        ...EMPTY_GEMA_DRAFT,
+        color: prev.color,
+        calidad: prev.calidad,
+        procedencia: prev.procedencia,
+      }));
+    }
+  }, [tipo]);
 
   // Page-local hotkeys ---------------------------------------------------------
   useEffect(() => {
@@ -1076,13 +1194,16 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         }
         return;
       }
-      // 1 / 2 / 3 / 4 — type select (only when not typing)
+      // 1 / 2 / 3 / 4 / 5 — type select (only when not typing)
       if (!isTyping(e.target) && !e.metaKey && !e.ctrlKey && !e.altKey) {
         if (e.key === "1") {
           e.preventDefault();
           setTipo("gema");
+        } else if (e.key === "2") {
+          e.preventDefault();
+          setTipo("bruto");
         }
-        // 2/3/4 are visually present but Slice-1 disabled — swallow noise.
+        // 3/4/5 are visually present but disabled — swallow noise.
       }
     };
     window.addEventListener("keydown", handler);
@@ -1310,13 +1431,25 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
             <TypeSelector value={tipo} onChange={setTipo} />
 
-            <GemaFields
-              value={gema}
-              onChange={(patch) => setGema((prev) => ({ ...prev, ...patch }))}
-              lotCostoTotalCOP={costoTotalCOP}
-              preponderanciaHelper={prepHelper?.text}
-              preponderanciaHelperAlert={prepHelper?.alert}
-            />
+            {tipo === "bruto" ? (
+              <BrutoFields
+                value={bruto}
+                onChange={(patch) =>
+                  setBruto((prev) => ({ ...prev, ...patch }))
+                }
+                lotCostoTotalCOP={costoTotalCOP}
+                preponderanciaHelper={prepHelper?.text}
+                preponderanciaHelperAlert={prepHelper?.alert}
+              />
+            ) : (
+              <GemaFields
+                value={gema}
+                onChange={(patch) => setGema((prev) => ({ ...prev, ...patch }))}
+                lotCostoTotalCOP={costoTotalCOP}
+                preponderanciaHelper={prepHelper?.text}
+                preponderanciaHelperAlert={prepHelper?.alert}
+              />
+            )}
 
             {/* Foto */}
             <Box>
@@ -1503,6 +1636,11 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
             };
             return (
               <LotMetaCard
+                action={{
+                  label: "Editar",
+                  onClick: () => setEditLotOpen(true),
+                  disabled: !editable,
+                }}
                 rows={[
                   {
                     label: "Lote",
@@ -1635,35 +1773,61 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
                     }
                     cost={formatCOP(item.costoBaseCOP)}
                     state="done"
+                    onEdit={
+                      itemEditable
+                        ? () => setEditingLotItemId(item._id as Id<"lotItems">)
+                        : undefined
+                    }
                   />
                 </Box>
               );
             })}
             {/* Active row for the in-progress item */}
-            {itemsCount < unidadesDeclaradas ? (
-              <Box component="li" sx={{ margin: 0 }}>
-                <ItemMiniCard
-                  ticketId={`${loteId} · ${String(itemsCount + 1).padStart(3, "0")}`}
-                  name={gema.nombre.trim() || "Ítem en captura"}
-                  meta={
-                    typeof gema.preponderancia === "number"
-                      ? `${gema.preponderancia}% · ${formatCOP(
-                          Math.round(
-                            costoTotalCOP *
-                              ((gema.preponderancia as number) / 100),
-                          ),
+            {itemsCount < unidadesDeclaradas
+              ? (() => {
+                  const activeName =
+                    tipo === "bruto"
+                      ? bruto.nombre.trim() || "Bruto en captura"
+                      : gema.nombre.trim() || "Ítem en captura";
+                  const activePrep =
+                    typeof activePreponderancia === "number"
+                      ? activePreponderancia
+                      : undefined;
+                  const baseMeta =
+                    typeof activePrep === "number"
+                      ? `${activePrep}% · ${formatCOP(
+                          Math.round(costoTotalCOP * (activePrep / 100)),
                         )}`
-                      : "Esperando preponderancia…"
+                      : "Esperando preponderancia…";
+                  let activeMeta = baseMeta;
+                  if (tipo === "bruto") {
+                    const brutoBits: string[] = [];
+                    if (bruto.pesoTotal.trim().length > 0)
+                      brutoBits.push(bruto.pesoTotal.trim());
+                    if (typeof bruto.cantidadEstimada === "number")
+                      brutoBits.push(`${bruto.cantidadEstimada} pzs est`);
+                    if (typeof bruto.rendimientoEsperado === "number")
+                      brutoBits.push(`${bruto.rendimientoEsperado}% rendim`);
+                    if (brutoBits.length > 0) {
+                      activeMeta =
+                        typeof activePrep === "number"
+                          ? `${brutoBits.join(" · ")} · ${baseMeta}`
+                          : brutoBits.join(" · ");
+                    }
                   }
-                  preponderancia={
-                    typeof gema.preponderancia === "number"
-                      ? gema.preponderancia
-                      : undefined
-                  }
-                  state="active"
-                />
-              </Box>
-            ) : null}
+                  return (
+                    <Box component="li" sx={{ margin: 0 }}>
+                      <ItemMiniCard
+                        ticketId={`${loteId} · ${String(itemsCount + 1).padStart(3, "0")}`}
+                        name={activeName}
+                        meta={activeMeta}
+                        preponderancia={activePrep}
+                        state="active"
+                      />
+                    </Box>
+                  );
+                })()
+              : null}
             {/* Pending placeholders for remaining declared items */}
             {Array.from(
               {
@@ -1691,6 +1855,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
               { label: "Duplicar ítem", keys: ["⌘", "D"] },
               { label: "Guardar y siguiente", keys: ["⌘", "↵"] },
               { label: "Cambiar a Gema", keys: ["1"] },
+              { label: "Cambiar a Bruto", keys: ["2"] },
               { label: "Abrir buscador global", keys: ["⌘", "K"] },
             ]}
           />
@@ -1723,6 +1888,42 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         }}
         contextLabel={`${loteId} · sin salir de la captura`}
       />
+
+      {/* Lot meta edit drawer ------------------------------------------------- */}
+      <EditLotDrawer
+        open={editLotOpen}
+        onClose={() => setEditLotOpen(false)}
+        lot={lot}
+        itemsCount={itemsCount}
+      />
+
+      {/* Item edit drawer ----------------------------------------------------- */}
+      {(() => {
+        const editingItem = (items ?? []).find(
+          (it) => it._id === editingLotItemId,
+        );
+        const editingIndex = editingItem
+          ? (items ?? []).findIndex((it) => it._id === editingItem._id)
+          : -1;
+        const siblingSum = editingItem
+          ? (items ?? [])
+              .filter((it) => it._id !== editingItem._id)
+              .reduce((s, it) => s + it.preponderancia, 0)
+          : 0;
+        return editingItem ? (
+          <EditItemDrawer
+            open={true}
+            onClose={() => setEditingLotItemId(null)}
+            itemId={editingItem.itemId}
+            lotItemId={editingItem._id as Id<"lotItems">}
+            currentPreponderancia={editingItem.preponderancia}
+            lotCostoTotalCOP={costoTotalCOP}
+            siblingPreponderanciaSum={siblingSum}
+            ticketLabel={`${loteId} · ${String(editingIndex + 1).padStart(3, "0")}`}
+            editable={lot.estado === "abierto"}
+          />
+        ) : null;
+      })()}
     </Box>
   );
 }

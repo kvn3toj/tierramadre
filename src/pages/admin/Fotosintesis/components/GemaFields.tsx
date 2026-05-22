@@ -4,7 +4,10 @@ import { ChevronDown } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../../design-system";
 import {
   CALIDADES,
+  CALIDAD_FACTORS,
   DEFAULT_CALIDAD,
+  TM_MARKUP_DEFAULT,
+  suggestedPrecioPublicoCOP,
   type GemaCalidad,
 } from "../../../../data/vocabularies";
 import { FieldLabel } from "./FieldLabel";
@@ -117,6 +120,21 @@ export function GemaFields({
     value.preponderancia === ""
       ? "= —"
       : `= ${formatCOP(computedCostoBaseCOP)}`;
+
+  // Quality-based public price suggestion. Only computed when we have a
+  // useful costoBase — otherwise the hint stays hidden (no placeholder).
+  const calidadFactor = CALIDAD_FACTORS[value.calidad] ?? 1;
+  const canSuggestPrecio =
+    typeof value.preponderancia === "number" &&
+    value.preponderancia > 0 &&
+    lotCostoTotalCOP > 0;
+  const suggestedPrecio = canSuggestPrecio
+    ? suggestedPrecioPublicoCOP(computedCostoBaseCOP, value.calidad)
+    : 0;
+  const currentPrecio =
+    typeof value.precioPublicoCOP === "number" ? value.precioPublicoCOP : 0;
+  const suggestionMatches =
+    canSuggestPrecio && Math.abs(currentPrecio - suggestedPrecio) <= 1;
 
   return (
     <Box
@@ -316,6 +334,84 @@ export function GemaFields({
           ariaLabel="Precio público en COP"
           disabled={disabled}
         />
+        {canSuggestPrecio ? (
+          <Box
+            sx={{
+              marginTop: "6px",
+              fontSize: 11,
+              color: foto.ink.tertiary,
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              flexWrap: "wrap",
+              lineHeight: 1.5,
+            }}
+          >
+            <Box component="span">Sugerido</Box>
+            <Box
+              component="span"
+              sx={{
+                fontFamily: fontFamilies.mono,
+                fontVariantNumeric: "tabular-nums",
+                color: foto.accent.deep,
+                fontWeight: 500,
+              }}
+            >
+              {formatCOP(suggestedPrecio)}
+            </Box>
+            <Box component="span">· calidad</Box>
+            <Box
+              component="span"
+              sx={{
+                fontFamily: fontFamilies.mono,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              ×{calidadFactor.toFixed(2)}
+            </Box>
+            <Box component="span">· markup</Box>
+            <Box
+              component="span"
+              sx={{
+                fontFamily: fontFamilies.mono,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              ×{TM_MARKUP_DEFAULT.toFixed(1)}
+            </Box>
+            {!disabled && !suggestionMatches ? (
+              <>
+                <Box component="span">—</Box>
+                <Box
+                  component="button"
+                  type="button"
+                  onClick={() =>
+                    onChange({ precioPublicoCOP: suggestedPrecio })
+                  }
+                  aria-label={`Usar precio sugerido ${formatCOP(suggestedPrecio)}`}
+                  sx={{
+                    background: "transparent",
+                    border: "none",
+                    padding: 0,
+                    fontSize: 11,
+                    fontFamily: fontFamilies.system,
+                    color: foto.accent.deep,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    textDecorationThickness: "1px",
+                    textUnderlineOffset: "2px",
+                    "&:hover": {
+                      color: foto.accent.primary,
+                    },
+                  }}
+                >
+                  Usar
+                </Box>
+              </>
+            ) : null}
+          </Box>
+        ) : null}
       </Box>
     </Box>
   );

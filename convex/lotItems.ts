@@ -7,6 +7,7 @@ const tipoItemValidator = v.union(
   v.literal("joya"),
   v.literal("insumo"),
   v.literal("lote"),
+  v.literal("bruto"),
 );
 
 export const listByLote = query({
@@ -90,7 +91,12 @@ export const create = mutation({
     cantidad: v.optional(v.number()),
     ubicacion: v.optional(v.string()),
     observacion: v.optional(v.string()),
+    procedencia: v.optional(v.string()),
+    precioPublicoCOP: v.optional(v.number()),
     mostrarEnCatalogo: v.optional(v.boolean()),
+    // Bruto-only — informational fields about an unworked parcel.
+    rendimientoEsperado: v.optional(v.number()),
+    cantidadEstimada: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     if (args.preponderancia <= 0 || args.preponderancia > 100) {
@@ -151,11 +157,16 @@ export const create = mutation({
       ubicacion: args.ubicacion,
       coleccion: args.coleccion,
       caja: args.caja,
+      precioCOP: args.precioPublicoCOP,
       estado: "DISPONIBLE" as const,
       loteId: args.loteId,
       preponderancia: args.preponderancia,
       costoBaseCOP,
       mostrarEnCatalogo: args.mostrarEnCatalogo ?? false,
+      procedencia: args.procedencia,
+      observacion: args.observacion,
+      rendimientoEsperado: args.rendimientoEsperado,
+      cantidadEstimada: args.cantidadEstimada,
       lastPulledAt: now,
       syncStatus: "pending" as const,
     });
@@ -275,6 +286,206 @@ export const updatePreponderancia = mutation({
     }
 
     return { lotItemId, preponderancia, costoBaseCOP };
+  },
+});
+
+/**
+ * Patch a lot item's gema metadata. Accepts any subset of editable
+ * fields and writes them to the linked productInventory row. If
+ * `preponderancia` is in the patch, the lotItems row and the product's
+ * `costoBaseCOP` are recomputed and updated atomically (BR-2 + BR-5).
+ *
+ * A single productEdits audit row captures every changed field with
+ * before/after values. Sheets push is scheduled once at the end so a
+ * multi-field edit is one network round-trip.
+ *
+ * Only fields actually different from the existing values produce
+ * patches/audit entries — a no-op call returns early.
+ */
+export const updateGemaFields = mutation({
+  args: {
+    lotItemId: v.id("lotItems"),
+    patch: v.object({
+      nombre: v.optional(v.string()),
+      peso: v.optional(v.string()),
+      color: v.optional(v.string()),
+      calidad: v.optional(v.string()),
+      procedencia: v.optional(v.string()),
+      observacion: v.optional(v.string()),
+      precioPublicoCOP: v.optional(v.number()),
+      mostrarEnCatalogo: v.optional(v.boolean()),
+      preponderancia: v.optional(v.number()),
+    }),
+    editorEmail: v.optional(v.string()),
+  },
+  handler: async (ctx, { lotItemId, patch, editorEmail }) => {
+    const lotItem = await ctx.db.get(lotItemId);
+    if (!lotItem) throw new Error(`lotItem ${lotItemId} no encontrado`);
+
+    const lot = await ctx.db
+      .query("lots")
+      .withIndex("by_loteId", (q) => q.eq("loteId", lotItem.loteId))
+      .first();
+    if (!lot) throw new Error(`Lote ${lotItem.loteId} no encontrado`);
+    if (lot.estado !== "abierto") {
+      throw new Error("Sólo se pueden editar ítems de un lote abierto");
+    }
+
+    const product = await ctx.db
+      .query("productInventory")
+      .withIndex("by_itemId", (q) => q.eq("itemId", lotItem.itemId))
+      .first();
+    if (!product) {
+      throw new Error(`productInventory para ${lotItem.itemId} no encontrado`);
+    }
+
+    // Validate nombre — productInventory mirror cannot have an empty name.
+    if (patch.nombre !== undefined && patch.nombre.trim().length === 0) {
+      throw new Error("Nombre es obligatorio");
+    }
+
+    // Re-validate preponderancia against siblings (BR-2) before any writes.
+    let nextPreponderancia: number | undefined;
+    let nextCostoBaseCOP: number | undefined;
+    if (patch.preponderancia !== undefined) {
+      const p = patch.preponderancia;
+      if (p <= 0 || p > 100) {
+        throw new Error("preponderancia debe estar en (0, 100]");
+      }
+      const siblings = await ctx.db
+        .query("lotItems")
+        .withIndex("by_loteId", (q) => q.eq("loteId", lotItem.loteId))
+        .collect();
+      const sumOthers = siblings
+        .filter((s) => s._id !== lotItemId)
+        .reduce((s, it) => s + it.preponderancia, 0);
+      if (sumOthers + p > 100.01) {
+        throw new Error(
+          `La preponderancia ${p}% excede el 100% del lote ` +
+            `(otros ítems suman ${sumOthers}%).`,
+        );
+      }
+      nextPreponderancia = p;
+      nextCostoBaseCOP = Math.round(lot.costoTotalCOP * (p / 100));
+    }
+
+    // Compute the diff vs current product/lotItem state so we audit only
+    // real changes. `precioPublicoCOP` from the UI maps to productInventory.precioCOP.
+    type Change = {
+      field: string;
+      before: string | number | null;
+      after: string | number | null;
+    };
+    const changes: Change[] = [];
+    const productPatch: Record<string, unknown> = {};
+
+    const compareString = (
+      field: string,
+      next: string | undefined,
+      current: string | undefined,
+      targetField?: string,
+    ) => {
+      if (next === undefined) return;
+      const normalized = next.trim();
+      const finalValue = normalized.length === 0 ? undefined : normalized;
+      if (finalValue === current) return;
+      productPatch[targetField ?? field] = finalValue;
+      changes.push({
+        field,
+        before: current ?? null,
+        after: finalValue ?? null,
+      });
+    };
+
+    compareString("nombre", patch.nombre, product.nombre);
+    compareString("peso", patch.peso, product.peso);
+    compareString("color", patch.color, product.color);
+    compareString("calidad", patch.calidad, product.calidad);
+    compareString("procedencia", patch.procedencia, product.procedencia);
+    compareString("observacion", patch.observacion, product.observacion);
+
+    if (patch.precioPublicoCOP !== undefined) {
+      const next =
+        patch.precioPublicoCOP === 0 ? undefined : patch.precioPublicoCOP;
+      if (next !== product.precioCOP) {
+        productPatch.precioCOP = next;
+        changes.push({
+          field: "precioCOP",
+          before: product.precioCOP ?? null,
+          after: next ?? null,
+        });
+      }
+    }
+
+    if (patch.mostrarEnCatalogo !== undefined) {
+      if (patch.mostrarEnCatalogo !== (product.mostrarEnCatalogo ?? false)) {
+        productPatch.mostrarEnCatalogo = patch.mostrarEnCatalogo;
+        changes.push({
+          field: "mostrarEnCatalogo",
+          before: product.mostrarEnCatalogo ? 1 : 0,
+          after: patch.mostrarEnCatalogo ? 1 : 0,
+        });
+      }
+    }
+
+    if (
+      nextPreponderancia !== undefined &&
+      nextCostoBaseCOP !== undefined &&
+      (nextPreponderancia !== lotItem.preponderancia ||
+        nextCostoBaseCOP !== lotItem.costoBaseCOP)
+    ) {
+      productPatch.preponderancia = nextPreponderancia;
+      productPatch.costoBaseCOP = nextCostoBaseCOP;
+      changes.push({
+        field: "preponderancia",
+        before: lotItem.preponderancia,
+        after: nextPreponderancia,
+      });
+      changes.push({
+        field: "costoBaseCOP",
+        before: lotItem.costoBaseCOP,
+        after: nextCostoBaseCOP,
+      });
+    }
+
+    if (changes.length === 0) {
+      return { lotItemId, changed: false };
+    }
+
+    // 1. Mirror writes (productInventory + lotItems if preponderancia changed).
+    await ctx.db.patch(product._id, {
+      ...productPatch,
+      syncStatus: "pending" as const,
+      syncError: undefined,
+    });
+    if (nextPreponderancia !== undefined && nextCostoBaseCOP !== undefined) {
+      await ctx.db.patch(lotItemId, {
+        preponderancia: nextPreponderancia,
+        costoBaseCOP: nextCostoBaseCOP,
+      });
+    }
+
+    // 2. Audit + scheduled sheet push.
+    const now = new Date().toISOString();
+    const auditId = await ctx.db.insert("productEdits", {
+      itemId: product.itemId,
+      editorEmail: editorEmail ?? "fotosintesis-edit",
+      editedAt: now,
+      changes,
+      status: "pending" as const,
+    });
+    await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+      itemId: product.itemId,
+      auditId,
+      mode: "patch",
+    });
+
+    return {
+      lotItemId,
+      changed: true,
+      changedFields: changes.map((c) => c.field),
+      costoBaseCOP: nextCostoBaseCOP ?? lotItem.costoBaseCOP,
+    };
   },
 });
 

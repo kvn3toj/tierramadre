@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { Check } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../../design-system";
 
 export type ItemMiniState = "done" | "active" | "pending";
@@ -21,6 +21,10 @@ interface ItemMiniCardProps {
   cost?: React.ReactNode;
   state: ItemMiniState;
   onClick?: () => void;
+  /** When set, renders a Pencil icon button on the right edge that opens the
+   *  full-item edit drawer. Independent from `onClick` so the row can be
+   *  passively rendered while the edit button does real work. */
+  onEdit?: () => void;
 }
 
 /**
@@ -36,6 +40,7 @@ export function ItemMiniCard({
   cost,
   state,
   onClick,
+  onEdit,
 }: ItemMiniCardProps) {
   const foto = getFoto("light");
 
@@ -71,7 +76,7 @@ export function ItemMiniCard({
       role={onClick ? "button" : undefined}
       sx={{
         display: "grid",
-        gridTemplateColumns: "auto 1fr auto",
+        gridTemplateColumns: onEdit ? "auto 1fr auto auto" : "auto 1fr auto",
         alignItems: "center",
         gap: "12px",
         width: "100%",
@@ -200,6 +205,42 @@ export function ItemMiniCard({
           </Box>
         ) : null}
       </Box>
+      {onEdit ? (
+        <Box
+          component="button"
+          type="button"
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          aria-label={`Editar ${ticketId}`}
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 28,
+            height: 28,
+            borderRadius: "7px",
+            border: `1px solid ${foto.surfaces.edge}`,
+            background: foto.surfaces.canvas,
+            color: foto.ink.tertiary,
+            cursor: "pointer",
+            transition:
+              "background 120ms ease, color 120ms ease, border-color 120ms ease",
+            "&:hover": {
+              background: foto.accent.soft,
+              color: foto.accent.deep,
+              borderColor: foto.accent.primary,
+            },
+            "&:focus-visible": {
+              outline: "none",
+              boxShadow: `0 0 0 2px ${foto.accent.glow}`,
+            },
+          }}
+        >
+          <Pencil size={12} strokeWidth={1.8} />
+        </Box>
+      ) : null}
     </Box>
   );
 }
