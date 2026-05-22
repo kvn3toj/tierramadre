@@ -257,6 +257,24 @@ export default defineSchema({
     preponderancia: v.number(),
     costoBaseCOP: v.number(),
     ordenEnLote: v.number(),
+    // Fotosíntesis v2 · Slice 2 — discriminator so `lots.close` can detect
+    // an insumo-only lot and skip BR-2 (sum=100 of preponderancia), since
+    // insumos compute their preponderancia from cantidad×costoUnitario and
+    // a mixed bag of insumos rarely lands on an exact 100%. Older items
+    // predating Slice 2 leave this undefined → treated as "gema".
+    tipo: v.optional(
+      v.union(
+        v.literal("gema"),
+        v.literal("joya"),
+        v.literal("insumo"),
+        v.literal("lote"),
+      ),
+    ),
+    /** Joya/insumo extras kept on the join row for analytics + display. */
+    tecnica: v.optional(v.string()),
+    materiales: v.optional(v.array(v.string())),
+    cantidad: v.optional(v.number()),
+    costoUnitarioCOP: v.optional(v.number()),
   })
     .index("by_loteId", ["loteId"])
     .index("by_itemId", ["itemId"]),

@@ -9,6 +9,7 @@
  */
 
 import type * as _lib_columnMaps from "../_lib/columnMaps.js";
+import type * as _lib_lotItemMath from "../_lib/lotItemMath.js";
 import type * as _lib_sheetSync from "../_lib/sheetSync.js";
 import type * as clients from "../clients.js";
 import type * as crons from "../crons.js";
@@ -16,6 +17,7 @@ import type * as fotosintesisAi from "../fotosintesisAi.js";
 import type * as invitations from "../invitations.js";
 import type * as lotItems from "../lotItems.js";
 import type * as lots from "../lots.js";
+import type * as materials from "../materials.js";
 import type * as productViews from "../productViews.js";
 import type * as products from "../products.js";
 import type * as providers from "../providers.js";
@@ -30,6 +32,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "_lib/columnMaps": typeof _lib_columnMaps;
+  "_lib/lotItemMath": typeof _lib_lotItemMath;
   "_lib/sheetSync": typeof _lib_sheetSync;
   clients: typeof clients;
   crons: typeof crons;
@@ -37,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   invitations: typeof invitations;
   lotItems: typeof lotItems;
   lots: typeof lots;
+  materials: typeof materials;
   productViews: typeof productViews;
   products: typeof products;
   providers: typeof providers;

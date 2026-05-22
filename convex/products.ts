@@ -145,6 +145,10 @@ export const saveEdit = mutation({
           v.literal(""),
         ),
       ),
+      // Fotosíntesis v2 · Slice 2 — per-item catalog visibility flip from
+      // the LoteResumenPage publish toggles. Lives on productInventory but
+      // is not a Sheets column today, so the push silently no-ops on it.
+      mostrarEnCatalogo: v.optional(v.boolean()),
     }),
   },
   handler: async (ctx, { itemId, editorEmail, editorName, patch }) => {

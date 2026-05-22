@@ -32,8 +32,19 @@ import {
   EMPTY_GEMA_DRAFT,
   type GemaDraft,
 } from "./components/GemaFields";
+import {
+  JoyaFields,
+  EMPTY_JOYA_DRAFT,
+  type JoyaDraft,
+} from "./components/JoyaFields";
+import {
+  InsumoFields,
+  EMPTY_INSUMO_DRAFT,
+  type InsumoDraft,
+} from "./components/InsumoFields";
 import { useNextLoteId } from "./hooks/useNextLoteId";
 import { usePreponderanciaTotal } from "./hooks/usePreponderanciaTotal";
+import { useNotification } from "../../../contexts/NotificationContext";
 
 // -----------------------------------------------------------------------------
 // Helpers
@@ -78,8 +89,10 @@ interface TypeOption {
 
 const TYPE_OPTIONS: TypeOption[] = [
   { value: "gema", label: "Gema", key: "1", Icon: Gem },
-  { value: "joya", label: "Joya", key: "2", Icon: Diamond, disabled: true },
-  { value: "insumo", label: "Insumo", key: "3", Icon: Package, disabled: true },
+  { value: "joya", label: "Joya", key: "2", Icon: Diamond },
+  { value: "insumo", label: "Insumo", key: "3", Icon: Package },
+  // Lote/Otros lands in Slice 4 (invoice + bulk-item flows). Slice 2 keeps
+  // this slot visible so the layout doesn't shift when it's enabled.
   { value: "lote", label: "Lote/Otros", key: "4", Icon: Tag, disabled: true },
 ];
 
@@ -806,6 +819,7 @@ interface ActiveLotPageProps {
 function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const foto = getFoto("light");
   const navigate = useNavigate();
+  const { notify } = useNotification();
 
   // Reactive data --------------------------------------------------------------
   const lot = useConvexQuery(convexApi.lots.getByLoteId, { loteId });
@@ -815,20 +829,35 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     convexApi.providers.get,
     lot?.providerId ? { id: lot.providerId } : "skip",
   );
+  const materials = useConvexQuery(convexApi.materials.list, {});
 
   // Mutations ------------------------------------------------------------------
   const createLotItem = useConvexMutation(convexApi.lotItems.create);
-  // `lots.update` mutation will be re-wired in Slice 2 once the patch
-  // validator accepts providerId (see drawer onSuccess below).
+  const createMaterial = useConvexMutation(convexApi.materials.create);
 
-  // Form state -----------------------------------------------------------------
+  // Form state — three drafts so switching tipo doesn't blow away the
+  // half-typed values of the previous type. Each draft is independent.
+  // ----------------------------------------------------------------------------
   const [tipo, setTipo] = useState<TipoItem>("gema");
   const [gema, setGema] = useState<GemaDraft>(EMPTY_GEMA_DRAFT);
+  const [joya, setJoya] = useState<JoyaDraft>(EMPTY_JOYA_DRAFT);
+  const [insumo, setInsumo] = useState<InsumoDraft>(EMPTY_INSUMO_DRAFT);
   const [observacion, setObservacion] = useState("");
   // Slice plan: items default to hidden from catalog (reserve). The Switch is
   // "Reserva oculta" ON → `mostrarEnCatalogo: false`.
   const [reservaOculta, setReservaOculta] = useState(true);
   const [photos, setPhotos] = useState<DropzonePhoto[]>([]);
+
+  /**
+   * Tracks how many photos each saved item ended up with at save time.
+   * Used to validate the "≥1 photo per non-insumo item" close-lot gate.
+   * Lives in client state because the photoCount isn't persisted server-side
+   * yet (Drive upload + URL storage is Slice 3+ work). Resets only when the
+   * loteId changes (re-mounting the page).
+   */
+  const [photoCountsByItemId, setPhotoCountsByItemId] = useState<
+    Record<string, number>
+  >({});
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -852,77 +881,231 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const isLastItem =
     unidadesDeclaradas > 0 && itemsCount === unidadesDeclaradas - 1;
 
-  const prepNumeric =
-    typeof gema.preponderancia === "number" ? gema.preponderancia : 0;
-  const projectedSum = prepTotal.sum + prepNumeric;
+  /**
+   * Current draft's projected preponderancia. For insumo, derived from
+   * cantidad × costoUnitario (mirrors server BR-5). For gema/joya, the
+   * field's typed value.
+   */
+  const currentPrepNumeric = useMemo<number>(() => {
+    if (tipo === "gema") {
+      return typeof gema.preponderancia === "number" ? gema.preponderancia : 0;
+    }
+    if (tipo === "joya") {
+      return typeof joya.preponderancia === "number" ? joya.preponderancia : 0;
+    }
+    if (tipo === "insumo") {
+      const cantidad =
+        typeof insumo.cantidad === "number" ? insumo.cantidad : 0;
+      const cu =
+        typeof insumo.costoUnitarioCOP === "number"
+          ? insumo.costoUnitarioCOP
+          : 0;
+      if (cantidad <= 0 || cu <= 0 || costoTotalCOP <= 0) return 0;
+      return Math.round(((cantidad * cu) / costoTotalCOP) * 100 * 100) / 100;
+    }
+    return 0;
+  }, [tipo, gema, joya, insumo, costoTotalCOP]);
+
+  const projectedSum = prepTotal.sum + currentPrepNumeric;
   const overflow = projectedSum - 100;
+
+  /**
+   * Whether the lot looks like it's going to be insumo-only. Used to relax
+   * the BR-2 helper text (since insumo-only lots don't need sum=100).
+   */
+  const allSavedInsumo =
+    items !== undefined &&
+    items.length > 0 &&
+    items.every((it) => it.tipo === "insumo");
+
   const prepHelper = useMemo<{
     text: React.ReactNode;
     alert: boolean;
   } | null>(() => {
+    if (tipo === "insumo") return null; // insumo has its own derived hint
     if (overflow > 0.01) {
       return {
         text: `Excede el 100% del lote por ${(Math.round(overflow * 10) / 10).toFixed(1)}%. Bajá la preponderancia o ajustá un ítem previo.`,
         alert: true,
       };
     }
-    if (
-      isLastItem &&
-      gema.preponderancia === "" &&
-      prepTotal.remaining > 0.01
-    ) {
+    const currentPrepEmpty =
+      (tipo === "gema" && gema.preponderancia === "") ||
+      (tipo === "joya" && joya.preponderancia === "");
+    if (isLastItem && currentPrepEmpty && prepTotal.remaining > 0.01) {
       return {
         text: `Es el último ítem del lote: te queda ${(Math.round(prepTotal.remaining * 10) / 10).toFixed(1)}% para completar el 100%.`,
         alert: false,
       };
     }
     return null;
-  }, [overflow, isLastItem, gema.preponderancia, prepTotal.remaining]);
+  }, [
+    tipo,
+    gema.preponderancia,
+    joya.preponderancia,
+    overflow,
+    isLastItem,
+    prepTotal.remaining,
+  ]);
 
-  // Save handlers --------------------------------------------------------------
+  // Per-type save eligibility -------------------------------------------------
+  const photoRequired = tipo !== "insumo";
+  const hasPhoto = photos.length >= 1;
+  const photoOK = !photoRequired || hasPhoto;
+
+  const draftCanSaveByType = useMemo<boolean>(() => {
+    if (tipo === "gema") {
+      return (
+        gema.nombre.trim().length > 0 &&
+        typeof gema.preponderancia === "number" &&
+        gema.preponderancia > 0
+      );
+    }
+    if (tipo === "joya") {
+      return (
+        joya.nombre.trim().length > 0 &&
+        typeof joya.preponderancia === "number" &&
+        joya.preponderancia > 0
+      );
+    }
+    if (tipo === "insumo") {
+      return (
+        insumo.nombre.trim().length > 0 &&
+        typeof insumo.cantidad === "number" &&
+        insumo.cantidad > 0 &&
+        typeof insumo.costoUnitarioCOP === "number" &&
+        insumo.costoUnitarioCOP > 0
+      );
+    }
+    return false;
+  }, [tipo, gema, joya, insumo]);
+
   const canSave =
     !!lot &&
     lot.estado === "abierto" &&
-    gema.nombre.trim().length > 0 &&
-    typeof gema.preponderancia === "number" &&
-    gema.preponderancia > 0 &&
-    overflow <= 0.01 &&
+    draftCanSaveByType &&
+    (tipo === "insumo" || overflow <= 0.01) &&
+    photoOK &&
     itemsCount < unidadesDeclaradas &&
     !saving;
+
+  // Close-lot gate: BR-3 always; BR-2 only when there's a non-insumo item;
+  // and every saved non-insumo item must have ≥1 photo (tracked client-side).
+  const allSavedNonInsumoHavePhotos = useMemo<boolean>(() => {
+    if (!items) return false;
+    return items.every((it) => {
+      if (it.tipo === "insumo") return true;
+      return (photoCountsByItemId[it.itemId] ?? 0) >= 1;
+    });
+  }, [items, photoCountsByItemId]);
 
   const canCloseLot =
     !!lot &&
     lot.estado === "abierto" &&
     itemsCount > 0 &&
     itemsCount === unidadesDeclaradas &&
-    Math.abs(prepTotal.sum - 100) <= 0.01;
+    (allSavedInsumo || Math.abs(prepTotal.sum - 100) <= 0.01) &&
+    allSavedNonInsumoHavePhotos;
 
   const resetItemDraft = useCallback(() => {
     setGema(EMPTY_GEMA_DRAFT);
+    setJoya(EMPTY_JOYA_DRAFT);
+    setInsumo(EMPTY_INSUMO_DRAFT);
     setObservacion("");
     setPhotos([]);
     setReservaOculta(true);
   }, []);
+
+  // Inline material creation: when JoyaFields' ChipsInput accepts a new
+  // chip whose name isn't in the catalog yet, persist it via the materials
+  // mutation and toast Maritza so she knows the library grew.
+  const handleJoyaPatch = useCallback(
+    async (patch: Partial<JoyaDraft>) => {
+      const next = { ...joya, ...patch };
+      setJoya(next);
+      if (patch.materiales && materials) {
+        const known = new Set(materials.map((m) => m.name.toLowerCase()));
+        const newOnes = patch.materiales.filter(
+          (name) => !known.has(name.toLowerCase()),
+        );
+        for (const name of newOnes) {
+          try {
+            const result = await createMaterial({ name });
+            if (result.created) {
+              notify(
+                `Material "${result.name}" agregado a la biblioteca`,
+                "info",
+              );
+            }
+          } catch (err) {
+            // Non-blocking — the chip is in the draft regardless; user just
+            // won't see it persisted to the catalog.
+            console.warn("[fotosintesis] createMaterial failed", err);
+          }
+        }
+      }
+    },
+    [joya, materials, createMaterial, notify],
+  );
 
   const handleSaveAndNext = useCallback(async () => {
     if (!canSave || !lot) return;
     setSaving(true);
     setError(null);
     try {
-      // TODO Slice 2: upload photos to Drive first, attach URL on create.
-      await createLotItem({
-        loteId,
-        tipo,
-        nombre: gema.nombre.trim(),
-        preponderancia: gema.preponderancia as number,
-        color: gema.color || undefined,
-        calidad: gema.calidad,
-        peso: gema.peso || undefined,
-        observacion: observacion.trim() || undefined,
-        mostrarEnCatalogo: !reservaOculta,
-        // procedencia + precioPublicoCOP are not in lotItems.create's
-        // surface yet — Slice 2 extends the mutation to capture them.
-      });
+      let payload: Parameters<typeof createLotItem>[0];
+      if (tipo === "gema") {
+        payload = {
+          loteId,
+          tipo: "gema",
+          nombre: gema.nombre.trim(),
+          preponderancia: gema.preponderancia as number,
+          color: gema.color || undefined,
+          calidad: gema.calidad,
+          peso: gema.peso || undefined,
+          observacion: observacion.trim() || undefined,
+          mostrarEnCatalogo: !reservaOculta,
+        };
+      } else if (tipo === "joya") {
+        payload = {
+          loteId,
+          tipo: "joya",
+          nombre: joya.nombre.trim(),
+          preponderancia: joya.preponderancia as number,
+          peso:
+            typeof joya.pesoGramos === "number"
+              ? `${joya.pesoGramos} g`
+              : undefined,
+          categoria: joya.tipoJoya || undefined,
+          tecnica: joya.tecnica || undefined,
+          materiales: joya.materiales.length > 0 ? joya.materiales : undefined,
+          observacion: observacion.trim() || undefined,
+          mostrarEnCatalogo: !reservaOculta,
+        };
+      } else if (tipo === "insumo") {
+        payload = {
+          loteId,
+          tipo: "insumo",
+          nombre: insumo.nombre.trim(),
+          cantidad: insumo.cantidad as number,
+          costoUnitarioCOP: insumo.costoUnitarioCOP as number,
+          categoria: insumo.categoria || undefined,
+          observacion: observacion.trim() || undefined,
+          mostrarEnCatalogo: !reservaOculta,
+        };
+      } else {
+        throw new Error(`Tipo "${tipo}" no soportado en este slice`);
+      }
+
+      const result = await createLotItem(payload);
+
+      // Stash the photo count for the new item so the close-lot gate can
+      // validate "≥1 photo per non-insumo item".
+      setPhotoCountsByItemId((prev) => ({
+        ...prev,
+        [result.itemId]: photos.length,
+      }));
+
       resetItemDraft();
     } catch (err) {
       setError(
@@ -938,8 +1121,11 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     loteId,
     tipo,
     gema,
+    joya,
+    insumo,
     observacion,
     reservaOculta,
+    photos.length,
     resetItemDraft,
   ]);
 
@@ -949,15 +1135,31 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   }, [canCloseLot, navigate, loteId]);
 
   const handleDuplicate = useCallback(() => {
-    // ⌘D — clone type/calidad/procedencia/color/materiales; reset
-    // nombre/peso/preponderancia for the next ítem.
-    setGema((prev) => ({
-      ...EMPTY_GEMA_DRAFT,
-      color: prev.color,
-      calidad: prev.calidad,
-      procedencia: prev.procedencia,
-    }));
-  }, []);
+    // ⌘D — clone the per-type "skeleton" so Maritza can rapid-fire similar
+    // items. Resets fields that should change each time (name, weight,
+    // preponderance / quantity). Carries the harder-to-retype context.
+    if (tipo === "gema") {
+      setGema((prev) => ({
+        ...EMPTY_GEMA_DRAFT,
+        color: prev.color,
+        calidad: prev.calidad,
+        procedencia: prev.procedencia,
+      }));
+    } else if (tipo === "joya") {
+      setJoya((prev) => ({
+        ...EMPTY_JOYA_DRAFT,
+        tipoJoya: prev.tipoJoya,
+        tecnica: prev.tecnica,
+        materiales: [...prev.materiales],
+      }));
+    } else if (tipo === "insumo") {
+      setInsumo((prev) => ({
+        ...EMPTY_INSUMO_DRAFT,
+        categoria: prev.categoria,
+        costoUnitarioCOP: prev.costoUnitarioCOP,
+      }));
+    }
+  }, [tipo]);
 
   // Page-local hotkeys ---------------------------------------------------------
   useEffect(() => {
@@ -976,9 +1178,6 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         !e.shiftKey &&
         !e.altKey
       ) {
-        // Only when on this page and not blocked by the global ⌘D (directory)
-        // — the global handler ignores typing targets too; here we intercept
-        // regardless of focus because the user clearly wants the local action.
         e.preventDefault();
         e.stopPropagation();
         handleDuplicate();
@@ -999,8 +1198,14 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         if (e.key === "1") {
           e.preventDefault();
           setTipo("gema");
+        } else if (e.key === "2") {
+          e.preventDefault();
+          setTipo("joya");
+        } else if (e.key === "3") {
+          e.preventDefault();
+          setTipo("insumo");
         }
-        // 2/3/4 are visually present but Slice-1 disabled — swallow noise.
+        // 4 (lote/otros) is still disabled in Slice 2 — swallow.
       }
     };
     window.addEventListener("keydown", handler);
@@ -1232,23 +1437,71 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
             <TypeSelector value={tipo} onChange={setTipo} />
 
-            <GemaFields
-              value={gema}
-              onChange={(patch) => setGema((prev) => ({ ...prev, ...patch }))}
-              lotCostoTotalCOP={costoTotalCOP}
-              preponderanciaHelper={prepHelper?.text}
-              preponderanciaHelperAlert={prepHelper?.alert}
-            />
+            {tipo === "gema" ? (
+              <GemaFields
+                value={gema}
+                onChange={(patch) => setGema((prev) => ({ ...prev, ...patch }))}
+                lotCostoTotalCOP={costoTotalCOP}
+                preponderanciaHelper={prepHelper?.text}
+                preponderanciaHelperAlert={prepHelper?.alert}
+              />
+            ) : tipo === "joya" ? (
+              <JoyaFields
+                value={joya}
+                onChange={handleJoyaPatch}
+                lotCostoTotalCOP={costoTotalCOP}
+                preponderanciaHelper={prepHelper?.text}
+                preponderanciaHelperAlert={prepHelper?.alert}
+                materialsCatalog={(materials ?? []).map((m) => m.name)}
+              />
+            ) : tipo === "insumo" ? (
+              <InsumoFields
+                value={insumo}
+                onChange={(patch) =>
+                  setInsumo((prev) => ({ ...prev, ...patch }))
+                }
+                lotCostoTotalCOP={costoTotalCOP}
+              />
+            ) : null}
 
             {/* Foto */}
             <Box>
-              <FieldLabel optional="opcional">Foto del ítem</FieldLabel>
+              <FieldLabel
+                optional={
+                  tipo === "insumo"
+                    ? "opcional para insumos"
+                    : tipo === "joya"
+                      ? "mínimo 1 · recomendado 3"
+                      : "mínimo 1 para cerrar"
+                }
+              >
+                Foto del ítem
+              </FieldLabel>
               <PhotoDropzone
                 photos={photos}
                 onAdd={addPhotos}
                 onRemove={removePhoto}
-                hint="JPG o PNG. Slice 2 sube a Drive automáticamente."
+                hint={
+                  tipo === "joya" && photos.length > 0 && photos.length < 3
+                    ? "Recomendado: 3 fotos para joyas (ángulo, detalle, escala)."
+                    : tipo === "insumo"
+                      ? "JPG o PNG. Para insumos la foto es opcional."
+                      : "JPG o PNG. Arrastrá o pegá desde el portapapeles."
+                }
               />
+              {photoRequired && photos.length === 0 ? (
+                <Box
+                  sx={{
+                    marginTop: "6px",
+                    fontSize: 11,
+                    color: foto.status.sold,
+                  }}
+                  role="status"
+                  aria-live="polite"
+                >
+                  Falta al menos una foto para poder guardar este ítem.
+                </Box>
+              ) : null}
             </Box>
 
             {/* Observación */}
@@ -1454,31 +1707,62 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
                 />
               </Box>
             ))}
-            {/* Active row for the in-progress item */}
-            {itemsCount < unidadesDeclaradas ? (
-              <Box component="li" sx={{ margin: 0 }}>
-                <ItemMiniCard
-                  ticketId={`${loteId} · ${String(itemsCount + 1).padStart(3, "0")}`}
-                  name={gema.nombre.trim() || "Ítem en captura"}
-                  meta={
-                    typeof gema.preponderancia === "number"
-                      ? `${gema.preponderancia}% · ${formatCOP(
-                          Math.round(
-                            costoTotalCOP *
-                              ((gema.preponderancia as number) / 100),
-                          ),
-                        )}`
-                      : "Esperando preponderancia…"
+            {/* Active row for the in-progress item — pulls from the
+                currently-selected draft so the bandeja mirrors the active
+                sub-form (gema/joya/insumo) instead of always showing gema. */}
+            {itemsCount < unidadesDeclaradas
+              ? (() => {
+                  let activeName = "Ítem en captura";
+                  let activePrep: number | undefined;
+                  let activeMeta: React.ReactNode = "Esperando datos…";
+                  if (tipo === "gema") {
+                    activeName = gema.nombre.trim() || "Gema en captura";
+                    if (typeof gema.preponderancia === "number") {
+                      activePrep = gema.preponderancia;
+                      activeMeta = `${gema.preponderancia}% · ${formatCOP(
+                        Math.round(costoTotalCOP * (gema.preponderancia / 100)),
+                      )}`;
+                    } else {
+                      activeMeta = "Esperando preponderancia…";
+                    }
+                  } else if (tipo === "joya") {
+                    activeName = joya.nombre.trim() || "Joya en captura";
+                    if (typeof joya.preponderancia === "number") {
+                      activePrep = joya.preponderancia;
+                      activeMeta = `${joya.preponderancia}% · ${formatCOP(
+                        Math.round(costoTotalCOP * (joya.preponderancia / 100)),
+                      )}`;
+                    } else {
+                      activeMeta = "Esperando preponderancia…";
+                    }
+                  } else if (tipo === "insumo") {
+                    activeName = insumo.nombre.trim() || "Insumo en captura";
+                    const cantidad =
+                      typeof insumo.cantidad === "number" ? insumo.cantidad : 0;
+                    const cu =
+                      typeof insumo.costoUnitarioCOP === "number"
+                        ? insumo.costoUnitarioCOP
+                        : 0;
+                    if (cantidad > 0 && cu > 0) {
+                      activeMeta = `${cantidad}u × ${formatCOP(cu)} = ${formatCOP(cantidad * cu)}`;
+                      activePrep = currentPrepNumeric;
+                    } else {
+                      activeMeta = "Esperando cantidad y costo unitario…";
+                    }
                   }
-                  preponderancia={
-                    typeof gema.preponderancia === "number"
-                      ? gema.preponderancia
-                      : undefined
-                  }
-                  state="active"
-                />
-              </Box>
-            ) : null}
+                  return (
+                    <Box component="li" sx={{ margin: 0 }}>
+                      <ItemMiniCard
+                        ticketId={`${loteId} · ${String(itemsCount + 1).padStart(3, "0")}`}
+                        name={activeName}
+                        meta={activeMeta}
+                        preponderancia={activePrep}
+                        state="active"
+                      />
+                    </Box>
+                  );
+                })()
+              : null}
             {/* Pending placeholders for remaining declared items */}
             {Array.from(
               {
@@ -1506,6 +1790,8 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
               { label: "Duplicar ítem", keys: ["⌘", "D"] },
               { label: "Guardar y siguiente", keys: ["⌘", "↵"] },
               { label: "Cambiar a Gema", keys: ["1"] },
+              { label: "Cambiar a Joya", keys: ["2"] },
+              { label: "Cambiar a Insumo", keys: ["3"] },
               { label: "Abrir buscador global", keys: ["⌘", "K"] },
             ]}
           />

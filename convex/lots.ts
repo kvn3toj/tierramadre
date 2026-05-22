@@ -10,6 +10,7 @@ import { api, internal } from "./_generated/api";
 import { pushTableRowToVercel } from "./_lib/sheetSync";
 import { COLUMN_MAPS } from "./_lib/columnMaps";
 import { allocateNext, formatLotId } from "./sequences";
+import { isInsumoOnlyLot } from "./_lib/lotItemMath";
 
 const formaPagoValidator = v.union(
   v.literal("contado"),
@@ -185,11 +186,21 @@ export const close = mutation({
       );
     }
 
-    const sum = items.reduce((s, it) => s + it.preponderancia, 0);
-    if (Math.abs(sum - 100) > 0.01) {
-      throw new Error(
-        `Preponderancia ${sum.toFixed(2)}% ≠ 100%. Ajusta los ítems antes de cerrar.`,
-      );
+    // BR-2 (Slice 2): suma preponderancia ≡ 100 ± 0.01 — but only when the
+    // lot contains anything other than insumos. A pure insumo lot (e.g.
+    // "3 cajitas de envases" at $5k/u for a $15k total) lands on 100% only
+    // by coincidence; insumos compute preponderancia server-side from
+    // cantidad×costoUnitario so any error vs lot.costoTotalCOP is shoulder
+    // room for shipping, taxes, etc. The user explicitly opts out of BR-2
+    // for insumo-only lots (handoff §4.2 step 3). The discriminator lives
+    // in `isInsumoOnlyLot` so the same rule is unit-tested in tests/.
+    if (!isInsumoOnlyLot(items)) {
+      const sum = items.reduce((s, it) => s + it.preponderancia, 0);
+      if (Math.abs(sum - 100) > 0.01) {
+        throw new Error(
+          `Preponderancia ${sum.toFixed(2)}% ≠ 100%. Ajusta los ítems antes de cerrar.`,
+        );
+      }
     }
 
     await ctx.db.patch(id, {

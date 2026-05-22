@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
+import { computeInsumoTotals, wouldOverflowHundred } from "./_lib/lotItemMath";
 
 const tipoItemValidator = v.union(
   v.literal("gema"),
@@ -65,9 +66,12 @@ async function nextItemId(ctx: {
  * Create one item in a lot. This:
  *   1. Reads the lot to obtain costoTotalCOP and validate state.
  *   2. Allocates the next itemId in productInventory.
- *   3. Computes costoBaseCOP = lot.costoTotalCOP × (preponderancia / 100).
+ *   3. Computes costoBaseCOP (BR-5):
+ *        gema/joya/lote → lot.costoTotalCOP × (preponderancia / 100)
+ *        insumo         → cantidad × costoUnitarioCOP (preponderancia
+ *                          back-derived for analytics).
  *   4. Inserts the productInventory row directly (mostrarEnCatalogo:false).
- *   5. Inserts the lotItems row.
+ *   5. Inserts the lotItems row with discriminator + type-specific extras.
  *   6. Schedules the productInventory push (mode: append).
  *
  * BR-5 (costoBaseCOP calculated, never user-editable) is enforced here.
@@ -77,7 +81,12 @@ export const create = mutation({
     loteId: v.string(),
     tipo: tipoItemValidator,
     nombre: v.string(),
-    preponderancia: v.number(),
+    /**
+     * For gema/joya/lote: required, in (0, 100].
+     * For insumo: optional — if omitted, the server derives it from
+     * `cantidad × costoUnitarioCOP / lot.costoTotalCOP × 100`.
+     */
+    preponderancia: v.optional(v.number()),
     // Type-specific fields are passed flat; the wizard validates per-type.
     color: v.optional(v.string()),
     calidad: v.optional(v.string()),
@@ -91,11 +100,13 @@ export const create = mutation({
     ubicacion: v.optional(v.string()),
     observacion: v.optional(v.string()),
     mostrarEnCatalogo: v.optional(v.boolean()),
+    // Joya extras (Slice 2)
+    tecnica: v.optional(v.string()),
+    materiales: v.optional(v.array(v.string())),
+    // Insumo extras (Slice 2) — see preponderancia note above.
+    costoUnitarioCOP: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    if (args.preponderancia <= 0 || args.preponderancia > 100) {
-      throw new Error("preponderancia debe estar en (0, 100]");
-    }
     if (args.nombre.trim().length === 0) {
       throw new Error("Nombre es obligatorio");
     }
@@ -120,17 +131,48 @@ export const create = mutation({
       );
     }
 
-    const sumExisting = existing.reduce((s, it) => s + it.preponderancia, 0);
-    if (sumExisting + args.preponderancia > 100.01) {
-      throw new Error(
-        `La preponderancia ${args.preponderancia}% excede el 100% del lote ` +
-          `(actual ${sumExisting}%, intento ${args.preponderancia}%).`,
-      );
+    // Slice 2: branch BR-5 by tipo. Insumo computes costo from
+    // cantidad × costoUnitario; everything else uses the preponderancia
+    // proportion of the lot total. The math lives in `_lib/lotItemMath`
+    // so the same rules are exercised by unit tests.
+    let preponderancia: number;
+    let costoBaseCOP: number;
+    if (args.tipo === "insumo") {
+      const totals = computeInsumoTotals({
+        cantidad: args.cantidad ?? 0,
+        costoUnitarioCOP: args.costoUnitarioCOP ?? 0,
+        lotCostoTotalCOP: lot.costoTotalCOP,
+      });
+      preponderancia = totals.preponderancia;
+      costoBaseCOP = totals.costoBaseCOP;
+    } else {
+      if (
+        typeof args.preponderancia !== "number" ||
+        args.preponderancia <= 0 ||
+        args.preponderancia > 100
+      ) {
+        throw new Error("preponderancia debe estar en (0, 100]");
+      }
+      preponderancia = args.preponderancia;
+      costoBaseCOP = Math.round(lot.costoTotalCOP * (preponderancia / 100));
     }
 
-    const costoBaseCOP = Math.round(
-      lot.costoTotalCOP * (args.preponderancia / 100),
-    );
+    // For mixed lots BR-2 still rules — guard the over-100 case at insert
+    // time so the cumulative drift is caught before the close-lot step.
+    // For all-insumo lots, `wouldOverflowHundred` silently allows the
+    // insert because `close()` skips BR-2 entirely.
+    if (
+      wouldOverflowHundred({
+        existing,
+        candidate: { tipo: args.tipo, preponderancia },
+      })
+    ) {
+      const sumExisting = existing.reduce((s, it) => s + it.preponderancia, 0);
+      throw new Error(
+        `La preponderancia ${preponderancia.toFixed(2)}% excede el 100% del lote ` +
+          `(actual ${sumExisting.toFixed(2)}%, intento ${preponderancia.toFixed(2)}%).`,
+      );
+    }
 
     const itemId = await nextItemId(ctx);
     const now = new Date().toISOString();
@@ -153,7 +195,7 @@ export const create = mutation({
       caja: args.caja,
       estado: "DISPONIBLE" as const,
       loteId: args.loteId,
-      preponderancia: args.preponderancia,
+      preponderancia,
       costoBaseCOP,
       mostrarEnCatalogo: args.mostrarEnCatalogo ?? false,
       lastPulledAt: now,
@@ -174,9 +216,18 @@ export const create = mutation({
     const lotItemId = await ctx.db.insert("lotItems", {
       loteId: args.loteId,
       itemId,
-      preponderancia: args.preponderancia,
+      preponderancia,
       costoBaseCOP,
       ordenEnLote: existing.length + 1,
+      tipo: args.tipo,
+      tecnica: args.tecnica,
+      materiales:
+        args.materiales && args.materiales.length > 0
+          ? args.materiales
+          : undefined,
+      cantidad: args.tipo === "insumo" ? args.cantidad : undefined,
+      costoUnitarioCOP:
+        args.tipo === "insumo" ? args.costoUnitarioCOP : undefined,
     });
 
     await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
@@ -185,7 +236,7 @@ export const create = mutation({
       mode: "append",
     });
 
-    return { lotItemId, productId, itemId, costoBaseCOP };
+    return { lotItemId, productId, itemId, costoBaseCOP, preponderancia };
   },
 });
 
