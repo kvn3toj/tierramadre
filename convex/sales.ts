@@ -170,15 +170,29 @@ export const create = mutation({
   },
 });
 
+/**
+ * Cancel a sale. Restores every itemId to estado "DISPONIBLE" and records
+ * an audit trail on both the sale (cancelledAt/By/Reason) and each affected
+ * productEdits row (with the real operator email instead of the previous
+ * "fotosintesis-sale-cancel" sentinel).
+ *
+ * `operatorEmail` is required so we can attribute the action. `reason` is
+ * optional at the schema level but the Slice 3 UI requires it (CancelVentaDialog).
+ */
 export const cancel = mutation({
-  args: { id: v.id("sales") },
-  handler: async (ctx, { id }) => {
+  args: {
+    id: v.id("sales"),
+    operatorEmail: v.string(),
+    operatorName: v.optional(v.string()),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, { id, operatorEmail, operatorName, reason }) => {
     const sale = await ctx.db.get(id);
     if (!sale) throw new Error(`Sale ${id} not found`);
     if (sale.estado === "cancelada") return { id, alreadyCancelled: true };
 
-    // Q-8 deferred: confirm with user before F4 ships. Default behavior
-    // here is yes — cancel restores items to DISPONIBLE.
+    const now = new Date().toISOString();
+
     for (const itemId of sale.itemIds) {
       const product = await ctx.db
         .query("productInventory")
@@ -191,8 +205,9 @@ export const cancel = mutation({
       });
       const auditId = await ctx.db.insert("productEdits", {
         itemId,
-        editorEmail: "fotosintesis-sale-cancel",
-        editedAt: new Date().toISOString(),
+        editorEmail: operatorEmail,
+        editorName: operatorName,
+        editedAt: now,
         changes: [{ field: "estado", before: "VENDIDA", after: "DISPONIBLE" }],
         status: "pending" as const,
       });
@@ -206,6 +221,11 @@ export const cancel = mutation({
     await ctx.db.patch(id, {
       estado: "cancelada" as const,
       syncStatus: "pending" as const,
+      cancelledAt: now,
+      cancelledBy: operatorName
+        ? `${operatorName} <${operatorEmail}>`
+        : operatorEmail,
+      ...(reason ? { cancellationReason: reason } : {}),
     });
     await ctx.scheduler.runAfter(0, api.sales._pushToSheet, {
       id,

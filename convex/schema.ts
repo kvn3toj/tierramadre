@@ -309,6 +309,12 @@ export default defineSchema({
       v.literal("confirmada"),
       v.literal("cancelada"),
     ),
+    // Slice 3 · Cancellation audit trail. Populated by `sales.cancel`. Kept
+    // on Convex only — Sheets sync of these fields is a follow-up that needs
+    // a coordinated tab schema change (see COLUMN_MAPS.sales).
+    cancelledAt: v.optional(v.string()),
+    cancelledBy: v.optional(v.string()),
+    cancellationReason: v.optional(v.string()),
     ...syncFields,
   })
     .index("by_saleId", ["saleId"])

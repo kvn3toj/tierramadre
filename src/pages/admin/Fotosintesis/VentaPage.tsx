@@ -28,8 +28,20 @@ import { FieldLabel } from "./components/FieldLabel";
 import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
 import { KbdKey } from "./components/KbdKey";
 import { KardexPreview } from "./components/KardexPreview";
+import { CertificadoPreview } from "./components/CertificadoPreview";
+import {
+  ClienteFinalForm,
+  type ClienteRow,
+} from "./components/ClienteFinalForm";
+import {
+  CreditoFields,
+  EsmereogenesisFields,
+} from "./components/CreditoFields";
 import { useFotosintesisLayout } from "./FotosintesisLayoutContext";
 import { exportCarnet } from "./exportCarnet";
+import { exportCertificado, isCertificadoApproved } from "./exportCertificado";
+import { slugifyBuyerName } from "../../../utils/slugify";
+import { beginStage, logFailure, logStage } from "./instrumentation";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 type CompradorTipo = "embajador" | "final";
@@ -74,7 +86,22 @@ export default function FotosintesisVentaPage() {
   const [submitting, setSubmitting] = useState(false);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
+  // ─── Slice 3 — Crédito fields ─────────────────────────────────────────
+  const [creditoFechaVenc, setCreditoFechaVenc] = useState<string>("");
+  const [creditoCuotas, setCreditoCuotas] = useState<number>(6);
+  const [creditoTasa, setCreditoTasa] = useState<number | "">("");
+
+  // ─── Slice 3 — Esmereogénesis fields ──────────────────────────────────
+  const [esmereoPlazo, setEsmereoPlazo] = useState<number | "">("");
+  const [esmereoCuotas, setEsmereoCuotas] = useState<number>(6);
+  const [esmereoFechaVenc, setEsmereoFechaVenc] = useState<string>("");
+  const [esmereoNotas, setEsmereoNotas] = useState<string>("");
+
+  // ─── Slice 3 — Email opcional ─────────────────────────────────────────
+  const [sendEmail, setSendEmail] = useState(false);
+
   const kardexRef = useRef<HTMLDivElement>(null);
+  const certificadoRef = useRef<HTMLDivElement>(null);
 
   // ─── Data ──────────────────────────────────────────────────────────────
   const item = useConvexQuery(
@@ -100,18 +127,31 @@ export default function FotosintesisVentaPage() {
   const peekedSaleId = peeked?.preview ?? "V-NEW";
 
   const createSale = useConvexMutation(convexApi.sales.create);
-
-  const selectedClient = useMemo(
-    () => embajadores.find((c) => c._id === clientId) ?? null,
-    [embajadores, clientId],
+  const setCarnetUrl = useConvexMutation(convexApi.sales.setCarnetUrl);
+  const setCertificadoUrl = useConvexMutation(
+    convexApi.sales.setCertificadoUrl,
   );
 
-  // Auto-select first embajador if none chosen
+  const selectedClient = useMemo<ClienteRow | null>(() => {
+    if (!clientId || !allClients) return null;
+    return (allClients.find((c) => c._id === clientId) ??
+      null) as ClienteRow | null;
+  }, [allClients, clientId]);
+
+  // Auto-select first embajador only when we're in the embajador flow.
+  // The cliente-final flow is creation-only — we wait for the operator.
   useEffect(() => {
+    if (compradorTipo !== "embajador") return;
     if (!clientId && embajadores.length > 0) {
       setClientId(embajadores[0]._id);
     }
-  }, [clientId, embajadores]);
+  }, [clientId, embajadores, compradorTipo]);
+
+  // Reset the selected client when the operator switches tabs so they don't
+  // accidentally ship an embajador's id in a "cliente final" sale or vice versa.
+  useEffect(() => {
+    setClientId(null);
+  }, [compradorTipo]);
 
   // ─── Derived ───────────────────────────────────────────────────────────
   const precioCop = typeof precioAcordado === "number" ? precioAcordado : 0;
@@ -149,7 +189,11 @@ export default function FotosintesisVentaPage() {
   // a local convenience when focus is in an input that swallows the global).
 
   // ─── Confirm flow ──────────────────────────────────────────────────────
-  const canConfirm = !!itemId && !!clientId && precioCop > 0 && !submitting;
+  const creditoComplete =
+    formaPago !== "credito" ||
+    (creditoFechaVenc.length > 0 && creditoCuotas > 0);
+  const canConfirm =
+    !!itemId && !!clientId && precioCop > 0 && creditoComplete && !submitting;
 
   const onDownloadPreview = useCallback(async () => {
     if (!kardexRef.current) return;
@@ -166,10 +210,23 @@ export default function FotosintesisVentaPage() {
       setErrorBanner("Falta completar comprador, ítem o precio.");
       return;
     }
+    if (formaPago === "credito" && !creditoFechaVenc) {
+      setErrorBanner("Crédito requiere fecha de vencimiento.");
+      return;
+    }
     setErrorBanner(null);
     setSubmitting(true);
+    logStage("confirm:begin", {
+      compradorTipo,
+      formaPago,
+      hasEmail: Boolean(selectedClient?.email),
+      sendEmail,
+    });
     try {
-      const res = await createSale({
+      // `fechaVencimiento` / `numeroCuotas` flow into the server only for
+      // credito (mandatory per BR-7) or esmereogénesis when the operator
+      // filled them in (optional UX nicety).
+      const createArgs: Parameters<typeof createSale>[0] = {
         itemIds: [itemId],
         clientId,
         fechaVenta,
@@ -178,27 +235,175 @@ export default function FotosintesisVentaPage() {
         comisionCOP: comisionCop || undefined,
         formaPago,
         metodoContado: formaPago === "contado" ? "efectivo" : undefined,
-      });
+      };
+      if (formaPago === "credito") {
+        createArgs.fechaVencimiento = creditoFechaVenc;
+        createArgs.numeroCuotas = creditoCuotas;
+      } else if (formaPago === "esmereogenesis") {
+        if (esmereoCuotas > 0) createArgs.numeroCuotas = esmereoCuotas;
+        if (esmereoFechaVenc) createArgs.fechaVencimiento = esmereoFechaVenc;
+      }
 
-      // After server success, capture the Kardex DOM and save the PDF locally.
-      // TODO(Slice 3): upload the returned Blob to Drive via /api/media-upload
-      // and call `sales.setCarnetUrl({ id: res.id, carnetUrl })` to persist.
-      if (kardexRef.current) {
+      const createStage = beginStage("sales.create", { itemId, formaPago });
+      let res: Awaited<ReturnType<typeof createSale>>;
+      try {
+        res = await createSale(createArgs);
+        createStage.ok({ saleId: res.saleId });
+      } catch (err) {
+        createStage.fail(err);
+        throw err;
+      }
+
+      // From here on, failures are non-blocking — the sale is recorded.
+      // PDF + email steps surface as toasts so the operator can retry
+      // without losing the sale.
+      const slug = slugifyBuyerName(selectedClient?.nombre ?? "cliente");
+      const now = new Date();
+      const subPath = `ventas/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+      const uploadPdf = async (
+        blob: Blob,
+        filename: string,
+      ): Promise<string> => {
+        const fd = new FormData();
+        fd.append("subPath", subPath);
+        fd.append(
+          "file",
+          new File([blob], filename, { type: "application/pdf" }),
+        );
+        const r = await fetch("/api/media-upload", {
+          method: "POST",
+          body: fd,
+        });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = (await r.json()) as {
+          success?: boolean;
+          urls?: string[];
+          error?: string;
+        };
+        if (!data.success || !data.urls?.[0]) {
+          throw new Error(data.error ?? "Drive devolvió respuesta sin URL");
+        }
+        return data.urls[0];
+      };
+
+      // ── Carnet ────────────────────────────────────────────────────────
+      let carnetUrl: string | null = null;
+      const carnetStage = beginStage("carnet", { saleId: res.saleId, subPath });
+      try {
+        if (!kardexRef.current) throw new Error("Kardex DOM no listo");
+        const carnetBlob = await exportCarnet(
+          kardexRef.current,
+          `${res.saleId}-${slug}.pdf`,
+          { download: false },
+        );
+        carnetUrl = await uploadPdf(carnetBlob, `${res.saleId}-${slug}.pdf`);
+        await setCarnetUrl({ id: res.id, carnetUrl });
+        carnetStage.ok({ bytes: carnetBlob.size });
+      } catch (err) {
+        carnetStage.fail(err);
+        const msg = err instanceof Error ? err.message : String(err);
+        notify(`Venta guardada, PDF en cola: ${msg}`, "warning", {
+          action: {
+            label: "Reintentar",
+            onClick: () => {
+              void (async () => {
+                try {
+                  if (!kardexRef.current) return;
+                  const blob = await exportCarnet(
+                    kardexRef.current,
+                    `${res.saleId}-${slug}.pdf`,
+                    { download: false },
+                  );
+                  const url = await uploadPdf(
+                    blob,
+                    `${res.saleId}-${slug}.pdf`,
+                  );
+                  await setCarnetUrl({ id: res.id, carnetUrl: url });
+                  notify("Kardex subido a Drive", "success");
+                } catch (e) {
+                  notify(
+                    `Reintento falló: ${e instanceof Error ? e.message : String(e)}`,
+                    "error",
+                  );
+                }
+              })();
+            },
+          },
+        });
+      }
+
+      // ── Certificado (gated by Q-6 legal approval) ─────────────────────
+      let certificadoUrl: string | null = null;
+      if (isCertificadoApproved()) {
+        const certStage = beginStage("certificado", { saleId: res.saleId });
         try {
-          await exportCarnet(kardexRef.current, `Kardex-${res.saleId}.pdf`);
-        } catch (pdfErr) {
-          // PDF failure shouldn't block the sale confirmation
-          const msg = pdfErr instanceof Error ? pdfErr.message : String(pdfErr);
-          notify(
-            `Venta ${res.saleId} guardada, pero falló el PDF: ${msg}`,
-            "warning",
+          if (!certificadoRef.current)
+            throw new Error("Certificado DOM no listo");
+          const certBlob = await exportCertificado(
+            certificadoRef.current,
+            `${res.saleId}-${slug}-certificado.pdf`,
+            { download: false },
           );
+          certificadoUrl = await uploadPdf(
+            certBlob,
+            `${res.saleId}-${slug}-certificado.pdf`,
+          );
+          await setCertificadoUrl({ id: res.id, certificadoUrl });
+          certStage.ok({ bytes: certBlob.size });
+        } catch (err) {
+          certStage.fail(err);
+          const msg = err instanceof Error ? err.message : String(err);
+          notify(`Certificado falló: ${msg}`, "warning");
+        }
+      } else {
+        logStage("certificado:skipped", { reason: "VITE_CERT_LEGAL_APPROVED" });
+        notify(
+          "Certificado pendiente · activar VITE_CERT_LEGAL_APPROVED tras aprobación legal (Q-6)",
+          "info",
+        );
+      }
+
+      // ── Email opcional ────────────────────────────────────────────────
+      if (sendEmail && selectedClient?.email && carnetUrl) {
+        const emailStage = beginStage("email", {
+          saleId: res.saleId,
+          to: selectedClient.email,
+        });
+        try {
+          const r = await fetch("/api/send-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "ventaKardex",
+              data: {
+                saleId: res.saleId,
+                buyerName: selectedClient.nombre,
+                carnetUrl,
+                certificadoUrl: certificadoUrl ?? undefined,
+              },
+              to: selectedClient.email,
+            }),
+          });
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          emailStage.ok();
+        } catch (err) {
+          emailStage.fail(err);
+          const msg = err instanceof Error ? err.message : String(err);
+          notify(`Email no se pudo enviar: ${msg}`, "warning");
         }
       }
 
-      notify(`Venta ${res.saleId} confirmada · Kardex descargado`, "success");
+      logStage("confirm:success", {
+        saleId: res.saleId,
+        carnetUploaded: Boolean(carnetUrl),
+        certificadoUploaded: Boolean(certificadoUrl),
+        emailRequested: sendEmail,
+      });
+      notify(`Venta ${res.saleId} confirmada`, "success");
       navigate("/admin/fotosintesis");
     } catch (err) {
+      logFailure("confirm", err);
       const msg = err instanceof Error ? err.message : String(err);
       setErrorBanner(msg);
     } finally {
@@ -210,9 +415,18 @@ export default function FotosintesisVentaPage() {
     precioCop,
     totalCop,
     comisionCop,
+    compradorTipo,
     formaPago,
     fechaVenta,
+    creditoFechaVenc,
+    creditoCuotas,
+    esmereoCuotas,
+    esmereoFechaVenc,
+    selectedClient,
+    sendEmail,
     createSale,
+    setCarnetUrl,
+    setCertificadoUrl,
     navigate,
     notify,
   ]);
@@ -308,110 +522,129 @@ export default function FotosintesisVentaPage() {
               onChange={setCompradorTipo}
               options={[
                 { value: "embajador", label: "Embajador" },
-                {
-                  value: "final",
-                  label: "Cliente final · próximamente",
-                  disabled: true,
-                },
+                { value: "final", label: "Cliente final" },
               ]}
             />
 
             <Box sx={{ marginTop: "16px" }}>
-              <FieldLabel>Embajador asignado</FieldLabel>
-              <Box
-                sx={{
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  background: foto.surfaces.inset,
-                  border: `1px solid ${foto.surfaces.rule}`,
-                  borderRadius: "9px",
-                  padding: "10px 14px",
-                  gap: "12px",
-                  "&:focus-within": {
-                    borderColor: foto.accent.primary,
-                    boxShadow: `0 0 0 3px ${foto.accent.glow}`,
-                  },
-                  transition: "border-color 120ms ease, box-shadow 120ms ease",
-                }}
-              >
-                {/* Avatar */}
-                <Box
-                  aria-hidden
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: "50%",
-                    background: `linear-gradient(135deg, ${emeraldCore.dark}, ${foto.accent.deep})`,
-                    color: "#fff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontFamily: fontFamilies.serif,
-                    fontSize: 18,
-                    fontWeight: 500,
-                    flexShrink: 0,
-                  }}
-                >
-                  {(selectedClient?.nombre ?? "?").slice(0, 1).toUpperCase()}
-                </Box>
-
-                {/* Name + meta + native select overlay */}
-                <Box sx={{ flex: 1, minWidth: 0 }}>
+              {compradorTipo === "final" ? (
+                <ClienteFinalForm
+                  allClients={(allClients ?? []) as ClienteRow[]}
+                  selectedClient={
+                    selectedClient && selectedClient.tipo === "final"
+                      ? selectedClient
+                      : null
+                  }
+                  onCreated={(id) => setClientId(id)}
+                  onChange={() => setClientId(null)}
+                />
+              ) : (
+                <>
+                  <FieldLabel>Embajador asignado</FieldLabel>
                   <Box
                     sx={{
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: foto.ink.primary,
-                      letterSpacing: "-0.012em",
+                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      background: foto.surfaces.inset,
+                      border: `1px solid ${foto.surfaces.rule}`,
+                      borderRadius: "9px",
+                      padding: "10px 14px",
+                      gap: "12px",
+                      "&:focus-within": {
+                        borderColor: foto.accent.primary,
+                        boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+                      },
+                      transition:
+                        "border-color 120ms ease, box-shadow 120ms ease",
                     }}
                   >
-                    {selectedClient?.nombre ?? "— Sin embajador seleccionado —"}
-                  </Box>
-                  <Box
-                    sx={{
-                      fontSize: 11.5,
-                      color: foto.ink.tertiary,
-                      marginTop: "2px",
-                    }}
-                  >
-                    {selectedClient?.email ??
-                      selectedClient?.telefono ??
-                      "Selecciona un embajador"}
-                  </Box>
-                </Box>
+                    {/* Avatar */}
+                    <Box
+                      aria-hidden
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: "50%",
+                        background: `linear-gradient(135deg, ${emeraldCore.dark}, ${foto.accent.deep})`,
+                        color: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontFamily: fontFamilies.serif,
+                        fontSize: 18,
+                        fontWeight: 500,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {(selectedClient?.nombre ?? "?")
+                        .slice(0, 1)
+                        .toUpperCase()}
+                    </Box>
 
-                <ChevronDown size={16} color={foto.ink.tertiary} aria-hidden />
+                    {/* Name + meta + native select overlay */}
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box
+                        sx={{
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color: foto.ink.primary,
+                          letterSpacing: "-0.012em",
+                        }}
+                      >
+                        {selectedClient?.nombre ??
+                          "— Sin embajador seleccionado —"}
+                      </Box>
+                      <Box
+                        sx={{
+                          fontSize: 11.5,
+                          color: foto.ink.tertiary,
+                          marginTop: "2px",
+                        }}
+                      >
+                        {selectedClient?.email ??
+                          selectedClient?.telefono ??
+                          "Selecciona un embajador"}
+                      </Box>
+                    </Box>
 
-                {/* Native <select> overlaid for accessibility + keyboard */}
-                <Box
-                  component="select"
-                  aria-label="Embajador asignado"
-                  value={clientId ?? ""}
-                  onChange={(e) => {
-                    const next = (e.target as HTMLSelectElement).value;
-                    // Convex Id<"clients"> is a branded string at the type level
-                    // but a plain string at runtime; the value came from a
-                    // server-issued `_id` we rendered as an <option>, so it's
-                    // safe to cast it back.
-                    setClientId(next ? (next as Id<"clients">) : null);
-                  }}
-                  sx={{
-                    position: "absolute",
-                    inset: 0,
-                    opacity: 0,
-                    cursor: "pointer",
-                    appearance: "none",
-                  }}
-                >
-                  <option value="">— Selecciona un embajador —</option>
-                  {embajadores.map((c) => (
-                    <option key={c._id as string} value={c._id as string}>
-                      {c.nombre}
-                    </option>
-                  ))}
-                </Box>
-              </Box>
+                    <ChevronDown
+                      size={16}
+                      color={foto.ink.tertiary}
+                      aria-hidden
+                    />
+
+                    {/* Native <select> overlaid for accessibility + keyboard */}
+                    <Box
+                      component="select"
+                      aria-label="Embajador asignado"
+                      value={clientId ?? ""}
+                      onChange={(e) => {
+                        const next = (e.target as HTMLSelectElement).value;
+                        // Convex Id<"clients"> is a branded string at the type level
+                        // but a plain string at runtime; the value came from a
+                        // server-issued `_id` we rendered as an <option>, so it's
+                        // safe to cast it back.
+                        setClientId(next ? (next as Id<"clients">) : null);
+                      }}
+                      sx={{
+                        position: "absolute",
+                        inset: 0,
+                        opacity: 0,
+                        cursor: "pointer",
+                        appearance: "none",
+                      }}
+                    >
+                      <option value="">— Selecciona un embajador —</option>
+                      {embajadores.map((c) => (
+                        <option key={c._id as string} value={c._id as string}>
+                          {c.nombre}
+                        </option>
+                      ))}
+                    </Box>
+                  </Box>
+                </>
+              )}
             </Box>
           </Section>
 
@@ -531,13 +764,34 @@ export default function FotosintesisVentaPage() {
               options={[
                 { value: "contado", label: "Contado" },
                 { value: "esmereogenesis", label: "Esmereogénesis" },
-                {
-                  value: "credito",
-                  label: "Crédito · próximamente",
-                  disabled: true,
-                },
+                { value: "credito", label: "Crédito" },
               ]}
             />
+
+            {formaPago === "credito" ? (
+              <CreditoFields
+                fechaVencimiento={creditoFechaVenc}
+                setFechaVencimiento={setCreditoFechaVenc}
+                numeroCuotas={creditoCuotas}
+                setNumeroCuotas={setCreditoCuotas}
+                tasaInteres={creditoTasa}
+                setTasaInteres={setCreditoTasa}
+                totalCop={precioCop}
+              />
+            ) : null}
+
+            {formaPago === "esmereogenesis" ? (
+              <EsmereogenesisFields
+                plazoMeses={esmereoPlazo}
+                setPlazoMeses={setEsmereoPlazo}
+                numeroCuotas={esmereoCuotas}
+                setNumeroCuotas={setEsmereoCuotas}
+                observaciones={esmereoNotas}
+                setObservaciones={setEsmereoNotas}
+                fechaVencimiento={esmereoFechaVenc}
+                setFechaVencimiento={setEsmereoFechaVenc}
+              />
+            ) : null}
 
             <Box sx={{ marginTop: "18px" }}>
               <FieldLabel>Precio acordado (COP)</FieldLabel>
@@ -624,9 +878,25 @@ export default function FotosintesisVentaPage() {
                 <li>
                   Se genera la venta {peekedSaleId} con esta forma de pago.
                 </li>
-                <li>El Kardex en PDF se descarga localmente.</li>
-                <li>Más adelante se subirá a Drive y se mandará por email.</li>
-                <li>Se actualiza el dashboard del embajador.</li>
+                <li>
+                  El Kardex se sube a Drive en{" "}
+                  <code>
+                    ventas/
+                    {new Date().getFullYear()}/
+                    {String(new Date().getMonth() + 1).padStart(2, "0")}
+                  </code>
+                  .
+                </li>
+                <li>
+                  {isCertificadoApproved()
+                    ? "El Certificado de Origen también se sube a Drive."
+                    : "El Certificado de Origen queda pendiente hasta que Maritza apruebe Q-6."}
+                </li>
+                <li>
+                  {sendEmail && selectedClient?.email
+                    ? `Se le envía un email a ${selectedClient.email} con los PDFs.`
+                    : "Se actualiza el dashboard del embajador."}
+                </li>
               </Box>
             </Box>
           </Section>
@@ -667,6 +937,47 @@ export default function FotosintesisVentaPage() {
                 inputProps={{
                   "aria-label": "Ocultar identificación en versión pública",
                 }}
+              />
+            </Box>
+          </Section>
+
+          {/* 6. Email opcional */}
+          <Section title="Enviar al comprador" foto={foto}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "16px",
+                padding: "14px 16px",
+                borderRadius: "11px",
+                border: `1px solid ${foto.surfaces.rule}`,
+                background: foto.surfaces.panel,
+                opacity: selectedClient?.email ? 1 : 0.55,
+              }}
+            >
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box
+                  sx={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: foto.ink.primary,
+                    marginBottom: "2px",
+                  }}
+                >
+                  Enviar Kardex por email
+                </Box>
+                <Box sx={{ fontSize: 11.5, color: foto.ink.tertiary }}>
+                  {selectedClient?.email
+                    ? `Se enviarán los enlaces de Drive a ${selectedClient.email}.`
+                    : "Agregá un email al cliente para habilitar el envío."}
+                </Box>
+              </Box>
+              <Switch
+                checked={sendEmail}
+                onChange={(e) => setSendEmail(e.target.checked)}
+                disabled={!selectedClient?.email}
+                inputProps={{ "aria-label": "Enviar Kardex por email" }}
               />
             </Box>
           </Section>
@@ -823,6 +1134,64 @@ export default function FotosintesisVentaPage() {
                 metodoContado: formaPago === "contado" ? "efectivo" : undefined,
               }}
               privacyOn={privacyOn}
+            />
+          </Box>
+
+          {/* Certificado preview — mounted in the DOM so html2canvas can
+              capture it during the confirm flow. Hidden visually (off-screen
+              positioning) until Q-6 legal copy lands. Once approved, we can
+              promote it to a visible tab next to the Kardex. */}
+          <Box
+            ref={certificadoRef}
+            aria-hidden
+            sx={{
+              position: "absolute",
+              left: "-99999px",
+              top: "auto",
+              width: 612 - 96, // matches Kardex paper width for consistent capture
+              pointerEvents: "none",
+            }}
+          >
+            <CertificadoPreview
+              item={
+                item
+                  ? {
+                      itemId: item.itemId,
+                      nombre: item.nombre ?? undefined,
+                      color: item.color ?? undefined,
+                      calidad: item.calidad ?? undefined,
+                      peso: item.peso ?? undefined,
+                      medidas: item.medidas ?? undefined,
+                    }
+                  : null
+              }
+              lot={
+                lot
+                  ? { loteId: lot.loteId, fechaRecepcion: lot.fechaRecepcion }
+                  : null
+              }
+              provider={
+                provider
+                  ? { nombreORazonSocial: provider.nombreORazonSocial }
+                  : null
+              }
+              buyer={
+                selectedClient
+                  ? {
+                      nombre: selectedClient.nombre,
+                      nit: selectedClient.nit ?? undefined,
+                      cedula: selectedClient.cedula ?? undefined,
+                      email: selectedClient.email ?? undefined,
+                      tipo: selectedClient.tipo,
+                    }
+                  : null
+              }
+              sale={{
+                id: peekedSaleId,
+                precioCop,
+                formaPago,
+                metodoContado: formaPago === "contado" ? "efectivo" : undefined,
+              }}
             />
           </Box>
 
