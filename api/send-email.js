@@ -17,6 +17,7 @@ import {
   isGoogleConfigured,
   SPREADSHEET_ID,
   getSheetNames,
+  findSheetByPattern,
   findColumnIndex,
 } from "./_lib/index.js";
 
@@ -118,16 +119,11 @@ async function getProviderFromSheet() {
     const sheets = getSheetsClient();
     const sheetNames = await getSheetNames(sheets);
 
-    // Use sheet 3 (index 2) for asesores data
-    let asesoresSheet = sheetNames[2];
-    if (!asesoresSheet) {
-      asesoresSheet =
-        sheetNames.find(
-          (name) =>
-            name.toLowerCase().includes("asesor") ||
-            name.toLowerCase().includes("embajador"),
-        ) || sheetNames[0];
-    }
+    // Locate the asesores sheet by name first; fall back to legacy index 2.
+    const asesoresSheet =
+      findSheetByPattern(sheetNames, ["asesor", "embajador"]) ||
+      sheetNames[2] ||
+      sheetNames[0];
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
