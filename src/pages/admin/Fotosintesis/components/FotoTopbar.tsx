@@ -1,5 +1,6 @@
 import { Box, alpha } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
+import { Search } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../../design-system";
 
 export type SyncStatus = "synced" | "pending" | "error";
@@ -13,16 +14,22 @@ interface FotoTopbarProps {
   crumbs: Crumb[];
   syncStatus?: SyncStatus;
   userInitial?: string;
+  /**
+   * Opens the global spotlight (⌘K). Wired by FotosintesisLayout so the
+   * topbar can render a real search trigger instead of a static shortcut chip.
+   */
+  onSearchClick?: () => void;
 }
 
 /**
- * Sticky top bar with breadcrumbs (left) and sync chip + avatar (right).
+ * Sticky top bar with breadcrumbs (left) and sync chip + search + avatar (right).
  * Matches `home.html .topbar`: glass blur on white at 86% opacity, hairline edge.
  */
 export function FotoTopbar({
   crumbs,
   syncStatus = "synced",
   userInitial = "M",
+  onSearchClick,
 }: FotoTopbarProps) {
   const foto = getFoto("light");
 
@@ -154,31 +161,81 @@ export function FotoTopbar({
           {sync.label}
         </Box>
         <Box
-          aria-label="Atajo: Buscar"
+          component="button"
+          type="button"
+          onClick={onSearchClick}
+          aria-label="Buscar productos, lotes y clientes"
+          aria-keyshortcuts="Meta+K Control+K"
           sx={{
-            // Same rationale as the sync chip — the ⌘K shortcut is also
-            // discoverable from the FAB / page hints on narrow viewports.
+            // Looks like a search field, behaves like a trigger: opens the
+            // ProductoSpotlight modal (which owns the real input + results).
+            // Hidden on xs — the FAB still surfaces ⌘K on narrow viewports.
             display: { xs: "none", sm: "inline-flex" },
             alignItems: "center",
-            gap: 0.75,
-            padding: "5px 10px",
-            borderRadius: "6px",
+            gap: 1,
+            height: 30,
+            paddingLeft: "10px",
+            paddingRight: "6px",
+            width: { sm: 220, md: 300, lg: 340 },
+            maxWidth: "40vw",
+            borderRadius: "8px",
             border: `1px solid ${foto.surfaces.edge}`,
-            fontSize: 10.5,
-            color: foto.ink.secondary,
-            fontWeight: 500,
+            background: alpha("#FFFFFF", 0.7),
+            color: foto.ink.tertiary,
+            fontSize: 12,
+            fontFamily: "inherit",
+            textAlign: "left",
+            cursor: "text",
+            appearance: "none",
+            transition:
+              "background 140ms ease, border-color 140ms ease, box-shadow 140ms ease",
+            "&:hover": {
+              background: alpha("#FFFFFF", 0.95),
+              borderColor: alpha(foto.accent.primary, 0.35),
+            },
+            "&:focus-visible": {
+              outline: "none",
+              borderColor: foto.accent.primary,
+              boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+            },
           }}
         >
-          Buscar
+          <Search
+            size={14}
+            strokeWidth={1.8}
+            color={foto.ink.tertiary}
+            aria-hidden
+          />
+          <Box
+            component="span"
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              color: foto.ink.tertiary,
+              fontWeight: 400,
+              letterSpacing: "-0.005em",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            Buscar productos, lotes, clientes…
+          </Box>
           <Box
             component="kbd"
+            aria-hidden
             sx={{
+              flexShrink: 0,
               fontFamily: fontFamilies.mono,
               fontSize: 9.5,
               background: foto.surfaces.inset,
               border: `1px solid ${foto.surfaces.edge}`,
               padding: "1.5px 5px",
               borderRadius: "3px",
+              color: foto.ink.tertiary,
+              fontWeight: 500,
+              letterSpacing: 0,
+              lineHeight: 1,
             }}
           >
             ⌘ K

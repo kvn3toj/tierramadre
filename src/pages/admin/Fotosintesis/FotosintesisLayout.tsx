@@ -79,7 +79,12 @@ export default function FotosintesisLayout() {
           textRendering: "optimizeLegibility",
         }}
       >
-        <FotoTopbar crumbs={crumbs} syncStatus="synced" userInitial="M" />
+        <FotoTopbar
+          crumbs={crumbs}
+          syncStatus="synced"
+          userInitial="M"
+          onSearchClick={() => openSpotlight()}
+        />
         <Box
           sx={{
             // Reserve room at the bottom so the floating GuideFab + the
