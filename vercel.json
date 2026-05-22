@@ -1,4 +1,5 @@
 {
+  "buildCommand": "npm run build:vercel",
   "functions": {
     "api/get-treasure-sheets.ts": {
       "maxDuration": 30
