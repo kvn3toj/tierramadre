@@ -12,6 +12,7 @@ import type * as _lib_columnMaps from "../_lib/columnMaps.js";
 import type * as _lib_sheetSync from "../_lib/sheetSync.js";
 import type * as clients from "../clients.js";
 import type * as crons from "../crons.js";
+import type * as fotosintesisAi from "../fotosintesisAi.js";
 import type * as invitations from "../invitations.js";
 import type * as lotItems from "../lotItems.js";
 import type * as lots from "../lots.js";
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   "_lib/sheetSync": typeof _lib_sheetSync;
   clients: typeof clients;
   crons: typeof crons;
+  fotosintesisAi: typeof fotosintesisAi;
   invitations: typeof invitations;
   lotItems: typeof lotItems;
   lots: typeof lots;

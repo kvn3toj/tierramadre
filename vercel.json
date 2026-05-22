@@ -74,6 +74,9 @@
     },
     "api/og-product.js": {
       "maxDuration": 15
+    },
+    "api/fotosintesis-ai.ts": {
+      "maxDuration": 60
     }
   },
   "headers": [
