@@ -29,6 +29,11 @@ export const list = query({
         v.literal("DISPONIBLE"),
         v.literal("VENDIDA"),
         v.literal("ASESOR"),
+        v.literal("Retornado"),
+        v.literal("ESMEREOGENESIS"),
+        v.literal("ESMERO"),
+        v.literal("DISPONIBLE ADOPTADA"),
+        v.literal("LOTE X CT"),
         v.literal(""),
       ),
     ),
@@ -142,6 +147,11 @@ export const saveEdit = mutation({
           v.literal("DISPONIBLE"),
           v.literal("VENDIDA"),
           v.literal("ASESOR"),
+          v.literal("Retornado"),
+          v.literal("ESMEREOGENESIS"),
+          v.literal("ESMERO"),
+          v.literal("DISPONIBLE ADOPTADA"),
+          v.literal("LOTE X CT"),
           v.literal(""),
         ),
       ),
@@ -488,6 +498,11 @@ export const saveEditMany = mutation({
           v.literal("DISPONIBLE"),
           v.literal("VENDIDA"),
           v.literal("ASESOR"),
+          v.literal("Retornado"),
+          v.literal("ESMEREOGENESIS"),
+          v.literal("ESMERO"),
+          v.literal("DISPONIBLE ADOPTADA"),
+          v.literal("LOTE X CT"),
           v.literal(""),
         ),
       ),
@@ -798,6 +813,11 @@ export const _upsertFromSheet = internalMutation({
         v.literal("DISPONIBLE"),
         v.literal("VENDIDA"),
         v.literal("ASESOR"),
+        v.literal("Retornado"),
+        v.literal("ESMEREOGENESIS"),
+        v.literal("ESMERO"),
+        v.literal("DISPONIBLE ADOPTADA"),
+        v.literal("LOTE X CT"),
         v.literal(""),
       ),
       qr: v.union(v.string(), v.null()),
@@ -906,12 +926,35 @@ function nullableNum(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function normalizeEstado(v: unknown): "DISPONIBLE" | "VENDIDA" | "ASESOR" | "" {
-  const s = String(v ?? "")
-    .trim()
-    .toUpperCase();
-  if (s === "DISPONIBLE" || s === "VENDIDA" || s === "ASESOR") return s;
-  if (s === "") return "DISPONIBLE"; // mirror the legacy default in get-treasure-sheets
+// Normalize the raw sheet ESTADO into one of the 9 vocabularies stored in
+// productInventory.estado (see schema.ts). Comparison is case-insensitive
+// on the uppercase variants and preserves the legacy mixed-case for
+// "Retornado". Empty cells default to DISPONIBLE to match the historical
+// behaviour of get-treasure-sheets. Genuinely unknown values fall back to
+// "" so an unexpected sheet edit doesn't break the pull.
+function normalizeEstado(
+  v: unknown,
+):
+  | "DISPONIBLE"
+  | "VENDIDA"
+  | "ASESOR"
+  | "Retornado"
+  | "ESMEREOGENESIS"
+  | "ESMERO"
+  | "DISPONIBLE ADOPTADA"
+  | "LOTE X CT"
+  | "" {
+  const raw = String(v ?? "").trim();
+  const upper = raw.toUpperCase();
+  if (upper === "DISPONIBLE" || upper === "VENDIDA" || upper === "ASESOR") {
+    return upper;
+  }
+  if (upper === "RETORNADO") return "Retornado"; // preserve legacy casing
+  if (upper === "ESMEREOGENESIS") return "ESMEREOGENESIS";
+  if (upper === "ESMERO") return "ESMERO";
+  if (upper === "DISPONIBLE ADOPTADA") return "DISPONIBLE ADOPTADA";
+  if (upper === "LOTE X CT") return "LOTE X CT";
+  if (raw === "") return "DISPONIBLE"; // mirror the legacy default in get-treasure-sheets
   return "";
 }
 

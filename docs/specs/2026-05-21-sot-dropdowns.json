@@ -1,0 +1,121 @@
+{
+  "inventario  recibo ": {
+    "col1": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "Final ",
+        "Embajador"
+      ]
+    },
+    "col2": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "Final ",
+        "Embajador"
+      ]
+    },
+    "col4": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "Efectivo ",
+        "Tranferencia"
+      ]
+    },
+    "col6": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "Anillo en Plata ",
+        "Aretes",
+        "Topitos",
+        "Pulsera",
+        "Dije",
+        "Anillo en Oro",
+        "Piedras",
+        "Gemas ",
+        "Lote de Gemas "
+      ]
+    },
+    "col7": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "Efectivo ",
+        "Tranferencia"
+      ]
+    },
+    "col8": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "Efectivo ",
+        "Tranferencia"
+      ]
+    },
+    "col9": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "Color ",
+        "Verde Azul",
+        "Verde Limón",
+        "Verde Menta",
+        "Verde Muzo",
+        "Verde Natural",
+        "Verde Vívido",
+        "Verde Chivor ",
+        "Verde Azuloso",
+        "Verde Intenso ",
+        "Fecha /venci",
+        "Cuotas"
+      ]
+    },
+    "col10": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "Extrafina Insignificant",
+        "Extrafina No Oil",
+        "Extrafina Minor",
+        "Extrafina F1",
+        "Extrafina Moderate",
+        "Extrafina F2",
+        "Fina Sublime",
+        "Fina Esencial",
+        "Com.Super Fina",
+        "Com.Fina",
+        "Com.Superior",
+        "Com.Estandar"
+      ]
+    },
+    "col11": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "Redonda",
+        "Brillante",
+        "Cuadrada",
+        "Esmeralda",
+        "Baguette",
+        "Lagrima",
+        "Ovalo",
+        "Superman",
+        "Trapecio ",
+        "Rectangular",
+        "Marquise",
+        "Trillion",
+        "Cushion",
+        "Corazon",
+        "Antiguo",
+        "Ancestral",
+        "Pera",
+        "Princesa",
+        "Variado"
+      ]
+    },
+    "col13": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "Anillo ",
+        "Aretes",
+        "Topitos",
+        "Pulsera",
+        "Dije"
+      ]
+    }
+  }
+}

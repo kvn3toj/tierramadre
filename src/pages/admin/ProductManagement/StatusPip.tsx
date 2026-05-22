@@ -17,8 +17,10 @@
 
 import { Box } from "@mui/material";
 import type { FotoTokens } from "../../../design-system";
+import type { ProductEstado } from "../../../data/vocabularies";
 
-export type EstadoValue = "DISPONIBLE" | "VENDIDA" | "ASESOR" | "";
+// Re-export under the historical name so downstream callers don't churn.
+export type EstadoValue = ProductEstado;
 
 interface StatusPipProps {
   estado: EstadoValue;
@@ -32,6 +34,11 @@ const LABELS: Record<EstadoValue, string> = {
   DISPONIBLE: "Disponible",
   ASESOR: "Con asesor",
   VENDIDA: "Vendida",
+  Retornado: "Retornado",
+  ESMEREOGENESIS: "Esmereogénesis",
+  ESMERO: "Esmero",
+  "DISPONIBLE ADOPTADA": "Adoptada",
+  "LOTE X CT": "Lote x ct",
   "": "Sin estado",
 };
 
@@ -39,10 +46,23 @@ function colorFor(estado: EstadoValue, foto: FotoTokens): string | null {
   switch (estado) {
     case "DISPONIBLE":
       return foto.status.available;
+    // Adopted is still nominally disponible, just pre-claimed by an asesor —
+    // visually treat it like ASESOR (consigned/gold).
     case "ASESOR":
+    case "DISPONIBLE ADOPTADA":
       return foto.status.consigned;
     case "VENDIDA":
       return foto.status.sold;
+    // Esmereogénesis (and its shorter alias ESMERO) belongs to the special
+    // program — paint it the same accent as consigned for now.
+    case "ESMEREOGENESIS":
+    case "ESMERO":
+      return foto.status.consigned;
+    // Retornado came back from somewhere — no canonical color yet, leave
+    // hollow to flag it for review.
+    case "Retornado":
+    case "LOTE X CT":
+    case "":
     default:
       return null;
   }

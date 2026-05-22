@@ -1,11 +1,16 @@
 import { useId } from "react";
 import { Box } from "@mui/material";
+import { ChevronDown } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../../design-system";
+import {
+  CALIDADES,
+  DEFAULT_CALIDAD,
+  type GemaCalidad,
+} from "../../../../data/vocabularies";
 import { FieldLabel } from "./FieldLabel";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
-import { SegmentedControl } from "./SegmentedControl";
 
-export type GemaCalidad = "AAA" | "AA" | "A" | "Comercial";
+export type { GemaCalidad } from "../../../../data/vocabularies";
 
 /**
  * State for the gem sub-form. Lives in the parent (CapturaLotePage) so we can
@@ -27,7 +32,7 @@ export const EMPTY_GEMA_DRAFT: GemaDraft = {
   nombre: "",
   peso: "",
   color: "",
-  calidad: "AAA",
+  calidad: DEFAULT_CALIDAD,
   procedencia: "Muzo",
   preponderancia: "",
   precioPublicoCOP: "",
@@ -54,13 +59,6 @@ const COP_FORMATTER = new Intl.NumberFormat("es-CO", {
 
 const formatCOP = (value: number): string => COP_FORMATTER.format(value);
 
-const CALIDAD_OPTIONS: Array<{ value: GemaCalidad; label: string }> = [
-  { value: "AAA", label: "AAA" },
-  { value: "AA", label: "AA" },
-  { value: "A", label: "A" },
-  { value: "Comercial", label: "Comercial" },
-];
-
 /**
  * Gema sub-form rendered under the TypeSelector in CapturaLote. Slice 1 only
  * exposes gem. Joya/Insumo fields land in Slice 2 (handoff §4.2).
@@ -81,6 +79,7 @@ export function GemaFields({
   const nombreId = useId();
   const pesoId = useId();
   const colorId = useId();
+  const calidadId = useId();
   const procedenciaId = useId();
   const preponderanciaId = useId();
   const precioPublicoId = useId();
@@ -191,15 +190,53 @@ export function GemaFields({
         </Box>
       </Box>
 
-      {/* Calidad segmented */}
+      {/* Calidad — native select (17 vocabularies, too many for SegmentedControl) */}
       <Box>
-        <FieldLabel>Calidad</FieldLabel>
-        <SegmentedControl
-          ariaLabel="Calidad de la gema"
-          options={CALIDAD_OPTIONS}
-          value={value.calidad}
-          onChange={(next) => onChange({ calidad: next as GemaCalidad })}
-        />
+        <FieldLabel htmlFor={calidadId}>Calidad</FieldLabel>
+        <Box sx={{ position: "relative" }}>
+          <Box
+            component="select"
+            id={calidadId}
+            value={value.calidad}
+            disabled={disabled}
+            onChange={(e) =>
+              onChange({
+                calidad: (e.target as HTMLSelectElement).value as GemaCalidad,
+              })
+            }
+            aria-label="Calidad de la gema"
+            sx={{
+              ...textInputSx,
+              appearance: "none",
+              WebkitAppearance: "none",
+              MozAppearance: "none",
+              paddingRight: "38px",
+              cursor: disabled ? "not-allowed" : "pointer",
+              backgroundImage: "none",
+            }}
+          >
+            {CALIDADES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </Box>
+          <Box
+            sx={{
+              position: "absolute",
+              right: "12px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              pointerEvents: "none",
+              color: foto.ink.tertiary,
+              display: "flex",
+              alignItems: "center",
+            }}
+            aria-hidden="true"
+          >
+            <ChevronDown size={16} strokeWidth={1.6} />
+          </Box>
+        </Box>
       </Box>
 
       {/* Procedencia */}
