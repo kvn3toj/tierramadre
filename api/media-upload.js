@@ -293,9 +293,12 @@ export default withApiHandler(
         const segments = subPath
           .split("/")
           .map((s) => s.trim())
-          .filter(Boolean);
+          // Drop empty, "..", and "." segments. Drive has no POSIX-style
+          // path traversal (folders are id-keyed, not path-keyed) so this
+          // is defensive only — keeps the folder tree predictable.
+          .filter((s) => s && s !== ".." && s !== ".");
         if (segments.length === 0) {
-          throw new Error("subPath must contain at least one segment");
+          throw new Error("subPath must contain at least one valid segment");
         }
         let cursor = parentFolderId;
         for (const segment of segments) {

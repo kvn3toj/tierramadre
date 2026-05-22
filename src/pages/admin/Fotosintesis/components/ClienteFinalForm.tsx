@@ -136,11 +136,14 @@ export function ClienteFinalForm({
   }, [finalClients, deferredNombre, deferredDoc, dupDismissed]);
 
   // ── Submit ───────────────────────────────────────────────────────────
-  const canSubmit =
-    !submitting &&
-    nombre.trim().length >= 3 &&
-    documento.trim().length >= 4 &&
-    direccion.trim().length > 0;
+  const missingFields = useMemo(() => {
+    const missing: string[] = [];
+    if (nombre.trim().length < 3) missing.push("nombre");
+    if (documento.trim().length < 4) missing.push(tipoDoc.toLowerCase());
+    if (direccion.trim().length === 0) missing.push("dirección");
+    return missing;
+  }, [nombre, documento, direccion, tipoDoc]);
+  const canSubmit = !submitting && missingFields.length === 0;
 
   const handleSubmit = useCallback(async () => {
     if (!canSubmit) return;
@@ -520,13 +523,35 @@ export function ClienteFinalForm({
         </Box>
       ) : null}
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: "14px",
+        }}
+      >
+        {missingFields.length > 0 ? (
+          <Box
+            id="cliente-final-missing"
+            sx={{
+              fontSize: 11.5,
+              color: foto.ink.tertiary,
+              lineHeight: 1.4,
+            }}
+          >
+            Falta: {missingFields.join(", ")}.
+          </Box>
+        ) : null}
         <Box
           component="button"
           type="button"
           onClick={() => void handleSubmit()}
           disabled={!canSubmit}
           aria-busy={submitting}
+          aria-describedby={
+            missingFields.length > 0 ? "cliente-final-missing" : undefined
+          }
           sx={{
             display: "inline-flex",
             alignItems: "center",

@@ -46,6 +46,7 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 
 type CompradorTipo = "embajador" | "final";
 type FormaPago = "contado" | "esmereogenesis" | "credito";
+type MetodoContado = "efectivo" | "transferencia";
 
 function formatCop(value: number | undefined | null): string {
   if (typeof value !== "number" || Number.isNaN(value)) return "—";
@@ -81,6 +82,7 @@ export default function FotosintesisVentaPage() {
   const [compradorTipo, setCompradorTipo] =
     useState<CompradorTipo>("embajador");
   const [formaPago, setFormaPago] = useState<FormaPago>("contado");
+  const [metodoContado, setMetodoContado] = useState<MetodoContado>("efectivo");
   const [precioAcordado, setPrecioAcordado] = useState<number | "">("");
   const [privacyOn, setPrivacyOn] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -157,6 +159,10 @@ export default function FotosintesisVentaPage() {
   const precioCop = typeof precioAcordado === "number" ? precioAcordado : 0;
   const totalCop = precioCop;
   const comisionCop = 0; // Slice 1 placeholder — commission % lives in Slice 3
+  // `fechaVenta` was previously memoized at mount which dated sales to the
+  // moment the operator opened the form rather than when they confirmed.
+  // Computed inside `onConfirm` now (see below). Kept here only as a
+  // placeholder for the Kardex preview's date display.
   const fechaVenta = useMemo(() => new Date().toISOString(), []);
 
   const stepBuyer: "done" | "active" | "pending" = clientId ? "done" : "active";
@@ -226,15 +232,16 @@ export default function FotosintesisVentaPage() {
       // `fechaVencimiento` / `numeroCuotas` flow into the server only for
       // credito (mandatory per BR-7) or esmereogénesis when the operator
       // filled them in (optional UX nicety).
+      const confirmedAt = new Date().toISOString();
       const createArgs: Parameters<typeof createSale>[0] = {
         itemIds: [itemId],
         clientId,
-        fechaVenta,
+        fechaVenta: confirmedAt,
         precioAcordadoCOP: precioCop,
         totalCOP: totalCop,
         comisionCOP: comisionCop || undefined,
         formaPago,
-        metodoContado: formaPago === "contado" ? "efectivo" : undefined,
+        metodoContado: formaPago === "contado" ? metodoContado : undefined,
       };
       if (formaPago === "credito") {
         createArgs.fechaVencimiento = creditoFechaVenc;
@@ -358,10 +365,24 @@ export default function FotosintesisVentaPage() {
         }
       } else {
         logStage("certificado:skipped", { reason: "VITE_CERT_LEGAL_APPROVED" });
-        notify(
-          "Certificado pendiente · activar VITE_CERT_LEGAL_APPROVED tras aprobación legal (Q-6)",
-          "info",
-        );
+        // Toast at most once per browser session — Maritza will see this
+        // every sale otherwise until Q-6 ships, which becomes noise fast.
+        try {
+          const KEY = "tm.fotosintesis.certPendingNotified";
+          if (typeof window !== "undefined" && !sessionStorage.getItem(KEY)) {
+            sessionStorage.setItem(KEY, "1");
+            notify(
+              "Certificado pendiente · activar VITE_CERT_LEGAL_APPROVED tras aprobación legal (Q-6)",
+              "info",
+            );
+          }
+        } catch {
+          // sessionStorage can throw in private mode; fall back to toast.
+          notify(
+            "Certificado pendiente · activar VITE_CERT_LEGAL_APPROVED tras aprobación legal (Q-6)",
+            "info",
+          );
+        }
       }
 
       // ── Email opcional ────────────────────────────────────────────────
@@ -417,6 +438,7 @@ export default function FotosintesisVentaPage() {
     comisionCop,
     compradorTipo,
     formaPago,
+    metodoContado,
     fechaVenta,
     creditoFechaVenc,
     creditoCuotas,
@@ -767,6 +789,22 @@ export default function FotosintesisVentaPage() {
                 { value: "credito", label: "Crédito" },
               ]}
             />
+
+            {formaPago === "contado" ? (
+              <Box sx={{ marginTop: "14px" }}>
+                <FieldLabel>Método de pago</FieldLabel>
+                <SegmentedControl<MetodoContado>
+                  ariaLabel="Método de pago contado"
+                  block
+                  value={metodoContado}
+                  onChange={setMetodoContado}
+                  options={[
+                    { value: "efectivo", label: "Efectivo" },
+                    { value: "transferencia", label: "Transferencia" },
+                  ]}
+                />
+              </Box>
+            ) : null}
 
             {formaPago === "credito" ? (
               <CreditoFields
@@ -1131,7 +1169,8 @@ export default function FotosintesisVentaPage() {
                 id: peekedSaleId,
                 precioCop: precioCop,
                 formaPago,
-                metodoContado: formaPago === "contado" ? "efectivo" : undefined,
+                metodoContado:
+                  formaPago === "contado" ? metodoContado : undefined,
               }}
               privacyOn={privacyOn}
             />
@@ -1190,7 +1229,8 @@ export default function FotosintesisVentaPage() {
                 id: peekedSaleId,
                 precioCop,
                 formaPago,
-                metodoContado: formaPago === "contado" ? "efectivo" : undefined,
+                metodoContado:
+                  formaPago === "contado" ? metodoContado : undefined,
               }}
             />
           </Box>
