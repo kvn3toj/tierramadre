@@ -13,6 +13,10 @@ interface ItemMiniCardProps {
   meta?: React.ReactNode;
   /** Preponderance percent shown right-side. */
   preponderancia?: number;
+  /** Override the rendered preponderancia value with a custom node
+   *  (e.g. an inline EditableMetaValue). When provided, the numeric
+   *  `preponderancia` prop is ignored. */
+  preponderanciaSlot?: React.ReactNode;
   /** Cost shown right-side (already formatted). */
   cost?: React.ReactNode;
   state: ItemMiniState;
@@ -28,6 +32,7 @@ export function ItemMiniCard({
   name,
   meta,
   preponderancia,
+  preponderanciaSlot,
   cost,
   state,
   onClick,
@@ -154,7 +159,20 @@ export function ItemMiniCard({
         ) : null}
       </Box>
       <Box sx={{ textAlign: "right" }}>
-        {typeof preponderancia === "number" ? (
+        {preponderanciaSlot ? (
+          <Box
+            sx={{
+              fontFamily: fontFamilies.mono,
+              fontVariantNumeric: "tabular-nums",
+              fontSize: 13,
+              fontWeight: 600,
+              color: foto.accent.deep,
+              letterSpacing: "-0.005em",
+            }}
+          >
+            {preponderanciaSlot}
+          </Box>
+        ) : typeof preponderancia === "number" ? (
           <Box
             sx={{
               fontFamily: fontFamilies.mono,

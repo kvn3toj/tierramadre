@@ -240,6 +240,49 @@ export const cancel = mutation({
   },
 });
 
+/**
+ * Edit the precio acordado / total of a sale after the fact. Common when
+ * Maritza miskeys the price or the embajador renegotiates. Only allowed
+ * while the sale is still confirmed/reservada — cancelled sales are
+ * read-only by design.
+ *
+ * `totalCOP` defaults to the new `precioAcordadoCOP` if omitted (matches
+ * the Slice 1 placeholder where comision = 0).
+ */
+export const updatePrice = mutation({
+  args: {
+    id: v.id("sales"),
+    precioAcordadoCOP: v.number(),
+    totalCOP: v.optional(v.number()),
+    descuentoCOP: v.optional(v.number()),
+  },
+  handler: async (ctx, { id, precioAcordadoCOP, totalCOP, descuentoCOP }) => {
+    if (precioAcordadoCOP <= 0) {
+      throw new Error("precioAcordadoCOP debe ser > 0");
+    }
+    const sale = await ctx.db.get(id);
+    if (!sale) throw new Error(`Sale ${id} not found`);
+    if (sale.estado === "cancelada") {
+      throw new Error("No se puede editar una venta cancelada");
+    }
+    const nextTotal = totalCOP ?? precioAcordadoCOP;
+    if (nextTotal <= 0) throw new Error("totalCOP debe ser > 0");
+
+    await ctx.db.patch(id, {
+      precioAcordadoCOP,
+      totalCOP: nextTotal,
+      ...(descuentoCOP !== undefined ? { descuentoCOP } : {}),
+      syncStatus: "pending" as const,
+      syncError: undefined,
+    });
+    await ctx.scheduler.runAfter(0, api.sales._pushToSheet, {
+      id,
+      mode: "patch",
+    });
+    return { id, precioAcordadoCOP, totalCOP: nextTotal };
+  },
+});
+
 export const setCarnetUrl = mutation({
   args: { id: v.id("sales"), carnetUrl: v.string() },
   handler: async (ctx, { id, carnetUrl }) => {

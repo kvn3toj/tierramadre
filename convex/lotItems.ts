@@ -189,6 +189,95 @@ export const create = mutation({
   },
 });
 
+/**
+ * Patch the preponderancia of an existing lot item. The linked
+ * productInventory row's `costoBaseCOP` is recomputed from the lot's
+ * current `costoTotalCOP` so the Sheets row stays consistent, and a
+ * push is scheduled with an audit row.
+ *
+ * BR-2 (sum ≤ 100) is re-validated server-side against the *other*
+ * items in the lot so the operator can drop one ítem's share and
+ * raise another without tripping the overflow guard.
+ */
+export const updatePreponderancia = mutation({
+  args: {
+    lotItemId: v.id("lotItems"),
+    preponderancia: v.number(),
+    editorEmail: v.optional(v.string()),
+  },
+  handler: async (ctx, { lotItemId, preponderancia, editorEmail }) => {
+    if (preponderancia <= 0 || preponderancia > 100) {
+      throw new Error("preponderancia debe estar en (0, 100]");
+    }
+    const existing = await ctx.db.get(lotItemId);
+    if (!existing) throw new Error(`lotItem ${lotItemId} no encontrado`);
+
+    const lot = await ctx.db
+      .query("lots")
+      .withIndex("by_loteId", (q) => q.eq("loteId", existing.loteId))
+      .first();
+    if (!lot) throw new Error(`Lote ${existing.loteId} no encontrado`);
+    if (lot.estado !== "abierto") {
+      throw new Error("Sólo se pueden editar ítems de un lote abierto");
+    }
+
+    const siblings = await ctx.db
+      .query("lotItems")
+      .withIndex("by_loteId", (q) => q.eq("loteId", existing.loteId))
+      .collect();
+    const sumOthers = siblings
+      .filter((s) => s._id !== lotItemId)
+      .reduce((s, it) => s + it.preponderancia, 0);
+    if (sumOthers + preponderancia > 100.01) {
+      throw new Error(
+        `La preponderancia ${preponderancia}% excede el 100% del lote ` +
+          `(otros ítems suman ${sumOthers}%).`,
+      );
+    }
+
+    const costoBaseCOP = Math.round(lot.costoTotalCOP * (preponderancia / 100));
+    await ctx.db.patch(lotItemId, { preponderancia, costoBaseCOP });
+
+    const product = await ctx.db
+      .query("productInventory")
+      .withIndex("by_itemId", (q) => q.eq("itemId", existing.itemId))
+      .first();
+    if (product) {
+      const now = new Date().toISOString();
+      await ctx.db.patch(product._id, {
+        preponderancia,
+        costoBaseCOP,
+        syncStatus: "pending" as const,
+      });
+      const auditId = await ctx.db.insert("productEdits", {
+        itemId: product.itemId,
+        editorEmail: editorEmail ?? "fotosintesis-edit",
+        editedAt: now,
+        changes: [
+          {
+            field: "preponderancia",
+            before: existing.preponderancia,
+            after: preponderancia,
+          },
+          {
+            field: "costoBaseCOP",
+            before: existing.costoBaseCOP,
+            after: costoBaseCOP,
+          },
+        ],
+        status: "pending" as const,
+      });
+      await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+        itemId: product.itemId,
+        auditId,
+        mode: "patch",
+      });
+    }
+
+    return { lotItemId, preponderancia, costoBaseCOP };
+  },
+});
+
 export const remove = mutation({
   args: { lotItemId: v.id("lotItems") },
   handler: async (ctx, { lotItemId }) => {

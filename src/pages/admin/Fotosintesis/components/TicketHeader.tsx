@@ -20,6 +20,8 @@ export interface TicketProgress {
 interface TicketHeaderProps {
   /** Big mono ID — "B-008" or "V-0042". */
   id: string;
+  /** Override the rendered id slot — used by LotSwitcher to overlay a select. */
+  idSlot?: React.ReactNode;
   /** Visual kind controls accent color of the bar. */
   kind?: "lot" | "sale";
   /** Optional subtitle line under the meta grid. */
@@ -38,6 +40,7 @@ interface TicketHeaderProps {
  */
 export function TicketHeader({
   id,
+  idSlot,
   kind = "lot",
   subtitle,
   meta = [],
@@ -75,21 +78,23 @@ export function TicketHeader({
         }}
       >
         <Box>
-          <Box
-            sx={{
-              fontFamily: fontFamilies.mono,
-              fontVariantNumeric: "tabular-nums",
-              // Slightly smaller ID on phones so the 42px monospace
-              // doesn't dominate a 360px viewport.
-              fontSize: { xs: 32, sm: 38, md: 42 },
-              fontWeight: 300,
-              letterSpacing: "-0.055em",
-              lineHeight: 1,
-              color: idColor,
-            }}
-          >
-            {id}
-          </Box>
+          {idSlot ?? (
+            <Box
+              sx={{
+                fontFamily: fontFamilies.mono,
+                fontVariantNumeric: "tabular-nums",
+                // Slightly smaller ID on phones so the 42px monospace
+                // doesn't dominate a 360px viewport.
+                fontSize: { xs: 32, sm: 38, md: 42 },
+                fontWeight: 300,
+                letterSpacing: "-0.055em",
+                lineHeight: 1,
+                color: idColor,
+              }}
+            >
+              {id}
+            </Box>
+          )}
           {subtitle ? (
             <Box
               sx={{

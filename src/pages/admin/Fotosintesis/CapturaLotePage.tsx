@@ -28,6 +28,10 @@ import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
 import { ShortcutTable } from "./components/ShortcutTable";
 import { ProveedorNuevoDrawer } from "./components/ProveedorNuevoDrawer";
 import { EntityPicker } from "./components/EntityPicker";
+import { LotSwitcher } from "./components/LotSwitcher";
+import { EditableMetaValue } from "./components/EditableMetaValue";
+import { useNotification } from "../../../contexts/NotificationContext";
+import type { Id } from "../../../../convex/_generated/dataModel";
 import {
   GemaFields,
   EMPTY_GEMA_DRAFT,
@@ -881,6 +885,7 @@ interface ActiveLotPageProps {
 function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const foto = getFoto("light");
   const navigate = useNavigate();
+  const { notify } = useNotification();
 
   // Reactive data --------------------------------------------------------------
   const lot = useConvexQuery(convexApi.lots.getByLoteId, { loteId });
@@ -893,8 +898,10 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
   // Mutations ------------------------------------------------------------------
   const createLotItem = useConvexMutation(convexApi.lotItems.create);
-  // `lots.update` mutation will be re-wired in Slice 2 once the patch
-  // validator accepts providerId (see drawer onSuccess below).
+  const updateLot = useConvexMutation(convexApi.lots.update);
+  const updatePreponderancia = useConvexMutation(
+    convexApi.lotItems.updatePreponderancia,
+  );
 
   // Form state -----------------------------------------------------------------
   const [tipo, setTipo] = useState<TipoItem>("gema");
@@ -1173,6 +1180,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
       <TicketHeader
         kind="lot"
         id={loteId}
+        idSlot={<LotSwitcher currentLoteId={loteId} />}
         meta={ticketMeta}
         progress={{
           value: prepTotal.sum,
@@ -1460,35 +1468,113 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
           </Box>
 
           {/* Lot meta summary */}
-          <LotMetaCard
-            rows={[
-              {
-                label: "Lote",
-                value: loteId,
-              },
-              {
-                label: "Recibido",
-                value: fmtDateEs(lot.fechaRecepcion),
-              },
-              {
-                label: "Costo",
-                value: formatCOP(lot.costoTotalCOP),
-              },
-              {
-                label: "Unidades",
-                value: `${itemsCount}/${unidadesDeclaradas}`,
-              },
-              {
-                label: "Pago",
-                value: formaPagoShort(lot.formaPago),
-              },
-              {
-                label: "Factura",
-                value: lot.numeroFactura ?? "por adjuntar",
-                alert: !lot.numeroFactura,
-              },
-            ]}
-          />
+          {(() => {
+            const editable = lot.estado === "abierto";
+            const handleCostoCommit = async (next: number) => {
+              try {
+                await updateLot({
+                  id: lot._id as Id<"lots">,
+                  patch: { costoTotalCOP: next },
+                });
+                notify("Costo del lote actualizado", "success");
+              } catch (err) {
+                const msg = err instanceof Error ? err.message : String(err);
+                notify(`No pudimos guardar el costo: ${msg}`, "error");
+                throw err;
+              }
+            };
+            const handleUnidadesCommit = async (next: number) => {
+              if (next < itemsCount) {
+                throw new Error(
+                  `Ya hay ${itemsCount} ítems capturados — no puede bajar de ahí.`,
+                );
+              }
+              try {
+                await updateLot({
+                  id: lot._id as Id<"lots">,
+                  patch: { unidadesDeclaradas: next },
+                });
+                notify("Unidades declaradas actualizadas", "success");
+              } catch (err) {
+                const msg = err instanceof Error ? err.message : String(err);
+                notify(`No pudimos guardar las unidades: ${msg}`, "error");
+                throw err;
+              }
+            };
+            return (
+              <LotMetaCard
+                rows={[
+                  {
+                    label: "Lote",
+                    value: loteId,
+                  },
+                  {
+                    label: "Recibido",
+                    value: fmtDateEs(lot.fechaRecepcion),
+                  },
+                  {
+                    label: "Costo",
+                    value: (
+                      <EditableMetaValue
+                        value={lot.costoTotalCOP}
+                        format={formatCOP}
+                        onCommit={handleCostoCommit}
+                        disabled={!editable}
+                        min={1}
+                        step={1000}
+                        variant="currency"
+                        ariaLabel="costo total del lote"
+                        helper={
+                          editable
+                            ? "Cambia el costo total del lote (Enter para guardar, Esc para cancelar)."
+                            : undefined
+                        }
+                      />
+                    ),
+                  },
+                  {
+                    label: "Unidades",
+                    value: (
+                      <Box
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "baseline",
+                          gap: "4px",
+                          justifyContent: "flex-end",
+                        }}
+                      >
+                        <Box component="span">{itemsCount}/</Box>
+                        <EditableMetaValue
+                          value={unidadesDeclaradas}
+                          format={(n) => String(n)}
+                          onCommit={handleUnidadesCommit}
+                          disabled={!editable}
+                          min={Math.max(1, itemsCount)}
+                          step={1}
+                          variant="count"
+                          ariaLabel="unidades declaradas del lote"
+                          helper={
+                            editable
+                              ? `Mínimo ${Math.max(1, itemsCount)} (ya capturadas).`
+                              : undefined
+                          }
+                        />
+                      </Box>
+                    ),
+                  },
+                  {
+                    label: "Pago",
+                    value: formaPagoShort(lot.formaPago),
+                  },
+                  {
+                    label: "Factura",
+                    value: lot.numeroFactura ?? "por adjuntar",
+                    alert: !lot.numeroFactura,
+                  },
+                ]}
+              />
+            );
+          })()}
 
           {/* Items list */}
           <Box
@@ -1503,22 +1589,56 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
               gap: "8px",
             }}
           >
-            {(items ?? []).map((item, idx) => (
-              <Box component="li" key={item._id} sx={{ margin: 0 }}>
-                <ItemMiniCard
-                  ticketId={`${loteId} · ${String(idx + 1).padStart(3, "0")}`}
-                  name={item.itemId}
-                  meta={
-                    typeof item.preponderancia === "number"
-                      ? `costo ${formatCOP(item.costoBaseCOP)}`
-                      : undefined
-                  }
-                  preponderancia={item.preponderancia}
-                  cost={formatCOP(item.costoBaseCOP)}
-                  state="done"
-                />
-              </Box>
-            ))}
+            {(items ?? []).map((item, idx) => {
+              const itemEditable = lot.estado === "abierto";
+              const handlePrepCommit = async (next: number) => {
+                try {
+                  await updatePreponderancia({
+                    lotItemId: item._id as Id<"lotItems">,
+                    preponderancia: next,
+                  });
+                  notify(
+                    `Preponderancia de #${item.itemId} actualizada`,
+                    "success",
+                  );
+                } catch (err) {
+                  const msg = err instanceof Error ? err.message : String(err);
+                  notify(
+                    `No pudimos actualizar la preponderancia: ${msg}`,
+                    "error",
+                  );
+                  throw err;
+                }
+              };
+              return (
+                <Box component="li" key={item._id} sx={{ margin: 0 }}>
+                  <ItemMiniCard
+                    ticketId={`${loteId} · ${String(idx + 1).padStart(3, "0")}`}
+                    name={item.itemId}
+                    meta={
+                      typeof item.preponderancia === "number"
+                        ? `costo ${formatCOP(item.costoBaseCOP)}`
+                        : undefined
+                    }
+                    preponderanciaSlot={
+                      <EditableMetaValue
+                        value={item.preponderancia}
+                        format={(n) => `${Math.round(n * 10) / 10}%`}
+                        onCommit={handlePrepCommit}
+                        disabled={!itemEditable}
+                        min={0.1}
+                        max={100}
+                        step={0.1}
+                        variant="count"
+                        ariaLabel={`preponderancia del ítem ${item.itemId}`}
+                      />
+                    }
+                    cost={formatCOP(item.costoBaseCOP)}
+                    state="done"
+                  />
+                </Box>
+              );
+            })}
             {/* Active row for the in-progress item */}
             {itemsCount < unidadesDeclaradas ? (
               <Box component="li" sx={{ margin: 0 }}>

@@ -13,6 +13,7 @@ import { useNotification } from "../../../contexts/NotificationContext";
 import { TicketHeader } from "./components/TicketHeader";
 import { KardexPreview } from "./components/KardexPreview";
 import { CancelVentaDialog } from "./components/CancelVentaDialog";
+import { EditableMetaValue } from "./components/EditableMetaValue";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 function formatCop(value: number | undefined | null): string {
@@ -91,6 +92,7 @@ export default function VentaDetailPage() {
   const sale = allSales === undefined ? undefined : saleMatch;
 
   const cancelSale = useConvexMutation(convexApi.sales.cancel);
+  const updatePrice = useConvexMutation(convexApi.sales.updatePrice);
 
   // First item drives the Kardex preview; for multi-item sales the additional
   // itemIds are listed under the comprobante.
@@ -312,7 +314,40 @@ export default function VentaDetailPage() {
               />
               <DetailRow
                 label="Precio acordado"
-                value={formatCop(sale.precioAcordadoCOP)}
+                value={
+                  <EditableMetaValue
+                    value={sale.precioAcordadoCOP}
+                    format={formatCop}
+                    disabled={isCancelled}
+                    min={1}
+                    step={1000}
+                    variant="currency"
+                    ariaLabel="precio acordado de la venta"
+                    helper={
+                      isCancelled
+                        ? undefined
+                        : "Actualiza precio + total (Enter para guardar)."
+                    }
+                    onCommit={async (next) => {
+                      try {
+                        await updatePrice({
+                          id: sale._id as Id<"sales">,
+                          precioAcordadoCOP: next,
+                          totalCOP: next,
+                        });
+                        notify("Precio de la venta actualizado", "success");
+                      } catch (err) {
+                        const msg =
+                          err instanceof Error ? err.message : String(err);
+                        notify(
+                          `No pudimos actualizar el precio: ${msg}`,
+                          "error",
+                        );
+                        throw err;
+                      }
+                    }}
+                  />
+                }
                 foto={foto}
                 mono
               />
