@@ -123,6 +123,33 @@ const AdminProductManagementPage = lazyWithRetry(
   () => import("./pages/admin/ProductManagement/ProductManagementPage"),
   "AdminProductManagementPage",
 );
+
+// Fotosíntesis v2 — captura admin (Slice 1)
+const FotosintesisLayout = lazyWithRetry(
+  () => import("./pages/admin/Fotosintesis/FotosintesisLayout"),
+  "FotosintesisLayout",
+);
+const FotosintesisHome = lazyWithRetry(
+  () => import("./pages/admin/Fotosintesis/HomePage"),
+  "FotosintesisHome",
+);
+const FotosintesisCapturaLote = lazyWithRetry(
+  () => import("./pages/admin/Fotosintesis/CapturaLotePage"),
+  "FotosintesisCapturaLote",
+);
+const FotosintesisLoteResumen = lazyWithRetry(
+  () => import("./pages/admin/Fotosintesis/LoteResumenPage"),
+  "FotosintesisLoteResumen",
+);
+const FotosintesisVenta = lazyWithRetry(
+  () => import("./pages/admin/Fotosintesis/VentaPage"),
+  "FotosintesisVenta",
+);
+const FotosintesisDirectorio = lazyWithRetry(
+  () => import("./pages/admin/Fotosintesis/DirectorioPage"),
+  "FotosintesisDirectorio",
+);
+
 const FeedbackDashboard = lazyWithRetry(
   () => import("./pages/admin/FeedbackDashboard"),
   "FeedbackDashboard",
@@ -495,6 +522,28 @@ function AppContent() {
               </AdminRoute>
             }
           />
+
+          {/* Fotosíntesis v2 — captura admin (handoff §6) */}
+          <Route
+            path="/admin/fotosintesis"
+            element={
+              <AdminRoute>
+                <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+                  <FotosintesisLayout />
+                </Suspense>
+              </AdminRoute>
+            }
+          >
+            <Route index element={<FotosintesisHome />} />
+            <Route path="lots/:loteId" element={<FotosintesisCapturaLote />} />
+            <Route
+              path="lots/:loteId/close"
+              element={<FotosintesisLoteResumen />}
+            />
+            <Route path="sales/new" element={<FotosintesisVenta />} />
+            <Route path="sales/:saleId" element={<FotosintesisVenta />} />
+            <Route path="directory" element={<FotosintesisDirectorio />} />
+          </Route>
 
           {/* Admin Feedback Dashboard */}
           <Route
