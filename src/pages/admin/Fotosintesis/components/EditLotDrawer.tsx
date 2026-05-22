@@ -36,7 +36,7 @@ interface LotRow {
   numeroFactura?: string;
   urlFactura?: string;
   notas?: string;
-  estado: "abierto" | "cerrado" | "publicado";
+  estado: "abierto" | "cerrado" | "publicado" | "cancelado";
 }
 
 interface EditLotDrawerProps {

@@ -41,6 +41,7 @@ import { EditableMetaValue } from "./components/EditableMetaValue";
 import { EditItemDrawer } from "./components/EditItemDrawer";
 import { EditLotDrawer } from "./components/EditLotDrawer";
 import { useNotification } from "../../../contexts/NotificationContext";
+import ConfirmDialog from "../../../components/shared/ConfirmDialog";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import {
   GemaFields,
@@ -967,6 +968,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const updatePreponderancia = useConvexMutation(
     convexApi.lotItems.updatePreponderancia,
   );
+  const cancelLot = useConvexMutation(convexApi.lots.cancel);
 
   // Form state -----------------------------------------------------------------
   // Tipo gates which draft is active; we hold both side-by-side so flipping
@@ -983,6 +985,15 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Cancel flows ---------------------------------------------------------------
+  // `cancelItemDialogOpen` covers two semantic actions depending on the lot
+  // shape: shrink the declared count by 1 (skip current slot), OR cancel the
+  // entire lot if this is the only slot left. `cancelLotDialogOpen` is the
+  // explicit top-bar action — kill the lot regardless of how many items it has.
+  const [cancelItemDialogOpen, setCancelItemDialogOpen] = useState(false);
+  const [cancelLotDialogOpen, setCancelLotDialogOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   // Edit drawers ---------------------------------------------------------------
   const [editLotOpen, setEditLotOpen] = useState(false);
@@ -1139,6 +1150,76 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     if (!canCloseLot) return;
     navigate(`/admin/fotosintesis/lots/${loteId}/close`);
   }, [canCloseLot, navigate, loteId]);
+
+  // Cancel ítem: opens a confirm. If the lot has only the current slot left
+  // (unidadesDeclaradas <= 1), the user is effectively cancelling the lot —
+  // we route the confirm to the cancelLot mutation. Otherwise we shrink
+  // unidadesDeclaradas by 1 and clear the form.
+  const handleCancelItemClick = useCallback(() => {
+    setCancelItemDialogOpen(true);
+  }, []);
+
+  const handleConfirmCancelItem = useCallback(async () => {
+    if (!lot) return;
+    setCancelling(true);
+    try {
+      if (unidadesDeclaradas <= 1) {
+        await cancelLot({ id: lot._id as Id<"lots"> });
+        notify("Lote cancelado", "info");
+        setCancelItemDialogOpen(false);
+        navigate("/admin/fotosintesis");
+        return;
+      }
+      const nextDeclared = unidadesDeclaradas - 1;
+      await updateLot({
+        id: lot._id as Id<"lots">,
+        patch: { unidadesDeclaradas: nextDeclared },
+      });
+      resetItemDraft();
+      notify(
+        `Slot descartado · el lote ahora declara ${nextDeclared} unidades`,
+        "success",
+      );
+      setCancelItemDialogOpen(false);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "No pudimos descartar el ítem";
+      notify(msg, "error");
+    } finally {
+      setCancelling(false);
+    }
+  }, [
+    lot,
+    unidadesDeclaradas,
+    cancelLot,
+    updateLot,
+    resetItemDraft,
+    notify,
+    navigate,
+  ]);
+
+  // Cancel lote: explicit "kill the lot" path from the topbar. Always
+  // confirms; on success navigates back to the home queue.
+  const handleCancelLotClick = useCallback(() => {
+    setCancelLotDialogOpen(true);
+  }, []);
+
+  const handleConfirmCancelLot = useCallback(async () => {
+    if (!lot) return;
+    setCancelling(true);
+    try {
+      await cancelLot({ id: lot._id as Id<"lots"> });
+      notify("Lote cancelado", "info");
+      setCancelLotDialogOpen(false);
+      navigate("/admin/fotosintesis");
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "No pudimos cancelar el lote";
+      notify(msg, "error");
+    } finally {
+      setCancelling(false);
+    }
+  }, [lot, cancelLot, notify, navigate]);
 
   const handleDuplicate = useCallback(() => {
     // ⌘D — clone type-shared fields (procedencia, plus type-specific
@@ -1545,7 +1626,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
           </Box>
 
           <StickyFooter
-            onCancel={resetItemDraft}
+            onCancel={handleCancelItemClick}
             onSaveAndNext={handleSaveAndNext}
             onCloseLot={handleCloseLot}
             saveDisabled={!canSave}
@@ -1859,6 +1940,66 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
               { label: "Abrir buscador global", keys: ["⌘", "K"] },
             ]}
           />
+
+          {lot.estado === "abierto" ? (
+            <Box
+              sx={{
+                padding: "14px 16px",
+                background: foto.surfaces.panel,
+                border: `1px dashed ${foto.surfaces.rule}`,
+                borderRadius: "12px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <Box
+                sx={{
+                  fontSize: 10.5,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  color: foto.ink.tertiary,
+                  fontWeight: 600,
+                }}
+              >
+                Zona delicada
+              </Box>
+              <Box
+                sx={{
+                  fontSize: 12,
+                  color: foto.ink.secondary,
+                  lineHeight: 1.45,
+                }}
+              >
+                Si este lote no va a continuar (compra anulada, factura caída,
+                error de captura), cancelalo. Los ítems ya guardados quedan en
+                inventario pero desligados del lote.
+              </Box>
+              <Box
+                component="button"
+                type="button"
+                onClick={handleCancelLotClick}
+                sx={{
+                  alignSelf: "flex-start",
+                  border: `1px solid ${foto.status.sold}`,
+                  background: "transparent",
+                  color: foto.status.sold,
+                  borderRadius: "8px",
+                  padding: "8px 14px",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "background 120ms ease, color 120ms ease",
+                  "&:hover": {
+                    background: foto.status.sold,
+                    color: foto.ink.inverse,
+                  },
+                }}
+              >
+                Cancelar lote
+              </Box>
+            </Box>
+          ) : null}
         </Box>
       </Box>
 
@@ -1924,6 +2065,52 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
           />
         ) : null;
       })()}
+
+      <ConfirmDialog
+        open={cancelItemDialogOpen}
+        title={
+          unidadesDeclaradas <= 1
+            ? `Cancelar lote ${loteId}`
+            : "Descartar este ítem"
+        }
+        message={
+          unidadesDeclaradas <= 1
+            ? itemsCount > 0
+              ? `Este es el único slot del lote y ya capturaste ${itemsCount} ítem(s). Cancelar el lote orfana esos ítems del lote (quedan en inventario sin lote asociado) y lo marca como cancelado.`
+              : "Este lote no tiene ítems capturados. Lo marcamos como cancelado y volvés al inicio."
+            : `Reduciremos las unidades declaradas de ${unidadesDeclaradas} a ${unidadesDeclaradas - 1}. Los ítems ya capturados (${itemsCount}) no se tocan. Si el ${unidadesDeclaradas - 1 === itemsCount ? "lote queda balanceado, podés cerrarlo." : "lote sigue incompleto, podés seguir capturando."}`
+        }
+        confirmLabel={
+          cancelling
+            ? "Procesando…"
+            : unidadesDeclaradas <= 1
+              ? "Cancelar lote"
+              : "Descartar ítem"
+        }
+        cancelLabel="Volver"
+        confirmColor="error"
+        onConfirm={() => void handleConfirmCancelItem()}
+        onCancel={() =>
+          cancelling ? undefined : setCancelItemDialogOpen(false)
+        }
+      />
+
+      <ConfirmDialog
+        open={cancelLotDialogOpen}
+        title={`Cancelar lote ${loteId}`}
+        message={
+          itemsCount > 0
+            ? `El lote tiene ${itemsCount} ítem(s) capturado(s). Al cancelarlo, esos ítems quedan en inventario pero se desligan del lote (sin costo asignado ni preponderancia). Esta acción no se puede deshacer.`
+            : "El lote no tiene ítems capturados. Lo marcamos como cancelado y volvés al inicio."
+        }
+        confirmLabel={cancelling ? "Cancelando…" : "Cancelar lote"}
+        cancelLabel="Volver"
+        confirmColor="error"
+        onConfirm={() => void handleConfirmCancelLot()}
+        onCancel={() =>
+          cancelling ? undefined : setCancelLotDialogOpen(false)
+        }
+      />
     </Box>
   );
 }

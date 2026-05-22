@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Box } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { Link } from "react-router-dom";
@@ -12,10 +12,18 @@ import {
   Check,
   ArrowRight,
   DollarSign,
+  X,
 } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../design-system";
-import { useConvexQuery, convexApi } from "../../../lib/convex-safe";
+import {
+  useConvexQuery,
+  useConvexMutation,
+  convexApi,
+} from "../../../lib/convex-safe";
 import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
+import { useNotification } from "../../../contexts/NotificationContext";
+import ConfirmDialog from "../../../components/shared/ConfirmDialog";
+import type { Id } from "../../../../convex/_generated/dataModel";
 
 /**
  * Fotosíntesis Home — Slice 1 (read-only).
@@ -36,6 +44,7 @@ function formaPagoLabel(formaPago: string): string {
 }
 export default function FotosintesisHomePage() {
   const foto = getFoto("light");
+  const { notify } = useNotification();
   const { user } = useGoogleAuth();
   const firstName = user?.givenName || user?.name?.split(" ")[0] || "Operador";
 
@@ -46,6 +55,32 @@ export default function FotosintesisHomePage() {
   const recentEdits = useConvexQuery(convexApi.products.recentEdits, {
     limit: 5,
   });
+
+  // --- Mutations -----------------------------------------------------------
+  const cancelLot = useConvexMutation(convexApi.lots.cancel);
+
+  // --- Cancel-lot flow -----------------------------------------------------
+  const [cancelTarget, setCancelTarget] = useState<{
+    id: Id<"lots">;
+    loteId: string;
+  } | null>(null);
+  const [cancellingLot, setCancellingLot] = useState(false);
+
+  const handleCancelLot = useCallback(async () => {
+    if (!cancelTarget) return;
+    setCancellingLot(true);
+    try {
+      await cancelLot({ id: cancelTarget.id });
+      notify(`Lote ${cancelTarget.loteId} cancelado`, "info");
+      setCancelTarget(null);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "No pudimos cancelar el lote";
+      notify(msg, "error");
+    } finally {
+      setCancellingLot(false);
+    }
+  }, [cancelTarget, cancelLot, notify]);
 
   // --- Derived -------------------------------------------------------------
   const now = useMemo(() => new Date(), []);
@@ -590,16 +625,15 @@ export default function FotosintesisHomePage() {
                     ? `/admin/fotosintesis/lots/${lot.loteId}`
                     : `/admin/fotosintesis/lots/${lot.loteId}/close`;
                 const isLast = idx === Math.min(5, activeLots.length) - 1;
+                const canCancel = lot.estado === "abierto";
                 return (
                   <Box
-                    component={Link}
-                    to={target}
                     key={lot._id}
                     sx={{
                       display: "grid",
                       gridTemplateColumns: {
-                        xs: "auto 1fr",
-                        md: "auto 1fr auto",
+                        xs: "auto 1fr auto",
+                        md: "auto 1fr auto auto",
                       },
                       gap: "14px",
                       alignItems: "center",
@@ -607,8 +641,6 @@ export default function FotosintesisHomePage() {
                       borderBottom: isLast
                         ? "none"
                         : `1px solid ${foto.surfaces.edge}`,
-                      textDecoration: "none",
-                      color: "inherit",
                       "& .lotId": {
                         transition: "background 120ms ease, color 120ms ease",
                       },
@@ -619,6 +651,8 @@ export default function FotosintesisHomePage() {
                     }}
                   >
                     <Box
+                      component={Link}
+                      to={target}
                       className="lotId"
                       sx={{
                         ...monoSx,
@@ -630,11 +664,16 @@ export default function FotosintesisHomePage() {
                         borderRadius: "7px",
                         fontSize: "11.5px",
                         fontWeight: 600,
+                        textDecoration: "none",
                       }}
                     >
                       {lot.loteId}
                     </Box>
-                    <Box>
+                    <Box
+                      component={Link}
+                      to={target}
+                      sx={{ textDecoration: "none", color: "inherit" }}
+                    >
                       <Box
                         sx={{
                           fontSize: "13.5px",
@@ -672,6 +711,8 @@ export default function FotosintesisHomePage() {
                       </Box>
                     </Box>
                     <Box
+                      component={Link}
+                      to={target}
                       sx={{
                         display: { xs: "none", md: "inline-flex" },
                         alignItems: "center",
@@ -679,11 +720,55 @@ export default function FotosintesisHomePage() {
                         fontSize: "11.5px",
                         color: foto.accent.deep,
                         fontWeight: 600,
+                        textDecoration: "none",
                       }}
                     >
                       {lot.estado === "abierto" ? "Continuar" : "Cerrar lote"}
                       <ArrowRight size={13} strokeWidth={2} />
                     </Box>
+                    {canCancel ? (
+                      <Box
+                        component="button"
+                        type="button"
+                        aria-label={`Cancelar lote ${lot.loteId}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setCancelTarget({
+                            id: lot._id as Id<"lots">,
+                            loteId: lot.loteId,
+                          });
+                        }}
+                        sx={{
+                          width: 28,
+                          height: 28,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: "transparent",
+                          border: `1px solid transparent`,
+                          borderRadius: "7px",
+                          color: foto.ink.tertiary,
+                          cursor: "pointer",
+                          transition:
+                            "background 120ms ease, color 120ms ease, border-color 120ms ease",
+                          "&:hover": {
+                            background: alpha(foto.status.sold, 0.08),
+                            borderColor: foto.status.sold,
+                            color: foto.status.sold,
+                          },
+                          "&:focus-visible": {
+                            outline: "none",
+                            borderColor: foto.status.sold,
+                            color: foto.status.sold,
+                          },
+                        }}
+                      >
+                        <X size={14} strokeWidth={2} />
+                      </Box>
+                    ) : (
+                      <Box sx={{ width: 28 }} />
+                    )}
                   </Box>
                 );
               })
@@ -893,6 +978,21 @@ export default function FotosintesisHomePage() {
           </Box>
         </Box>
       </Box>
+
+      <ConfirmDialog
+        open={cancelTarget !== null}
+        title={
+          cancelTarget
+            ? `Cancelar lote ${cancelTarget.loteId}`
+            : "Cancelar lote"
+        }
+        message="Los ítems ya capturados se desligan del lote (quedan en inventario sin lote, sin costo asignado ni preponderancia). El lote queda marcado como cancelado y no se puede revertir."
+        confirmLabel={cancellingLot ? "Cancelando…" : "Cancelar lote"}
+        cancelLabel="Volver"
+        confirmColor="error"
+        onConfirm={() => void handleCancelLot()}
+        onCancel={() => (cancellingLot ? undefined : setCancelTarget(null))}
+      />
     </Box>
   );
 }

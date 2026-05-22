@@ -271,6 +271,7 @@ export default defineSchema({
       v.literal("abierto"),
       v.literal("cerrado"),
       v.literal("publicado"),
+      v.literal("cancelado"),
     ),
     ...syncFields,
   })

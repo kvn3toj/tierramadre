@@ -47,6 +47,7 @@ export const list = query({
         v.literal("abierto"),
         v.literal("cerrado"),
         v.literal("publicado"),
+        v.literal("cancelado"),
       ),
     ),
   },
@@ -206,6 +207,69 @@ export const close = mutation({
       mode: "patch",
     });
     return { id, loteId: lot.loteId };
+  },
+});
+
+/**
+ * Cancel an open lot: orphan every linked productInventory row (same
+ * pattern as `lotItems.remove`), delete every `lotItems` join row, and
+ * flip the lot estado to `cancelado`. We keep the lot row so historical
+ * references survive (Sheets, audit trails), but it no longer appears in
+ * the active queue.
+ *
+ * Only `abierto` lots can be cancelled — closed or published lots have
+ * downstream effects (sales, catalog) that need their own undo flow.
+ */
+export const cancel = mutation({
+  args: {
+    id: v.id("lots"),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, { id, reason }) => {
+    const lot = await ctx.db.get(id);
+    if (!lot) throw new Error(`Lot ${id} not found`);
+    if (lot.estado !== "abierto")
+      throw new Error("Sólo se pueden cancelar lotes abiertos");
+
+    const lotItemRows = await ctx.db
+      .query("lotItems")
+      .withIndex("by_loteId", (q) => q.eq("loteId", lot.loteId))
+      .collect();
+
+    for (const li of lotItemRows) {
+      const product = await ctx.db
+        .query("productInventory")
+        .withIndex("by_itemId", (q) => q.eq("itemId", li.itemId))
+        .first();
+      if (product) {
+        await ctx.db.patch(product._id, {
+          loteId: undefined,
+          preponderancia: undefined,
+          costoBaseCOP: undefined,
+          mostrarEnCatalogo: false,
+        });
+      }
+      await ctx.db.delete(li._id);
+    }
+
+    const trimmedReason = reason?.trim();
+    const notasNext = trimmedReason
+      ? `${lot.notas ? `${lot.notas} | ` : ""}Cancelado: ${trimmedReason}`
+      : lot.notas;
+
+    await ctx.db.patch(id, {
+      estado: "cancelado" as const,
+      notas: notasNext,
+      syncStatus: "pending" as const,
+      syncError: undefined,
+    });
+
+    await ctx.scheduler.runAfter(0, api.lots._pushToSheet, {
+      id,
+      mode: "patch",
+    });
+
+    return { id, loteId: lot.loteId, orphanedItems: lotItemRows.length };
   },
 });
 
