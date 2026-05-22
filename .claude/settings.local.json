@@ -104,7 +104,9 @@
       "Bash(source ~/.nvm/nvm.sh)",
       "Bash(source ~/.zshrc)",
       "Bash(git stash:*)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "mcp__playwright__browser_navigate",
+      "Read(//tmp/**)"
     ],
     "deny": [],
     "ask": []

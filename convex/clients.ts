@@ -177,3 +177,92 @@ export const retryPush = action({
     });
   },
 });
+
+/**
+ * One-shot import of legacy `Asesores` rows into `clients` with
+ * tipo: "embajador". Idempotent: skips any row whose normalized name is
+ * already present in the table.
+ *
+ * Called by `scripts/import-asesores-to-convex.ts`. Returns per-row outcome
+ * so the script can log what it did. Pushes each new row to the SOT via
+ * the same scheduler path `create` uses; `pushToSot=false` skips that
+ * step for cold imports where the SOT is already aligned.
+ */
+export const bulkImportFromLegacy = mutation({
+  args: {
+    rows: v.array(
+      v.object({
+        nombre: v.string(),
+        email: v.optional(v.string()),
+        telefono: v.optional(v.string()),
+        asesorId: v.optional(v.string()),
+      }),
+    ),
+    pushToSot: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { rows, pushToSot = true }) => {
+    const normalize = (s: string) =>
+      s
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "");
+
+    const existing = await ctx.db.query("clients").collect();
+    const existingNorm = new Set(existing.map((c) => normalize(c.nombre)));
+    let nextRow = existing.reduce((m, c) => Math.max(m, c.rowIndex), 1);
+
+    const now = new Date().toISOString();
+    const results: Array<{
+      nombre: string;
+      status: "created" | "skipped";
+      reason?: string;
+    }> = [];
+
+    for (const row of rows) {
+      const norm = normalize(row.nombre);
+      if (!norm) {
+        results.push({
+          nombre: row.nombre,
+          status: "skipped",
+          reason: "empty after normalize",
+        });
+        continue;
+      }
+      if (existingNorm.has(norm)) {
+        results.push({
+          nombre: row.nombre,
+          status: "skipped",
+          reason: "duplicate",
+        });
+        continue;
+      }
+      existingNorm.add(norm);
+      nextRow += 1;
+      const id = await ctx.db.insert("clients", {
+        nombre: row.nombre,
+        email: row.email,
+        telefono: row.telefono,
+        tipo: "embajador" as const,
+        asesorId: row.asesorId,
+        rowIndex: nextRow,
+        lastPulledAt: now,
+        syncStatus: "pending" as const,
+      });
+      if (pushToSot) {
+        await ctx.scheduler.runAfter(0, api.clients._pushToSheet, {
+          id,
+          mode: "append",
+        });
+      }
+      results.push({ nombre: row.nombre, status: "created" });
+    }
+
+    return {
+      total: rows.length,
+      created: results.filter((r) => r.status === "created").length,
+      skipped: results.filter((r) => r.status === "skipped").length,
+      details: results,
+    };
+  },
+});

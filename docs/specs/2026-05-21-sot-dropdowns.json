@@ -1,72 +1,58 @@
 {
-  "inventario  recibo ": {
-    "col1": {
+  "Proveedores": {
+    "tipo": {
       "type": "ONE_OF_LIST",
       "options": [
-        "Final ",
-        "Embajador"
+        "gemas",
+        "joyas",
+        "insumos",
+        "otros"
+      ]
+    }
+  },
+  "Lotes": {
+    "formaPago": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "contado",
+        "credito",
+        "esmereogenesis",
+        "bajo_pedido",
+        "consignacion"
       ]
     },
-    "col2": {
+    "metodoContado": {
       "type": "ONE_OF_LIST",
       "options": [
-        "Final ",
-        "Embajador"
+        "efectivo",
+        "transferencia"
       ]
     },
-    "col4": {
+    "estado": {
       "type": "ONE_OF_LIST",
       "options": [
-        "Efectivo ",
-        "Tranferencia"
+        "abierto",
+        "cerrado",
+        "publicado"
       ]
-    },
-    "col6": {
+    }
+  },
+  "Inventario": {
+    "Color": {
       "type": "ONE_OF_LIST",
       "options": [
-        "Anillo en Plata ",
-        "Aretes",
-        "Topitos",
-        "Pulsera",
-        "Dije",
-        "Anillo en Oro",
-        "Piedras",
-        "Gemas ",
-        "Lote de Gemas "
-      ]
-    },
-    "col7": {
-      "type": "ONE_OF_LIST",
-      "options": [
-        "Efectivo ",
-        "Tranferencia"
-      ]
-    },
-    "col8": {
-      "type": "ONE_OF_LIST",
-      "options": [
-        "Efectivo ",
-        "Tranferencia"
-      ]
-    },
-    "col9": {
-      "type": "ONE_OF_LIST",
-      "options": [
-        "Color ",
-        "Verde Azul",
+        "Verde Azulado",
         "Verde Limón",
         "Verde Menta",
         "Verde Muzo",
         "Verde Natural",
         "Verde Vívido",
-        "Verde Chivor ",
+        "Verde Chivor",
         "Verde Azuloso",
-        "Verde Intenso ",
-        "Fecha /venci",
-        "Cuotas"
+        "Verde Intenso"
       ]
     },
-    "col10": {
+    "Calidad": {
       "type": "ONE_OF_LIST",
       "options": [
         "Extrafina Insignificant",
@@ -75,46 +61,174 @@
         "Extrafina F1",
         "Extrafina Moderate",
         "Extrafina F2",
+        "Extrafina",
         "Fina Sublime",
         "Fina Esencial",
-        "Com.Super Fina",
-        "Com.Fina",
-        "Com.Superior",
-        "Com.Estandar"
+        "Comercial Superfina",
+        "Comercial Fina",
+        "Comercial Superior",
+        "Comercial Estándar",
+        "Morralla Pulida",
+        "Morralla Superior",
+        "Morralla Fina",
+        "Morralla Comercial"
       ]
     },
-    "col11": {
+    "Talla": {
       "type": "ONE_OF_LIST",
       "options": [
-        "Redonda",
-        "Brillante",
-        "Cuadrada",
-        "Esmeralda",
+        "0",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
         "Baguette",
-        "Lagrima",
-        "Ovalo",
-        "Superman",
-        "Trapecio ",
-        "Rectangular",
-        "Marquise",
-        "Trillion",
+        "Brillante",
+        "Cabuchon",
+        "Canutillo",
+        "Chispero",
+        "Chisperito",
+        "Corazón",
+        "Cuadrada",
         "Cushion",
-        "Corazon",
-        "Antiguo",
-        "Ancestral",
+        "En Bruto-Natural",
+        "Esmeralda",
+        "Gola",
+        "Iris",
+        "Lágrima",
+        "Marquis",
+        "Marquise",
+        "Morralla-Lapidada",
+        "Ovalo",
         "Pera",
         "Princesa",
-        "Variado"
+        "Rectangular",
+        "Redonda",
+        "Redonda calibrada",
+        "Superman",
+        "Trapecio",
+        "Trillion",
+        "Variado",
+        "Varias",
+        "Ancestral",
+        "Antiguo"
       ]
     },
-    "col13": {
+    "Medidas": {
       "type": "ONE_OF_LIST",
       "options": [
-        "Anillo ",
+        "Largo x Ancho",
+        "Diámetro"
+      ]
+    },
+    "Categoría": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "Gema",
+        "Anillo en Plata",
+        "Anillo en Oro",
         "Aretes",
         "Topitos",
         "Pulsera",
-        "Dije"
+        "Dije",
+        "Lote de Gemas",
+        "Joyas",
+        "Piedras"
+      ]
+    },
+    "UBICACIÓN": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "BOVEDA",
+        "OFI.BOGOTA",
+        "OFI.CALI",
+        "ASESOR",
+        "EMBAJADOR",
+        "CLIENTE",
+        "EN PRODUCCION",
+        "EN CERTIFICACION",
+        "RETORNADO"
+      ]
+    },
+    "ESTADO": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "DISPONIBLE",
+        "VENDIDA",
+        "ASESOR",
+        "Retornado",
+        "ESMEREOGENESIS",
+        "ESMERO",
+        "DISPONIBLE ADOPTADA",
+        "LOTE X CT"
+      ]
+    },
+    "Colección": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "COLECCION #4000",
+        "11:11",
+        "Fenix",
+        "Secretos del Bosque",
+        "Princesas",
+        "Reinas",
+        "Génesis",
+        "Esencia",
+        "Origen",
+        "Raíces",
+        "Verde Eterno",
+        "Lluvia de Oportunidades",
+        "Encantada",
+        "Sagrada",
+        "Ancestral",
+        "Madre Selva",
+        "Tierra"
+      ]
+    },
+    "CAJA": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "Legalizada",
+        "Pte Legalizar",
+        "Pte Fecha x Legalizar",
+        "Esmereogenesis"
+      ]
+    }
+  },
+  "Clientes": {
+    "tipo": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "embajador",
+        "final"
+      ]
+    }
+  },
+  "Ventas": {
+    "formaPago": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "contado",
+        "credito",
+        "esmereogenesis",
+        "bajo_pedido",
+        "consignacion"
+      ]
+    },
+    "metodoContado": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "efectivo",
+        "transferencia"
+      ]
+    },
+    "estado": {
+      "type": "ONE_OF_LIST",
+      "options": [
+        "reservada",
+        "confirmada",
+        "cancelada"
       ]
     }
   }
