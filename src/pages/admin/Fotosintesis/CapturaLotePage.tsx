@@ -33,6 +33,7 @@ import {
   EMPTY_GEMA_DRAFT,
   type GemaDraft,
 } from "./components/GemaFields";
+import { CreditoFields } from "./components/CreditoFields";
 import { useNextLoteId } from "./hooks/useNextLoteId";
 import { usePreponderanciaTotal } from "./hooks/usePreponderanciaTotal";
 
@@ -252,7 +253,7 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
 // "Antes de empezar" intro form (loteId === "new")
 // -----------------------------------------------------------------------------
 
-type FormaPago = "contado" | "esmereogenesis";
+type FormaPago = "contado" | "esmereogenesis" | "credito";
 type MetodoContado = "efectivo" | "transferencia";
 
 interface NewLotIntroProps {
@@ -289,6 +290,12 @@ function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
   const [metodoContado, setMetodoContado] =
     useState<MetodoContado>("transferencia");
 
+  // Crédito a proveedor — vencimiento + cuotas viajan a Convex (BR-7),
+  // tasaInteres se queda UI-only hasta que el contador defina la columna.
+  const [creditoFechaVenc, setCreditoFechaVenc] = useState<string>("");
+  const [creditoCuotas, setCreditoCuotas] = useState<number>(3);
+  const [creditoTasa, setCreditoTasa] = useState<number | "">("");
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -310,28 +317,42 @@ function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
     return null;
   }, [providerId, providerName, providers]);
 
+  const creditoComplete =
+    formaPago !== "credito" ||
+    (creditoFechaVenc.length > 0 && creditoCuotas > 0);
+
   const canSubmit =
     !!providerId &&
     typeof costoTotalCOP === "number" &&
     costoTotalCOP > 0 &&
     typeof unidadesDeclaradas === "number" &&
     unidadesDeclaradas >= 1 &&
+    creditoComplete &&
     !submitting;
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!canSubmit || !providerId) return;
+    if (formaPago === "credito" && !creditoFechaVenc) {
+      setError("Crédito requiere fecha de vencimiento.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
-      const result = await createLot({
+      const createArgs: Parameters<typeof createLot>[0] = {
         providerId: providerId as any, // Convex Id is opaque; drawer hands back a string id
         fechaRecepcion,
         costoTotalCOP: costoTotalCOP as number,
         unidadesDeclaradas: unidadesDeclaradas as number,
         formaPago,
         metodoContado: formaPago === "contado" ? metodoContado : undefined,
-      });
+      };
+      if (formaPago === "credito") {
+        createArgs.fechaVencimiento = creditoFechaVenc;
+        createArgs.numeroCuotas = creditoCuotas;
+      }
+      const result = await createLot(createArgs);
       navigate(`/admin/fotosintesis/lots/${result.loteId}`, {
         replace: true,
       });
@@ -550,13 +571,10 @@ function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
               options={[
                 { value: "contado", label: "Contado" },
                 { value: "esmereogenesis", label: "Esmereogénesis" },
-                { value: "credito", label: "Crédito", disabled: true },
+                { value: "credito", label: "Crédito" },
               ]}
               value={formaPago}
-              onChange={(next) => {
-                if (next === "credito") return;
-                setFormaPago(next as FormaPago);
-              }}
+              onChange={(next) => setFormaPago(next as FormaPago)}
             />
           </Box>
         </Box>
@@ -574,6 +592,18 @@ function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
               onChange={(next) => setMetodoContado(next as MetodoContado)}
             />
           </Box>
+        ) : null}
+
+        {formaPago === "credito" ? (
+          <CreditoFields
+            fechaVencimiento={creditoFechaVenc}
+            setFechaVencimiento={setCreditoFechaVenc}
+            numeroCuotas={creditoCuotas}
+            setNumeroCuotas={setCreditoCuotas}
+            tasaInteres={creditoTasa}
+            setTasaInteres={setCreditoTasa}
+            totalCop={typeof costoTotalCOP === "number" ? costoTotalCOP : 0}
+          />
         ) : null}
 
         <Box
