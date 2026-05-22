@@ -7,19 +7,19 @@
 
 // Brand Colors
 const COLORS = {
-  emerald: '#047857',       // Primary emerald green
-  emeraldDark: '#065f46',   // Dark emerald
-  emeraldLight: '#10b981',  // Light emerald accent
-  gold: '#d4af37',          // Accent gold
-  background: '#f8fafc',    // Light background
-  text: '#1e293b',          // Dark text
-  textLight: '#64748b',     // Light text
-  white: '#ffffff',
-  border: '#e2e8f0',
+  emerald: "#047857", // Primary emerald green
+  emeraldDark: "#065f46", // Dark emerald
+  emeraldLight: "#10b981", // Light emerald accent
+  gold: "#d4af37", // Accent gold
+  background: "#f8fafc", // Light background
+  text: "#1e293b", // Dark text
+  textLight: "#64748b", // Light text
+  white: "#ffffff",
+  border: "#e2e8f0",
 };
 
 // Base template wrapper
-const baseTemplate = (content, previewText = '') => `
+const baseTemplate = (content, previewText = "") => `
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -35,7 +35,7 @@ const baseTemplate = (content, previewText = '') => `
   <![endif]-->
 </head>
 <body style="margin: 0; padding: 0; background-color: ${COLORS.background}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-  ${previewText ? `<div style="display: none; max-height: 0; overflow: hidden;">${previewText}</div>` : ''}
+  ${previewText ? `<div style="display: none; max-height: 0; overflow: hidden;">${previewText}</div>` : ""}
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: ${COLORS.background};">
     <tr>
       <td align="center" style="padding: 40px 20px;">
@@ -143,7 +143,7 @@ export const newQuotationRequest = ({
   quantity,
   notes,
   requestId,
-  appUrl
+  appUrl,
 }) => {
   const content = `
     <h1 style="margin: 0 0 8px 0; font-size: 24px; color: ${COLORS.text};">
@@ -154,26 +154,30 @@ export const newQuotationRequest = ({
     </p>
 
     ${detailBox(`
-      ${infoRow('Tipo de Producto', productType || 'No especificado')}
-      ${infoRow('Peso', `${weightMin || '?'} - ${weightMax || '?'} ct`)}
-      ${infoRow('Color', colorPreference || 'Flexible')}
-      ${infoRow('Calidad', qualityPreference || 'Flexible')}
-      ${infoRow('Presupuesto Máx', budgetMax ? `$${Number(budgetMax).toLocaleString('es-CO')} COP` : 'Flexible')}
-      ${infoRow('Cantidad', quantity || '1')}
+      ${infoRow("Tipo de Producto", productType || "No especificado")}
+      ${infoRow("Peso", `${weightMin || "?"} - ${weightMax || "?"} ct`)}
+      ${infoRow("Color", colorPreference || "Flexible")}
+      ${infoRow("Calidad", qualityPreference || "Flexible")}
+      ${infoRow("Presupuesto Máx", budgetMax ? `$${Number(budgetMax).toLocaleString("es-CO")} COP` : "Flexible")}
+      ${infoRow("Cantidad", quantity || "1")}
     `)}
 
-    ${notes ? `
+    ${
+      notes
+        ? `
     <div style="margin: 20px 0; padding: 16px; background-color: #fef9c3; border-radius: 8px; border-left: 4px solid ${COLORS.gold};">
       <p style="margin: 0; font-size: 13px; color: ${COLORS.textLight};">Notas adicionales:</p>
       <p style="margin: 4px 0 0 0; font-size: 14px; color: ${COLORS.text};">${notes}</p>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
     <p style="margin: 24px 0 0 0; font-size: 14px; color: ${COLORS.text};">
       Por favor responde a esta solicitud con tu mejor oferta.
     </p>
 
-    ${button('Responder Solicitud', `${appUrl}/provider/requests?respond=${requestId}`)}
+    ${button("Responder Solicitud", `${appUrl}/provider/requests?respond=${requestId}`)}
 
     <p style="margin: 0; font-size: 12px; color: ${COLORS.textLight};">
       ID de Solicitud: ${requestId}
@@ -181,8 +185,11 @@ export const newQuotationRequest = ({
   `;
 
   return {
-    subject: '💎 Nueva Solicitud de Cotización - Tierra Madre',
-    html: baseTemplate(content, `Tienes una nueva solicitud de cotización para ${productType}`),
+    subject: "💎 Nueva Solicitud de Cotización - Tierra Madre",
+    html: baseTemplate(
+      content,
+      `Tienes una nueva solicitud de cotización para ${productType}`,
+    ),
   };
 };
 
@@ -202,14 +209,14 @@ export const providerSubmittedQuotation = ({
   description,
   quotationId,
   requestId,
-  appUrl
+  appUrl,
 }) => {
   const content = `
     <h1 style="margin: 0 0 8px 0; font-size: 24px; color: ${COLORS.text};">
       Nueva Cotización Recibida
     </h1>
     <p style="margin: 0 0 24px 0; font-size: 15px; color: ${COLORS.textLight};">
-      ${adminName ? `Hola ${adminName}, ` : ''}${providerName} ha enviado una nueva cotización${requestId ? ' en respuesta a tu solicitud' : ''}.
+      ${adminName ? `Hola ${adminName}, ` : ""}${providerName} ha enviado una nueva cotización${requestId ? " en respuesta a tu solicitud" : ""}.
     </p>
 
     <div style="margin-bottom: 20px; padding: 12px 16px; background-color: ${COLORS.emeraldLight}20; border-radius: 8px; border-left: 4px solid ${COLORS.emerald};">
@@ -219,31 +226,38 @@ export const providerSubmittedQuotation = ({
     </div>
 
     ${detailBox(`
-      ${infoRow('Tipo', productType || 'Esmeralda')}
-      ${infoRow('Peso', weightCarats ? `${weightCarats} ct` : 'No especificado')}
-      ${infoRow('Color', color || 'No especificado')}
-      ${infoRow('Calidad', quality || 'No especificado')}
-      ${infoRow('Precio', priceCOP ? `$${Number(priceCOP).toLocaleString('es-CO')} COP` : 'Consultar')}
+      ${infoRow("Tipo", productType || "Esmeralda")}
+      ${infoRow("Peso", weightCarats ? `${weightCarats} ct` : "No especificado")}
+      ${infoRow("Color", color || "No especificado")}
+      ${infoRow("Calidad", quality || "No especificado")}
+      ${infoRow("Precio", priceCOP ? `$${Number(priceCOP).toLocaleString("es-CO")} COP` : "Consultar")}
     `)}
 
-    ${description ? `
+    ${
+      description
+        ? `
     <div style="margin: 16px 0;">
       <p style="margin: 0; font-size: 13px; color: ${COLORS.textLight};">Descripción:</p>
       <p style="margin: 4px 0 0 0; font-size: 14px; color: ${COLORS.text};">${description}</p>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
-    ${button('Ver Cotización', `${appUrl}/cuentas/cotizaciones-proveedor?id=${quotationId}`)}
+    ${button("Ver Cotización", `${appUrl}/cuentas/cotizaciones-proveedor?id=${quotationId}`)}
 
     <p style="margin: 0; font-size: 12px; color: ${COLORS.textLight};">
       ID de Cotización: ${quotationId}
-      ${requestId ? `<br>En respuesta a solicitud: ${requestId}` : ''}
+      ${requestId ? `<br>En respuesta a solicitud: ${requestId}` : ""}
     </p>
   `;
 
   return {
     subject: `💎 Nueva Cotización de ${providerName} - Tierra Madre`,
-    html: baseTemplate(content, `${providerName} ha enviado una cotización de ${productType}`),
+    html: baseTemplate(
+      content,
+      `${providerName} ha enviado una cotización de ${productType}`,
+    ),
   };
 };
 
@@ -258,33 +272,35 @@ export const quotationStatusChanged = ({
   oldStatus,
   newStatus,
   adminNotes,
-  appUrl
+  appUrl,
 }) => {
   const statusMessages = {
     reservado: {
-      title: '🎉 ¡Tu cotización ha sido reservada!',
-      message: 'El administrador ha reservado tu cotización. Esto significa que hay un cliente interesado.',
-      color: '#f59e0b',
+      title: "🎉 ¡Tu cotización ha sido reservada!",
+      message:
+        "El administrador ha reservado tu cotización. Esto significa que hay un cliente interesado.",
+      color: "#f59e0b",
     },
     vendido: {
-      title: '✨ ¡Cotización vendida!',
-      message: '¡Felicitaciones! Tu producto ha sido vendido.',
+      title: "✨ ¡Cotización vendida!",
+      message: "¡Felicitaciones! Tu producto ha sido vendido.",
       color: COLORS.emerald,
     },
     disponible: {
-      title: 'Cotización disponible nuevamente',
-      message: 'Tu cotización ha vuelto al estado disponible.',
+      title: "Cotización disponible nuevamente",
+      message: "Tu cotización ha vuelto al estado disponible.",
       color: COLORS.emeraldLight,
     },
     rechazado: {
-      title: 'Cotización no seleccionada',
-      message: 'Lamentablemente, tu cotización no fue seleccionada en esta ocasión.',
-      color: '#ef4444',
+      title: "Cotización no seleccionada",
+      message:
+        "Lamentablemente, tu cotización no fue seleccionada en esta ocasión.",
+      color: "#ef4444",
     },
   };
 
   const statusInfo = statusMessages[newStatus] || {
-    title: 'Estado de cotización actualizado',
+    title: "Estado de cotización actualizado",
     message: `El estado de tu cotización ha cambiado a: ${newStatus}`,
     color: COLORS.textLight,
   };
@@ -301,19 +317,23 @@ export const quotationStatusChanged = ({
     </p>
 
     ${detailBox(`
-      ${infoRow('Producto', productType || 'Esmeralda')}
-      ${infoRow('Estado Anterior', oldStatus)}
-      ${infoRow('Nuevo Estado', newStatus.toUpperCase())}
+      ${infoRow("Producto", productType || "Esmeralda")}
+      ${infoRow("Estado Anterior", oldStatus)}
+      ${infoRow("Nuevo Estado", newStatus.toUpperCase())}
     `)}
 
-    ${adminNotes ? `
+    ${
+      adminNotes
+        ? `
     <div style="margin: 20px 0; padding: 16px; background-color: ${COLORS.background}; border-radius: 8px;">
       <p style="margin: 0; font-size: 13px; color: ${COLORS.textLight};">Mensaje del administrador:</p>
       <p style="margin: 4px 0 0 0; font-size: 14px; color: ${COLORS.text};">${adminNotes}</p>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
-    ${button('Ver Mis Cotizaciones', `${appUrl}/provider/mis-cotizaciones`)}
+    ${button("Ver Mis Cotizaciones", `${appUrl}/provider/mis-cotizaciones`)}
 
     <p style="margin: 0; font-size: 12px; color: ${COLORS.textLight};">
       ID de Cotización: ${quotationId}
@@ -335,7 +355,7 @@ export const quotationRequestCancelled = ({
   requestId,
   productType,
   reason,
-  appUrl
+  appUrl,
 }) => {
   const content = `
     <h1 style="margin: 0 0 8px 0; font-size: 24px; color: ${COLORS.text};">
@@ -346,28 +366,35 @@ export const quotationRequestCancelled = ({
     </p>
 
     ${detailBox(`
-      ${infoRow('Tipo de Producto', productType || 'No especificado')}
-      ${infoRow('ID de Solicitud', requestId)}
-      ${infoRow('Estado', 'CANCELADA')}
+      ${infoRow("Tipo de Producto", productType || "No especificado")}
+      ${infoRow("ID de Solicitud", requestId)}
+      ${infoRow("Estado", "CANCELADA")}
     `)}
 
-    ${reason ? `
+    ${
+      reason
+        ? `
     <div style="margin: 20px 0; padding: 16px; background-color: #fef2f2; border-radius: 8px; border-left: 4px solid #ef4444;">
       <p style="margin: 0; font-size: 13px; color: ${COLORS.textLight};">Razón:</p>
       <p style="margin: 4px 0 0 0; font-size: 14px; color: ${COLORS.text};">${reason}</p>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
     <p style="margin: 24px 0 0 0; font-size: 14px; color: ${COLORS.text};">
       Puedes seguir revisando otras solicitudes activas en el sistema.
     </p>
 
-    ${button('Ver Solicitudes', `${appUrl}/provider/requests`, false)}
+    ${button("Ver Solicitudes", `${appUrl}/provider/requests`, false)}
   `;
 
   return {
-    subject: '💎 Solicitud Cancelada - Tierra Madre',
-    html: baseTemplate(content, 'Una solicitud de cotización ha sido cancelada'),
+    subject: "💎 Solicitud Cancelada - Tierra Madre",
+    html: baseTemplate(
+      content,
+      "Una solicitud de cotización ha sido cancelada",
+    ),
   };
 };
 
@@ -393,11 +420,11 @@ export const productRequestForwarded = ({
   neededBy,
   notes,
   requestId,
-  appUrl
+  appUrl,
 }) => {
   const priorityColors = {
-    alta: '#ef4444',
-    media: '#f59e0b',
+    alta: "#ef4444",
+    media: "#f59e0b",
     baja: COLORS.emeraldLight,
   };
 
@@ -406,50 +433,66 @@ export const productRequestForwarded = ({
       Solicitud de Producto
     </h1>
     <p style="margin: 0 0 24px 0; font-size: 15px; color: ${COLORS.textLight};">
-      Hola ${providerName}, un ${requesterRole || 'miembro del equipo'} ha solicitado un producto.
+      Hola ${providerName}, un ${requesterRole || "miembro del equipo"} ha solicitado un producto.
     </p>
 
-    ${priority ? `
+    ${
+      priority
+        ? `
     <div style="display: inline-block; margin-bottom: 16px; padding: 4px 12px; background-color: ${priorityColors[priority] || COLORS.textLight}20; border-radius: 16px;">
       <span style="font-size: 12px; font-weight: 600; color: ${priorityColors[priority] || COLORS.textLight}; text-transform: uppercase;">
         Prioridad ${priority}
       </span>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
     ${detailBox(`
-      ${infoRow('Solicitante', requesterName || 'No especificado')}
-      ${infoRow('Tipo de Producto', productType || 'Esmeralda')}
-      ${infoRow('Peso', `${weightMin || '?'} - ${weightMax || '?'} ct`)}
-      ${infoRow('Color', colorPreference || 'Flexible')}
-      ${infoRow('Calidad', qualityPreference || 'Flexible')}
-      ${budgetMin || budgetMax ? infoRow('Presupuesto', `$${Number(budgetMin || 0).toLocaleString('es-CO')} - $${Number(budgetMax || 0).toLocaleString('es-CO')} COP`) : ''}
-      ${infoRow('Cantidad', quantity || '1')}
-      ${neededBy ? infoRow('Fecha Límite', new Date(neededBy).toLocaleDateString('es-CO')) : ''}
+      ${infoRow("Solicitante", requesterName || "No especificado")}
+      ${infoRow("Tipo de Producto", productType || "Esmeralda")}
+      ${infoRow("Peso", `${weightMin || "?"} - ${weightMax || "?"} ct`)}
+      ${infoRow("Color", colorPreference || "Flexible")}
+      ${infoRow("Calidad", qualityPreference || "Flexible")}
+      ${budgetMin || budgetMax ? infoRow("Presupuesto", `$${Number(budgetMin || 0).toLocaleString("es-CO")} - $${Number(budgetMax || 0).toLocaleString("es-CO")} COP`) : ""}
+      ${infoRow("Cantidad", quantity || "1")}
+      ${neededBy ? infoRow("Fecha Límite", new Date(neededBy).toLocaleDateString("es-CO")) : ""}
     `)}
 
-    ${description ? `
+    ${
+      description
+        ? `
     <div style="margin: 16px 0;">
       <p style="margin: 0; font-size: 13px; color: ${COLORS.textLight};">Descripción:</p>
       <p style="margin: 4px 0 0 0; font-size: 14px; color: ${COLORS.text};">${description}</p>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
-    ${clientName ? `
+    ${
+      clientName
+        ? `
     <div style="margin: 16px 0; padding: 12px; background-color: ${COLORS.gold}15; border-radius: 8px;">
       <p style="margin: 0; font-size: 13px; color: ${COLORS.textLight};">Cliente Final:</p>
       <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: 500; color: ${COLORS.text};">${clientName}</p>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
-    ${notes ? `
+    ${
+      notes
+        ? `
     <div style="margin: 16px 0;">
       <p style="margin: 0; font-size: 13px; color: ${COLORS.textLight};">Notas adicionales:</p>
       <p style="margin: 4px 0 0 0; font-size: 14px; color: ${COLORS.text};">${notes}</p>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
-    ${button('Enviar Cotización', `${appUrl}/provider/quotation-form?productRequestId=${requestId}`)}
+    ${button("Enviar Cotización", `${appUrl}/provider/quotation-form?productRequestId=${requestId}`)}
 
     <p style="margin: 0; font-size: 12px; color: ${COLORS.textLight};">
       ID de Solicitud: ${requestId}
@@ -457,7 +500,7 @@ export const productRequestForwarded = ({
   `;
 
   return {
-    subject: `💎 Solicitud de Producto${priority === 'alta' ? ' - URGENTE' : ''} - Tierra Madre`,
+    subject: `💎 Solicitud de Producto${priority === "alta" ? " - URGENTE" : ""} - Tierra Madre`,
     html: baseTemplate(content, `Nueva solicitud de producto: ${productType}`),
   };
 };
@@ -473,33 +516,33 @@ export const productRequestStatusUpdate = ({
   status,
   adminResponse,
   respondedBy,
-  appUrl
+  appUrl,
 }) => {
   const statusInfo = {
     aprobada: {
-      title: '✅ Solicitud Aprobada',
-      message: 'Tu solicitud de producto ha sido aprobada.',
+      title: "✅ Solicitud Aprobada",
+      message: "Tu solicitud de producto ha sido aprobada.",
       color: COLORS.emerald,
     },
     rechazada: {
-      title: '❌ Solicitud No Aprobada',
-      message: 'Lamentablemente, tu solicitud no fue aprobada.',
-      color: '#ef4444',
+      title: "❌ Solicitud No Aprobada",
+      message: "Lamentablemente, tu solicitud no fue aprobada.",
+      color: "#ef4444",
     },
     enviada_proveedor: {
-      title: '📤 Enviada a Proveedor',
-      message: 'Tu solicitud ha sido enviada a nuestros proveedores.',
-      color: '#3b82f6',
+      title: "📤 Enviada a Proveedor",
+      message: "Tu solicitud ha sido enviada a nuestros proveedores.",
+      color: "#3b82f6",
     },
     completada: {
-      title: '🎉 Solicitud Completada',
-      message: '¡Tu solicitud ha sido completada exitosamente!',
+      title: "🎉 Solicitud Completada",
+      message: "¡Tu solicitud ha sido completada exitosamente!",
       color: COLORS.emerald,
     },
   };
 
   const info = statusInfo[status] || {
-    title: 'Actualización de Solicitud',
+    title: "Actualización de Solicitud",
     message: `El estado de tu solicitud ha cambiado a: ${status}`,
     color: COLORS.textLight,
   };
@@ -516,19 +559,23 @@ export const productRequestStatusUpdate = ({
     </p>
 
     ${detailBox(`
-      ${infoRow('Producto', productType || 'Esmeralda')}
-      ${infoRow('Estado', status.toUpperCase().replace('_', ' '))}
-      ${respondedBy ? infoRow('Respondido por', respondedBy) : ''}
+      ${infoRow("Producto", productType || "Esmeralda")}
+      ${infoRow("Estado", status.toUpperCase().replace("_", " "))}
+      ${respondedBy ? infoRow("Respondido por", respondedBy) : ""}
     `)}
 
-    ${adminResponse ? `
+    ${
+      adminResponse
+        ? `
     <div style="margin: 20px 0; padding: 16px; background-color: ${COLORS.background}; border-radius: 8px;">
       <p style="margin: 0; font-size: 13px; color: ${COLORS.textLight};">Respuesta del administrador:</p>
       <p style="margin: 4px 0 0 0; font-size: 14px; color: ${COLORS.text};">${adminResponse}</p>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
-    ${button('Ver Mis Solicitudes', `${appUrl}/mis-solicitudes`)}
+    ${button("Ver Mis Solicitudes", `${appUrl}/mis-solicitudes`)}
 
     <p style="margin: 0; font-size: 12px; color: ${COLORS.textLight};">
       ID de Solicitud: ${requestId}
@@ -541,6 +588,74 @@ export const productRequestStatusUpdate = ({
   };
 };
 
+/**
+ * Template: Venta Kardex (Sale → Buyer)
+ * Sent when a sale closes — delivers the buyer their Kardex (and optional
+ * Certificado de Origen) as Drive view links inside the email body.
+ *
+ * Required data:
+ *  - saleId          (e.g. "V-0042")
+ *  - buyerName       (string)
+ *  - carnetUrl       (string, Drive view URL — REQUIRED)
+ *  - certificadoUrl  (string, optional — only rendered when truthy)
+ *  - appUrl          (injected by the central send wrapper)
+ */
+export const ventaKardex = ({
+  saleId,
+  buyerName,
+  carnetUrl,
+  certificadoUrl,
+}) => {
+  // Tiny local HTML escaper for user-supplied strings (buyer name).
+  const escapeHtml = (value) =>
+    String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+  const safeBuyerName = escapeHtml(buyerName) || "cliente";
+  const safeSaleId = escapeHtml(saleId);
+
+  const content = `
+    <h1 style="margin: 0 0 8px 0; font-size: 24px; color: ${COLORS.text};">
+      Hola, ${safeBuyerName}
+    </h1>
+    <p style="margin: 0 0 16px 0; font-size: 15px; color: ${COLORS.text};">
+      Tenemos lista la documentación de tu venta ${safeSaleId} con Tierra Madre. Podés acceder a tu Kardex desde el siguiente enlace:
+    </p>
+
+    ${button("Ver Kardex", carnetUrl)}
+
+    ${
+      certificadoUrl
+        ? `
+    <p style="margin: 16px 0 0 0; font-size: 15px; color: ${COLORS.text};">
+      Además, te compartimos el Certificado de Origen de tu pieza:
+    </p>
+
+    ${button("Ver Certificado de Origen", certificadoUrl, false)}
+    `
+        : ""
+    }
+
+    <p style="margin: 24px 0 16px 0; font-size: 14px; color: ${COLORS.text};">
+      Si necesitás cualquier cosa, respondé a este correo y te atendemos directamente.
+    </p>
+
+    <p style="margin: 0; font-size: 13px; font-style: italic; color: ${COLORS.textLight};">
+      — Equipo Tierra Madre Studio
+    </p>
+  `;
+
+  return {
+    subject: `Tu Kardex de Tierra Madre · ${saleId}`,
+    html: baseTemplate(
+      content,
+      `Documentación de tu venta ${saleId} con Tierra Madre`,
+    ),
+  };
+};
+
 // Export all templates
 export default {
   newQuotationRequest,
@@ -549,4 +664,5 @@ export default {
   quotationRequestCancelled,
   productRequestForwarded,
   productRequestStatusUpdate,
+  ventaKardex,
 };

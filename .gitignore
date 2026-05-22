@@ -94,3 +94,32 @@ public/gallery/
 .claude/settings.local.json
 .env*.local
 .superpowers/
+
+# Tooling caches & MCP scratch
+.gstack/
+.playwright-mcp/
+vite.config.js.timestamp-*
+vite.config.js.disabled-by-test
+
+# Local QA/audit screenshots (root only — keep src/ docs/specs clean)
+/qa-*.png
+/qa-*.jpg
+/f04-*.png
+/foto-*.png
+/fv2-*.png
+/phase13-*.png
+/grid-*.png
+/post-*.png
+/IMG_*.jpg
+/IMG_*.JPG
+/IMG_*.jpeg
+
+# Local reports & analysis dumps
+/Reporte-*.docx
+/_slide_review/
+/emerald-row/
+/wb-*/
+/docs/previews/
+/docs/reuniones/
+/docs/Cierres Reels (Opciones)/
+
