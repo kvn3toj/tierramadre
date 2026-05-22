@@ -38,6 +38,7 @@ import {
   ShoppingBag,
   ChevronRight,
   Package,
+  Camera,
 } from "lucide-react";
 import FeedbackWizard from "../feedback/FeedbackWizard";
 import { InvitationGenerator } from "../invitation";
@@ -178,14 +179,22 @@ const buildMenuSections = (
       title: t.menu.admin.toUpperCase(),
       tools: [
         {
+          id: "fotosintesis",
+          label: "Fotosíntesis",
+          subtitle: "Captura: compra → inventario → venta → carnet",
+          icon: Camera as any,
+          route: "/admin/fotosintesis",
+          color: emeraldCore.primary,
+        },
+        {
           id: "atelier-products",
-          label: t.tools.atelierProducts?.label || "Atelier · Fotosíntesis",
+          label: t.tools.atelierProducts?.label || "Atelier · Inventario",
           subtitle:
             t.tools.atelierProducts?.subtitle ||
-            "Donde la hoja maestra se vuelve catálogo vivo",
+            "Consulta y edición fina de la hoja maestra",
           icon: Package as any,
           route: "/admin/products",
-          color: emeraldCore.primary,
+          color: emeraldCore.dark,
         },
         {
           id: "analytics",
