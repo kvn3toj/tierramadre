@@ -233,3 +233,46 @@ Se eligió un híbrido seguro: **sheet nuevo dedicado para Fotosíntesis v2**, s
 1. En Vercel: añadir `FOTOSINTESIS_SPREADSHEET_ID=18w0DcP_4CO-le9_vt_UPGCHXAVXkQ5sugLF4r_o2bVM` a Environment Variables (Production + Preview).
 2. Después del próximo deploy: smoke test `/api/get-table?table=providers|lots|clients|sales` desde el navegador con `x-admin-sync-token`, o correr `npm run smoke:fotosintesis` localmente.
 3. Cuando ya esté operando: poblar los proveedores/lotes reales desde Fotosíntesis (no más a mano en GENESIS).
+
+---
+
+## 8. Auditoría post-implementación (2026-05-22)
+
+### Verificaciones que pasaron
+
+- Headers columna a columna en los 5 tabs vs `admin-table-config.ts` + `columnMaps.ts` + `INVENTARIO_HEADERS` de `get-treasure-sheets.ts`: **match exacto** (Proveedores 8/8, Lotes 14/14, Inventario 21/21, Clientes 8/8, Ventas 15/15).
+- Service account `tierra-madre-inventory@...` lee los 5 tabs sin error.
+- `getSheetNames(sheets, SPREADSHEET_ID)` pasa el id explícito tanto en `get-table.ts` (línea 63) como en `admin-table-update.ts` (línea 109).
+- Round-trip de escritura end-to-end al SOT nuevo (`Proveedores` row 3): write + read-back + cleanup → OK.
+- `npx tsc --noEmit` sin errores en los archivos modificados.
+- Grep exhaustivo en `api/`: ningún flujo Fotosíntesis administrativo sigue apuntando al legacy `SPREADSHEET_ID`.
+
+### Asimetría detectada
+
+Los 4 endpoints admin (`providers/lots/clients/sales`) escriben al SOT nuevo.
+Pero `lotItems.create` también inserta un row en `productInventory` que se sincroniza vía `api.products.pushToSheet` → `/api/admin-product-update.ts`, y ese endpoint sigue apuntando al **sheet legacy** (`1mghR6...`).
+
+**Consecuencia:** un ítem capturado por Maritza en Fotosíntesis aparecerá en:
+- Convex `productInventory` (mirror).
+- Sheet legacy `Inventario` tab (vía push existente).
+- **NO** en el sheet nuevo `Inventario` tab.
+
+Choca con la intención "en genesis únicamente hacemos el proceso de ingreso desde hoy en adelante".
+
+**Opciones para resolver:**
+
+A. **Aceptar la mezcla.** Items nuevos siguen yendo al legacy. El sheet nuevo solo sirve para Proveedores/Lotes/Clientes/Ventas. La pestaña `Inventario` del nuevo SOT queda como semilla GENESIS, no destino. Cero código adicional.
+
+B. **Routing dual en `admin-product-update.ts`.** Detectar si el ítem viene de Fotosíntesis (e.g., `loteId` presente) y enrutar el write al nuevo SOT. Items legacy siguen yendo al legacy. Requiere refactor en `admin-product-update.ts` para honrar `FOTOSINTESIS_SPREADSHEET_ID` condicionalmente, posiblemente segundo mirror en Convex.
+
+C. **Switch total.** Todo `productInventory` write va al nuevo SOT. El catálogo público `get-treasure-sheets` deja de ver los cientos de ítems existentes hasta migrar. No recomendado sin migración previa.
+
+**Recomendación:** opción A en esta iteración. Si en el futuro Maritza quiere catálogo separado, movemos a B.
+
+### Otros usos legítimos de `SPREADSHEET_ID` legacy (no cambiar)
+
+`health.js`, `get-asesores.ts`, `admin-product-update.ts`, `create-product-folders.js`, `send-email.js`, `validate.ts`, `cotizacion-save.ts`, `get-treasure-sheets.ts`, `og-product.js` — flujos del catálogo legacy o features ortogonales a Fotosíntesis.
+
+### Veredicto
+
+**Aprobado para deploy** con la salvedad anterior documentada. Los 4 tabs admin están al 100%. Decisión pendiente: qué hacer con la pestaña `Inventario` del nuevo SOT (opción A/B/C) antes del primer ingreso real.
