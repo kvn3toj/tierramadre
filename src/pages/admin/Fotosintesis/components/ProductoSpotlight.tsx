@@ -305,20 +305,23 @@ export function ProductoSpotlight({
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "210px 1fr",
-          minHeight: 540,
-          maxHeight: 540,
+          // Stack the filter sidebar above the results on narrow viewports
+          // so the result list fills the modal width. The sidebar is
+          // disabled in Slice 1 anyway, so it collapses to a thin header.
+          gridTemplateColumns: { xs: "1fr", sm: "210px 1fr" },
+          minHeight: { xs: 420, sm: 540 },
+          maxHeight: { xs: "70vh", sm: 540 },
           borderBottom: `1px solid ${foto.surfaces.edge}`,
         }}
       >
         {/* Left: filters (disabled this slice) */}
         <Box
           sx={{
+            display: { xs: "none", sm: "flex" },
             padding: "16px 18px",
             borderRight: `1px solid ${foto.surfaces.edge}`,
             background: foto.surfaces.panel,
             overflow: "auto",
-            display: "flex",
             flexDirection: "column",
             gap: "18px",
           }}

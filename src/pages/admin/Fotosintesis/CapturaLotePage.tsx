@@ -278,15 +278,11 @@ function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
   const [error, setError] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Provider drawer auto-opens once on mount when there's no provider yet
-  // (handoff §4.2 — "auto-opens if the lot has no providerId").
-  const autoOpenedRef = useRef(false);
-  useEffect(() => {
-    if (!providerId && !autoOpenedRef.current) {
-      autoOpenedRef.current = true;
-      setDrawerOpen(true);
-    }
-  }, [providerId]);
+  // Provider drawer no longer auto-opens on the new-lot intro: the QA
+  // pass at 360/768 showed it covered the entire form on first load, so
+  // we let the user click "Elegir proveedor" explicitly. The auto-open
+  // behaviour still applies inside `<ActiveLotPage>` for legacy lots
+  // that lack a providerId (handoff §4.2).
 
   const canSubmit =
     !!providerId &&

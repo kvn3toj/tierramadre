@@ -59,6 +59,11 @@ export function FotoTopbar({
           display: "flex",
           alignItems: "center",
           gap: 0,
+          minWidth: 0,
+          flex: "1 1 auto",
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
         }}
       >
         {crumbs.map((crumb, idx) => {
@@ -104,11 +109,21 @@ export function FotoTopbar({
         })}
       </Box>
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          minWidth: 0,
+          flexShrink: 0,
+        }}
+      >
         <Box
           aria-label={sync.label}
           sx={{
-            display: "inline-flex",
+            // Hide the sync chip on narrow viewports — the dot alone is
+            // enough signal and the breadcrumbs need the horizontal room.
+            display: { xs: "none", sm: "inline-flex" },
             alignItems: "center",
             gap: 0.75,
             padding: "5px 10px",
@@ -141,7 +156,9 @@ export function FotoTopbar({
         <Box
           aria-label="Atajo: Buscar"
           sx={{
-            display: "inline-flex",
+            // Same rationale as the sync chip — the ⌘K shortcut is also
+            // discoverable from the FAB / page hints on narrow viewports.
+            display: { xs: "none", sm: "inline-flex" },
             alignItems: "center",
             gap: 0.75,
             padding: "5px 10px",

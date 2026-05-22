@@ -10,6 +10,7 @@ import {
   Compass,
   PackagePlus,
   Search,
+  Sparkles,
   Tag,
   UserPlus,
   Users,
@@ -17,6 +18,9 @@ import {
 } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../../design-system";
 import { KbdKey } from "./KbdKey";
+import { CopilotPanel } from "./CopilotPanel";
+
+type FabTab = "guide" | "copilot";
 
 interface FotosintesisGuideFabProps {
   /** Defaults to false. Controlled prop is optional — uncontrolled by default. */
@@ -54,6 +58,7 @@ export function FotosintesisGuideFab({
   const subtitleId = useId();
 
   const [internalOpen, setInternalOpen] = useState(false);
+  const [tab, setTab] = useState<FabTab>("guide");
   const open = openProp ?? internalOpen;
   const setOpen = (next: boolean) => {
     if (openProp === undefined) setInternalOpen(next);
@@ -152,13 +157,13 @@ export function FotosintesisGuideFab({
   return (
     <>
       <Tooltip
-        title="Guía del flujo · ?"
+        title="Guía + Fotosynthia · ?"
         placement="left"
         enterDelay={400}
         arrow
       >
         <IconButton
-          aria-label="Abrir guía del flujo de Fotosíntesis"
+          aria-label="Abrir guía del flujo y copiloto Fotosynthia"
           aria-haspopup="dialog"
           aria-expanded={open}
           onClick={() => setOpen(true)}
@@ -167,11 +172,14 @@ export function FotosintesisGuideFab({
             // Lifted above the global iOS bottom tab bar (~80px) AND the
             // "nueva versión disponible" update banner that stacks on top of
             // it (~70px). Total clearance: ~170px + breathing room.
-            bottom: { xs: 180, md: 188 },
-            right: { xs: 20, md: 28 },
+            // Smaller + tucked tighter on phones so it doesn't overlap form
+            // content (QA flagged collisions with the Venta totals and
+            // Captura inputs at mobile widths).
+            bottom: { xs: 168, md: 188 },
+            right: { xs: 12, md: 28 },
             zIndex: 1300,
-            width: 56,
-            height: 56,
+            width: { xs: 44, md: 56 },
+            height: { xs: 44, md: 56 },
             borderRadius: "50%",
             background: foto.accent.primary,
             color: foto.ink.inverse,
@@ -244,7 +252,9 @@ export function FotosintesisGuideFab({
                   fontWeight: 500,
                 }}
               >
-                Atelier · guía del flujo
+                {tab === "guide"
+                  ? "Atelier · guía del flujo"
+                  : "Atelier · Fotosynthia copiloto"}
               </Box>
               <Box
                 component="h2"
@@ -258,7 +268,9 @@ export function FotosintesisGuideFab({
                   color: foto.ink.primary,
                 }}
               >
-                Cómo funciona Fotosíntesis
+                {tab === "guide"
+                  ? "Cómo funciona Fotosíntesis"
+                  : "Habla con Fotosynthia"}
               </Box>
               <Box
                 id={subtitleId}
@@ -269,8 +281,9 @@ export function FotosintesisGuideFab({
                   maxWidth: 380,
                 }}
               >
-                El ciclo completo en ocho pasos — desde que llega una caja hasta
-                que el Kardex viaja al comprador.
+                {tab === "guide"
+                  ? "El ciclo completo en ocho pasos — desde que llega una caja hasta que el Kardex viaja al comprador."
+                  : "Pregúntale por lotes, ventas, embajadores o el flujo en general. Responde en español, con datos vivos del taller."}
               </Box>
             </Box>
             <IconButton
@@ -293,177 +306,251 @@ export function FotosintesisGuideFab({
             </IconButton>
           </Box>
 
-          {/* BODY */}
+          {/* TABS — Guía / Copiloto */}
           <Box
-            component="ol"
+            role="tablist"
+            aria-label="Secciones de la guía"
             sx={{
-              flex: 1,
-              overflowY: "auto",
-              margin: 0,
-              padding: "20px 26px 24px",
-              listStyle: "none",
-              display: "flex",
-              flexDirection: "column",
-              gap: "14px",
+              padding: "10px 26px 0",
+              borderBottom: `1px solid ${foto.surfaces.rule}`,
+              background: foto.surfaces.canvas,
+              display: "inline-flex",
+              gap: "4px",
             }}
           >
-            {steps.map((step) => (
-              <Box
-                key={step.number}
-                component="li"
-                sx={{
-                  border: `1px solid ${foto.surfaces.rule}`,
-                  borderRadius: "12px",
-                  padding: "16px 16px 14px",
-                  background: foto.surfaces.canvas,
-                  display: "grid",
-                  gridTemplateColumns: "auto 1fr",
-                  columnGap: "14px",
-                  rowGap: "10px",
-                  transition: "border-color 120ms ease, background 120ms ease",
-                  "&:hover": {
-                    borderColor: foto.surfaces.edgeStrong,
-                    background: foto.surfaces.panel,
-                  },
-                }}
-              >
+            {[
+              { id: "guide" as FabTab, label: "Guía", icon: BookOpen },
+              {
+                id: "copilot" as FabTab,
+                label: "Copiloto",
+                icon: Sparkles,
+              },
+            ].map(({ id, label, icon: Icon }) => {
+              const isActive = tab === id;
+              return (
                 <Box
+                  key={id}
+                  component="button"
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setTab(id)}
                   sx={{
-                    display: "flex",
-                    flexDirection: "column",
+                    fontFamily: "inherit",
+                    fontSize: "12px",
+                    fontWeight: isActive ? 600 : 500,
+                    color: isActive ? foto.accent.deep : foto.ink.secondary,
+                    background: "transparent",
+                    border: "none",
+                    padding: "10px 12px",
+                    borderBottom: `2px solid ${
+                      isActive ? foto.accent.primary : "transparent"
+                    }`,
+                    cursor: "pointer",
+                    display: "inline-flex",
                     alignItems: "center",
-                    gap: "8px",
+                    gap: "6px",
+                    transition: "color 120ms ease, border-color 120ms ease",
+                    "&:hover": {
+                      color: isActive ? foto.accent.deep : foto.ink.primary,
+                    },
+                    "&:focus-visible": {
+                      outline: "none",
+                      boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+                      borderRadius: "4px",
+                    },
+                  }}
+                >
+                  <Icon size={14} strokeWidth={1.8} />
+                  {label}
+                </Box>
+              );
+            })}
+          </Box>
+
+          {/* BODY · GUÍA */}
+          {tab === "guide" && (
+            <Box
+              component="ol"
+              sx={{
+                flex: 1,
+                overflowY: "auto",
+                margin: 0,
+                padding: "20px 26px 24px",
+                listStyle: "none",
+                display: "flex",
+                flexDirection: "column",
+                gap: "14px",
+              }}
+            >
+              {steps.map((step) => (
+                <Box
+                  key={step.number}
+                  component="li"
+                  sx={{
+                    border: `1px solid ${foto.surfaces.rule}`,
+                    borderRadius: "12px",
+                    padding: "16px 16px 14px",
+                    background: foto.surfaces.canvas,
+                    display: "grid",
+                    gridTemplateColumns: "auto 1fr",
+                    columnGap: "14px",
+                    rowGap: "10px",
+                    transition:
+                      "border-color 120ms ease, background 120ms ease",
+                    "&:hover": {
+                      borderColor: foto.surfaces.edgeStrong,
+                      background: foto.surfaces.panel,
+                    },
                   }}
                 >
                   <Box
-                    aria-hidden
                     sx={{
-                      fontFamily: fontFamilies.mono,
-                      fontSize: "11px",
-                      fontVariantNumeric: "tabular-nums",
-                      letterSpacing: "-0.005em",
-                      color: foto.accent.deep,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {step.number}
-                  </Box>
-                  <Box
-                    aria-hidden
-                    sx={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: "9px",
-                      background: foto.accent.soft,
-                      color: foto.accent.deep,
                       display: "flex",
+                      flexDirection: "column",
                       alignItems: "center",
-                      justifyContent: "center",
+                      gap: "8px",
                     }}
                   >
-                    {step.icon}
-                  </Box>
-                </Box>
-                <Box>
-                  <Box
-                    sx={{
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      letterSpacing: "-0.015em",
-                      color: foto.ink.primary,
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    {step.title}
-                  </Box>
-                  <Box
-                    sx={{
-                      marginTop: "6px",
-                      fontSize: "12.5px",
-                      color: foto.ink.secondary,
-                      lineHeight: 1.55,
-                    }}
-                  >
-                    {step.body}
-                  </Box>
-                  {(step.link || step.shortcut) && (
                     <Box
+                      aria-hidden
                       sx={{
-                        marginTop: "12px",
-                        display: "flex",
-                        flexWrap: "wrap",
-                        alignItems: "center",
-                        gap: "10px",
+                        fontFamily: fontFamilies.mono,
+                        fontSize: "11px",
+                        fontVariantNumeric: "tabular-nums",
+                        letterSpacing: "-0.005em",
+                        color: foto.accent.deep,
+                        fontWeight: 600,
                       }}
                     >
-                      {step.link && (
-                        <Box
-                          component={RouterLink}
-                          to={step.link.to}
-                          onClick={() => setOpen(false)}
-                          sx={{
-                            fontSize: "11.5px",
-                            fontWeight: 600,
-                            color: foto.accent.deep,
-                            textDecoration: "none",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px",
-                            padding: "5px 0",
-                            borderBottom: `1px solid transparent`,
-                            transition:
-                              "color 120ms ease, border-color 120ms ease",
-                            "&:hover": {
-                              color: foto.accent.primary,
-                              borderColor: foto.accent.primary,
-                            },
-                            "&:focus-visible": {
-                              outline: "none",
-                              boxShadow: `0 0 0 3px ${foto.accent.glow}`,
-                              borderRadius: "4px",
-                            },
-                          }}
-                        >
-                          {step.link.label}
-                          <ArrowRight size={12} strokeWidth={2} />
-                        </Box>
-                      )}
-                      {step.shortcut && (
-                        <Box
-                          sx={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            fontSize: "10.5px",
-                            color: foto.ink.tertiary,
-                          }}
-                        >
+                      {step.number}
+                    </Box>
+                    <Box
+                      aria-hidden
+                      sx={{
+                        width: 30,
+                        height: 30,
+                        borderRadius: "9px",
+                        background: foto.accent.soft,
+                        color: foto.accent.deep,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {step.icon}
+                    </Box>
+                  </Box>
+                  <Box>
+                    <Box
+                      sx={{
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        letterSpacing: "-0.015em",
+                        color: foto.ink.primary,
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {step.title}
+                    </Box>
+                    <Box
+                      sx={{
+                        marginTop: "6px",
+                        fontSize: "12.5px",
+                        color: foto.ink.secondary,
+                        lineHeight: 1.55,
+                      }}
+                    >
+                      {step.body}
+                    </Box>
+                    {(step.link || step.shortcut) && (
+                      <Box
+                        sx={{
+                          marginTop: "12px",
+                          display: "flex",
+                          flexWrap: "wrap",
+                          alignItems: "center",
+                          gap: "10px",
+                        }}
+                      >
+                        {step.link && (
                           <Box
-                            component="span"
+                            component={RouterLink}
+                            to={step.link.to}
+                            onClick={() => setOpen(false)}
                             sx={{
-                              fontSize: "9px",
-                              letterSpacing: "0.18em",
-                              textTransform: "uppercase",
-                              fontWeight: 500,
+                              fontSize: "11.5px",
+                              fontWeight: 600,
+                              color: foto.accent.deep,
+                              textDecoration: "none",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "5px 0",
+                              borderBottom: `1px solid transparent`,
+                              transition:
+                                "color 120ms ease, border-color 120ms ease",
+                              "&:hover": {
+                                color: foto.accent.primary,
+                                borderColor: foto.accent.primary,
+                              },
+                              "&:focus-visible": {
+                                outline: "none",
+                                boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+                                borderRadius: "4px",
+                              },
                             }}
                           >
-                            Atajo
+                            {step.link.label}
+                            <ArrowRight size={12} strokeWidth={2} />
                           </Box>
-                          <Box sx={{ display: "inline-flex", gap: "3px" }}>
-                            {step.shortcut.map((k, i) => (
-                              <KbdKey key={`${step.number}-${k}-${i}`}>
-                                {k}
-                              </KbdKey>
-                            ))}
+                        )}
+                        {step.shortcut && (
+                          <Box
+                            sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              fontSize: "10.5px",
+                              color: foto.ink.tertiary,
+                            }}
+                          >
+                            <Box
+                              component="span"
+                              sx={{
+                                fontSize: "9px",
+                                letterSpacing: "0.18em",
+                                textTransform: "uppercase",
+                                fontWeight: 500,
+                              }}
+                            >
+                              Atajo
+                            </Box>
+                            <Box sx={{ display: "inline-flex", gap: "3px" }}>
+                              {step.shortcut.map((k, i) => (
+                                <KbdKey key={`${step.number}-${k}-${i}`}>
+                                  {k}
+                                </KbdKey>
+                              ))}
+                            </Box>
                           </Box>
-                        </Box>
-                      )}
-                    </Box>
-                  )}
+                        )}
+                      </Box>
+                    )}
+                  </Box>
                 </Box>
+              ))}
+            </Box>
+          )}
+
+          {/* BODY · COPILOTO */}
+          {tab === "copilot" && (
+            <Box sx={{ flex: 1, minHeight: 0, display: "flex" }}>
+              <Box sx={{ flex: 1, display: "flex", minHeight: 0 }}>
+                <CopilotPanel active={open && tab === "copilot"} />
               </Box>
-            ))}
-          </Box>
+            </Box>
+          )}
 
           {/* FOOTER */}
           <Box
@@ -483,7 +570,11 @@ export function FotosintesisGuideFab({
               sx={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
             >
               <KbdKey>?</KbdKey>
-              <span>abre o cierra esta guía</span>
+              <span>
+                {tab === "guide"
+                  ? "abre o cierra esta guía"
+                  : "abre o cierra el copiloto"}
+              </span>
             </Box>
             <Box
               component="button"

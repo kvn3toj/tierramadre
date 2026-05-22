@@ -66,9 +66,12 @@ export function TicketHeader({
           maxWidth: 1320,
           margin: "0 auto",
           display: "grid",
-          gridTemplateColumns: "auto 1fr auto",
-          gap: "28px",
-          alignItems: "end",
+          // Stack the three slots on mobile so the 42px mono ID never
+          // collides with meta + stepper. QA showed catastrophic wrap
+          // at 360 — vertical stack below `md`.
+          gridTemplateColumns: { xs: "1fr", md: "auto 1fr auto" },
+          gap: { xs: "18px", md: "28px" },
+          alignItems: { xs: "stretch", md: "end" },
         }}
       >
         <Box>
@@ -76,7 +79,9 @@ export function TicketHeader({
             sx={{
               fontFamily: fontFamilies.mono,
               fontVariantNumeric: "tabular-nums",
-              fontSize: 42,
+              // Slightly smaller ID on phones so the 42px monospace
+              // doesn't dominate a 360px viewport.
+              fontSize: { xs: 32, sm: 38, md: 42 },
               fontWeight: 300,
               letterSpacing: "-0.055em",
               lineHeight: 1,
@@ -101,11 +106,16 @@ export function TicketHeader({
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: meta.length
-              ? `repeat(${meta.length}, minmax(0, auto))`
-              : "1fr",
-            gap: "32px",
-            justifyContent: "start",
+            // Mobile: 2-col meta grid that wraps naturally.
+            // Desktop: original auto-fit single row.
+            gridTemplateColumns: {
+              xs: "repeat(2, minmax(0, 1fr))",
+              md: meta.length
+                ? `repeat(${meta.length}, minmax(0, auto))`
+                : "1fr",
+            },
+            gap: { xs: "12px 18px", md: "32px" },
+            justifyContent: { xs: "stretch", md: "start" },
           }}
         >
           {meta.map((m) => (
@@ -137,7 +147,22 @@ export function TicketHeader({
         </Box>
 
         {rightSlot ? (
-          <Box sx={{ display: "flex", alignItems: "end" }}>{rightSlot}</Box>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: { xs: "stretch", md: "end" },
+              // Horizontal scroll on mobile so the step pill row never
+              // clips at the right edge — fits the "stepper as scroller"
+              // QA recommendation.
+              overflowX: { xs: "auto", md: "visible" },
+              maxWidth: "100%",
+              paddingBottom: { xs: "4px", md: 0 },
+              scrollbarWidth: "none",
+              "&::-webkit-scrollbar": { display: "none" },
+            }}
+          >
+            {rightSlot}
+          </Box>
         ) : null}
       </Box>
 

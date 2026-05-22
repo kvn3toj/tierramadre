@@ -80,7 +80,16 @@ export default function FotosintesisLayout() {
         }}
       >
         <FotoTopbar crumbs={crumbs} syncStatus="synced" userInitial="M" />
-        <Outlet />
+        <Box
+          sx={{
+            // Reserve room at the bottom so the floating GuideFab + the
+            // global iOS tab bar never sit on top of page content when
+            // scrolled to the end. QA flagged this at every viewport.
+            paddingBottom: { xs: "220px", md: "120px" },
+          }}
+        >
+          <Outlet />
+        </Box>
         <FotosintesisGuideFab />
       </Box>
 

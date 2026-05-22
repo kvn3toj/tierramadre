@@ -287,10 +287,15 @@ export default function FotosintesisDirectorioPage() {
         sx={{
           maxWidth: 1320,
           margin: "0 auto",
-          padding: "0 28px",
+          padding: { xs: "0 16px", md: "0 28px" },
           display: "flex",
           gap: "4px",
           borderBottom: `1px solid ${foto.surfaces.edge}`,
+          // Horizontal scroll on phones so the 3rd tab is never clipped.
+          overflowX: { xs: "auto", md: "visible" },
+          scrollbarWidth: "none",
+          "&::-webkit-scrollbar": { display: "none" },
+          flexWrap: "nowrap",
         }}
       >
         <TabButton
