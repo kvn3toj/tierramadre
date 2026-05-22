@@ -25,6 +25,15 @@ import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
  * Spec: docs/specs/2026-05-21-fotosintesis-v2-handoff.md §4.1
  * Visual source of truth: docs/previews/fotosintesis-v2/home.html
  */
+
+function formaPagoLabel(formaPago: string): string {
+  if (formaPago === "contado") return "Contado";
+  if (formaPago === "credito") return "Crédito";
+  if (formaPago === "esmereogenesis") return "Esmereogénesis";
+  if (formaPago === "bajo_pedido") return "Bajo pedido";
+  if (formaPago === "consignacion") return "Consignación";
+  return formaPago;
+}
 export default function FotosintesisHomePage() {
   const foto = getFoto("light");
   const { user } = useGoogleAuth();
@@ -659,7 +668,7 @@ export default function FotosintesisHomePage() {
                         >
                           {lot.unidadesDeclaradas}
                         </Box>{" "}
-                        unidades declaradas · {lot.formaPago}
+                        unidades declaradas · {formaPagoLabel(lot.formaPago)}
                       </Box>
                     </Box>
                     <Box

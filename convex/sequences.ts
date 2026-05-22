@@ -63,12 +63,28 @@ export const peek = internalQuery({
   },
 });
 
-/** "B-001", "B-002", … "B-9999". */
-export function formatLotId(n: number): string {
-  return `B-${String(n).padStart(3, "0")}`;
+export type Sede = "B" | "C";
+
+/**
+ * Sequence name for a lot id. Legacy callers used `"lot"` (Bogotá-only);
+ * we keep that name for sede `B` so the counter continues uninterrupted,
+ * and use `"lot:C"` for the new Cali sede.
+ */
+export function lotSequenceName(sede: Sede): string {
+  return sede === "B" ? "lot" : "lot:C";
 }
 
-/** "V-0001", "V-0002", … "V-99999". */
-export function formatSaleId(n: number): string {
-  return `V-${String(n).padStart(4, "0")}`;
+/** Same migration trick as `lotSequenceName` — preserves the legacy V- counter. */
+export function saleSequenceName(sede: Sede): string {
+  return sede === "B" ? "sale" : "sale:C";
+}
+
+/** "B-001"/"C-001", … "B-9999"/"C-9999". */
+export function formatLotId(n: number, sede: Sede): string {
+  return `${sede}-${String(n).padStart(3, "0")}`;
+}
+
+/** "VB-0001"/"VC-0001", … "VB-99999"/"VC-99999". */
+export function formatSaleId(n: number, sede: Sede): string {
+  return `V${sede}-${String(n).padStart(4, "0")}`;
 }

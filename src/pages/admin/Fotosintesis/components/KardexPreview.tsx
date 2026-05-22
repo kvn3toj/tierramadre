@@ -80,6 +80,8 @@ function formatPago(formaPago?: string, metodoContado?: string): string {
   }
   if (formaPago === "esmereogenesis") return "Esmereogénesis";
   if (formaPago === "credito") return "Crédito";
+  if (formaPago === "bajo_pedido") return "Bajo pedido";
+  if (formaPago === "consignacion") return "Consignación";
   return formaPago;
 }
 

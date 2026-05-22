@@ -9,12 +9,16 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { pushTableRowToVercel } from "./_lib/sheetSync";
 import { COLUMN_MAPS } from "./_lib/columnMaps";
-import { allocateNext, formatLotId } from "./sequences";
+import { allocateNext, formatLotId, lotSequenceName } from "./sequences";
+
+const sedeValidator = v.union(v.literal("B"), v.literal("C"));
 
 const formaPagoValidator = v.union(
   v.literal("contado"),
   v.literal("credito"),
   v.literal("esmereogenesis"),
+  v.literal("bajo_pedido"),
+  v.literal("consignacion"),
 );
 
 const metodoContadoValidator = v.union(
@@ -72,23 +76,24 @@ export const getByLoteId = query({
 });
 
 /**
- * Read-only peek at the next lot ID. Lets the form preview "B-008"
- * before submit. Does NOT consume the sequence.
+ * Read-only peek at the next lot ID for the chosen sede. Lets the form
+ * preview "B-008" / "C-001" before submit. Does NOT consume the sequence.
  */
 export const peekNextLoteId = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { sede: sedeValidator },
+  handler: async (ctx, { sede }) => {
     const seq = await ctx.db
       .query("sequences")
-      .withIndex("by_name", (q) => q.eq("name", "lot"))
+      .withIndex("by_name", (q) => q.eq("name", lotSequenceName(sede)))
       .first();
     const next = seq?.nextValue ?? 1;
-    return { nextValue: next, preview: formatLotId(next) };
+    return { nextValue: next, preview: formatLotId(next, sede) };
   },
 });
 
 export const create = mutation({
   args: {
+    sede: sedeValidator,
     providerId: v.id("providers"),
     fechaRecepcion: v.string(),
     pesoTotalQuilates: v.optional(v.number()),
@@ -114,8 +119,8 @@ export const create = mutation({
     const provider = await ctx.db.get(args.providerId);
     if (!provider) throw new Error("Proveedor no encontrado");
 
-    const seqValue = await allocateNext(ctx, "lot");
-    const loteId = formatLotId(seqValue);
+    const seqValue = await allocateNext(ctx, lotSequenceName(args.sede));
+    const loteId = formatLotId(seqValue, args.sede);
 
     const now = new Date().toISOString();
     const all = await ctx.db.query("lots").collect();

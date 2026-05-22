@@ -46,8 +46,14 @@ import { beginStage, logFailure, logStage } from "./instrumentation";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 type CompradorTipo = "embajador" | "final";
-type FormaPago = "contado" | "esmereogenesis" | "credito";
+type FormaPago =
+  | "contado"
+  | "esmereogenesis"
+  | "credito"
+  | "bajo_pedido"
+  | "consignacion";
 type MetodoContado = "efectivo" | "transferencia";
+type Sede = "B" | "C";
 
 function formatCop(value: number | undefined | null): string {
   if (typeof value !== "number" || Number.isNaN(value)) return "—";
@@ -81,6 +87,9 @@ export default function FotosintesisVentaPage() {
   const initialItemId = searchParams.get("itemId") ?? null;
   const [itemId, setItemId] = useState<string | null>(initialItemId);
   const [clientId, setClientId] = useState<Id<"clients"> | null>(null);
+  // Sede must be picked explicitly every sale — no default. The saleId
+  // preview only resolves once the operator has chosen Bogotá or Cali.
+  const [sede, setSede] = useState<Sede | null>(null);
   const [compradorTipo, setCompradorTipo] =
     useState<CompradorTipo>("embajador");
   const [formaPago, setFormaPago] = useState<FormaPago>("contado");
@@ -127,8 +136,11 @@ export default function FotosintesisVentaPage() {
     [allClients],
   );
 
-  const peeked = useConvexQuery(convexApi.sales.peekNextSaleId, {});
-  const peekedSaleId = peeked?.preview ?? "V-NEW";
+  const peeked = useConvexQuery(
+    convexApi.sales.peekNextSaleId,
+    sede ? { sede } : "skip",
+  );
+  const peekedSaleId = peeked?.preview ?? (sede ? `V${sede}-NEW` : "V—");
 
   const createSale = useConvexMutation(convexApi.sales.create);
   const setCarnetUrl = useConvexMutation(convexApi.sales.setCarnetUrl);
@@ -201,7 +213,12 @@ export default function FotosintesisVentaPage() {
     formaPago !== "credito" ||
     (creditoFechaVenc.length > 0 && creditoCuotas > 0);
   const canConfirm =
-    !!itemId && !!clientId && precioCop > 0 && creditoComplete && !submitting;
+    !!sede &&
+    !!itemId &&
+    !!clientId &&
+    precioCop > 0 &&
+    creditoComplete &&
+    !submitting;
 
   const onDownloadPreview = useCallback(async () => {
     if (!kardexRef.current) return;
@@ -214,6 +231,10 @@ export default function FotosintesisVentaPage() {
   }, [peekedSaleId, notify]);
 
   const onConfirm = useCallback(async () => {
+    if (!sede) {
+      setErrorBanner("Falta elegir sede (Bogotá o Cali).");
+      return;
+    }
     if (!itemId || !clientId || precioCop <= 0) {
       setErrorBanner("Falta completar comprador, ítem o precio.");
       return;
@@ -236,6 +257,7 @@ export default function FotosintesisVentaPage() {
       // filled them in (optional UX nicety).
       const confirmedAt = new Date().toISOString();
       const createArgs: Parameters<typeof createSale>[0] = {
+        sede,
         itemIds: [itemId],
         clientId,
         fechaVenta: confirmedAt,
@@ -433,6 +455,7 @@ export default function FotosintesisVentaPage() {
       setSubmitting(false);
     }
   }, [
+    sede,
     itemId,
     clientId,
     precioCop,
@@ -537,6 +560,19 @@ export default function FotosintesisVentaPage() {
               {errorBanner}
             </Box>
           ) : null}
+
+          {/* 0. Sede — qué contador alimentar (VB-/VC-). Sin default. */}
+          <Section title="Sede" foto={foto}>
+            <SegmentedControl<Sede>
+              ariaLabel="Sede de la venta"
+              value={sede ?? ("" as Sede)}
+              onChange={setSede}
+              options={[
+                { value: "B", label: "Bogotá" },
+                { value: "C", label: "Cali" },
+              ]}
+            />
+          </Section>
 
           {/* 1. Comprador */}
           <Section title="Comprador" foto={foto}>
@@ -787,8 +823,10 @@ export default function FotosintesisVentaPage() {
               onChange={setFormaPago}
               options={[
                 { value: "contado", label: "Contado" },
-                { value: "esmereogenesis", label: "Esmereogénesis" },
                 { value: "credito", label: "Crédito" },
+                { value: "esmereogenesis", label: "Esmereogénesis" },
+                { value: "bajo_pedido", label: "Bajo pedido" },
+                { value: "consignacion", label: "Consignación" },
               ]}
             />
 

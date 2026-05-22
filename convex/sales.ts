@@ -9,12 +9,16 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { pushTableRowToVercel } from "./_lib/sheetSync";
 import { COLUMN_MAPS } from "./_lib/columnMaps";
-import { allocateNext, formatSaleId } from "./sequences";
+import { allocateNext, formatSaleId, saleSequenceName } from "./sequences";
+
+const sedeValidator = v.union(v.literal("B"), v.literal("C"));
 
 const formaPagoValidator = v.union(
   v.literal("contado"),
   v.literal("credito"),
   v.literal("esmereogenesis"),
+  v.literal("bajo_pedido"),
+  v.literal("consignacion"),
 );
 
 const metodoContadoValidator = v.union(
@@ -49,14 +53,14 @@ export const get = query({
 });
 
 export const peekNextSaleId = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { sede: sedeValidator },
+  handler: async (ctx, { sede }) => {
     const seq = await ctx.db
       .query("sequences")
-      .withIndex("by_name", (q) => q.eq("name", "sale"))
+      .withIndex("by_name", (q) => q.eq("name", saleSequenceName(sede)))
       .first();
     const next = seq?.nextValue ?? 1;
-    return { nextValue: next, preview: formatSaleId(next) };
+    return { nextValue: next, preview: formatSaleId(next, sede) };
   },
 });
 
@@ -71,6 +75,7 @@ export const peekNextSaleId = query({
  */
 export const create = mutation({
   args: {
+    sede: sedeValidator,
     itemIds: v.array(v.string()),
     clientId: v.id("clients"),
     fechaVenta: v.string(),
@@ -124,8 +129,8 @@ export const create = mutation({
       products.push(product);
     }
 
-    const seqValue = await allocateNext(ctx, "sale");
-    const saleId = formatSaleId(seqValue);
+    const seqValue = await allocateNext(ctx, saleSequenceName(args.sede));
+    const saleId = formatSaleId(seqValue, args.sede);
 
     const now = new Date().toISOString();
     const all = await ctx.db.query("sales").collect();

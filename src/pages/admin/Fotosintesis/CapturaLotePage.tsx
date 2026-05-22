@@ -253,12 +253,26 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
 // "Antes de empezar" intro form (loteId === "new")
 // -----------------------------------------------------------------------------
 
-type FormaPago = "contado" | "esmereogenesis" | "credito";
+type FormaPago =
+  | "contado"
+  | "esmereogenesis"
+  | "credito"
+  | "bajo_pedido"
+  | "consignacion";
 type MetodoContado = "efectivo" | "transferencia";
 
-interface NewLotIntroProps {
-  previewLoteId: string | null;
+function formaPagoShort(formaPago: string, metodoContado?: string): string {
+  if (formaPago === "contado") {
+    return metodoContado ? `Contado · ${metodoContado}` : "Contado";
+  }
+  if (formaPago === "esmereogenesis") return "Esmereo";
+  if (formaPago === "credito") return "Crédito";
+  if (formaPago === "bajo_pedido") return "Bajo pedido";
+  if (formaPago === "consignacion") return "Consignación";
+  return formaPago;
 }
+
+type Sede = "B" | "C";
 
 interface ProviderRow {
   _id: string;
@@ -268,9 +282,14 @@ interface ProviderRow {
   tipo?: "gemas" | "joyas" | "insumos" | "otros";
 }
 
-function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
+function NewLotIntro() {
   const foto = getFoto("light");
   const navigate = useNavigate();
+
+  // Sede must be chosen explicitly every time — there is no default. The
+  // lot ID preview ("B-009"/"C-001") only resolves after a sede is picked.
+  const [sede, setSede] = useState<Sede | null>(null);
+  const previewLoteId = useNextLoteId(sede);
 
   const createLot = useConvexMutation(convexApi.lots.create);
   // Provider directory — already loaded by the drawer below; surface it at
@@ -322,6 +341,7 @@ function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
     (creditoFechaVenc.length > 0 && creditoCuotas > 0);
 
   const canSubmit =
+    !!sede &&
     !!providerId &&
     typeof costoTotalCOP === "number" &&
     costoTotalCOP > 0 &&
@@ -332,7 +352,7 @@ function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!canSubmit || !providerId) return;
+    if (!canSubmit || !providerId || !sede) return;
     if (formaPago === "credito" && !creditoFechaVenc) {
       setError("Crédito requiere fecha de vencimiento.");
       return;
@@ -341,6 +361,7 @@ function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
     setError(null);
     try {
       const createArgs: Parameters<typeof createLot>[0] = {
+        sede,
         providerId: providerId as any, // Convex Id is opaque; drawer hands back a string id
         fechaRecepcion,
         costoTotalCOP: costoTotalCOP as number,
@@ -409,7 +430,7 @@ function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
               letterSpacing: "-0.04em",
             }}
           >
-            {previewLoteId ?? "B-…"}
+            {previewLoteId ?? (sede ? `${sede}-…` : "—")}
           </Box>
         </Box>
         <Box
@@ -455,6 +476,20 @@ function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
           borderRadius: "14px",
         }}
       >
+        {/* Sede — decide qué contador alimentar (B-NNN / C-NNN). Sin default. */}
+        <Box>
+          <FieldLabel>Sede</FieldLabel>
+          <SegmentedControl
+            ariaLabel="Sede del lote"
+            options={[
+              { value: "B", label: "Bogotá" },
+              { value: "C", label: "Cali" },
+            ]}
+            value={sede ?? ("" as Sede)}
+            onChange={(next) => setSede(next as Sede)}
+          />
+        </Box>
+
         {/* Proveedor */}
         <EntityPicker<ProviderRow>
           label="Proveedor"
@@ -570,8 +605,10 @@ function NewLotIntro({ previewLoteId }: NewLotIntroProps) {
               ariaLabel="Forma de pago"
               options={[
                 { value: "contado", label: "Contado" },
-                { value: "esmereogenesis", label: "Esmereogénesis" },
                 { value: "credito", label: "Crédito" },
+                { value: "esmereogenesis", label: "Esmereogénesis" },
+                { value: "bajo_pedido", label: "Bajo pedido" },
+                { value: "consignacion", label: "Consignación" },
               ]}
               value={formaPago}
               onChange={(next) => setFormaPago(next as FormaPago)}
@@ -1066,12 +1103,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
       },
       {
         label: "Pago",
-        value:
-          lot.formaPago === "contado"
-            ? `Contado · ${lot.metodoContado ?? ""}`.trim()
-            : lot.formaPago === "esmereogenesis"
-              ? "Esmereogénesis"
-              : "Crédito",
+        value: formaPagoShort(lot.formaPago, lot.metodoContado),
       },
     ];
   }, [lot, provider, hasProvider]);
@@ -1448,12 +1480,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
               },
               {
                 label: "Pago",
-                value:
-                  lot.formaPago === "contado"
-                    ? "Contado"
-                    : lot.formaPago === "esmereogenesis"
-                      ? "Esmereo"
-                      : "Crédito",
+                value: formaPagoShort(lot.formaPago),
               },
               {
                 label: "Factura",
@@ -1586,10 +1613,9 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
 export default function FotosintesisCapturaLotePage() {
   const { loteId } = useParams<{ loteId: string }>();
-  const previewLoteId = useNextLoteId();
 
   if (!loteId || loteId === "new") {
-    return <NewLotIntro previewLoteId={previewLoteId} />;
+    return <NewLotIntro />;
   }
 
   return <ActiveLotPage loteId={loteId} />;

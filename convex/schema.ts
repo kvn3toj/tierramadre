@@ -93,10 +93,20 @@ export default defineSchema({
     precioCOP: v.optional(v.number()),
     ubicacion: v.optional(v.string()),
     asesor: v.optional(v.string()),
+    // 9 values: the 4 we always handled + 5 inherited from the legacy
+    // sheet's ESTADO dropdown (Retornado, ESMEREOGENESIS, ESMERO,
+    // DISPONIBLE ADOPTADA, LOTE X CT). Keeps existing rows in
+    // `1mghR6...!INVENTARIO Tierra.Madre` validating on pull without a
+    // migration pass. Mirror in `src/data/vocabularies.ts#PRODUCT_ESTADOS`.
     estado: v.union(
       v.literal("DISPONIBLE"),
       v.literal("VENDIDA"),
       v.literal("ASESOR"),
+      v.literal("Retornado"),
+      v.literal("ESMEREOGENESIS"),
+      v.literal("ESMERO"),
+      v.literal("DISPONIBLE ADOPTADA"),
+      v.literal("LOTE X CT"),
       v.literal(""),
     ),
     qr: v.optional(v.string()),
@@ -217,8 +227,15 @@ export default defineSchema({
     .index("by_syncStatus", ["syncStatus"]),
 
   lots: defineTable({
-    /** "B-001", "B-002", ... — globally unique, allocated via sequences. */
+    /**
+     * "B-001"/"C-001", ... — globally unique, allocated via sequences.
+     * Prefix encodes the sede (B = Bogotá, C = Cali). Pre-multisede rows
+     * have a B- id; the optional `sede` field carries the same info for
+     * filtering/group-by queries.
+     */
     loteId: v.string(),
+    /** Sede where the lot was captured. Optional for legacy rows. */
+    sede: v.optional(v.union(v.literal("B"), v.literal("C"))),
     providerId: v.id("providers"),
     fechaRecepcion: v.string(),
     pesoTotalQuilates: v.optional(v.number()),
@@ -228,6 +245,8 @@ export default defineSchema({
       v.literal("contado"),
       v.literal("credito"),
       v.literal("esmereogenesis"),
+      v.literal("bajo_pedido"),
+      v.literal("consignacion"),
     ),
     metodoContado: v.optional(
       v.union(v.literal("efectivo"), v.literal("transferencia")),
@@ -282,8 +301,14 @@ export default defineSchema({
     .index("by_syncStatus", ["syncStatus"]),
 
   sales: defineTable({
-    /** "V-0001", "V-0002", ... — globally unique, allocated via sequences. */
+    /**
+     * "VB-0001"/"VC-0001", ... — globally unique, allocated via sequences.
+     * Legacy rows captured before the multisede split have a plain
+     * "V-NNNN" id; the optional `sede` field carries the sede.
+     */
     saleId: v.string(),
+    /** Sede where the sale was recorded. Optional for legacy rows. */
+    sede: v.optional(v.union(v.literal("B"), v.literal("C"))),
     fechaVenta: v.string(),
     /** itemIds reference productInventory.itemId (string, not Convex id). */
     itemIds: v.array(v.string()),
@@ -296,6 +321,8 @@ export default defineSchema({
       v.literal("contado"),
       v.literal("credito"),
       v.literal("esmereogenesis"),
+      v.literal("bajo_pedido"),
+      v.literal("consignacion"),
     ),
     metodoContado: v.optional(
       v.union(v.literal("efectivo"), v.literal("transferencia")),
