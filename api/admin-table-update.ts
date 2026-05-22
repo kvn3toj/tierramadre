@@ -31,13 +31,16 @@ import type { sheets_v4 } from "@googleapis/sheets";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   withApiHandler,
-  SPREADSHEET_ID,
+  FOTOSINTESIS_SPREADSHEET_ID,
   sendError,
   sendSuccess,
   getSheetNames,
   findSheetByPattern,
 } from "./_lib/index.js";
 import { TABLE_CONFIGS, isFotoTable } from "./_lib/admin-table-config.js";
+
+// Writes go to the Fotosíntesis v2 SOT, not the legacy live-catalog sheet.
+const SPREADSHEET_ID = FOTOSINTESIS_SPREADSHEET_ID;
 
 interface UpdateBody {
   table?: string;
@@ -100,7 +103,10 @@ export default withApiHandler(
     const config = TABLE_CONFIGS[table];
     const { sheets } = ctx as { sheets: sheets_v4.Sheets };
 
-    const sheetNames = await getSheetNames(sheets);
+    // Enumerate tabs from the Fotosíntesis SOT, NOT the legacy default.
+    // (`getSheetNames` defaults to the legacy SPREADSHEET_ID — must pass
+    // the new SOT id explicitly or tab lookup silently 404s.)
+    const sheetNames = await getSheetNames(sheets, SPREADSHEET_ID);
     const targetSheet =
       findSheetByPattern(sheetNames, config.sheetTabPatterns) ?? null;
     if (!targetSheet) {

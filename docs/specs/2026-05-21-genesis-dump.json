@@ -1,0 +1,213 @@
+{
+  "meta": {
+    "tabs": [
+      {
+        "sheetId": 852889266,
+        "title": "inventario  recibo ",
+        "index": 0,
+        "sheetType": "GRID",
+        "gridProperties": {
+          "rowCount": 1002,
+          "columnCount": 28
+        }
+      }
+    ]
+  },
+  "data": {
+    "inventario  recibo ": [
+      [],
+      [
+        "PROVEEDOR "
+      ],
+      [
+        "Item",
+        "Fecha\nIngreso\n al Inventario ",
+        "Nombre ",
+        "NIT/CÉDULA ",
+        "DIRECCIÓN ",
+        "TEL ",
+        "EMAIL",
+        "",
+        "lote ",
+        "Talla ",
+        "Medidas",
+        "Medidas",
+        "Categoría",
+        " Precio\nCOP",
+        "UBICACIÓN ",
+        "NOMBRE\nINV-ESPECIAL",
+        "-",
+        "QR",
+        "Colección",
+        "CAJA",
+        "",
+        "NOMBRE-INV\nEMBAJADOR",
+        "ESTADO"
+      ],
+      [
+        "319",
+        "21-may-2026",
+        "Edwin Mauricio Ruiz ",
+        "80.179.071",
+        "carrera 6#14-74\nEdificio sprinter oficina 904",
+        "573142978350",
+        "",
+        "",
+        "",
+        "Fecha\nIngreso\n al Inventario "
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Peso\n (ct) "
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Color "
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Calidad "
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Cant."
+      ],
+      [],
+      [],
+      [],
+      [
+        "COMPRAS"
+      ],
+      [
+        "Item",
+        "LOTE ",
+        "FORMA DE PAGO ",
+        "FECHA/\nVENCIMIENTO ",
+        "EFECTIVO ",
+        "PESO /CT",
+        "COSTO",
+        "UNIDADES "
+      ],
+      [
+        "CMP-1",
+        "C001",
+        "CONTADO",
+        "",
+        "Tranferencia ",
+        "37.3",
+        "$4,900,000",
+        "190"
+      ],
+      [],
+      [
+        "INVENTARIO"
+      ],
+      [
+        "Item",
+        "LOTE ",
+        "Renombre /Item",
+        "Nombre / Item",
+        "Preponderancia",
+        "Unidades ",
+        "Categoría ",
+        "Peso/ct",
+        "Descripción ",
+        "Color ",
+        "Calidad ",
+        "corte ",
+        "Medidas",
+        "Joya ",
+        "Peso /Joya gr",
+        "Tecnica ",
+        "Materiales 1",
+        "Foto ",
+        "Observacion "
+      ],
+      [
+        "1",
+        "C001",
+        "Lluvia de Oportunidades- Calibrada ",
+        "",
+        "30%",
+        "",
+        "Lote de Gemas ",
+        "",
+        "Cristal",
+        "Verde Natural",
+        "Extrafina F1",
+        "Variado",
+        "3,5",
+        "Aretes"
+      ],
+      [
+        "2",
+        "C001",
+        "Lluvia de Oportunidades- no Calibrada ",
+        "",
+        "",
+        "",
+        "Lote de Gemas "
+      ],
+      [],
+      [
+        "VENTAS"
+      ],
+      [
+        "Item",
+        "CLIENTE ",
+        "Nombre ",
+        "Nit/Cedula ",
+        "Direccion",
+        "Telefono ",
+        "Email ",
+        "Forma de Pago ",
+        "Contado ",
+        "Credito "
+      ],
+      [
+        "CMP-1",
+        "Final ",
+        "",
+        "",
+        "Tranferencia ",
+        "",
+        "",
+        "Efectivo ",
+        "Tranferencia",
+        "Tranferencia"
+      ]
+    ]
+  }
+}

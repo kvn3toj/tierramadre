@@ -15,7 +15,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "migrate:convex": "tsx scripts/migrate-sheets-to-convex.ts",
-    "migrate:convex:dry": "tsx scripts/migrate-sheets-to-convex.ts --dry-run --table all"
+    "migrate:convex:dry": "tsx scripts/migrate-sheets-to-convex.ts --dry-run --table all",
+    "smoke:fotosintesis": "node scripts/smoke-fotosintesis-endpoints.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.13.0",

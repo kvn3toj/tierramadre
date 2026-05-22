@@ -5,7 +5,17 @@
  */
 
 // Google Sheets Configuration
+//
+// Legacy/live catalog (productInventory + PRICING + treasure browser).
+// Hundreds of items, untouched by the Fotosíntesis ingreso refactor.
 export const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
+
+// Fotosíntesis SOT v2 (Proveedores / Lotes / Clientes / Ventas + new Inventario)
+// Created 2026-05-21 from GENESIS data; populated by Maritza's ingreso flow.
+// Override via env if you want to point at a different SOT (e.g. staging).
+export const FOTOSINTESIS_SPREADSHEET_ID =
+  process.env.FOTOSINTESIS_SPREADSHEET_ID?.trim() ||
+  '18w0DcP_4CO-le9_vt_UPGCHXAVXkQ5sugLF4r_o2bVM';
 
 // Dedicated Feedback Spreadsheet (separate from inventory to avoid overload)
 export const FEEDBACK_SPREADSHEET_ID = process.env.FEEDBACK_SPREADSHEET_ID?.trim() || '1Nl2gxfZzWy4lUv_C-9xTt90MzFDIgHLvWtWtDRNzJaU';
