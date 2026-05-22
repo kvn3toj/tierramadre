@@ -208,7 +208,10 @@ export default function VentaDetailPage() {
         kind="sale"
         meta={[
           { label: "Fecha", value: formatDateLong(sale.fechaVenta) },
-          { label: "Operador", value: "Maritza" },
+          {
+            label: "Operador",
+            value: user?.givenName || user?.name?.split(" ")[0] || "Operador",
+          },
         ]}
       />
 

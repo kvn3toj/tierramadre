@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../design-system";
 import { useConvexQuery, convexApi } from "../../../lib/convex-safe";
+import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
 
 /**
  * Fotosíntesis Home — Slice 1 (read-only).
@@ -26,6 +27,8 @@ import { useConvexQuery, convexApi } from "../../../lib/convex-safe";
  */
 export default function FotosintesisHomePage() {
   const foto = getFoto("light");
+  const { user } = useGoogleAuth();
+  const firstName = user?.givenName || user?.name?.split(" ")[0] || "Operador";
 
   // --- Data ----------------------------------------------------------------
   const lots = useConvexQuery(convexApi.lots.list, {});
@@ -238,7 +241,7 @@ export default function FotosintesisHomePage() {
                   color: "transparent",
                 }}
               >
-                Maritza
+                {firstName}
               </Box>
             </Box>
             <Box

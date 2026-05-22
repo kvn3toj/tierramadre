@@ -21,6 +21,7 @@ import {
   convexApi,
 } from "../../../lib/convex-safe";
 import { useNotification } from "../../../contexts/NotificationContext";
+import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
 import { TicketHeader } from "./components/TicketHeader";
 import { StepPills } from "./components/StepPills";
 import { SegmentedControl } from "./components/SegmentedControl";
@@ -74,6 +75,7 @@ export default function FotosintesisVentaPage() {
   const [searchParams] = useSearchParams();
   const { openSpotlight } = useFotosintesisLayout();
   const { notify } = useNotification();
+  const { user } = useGoogleAuth();
 
   // ─── Selection state ───────────────────────────────────────────────────
   const initialItemId = searchParams.get("itemId") ?? null;
@@ -480,7 +482,7 @@ export default function FotosintesisVentaPage() {
           },
           {
             label: "Operador",
-            value: "Maritza",
+            value: user?.givenName || user?.name?.split(" ")[0] || "Operador",
           },
         ]}
         rightSlot={
