@@ -102,7 +102,7 @@ export const workspaceSnapshot = query({
       }
       inviteCounts.set(key, entry);
     }
-    const topInviters = [...inviteCounts.values()]
+    const topInviters = Array.from(inviteCounts.values())
       .sort((a, b) => b.active - a.active)
       .slice(0, 5);
 

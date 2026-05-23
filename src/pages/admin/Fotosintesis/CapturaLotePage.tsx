@@ -41,8 +41,13 @@ import { EditableMetaValue } from "./components/EditableMetaValue";
 import { EditItemDrawer } from "./components/EditItemDrawer";
 import { EditLotDrawer } from "./components/EditLotDrawer";
 import { useNotification } from "../../../contexts/NotificationContext";
+import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
 import ConfirmDialog from "../../../components/shared/ConfirmDialog";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import {
+  BOVEDAS,
+  type Sede,
+} from "../../../data/vocabularies";
 import {
   GemaFields,
   EMPTY_GEMA_DRAFT,
@@ -53,6 +58,21 @@ import {
   EMPTY_BRUTO_DRAFT,
   type BrutoDraft,
 } from "./components/BrutoFields";
+import {
+  JoyaFields,
+  EMPTY_JOYA_DRAFT,
+  type JoyaDraft,
+} from "./components/JoyaFields";
+import {
+  buildBrutoPayload,
+  buildGemaPayload,
+  buildJoyaPayload,
+  buildLotePayload,
+} from "./utils/buildLotItemPayload";
+import {
+  uploadFotosintesisCertificado,
+  uploadFotosintesisImages,
+} from "./utils/uploadItemMedia";
 import { CreditoFields } from "./components/CreditoFields";
 import { useNextLoteId } from "./hooks/useNextLoteId";
 import { usePreponderanciaTotal } from "./hooks/usePreponderanciaTotal";
@@ -101,9 +121,9 @@ interface TypeOption {
 const TYPE_OPTIONS: TypeOption[] = [
   { value: "gema", label: "Gema", key: "1", Icon: Gem },
   { value: "bruto", label: "Bruto", key: "2", Icon: Mountain },
-  { value: "joya", label: "Joya", key: "3", Icon: Diamond, disabled: true },
+  { value: "joya", label: "Joya", key: "3", Icon: Diamond },
   { value: "insumo", label: "Insumo", key: "4", Icon: Package, disabled: true },
-  { value: "lote", label: "Lote/Otros", key: "5", Icon: Tag, disabled: true },
+  { value: "lote", label: "Lote/Otros", key: "5", Icon: Tag },
 ];
 
 interface TypeSelectorProps {
@@ -296,9 +316,7 @@ function formaPagoShort(formaPago: string, metodoContado?: string): string {
   return formaPago;
 }
 
-type Sede = "B" | "C";
-
-interface ProviderRow {
+type ProviderRow = {
   _id: string;
   nombreORazonSocial: string;
   nit?: string;
@@ -309,9 +327,8 @@ interface ProviderRow {
 function NewLotIntro() {
   const foto = getFoto("light");
   const navigate = useNavigate();
+  const { user } = useGoogleAuth();
 
-  // Sede must be chosen explicitly every time — there is no default. The
-  // lot ID preview ("B-009"/"C-001") only resolves after a sede is picked.
   const [sede, setSede] = useState<Sede | null>(null);
   const previewLoteId = useNextLoteId(sede);
 
@@ -338,6 +355,14 @@ function NewLotIntro() {
   const [creditoFechaVenc, setCreditoFechaVenc] = useState<string>("");
   const [creditoCuotas, setCreditoCuotas] = useState<number>(3);
   const [creditoTasa, setCreditoTasa] = useState<number | "">("");
+
+  const [renombreLote, setRenombreLote] = useState("");
+  const [tratamiento, setTratamiento] = useState("");
+  const [mina, setMina] = useState("");
+  const [pesoTotalQuilates, setPesoTotalQuilates] = useState<number | "">("");
+  const [notas, setNotas] = useState("");
+  // Silence the unused variable warning for notas until it's sent to the backend
+  void setNotas;
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -386,12 +411,22 @@ function NewLotIntro() {
     try {
       const createArgs: Parameters<typeof createLot>[0] = {
         sede,
-        providerId: providerId as any, // Convex Id is opaque; drawer hands back a string id
+        providerId: providerId as Id<"providers">,
         fechaRecepcion,
         costoTotalCOP: costoTotalCOP as number,
         unidadesDeclaradas: unidadesDeclaradas as number,
         formaPago,
         metodoContado: formaPago === "contado" ? metodoContado : undefined,
+        renombreLote: renombreLote.trim() || undefined,
+        tratamiento: tratamiento.trim() || undefined,
+        mina: mina.trim() || undefined,
+        pesoTotalQuilates:
+          typeof pesoTotalQuilates === "number" && pesoTotalQuilates > 0
+            ? pesoTotalQuilates
+            : undefined,
+        operadorNombre: user?.name ?? user?.email ?? undefined,
+        operadorRol: "captura",
+        notas: notas.trim() || undefined,
       };
       if (formaPago === "credito") {
         createArgs.fechaVencimiento = creditoFechaVenc;
@@ -500,15 +535,15 @@ function NewLotIntro() {
           borderRadius: "14px",
         }}
       >
-        {/* Sede — decide qué contador alimentar (B-NNN / C-NNN). Sin default. */}
+        {/* Bóveda — B-NNN / C-NNN / S-NNN */}
         <Box>
-          <FieldLabel>Sede</FieldLabel>
+          <FieldLabel>Bóveda</FieldLabel>
           <SegmentedControl
-            ariaLabel="Sede del lote"
-            options={[
-              { value: "B", label: "Bogotá" },
-              { value: "C", label: "Cali" },
-            ]}
+            ariaLabel="Bóveda del lote"
+            options={BOVEDAS.map((b) => ({
+              value: b.code,
+              label: b.label,
+            }))}
             value={sede ?? ("" as Sede)}
             onChange={(next) => setSede(next as Sede)}
           />
@@ -600,6 +635,97 @@ function NewLotIntro() {
           </Box>
         </Box>
 
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "18px",
+          }}
+        >
+          <Box>
+            <FieldLabel optional="alias interno">Renombre del lote</FieldLabel>
+            <Box
+              component="input"
+              type="text"
+              value={renombreLote}
+              placeholder="Ej. Lote Muzo marzo"
+              onChange={(e) =>
+                setRenombreLote((e.target as HTMLInputElement).value)
+              }
+              sx={{
+                width: "100%",
+                background: foto.surfaces.inset,
+                border: `1px solid ${foto.surfaces.rule}`,
+                borderRadius: "9px",
+                padding: "11px 14px",
+                fontSize: 13,
+                color: foto.ink.primary,
+              }}
+            />
+          </Box>
+          <Box>
+            <FieldLabel optional="quilates">Peso del lote</FieldLabel>
+            <NumberInputWithCalc
+              id="intro-peso-total"
+              value={pesoTotalQuilates}
+              onChange={setPesoTotalQuilates}
+              placeholder="0"
+              step={0.1}
+              min={0}
+              ariaLabel="Peso total del lote"
+              calcSuffix="ct"
+              calcVariant="neutral"
+            />
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "18px",
+          }}
+        >
+          <Box>
+            <FieldLabel optional="tratamiento">Tratamiento</FieldLabel>
+            <Box
+              component="input"
+              type="text"
+              value={tratamiento}
+              onChange={(e) =>
+                setTratamiento((e.target as HTMLInputElement).value)
+              }
+              sx={{
+                width: "100%",
+                background: foto.surfaces.inset,
+                border: `1px solid ${foto.surfaces.rule}`,
+                borderRadius: "9px",
+                padding: "11px 14px",
+                fontSize: 13,
+                color: foto.ink.primary,
+              }}
+            />
+          </Box>
+          <Box>
+            <FieldLabel optional="mina">Mina</FieldLabel>
+            <Box
+              component="input"
+              type="text"
+              value={mina}
+              onChange={(e) => setMina((e.target as HTMLInputElement).value)}
+              sx={{
+                width: "100%",
+                background: foto.surfaces.inset,
+                border: `1px solid ${foto.surfaces.rule}`,
+                borderRadius: "9px",
+                padding: "11px 14px",
+                fontSize: 13,
+                color: foto.ink.primary,
+              }}
+            />
+          </Box>
+        </Box>
+
         {/* Unidades + Forma de pago */}
         <Box
           sx={{
@@ -666,6 +792,34 @@ function NewLotIntro() {
             totalCop={typeof costoTotalCOP === "number" ? costoTotalCOP : 0}
           />
         ) : null}
+
+        <Box>
+          <FieldLabel htmlFor="notas-lote">Observaciones del lote</FieldLabel>
+          <Box
+            component="textarea"
+            id="notas-lote"
+            value={notas}
+            onChange={(event) => setNotas(event.target.value)}
+            rows={3}
+            placeholder="Notas de compra, contexto del proveedor, etc."
+            sx={{
+              width: "100%",
+              marginTop: "6px",
+              borderRadius: "9px",
+              border: `1px solid ${foto.surfaces.rule}`,
+              background: foto.surfaces.inset,
+              color: foto.ink.primary,
+              fontSize: 13,
+              padding: "10px 12px",
+              resize: "vertical",
+              fontFamily: "inherit",
+              outline: "none",
+              "&:focus": {
+                borderColor: foto.accent.primary,
+              },
+            }}
+          />
+        </Box>
 
         <Box
           sx={{
@@ -964,6 +1118,9 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
   // Mutations ------------------------------------------------------------------
   const createLotItem = useConvexMutation(convexApi.lotItems.create);
+  const updateGemaFields = useConvexMutation(
+    convexApi.lotItems.updateGemaFields,
+  );
   const updateLot = useConvexMutation(convexApi.lots.update);
   const updatePreponderancia = useConvexMutation(
     convexApi.lotItems.updatePreponderancia,
@@ -977,11 +1134,11 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const [tipo, setTipo] = useState<TipoItem>("gema");
   const [gema, setGema] = useState<GemaDraft>(EMPTY_GEMA_DRAFT);
   const [bruto, setBruto] = useState<BrutoDraft>(EMPTY_BRUTO_DRAFT);
+  const [joya, setJoya] = useState<JoyaDraft>(EMPTY_JOYA_DRAFT);
   const [observacion, setObservacion] = useState("");
-  // Slice plan: items default to hidden from catalog (reserve). The Switch is
-  // "Reserva oculta" ON → `mostrarEnCatalogo: false`.
   const [reservaOculta, setReservaOculta] = useState(true);
   const [photos, setPhotos] = useState<DropzonePhoto[]>([]);
+  const [certificadoFile, setCertificadoFile] = useState<File | null>(null);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1021,7 +1178,8 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
   // Active draft surface — the form fields below dispatch off `tipo`, but
   // preponderancia + nombre validations are uniform across types.
-  const activeDraft = tipo === "bruto" ? bruto : gema;
+  const activeDraft =
+    tipo === "bruto" ? bruto : tipo === "gema" ? gema : joya;
   const activePreponderancia = activeDraft.preponderancia;
   const activeNombre = activeDraft.nombre;
 
@@ -1073,8 +1231,10 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const resetItemDraft = useCallback(() => {
     setGema(EMPTY_GEMA_DRAFT);
     setBruto(EMPTY_BRUTO_DRAFT);
+    setJoya(EMPTY_JOYA_DRAFT);
     setObservacion("");
     setPhotos([]);
+    setCertificadoFile(null);
     setReservaOculta(true);
   }, []);
 
@@ -1082,50 +1242,92 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     if (!canSave || !lot) return;
     setSaving(true);
     setError(null);
+    const mostrarEnCatalogo = !reservaOculta;
     try {
-      // TODO Slice 2: upload photos to Drive first, attach URL on create.
+      type CreateLotItemArgs = Parameters<typeof createLotItem>[0];
+      let payload: CreateLotItemArgs;
       if (tipo === "bruto") {
-        await createLotItem({
+        payload = buildBrutoPayload(
           loteId,
-          tipo,
-          nombre: bruto.nombre.trim(),
-          preponderancia: bruto.preponderancia as number,
-          peso: bruto.pesoTotal || undefined,
-          procedencia: bruto.procedencia || undefined,
-          cantidadEstimada:
-            typeof bruto.cantidadEstimada === "number"
-              ? bruto.cantidadEstimada
-              : undefined,
-          rendimientoEsperado:
-            typeof bruto.rendimientoEsperado === "number"
-              ? bruto.rendimientoEsperado
-              : undefined,
-          precioPublicoCOP:
-            typeof bruto.precioPublicoCOP === "number"
-              ? bruto.precioPublicoCOP
-              : undefined,
-          observacion: observacion.trim() || undefined,
-          mostrarEnCatalogo: !reservaOculta,
-        });
+          bruto,
+          observacion,
+          mostrarEnCatalogo,
+        ) as unknown as CreateLotItemArgs;
+      } else if (tipo === "gema") {
+        payload = buildGemaPayload(
+          loteId,
+          gema,
+          observacion,
+          mostrarEnCatalogo,
+        ) as unknown as CreateLotItemArgs;
+      } else if (tipo === "joya") {
+        payload = buildJoyaPayload(
+          loteId,
+          joya,
+          observacion,
+          mostrarEnCatalogo,
+        ) as unknown as CreateLotItemArgs;
+      } else if (tipo === "lote") {
+        payload = buildLotePayload(
+          loteId,
+          joya,
+          observacion,
+          mostrarEnCatalogo,
+        ) as unknown as CreateLotItemArgs;
       } else {
-        await createLotItem({
-          loteId,
-          tipo,
-          nombre: gema.nombre.trim(),
-          preponderancia: gema.preponderancia as number,
-          color: gema.color || undefined,
-          calidad: gema.calidad,
-          peso: gema.peso || undefined,
-          procedencia: gema.procedencia || undefined,
-          precioPublicoCOP:
-            typeof gema.precioPublicoCOP === "number"
-              ? gema.precioPublicoCOP
-              : undefined,
-          observacion: observacion.trim() || undefined,
-          mostrarEnCatalogo: !reservaOculta,
+        throw new Error("Tipo de ítem no soportado en captura");
+      }
+
+      const result = (await createLotItem(payload)) as { lotItemId: Id<"lotItems">; itemId: string };
+
+      const photoFiles = photos
+        .map((p) => p.file)
+        .filter((f): f is File => !!f);
+      let fotoUrl: string | undefined;
+      let certificadoUrl: string | undefined;
+
+      if (photoFiles.length > 0) {
+        try {
+          fotoUrl = await uploadFotosintesisImages(
+            photoFiles,
+            loteId,
+            result.itemId,
+          );
+        } catch {
+          notify(
+            "Ítem guardado, pero no pudimos subir la foto a Drive",
+            "warning",
+          );
+        }
+      }
+
+      if (certificadoFile) {
+        try {
+          certificadoUrl = await uploadFotosintesisCertificado(
+            certificadoFile,
+            loteId,
+            result.itemId,
+          );
+        } catch {
+          notify(
+            "Ítem guardado, pero no pudimos subir el certificado",
+            "warning",
+          );
+        }
+      }
+
+      if (fotoUrl || certificadoUrl) {
+        await updateGemaFields({
+          lotItemId: result.lotItemId,
+          patch: {
+            ...(fotoUrl ? { fotoUrl } : {}),
+            ...(certificadoUrl ? { certificadoUrl } : {}),
+          },
         });
       }
+
       resetItemDraft();
+      notify(`Ítem ${result.itemId} guardado`, "success");
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "No pudimos guardar el ítem",
@@ -1137,13 +1339,18 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     canSave,
     lot,
     createLotItem,
+    updateGemaFields,
     loteId,
     tipo,
     gema,
     bruto,
+    joya,
     observacion,
     reservaOculta,
+    photos,
+    certificadoFile,
     resetItemDraft,
+    notify,
   ]);
 
   const handleCloseLot = useCallback(() => {
@@ -1222,20 +1429,28 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   }, [lot, cancelLot, notify, navigate]);
 
   const handleDuplicate = useCallback(() => {
-    // ⌘D — clone type-shared fields (procedencia, plus type-specific
-    // contextual ones); reset nombre/peso/preponderancia for the next ítem.
     if (tipo === "bruto") {
       setBruto((prev) => ({
         ...EMPTY_BRUTO_DRAFT,
         procedencia: prev.procedencia,
         rendimientoEsperado: prev.rendimientoEsperado,
       }));
-    } else {
+    } else if (tipo === "gema") {
       setGema((prev) => ({
         ...EMPTY_GEMA_DRAFT,
         color: prev.color,
         calidad: prev.calidad,
         procedencia: prev.procedencia,
+        tipoEsmeralda: prev.tipoEsmeralda,
+        corte: prev.corte,
+      }));
+    } else {
+      setJoya((prev) => ({
+        ...EMPTY_JOYA_DRAFT,
+        tipoJoya: prev.tipoJoya,
+        tecnica: prev.tecnica,
+        minerales: [...prev.minerales],
+        complementos: [...prev.complementos],
       }));
     }
   }, [tipo]);
@@ -1283,8 +1498,13 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         } else if (e.key === "2") {
           e.preventDefault();
           setTipo("bruto");
+        } else if (e.key === "3") {
+          e.preventDefault();
+          setTipo("joya");
+        } else if (e.key === "5") {
+          e.preventDefault();
+          setTipo("lote");
         }
-        // 3/4/5 are visually present but disabled — swallow noise.
       }
     };
     window.addEventListener("keydown", handler);
@@ -1322,6 +1542,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     const next: DropzonePhoto[] = files.map((f) => ({
       id: `${f.name}-${f.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
       url: URL.createObjectURL(f),
+      file: f,
     }));
     setPhotos((prev) => [...prev, ...next]);
   };
@@ -1522,10 +1743,18 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
                 preponderanciaHelper={prepHelper?.text}
                 preponderanciaHelperAlert={prepHelper?.alert}
               />
-            ) : (
+            ) : tipo === "gema" ? (
               <GemaFields
                 value={gema}
                 onChange={(patch) => setGema((prev) => ({ ...prev, ...patch }))}
+                lotCostoTotalCOP={costoTotalCOP}
+                preponderanciaHelper={prepHelper?.text}
+                preponderanciaHelperAlert={prepHelper?.alert}
+              />
+            ) : (
+              <JoyaFields
+                value={joya}
+                onChange={(patch) => setJoya((prev) => ({ ...prev, ...patch }))}
                 lotCostoTotalCOP={costoTotalCOP}
                 preponderanciaHelper={prepHelper?.text}
                 preponderanciaHelperAlert={prepHelper?.alert}
@@ -1539,8 +1768,32 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
                 photos={photos}
                 onAdd={addPhotos}
                 onRemove={removePhoto}
-                hint="JPG o PNG. Slice 2 sube a Drive automáticamente."
+                hint="JPG o PNG. Se sube a Drive al guardar."
               />
+            </Box>
+
+            {/* Certificado */}
+            <Box>
+              <FieldLabel optional="opcional">Certificado</FieldLabel>
+              <Box
+                component="input"
+                type="file"
+                accept=".pdf,image/*"
+                onChange={(e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  setCertificadoFile(file ?? null);
+                }}
+                sx={{
+                  width: "100%",
+                  fontSize: 12,
+                  color: foto.ink.secondary,
+                }}
+              />
+              {certificadoFile ? (
+                <Box sx={{ fontSize: 11, color: foto.ink.tertiary, mt: 0.5 }}>
+                  {certificadoFile.name}
+                </Box>
+              ) : null}
             </Box>
 
             {/* Observación */}

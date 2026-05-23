@@ -11,15 +11,14 @@ import {
 } from "../../../../lib/convex-safe";
 import { useNotification } from "../../../../contexts/NotificationContext";
 import type { Id } from "../../../../../convex/_generated/dataModel";
-import {
-  CALIDADES,
-  DEFAULT_CALIDAD,
-  type GemaCalidad,
-} from "../../../../data/vocabularies";
 
 import { FieldLabel } from "./FieldLabel";
-import { GemaFields, type GemaDraft } from "./GemaFields";
+import { GemaFields, EMPTY_GEMA_DRAFT, type GemaDraft } from "./GemaFields";
 import { KbdKey } from "./KbdKey";
+import {
+  gemaDraftFromProduct,
+  gemaPatchFromDraft,
+} from "../utils/buildLotItemPayload";
 
 interface ProductInventoryRow {
   _id: string;
@@ -32,6 +31,13 @@ interface ProductInventoryRow {
   observacion?: string;
   precioCOP?: number;
   mostrarEnCatalogo?: boolean;
+  cantidad?: number;
+  talla?: string;
+  medidas?: string;
+  categoria?: string;
+  tipoEsmeralda?: string;
+  nivelRareza?: number;
+  calificacion?: number;
 }
 
 interface EditItemDrawerProps {
@@ -52,11 +58,6 @@ interface EditItemDrawerProps {
   /** When false, all fields are read-only (lot not abierto). */
   editable?: boolean;
 }
-
-const isGemaCalidad = (s: string | undefined): s is GemaCalidad => {
-  if (!s) return false;
-  return (CALIDADES as readonly string[]).includes(s);
-};
 
 /**
  * Right-anchored drawer that lets an admin edit every field of an already-
@@ -96,14 +97,9 @@ export function EditItemDrawer({
   const removeLotItem = useConvexMutation(convexApi.lotItems.remove);
 
   const [draft, setDraft] = useState<GemaDraft>(() => ({
-    nombre: "",
-    peso: "",
-    color: "",
-    calidad: DEFAULT_CALIDAD,
-    procedencia: "",
+    ...EMPTY_GEMA_DRAFT,
     preponderancia: currentPreponderancia,
-    precioPublicoCOP: "",
-  }));
+  } as GemaDraft));
   const [observacion, setObservacion] = useState("");
   const [mostrarEnCatalogo, setMostrarEnCatalogo] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -118,15 +114,8 @@ export function EditItemDrawer({
     if (!open) return;
     if (!product) return;
     setDraft({
-      nombre: product.nombre ?? "",
-      peso: product.peso ?? "",
-      color: product.color ?? "",
-      calidad: isGemaCalidad(product.calidad)
-        ? product.calidad
-        : DEFAULT_CALIDAD,
-      procedencia: product.procedencia ?? "",
+      ...gemaDraftFromProduct(product),
       preponderancia: currentPreponderancia,
-      precioPublicoCOP: product.precioCOP ?? "",
     });
     setObservacion(product.observacion ?? "");
     setMostrarEnCatalogo(product.mostrarEnCatalogo ?? false);
@@ -173,20 +162,7 @@ export function EditItemDrawer({
     try {
       const result = await updateGemaFields({
         lotItemId,
-        patch: {
-          nombre: draft.nombre,
-          peso: draft.peso,
-          color: draft.color,
-          calidad: draft.calidad,
-          procedencia: draft.procedencia,
-          observacion,
-          precioPublicoCOP:
-            typeof draft.precioPublicoCOP === "number"
-              ? draft.precioPublicoCOP
-              : 0,
-          mostrarEnCatalogo,
-          preponderancia: draft.preponderancia as number,
-        },
+        patch: gemaPatchFromDraft(draft, observacion, mostrarEnCatalogo),
       });
       if (result.changed === false) {
         notify("Sin cambios para guardar", "info");
