@@ -900,6 +900,18 @@ export const _upsertManyFromSheet = internalMutation({
       }
 
       const rowIndexShifted = existing.rowIndex !== item.rowIndex;
+      
+      // Check if any actual data fields changed
+      const fieldsChanged = Object.entries(cleanedFields).some(([key, value]) => {
+        return existing[key as keyof typeof existing] !== value;
+      });
+
+      // If nothing changed (neither data nor row index), skip the database write entirely
+      // to save database operations on the 5-minute cron job.
+      if (!fieldsChanged && !rowIndexShifted) {
+        continue;
+      }
+
       const baseUpdate: { rowIndex: number; lastPulledAt: string } = {
         rowIndex: item.rowIndex,
         lastPulledAt: now,
@@ -1004,6 +1016,17 @@ export const _upsertFromSheet = internalMutation({
 
     // Always re-pin rowIndex to what the sheet says (rows can shift)
     const rowIndexShifted = existing.rowIndex !== rowIndex;
+    
+    // Check if any actual data fields changed
+    const fieldsChanged = Object.entries(cleanedFields).some(([key, value]) => {
+      return existing[key as keyof typeof existing] !== value;
+    });
+
+    // If nothing changed (neither data nor row index), skip the database write entirely
+    if (!fieldsChanged && !rowIndexShifted) {
+      return { upserted: false, rebased: false };
+    }
+
     const baseUpdate: { rowIndex: number; lastPulledAt: string } = {
       rowIndex,
       lastPulledAt: now,
