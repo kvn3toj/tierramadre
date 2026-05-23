@@ -9,6 +9,7 @@
  */
 
 import type * as _lib_columnMaps from "../_lib/columnMaps.js";
+import type * as _lib_fotosintesisVocab from "../_lib/fotosintesisVocab.js";
 import type * as _lib_sheetSync from "../_lib/sheetSync.js";
 import type * as clients from "../clients.js";
 import type * as crons from "../crons.js";
@@ -30,6 +31,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "_lib/columnMaps": typeof _lib_columnMaps;
+  "_lib/fotosintesisVocab": typeof _lib_fotosintesisVocab;
   "_lib/sheetSync": typeof _lib_sheetSync;
   clients: typeof clients;
   crons: typeof crons;
