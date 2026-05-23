@@ -5,10 +5,15 @@ import { getFoto, fontFamilies } from "../../../../design-system";
 import {
   CALIDADES,
   CALIDAD_FACTORS,
+  COLORS,
+  CORTES,
   DEFAULT_CALIDAD,
+  TIPOS_ESMERALDA,
   TM_MARKUP_DEFAULT,
   suggestedPrecioPublicoCOP,
+  type Corte,
   type GemaCalidad,
+  type TipoEsmeralda,
 } from "../../../../data/vocabularies";
 import { FieldLabel } from "./FieldLabel";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
@@ -29,6 +34,14 @@ export interface GemaDraft {
   procedencia: string;
   preponderancia: number | "";
   precioPublicoCOP: number | "";
+  cantidad: number | "";
+  tipoEsmeralda: TipoEsmeralda | "";
+  corte: Corte | "";
+  medidasAncho: string;
+  medidasAlto: string;
+  medidasCono: string;
+  nivelRareza: number | "";
+  calificacion: number | "";
 }
 
 export const EMPTY_GEMA_DRAFT: GemaDraft = {
@@ -39,6 +52,14 @@ export const EMPTY_GEMA_DRAFT: GemaDraft = {
   procedencia: "Muzo",
   preponderancia: "",
   precioPublicoCOP: "",
+  cantidad: 1,
+  tipoEsmeralda: "",
+  corte: "",
+  medidasAncho: "",
+  medidasAlto: "",
+  medidasCono: "",
+  nivelRareza: "",
+  calificacion: "",
 };
 
 interface GemaFieldsProps {
@@ -61,6 +82,143 @@ const COP_FORMATTER = new Intl.NumberFormat("es-CO", {
 });
 
 const formatCOP = (value: number): string => COP_FORMATTER.format(value);
+
+function ScalePicker({
+  id,
+  label,
+  value,
+  onChange,
+  disabled,
+}: {
+  id: string;
+  label: string;
+  value: number | "";
+  onChange: (next: number | "") => void;
+  disabled?: boolean;
+}) {
+  const foto = getFoto("light");
+  return (
+    <Box>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <Box
+        id={id}
+        role="group"
+        aria-label={label}
+        sx={{ display: "flex", gap: "6px", flexWrap: "wrap" }}
+      >
+        {[1, 2, 3, 4, 5, 6].map((n) => {
+          const active = value === n;
+          return (
+            <Box
+              key={n}
+              component="button"
+              type="button"
+              disabled={disabled}
+              aria-pressed={active}
+              onClick={() => onChange(active ? "" : n)}
+              sx={{
+                minWidth: 34,
+                height: 34,
+                borderRadius: "8px",
+                border: `1px solid ${
+                  active ? foto.accent.primary : foto.surfaces.rule
+                }`,
+                background: active ? foto.accent.soft : foto.surfaces.inset,
+                color: active ? foto.accent.deep : foto.ink.secondary,
+                fontFamily: fontFamilies.mono,
+                fontSize: 12,
+                fontWeight: active ? 600 : 500,
+                cursor: disabled ? "not-allowed" : "pointer",
+                opacity: disabled ? 0.55 : 1,
+              }}
+            >
+              {n}
+            </Box>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+}
+
+function SelectField({
+  id,
+  label,
+  value,
+  options,
+  placeholder,
+  onChange,
+  disabled,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  options: readonly string[];
+  placeholder: string;
+  onChange: (next: string) => void;
+  disabled?: boolean;
+}) {
+  const foto = getFoto("light");
+  const textInputSx = {
+    width: "100%",
+    background: foto.surfaces.inset,
+    border: `1px solid ${foto.surfaces.rule}`,
+    borderRadius: "9px",
+    padding: "11px 14px",
+    fontSize: 13.5,
+    color: foto.ink.primary,
+    fontFamily: fontFamilies.system,
+    outline: "none",
+    appearance: "none",
+    WebkitAppearance: "none",
+    MozAppearance: "none",
+    paddingRight: "38px",
+    cursor: disabled ? "not-allowed" : "pointer",
+    backgroundImage: "none",
+    transition: "border-color 120ms ease, box-shadow 120ms ease",
+    "&:focus": {
+      borderColor: foto.accent.primary,
+      boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+    },
+  } as const;
+
+  return (
+    <Box>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <Box sx={{ position: "relative" }}>
+        <Box
+          component="select"
+          id={id}
+          value={value}
+          disabled={disabled}
+          onChange={(e) => onChange((e.target as HTMLSelectElement).value)}
+          sx={textInputSx}
+        >
+          <option value="">{placeholder}</option>
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </Box>
+        <Box
+          sx={{
+            position: "absolute",
+            right: "12px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            pointerEvents: "none",
+            color: foto.ink.tertiary,
+            display: "flex",
+          }}
+          aria-hidden="true"
+        >
+          <ChevronDown size={16} strokeWidth={1.6} />
+        </Box>
+      </Box>
+    </Box>
+  );
+}
 
 /**
  * Gema sub-form rendered under the TypeSelector in CapturaLote. Slice 1 only
@@ -86,6 +244,14 @@ export function GemaFields({
   const procedenciaId = useId();
   const preponderanciaId = useId();
   const precioPublicoId = useId();
+  const cantidadId = useId();
+  const tipoEsmeraldaId = useId();
+  const corteId = useId();
+  const medAnchoId = useId();
+  const medAltoId = useId();
+  const medConoId = useId();
+  const rarezaId = useId();
+  const calificacionId = useId();
 
   // Reuse a single styled text input "recipe" to keep visual parity with
   // NumberInputWithCalc's focus ring + inset background.
@@ -192,18 +358,127 @@ export function GemaFields({
           />
         </Box>
         <Box>
-          <FieldLabel htmlFor={colorId}>Color</FieldLabel>
+          <SelectField
+            id={colorId}
+            label="Color"
+            value={value.color}
+            options={COLORS}
+            placeholder="Elegir color…"
+            disabled={disabled}
+            onChange={(next) => onChange({ color: next })}
+          />
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: fieldGap,
+        }}
+      >
+        <SelectField
+          id={tipoEsmeraldaId}
+          label="Tipo de esmeralda"
+          value={value.tipoEsmeralda}
+          options={TIPOS_ESMERALDA}
+          placeholder="Elegir tipo…"
+          disabled={disabled}
+          onChange={(next) =>
+            onChange({ tipoEsmeralda: next as TipoEsmeralda | "" })
+          }
+        />
+        <SelectField
+          id={corteId}
+          label="Corte"
+          value={value.corte}
+          options={CORTES}
+          placeholder="Elegir corte…"
+          disabled={disabled}
+          onChange={(next) => onChange({ corte: next as Corte | "" })}
+        />
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "120px 1fr 1fr 1fr",
+          gap: fieldGap,
+        }}
+      >
+        <Box>
+          <FieldLabel htmlFor={cantidadId}>Cantidad</FieldLabel>
+          <NumberInputWithCalc
+            id={cantidadId}
+            value={value.cantidad}
+            onChange={(next) => onChange({ cantidad: next })}
+            placeholder="1"
+            step={1}
+            min={1}
+            ariaLabel="Cantidad de piezas"
+            disabled={disabled}
+            calcSuffix="pzas"
+            calcVariant="neutral"
+          />
+        </Box>
+        <Box>
+          <FieldLabel htmlFor={medAnchoId} optional="mm">
+            Ancho
+          </FieldLabel>
           <Box
             component="input"
-            id={colorId}
+            id={medAnchoId}
             type="text"
-            value={value.color}
-            placeholder="Verde profundo, sandía…"
+            value={value.medidasAncho}
             disabled={disabled}
+            placeholder="5.2"
             onChange={(e) =>
-              onChange({ color: (e.target as HTMLInputElement).value })
+              onChange({ medidasAncho: (e.target as HTMLInputElement).value })
             }
-            sx={textInputSx}
+            sx={{
+              ...textInputSx,
+              fontFamily: fontFamilies.mono,
+            }}
+          />
+        </Box>
+        <Box>
+          <FieldLabel htmlFor={medAltoId} optional="mm">
+            Alto
+          </FieldLabel>
+          <Box
+            component="input"
+            id={medAltoId}
+            type="text"
+            value={value.medidasAlto}
+            disabled={disabled}
+            placeholder="7.1"
+            onChange={(e) =>
+              onChange({ medidasAlto: (e.target as HTMLInputElement).value })
+            }
+            sx={{
+              ...textInputSx,
+              fontFamily: fontFamilies.mono,
+            }}
+          />
+        </Box>
+        <Box>
+          <FieldLabel htmlFor={medConoId} optional="mm">
+            Cono
+          </FieldLabel>
+          <Box
+            component="input"
+            id={medConoId}
+            type="text"
+            value={value.medidasCono}
+            disabled={disabled}
+            placeholder="4.0"
+            onChange={(e) =>
+              onChange({ medidasCono: (e.target as HTMLInputElement).value })
+            }
+            sx={{
+              ...textInputSx,
+              fontFamily: fontFamilies.mono,
+            }}
           />
         </Box>
       </Box>
@@ -257,6 +532,29 @@ export function GemaFields({
         </Box>
       </Box>
 
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: fieldGap,
+        }}
+      >
+        <ScalePicker
+          id={rarezaId}
+          label="Nivel de rareza (1–6)"
+          value={value.nivelRareza}
+          onChange={(next) => onChange({ nivelRareza: next })}
+          disabled={disabled}
+        />
+        <ScalePicker
+          id={calificacionId}
+          label="Calificación (1–6)"
+          value={value.calificacion}
+          onChange={(next) => onChange({ calificacion: next })}
+          disabled={disabled}
+        />
+      </Box>
+
       {/* Procedencia */}
       <Box>
         <FieldLabel htmlFor={procedenciaId}>Procedencia</FieldLabel>
@@ -305,6 +603,12 @@ export function GemaFields({
             aria-live={preponderanciaHelperAlert ? "polite" : undefined}
           >
             {preponderanciaHelper}
+            {typeof value.preponderancia === "number" &&
+            value.preponderancia > 0 ? (
+              <Box component="span" sx={{ marginLeft: "6px", opacity: 0.85 }}>
+                · ≈ {(value.preponderancia / 10).toFixed(1)}/10 en formulario
+              </Box>
+            ) : null}
           </Box>
         ) : null}
       </Box>

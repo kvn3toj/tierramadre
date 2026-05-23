@@ -134,7 +134,23 @@ export default defineSchema({
     rendimientoEsperado: v.optional(v.number()),
     cantidadEstimada: v.optional(v.number()),
 
-    // Sync metadata
+    // Form FOTOSÍNTESIS — esmeraldas / joyas / pricing (optional)
+    nivelRareza: v.optional(v.number()),
+    calificacion: v.optional(v.number()),
+    tipoEsmeralda: v.optional(v.string()),
+    subtipoForm: v.optional(v.string()),
+    tipoJoya: v.optional(v.string()),
+    tecnicaJoya: v.optional(v.string()),
+    minerales: v.optional(v.array(v.string())),
+    complementos: v.optional(v.array(v.string())),
+    fotoUrl: v.optional(v.string()),
+    certificadoUrl: v.optional(v.string()),
+    formulaGema: v.optional(v.string()),
+    formulaJoya: v.optional(v.string()),
+    rangoDescuento: v.optional(v.string()),
+    precioEmbajadorCOP: v.optional(v.number()),
+    precioPotencialCOP: v.optional(v.number()),
+    precioConscienteCOP: v.optional(v.number()),
     /** ISO timestamp of last successful pull from Sheets */
     lastPulledAt: v.string(),
     /** ISO timestamp of last successful push to Sheets (null if never edited) */
@@ -153,7 +169,8 @@ export default defineSchema({
     .index("by_itemId", ["itemId"])
     .index("by_rowIndex", ["rowIndex"])
     .index("by_estado", ["estado"])
-    .index("by_syncStatus", ["syncStatus"]),
+    .index("by_syncStatus", ["syncStatus"])
+    .index("by_loteId", ["loteId"]),
 
   productEdits: defineTable({
     /** Item being edited */
@@ -246,9 +263,16 @@ export default defineSchema({
      */
     loteId: v.string(),
     /** Sede where the lot was captured. Optional for legacy rows. */
-    sede: v.optional(v.union(v.literal("B"), v.literal("C"))),
+    sede: v.optional(
+      v.union(v.literal("B"), v.literal("C"), v.literal("S"), v.literal("M")),
+    ),
     providerId: v.id("providers"),
     fechaRecepcion: v.string(),
+    renombreLote: v.optional(v.string()),
+    tratamiento: v.optional(v.string()),
+    mina: v.optional(v.string()),
+    operadorNombre: v.optional(v.string()),
+    operadorRol: v.optional(v.string()),
     pesoTotalQuilates: v.optional(v.number()),
     costoTotalCOP: v.number(),
     unidadesDeclaradas: v.number(),
@@ -320,7 +344,9 @@ export default defineSchema({
      */
     saleId: v.string(),
     /** Sede where the sale was recorded. Optional for legacy rows. */
-    sede: v.optional(v.union(v.literal("B"), v.literal("C"))),
+    sede: v.optional(
+      v.union(v.literal("B"), v.literal("C"), v.literal("S"), v.literal("M")),
+    ),
     fechaVenta: v.string(),
     /** itemIds reference productInventory.itemId (string, not Convex id). */
     itemIds: v.array(v.string()),
@@ -333,14 +359,20 @@ export default defineSchema({
       v.literal("contado"),
       v.literal("credito"),
       v.literal("esmereogenesis"),
+      v.literal("canje"),
       v.literal("bajo_pedido"),
       v.literal("consignacion"),
     ),
     metodoContado: v.optional(
-      v.union(v.literal("efectivo"), v.literal("transferencia")),
+      v.union(
+        v.literal("efectivo"),
+        v.literal("transferencia"),
+        v.literal("crypto"),
+      ),
     ),
     fechaVencimiento: v.optional(v.string()),
     numeroCuotas: v.optional(v.number()),
+    adicionales: v.optional(v.string()),
     carnetUrl: v.optional(v.string()),
     certificadoUrl: v.optional(v.string()),
     estado: v.union(

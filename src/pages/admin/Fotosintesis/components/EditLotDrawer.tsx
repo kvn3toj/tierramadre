@@ -26,6 +26,9 @@ interface LotRow {
   _id: string;
   loteId: string;
   fechaRecepcion: string;
+  renombreLote?: string;
+  tratamiento?: string;
+  mina?: string;
   pesoTotalQuilates?: number;
   costoTotalCOP: number;
   unidadesDeclaradas: number;
@@ -80,6 +83,9 @@ export function EditLotDrawer({
   const updateLot = useConvexMutation(convexApi.lots.update);
 
   const [fechaRecepcion, setFechaRecepcion] = useState(lot.fechaRecepcion);
+  const [renombreLote, setRenombreLote] = useState(lot.renombreLote ?? "");
+  const [tratamiento, setTratamiento] = useState(lot.tratamiento ?? "");
+  const [mina, setMina] = useState(lot.mina ?? "");
   const [costoTotalCOP, setCostoTotalCOP] = useState<number | "">(
     lot.costoTotalCOP,
   );
@@ -113,6 +119,9 @@ export function EditLotDrawer({
   useEffect(() => {
     if (!open) return;
     setFechaRecepcion(lot.fechaRecepcion);
+    setRenombreLote(lot.renombreLote ?? "");
+    setTratamiento(lot.tratamiento ?? "");
+    setMina(lot.mina ?? "");
     setCostoTotalCOP(lot.costoTotalCOP);
     setUnidadesDeclaradas(lot.unidadesDeclaradas);
     setPesoTotalQuilates(lot.pesoTotalQuilates ?? "");
@@ -148,6 +157,9 @@ export function EditLotDrawer({
     try {
       const patch: Parameters<typeof updateLot>[0]["patch"] = {
         fechaRecepcion,
+        renombreLote: renombreLote.trim() || undefined,
+        tratamiento: tratamiento.trim() || undefined,
+        mina: mina.trim() || undefined,
         costoTotalCOP: costoTotalCOP as number,
         unidadesDeclaradas: unidadesDeclaradas as number,
         formaPago,
@@ -380,6 +392,53 @@ export function EditLotDrawer({
               }
               calcVariant="neutral"
               disabled={!editable}
+            />
+          </Box>
+        </Box>
+
+        <Box>
+          <FieldLabel optional="alias interno">Renombre del lote</FieldLabel>
+          <Box
+            component="input"
+            type="text"
+            value={renombreLote}
+            disabled={!editable}
+            onChange={(e) =>
+              setRenombreLote((e.target as HTMLInputElement).value)
+            }
+            sx={textInputSx}
+          />
+        </Box>
+
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "16px",
+          }}
+        >
+          <Box>
+            <FieldLabel optional="tratamiento">Tratamiento</FieldLabel>
+            <Box
+              component="input"
+              type="text"
+              value={tratamiento}
+              disabled={!editable}
+              onChange={(e) =>
+                setTratamiento((e.target as HTMLInputElement).value)
+              }
+              sx={textInputSx}
+            />
+          </Box>
+          <Box>
+            <FieldLabel optional="mina">Mina</FieldLabel>
+            <Box
+              component="input"
+              type="text"
+              value={mina}
+              disabled={!editable}
+              onChange={(e) => setMina((e.target as HTMLInputElement).value)}
+              sx={textInputSx}
             />
           </Box>
         </Box>

@@ -44,16 +44,17 @@ import { exportCertificado, isCertificadoApproved } from "./exportCertificado";
 import { slugifyBuyerName } from "../../../utils/slugify";
 import { beginStage, logFailure, logStage } from "./instrumentation";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { BOVEDAS, type Sede } from "../../../data/vocabularies";
 
 type CompradorTipo = "embajador" | "final";
 type FormaPago =
   | "contado"
   | "esmereogenesis"
   | "credito"
+  | "canje"
   | "bajo_pedido"
   | "consignacion";
-type MetodoContado = "efectivo" | "transferencia";
-type Sede = "B" | "C";
+type MetodoContado = "efectivo" | "transferencia" | "crypto";
 
 function formatCop(value: number | undefined | null): string {
   if (typeof value !== "number" || Number.isNaN(value)) return "—";
@@ -112,6 +113,7 @@ export default function FotosintesisVentaPage() {
 
   // ─── Slice 3 — Email opcional ─────────────────────────────────────────
   const [sendEmail, setSendEmail] = useState(false);
+  const [adicionales, setAdicionales] = useState("");
 
   const kardexRef = useRef<HTMLDivElement>(null);
   const certificadoRef = useRef<HTMLDivElement>(null);
@@ -232,7 +234,7 @@ export default function FotosintesisVentaPage() {
 
   const onConfirm = useCallback(async () => {
     if (!sede) {
-      setErrorBanner("Falta elegir sede (Bogotá o Cali).");
+      setErrorBanner("Falta elegir bóveda.");
       return;
     }
     if (!itemId || !clientId || precioCop <= 0) {
@@ -266,6 +268,7 @@ export default function FotosintesisVentaPage() {
         comisionCOP: comisionCop || undefined,
         formaPago,
         metodoContado: formaPago === "contado" ? metodoContado : undefined,
+        adicionales: adicionales.trim() || undefined,
       };
       if (formaPago === "credito") {
         createArgs.fechaVencimiento = creditoFechaVenc;
@@ -469,6 +472,7 @@ export default function FotosintesisVentaPage() {
     creditoCuotas,
     esmereoCuotas,
     esmereoFechaVenc,
+    adicionales,
     selectedClient,
     sendEmail,
     createSale,
@@ -561,16 +565,16 @@ export default function FotosintesisVentaPage() {
             </Box>
           ) : null}
 
-          {/* 0. Sede — qué contador alimentar (VB-/VC-). Sin default. */}
-          <Section title="Sede" foto={foto}>
+          {/* 0. Bóveda */}
+          <Section title="Bóveda" foto={foto}>
             <SegmentedControl<Sede>
-              ariaLabel="Sede de la venta"
+              ariaLabel="Bóveda de la venta"
               value={sede ?? ("" as Sede)}
               onChange={setSede}
-              options={[
-                { value: "B", label: "Bogotá" },
-                { value: "C", label: "Cali" },
-              ]}
+              options={BOVEDAS.map((b) => ({
+                value: b.code,
+                label: b.label,
+              }))}
             />
           </Section>
 
@@ -824,6 +828,7 @@ export default function FotosintesisVentaPage() {
               options={[
                 { value: "contado", label: "Contado" },
                 { value: "credito", label: "Crédito" },
+                { value: "canje", label: "Canje / Trueque" },
                 { value: "esmereogenesis", label: "Esmereogénesis" },
                 { value: "bajo_pedido", label: "Bajo pedido" },
                 { value: "consignacion", label: "Consignación" },
@@ -841,6 +846,7 @@ export default function FotosintesisVentaPage() {
                   options={[
                     { value: "efectivo", label: "Efectivo" },
                     { value: "transferencia", label: "Transferencia" },
+                    { value: "crypto", label: "Crypto" },
                   ]}
                 />
               </Box>
@@ -870,6 +876,30 @@ export default function FotosintesisVentaPage() {
                 setFechaVencimiento={setEsmereoFechaVenc}
               />
             ) : null}
+
+            <Box sx={{ marginTop: "16px" }}>
+              <FieldLabel optional="notas de cierre">Adicionales</FieldLabel>
+              <Box
+                component="textarea"
+                value={adicionales}
+                onChange={(e) =>
+                  setAdicionales((e.target as HTMLTextAreaElement).value)
+                }
+                rows={2}
+                placeholder="Condiciones especiales, trueque, entregables…"
+                sx={{
+                  width: "100%",
+                  background: foto.surfaces.inset,
+                  border: `1px solid ${foto.surfaces.rule}`,
+                  borderRadius: "9px",
+                  padding: "11px 14px",
+                  fontSize: 13,
+                  color: foto.ink.primary,
+                  fontFamily: fontFamilies.system,
+                  resize: "vertical",
+                }}
+              />
+            </Box>
 
             <Box sx={{ marginTop: "18px" }}>
               <FieldLabel>Precio acordado (COP)</FieldLabel>

@@ -11,7 +11,12 @@ import { pushTableRowToVercel } from "./_lib/sheetSync";
 import { COLUMN_MAPS } from "./_lib/columnMaps";
 import { allocateNext, formatLotId, lotSequenceName } from "./sequences";
 
-const sedeValidator = v.union(v.literal("B"), v.literal("C"));
+const sedeValidator = v.union(
+  v.literal("B"),
+  v.literal("C"),
+  v.literal("S"),
+  v.literal("M"),
+);
 
 const formaPagoValidator = v.union(
   v.literal("contado"),
@@ -28,6 +33,11 @@ const metodoContadoValidator = v.union(
 
 const lotPatchValidator = v.object({
   fechaRecepcion: v.optional(v.string()),
+  renombreLote: v.optional(v.string()),
+  tratamiento: v.optional(v.string()),
+  mina: v.optional(v.string()),
+  operadorNombre: v.optional(v.string()),
+  operadorRol: v.optional(v.string()),
   pesoTotalQuilates: v.optional(v.number()),
   costoTotalCOP: v.optional(v.number()),
   unidadesDeclaradas: v.optional(v.number()),
@@ -97,6 +107,11 @@ export const create = mutation({
     sede: sedeValidator,
     providerId: v.id("providers"),
     fechaRecepcion: v.string(),
+    renombreLote: v.optional(v.string()),
+    tratamiento: v.optional(v.string()),
+    mina: v.optional(v.string()),
+    operadorNombre: v.optional(v.string()),
+    operadorRol: v.optional(v.string()),
     pesoTotalQuilates: v.optional(v.number()),
     costoTotalCOP: v.number(),
     unidadesDeclaradas: v.number(),

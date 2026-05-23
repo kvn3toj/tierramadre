@@ -27,6 +27,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   withApiHandler,
   SPREADSHEET_ID,
+  FOTOSINTESIS_SPREADSHEET_ID,
   sendError,
   sendSuccess,
   getSheetNames,
@@ -36,6 +37,11 @@ import {
 interface UpdateBody {
   itemId?: string;
   rowIndex?: number;
+  /** patch = update existing row; append reserved for future use */
+  mode?: 'patch' | 'append';
+  /** legacy = treasure sheet; fotosintesis = SOT Inventario when loteId set */
+  target?: 'legacy' | 'fotosintesis';
+  loteId?: string;
   fields?: {
     nombre?: string;
     peso?: string | number;
@@ -81,7 +87,7 @@ export default withApiHandler(
     }
 
     const body = (req.body ?? {}) as UpdateBody;
-    const { itemId, rowIndex, fields } = body;
+    const { itemId, rowIndex, fields, mode, target, loteId } = body;
     if (!itemId || !rowIndex || !fields) {
       return sendError(res, 400, 'Missing itemId, rowIndex, or fields');
     }
@@ -89,15 +95,20 @@ export default withApiHandler(
       return sendError(res, 400, 'rowIndex must be an integer ≥ 2');
     }
 
+    const spreadsheetId =
+      target === 'fotosintesis' || loteId
+        ? FOTOSINTESIS_SPREADSHEET_ID
+        : SPREADSHEET_ID;
+
     const { sheets } = ctx as { sheets: sheets_v4.Sheets };
-    const sheetNames = await getSheetNames(sheets);
+    const sheetNames = await getSheetNames(sheets, spreadsheetId);
     const targetSheet =
       findSheetByPattern(sheetNames, ['inventario', 'inventory']) || sheetNames[0];
 
     // Read the existing row so we preserve untouched columns (notably B / S)
     const range = `${targetSheet}!A${rowIndex}:U${rowIndex}`;
     const existing = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId,
       range,
     });
     const existingRow = (existing.data.values?.[0] ?? []) as string[];
@@ -160,7 +171,7 @@ export default withApiHandler(
     if (fields.estadoAsesor !== undefined) merged[20] = s(fields.estadoAsesor);
 
     await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId,
       range,
       valueInputOption: 'USER_ENTERED', // lets numbers/dates stay typed
       requestBody: { values: [merged] },
@@ -170,6 +181,8 @@ export default withApiHandler(
       itemId,
       rowIndex,
       sheetName: targetSheet,
+      spreadsheetId,
+      mode: mode ?? 'patch',
       updatedAt: new Date().toISOString(),
     });
   },

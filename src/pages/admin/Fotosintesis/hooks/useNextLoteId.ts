@@ -1,6 +1,7 @@
 import { useConvexQuery, convexApi } from "../../../../lib/convex-safe";
+import type { Sede } from "../../../../data/vocabularies";
 
-export type Sede = "B" | "C";
+export type { Sede };
 
 /**
  * Reactive peek at the next loteId the server would allocate for a given

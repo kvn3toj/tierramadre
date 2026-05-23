@@ -535,7 +535,7 @@ function NewLotIntro() {
           borderRadius: "14px",
         }}
       >
-        {/* Bóveda — B-NNN / C-NNN / S-NNN */}
+        {/* Bóveda — B-NNN / C-NNN / S-NNN / M-NNN */}
         <Box>
           <FieldLabel>Bóveda</FieldLabel>
           <SegmentedControl

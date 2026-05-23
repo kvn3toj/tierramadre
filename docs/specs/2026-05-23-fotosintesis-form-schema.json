@@ -1,0 +1,330 @@
+{
+  "meta": {
+    "formId": "1WA_FbTLGK2HHTwekEW4NvNf6veN_yQK8l64PeTLBcbA",
+    "title": "FOTOSÍNTESIS",
+    "description": "Protocolo de ingreso de inventario conectado al sistema administrativo y contable como insumo para la super aplicación de tesoros Tierra Madre.",
+    "source": "Google Form screenshots + plan review 2026-05-23",
+    "sectionsCount": 10
+  },
+  "sections": [
+    {
+      "index": 1,
+      "title": "FOTOSÍNTESIS",
+      "questions": [
+        { "title": "NOMBRE DEL QUE INGRESA INFO", "type": "short_text", "required": false },
+        { "title": "ROL", "type": "short_text", "required": false },
+        {
+          "title": "BÓVEDA",
+          "type": "multiple_choice",
+          "required": false,
+          "options": ["BOGOTÁ", "CALI", "SECRETA"]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "title": "PROVEEDOR",
+      "questions": [
+        { "title": "NOMBRE O RAZÓN SOCIAL", "type": "short_text", "required": false },
+        { "title": "NIT O CC", "type": "short_text", "required": false },
+        { "title": "DIRECCIÓN", "type": "long_text", "required": false },
+        { "title": "TELÉFONO", "type": "short_text", "required": false },
+        { "title": "E-MAIL", "type": "short_text", "required": false }
+      ]
+    },
+    {
+      "index": 3,
+      "title": "COMPRA",
+      "questions": [
+        { "title": "LOTE", "type": "short_text", "required": false },
+        { "title": "RENOMBRE DEL LOTE", "type": "short_text", "required": false },
+        { "title": "PESO", "type": "short_text", "required": false },
+        { "title": "COSTO", "type": "short_text", "required": true },
+        { "title": "TRATAMIENTO", "type": "long_text", "required": false },
+        { "title": "UNIDADES", "type": "short_text", "required": true },
+        { "title": "MINA", "type": "short_text", "required": false },
+        { "title": "OBSERVACIONES", "type": "long_text", "required": false }
+      ]
+    },
+    {
+      "index": 4,
+      "title": "FORMA DE PAGO [COMPRA]",
+      "questions": [
+        {
+          "title": "Pregunta",
+          "type": "checkbox",
+          "required": true,
+          "options": ["CRÉDITO", "CONTADO"]
+        },
+        { "title": "VENCIMIENTO DEL CRÉDITO", "type": "date", "required": false },
+        {
+          "title": "CONTADO",
+          "type": "multiple_choice",
+          "required": false,
+          "options": ["EFECTIVO", "TRANSFERENCIA"]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "title": "CREAR ÍTEM",
+      "questions": [
+        {
+          "title": "TIPO",
+          "type": "multiple_choice",
+          "required": false,
+          "options": [
+            "PIEDRA",
+            "GEMA",
+            "LOTE",
+            "JOYA",
+            "LOTE DE JOYAS",
+            "GANGA",
+            "MACLA",
+            "CANUTILLO",
+            "Otros"
+          ]
+        },
+        { "title": "NOMBRE SAGRADO (ÍTEM)", "type": "short_text", "required": true },
+        {
+          "title": "PREPONDERANCIA",
+          "type": "linear_scale",
+          "required": true,
+          "low": 1,
+          "high": 10,
+          "lowLabel": "MÁS ESTÁNDAR / MENOS PRECIO",
+          "highLabel": "MÁS FINO / MÁS PRECIO"
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "title": "ESMERALDAS",
+      "questions": [
+        { "title": "DESCRIPCIÓN (OFC)", "type": "long_text", "required": false },
+        { "title": "NIVEL DE RAREZA", "type": "linear_scale", "required": false, "low": 1, "high": 6 },
+        { "title": "CALIFICACIÓN", "type": "linear_scale", "required": false, "low": 1, "high": 6 },
+        { "title": "PESO", "type": "short_text", "required": false },
+        { "title": "CANTIDAD", "type": "short_text", "required": false },
+        {
+          "title": "TIPO",
+          "type": "multiple_choice",
+          "required": false,
+          "options": [
+            "MURALLA",
+            "PIEDRA NATURAL",
+            "CANUTILLO",
+            "COLA",
+            "RAÍZ",
+            "GEMA FACETEADA",
+            "Otros"
+          ]
+        },
+        {
+          "title": "COLOR",
+          "type": "multiple_choice",
+          "required": false,
+          "options": [
+            "VERDE CHIVOR",
+            "VERDE AZUL",
+            "VERDE AZULOSO",
+            "VERDE MUZO",
+            "VERDE VÍVIDO",
+            "VERDE INTENSO",
+            "VERDE SELVA",
+            "VERDE NATURAL",
+            "VERDE LIMÓN",
+            "VERDE VICHE",
+            "VERDE MENTA",
+            "VERDE DIAMANTADO",
+            "VERDE BRILLANTE",
+            "Otros"
+          ]
+        },
+        {
+          "title": "CALIDAD",
+          "type": "multiple_choice",
+          "required": false,
+          "options": [
+            "NO OIL",
+            "INSIGNIFICANT",
+            "MINOR",
+            "F1",
+            "MODERATE",
+            "F2",
+            "FINA SUBLIME",
+            "FINA ESENCIAL",
+            "FINA",
+            "FINA COMERCIAL",
+            "COMERCIAL SÚPER FINA",
+            "COMERCIAL FINA",
+            "COMERCIAL SUPERIOR",
+            "COMERCIAL ESTÁNDAR",
+            "COMERCIAL",
+            "Otros"
+          ]
+        },
+        {
+          "title": "CORTE",
+          "type": "multiple_choice",
+          "required": false,
+          "options": [
+            "REDONDA",
+            "BRILLANTE",
+            "CUADRADA",
+            "BAGUETTE",
+            "LÁGRIMA",
+            "OVALO",
+            "SUPERMAN",
+            "TRAPECIO",
+            "RECTANGULAR",
+            "MARQUISE",
+            "TRILLION",
+            "CUSHION",
+            "CORAZÓN",
+            "ANTIGUO",
+            "ANCESTRAL",
+            "PERA",
+            "PRINCESA",
+            "Otros"
+          ]
+        },
+        { "title": "MEDIDAS - ANCHO", "type": "short_text", "required": false },
+        { "title": "MEDIDAS - ALTO", "type": "short_text", "required": false },
+        { "title": "MEDIDAS - CONO", "type": "short_text", "required": false }
+      ]
+    },
+    {
+      "index": 7,
+      "title": "JOYAS",
+      "questions": [
+        { "title": "DESCRIPCIÓN (OPC)", "type": "long_text", "required": false },
+        { "title": "CANTIDAD", "type": "short_text", "required": false },
+        { "title": "PESO [gr]", "type": "short_text", "required": false },
+        {
+          "title": "TIPO",
+          "type": "multiple_choice",
+          "required": false,
+          "options": [
+            "TOPITOS PEQ",
+            "TOPITOS GRANDES",
+            "TOPITOS HOMBRE",
+            "ARETES",
+            "PULSERA",
+            "DIJE",
+            "CADENA",
+            "EXPANSIÓN",
+            "ANILLO MUJER",
+            "ANILLO HOMBRE",
+            "Otros"
+          ]
+        },
+        { "title": "TÉCNICA", "type": "long_text", "required": false },
+        {
+          "title": "MINERAL",
+          "type": "checkbox",
+          "required": false,
+          "options": [
+            "PLATINO",
+            "ORO",
+            "ORO ROSADO",
+            "ORO ITALIANO",
+            "ORO BLANCO",
+            "ORO NEGRO",
+            "PLATA 925",
+            "PLATA RODINADA",
+            "PLATA CHINA",
+            "PLATA BAÑO DE ORO",
+            "BRONCE",
+            "BRONCE BAÑO DE ORO",
+            "TELA",
+            "HILOS",
+            "Otros"
+          ]
+        },
+        {
+          "title": "COMPLEMENTO",
+          "type": "checkbox",
+          "required": false,
+          "options": [
+            "DIAMANTE",
+            "RUBÍ",
+            "ZAFIRO",
+            "CIRCONES (NATURAL)",
+            "CIRCONIA",
+            "CUARZOS",
+            "Otros"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "title": "APOYO VISUAL Y CERTIFICADO",
+      "questions": [
+        { "title": "FOTO", "type": "file_upload", "required": false },
+        { "title": "CERTIFICADO", "type": "file_upload", "required": false },
+        { "title": "OBSERVACIONES FINALES", "type": "long_text", "required": false }
+      ]
+    },
+    {
+      "index": 9,
+      "title": "PRECIO FINAL",
+      "questions": [
+        { "title": "PRECIO FINAL EMBAJADOR TIERRA MADRE", "type": "short_text", "required": false },
+        { "title": "PRECIO FINAL POTENCIAL EMBAJADOR TMS", "type": "short_text", "required": false },
+        { "title": "PRECIO FINAL CLIENTES CONSCIENTES", "type": "short_text", "required": false },
+        {
+          "title": "FORMULA APLICADA EN GEMA",
+          "type": "multiple_choice",
+          "required": false,
+          "options": ["X1", "X1,5", "X2", "X2,5", "X3", "Otros"]
+        },
+        {
+          "title": "FORMULA APLICADA JOYA",
+          "type": "multiple_choice",
+          "required": false,
+          "options": ["X1", "X1,1", "X1,2", "X1,5", "X2", "X2,5", "X3", "Otros"]
+        },
+        {
+          "title": "RANGO DE DESCUENTOS",
+          "type": "multiple_choice",
+          "required": false,
+          "options": ["10%", "20%", "30%", "40%", "50%", "60%", "70%", "Otros"]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "title": "VENTA",
+      "questions": [
+        {
+          "title": "COMPRADOR",
+          "type": "multiple_choice",
+          "required": false,
+          "options": ["EMBAJADOR", "CLIENTE FINAL"]
+        },
+        { "title": "NOMBRE O RAZÓN SOCIAL", "type": "short_text", "required": false },
+        { "title": "NIT O CC", "type": "short_text", "required": false },
+        { "title": "DIRECCIÓN", "type": "long_text", "required": false },
+        { "title": "TELÉFONO", "type": "short_text", "required": false },
+        { "title": "E-MAIL", "type": "short_text", "required": false },
+        {
+          "title": "FORMA DE PAGO - CLIENTE",
+          "type": "multiple_choice",
+          "required": false,
+          "options": ["ESMEREOGÉNESIS", "CONTADO", "CRÉDITO", "CANJE O TRUEQUE"]
+        },
+        {
+          "title": "RECEPCIÓN DE PAGO",
+          "type": "multiple_choice",
+          "required": false,
+          "options": ["EFECTIVO", "TRANSFERENCIA", "CRYPTO"]
+        },
+        { "title": "NÚMERO DE CUOTAS (SI APLICA)", "type": "short_text", "required": false },
+        { "title": "FECHA DE VENCIMIENTO (SI APLICA)", "type": "date", "required": false },
+        { "title": "ADICIONALES", "type": "long_text", "required": false }
+      ]
+    }
+  ]
+}

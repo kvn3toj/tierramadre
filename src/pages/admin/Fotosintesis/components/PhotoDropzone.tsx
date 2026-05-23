@@ -14,6 +14,8 @@ export interface DropzonePhoto {
   id: string;
   /** Either a Drive URL or a local objectURL. */
   url: string;
+  /** Original file — kept for Drive upload after item create. */
+  file?: File;
 }
 
 interface PhotoDropzoneProps {

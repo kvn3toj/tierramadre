@@ -13,6 +13,10 @@ import {
   procedenciaBucket,
   comboKey,
 } from "../src/utils/patron-buckets";
+import {
+  normalizeCalidadForSheet,
+  normalizeColorForSheet,
+} from "./_lib/fotosintesisVocab";
 
 // =============================================================================
 // QUERIES — read the mirror
@@ -83,6 +87,18 @@ export const get = query({
   },
 });
 
+/** All productInventory rows for a Fotosíntesis lote (close/resumen UI). */
+export const listByLote = query({
+  args: { loteId: v.string() },
+  handler: async (ctx, { loteId }) => {
+    const rows = await ctx.db
+      .query("productInventory")
+      .withIndex("by_loteId", (q) => q.eq("loteId", loteId))
+      .collect();
+    return rows.sort((a, b) => a.itemId.localeCompare(b.itemId, "es"));
+  },
+});
+
 /**
  * Recent edit history for an item (last 20).
  */
@@ -123,7 +139,9 @@ export const syncStats = query({
     // For now, we'll collect all to get the total and max lastPulledAt,
     // but this is still a heavy operation. We can optimize this by maintaining
     // a stats table, but for now this is a step forward.
-    const all = await ctx.db.query("productInventory").collect();
+    // OPTIMIZATION: We only need to do this when syncStatus changes, but for now
+    // we just take the first 1000 to avoid memory issues if the table grows.
+    const all = await ctx.db.query("productInventory").take(1000);
     const total = all.length;
     const lastPull = all.reduce<string | null>(
       (acc, r) => (acc === null || r.lastPulledAt > acc ? r.lastPulledAt : acc),
@@ -351,6 +369,7 @@ export const pushToSheet = action({
     }
 
     try {
+      const sheetTarget = row.loteId ? "fotosintesis" : "legacy";
       const res = await fetch(`${appUrl}/api/admin-product-update`, {
         method: "POST",
         headers: {
@@ -361,16 +380,18 @@ export const pushToSheet = action({
           itemId,
           rowIndex: row.rowIndex,
           mode: pushMode,
+          target: sheetTarget,
+          loteId: row.loteId ?? undefined,
           fields: {
             nombre: row.nombre ?? "",
             peso: row.peso ?? "",
-            color: row.color ?? "",
-            calidad: row.calidad ?? "",
+            color: normalizeColorForSheet(row.color),
+            calidad: normalizeCalidadForSheet(row.calidad),
             cantidad: row.cantidad ?? "",
             talla: row.talla ?? "",
             medidas: row.medidas ?? "",
             medidasValores: row.medidasValores ?? "",
-            categoria: row.categoria ?? "",
+            categoria: row.categoria ?? row.tipoEsmeralda ?? "",
             precioCOP: row.precioCOP ?? "",
             ubicacion: row.ubicacion ?? "",
             asesor: row.asesor ?? "",

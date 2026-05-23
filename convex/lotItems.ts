@@ -94,6 +94,22 @@ export const create = mutation({
     procedencia: v.optional(v.string()),
     precioPublicoCOP: v.optional(v.number()),
     mostrarEnCatalogo: v.optional(v.boolean()),
+    nivelRareza: v.optional(v.number()),
+    calificacion: v.optional(v.number()),
+    tipoEsmeralda: v.optional(v.string()),
+    subtipoForm: v.optional(v.string()),
+    tipoJoya: v.optional(v.string()),
+    tecnicaJoya: v.optional(v.string()),
+    minerales: v.optional(v.array(v.string())),
+    complementos: v.optional(v.array(v.string())),
+    fotoUrl: v.optional(v.string()),
+    certificadoUrl: v.optional(v.string()),
+    formulaGema: v.optional(v.string()),
+    formulaJoya: v.optional(v.string()),
+    rangoDescuento: v.optional(v.string()),
+    precioEmbajadorCOP: v.optional(v.number()),
+    precioPotencialCOP: v.optional(v.number()),
+    precioConscienteCOP: v.optional(v.number()),
     // Bruto-only — informational fields about an unworked parcel.
     rendimientoEsperado: v.optional(v.number()),
     cantidadEstimada: v.optional(v.number()),
@@ -167,6 +183,22 @@ export const create = mutation({
       observacion: args.observacion,
       rendimientoEsperado: args.rendimientoEsperado,
       cantidadEstimada: args.cantidadEstimada,
+      nivelRareza: args.nivelRareza,
+      calificacion: args.calificacion,
+      tipoEsmeralda: args.tipoEsmeralda,
+      subtipoForm: args.subtipoForm,
+      tipoJoya: args.tipoJoya,
+      tecnicaJoya: args.tecnicaJoya,
+      minerales: args.minerales,
+      complementos: args.complementos,
+      fotoUrl: args.fotoUrl,
+      certificadoUrl: args.certificadoUrl,
+      formulaGema: args.formulaGema,
+      formulaJoya: args.formulaJoya,
+      rangoDescuento: args.rangoDescuento,
+      precioEmbajadorCOP: args.precioEmbajadorCOP,
+      precioPotencialCOP: args.precioPotencialCOP,
+      precioConscienteCOP: args.precioConscienteCOP,
       lastPulledAt: now,
       syncStatus: "pending" as const,
     });
@@ -312,6 +344,26 @@ export const updateGemaFields = mutation({
       calidad: v.optional(v.string()),
       procedencia: v.optional(v.string()),
       observacion: v.optional(v.string()),
+      talla: v.optional(v.string()),
+      medidas: v.optional(v.string()),
+      cantidad: v.optional(v.number()),
+      categoria: v.optional(v.string()),
+      nivelRareza: v.optional(v.number()),
+      calificacion: v.optional(v.number()),
+      tipoEsmeralda: v.optional(v.string()),
+      subtipoForm: v.optional(v.string()),
+      tipoJoya: v.optional(v.string()),
+      tecnicaJoya: v.optional(v.string()),
+      minerales: v.optional(v.array(v.string())),
+      complementos: v.optional(v.array(v.string())),
+      fotoUrl: v.optional(v.string()),
+      certificadoUrl: v.optional(v.string()),
+      formulaGema: v.optional(v.string()),
+      formulaJoya: v.optional(v.string()),
+      rangoDescuento: v.optional(v.string()),
+      precioEmbajadorCOP: v.optional(v.number()),
+      precioPotencialCOP: v.optional(v.number()),
+      precioConscienteCOP: v.optional(v.number()),
       precioPublicoCOP: v.optional(v.number()),
       mostrarEnCatalogo: v.optional(v.boolean()),
       preponderancia: v.optional(v.number()),
@@ -403,6 +455,80 @@ export const updateGemaFields = mutation({
     compareString("calidad", patch.calidad, product.calidad);
     compareString("procedencia", patch.procedencia, product.procedencia);
     compareString("observacion", patch.observacion, product.observacion);
+    compareString("talla", patch.talla, product.talla);
+    compareString("medidas", patch.medidas, product.medidas);
+    compareString("categoria", patch.categoria, product.categoria);
+    compareString("tipoEsmeralda", patch.tipoEsmeralda, product.tipoEsmeralda);
+    compareString("subtipoForm", patch.subtipoForm, product.subtipoForm);
+    compareString("tipoJoya", patch.tipoJoya, product.tipoJoya);
+    compareString("tecnicaJoya", patch.tecnicaJoya, product.tecnicaJoya);
+    compareString("formulaGema", patch.formulaGema, product.formulaGema);
+    compareString("formulaJoya", patch.formulaJoya, product.formulaJoya);
+    compareString("rangoDescuento", patch.rangoDescuento, product.rangoDescuento);
+    compareString("fotoUrl", patch.fotoUrl, product.fotoUrl);
+    compareString("certificadoUrl", patch.certificadoUrl, product.certificadoUrl);
+
+    const compareNumber = (
+      field: string,
+      next: number | undefined,
+      current: number | undefined,
+    ) => {
+      if (next === undefined) return;
+      if (next === current) return;
+      productPatch[field] = next;
+      changes.push({ field, before: current ?? null, after: next });
+    };
+
+    compareNumber("cantidad", patch.cantidad, product.cantidad);
+    compareNumber("nivelRareza", patch.nivelRareza, product.nivelRareza);
+    compareNumber("calificacion", patch.calificacion, product.calificacion);
+    compareNumber(
+      "precioEmbajadorCOP",
+      patch.precioEmbajadorCOP,
+      product.precioEmbajadorCOP,
+    );
+    compareNumber(
+      "precioPotencialCOP",
+      patch.precioPotencialCOP,
+      product.precioPotencialCOP,
+    );
+    compareNumber(
+      "precioConscienteCOP",
+      patch.precioConscienteCOP,
+      product.precioConscienteCOP,
+    );
+
+    if (patch.minerales !== undefined) {
+      const prev = product.minerales ?? [];
+      const next = patch.minerales;
+      const same =
+        prev.length === next.length &&
+        prev.every((v, i) => v === next[i]);
+      if (!same) {
+        productPatch.minerales = next;
+        changes.push({
+          field: "minerales",
+          before: prev.join(", ") || null,
+          after: next.join(", ") || null,
+        });
+      }
+    }
+
+    if (patch.complementos !== undefined) {
+      const prev = product.complementos ?? [];
+      const next = patch.complementos;
+      const same =
+        prev.length === next.length &&
+        prev.every((v, i) => v === next[i]);
+      if (!same) {
+        productPatch.complementos = next;
+        changes.push({
+          field: "complementos",
+          before: prev.join(", ") || null,
+          after: next.join(", ") || null,
+        });
+      }
+    }
 
     if (patch.precioPublicoCOP !== undefined) {
       const next =

@@ -11,12 +11,18 @@ import { pushTableRowToVercel } from "./_lib/sheetSync";
 import { COLUMN_MAPS } from "./_lib/columnMaps";
 import { allocateNext, formatSaleId, saleSequenceName } from "./sequences";
 
-const sedeValidator = v.union(v.literal("B"), v.literal("C"));
+const sedeValidator = v.union(
+  v.literal("B"),
+  v.literal("C"),
+  v.literal("S"),
+  v.literal("M"),
+);
 
 const formaPagoValidator = v.union(
   v.literal("contado"),
   v.literal("credito"),
   v.literal("esmereogenesis"),
+  v.literal("canje"),
   v.literal("bajo_pedido"),
   v.literal("consignacion"),
 );
@@ -24,6 +30,7 @@ const formaPagoValidator = v.union(
 const metodoContadoValidator = v.union(
   v.literal("efectivo"),
   v.literal("transferencia"),
+  v.literal("crypto"),
 );
 
 export const list = query({
@@ -87,6 +94,7 @@ export const create = mutation({
     metodoContado: v.optional(metodoContadoValidator),
     fechaVencimiento: v.optional(v.string()),
     numeroCuotas: v.optional(v.number()),
+    adicionales: v.optional(v.string()),
     estado: v.optional(
       v.union(
         v.literal("reservada"),
