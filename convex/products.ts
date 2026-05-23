@@ -104,14 +104,32 @@ export const editHistory = query({
 export const syncStats = query({
   args: {},
   handler: async (ctx) => {
+    // Instead of collecting all rows, we use the by_syncStatus index
+    // to count pending and errored items efficiently.
+    const pendingRows = await ctx.db
+      .query("productInventory")
+      .withIndex("by_syncStatus", (q) => q.eq("syncStatus", "pending"))
+      .collect();
+    const erroredRows = await ctx.db
+      .query("productInventory")
+      .withIndex("by_syncStatus", (q) => q.eq("syncStatus", "error"))
+      .collect();
+    
+    const pending = pendingRows.length;
+    const errored = erroredRows.length;
+    
+    // For total count and lastPull, we still need to scan, but we can optimize
+    // by just collecting the fields we need if Convex supported select.
+    // For now, we'll collect all to get the total and max lastPulledAt,
+    // but this is still a heavy operation. We can optimize this by maintaining
+    // a stats table, but for now this is a step forward.
     const all = await ctx.db.query("productInventory").collect();
     const total = all.length;
-    const pending = all.filter((r) => r.syncStatus === "pending").length;
-    const errored = all.filter((r) => r.syncStatus === "error").length;
     const lastPull = all.reduce<string | null>(
       (acc, r) => (acc === null || r.lastPulledAt > acc ? r.lastPulledAt : acc),
       null,
     );
+
     return { total, pending, errored, lastPull };
   },
 });
@@ -746,18 +764,12 @@ export const pullFromSheet = action({
     const payload = (await res.json()) as { treasure?: SheetRow[] };
     const items: SheetRow[] = payload.treasure ?? [];
 
-    let upserted = 0;
-    let rebased = 0;
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      const itemId = String(item.item ?? "").trim();
-      if (!itemId) continue;
-      // Sheet row index: header is row 1, item at index 0 is row 2
-      const rowIndex = i + 2;
-      const result = await ctx.runMutation(internal.products._upsertFromSheet, {
-        itemId,
-        rowIndex,
+    // Batch upsert all items in a single mutation to avoid excessive re-renders
+    // and database bandwidth consumption.
+    const result = await ctx.runMutation(internal.products._upsertManyFromSheet, {
+      items: items.map((item, i) => ({
+        itemId: String(item.item ?? "").trim(),
+        rowIndex: i + 2,
         fields: {
           nombre: nullableStr(item.nombre),
           peso: nullableStr(item.peso),
@@ -778,12 +790,115 @@ export const pullFromSheet = action({
           asesorActual: nullableStr(item.asesorActual),
           estadoAsesor: nullableStr(item.estadoAsesor),
         },
+      })).filter(item => item.itemId !== ""),
+    });
+
+    return { pulled: items.length, upserted: result.upserted, rebased: result.rebased };
+  },
+});
+
+export const _upsertManyFromSheet = internalMutation({
+  args: {
+    items: v.array(v.object({
+      itemId: v.string(),
+      rowIndex: v.number(),
+      fields: v.object({
+        nombre: v.union(v.string(), v.null()),
+        peso: v.union(v.string(), v.null()),
+        color: v.union(v.string(), v.null()),
+        calidad: v.union(v.string(), v.null()),
+        cantidad: v.union(v.number(), v.null()),
+        talla: v.union(v.string(), v.null()),
+        medidas: v.union(v.string(), v.null()),
+        medidasValores: v.union(v.string(), v.null()),
+        categoria: v.union(v.string(), v.null()),
+        precioCOP: v.union(v.number(), v.null()),
+        ubicacion: v.union(v.string(), v.null()),
+        asesor: v.union(v.string(), v.null()),
+        estado: v.union(
+          v.literal("DISPONIBLE"),
+          v.literal("VENDIDA"),
+          v.literal("ASESOR"),
+          v.literal("Retornado"),
+          v.literal("ESMEREOGENESIS"),
+          v.literal("ESMERO"),
+          v.literal("DISPONIBLE ADOPTADA"),
+          v.literal("LOTE X CT"),
+          v.literal(""),
+        ),
+        qr: v.union(v.string(), v.null()),
+        coleccion: v.union(v.string(), v.null()),
+        caja: v.union(v.string(), v.null()),
+        asesorActual: v.union(v.string(), v.null()),
+        estadoAsesor: v.union(v.string(), v.null()),
+      })
+    }))
+  },
+  handler: async (ctx, { items }) => {
+    let upserted = 0;
+    let rebased = 0;
+    const now = new Date().toISOString();
+
+    // Fetch all existing items to minimize individual queries
+    const existingItems = await ctx.db.query("productInventory").collect();
+    const existingMap = new Map(existingItems.map(item => [item.itemId, item]));
+
+    for (const item of items) {
+      const existing = existingMap.get(item.itemId);
+      const cleanedFields = {
+        nombre: item.fields.nombre ?? undefined,
+        peso: item.fields.peso ?? undefined,
+        color: item.fields.color ?? undefined,
+        calidad: item.fields.calidad ?? undefined,
+        cantidad: item.fields.cantidad ?? undefined,
+        talla: item.fields.talla ?? undefined,
+        medidas: item.fields.medidas ?? undefined,
+        medidasValores: item.fields.medidasValores ?? undefined,
+        categoria: item.fields.categoria ?? undefined,
+        precioCOP: item.fields.precioCOP ?? undefined,
+        ubicacion: item.fields.ubicacion ?? undefined,
+        asesor: item.fields.asesor ?? undefined,
+        estado: item.fields.estado,
+        qr: item.fields.qr ?? undefined,
+        coleccion: item.fields.coleccion ?? undefined,
+        caja: item.fields.caja ?? undefined,
+        asesorActual: item.fields.asesorActual ?? undefined,
+        estadoAsesor: item.fields.estadoAsesor ?? undefined,
+      };
+
+      if (!existing) {
+        await ctx.db.insert("productInventory", {
+          itemId: item.itemId,
+          rowIndex: item.rowIndex,
+          ...cleanedFields,
+          lastPulledAt: now,
+          syncStatus: "synced" as const,
+        });
+        upserted++;
+        continue;
+      }
+
+      const rowIndexShifted = existing.rowIndex !== item.rowIndex;
+      const baseUpdate: { rowIndex: number; lastPulledAt: string } = {
+        rowIndex: item.rowIndex,
+        lastPulledAt: now,
+      };
+
+      if (existing.syncStatus === "pending" || existing.syncStatus === "error") {
+        await ctx.db.patch(existing._id, baseUpdate);
+        if (rowIndexShifted) rebased++;
+        continue;
+      }
+
+      await ctx.db.patch(existing._id, {
+        ...cleanedFields,
+        ...baseUpdate,
+        syncStatus: "synced" as const,
       });
-      if (result.upserted) upserted++;
-      if (result.rebased) rebased++;
+      if (rowIndexShifted) rebased++;
     }
 
-    return { pulled: items.length, upserted, rebased };
+    return { upserted, rebased };
   },
 });
 
