@@ -138,9 +138,7 @@ async function uploadFileToDrive(drive, folderId, file, index) {
   if (isVideo) {
     result.url = `https://drive.google.com/file/d/${fileId}/preview`;
     result.videoUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-    result.thumbnailUrl =
-      uploadedFile.data.thumbnailLink ||
-      `/api/serve-drive-image?fileId=${fileId}&thumbnail=true`;
+    result.thumbnailUrl = `/api/serve-drive-image?fileId=${fileId}&thumbnail=true`;
   } else {
     result.url = `https://drive.google.com/uc?export=view&id=${fileId}`;
   }
