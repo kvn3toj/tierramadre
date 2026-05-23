@@ -51,6 +51,7 @@ import {
  * - original: no resize - full quality
  */
 const IMAGE_SIZES = {
+  tiny: 20,
   thumb: 200,
   small: 400,
   medium: 800,

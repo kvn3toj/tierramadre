@@ -71,7 +71,7 @@ export default withApiHandler(
             if (result) {
               const { file, isVideo } = result;
               const tinyThumb = file.thumbnailLink
-                ? file.thumbnailLink.replace(/=s\d+/, '=s20')
+                ? getProxyUrl(file.id!, isVideo, 'tiny')
                 : null;
               return {
                 itemNumber,
