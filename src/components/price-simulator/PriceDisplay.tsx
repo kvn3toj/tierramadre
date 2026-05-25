@@ -7,11 +7,16 @@
  * Diseñado por Aria - Capitana del Concilio de Creación
  * Refactored: Uses design system tokens for iOS HIG compliance
  */
-import { Box, Stack, Typography, useTheme } from '@mui/material';
+import { Box, Stack, Typography, useTheme } from "@mui/material";
 // Design System Tokens
-import { brand, iosSemanticColors, iosTypographyScale, legacyTypography as typography } from '../../design-system';
-import { usePriceShare } from '../../contexts/PriceShareContext';
-import { useCurrency } from '../../contexts/CurrencyContext';
+import {
+  brand,
+  iosSemanticColors,
+  iosTypographyScale,
+  legacyTypography as typography,
+} from "../../design-system";
+import { usePriceShare } from "../../contexts/PriceShareContext";
+import { useCurrency } from "../../contexts/CurrencyContext";
 
 export interface PriceDisplayProps {
   /** Precio COP del producto (precio regular/público) */
@@ -25,23 +30,25 @@ export interface PriceDisplayProps {
 /**
  * Formatea un valor numérico como moneda
  */
-const formatCurrencyValue = (value: number, currency: 'COP' | 'USD' = 'COP'): string => {
-  if (currency === 'USD') {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+const formatCurrencyValue = (
+  value: number,
+  currency: "COP" | "USD" = "COP",
+): string => {
+  if (currency === "USD") {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
   }
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
 };
-
 
 export const PriceDisplay = ({
   price,
@@ -81,33 +88,33 @@ export const PriceDisplay = ({
   }
 
   // iOS HIG-inspired: weight & opacity hierarchy, clean layout
-  const isDark = theme.palette.mode === 'dark';
-  const mode = isDark ? 'dark' : 'light';
+  const isDark = theme.palette.mode === "dark";
+  const mode = isDark ? "dark" : "light";
 
   // iOS semantic colors from design system
   const labelColor = iosSemanticColors.secondaryLabel[mode];
   const primaryTextColor = iosSemanticColors.label[mode];
-  const isUSD = currency === 'USD';
+  const isUSD = currency === "USD";
 
   return (
-    <Stack spacing={0.5} sx={{ width: '100%' }}>
+    <Stack spacing={0.5} sx={{ width: "100%" }}>
       {/* Price - Primary (iOS Title style: 28pt bold for compact density) */}
       {displayPrice > 0 && (
         <Box>
           <Typography
             sx={{
-              fontSize: '13px',
+              fontSize: "13px",
               fontWeight: typography.weight.normal,
               color: labelColor,
               letterSpacing: typography.letterSpacing.tight,
               mb: 0.25,
             }}
           >
-            Price
+            Precio
           </Typography>
           <Typography
             sx={{
-              fontSize: '26px',
+              fontSize: "26px",
               fontWeight: typography.weight.bold,
               color: primaryTextColor,
               letterSpacing: typography.letterSpacing.tighter,
@@ -120,14 +127,14 @@ export const PriceDisplay = ({
           {isUSD && (
             <Typography
               sx={{
-                fontSize: '11px',
+                fontSize: "11px",
                 fontWeight: typography.weight.normal,
                 color: labelColor,
                 mt: 0.5,
                 fontFeatureSettings: '"tnum"',
               }}
             >
-              TRM: {trmRate.toLocaleString('es-CO')}
+              TRM: {trmRate.toLocaleString("es-CO")}
             </Typography>
           )}
         </Box>

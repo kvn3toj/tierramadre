@@ -49,6 +49,7 @@ import {
   SpecificationsList,
   AdditionalInfo,
   ProductActions,
+  LotePriceBreakdown,
 } from "./components";
 import { EsmereogenesisCTA } from "../../../components/esmereogenesis/EsmereogenesisCTA";
 import Breadcrumbs from "../../../components/shared/Breadcrumbs";
@@ -114,6 +115,10 @@ export default function ProductDetail() {
     if (!product?.isLote || !product.loteItems) return null;
     const media: MediaItem[] = [];
     const prices: number[] = [];
+    // `itemKeys[i]` = the lote item shown at gallery slot i, or null for the
+    // bundle hero (slot 0). Lets the price breakdown highlight the row whose
+    // photo is currently in view.
+    const itemKeys: (number | null)[] = [];
     if (product.imagen) {
       media.push({
         id: `lote-hero-${product.groupId}`,
@@ -124,6 +129,7 @@ export default function ProductDetail() {
         order: 0,
       });
       prices.push(product.precioCOP); // total
+      itemKeys.push(null);
     }
     product.loteItems.forEach((li, i) => {
       if (!li.imagen) return;
@@ -136,9 +142,10 @@ export default function ProductDetail() {
         order: i + 1,
       });
       prices.push(li.precioCOP);
+      itemKeys.push(li.item);
     });
     if (prices.length === 0) prices.push(product.precioCOP);
-    return { media, prices };
+    return { media, prices, itemKeys };
   }, [product, displayName]);
 
   // Track product view (once per session, fire-and-forget)
@@ -688,18 +695,22 @@ export default function ProductDetail() {
                 )}
               </Box>
 
-              {/* Price display — for a lote bundle, the price tracks the
-                  current gallery image (index 0 = total, k = item k's price). */}
-              {shouldShowPrices && (
-                <PriceDisplay
-                  price={
-                    product.isLote && loteMedia
-                      ? (loteMedia.prices[galleryIndex] ?? product.precioCOP)
-                      : product.precioCOP
-                  }
-                  precioInternacional={product.precioInternacional}
-                />
-              )}
+              {/* Price display — a lote shows a stable total plus an itemized
+                  breakdown (price by item + total), with the row matching the
+                  gallery image highlighted. Single items show the plain price. */}
+              {shouldShowPrices &&
+                (product.isLote && product.loteItems ? (
+                  <LotePriceBreakdown
+                    items={product.loteItems}
+                    total={product.precioCOP}
+                    activeItem={loteMedia?.itemKeys[galleryIndex] ?? null}
+                  />
+                ) : (
+                  <PriceDisplay
+                    price={product.precioCOP}
+                    precioInternacional={product.precioInternacional}
+                  />
+                ))}
             </Box>
 
             {/* Separator */}
