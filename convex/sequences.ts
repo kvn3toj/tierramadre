@@ -89,7 +89,9 @@ export const peek = internalQuery({
   },
 });
 
-export type Sede = "B" | "C" | "S" | "M";
+// Known sede codes keep autocomplete; a sanitized custom write-in code is also
+// accepted (it just becomes the loteId/saleId prefix + its own sequence key).
+export type Sede = "B" | "C" | "S" | "M" | (string & {});
 
 /**
  * Sequence name for a lot id. Legacy callers used `"lot"` (Bogotá-only);

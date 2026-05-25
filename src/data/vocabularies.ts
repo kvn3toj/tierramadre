@@ -65,7 +65,14 @@ export const CALIDAD_LEGACY_ALIAS: Record<string, GemaCalidad> = {
   "Comercial Standar": "COMERCIAL ESTÁNDAR",
 };
 
-/** Normalize any stored calidad string to a canonical form label. */
+/**
+ * Normalize a stored calidad string to a canonical form label. Recognized
+ * values (canonical, legacy alias, or case-insensitive match) are mapped to
+ * their canonical label; an unrecognized **non-empty** value is preserved
+ * verbatim so operator write-ins ("Otra opción") round-trip and save instead
+ * of being silently coerced to the default. Mirrors `normalizeCalidadForSheet`
+ * in `convex/_lib/fotosintesisVocab.ts`, which already preserves unknowns.
+ */
 export function normalizeCalidad(raw: string | undefined | null): GemaCalidad {
   const s = (raw ?? "").trim();
   if (!s) return DEFAULT_CALIDAD;
@@ -74,7 +81,8 @@ export function normalizeCalidad(raw: string | undefined | null): GemaCalidad {
   if (aliased) return aliased;
   const upper = s.toUpperCase();
   const match = CALIDADES.find((c) => c.toUpperCase() === upper);
-  return match ?? DEFAULT_CALIDAD;
+  // Preserve custom write-ins (cast: the field stores free text downstream).
+  return match ?? (s as GemaCalidad);
 }
 
 // ─── Estado de productInventory ──────────────────────────────────────
@@ -416,7 +424,23 @@ export const BOVEDAS = [
   { code: "M" as const, label: "Marketing", formLabel: "MARKETING" },
 ] as const;
 
-export type Sede = (typeof BOVEDAS)[number]["code"];
+// Known sede codes (B/C/S/M) keep their autocomplete, but a custom write-in
+// bóveda code is allowed too (sanitized to an uppercase, dash-free token so it
+// stays valid as a loteId/saleId prefix). The `& {}` keeps the literal hints.
+export type Sede = (typeof BOVEDAS)[number]["code"] | (string & {});
+
+/**
+ * Sanitize an operator-written bóveda code into an ID-safe sede token: uppercase
+ * letters/digits only (no dashes/spaces — they'd break `parseLoteId`, which
+ * splits on the first "-"), capped at 4 chars. Keeps custom loteId/saleId
+ * prefixes well-formed, e.g. "Medellín" → "MEDE".
+ */
+export function sanitizeSedeCode(raw: string): string {
+  return (raw ?? "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 4);
+}
 
 // ─── Tipo ítem form (Sección 5) ──────────────────────────────────────
 

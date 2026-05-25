@@ -1,6 +1,5 @@
 import { useId } from "react";
 import { Box } from "@mui/material";
-import { ChevronDown } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../../design-system";
 import {
   CALIDADES,
@@ -16,8 +15,9 @@ import {
   type TipoEsmeralda,
 } from "../../../../data/vocabularies";
 import { FieldLabel } from "./FieldLabel";
-import { spanishText, noSpellCheck } from "../utils/fieldLang";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
+import { SelectField } from "./SelectField";
+import { spanishText, noSpellCheck } from "../utils/fieldLang";
 
 export type { GemaCalidad } from "../../../../data/vocabularies";
 
@@ -137,85 +137,6 @@ function ScalePicker({
             </Box>
           );
         })}
-      </Box>
-    </Box>
-  );
-}
-
-function SelectField({
-  id,
-  label,
-  value,
-  options,
-  placeholder,
-  onChange,
-  disabled,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  options: readonly string[];
-  placeholder: string;
-  onChange: (next: string) => void;
-  disabled?: boolean;
-}) {
-  const foto = getFoto("light");
-  const textInputSx = {
-    width: "100%",
-    background: foto.surfaces.inset,
-    border: `1px solid ${foto.surfaces.rule}`,
-    borderRadius: "9px",
-    padding: "11px 14px",
-    fontSize: 13.5,
-    color: foto.ink.primary,
-    fontFamily: fontFamilies.system,
-    outline: "none",
-    appearance: "none",
-    WebkitAppearance: "none",
-    MozAppearance: "none",
-    paddingRight: "38px",
-    cursor: disabled ? "not-allowed" : "pointer",
-    backgroundImage: "none",
-    transition: "border-color 120ms ease, box-shadow 120ms ease",
-    "&:focus": {
-      borderColor: foto.accent.primary,
-      boxShadow: `0 0 0 3px ${foto.accent.glow}`,
-    },
-  } as const;
-
-  return (
-    <Box>
-      <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <Box sx={{ position: "relative" }}>
-        <Box
-          component="select"
-          id={id}
-          value={value}
-          disabled={disabled}
-          onChange={(e) => onChange((e.target as HTMLSelectElement).value)}
-          sx={textInputSx}
-        >
-          <option value="">{placeholder}</option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </Box>
-        <Box
-          sx={{
-            position: "absolute",
-            right: "12px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            pointerEvents: "none",
-            color: foto.ink.tertiary,
-            display: "flex",
-          }}
-          aria-hidden="true"
-        >
-          <ChevronDown size={16} strokeWidth={1.6} />
-        </Box>
       </Box>
     </Box>
   );
@@ -489,54 +410,16 @@ export function GemaFields({
         </Box>
       </Box>
 
-      {/* Calidad — native select (17 vocabularies, too many for SegmentedControl) */}
-      <Box>
-        <FieldLabel htmlFor={calidadId}>Calidad</FieldLabel>
-        <Box sx={{ position: "relative" }}>
-          <Box
-            component="select"
-            id={calidadId}
-            value={value.calidad}
-            disabled={disabled}
-            onChange={(e) =>
-              onChange({
-                calidad: (e.target as HTMLSelectElement).value as GemaCalidad,
-              })
-            }
-            aria-label="Calidad de la gema"
-            sx={{
-              ...textInputSx,
-              appearance: "none",
-              WebkitAppearance: "none",
-              MozAppearance: "none",
-              paddingRight: "38px",
-              cursor: disabled ? "not-allowed" : "pointer",
-              backgroundImage: "none",
-            }}
-          >
-            {CALIDADES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </Box>
-          <Box
-            sx={{
-              position: "absolute",
-              right: "12px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              pointerEvents: "none",
-              color: foto.ink.tertiary,
-              display: "flex",
-              alignItems: "center",
-            }}
-            aria-hidden="true"
-          >
-            <ChevronDown size={16} strokeWidth={1.6} />
-          </Box>
-        </Box>
-      </Box>
+      {/* Calidad — 19 vocabularies + write-in for grades not yet catalogued */}
+      <SelectField
+        id={calidadId}
+        label="Calidad"
+        value={value.calidad}
+        options={CALIDADES}
+        placeholder="Elegir calidad…"
+        disabled={disabled}
+        onChange={(next) => onChange({ calidad: next as GemaCalidad })}
+      />
 
       <Box
         sx={{

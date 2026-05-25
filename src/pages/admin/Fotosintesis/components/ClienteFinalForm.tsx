@@ -26,8 +26,8 @@ import { getFoto, fontFamilies } from "../../../../design-system";
 import { useConvexMutation, convexApi } from "../../../../lib/convex-safe";
 import { verifyNit } from "../../../../utils/nitVerify";
 import { FieldLabel } from "./FieldLabel";
-import { properName, streetAddress, noSpellCheck } from "../utils/fieldLang";
 import { SegmentedControl } from "./SegmentedControl";
+import { properName, streetAddress, noSpellCheck } from "../utils/fieldLang";
 import { EntityPicker } from "./EntityPicker";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
@@ -43,11 +43,19 @@ export interface ClienteRow {
   direccion?: string;
   telefono?: string;
   email?: string;
-  tipo: "embajador" | "final";
+  // Canonical embajador | final, but free text so a custom write-in buyer type
+  // ("Otro…" from the venta comprador picker) round-trips.
+  tipo: string;
 }
 
 interface ClienteFinalFormProps {
-  /** All clients from the cached query — filtered for tipo=final here. */
+  /**
+   * Buyer type stored on the created client. Defaults to "final"; the venta
+   * comprador picker passes a custom write-in here ("Otro…") so it persists on
+   * clients.tipo. Duplicate detection is scoped to clients of this same tipo.
+   */
+  tipo?: string;
+  /** All clients from the cached query — filtered to this `tipo` here. */
   allClients: readonly ClienteRow[];
   /** Currently selected client (so we can render a compact summary card
    *  instead of the form once the operator has chosen one). */
@@ -81,6 +89,7 @@ function formatColombianPhone(raw: string): string {
 }
 
 export function ClienteFinalForm({
+  tipo = "final",
   allClients,
   selectedClient,
   onCreated,
@@ -138,10 +147,10 @@ export function ClienteFinalForm({
     return verifyNit(documento);
   }, [documento, tipoDoc]);
 
-  // ── Duplicate detection (only against tipo=final) ───────────────────
+  // ── Duplicate detection (scoped to clients of this same tipo) ───────
   const finalClients = useMemo(
-    () => allClients.filter((c) => c.tipo === "final"),
-    [allClients],
+    () => allClients.filter((c) => c.tipo === tipo),
+    [allClients, tipo],
   );
   const deferredNombre = useDeferredValue(nombre);
   const deferredDoc = useDeferredValue(documento);
@@ -178,7 +187,7 @@ export function ClienteFinalForm({
     setSubmitError(null);
     try {
       const payload: {
-        tipo: "final";
+        tipo: string;
         nombre: string;
         nit?: string;
         cedula?: string;
@@ -186,7 +195,7 @@ export function ClienteFinalForm({
         telefono?: string;
         email?: string;
       } = {
-        tipo: "final",
+        tipo,
         nombre: nombre.trim(),
         direccion: direccion.trim() || undefined,
       };
@@ -215,6 +224,7 @@ export function ClienteFinalForm({
     nombre,
     onCreated,
     telefono,
+    tipo,
     tipoDoc,
   ]);
 

@@ -24,9 +24,9 @@ import { useNotification } from "../../../contexts/NotificationContext";
 import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
 import { TicketHeader } from "./components/TicketHeader";
 import { StepPills } from "./components/StepPills";
+import { spanishText } from "./utils/fieldLang";
 import { SegmentedControl } from "./components/SegmentedControl";
 import { FieldLabel } from "./components/FieldLabel";
-import { spanishText } from "./utils/fieldLang";
 import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
 import { KbdKey } from "./components/KbdKey";
 import { KardexPreview } from "./components/KardexPreview";
@@ -45,9 +45,15 @@ import { exportCertificado, isCertificadoApproved } from "./exportCertificado";
 import { slugifyBuyerName } from "../../../utils/slugify";
 import { beginStage, logFailure, logStage } from "./instrumentation";
 import type { Id } from "../../../../convex/_generated/dataModel";
-import { BOVEDAS, type Sede } from "../../../data/vocabularies";
+import {
+  BOVEDAS,
+  sanitizeSedeCode,
+  type Sede,
+} from "../../../data/vocabularies";
 
-type CompradorTipo = "embajador" | "final";
+// Known buyer types keep autocomplete; a custom write-in ("Otro…") is allowed
+// and captured through the cliente-final form, which stores it on clients.tipo.
+type CompradorTipo = "embajador" | "final" | (string & {});
 type FormaPago =
   | "contado"
   | "esmereogenesis"
@@ -570,6 +576,10 @@ export default function FotosintesisVentaPage() {
           <Section title="Bóveda" foto={foto}>
             <SegmentedControl<Sede>
               ariaLabel="Bóveda de la venta"
+              allowOther
+              otherLabel="Otra…"
+              otherPlaceholder="Código de bóveda (ej. MED)…"
+              sanitizeOther={sanitizeSedeCode}
               value={sede ?? ("" as Sede)}
               onChange={setSede}
               options={BOVEDAS.map((b) => ({
@@ -583,6 +593,9 @@ export default function FotosintesisVentaPage() {
           <Section title="Comprador" foto={foto}>
             <SegmentedControl<CompradorTipo>
               ariaLabel="Tipo de comprador"
+              allowOther
+              otherLabel="Otro…"
+              otherPlaceholder="Escribir tipo de comprador…"
               value={compradorTipo}
               onChange={setCompradorTipo}
               options={[
@@ -592,11 +605,15 @@ export default function FotosintesisVentaPage() {
             />
 
             <Box sx={{ marginTop: "16px" }}>
-              {compradorTipo === "final" ? (
+              {/* Embajador uses the asesor picker; "final" and any custom write-in
+                  buyer type are captured through the cliente-final form (which
+                  persists the custom tipo onto the client). */}
+              {compradorTipo !== "embajador" ? (
                 <ClienteFinalForm
+                  tipo={compradorTipo}
                   allClients={(allClients ?? []) as ClienteRow[]}
                   selectedClient={
-                    selectedClient && selectedClient.tipo === "final"
+                    selectedClient && selectedClient.tipo !== "embajador"
                       ? selectedClient
                       : null
                   }
@@ -824,6 +841,9 @@ export default function FotosintesisVentaPage() {
           <Section title="Forma de pago" foto={foto}>
             <SegmentedControl<FormaPago>
               ariaLabel="Forma de pago"
+              allowOther
+              otherLabel="Otra…"
+              otherPlaceholder="Escribir forma de pago…"
               value={formaPago}
               onChange={setFormaPago}
               options={[
@@ -842,6 +862,9 @@ export default function FotosintesisVentaPage() {
                 <SegmentedControl<MetodoContado>
                   ariaLabel="Método de pago contado"
                   block
+                  allowOther
+                  otherLabel="Otro…"
+                  otherPlaceholder="Escribir método de pago…"
                   value={metodoContado}
                   onChange={setMetodoContado}
                   options={[

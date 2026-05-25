@@ -11,27 +11,19 @@ import { pushTableRowToVercel } from "./_lib/sheetSync";
 import { COLUMN_MAPS } from "./_lib/columnMaps";
 import { allocateNext, formatSaleId, saleSequenceName } from "./sequences";
 
-const sedeValidator = v.union(
-  v.literal("B"),
-  v.literal("C"),
-  v.literal("S"),
-  v.literal("M"),
-);
+// Free text (canonical: B | C | S | M). The venta UI sanitizes a custom
+// write-in to an uppercase, dash-free token before it reaches here, so it stays
+// valid as the saleId prefix (`formatSaleId`) and its own `sequences` key.
+const sedeValidator = v.string();
 
-const formaPagoValidator = v.union(
-  v.literal("contado"),
-  v.literal("credito"),
-  v.literal("esmereogenesis"),
-  v.literal("canje"),
-  v.literal("bajo_pedido"),
-  v.literal("consignacion"),
-);
+// Free text (canonical: contado | credito | esmereogenesis | canje |
+// bajo_pedido | consignacion) so the venta UI can submit an operator write-in.
+// The conditional logic in `create` only special-cases known strings, so a
+// custom value is stored verbatim and harmless.
+const formaPagoValidator = v.string();
 
-const metodoContadoValidator = v.union(
-  v.literal("efectivo"),
-  v.literal("transferencia"),
-  v.literal("crypto"),
-);
+// Free text (canonical: efectivo | transferencia | crypto) for write-in parity.
+const metodoContadoValidator = v.string();
 
 export const list = query({
   args: {
