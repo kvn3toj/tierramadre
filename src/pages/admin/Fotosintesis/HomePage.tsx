@@ -13,6 +13,7 @@ import {
   ArrowRight,
   DollarSign,
   X,
+  Boxes,
 } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../design-system";
 import {
@@ -767,7 +768,33 @@ export default function FotosintesisHomePage() {
                         <X size={14} strokeWidth={2} />
                       </Box>
                     ) : (
-                      <Box sx={{ width: 28 }} />
+                      <Box
+                        component={Link}
+                        to={`/admin/fotosintesis/lots/${lot.loteId}/sublotes`}
+                        aria-label={`Sub-lotes del lote ${lot.loteId}`}
+                        title="Sub-lotes"
+                        sx={{
+                          width: 28,
+                          height: 28,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: "transparent",
+                          border: `1px solid transparent`,
+                          borderRadius: "7px",
+                          color: foto.ink.tertiary,
+                          textDecoration: "none",
+                          transition:
+                            "background 120ms ease, color 120ms ease, border-color 120ms ease",
+                          "&:hover": {
+                            background: foto.accent.soft,
+                            borderColor: foto.accent.primary,
+                            color: foto.accent.deep,
+                          },
+                        }}
+                      >
+                        <Boxes size={15} strokeWidth={2} />
+                      </Box>
                     )}
                   </Box>
                 );

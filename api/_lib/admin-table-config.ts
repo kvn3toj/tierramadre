@@ -17,7 +17,7 @@
  * bumping this letter.
  */
 
-export type FotoTable = "providers" | "lots" | "clients" | "sales";
+export type FotoTable = "providers" | "lots" | "clients" | "sales" | "subLotes";
 
 export interface TableConfig {
   sheetTabPatterns: string[];
@@ -100,8 +100,31 @@ export const TABLE_CONFIGS: Record<FotoTable, TableConfig> = {
     idColumn: "saleId",
     lastColumnLetter: "O",
   },
+  subLotes: {
+    sheetTabPatterns: ["sublotes", "sub-lotes", "sublotes (sale-bundles)"],
+    columns: [
+      "subLoteId",
+      "parentLoteId",
+      "sede",
+      "nombre",
+      "itemIdsJoined",
+      "unidades",
+      "totalCostoCOP",
+      "estado",
+      "notas",
+      "createdAt",
+    ],
+    idColumn: "subLoteId",
+    lastColumnLetter: "J",
+  },
 };
 
 export function isFotoTable(x: unknown): x is FotoTable {
-  return x === "providers" || x === "lots" || x === "clients" || x === "sales";
+  return (
+    x === "providers" ||
+    x === "lots" ||
+    x === "clients" ||
+    x === "sales" ||
+    x === "subLotes"
+  );
 }

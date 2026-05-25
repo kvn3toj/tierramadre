@@ -129,3 +129,18 @@ export function parseLoteId(loteId: string): { sede: Sede; value: number } {
 export function formatSaleId(n: number, sede: Sede): string {
   return `V${sede}-${String(n).padStart(4, "0")}`;
 }
+
+/**
+ * Sub-lote sequence key — one counter PER parent lote so ids read
+ * "B-001-G1", "B-001-G2", … and never collide across parents. The parent
+ * loteId is embedded in the key, so the same "G" number can recur under
+ * different parents without clashing.
+ */
+export function subLoteSequenceName(parentLoteId: string): string {
+  return `sublot:${parentLoteId}`;
+}
+
+/** "B-001-G1" — parent loteId + "-G" + the per-parent sequence value. */
+export function formatSubLoteId(parentLoteId: string, n: number): string {
+  return `${parentLoteId}-G${n}`;
+}

@@ -15,7 +15,7 @@
  * the document being updated).
  */
 
-export type FotoTable = "providers" | "lots" | "clients" | "sales";
+export type FotoTable = "providers" | "lots" | "clients" | "sales" | "subLotes";
 
 export const COLUMN_MAPS: Record<FotoTable, readonly string[]> = {
   providers: [
@@ -70,6 +70,18 @@ export const COLUMN_MAPS: Record<FotoTable, readonly string[]> = {
     "carnetUrl",
     "certificadoUrl",
     "estado",
+  ],
+  subLotes: [
+    "subLoteId", // A — natural key
+    "parentLoteId", // B — FK to lots.loteId
+    "sede", // C
+    "nombre", // D
+    "itemIdsJoined", // E — denormalized at push time (comma-separated)
+    "unidades", // F — derived
+    "totalCostoCOP", // G — derived
+    "estado", // H
+    "notas", // I
+    "createdAt", // J
   ],
 } as const;
 

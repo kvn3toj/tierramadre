@@ -394,6 +394,40 @@ export default defineSchema({
     .index("by_rowIndex", ["rowIndex"])
     .index("by_syncStatus", ["syncStatus"]),
 
+  // ─── Fotosíntesis · Sub-lotes (sale-bundles) ─────────────────────
+  //
+  // A sub-lote is a named group of items drawn from ONE parent lote, built to
+  // sell them together while keeping traceability to the source lote. Membership
+  // lives as `itemIds` (mirrors sales.itemIds), so an item can belong to several
+  // sub-lotes at once; the item keeps its own loteId — a sub-lote never rewrites
+  // item ownership. Derived figures (`unidades`, `totalCostoCOP`) are recomputed
+  // server-side on every mutation, never client-set (BR-S3). Mirrors a Google
+  // Sheets "Sublotes" tab, push-only like lots/sales.
+  subLotes: defineTable({
+    /** "B-001-G1" — parentLoteId + "-G" + per-parent sequence value. */
+    subLoteId: v.string(),
+    /** FK → lots.loteId. The traceability link back to the source lote. */
+    parentLoteId: v.string(),
+    /** Sede inherited from the parent lote (free text for custom write-ins). */
+    sede: v.optional(v.string()),
+    nombre: v.string(),
+    /** itemIds reference productInventory.itemId (string, not Convex id). */
+    itemIds: v.array(v.string()),
+    /** Derived: itemIds.length. */
+    unidades: v.number(),
+    /** Derived: Σ member productInventory.costoBaseCOP. Never user-set (BR-S3). */
+    totalCostoCOP: v.number(),
+    notas: v.optional(v.string()),
+    estado: v.union(v.literal("activa"), v.literal("archivada")),
+    createdAt: v.string(),
+    ...syncFields,
+  })
+    .index("by_subLoteId", ["subLoteId"])
+    .index("by_parentLote", ["parentLoteId"])
+    .index("by_estado", ["estado"])
+    .index("by_rowIndex", ["rowIndex"])
+    .index("by_syncStatus", ["syncStatus"]),
+
   /** Materials catalog populated inline by the inventory wizard (joyas). */
   materials: defineTable({
     name: v.string(),
