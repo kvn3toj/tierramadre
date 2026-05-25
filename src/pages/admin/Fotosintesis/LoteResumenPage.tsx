@@ -190,11 +190,14 @@ export default function FotosintesisLoteResumenPage() {
   // them appear in the catalog (the `mostrarEnCatalogo` flag is what the
   // customer-facing `products.publishedCatalog` bridge reads).
   const isClosed = lot?.estado === "cerrado";
+  // A published lot stays reachable here so the operator can manage its
+  // catalog grouping (hero photo + "Mostrar como lote") after the fact.
+  const isPublished = lot?.estado === "publicado";
 
   useEffect(() => {
     if (!lot || !lotItems) return;
-    // Already published — nothing left to do here, send back to the queue.
-    if (lot.estado === "publicado" || lot.estado === "cancelado") {
+    // Cancelled lots have nothing to manage — send back to the queue.
+    if (lot.estado === "cancelado") {
       navigate("/admin/fotosintesis", { replace: true });
       return;
     }
@@ -309,6 +312,25 @@ export default function FotosintesisLoteResumenPage() {
     }
   };
 
+  // Manage an already-published lot: just persist the catalog-grouping fields
+  // (hero photo + "Mostrar como lote"). No re-publish, no item changes.
+  const handleSaveGrouping = async () => {
+    if (!lot || !isPublished) return;
+    setClosing(true);
+    try {
+      await persistLoteDisplay(lot._id as Id<"lots">);
+      notify(`Lote ${lot.loteId} actualizado`, "success");
+      navigate("/admin/fotosintesis");
+    } catch (err) {
+      notify(
+        err instanceof Error ? err.message : "No pudimos guardar el lote",
+        "error",
+      );
+    } finally {
+      setClosing(false);
+    }
+  };
+
   if (!lot || !lotItems || !products) {
     return (
       <Box
@@ -350,7 +372,11 @@ export default function FotosintesisLoteResumenPage() {
           }}
         >
           <CheckCircle2 size={14} />
-          {isClosed ? "Lote cerrado" : "Listo para cerrar"}
+          {isPublished
+            ? "Lote publicado"
+            : isClosed
+              ? "Lote cerrado"
+              : "Listo para cerrar"}
         </Box>
         <Box
           component="h1"
@@ -362,14 +388,21 @@ export default function FotosintesisLoteResumenPage() {
             color: foto.ink.primary,
           }}
         >
-          {isClosed ? "Publicar lote" : "Cerrar lote"} {lot.loteId}
+          {isPublished
+            ? "Gestionar lote"
+            : isClosed
+              ? "Publicar lote"
+              : "Cerrar lote"}{" "}
+          {lot.loteId}
         </Box>
         <Box
           sx={{ fontSize: 14, color: foto.ink.secondary, marginTop: "10px" }}
         >
-          {isClosed
-            ? "Este lote ya está cerrado. Publicá sus ítems para que aparezcan en el catálogo y puedas venderlos."
-            : "Revisá las validaciones, decidí qué ítems publicar y confirmá el cierre. Después podrás vender desde el catálogo."}
+          {isPublished
+            ? "Este lote ya está en el catálogo. Mostralo como un solo card de lote (con foto y precio total) o dejá sus ítems individuales."
+            : isClosed
+              ? "Este lote ya está cerrado. Publicá sus ítems para que aparezcan en el catálogo y puedas venderlos."
+              : "Revisá las validaciones, decidí qué ítems publicar y confirmá el cierre. Después podrás vender desde el catálogo."}
         </Box>
       </Box>
 
@@ -586,7 +619,14 @@ export default function FotosintesisLoteResumenPage() {
               lineHeight: 1.55,
             }}
           >
-            {isClosed ? (
+            {isPublished ? (
+              <>
+                Este lote ya está <strong>publicado</strong>. Activá{" "}
+                <strong>Mostrar como lote</strong> para presentarlo como un solo
+                card con foto y precio total; al guardar se actualiza el
+                catálogo.
+              </>
+            ) : isClosed ? (
               <>
                 Al publicar: todos los ítems pasan a{" "}
                 <strong>visibles en catálogo</strong> y el lote queda{" "}
@@ -601,7 +641,7 @@ export default function FotosintesisLoteResumenPage() {
             )}
           </Box>
 
-          {isClosed ? null : (
+          {isClosed || isPublished ? null : (
             <Box
               sx={{
                 background: foto.surfaces.panel,
@@ -701,9 +741,15 @@ export default function FotosintesisLoteResumenPage() {
           <Box
             component="button"
             type="button"
-            disabled={(isClosed ? false : !validationsOk) || closing}
+            disabled={
+              (isClosed || isPublished ? false : !validationsOk) || closing
+            }
             onClick={() =>
-              isClosed ? void handlePublishClosed() : void handleClose()
+              isPublished
+                ? void handleSaveGrouping()
+                : isClosed
+                  ? void handlePublishClosed()
+                  : void handleClose()
             }
             sx={{
               width: "100%",
@@ -715,19 +761,26 @@ export default function FotosintesisLoteResumenPage() {
               fontSize: 14,
               fontWeight: 600,
               cursor: closing ? "wait" : "pointer",
-              opacity: (isClosed ? false : !validationsOk) || closing ? 0.6 : 1,
+              opacity:
+                (isClosed || isPublished ? false : !validationsOk) || closing
+                  ? 0.6
+                  : 1,
               "&:hover:not(:disabled)": {
                 filter: "brightness(1.05)",
               },
             }}
           >
             {closing
-              ? isClosed
-                ? "Publicando…"
-                : "Cerrando…"
-              : isClosed
-                ? "Publicar lote"
-                : "Cerrar lote"}
+              ? isPublished
+                ? "Guardando…"
+                : isClosed
+                  ? "Publicando…"
+                  : "Cerrando…"
+              : isPublished
+                ? "Guardar cambios"
+                : isClosed
+                  ? "Publicar lote"
+                  : "Cerrar lote"}
           </Box>
         </Box>
       </Box>
