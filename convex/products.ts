@@ -100,6 +100,28 @@ export const listByLote = query({
 });
 
 /**
+ * Published Fotosíntesis catalog — every productInventory row that belongs
+ * to a lot (`loteId` set) AND has been published (`mostrarEnCatalogo` true).
+ *
+ * This is the bridge that lets the customer-facing Treasure Browser show
+ * Fotosíntesis-captured items. They live in a separate spreadsheet from the
+ * legacy catalog (`get-treasure-sheets` reads the legacy sheet only), and
+ * the `mostrarEnCatalogo` publish flag is Convex-only — never synced to
+ * Sheets — so Convex is the only authority that knows what's published.
+ * Items kept "en reserva" (mostrarEnCatalogo false) are intentionally
+ * excluded so the publish/reserve decision is honored.
+ */
+export const publishedCatalog = query({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db.query("productInventory").collect();
+    return rows.filter(
+      (row) => row.loteId !== undefined && row.mostrarEnCatalogo === true,
+    );
+  },
+});
+
+/**
  * Recent edit history for an item (last 20).
  */
 export const editHistory = query({
@@ -130,10 +152,10 @@ export const syncStats = query({
       .query("productInventory")
       .withIndex("by_syncStatus", (q) => q.eq("syncStatus", "error"))
       .collect();
-    
+
     const pending = pendingRows.length;
     const errored = erroredRows.length;
-    
+
     // For total count and lastPull, we still need to scan, but we can optimize
     // by just collecting the fields we need if Convex supported select.
     // For now, we'll collect all to get the total and max lastPulledAt,
@@ -787,73 +809,84 @@ export const pullFromSheet = action({
 
     // Batch upsert all items in a single mutation to avoid excessive re-renders
     // and database bandwidth consumption.
-    const result = await ctx.runMutation(internal.products._upsertManyFromSheet, {
-      items: items.map((item, i) => ({
-        itemId: String(item.item ?? "").trim(),
-        rowIndex: i + 2,
-        fields: {
-          nombre: nullableStr(item.nombre),
-          peso: nullableStr(item.peso),
-          color: nullableStr(item.color),
-          calidad: nullableStr(item.calidad),
-          cantidad: nullableNum(item.cantidad),
-          talla: nullableStr(item.talla),
-          medidas: nullableStr(item.medidas),
-          medidasValores: nullableStr(item.medidasValores),
-          categoria: nullableStr(item.categoria),
-          precioCOP: nullableNum(item.precioCOP),
-          ubicacion: nullableStr(item.ubicacion),
-          asesor: nullableStr(item.asesor),
-          estado: normalizeEstado(item.estado),
-          qr: nullableStr(item.qr),
-          coleccion: nullableStr(item.coleccion),
-          caja: nullableStr(item.caja),
-          asesorActual: nullableStr(item.asesorActual),
-          estadoAsesor: nullableStr(item.estadoAsesor),
-        },
-      })).filter(item => item.itemId !== ""),
-    });
+    const result = await ctx.runMutation(
+      internal.products._upsertManyFromSheet,
+      {
+        items: items
+          .map((item, i) => ({
+            itemId: String(item.item ?? "").trim(),
+            rowIndex: i + 2,
+            fields: {
+              nombre: nullableStr(item.nombre),
+              peso: nullableStr(item.peso),
+              color: nullableStr(item.color),
+              calidad: nullableStr(item.calidad),
+              cantidad: nullableNum(item.cantidad),
+              talla: nullableStr(item.talla),
+              medidas: nullableStr(item.medidas),
+              medidasValores: nullableStr(item.medidasValores),
+              categoria: nullableStr(item.categoria),
+              precioCOP: nullableNum(item.precioCOP),
+              ubicacion: nullableStr(item.ubicacion),
+              asesor: nullableStr(item.asesor),
+              estado: normalizeEstado(item.estado),
+              qr: nullableStr(item.qr),
+              coleccion: nullableStr(item.coleccion),
+              caja: nullableStr(item.caja),
+              asesorActual: nullableStr(item.asesorActual),
+              estadoAsesor: nullableStr(item.estadoAsesor),
+            },
+          }))
+          .filter((item) => item.itemId !== ""),
+      },
+    );
 
-    return { pulled: items.length, upserted: result.upserted, rebased: result.rebased };
+    return {
+      pulled: items.length,
+      upserted: result.upserted,
+      rebased: result.rebased,
+    };
   },
 });
 
 export const _upsertManyFromSheet = internalMutation({
   args: {
-    items: v.array(v.object({
-      itemId: v.string(),
-      rowIndex: v.number(),
-      fields: v.object({
-        nombre: v.union(v.string(), v.null()),
-        peso: v.union(v.string(), v.null()),
-        color: v.union(v.string(), v.null()),
-        calidad: v.union(v.string(), v.null()),
-        cantidad: v.union(v.number(), v.null()),
-        talla: v.union(v.string(), v.null()),
-        medidas: v.union(v.string(), v.null()),
-        medidasValores: v.union(v.string(), v.null()),
-        categoria: v.union(v.string(), v.null()),
-        precioCOP: v.union(v.number(), v.null()),
-        ubicacion: v.union(v.string(), v.null()),
-        asesor: v.union(v.string(), v.null()),
-        estado: v.union(
-          v.literal("DISPONIBLE"),
-          v.literal("VENDIDA"),
-          v.literal("ASESOR"),
-          v.literal("Retornado"),
-          v.literal("ESMEREOGENESIS"),
-          v.literal("ESMERO"),
-          v.literal("DISPONIBLE ADOPTADA"),
-          v.literal("LOTE X CT"),
-          v.literal(""),
-        ),
-        qr: v.union(v.string(), v.null()),
-        coleccion: v.union(v.string(), v.null()),
-        caja: v.union(v.string(), v.null()),
-        asesorActual: v.union(v.string(), v.null()),
-        estadoAsesor: v.union(v.string(), v.null()),
-      })
-    }))
+    items: v.array(
+      v.object({
+        itemId: v.string(),
+        rowIndex: v.number(),
+        fields: v.object({
+          nombre: v.union(v.string(), v.null()),
+          peso: v.union(v.string(), v.null()),
+          color: v.union(v.string(), v.null()),
+          calidad: v.union(v.string(), v.null()),
+          cantidad: v.union(v.number(), v.null()),
+          talla: v.union(v.string(), v.null()),
+          medidas: v.union(v.string(), v.null()),
+          medidasValores: v.union(v.string(), v.null()),
+          categoria: v.union(v.string(), v.null()),
+          precioCOP: v.union(v.number(), v.null()),
+          ubicacion: v.union(v.string(), v.null()),
+          asesor: v.union(v.string(), v.null()),
+          estado: v.union(
+            v.literal("DISPONIBLE"),
+            v.literal("VENDIDA"),
+            v.literal("ASESOR"),
+            v.literal("Retornado"),
+            v.literal("ESMEREOGENESIS"),
+            v.literal("ESMERO"),
+            v.literal("DISPONIBLE ADOPTADA"),
+            v.literal("LOTE X CT"),
+            v.literal(""),
+          ),
+          qr: v.union(v.string(), v.null()),
+          coleccion: v.union(v.string(), v.null()),
+          caja: v.union(v.string(), v.null()),
+          asesorActual: v.union(v.string(), v.null()),
+          estadoAsesor: v.union(v.string(), v.null()),
+        }),
+      }),
+    ),
   },
   handler: async (ctx, { items }) => {
     let upserted = 0;
@@ -862,7 +895,9 @@ export const _upsertManyFromSheet = internalMutation({
 
     // Fetch all existing items to minimize individual queries
     const existingItems = await ctx.db.query("productInventory").collect();
-    const existingMap = new Map(existingItems.map(item => [item.itemId, item]));
+    const existingMap = new Map(
+      existingItems.map((item) => [item.itemId, item]),
+    );
 
     for (const item of items) {
       const existing = existingMap.get(item.itemId);
@@ -900,11 +935,13 @@ export const _upsertManyFromSheet = internalMutation({
       }
 
       const rowIndexShifted = existing.rowIndex !== item.rowIndex;
-      
+
       // Check if any actual data fields changed
-      const fieldsChanged = Object.entries(cleanedFields).some(([key, value]) => {
-        return existing[key as keyof typeof existing] !== value;
-      });
+      const fieldsChanged = Object.entries(cleanedFields).some(
+        ([key, value]) => {
+          return existing[key as keyof typeof existing] !== value;
+        },
+      );
 
       // If nothing changed (neither data nor row index), skip the database write entirely
       // to save database operations on the 5-minute cron job.
@@ -917,7 +954,10 @@ export const _upsertManyFromSheet = internalMutation({
         lastPulledAt: now,
       };
 
-      if (existing.syncStatus === "pending" || existing.syncStatus === "error") {
+      if (
+        existing.syncStatus === "pending" ||
+        existing.syncStatus === "error"
+      ) {
         await ctx.db.patch(existing._id, baseUpdate);
         if (rowIndexShifted) rebased++;
         continue;
@@ -1016,7 +1056,7 @@ export const _upsertFromSheet = internalMutation({
 
     // Always re-pin rowIndex to what the sheet says (rows can shift)
     const rowIndexShifted = existing.rowIndex !== rowIndex;
-    
+
     // Check if any actual data fields changed
     const fieldsChanged = Object.entries(cleanedFields).some(([key, value]) => {
       return existing[key as keyof typeof existing] !== value;
