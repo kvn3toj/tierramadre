@@ -2,6 +2,7 @@ import {
   query,
   mutation,
   action,
+  internalAction,
   internalMutation,
   internalQuery,
 } from "./_generated/server";
@@ -9,7 +10,13 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { pushTableRowToVercel } from "./_lib/sheetSync";
 import { COLUMN_MAPS } from "./_lib/columnMaps";
-import { allocateNext, formatLotId, lotSequenceName } from "./sequences";
+import {
+  allocateNext,
+  formatLotId,
+  lotSequenceName,
+  parseLoteId,
+  reclaimIfTail,
+} from "./sequences";
 
 const sedeValidator = v.union(
   v.literal("B"),
@@ -251,6 +258,29 @@ export const cancel = mutation({
       .withIndex("by_loteId", (q) => q.eq("loteId", lot.loteId))
       .collect();
 
+    // True abort: a lot with NOTHING captured yet, holding the tail of its
+    // sede's sequence, is reclaimed in full. We roll the sequence back so the
+    // next lot reuses this number (BR-1 "sin saltos") and DELETE the row so the
+    // reused loteId stays globally unique — `getByLoteId` relies on `.first()`,
+    // and a tombstone keeping the same id would shadow the new lot. Lots that
+    // already have items, or sit mid-sequence (a newer number exists), keep the
+    // cancelado tombstone below: their number can't be renumbered safely.
+    if (lotItemRows.length === 0) {
+      const { sede, value } = parseLoteId(lot.loteId);
+      const reclaimed = await reclaimIfTail(ctx, lotSequenceName(sede), value);
+      if (reclaimed) {
+        await ctx.db.delete(id);
+        // Best-effort: void the row we appended to Sheets at create time so the
+        // push-only mirror keeps no stale "abierto" row and the reused number
+        // doesn't surface as a duplicate. A failure here never blocks cancel.
+        await ctx.scheduler.runAfter(0, internal.lots._voidSheetRow, {
+          rowIndex: lot.rowIndex,
+          loteId: lot.loteId,
+        });
+        return { id, loteId: lot.loteId, orphanedItems: 0, reclaimed: true };
+      }
+    }
+
     for (const li of lotItemRows) {
       const product = await ctx.db
         .query("productInventory")
@@ -284,7 +314,35 @@ export const cancel = mutation({
       mode: "patch",
     });
 
-    return { id, loteId: lot.loteId, orphanedItems: lotItemRows.length };
+    return {
+      id,
+      loteId: lot.loteId,
+      orphanedItems: lotItemRows.length,
+      reclaimed: false,
+    };
+  },
+});
+
+/**
+ * Best-effort cleanup of the Sheets mirror after `cancel` reclaims a lot
+ * number (see `lots.cancel`). The lot's Convex row is already gone, so we
+ * can't reuse `_pushToSheet`; instead we rename column A of the appended row
+ * away from the reclaimed id (so the upcoming reuse of that number doesn't
+ * read as two `C-001` rows) and flag it `cancelado`. The mirror is push-only
+ * with no pull-back (see crons.ts), so a transient failure is harmless.
+ */
+export const _voidSheetRow = internalAction({
+  args: { rowIndex: v.number(), loteId: v.string() },
+  handler: async (_ctx, { rowIndex, loteId }) => {
+    const voidId = `${loteId}·anulado`;
+    await pushTableRowToVercel({
+      table: "lots",
+      rowIndex,
+      mode: "patch",
+      idValue: voidId,
+      previousIdValue: loteId,
+      fields: { loteId: voidId, estado: "cancelado" },
+    });
   },
 });
 
