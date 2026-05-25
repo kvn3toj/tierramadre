@@ -17,8 +17,13 @@ import {
   convexApi,
 } from "../../../../lib/convex-safe";
 import { FieldLabel } from "./FieldLabel";
-import { spanishText, properName, streetAddress, noSpellCheck } from "../utils/fieldLang";
 import { KbdKey } from "./KbdKey";
+import {
+  spanishText,
+  properName,
+  streetAddress,
+  noSpellCheck,
+} from "../utils/fieldLang";
 import { SegmentedControl } from "./SegmentedControl";
 import { verifyNit } from "../../../../utils/nitVerify";
 
@@ -119,7 +124,11 @@ export function ProveedorNuevoDrawer({
   const titleId = useId();
 
   // Form state — kept local; nothing leaks until submit.
-  const [tipo, setTipo] = useState<ProveedorTipo>("gemas");
+  // `tipo` is widened to string so the operator can write a category that
+  // isn't in TIPO_OPTIONS (selecting "Otros" reveals a free-text input). The
+  // four known values stay the common path; persisted via providers.tipo,
+  // whose Convex validator accepts free text.
+  const [tipo, setTipo] = useState<string>("gemas");
   const [nombre, setNombre] = useState("");
   const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>("NIT");
   const [documento, setDocumento] = useState("");
@@ -224,6 +233,10 @@ export function ProveedorNuevoDrawer({
     },
     [requestClose],
   );
+
+  // True when `tipo` holds an operator write-in rather than one of the four
+  // known categories — drives the "Otros" highlight + the reveal of the input.
+  const tipoIsCustom = !TIPO_OPTIONS.some((o) => o.value === tipo);
 
   // ---- Submission --------------------------------------------------------
   const canSubmit = nombre.trim().length > 0 && !submitting;
@@ -456,7 +469,9 @@ export function ProveedorNuevoDrawer({
             }}
           >
             {TIPO_OPTIONS.map((opt) => {
-              const active = opt.value === tipo;
+              // "Otros" stays highlighted while a custom value is being typed.
+              const active =
+                opt.value === tipo || (opt.value === "otros" && tipoIsCustom);
               return (
                 <Box
                   key={opt.value}
@@ -490,6 +505,20 @@ export function ProveedorNuevoDrawer({
               );
             })}
           </Box>
+          {tipo === "otros" || tipoIsCustom ? (
+            <Box
+              component="input"
+              value={tipoIsCustom ? tipo : ""}
+              {...spanishText}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                const next = e.target.value;
+                setTipo(next.trim().length > 0 ? next : "otros");
+              }}
+              placeholder="Especificar otro tipo (opcional)…"
+              aria-label="Especificar otro tipo de proveedor"
+              sx={{ ...inputBaseSx, marginTop: "8px" }}
+            />
+          ) : null}
         </FormGroup>
 
         {/* GROUP — Identidad */}

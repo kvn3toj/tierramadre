@@ -13,13 +13,14 @@
  * Provides a unified API for treasure data with media merged in.
  */
 
-import { useMemo } from 'react';
-import { TreasureItem } from '../types';
-import { treasureData as defaultTreasureData } from '../data/treasure';
-import { useSheetsTreasure } from './useSheetsTreasure';
-import { useTreasureMedia } from './useTreasureMedia';
-import { useBatchThumbnails } from './useBatchThumbnails';
-import { usePrevious } from './usePrevious';
+import { useMemo } from "react";
+import { TreasureItem } from "../types";
+import { treasureData as defaultTreasureData } from "../data/treasure";
+import { useSheetsTreasure } from "./useSheetsTreasure";
+import { useTreasureMedia } from "./useTreasureMedia";
+import { useBatchThumbnails } from "./useBatchThumbnails";
+import { usePrevious } from "./usePrevious";
+import { useFotosintesisCatalog } from "./useFotosintesisCatalog";
 
 /**
  * Extract Google Drive file ID from various URL formats
@@ -28,9 +29,9 @@ function extractDriveFileId(url: string): string | null {
   if (!url) return null;
 
   const patterns = [
-    /\/file\/d\/([a-zA-Z0-9_-]+)/,           // /file/d/FILE_ID/
-    /\/d\/([a-zA-Z0-9_-]+)/,                  // /d/FILE_ID/
-    /id=([a-zA-Z0-9_-]+)/,                    // ?id=FILE_ID
+    /\/file\/d\/([a-zA-Z0-9_-]+)/, // /file/d/FILE_ID/
+    /\/d\/([a-zA-Z0-9_-]+)/, // /d/FILE_ID/
+    /id=([a-zA-Z0-9_-]+)/, // ?id=FILE_ID
   ];
 
   for (const pattern of patterns) {
@@ -49,7 +50,10 @@ function convertToProxyUrl(url: string | undefined): string | undefined {
   if (!url) return url;
 
   // Check if it's a Google Drive URL
-  if (url.includes('drive.google.com') || url.includes('lh3.googleusercontent.com')) {
+  if (
+    url.includes("drive.google.com") ||
+    url.includes("lh3.googleusercontent.com")
+  ) {
     const fileId = extractDriveFileId(url);
     if (fileId) {
       return `/api/serve-drive-image?fileId=${fileId}`;
@@ -90,12 +94,28 @@ export function useTreasure() {
   } = useTreasureMedia();
 
   // Batch thumbnails from Google Drive folders
-  const { thumbnails: batchThumbnails, isLoading: isLoadingThumbnails } = useBatchThumbnails();
+  const { thumbnails: batchThumbnails, isLoading: isLoadingThumbnails } =
+    useBatchThumbnails();
+
+  // Published Fotosíntesis items (Convex) — captured through the lot wizard
+  // and published to catalog. They live in a separate sheet the legacy reader
+  // never touches, so we merge them in here.
+  const fotosintesisItems = useFotosintesisCatalog();
 
   // Merge treasure data with media (memoized for performance)
   const treasure = useMemo((): TreasureItem[] => {
     // Use Google Sheets data if available, otherwise fall back to local data
-    const baseTreasure = sheetsTreasure || defaultTreasureData;
+    const sheetsBase = sheetsTreasure || defaultTreasureData;
+
+    // Append published Fotosíntesis items, skipping any id already present in
+    // the legacy catalog so a number collision never duplicates a card.
+    const sheetIds = new Set(sheetsBase.map((i) => i.item));
+    const baseTreasure = fotosintesisItems.length
+      ? [
+          ...sheetsBase,
+          ...fotosintesisItems.filter((i) => !sheetIds.has(i.item)),
+        ]
+      : sheetsBase;
 
     return baseTreasure.map((item) => {
       const itemMedia = legacyMedia[item.item];
@@ -110,12 +130,19 @@ export function useTreasure() {
 
       // Image Source: Google Drive `products/` folder via batch thumbnails
       // Convert any Google Drive URLs to proxy URLs for reliable loading
-      const rawImageUrl = mainMedia?.url || itemMedia?.url || batchThumb?.url;
-      const rawThumbnailUrl = mainMedia?.thumbnailUrl || itemMedia?.thumbnailUrl || item.thumbnailUrl;
+      const rawImageUrl =
+        mainMedia?.url || itemMedia?.url || batchThumb?.url || item.imagen;
+      const rawThumbnailUrl =
+        mainMedia?.thumbnailUrl || itemMedia?.thumbnailUrl || item.thumbnailUrl;
 
       // Determine media type: check if batch thumbnail is from a video-only product
-      const isVideoOnly = batchThumb?.isVideoThumbnail && !mainMedia && !itemMedia;
-      const mediaType = mainMedia?.type || itemMedia?.mediaType || (isVideoOnly ? 'video' : item.mediaType) || 'image';
+      const isVideoOnly =
+        batchThumb?.isVideoThumbnail && !mainMedia && !itemMedia;
+      const mediaType =
+        mainMedia?.type ||
+        itemMedia?.mediaType ||
+        (isVideoOnly ? "video" : item.mediaType) ||
+        "image";
 
       return {
         ...item,
@@ -126,7 +153,13 @@ export function useTreasure() {
         tinyThumb: batchThumb?.tinyThumb,
       };
     });
-  }, [sheetsTreasure, legacyMedia, galleries, batchThumbnails]);
+  }, [
+    sheetsTreasure,
+    legacyMedia,
+    galleries,
+    batchThumbnails,
+    fotosintesisItems,
+  ]);
 
   // Track previous treasure array for URL stability check
   const prevTreasure = usePrevious(treasure);

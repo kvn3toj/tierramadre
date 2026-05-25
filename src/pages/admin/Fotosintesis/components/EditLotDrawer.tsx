@@ -9,19 +9,17 @@ import { useNotification } from "../../../../contexts/NotificationContext";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
 import { FieldLabel } from "./FieldLabel";
-import { spanishText, noSpellCheck } from "../utils/fieldLang";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
 import { SegmentedControl } from "./SegmentedControl";
 import { CreditoFields } from "./CreditoFields";
+import { spanishText, noSpellCheck } from "../utils/fieldLang";
 import { KbdKey } from "./KbdKey";
 
-type FormaPago =
-  | "contado"
-  | "credito"
-  | "esmereogenesis"
-  | "bajo_pedido"
-  | "consignacion";
-type MetodoContado = "efectivo" | "transferencia";
+// Free text so an operator write-in round-trips when editing a lot.
+// Canonical: contado | credito | esmereogenesis | bajo_pedido | consignacion.
+type FormaPago = string;
+// Canonical: efectivo | transferencia.
+type MetodoContado = string;
 
 interface LotRow {
   _id: string;
@@ -500,6 +498,9 @@ export function EditLotDrawer({
           <FieldLabel>Forma de pago</FieldLabel>
           <SegmentedControl
             ariaLabel="Forma de pago"
+            allowOther={editable}
+            otherLabel="Otra…"
+            otherPlaceholder="Escribir forma de pago…"
             options={[
               { value: "contado", label: "Contado", disabled: !editable },
               { value: "credito", label: "Crédito", disabled: !editable },
@@ -525,6 +526,9 @@ export function EditLotDrawer({
             <FieldLabel>Método</FieldLabel>
             <SegmentedControl
               ariaLabel="Método de pago contado"
+              allowOther={editable}
+              otherLabel="Otro…"
+              otherPlaceholder="Escribir método de pago…"
               options={[
                 { value: "efectivo", label: "Efectivo", disabled: !editable },
                 {

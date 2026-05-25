@@ -1,5 +1,6 @@
-import { useId } from "react";
+import { useId, useRef, useState } from "react";
 import { Box } from "@mui/material";
+import { Check, Plus } from "lucide-react";
 import {
   COMPLEMENTOS,
   MINERALES,
@@ -10,8 +11,9 @@ import {
 } from "../../../../data/vocabularies";
 import { getFoto, fontFamilies } from "../../../../design-system";
 import { FieldLabel } from "./FieldLabel";
-import { spanishText } from "../utils/fieldLang";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
+import { SelectField } from "./SelectField";
+import { spanishText } from "../utils/fieldLang";
 
 export interface JoyaDraft {
   nombre: string;
@@ -87,6 +89,187 @@ function ChipToggle({
   );
 }
 
+/**
+ * Chip multi-select with an inline "+ Otro" write-in. Vocabulary suggestions
+ * render as toggle chips; any selected value not in the vocabulary (a custom
+ * write-in, or one loaded from an edited record) renders as its own removable
+ * chip so it round-trips. `onChange` always returns the full next array.
+ */
+function ChipMultiSelect({
+  label,
+  optionalText = "multi",
+  options,
+  selected,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  optionalText?: string;
+  options: readonly string[];
+  selected: readonly string[];
+  onChange: (next: string[]) => void;
+  disabled?: boolean;
+}) {
+  const foto = getFoto("light");
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState("");
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const customSelected = selected.filter(
+    (s) => !(options as readonly string[]).includes(s),
+  );
+
+  const toggle = (item: string) => {
+    if (disabled) return;
+    onChange(
+      selected.includes(item)
+        ? selected.filter((x) => x !== item)
+        : [...selected, item],
+    );
+  };
+
+  const commitCustom = () => {
+    const v = draft.trim();
+    if (v && !selected.includes(v)) onChange([...selected, v]);
+    setDraft("");
+    setAdding(false);
+  };
+
+  const startAdding = () => {
+    setAdding(true);
+    window.setTimeout(() => inputRef.current?.focus(), 30);
+  };
+
+  return (
+    <Box>
+      <FieldLabel optional={optionalText}>{label}</FieldLabel>
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "6px",
+          alignItems: "center",
+        }}
+      >
+        {options.map((o) => (
+          <ChipToggle
+            key={o}
+            label={o}
+            selected={selected.includes(o)}
+            disabled={disabled}
+            onToggle={() => toggle(o)}
+          />
+        ))}
+        {customSelected.map((o) => (
+          <ChipToggle
+            key={o}
+            label={o}
+            selected
+            disabled={disabled}
+            onToggle={() => toggle(o)}
+          />
+        ))}
+        {adding ? (
+          <Box
+            sx={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
+          >
+            <Box
+              component="input"
+              ref={inputRef}
+              type="text"
+              value={draft}
+              disabled={disabled}
+              placeholder="Escribir…"
+              aria-label={`${label} — escribir respuesta`}
+              {...spanishText}
+              onChange={(e) => setDraft((e.target as HTMLInputElement).value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  commitCustom();
+                } else if (e.key === "Escape") {
+                  setDraft("");
+                  setAdding(false);
+                }
+              }}
+              onBlur={() => {
+                if (!draft.trim()) setAdding(false);
+              }}
+              sx={{
+                width: 120,
+                background: foto.surfaces.inset,
+                border: `1px solid ${foto.accent.primary}`,
+                borderRadius: "999px",
+                padding: "5px 11px",
+                fontSize: 11,
+                color: foto.ink.primary,
+                fontFamily: fontFamilies.system,
+                outline: "none",
+              }}
+            />
+            <Box
+              component="button"
+              type="button"
+              onClick={commitCustom}
+              disabled={disabled || !draft.trim()}
+              aria-label="Agregar respuesta"
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 26,
+                height: 26,
+                borderRadius: "999px",
+                border: `1px solid ${foto.accent.primary}`,
+                background: draft.trim()
+                  ? foto.accent.primary
+                  : foto.surfaces.inset,
+                color: draft.trim() ? foto.ink.inverse : foto.ink.mute,
+                cursor: draft.trim() ? "pointer" : "not-allowed",
+                flexShrink: 0,
+              }}
+            >
+              <Check size={13} strokeWidth={2.4} />
+            </Box>
+          </Box>
+        ) : (
+          <Box
+            component="button"
+            type="button"
+            onClick={startAdding}
+            disabled={disabled}
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              fontFamily: fontFamilies.system,
+              fontSize: 11,
+              fontWeight: 500,
+              padding: "6px 10px",
+              borderRadius: "999px",
+              border: `1px dashed ${foto.surfaces.edgeStrong}`,
+              background: "transparent",
+              color: foto.ink.secondary,
+              cursor: disabled ? "not-allowed" : "pointer",
+              opacity: disabled ? 0.55 : 1,
+              transition: "border-color 120ms ease, color 120ms ease",
+              "&:hover": disabled
+                ? undefined
+                : {
+                    borderColor: foto.accent.primary,
+                    color: foto.accent.deep,
+                  },
+            }}
+          >
+            <Plus size={12} strokeWidth={2} />
+            Otro
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
 export function JoyaFields({
   value,
   onChange,
@@ -110,17 +293,6 @@ export function JoyaFields({
   const computedCostoBaseCOP = Math.round(
     lotCostoTotalCOP * (prepNumeric / 100),
   );
-
-  const toggleList = <T extends string>(
-    list: T[],
-    item: T,
-    key: "minerales" | "complementos",
-  ) => {
-    const next = list.includes(item)
-      ? list.filter((x) => x !== item)
-      : [...list, item];
-    onChange({ [key]: next } as Partial<JoyaDraft>);
-  };
 
   const textInputSx = {
     width: "100%",
@@ -209,28 +381,15 @@ export function JoyaFields({
             calcVariant="neutral"
           />
         </Box>
-        <Box>
-          <FieldLabel htmlFor={tipoJoyaId}>Tipo de joya</FieldLabel>
-          <Box
-            component="select"
-            id={tipoJoyaId}
-            value={value.tipoJoya}
-            disabled={disabled}
-            onChange={(e) =>
-              onChange({
-                tipoJoya: (e.target as HTMLSelectElement).value as TipoJoya | "",
-              })
-            }
-            sx={textInputSx}
-          >
-            <option value="">Elegir…</option>
-            {TIPOS_JOYA.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </Box>
-        </Box>
+        <SelectField
+          id={tipoJoyaId}
+          label="Tipo de joya"
+          value={value.tipoJoya}
+          options={TIPOS_JOYA}
+          placeholder="Elegir…"
+          disabled={disabled}
+          onChange={(next) => onChange({ tipoJoya: next as TipoJoya | "" })}
+        />
       </Box>
 
       <Box>
@@ -251,35 +410,21 @@ export function JoyaFields({
         />
       </Box>
 
-      <Box>
-        <FieldLabel optional="multi">Mineral</FieldLabel>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-          {MINERALES.map((m) => (
-            <ChipToggle
-              key={m}
-              label={m}
-              selected={value.minerales.includes(m)}
-              disabled={disabled}
-              onToggle={() => toggleList(value.minerales, m, "minerales")}
-            />
-          ))}
-        </Box>
-      </Box>
+      <ChipMultiSelect
+        label="Mineral"
+        options={MINERALES}
+        selected={value.minerales}
+        disabled={disabled}
+        onChange={(next) => onChange({ minerales: next as Mineral[] })}
+      />
 
-      <Box>
-        <FieldLabel optional="multi">Complemento</FieldLabel>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-          {COMPLEMENTOS.map((c) => (
-            <ChipToggle
-              key={c}
-              label={c}
-              selected={value.complementos.includes(c)}
-              disabled={disabled}
-              onToggle={() => toggleList(value.complementos, c, "complementos")}
-            />
-          ))}
-        </Box>
-      </Box>
+      <ChipMultiSelect
+        label="Complemento"
+        options={COMPLEMENTOS}
+        selected={value.complementos}
+        disabled={disabled}
+        onChange={(next) => onChange({ complementos: next as Complemento[] })}
+      />
 
       <Box>
         <FieldLabel htmlFor={preponderanciaId}>

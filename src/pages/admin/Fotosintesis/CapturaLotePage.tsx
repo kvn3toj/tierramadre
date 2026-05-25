@@ -31,8 +31,8 @@ import { PreponderanceRing } from "./components/PreponderanceRing";
 import { ItemMiniCard } from "./components/ItemMiniCard";
 import { SegmentedControl } from "./components/SegmentedControl";
 import { FieldLabel } from "./components/FieldLabel";
-import { spanishText, noSpellCheck } from "./utils/fieldLang";
 import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
+import { spanishText, noSpellCheck } from "./utils/fieldLang";
 import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
 import { ShortcutTable } from "./components/ShortcutTable";
 import { ProveedorNuevoDrawer } from "./components/ProveedorNuevoDrawer";
@@ -47,6 +47,7 @@ import ConfirmDialog from "../../../components/shared/ConfirmDialog";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import {
   BOVEDAS,
+  sanitizeSedeCode,
   type Sede,
 } from "../../../data/vocabularies";
 import {
@@ -323,7 +324,7 @@ type ProviderRow = {
   nit?: string;
   cedula?: string;
   tipo?: "gemas" | "joyas" | "insumos" | "otros";
-}
+};
 
 function NewLotIntro() {
   const foto = getFoto("light");
@@ -541,6 +542,10 @@ function NewLotIntro() {
           <FieldLabel>Bóveda</FieldLabel>
           <SegmentedControl
             ariaLabel="Bóveda del lote"
+            allowOther
+            otherLabel="Otra…"
+            otherPlaceholder="Código de bóveda (ej. MED)…"
+            sanitizeOther={sanitizeSedeCode}
             options={BOVEDAS.map((b) => ({
               value: b.code,
               label: b.label,
@@ -757,6 +762,9 @@ function NewLotIntro() {
             <FieldLabel>Forma de pago</FieldLabel>
             <SegmentedControl
               ariaLabel="Forma de pago"
+              allowOther
+              otherLabel="Otra…"
+              otherPlaceholder="Escribir forma de pago…"
               options={[
                 { value: "contado", label: "Contado" },
                 { value: "credito", label: "Crédito" },
@@ -775,6 +783,9 @@ function NewLotIntro() {
             <FieldLabel>Método</FieldLabel>
             <SegmentedControl
               ariaLabel="Método de pago contado"
+              allowOther
+              otherLabel="Otro…"
+              otherPlaceholder="Escribir método de pago…"
               options={[
                 { value: "efectivo", label: "Efectivo" },
                 { value: "transferencia", label: "Transferencia" },
@@ -1183,8 +1194,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
   // Active draft surface — the form fields below dispatch off `tipo`, but
   // preponderancia + nombre validations are uniform across types.
-  const activeDraft =
-    tipo === "bruto" ? bruto : tipo === "gema" ? gema : joya;
+  const activeDraft = tipo === "bruto" ? bruto : tipo === "gema" ? gema : joya;
   const activePreponderancia = activeDraft.preponderancia;
   const activeNombre = activeDraft.nombre;
 
@@ -1283,7 +1293,10 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         throw new Error("Tipo de ítem no soportado en captura");
       }
 
-      const result = (await createLotItem(payload)) as { lotItemId: Id<"lotItems">; itemId: string };
+      const result = (await createLotItem(payload)) as {
+        lotItemId: Id<"lotItems">;
+        itemId: string;
+      };
 
       const photoFiles = photos
         .map((p) => p.file)

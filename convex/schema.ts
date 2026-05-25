@@ -234,12 +234,11 @@ export default defineSchema({
     direccion: v.optional(v.string()),
     telefono: v.optional(v.string()),
     email: v.optional(v.string()),
-    tipo: v.union(
-      v.literal("gemas"),
-      v.literal("joyas"),
-      v.literal("insumos"),
-      v.literal("otros"),
-    ),
+    // Canonical values: gemas | joyas | insumos | otros. Stored as free text
+    // so the capture UI can save an operator write-in ("Otra opción") when the
+    // proveedor category isn't one of the four. Mirror in
+    // `src/data/vocabularies.ts#PROVIDER_TIPOS`.
+    tipo: v.string(),
     notas: v.optional(v.string()),
     /**
      * Set when a rename is in flight: holds the prior natural-key value so
@@ -262,10 +261,12 @@ export default defineSchema({
      * filtering/group-by queries.
      */
     loteId: v.string(),
-    /** Sede where the lot was captured. Optional for legacy rows. */
-    sede: v.optional(
-      v.union(v.literal("B"), v.literal("C"), v.literal("S"), v.literal("M")),
-    ),
+    /**
+     * Sede where the lot was captured. Optional for legacy rows. Canonical
+     * codes B/C/S/M; stored as free text so a sanitized custom bóveda code
+     * (the loteId prefix) can be saved via the capture UI's "Otra…" write-in.
+     */
+    sede: v.optional(v.string()),
     providerId: v.id("providers"),
     fechaRecepcion: v.string(),
     renombreLote: v.optional(v.string()),
@@ -276,16 +277,12 @@ export default defineSchema({
     pesoTotalQuilates: v.optional(v.number()),
     costoTotalCOP: v.number(),
     unidadesDeclaradas: v.number(),
-    formaPago: v.union(
-      v.literal("contado"),
-      v.literal("credito"),
-      v.literal("esmereogenesis"),
-      v.literal("bajo_pedido"),
-      v.literal("consignacion"),
-    ),
-    metodoContado: v.optional(
-      v.union(v.literal("efectivo"), v.literal("transferencia")),
-    ),
+    // Canonical: contado | credito | esmereogenesis | bajo_pedido |
+    // consignacion. Free text so the capture UI can save an operator write-in
+    // ("Otra…"); the credito/contado branches simply don't fire for customs.
+    formaPago: v.string(),
+    // Canonical: efectivo | transferencia. Free text for write-in parity.
+    metodoContado: v.optional(v.string()),
     fechaVencimiento: v.optional(v.string()),
     numeroCuotas: v.optional(v.number()),
     numeroFactura: v.optional(v.string()),
@@ -323,7 +320,10 @@ export default defineSchema({
     direccion: v.optional(v.string()),
     telefono: v.optional(v.string()),
     email: v.optional(v.string()),
-    tipo: v.union(v.literal("embajador"), v.literal("final")),
+    // Canonical: embajador | final. Free text so the venta UI's comprador
+    // picker can save a custom buyer type ("Otro…", e.g. "mayorista"); the
+    // custom path is captured through the cliente-final form.
+    tipo: v.string(),
     /** Free-form id pointing to the asesores directory (when tipo = "embajador"). */
     asesorId: v.optional(v.string()),
     /** See providers.pendingPreviousIdValue — same rename-safety mechanism. */
@@ -343,10 +343,12 @@ export default defineSchema({
      * "V-NNNN" id; the optional `sede` field carries the sede.
      */
     saleId: v.string(),
-    /** Sede where the sale was recorded. Optional for legacy rows. */
-    sede: v.optional(
-      v.union(v.literal("B"), v.literal("C"), v.literal("S"), v.literal("M")),
-    ),
+    /**
+     * Sede where the sale was recorded. Optional for legacy rows. Canonical
+     * codes B/C/S/M; free text so a sanitized custom bóveda code (the saleId
+     * prefix) can be saved via the venta UI's "Otra…" write-in.
+     */
+    sede: v.optional(v.string()),
     fechaVenta: v.string(),
     /** itemIds reference productInventory.itemId (string, not Convex id). */
     itemIds: v.array(v.string()),
@@ -355,21 +357,12 @@ export default defineSchema({
     descuentoCOP: v.optional(v.number()),
     totalCOP: v.number(),
     comisionCOP: v.optional(v.number()),
-    formaPago: v.union(
-      v.literal("contado"),
-      v.literal("credito"),
-      v.literal("esmereogenesis"),
-      v.literal("canje"),
-      v.literal("bajo_pedido"),
-      v.literal("consignacion"),
-    ),
-    metodoContado: v.optional(
-      v.union(
-        v.literal("efectivo"),
-        v.literal("transferencia"),
-        v.literal("crypto"),
-      ),
-    ),
+    // Canonical: contado | credito | esmereogenesis | canje | bajo_pedido |
+    // consignacion. Free text so the venta UI can save an operator write-in
+    // ("Otra…"); the credito/contado/esmereogenesis branches no-op for customs.
+    formaPago: v.string(),
+    // Canonical: efectivo | transferencia | crypto. Free text for write-in parity.
+    metodoContado: v.optional(v.string()),
     fechaVencimiento: v.optional(v.string()),
     numeroCuotas: v.optional(v.number()),
     adicionales: v.optional(v.string()),

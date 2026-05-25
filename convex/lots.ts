@@ -18,25 +18,19 @@ import {
   reclaimIfTail,
 } from "./sequences";
 
-const sedeValidator = v.union(
-  v.literal("B"),
-  v.literal("C"),
-  v.literal("S"),
-  v.literal("M"),
-);
+// Free text (canonical: B | C | S | M). The capture UI sanitizes a custom
+// write-in to an uppercase, dash-free token before it reaches here, so it stays
+// valid as the loteId prefix (`formatLotId`) and its own `sequences` key.
+const sedeValidator = v.string();
 
-const formaPagoValidator = v.union(
-  v.literal("contado"),
-  v.literal("credito"),
-  v.literal("esmereogenesis"),
-  v.literal("bajo_pedido"),
-  v.literal("consignacion"),
-);
+// Free text (canonical: contado | credito | esmereogenesis | bajo_pedido |
+// consignacion) so the capture UI can submit an operator write-in. The
+// conditional logic in `create` only special-cases the known "credito"/
+// "contado" strings, so a custom value is stored verbatim and harmless.
+const formaPagoValidator = v.string();
 
-const metodoContadoValidator = v.union(
-  v.literal("efectivo"),
-  v.literal("transferencia"),
-);
+// Free text (canonical: efectivo | transferencia) for write-in parity.
+const metodoContadoValidator = v.string();
 
 const lotPatchValidator = v.object({
   fechaRecepcion: v.optional(v.string()),

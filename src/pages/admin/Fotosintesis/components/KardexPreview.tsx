@@ -36,7 +36,8 @@ export interface KardexBuyer {
   nit?: string;
   cedula?: string;
   email?: string;
-  tipo?: "embajador" | "final";
+  // Canonical embajador | final; free text to accept a custom buyer write-in.
+  tipo?: string;
 }
 
 export interface KardexSale {

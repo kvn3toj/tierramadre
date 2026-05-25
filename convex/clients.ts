@@ -10,7 +10,9 @@ import { api, internal } from "./_generated/api";
 import { pushTableRowToVercel } from "./_lib/sheetSync";
 import { marshalRow } from "./_lib/columnMaps";
 
-const tipoValidator = v.union(v.literal("embajador"), v.literal("final"));
+// Free text (canonical: embajador | final). The custom "Otro…" buyer type from
+// the venta comprador picker is captured through the cliente-final form.
+const tipoValidator = v.string();
 
 const clientPatchValidator = v.object({
   nombre: v.optional(v.string()),
