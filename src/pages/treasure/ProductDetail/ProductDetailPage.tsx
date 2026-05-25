@@ -54,6 +54,7 @@ import {
 import { EsmereogenesisCTA } from "../../../components/esmereogenesis/EsmereogenesisCTA";
 import Breadcrumbs from "../../../components/shared/Breadcrumbs";
 import { scrollMainTo } from "../../../utils/mainScroll";
+import { activeLotePiece, resolveLoteDetail } from "./loteDetail";
 
 const log = createLogger("ProductDetail");
 
@@ -147,6 +148,32 @@ export default function ProductDetail() {
     if (prices.length === 0) prices.push(product.precioCOP);
     return { media, prices, itemKeys };
   }, [product, displayName]);
+
+  // The lote piece whose photo is currently in the gallery, or null when the
+  // bundle hero (slot 0) is in view. Drives the per-piece detail swap below.
+  const activeLoteItem = useMemo(
+    () => activeLotePiece(product, loteMedia?.itemKeys, galleryIndex),
+    [product, loteMedia, galleryIndex],
+  );
+
+  // What the descriptive sections (title, metadata, specifications) render.
+  // When a single piece's photo is in view, we overlay that piece's own specs
+  // onto the bundle so the detail below matches the image; otherwise we show
+  // the bundle itself. Pricing breakdown, QR, favorites and cart actions stay
+  // bundle-scoped (the lote is bought as one), so they keep using `product`.
+  const detail = useMemo(
+    () => (product ? resolveLoteDetail(product, activeLoteItem) : undefined),
+    [product, activeLoteItem],
+  );
+
+  // Cleaned title for the piece (or bundle) currently in view.
+  const detailName = useMemo(() => {
+    if (!detail) return "";
+    return detail.nombre
+      .replace(/^L:.*?\s/, "")
+      .replace(/^L:/, "")
+      .trim();
+  }, [detail]);
 
   // Track product view (once per session, fire-and-forget)
   useProductView({
@@ -467,6 +494,10 @@ export default function ProductDetail() {
   }
 
   const isAvailable = product.estado === "DISPONIBLE";
+  // Descriptive sections (title, metadata, specs) follow the piece in view;
+  // `detail` is only undefined when `product` is, which the guard above rules
+  // out, so `info` is always a concrete item here.
+  const info = detail ?? product;
   const separatorColor = isLight
     ? "rgba(60, 60, 67, 0.12)"
     : "rgba(235, 235, 245, 0.12)";
@@ -557,7 +588,7 @@ export default function ProductDetail() {
                     flex: 1,
                   }}
                 >
-                  {displayName}
+                  {detailName || displayName}
                 </Typography>
                 {/* Favorite button */}
                 {!isProvider && product && (
@@ -621,7 +652,7 @@ export default function ProductDetail() {
                     fontWeight: 500,
                   }}
                 >
-                  #{product.item}
+                  #{info.item}
                 </Typography>
                 <Typography
                   component="span"
@@ -633,7 +664,7 @@ export default function ProductDetail() {
                 >
                   ·
                 </Typography>
-                {product.isJewelry && (
+                {info.isJewelry && (
                   <Crown size={14} color={goldAccent.primary} />
                 )}
                 <Typography
@@ -644,8 +675,7 @@ export default function ProductDetail() {
                     fontWeight: 400,
                   }}
                 >
-                  {product.categoria ||
-                    (product.isJewelry ? "Joyeria" : "Gema")}
+                  {info.categoria || (info.isJewelry ? "Joyeria" : "Gema")}
                 </Typography>
                 <Typography
                   component="span"
@@ -669,7 +699,7 @@ export default function ProductDetail() {
                 >
                   {isAvailable ? "Disponible" : "Vendido"}
                 </Typography>
-                {product.cantidad > 1 && (
+                {info.cantidad > 1 && (
                   <>
                     <Typography
                       component="span"
@@ -689,7 +719,7 @@ export default function ProductDetail() {
                         fontWeight: 500,
                       }}
                     >
-                      Lote x{product.cantidad}
+                      Lote x{info.cantidad}
                     </Typography>
                   </>
                 )}
@@ -716,8 +746,8 @@ export default function ProductDetail() {
             {/* Separator */}
             <Box sx={{ height: "0.5px", bgcolor: separatorColor, my: 2 }} />
 
-            {/* Specifications */}
-            <SpecificationsList product={product} />
+            {/* Specifications — follow the piece whose photo is in view */}
+            <SpecificationsList product={info} />
 
             {/* Separator */}
             <Box sx={{ height: "0.5px", bgcolor: separatorColor, my: 2 }} />

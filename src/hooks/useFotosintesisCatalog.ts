@@ -145,7 +145,7 @@ export function useFotosintesisCatalog(): TreasureItem[] {
 
 // ─── Grouped lote / sublote catalog cards ───────────────────────────
 
-interface GroupItem {
+export interface GroupItem {
   itemId: string;
   nombre: string;
   fotoUrl?: string;
@@ -158,7 +158,7 @@ interface GroupItem {
   medidas?: string;
 }
 
-interface PublishedGroup {
+export interface PublishedGroup {
   groupKind: "lote" | "sublote";
   groupId: string;
   parentLoteId: string;
@@ -183,7 +183,7 @@ function hashGroupId(groupId: string): number {
   return 8_000_000 + (Math.abs(h) % 1_000_000);
 }
 
-function mapGroupToTreasureItem(
+export function mapGroupToTreasureItem(
   group: PublishedGroup,
   item: number,
 ): TreasureItem {
@@ -220,12 +220,28 @@ function mapGroupToTreasureItem(
     isLote: true,
     groupKind: group.groupKind,
     groupId: group.groupId,
-    loteItems: group.items.map((it) => ({
-      item: parseInt(it.itemId, 10),
-      nombre: it.nombre,
-      imagen: it.fotoUrl || undefined,
-      precioCOP: it.precioCOP,
-    })),
+    loteItems: group.items.map((it) => {
+      // Derive the same jewelry/peso fields per piece so a single item's
+      // detail view renders identically to a standalone catalog item.
+      const derived = derivePeso(
+        typeof it.peso === "string" ? it.peso : "",
+        it.categoria,
+      );
+      return {
+        item: parseInt(it.itemId, 10),
+        nombre: it.nombre,
+        imagen: it.fotoUrl || undefined,
+        precioCOP: it.precioCOP,
+        color: (it.color ?? "") as EmeraldColor,
+        calidad: (it.calidad ?? "") as EmeraldQuality,
+        peso: derived.pesoValue,
+        categoria: (it.categoria ?? "").trim(),
+        talla: it.talla ?? "",
+        medidas: it.medidas ?? "",
+        isJewelry: derived.isJewelry,
+        ...(derived.metalType ? { metalType: derived.metalType } : {}),
+      };
+    }),
   };
 }
 

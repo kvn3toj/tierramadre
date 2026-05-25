@@ -346,5 +346,17 @@ export interface TreasureItem {
     nombre: string;
     imagen?: string;
     precioCOP: number;
+    // Per-piece specs so the detail view can reflect the exact gem whose photo
+    // is currently in the gallery — not just the bundle aggregate. Optional
+    // because legacy/partial rows may omit them; the detail view falls back to
+    // the bundle values when a field is missing.
+    color?: EmeraldColor;
+    calidad?: EmeraldQuality;
+    peso?: string | number;
+    categoria?: string;
+    talla?: string;
+    medidas?: string;
+    isJewelry?: boolean;
+    metalType?: "Plata" | "Oro 18k";
   }[];
 }

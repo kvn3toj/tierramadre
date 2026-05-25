@@ -123,3 +123,4 @@ vite.config.js.disabled-by-test
 /docs/reuniones/
 /docs/Cierres Reels (Opciones)/
 
+.env*
