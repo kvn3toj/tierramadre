@@ -122,6 +122,111 @@ export const publishedCatalog = query({
 });
 
 /**
+ * Published catalog GROUPS — lotes and sublotes the operator chose to show as
+ * a single bundled card (hero photo + total price + per-item gallery).
+ *
+ *   - Lote group:    lots.estado === "publicado" && lots.mostrarComoLote
+ *   - Sublote group: subLotes.estado === "activa" && subLotes.mostrarComoLote
+ *
+ * Returns a uniform shape so the frontend renders both the same way. Per-item
+ * price = precioCOP ?? precioConscienteCOP ?? 0; totalPriceCOP = sum. The
+ * frontend emits one card per group and excludes member items from the
+ * individual-item catalog (`publishedCatalog`).
+ */
+export const publishedGroups = query({
+  args: {},
+  handler: async (ctx) => {
+    const itemForId = async (itemId: string) => {
+      const p = await ctx.db
+        .query("productInventory")
+        .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+        .first();
+      if (!p) return null;
+      return {
+        itemId: p.itemId,
+        nombre: p.nombre ?? "",
+        fotoUrl: p.fotoUrl,
+        precioCOP: p.precioCOP ?? p.precioConscienteCOP ?? 0,
+        color: p.color,
+        calidad: p.calidad,
+        peso: p.peso,
+        categoria: p.categoria,
+        talla: p.talla,
+        medidas: p.medidas,
+      };
+    };
+
+    const groups: Array<{
+      groupKind: "lote" | "sublote";
+      groupId: string;
+      parentLoteId: string;
+      nombre: string;
+      fotoUrl?: string;
+      totalPriceCOP: number;
+      items: NonNullable<Awaited<ReturnType<typeof itemForId>>>[];
+    }> = [];
+
+    // ── Lote groups ──────────────────────────────────────────────
+    const publishedLots = await ctx.db
+      .query("lots")
+      .withIndex("by_estado", (q) => q.eq("estado", "publicado"))
+      .collect();
+    for (const lot of publishedLots) {
+      if (lot.mostrarComoLote !== true) continue;
+      const joins = await ctx.db
+        .query("lotItems")
+        .withIndex("by_loteId", (q) => q.eq("loteId", lot.loteId))
+        .collect();
+      joins.sort((a, b) => a.ordenEnLote - b.ordenEnLote);
+      const items = [];
+      for (const j of joins) {
+        const it = await itemForId(j.itemId);
+        if (it) items.push(it);
+      }
+      if (items.length === 0) continue;
+      groups.push({
+        groupKind: "lote",
+        groupId: lot.loteId,
+        parentLoteId: lot.loteId,
+        nombre: lot.renombreLote ?? lot.loteId,
+        fotoUrl: lot.fotoLoteUrl,
+        totalPriceCOP: items.reduce((s, it) => s + it.precioCOP, 0),
+        items,
+      });
+    }
+
+    // ── Sublote groups ───────────────────────────────────────────
+    const activeSubs = await ctx.db
+      .query("subLotes")
+      .withIndex("by_estado", (q) => q.eq("estado", "activa"))
+      .collect();
+    for (const sub of activeSubs) {
+      if (sub.mostrarComoLote !== true) continue;
+      const seen = new Set<string>();
+      const items = [];
+      for (const itemId of sub.itemIds) {
+        if (seen.has(itemId)) continue;
+        seen.add(itemId);
+        const it = await itemForId(itemId);
+        if (it) items.push(it);
+      }
+      if (items.length === 0) continue;
+      groups.push({
+        groupKind: "sublote",
+        groupId: sub.subLoteId,
+        parentLoteId: sub.parentLoteId,
+        nombre: sub.nombre,
+        fotoUrl: sub.fotoUrl,
+        totalPriceCOP: items.reduce((s, it) => s + it.precioCOP, 0),
+        items,
+      });
+    }
+
+    return groups;
+  },
+});
+
+/**
  * Recent edit history for an item (last 20).
  */
 export const editHistory = query({

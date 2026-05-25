@@ -143,4 +143,127 @@ export function useFotosintesisCatalog(): TreasureItem[] {
   }, [rows]);
 }
 
+// ─── Grouped lote / sublote catalog cards ───────────────────────────
+
+interface GroupItem {
+  itemId: string;
+  nombre: string;
+  fotoUrl?: string;
+  precioCOP: number;
+  color?: string;
+  calidad?: string;
+  peso?: string;
+  categoria?: string;
+  talla?: string;
+  medidas?: string;
+}
+
+interface PublishedGroup {
+  groupKind: "lote" | "sublote";
+  groupId: string;
+  parentLoteId: string;
+  nombre: string;
+  fotoUrl?: string;
+  totalPriceCOP: number;
+  items: GroupItem[];
+}
+
+/**
+ * Stable, deterministic numeric key for a group card. The grid/favorites/
+ * comparison machinery keys on the numeric `item`, but groups route by their
+ * string `groupId`, so this only needs to be stable per groupId and unlikely
+ * to collide with real item numbers (which are in the hundreds). We hash into
+ * a high range; callers add a used-id guard for the rare collision.
+ */
+function hashGroupId(groupId: string): number {
+  let h = 0;
+  for (let i = 0; i < groupId.length; i++) {
+    h = (h * 31 + groupId.charCodeAt(i)) | 0;
+  }
+  return 8_000_000 + (Math.abs(h) % 1_000_000);
+}
+
+function mapGroupToTreasureItem(
+  group: PublishedGroup,
+  item: number,
+): TreasureItem {
+  const first = group.items[0];
+  const { pesoValue, isJewelry, metalType } = derivePeso(
+    typeof first?.peso === "string" ? first.peso : "",
+    first?.categoria,
+  );
+  return {
+    item,
+    fechaIngreso: "",
+    nombre: group.nombre,
+    peso: pesoValue,
+    color: (first?.color ?? "") as EmeraldColor,
+    calidad: (first?.calidad ?? "") as EmeraldQuality,
+    cantidad: group.items.length,
+    talla: first?.talla ?? "",
+    medidas: first?.medidas ?? "",
+    medidasValores: "",
+    categoria: (first?.categoria ?? "").trim(),
+    precioCOP: group.totalPriceCOP,
+    precioInternacional: 0,
+    ubicacion: "",
+    asesor: "",
+    estado: "DISPONIBLE" as TreasureStatus,
+    qr: "",
+    coleccion: "",
+    caja: "",
+    asesorActual: "",
+    estadoAsesor: "",
+    isJewelry,
+    ...(metalType ? { metalType } : {}),
+    imagen: group.fotoUrl || first?.fotoUrl || undefined,
+    isLote: true,
+    groupKind: group.groupKind,
+    groupId: group.groupId,
+    loteItems: group.items.map((it) => ({
+      item: parseInt(it.itemId, 10),
+      nombre: it.nombre,
+      imagen: it.fotoUrl || undefined,
+      precioCOP: it.precioCOP,
+    })),
+  };
+}
+
+/**
+ * Published catalog GROUP cards (lotes + sublotes shown as one bundle), plus
+ * the set of member item numbers that must be excluded from the individual
+ * `useFotosintesisCatalog` list so they don't double-show.
+ */
+export function useFotosintesisGroups(): {
+  groupCards: TreasureItem[];
+  excludedItemIds: Set<number>;
+} {
+  const groups = useConvexQuery(convexApi.products.publishedGroups, {}) as
+    | PublishedGroup[]
+    | undefined;
+
+  return useMemo(() => {
+    if (!groups) return { groupCards: [], excludedItemIds: new Set<number>() };
+    const excludedItemIds = new Set<number>();
+    const usedKeys = new Set<number>();
+    const groupCards: TreasureItem[] = [];
+
+    for (const group of groups) {
+      const memberIds = group.items
+        .map((it) => parseInt(it.itemId, 10))
+        .filter((n) => Number.isFinite(n) && n > 0);
+      if (memberIds.length === 0) continue;
+      memberIds.forEach((n) => excludedItemIds.add(n));
+
+      // Assign a stable, collision-free numeric key.
+      let key = hashGroupId(group.groupId);
+      while (usedKeys.has(key)) key += 1;
+      usedKeys.add(key);
+
+      groupCards.push(mapGroupToTreasureItem(group, key));
+    }
+    return { groupCards, excludedItemIds };
+  }, [groups]);
+}
+
 export default useFotosintesisCatalog;

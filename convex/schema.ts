@@ -294,6 +294,12 @@ export default defineSchema({
       v.literal("publicado"),
       v.literal("cancelado"),
     ),
+    // Catalog grouping (Convex-only, NOT synced to Sheets — see COLUMN_MAPS.lots).
+    // When `mostrarComoLote` is true and the lot is `publicado`, the customer
+    // catalog shows the whole lote as ONE grouped card (hero photo + total
+    // price + per-item gallery) instead of one card per item.
+    fotoLoteUrl: v.optional(v.string()),
+    mostrarComoLote: v.optional(v.boolean()),
     ...syncFields,
   })
     .index("by_loteId", ["loteId"])
@@ -413,6 +419,11 @@ export default defineSchema({
     notas: v.optional(v.string()),
     estado: v.union(v.literal("activa"), v.literal("archivada")),
     createdAt: v.string(),
+    // Catalog grouping (Convex-only, NOT synced to Sheets — see COLUMN_MAPS.subLotes).
+    // When `mostrarComoLote` is true and the sublote is `activa`, the customer
+    // catalog shows this curated subset as ONE grouped card.
+    fotoUrl: v.optional(v.string()),
+    mostrarComoLote: v.optional(v.boolean()),
     ...syncFields,
   })
     .index("by_subLoteId", ["subLoteId"])

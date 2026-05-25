@@ -20,49 +20,11 @@ import { useSheetsTreasure } from "./useSheetsTreasure";
 import { useTreasureMedia } from "./useTreasureMedia";
 import { useBatchThumbnails } from "./useBatchThumbnails";
 import { usePrevious } from "./usePrevious";
-import { useFotosintesisCatalog } from "./useFotosintesisCatalog";
-
-/**
- * Extract Google Drive file ID from various URL formats
- */
-function extractDriveFileId(url: string): string | null {
-  if (!url) return null;
-
-  const patterns = [
-    /\/file\/d\/([a-zA-Z0-9_-]+)/, // /file/d/FILE_ID/
-    /\/d\/([a-zA-Z0-9_-]+)/, // /d/FILE_ID/
-    /id=([a-zA-Z0-9_-]+)/, // ?id=FILE_ID
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match && match[1]) return match[1];
-  }
-
-  return null;
-}
-
-/**
- * Convert Google Drive URL to proxy URL for reliable loading
- * If not a Drive URL, returns the original URL unchanged
- */
-function convertToProxyUrl(url: string | undefined): string | undefined {
-  if (!url) return url;
-
-  // Check if it's a Google Drive URL
-  if (
-    url.includes("drive.google.com") ||
-    url.includes("lh3.googleusercontent.com")
-  ) {
-    const fileId = extractDriveFileId(url);
-    if (fileId) {
-      return `/api/serve-drive-image?fileId=${fileId}`;
-    }
-  }
-
-  // Return original URL if not a Drive URL or no file ID found
-  return url;
-}
+import {
+  useFotosintesisCatalog,
+  useFotosintesisGroups,
+} from "./useFotosintesisCatalog";
+import { convertToProxyUrl } from "../utils/driveUrl";
 
 export function useTreasure() {
   // Google Sheets data
@@ -101,6 +63,8 @@ export function useTreasure() {
   // and published to catalog. They live in a separate sheet the legacy reader
   // never touches, so we merge them in here.
   const fotosintesisItems = useFotosintesisCatalog();
+  // Grouped lote/sublote bundle cards + the member item ids they absorb.
+  const { groupCards, excludedItemIds } = useFotosintesisGroups();
 
   // Merge treasure data with media (memoized for performance)
   const treasure = useMemo((): TreasureItem[] => {
@@ -108,14 +72,17 @@ export function useTreasure() {
     const sheetsBase = sheetsTreasure || defaultTreasureData;
 
     // Append published Fotosíntesis items, skipping any id already present in
-    // the legacy catalog so a number collision never duplicates a card.
+    // the legacy catalog so a number collision never duplicates a card, and
+    // skipping items absorbed into a grouped lote/sublote card.
     const sheetIds = new Set(sheetsBase.map((i) => i.item));
-    const baseTreasure = fotosintesisItems.length
-      ? [
-          ...sheetsBase,
-          ...fotosintesisItems.filter((i) => !sheetIds.has(i.item)),
-        ]
-      : sheetsBase;
+    const individuals = fotosintesisItems.filter(
+      (i) => !sheetIds.has(i.item) && !excludedItemIds.has(i.item),
+    );
+    const lotes = groupCards.filter((g) => !sheetIds.has(g.item));
+    const baseTreasure =
+      individuals.length || lotes.length
+        ? [...sheetsBase, ...individuals, ...lotes]
+        : sheetsBase;
 
     return baseTreasure.map((item) => {
       const itemMedia = legacyMedia[item.item];
@@ -159,6 +126,8 @@ export function useTreasure() {
     galleries,
     batchThumbnails,
     fotosintesisItems,
+    groupCards,
+    excludedItemIds,
   ]);
 
   // Track previous treasure array for URL stability check
@@ -183,6 +152,7 @@ export function useTreasure() {
         prevItem.galleryCount === item.galleryCount &&
         prevItem.precioCOP === item.precioCOP &&
         prevItem.isJewelry === item.isJewelry &&
+        prevItem.isLote === item.isLote &&
         prevItem.estado === item.estado
       ) {
         // URLs unchanged - reuse previous object reference

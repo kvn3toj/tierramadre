@@ -181,6 +181,33 @@ export const update = mutation({
 });
 
 /**
+ * Set the catalog-grouping fields (`fotoLoteUrl`, `mostrarComoLote`). These
+ * are Convex-only display fields, so unlike `update` this:
+ *   - works regardless of lot estado (grouping is decided at/after close), and
+ *   - does NOT flip syncStatus or push to Sheets (the fields aren't synced).
+ * Omitting a field leaves it unchanged; pass `fotoLoteUrl: ""` to clear it.
+ */
+export const setLoteDisplay = mutation({
+  args: {
+    id: v.id("lots"),
+    fotoLoteUrl: v.optional(v.string()),
+    mostrarComoLote: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { id, fotoLoteUrl, mostrarComoLote }) => {
+    const lot = await ctx.db.get(id);
+    if (!lot) throw new Error(`Lot ${id} not found`);
+    if (lot.estado === "cancelado")
+      throw new Error("No se puede configurar un lote cancelado");
+    const patch: Record<string, unknown> = {};
+    if (fotoLoteUrl !== undefined) patch.fotoLoteUrl = fotoLoteUrl;
+    if (mostrarComoLote !== undefined) patch.mostrarComoLote = mostrarComoLote;
+    if (Object.keys(patch).length === 0) return { id, changed: false };
+    await ctx.db.patch(id, patch);
+    return { id, changed: true };
+  },
+});
+
+/**
  * BR-2: suma preponderancia ≡ 100 ± 0.01.
  * BR-3: count(lotItems where loteId === L) === unidadesDeclaradas.
  *

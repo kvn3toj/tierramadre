@@ -1,30 +1,30 @@
 // Core data types for Tierra Madre Studio
 
-export type MediaType = 'image' | 'video';
+export type MediaType = "image" | "video";
 
 export interface Emerald {
   id: string;
   name: string;
-  mediaData: string;             // Base64 data URI for images, indexeddb:// reference for videos
-  mediaType?: MediaType;         // Type of media (defaults to 'image' for backwards compatibility)
-  thumbnailUrl?: string;         // Thumbnail for videos (base64 data URI)
+  mediaData: string; // Base64 data URI for images, indexeddb:// reference for videos
+  mediaType?: MediaType; // Type of media (defaults to 'image' for backwards compatibility)
+  thumbnailUrl?: string; // Thumbnail for videos (base64 data URI)
   aiSuggestedNames: string[];
   aiDescription: string;
   weightCarats?: number;
   priceCOP?: number;
-  lotCode?: string;              // L:A-XXX, L:II-JA format
+  lotCode?: string; // L:A-XXX, L:II-JA format
   category: EmeraldCategory;
   status: EmeraldStatus;
   // Jewelry-specific fields
-  ringSize?: string;             // For rings: 4, 5, 6, 7, 8...
-  color?: string;                // Verde Muzo, Verde Chivor, etc.
-  quality?: string;              // Premium, Estándar, etc.
+  ringSize?: string; // For rings: 4, 5, 6, 7, 8...
+  color?: string; // Verde Muzo, Verde Chivor, etc.
+  quality?: string; // Premium, Estándar, etc.
   createdAt: string;
   updatedAt: string;
 }
 
-export type EmeraldCategory = 'loose' | 'ring' | 'pendant' | 'earrings';
-export type EmeraldStatus = 'available' | 'sold' | 'reserved';
+export type EmeraldCategory = "loose" | "ring" | "pendant" | "earrings";
+export type EmeraldStatus = "available" | "sold" | "reserved";
 
 export interface InstagramPost {
   id: string;
@@ -33,18 +33,18 @@ export interface InstagramPost {
   hashtags: string[];
   scheduledDate: string;
   status: PostStatus;
-  gridPosition?: number;         // 0-8 for 3x3 grid
+  gridPosition?: number; // 0-8 for 3x3 grid
 }
 
-export type PostStatus = 'draft' | 'scheduled' | 'posted';
+export type PostStatus = "draft" | "scheduled" | "posted";
 
 export type NamingCategory =
-  | 'mythology'    // Diosa, Venus, Gaia, Apolo
-  | 'royalty'      // La Reina Margot, Las Emperatrices
-  | 'nature'       // Amazonas, Pacífico, Bambú
-  | 'cosmic'       // Galaxia, Lunera, Firmamento
-  | 'emotional'    // Amor Eterno, Chispa Divina
-  | 'disney';      // Rapunzel, Aurora, Bella
+  | "mythology" // Diosa, Venus, Gaia, Apolo
+  | "royalty" // La Reina Margot, Las Emperatrices
+  | "nature" // Amazonas, Pacífico, Bambú
+  | "cosmic" // Galaxia, Lunera, Firmamento
+  | "emotional" // Amor Eterno, Chispa Divina
+  | "disney"; // Rapunzel, Aurora, Bella
 
 export interface AIAnalysisResult {
   names: string[];
@@ -103,28 +103,62 @@ export interface ReceiptData {
   discountPercent?: number;
   tax?: number;
   total: number;
-  paymentMethod: 'cash' | 'card' | 'transfer' | 'crypto';
+  paymentMethod: "cash" | "card" | "transfer" | "crypto";
   notes?: string;
   createdAt: string;
 }
 
 // Treasure types for official stock
-export type TreasureStatus = 'DISPONIBLE' | 'VENDIDA' | 'ASESOR';
-export type EmeraldColor = 'Verde Vivido' | 'Verde Muzo' | 'Verde Limón' | 'Verde Menta' | 'Verde Natural' | string;
-export type EmeraldQuality = 'Fina' | 'Comercial Fina' | 'Comercial SuperFina' | 'Comercial Superior' | 'Comercial Estándar' | 'Estándar' | string;
-export type EmeraldCut = 'Cushion' | 'Corazón' | 'Esmeralda' | 'Óvalo' | 'Redonda' | 'Cuadrada' | 'Lágrima' | string;
+export type TreasureStatus = "DISPONIBLE" | "VENDIDA" | "ASESOR";
+export type EmeraldColor =
+  | "Verde Vivido"
+  | "Verde Muzo"
+  | "Verde Limón"
+  | "Verde Menta"
+  | "Verde Natural"
+  | string;
+export type EmeraldQuality =
+  | "Fina"
+  | "Comercial Fina"
+  | "Comercial SuperFina"
+  | "Comercial Superior"
+  | "Comercial Estándar"
+  | "Estándar"
+  | string;
+export type EmeraldCut =
+  | "Cushion"
+  | "Corazón"
+  | "Esmeralda"
+  | "Óvalo"
+  | "Redonda"
+  | "Cuadrada"
+  | "Lágrima"
+  | string;
 
 // Colombian emerald regions
-export type ColombianRegion = 'Muzo' | 'Chivor' | 'Coscuez' | 'Peñas Blancas' | 'La Pita' | 'Other';
+export type ColombianRegion =
+  | "Muzo"
+  | "Chivor"
+  | "Coscuez"
+  | "Peñas Blancas"
+  | "La Pita"
+  | "Other";
 
 // Chain of custody role types
-export type CustodyRole = 'MINER' | 'CUTTER' | 'POLISHER' | 'DEALER' | 'SELLER';
+export type CustodyRole = "MINER" | "CUTTER" | "POLISHER" | "DEALER" | "SELLER";
 
 // Gemological lab types
-export type GemologicalLab = 'GIA' | 'IGI' | 'CDTEC' | 'AGL' | 'Gübelin' | 'SSEF' | 'Other';
+export type GemologicalLab =
+  | "GIA"
+  | "IGI"
+  | "CDTEC"
+  | "AGL"
+  | "Gübelin"
+  | "SSEF"
+  | "Other";
 
 // Demand indicator for market scoring
-export type DemandIndicator = 'HIGH' | 'MEDIUM' | 'LOW';
+export type DemandIndicator = "HIGH" | "MEDIUM" | "LOW";
 
 // Chain of custody record for provenance tracking
 export interface CustodyRecord {
@@ -134,7 +168,7 @@ export interface CustodyRecord {
   to: string;
   role: CustodyRole;
   location: string;
-  verificationMethod: 'SIGNATURE' | 'PHOTO' | 'DOCUMENT';
+  verificationMethod: "SIGNATURE" | "PHOTO" | "DOCUMENT";
   notes?: string;
 }
 
@@ -143,12 +177,12 @@ export interface GemologicalCertification {
   lab: GemologicalLab;
   certificateNumber: string;
   reportDate: string;
-  authenticity: 'VERIFIED' | 'PENDING' | 'EXPIRED';
-  certificateImage?: string;  // Base64 or URL
-  clarity?: 'FL' | 'IF' | 'VVS' | 'VS' | 'SI' | 'I';
+  authenticity: "VERIFIED" | "PENDING" | "EXPIRED";
+  certificateImage?: string; // Base64 or URL
+  clarity?: "FL" | "IF" | "VVS" | "VS" | "SI" | "I";
   colorGrade?: string;
-  cutGrade?: 'EXCELLENT' | 'VERY_GOOD' | 'GOOD' | 'FAIR';
-  treatments?: 'NONE' | 'OILED' | 'RESIN' | 'OTHER';
+  cutGrade?: "EXCELLENT" | "VERY_GOOD" | "GOOD" | "FAIR";
+  treatments?: "NONE" | "OILED" | "RESIN" | "OTHER";
   treatmentDetails?: string;
 }
 
@@ -180,99 +214,103 @@ export interface ItemCertifications {
 
 // Aesthetic rating (1-10 scale)
 export interface AestheticRating {
-  fire: number;           // Brilliance/sparkle
-  saturation: number;     // Color saturation
-  uniqueness: number;     // Unique characteristics
+  fire: number; // Brilliance/sparkle
+  saturation: number; // Color saturation
+  uniqueness: number; // Unique characteristics
   photographability: number; // Marketing appeal
-  average?: number;       // Computed average
+  average?: number; // Computed average
 }
 
 // Certification status summary
 export interface CertificationStatus {
-  gemological: 'verified' | 'pending' | 'expired';
-  colombianOrigin: 'verified' | 'pending';
-  ethical: 'verified' | 'pending';
-  chainOfCustody: 'verified' | 'pending';
-  completeness: number;   // 0-100 percentage
+  gemological: "verified" | "pending" | "expired";
+  colombianOrigin: "verified" | "pending";
+  ethical: "verified" | "pending";
+  chainOfCustody: "verified" | "pending";
+  completeness: number; // 0-100 percentage
   totalVerified: number;
   totalPossible: number;
 }
 
 // Image verification and quality types
-export type ImageVerificationStatus = 'pending' | 'verified' | 'rejected' | 'needs_review';
+export type ImageVerificationStatus =
+  | "pending"
+  | "verified"
+  | "rejected"
+  | "needs_review";
 export type ImageQualityLevel = 1 | 2 | 3 | 4 | 5;
 
 export interface ImageQualityCheck {
   resolution: {
     width: number;
     height: number;
-    isAcceptable: boolean;  // min 1200px for product photos
+    isAcceptable: boolean; // min 1200px for product photos
   };
   fileSize: {
     bytes: number;
-    isOptimal: boolean;     // 100KB-5MB range
+    isOptimal: boolean; // 100KB-5MB range
   };
-  brightness: number;       // 0-255, ideal 120-180
-  contrast: number;         // 0-100, ideal 40-70
-  sharpness: number;        // 0-100, detected blur level
-  colorAccuracy: number;    // 0-100, emerald green detection
+  brightness: number; // 0-255, ideal 120-180
+  contrast: number; // 0-100, ideal 40-70
+  sharpness: number; // 0-100, detected blur level
+  colorAccuracy: number; // 0-100, emerald green detection
   overallScore: ImageQualityLevel;
   recommendations: string[];
 }
 
 export interface ImageMetadata {
-  sourceUrl: string;               // Original source (Drive, Cloudinary, local)
-  cloudinaryUrl?: string;          // Optimized CDN URL
-  driveUrl?: string;               // Google Drive backup URL
-  driveFileId?: string;            // Google Drive file ID
+  sourceUrl: string; // Original source (Drive, Cloudinary, local)
+  cloudinaryUrl?: string; // Optimized CDN URL
+  driveUrl?: string; // Google Drive backup URL
+  driveFileId?: string; // Google Drive file ID
   uploadedAt: string;
   verifiedAt?: string;
   verificationStatus: ImageVerificationStatus;
   qualityCheck?: ImageQualityCheck;
-  verifiedBy?: string;             // User who verified
+  verifiedBy?: string; // User who verified
   notes?: string;
 }
 
 export interface EmeraldImageGallery {
-  primary: ImageMetadata;          // Main product photo
-  gallery: ImageMetadata[];        // Additional photos
-  hasAllAngles: boolean;           // Has front, back, side views
-  hasMacro: boolean;               // Has close-up detail shot
-  hasLifestyle: boolean;           // Has in-context/hand shot
+  primary: ImageMetadata; // Main product photo
+  gallery: ImageMetadata[]; // Additional photos
+  hasAllAngles: boolean; // Has front, back, side views
+  hasMacro: boolean; // Has close-up detail shot
+  hasLifestyle: boolean; // Has in-context/hand shot
 }
 
 export interface TreasureItem {
   item: number;
   fechaIngreso: string;
   nombre: string;
-  peso: string | number;  // Can be "Plata" for jewelry or carats number
+  peso: string | number; // Can be "Plata" for jewelry or carats number
   color: EmeraldColor;
   calidad: EmeraldQuality;
   cantidad: number;
   talla: string;
   medidas: string;
-  medidasValores?: string;  // Actual measurement values (Largo x Ancho in mm)
+  medidasValores?: string; // Actual measurement values (Largo x Ancho in mm)
   imagen?: string;
-  mediaType?: MediaType;     // Type of media (image or video)
-  thumbnailUrl?: string;     // Thumbnail for videos
-  videoUrl?: string;         // Direct URL to static video file (e.g., /videos/ceo-collection/901.mp4)
-  posterUrl?: string;        // Direct URL to video poster image
-  galleryCount?: number;     // Number of media items in gallery
-  tinyThumb?: string;        // Tiny 20px Google thumbnail URL for LQIP blur-up
+  mediaType?: MediaType; // Type of media (image or video)
+  thumbnailUrl?: string; // Thumbnail for videos
+  videoUrl?: string; // Direct URL to static video file (e.g., /videos/ceo-collection/901.mp4)
+  posterUrl?: string; // Direct URL to video poster image
+  galleryCount?: number; // Number of media items in gallery
+  tinyThumb?: string; // Tiny 20px Google thumbnail URL for LQIP blur-up
   costoTM?: number;
   precioCOP: number;
-  precioInternacional?: number;  // International price from Google Sheets (Column H)
+  precioInternacional?: number; // International price from Google Sheets (Column H)
   ubicacion: string;
   asesor: string;
   estado: TreasureStatus;
-  asesorActual?: string;              // Column T: Current owner (overrides asesor if present)
-  estadoAsesor?: TreasureStatus | ''; // Column U: State from current owner's perspective
+  asesorActual?: string; // Column T: Current owner (overrides asesor if present)
+  estadoAsesor?: TreasureStatus | ""; // Column U: State from current owner's perspective
   caja?: string;
-  qr?: string;                      // QR code data (Column P)
-  categoria?: string;                // Product category from Column K (e.g., Anillo en Plata, Aretes)
-  coleccion?: string;               // Collection/Catalog label for grouping (Column Q)
-  isJewelry: boolean;  // Computed: true if peso is "Plata" or "Oro 18k"
-  metalType?: 'Plata' | 'Oro 18k';
+  qr?: string; // QR code data (Column P)
+  categoria?: string; // Product category from Column K (e.g., Anillo en Plata, Aretes)
+  coleccion?: string; // Collection/Catalog label for grouping (Column Q)
+  isJewelry: boolean; // Computed: true if peso is "Plata" or "Oro 18k"
+  metalType?: "Plata" | "Oro 18k";
 
   // Provenance fields
   certifications?: ItemCertifications;
@@ -283,16 +321,30 @@ export interface TreasureItem {
   // Image verification fields
   imageGallery?: EmeraldImageGallery;
   imageVerificationStatus?: ImageVerificationStatus;
-  lastImageVerification?: string;    // ISO date of last verification
+  lastImageVerification?: string; // ISO date of last verification
 
   // Location and exclusivity fields
-  city?: 'Cali' | 'Bogotá';         // City location for filtering
-  isVaultExclusive?: boolean;        // True if item is part of Secret Vault collection
+  city?: "Cali" | "Bogotá"; // City location for filtering
+  isVaultExclusive?: boolean; // True if item is part of Secret Vault collection
 
   // Certificate
-  certificateUrl?: string;           // URL to certificate image/PDF
+  certificateUrl?: string; // URL to certificate image/PDF
 
   // Description
-  description?: string;              // Short evocative text giving the emerald personality
-}
+  description?: string; // Short evocative text giving the emerald personality
 
+  // ── Grouped Fotosíntesis catalog card (lote or sublote bundle) ──
+  // When `isLote` is true, this TreasureItem represents a whole lote or a
+  // sublote shown as ONE card: `imagen` is the bundle hero, `precioCOP` is the
+  // TOTAL, and `loteItems` carries each member for the per-image gallery/price.
+  // `item` is a synthetic stable key; navigation routes by `groupId`.
+  isLote?: boolean;
+  groupKind?: "lote" | "sublote";
+  groupId?: string;
+  loteItems?: {
+    item: number;
+    nombre: string;
+    imagen?: string;
+    precioCOP: number;
+  }[];
+}

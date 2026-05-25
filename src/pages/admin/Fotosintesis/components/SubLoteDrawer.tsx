@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState } from "react";
-import { Box, Dialog } from "@mui/material";
+import { Box, Dialog, Switch } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { X as XIcon } from "lucide-react";
 
@@ -7,6 +7,8 @@ import { getFoto, fontFamilies } from "../../../../design-system";
 import { useConvexMutation, convexApi } from "../../../../lib/convex-safe";
 import { useNotification } from "../../../../contexts/NotificationContext";
 import type { Doc } from "../../../../../convex/_generated/dataModel";
+import { PhotoDropzone, type DropzonePhoto } from "./PhotoDropzone";
+import { uploadFotosintesisImages } from "../utils/uploadItemMedia";
 
 const formatCOP = (n: number): string =>
   new Intl.NumberFormat("es-CO", {
@@ -46,18 +48,26 @@ export function SubLoteDrawer({
   const addItems = useConvexMutation(convexApi.subLotes.addItems);
   const removeItems = useConvexMutation(convexApi.subLotes.removeItems);
   const updateMeta = useConvexMutation(convexApi.subLotes.updateMeta);
+  const setDisplay = useConvexMutation(convexApi.subLotes.setDisplay);
 
   const [nombre, setNombre] = useState("");
   const [notas, setNotas] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Catalog grouping: show this sublote as one bundled card.
+  const [heroPhoto, setHeroPhoto] = useState<DropzonePhoto[]>([]);
+  const [mostrarComoLote, setMostrarComoLote] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setNombre(subLote?.nombre ?? "");
     setNotas(subLote?.notas ?? "");
     setSelected(new Set(subLote?.itemIds ?? []));
+    setMostrarComoLote(subLote?.mostrarComoLote ?? false);
+    setHeroPhoto(
+      subLote?.fotoUrl ? [{ id: "existing-hero", url: subLote.fotoUrl }] : [],
+    );
     setError(null);
   }, [open, subLote]);
 
@@ -85,6 +95,7 @@ export function SubLoteDrawer({
     setSubmitting(true);
     setError(null);
     try {
+      let effectiveSubLoteId: string;
       if (subLote) {
         const nombreNext = nombre.trim();
         const notasNext = notas.trim();
@@ -105,6 +116,7 @@ export function SubLoteDrawer({
           await addItems({ subLoteId: subLote.subLoteId, itemIds: added });
         if (removed.length)
           await removeItems({ subLoteId: subLote.subLoteId, itemIds: removed });
+        effectiveSubLoteId = subLote.subLoteId;
         notify(`Sub-lote ${subLote.subLoteId} actualizado`, "success");
       } else {
         const res = await createSubLote({
@@ -113,6 +125,7 @@ export function SubLoteDrawer({
           notas: notas.trim() || undefined,
           itemIds: [...selected],
         });
+        effectiveSubLoteId = res.subLoteId;
         notify(
           `Sub-lote ${res.subLoteId} creado · ${selected.size} ${
             selected.size === 1 ? "ítem" : "ítems"
@@ -120,6 +133,23 @@ export function SubLoteDrawer({
           "success",
         );
       }
+
+      // Persist catalog-grouping (hero photo + show-as-group flag).
+      let fotoUrl: string | undefined;
+      const pendingHero = heroPhoto.find((p) => p.file);
+      if (pendingHero?.file) {
+        fotoUrl = await uploadFotosintesisImages(
+          [pendingHero.file],
+          parentLoteId,
+          `sublote-${effectiveSubLoteId}-hero`,
+        );
+      }
+      await setDisplay({
+        subLoteId: effectiveSubLoteId,
+        ...(fotoUrl !== undefined ? { fotoUrl } : {}),
+        mostrarComoLote,
+      });
+
       onClose();
     } catch (err) {
       setError(
@@ -282,6 +312,66 @@ export function SubLoteDrawer({
             rows={2}
             sx={{ ...inputSx, resize: "vertical", minHeight: 56 }}
           />
+        </Box>
+
+        {/* Catalog grouping — show this sublote as one bundled card */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+            padding: "14px 16px",
+            border: `1px solid ${foto.surfaces.rule}`,
+            borderRadius: "12px",
+            background: foto.surfaces.inset,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px",
+            }}
+          >
+            <Box sx={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              <Box
+                sx={{ fontSize: 13, fontWeight: 600, color: foto.ink.primary }}
+              >
+                Mostrar como grupo en catálogo
+              </Box>
+              <Box sx={{ fontSize: 11, color: foto.ink.tertiary }}>
+                Un card con foto del sub-lote y precio total; la galería muestra
+                cada ítem con su precio.
+              </Box>
+            </Box>
+            <Switch
+              checked={mostrarComoLote}
+              onChange={(e) => setMostrarComoLote(e.target.checked)}
+              inputProps={{ "aria-label": "Mostrar como grupo en catálogo" }}
+            />
+          </Box>
+          {mostrarComoLote ? (
+            <PhotoDropzone
+              photos={heroPhoto}
+              onAdd={(files) => {
+                const f = files[0];
+                if (!f) return;
+                heroPhoto.forEach((p) => {
+                  if (p.url.startsWith("blob:")) URL.revokeObjectURL(p.url);
+                });
+                setHeroPhoto([
+                  {
+                    id: `${f.name}-${f.lastModified}`,
+                    url: URL.createObjectURL(f),
+                    file: f,
+                  },
+                ]);
+              }}
+              onRemove={() => setHeroPhoto([])}
+              hint="Foto del sub-lote completo. Se sube a Drive al guardar."
+            />
+          ) : null}
         </Box>
 
         <Box>
