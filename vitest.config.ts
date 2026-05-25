@@ -11,6 +11,7 @@ export default defineConfig({
       ["tests/vault-cinematic-sequence.test.ts", "jsdom"],
       ["tests/vault-audio.test.ts", "jsdom"],
       ["tests/useChromaSamples.test.ts", "jsdom"],
+      ["tests/fotosintesis-phone.test.ts", "jsdom"],
     ],
   },
 });

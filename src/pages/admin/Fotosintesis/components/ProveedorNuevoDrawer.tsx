@@ -87,7 +87,12 @@ function normalizeDocDigits(s: string | undefined | null): string {
  */
 function formatColombianPhone(raw: string): string {
   let digits = (raw ?? "").replace(/[^0-9]/g, "");
-  if (digits.startsWith("57") && digits.length > 10) {
+  // Drop a leading +57 country code if present so it isn't counted as part of
+  // the national number. Colombian national numbers never start with "57"
+  // (mobiles start with "3", landlines with "60"), so this is safe to strip
+  // unconditionally — including during incremental typing, where the controlled
+  // input re-feeds its own "+57 ..." formatted value back into this function.
+  if (digits.startsWith("57")) {
     digits = digits.slice(2);
   }
   if (digits.length === 0) return "";
