@@ -164,9 +164,19 @@ export default function FotosintesisLoteResumenPage() {
   const syncOk = lot?.syncStatus !== "error";
 
   const validationsOk = br2Ok && br3Ok && lot?.estado === "abierto";
+  // A lot closed in selective/reserve mode lands here as `cerrado` with its
+  // items still in reserva. Publishing is the post-close action that makes
+  // them appear in the catalog (the `mostrarEnCatalogo` flag is what the
+  // customer-facing `products.publishedCatalog` bridge reads).
+  const isClosed = lot?.estado === "cerrado";
 
   useEffect(() => {
     if (!lot || !lotItems) return;
+    // Already published — nothing left to do here, send back to the queue.
+    if (lot.estado === "publicado" || lot.estado === "cancelado") {
+      navigate("/admin/fotosintesis", { replace: true });
+      return;
+    }
     if (lot.estado !== "abierto") return;
     if (!validationsOk) {
       navigate(`/admin/fotosintesis/lots/${loteId}`, { replace: true });
@@ -232,9 +242,35 @@ export default function FotosintesisLoteResumenPage() {
     }
   };
 
+  // Publish an already-closed lot: flips every item to mostrarEnCatalogo:true
+  // and moves the lot to `publicado`, so its items surface in the catalog and
+  // it leaves the "Lotes en curso" queue. This is the missing exit for lots
+  // closed in selective/reserve mode (which never reached `publicado`).
+  const handlePublishClosed = async () => {
+    if (!lot || !isClosed) return;
+    setClosing(true);
+    try {
+      await publishLot({ id: lot._id as Id<"lots"> });
+      notify(
+        `Lote ${lot.loteId} publicado · ${itemsCount} ítems en catálogo`,
+        "success",
+      );
+      navigate("/admin/fotosintesis");
+    } catch (err) {
+      notify(
+        err instanceof Error ? err.message : "No pudimos publicar el lote",
+        "error",
+      );
+    } finally {
+      setClosing(false);
+    }
+  };
+
   if (!lot || !lotItems || !products) {
     return (
-      <Box sx={{ padding: "36px 28px", color: foto.ink.tertiary, fontSize: 13 }}>
+      <Box
+        sx={{ padding: "36px 28px", color: foto.ink.tertiary, fontSize: 13 }}
+      >
         Cargando resumen del lote {loteId}…
       </Box>
     );
@@ -252,7 +288,9 @@ export default function FotosintesisLoteResumenPage() {
         ]}
       />
 
-      <Box sx={{ textAlign: "center", margin: "32px auto 28px", maxWidth: 560 }}>
+      <Box
+        sx={{ textAlign: "center", margin: "32px auto 28px", maxWidth: 560 }}
+      >
         <Box
           sx={{
             display: "inline-flex",
@@ -269,7 +307,7 @@ export default function FotosintesisLoteResumenPage() {
           }}
         >
           <CheckCircle2 size={14} />
-          Listo para cerrar
+          {isClosed ? "Lote cerrado" : "Listo para cerrar"}
         </Box>
         <Box
           component="h1"
@@ -281,11 +319,14 @@ export default function FotosintesisLoteResumenPage() {
             color: foto.ink.primary,
           }}
         >
-          Cerrar lote {lot.loteId}
+          {isClosed ? "Publicar lote" : "Cerrar lote"} {lot.loteId}
         </Box>
-        <Box sx={{ fontSize: 14, color: foto.ink.secondary, marginTop: "10px" }}>
-          Revisá las validaciones, decidí qué ítems publicar y confirmá el
-          cierre. Después podrás vender desde el catálogo.
+        <Box
+          sx={{ fontSize: 14, color: foto.ink.secondary, marginTop: "10px" }}
+        >
+          {isClosed
+            ? "Este lote ya está cerrado. Publicá sus ítems para que aparezcan en el catálogo y puedas venderlos."
+            : "Revisá las validaciones, decidí qué ítems publicar y confirmá el cierre. Después podrás vender desde el catálogo."}
         </Box>
       </Box>
 
@@ -345,7 +386,11 @@ export default function FotosintesisLoteResumenPage() {
           >
             Ítems del lote
           </Box>
-          <Box component="ul" role="list" sx={{ listStyle: "none", m: 0, p: 0 }}>
+          <Box
+            component="ul"
+            role="list"
+            sx={{ listStyle: "none", m: 0, p: 0 }}
+          >
             {lotItems.map((li) => {
               const product = products.find((p) => p.itemId === li.itemId);
               const pubOn = pubByItemId[li.itemId] ?? false;
@@ -408,7 +453,9 @@ export default function FotosintesisLoteResumenPage() {
                         padding: "6px 10px",
                         borderRadius: "999px",
                         border: `1px solid ${pubOn ? foto.accent.primary : foto.surfaces.rule}`,
-                        background: pubOn ? foto.accent.soft : foto.surfaces.inset,
+                        background: pubOn
+                          ? foto.accent.soft
+                          : foto.surfaces.inset,
                         color: pubOn ? foto.accent.deep : foto.ink.secondary,
                         cursor: "pointer",
                       }}
@@ -424,7 +471,9 @@ export default function FotosintesisLoteResumenPage() {
                     }}
                   >
                     <Box>
-                      <FieldLabel optional="embajador">Precio embajador</FieldLabel>
+                      <FieldLabel optional="embajador">
+                        Precio embajador
+                      </FieldLabel>
                       <NumberInputWithCalc
                         value={pricing.precioEmbajadorCOP}
                         onChange={(v) =>
@@ -440,7 +489,9 @@ export default function FotosintesisLoteResumenPage() {
                       />
                     </Box>
                     <Box>
-                      <FieldLabel optional="potencial">Precio potencial</FieldLabel>
+                      <FieldLabel optional="potencial">
+                        Precio potencial
+                      </FieldLabel>
                       <NumberInputWithCalc
                         value={pricing.precioPotencialCOP}
                         onChange={(v) =>
@@ -456,7 +507,9 @@ export default function FotosintesisLoteResumenPage() {
                       />
                     </Box>
                     <Box>
-                      <FieldLabel optional="consciente">Precio consciente</FieldLabel>
+                      <FieldLabel optional="consciente">
+                        Precio consciente
+                      </FieldLabel>
                       <NumberInputWithCalc
                         value={pricing.precioConscienteCOP}
                         onChange={(v) =>
@@ -490,50 +543,64 @@ export default function FotosintesisLoteResumenPage() {
               lineHeight: 1.55,
             }}
           >
-            Al cerrar: el lote pasa a <strong>cerrado</strong>, se sincroniza a
-            Sheets y los ítems en reserva quedan ocultos del catálogo hasta que
-            los publiques.
+            {isClosed ? (
+              <>
+                Al publicar: todos los ítems pasan a{" "}
+                <strong>visibles en catálogo</strong> y el lote queda{" "}
+                <strong>publicado</strong>, listo para vender.
+              </>
+            ) : (
+              <>
+                Al cerrar: el lote pasa a <strong>cerrado</strong>, se
+                sincroniza a Sheets y los ítems en reserva quedan ocultos del
+                catálogo hasta que los publiques.
+              </>
+            )}
           </Box>
 
-          <Box
-            sx={{
-              background: foto.surfaces.panel,
-              border: `1px solid ${foto.surfaces.rule}`,
-              borderRadius: "14px",
-              padding: "18px 20px",
-            }}
-          >
-            <FieldLabel>Decisión de publicación</FieldLabel>
-            <RadioGroup
-              aria-label="Decisión de publicación"
-              value={publishMode}
-              onChange={(e) =>
-                applyPublishMode(e.target.value as PublishMode)
-              }
+          {isClosed ? null : (
+            <Box
+              sx={{
+                background: foto.surfaces.panel,
+                border: `1px solid ${foto.surfaces.rule}`,
+                borderRadius: "14px",
+                padding: "18px 20px",
+              }}
             >
-              <FormControlLabel
-                value="all"
-                control={<Radio size="small" />}
-                label="Publicar todo el lote ahora"
-              />
-              <FormControlLabel
-                value="selective"
-                control={<Radio size="small" />}
-                label="Publicar selectivamente (usa toggles)"
-              />
-              <FormControlLabel
-                value="reserve"
-                control={<Radio size="small" />}
-                label="Mantener todo en reserva"
-              />
-            </RadioGroup>
-          </Box>
+              <FieldLabel>Decisión de publicación</FieldLabel>
+              <RadioGroup
+                aria-label="Decisión de publicación"
+                value={publishMode}
+                onChange={(e) =>
+                  applyPublishMode(e.target.value as PublishMode)
+                }
+              >
+                <FormControlLabel
+                  value="all"
+                  control={<Radio size="small" />}
+                  label="Publicar todo el lote ahora"
+                />
+                <FormControlLabel
+                  value="selective"
+                  control={<Radio size="small" />}
+                  label="Publicar selectivamente (usa toggles)"
+                />
+                <FormControlLabel
+                  value="reserve"
+                  control={<Radio size="small" />}
+                  label="Mantener todo en reserva"
+                />
+              </RadioGroup>
+            </Box>
+          )}
 
           <Box
             component="button"
             type="button"
-            disabled={!validationsOk || closing}
-            onClick={() => void handleClose()}
+            disabled={(isClosed ? false : !validationsOk) || closing}
+            onClick={() =>
+              isClosed ? void handlePublishClosed() : void handleClose()
+            }
             sx={{
               width: "100%",
               padding: "14px 18px",
@@ -544,13 +611,19 @@ export default function FotosintesisLoteResumenPage() {
               fontSize: 14,
               fontWeight: 600,
               cursor: closing ? "wait" : "pointer",
-              opacity: !validationsOk || closing ? 0.6 : 1,
+              opacity: (isClosed ? false : !validationsOk) || closing ? 0.6 : 1,
               "&:hover:not(:disabled)": {
                 filter: "brightness(1.05)",
               },
             }}
           >
-            {closing ? "Cerrando…" : "Cerrar lote"}
+            {closing
+              ? isClosed
+                ? "Publicando…"
+                : "Cerrando…"
+              : isClosed
+                ? "Publicar lote"
+                : "Cerrar lote"}
           </Box>
         </Box>
       </Box>
