@@ -17,7 +17,24 @@ export const listByLote = query({
       .query("lotItems")
       .withIndex("by_loteId", (q) => q.eq("loteId", loteId))
       .collect();
-    return items.sort((a, b) => a.ordenEnLote - b.ordenEnLote);
+    const sorted = items.sort((a, b) => a.ordenEnLote - b.ordenEnLote);
+    // Enrich each join row with the human-readable `nombre` (and `tipo`) from
+    // its productInventory mirror so the capture bandeja can show the name the
+    // operator typed — not just the sequential itemId. Keeps the field additive
+    // for other consumers (LoteResumenPage) that ignore it.
+    return await Promise.all(
+      sorted.map(async (item) => {
+        const product = await ctx.db
+          .query("productInventory")
+          .withIndex("by_itemId", (q) => q.eq("itemId", item.itemId))
+          .first();
+        return {
+          ...item,
+          nombre: product?.nombre,
+          tipoEsmeralda: product?.tipoEsmeralda,
+        };
+      }),
+    );
   },
 });
 
@@ -464,9 +481,17 @@ export const updateGemaFields = mutation({
     compareString("tecnicaJoya", patch.tecnicaJoya, product.tecnicaJoya);
     compareString("formulaGema", patch.formulaGema, product.formulaGema);
     compareString("formulaJoya", patch.formulaJoya, product.formulaJoya);
-    compareString("rangoDescuento", patch.rangoDescuento, product.rangoDescuento);
+    compareString(
+      "rangoDescuento",
+      patch.rangoDescuento,
+      product.rangoDescuento,
+    );
     compareString("fotoUrl", patch.fotoUrl, product.fotoUrl);
-    compareString("certificadoUrl", patch.certificadoUrl, product.certificadoUrl);
+    compareString(
+      "certificadoUrl",
+      patch.certificadoUrl,
+      product.certificadoUrl,
+    );
 
     const compareNumber = (
       field: string,
@@ -502,8 +527,7 @@ export const updateGemaFields = mutation({
       const prev = product.minerales ?? [];
       const next = patch.minerales;
       const same =
-        prev.length === next.length &&
-        prev.every((v, i) => v === next[i]);
+        prev.length === next.length && prev.every((v, i) => v === next[i]);
       if (!same) {
         productPatch.minerales = next;
         changes.push({
@@ -518,8 +542,7 @@ export const updateGemaFields = mutation({
       const prev = product.complementos ?? [];
       const next = patch.complementos;
       const same =
-        prev.length === next.length &&
-        prev.every((v, i) => v === next[i]);
+        prev.length === next.length && prev.every((v, i) => v === next[i]);
       if (!same) {
         productPatch.complementos = next;
         changes.push({

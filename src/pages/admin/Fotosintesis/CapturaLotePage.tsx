@@ -2115,12 +2115,8 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
                 <Box component="li" key={item._id} sx={{ margin: 0 }}>
                   <ItemMiniCard
                     ticketId={`${loteId} · ${String(idx + 1).padStart(3, "0")}`}
-                    name={item.itemId}
-                    meta={
-                      typeof item.preponderancia === "number"
-                        ? `costo ${formatCOP(item.costoBaseCOP)}`
-                        : undefined
-                    }
+                    name={item.nombre?.trim() || `Ítem ${item.itemId}`}
+                    meta={`#${item.itemId}`}
                     preponderanciaSlot={
                       <EditableMetaValue
                         value={item.preponderancia}
@@ -2149,9 +2145,12 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
             {itemsCount < unidadesDeclaradas
               ? (() => {
                   const activeName =
-                    tipo === "bruto"
-                      ? bruto.nombre.trim() || "Bruto en captura"
-                      : gema.nombre.trim() || "Ítem en captura";
+                    activeNombre.trim() ||
+                    (tipo === "bruto"
+                      ? "Bruto en captura"
+                      : tipo === "joya"
+                        ? "Joya en captura"
+                        : "Ítem en captura");
                   const activePrep =
                     typeof activePreponderancia === "number"
                       ? activePreponderancia
