@@ -71,16 +71,12 @@ export const LotePriceBreakdown: React.FC<LotePriceBreakdownProps> = ({
     ? `${emeraldCore.primary}12`
     : `${emeraldCore.primary}22`;
 
-  // Pieces that actually carry a price; count drives the "N piezas / average".
+  // Pieces that actually carry a price; count drives the "N piezas" badge.
   const pricedItems = useMemo(
     () => items.filter((li) => typeof li.precioCOP === "number"),
     [items],
   );
   const pieceCount = items.length;
-  // Average per piece is always derivable from total ÷ count — accurate even
-  // when individual prices vary or the bundle is priced at a discount.
-  const averagePerPiece =
-    pieceCount > 0 && total > 0 ? Math.round(total / pieceCount) : 0;
 
   // Coerce missing/NaN sheet values to 0 so we never render "$NaN".
   const fmt = (cop: number) =>
@@ -142,20 +138,6 @@ export const LotePriceBreakdown: React.FC<LotePriceBreakdownProps> = ({
             {pieceCount} {pieceCount === 1 ? "pieza" : "piezas"}
           </Box>
         </Box>
-        {/* Description: turns the total into a per-item intuition (always true). */}
-        {averagePerPiece > 0 && (
-          <Typography
-            sx={{
-              fontSize: "12px",
-              fontWeight: 400,
-              color: secondaryTextColor,
-              mt: 0.5,
-            }}
-          >
-            Precio total por las {pieceCount} piezas ·{" "}
-            {fmt(averagePerPiece)} c/u en promedio
-          </Typography>
-        )}
         {isUSD && (
           <Typography
             sx={{
