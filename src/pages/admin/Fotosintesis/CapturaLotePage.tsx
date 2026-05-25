@@ -47,6 +47,7 @@ import ConfirmDialog from "../../../components/shared/ConfirmDialog";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import {
   BOVEDAS,
+  PROCEDENCIAS,
   sanitizeSedeCode,
   type Sede,
 } from "../../../data/vocabularies";
@@ -627,6 +628,7 @@ function NewLotIntro() {
               id="lote-costo"
               value={costoTotalCOP}
               onChange={setCostoTotalCOP}
+              format="currency"
               placeholder="0"
               step={1000}
               min={0}
@@ -676,7 +678,8 @@ function NewLotIntro() {
               id="intro-peso-total"
               value={pesoTotalQuilates}
               onChange={setPesoTotalQuilates}
-              placeholder="0"
+              format="carat"
+              placeholder="0,00"
               step={0.1}
               min={0}
               ariaLabel="Peso total del lote"
@@ -720,6 +723,7 @@ function NewLotIntro() {
               component="input"
               type="text"
               value={mina}
+              list="lote-mina-list"
               {...noSpellCheck}
               onChange={(e) => setMina((e.target as HTMLInputElement).value)}
               sx={{
@@ -732,6 +736,11 @@ function NewLotIntro() {
                 color: foto.ink.primary,
               }}
             />
+            <datalist id="lote-mina-list">
+              {PROCEDENCIAS.map((p) => (
+                <option key={p} value={p} />
+              ))}
+            </datalist>
           </Box>
         </Box>
 
@@ -750,6 +759,7 @@ function NewLotIntro() {
               id="lote-unidades"
               value={unidadesDeclaradas}
               onChange={setUnidadesDeclaradas}
+              format="integer"
               placeholder="3"
               step={1}
               min={1}

@@ -931,6 +931,7 @@ export default function FotosintesisVentaPage() {
               <NumberInputWithCalc
                 value={precioAcordado}
                 onChange={setPrecioAcordado}
+                format="currency"
                 placeholder="Ingresá el precio final"
                 step={1000}
                 min={0}

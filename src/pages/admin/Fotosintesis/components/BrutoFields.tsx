@@ -3,6 +3,8 @@ import { Box } from "@mui/material";
 import { getFoto, fontFamilies } from "../../../../design-system";
 import { FieldLabel } from "./FieldLabel";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
+import { spanishText, noSpellCheck } from "../utils/fieldLang";
+import { PROCEDENCIAS } from "../../../../data/vocabularies";
 
 /** Bruto sub-form draft — unworked rough parcel. */
 export interface BrutoDraft {
@@ -57,6 +59,7 @@ export function BrutoFields({
   const nombreId = useId();
   const pesoId = useId();
   const procedenciaId = useId();
+  const procedenciaListId = useId();
   const cantidadId = useId();
   const rendimientoId = useId();
   const preponderanciaId = useId();
@@ -110,6 +113,7 @@ export function BrutoFields({
           value={value.nombre}
           placeholder="Ej. Bruto Muzo lote azul"
           disabled={disabled}
+          {...spanishText}
           onChange={(e) =>
             onChange({ nombre: (e.target as HTMLInputElement).value })
           }
@@ -129,6 +133,7 @@ export function BrutoFields({
           value={value.pesoTotal}
           placeholder="12 kg"
           disabled={disabled}
+          {...noSpellCheck}
           onChange={(e) =>
             onChange({ pesoTotal: (e.target as HTMLInputElement).value })
           }
@@ -151,11 +156,18 @@ export function BrutoFields({
           value={value.procedencia}
           placeholder="Muzo, Chivor, Coscuez…"
           disabled={disabled}
+          list={procedenciaListId}
+          {...noSpellCheck}
           onChange={(e) =>
             onChange({ procedencia: (e.target as HTMLInputElement).value })
           }
           sx={textInputSx}
         />
+        <datalist id={procedenciaListId}>
+          {PROCEDENCIAS.map((p) => (
+            <option key={p} value={p} />
+          ))}
+        </datalist>
       </Box>
 
       {/* Cantidad estimada + Rendimiento esperado — two columns */}
@@ -176,6 +188,7 @@ export function BrutoFields({
             onChange={(next) => onChange({ cantidadEstimada: next })}
             calcSuffix="piezas"
             calcVariant="neutral"
+            format="integer"
             placeholder="80"
             step={1}
             min={0}
@@ -257,6 +270,7 @@ export function BrutoFields({
               : "= —"
           }
           calcVariant="neutral"
+          format="currency"
           placeholder="0"
           step={1000}
           min={0}

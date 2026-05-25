@@ -7,6 +7,7 @@ import {
   COLORS,
   CORTES,
   DEFAULT_CALIDAD,
+  PROCEDENCIAS,
   TIPOS_ESMERALDA,
   TM_MARKUP_DEFAULT,
   suggestedPrecioPublicoCOP,
@@ -164,6 +165,7 @@ export function GemaFields({
   const colorId = useId();
   const calidadId = useId();
   const procedenciaId = useId();
+  const procedenciaListId = useId();
   const preponderanciaId = useId();
   const precioPublicoId = useId();
   const cantidadId = useId();
@@ -339,6 +341,7 @@ export function GemaFields({
             placeholder="1"
             step={1}
             min={1}
+            format="integer"
             ariaLabel="Cantidad de piezas"
             disabled={disabled}
             calcSuffix="pzas"
@@ -454,12 +457,18 @@ export function GemaFields({
           value={value.procedencia}
           placeholder="Muzo, Chivor, Coscuez…"
           disabled={disabled}
+          list={procedenciaListId}
           {...noSpellCheck}
           onChange={(e) =>
             onChange({ procedencia: (e.target as HTMLInputElement).value })
           }
           sx={textInputSx}
         />
+        <datalist id={procedenciaListId}>
+          {PROCEDENCIAS.map((p) => (
+            <option key={p} value={p} />
+          ))}
+        </datalist>
       </Box>
 
       {/* Preponderancia — live cost calc */}
@@ -522,6 +531,7 @@ export function GemaFields({
               : "= —"
           }
           calcVariant="neutral"
+          format="currency"
           placeholder="0"
           step={1000}
           min={0}

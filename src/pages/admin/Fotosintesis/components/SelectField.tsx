@@ -3,6 +3,7 @@ import { Box } from "@mui/material";
 import { ChevronDown } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../../design-system";
 import { FieldLabel } from "./FieldLabel";
+import { spanishText } from "../utils/fieldLang";
 
 /**
  * Sentinel <option> value for the "write your own answer" entry. Picked to be
@@ -189,6 +190,7 @@ export function SelectField({
             disabled={disabled}
             placeholder={otherPlaceholder}
             aria-label={`${label} — escribir respuesta`}
+            {...spanishText}
             onChange={(e) => onChange((e.target as HTMLInputElement).value)}
             sx={fieldBaseSx}
           />

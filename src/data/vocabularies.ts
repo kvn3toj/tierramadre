@@ -527,6 +527,43 @@ export const COMPLEMENTOS = [
 
 export type Complemento = (typeof COMPLEMENTOS)[number];
 
+// ─── Predictive suggestions for free-text capture fields ─────────────
+// These power native <datalist> autocomplete: they suggest as the operator
+// types but never constrain the value — any free text still saves verbatim.
+
+/** Colombian emerald sources, for the Procedencia field (gema + bruto). */
+export const PROCEDENCIAS = [
+  "Muzo",
+  "Chivor",
+  "Coscuez",
+  "Gachalá",
+  "Peñas Blancas",
+  "La Pita",
+  "Quípama",
+  "Maripí",
+  "Otanche",
+  "Pauna",
+  "San Pablo de Borbur",
+  "Yacopí",
+] as const;
+export type Procedencia = (typeof PROCEDENCIAS)[number];
+
+/** Common goldsmithing techniques, for the Técnica field (joya). */
+export const TECNICAS_JOYA = [
+  "Engaste",
+  "Microengaste",
+  "Filigrana",
+  "Fundición",
+  "Cera perdida",
+  "Repujado",
+  "Calado",
+  "Martillado",
+  "Granulado",
+  "Soldadura",
+  "Electroformado",
+] as const;
+export type TecnicaJoya = (typeof TECNICAS_JOYA)[number];
+
 // ─── Precio final (form Sección 9) ───────────────────────────────────
 
 export const FORMULAS_GEMA = ["X1", "X1,5", "X2", "X2,5", "X3"] as const;

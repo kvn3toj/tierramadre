@@ -4,6 +4,7 @@ import { Check, Plus } from "lucide-react";
 import {
   COMPLEMENTOS,
   MINERALES,
+  TECNICAS_JOYA,
   TIPOS_JOYA,
   type Complemento,
   type Mineral,
@@ -283,6 +284,7 @@ export function JoyaFields({
   const descripcionId = useId();
   const tipoJoyaId = useId();
   const tecnicaId = useId();
+  const tecnicaListId = useId();
   const cantidadId = useId();
   const pesoGrId = useId();
   const preponderanciaId = useId();
@@ -360,6 +362,7 @@ export function JoyaFields({
             placeholder="1"
             step={1}
             min={1}
+            format="integer"
             ariaLabel="Cantidad"
             disabled={disabled}
             calcSuffix="pzas"
@@ -402,12 +405,18 @@ export function JoyaFields({
           type="text"
           value={value.tecnica}
           disabled={disabled}
+          list={tecnicaListId}
           {...spanishText}
           onChange={(e) =>
             onChange({ tecnica: (e.target as HTMLInputElement).value })
           }
           sx={textInputSx}
         />
+        <datalist id={tecnicaListId}>
+          {TECNICAS_JOYA.map((t) => (
+            <option key={t} value={t} />
+          ))}
+        </datalist>
       </Box>
 
       <ChipMultiSelect
@@ -477,6 +486,7 @@ export function JoyaFields({
           placeholder="0"
           step={1000}
           min={0}
+          format="currency"
           ariaLabel="Precio público"
           disabled={disabled}
           calcVariant="neutral"

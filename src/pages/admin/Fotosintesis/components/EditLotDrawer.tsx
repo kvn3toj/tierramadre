@@ -13,6 +13,7 @@ import { NumberInputWithCalc } from "./NumberInputWithCalc";
 import { SegmentedControl } from "./SegmentedControl";
 import { CreditoFields } from "./CreditoFields";
 import { spanishText, noSpellCheck } from "../utils/fieldLang";
+import { PROCEDENCIAS } from "../../../../data/vocabularies";
 import { KbdKey } from "./KbdKey";
 
 // Free text so an operator write-in round-trips when editing a lot.
@@ -380,7 +381,8 @@ export function EditLotDrawer({
               id="lote-peso"
               value={pesoTotalQuilates}
               onChange={setPesoTotalQuilates}
-              placeholder="0"
+              format="carat"
+              placeholder="0,00"
               step={0.1}
               min={0}
               ariaLabel="Peso total del lote en quilates"
@@ -438,10 +440,16 @@ export function EditLotDrawer({
               type="text"
               value={mina}
               disabled={!editable}
+              list="editlot-mina-list"
               {...noSpellCheck}
               onChange={(e) => setMina((e.target as HTMLInputElement).value)}
               sx={textInputSx}
             />
+            <datalist id="editlot-mina-list">
+              {PROCEDENCIAS.map((p) => (
+                <option key={p} value={p} />
+              ))}
+            </datalist>
           </Box>
         </Box>
 
@@ -459,6 +467,7 @@ export function EditLotDrawer({
               id="lote-costo-edit"
               value={costoTotalCOP}
               onChange={setCostoTotalCOP}
+              format="currency"
               placeholder="0"
               step={1000}
               min={1}
@@ -478,6 +487,7 @@ export function EditLotDrawer({
               id="lote-unidades-edit"
               value={unidadesDeclaradas}
               onChange={setUnidadesDeclaradas}
+              format="integer"
               placeholder={String(minUnidades)}
               step={1}
               min={minUnidades}
