@@ -638,6 +638,96 @@ export const updateGemaFields = mutation({
   },
 });
 
+/**
+ * Update only an item's media (foto + certificado) on the linked
+ * productInventory row. Unlike `updateGemaFields`, this is intentionally
+ * **state-agnostic**: media is presentation metadata, not financial data, so
+ * an operator can refresh / replace an item's photo after the lot has been
+ * `cerrado` or `publicado` (e.g. a better studio shot arrives days later)
+ * without reopening the lot.
+ *
+ * Pass an empty string to clear a field. Only fields that actually change
+ * produce an audit entry + Sheets push; a no-op returns early.
+ */
+export const updateMedia = mutation({
+  args: {
+    lotItemId: v.id("lotItems"),
+    fotoUrl: v.optional(v.string()),
+    certificadoUrl: v.optional(v.string()),
+    editorEmail: v.optional(v.string()),
+  },
+  handler: async (ctx, { lotItemId, fotoUrl, certificadoUrl, editorEmail }) => {
+    const lotItem = await ctx.db.get(lotItemId);
+    if (!lotItem) throw new Error(`lotItem ${lotItemId} no encontrado`);
+
+    const product = await ctx.db
+      .query("productInventory")
+      .withIndex("by_itemId", (q) => q.eq("itemId", lotItem.itemId))
+      .first();
+    if (!product) {
+      throw new Error(`productInventory para ${lotItem.itemId} no encontrado`);
+    }
+
+    type Change = {
+      field: string;
+      before: string | number | null;
+      after: string | number | null;
+    };
+    const changes: Change[] = [];
+    const productPatch: Record<string, unknown> = {};
+
+    const applyMedia = (
+      field: "fotoUrl" | "certificadoUrl",
+      next: string | undefined,
+      current: string | undefined,
+    ) => {
+      if (next === undefined) return;
+      const normalized = next.trim();
+      const finalValue = normalized.length === 0 ? undefined : normalized;
+      if (finalValue === current) return;
+      productPatch[field] = finalValue;
+      changes.push({
+        field,
+        before: current ?? null,
+        after: finalValue ?? null,
+      });
+    };
+
+    applyMedia("fotoUrl", fotoUrl, product.fotoUrl);
+    applyMedia("certificadoUrl", certificadoUrl, product.certificadoUrl);
+
+    if (changes.length === 0) {
+      return { lotItemId, changed: false };
+    }
+
+    await ctx.db.patch(product._id, {
+      ...productPatch,
+      syncStatus: "pending" as const,
+      syncError: undefined,
+    });
+
+    const now = new Date().toISOString();
+    const auditId = await ctx.db.insert("productEdits", {
+      itemId: product.itemId,
+      editorEmail: editorEmail ?? "fotosintesis-media",
+      editedAt: now,
+      changes,
+      status: "pending" as const,
+    });
+    await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+      itemId: product.itemId,
+      auditId,
+      mode: "patch",
+    });
+
+    return {
+      lotItemId,
+      changed: true,
+      changedFields: changes.map((c) => c.field),
+    };
+  },
+});
+
 export const remove = mutation({
   args: { lotItemId: v.id("lotItems") },
   handler: async (ctx, { lotItemId }) => {

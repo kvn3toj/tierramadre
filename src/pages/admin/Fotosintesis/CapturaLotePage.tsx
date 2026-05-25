@@ -2337,6 +2337,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
             open={true}
             onClose={() => setEditingLotItemId(null)}
             itemId={editingItem.itemId}
+            loteId={loteId}
             lotItemId={editingItem._id as Id<"lotItems">}
             currentPreponderancia={editingItem.preponderancia}
             lotCostoTotalCOP={costoTotalCOP}

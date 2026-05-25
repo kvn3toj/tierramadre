@@ -7,7 +7,7 @@ import {
   Switch,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, ImagePlus } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../design-system";
 import {
   useConvexMutation,
@@ -20,6 +20,7 @@ import { TicketHeader } from "./components/TicketHeader";
 import { FieldLabel } from "./components/FieldLabel";
 import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
 import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
+import { EditItemDrawer } from "./components/EditItemDrawer";
 import { uploadFotosintesisImages } from "./utils/uploadItemMedia";
 
 type PublishMode = "all" | "selective" | "reserve";
@@ -132,6 +133,10 @@ export default function FotosintesisLoteResumenPage() {
   // Catalog grouping: hero photo + "show as one card" toggle.
   const [heroPhoto, setHeroPhoto] = useState<DropzonePhoto[]>([]);
   const [mostrarComoLote, setMostrarComoLote] = useState(false);
+  // Per-item editor (photos editable in any estado; other fields read-only
+  // once the lot is closed). Lets the operator fix item photos after finishing.
+  const [editingLotItemId, setEditingLotItemId] =
+    useState<Id<"lotItems"> | null>(null);
   const [pricingByItemId, setPricingByItemId] = useState<
     Record<
       string,
@@ -541,6 +546,78 @@ export default function FotosintesisLoteResumenPage() {
                   </Box>
                   <Box
                     sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    {product?.fotoUrl ? (
+                      <Box
+                        component="img"
+                        src={product.fotoUrl}
+                        alt={`Foto del ítem ${li.itemId}`}
+                        sx={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: "8px",
+                          objectFit: "cover",
+                          border: `1px solid ${foto.surfaces.rule}`,
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        aria-hidden
+                        sx={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: "8px",
+                          border: `1px dashed ${foto.surfaces.rule}`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: foto.ink.tertiary,
+                          fontSize: 9,
+                          textAlign: "center",
+                          lineHeight: 1.1,
+                          flexShrink: 0,
+                        }}
+                      >
+                        Sin foto
+                      </Box>
+                    )}
+                    <Box
+                      component="button"
+                      type="button"
+                      onClick={() =>
+                        setEditingLotItemId(li._id as Id<"lotItems">)
+                      }
+                      sx={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        fontFamily: fontFamilies.system,
+                        fontSize: 11.5,
+                        fontWeight: 600,
+                        padding: "7px 12px",
+                        borderRadius: "8px",
+                        border: `1px solid ${foto.surfaces.rule}`,
+                        background: foto.surfaces.inset,
+                        color: foto.ink.secondary,
+                        cursor: "pointer",
+                        transition: "background 120ms ease, color 120ms ease",
+                        "&:hover": {
+                          background: foto.surfaces.panel,
+                          color: foto.ink.primary,
+                        },
+                      }}
+                    >
+                      <ImagePlus size={13} strokeWidth={2} />
+                      {product?.fotoUrl ? "Editar foto" : "Agregar foto"}
+                    </Box>
+                  </Box>
+                  <Box
+                    sx={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr 1fr",
                       gap: "10px",
@@ -784,6 +861,34 @@ export default function FotosintesisLoteResumenPage() {
           </Box>
         </Box>
       </Box>
+
+      {/* Per-item editor — photos editable even on a closed/published lot. */}
+      {(() => {
+        const editingItem = (lotItems ?? []).find(
+          (it) => it._id === editingLotItemId,
+        );
+        if (!editingItem) return null;
+        const editingIndex = (lotItems ?? []).findIndex(
+          (it) => it._id === editingItem._id,
+        );
+        const siblingSum = (lotItems ?? [])
+          .filter((it) => it._id !== editingItem._id)
+          .reduce((s, it) => s + it.preponderancia, 0);
+        return (
+          <EditItemDrawer
+            open
+            onClose={() => setEditingLotItemId(null)}
+            itemId={editingItem.itemId}
+            loteId={loteId}
+            lotItemId={editingItem._id as Id<"lotItems">}
+            currentPreponderancia={editingItem.preponderancia}
+            lotCostoTotalCOP={lot.costoTotalCOP}
+            siblingPreponderanciaSum={siblingSum}
+            ticketLabel={`${loteId} · ${String(editingIndex + 1).padStart(3, "0")}`}
+            editable={lot.estado === "abierto"}
+          />
+        );
+      })()}
     </Box>
   );
 }

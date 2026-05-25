@@ -13,13 +13,15 @@ import { useNotification } from "../../../../contexts/NotificationContext";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
 import { FieldLabel } from "./FieldLabel";
-import { spanishText } from "../utils/fieldLang";
 import { GemaFields, EMPTY_GEMA_DRAFT, type GemaDraft } from "./GemaFields";
 import { KbdKey } from "./KbdKey";
+import { PhotoDropzone, type DropzonePhoto } from "./PhotoDropzone";
+import { spanishText } from "../utils/fieldLang";
 import {
   gemaDraftFromProduct,
   gemaPatchFromDraft,
 } from "../utils/buildLotItemPayload";
+import { uploadFotosintesisImages } from "../utils/uploadItemMedia";
 
 interface ProductInventoryRow {
   _id: string;
@@ -39,6 +41,8 @@ interface ProductInventoryRow {
   tipoEsmeralda?: string;
   nivelRareza?: number;
   calificacion?: number;
+  fotoUrl?: string;
+  certificadoUrl?: string;
 }
 
 interface EditItemDrawerProps {
@@ -46,6 +50,8 @@ interface EditItemDrawerProps {
   onClose: () => void;
   /** Linked productInventory.itemId — the natural key the drawer queries. */
   itemId: string;
+  /** Lot id — drives the Drive upload path for replaced item photos. */
+  loteId: string;
   /** Lot item record id — what updateGemaFields patches. */
   lotItemId: Id<"lotItems">;
   /** Current preponderancia from the lotItems row (kept in sync via the parent). */
@@ -76,6 +82,7 @@ export function EditItemDrawer({
   open,
   onClose,
   itemId,
+  loteId,
   lotItemId,
   currentPreponderancia,
   lotCostoTotalCOP,
@@ -95,18 +102,36 @@ export function EditItemDrawer({
   const updateGemaFields = useConvexMutation(
     convexApi.lotItems.updateGemaFields,
   );
+  const updateMedia = useConvexMutation(convexApi.lotItems.updateMedia);
   const removeLotItem = useConvexMutation(convexApi.lotItems.remove);
 
-  const [draft, setDraft] = useState<GemaDraft>(() => ({
-    ...EMPTY_GEMA_DRAFT,
-    preponderancia: currentPreponderancia,
-  } as GemaDraft));
+  const [draft, setDraft] = useState<GemaDraft>(
+    () =>
+      ({
+        ...EMPTY_GEMA_DRAFT,
+        preponderancia: currentPreponderancia,
+      }) as GemaDraft,
+  );
   const [observacion, setObservacion] = useState("");
   const [mostrarEnCatalogo, setMostrarEnCatalogo] = useState(false);
+  // Item photo (hero). Seeded from the saved Drive URL; a freshly dropped file
+  // carries `file` so submit knows to upload it. Photos are editable in any lot
+  // estado — see the `updateMedia` mutation.
+  const [photos, setPhotos] = useState<DropzonePhoto[]>([]);
+  const [initialFotoUrl, setInitialFotoUrl] = useState<string | undefined>(
+    undefined,
+  );
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Revoke any object URLs we created for previews so we don't leak blobs.
+  const revokeLocalPreviews = (list: DropzonePhoto[]) => {
+    for (const p of list) {
+      if (p.url.startsWith("blob:")) URL.revokeObjectURL(p.url);
+    }
+  };
 
   // Hydrate the local draft from the latest mirror values every time the
   // drawer (re)opens or the underlying product row changes. We only reset
@@ -120,13 +145,26 @@ export function EditItemDrawer({
     });
     setObservacion(product.observacion ?? "");
     setMostrarEnCatalogo(product.mostrarEnCatalogo ?? false);
+    setPhotos((prev) => {
+      revokeLocalPreviews(prev);
+      return product.fotoUrl
+        ? [{ id: "existing-foto", url: product.fotoUrl }]
+        : [];
+    });
+    setInitialFotoUrl(product.fotoUrl);
     setError(null);
     setConfirmDelete(false);
   }, [open, product, currentPreponderancia]);
 
-  // Reset the confirm-delete prompt whenever the drawer closes.
+  // Reset the confirm-delete prompt + drop any local previews on close.
   useEffect(() => {
-    if (!open) setConfirmDelete(false);
+    if (!open) {
+      setConfirmDelete(false);
+      setPhotos((prev) => {
+        revokeLocalPreviews(prev);
+        return [];
+      });
+    }
   }, [open]);
 
   const prepNumeric =
@@ -146,33 +184,68 @@ export function EditItemDrawer({
     return null;
   }, [overflow]);
 
+  // A dropped file means "upload + replace"; an emptied dropzone over a saved
+  // photo means "clear". Either is a photo change the operator can save even
+  // when the lot is closed.
+  const pendingPhotoFile = photos.find((p) => p.file)?.file;
+  const photoRemoved = !!initialFotoUrl && photos.length === 0;
+  const photoChanged = !!pendingPhotoFile || photoRemoved;
+
   const canSubmit =
-    editable &&
     !!product &&
-    draft.nombre.trim().length > 0 &&
-    typeof draft.preponderancia === "number" &&
-    draft.preponderancia > 0 &&
-    overflow <= 0.01 &&
     !saving &&
-    !deleting;
+    !deleting &&
+    (editable
+      ? draft.nombre.trim().length > 0 &&
+        typeof draft.preponderancia === "number" &&
+        draft.preponderancia > 0 &&
+        overflow <= 0.01
+      : photoChanged);
 
   const handleSubmit = async () => {
     if (!canSubmit || !product) return;
     setSaving(true);
     setError(null);
     try {
-      const result = await updateGemaFields({
-        lotItemId,
-        patch: gemaPatchFromDraft(draft, observacion, mostrarEnCatalogo),
-      });
-      if (result.changed === false) {
-        notify("Sin cambios para guardar", "info");
-      } else {
-        const count = result.changedFields?.length ?? 0;
-        notify(
-          `Ítem #${product.itemId} actualizado · ${count} campo${count === 1 ? "" : "s"}`,
-          "success",
+      // 1. Resolve the next photo URL: upload a dropped file, or clear it.
+      let nextFotoUrl: string | undefined;
+      if (pendingPhotoFile) {
+        nextFotoUrl = await uploadFotosintesisImages(
+          [pendingPhotoFile],
+          loteId,
+          itemId,
         );
+      } else if (photoRemoved) {
+        nextFotoUrl = ""; // empty string clears the field server-side
+      }
+
+      if (editable) {
+        // Open lot — persist every field (photo folded into the same patch).
+        const patch = gemaPatchFromDraft(draft, observacion, mostrarEnCatalogo);
+        if (nextFotoUrl !== undefined) patch.fotoUrl = nextFotoUrl;
+        const result = await updateGemaFields({ lotItemId, patch });
+        if (result.changed === false) {
+          notify("Sin cambios para guardar", "info");
+        } else {
+          const count = result.changedFields?.length ?? 0;
+          notify(
+            `Ítem #${product.itemId} actualizado · ${count} campo${count === 1 ? "" : "s"}`,
+            "success",
+          );
+        }
+      } else {
+        // Closed/published lot — only the photo can change here.
+        if (nextFotoUrl === undefined) {
+          notify("Sin cambios para guardar", "info");
+          onClose();
+          return;
+        }
+        const result = await updateMedia({ lotItemId, fotoUrl: nextFotoUrl });
+        if (result.changed === false) {
+          notify("Sin cambios para guardar", "info");
+        } else {
+          notify(`Foto del ítem #${product.itemId} actualizada`, "success");
+        }
       }
       onClose();
     } catch (err) {
@@ -312,7 +385,7 @@ export function EditItemDrawer({
           >
             {editable
               ? "Cambios persisten en Convex y se sincronizan a la planilla."
-              : "Lote cerrado — los campos están en sólo lectura."}
+              : "Lote cerrado — los datos quedan en sólo lectura, pero podés actualizar la foto."}
           </Box>
         </Box>
         <Box
@@ -390,6 +463,38 @@ export function EditItemDrawer({
               preponderanciaHelperAlert={prepHelper?.alert}
               disabled={!editable}
             />
+
+            <Box>
+              <FieldLabel optional="opcional">Foto del ítem</FieldLabel>
+              <PhotoDropzone
+                photos={photos}
+                onAdd={(files) => {
+                  const f = files[0];
+                  if (!f) return;
+                  setPhotos((prev) => {
+                    revokeLocalPreviews(prev);
+                    return [
+                      {
+                        id: `${f.name}-${f.lastModified}`,
+                        url: URL.createObjectURL(f),
+                        file: f,
+                      },
+                    ];
+                  });
+                }}
+                onRemove={() =>
+                  setPhotos((prev) => {
+                    revokeLocalPreviews(prev);
+                    return [];
+                  })
+                }
+                hint={
+                  editable
+                    ? "Reemplazá la foto principal del ítem. Se sube a Drive al guardar."
+                    : "El lote está cerrado, pero la foto sí se puede actualizar. Se sube a Drive al guardar."
+                }
+              />
+            </Box>
 
             <Box>
               <FieldLabel htmlFor={observacionId} optional="opcional">
