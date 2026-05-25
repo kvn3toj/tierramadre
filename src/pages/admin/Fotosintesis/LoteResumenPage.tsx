@@ -18,7 +18,7 @@ import { useNotification } from "../../../contexts/NotificationContext";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { TicketHeader } from "./components/TicketHeader";
 import { FieldLabel } from "./components/FieldLabel";
-import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
+import { PriceMultiplierField } from "./components/PriceMultiplierField";
 import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
 import { EditItemDrawer } from "./components/EditItemDrawer";
 import { uploadFotosintesisImages } from "./utils/uploadItemMedia";
@@ -142,7 +142,6 @@ export default function FotosintesisLoteResumenPage() {
       string,
       {
         precioEmbajadorCOP: number | "";
-        precioPotencialCOP: number | "";
         precioConscienteCOP: number | "";
       }
     >
@@ -158,7 +157,6 @@ export default function FotosintesisLoteResumenPage() {
       nextPub[li.itemId] = p?.mostrarEnCatalogo ?? false;
       nextPricing[li.itemId] = {
         precioEmbajadorCOP: p?.precioEmbajadorCOP ?? "",
-        precioPotencialCOP: p?.precioPotencialCOP ?? "",
         precioConscienteCOP: p?.precioConscienteCOP ?? "",
       };
     }
@@ -258,9 +256,6 @@ export default function FotosintesisLoteResumenPage() {
             mostrarEnCatalogo: pubByItemId[li.itemId] ?? false,
             ...(typeof pricing?.precioEmbajadorCOP === "number"
               ? { precioEmbajadorCOP: pricing.precioEmbajadorCOP }
-              : {}),
-            ...(typeof pricing?.precioPotencialCOP === "number"
-              ? { precioPotencialCOP: pricing.precioPotencialCOP }
               : {}),
             ...(typeof pricing?.precioConscienteCOP === "number"
               ? { precioConscienteCOP: pricing.precioConscienteCOP }
@@ -477,7 +472,6 @@ export default function FotosintesisLoteResumenPage() {
               const pubOn = pubByItemId[li.itemId] ?? false;
               const pricing = pricingByItemId[li.itemId] ?? {
                 precioEmbajadorCOP: "",
-                precioPotencialCOP: "",
                 precioConscienteCOP: "",
               };
               return (
@@ -619,64 +613,38 @@ export default function FotosintesisLoteResumenPage() {
                   <Box
                     sx={{
                       display: "grid",
-                      gridTemplateColumns: "1fr 1fr 1fr",
-                      gap: "10px",
+                      gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                      gap: "16px",
                     }}
                   >
-                    <Box>
-                      <FieldLabel optional="embajador">
-                        Precio embajador
-                      </FieldLabel>
-                      <NumberInputWithCalc
-                        value={pricing.precioEmbajadorCOP}
-                        onChange={(v) =>
-                          setPricingByItemId((prev) => ({
-                            ...prev,
-                            [li.itemId]: { ...pricing, precioEmbajadorCOP: v },
-                          }))
-                        }
-                        step={1000}
-                        min={0}
-                        ariaLabel="Precio embajador"
-                        calcVariant="neutral"
-                      />
-                    </Box>
-                    <Box>
-                      <FieldLabel optional="potencial">
-                        Precio potencial
-                      </FieldLabel>
-                      <NumberInputWithCalc
-                        value={pricing.precioPotencialCOP}
-                        onChange={(v) =>
-                          setPricingByItemId((prev) => ({
-                            ...prev,
-                            [li.itemId]: { ...pricing, precioPotencialCOP: v },
-                          }))
-                        }
-                        step={1000}
-                        min={0}
-                        ariaLabel="Precio potencial"
-                        calcVariant="neutral"
-                      />
-                    </Box>
-                    <Box>
-                      <FieldLabel optional="consciente">
-                        Precio consciente
-                      </FieldLabel>
-                      <NumberInputWithCalc
-                        value={pricing.precioConscienteCOP}
-                        onChange={(v) =>
-                          setPricingByItemId((prev) => ({
-                            ...prev,
-                            [li.itemId]: { ...pricing, precioConscienteCOP: v },
-                          }))
-                        }
-                        step={1000}
-                        min={0}
-                        ariaLabel="Precio clientes conscientes"
-                        calcVariant="neutral"
-                      />
-                    </Box>
+                    <PriceMultiplierField
+                      label="Precio embajador"
+                      optional="embajador"
+                      baseCOP={li.costoBaseCOP}
+                      defaultMultiplier={3}
+                      value={pricing.precioEmbajadorCOP}
+                      onChange={(v) =>
+                        setPricingByItemId((prev) => ({
+                          ...prev,
+                          [li.itemId]: { ...pricing, precioEmbajadorCOP: v },
+                        }))
+                      }
+                      ariaLabel="Precio embajador"
+                    />
+                    <PriceMultiplierField
+                      label="Precio consciente"
+                      optional="consciente"
+                      baseCOP={li.costoBaseCOP}
+                      defaultMultiplier={4}
+                      value={pricing.precioConscienteCOP}
+                      onChange={(v) =>
+                        setPricingByItemId((prev) => ({
+                          ...prev,
+                          [li.itemId]: { ...pricing, precioConscienteCOP: v },
+                        }))
+                      }
+                      ariaLabel="Precio clientes conscientes"
+                    />
                   </Box>
                 </Box>
               );
