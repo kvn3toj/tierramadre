@@ -100,9 +100,15 @@ export default function FotosintesisHomePage() {
     () => (lots ?? []).filter((l) => l.estado === "cerrado"),
     [lots],
   );
+  // Published lots stay reachable (to manage catalog grouping) — listed after
+  // the in-progress ones.
+  const publishedLots = useMemo(
+    () => (lots ?? []).filter((l) => l.estado === "publicado"),
+    [lots],
+  );
   const activeLots = useMemo(
-    () => [...openLots, ...closedLots],
-    [openLots, closedLots],
+    () => [...openLots, ...closedLots, ...publishedLots],
+    [openLots, closedLots, publishedLots],
   );
 
   const itemsAvailable = useMemo(
@@ -685,7 +691,9 @@ export default function FotosintesisHomePage() {
                       >
                         {lot.estado === "abierto"
                           ? "Captura en curso"
-                          : "Listo para publicar"}
+                          : lot.estado === "cerrado"
+                            ? "Listo para publicar"
+                            : "Publicado · en catálogo"}
                       </Box>
                       <Box
                         sx={{
@@ -724,7 +732,11 @@ export default function FotosintesisHomePage() {
                         textDecoration: "none",
                       }}
                     >
-                      {lot.estado === "abierto" ? "Continuar" : "Publicar"}
+                      {lot.estado === "abierto"
+                        ? "Continuar"
+                        : lot.estado === "cerrado"
+                          ? "Publicar"
+                          : "Gestionar"}
                       <ArrowRight size={13} strokeWidth={2} />
                     </Box>
                     {canCancel ? (

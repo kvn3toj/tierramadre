@@ -132,6 +132,11 @@ export const publishedCatalog = query({
  * price = precioCOP ?? precioConscienteCOP ?? 0; totalPriceCOP = sum. The
  * frontend emits one card per group and excludes member items from the
  * individual-item catalog (`publishedCatalog`).
+ *
+ * Precedence: a shown sublote group CLAIMS its items away from its parent
+ * lote's bundle card, so a shared item never appears in both the sublote card
+ * and the parent lote card. Sublote groups are built first; the lote card then
+ * lists only the items no shown sublote claimed (and is dropped if emptied).
  */
 export const publishedGroups = query({
   args: {},
@@ -156,7 +161,7 @@ export const publishedGroups = query({
       };
     };
 
-    const groups: Array<{
+    type Group = {
       groupKind: "lote" | "sublote";
       groupId: string;
       parentLoteId: string;
@@ -164,38 +169,11 @@ export const publishedGroups = query({
       fotoUrl?: string;
       totalPriceCOP: number;
       items: NonNullable<Awaited<ReturnType<typeof itemForId>>>[];
-    }> = [];
+    };
 
-    // ── Lote groups ──────────────────────────────────────────────
-    const publishedLots = await ctx.db
-      .query("lots")
-      .withIndex("by_estado", (q) => q.eq("estado", "publicado"))
-      .collect();
-    for (const lot of publishedLots) {
-      if (lot.mostrarComoLote !== true) continue;
-      const joins = await ctx.db
-        .query("lotItems")
-        .withIndex("by_loteId", (q) => q.eq("loteId", lot.loteId))
-        .collect();
-      joins.sort((a, b) => a.ordenEnLote - b.ordenEnLote);
-      const items = [];
-      for (const j of joins) {
-        const it = await itemForId(j.itemId);
-        if (it) items.push(it);
-      }
-      if (items.length === 0) continue;
-      groups.push({
-        groupKind: "lote",
-        groupId: lot.loteId,
-        parentLoteId: lot.loteId,
-        nombre: lot.renombreLote ?? lot.loteId,
-        fotoUrl: lot.fotoLoteUrl,
-        totalPriceCOP: items.reduce((s, it) => s + it.precioCOP, 0),
-        items,
-      });
-    }
-
-    // ── Sublote groups ───────────────────────────────────────────
+    // ── Sublote groups first (they claim their items) ────────────
+    const subloteGroups: Group[] = [];
+    const claimedItemIds = new Set<string>();
     const activeSubs = await ctx.db
       .query("subLotes")
       .withIndex("by_estado", (q) => q.eq("estado", "activa"))
@@ -211,7 +189,8 @@ export const publishedGroups = query({
         if (it) items.push(it);
       }
       if (items.length === 0) continue;
-      groups.push({
+      for (const it of items) claimedItemIds.add(it.itemId);
+      subloteGroups.push({
         groupKind: "sublote",
         groupId: sub.subLoteId,
         parentLoteId: sub.parentLoteId,
@@ -222,7 +201,38 @@ export const publishedGroups = query({
       });
     }
 
-    return groups;
+    // ── Lote groups (excluding items claimed by a shown sublote) ──
+    const loteGroups: Group[] = [];
+    const publishedLots = await ctx.db
+      .query("lots")
+      .withIndex("by_estado", (q) => q.eq("estado", "publicado"))
+      .collect();
+    for (const lot of publishedLots) {
+      if (lot.mostrarComoLote !== true) continue;
+      const joins = await ctx.db
+        .query("lotItems")
+        .withIndex("by_loteId", (q) => q.eq("loteId", lot.loteId))
+        .collect();
+      joins.sort((a, b) => a.ordenEnLote - b.ordenEnLote);
+      const items = [];
+      for (const j of joins) {
+        if (claimedItemIds.has(j.itemId)) continue; // claimed by a sublote
+        const it = await itemForId(j.itemId);
+        if (it) items.push(it);
+      }
+      if (items.length === 0) continue; // fully split into sublotes
+      loteGroups.push({
+        groupKind: "lote",
+        groupId: lot.loteId,
+        parentLoteId: lot.loteId,
+        nombre: lot.renombreLote ?? lot.loteId,
+        fotoUrl: lot.fotoLoteUrl,
+        totalPriceCOP: items.reduce((s, it) => s + it.precioCOP, 0),
+        items,
+      });
+    }
+
+    return [...loteGroups, ...subloteGroups];
   },
 });
 
