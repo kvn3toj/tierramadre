@@ -13,6 +13,7 @@ import { useNotification } from "../../../../contexts/NotificationContext";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
 import { FieldLabel } from "./FieldLabel";
+import { spanishText } from "../utils/fieldLang";
 import { GemaFields, EMPTY_GEMA_DRAFT, type GemaDraft } from "./GemaFields";
 import { KbdKey } from "./KbdKey";
 import {
@@ -400,6 +401,7 @@ export function EditItemDrawer({
                 value={observacion}
                 placeholder="Cualquier detalle libre — talla del corte, particularidades, intenciones de venta…"
                 disabled={!editable}
+                {...spanishText}
                 onChange={(e) =>
                   setObservacion((e.target as HTMLTextAreaElement).value)
                 }

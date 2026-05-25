@@ -26,6 +26,7 @@ import { TicketHeader } from "./components/TicketHeader";
 import { StepPills } from "./components/StepPills";
 import { SegmentedControl } from "./components/SegmentedControl";
 import { FieldLabel } from "./components/FieldLabel";
+import { spanishText } from "./utils/fieldLang";
 import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
 import { KbdKey } from "./components/KbdKey";
 import { KardexPreview } from "./components/KardexPreview";
@@ -882,6 +883,7 @@ export default function FotosintesisVentaPage() {
               <Box
                 component="textarea"
                 value={adicionales}
+                {...spanishText}
                 onChange={(e) =>
                   setAdicionales((e.target as HTMLTextAreaElement).value)
                 }

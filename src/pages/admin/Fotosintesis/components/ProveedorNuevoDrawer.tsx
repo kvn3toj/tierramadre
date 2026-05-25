@@ -17,6 +17,7 @@ import {
   convexApi,
 } from "../../../../lib/convex-safe";
 import { FieldLabel } from "./FieldLabel";
+import { spanishText, properName, streetAddress, noSpellCheck } from "../utils/fieldLang";
 import { KbdKey } from "./KbdKey";
 import { SegmentedControl } from "./SegmentedControl";
 import { verifyNit } from "../../../../utils/nitVerify";
@@ -506,6 +507,7 @@ export function ProveedorNuevoDrawer({
                 ref={nombreInputRef}
                 component="input"
                 value={nombre}
+                {...properName}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setNombre(e.target.value)
                 }
@@ -557,6 +559,7 @@ export function ProveedorNuevoDrawer({
                 <Box
                   component="input"
                   value={documento}
+                  {...noSpellCheck}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setDocumento(e.target.value)
                   }
@@ -720,6 +723,8 @@ export function ProveedorNuevoDrawer({
               <Box
                 component="input"
                 value={telefono}
+                {...noSpellCheck}
+                autoComplete="tel"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setTelefono(formatColombianPhone(e.target.value))
                 }
@@ -748,6 +753,8 @@ export function ProveedorNuevoDrawer({
                 component="input"
                 type="email"
                 value={email}
+                {...noSpellCheck}
+                autoComplete="email"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setEmail(e.target.value)
                 }
@@ -761,6 +768,7 @@ export function ProveedorNuevoDrawer({
                 component="textarea"
                 rows={2}
                 value={direccion}
+                {...streetAddress}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   setDireccion(e.target.value)
                 }
@@ -785,6 +793,7 @@ export function ProveedorNuevoDrawer({
             component="textarea"
             rows={2}
             value={notas}
+            {...spanishText}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
               setNotas(e.target.value)
             }

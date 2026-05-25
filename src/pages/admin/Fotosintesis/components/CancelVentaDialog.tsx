@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import { emeraldCore } from "../../../../design-system/tokens/colors";
 import { fontWeights } from "../../../../design-system";
+import { spanishText } from "../utils/fieldLang";
 
 const REASON_MAX = 280;
 
@@ -92,6 +93,7 @@ export function CancelVentaDialog({
           placeholder="Ej. acordada devolución con la clienta, ítem regresa a inventario."
           disabled={submitting}
           variant="outlined"
+          slotProps={{ htmlInput: spanishText }}
           sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
         />
         <Box

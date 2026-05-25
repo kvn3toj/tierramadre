@@ -9,6 +9,7 @@ import { useNotification } from "../../../../contexts/NotificationContext";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
 import { FieldLabel } from "./FieldLabel";
+import { spanishText, noSpellCheck } from "../utils/fieldLang";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
 import { SegmentedControl } from "./SegmentedControl";
 import { CreditoFields } from "./CreditoFields";
@@ -403,6 +404,7 @@ export function EditLotDrawer({
             type="text"
             value={renombreLote}
             disabled={!editable}
+            {...spanishText}
             onChange={(e) =>
               setRenombreLote((e.target as HTMLInputElement).value)
             }
@@ -424,6 +426,7 @@ export function EditLotDrawer({
               type="text"
               value={tratamiento}
               disabled={!editable}
+              {...spanishText}
               onChange={(e) =>
                 setTratamiento((e.target as HTMLInputElement).value)
               }
@@ -437,6 +440,7 @@ export function EditLotDrawer({
               type="text"
               value={mina}
               disabled={!editable}
+              {...noSpellCheck}
               onChange={(e) => setMina((e.target as HTMLInputElement).value)}
               sx={textInputSx}
             />
@@ -566,6 +570,7 @@ export function EditLotDrawer({
               value={numeroFactura}
               disabled={!editable}
               placeholder="Ej. F-2026-0042"
+              {...noSpellCheck}
               onChange={(e) =>
                 setNumeroFactura((e.target as HTMLInputElement).value)
               }
@@ -605,6 +610,7 @@ export function EditLotDrawer({
             value={notas}
             disabled={!editable}
             placeholder="Cualquier detalle del lote, condiciones, recordatorios…"
+            {...spanishText}
             onChange={(e) => setNotas((e.target as HTMLTextAreaElement).value)}
             sx={{
               ...textInputSx,

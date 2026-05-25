@@ -16,6 +16,7 @@ import {
   type TipoEsmeralda,
 } from "../../../../data/vocabularies";
 import { FieldLabel } from "./FieldLabel";
+import { spanishText, noSpellCheck } from "../utils/fieldLang";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
 
 export type { GemaCalidad } from "../../../../data/vocabularies";
@@ -320,6 +321,7 @@ export function GemaFields({
           value={value.nombre}
           placeholder="Ej. Esmeralda Cushion Verde Profundo"
           disabled={disabled}
+          {...spanishText}
           onChange={(e) =>
             onChange({ nombre: (e.target as HTMLInputElement).value })
           }
@@ -346,6 +348,7 @@ export function GemaFields({
             value={value.peso}
             placeholder="2.5 ct"
             disabled={disabled}
+            {...noSpellCheck}
             onChange={(e) =>
               onChange({ peso: (e.target as HTMLInputElement).value })
             }
@@ -432,6 +435,7 @@ export function GemaFields({
             value={value.medidasAncho}
             disabled={disabled}
             placeholder="5.2"
+            {...noSpellCheck}
             onChange={(e) =>
               onChange({ medidasAncho: (e.target as HTMLInputElement).value })
             }
@@ -452,6 +456,7 @@ export function GemaFields({
             value={value.medidasAlto}
             disabled={disabled}
             placeholder="7.1"
+            {...noSpellCheck}
             onChange={(e) =>
               onChange({ medidasAlto: (e.target as HTMLInputElement).value })
             }
@@ -472,6 +477,7 @@ export function GemaFields({
             value={value.medidasCono}
             disabled={disabled}
             placeholder="4.0"
+            {...noSpellCheck}
             onChange={(e) =>
               onChange({ medidasCono: (e.target as HTMLInputElement).value })
             }
@@ -565,6 +571,7 @@ export function GemaFields({
           value={value.procedencia}
           placeholder="Muzo, Chivor, Coscuez…"
           disabled={disabled}
+          {...noSpellCheck}
           onChange={(e) =>
             onChange({ procedencia: (e.target as HTMLInputElement).value })
           }

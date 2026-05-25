@@ -31,6 +31,7 @@ import { PreponderanceRing } from "./components/PreponderanceRing";
 import { ItemMiniCard } from "./components/ItemMiniCard";
 import { SegmentedControl } from "./components/SegmentedControl";
 import { FieldLabel } from "./components/FieldLabel";
+import { spanishText, noSpellCheck } from "./utils/fieldLang";
 import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
 import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
 import { ShortcutTable } from "./components/ShortcutTable";
@@ -649,6 +650,7 @@ function NewLotIntro() {
               type="text"
               value={renombreLote}
               placeholder="Ej. Lote Muzo marzo"
+              {...spanishText}
               onChange={(e) =>
                 setRenombreLote((e.target as HTMLInputElement).value)
               }
@@ -692,6 +694,7 @@ function NewLotIntro() {
               component="input"
               type="text"
               value={tratamiento}
+              {...spanishText}
               onChange={(e) =>
                 setTratamiento((e.target as HTMLInputElement).value)
               }
@@ -712,6 +715,7 @@ function NewLotIntro() {
               component="input"
               type="text"
               value={mina}
+              {...noSpellCheck}
               onChange={(e) => setMina((e.target as HTMLInputElement).value)}
               sx={{
                 width: "100%",
@@ -799,6 +803,7 @@ function NewLotIntro() {
             component="textarea"
             id="notas-lote"
             value={notas}
+            {...spanishText}
             onChange={(event) => setNotas(event.target.value)}
             rows={3}
             placeholder="Notas de compra, contexto del proveedor, etc."
@@ -1804,6 +1809,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
                 id="obs"
                 value={observacion}
                 placeholder="Cualquier detalle libre — talla del corte, particularidades, intenciones de venta…"
+                {...spanishText}
                 onChange={(e) =>
                   setObservacion((e.target as HTMLTextAreaElement).value)
                 }

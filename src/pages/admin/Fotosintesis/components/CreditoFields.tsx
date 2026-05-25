@@ -14,6 +14,7 @@ import { useMemo } from "react";
 import { Box } from "@mui/material";
 import { getFoto, fontFamilies } from "../../../../design-system";
 import { FieldLabel } from "./FieldLabel";
+import { spanishText } from "../utils/fieldLang";
 
 function formatCop(value: number): string {
   if (!Number.isFinite(value) || value <= 0) return "—";
@@ -261,6 +262,7 @@ export function EsmereogenesisFields({
           component="textarea"
           rows={2}
           value={observaciones}
+          {...spanishText}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
             setObservaciones(e.target.value)
           }

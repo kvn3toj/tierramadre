@@ -10,6 +10,7 @@ import {
 } from "../../../../data/vocabularies";
 import { getFoto, fontFamilies } from "../../../../design-system";
 import { FieldLabel } from "./FieldLabel";
+import { spanishText } from "../utils/fieldLang";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
 
 export interface JoyaDraft {
@@ -147,6 +148,7 @@ export function JoyaFields({
           type="text"
           value={value.nombre}
           disabled={disabled}
+          {...spanishText}
           onChange={(e) =>
             onChange({ nombre: (e.target as HTMLInputElement).value })
           }
@@ -162,6 +164,7 @@ export function JoyaFields({
           value={value.descripcion}
           disabled={disabled}
           rows={2}
+          {...spanishText}
           onChange={(e) =>
             onChange({ descripcion: (e.target as HTMLTextAreaElement).value })
           }
@@ -240,6 +243,7 @@ export function JoyaFields({
           type="text"
           value={value.tecnica}
           disabled={disabled}
+          {...spanishText}
           onChange={(e) =>
             onChange({ tecnica: (e.target as HTMLInputElement).value })
           }

@@ -16,14 +16,15 @@ declare global {
  */
 export const isPWA = (): boolean => {
   // Check if running in standalone mode (iOS)
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
 
   // Check if added to home screen (iOS)
   const isIOSStandalone = (window.navigator as any).standalone === true;
 
   // Check if running as installed PWA (Android)
-  const isAndroidPWA = window.matchMedia('(display-mode: standalone)').matches ||
-    window.matchMedia('(display-mode: fullscreen)').matches;
+  const isAndroidPWA =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches;
 
   return isStandalone || isIOSStandalone || isAndroidPWA;
 };
@@ -32,7 +33,7 @@ export const isPWA = (): boolean => {
  * Get PWA install prompt availability
  */
 export const canInstallPWA = (): boolean => {
-  return !isPWA() && 'BeforeInstallPromptEvent' in window;
+  return !isPWA() && "BeforeInstallPromptEvent" in window;
 };
 
 /**
@@ -71,7 +72,7 @@ export const requestFullscreen = async (): Promise<void> => {
       await (elem as any).msRequestFullscreen();
     }
   } catch (error) {
-    console.warn('Fullscreen request failed:', error);
+    console.warn("Fullscreen request failed:", error);
   }
 };
 
@@ -83,7 +84,7 @@ export const getInstallInstructions = (): string => {
     return 'Toca el botón "Compartir" y luego "Añadir a la pantalla de inicio"';
   }
 
-  return 'Usa el menú de tu navegador para añadir esta app a tu pantalla de inicio';
+  return "Usa el menú de tu navegador para añadir esta app a tu pantalla de inicio";
 };
 
 /**
@@ -109,14 +110,21 @@ export const initPWA = (): void => {
   if (!isPWA()) return;
 
   // Prevent zooming on iPad
-  document.addEventListener('gesturestart', (e) => {
+  document.addEventListener("gesturestart", (e) => {
     e.preventDefault();
   });
 
-  // Prevent text selection on long press (iOS)
-  document.addEventListener('contextmenu', (e) => {
-    if ((e.target as HTMLElement).tagName !== 'INPUT' &&
-        (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+  // Allow the native context menu ("segundo clic" / right-click / iOS long
+  // press) on editable fields so the browser's spell-check correction
+  // suggestions stay reachable. Block it elsewhere to deter long-press image
+  // saving. `closest()` keeps the exemption working even when the event
+  // target is a node nested inside the field.
+  document.addEventListener("contextmenu", (e) => {
+    const target = e.target as HTMLElement | null;
+    const isEditable = !!target?.closest(
+      'input, textarea, [contenteditable=""], [contenteditable="true"]',
+    );
+    if (!isEditable) {
       e.preventDefault();
     }
   });
@@ -124,39 +132,47 @@ export const initPWA = (): void => {
   // Lock viewport height for iPad
   const setVH = () => {
     const vh = window.innerHeight * 0.01;
-    document.documentElement.style.setProperty('--vh', `${vh}px`);
+    document.documentElement.style.setProperty("--vh", `${vh}px`);
   };
 
   setVH();
-  window.addEventListener('resize', setVH);
-  window.addEventListener('orientationchange', setVH);
+  window.addEventListener("resize", setVH);
+  window.addEventListener("orientationchange", setVH);
 
   // CRITICAL: Prevent links from opening in Safari
   // This keeps navigation within the PWA
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    const anchor = target.closest('a');
+  document.addEventListener(
+    "click",
+    (e) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
 
-    if (anchor && anchor.href) {
-      const url = new URL(anchor.href, window.location.origin);
+      if (anchor && anchor.href) {
+        const url = new URL(anchor.href, window.location.origin);
 
-      // If it's an internal link (same origin)
-      if (url.origin === window.location.origin) {
-        // Check if it has target="_blank" or download attribute
-        if (anchor.target === '_blank' || anchor.hasAttribute('download')) {
-          return; // Let it open normally
+        // If it's an internal link (same origin)
+        if (url.origin === window.location.origin) {
+          // Check if it has target="_blank" or download attribute
+          if (anchor.target === "_blank" || anchor.hasAttribute("download")) {
+            return; // Let it open normally
+          }
+
+          // Prevent default behavior that might trigger Safari
+          // React Router will handle the navigation
         }
-
-        // Prevent default behavior that might trigger Safari
-        // React Router will handle the navigation
       }
-    }
-  }, true); // Use capture phase
+    },
+    true,
+  ); // Use capture phase
 
   // Prevent window.open from breaking out of PWA
   const originalOpen = window.open;
-  window.open = function(url?: string | URL, target?: string, features?: string) {
-    if (typeof url === 'string' && url.startsWith(window.location.origin)) {
+  window.open = function (
+    url?: string | URL,
+    target?: string,
+    features?: string,
+  ) {
+    if (typeof url === "string" && url.startsWith(window.location.origin)) {
       // Internal link - use navigation instead
       window.location.href = url;
       return null;
@@ -180,15 +196,15 @@ export const checkForUpdates = async (): Promise<boolean> => {
   try {
     // Don't check if we don't have a current version
     const currentVersion = window.__TM_VERSION__;
-    if (!currentVersion || typeof currentVersion !== 'string') {
+    if (!currentVersion || typeof currentVersion !== "string") {
       return false;
     }
 
-    const response = await fetch('/version.json?_t=' + Date.now(), {
-      cache: 'no-store',
+    const response = await fetch("/version.json?_t=" + Date.now(), {
+      cache: "no-store",
       headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
       },
     });
 
@@ -199,7 +215,7 @@ export const checkForUpdates = async (): Promise<boolean> => {
     const data = await response.json();
 
     // Validate remote version
-    if (!data.version || typeof data.version !== 'string') {
+    if (!data.version || typeof data.version !== "string") {
       return false;
     }
 
@@ -211,11 +227,15 @@ export const checkForUpdates = async (): Promise<boolean> => {
     // Additional validation: ensure remote version looks newer
     // Version format: YYYY.MM.DD.N (e.g., 2026.01.16.901)
     // Only show update if remote version is actually higher
-    const currentParts = currentVersion.split('.').map(Number);
-    const remoteParts = data.version.split('.').map(Number);
+    const currentParts = currentVersion.split(".").map(Number);
+    const remoteParts = data.version.split(".").map(Number);
 
     // Compare each part: year, month, day, build number
-    for (let i = 0; i < Math.max(currentParts.length, remoteParts.length); i++) {
+    for (
+      let i = 0;
+      i < Math.max(currentParts.length, remoteParts.length);
+      i++
+    ) {
       const currentPart = currentParts[i] || 0;
       const remotePart = remoteParts[i] || 0;
 
@@ -243,11 +263,11 @@ export const getVersionInfo = async (): Promise<{
   remote: string | null;
   updateAvailable: boolean;
 }> => {
-  const current = window.__TM_VERSION__ || 'unknown';
+  const current = window.__TM_VERSION__ || "unknown";
 
   try {
-    const response = await fetch('/version.json?_t=' + Date.now(), {
-      cache: 'no-store',
+    const response = await fetch("/version.json?_t=" + Date.now(), {
+      cache: "no-store",
     });
     const data = await response.json();
 
@@ -271,15 +291,15 @@ export const getVersionInfo = async (): Promise<{
  */
 export const forceRefreshPWA = async (): Promise<void> => {
   // Clear any remaining caches
-  if ('caches' in window) {
+  if ("caches" in window) {
     try {
       const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map(name => caches.delete(name)));
+      await Promise.all(cacheNames.map((name) => caches.delete(name)));
     } catch {
       // Ignore cache clearing errors
     }
   }
 
   // Force reload bypassing cache
-  window.location.replace(window.location.pathname + '?_refresh=' + Date.now());
+  window.location.replace(window.location.pathname + "?_refresh=" + Date.now());
 };

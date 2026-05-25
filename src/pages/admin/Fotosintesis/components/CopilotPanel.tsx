@@ -24,6 +24,7 @@ import { fontFamilies, getFoto } from "../../../../design-system";
 import { useGoogleAuth } from "../../../../contexts/GoogleAuthContext";
 import { api } from "../../../../../convex/_generated/api";
 import { useFotosynthiaChat } from "../hooks/useFotosynthiaChat";
+import { spanishText } from "../utils/fieldLang";
 
 // Convex provider is only mounted when VITE_CONVEX_URL is set in main.tsx.
 // We mirror that gate here so `useQuery` isn't called in environments
@@ -423,6 +424,7 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
           rows={1}
           value={input}
           placeholder="Pregúntale a Fotosynthia…"
+          {...spanishText}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           aria-label="Mensaje a Fotosynthia"

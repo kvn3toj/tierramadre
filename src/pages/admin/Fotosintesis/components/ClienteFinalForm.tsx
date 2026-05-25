@@ -26,6 +26,7 @@ import { getFoto, fontFamilies } from "../../../../design-system";
 import { useConvexMutation, convexApi } from "../../../../lib/convex-safe";
 import { verifyNit } from "../../../../utils/nitVerify";
 import { FieldLabel } from "./FieldLabel";
+import { properName, streetAddress, noSpellCheck } from "../utils/fieldLang";
 import { SegmentedControl } from "./SegmentedControl";
 import { EntityPicker } from "./EntityPicker";
 import type { Id } from "../../../../../convex/_generated/dataModel";
@@ -432,6 +433,7 @@ export function ClienteFinalForm({
             ref={nombreRef}
             component="input"
             value={nombre}
+            {...properName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNombre(e.target.value)
             }
@@ -473,6 +475,7 @@ export function ClienteFinalForm({
             <Box
               component="input"
               value={documento}
+              {...noSpellCheck}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setDocumento(e.target.value)
               }
@@ -541,6 +544,7 @@ export function ClienteFinalForm({
           <Box
             component="input"
             value={direccion}
+            {...streetAddress}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setDireccion(e.target.value)
             }
@@ -554,6 +558,8 @@ export function ClienteFinalForm({
           <Box
             component="input"
             value={telefono}
+            {...noSpellCheck}
+            autoComplete="tel"
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setTelefono(formatColombianPhone(e.target.value))
             }
@@ -572,6 +578,8 @@ export function ClienteFinalForm({
             component="input"
             type="email"
             value={email}
+            {...noSpellCheck}
+            autoComplete="email"
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setEmail(e.target.value)
             }
