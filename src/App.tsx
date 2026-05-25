@@ -306,6 +306,16 @@ function AppContent() {
             }
           />
 
+          {/* Grouped lote/sublote bundle detail (same page, resolved by groupId) */}
+          <Route
+            path="/grupo/:groupId"
+            element={
+              <Suspense fallback={<LocalizedLoading messageKey="product" />}>
+                <ProductDetail />
+              </Suspense>
+            }
+          />
+
           {/* Cart / Selection */}
           <Route
             path="/cart"

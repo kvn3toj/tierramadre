@@ -120,18 +120,42 @@ export function SubLoteCard({
         </Box>
         <Box
           sx={{
+            display: "flex",
+            gap: "6px",
+            alignItems: "center",
             flexShrink: 0,
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            padding: "4px 9px",
-            borderRadius: "999px",
-            color: archived ? foto.ink.tertiary : foto.accent.deep,
-            background: archived ? foto.surfaces.inset : foto.accent.soft,
           }}
         >
-          {archived ? "Archivada" : "Activa"}
+          {subLote.mostrarComoLote ? (
+            <Box
+              sx={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                padding: "4px 9px",
+                borderRadius: "999px",
+                color: "#fff",
+                background: foto.accent.primary,
+              }}
+            >
+              En catálogo
+            </Box>
+          ) : null}
+          <Box
+            sx={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              padding: "4px 9px",
+              borderRadius: "999px",
+              color: archived ? foto.ink.tertiary : foto.accent.deep,
+              background: archived ? foto.surfaces.inset : foto.accent.soft,
+            }}
+          >
+            {archived ? "Archivada" : "Activa"}
+          </Box>
         </Box>
       </Box>
 

@@ -292,6 +292,30 @@ export const setEstado = mutation({
   },
 });
 
+/**
+ * Set the catalog-grouping fields (`fotoUrl`, `mostrarComoLote`). These are
+ * Convex-only display fields (NOT in COLUMN_MAPS.subLotes), so this does NOT
+ * flip syncStatus or push to Sheets. When `mostrarComoLote` is true and the
+ * sublote is `activa`, the customer catalog shows it as one grouped card.
+ * Omitting a field leaves it unchanged; pass `fotoUrl: ""` to clear it.
+ */
+export const setDisplay = mutation({
+  args: {
+    subLoteId: v.string(),
+    fotoUrl: v.optional(v.string()),
+    mostrarComoLote: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { subLoteId, fotoUrl, mostrarComoLote }) => {
+    const sub = await requireSubLote(ctx, subLoteId);
+    const patch: Record<string, unknown> = {};
+    if (fotoUrl !== undefined) patch.fotoUrl = fotoUrl;
+    if (mostrarComoLote !== undefined) patch.mostrarComoLote = mostrarComoLote;
+    if (Object.keys(patch).length === 0) return { subLoteId, changed: false };
+    await ctx.db.patch(sub._id, patch);
+    return { subLoteId, changed: true };
+  },
+});
+
 // ─── Sheets sync (push-only, mirrors lots/sales) ─────────────────
 
 export const _getInternal = internalQuery({

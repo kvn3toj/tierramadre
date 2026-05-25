@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Radio, RadioGroup, FormControlLabel } from "@mui/material";
+import {
+  Box,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  Switch,
+} from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../design-system";
@@ -13,6 +19,8 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 import { TicketHeader } from "./components/TicketHeader";
 import { FieldLabel } from "./components/FieldLabel";
 import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
+import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
+import { uploadFotosintesisImages } from "./utils/uploadItemMedia";
 
 type PublishMode = "all" | "selective" | "reserve";
 
@@ -117,9 +125,13 @@ export default function FotosintesisLoteResumenPage() {
   const updateGemaFields = useConvexMutation(
     convexApi.lotItems.updateGemaFields,
   );
+  const setLoteDisplay = useConvexMutation(convexApi.lots.setLoteDisplay);
 
   const [pubByItemId, setPubByItemId] = useState<Record<string, boolean>>({});
   const [publishMode, setPublishMode] = useState<PublishMode>("selective");
+  // Catalog grouping: hero photo + "show as one card" toggle.
+  const [heroPhoto, setHeroPhoto] = useState<DropzonePhoto[]>([]);
+  const [mostrarComoLote, setMostrarComoLote] = useState(false);
   const [pricingByItemId, setPricingByItemId] = useState<
     Record<
       string,
@@ -148,6 +160,15 @@ export default function FotosintesisLoteResumenPage() {
     setPubByItemId(nextPub);
     setPricingByItemId(nextPricing);
   }, [lotItems, products]);
+
+  // Seed the grouping controls from the lot (only the persisted hero/flag).
+  useEffect(() => {
+    if (!lot) return;
+    setMostrarComoLote(lot.mostrarComoLote ?? false);
+    if (lot.fotoLoteUrl) {
+      setHeroPhoto([{ id: "existing-hero", url: lot.fotoLoteUrl }]);
+    }
+  }, [lot]);
 
   const prepSum = useMemo(
     () => (lotItems ?? []).reduce((s, it) => s + it.preponderancia, 0),
@@ -198,6 +219,25 @@ export default function FotosintesisLoteResumenPage() {
     [lotItems],
   );
 
+  // Upload the hero photo (if a new file was dropped) and persist the
+  // grouping fields. Works in any lot estado (setLoteDisplay is state-agnostic).
+  const persistLoteDisplay = async (lotDocId: Id<"lots">) => {
+    let fotoLoteUrl: string | undefined;
+    const pending = heroPhoto.find((p) => p.file);
+    if (pending?.file) {
+      fotoLoteUrl = await uploadFotosintesisImages(
+        [pending.file],
+        loteId,
+        "lote-hero",
+      );
+    }
+    await setLoteDisplay({
+      id: lotDocId,
+      ...(fotoLoteUrl !== undefined ? { fotoLoteUrl } : {}),
+      mostrarComoLote,
+    });
+  };
+
   const handleClose = async () => {
     if (!lot || !lotItems || !validationsOk) return;
     setClosing(true);
@@ -220,6 +260,8 @@ export default function FotosintesisLoteResumenPage() {
           },
         });
       }
+
+      await persistLoteDisplay(lot._id as Id<"lots">);
 
       await closeLot({ id: lot._id as Id<"lots"> });
 
@@ -250,6 +292,7 @@ export default function FotosintesisLoteResumenPage() {
     if (!lot || !isClosed) return;
     setClosing(true);
     try {
+      await persistLoteDisplay(lot._id as Id<"lots">);
       await publishLot({ id: lot._id as Id<"lots"> });
       notify(
         `Lote ${lot.loteId} publicado · ${itemsCount} ítems en catálogo`,
@@ -593,6 +636,67 @@ export default function FotosintesisLoteResumenPage() {
               </RadioGroup>
             </Box>
           )}
+
+          {/* Catalog grouping — show the whole lote as ONE bundled card */}
+          <Box
+            sx={{
+              background: foto.surfaces.panel,
+              border: `1px solid ${foto.surfaces.rule}`,
+              borderRadius: "14px",
+              padding: "18px 20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "12px",
+              }}
+            >
+              <Box
+                sx={{ display: "flex", flexDirection: "column", gap: "2px" }}
+              >
+                <FieldLabel>Mostrar como lote</FieldLabel>
+                <Box sx={{ fontSize: 11, color: foto.ink.tertiary }}>
+                  Un solo card con foto del lote y precio total; al abrirlo, la
+                  galería muestra cada ítem con su precio.
+                </Box>
+              </Box>
+              <Switch
+                checked={mostrarComoLote}
+                onChange={(e) => setMostrarComoLote(e.target.checked)}
+                inputProps={{ "aria-label": "Mostrar como lote en catálogo" }}
+              />
+            </Box>
+            {mostrarComoLote ? (
+              <Box>
+                <FieldLabel optional="recomendado">Foto del lote</FieldLabel>
+                <PhotoDropzone
+                  photos={heroPhoto}
+                  onAdd={(files) => {
+                    const f = files[0];
+                    if (!f) return;
+                    heroPhoto.forEach((p) => {
+                      if (p.url.startsWith("blob:")) URL.revokeObjectURL(p.url);
+                    });
+                    setHeroPhoto([
+                      {
+                        id: `${f.name}-${f.lastModified}`,
+                        url: URL.createObjectURL(f),
+                        file: f,
+                      },
+                    ]);
+                  }}
+                  onRemove={() => setHeroPhoto([])}
+                  hint="Una foto del lote completo. Se sube a Drive al publicar."
+                />
+              </Box>
+            ) : null}
+          </Box>
 
           <Box
             component="button"
