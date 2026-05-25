@@ -685,7 +685,7 @@ export default function FotosintesisHomePage() {
                       >
                         {lot.estado === "abierto"
                           ? "Captura en curso"
-                          : "Listo para cerrar"}
+                          : "Listo para publicar"}
                       </Box>
                       <Box
                         sx={{
@@ -724,7 +724,7 @@ export default function FotosintesisHomePage() {
                         textDecoration: "none",
                       }}
                     >
-                      {lot.estado === "abierto" ? "Continuar" : "Cerrar lote"}
+                      {lot.estado === "abierto" ? "Continuar" : "Publicar"}
                       <ArrowRight size={13} strokeWidth={2} />
                     </Box>
                     {canCancel ? (
