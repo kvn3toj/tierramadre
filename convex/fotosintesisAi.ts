@@ -17,17 +17,43 @@ import { v } from "convex/values";
  * productInventory by lot) are intentionally avoided — the AI can ask
  * follow-ups instead of swallowing the whole catalog.
  */
+// BANDWIDTH CAP for the invitations read. See the note below the query for
+// the full rationale — in short, this query is a *reactive* subscription
+// (CopilotPanel's `useQuery`) that re-executes on every write to any table it
+// reads, for as long as the copilot tab is open. `invitations` is the only
+// unbounded table here (one row per guest invite, never pruned — see
+// convex/invitations.ts), so an unguarded `.collect()` would make the snapshot
+// re-read the entire, ever-growing invitation log on each re-execution. We cap
+// the read at the most-recent INVITATION_SCAN_CAP rows so reactive bandwidth
+// stays bounded regardless of table size.
+const INVITATION_SCAN_CAP = 2000;
+
 export const workspaceSnapshot = query({
   args: {},
   handler: async (ctx) => {
     const now = new Date().toISOString();
 
+    // lots / sales / providers / clients are bounded domain tables (the
+    // atelier's compras/ventas/proveedores/clientes ledgers). Each one feeds an
+    // EXACT figure in the output — a total count, a count-by-state breakdown,
+    // and/or a syncStatus error tally — none of which Convex can derive without
+    // reading the rows, so these stay `.collect()`. Trimming them would change
+    // the snapshot the AI sees.
+    //
+    // invitations is the unbounded outlier. We read it most-recent-first
+    // (default `.order("desc")` is by _creationTime) and cap at
+    // INVITATION_SCAN_CAP rows so a growing invitation log can't blow up
+    // reactive bandwidth. TRADEOFF: once more than INVITATION_SCAN_CAP
+    // invitations exist, `counts.invitations`, `ambassadorActivity.active` and
+    // `topInviters` are computed over the most recent INVITATION_SCAN_CAP only.
+    // Output SHAPE is identical; figures saturate at the cap (which is far above
+    // any realistic invite volume) instead of growing the read without bound.
     const [lots, sales, providers, clients, invitations] = await Promise.all([
       ctx.db.query("lots").collect(),
       ctx.db.query("sales").collect(),
       ctx.db.query("providers").collect(),
       ctx.db.query("clients").collect(),
-      ctx.db.query("invitations").collect(),
+      ctx.db.query("invitations").order("desc").take(INVITATION_SCAN_CAP),
     ]);
 
     const lotsByState = lots.reduce<Record<string, number>>((acc, lot) => {
