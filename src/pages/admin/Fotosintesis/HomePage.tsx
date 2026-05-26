@@ -599,8 +599,31 @@ export default function FotosintesisHomePage() {
               <Box component="h2" sx={panelHeadTitleSx}>
                 Lotes en curso
               </Box>
-              <Box sx={{ fontSize: "11px", color: foto.ink.tertiary }}>
-                {activeLots.length > 0 ? `${activeLots.length} activos` : null}
+              <Box
+                sx={{ display: "flex", alignItems: "baseline", gap: "12px" }}
+              >
+                {activeLots.length > 0 ? (
+                  <Box sx={{ fontSize: "11px", color: foto.ink.tertiary }}>
+                    {activeLots.length} activos
+                  </Box>
+                ) : null}
+                <Box
+                  component={Link}
+                  to="/admin/fotosintesis/lots"
+                  aria-label="Ver todos los lotes"
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontSize: "11.5px",
+                    fontWeight: 600,
+                    color: foto.accent.deep,
+                    textDecoration: "none",
+                    "&:hover": { color: foto.accent.primary },
+                  }}
+                >
+                  Ver todos <ArrowRight size={12} strokeWidth={2} />
+                </Box>
               </Box>
             </Box>
 

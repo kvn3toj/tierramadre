@@ -5,6 +5,7 @@ import { Link as RouterLink } from "react-router-dom";
 import {
   ArrowRight,
   BookOpen,
+  Boxes,
   Camera,
   CheckCircle2,
   Compass,
@@ -149,6 +150,16 @@ export function FotosintesisGuideFab({
           label: "Abrir directorio",
         },
         shortcut: ["⌘", "D"],
+      },
+      {
+        number: "09",
+        icon: <Boxes size={16} strokeWidth={1.8} />,
+        title: "Lotes · ver todo el historial",
+        body: "El Inicio solo muestra los lotes en curso más recientes. Para ver todos —abiertos, cerrados, publicados y cancelados— abre la lista completa: filtra por estado y busca por ID, proveedor, mina u operador.",
+        link: {
+          to: "/admin/fotosintesis/lots",
+          label: "Ver todos los lotes",
+        },
       },
     ],
     [],

@@ -51,6 +51,9 @@ export default function FotosintesisLayout() {
     if (path === "/admin/fotosintesis") {
       return [{ label: "Inicio" }];
     }
+    if (path === "/admin/fotosintesis/lots") {
+      return [base, { label: "Lotes" }];
+    }
     if (path.startsWith("/admin/fotosintesis/lots/")) {
       const isClose = path.endsWith("/close");
       return [base, { label: isClose ? "Cerrar lote" : "Captura de lote" }];

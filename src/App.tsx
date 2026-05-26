@@ -157,6 +157,10 @@ const FotosintesisSubLotes = lazyWithRetry(
   () => import("./pages/admin/Fotosintesis/SubLotesPage"),
   "FotosintesisSubLotes",
 );
+const FotosintesisLotes = lazyWithRetry(
+  () => import("./pages/admin/Fotosintesis/LotesPage"),
+  "FotosintesisLotes",
+);
 
 const FeedbackDashboard = lazyWithRetry(
   () => import("./pages/admin/FeedbackDashboard"),
@@ -553,6 +557,7 @@ function AppContent() {
             }
           >
             <Route index element={<FotosintesisHome />} />
+            <Route path="lots" element={<FotosintesisLotes />} />
             <Route path="lots/:loteId" element={<FotosintesisCapturaLote />} />
             <Route
               path="lots/:loteId/close"
