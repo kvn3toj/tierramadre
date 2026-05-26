@@ -11,10 +11,11 @@ import { Box, Switch } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   AlertTriangle,
+  Boxes,
   Diamond,
   Gem,
+  Layers,
   Mountain,
-  Package,
   Pencil,
   Tag,
 } from "lucide-react";
@@ -108,30 +109,91 @@ const fmtDateEs = (iso: string): string => {
 };
 
 // -----------------------------------------------------------------------------
-// Type selector (custom radios — Slice 1 disables joya/insumo/lote)
+// Type selector (custom radios)
 // -----------------------------------------------------------------------------
 
+// Underlying "field kind" — drives which draft + fields + payload builder runs.
+// The operator-facing options below are richer (`ItemSubtipo`) and map down onto
+// these kinds: the rough-stone family (Piedra / Ganga / Macla / Canutillo) and
+// Gema all capture the same data via the Gema field set; Joya uses the Joya set;
+// Lote / Lote de joyas / Otros reuse the Joya surface as "lote".
 type TipoItem = "gema" | "bruto" | "joya" | "insumo" | "lote";
 
-interface TypeOption {
-  value: TipoItem;
+// Operator-facing item types, mirroring the FOTOSÍNTESIS form's "TIPO" list.
+// Labels are sentence case (first letter only) by design — not ALL CAPS.
+type ItemSubtipo =
+  | "piedra"
+  | "gema"
+  | "lote"
+  | "joya"
+  | "lote_de_joyas"
+  | "ganga"
+  | "macla"
+  | "canutillo"
+  | "otros";
+
+interface SubtipoOption {
+  value: ItemSubtipo;
   label: string;
   key: string;
   Icon: typeof Gem;
-  disabled?: boolean;
+  /** Which field set / payload builder this option drives. */
+  fieldKind: TipoItem;
 }
 
-const TYPE_OPTIONS: TypeOption[] = [
-  { value: "gema", label: "Gema", key: "1", Icon: Gem },
-  { value: "bruto", label: "Bruto", key: "2", Icon: Mountain },
-  { value: "joya", label: "Joya", key: "3", Icon: Diamond },
-  { value: "insumo", label: "Insumo", key: "4", Icon: Package, disabled: true },
-  { value: "lote", label: "Lote/Otros", key: "5", Icon: Tag },
+const SUBTIPO_OPTIONS: SubtipoOption[] = [
+  {
+    value: "piedra",
+    label: "Piedra",
+    key: "1",
+    Icon: Mountain,
+    fieldKind: "gema",
+  },
+  { value: "gema", label: "Gema", key: "2", Icon: Gem, fieldKind: "gema" },
+  { value: "lote", label: "Lote", key: "3", Icon: Layers, fieldKind: "lote" },
+  { value: "joya", label: "Joya", key: "4", Icon: Diamond, fieldKind: "joya" },
+  {
+    value: "lote_de_joyas",
+    label: "Lote de joyas",
+    key: "5",
+    Icon: Boxes,
+    fieldKind: "lote",
+  },
+  {
+    value: "ganga",
+    label: "Ganga",
+    key: "6",
+    Icon: Mountain,
+    fieldKind: "gema",
+  },
+  {
+    value: "macla",
+    label: "Macla",
+    key: "7",
+    Icon: Mountain,
+    fieldKind: "gema",
+  },
+  {
+    value: "canutillo",
+    label: "Canutillo",
+    key: "8",
+    Icon: Mountain,
+    fieldKind: "gema",
+  },
+  { value: "otros", label: "Otros", key: "9", Icon: Tag, fieldKind: "lote" },
 ];
 
+const SUBTIPO_LABEL = Object.fromEntries(
+  SUBTIPO_OPTIONS.map((o) => [o.value, o.label]),
+) as Record<ItemSubtipo, string>;
+
+const SUBTIPO_FIELDKIND = Object.fromEntries(
+  SUBTIPO_OPTIONS.map((o) => [o.value, o.fieldKind]),
+) as Record<ItemSubtipo, TipoItem>;
+
 interface TypeSelectorProps {
-  value: TipoItem;
-  onChange: (next: TipoItem) => void;
+  value: ItemSubtipo;
+  onChange: (next: ItemSubtipo) => void;
 }
 
 function TypeSelector({ value, onChange }: TypeSelectorProps) {
@@ -167,13 +229,13 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
           display: "grid",
           gridTemplateColumns: {
             xs: "repeat(2, minmax(0, 1fr))",
-            sm: `repeat(${TYPE_OPTIONS.length}, minmax(0, 1fr))`,
+            sm: "repeat(3, minmax(0, 1fr))",
           },
           gap: "8px",
         }}
       >
-        {TYPE_OPTIONS.map((opt) => {
-          const isActive = value === opt.value && !opt.disabled;
+        {SUBTIPO_OPTIONS.map((opt) => {
+          const isActive = value === opt.value;
           const inputId = `${groupName}-${opt.value}`;
           const Glyph = opt.Icon;
           return (
@@ -192,13 +254,9 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
                   isActive ? foto.accent.primary : foto.surfaces.rule
                 }`,
                 background: isActive ? foto.accent.soft : foto.surfaces.canvas,
-                cursor: opt.disabled ? "not-allowed" : "pointer",
-                opacity: opt.disabled ? 0.55 : 1,
-                transition:
-                  "background 120ms ease, border-color 120ms ease, opacity 120ms ease",
-                "&:hover": opt.disabled
-                  ? undefined
-                  : { background: foto.accent.soft },
+                cursor: "pointer",
+                transition: "background 120ms ease, border-color 120ms ease",
+                "&:hover": { background: foto.accent.soft },
               }}
             >
               <Box
@@ -208,8 +266,7 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
                 name={groupName}
                 value={opt.value}
                 checked={isActive}
-                disabled={opt.disabled}
-                onChange={() => !opt.disabled && onChange(opt.value)}
+                onChange={() => onChange(opt.value)}
                 sx={{
                   position: "absolute",
                   opacity: 0,
@@ -250,29 +307,15 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
                 >
                   {opt.label}
                 </Box>
-                {opt.disabled ? (
-                  <Box
-                    sx={{
-                      fontSize: 9,
-                      fontWeight: 500,
-                      letterSpacing: "0.16em",
-                      textTransform: "uppercase",
-                      color: foto.ink.mute,
-                    }}
-                  >
-                    Próximamente
-                  </Box>
-                ) : (
-                  <Box
-                    sx={{
-                      fontSize: 10.5,
-                      color: foto.ink.tertiary,
-                      fontFamily: fontFamilies.mono,
-                    }}
-                  >
-                    Tecla {opt.key}
-                  </Box>
-                )}
+                <Box
+                  sx={{
+                    fontSize: 10.5,
+                    color: foto.ink.tertiary,
+                    fontFamily: fontFamilies.mono,
+                  }}
+                >
+                  Tecla {opt.key}
+                </Box>
               </Box>
               {isActive ? (
                 <Box
@@ -1157,7 +1200,10 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   // Tipo gates which draft is active; we hold both side-by-side so flipping
   // between Gema and Bruto doesn't wipe in-progress fields for the other type.
   // Each draft is reset independently on save.
-  const [tipo, setTipo] = useState<TipoItem>("gema");
+  // `subtipo` is the operator-facing choice (9 options); `tipo` is the derived
+  // field kind that gates which draft/fields/payload builder runs below.
+  const [subtipo, setSubtipo] = useState<ItemSubtipo>("gema");
+  const tipo: TipoItem = SUBTIPO_FIELDKIND[subtipo];
   const [gema, setGema] = useState<GemaDraft>(EMPTY_GEMA_DRAFT);
   const [bruto, setBruto] = useState<BrutoDraft>(EMPTY_BRUTO_DRAFT);
   const [joya, setJoya] = useState<JoyaDraft>(EMPTY_JOYA_DRAFT);
@@ -1303,6 +1349,13 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         throw new Error("Tipo de ítem no soportado en captura");
       }
 
+      // Persist the operator-facing subtype (e.g. "Macla", "Canutillo") so the
+      // specific choice survives even when several map to the same field kind.
+      payload = {
+        ...(payload as Record<string, unknown>),
+        subtipoForm: SUBTIPO_LABEL[subtipo],
+      } as unknown as CreateLotItemArgs;
+
       const result = (await createLotItem(payload)) as {
         lotItemId: Id<"lotItems">;
         itemId: string;
@@ -1370,6 +1423,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     updateGemaFields,
     loteId,
     tipo,
+    subtipo,
     gema,
     bruto,
     joya,
@@ -1518,20 +1572,12 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         }
         return;
       }
-      // 1 / 2 / 3 / 4 / 5 — type select (only when not typing)
+      // 1–9 — type select (only when not typing)
       if (!isTyping(e.target) && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        if (e.key === "1") {
+        const match = SUBTIPO_OPTIONS.find((o) => o.key === e.key);
+        if (match) {
           e.preventDefault();
-          setTipo("gema");
-        } else if (e.key === "2") {
-          e.preventDefault();
-          setTipo("bruto");
-        } else if (e.key === "3") {
-          e.preventDefault();
-          setTipo("joya");
-        } else if (e.key === "5") {
-          e.preventDefault();
-          setTipo("lote");
+          setSubtipo(match.value);
         }
       }
     };
@@ -1759,7 +1805,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
               </Box>
             </Box>
 
-            <TypeSelector value={tipo} onChange={setTipo} />
+            <TypeSelector value={subtipo} onChange={setSubtipo} />
 
             {tipo === "bruto" ? (
               <BrutoFields
@@ -2146,11 +2192,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
               ? (() => {
                   const activeName =
                     activeNombre.trim() ||
-                    (tipo === "bruto"
-                      ? "Bruto en captura"
-                      : tipo === "joya"
-                        ? "Joya en captura"
-                        : "Ítem en captura");
+                    `${SUBTIPO_LABEL[subtipo]} en captura`;
                   const activePrep =
                     typeof activePreponderancia === "number"
                       ? activePreponderancia
@@ -2216,8 +2258,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
             shortcuts={[
               { label: "Duplicar ítem", keys: ["⌘", "D"] },
               { label: "Guardar y siguiente", keys: ["⌘", "↵"] },
-              { label: "Cambiar a Gema", keys: ["1"] },
-              { label: "Cambiar a Bruto", keys: ["2"] },
+              { label: "Cambiar tipo de ítem", keys: ["1", "–", "9"] },
               { label: "Abrir buscador global", keys: ["⌘", "K"] },
             ]}
           />
