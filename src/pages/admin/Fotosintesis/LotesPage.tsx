@@ -357,12 +357,13 @@ export default function FotosintesisLotesPage() {
           {/* Column headers (desktop) */}
           <Box
             sx={{
-              display: { xs: "none", lg: "grid" },
+              display: { xs: "none", md: "grid" },
               gridTemplateColumns:
                 "72px minmax(0, 1.5fr) 96px 70px 120px 130px",
               gap: "12px",
               alignItems: "center",
               padding: "10px 18px",
+              boxSizing: "border-box",
               borderBottom: `1px solid ${foto.surfaces.edge}`,
               fontSize: "9px",
               letterSpacing: "0.2em",
@@ -433,6 +434,9 @@ export default function FotosintesisLotesPage() {
                     aria-label={`Lote ${row.loteId}, ${meta.label}, ${row.providerName}`}
                     sx={{
                       width: "100%",
+                      // content-box rows add their 18px padding ON TOP of 100%,
+                      // overflowing the card and clipping the right (Costo) cell.
+                      boxSizing: "border-box",
                       textDecoration: "none",
                       background: foto.surfaces.canvas,
                       borderBottom: `1px solid ${foto.surfaces.edge}`,
@@ -440,7 +444,7 @@ export default function FotosintesisLotesPage() {
                       display: "grid",
                       gridTemplateColumns: {
                         xs: "72px minmax(0, 1fr) auto",
-                        lg: "72px minmax(0, 1.5fr) 96px 70px 120px 130px",
+                        md: "72px minmax(0, 1.5fr) 96px 70px 120px 130px",
                       },
                       gap: "12px",
                       alignItems: "center",
@@ -531,7 +535,7 @@ export default function FotosintesisLotesPage() {
                     {/* Recibido (desktop) */}
                     <Box
                       sx={{
-                        display: { xs: "none", lg: "block" },
+                        display: { xs: "none", md: "block" },
                         ...monoSx,
                         fontSize: "12px",
                         color: foto.ink.secondary,
@@ -543,7 +547,7 @@ export default function FotosintesisLotesPage() {
                     {/* Unidades (desktop) */}
                     <Box
                       sx={{
-                        display: { xs: "none", lg: "block" },
+                        display: { xs: "none", md: "block" },
                         ...monoSx,
                         fontSize: "12.5px",
                         color: foto.ink.secondary,
@@ -556,7 +560,7 @@ export default function FotosintesisLotesPage() {
                     {/* Forma de pago (desktop) */}
                     <Box
                       sx={{
-                        display: { xs: "none", lg: "block" },
+                        display: { xs: "none", md: "block" },
                         fontSize: "12px",
                         color: foto.ink.secondary,
                         overflow: "hidden",
@@ -570,7 +574,7 @@ export default function FotosintesisLotesPage() {
                     {/* Costo (desktop) */}
                     <Box
                       sx={{
-                        display: { xs: "none", lg: "block" },
+                        display: { xs: "none", md: "block" },
                         ...monoSx,
                         fontSize: "12.5px",
                         fontWeight: 600,
@@ -585,7 +589,7 @@ export default function FotosintesisLotesPage() {
                     <Box
                       aria-hidden="true"
                       sx={{
-                        display: { xs: "inline-flex", lg: "none" },
+                        display: { xs: "inline-flex", md: "none" },
                         alignItems: "center",
                         justifyContent: "center",
                         color: foto.ink.mute,

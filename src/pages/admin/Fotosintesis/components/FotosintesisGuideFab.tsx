@@ -180,15 +180,17 @@ export function FotosintesisGuideFab({
           onClick={() => setOpen(true)}
           sx={{
             position: "fixed",
-            // Lifted above the global iOS bottom tab bar (~80px) AND the
-            // "nueva versión disponible" update banner that stacks on top of
-            // it (~70px). Total clearance: ~170px + breathing room.
-            // Smaller + tucked tighter on phones so it doesn't overlap form
-            // content (QA flagged collisions with the Venta totals and
-            // Captura inputs at mobile widths).
+            // Phone (xs): lifted above the iOS bottom tab bar (~80px) + the
+            // "nueva versión disponible" update banner (~70px), and tucked
+            // tighter so it doesn't collide with the Venta totals / Captura
+            // inputs at mobile widths.
+            // Desktop (md+): the bottom tab bar auto-hides on Fotosíntesis, so
+            // the FAB drops to the corner — clears the sticky action footer
+            // (~72px) while sitting below mid-table content (was 188, which
+            // overlapped the LotesPage Costo column).
             bottom: {
               xs: "calc(168px + env(safe-area-inset-bottom))",
-              md: 188,
+              md: 104,
             },
             right: { xs: 12, md: 28 },
             zIndex: 1300,

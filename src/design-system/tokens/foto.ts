@@ -85,7 +85,7 @@ const LIGHT: FotoTokens = {
   ink: {
     primary: "#0B100E",
     secondary: "#4A5251",
-    tertiary: "#8B9290",
+    tertiary: "#5F6764",
     mute: "#B7BCBA",
     inverse: "#FFFFFF",
   },

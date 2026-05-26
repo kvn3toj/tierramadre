@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Box } from "@mui/material";
 import { getFoto } from "../../../design-system";
@@ -25,17 +25,27 @@ export default function FotosintesisLayout() {
   const [spotlightOptions, setSpotlightOptions] =
     useState<SpotlightOpenOptions>({});
 
+  // Page-registered fallback options for keyless entry points (⌘K, topbar
+  // search). A ref so updating it never re-renders the layout.
+  const defaultSpotlightRef = useRef<SpotlightOpenOptions | null>(null);
+
   const openSpotlight = useCallback((options?: SpotlightOpenOptions) => {
-    setSpotlightOptions(options ?? {});
+    setSpotlightOptions(options ?? defaultSpotlightRef.current ?? {});
     setSpotlightOpen(true);
   }, []);
   const closeSpotlight = useCallback(() => {
     setSpotlightOpen(false);
   }, []);
+  const registerSpotlightDefault = useCallback(
+    (options: SpotlightOpenOptions | null) => {
+      defaultSpotlightRef.current = options;
+    },
+    [],
+  );
 
   const layoutValue = useMemo(
-    () => ({ openSpotlight, closeSpotlight }),
-    [openSpotlight, closeSpotlight],
+    () => ({ openSpotlight, closeSpotlight, registerSpotlightDefault }),
+    [openSpotlight, closeSpotlight, registerSpotlightDefault],
   );
 
   useFotosintesisHotkeys({
@@ -70,6 +80,10 @@ export default function FotosintesisLayout() {
   return (
     <FotosintesisLayoutProvider value={layoutValue}>
       <Box
+        // Marker for the global form-control box-sizing reset in
+        // css-variables.css (Fotosíntesis inputs default to content-box,
+        // overflowing their grid cells). Covers every in-layout form.
+        data-foto-admin
         sx={{
           minHeight: "100vh",
           background: foto.surfaces.canvas,
@@ -93,7 +107,7 @@ export default function FotosintesisLayout() {
             // Reserve room at the bottom so the floating GuideFab + the
             // global iOS tab bar never sit on top of page content when
             // scrolled to the end. QA flagged this at every viewport.
-            paddingBottom: { xs: "220px", md: "120px" },
+            paddingBottom: { xs: "220px", md: "88px" },
           }}
         >
           <Outlet />

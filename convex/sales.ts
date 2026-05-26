@@ -204,6 +204,12 @@ export const cancel = mutation({
         .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
         .first();
       if (!product) continue;
+      // Only reopen items this sale still owns. If the item moved on after
+      // this sale (re-sold by another sale, re-classified to ESMEREOGENESIS /
+      // ASESOR, or already DISPONIBLE), leave it untouched — clobbering it to
+      // DISPONIBLE would free stock another active sale owns and write a false
+      // `before` into the audit trail.
+      if (product.estado !== "VENDIDA") continue;
       await ctx.db.patch(product._id, {
         estado: "DISPONIBLE" as const,
         syncStatus: "pending" as const,
@@ -213,7 +219,11 @@ export const cancel = mutation({
         editorEmail: operatorEmail,
         editorName: operatorName,
         editedAt: now,
-        changes: [{ field: "estado", before: "VENDIDA", after: "DISPONIBLE" }],
+        // `before` is the item's real prior estado (guaranteed VENDIDA by the
+        // guard above), not a hardcoded literal.
+        changes: [
+          { field: "estado", before: product.estado, after: "DISPONIBLE" },
+        ],
         status: "pending" as const,
       });
       await ctx.scheduler.runAfter(0, api.products.pushToSheet, {

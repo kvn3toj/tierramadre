@@ -60,6 +60,23 @@ export function PreponderanceRing({
       }}
     >
       <Box
+        component="span"
+        aria-live="polite"
+        sx={{
+          position: "absolute",
+          width: "1px",
+          height: "1px",
+          padding: 0,
+          margin: "-1px",
+          overflow: "hidden",
+          clip: "rect(0 0 0 0)",
+          whiteSpace: "nowrap",
+          border: 0,
+        }}
+      >
+        {`Preponderancia ${Math.round(value)} de ${target}`}
+      </Box>
+      <Box
         component="svg"
         viewBox={`0 0 ${size} ${size}`}
         sx={{

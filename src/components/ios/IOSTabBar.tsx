@@ -10,24 +10,27 @@
  * - Safe area insets for modern iOS devices
  */
 
-import React, { useMemo } from 'react';
-import { createPortal } from 'react-dom';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
-import { motion, LayoutGroup } from 'framer-motion';
-import {
-  Home,
-  MoreHoriz,
-  People,
-} from '@mui/icons-material';
-import { Gem, FileText, PlusCircle, Package } from 'lucide-react';
-import { useIsProvider } from '../../hooks/usePermissions';
+import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
+import { motion, LayoutGroup } from "framer-motion";
+import { Home, MoreHoriz, People } from "@mui/icons-material";
+import { Gem, FileText, PlusCircle, Package } from "lucide-react";
+import { useIsProvider } from "../../hooks/usePermissions";
 
 // Design tokens
-import { primitiveColors, easingCurves, durations, zIndex, fontWeights, microinteraction } from '../../design-system';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { useThemeMode } from '../../contexts/ThemeContext';
-import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
+import {
+  primitiveColors,
+  easingCurves,
+  durations,
+  zIndex,
+  fontWeights,
+  microinteraction,
+} from "../../design-system";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { useThemeMode } from "../../contexts/ThemeContext";
+import { useLiquidGlassSafe } from "../../contexts/LiquidGlassContext";
 
 export interface TabConfig {
   id: string;
@@ -40,28 +43,28 @@ export interface TabConfig {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getPrimaryTabs = (t: any): TabConfig[] => [
   {
-    id: 'home',
+    id: "home",
     label: t.nav.home,
     icon: Home,
-    route: '/home',
+    route: "/home",
   },
   {
-    id: 'treasure',
+    id: "treasure",
     label: t.nav.treasure,
     icon: Gem as React.ElementType,
-    route: '/treasure',
+    route: "/treasure",
   },
   {
-    id: 'ambassadors',
+    id: "ambassadors",
     label: t.nav.ambassadors,
     icon: People,
-    route: '/ambassadors',
+    route: "/ambassadors",
   },
   {
-    id: 'more',
+    id: "more",
     label: t.nav.more,
     icon: MoreHoriz,
-    route: '/more',
+    route: "/more",
   },
 ];
 
@@ -69,28 +72,28 @@ const getPrimaryTabs = (t: any): TabConfig[] => [
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getProviderTabs = (t: any): TabConfig[] => [
   {
-    id: 'provider-home',
+    id: "provider-home",
     label: t.nav.home,
     icon: Home,
-    route: '/provider',
+    route: "/provider",
   },
   {
-    id: 'provider-requests',
+    id: "provider-requests",
     label: t.nav.requests,
     icon: FileText as React.ElementType,
-    route: '/provider/requests',
+    route: "/provider/requests",
   },
   {
-    id: 'provider-submit',
+    id: "provider-submit",
     label: t.actions.quote,
     icon: PlusCircle as React.ElementType,
-    route: '/provider/submit',
+    route: "/provider/submit",
   },
   {
-    id: 'provider-inventory',
+    id: "provider-inventory",
     label: t.nav.inventory,
     icon: Package as React.ElementType,
-    route: '/provider/inventory',
+    route: "/provider/inventory",
   },
 ];
 
@@ -108,11 +111,11 @@ const ICON_SIZE = 20;
 const LABEL_SIZE = 10;
 const LABEL_SPACING = 0.5;
 // Logo green #00AF84 as gradient base, darker end derived from Button/Primary pattern
-const ACTIVE_GRADIENT = 'linear-gradient(225deg, #00AF84 0%, #008C6A 100%)';
-const ACTIVE_SHADOW = '0 4px 14px rgba(0, 175, 132, 0.3)';
-const ACTIVE_SOLID = '#00AF84'; // badge ring color
-const INACTIVE_LIGHT = '#9CA3AF';
-const INACTIVE_DARK = '#78788A';
+const ACTIVE_GRADIENT = "linear-gradient(225deg, #00AF84 0%, #008C6A 100%)";
+const ACTIVE_SHADOW = "0 4px 14px rgba(0, 175, 132, 0.3)";
+const ACTIVE_SOLID = "#00AF84"; // badge ring color
+const INACTIVE_LIGHT = "#9CA3AF";
+const INACTIVE_DARK = "#78788A";
 
 const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
   const navigate = useNavigate();
@@ -120,10 +123,54 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
   const { t } = useLanguage();
   const { effectiveConfig } = useLiquidGlassSafe();
   const { mode } = useThemeMode();
-  const isDark = mode === 'dark';
+  const isDark = mode === "dark";
   const isProvider = useIsProvider();
 
   const inactiveColor = isDark ? INACTIVE_DARK : INACTIVE_LIGHT;
+
+  // Auto-hide behavior: on desktop within Fotosíntesis admin routes, the tab
+  // bar slides out of view and only reveals when the pointer nears the bottom
+  // edge (or on keyboard focus). Phones (<md) and all other routes are unchanged.
+  // Direct matchMedia (not MUI useMediaQuery) — robust against portal/theme
+  // timing and emulated-viewport quirks where useMediaQuery reads stale.
+  const [isDesktop, setIsDesktop] = useState<boolean>(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(min-width: 900px)").matches
+      : false,
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 900px)");
+    const onChange = () => setIsDesktop(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  const autoHide =
+    isDesktop && location.pathname.startsWith("/admin/fotosintesis");
+  const [revealed, setRevealed] = useState(false);
+  const reduceMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  useEffect(() => {
+    if (!autoHide) {
+      setRevealed(false);
+      return;
+    }
+    let raf = 0;
+    const onMove = (e: MouseEvent) => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        setRevealed(e.clientY >= window.innerHeight - 100);
+      });
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      cancelAnimationFrame(raf);
+    };
+  }, [autoHide]);
 
   // Use provider tabs if user is a provider, otherwise use primary tabs
   const PRIMARY_TABS = useMemo(() => {
@@ -138,29 +185,32 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
 
     // For providers, match against provider routes
     if (isProvider) {
-      const matchingTab = PRIMARY_TABS.find(tab =>
-        currentPath === tab.route || currentPath.startsWith(tab.route + '/')
+      const matchingTab = PRIMARY_TABS.find(
+        (tab) =>
+          currentPath === tab.route || currentPath.startsWith(tab.route + "/"),
       );
-      return matchingTab?.id || 'provider-home';
+      return matchingTab?.id || "provider-home";
     }
 
     // For regular users
-    const matchingTab = PRIMARY_TABS.find(tab =>
-      currentPath.startsWith(tab.route) && tab.id !== 'more'
+    const matchingTab = PRIMARY_TABS.find(
+      (tab) => currentPath.startsWith(tab.route) && tab.id !== "more",
     );
 
     if (matchingTab) return matchingTab.id;
 
-    const secondaryRoutes = ['/cuentas', '/boveda-secreta'];
-    const isSecondaryRoute = secondaryRoutes.some(route => currentPath.startsWith(route));
+    const secondaryRoutes = ["/cuentas", "/boveda-secreta"];
+    const isSecondaryRoute = secondaryRoutes.some((route) =>
+      currentPath.startsWith(route),
+    );
 
-    return isSecondaryRoute ? 'more' : '';
+    return isSecondaryRoute ? "more" : "";
   };
 
   const activeTab = getActiveTab();
 
   const handleTabClick = (tab: TabConfig) => {
-    if ('vibrate' in navigator) {
+    if ("vibrate" in navigator) {
       navigator.vibrate(10);
     }
 
@@ -170,7 +220,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
       return;
     }
 
-    if (tab.id === 'more') {
+    if (tab.id === "more") {
       if (onMoreClick) onMoreClick();
     } else {
       navigate(tab.route);
@@ -183,55 +233,66 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
     <Box
       component="nav"
       aria-label="Primary navigation"
+      onFocus={() => autoHide && setRevealed(true)}
+      onBlur={() => autoHide && setRevealed(false)}
       sx={{
         // Outer wrapper — creates floating effect with padding
-        position: 'fixed',
+        position: "fixed",
         bottom: 0,
         left: 0,
         right: 0,
         padding: `12px 21px calc(21px + env(safe-area-inset-bottom)) 21px`,
         zIndex: zIndex.float,
-        pointerEvents: 'none', // Pass through clicks outside the pill
+        pointerEvents: "none", // Pass through clicks outside the pill
 
-        // GPU acceleration
-        WebkitTransform: 'translate3d(0, 0, 0)',
-        transform: 'translate3d(0, 0, 0)',
-        WebkitBackfaceVisibility: 'hidden',
-        backfaceVisibility: 'hidden',
-        willChange: 'transform',
+        // GPU acceleration + desktop auto-hide slide (Fotosíntesis only)
+        WebkitTransform:
+          autoHide && !revealed
+            ? "translate3d(0, calc(100% + 24px), 0)"
+            : "translate3d(0, 0, 0)",
+        transform:
+          autoHide && !revealed
+            ? "translate3d(0, calc(100% + 24px), 0)"
+            : "translate3d(0, 0, 0)",
+        transition: reduceMotion
+          ? "none"
+          : "transform 260ms cubic-bezier(0.32, 0.72, 0, 1)",
+        WebkitBackfaceVisibility: "hidden",
+        backfaceVisibility: "hidden",
+        willChange: "transform",
       }}
     >
       {/* Inner pill container */}
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           height: PILL_HEIGHT,
           borderRadius: `${PILL_RADIUS}px`,
           padding: `${PILL_PADDING}px`,
-          pointerEvents: 'auto', // Re-enable clicks on the pill
-          overflow: 'hidden',
-          position: 'relative',
+          pointerEvents: "auto", // Re-enable clicks on the pill
+          overflow: "hidden",
+          position: "relative",
 
           // Background
-          backgroundColor: isDark ? '#161618' : '#FFFFFF',
+          backgroundColor: isDark ? "#161618" : "#FFFFFF",
 
           // Border
-          border: `1px solid ${isDark ? '#2E2E33' : '#E5E7EB'}`,
+          border: `1px solid ${isDark ? "#2E2E33" : "#E5E7EB"}`,
 
           // Shadow — blur 16, offset y:4, subtle
           boxShadow: isDark
-            ? '0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(0, 174, 122, 0.06)'
-            : '0 4px 16px rgba(0, 0, 0, 0.1)',
+            ? "0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(0, 174, 122, 0.06)"
+            : "0 4px 16px rgba(0, 0, 0, 0.1)",
 
           // Transitions
           transition: effectiveConfig.animations
             ? `background-color ${durations.liquidFast} ${easingCurves.liquidInOut}, border-color ${durations.liquidFast} ${easingCurves.liquidInOut}, box-shadow ${durations.liquidFast} ${easingCurves.liquidInOut}`
-            : 'none',
+            : "none",
 
           // Reduced motion support
-          '@media (prefers-reduced-motion: reduce)': {
-            transition: 'none',
+          "@media (prefers-reduced-motion: reduce)": {
+            transition: "none",
           },
         }}
       >
@@ -240,7 +301,12 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             // Lucide icons: treasure (Gem), provider tabs (FileText, PlusCircle, Package)
-            const lucideIconIds = ['treasure', 'provider-requests', 'provider-submit', 'provider-inventory'];
+            const lucideIconIds = [
+              "treasure",
+              "provider-requests",
+              "provider-submit",
+              "provider-inventory",
+            ];
             const isLucideIcon = lucideIconIds.includes(tab.id);
 
             return (
@@ -248,60 +314,66 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                 key={tab.id}
                 role="button"
                 aria-label={tab.label}
-                aria-current={isActive ? 'page' : undefined}
+                aria-current={isActive ? "page" : undefined}
                 tabIndex={0}
                 onClick={() => handleTabClick(tab)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
+                  if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     handleTabClick(tab);
                   }
                 }}
                 sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
                   flex: 1,
-                  height: '100%',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  isolation: 'isolate',
+                  height: "100%",
+                  cursor: "pointer",
+                  position: "relative",
+                  isolation: "isolate",
                   borderRadius: `${isActive ? TAB_RADIUS_ACTIVE : TAB_RADIUS_INACTIVE}px`,
-                  gap: '3px',
-                  userSelect: 'none',
-                  WebkitTapHighlightColor: 'transparent',
+                  gap: "3px",
+                  userSelect: "none",
+                  WebkitTapHighlightColor: "transparent",
 
                   // Transitions
                   transition: effectiveConfig.animations
                     ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
-                    : 'none',
+                    : "none",
 
-                  '&:hover': !isActive ? {
-                    backgroundColor: effectiveConfig.animations
-                      ? (isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)')
-                      : undefined,
-                  } : {},
-                  '&:active': {
-                    transform: effectiveConfig.animations ? 'scale(0.95)' : 'none',
+                  "&:hover": !isActive
+                    ? {
+                        backgroundColor: effectiveConfig.animations
+                          ? isDark
+                            ? "rgba(255, 255, 255, 0.06)"
+                            : "rgba(0, 0, 0, 0.04)"
+                          : undefined,
+                      }
+                    : {},
+                  "&:active": {
+                    transform: effectiveConfig.animations
+                      ? "scale(0.95)"
+                      : "none",
                     transition: effectiveConfig.animations
                       ? `transform 80ms ${easingCurves.liquidIn}`
-                      : 'none',
+                      : "none",
                   },
-                  '&:focus-visible': {
+                  "&:focus-visible": {
                     outline: `2px solid ${primitiveColors.emerald[500]}`,
-                    outlineOffset: '2px',
+                    outlineOffset: "2px",
                   },
                 }}
               >
                 {/* Animated sliding emerald pill background for active tab */}
-                {isActive && (
-                  effectiveConfig.animations ? (
+                {isActive &&
+                  (effectiveConfig.animations ? (
                     <motion.div
                       layoutId="tab-indicator"
                       transition={microinteraction.navPill}
                       style={{
-                        position: 'absolute',
+                        position: "absolute",
                         inset: 0,
                         background: ACTIVE_GRADIENT,
                         boxShadow: ACTIVE_SHADOW,
@@ -312,7 +384,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                   ) : (
                     <div
                       style={{
-                        position: 'absolute',
+                        position: "absolute",
                         inset: 0,
                         background: ACTIVE_GRADIENT,
                         boxShadow: ACTIVE_SHADOW,
@@ -320,38 +392,39 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                         zIndex: 0,
                       }}
                     />
-                  )
-                )}
+                  ))}
 
                 {/* Icon */}
-                <Box sx={{
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: ICON_SIZE,
-                  width: ICON_SIZE,
-                  zIndex: 1,
-                }}>
+                <Box
+                  sx={{
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: ICON_SIZE,
+                    width: ICON_SIZE,
+                    zIndex: 1,
+                  }}
+                >
                   {isLucideIcon ? (
                     <Icon
                       size={ICON_SIZE}
-                      color={isActive ? '#FFFFFF' : inactiveColor}
+                      color={isActive ? "#FFFFFF" : inactiveColor}
                       strokeWidth={isActive ? 2.2 : 1.8}
                       style={{
                         transition: effectiveConfig.animations
                           ? `color ${durations.liquidFast} ${easingCurves.liquidInOut}`
-                          : 'none',
+                          : "none",
                       }}
                     />
                   ) : (
                     <Icon
                       sx={{
                         fontSize: `${ICON_SIZE}px`,
-                        color: isActive ? '#FFFFFF' : inactiveColor,
+                        color: isActive ? "#FFFFFF" : inactiveColor,
                         transition: effectiveConfig.animations
                           ? `color ${durations.liquidFast} ${easingCurves.liquidInOut}`
-                          : 'none',
+                          : "none",
                       }}
                     />
                   )}
@@ -360,54 +433,56 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                     <Box
                       aria-label={`${tab.badge} notifications`}
                       sx={{
-                        position: 'absolute',
-                        top: '-4px',
-                        right: '-8px',
-                        minWidth: '16px',
-                        height: '16px',
-                        borderRadius: '8px',
-                        backgroundColor: 'var(--status-error)',
-                        color: 'white',
-                        fontSize: '10px',
+                        position: "absolute",
+                        top: "-4px",
+                        right: "-8px",
+                        minWidth: "16px",
+                        height: "16px",
+                        borderRadius: "8px",
+                        backgroundColor: "var(--status-error)",
+                        color: "white",
+                        fontSize: "10px",
                         fontWeight: fontWeights.semibold,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '0 4px',
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "0 4px",
                         boxShadow: isActive
                           ? `0 0 0 2px ${ACTIVE_SOLID}`
-                          : `0 0 0 2px ${isDark ? '#161618' : '#FFFFFF'}`,
+                          : `0 0 0 2px ${isDark ? "#161618" : "#FFFFFF"}`,
                         // Badge entrance animation
                         animation: effectiveConfig.animations
                           ? `badgeIn 300ms ${easingCurves.liquidSpring} both`
-                          : 'none',
+                          : "none",
                         // Pulse ring pseudo-element
-                        '&::after': effectiveConfig.animations ? {
-                          content: '""',
-                          position: 'absolute',
-                          inset: 0,
-                          borderRadius: 'inherit',
-                          backgroundColor: 'var(--status-error)',
-                          opacity: 0,
-                          animation: 'badgePulse 2s ease-in-out infinite',
-                          zIndex: -1,
-                        } : {},
-                        '@keyframes badgeIn': {
-                          '0%': { transform: 'scale(0)' },
-                          '70%': { transform: 'scale(1.15)' },
-                          '100%': { transform: 'scale(1)' },
+                        "&::after": effectiveConfig.animations
+                          ? {
+                              content: '""',
+                              position: "absolute",
+                              inset: 0,
+                              borderRadius: "inherit",
+                              backgroundColor: "var(--status-error)",
+                              opacity: 0,
+                              animation: "badgePulse 2s ease-in-out infinite",
+                              zIndex: -1,
+                            }
+                          : {},
+                        "@keyframes badgeIn": {
+                          "0%": { transform: "scale(0)" },
+                          "70%": { transform: "scale(1.15)" },
+                          "100%": { transform: "scale(1)" },
                         },
-                        '@keyframes badgePulse': {
-                          '0%': { transform: 'scale(1)', opacity: 0.4 },
-                          '100%': { transform: 'scale(2.5)', opacity: 0 },
+                        "@keyframes badgePulse": {
+                          "0%": { transform: "scale(1)", opacity: 0.4 },
+                          "100%": { transform: "scale(2.5)", opacity: 0 },
                         },
-                        '@media (prefers-reduced-motion: reduce)': {
-                          animation: 'none',
-                          '&::after': { animation: 'none' },
+                        "@media (prefers-reduced-motion: reduce)": {
+                          animation: "none",
+                          "&::after": { animation: "none" },
                         },
                       }}
                     >
-                      {tab.badge > 99 ? '99+' : tab.badge}
+                      {tab.badge > 99 ? "99+" : tab.badge}
                     </Box>
                   )}
                 </Box>
@@ -420,19 +495,19 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                     fontFamily: '"DM Sans", sans-serif',
                     fontWeight: isActive ? 600 : 500,
                     letterSpacing: `${LABEL_SPACING}px`,
-                    textTransform: 'uppercase',
-                    color: isActive ? '#FFFFFF' : inactiveColor,
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '100%',
+                    textTransform: "uppercase",
+                    color: isActive ? "#FFFFFF" : inactiveColor,
+                    textAlign: "center",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    maxWidth: "100%",
                     lineHeight: 1.2,
                     transition: effectiveConfig.animations
                       ? `color ${durations.liquidFast} ${easingCurves.liquidInOut}`
-                      : 'none',
+                      : "none",
                     zIndex: 1,
-                    position: 'relative',
+                    position: "relative",
                   }}
                 >
                   {tab.label}

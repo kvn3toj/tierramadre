@@ -157,7 +157,15 @@ function CategoriaPicker({
                 transition: "background 120ms ease, border-color 120ms ease",
                 "&:hover": disabled
                   ? undefined
-                  : { background: foto.accent.soft },
+                  : {
+                      background: isActive
+                        ? foto.accent.soft
+                        : foto.surfaces.inset,
+                    },
+                "&:focus-within": {
+                  outline: `2px solid ${foto.accent.primary}`,
+                  outlineOffset: 2,
+                },
               }}
             >
               <Box
@@ -381,10 +389,7 @@ export function InsumoFields({
 
       {/* Costo — optional purchase cost */}
       <Box>
-        <FieldLabel
-          htmlFor={precioPublicoId}
-          optional="opcional, costo de compra"
-        >
+        <FieldLabel htmlFor={precioPublicoId} optional="costo de compra">
           Costo (COP)
         </FieldLabel>
         <NumberInputWithCalc

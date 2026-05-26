@@ -348,10 +348,16 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
                 border: `1px solid ${
                   isActive ? foto.accent.primary : foto.surfaces.rule
                 }`,
-                background: isActive ? foto.accent.soft : foto.surfaces.canvas,
+                background: isActive ? foto.accent.soft : "transparent",
                 cursor: "pointer",
                 transition: "background 120ms ease, border-color 120ms ease",
-                "&:hover": { background: foto.accent.soft },
+                "&:hover": {
+                  background: isActive ? foto.accent.soft : foto.surfaces.inset,
+                },
+                "&:focus-within": {
+                  outline: `2px solid ${foto.accent.primary}`,
+                  outlineOffset: 2,
+                },
               }}
             >
               <Box
@@ -586,9 +592,9 @@ function NewLotIntro() {
   return (
     <Box
       sx={{
-        maxWidth: 720,
+        maxWidth: { xs: "100%", md: 1080, xl: 1200 },
         margin: "0 auto",
-        padding: "36px 28px 80px",
+        padding: { xs: "28px 18px 80px", md: "36px 28px 80px" },
       }}
     >
       <Box
@@ -668,355 +674,416 @@ function NewLotIntro() {
         onSubmit={onSubmit}
         sx={{
           display: "grid",
-          gridTemplateColumns: "1fr",
-          gap: "18px",
+          gridTemplateColumns: {
+            xs: "1fr",
+            md: "minmax(0, 1.5fr) minmax(0, 1fr)",
+          },
+          gap: { xs: "18px", md: "28px" },
+          alignItems: "start",
           padding: "22px",
           background: foto.surfaces.canvas,
           border: `1px solid ${foto.surfaces.rule}`,
           borderRadius: "14px",
         }}
       >
-        {/* Bóveda — B-NNN / C-NNN / S-NNN / M-NNN */}
-        <Box>
-          <FieldLabel>Bóveda</FieldLabel>
-          <SegmentedControl
-            ariaLabel="Bóveda del lote"
-            allowOther
-            otherLabel="Otra…"
-            otherPlaceholder="Código de bóveda (ej. MED)…"
-            sanitizeOther={sanitizeSedeCode}
-            options={BOVEDAS.map((b) => ({
-              value: b.code,
-              label: b.label,
-            }))}
-            value={sede ?? ("" as Sede)}
-            onChange={(next) => setSede(next as Sede)}
-          />
-        </Box>
-
-        {/* Proveedor */}
-        <EntityPicker<ProviderRow>
-          label="Proveedor"
-          placeholder="Buscar por nombre o NIT…"
-          options={providers ?? []}
-          loading={providers === undefined}
-          value={selectedProvider}
-          onChange={(next) => {
-            setProviderId(next?._id ?? null);
-            setProviderName(next?.nombreORazonSocial ?? null);
-          }}
-          getOptionId={(p) => p._id}
-          getOptionLabel={(p) => p.nombreORazonSocial}
-          getOptionMeta={(p) =>
-            [
-              p.nit ? `NIT ${p.nit}` : p.cedula ? `CC ${p.cedula}` : null,
-              p.tipo,
-            ]
-              .filter(Boolean)
-              .join(" · ") || null
-          }
-          getOptionAvatar={(p) =>
-            p.nombreORazonSocial.slice(0, 1).toUpperCase()
-          }
-          onCreateRequest={(typed) => {
-            setDrawerInitialName(typed);
-            setDrawerOpen(true);
-          }}
-          createLabel={(t) => `Crear «${t}» como nuevo proveedor`}
-        />
-
-        {/* Fecha + Costo total */}
+        {/* LEFT column — Datos del lote */}
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
             gap: "18px",
+            alignContent: "start",
+            minWidth: 0,
           }}
         >
+          <Box
+            sx={{
+              fontSize: 9,
+              fontWeight: 500,
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: foto.ink.tertiary,
+            }}
+          >
+            Datos del lote
+          </Box>
+          {/* Bóveda — B-NNN / C-NNN / S-NNN / M-NNN */}
           <Box>
-            <FieldLabel htmlFor="lote-fecha">Fecha de recepción</FieldLabel>
+            <FieldLabel>Bóveda</FieldLabel>
+            <SegmentedControl
+              ariaLabel="Bóveda del lote"
+              allowOther
+              otherLabel="Otra…"
+              otherPlaceholder="Código de bóveda (ej. MED)…"
+              sanitizeOther={sanitizeSedeCode}
+              options={BOVEDAS.map((b) => ({
+                value: b.code,
+                label: b.label,
+              }))}
+              value={sede ?? ("" as Sede)}
+              onChange={(next) => setSede(next as Sede)}
+            />
+          </Box>
+
+          {/* Proveedor */}
+          <EntityPicker<ProviderRow>
+            label="Proveedor"
+            placeholder="Buscar por nombre o NIT…"
+            options={providers ?? []}
+            loading={providers === undefined}
+            value={selectedProvider}
+            onChange={(next) => {
+              setProviderId(next?._id ?? null);
+              setProviderName(next?.nombreORazonSocial ?? null);
+            }}
+            getOptionId={(p) => p._id}
+            getOptionLabel={(p) => p.nombreORazonSocial}
+            getOptionMeta={(p) =>
+              [
+                p.nit ? `NIT ${p.nit}` : p.cedula ? `CC ${p.cedula}` : null,
+                p.tipo,
+              ]
+                .filter(Boolean)
+                .join(" · ") || null
+            }
+            getOptionAvatar={(p) =>
+              p.nombreORazonSocial.slice(0, 1).toUpperCase()
+            }
+            onCreateRequest={(typed) => {
+              setDrawerInitialName(typed);
+              setDrawerOpen(true);
+            }}
+            createLabel={(t) => `Crear «${t}» como nuevo proveedor`}
+          />
+
+          {/* Fecha + Costo total */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "minmax(0, 1fr) minmax(0, 1fr)",
+              },
+              gap: "18px",
+            }}
+          >
+            <Box>
+              <FieldLabel htmlFor="lote-fecha">Fecha de recepción</FieldLabel>
+              <Box
+                component="input"
+                id="lote-fecha"
+                type="date"
+                value={fechaRecepcion}
+                onChange={(e) =>
+                  setFechaRecepcion((e.target as HTMLInputElement).value)
+                }
+                sx={{
+                  width: "100%",
+                  background: foto.surfaces.inset,
+                  border: `1px solid ${foto.surfaces.rule}`,
+                  borderRadius: "9px",
+                  padding: "11px 14px",
+                  fontSize: 13,
+                  color: foto.ink.primary,
+                  fontFamily: fontFamilies.mono,
+                  outline: "none",
+                  "&:focus": {
+                    borderColor: foto.accent.primary,
+                    boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+                  },
+                }}
+              />
+            </Box>
+            <Box>
+              <FieldLabel htmlFor="lote-costo">Costo total (COP)</FieldLabel>
+              <NumberInputWithCalc
+                id="lote-costo"
+                value={costoTotalCOP}
+                onChange={setCostoTotalCOP}
+                format="currency"
+                placeholder="0"
+                step={1000}
+                min={0}
+                ariaLabel="Costo total del lote en COP"
+                calcSuffix={
+                  typeof costoTotalCOP === "number" && costoTotalCOP > 0
+                    ? formatCOP(costoTotalCOP)
+                    : "= —"
+                }
+                calcVariant="neutral"
+              />
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "minmax(0, 1fr) minmax(0, 1fr)",
+              },
+              gap: "18px",
+            }}
+          >
+            <Box>
+              <FieldLabel optional="alias interno">
+                Renombre del lote
+              </FieldLabel>
+              <Box
+                component="input"
+                type="text"
+                value={renombreLote}
+                placeholder="Ej. Lote Muzo marzo"
+                {...spanishText}
+                onChange={(e) =>
+                  setRenombreLote((e.target as HTMLInputElement).value)
+                }
+                sx={{
+                  width: "100%",
+                  background: foto.surfaces.inset,
+                  border: `1px solid ${foto.surfaces.rule}`,
+                  borderRadius: "9px",
+                  padding: "11px 14px",
+                  fontSize: 13,
+                  color: foto.ink.primary,
+                }}
+              />
+            </Box>
+            <Box>
+              <FieldLabel optional="quilates">Peso del lote</FieldLabel>
+              <NumberInputWithCalc
+                id="intro-peso-total"
+                value={pesoTotalQuilates}
+                onChange={setPesoTotalQuilates}
+                format="carat"
+                placeholder="0,00"
+                step={0.1}
+                min={0}
+                ariaLabel="Peso total del lote"
+                calcSuffix="ct"
+                calcVariant="neutral"
+              />
+            </Box>
+          </Box>
+
+          <PricePerCaratHint
+            priceCOP={costoTotalCOP}
+            peso={pesoTotalQuilates}
+            label="Costo por quilate"
+          />
+
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "minmax(0, 1fr) minmax(0, 1fr)",
+              },
+              gap: "18px",
+            }}
+          >
+            <Box>
+              <FieldLabel optional="tratamiento">Tratamiento</FieldLabel>
+              <Box
+                component="input"
+                type="text"
+                value={tratamiento}
+                {...spanishText}
+                onChange={(e) =>
+                  setTratamiento((e.target as HTMLInputElement).value)
+                }
+                sx={{
+                  width: "100%",
+                  background: foto.surfaces.inset,
+                  border: `1px solid ${foto.surfaces.rule}`,
+                  borderRadius: "9px",
+                  padding: "11px 14px",
+                  fontSize: 13,
+                  color: foto.ink.primary,
+                }}
+              />
+            </Box>
+            <Box>
+              <FieldLabel optional="mina">Mina</FieldLabel>
+              <SuggestInput
+                value={mina}
+                onValueChange={setMina}
+                suggestions={PROCEDENCIAS}
+                fieldLang={noSpellCheck}
+                sx={{
+                  width: "100%",
+                  background: foto.surfaces.inset,
+                  border: `1px solid ${foto.surfaces.rule}`,
+                  borderRadius: "9px",
+                  padding: "11px 14px",
+                  fontSize: 13,
+                  color: foto.ink.primary,
+                }}
+                aria-label="Mina"
+              />
+            </Box>
+          </Box>
+        </Box>
+
+        {/* RIGHT column — Pago */}
+        <Box
+          sx={{
+            display: "grid",
+            gap: "18px",
+            alignContent: "start",
+            minWidth: 0,
+          }}
+        >
+          <Box
+            sx={{
+              fontSize: 9,
+              fontWeight: 500,
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: foto.ink.tertiary,
+            }}
+          >
+            Pago
+          </Box>
+          {/* Unidades + Forma de pago — stacked: in the narrow PAGO column a
+              side-by-side split floats Forma de pago far from its label. */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "1fr",
+              gap: "18px",
+            }}
+          >
+            <Box>
+              <FieldLabel htmlFor="lote-unidades">
+                Unidades declaradas
+              </FieldLabel>
+              <NumberInputWithCalc
+                id="lote-unidades"
+                value={unidadesDeclaradas}
+                onChange={setUnidadesDeclaradas}
+                format="integer"
+                placeholder="3"
+                step={1}
+                min={1}
+                ariaLabel="Unidades declaradas"
+                calcSuffix="ítems"
+                calcVariant="neutral"
+              />
+            </Box>
+            <Box>
+              <FieldLabel>Forma de pago</FieldLabel>
+              <SegmentedControl
+                ariaLabel="Forma de pago"
+                allowOther
+                otherLabel="Otra…"
+                otherPlaceholder="Escribir forma de pago…"
+                options={[
+                  { value: "contado", label: "Contado" },
+                  { value: "credito", label: "Crédito" },
+                  { value: "esmereogenesis", label: "Esmereogénesis" },
+                  { value: "bajo_pedido", label: "Bajo pedido" },
+                  { value: "consignacion", label: "Consignación" },
+                ]}
+                value={formaPago}
+                onChange={(next) => setFormaPago(next as FormaPago)}
+              />
+            </Box>
+          </Box>
+
+          {formaPago === "contado" ? (
+            <Box>
+              <FieldLabel>Método</FieldLabel>
+              <SegmentedControl
+                ariaLabel="Método de pago contado"
+                allowOther
+                otherLabel="Otro…"
+                otherPlaceholder="Escribir método de pago…"
+                options={[
+                  { value: "efectivo", label: "Efectivo" },
+                  { value: "transferencia", label: "Transferencia" },
+                ]}
+                value={metodoContado}
+                onChange={(next) => setMetodoContado(next as MetodoContado)}
+              />
+            </Box>
+          ) : null}
+
+          {formaPago === "credito" ? (
+            <CreditoFields
+              fechaVencimiento={creditoFechaVenc}
+              setFechaVencimiento={setCreditoFechaVenc}
+              numeroCuotas={creditoCuotas}
+              setNumeroCuotas={setCreditoCuotas}
+              tasaInteres={creditoTasa}
+              setTasaInteres={setCreditoTasa}
+              totalCop={typeof costoTotalCOP === "number" ? costoTotalCOP : 0}
+            />
+          ) : null}
+
+          <Box>
+            <FieldLabel htmlFor="notas-lote">Observaciones del lote</FieldLabel>
             <Box
-              component="input"
-              id="lote-fecha"
-              type="date"
-              value={fechaRecepcion}
-              onChange={(e) =>
-                setFechaRecepcion((e.target as HTMLInputElement).value)
-              }
+              component="textarea"
+              id="notas-lote"
+              value={notas}
+              {...spanishText}
+              onChange={(event) => setNotas(event.target.value)}
+              rows={3}
+              placeholder="Notas de compra, contexto del proveedor, etc."
               sx={{
                 width: "100%",
-                background: foto.surfaces.inset,
-                border: `1px solid ${foto.surfaces.rule}`,
+                marginTop: "6px",
                 borderRadius: "9px",
-                padding: "11px 14px",
-                fontSize: 13,
+                border: `1px solid ${foto.surfaces.rule}`,
+                background: foto.surfaces.inset,
                 color: foto.ink.primary,
-                fontFamily: fontFamilies.mono,
+                fontSize: 13,
+                padding: "10px 12px",
+                resize: "vertical",
+                fontFamily: "inherit",
                 outline: "none",
                 "&:focus": {
                   borderColor: foto.accent.primary,
-                  boxShadow: `0 0 0 3px ${foto.accent.glow}`,
                 },
               }}
             />
           </Box>
-          <Box>
-            <FieldLabel htmlFor="lote-costo">Costo total (COP)</FieldLabel>
-            <NumberInputWithCalc
-              id="lote-costo"
-              value={costoTotalCOP}
-              onChange={setCostoTotalCOP}
-              format="currency"
-              placeholder="0"
-              step={1000}
-              min={0}
-              ariaLabel="Costo total del lote en COP"
-              calcSuffix={
-                typeof costoTotalCOP === "number" && costoTotalCOP > 0
-                  ? formatCOP(costoTotalCOP)
-                  : "= —"
-              }
-              calcVariant="neutral"
-            />
-          </Box>
-        </Box>
 
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-            gap: "18px",
-          }}
-        >
-          <Box>
-            <FieldLabel optional="alias interno">Renombre del lote</FieldLabel>
-            <Box
-              component="input"
-              type="text"
-              value={renombreLote}
-              placeholder="Ej. Lote Muzo marzo"
-              {...spanishText}
-              onChange={(e) =>
-                setRenombreLote((e.target as HTMLInputElement).value)
-              }
-              sx={{
-                width: "100%",
-                background: foto.surfaces.inset,
-                border: `1px solid ${foto.surfaces.rule}`,
-                borderRadius: "9px",
-                padding: "11px 14px",
-                fontSize: 13,
-                color: foto.ink.primary,
-              }}
-            />
-          </Box>
-          <Box>
-            <FieldLabel optional="quilates">Peso del lote</FieldLabel>
-            <NumberInputWithCalc
-              id="intro-peso-total"
-              value={pesoTotalQuilates}
-              onChange={setPesoTotalQuilates}
-              format="carat"
-              placeholder="0,00"
-              step={0.1}
-              min={0}
-              ariaLabel="Peso total del lote"
-              calcSuffix="ct"
-              calcVariant="neutral"
-            />
-          </Box>
-        </Box>
-
-        <PricePerCaratHint
-          priceCOP={costoTotalCOP}
-          peso={pesoTotalQuilates}
-          label="Costo por quilate"
-        />
-
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-            gap: "18px",
-          }}
-        >
-          <Box>
-            <FieldLabel optional="tratamiento">Tratamiento</FieldLabel>
-            <Box
-              component="input"
-              type="text"
-              value={tratamiento}
-              {...spanishText}
-              onChange={(e) =>
-                setTratamiento((e.target as HTMLInputElement).value)
-              }
-              sx={{
-                width: "100%",
-                background: foto.surfaces.inset,
-                border: `1px solid ${foto.surfaces.rule}`,
-                borderRadius: "9px",
-                padding: "11px 14px",
-                fontSize: 13,
-                color: foto.ink.primary,
-              }}
-            />
-          </Box>
-          <Box>
-            <FieldLabel optional="mina">Mina</FieldLabel>
-            <SuggestInput
-              value={mina}
-              onValueChange={setMina}
-              suggestions={PROCEDENCIAS}
-              fieldLang={noSpellCheck}
-              sx={{
-                width: "100%",
-                background: foto.surfaces.inset,
-                border: `1px solid ${foto.surfaces.rule}`,
-                borderRadius: "9px",
-                padding: "11px 14px",
-                fontSize: 13,
-                color: foto.ink.primary,
-              }}
-              aria-label="Mina"
-            />
-          </Box>
-        </Box>
-
-        {/* Unidades + Forma de pago */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-            gap: "18px",
-            alignItems: "end",
-          }}
-        >
-          <Box>
-            <FieldLabel htmlFor="lote-unidades">Unidades declaradas</FieldLabel>
-            <NumberInputWithCalc
-              id="lote-unidades"
-              value={unidadesDeclaradas}
-              onChange={setUnidadesDeclaradas}
-              format="integer"
-              placeholder="3"
-              step={1}
-              min={1}
-              ariaLabel="Unidades declaradas"
-              calcSuffix="ítems"
-              calcVariant="neutral"
-            />
-          </Box>
-          <Box>
-            <FieldLabel>Forma de pago</FieldLabel>
-            <SegmentedControl
-              ariaLabel="Forma de pago"
-              allowOther
-              otherLabel="Otra…"
-              otherPlaceholder="Escribir forma de pago…"
-              options={[
-                { value: "contado", label: "Contado" },
-                { value: "credito", label: "Crédito" },
-                { value: "esmereogenesis", label: "Esmereogénesis" },
-                { value: "bajo_pedido", label: "Bajo pedido" },
-                { value: "consignacion", label: "Consignación" },
-              ]}
-              value={formaPago}
-              onChange={(next) => setFormaPago(next as FormaPago)}
-            />
-          </Box>
-        </Box>
-
-        {formaPago === "contado" ? (
-          <Box>
-            <FieldLabel>Método</FieldLabel>
-            <SegmentedControl
-              ariaLabel="Método de pago contado"
-              allowOther
-              otherLabel="Otro…"
-              otherPlaceholder="Escribir método de pago…"
-              options={[
-                { value: "efectivo", label: "Efectivo" },
-                { value: "transferencia", label: "Transferencia" },
-              ]}
-              value={metodoContado}
-              onChange={(next) => setMetodoContado(next as MetodoContado)}
-            />
-          </Box>
-        ) : null}
-
-        {formaPago === "credito" ? (
-          <CreditoFields
-            fechaVencimiento={creditoFechaVenc}
-            setFechaVencimiento={setCreditoFechaVenc}
-            numeroCuotas={creditoCuotas}
-            setNumeroCuotas={setCreditoCuotas}
-            tasaInteres={creditoTasa}
-            setTasaInteres={setCreditoTasa}
-            totalCop={typeof costoTotalCOP === "number" ? costoTotalCOP : 0}
-          />
-        ) : null}
-
-        <Box>
-          <FieldLabel htmlFor="notas-lote">Observaciones del lote</FieldLabel>
           <Box
-            component="textarea"
-            id="notas-lote"
-            value={notas}
-            {...spanishText}
-            onChange={(event) => setNotas(event.target.value)}
-            rows={3}
-            placeholder="Notas de compra, contexto del proveedor, etc."
             sx={{
-              width: "100%",
-              marginTop: "6px",
-              borderRadius: "9px",
-              border: `1px solid ${foto.surfaces.rule}`,
-              background: foto.surfaces.inset,
-              color: foto.ink.primary,
-              fontSize: 13,
-              padding: "10px 12px",
-              resize: "vertical",
-              fontFamily: "inherit",
-              outline: "none",
-              "&:focus": {
-                borderColor: foto.accent.primary,
-              },
-            }}
-          />
-        </Box>
-
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: "10px",
-            marginTop: "4px",
-          }}
-        >
-          <Box
-            component="button"
-            type="submit"
-            disabled={!canSubmit}
-            sx={{
-              border: "none",
-              borderRadius: "9px",
-              padding: "12px 22px",
-              background: canSubmit ? foto.accent.primary : foto.surfaces.inset,
-              color: canSubmit ? foto.ink.inverse : foto.ink.mute,
-              fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: "-0.005em",
-              cursor: canSubmit ? "pointer" : "not-allowed",
-              transition: "background 120ms ease, transform 120ms ease",
-              "&:hover": canSubmit
-                ? {
-                    background: foto.accent.deep,
-                    transform: "translateY(-1px)",
-                  }
-                : undefined,
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "10px",
+              marginTop: "4px",
             }}
           >
-            {submitting ? "Creando…" : "Empezar captura"}
+            <Box
+              component="button"
+              type="submit"
+              disabled={!canSubmit}
+              sx={{
+                border: "none",
+                borderRadius: "9px",
+                padding: "12px 22px",
+                background: canSubmit
+                  ? foto.accent.primary
+                  : foto.surfaces.inset,
+                color: canSubmit ? foto.ink.inverse : foto.ink.mute,
+                fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: "-0.005em",
+                cursor: canSubmit ? "pointer" : "not-allowed",
+                transition: "background 120ms ease, transform 120ms ease",
+                "&:hover": canSubmit
+                  ? {
+                      background: foto.accent.deep,
+                      transform: "translateY(-1px)",
+                    }
+                  : undefined,
+              }}
+            >
+              {submitting ? "Creando…" : "Empezar captura"}
+            </Box>
           </Box>
         </Box>
       </Box>
@@ -2111,7 +2178,11 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
             {/* Foto */}
             <Box>
-              <FieldLabel optional="opcional">Foto del ítem</FieldLabel>
+              {tipo === "insumo" ? (
+                <FieldLabel>Foto (opcional)</FieldLabel>
+              ) : (
+                <FieldLabel optional="opcional">Foto del ítem</FieldLabel>
+              )}
               <PhotoDropzone
                 photos={photos}
                 onAdd={addPhotos}
@@ -2121,28 +2192,45 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
             </Box>
 
             {/* Certificado */}
-            <Box>
-              <FieldLabel optional="opcional">Certificado</FieldLabel>
-              <Box
-                component="input"
-                type="file"
-                accept=".pdf,image/*"
-                onChange={(e) => {
-                  const file = (e.target as HTMLInputElement).files?.[0];
-                  setCertificadoFile(file ?? null);
-                }}
-                sx={{
-                  width: "100%",
-                  fontSize: 12,
-                  color: foto.ink.secondary,
-                }}
-              />
-              {certificadoFile ? (
-                <Box sx={{ fontSize: 11, color: foto.ink.tertiary, mt: 0.5 }}>
-                  {certificadoFile.name}
+            {tipo !== "insumo" && (
+              <Box>
+                <FieldLabel optional="opcional">Certificado</FieldLabel>
+                <Box
+                  component="input"
+                  id="cert-file"
+                  type="file"
+                  accept=".pdf,image/*"
+                  onChange={(e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    setCertificadoFile(file ?? null);
+                  }}
+                  sx={{ display: "none" }}
+                />
+                <Box
+                  component="label"
+                  htmlFor="cert-file"
+                  sx={{
+                    display: "block",
+                    background: foto.surfaces.inset,
+                    border: `1px solid ${foto.surfaces.rule}`,
+                    borderRadius: "9px",
+                    padding: "11px 14px",
+                    fontSize: 12.5,
+                    color: foto.ink.secondary,
+                    cursor: "pointer",
+                  }}
+                >
+                  {certificadoFile
+                    ? "Cambiar archivo…"
+                    : "Adjuntar PDF o imagen…"}
                 </Box>
-              ) : null}
-            </Box>
+                {certificadoFile ? (
+                  <Box sx={{ fontSize: 11, color: foto.ink.tertiary, mt: 0.5 }}>
+                    {certificadoFile.name}
+                  </Box>
+                ) : null}
+              </Box>
+            )}
 
             {/* Observación */}
             <Box>
@@ -2206,6 +2294,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
                   Reserva oculta
                 </Box>
                 <Box
+                  id="reserva-oculta-help"
                   sx={{
                     fontSize: 10.5,
                     color: foto.ink.tertiary,
@@ -2222,6 +2311,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
                 inputProps={{
                   "aria-checked": reservaOculta,
                   "aria-label": "Reserva oculta",
+                  "aria-describedby": "reserva-oculta-help",
                 }}
               />
             </Box>

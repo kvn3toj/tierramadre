@@ -96,7 +96,7 @@ export default function FotosintesisVentaPage() {
   const navigate = useNavigate();
   const { saleId } = useParams();
   const [searchParams] = useSearchParams();
-  const { openSpotlight } = useFotosintesisLayout();
+  const { openSpotlight, registerSpotlightDefault } = useFotosintesisLayout();
   const { notify } = useNotification();
   const { user } = useGoogleAuth();
 
@@ -211,31 +211,48 @@ export default function FotosintesisVentaPage() {
       : "pending";
 
   // ─── Spotlight wiring ──────────────────────────────────────────────────
-  const onBuscarItem = useCallback(() => {
-    openSpotlight({
-      scope: "Solo vendibles",
-      onSelect: (product) => {
-        setItemId(product.itemId);
-        if (typeof product.precioCop === "number" && !precioAcordado) {
-          setPrecioAcordado(product.precioCop);
-        }
-      },
-    });
-  }, [openSpotlight, precioAcordado]);
+  const handleSelectItem = useCallback(
+    (product: { itemId: string; precioCop?: number }) => {
+      setItemId(product.itemId);
+      if (typeof product.precioCop === "number" && !precioAcordado) {
+        setPrecioAcordado(product.precioCop);
+      }
+    },
+    [precioAcordado],
+  );
 
-  // ⌘K when on this page → spotlight too (layout handles globally; this is
-  // a local convenience when focus is in an input that swallows the global).
+  const onBuscarItem = useCallback(() => {
+    openSpotlight({ scope: "Solo vendibles", onSelect: handleSelectItem });
+  }, [openSpotlight, handleSelectItem]);
+
+  // Register the item-select as the spotlight default so the GLOBAL ⌘K hotkey
+  // and the topbar "Buscar" button (which open the spotlight without options)
+  // also land the selection here — otherwise picking an item via ⌘K silently
+  // does nothing, contradicting the ⌘K affordance shown on the dropzone.
+  useEffect(() => {
+    registerSpotlightDefault({
+      scope: "Solo vendibles",
+      onSelect: handleSelectItem,
+    });
+    return () => registerSpotlightDefault(null);
+  }, [registerSpotlightDefault, handleSelectItem]);
 
   // ─── Confirm flow ──────────────────────────────────────────────────────
   const creditoComplete =
     formaPago !== "credito" ||
     (creditoFechaVenc.length > 0 && creditoCuotas > 0);
+  // Mirror the server's BR-6 client-side: a VENDIDA item can't be sold again.
+  // `item` is a reactive query, so if the piece is sold in another tab this
+  // flips live and blocks the submit — instead of failing with a raw server
+  // error only after the operator clicks Confirmar.
+  const itemSold = item?.estado === "VENDIDA";
   const canConfirm =
     !!sede &&
     !!itemId &&
     !!clientId &&
     precioCop > 0 &&
     creditoComplete &&
+    !itemSold &&
     !submitting;
 
   const onDownloadPreview = useCallback(async () => {
@@ -255,6 +272,10 @@ export default function FotosintesisVentaPage() {
     }
     if (!itemId || !clientId || precioCop <= 0) {
       setErrorBanner("Falta completar comprador, ítem o precio.");
+      return;
+    }
+    if (itemSold) {
+      setErrorBanner("Este ítem ya está vendido. Elegí otro.");
       return;
     }
     if (formaPago === "credito" && !creditoFechaVenc) {
@@ -338,49 +359,61 @@ export default function FotosintesisVentaPage() {
       };
 
       // ── Carnet ────────────────────────────────────────────────────────
+      // Generate the PDF blob from the DOM FIRST, while the page is still
+      // mounted. The retry below reuses this captured blob (not kardexRef) so
+      // it survives the navigate() at the end of this flow — previously the
+      // retry re-read kardexRef.current, which is null once we've navigated
+      // away, making "Reintentar" a silent no-op.
       let carnetUrl: string | null = null;
+      const carnetFilename = `${res.saleId}-${slug}.pdf`;
       const carnetStage = beginStage("carnet", { saleId: res.saleId, subPath });
+      let carnetBlob: Blob | null = null;
       try {
         if (!kardexRef.current) throw new Error("Kardex DOM no listo");
-        const carnetBlob = await exportCarnet(
-          kardexRef.current,
-          `${res.saleId}-${slug}.pdf`,
-          { download: false },
-        );
-        carnetUrl = await uploadPdf(carnetBlob, `${res.saleId}-${slug}.pdf`);
-        await setCarnetUrl({ id: res.id, carnetUrl });
-        carnetStage.ok({ bytes: carnetBlob.size });
+        carnetBlob = await exportCarnet(kardexRef.current, carnetFilename, {
+          download: false,
+        });
       } catch (err) {
+        // DOM→PDF generation failed; it can't be retried after navigation, so
+        // surface a clear (actionless) warning rather than a dead retry button.
         carnetStage.fail(err);
         const msg = err instanceof Error ? err.message : String(err);
-        notify(`Venta guardada, PDF en cola: ${msg}`, "warning", {
-          action: {
-            label: "Reintentar",
-            onClick: () => {
-              void (async () => {
-                try {
-                  if (!kardexRef.current) return;
-                  const blob = await exportCarnet(
-                    kardexRef.current,
-                    `${res.saleId}-${slug}.pdf`,
-                    { download: false },
-                  );
-                  const url = await uploadPdf(
-                    blob,
-                    `${res.saleId}-${slug}.pdf`,
-                  );
-                  await setCarnetUrl({ id: res.id, carnetUrl: url });
-                  notify("Kardex subido a Drive", "success");
-                } catch (e) {
-                  notify(
-                    `Reintento falló: ${e instanceof Error ? e.message : String(e)}`,
-                    "error",
-                  );
-                }
-              })();
+        notify(
+          `Venta guardada, pero no se generó el carnet PDF: ${msg}`,
+          "warning",
+        );
+      }
+      if (carnetBlob) {
+        const blobForRetry = carnetBlob;
+        try {
+          carnetUrl = await uploadPdf(blobForRetry, carnetFilename);
+          await setCarnetUrl({ id: res.id, carnetUrl });
+          carnetStage.ok({ bytes: blobForRetry.size });
+        } catch (err) {
+          carnetStage.fail(err);
+          const msg = err instanceof Error ? err.message : String(err);
+          notify(`Venta guardada, PDF en cola: ${msg}`, "warning", {
+            action: {
+              label: "Reintentar",
+              onClick: () => {
+                // Reuses the already-generated blob — works even after we've
+                // navigated away from the venta page.
+                void (async () => {
+                  try {
+                    const url = await uploadPdf(blobForRetry, carnetFilename);
+                    await setCarnetUrl({ id: res.id, carnetUrl: url });
+                    notify("Kardex subido a Drive", "success");
+                  } catch (e) {
+                    notify(
+                      `Reintento falló: ${e instanceof Error ? e.message : String(e)}`,
+                      "error",
+                    );
+                  }
+                })();
+              },
             },
-          },
-        });
+          });
+        }
       }
 
       // ── Certificado (gated by Q-6 legal approval) ─────────────────────
@@ -477,6 +510,7 @@ export default function FotosintesisVentaPage() {
     sede,
     itemId,
     clientId,
+    itemSold,
     precioCop,
     totalCop,
     comisionCop,
@@ -743,89 +777,113 @@ export default function FotosintesisVentaPage() {
           <Section title="Ítem a vender" foto={foto}>
             {itemId && item ? (
               <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "96px 1fr",
-                  gap: "16px",
-                  padding: "16px",
-                  borderRadius: "11px",
-                  border: `1px solid ${foto.surfaces.rule}`,
-                  background: foto.surfaces.panel,
-                }}
+                sx={{ display: "flex", flexDirection: "column", gap: "10px" }}
               >
+                {itemSold ? (
+                  <Box
+                    role="alert"
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "10px 12px",
+                      borderRadius: "9px",
+                      background: alpha(foto.status.sold, 0.08),
+                      border: `1px solid ${foto.status.sold}`,
+                      color: foto.status.sold,
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                    }}
+                  >
+                    <AlertCircle size={15} aria-hidden />
+                    Este ítem ya está vendido — elegí otro para continuar.
+                  </Box>
+                ) : null}
                 <Box
                   sx={{
-                    width: 96,
-                    height: 96,
-                    aspectRatio: "1 / 1",
-                    borderRadius: "7px",
-                    background: foto.surfaces.inset,
-                    border: `1px solid ${foto.surfaces.edge}`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: foto.ink.mute,
-                    fontFamily: fontFamilies.mono,
-                    fontSize: 11,
-                    overflow: "hidden",
+                    display: "grid",
+                    gridTemplateColumns: "96px 1fr",
+                    gap: "16px",
+                    padding: "16px",
+                    borderRadius: "11px",
+                    border: `1px solid ${itemSold ? foto.status.sold : foto.surfaces.rule}`,
+                    background: foto.surfaces.panel,
                   }}
-                  aria-hidden
                 >
-                  {item.itemId}
-                </Box>
-                <Box sx={{ minWidth: 0 }}>
                   <Box
                     sx={{
-                      fontSize: 16,
-                      fontWeight: 600,
-                      letterSpacing: "-0.018em",
-                      color: foto.ink.primary,
-                      marginBottom: "6px",
+                      width: 96,
+                      height: 96,
+                      aspectRatio: "1 / 1",
+                      borderRadius: "7px",
+                      background: foto.surfaces.inset,
+                      border: `1px solid ${foto.surfaces.edge}`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: foto.ink.mute,
+                      fontFamily: fontFamilies.mono,
+                      fontSize: 11,
+                      overflow: "hidden",
                     }}
+                    aria-hidden
                   >
-                    {item.nombre ?? "Sin nombre"}
+                    {item.itemId}
                   </Box>
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-                      gap: "6px 18px",
-                      fontSize: 11.5,
-                      color: foto.ink.secondary,
-                    }}
-                  >
-                    <Lineage
-                      label="Procedencia"
-                      value={item.coleccion ?? "—"}
-                      foto={foto}
-                    />
-                    <Lineage
-                      label="Calidad"
-                      value={item.calidad ?? "—"}
-                      foto={foto}
-                    />
-                    <Lineage
-                      label="Peso"
-                      value={item.peso ?? "—"}
-                      foto={foto}
-                    />
-                    <Lineage
-                      label="Color"
-                      value={item.color ?? "—"}
-                      foto={foto}
-                    />
-                    <Lineage
-                      label="Lote"
-                      value={item.loteId ?? "—"}
-                      foto={foto}
-                      mono
-                    />
-                    <Lineage
-                      label="Costo base"
-                      value={formatCop(item.costoBaseCOP)}
-                      foto={foto}
-                      mono
-                    />
+                  <Box sx={{ minWidth: 0 }}>
+                    <Box
+                      sx={{
+                        fontSize: 16,
+                        fontWeight: 600,
+                        letterSpacing: "-0.018em",
+                        color: foto.ink.primary,
+                        marginBottom: "6px",
+                      }}
+                    >
+                      {item.nombre ?? "Sin nombre"}
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                        gap: "6px 18px",
+                        fontSize: 11.5,
+                        color: foto.ink.secondary,
+                      }}
+                    >
+                      <Lineage
+                        label="Procedencia"
+                        value={item.coleccion ?? "—"}
+                        foto={foto}
+                      />
+                      <Lineage
+                        label="Calidad"
+                        value={item.calidad ?? "—"}
+                        foto={foto}
+                      />
+                      <Lineage
+                        label="Peso"
+                        value={item.peso ?? "—"}
+                        foto={foto}
+                      />
+                      <Lineage
+                        label="Color"
+                        value={item.color ?? "—"}
+                        foto={foto}
+                      />
+                      <Lineage
+                        label="Lote"
+                        value={item.loteId ?? "—"}
+                        foto={foto}
+                        mono
+                      />
+                      <Lineage
+                        label="Costo base"
+                        value={formatCop(item.costoBaseCOP)}
+                        foto={foto}
+                        mono
+                      />
+                    </Box>
                   </Box>
                 </Box>
               </Box>
