@@ -63,21 +63,25 @@ interface EditItemDrawerProps {
   siblingPreponderanciaSum: number;
   /** Display label in the breadcrumb (e.g. "B-008 · 003"). */
   ticketLabel: string;
-  /** When false, all fields are read-only (lot not abierto). */
+  /** When false, all gem fields are read-only and only the photo can change. */
   editable?: boolean;
 }
 
 /**
  * Right-anchored drawer that lets an admin edit every field of an already-
- * captured gema while the lot is still `abierto`. Reuses GemaFields + a
- * Reserva-oculta switch + an observación textarea so the form looks identical
- * to the wizard's left column.
+ * captured gema in any lot estado (abierto · cerrado · publicado). Reuses
+ * GemaFields + a Reserva-oculta switch + an observación textarea so the form
+ * looks identical to the wizard's left column.
  *
  * Submit hits `lotItems.updateGemaFields`, which patches productInventory and
  * (if preponderancia changed) recomputes the lotItem cost server-side.
  *
  * The delete affordance routes through `lotItems.remove`, which orphans the
  * product row rather than deleting it — keeping any sales referencing it safe.
+ *
+ * The `editable` prop is kept for future surfaces that may want a read-only
+ * view (e.g. surfacing the drawer from a sales context); LoteResumenPage now
+ * always passes `editable` so the studio can fix any field at any time.
  */
 export function EditItemDrawer({
   open,
@@ -392,7 +396,7 @@ export function EditItemDrawer({
           >
             {editable
               ? "Cambios persisten en Convex y se sincronizan a la planilla."
-              : "Lote cerrado — los datos quedan en sólo lectura, pero podés actualizar la foto."}
+              : "Vista en sólo lectura — la foto sí se puede actualizar."}
           </Box>
         </Box>
         <Box
@@ -497,11 +501,7 @@ export function EditItemDrawer({
                     return [];
                   })
                 }
-                hint={
-                  editable
-                    ? "Reemplazá la foto principal del ítem. Se sube a Drive al guardar."
-                    : "El lote está cerrado, pero la foto sí se puede actualizar. Se sube a Drive al guardar."
-                }
+                hint="Reemplazá la foto principal del ítem. Se sube a Drive al guardar."
               />
             </Box>
 

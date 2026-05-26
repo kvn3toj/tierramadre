@@ -277,9 +277,10 @@ export const updatePreponderancia = mutation({
       .withIndex("by_loteId", (q) => q.eq("loteId", existing.loteId))
       .first();
     if (!lot) throw new Error(`Lote ${existing.loteId} no encontrado`);
-    if (lot.estado !== "abierto") {
-      throw new Error("Sólo se pueden editar ítems de un lote abierto");
-    }
+    // Editing is allowed in any lot estado — the studio needs to fix
+    // preponderancia after a lot has been closed/published when a
+    // mis-keyed split is discovered. Preponderancia overflow is still
+    // re-validated below.
 
     const siblings = await ctx.db
       .query("lotItems")
@@ -396,9 +397,10 @@ export const updateGemaFields = mutation({
       .withIndex("by_loteId", (q) => q.eq("loteId", lotItem.loteId))
       .first();
     if (!lot) throw new Error(`Lote ${lotItem.loteId} no encontrado`);
-    if (lot.estado !== "abierto") {
-      throw new Error("Sólo se pueden editar ítems de un lote abierto");
-    }
+    // Editing is allowed in any lot estado. The studio needs to fix
+    // gem details (e.g. a wrongly-keyed peso or color) after a lot has
+    // been closed or even published. Preponderancia overflow and the
+    // BR-2 invariant are still re-validated below before any writes.
 
     const product = await ctx.db
       .query("productInventory")
@@ -733,13 +735,10 @@ export const remove = mutation({
   handler: async (ctx, { lotItemId }) => {
     const item = await ctx.db.get(lotItemId);
     if (!item) return { removed: false };
-    const lot = await ctx.db
-      .query("lots")
-      .withIndex("by_loteId", (q) => q.eq("loteId", item.loteId))
-      .first();
-    if (lot && lot.estado !== "abierto") {
-      throw new Error("No se puede borrar ítems de un lote no abierto");
-    }
+    // Item removal is allowed in any lot estado — operators may need to
+    // pull a mis-captured stone out of a published lot. Sales referencing
+    // the productInventory row stay safe because we orphan that row
+    // (see below) rather than deleting it.
     await ctx.db.delete(lotItemId);
     // We leave productInventory row in place — the user may want to
     // re-link it to a new lot, and deleting the row would cascade

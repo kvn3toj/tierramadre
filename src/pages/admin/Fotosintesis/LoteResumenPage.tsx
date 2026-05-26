@@ -7,7 +7,7 @@ import {
   Switch,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
-import { CheckCircle2, AlertCircle, ImagePlus } from "lucide-react";
+import { CheckCircle2, AlertCircle, Pencil } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../design-system";
 import {
   useConvexMutation,
@@ -632,8 +632,8 @@ export default function FotosintesisLoteResumenPage() {
                           },
                         }}
                       >
-                        <ImagePlus size={13} strokeWidth={2} />
-                        {product?.fotoUrl ? "Editar foto" : "Agregar foto"}
+                        <Pencil size={13} strokeWidth={2} />
+                        Editar ítem
                       </Box>
                     </Box>
                     <Box
@@ -884,7 +884,10 @@ export default function FotosintesisLoteResumenPage() {
             lotCostoTotalCOP={lot.costoTotalCOP}
             siblingPreponderanciaSum={siblingSum}
             ticketLabel={`${loteId} · ${String(editingIndex + 1).padStart(3, "0")}`}
-            editable={lot.estado === "abierto"}
+            // All lot estados are editable from here — server-side
+            // mutations no longer gate by estado either. See
+            // `lotItems.updateGemaFields` / `updatePreponderancia` / `remove`.
+            editable
           />
         );
       })()}
