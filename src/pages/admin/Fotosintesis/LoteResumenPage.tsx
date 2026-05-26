@@ -650,7 +650,7 @@ export default function FotosintesisLoteResumenPage() {
                         label="Precio embajador"
                         optional="embajador"
                         baseCOP={li.costoBaseCOP}
-                        defaultMultiplier={3}
+                        defaultMultiplier={2.5}
                         value={pricing.precioEmbajadorCOP}
                         onChange={(v) =>
                           setPricingByItemId((prev) => ({
@@ -664,7 +664,7 @@ export default function FotosintesisLoteResumenPage() {
                         label="Precio consciente"
                         optional="consciente"
                         baseCOP={li.costoBaseCOP}
-                        defaultMultiplier={4}
+                        defaultMultiplier={3}
                         value={pricing.precioConscienteCOP}
                         onChange={(v) =>
                           setPricingByItemId((prev) => ({

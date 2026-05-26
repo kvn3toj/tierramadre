@@ -113,13 +113,18 @@ export function PriceMultiplierField({
                 },
                 "&.Mui-active": { boxShadow: `0 0 0 8px ${foto.accent.glow}` },
               },
+              // sx interprets numeric `width: 1` as 100% of the parent, which
+              // stretches each mark across the whole slider and bleeds the
+              // colored mark past the rail into the next column. Pin to pixels
+              // so marks stay as 1-px ticks regardless of slider width.
               "& .MuiSlider-mark": {
                 backgroundColor: foto.surfaces.rule,
-                width: 1,
-                height: 5,
+                width: "1px",
+                height: "5px",
               },
               "& .MuiSlider-markActive": {
                 backgroundColor: foto.accent.soft,
+                width: "1px",
               },
             }}
           />
