@@ -12,7 +12,7 @@ import {
 } from "../../../../data/vocabularies";
 import { getFoto, fontFamilies } from "../../../../design-system";
 import { FieldLabel } from "./FieldLabel";
-import { InlineSuggestInput } from "./InlineSuggestInput";
+import { SuggestInput } from "./SuggestInput";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
 import { SelectField } from "./SelectField";
 import { spanishText } from "../utils/fieldLang";
@@ -400,14 +400,13 @@ export function JoyaFields({
         <FieldLabel htmlFor={tecnicaId} optional="técnica">
           Técnica
         </FieldLabel>
-        <InlineSuggestInput
+        <SuggestInput
           id={tecnicaId}
           value={value.tecnica}
           onValueChange={(tecnica) => onChange({ tecnica })}
           suggestions={TECNICAS_JOYA}
           disabled={disabled}
           fieldLang={spanishText}
-          ghostColor={foto.ink.mute}
           sx={textInputSx}
         />
       </Box>

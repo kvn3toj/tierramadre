@@ -16,7 +16,7 @@ import {
   type TipoEsmeralda,
 } from "../../../../data/vocabularies";
 import { FieldLabel } from "./FieldLabel";
-import { InlineSuggestInput } from "./InlineSuggestInput";
+import { SuggestInput } from "./SuggestInput";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
 import { SelectField } from "./SelectField";
 import { spanishText, noSpellCheck } from "../utils/fieldLang";
@@ -454,7 +454,7 @@ export function GemaFields({
       {/* Procedencia */}
       <Box>
         <FieldLabel htmlFor={procedenciaId}>Procedencia</FieldLabel>
-        <InlineSuggestInput
+        <SuggestInput
           id={procedenciaId}
           value={value.procedencia}
           onValueChange={(procedencia) => onChange({ procedencia })}
@@ -462,7 +462,6 @@ export function GemaFields({
           placeholder="Muzo, Chivor, Coscuez…"
           disabled={disabled}
           fieldLang={noSpellCheck}
-          ghostColor={foto.ink.mute}
           sx={textInputSx}
         />
       </Box>

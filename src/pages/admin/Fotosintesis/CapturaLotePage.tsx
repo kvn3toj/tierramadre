@@ -34,7 +34,7 @@ import { PreponderanceRing } from "./components/PreponderanceRing";
 import { ItemMiniCard } from "./components/ItemMiniCard";
 import { SegmentedControl } from "./components/SegmentedControl";
 import { FieldLabel } from "./components/FieldLabel";
-import { InlineSuggestInput } from "./components/InlineSuggestInput";
+import { SuggestInput } from "./components/SuggestInput";
 import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
 import { spanishText, noSpellCheck } from "./utils/fieldLang";
 import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
@@ -799,12 +799,11 @@ function NewLotIntro() {
           </Box>
           <Box>
             <FieldLabel optional="mina">Mina</FieldLabel>
-            <InlineSuggestInput
+            <SuggestInput
               value={mina}
               onValueChange={setMina}
               suggestions={PROCEDENCIAS}
               fieldLang={noSpellCheck}
-              ghostColor={foto.ink.mute}
               sx={{
                 width: "100%",
                 background: foto.surfaces.inset,

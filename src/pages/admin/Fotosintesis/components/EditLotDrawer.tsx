@@ -9,7 +9,7 @@ import { useNotification } from "../../../../contexts/NotificationContext";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
 import { FieldLabel } from "./FieldLabel";
-import { InlineSuggestInput } from "./InlineSuggestInput";
+import { SuggestInput } from "./SuggestInput";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
 import { SegmentedControl } from "./SegmentedControl";
 import { CreditoFields } from "./CreditoFields";
@@ -438,13 +438,12 @@ export function EditLotDrawer({
           </Box>
           <Box>
             <FieldLabel optional="mina">Mina</FieldLabel>
-            <InlineSuggestInput
+            <SuggestInput
               value={mina}
               onValueChange={setMina}
               suggestions={PROCEDENCIAS}
               disabled={!editable}
               fieldLang={noSpellCheck}
-              ghostColor={foto.ink.mute}
               sx={textInputSx}
               aria-label="Mina"
             />

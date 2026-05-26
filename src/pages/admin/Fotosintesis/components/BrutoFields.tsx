@@ -2,7 +2,7 @@ import { useId } from "react";
 import { Box } from "@mui/material";
 import { getFoto, fontFamilies } from "../../../../design-system";
 import { FieldLabel } from "./FieldLabel";
-import { InlineSuggestInput } from "./InlineSuggestInput";
+import { SuggestInput } from "./SuggestInput";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
 import { spanishText, noSpellCheck } from "../utils/fieldLang";
 import { PROCEDENCIAS } from "../../../../data/vocabularies";
@@ -149,7 +149,7 @@ export function BrutoFields({
       {/* Procedencia */}
       <Box>
         <FieldLabel htmlFor={procedenciaId}>Procedencia</FieldLabel>
-        <InlineSuggestInput
+        <SuggestInput
           id={procedenciaId}
           value={value.procedencia}
           onValueChange={(procedencia) => onChange({ procedencia })}
@@ -157,7 +157,6 @@ export function BrutoFields({
           placeholder="Muzo, Chivor, Coscuez…"
           disabled={disabled}
           fieldLang={noSpellCheck}
-          ghostColor={foto.ink.mute}
           sx={textInputSx}
         />
       </Box>
