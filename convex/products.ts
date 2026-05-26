@@ -4,6 +4,7 @@ import {
   action,
   internalMutation,
   internalQuery,
+  type MutationCtx,
 } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
@@ -299,19 +300,21 @@ export const syncStats = query({
     const pending = pendingRows.length;
     const errored = erroredRows.length;
 
-    // For total count and lastPull, we still need to scan, but we can optimize
-    // by just collecting the fields we need if Convex supported select.
-    // For now, we'll collect all to get the total and max lastPulledAt,
-    // but this is still a heavy operation. We can optimize this by maintaining
-    // a stats table, but for now this is a step forward.
-    // OPTIMIZATION: We only need to do this when syncStatus changes, but for now
-    // we just take the first 1000 to avoid memory issues if the table grows.
-    const all = await ctx.db.query("productInventory").take(1000);
-    const total = all.length;
-    const lastPull = all.reduce<string | null>(
-      (acc, r) => (acc === null || r.lastPulledAt > acc ? r.lastPulledAt : acc),
-      null,
-    );
+    // BANDWIDTH: `total` and `lastPull` come from the maintained
+    // `inventoryStats` singleton (ONE doc) instead of a reactive
+    // `.take(1000)` scan of full productInventory documents. The old scan
+    // re-ran on every productInventory write for every subscribed admin
+    // (a 1000-doc fan-out per sync). The counter is maintained at the four
+    // insert sites + the pull path (see ensureInventoryStats / bump helpers).
+    //
+    // `syncStats` is a query, so it can't lazily seed the singleton (queries
+    // can't write). If it's somehow missing (brand-new deployment before the
+    // first insert/pull), fall back to 0 / null — the frontend already
+    // tolerates this via `stats?.total ?? products?.length` and
+    // `stats?.lastPull ?? null`. The first insert or pull seeds it for real.
+    const statsRow = await ctx.db.query("inventoryStats").first();
+    const total = statsRow?.total ?? 0;
+    const lastPull = statsRow?.lastPull ?? null;
 
     return { total, pending, errored, lastPull };
   },
@@ -1139,6 +1142,14 @@ export const _upsertManyFromSheet = internalMutation({
       if (rowIndexShifted) rebased++;
     }
 
+    // BANDWIDTH: maintain the inventoryStats singleton with ONE extra write
+    // per pull, not per row. `upserted` counts the rows we inserted this call.
+    // We also stamp `lastPull` once here so syncStats never has to scan for a
+    // max(lastPulledAt). (`now` is the single timestamp used for every row in
+    // this batch.)
+    if (upserted > 0) await bumpInventoryTotal(ctx, upserted);
+    await setInventoryLastPull(ctx, now);
+
     return { upserted, rebased };
   },
 });
@@ -1219,6 +1230,10 @@ export const _upsertFromSheet = internalMutation({
         lastPulledAt: now,
         syncStatus: "synced" as const,
       });
+      // BANDWIDTH: maintain the inventoryStats counter (+1) and stamp the
+      // single-row pull timestamp so syncStats reads the singleton, not a scan.
+      await bumpInventoryTotal(ctx, 1);
+      await setInventoryLastPull(ctx, now);
       return { upserted: true, rebased: false };
     }
 
@@ -1258,6 +1273,55 @@ export const _upsertFromSheet = internalMutation({
 // =============================================================================
 // HELPERS
 // =============================================================================
+
+// ─── Inventory stats singleton maintenance ──────────────────────────────────
+//
+// BANDWIDTH: keep a maintained `inventoryStats` counter (single row) so the
+// reactive `syncStats` query reads ONE doc instead of `.take(1000)`-ing full
+// productInventory documents (which re-ran on every write for every admin).
+//
+// `total` is monotonically increasing — productInventory rows are never
+// deleted anywhere in convex/ (lots.cancel / lotItems.remove only ORPHAN
+// rows; sheet pulls only insert/patch). So bumping a counter at the 4 insert
+// sites is sufficient and never drifts downward.
+
+/**
+ * Lazily seed (at most once, ever) and return the singleton row's Convex _id.
+ * The seeding `collect()` scan runs only the FIRST time the singleton is
+ * missing — after that every caller just reads/patches the one row.
+ */
+async function ensureInventoryStats(ctx: MutationCtx) {
+  const existing = await ctx.db.query("inventoryStats").first();
+  if (existing) return existing;
+  // One-time seed: count the current table size so the counter starts
+  // accurate. This is the ONLY scan this whole mechanism ever performs.
+  const all = await ctx.db.query("productInventory").collect();
+  const total = all.length;
+  const lastPull = all.reduce<string | undefined>(
+    (acc, r) =>
+      acc === undefined || r.lastPulledAt > acc ? r.lastPulledAt : acc,
+    undefined,
+  );
+  const id = await ctx.db.insert("inventoryStats", { total, lastPull });
+  return (await ctx.db.get(id))!;
+}
+
+/**
+ * Increment the maintained inventory total by `n` (≥ 1). Exported so the
+ * other insert site (lotItems.create) can keep the counter in sync without
+ * duplicating the seed-or-patch logic.
+ */
+export async function bumpInventoryTotal(ctx: MutationCtx, n: number) {
+  if (n <= 0) return;
+  const stats = await ensureInventoryStats(ctx);
+  await ctx.db.patch(stats._id, { total: stats.total + n });
+}
+
+/** Stamp the singleton's `lastPull` once per pull (NOT once per row). */
+async function setInventoryLastPull(ctx: MutationCtx, lastPull: string) {
+  const stats = await ensureInventoryStats(ctx);
+  await ctx.db.patch(stats._id, { lastPull });
+}
 
 type SheetRow = {
   item?: number | string;
@@ -1545,6 +1609,11 @@ export const createProduct = mutation({
       lastPulledAt: now,
       syncStatus: "pending" as const,
     });
+
+    // BANDWIDTH: keep the inventoryStats counter in sync so syncStats reads
+    // ONE doc instead of scanning. total is monotonic — a new product only
+    // adds to it. (Not a pull, so we do NOT touch lastPull here.)
+    await bumpInventoryTotal(ctx, 1);
 
     const auditId = await ctx.db.insert("productEdits", {
       itemId: itemIdTrim,

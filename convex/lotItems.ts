@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
+import { bumpInventoryTotal } from "./products";
 
 const tipoItemValidator = v.union(
   v.literal("gema"),
@@ -220,6 +221,12 @@ export const create = mutation({
       lastPulledAt: now,
       syncStatus: "pending" as const,
     });
+
+    // BANDWIDTH: keep the inventoryStats counter in sync (+1) so
+    // products.syncStats reads ONE singleton doc instead of reactively
+    // scanning up to 1000 full productInventory documents. total is
+    // monotonic — a new lot item only ever adds to it.
+    await bumpInventoryTotal(ctx, 1);
 
     // Single audit row captures the wizard creation. The same auditId
     // feeds api.products.pushToSheet so the audit moves from "pending"

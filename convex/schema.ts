@@ -448,6 +448,25 @@ export default defineSchema({
     type: v.optional(v.string()),
   }).index("by_name", ["name"]),
 
+  // ─── Inventory stats singleton ───────────────────────────────────
+  //
+  // BANDWIDTH: `products.syncStats` used to `.take(1000)` the FULL
+  // productInventory documents just to compute a count (`total`) and a
+  // max-of-`lastPulledAt` (`lastPull`). Because that query *read* those
+  // rows, it re-ran reactively on EVERY productInventory write for every
+  // subscribed admin — a 1000-doc fan-out per keystroke-sync.
+  //
+  // productInventory rows are never deleted (cancel/remove only orphan;
+  // pulls only insert/patch), so `total` is monotonically increasing and
+  // can be maintained as a counter. This table holds a SINGLE row that the
+  // four insert sites bump (+N) and the pull path stamps with `lastPull`.
+  // `syncStats` then reads ONE doc instead of scanning 1000. No index
+  // needed — fetch the lone row via `.first()`.
+  inventoryStats: defineTable({
+    total: v.number(),
+    lastPull: v.optional(v.string()),
+  }),
+
   // ─── Fotosynthia · AI copilot summaries ──────────────────────────
   //
   // One row per conversation thread. The full message history lives in
