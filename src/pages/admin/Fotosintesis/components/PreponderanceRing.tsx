@@ -51,8 +51,9 @@ export function PreponderanceRing({
       aria-label={`Preponderancia acumulada ${Math.round(value)} de ${target}`}
       sx={{
         position: "relative",
-        width: size,
-        height: size,
+        width: "100%",
+        maxWidth: size,
+        aspectRatio: "1 / 1",
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
@@ -60,10 +61,13 @@ export function PreponderanceRing({
     >
       <Box
         component="svg"
-        width={size}
-        height={size}
         viewBox={`0 0 ${size} ${size}`}
-        sx={{ transform: "rotate(-90deg)" }}
+        sx={{
+          width: "100%",
+          height: "auto",
+          maxWidth: size,
+          transform: "rotate(-90deg)",
+        }}
         aria-hidden
       >
         <circle

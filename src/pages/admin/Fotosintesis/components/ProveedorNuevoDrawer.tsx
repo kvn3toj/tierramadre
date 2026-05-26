@@ -359,8 +359,8 @@ export function ProveedorNuevoDrawer({
           top: 0,
           bottom: 0,
           margin: 0,
-          width: 560,
-          maxWidth: "calc(100vw - 24px)",
+          width: { xs: "100vw", sm: 560 },
+          maxWidth: "100vw",
           height: "100vh",
           maxHeight: "100vh",
           borderRadius: 0,
@@ -430,6 +430,8 @@ export function ProveedorNuevoDrawer({
           sx={{
             width: 32,
             height: 32,
+            minWidth: 44,
+            minHeight: 44,
             borderRadius: "8px",
             display: "flex",
             alignItems: "center",
@@ -464,7 +466,10 @@ export function ProveedorNuevoDrawer({
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
+              gridTemplateColumns: {
+                xs: "repeat(2, 1fr)",
+                sm: "repeat(4, 1fr)",
+              },
               gap: "8px",
             }}
           >
@@ -526,7 +531,7 @@ export function ProveedorNuevoDrawer({
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
               gap: "14px",
             }}
           >
@@ -743,7 +748,7 @@ export function ProveedorNuevoDrawer({
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
               gap: "14px",
             }}
           >

@@ -68,7 +68,7 @@ export function CreditoFields({
         background: foto.surfaces.panel,
         marginTop: "14px",
         display: "grid",
-        gridTemplateColumns: "1fr 1fr 1fr",
+        gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr 1fr" },
         gap: "14px",
       }}
     >
@@ -193,7 +193,7 @@ export function EsmereogenesisFields({
         background: foto.surfaces.panel,
         marginTop: "14px",
         display: "grid",
-        gridTemplateColumns: "1fr 1fr",
+        gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
         gap: "14px",
       }}
     >

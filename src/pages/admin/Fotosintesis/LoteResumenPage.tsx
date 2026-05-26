@@ -51,8 +51,7 @@ function ValidationCard({
       aria-label={`${label}: ${ok ? "cumplido" : "pendiente"}`}
       sx={{
         background: foto.surfaces.panel,
-        border: `1px solid ${ok ? foto.accent.soft : foto.surfaces.rule}`,
-        borderLeft: `3px solid ${ok ? foto.accent.primary : foto.status.sold}`,
+        border: `1px solid ${ok ? foto.accent.primary : foto.status.sold}`,
         borderRadius: "12px",
         padding: "16px 18px",
         display: "flex",
@@ -429,7 +428,11 @@ export default function FotosintesisLoteResumenPage() {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              md: "repeat(4, 1fr)",
+            },
             gap: "14px",
             marginBottom: "28px",
           }}
@@ -829,7 +832,7 @@ export default function FotosintesisLoteResumenPage() {
                 borderRadius: "11px",
                 border: "none",
                 background: foto.accent.primary,
-                color: "#fff",
+                color: foto.ink.inverse,
                 fontSize: 14,
                 fontWeight: 600,
                 cursor: closing ? "wait" : "pointer",

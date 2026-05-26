@@ -135,7 +135,7 @@ export function SubLoteCard({
                 textTransform: "uppercase",
                 padding: "4px 9px",
                 borderRadius: "999px",
-                color: "#fff",
+                color: foto.ink.inverse,
                 background: foto.accent.primary,
               }}
             >

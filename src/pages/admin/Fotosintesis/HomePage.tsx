@@ -15,7 +15,7 @@ import {
   X,
   Boxes,
 } from "lucide-react";
-import { getFoto, fontFamilies } from "../../../design-system";
+import { getFoto, fontFamilies, goldAccent } from "../../../design-system";
 import {
   useConvexQuery,
   useConvexMutation,
@@ -287,10 +287,7 @@ export default function FotosintesisHomePage() {
                 component="span"
                 sx={{
                   display: "inline-block",
-                  background: `linear-gradient(180deg, ${foto.ink.primary} 0%, #2a5b4a 100%)`,
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  color: "transparent",
+                  color: foto.ink.primary,
                 }}
               >
                 {firstName}
@@ -339,11 +336,14 @@ export default function FotosintesisHomePage() {
           {/* HEALTH STRIP */}
           <Box
             sx={{
-              display: "flex",
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "repeat(2, 1fr)",
+                md: "repeat(4, auto)",
+              },
               alignItems: "flex-end",
-              gap: "24px",
+              gap: { xs: "20px 24px", md: "24px" },
               paddingRight: "4px",
-              flexWrap: { xs: "wrap", md: "nowrap" },
             }}
             role="group"
             aria-label="Salud del atelier"
@@ -388,7 +388,8 @@ export default function FotosintesisHomePage() {
           }}
         >
           <Box
-            role="alert"
+            role="region"
+            aria-label="Lote en curso"
             sx={{
               background: `linear-gradient(90deg, ${foto.accent.soft} 0%, ${alpha(foto.accent.primary, 0.03)} 100%)`,
               border: `1px solid ${alpha(foto.accent.primary, 0.18)}`,
@@ -521,7 +522,7 @@ export default function FotosintesisHomePage() {
             }
             kbdPill="⌘ N"
             icon={<ShoppingBag size={20} strokeWidth={1.8} />}
-            iconBackground="linear-gradient(135deg, #2a5b4a, #0b3d2a)"
+            iconBackground={`linear-gradient(135deg, ${foto.accent.primary}, ${foto.accent.deep})`}
             foto={foto}
           />
 
@@ -556,7 +557,7 @@ export default function FotosintesisHomePage() {
             }
             kbdPill="⌘ V"
             icon={<Tag size={20} strokeWidth={1.8} />}
-            iconBackground="linear-gradient(135deg, #c5a06a, #8a5e2c)"
+            iconBackground={`linear-gradient(135deg, ${goldAccent.primary}, ${goldAccent.dark})`}
             foto={foto}
           />
 
@@ -759,8 +760,8 @@ export default function FotosintesisHomePage() {
                           });
                         }}
                         sx={{
-                          width: 28,
-                          height: 28,
+                          minWidth: 44,
+                          minHeight: 44,
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -792,8 +793,8 @@ export default function FotosintesisHomePage() {
                         aria-label={`Sub-lotes del lote ${lot.loteId}`}
                         title="Sub-lotes"
                         sx={{
-                          width: 28,
-                          height: 28,
+                          minWidth: 44,
+                          minHeight: 44,
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -1089,8 +1090,8 @@ function HealthStat({
         flexDirection: "column",
         alignItems: "flex-end",
         gap: "3px",
-        borderRight: `1px solid ${foto.surfaces.rule}`,
-        paddingRight: "24px",
+        borderRight: { xs: "none", md: `1px solid ${foto.surfaces.rule}` },
+        paddingRight: { xs: 0, md: "24px" },
         "&:last-child": { borderRight: "none", paddingRight: 0 },
       }}
     >

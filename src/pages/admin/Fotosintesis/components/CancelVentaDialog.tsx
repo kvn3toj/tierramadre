@@ -16,8 +16,10 @@ import {
   alpha,
 } from "@mui/material";
 import { emeraldCore } from "../../../../design-system/tokens/colors";
-import { fontWeights } from "../../../../design-system";
+import { fontWeights, getFoto } from "../../../../design-system";
 import { spanishText } from "../utils/fieldLang";
+
+const foto = getFoto("light");
 
 const REASON_MAX = 280;
 
@@ -68,6 +70,7 @@ export function CancelVentaDialog({
     <Dialog
       open={open}
       onClose={submitting ? undefined : onCancel}
+      fullWidth
       PaperProps={{
         sx: { borderRadius: 3, maxWidth: 460, mx: 2, width: "100%" },
       }}
@@ -117,9 +120,9 @@ export function CancelVentaDialog({
               mt: 1.5,
               padding: "10px 12px",
               borderRadius: 2,
-              border: `1px solid ${alpha("#B33A2F", 0.3)}`,
-              background: alpha("#B33A2F", 0.06),
-              color: "#B33A2F",
+              border: `1px solid ${alpha(foto.status.sold, 0.3)}`,
+              background: alpha(foto.status.sold, 0.06),
+              color: foto.status.sold,
               fontSize: 12,
             }}
           >

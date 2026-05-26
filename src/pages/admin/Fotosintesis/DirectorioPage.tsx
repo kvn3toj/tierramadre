@@ -9,6 +9,7 @@ import { Box, Dialog, IconButton } from "@mui/material";
 import { Search, X, ChevronRight } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../design-system";
 import { useConvexQuery, convexApi } from "../../../lib/convex-safe";
+import { FOTO_TOPBAR_HEIGHT } from "./components/FotoTopbar";
 
 /**
  * Fotosíntesis Directory — Slice 1 (read-only).
@@ -179,7 +180,7 @@ export default function FotosintesisDirectorioPage() {
       sx={{
         color: foto.ink.primary,
         background: foto.surfaces.canvas,
-        minHeight: "calc(100vh - 56px)",
+        minHeight: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
       }}
     >
       {/* HEADER BAND */}
@@ -416,7 +417,11 @@ export default function FotosintesisDirectorioPage() {
           {/* Rows */}
           {(tab === "proveedores" && providers === undefined) ||
           (tab !== "proveedores" && clients === undefined) ? (
-            <Box sx={emptyMessageSx(foto)}>—</Box>
+            <Box sx={emptyMessageSx(foto)}>
+              <Box component="span" aria-label="Sin datos">
+                —
+              </Box>
+            </Box>
           ) : filteredRows.length === 0 ? (
             <Box sx={emptyMessageSx(foto)}>
               {deferredSearch.trim()
@@ -568,6 +573,7 @@ export default function FotosintesisDirectorioPage() {
                       <Box
                         component="span"
                         sx={{ display: { xs: "none", lg: "inline" } }}
+                        aria-label="Sin datos"
                       >
                         —
                       </Box>
@@ -591,7 +597,7 @@ export default function FotosintesisDirectorioPage() {
           sx={{
             display: { xs: "none", lg: "block" },
             position: "sticky",
-            top: 72,
+            top: FOTO_TOPBAR_HEIGHT,
             alignSelf: "start",
           }}
         >

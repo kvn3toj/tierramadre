@@ -106,7 +106,7 @@ export function PriceMultiplierField({
               "& .MuiSlider-thumb": {
                 width: 15,
                 height: 15,
-                backgroundColor: "#fff",
+                backgroundColor: foto.ink.inverse,
                 border: `2px solid ${foto.accent.primary}`,
                 "&:hover, &.Mui-focusVisible": {
                   boxShadow: `0 0 0 6px ${foto.accent.glow}`,

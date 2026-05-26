@@ -6,6 +6,7 @@ import {
   type DragEvent,
 } from "react";
 import { Box } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { Camera, X as XIcon } from "lucide-react";
 import { getFoto } from "../../../../design-system";
 
@@ -194,8 +195,8 @@ export function PhotoDropzone({
                   height: 20,
                   border: "none",
                   borderRadius: "50%",
-                  background: "rgba(11,16,14,0.7)",
-                  color: "#fff",
+                  background: alpha(foto.ink.primary, 0.7),
+                  color: foto.ink.inverse,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",

@@ -187,7 +187,7 @@ export function EditableMetaValue({
             }
           }}
           sx={{
-            width: 120,
+            width: { xs: 88, sm: 120 },
             background: foto.surfaces.canvas,
             border: `1px solid ${foto.accent.primary}`,
             borderRadius: "6px",

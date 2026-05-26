@@ -27,6 +27,7 @@ export function StepPills({ steps, ariaLabel = "Pasos" }: StepPillsProps) {
       sx={{
         listStyle: "none",
         display: "flex",
+        flexWrap: "wrap",
         gap: "8px",
         margin: 0,
         padding: 0,

@@ -256,7 +256,7 @@ export function GemaFields({
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
           gap: fieldGap,
         }}
       >
@@ -300,7 +300,7 @@ export function GemaFields({
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
           gap: fieldGap,
         }}
       >
@@ -331,7 +331,7 @@ export function GemaFields({
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "120px 1fr 1fr 1fr",
+          gridTemplateColumns: { xs: "1fr 1fr", sm: "120px 1fr 1fr 1fr" },
           gap: fieldGap,
         }}
       >
@@ -431,7 +431,7 @@ export function GemaFields({
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
           gap: fieldGap,
         }}
       >
@@ -589,7 +589,7 @@ export function GemaFields({
             </Box>
             {!disabled && !suggestionMatches ? (
               <>
-                <Box component="span">—</Box>
+                <Box component="span">·</Box>
                 <Box
                   component="button"
                   type="button"

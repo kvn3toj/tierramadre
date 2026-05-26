@@ -44,6 +44,7 @@ export function LotSwitcher({
         display: "inline-flex",
         alignItems: "center",
         gap: "10px",
+        minWidth: 0,
       }}
     >
       <Box
@@ -55,6 +56,10 @@ export function LotSwitcher({
           letterSpacing: "-0.055em",
           lineHeight: 1,
           color: foto.ink.primary,
+          maxWidth: "100%",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
         }}
       >
         {currentLoteId}

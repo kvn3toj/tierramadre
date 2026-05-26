@@ -1,8 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
 import { Box } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlertCircle, Ban, ExternalLink, Link2Off } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../design-system";
+import { FOTO_PREVIEW_FELT } from "./VentaPage";
+import { FOTO_TOPBAR_HEIGHT } from "./components/FotoTopbar";
 import {
   useConvexQuery,
   useConvexMutation,
@@ -138,7 +141,7 @@ export default function VentaDetailPage() {
         sx={{
           background: foto.surfaces.canvas,
           color: foto.ink.tertiary,
-          minHeight: "calc(100vh - 56px)",
+          minHeight: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -157,7 +160,7 @@ export default function VentaDetailPage() {
         sx={{
           background: foto.surfaces.canvas,
           color: foto.ink.primary,
-          minHeight: "calc(100vh - 56px)",
+          minHeight: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -204,7 +207,7 @@ export default function VentaDetailPage() {
       sx={{
         background: foto.surfaces.canvas,
         color: foto.ink.primary,
-        minHeight: "calc(100vh - 56px)",
+        minHeight: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
       }}
     >
       <TicketHeader
@@ -222,11 +225,14 @@ export default function VentaDetailPage() {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.2fr) 480px" },
+          gridTemplateColumns: {
+            xs: "1fr",
+            lg: "minmax(0, 1fr) minmax(380px, 460px)",
+          },
           gap: 0,
           maxWidth: 1320,
           margin: "0 auto",
-          minHeight: "calc(100vh - 56px - 110px)",
+          minHeight: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px - 110px)`,
         }}
       >
         {/* ───── LEFT pane (form summary) ───── */}
@@ -392,7 +398,7 @@ export default function VentaDetailPage() {
                   padding: "14px 16px",
                   borderRadius: "11px",
                   border: `1px solid ${foto.status.sold}`,
-                  background: "rgba(179, 58, 47, 0.06)",
+                  background: alpha(foto.status.sold, 0.06),
                   color: foto.status.sold,
                   fontSize: 12.5,
                   lineHeight: 1.55,
@@ -439,7 +445,7 @@ export default function VentaDetailPage() {
                 border: `1px solid ${isCancelled ? foto.surfaces.rule : foto.status.sold}`,
                 background: isCancelled
                   ? foto.surfaces.inset
-                  : "rgba(179, 58, 47, 0.06)",
+                  : alpha(foto.status.sold, 0.06),
                 color: isCancelled ? foto.ink.mute : foto.status.sold,
                 fontSize: 13,
                 fontWeight: 600,
@@ -448,7 +454,7 @@ export default function VentaDetailPage() {
                 fontFamily: "inherit",
                 transition: "background 120ms ease, transform 120ms ease",
                 "&:hover:not(:disabled)": {
-                  background: "rgba(179, 58, 47, 0.10)",
+                  background: alpha(foto.status.sold, 0.1),
                   transform: "translateY(-1px)",
                 },
               }}
@@ -462,11 +468,14 @@ export default function VentaDetailPage() {
         {/* ───── RIGHT pane (Kardex comprobante) ───── */}
         <Box
           sx={{
-            background: "linear-gradient(180deg, #2a2522 0%, #1a1714 100%)",
+            background: FOTO_PREVIEW_FELT,
             padding: "28px 24px",
             position: { xs: "static", lg: "sticky" },
-            top: 56,
-            maxHeight: { xs: "none", lg: "calc(100vh - 56px)" },
+            top: FOTO_TOPBAR_HEIGHT,
+            maxHeight: {
+              xs: "none",
+              lg: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
+            },
             overflowY: "auto",
           }}
         >
@@ -719,7 +728,7 @@ function DocumentRow({ label, url, openLabel, foto }: DocumentRowProps) {
             textDecoration: "none",
             letterSpacing: "-0.005em",
             transition: "background 120ms ease",
-            "&:hover": { background: "rgba(0, 92, 66, 0.12)" },
+            "&:hover": { background: alpha(foto.accent.primary, 0.12) },
           }}
         >
           <ExternalLink size={13} strokeWidth={1.8} aria-hidden />

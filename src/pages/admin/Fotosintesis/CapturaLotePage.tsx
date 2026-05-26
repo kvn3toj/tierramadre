@@ -7,7 +7,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { Box, Switch } from "@mui/material";
+import { Box, Switch, alpha } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   AlertTriangle,
@@ -29,6 +29,7 @@ import {
 import { STORAGE_KEYS } from "../../../constants/storage-keys";
 
 import { TicketHeader, type TicketMeta } from "./components/TicketHeader";
+import { FOTO_TOPBAR_HEIGHT } from "./components/FotoTopbar";
 import { PreponderanceRing } from "./components/PreponderanceRing";
 import { ItemMiniCard } from "./components/ItemMiniCard";
 import { SegmentedControl } from "./components/SegmentedControl";
@@ -593,7 +594,7 @@ function NewLotIntro() {
             marginBottom: "20px",
             padding: "12px 14px",
             border: `1px solid ${foto.status.sold}`,
-            background: "rgba(179,58,47,0.06)",
+            background: alpha(foto.status.sold, 0.06),
             color: foto.status.sold,
             fontSize: 12.5,
             borderRadius: "10px",
@@ -1756,7 +1757,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
             maxWidth: 1320,
             margin: "12px auto 0",
             padding: "10px 14px",
-            background: "rgba(179,58,47,0.06)",
+            background: alpha(foto.status.sold, 0.06),
             border: `1px solid ${foto.status.sold}`,
             borderRadius: "10px",
             display: "flex",
@@ -1815,7 +1816,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
                 marginBottom: "18px",
                 padding: "10px 14px",
                 border: `1px solid ${foto.status.sold}`,
-                background: "rgba(179,58,47,0.06)",
+                background: alpha(foto.status.sold, 0.06),
                 color: foto.status.sold,
                 fontSize: 12.5,
                 borderRadius: "10px",
@@ -2085,8 +2086,8 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         <Box
           sx={{
             position: { lg: "sticky" },
-            top: { lg: 56 },
-            maxHeight: { lg: "calc(100vh - 56px)" },
+            top: { lg: FOTO_TOPBAR_HEIGHT },
+            maxHeight: { lg: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)` },
             overflow: { lg: "auto" },
             paddingBottom: "20px",
             display: "flex",
@@ -2460,12 +2461,10 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
           // here with `{ providerId: id }`.
           setDrawerOpen(false);
           void id;
-          if (typeof window !== "undefined") {
-            // eslint-disable-next-line no-alert
-            window.alert(
-              `Proveedor creado, pero el enlace al lote ${loteId} requiere extender lots.update en el servidor (Slice 2). Por ahora abrí el lote de nuevo desde Inicio para volver a empezar con este proveedor.`,
-            );
-          }
+          notify(
+            `Proveedor creado, pero el enlace al lote ${loteId} requiere extender lots.update en el servidor (Slice 2). Por ahora abrí el lote de nuevo desde Inicio para volver a empezar con este proveedor.`,
+            "warning",
+          );
         }}
         contextLabel={`${loteId} · sin salir de la captura`}
       />

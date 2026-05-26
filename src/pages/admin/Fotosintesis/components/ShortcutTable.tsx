@@ -58,6 +58,8 @@ export function ShortcutTable({ title, shortcuts }: ShortcutTableProps) {
               sx={{
                 fontSize: 11.5,
                 color: foto.ink.secondary,
+                minWidth: 0,
+                overflowWrap: "anywhere",
               }}
             >
               {s.label}

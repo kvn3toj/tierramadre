@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Box, Switch } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   Search,
@@ -23,6 +24,7 @@ import {
 import { useNotification } from "../../../contexts/NotificationContext";
 import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
 import { TicketHeader } from "./components/TicketHeader";
+import { FOTO_TOPBAR_HEIGHT } from "./components/FotoTopbar";
 import { StepPills } from "./components/StepPills";
 import { spanishText } from "./utils/fieldLang";
 import { SegmentedControl } from "./components/SegmentedControl";
@@ -62,6 +64,13 @@ type FormaPago =
   | "bajo_pedido"
   | "consignacion";
 type MetodoContado = "efectivo" | "transferencia" | "crypto";
+
+/**
+ * Shared dark "felt" gradient for the Kardex/comprobante preview panes.
+ * Re-used by VentaDetailPage so the two preview backgrounds stay identical.
+ */
+export const FOTO_PREVIEW_FELT =
+  "linear-gradient(180deg, #2a2522 0%, #1a1714 100%)";
 
 function formatCop(value: number | undefined | null): string {
   if (typeof value !== "number" || Number.isNaN(value)) return "—";
@@ -533,7 +542,10 @@ export default function FotosintesisVentaPage() {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.2fr) 480px" },
+          gridTemplateColumns: {
+            xs: "1fr",
+            lg: "minmax(0, 1fr) minmax(380px, 460px)",
+          },
           gap: 0,
           maxWidth: 1320,
           margin: "0 auto",
@@ -557,7 +569,7 @@ export default function FotosintesisVentaPage() {
                 alignItems: "center",
                 gap: "10px",
                 padding: "12px 16px",
-                background: "rgba(179, 58, 47, 0.08)",
+                background: alpha(foto.status.sold, 0.08),
                 border: `1px solid ${foto.status.sold}`,
                 borderRadius: "9px",
                 color: foto.status.sold,
@@ -776,7 +788,7 @@ export default function FotosintesisVentaPage() {
                   <Box
                     sx={{
                       display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
+                      gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
                       gap: "6px 18px",
                       fontSize: 11.5,
                       color: foto.ink.secondary,
@@ -785,14 +797,33 @@ export default function FotosintesisVentaPage() {
                     <Lineage
                       label="Procedencia"
                       value={item.coleccion ?? "—"}
+                      foto={foto}
                     />
-                    <Lineage label="Calidad" value={item.calidad ?? "—"} />
-                    <Lineage label="Peso" value={item.peso ?? "—"} />
-                    <Lineage label="Color" value={item.color ?? "—"} />
-                    <Lineage label="Lote" value={item.loteId ?? "—"} mono />
+                    <Lineage
+                      label="Calidad"
+                      value={item.calidad ?? "—"}
+                      foto={foto}
+                    />
+                    <Lineage
+                      label="Peso"
+                      value={item.peso ?? "—"}
+                      foto={foto}
+                    />
+                    <Lineage
+                      label="Color"
+                      value={item.color ?? "—"}
+                      foto={foto}
+                    />
+                    <Lineage
+                      label="Lote"
+                      value={item.loteId ?? "—"}
+                      foto={foto}
+                      mono
+                    />
                     <Lineage
                       label="Costo base"
                       value={formatCop(item.costoBaseCOP)}
+                      foto={foto}
                       mono
                     />
                   </Box>
@@ -1164,7 +1195,7 @@ export default function FotosintesisVentaPage() {
                 cursor: canConfirm ? "pointer" : "not-allowed",
                 fontFamily: "inherit",
                 boxShadow: canConfirm
-                  ? "0 1px 2px rgba(0,0,0,0.06), 0 4px 12px rgba(0,140,98,0.18)"
+                  ? `0 1px 2px rgba(0,0,0,0.06), 0 4px 12px ${alpha(foto.accent.primary, 0.18)}`
                   : "none",
                 transition:
                   "background 120ms ease, transform 120ms ease, box-shadow 120ms ease",
@@ -1195,11 +1226,14 @@ export default function FotosintesisVentaPage() {
         {/* ───── RIGHT pane (Kardex preview) ───── */}
         <Box
           sx={{
-            background: "linear-gradient(180deg, #2a2522 0%, #1a1714 100%)",
+            background: FOTO_PREVIEW_FELT,
             padding: "28px 24px",
             position: { xs: "static", lg: "sticky" },
-            top: 56,
-            maxHeight: { xs: "none", lg: "calc(100vh - 56px)" },
+            top: FOTO_TOPBAR_HEIGHT,
+            maxHeight: {
+              xs: "none",
+              lg: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
+            },
             overflowY: "auto",
           }}
         >
@@ -1386,19 +1420,20 @@ function Section({ title, children, foto }: SectionProps) {
 interface LineageProps {
   label: string;
   value: React.ReactNode;
+  foto: ReturnType<typeof getFoto>;
   mono?: boolean;
 }
 
-function Lineage({ label, value, mono = false }: LineageProps) {
+function Lineage({ label, value, foto, mono = false }: LineageProps) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
       <Box
         sx={{
           fontSize: 8.5,
           fontWeight: 500,
           letterSpacing: "0.2em",
           textTransform: "uppercase",
-          color: "#8B9290",
+          color: foto.ink.tertiary,
           marginBottom: "2px",
         }}
       >
@@ -1409,7 +1444,7 @@ function Lineage({ label, value, mono = false }: LineageProps) {
           fontFamily: mono ? fontFamilies.mono : fontFamilies.system,
           fontVariantNumeric: mono ? "tabular-nums" : undefined,
           fontSize: 12,
-          color: "#0B100E",
+          color: foto.ink.primary,
           fontWeight: 500,
         }}
       >

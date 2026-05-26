@@ -71,9 +71,20 @@ export function ItemMiniCard({
 
   return (
     <Box
-      component={onClick ? "button" : "div"}
+      component="div"
       onClick={onClick}
       role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e: React.KeyboardEvent) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
       sx={{
         display: "grid",
         gridTemplateColumns: onEdit ? "auto 1fr auto auto" : "auto 1fr auto",

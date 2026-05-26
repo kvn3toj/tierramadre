@@ -4,6 +4,14 @@ import { getFoto, fontFamilies } from "../../../../design-system";
 
 export type SyncStatus = "synced" | "pending" | "error";
 
+/**
+ * Canonical sticky-topbar height (px). The bar is otherwise padding-driven
+ * (~48–52px), which led consumers to guess `56`/`72` for their own sticky
+ * offsets. Pin it here so every `position: sticky; top:` and `calc(100vh - …)`
+ * in the module derives from one value instead of a magic number.
+ */
+export const FOTO_TOPBAR_HEIGHT = 56;
+
 export interface Crumb {
   label: string;
   to?: string;
@@ -47,6 +55,10 @@ export function FotoTopbar({
         position: "sticky",
         top: 0,
         zIndex: 50,
+        boxSizing: "border-box",
+        minHeight: FOTO_TOPBAR_HEIGHT,
+        display: "flex",
+        alignItems: "center",
         padding: { xs: "11px 16px", md: "13px 28px" },
         borderBottom: `1px solid ${foto.surfaces.edge}`,
         background: alpha("#FFFFFF", 0.86),

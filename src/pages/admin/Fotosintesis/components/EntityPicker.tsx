@@ -267,7 +267,7 @@ export function EntityPicker<T>({
                           height: 26,
                           borderRadius: "50%",
                           background: foto.accent.primary,
-                          color: "#fff",
+                          color: foto.ink.inverse,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",

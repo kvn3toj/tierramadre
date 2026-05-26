@@ -175,7 +175,10 @@ export function FotosintesisGuideFab({
             // Smaller + tucked tighter on phones so it doesn't overlap form
             // content (QA flagged collisions with the Venta totals and
             // Captura inputs at mobile widths).
-            bottom: { xs: 168, md: 188 },
+            bottom: {
+              xs: "calc(168px + env(safe-area-inset-bottom))",
+              md: 188,
+            },
             right: { xs: 12, md: 28 },
             zIndex: 1300,
             width: { xs: 44, md: 56 },
@@ -296,6 +299,8 @@ export function FotosintesisGuideFab({
                 borderRadius: "8px",
                 width: 32,
                 height: 32,
+                minWidth: 44,
+                minHeight: 44,
                 "&:hover": {
                   background: foto.surfaces.inset,
                   color: foto.ink.primary,

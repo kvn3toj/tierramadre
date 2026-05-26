@@ -277,6 +277,7 @@ export function CertificadoPreview({
               lineHeight: 1.6,
               color: PAPER_INK_SOFT,
               fontStyle: "italic",
+              whiteSpace: "pre-line",
             }}
           >
             {

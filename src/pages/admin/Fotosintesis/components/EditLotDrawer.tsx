@@ -245,8 +245,8 @@ export function EditLotDrawer({
           top: 0,
           bottom: 0,
           margin: 0,
-          width: 560,
-          maxWidth: "calc(100vw - 24px)",
+          width: { xs: "100vw", sm: 560 },
+          maxWidth: "100vw",
           height: "100vh",
           maxHeight: "100vh",
           borderRadius: 0,
@@ -317,6 +317,8 @@ export function EditLotDrawer({
           sx={{
             width: 32,
             height: 32,
+            minWidth: 44,
+            minHeight: 44,
             borderRadius: "8px",
             display: "flex",
             alignItems: "center",
@@ -353,7 +355,7 @@ export function EditLotDrawer({
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
             gap: "16px",
           }}
         >
@@ -415,7 +417,7 @@ export function EditLotDrawer({
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
             gap: "16px",
           }}
         >
@@ -457,7 +459,7 @@ export function EditLotDrawer({
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
             gap: "16px",
           }}
         >

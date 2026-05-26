@@ -435,7 +435,11 @@ export function ClienteFinalForm({
         </Box>
       </Box>
       <Box
-        sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+          gap: "14px",
+        }}
       >
         <Box sx={{ gridColumn: "1 / -1" }}>
           <FieldLabel>Nombre completo ·</FieldLabel>

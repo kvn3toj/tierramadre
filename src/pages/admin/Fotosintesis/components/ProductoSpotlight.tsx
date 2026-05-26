@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { Box, Dialog } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import { Search, X, Clock } from "lucide-react";
 import { getFoto, fontFamilies, emeraldCore } from "../../../../design-system";
@@ -454,14 +455,14 @@ export function ProductoSpotlight({
                   }}
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: "52px auto 1fr auto auto",
+                    gridTemplateColumns: {
+                      xs: "44px 1fr auto",
+                      sm: "52px auto 1fr auto auto",
+                    },
                     gap: "14px",
                     alignItems: "center",
                     padding: "10px 18px",
                     cursor: "pointer",
-                    borderLeft: isFocus
-                      ? `3px solid ${foto.accent.primary}`
-                      : "3px solid transparent",
                     background: isFocus ? foto.accent.soft : "transparent",
                     transition: "background 120ms ease",
                   }}
@@ -505,7 +506,7 @@ export function ProductoSpotlight({
                   {/* Ct chip */}
                   <Box
                     sx={{
-                      display: "inline-flex",
+                      display: { xs: "none", sm: "inline-flex" },
                       alignItems: "center",
                       padding: "3px 8px",
                       borderRadius: "999px",
@@ -554,14 +555,14 @@ export function ProductoSpotlight({
                   {/* Estado badge */}
                   <Box
                     sx={{
-                      display: "inline-flex",
+                      display: { xs: "none", sm: "inline-flex" },
                       alignItems: "center",
                       gap: "5px",
                       padding: "3px 9px",
                       borderRadius: "999px",
                       background:
                         row.estado === "ASESOR"
-                          ? "rgba(182, 139, 47, 0.10)"
+                          ? alpha(foto.status.consigned, 0.1)
                           : foto.accent.soft,
                       border: `1px solid ${
                         row.estado === "ASESOR"
