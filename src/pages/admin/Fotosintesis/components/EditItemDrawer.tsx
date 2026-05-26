@@ -22,6 +22,7 @@ import {
   gemaPatchFromDraft,
 } from "../utils/buildLotItemPayload";
 import { uploadFotosintesisImages } from "../utils/uploadItemMedia";
+import { convertToProxyUrl } from "../../../../utils/driveUrl";
 
 interface ProductInventoryRow {
   _id: string;
@@ -148,7 +149,13 @@ export function EditItemDrawer({
     setPhotos((prev) => {
       revokeLocalPreviews(prev);
       return product.fotoUrl
-        ? [{ id: "existing-foto", url: product.fotoUrl }]
+        ? [
+            {
+              id: "existing-foto",
+              // Route the saved Drive URL through the proxy so it renders.
+              url: convertToProxyUrl(product.fotoUrl) ?? product.fotoUrl,
+            },
+          ]
         : [];
     });
     setInitialFotoUrl(product.fotoUrl);

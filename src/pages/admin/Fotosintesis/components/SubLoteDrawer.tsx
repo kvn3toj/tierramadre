@@ -9,6 +9,7 @@ import { useNotification } from "../../../../contexts/NotificationContext";
 import type { Doc } from "../../../../../convex/_generated/dataModel";
 import { PhotoDropzone, type DropzonePhoto } from "./PhotoDropzone";
 import { uploadFotosintesisImages } from "../utils/uploadItemMedia";
+import { convertToProxyUrl } from "../../../../utils/driveUrl";
 
 const formatCOP = (n: number): string =>
   new Intl.NumberFormat("es-CO", {
@@ -66,7 +67,15 @@ export function SubLoteDrawer({
     setSelected(new Set(subLote?.itemIds ?? []));
     setMostrarComoLote(subLote?.mostrarComoLote ?? false);
     setHeroPhoto(
-      subLote?.fotoUrl ? [{ id: "existing-hero", url: subLote.fotoUrl }] : [],
+      subLote?.fotoUrl
+        ? [
+            {
+              id: "existing-hero",
+              // Drive URLs only render through the serve-drive-image proxy.
+              url: convertToProxyUrl(subLote.fotoUrl) ?? subLote.fotoUrl,
+            },
+          ]
+        : [],
     );
     setError(null);
   }, [open, subLote]);

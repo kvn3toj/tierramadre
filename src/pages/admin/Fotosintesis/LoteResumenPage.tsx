@@ -22,6 +22,7 @@ import { PriceMultiplierField } from "./components/PriceMultiplierField";
 import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
 import { EditItemDrawer } from "./components/EditItemDrawer";
 import { uploadFotosintesisImages } from "./utils/uploadItemMedia";
+import { convertToProxyUrl } from "../../../utils/driveUrl";
 
 type PublishMode = "all" | "selective" | "reserve";
 
@@ -169,7 +170,13 @@ export default function FotosintesisLoteResumenPage() {
     if (!lot) return;
     setMostrarComoLote(lot.mostrarComoLote ?? false);
     if (lot.fotoLoteUrl) {
-      setHeroPhoto([{ id: "existing-hero", url: lot.fotoLoteUrl }]);
+      // Drive URLs are served through the proxy so the preview actually loads.
+      setHeroPhoto([
+        {
+          id: "existing-hero",
+          url: convertToProxyUrl(lot.fotoLoteUrl) ?? lot.fotoLoteUrl,
+        },
+      ]);
     }
   }, [lot]);
 
@@ -561,7 +568,10 @@ export default function FotosintesisLoteResumenPage() {
                       {product?.fotoUrl ? (
                         <Box
                           component="img"
-                          src={product.fotoUrl}
+                          src={
+                            convertToProxyUrl(product.fotoUrl) ??
+                            product.fotoUrl
+                          }
                           alt={`Foto del ítem ${li.itemId}`}
                           sx={{
                             width: 44,

@@ -14,6 +14,7 @@ import { getFoto, fontFamilies, emeraldCore } from "../../../../design-system";
 import { useConvexQuery, convexApi } from "../../../../lib/convex-safe";
 import type { SpotlightProduct } from "../FotosintesisLayoutContext";
 import { KbdKey } from "./KbdKey";
+import { convertToProxyUrl } from "../../../../utils/driveUrl";
 
 interface ProductoSpotlightProps {
   open: boolean;
@@ -112,6 +113,8 @@ export function ProductoSpotlight({
       deduped.push({
         itemId: row.itemId,
         nombre: row.nombre ?? "Sin nombre",
+        // Drive URLs need the proxy to render as an <img> thumbnail.
+        thumbnailUrl: convertToProxyUrl(row.fotoUrl),
         precioCop: row.precioCOP,
         loteId: row.loteId,
         estado: row.estado as string | undefined,
