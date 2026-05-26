@@ -120,10 +120,49 @@ export const listByLote = query({
 export const publishedCatalog = query({
   args: {},
   handler: async (ctx) => {
-    const rows = await ctx.db.query("productInventory").collect();
-    return rows.filter(
-      (row) => row.loteId !== undefined && row.mostrarEnCatalogo === true,
-    );
+    // Scan ONLY published rows via the index, not the whole inventory table.
+    // The set of `mostrarEnCatalogo === true` rows is tiny (a handful of
+    // published lot items) versus the full table (thousands of legacy rows),
+    // so this slashes per-execution DB read. It also narrows the reactive
+    // read set: writes to unpublished rows (every cron pull, most admin edits)
+    // fall outside this index range and no longer re-run the query for the
+    // anonymous catalog visitors subscribed to it.
+    const rows = await ctx.db
+      .query("productInventory")
+      .withIndex("by_mostrarEnCatalogo", (q) => q.eq("mostrarEnCatalogo", true))
+      .collect();
+
+    // Project ONLY the fields the customer catalog consumes (see
+    // useFotosintesisCatalog.PublishedRow). Returning full docs to anonymous
+    // clients both wastes client bandwidth and leaks internal data —
+    // costoBaseCOP, precioEmbajadorCOP, precioPotencialCOP, sync metadata,
+    // rowIndex, etc. — none of which the public UI reads.
+    return rows
+      .filter((row) => row.loteId !== undefined)
+      .map((row) => ({
+        itemId: row.itemId,
+        nombre: row.nombre,
+        peso: row.peso,
+        color: row.color,
+        calidad: row.calidad,
+        cantidad: row.cantidad,
+        talla: row.talla,
+        medidas: row.medidas,
+        medidasValores: row.medidasValores,
+        categoria: row.categoria,
+        precioCOP: row.precioCOP,
+        precioConscienteCOP: row.precioConscienteCOP,
+        ubicacion: row.ubicacion,
+        asesor: row.asesor,
+        estado: row.estado,
+        qr: row.qr,
+        coleccion: row.coleccion,
+        caja: row.caja,
+        asesorActual: row.asesorActual,
+        estadoAsesor: row.estadoAsesor,
+        fotoUrl: row.fotoUrl,
+        certificadoUrl: row.certificadoUrl,
+      }));
   },
 });
 

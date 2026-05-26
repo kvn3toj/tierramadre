@@ -174,7 +174,13 @@ export default defineSchema({
     .index("by_rowIndex", ["rowIndex"])
     .index("by_estado", ["estado"])
     .index("by_syncStatus", ["syncStatus"])
-    .index("by_loteId", ["loteId"]),
+    .index("by_loteId", ["loteId"])
+    // Powers the PUBLIC, always-on `products.publishedCatalog` query. Indexing
+    // `mostrarEnCatalogo` lets that query scan ONLY published rows instead of
+    // the whole table — which also means cron/admin writes to unpublished rows
+    // (the overwhelming majority) no longer invalidate every catalog visitor's
+    // reactive subscription. Both a bandwidth and an invalidation-frequency win.
+    .index("by_mostrarEnCatalogo", ["mostrarEnCatalogo"]),
 
   productEdits: defineTable({
     /** Item being edited */
