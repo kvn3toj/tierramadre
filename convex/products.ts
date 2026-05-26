@@ -17,6 +17,12 @@ import {
   normalizeCalidadForSheet,
   normalizeColorForSheet,
 } from "./_lib/fotosintesisVocab";
+import {
+  assembleBundleGroups,
+  type ResolvedBundleItem,
+  type ShownSublote,
+  type ShownLot,
+} from "./_lib/publishedGroups";
 
 // =============================================================================
 // QUERIES — read the mirror
@@ -141,7 +147,11 @@ export const publishedCatalog = query({
 export const publishedGroups = query({
   args: {},
   handler: async (ctx) => {
-    const itemForId = async (itemId: string) => {
+    // Resolve a productInventory row into a bundle member, carrying its
+    // `mostrarEnCatalogo` flag so the pure assembler can drop hidden pieces.
+    const resolve = async (
+      itemId: string,
+    ): Promise<ResolvedBundleItem | null> => {
       const p = await ctx.db
         .query("productInventory")
         .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
@@ -158,55 +168,31 @@ export const publishedGroups = query({
         categoria: p.categoria,
         talla: p.talla,
         medidas: p.medidas,
+        mostrarEnCatalogo: p.mostrarEnCatalogo === true,
       };
     };
 
-    type Group = {
-      groupKind: "lote" | "sublote";
-      groupId: string;
-      parentLoteId: string;
-      nombre: string;
-      fotoUrl?: string;
-      totalPriceCOP: number;
-      items: NonNullable<Awaited<ReturnType<typeof itemForId>>>[];
-    };
-
-    // ── Sublote groups first (they claim their items) ────────────
-    const subloteGroups: Group[] = [];
-    const claimedItemIds = new Set<string>();
+    // Shown sub-lotes: active + opted into bundle display.
     const activeSubs = await ctx.db
       .query("subLotes")
       .withIndex("by_estado", (q) => q.eq("estado", "activa"))
       .collect();
-    for (const sub of activeSubs) {
-      if (sub.mostrarComoLote !== true) continue;
-      const seen = new Set<string>();
-      const items = [];
-      for (const itemId of sub.itemIds) {
-        if (seen.has(itemId)) continue;
-        seen.add(itemId);
-        const it = await itemForId(itemId);
-        if (it) items.push(it);
-      }
-      if (items.length === 0) continue;
-      for (const it of items) claimedItemIds.add(it.itemId);
-      subloteGroups.push({
-        groupKind: "sublote",
-        groupId: sub.subLoteId,
-        parentLoteId: sub.parentLoteId,
-        nombre: sub.nombre,
-        fotoUrl: sub.fotoUrl,
-        totalPriceCOP: items.reduce((s, it) => s + it.precioCOP, 0),
-        items,
-      });
-    }
+    const shownSublotes: ShownSublote[] = activeSubs
+      .filter((s) => s.mostrarComoLote === true)
+      .map((s) => ({
+        subLoteId: s.subLoteId,
+        parentLoteId: s.parentLoteId,
+        nombre: s.nombre,
+        fotoUrl: s.fotoUrl,
+        itemIds: s.itemIds,
+      }));
 
-    // ── Lote groups (excluding items claimed by a shown sublote) ──
-    const loteGroups: Group[] = [];
+    // Shown lotes: published + opted into bundle display, members in lot order.
     const publishedLots = await ctx.db
       .query("lots")
       .withIndex("by_estado", (q) => q.eq("estado", "publicado"))
       .collect();
+    const shownLots: ShownLot[] = [];
     for (const lot of publishedLots) {
       if (lot.mostrarComoLote !== true) continue;
       const joins = await ctx.db
@@ -214,25 +200,28 @@ export const publishedGroups = query({
         .withIndex("by_loteId", (q) => q.eq("loteId", lot.loteId))
         .collect();
       joins.sort((a, b) => a.ordenEnLote - b.ordenEnLote);
-      const items = [];
-      for (const j of joins) {
-        if (claimedItemIds.has(j.itemId)) continue; // claimed by a sublote
-        const it = await itemForId(j.itemId);
-        if (it) items.push(it);
-      }
-      if (items.length === 0) continue; // fully split into sublotes
-      loteGroups.push({
-        groupKind: "lote",
-        groupId: lot.loteId,
-        parentLoteId: lot.loteId,
+      shownLots.push({
+        loteId: lot.loteId,
         nombre: lot.renombreLote ?? lot.loteId,
         fotoUrl: lot.fotoLoteUrl,
-        totalPriceCOP: items.reduce((s, it) => s + it.precioCOP, 0),
-        items,
+        memberItemIds: joins.map((j) => j.itemId),
       });
     }
 
-    return [...loteGroups, ...subloteGroups];
+    // Pre-resolve every candidate item once so the assembly stays pure + sync.
+    const candidateIds = new Set<string>();
+    for (const s of shownSublotes)
+      for (const id of s.itemIds) candidateIds.add(id);
+    for (const l of shownLots)
+      for (const id of l.memberItemIds) candidateIds.add(id);
+    const resolved = new Map<string, ResolvedBundleItem | null>();
+    for (const id of candidateIds) resolved.set(id, await resolve(id));
+
+    return assembleBundleGroups({
+      shownSublotes,
+      shownLots,
+      resolveItem: (id) => resolved.get(id) ?? null,
+    });
   },
 });
 
