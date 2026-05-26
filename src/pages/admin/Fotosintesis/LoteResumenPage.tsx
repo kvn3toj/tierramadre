@@ -334,7 +334,13 @@ export default function FotosintesisLoteResumenPage() {
   if (!lot || !lotItems || !products) {
     return (
       <Box
-        sx={{ padding: "36px 28px", color: foto.ink.tertiary, fontSize: 13 }}
+        sx={{
+          maxWidth: 1320,
+          marginX: "auto",
+          padding: { xs: "24px 16px", md: "36px 28px" },
+          color: foto.ink.tertiary,
+          fontSize: 13,
+        }}
       >
         Cargando resumen del lote {loteId}…
       </Box>
@@ -342,7 +348,7 @@ export default function FotosintesisLoteResumenPage() {
   }
 
   return (
-    <Box sx={{ padding: { xs: "24px 16px", md: "36px 28px" } }}>
+    <Box>
       <TicketHeader
         id={lot.loteId}
         meta={[
@@ -354,478 +360,487 @@ export default function FotosintesisLoteResumenPage() {
       />
 
       <Box
-        sx={{ textAlign: "center", margin: "32px auto 28px", maxWidth: 560 }}
-      >
-        <Box
-          sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: foto.accent.deep,
-            background: foto.accent.soft,
-            borderRadius: "999px",
-            padding: "6px 12px",
-          }}
-        >
-          <CheckCircle2 size={14} />
-          {isPublished
-            ? "Lote publicado"
-            : isClosed
-              ? "Lote cerrado"
-              : "Listo para cerrar"}
-        </Box>
-        <Box
-          component="h1"
-          sx={{
-            fontSize: { xs: 28, md: 38 },
-            fontWeight: 600,
-            letterSpacing: "-0.03em",
-            marginTop: "16px",
-            color: foto.ink.primary,
-          }}
-        >
-          {isPublished
-            ? "Gestionar lote"
-            : isClosed
-              ? "Publicar lote"
-              : "Cerrar lote"}{" "}
-          {lot.loteId}
-        </Box>
-        <Box
-          sx={{ fontSize: 14, color: foto.ink.secondary, marginTop: "10px" }}
-        >
-          {isPublished
-            ? "Este lote ya está en el catálogo. Mostralo como un solo card de lote (con foto y precio total) o dejá sus ítems individuales."
-            : isClosed
-              ? "Este lote ya está cerrado. Publicá sus ítems para que aparezcan en el catálogo y puedas venderlos."
-              : "Revisá las validaciones, decidí qué ítems publicar y confirmá el cierre. Después podrás vender desde el catálogo."}
-        </Box>
-      </Box>
-
-      <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
-          gap: "14px",
-          marginBottom: "28px",
-        }}
-      >
-        <ValidationCard
-          label="Preponderancia (BR-2)"
-          ok={br2Ok}
-          value={`${prepSum.toFixed(1)}%`}
-          detail="Debe sumar 100% ± 0.01"
-        />
-        <ValidationCard
-          label="Conteo (BR-3)"
-          ok={br3Ok}
-          value={`${itemsCount} / ${unidades}`}
-          detail="Ítems capturados = unidades declaradas"
-        />
-        <ValidationCard
-          label="Fotos"
-          ok={photosOk}
-          value={photosOk ? "Completo" : "Faltan fotos"}
-          detail="Recomendado: hero en Drive por ítem"
-        />
-        <ValidationCard
-          label="Sync"
-          ok={syncOk}
-          value={lot.syncStatus ?? "—"}
-          detail="Estado de sincronización con Sheets"
-        />
-      </Box>
-
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", lg: "1.5fr 420px" },
-          gap: "32px",
-          alignItems: "start",
+          maxWidth: 1320,
+          marginX: "auto",
+          padding: { xs: "24px 16px", md: "36px 28px" },
         }}
       >
         <Box
-          sx={{
-            background: foto.surfaces.panel,
-            border: `1px solid ${foto.surfaces.rule}`,
-            borderRadius: "14px",
-            padding: "20px 22px",
-          }}
+          sx={{ textAlign: "center", margin: "32px auto 28px", maxWidth: 560 }}
         >
-          <Box
-            component="h2"
-            sx={{ fontSize: 17, fontWeight: 600, margin: "0 0 16px" }}
-          >
-            Ítems del lote
-          </Box>
-          <Box
-            component="ul"
-            role="list"
-            sx={{ listStyle: "none", m: 0, p: 0 }}
-          >
-            {lotItems.map((li) => {
-              const product = products.find((p) => p.itemId === li.itemId);
-              const pubOn = pubByItemId[li.itemId] ?? false;
-              const pricing = pricingByItemId[li.itemId] ?? {
-                precioEmbajadorCOP: "",
-                precioConscienteCOP: "",
-              };
-              return (
-                <Box
-                  component="li"
-                  key={li._id}
-                  sx={{
-                    display: "grid",
-                    gap: "12px",
-                    padding: "14px 0",
-                    borderBottom: `1px solid ${foto.surfaces.edge}`,
-                    "&:last-of-type": { borderBottom: "none" },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: "12px",
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <Box>
-                      <Box
-                        sx={{
-                          fontFamily: fontFamilies.mono,
-                          fontSize: 11,
-                          color: foto.ink.tertiary,
-                        }}
-                      >
-                        #{li.itemId}
-                      </Box>
-                      <Box sx={{ fontSize: 14, fontWeight: 600 }}>
-                        {product?.nombre ?? "—"}
-                      </Box>
-                      <Box sx={{ fontSize: 12, color: foto.ink.secondary }}>
-                        {li.preponderancia}% · {formatCOP(li.costoBaseCOP)}
-                      </Box>
-                    </Box>
-                    <Box
-                      component="button"
-                      type="button"
-                      aria-pressed={pubOn}
-                      onClick={() =>
-                        setPubByItemId((prev) => ({
-                          ...prev,
-                          [li.itemId]: !pubOn,
-                        }))
-                      }
-                      sx={{
-                        fontFamily: fontFamilies.system,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        padding: "6px 10px",
-                        borderRadius: "999px",
-                        border: `1px solid ${pubOn ? foto.accent.primary : foto.surfaces.rule}`,
-                        background: pubOn
-                          ? foto.accent.soft
-                          : foto.surfaces.inset,
-                        color: pubOn ? foto.accent.deep : foto.ink.secondary,
-                        cursor: "pointer",
-                      }}
-                    >
-                      {pubOn ? "Publicar" : "Reserva"}
-                    </Box>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                    }}
-                  >
-                    {product?.fotoUrl ? (
-                      <Box
-                        component="img"
-                        src={product.fotoUrl}
-                        alt={`Foto del ítem ${li.itemId}`}
-                        sx={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: "8px",
-                          objectFit: "cover",
-                          border: `1px solid ${foto.surfaces.rule}`,
-                          flexShrink: 0,
-                        }}
-                      />
-                    ) : (
-                      <Box
-                        aria-hidden
-                        sx={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: "8px",
-                          border: `1px dashed ${foto.surfaces.rule}`,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: foto.ink.tertiary,
-                          fontSize: 9,
-                          textAlign: "center",
-                          lineHeight: 1.1,
-                          flexShrink: 0,
-                        }}
-                      >
-                        Sin foto
-                      </Box>
-                    )}
-                    <Box
-                      component="button"
-                      type="button"
-                      onClick={() =>
-                        setEditingLotItemId(li._id as Id<"lotItems">)
-                      }
-                      sx={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        fontFamily: fontFamilies.system,
-                        fontSize: 11.5,
-                        fontWeight: 600,
-                        padding: "7px 12px",
-                        borderRadius: "8px",
-                        border: `1px solid ${foto.surfaces.rule}`,
-                        background: foto.surfaces.inset,
-                        color: foto.ink.secondary,
-                        cursor: "pointer",
-                        transition: "background 120ms ease, color 120ms ease",
-                        "&:hover": {
-                          background: foto.surfaces.panel,
-                          color: foto.ink.primary,
-                        },
-                      }}
-                    >
-                      <ImagePlus size={13} strokeWidth={2} />
-                      {product?.fotoUrl ? "Editar foto" : "Agregar foto"}
-                    </Box>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-                      gap: "16px",
-                    }}
-                  >
-                    <PriceMultiplierField
-                      label="Precio embajador"
-                      optional="embajador"
-                      baseCOP={li.costoBaseCOP}
-                      defaultMultiplier={3}
-                      value={pricing.precioEmbajadorCOP}
-                      onChange={(v) =>
-                        setPricingByItemId((prev) => ({
-                          ...prev,
-                          [li.itemId]: { ...pricing, precioEmbajadorCOP: v },
-                        }))
-                      }
-                      ariaLabel="Precio embajador"
-                    />
-                    <PriceMultiplierField
-                      label="Precio consciente"
-                      optional="consciente"
-                      baseCOP={li.costoBaseCOP}
-                      defaultMultiplier={4}
-                      value={pricing.precioConscienteCOP}
-                      onChange={(v) =>
-                        setPricingByItemId((prev) => ({
-                          ...prev,
-                          [li.itemId]: { ...pricing, precioConscienteCOP: v },
-                        }))
-                      }
-                      ariaLabel="Precio clientes conscientes"
-                    />
-                  </Box>
-                </Box>
-              );
-            })}
-          </Box>
-        </Box>
-
-        <Box sx={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <Box
             sx={{
-              background: foto.surfaces.inset,
-              border: `1px solid ${foto.surfaces.edge}`,
-              borderRadius: "12px",
-              padding: "16px 18px",
-              fontSize: 12.5,
-              color: foto.ink.secondary,
-              lineHeight: 1.55,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: foto.accent.deep,
+              background: foto.accent.soft,
+              borderRadius: "999px",
+              padding: "6px 12px",
             }}
           >
-            {isPublished ? (
-              <>
-                Este lote ya está <strong>publicado</strong>. Activá{" "}
-                <strong>Mostrar como lote</strong> para presentarlo como un solo
-                card con foto y precio total; al guardar se actualiza el
-                catálogo.
-              </>
-            ) : isClosed ? (
-              <>
-                Al publicar: todos los ítems pasan a{" "}
-                <strong>visibles en catálogo</strong> y el lote queda{" "}
-                <strong>publicado</strong>, listo para vender.
-              </>
-            ) : (
-              <>
-                Al cerrar: el lote pasa a <strong>cerrado</strong>, se
-                sincroniza a Sheets y los ítems en reserva quedan ocultos del
-                catálogo hasta que los publiques.
-              </>
-            )}
+            <CheckCircle2 size={14} />
+            {isPublished
+              ? "Lote publicado"
+              : isClosed
+                ? "Lote cerrado"
+                : "Listo para cerrar"}
+          </Box>
+          <Box
+            component="h1"
+            sx={{
+              fontSize: { xs: 28, md: 38 },
+              fontWeight: 600,
+              letterSpacing: "-0.03em",
+              marginTop: "16px",
+              color: foto.ink.primary,
+            }}
+          >
+            {isPublished
+              ? "Gestionar lote"
+              : isClosed
+                ? "Publicar lote"
+                : "Cerrar lote"}{" "}
+            {lot.loteId}
+          </Box>
+          <Box
+            sx={{ fontSize: 14, color: foto.ink.secondary, marginTop: "10px" }}
+          >
+            {isPublished
+              ? "Este lote ya está en el catálogo. Mostralo como un solo card de lote (con foto y precio total) o dejá sus ítems individuales."
+              : isClosed
+                ? "Este lote ya está cerrado. Publicá sus ítems para que aparezcan en el catálogo y puedas venderlos."
+                : "Revisá las validaciones, decidí qué ítems publicar y confirmá el cierre. Después podrás vender desde el catálogo."}
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+            gap: "14px",
+            marginBottom: "28px",
+          }}
+        >
+          <ValidationCard
+            label="Preponderancia (BR-2)"
+            ok={br2Ok}
+            value={`${prepSum.toFixed(1)}%`}
+            detail="Debe sumar 100% ± 0.01"
+          />
+          <ValidationCard
+            label="Conteo (BR-3)"
+            ok={br3Ok}
+            value={`${itemsCount} / ${unidades}`}
+            detail="Ítems capturados = unidades declaradas"
+          />
+          <ValidationCard
+            label="Fotos"
+            ok={photosOk}
+            value={photosOk ? "Completo" : "Faltan fotos"}
+            detail="Recomendado: hero en Drive por ítem"
+          />
+          <ValidationCard
+            label="Sync"
+            ok={syncOk}
+            value={lot.syncStatus ?? "—"}
+            detail="Estado de sincronización con Sheets"
+          />
+        </Box>
+
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", lg: "1.5fr 420px" },
+            gap: "32px",
+            alignItems: "start",
+          }}
+        >
+          <Box
+            sx={{
+              background: foto.surfaces.panel,
+              border: `1px solid ${foto.surfaces.rule}`,
+              borderRadius: "14px",
+              padding: "20px 22px",
+            }}
+          >
+            <Box
+              component="h2"
+              sx={{ fontSize: 17, fontWeight: 600, margin: "0 0 16px" }}
+            >
+              Ítems del lote
+            </Box>
+            <Box
+              component="ul"
+              role="list"
+              sx={{ listStyle: "none", m: 0, p: 0 }}
+            >
+              {lotItems.map((li) => {
+                const product = products.find((p) => p.itemId === li.itemId);
+                const pubOn = pubByItemId[li.itemId] ?? false;
+                const pricing = pricingByItemId[li.itemId] ?? {
+                  precioEmbajadorCOP: "",
+                  precioConscienteCOP: "",
+                };
+                return (
+                  <Box
+                    component="li"
+                    key={li._id}
+                    sx={{
+                      display: "grid",
+                      gap: "12px",
+                      padding: "14px 0",
+                      borderBottom: `1px solid ${foto.surfaces.edge}`,
+                      "&:last-of-type": { borderBottom: "none" },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: "12px",
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <Box>
+                        <Box
+                          sx={{
+                            fontFamily: fontFamilies.mono,
+                            fontSize: 11,
+                            color: foto.ink.tertiary,
+                          }}
+                        >
+                          #{li.itemId}
+                        </Box>
+                        <Box sx={{ fontSize: 14, fontWeight: 600 }}>
+                          {product?.nombre ?? "—"}
+                        </Box>
+                        <Box sx={{ fontSize: 12, color: foto.ink.secondary }}>
+                          {li.preponderancia}% · {formatCOP(li.costoBaseCOP)}
+                        </Box>
+                      </Box>
+                      <Box
+                        component="button"
+                        type="button"
+                        aria-pressed={pubOn}
+                        onClick={() =>
+                          setPubByItemId((prev) => ({
+                            ...prev,
+                            [li.itemId]: !pubOn,
+                          }))
+                        }
+                        sx={{
+                          fontFamily: fontFamilies.system,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          padding: "6px 10px",
+                          borderRadius: "999px",
+                          border: `1px solid ${pubOn ? foto.accent.primary : foto.surfaces.rule}`,
+                          background: pubOn
+                            ? foto.accent.soft
+                            : foto.surfaces.inset,
+                          color: pubOn ? foto.accent.deep : foto.ink.secondary,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {pubOn ? "Publicar" : "Reserva"}
+                      </Box>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                      }}
+                    >
+                      {product?.fotoUrl ? (
+                        <Box
+                          component="img"
+                          src={product.fotoUrl}
+                          alt={`Foto del ítem ${li.itemId}`}
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: "8px",
+                            objectFit: "cover",
+                            border: `1px solid ${foto.surfaces.rule}`,
+                            flexShrink: 0,
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          aria-hidden
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: "8px",
+                            border: `1px dashed ${foto.surfaces.rule}`,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: foto.ink.tertiary,
+                            fontSize: 9,
+                            textAlign: "center",
+                            lineHeight: 1.1,
+                            flexShrink: 0,
+                          }}
+                        >
+                          Sin foto
+                        </Box>
+                      )}
+                      <Box
+                        component="button"
+                        type="button"
+                        onClick={() =>
+                          setEditingLotItemId(li._id as Id<"lotItems">)
+                        }
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontFamily: fontFamilies.system,
+                          fontSize: 11.5,
+                          fontWeight: 600,
+                          padding: "7px 12px",
+                          borderRadius: "8px",
+                          border: `1px solid ${foto.surfaces.rule}`,
+                          background: foto.surfaces.inset,
+                          color: foto.ink.secondary,
+                          cursor: "pointer",
+                          transition: "background 120ms ease, color 120ms ease",
+                          "&:hover": {
+                            background: foto.surfaces.panel,
+                            color: foto.ink.primary,
+                          },
+                        }}
+                      >
+                        <ImagePlus size={13} strokeWidth={2} />
+                        {product?.fotoUrl ? "Editar foto" : "Agregar foto"}
+                      </Box>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                        gap: "16px",
+                      }}
+                    >
+                      <PriceMultiplierField
+                        label="Precio embajador"
+                        optional="embajador"
+                        baseCOP={li.costoBaseCOP}
+                        defaultMultiplier={3}
+                        value={pricing.precioEmbajadorCOP}
+                        onChange={(v) =>
+                          setPricingByItemId((prev) => ({
+                            ...prev,
+                            [li.itemId]: { ...pricing, precioEmbajadorCOP: v },
+                          }))
+                        }
+                        ariaLabel="Precio embajador"
+                      />
+                      <PriceMultiplierField
+                        label="Precio consciente"
+                        optional="consciente"
+                        baseCOP={li.costoBaseCOP}
+                        defaultMultiplier={4}
+                        value={pricing.precioConscienteCOP}
+                        onChange={(v) =>
+                          setPricingByItemId((prev) => ({
+                            ...prev,
+                            [li.itemId]: { ...pricing, precioConscienteCOP: v },
+                          }))
+                        }
+                        ariaLabel="Precio clientes conscientes"
+                      />
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Box>
           </Box>
 
-          {isClosed || isPublished ? null : (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <Box
+              sx={{
+                background: foto.surfaces.inset,
+                border: `1px solid ${foto.surfaces.edge}`,
+                borderRadius: "12px",
+                padding: "16px 18px",
+                fontSize: 12.5,
+                color: foto.ink.secondary,
+                lineHeight: 1.55,
+              }}
+            >
+              {isPublished ? (
+                <>
+                  Este lote ya está <strong>publicado</strong>. Activá{" "}
+                  <strong>Mostrar como lote</strong> para presentarlo como un
+                  solo card con foto y precio total; al guardar se actualiza el
+                  catálogo.
+                </>
+              ) : isClosed ? (
+                <>
+                  Al publicar: todos los ítems pasan a{" "}
+                  <strong>visibles en catálogo</strong> y el lote queda{" "}
+                  <strong>publicado</strong>, listo para vender.
+                </>
+              ) : (
+                <>
+                  Al cerrar: el lote pasa a <strong>cerrado</strong>, se
+                  sincroniza a Sheets y los ítems en reserva quedan ocultos del
+                  catálogo hasta que los publiques.
+                </>
+              )}
+            </Box>
+
+            {isClosed || isPublished ? null : (
+              <Box
+                sx={{
+                  background: foto.surfaces.panel,
+                  border: `1px solid ${foto.surfaces.rule}`,
+                  borderRadius: "14px",
+                  padding: "18px 20px",
+                }}
+              >
+                <FieldLabel>Decisión de publicación</FieldLabel>
+                <RadioGroup
+                  aria-label="Decisión de publicación"
+                  value={publishMode}
+                  onChange={(e) =>
+                    applyPublishMode(e.target.value as PublishMode)
+                  }
+                >
+                  <FormControlLabel
+                    value="all"
+                    control={<Radio size="small" />}
+                    label="Publicar todo el lote ahora"
+                  />
+                  <FormControlLabel
+                    value="selective"
+                    control={<Radio size="small" />}
+                    label="Publicar selectivamente (usa toggles)"
+                  />
+                  <FormControlLabel
+                    value="reserve"
+                    control={<Radio size="small" />}
+                    label="Mantener todo en reserva"
+                  />
+                </RadioGroup>
+              </Box>
+            )}
+
+            {/* Catalog grouping — show the whole lote as ONE bundled card */}
             <Box
               sx={{
                 background: foto.surfaces.panel,
                 border: `1px solid ${foto.surfaces.rule}`,
                 borderRadius: "14px",
                 padding: "18px 20px",
-              }}
-            >
-              <FieldLabel>Decisión de publicación</FieldLabel>
-              <RadioGroup
-                aria-label="Decisión de publicación"
-                value={publishMode}
-                onChange={(e) =>
-                  applyPublishMode(e.target.value as PublishMode)
-                }
-              >
-                <FormControlLabel
-                  value="all"
-                  control={<Radio size="small" />}
-                  label="Publicar todo el lote ahora"
-                />
-                <FormControlLabel
-                  value="selective"
-                  control={<Radio size="small" />}
-                  label="Publicar selectivamente (usa toggles)"
-                />
-                <FormControlLabel
-                  value="reserve"
-                  control={<Radio size="small" />}
-                  label="Mantener todo en reserva"
-                />
-              </RadioGroup>
-            </Box>
-          )}
-
-          {/* Catalog grouping — show the whole lote as ONE bundled card */}
-          <Box
-            sx={{
-              background: foto.surfaces.panel,
-              border: `1px solid ${foto.surfaces.rule}`,
-              borderRadius: "14px",
-              padding: "18px 20px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-            }}
-          >
-            <Box
-              sx={{
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                flexDirection: "column",
                 gap: "12px",
               }}
             >
               <Box
-                sx={{ display: "flex", flexDirection: "column", gap: "2px" }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                }}
               >
-                <FieldLabel>Mostrar como lote</FieldLabel>
-                <Box sx={{ fontSize: 11, color: foto.ink.tertiary }}>
-                  Un solo card con foto del lote y precio total; al abrirlo, la
-                  galería muestra cada ítem con su precio.
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: "2px" }}
+                >
+                  <FieldLabel>Mostrar como lote</FieldLabel>
+                  <Box sx={{ fontSize: 11, color: foto.ink.tertiary }}>
+                    Un solo card con foto del lote y precio total; al abrirlo,
+                    la galería muestra cada ítem con su precio.
+                  </Box>
                 </Box>
-              </Box>
-              <Switch
-                checked={mostrarComoLote}
-                onChange={(e) => setMostrarComoLote(e.target.checked)}
-                inputProps={{ "aria-label": "Mostrar como lote en catálogo" }}
-              />
-            </Box>
-            {mostrarComoLote ? (
-              <Box>
-                <FieldLabel optional="recomendado">Foto del lote</FieldLabel>
-                <PhotoDropzone
-                  photos={heroPhoto}
-                  onAdd={(files) => {
-                    const f = files[0];
-                    if (!f) return;
-                    heroPhoto.forEach((p) => {
-                      if (p.url.startsWith("blob:")) URL.revokeObjectURL(p.url);
-                    });
-                    setHeroPhoto([
-                      {
-                        id: `${f.name}-${f.lastModified}`,
-                        url: URL.createObjectURL(f),
-                        file: f,
-                      },
-                    ]);
-                  }}
-                  onRemove={() => setHeroPhoto([])}
-                  hint="Una foto del lote completo. Se sube a Drive al publicar."
+                <Switch
+                  checked={mostrarComoLote}
+                  onChange={(e) => setMostrarComoLote(e.target.checked)}
+                  inputProps={{ "aria-label": "Mostrar como lote en catálogo" }}
                 />
               </Box>
-            ) : null}
-          </Box>
+              {mostrarComoLote ? (
+                <Box>
+                  <FieldLabel optional="recomendado">Foto del lote</FieldLabel>
+                  <PhotoDropzone
+                    photos={heroPhoto}
+                    onAdd={(files) => {
+                      const f = files[0];
+                      if (!f) return;
+                      heroPhoto.forEach((p) => {
+                        if (p.url.startsWith("blob:"))
+                          URL.revokeObjectURL(p.url);
+                      });
+                      setHeroPhoto([
+                        {
+                          id: `${f.name}-${f.lastModified}`,
+                          url: URL.createObjectURL(f),
+                          file: f,
+                        },
+                      ]);
+                    }}
+                    onRemove={() => setHeroPhoto([])}
+                    hint="Una foto del lote completo. Se sube a Drive al publicar."
+                  />
+                </Box>
+              ) : null}
+            </Box>
 
-          <Box
-            component="button"
-            type="button"
-            disabled={
-              (isClosed || isPublished ? false : !validationsOk) || closing
-            }
-            onClick={() =>
-              isPublished
-                ? void handleSaveGrouping()
-                : isClosed
-                  ? void handlePublishClosed()
-                  : void handleClose()
-            }
-            sx={{
-              width: "100%",
-              padding: "14px 18px",
-              borderRadius: "11px",
-              border: "none",
-              background: foto.accent.primary,
-              color: "#fff",
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: closing ? "wait" : "pointer",
-              opacity:
+            <Box
+              component="button"
+              type="button"
+              disabled={
                 (isClosed || isPublished ? false : !validationsOk) || closing
-                  ? 0.6
-                  : 1,
-              "&:hover:not(:disabled)": {
-                filter: "brightness(1.05)",
-              },
-            }}
-          >
-            {closing
-              ? isPublished
-                ? "Guardando…"
-                : isClosed
-                  ? "Publicando…"
-                  : "Cerrando…"
-              : isPublished
-                ? "Guardar cambios"
-                : isClosed
-                  ? "Publicar lote"
-                  : "Cerrar lote"}
+              }
+              onClick={() =>
+                isPublished
+                  ? void handleSaveGrouping()
+                  : isClosed
+                    ? void handlePublishClosed()
+                    : void handleClose()
+              }
+              sx={{
+                width: "100%",
+                padding: "14px 18px",
+                borderRadius: "11px",
+                border: "none",
+                background: foto.accent.primary,
+                color: "#fff",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: closing ? "wait" : "pointer",
+                opacity:
+                  (isClosed || isPublished ? false : !validationsOk) || closing
+                    ? 0.6
+                    : 1,
+                "&:hover:not(:disabled)": {
+                  filter: "brightness(1.05)",
+                },
+              }}
+            >
+              {closing
+                ? isPublished
+                  ? "Guardando…"
+                  : isClosed
+                    ? "Publicando…"
+                    : "Cerrando…"
+                : isPublished
+                  ? "Guardar cambios"
+                  : isClosed
+                    ? "Publicar lote"
+                    : "Cerrar lote"}
+            </Box>
           </Box>
         </Box>
       </Box>

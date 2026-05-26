@@ -634,7 +634,7 @@ function NewLotIntro() {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
             gap: "18px",
           }}
         >
@@ -689,7 +689,7 @@ function NewLotIntro() {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
             gap: "18px",
           }}
         >
@@ -735,7 +735,7 @@ function NewLotIntro() {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
             gap: "18px",
           }}
         >
@@ -791,7 +791,7 @@ function NewLotIntro() {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
             gap: "18px",
             alignItems: "end",
           }}
@@ -980,6 +980,7 @@ function StickyFooter({
         padding: "14px 0 18px",
         background: `linear-gradient(180deg, transparent 0%, ${foto.surfaces.canvas} 28%)`,
         display: "flex",
+        flexWrap: "wrap",
         gap: "8px",
         justifyContent: "flex-end",
         alignItems: "center",

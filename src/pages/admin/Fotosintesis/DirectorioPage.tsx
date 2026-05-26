@@ -43,12 +43,12 @@ export default function FotosintesisDirectorioPage() {
   // for narrow viewports (CLAUDE.md anti-blinking guidance).
   const [isMobile, setIsMobile] = useState<boolean>(() =>
     typeof window !== "undefined"
-      ? window.matchMedia("(max-width: 899px)").matches
+      ? window.matchMedia("(max-width: 1199px)").matches
       : false,
   );
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 899px)");
+    const mq = window.matchMedia("(max-width: 1199px)");
     const onChange = () => setIsMobile(mq.matches);
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -328,8 +328,8 @@ export default function FotosintesisDirectorioPage() {
           margin: "0 auto",
           padding: { xs: "20px 16px 40px", md: "24px 28px 60px" },
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) 440px" },
-          gap: { xs: "16px", md: "24px" },
+          gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 440px" },
+          gap: { xs: "16px", lg: "24px" },
           alignItems: "start",
         }}
       >
@@ -391,8 +391,9 @@ export default function FotosintesisDirectorioPage() {
           {/* Column headers */}
           <Box
             sx={{
-              display: { xs: "none", md: "grid" },
-              gridTemplateColumns: "32px 1.4fr 1fr 110px 80px",
+              display: { xs: "none", lg: "grid" },
+              gridTemplateColumns:
+                "32px minmax(0, 1.4fr) minmax(0, 1fr) 110px 80px",
               gap: "12px",
               alignItems: "center",
               padding: "10px 18px",
@@ -426,8 +427,8 @@ export default function FotosintesisDirectorioPage() {
             <Box
               role="list"
               sx={{
-                maxHeight: { md: "calc(100vh - 360px)" },
-                overflowY: { md: "auto" },
+                maxHeight: { lg: "calc(100vh - 360px)" },
+                overflowY: { lg: "auto" },
               }}
             >
               {filteredRows.map((row) => {
@@ -454,8 +455,8 @@ export default function FotosintesisDirectorioPage() {
                       padding: "14px 18px",
                       display: "grid",
                       gridTemplateColumns: {
-                        xs: "32px 1fr auto",
-                        md: "32px 1.4fr 1fr 110px 80px",
+                        xs: "32px minmax(0, 1fr) auto",
+                        lg: "32px minmax(0, 1.4fr) minmax(0, 1fr) 110px 80px",
                       },
                       gap: "12px",
                       alignItems: "center",
@@ -522,7 +523,8 @@ export default function FotosintesisDirectorioPage() {
                     </Box>
                     <Box
                       sx={{
-                        display: { xs: "none", md: "block" },
+                        display: { xs: "none", lg: "block" },
+                        minWidth: 0,
                         fontSize: "12px",
                         color: foto.ink.secondary,
                         overflow: "hidden",
@@ -533,7 +535,7 @@ export default function FotosintesisDirectorioPage() {
                     >
                       {row.contactPrimary}
                     </Box>
-                    <Box sx={{ display: { xs: "none", md: "block" } }}>
+                    <Box sx={{ display: { xs: "none", lg: "block" } }}>
                       <Box
                         component="span"
                         sx={{
@@ -554,8 +556,8 @@ export default function FotosintesisDirectorioPage() {
                     </Box>
                     <Box
                       sx={{
-                        display: { xs: "flex", md: "block" },
-                        textAlign: { md: "right" } as const,
+                        display: { xs: "flex", lg: "block" },
+                        textAlign: { lg: "right" } as const,
                         alignItems: "center",
                         justifyContent: "flex-end",
                         ...monoSx,
@@ -565,13 +567,13 @@ export default function FotosintesisDirectorioPage() {
                     >
                       <Box
                         component="span"
-                        sx={{ display: { xs: "none", md: "inline" } }}
+                        sx={{ display: { xs: "none", lg: "inline" } }}
                       >
                         —
                       </Box>
                       <Box
                         component="span"
-                        sx={{ display: { xs: "inline-flex", md: "none" } }}
+                        sx={{ display: { xs: "inline-flex", lg: "none" } }}
                         aria-hidden="true"
                       >
                         <ChevronRight size={14} />
@@ -587,7 +589,7 @@ export default function FotosintesisDirectorioPage() {
         {/* DRAWER PANE — desktop */}
         <Box
           sx={{
-            display: { xs: "none", md: "block" },
+            display: { xs: "none", lg: "block" },
             position: "sticky",
             top: 72,
             alignSelf: "start",
@@ -881,7 +883,7 @@ function ContactFicha({ row, foto, embedded }: ContactFichaProps) {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
           gap: "12px 16px",
           padding: "16px",
           background: foto.surfaces.panel,
@@ -903,7 +905,7 @@ function ContactFicha({ row, foto, embedded }: ContactFichaProps) {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
           gap: "12px",
         }}
       >
@@ -939,7 +941,7 @@ function FichaMeta({
   foto: FotoT;
 }) {
   return (
-    <Box>
+    <Box sx={{ minWidth: 0 }}>
       <Box
         sx={{
           fontSize: "9px",
@@ -958,6 +960,7 @@ function FichaMeta({
           color: foto.ink.primary,
           overflow: "hidden",
           textOverflow: "ellipsis",
+          overflowWrap: "anywhere",
         }}
       >
         {value}

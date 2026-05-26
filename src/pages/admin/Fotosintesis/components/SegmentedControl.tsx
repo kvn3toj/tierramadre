@@ -105,6 +105,11 @@ export function SegmentedControl<TValue extends string = string>({
       aria-label={ariaLabel}
       sx={{
         display: "inline-flex",
+        // Wrap to a second row instead of forcing the parent grid cell wider
+        // (grid items default to min-width:auto). Prevents horizontal overflow
+        // when an allowOther control with many options lands in a 1fr column.
+        flexWrap: "wrap",
+        maxWidth: "100%",
         width: block ? "100%" : "auto",
         padding: "3px",
         gap: "2px",
@@ -170,7 +175,7 @@ export function SegmentedControl<TValue extends string = string>({
   if (!allowOther) return radioGroup;
 
   return (
-    <Box sx={{ display: "block" }}>
+    <Box sx={{ display: "block", maxWidth: "100%" }}>
       {radioGroup}
       {otherMode ? (
         <Box

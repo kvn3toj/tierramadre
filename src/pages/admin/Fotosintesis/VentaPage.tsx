@@ -533,20 +533,17 @@ export default function FotosintesisVentaPage() {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "minmax(0, 1.2fr) 480px",
+          gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.2fr) 480px" },
           gap: 0,
           maxWidth: 1320,
           margin: "0 auto",
           minHeight: "calc(100vh - 56px - 110px)",
-          "@media (max-width: 1024px)": {
-            gridTemplateColumns: "1fr",
-          },
         }}
       >
         {/* ───── LEFT pane (form) ───── */}
         <Box
           sx={{
-            padding: "24px 28px 60px",
+            padding: { xs: "24px 16px 60px", md: "24px 28px 60px" },
             display: "flex",
             flexDirection: "column",
             gap: "28px",
@@ -1200,14 +1197,10 @@ export default function FotosintesisVentaPage() {
           sx={{
             background: "linear-gradient(180deg, #2a2522 0%, #1a1714 100%)",
             padding: "28px 24px",
-            position: "sticky",
+            position: { xs: "static", lg: "sticky" },
             top: 56,
-            maxHeight: "calc(100vh - 56px)",
+            maxHeight: { xs: "none", lg: "calc(100vh - 56px)" },
             overflowY: "auto",
-            "@media (max-width: 1024px)": {
-              position: "static",
-              maxHeight: "none",
-            },
           }}
         >
           <Box

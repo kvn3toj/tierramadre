@@ -55,7 +55,13 @@ export default function FotosintesisSubLotesPage() {
   if (lot === undefined || subLotes === undefined || products === undefined) {
     return (
       <Box
-        sx={{ padding: "36px 28px", color: foto.ink.tertiary, fontSize: 13 }}
+        sx={{
+          maxWidth: 1320,
+          marginX: "auto",
+          padding: { xs: "24px 16px", md: "36px 28px" },
+          color: foto.ink.tertiary,
+          fontSize: 13,
+        }}
       >
         Cargando sub-lotes de {loteId}…
       </Box>
@@ -64,7 +70,13 @@ export default function FotosintesisSubLotesPage() {
 
   if (lot === null) {
     return (
-      <Box sx={{ padding: "36px 28px" }}>
+      <Box
+        sx={{
+          maxWidth: 1320,
+          marginX: "auto",
+          padding: { xs: "24px 16px", md: "36px 28px" },
+        }}
+      >
         <Box sx={{ fontSize: 14, color: foto.ink.secondary }}>
           No encontramos el lote {loteId}.
         </Box>
@@ -100,7 +112,13 @@ export default function FotosintesisSubLotesPage() {
   const ordered = [...activeSubs, ...archivedSubs];
 
   return (
-    <Box sx={{ padding: { xs: "24px 16px", md: "36px 28px" } }}>
+    <Box
+      sx={{
+        maxWidth: 1320,
+        marginX: "auto",
+        padding: { xs: "24px 16px", md: "36px 28px" },
+      }}
+    >
       <Box
         component={Link}
         to="/admin/fotosintesis"
@@ -233,7 +251,11 @@ export default function FotosintesisSubLotesPage() {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
+            gridTemplateColumns: {
+              xs: "1fr",
+              md: "repeat(2, 1fr)",
+              xl: "repeat(3, 1fr)",
+            },
             gap: "16px",
             alignItems: "start",
           }}

@@ -229,7 +229,7 @@ export default function FotosintesisHomePage() {
       <Box
         component="section"
         sx={{
-          padding: "36px 28px 24px",
+          padding: { xs: "32px 16px 20px", md: "36px 28px 24px" },
           background: `linear-gradient(180deg, ${foto.surfaces.canvas} 0%, ${foto.surfaces.panel} 60%, ${foto.surfaces.canvas} 100%)`,
           borderBottom: `1px solid ${foto.surfaces.rule}`,
         }}
@@ -274,11 +274,12 @@ export default function FotosintesisHomePage() {
               component="h1"
               sx={{
                 marginTop: "10px",
-                fontSize: "42px",
+                fontSize: { xs: "34px", sm: "42px" },
                 fontWeight: 600,
                 letterSpacing: "-0.035em",
                 lineHeight: 1.05,
                 color: foto.ink.primary,
+                overflowWrap: "anywhere",
               }}
             >
               {greeting},{" "}
@@ -383,7 +384,7 @@ export default function FotosintesisHomePage() {
           sx={{
             maxWidth: 1320,
             margin: "24px auto 0",
-            padding: "0 28px",
+            padding: { xs: "0 16px", md: "0 28px" },
           }}
         >
           <Box
@@ -480,7 +481,7 @@ export default function FotosintesisHomePage() {
         sx={{
           maxWidth: 1320,
           margin: "0 auto",
-          padding: "24px 28px 60px",
+          padding: { xs: "24px 16px 48px", md: "24px 28px 60px" },
           display: "grid",
           gridTemplateColumns: { xs: "1fr", lg: "1.6fr 1fr" },
           gap: "24px",
@@ -679,7 +680,12 @@ export default function FotosintesisHomePage() {
                     <Box
                       component={Link}
                       to={target}
-                      sx={{ textDecoration: "none", color: "inherit" }}
+                      sx={{
+                        textDecoration: "none",
+                        color: "inherit",
+                        minWidth: 0,
+                        overflowWrap: "anywhere",
+                      }}
                     >
                       <Box
                         sx={{
@@ -903,6 +909,8 @@ export default function FotosintesisHomePage() {
                         fontSize: "12.5px",
                         color: foto.ink.primary,
                         lineHeight: 1.45,
+                        minWidth: 0,
+                        overflowWrap: "anywhere",
                       }}
                     >
                       {it.kind === "sale" ? (
