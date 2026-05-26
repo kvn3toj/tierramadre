@@ -6,12 +6,13 @@ import {
 } from "../../../../data/vocabularies";
 import type { GemaDraft } from "../components/GemaFields";
 import type { BrutoDraft } from "../components/BrutoFields";
+import type { InsumoDraft } from "../components/InsumoFields";
 import type { JoyaDraft, PesoUnidad } from "../components/JoyaFields";
 
 type TipoItem = "gema" | "bruto" | "joya" | "insumo" | "lote";
 
 /** Item types the EditItemDrawer can render a dedicated sub-form for. */
-export type EditableTipo = "gema" | "joya" | "bruto";
+export type EditableTipo = "gema" | "joya" | "bruto" | "insumo";
 
 interface SharedCreateFields {
   loteId: string;
@@ -54,6 +55,31 @@ export function buildBrutoPayload(
     precioPublicoCOP:
       typeof bruto.precioPublicoCOP === "number"
         ? bruto.precioPublicoCOP
+        : undefined,
+    observacion: observacion.trim() || undefined,
+    mostrarEnCatalogo,
+  };
+}
+
+export function buildInsumoPayload(
+  loteId: string,
+  insumo: InsumoDraft,
+  observacion: string,
+  mostrarEnCatalogo: boolean,
+): SharedCreateFields & {
+  categoria?: string;
+  cantidad?: number;
+} {
+  return {
+    loteId,
+    tipo: "insumo",
+    nombre: insumo.nombre.trim(),
+    preponderancia: insumo.preponderancia as number,
+    categoria: insumo.categoria || undefined,
+    cantidad: typeof insumo.cantidad === "number" ? insumo.cantidad : undefined,
+    precioPublicoCOP:
+      typeof insumo.precioPublicoCOP === "number"
+        ? insumo.precioPublicoCOP
         : undefined,
     observacion: observacion.trim() || undefined,
     mostrarEnCatalogo,
@@ -238,7 +264,12 @@ export function inferItemTipo(row: {
   cantidadEstimada?: number;
   rendimientoEsperado?: number;
 }): EditableTipo {
-  if (row.tipo === "gema" || row.tipo === "joya" || row.tipo === "bruto") {
+  if (
+    row.tipo === "gema" ||
+    row.tipo === "joya" ||
+    row.tipo === "bruto" ||
+    row.tipo === "insumo"
+  ) {
     return row.tipo;
   }
   // A "lote" (lote de joyas) reuses the joya payload shape, so it edits as one.
@@ -368,6 +399,38 @@ export function brutoPatchFromDraft(
       typeof draft.rendimientoEsperado === "number"
         ? draft.rendimientoEsperado
         : undefined,
+    observacion,
+    precioPublicoCOP:
+      typeof draft.precioPublicoCOP === "number" ? draft.precioPublicoCOP : 0,
+    mostrarEnCatalogo,
+    preponderancia: draft.preponderancia as number,
+  };
+}
+
+export function insumoDraftFromProduct(row: {
+  nombre?: string;
+  categoria?: string;
+  cantidad?: number;
+  precioCOP?: number;
+}): InsumoDraft {
+  return {
+    nombre: row.nombre ?? "",
+    categoria: row.categoria ?? "",
+    cantidad: row.cantidad ?? "",
+    preponderancia: "",
+    precioPublicoCOP: row.precioCOP ?? "",
+  };
+}
+
+export function insumoPatchFromDraft(
+  draft: InsumoDraft,
+  observacion: string,
+  mostrarEnCatalogo: boolean,
+): Record<string, unknown> {
+  return {
+    nombre: draft.nombre,
+    categoria: draft.categoria || undefined,
+    cantidad: typeof draft.cantidad === "number" ? draft.cantidad : undefined,
     observacion,
     precioPublicoCOP:
       typeof draft.precioPublicoCOP === "number" ? draft.precioPublicoCOP : 0,

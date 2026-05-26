@@ -18,6 +18,7 @@ import {
   Mountain,
   Pencil,
   Tag,
+  Wrench,
 } from "lucide-react";
 
 import { getFoto, fontFamilies } from "../../../design-system";
@@ -72,8 +73,14 @@ import {
   type JoyaDraft,
 } from "./components/JoyaFields";
 import {
+  InsumoFields,
+  EMPTY_INSUMO_DRAFT,
+  type InsumoDraft,
+} from "./components/InsumoFields";
+import {
   buildBrutoPayload,
   buildGemaPayload,
+  buildInsumoPayload,
   buildJoyaPayload,
   buildLotePayload,
 } from "./utils/buildLotItemPayload";
@@ -136,6 +143,10 @@ const carryJoyaBase = (prev: JoyaDraft): JoyaDraft => ({
   minerales: [...prev.minerales],
   complementos: [...prev.complementos],
 });
+const carryInsumoBase = (prev: InsumoDraft): InsumoDraft => ({
+  ...EMPTY_INSUMO_DRAFT,
+  categoria: prev.categoria,
+});
 
 // Single-item lots: the lone item IS the lote, so its identity already lives on
 // the lot header. These mappers seed an item draft from the lot so the operator
@@ -170,6 +181,10 @@ const seedJoyaFromLot = (lot: LotSeedFields): Partial<JoyaDraft> => ({
     ? { pesoValor: lot.pesoTotalQuilates, pesoUnidad: "ct" as const }
     : {}),
 });
+const seedInsumoFromLot = (lot: LotSeedFields): Partial<InsumoDraft> => ({
+  preponderancia: 100,
+  ...(lot.renombreLote?.trim() ? { nombre: lot.renombreLote.trim() } : {}),
+});
 
 /** Human label for the base fields a given field kind carries, for helper copy. */
 const BASE_FIELDS_LABEL: Record<TipoItem, string> = {
@@ -177,7 +192,7 @@ const BASE_FIELDS_LABEL: Record<TipoItem, string> = {
   bruto: "procedencia y rendimiento",
   joya: "tipo de joya, técnica, minerales y complementos",
   lote: "tipo de joya, técnica, minerales y complementos",
-  insumo: "los datos base",
+  insumo: "la categoría",
 };
 
 // -----------------------------------------------------------------------------
@@ -202,6 +217,7 @@ type ItemSubtipo =
   | "ganga"
   | "macla"
   | "canutillo"
+  | "insumo"
   | "otros";
 
 interface SubtipoOption {
@@ -251,6 +267,13 @@ const SUBTIPO_OPTIONS: SubtipoOption[] = [
     key: "8",
     Icon: Mountain,
     fieldKind: "gema",
+  },
+  {
+    value: "insumo",
+    label: "Insumo",
+    key: "0",
+    Icon: Wrench,
+    fieldKind: "insumo",
   },
   { value: "otros", label: "Otros", key: "9", Icon: Tag, fieldKind: "lote" },
 ];
@@ -1280,6 +1303,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const [gema, setGema] = useState<GemaDraft>(EMPTY_GEMA_DRAFT);
   const [bruto, setBruto] = useState<BrutoDraft>(EMPTY_BRUTO_DRAFT);
   const [joya, setJoya] = useState<JoyaDraft>(EMPTY_JOYA_DRAFT);
+  const [insumo, setInsumo] = useState<InsumoDraft>(EMPTY_INSUMO_DRAFT);
   const [observacion, setObservacion] = useState("");
   const [reservaOculta, setReservaOculta] = useState(true);
   const [photos, setPhotos] = useState<DropzonePhoto[]>([]);
@@ -1368,11 +1392,19 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     setGema((prev) => ({ ...prev, ...seedGemaFromLot(seed) }));
     setBruto((prev) => ({ ...prev, ...seedBrutoFromLot(seed) }));
     setJoya((prev) => ({ ...prev, ...seedJoyaFromLot(seed) }));
+    setInsumo((prev) => ({ ...prev, ...seedInsumoFromLot(seed) }));
   }, [lot, items, unidadesDeclaradas, loteId]);
 
   // Active draft surface — the form fields below dispatch off `tipo`, but
   // preponderancia + nombre validations are uniform across types.
-  const activeDraft = tipo === "bruto" ? bruto : tipo === "gema" ? gema : joya;
+  const activeDraft =
+    tipo === "bruto"
+      ? bruto
+      : tipo === "gema"
+        ? gema
+        : tipo === "insumo"
+          ? insumo
+          : joya;
   const activePreponderancia = activeDraft.preponderancia;
   const activeNombre = activeDraft.nombre;
 
@@ -1425,6 +1457,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     setGema(EMPTY_GEMA_DRAFT);
     setBruto(EMPTY_BRUTO_DRAFT);
     setJoya(EMPTY_JOYA_DRAFT);
+    setInsumo(EMPTY_INSUMO_DRAFT);
     setObservacion("");
     setPhotos([]);
     setCertificadoFile(null);
@@ -1438,6 +1471,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     setGema(carryGemaBase);
     setBruto(carryBrutoBase);
     setJoya(carryJoyaBase);
+    setInsumo(carryInsumoBase);
     setObservacion("");
     setPhotos([]);
     setCertificadoFile(null);
@@ -1477,6 +1511,13 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         payload = buildLotePayload(
           loteId,
           joya,
+          observacion,
+          mostrarEnCatalogo,
+        ) as unknown as CreateLotItemArgs;
+      } else if (tipo === "insumo") {
+        payload = buildInsumoPayload(
+          loteId,
+          insumo,
           observacion,
           mostrarEnCatalogo,
         ) as unknown as CreateLotItemArgs;
@@ -1566,6 +1607,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     gema,
     bruto,
     joya,
+    insumo,
     observacion,
     reservaOculta,
     photos,
@@ -1656,6 +1698,8 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
       setBruto(carryBrutoBase);
     } else if (tipo === "gema") {
       setGema(carryGemaBase);
+    } else if (tipo === "insumo") {
+      setInsumo(carryInsumoBase);
     } else {
       setJoya(carryJoyaBase);
     }
@@ -2027,7 +2071,17 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
               </Box>
             ) : null}
 
-            {tipo === "bruto" ? (
+            {tipo === "insumo" ? (
+              <InsumoFields
+                value={insumo}
+                onChange={(patch) =>
+                  setInsumo((prev) => ({ ...prev, ...patch }))
+                }
+                lotCostoTotalCOP={costoTotalCOP}
+                preponderanciaHelper={prepHelper?.text}
+                preponderanciaHelperAlert={prepHelper?.alert}
+              />
+            ) : tipo === "bruto" ? (
               <BrutoFields
                 value={bruto}
                 onChange={(patch) =>

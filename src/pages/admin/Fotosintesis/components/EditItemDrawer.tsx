@@ -16,6 +16,11 @@ import { FieldLabel } from "./FieldLabel";
 import { GemaFields, EMPTY_GEMA_DRAFT, type GemaDraft } from "./GemaFields";
 import { JoyaFields, EMPTY_JOYA_DRAFT, type JoyaDraft } from "./JoyaFields";
 import { BrutoFields, EMPTY_BRUTO_DRAFT, type BrutoDraft } from "./BrutoFields";
+import {
+  InsumoFields,
+  EMPTY_INSUMO_DRAFT,
+  type InsumoDraft,
+} from "./InsumoFields";
 import { KbdKey } from "./KbdKey";
 import { PhotoDropzone, type DropzonePhoto } from "./PhotoDropzone";
 import { spanishText } from "../utils/fieldLang";
@@ -27,6 +32,8 @@ import {
   joyaPatchFromDraft,
   brutoDraftFromProduct,
   brutoPatchFromDraft,
+  insumoDraftFromProduct,
+  insumoPatchFromDraft,
   type EditableTipo,
 } from "../utils/buildLotItemPayload";
 import {
@@ -39,6 +46,7 @@ const TIPO_LABEL: Record<EditableTipo, string> = {
   gema: "Gema",
   joya: "Joya",
   bruto: "Bruto",
+  insumo: "Insumo",
 };
 
 interface ProductInventoryRow {
@@ -167,6 +175,13 @@ export function EditItemDrawer({
         preponderancia: currentPreponderancia,
       }) as BrutoDraft,
   );
+  const [insumoDraft, setInsumoDraft] = useState<InsumoDraft>(
+    () =>
+      ({
+        ...EMPTY_INSUMO_DRAFT,
+        preponderancia: currentPreponderancia,
+      }) as InsumoDraft,
+  );
   const [observacion, setObservacion] = useState("");
   const [mostrarEnCatalogo, setMostrarEnCatalogo] = useState(false);
   // Item photo (hero). Seeded from the saved Drive URL; a freshly dropped file
@@ -209,6 +224,11 @@ export function EditItemDrawer({
     } else if (t === "bruto") {
       setBrutoDraft({
         ...brutoDraftFromProduct(product),
+        preponderancia: currentPreponderancia,
+      });
+    } else if (t === "insumo") {
+      setInsumoDraft({
+        ...insumoDraftFromProduct(product),
         preponderancia: currentPreponderancia,
       });
     } else {
@@ -254,8 +274,14 @@ export function EditItemDrawer({
 
   // The active draft drives the shared preponderancia + name validation,
   // regardless of which sub-form is rendered.
-  const activeDraft: GemaDraft | JoyaDraft | BrutoDraft =
-    tipo === "joya" ? joyaDraft : tipo === "bruto" ? brutoDraft : draft;
+  const activeDraft: GemaDraft | JoyaDraft | BrutoDraft | InsumoDraft =
+    tipo === "joya"
+      ? joyaDraft
+      : tipo === "bruto"
+        ? brutoDraft
+        : tipo === "insumo"
+          ? insumoDraft
+          : draft;
   const activeNombre = activeDraft.nombre;
   const activePreponderancia = activeDraft.preponderancia;
 
@@ -330,7 +356,13 @@ export function EditItemDrawer({
             ? joyaPatchFromDraft(joyaDraft, mostrarEnCatalogo)
             : tipo === "bruto"
               ? brutoPatchFromDraft(brutoDraft, observacion, mostrarEnCatalogo)
-              : gemaPatchFromDraft(draft, observacion, mostrarEnCatalogo);
+              : tipo === "insumo"
+                ? insumoPatchFromDraft(
+                    insumoDraft,
+                    observacion,
+                    mostrarEnCatalogo,
+                  )
+                : gemaPatchFromDraft(draft, observacion, mostrarEnCatalogo);
         if (nextFotoUrl !== undefined) patch.fotoUrl = nextFotoUrl;
         if (nextCertificadoUrl !== undefined)
           patch.certificadoUrl = nextCertificadoUrl;
@@ -590,6 +622,17 @@ export function EditItemDrawer({
                 value={brutoDraft}
                 onChange={(patch) =>
                   setBrutoDraft((prev) => ({ ...prev, ...patch }))
+                }
+                lotCostoTotalCOP={lotCostoTotalCOP}
+                preponderanciaHelper={prepHelper?.text}
+                preponderanciaHelperAlert={prepHelper?.alert}
+                disabled={!editable}
+              />
+            ) : tipo === "insumo" ? (
+              <InsumoFields
+                value={insumoDraft}
+                onChange={(patch) =>
+                  setInsumoDraft((prev) => ({ ...prev, ...patch }))
                 }
                 lotCostoTotalCOP={lotCostoTotalCOP}
                 preponderanciaHelper={prepHelper?.text}

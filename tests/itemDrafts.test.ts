@@ -6,6 +6,8 @@ import {
   joyaPatchFromDraft,
   brutoDraftFromProduct,
   brutoPatchFromDraft,
+  insumoDraftFromProduct,
+  insumoPatchFromDraft,
 } from "../src/pages/admin/Fotosintesis/utils/buildLotItemPayload";
 
 describe("inferItemTipo", () => {
@@ -13,6 +15,7 @@ describe("inferItemTipo", () => {
     expect(inferItemTipo({ tipo: "gema" })).toBe("gema");
     expect(inferItemTipo({ tipo: "joya" })).toBe("joya");
     expect(inferItemTipo({ tipo: "bruto" })).toBe("bruto");
+    expect(inferItemTipo({ tipo: "insumo" })).toBe("insumo");
   });
 
   it("edits a lote de joyas as a joya", () => {
@@ -158,6 +161,44 @@ describe("bruto round-trip", () => {
       rendimientoEsperado: 65,
       observacion: "rough parcel",
       preponderancia: 50,
+    });
+  });
+});
+
+describe("insumo round-trip", () => {
+  it("hydrates a draft from a product row", () => {
+    const draft = insumoDraftFromProduct({
+      nombre: "Lupa triplete 10x",
+      categoria: "Óptica",
+      cantidad: 3,
+      precioCOP: 180_000,
+    });
+    expect(draft).toMatchObject({
+      nombre: "Lupa triplete 10x",
+      categoria: "Óptica",
+      cantidad: 3,
+      precioPublicoCOP: 180_000,
+    });
+  });
+
+  it("serializes a patch that preserves the category", () => {
+    const draft = insumoDraftFromProduct({
+      nombre: "Limpiador ultrasónico",
+      categoria: "Limpieza",
+      cantidad: 1,
+    });
+    const patch = insumoPatchFromDraft(
+      { ...draft, preponderancia: 100 },
+      "uso interno",
+      false,
+    );
+    expect(patch).toMatchObject({
+      nombre: "Limpiador ultrasónico",
+      categoria: "Limpieza",
+      cantidad: 1,
+      observacion: "uso interno",
+      mostrarEnCatalogo: false,
+      preponderancia: 100,
     });
   });
 });
