@@ -192,11 +192,29 @@ export function mapGroupToTreasureItem(
     typeof first?.peso === "string" ? first.peso : "",
     first?.categoria,
   );
+
+  // Bundle carat weight = SUM of every gem piece's weight, not just the first.
+  // A lote is shown as one card, so its "Gema (Ct)" spec must read the whole
+  // lot's total. Jewelry pieces carry a string peso (e.g. "Plata"/"Oro") that
+  // can't be summed as carats, so we add only the numeric (gem) weights and
+  // fall back to the first piece's value when none is numeric (all-jewelry lote).
+  const numericPesos = group.items
+    .map(
+      (it) =>
+        derivePeso(typeof it.peso === "string" ? it.peso : "", it.categoria)
+          .pesoValue,
+    )
+    .filter((p): p is number => typeof p === "number");
+  const totalPeso: string | number =
+    numericPesos.length > 0
+      ? numericPesos.reduce((sum, p) => sum + p, 0)
+      : pesoValue;
+
   return {
     item,
     fechaIngreso: "",
     nombre: group.nombre,
-    peso: pesoValue,
+    peso: totalPeso,
     color: (first?.color ?? "") as EmeraldColor,
     calidad: (first?.calidad ?? "") as EmeraldQuality,
     cantidad: group.items.length,
