@@ -118,6 +118,20 @@ export const STORAGE_KEYS = {
   AMBASSADOR_OVERRIDES_PREFIX: "tm:ambassador-overrides:",
 
   // =============================================================================
+  // FOTOSÍNTESIS (emerald capture wizard)
+  // =============================================================================
+
+  // Operator write-ins ("Otra opción") added to a SelectField dropdown, so a
+  // custom value typed once becomes a reusable option. Global per vocabulary —
+  // a color typed in one lote is suggested in the next. Final key resolved as:
+  // `${FOTO_CUSTOM_VOCAB_PREFIX}${vocabularyKey}` (e.g. …:color).
+  FOTO_CUSTOM_VOCAB_PREFIX: "tierra-madre-foto-vocab:",
+
+  // Per-lote "repeat base data on each item" toggle. Final key resolved as:
+  // `${FOTO_REUSE_BASE_PREFIX}${loteId}`.
+  FOTO_REUSE_BASE_PREFIX: "tierra-madre-foto-reuse-base:",
+
+  // =============================================================================
   // ONBOARDING
   // =============================================================================
 

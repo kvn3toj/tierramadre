@@ -391,6 +391,7 @@ export function JoyaFields({
           options={TIPOS_JOYA}
           placeholder="Elegir…"
           disabled={disabled}
+          vocabularyKey="tipoJoya"
           onChange={(next) => onChange({ tipoJoya: next as TipoJoya | "" })}
         />
       </Box>

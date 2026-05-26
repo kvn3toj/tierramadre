@@ -1,9 +1,13 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Box } from "@mui/material";
 import { ChevronDown } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../../design-system";
 import { FieldLabel } from "./FieldLabel";
 import { spanishText } from "../utils/fieldLang";
+import {
+  addCustomVocabularyOption,
+  useCustomVocabularyOptions,
+} from "../utils/customVocabularies";
 
 /**
  * Sentinel <option> value for the "write your own answer" entry. Picked to be
@@ -32,6 +36,14 @@ interface SelectFieldProps {
   otherLabel?: string;
   /** Placeholder for the revealed free-text input. */
   otherPlaceholder?: string;
+  /**
+   * Opt-in persistence key. When set, a committed write-in (blur or Enter) is
+   * remembered under this vocabulary and appended to the dropdown so the same
+   * value can be re-picked next time without retyping. Keys are global per
+   * vocabulary (e.g. "color", "corte"), not per record. Omit to keep write-ins
+   * single-use.
+   */
+  vocabularyKey?: string;
 }
 
 /**
@@ -55,6 +67,7 @@ export function SelectField({
   allowOther = true,
   otherLabel = "Otra opción (escribir)…",
   otherPlaceholder = "Escribir respuesta…",
+  vocabularyKey,
 }: SelectFieldProps) {
   const foto = getFoto("light");
   const generatedId = useId();
@@ -65,11 +78,29 @@ export function SelectField({
   // so the value→"" reset that follows doesn't bounce us back to list mode.
   const justPickedOther = useRef(false);
 
-  const isKnown = (v: string): boolean =>
-    (options as readonly string[]).includes(v);
+  // Remembered write-ins for this vocabulary, merged after the canonical list.
+  // De-duped case-insensitively so a custom value that matches an existing
+  // option never doubles up.
+  const customOptions = useCustomVocabularyOptions(vocabularyKey);
+  const mergedOptions = useMemo<readonly string[]>(() => {
+    if (!vocabularyKey || customOptions.length === 0) return options;
+    const seen = new Set(options.map((o) => o.toLowerCase()));
+    const extras = customOptions.filter((c) => !seen.has(c.toLowerCase()));
+    return extras.length > 0 ? [...options, ...extras] : options;
+  }, [options, customOptions, vocabularyKey]);
+
+  const isKnown = (v: string): boolean => mergedOptions.includes(v);
   const valueIsCustom = value !== "" && !isKnown(value);
 
   const [otherMode, setOtherMode] = useState(valueIsCustom);
+
+  // Persist a committed write-in so it joins the dropdown. Once stored, the
+  // merged options include it → `isKnown(value)` flips true → the effect below
+  // returns the field to list mode with the new value already selected.
+  const commitCustomOption = () => {
+    if (!vocabularyKey) return;
+    addCustomVocabularyOption(vocabularyKey, value, options);
+  };
 
   // Keep "other mode" in sync with the external value. A known option always
   // wins back to list mode; a non-empty custom value forces write-in mode; an
@@ -86,7 +117,7 @@ export function SelectField({
       setOtherMode(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, options]);
+  }, [value, mergedOptions]);
 
   const selectValue = otherMode ? OTHER_SENTINEL : isKnown(value) ? value : "";
 
@@ -155,7 +186,7 @@ export function SelectField({
           sx={selectSx}
         >
           <option value="">{placeholder}</option>
-          {options.map((opt) => (
+          {mergedOptions.map((opt) => (
             <option key={opt} value={opt}>
               {opt}
             </option>
@@ -192,6 +223,13 @@ export function SelectField({
             aria-label={`${label} — escribir respuesta`}
             {...spanishText}
             onChange={(e) => onChange((e.target as HTMLInputElement).value)}
+            onBlur={commitCustomOption}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                commitCustomOption();
+              }
+            }}
             sx={fieldBaseSx}
           />
           <Box

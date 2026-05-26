@@ -26,6 +26,7 @@ import {
   useConvexMutation,
   convexApi,
 } from "../../../lib/convex-safe";
+import { STORAGE_KEYS } from "../../../constants/storage-keys";
 
 import { TicketHeader, type TicketMeta } from "./components/TicketHeader";
 import { PreponderanceRing } from "./components/PreponderanceRing";
@@ -106,6 +107,40 @@ const fmtDateEs = (iso: string): string => {
   const [y, m, d] = iso.split("-").map(Number);
   const date = new Date(y, (m ?? 1) - 1, d ?? 1);
   return date.toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
+};
+
+// "Datos base" — the fields that tend to repeat across every piece in a lote
+// (vs. nombre / peso / medidas / preponderancia / precio, which are unique per
+// item). These carry-over mappers reset an item draft while preserving its base
+// fields; they back both ⌘D duplicate and the "repetir datos base" toggle.
+const carryGemaBase = (prev: GemaDraft): GemaDraft => ({
+  ...EMPTY_GEMA_DRAFT,
+  color: prev.color,
+  calidad: prev.calidad,
+  procedencia: prev.procedencia,
+  tipoEsmeralda: prev.tipoEsmeralda,
+  corte: prev.corte,
+});
+const carryBrutoBase = (prev: BrutoDraft): BrutoDraft => ({
+  ...EMPTY_BRUTO_DRAFT,
+  procedencia: prev.procedencia,
+  rendimientoEsperado: prev.rendimientoEsperado,
+});
+const carryJoyaBase = (prev: JoyaDraft): JoyaDraft => ({
+  ...EMPTY_JOYA_DRAFT,
+  tipoJoya: prev.tipoJoya,
+  tecnica: prev.tecnica,
+  minerales: [...prev.minerales],
+  complementos: [...prev.complementos],
+});
+
+/** Human label for the base fields a given field kind carries, for helper copy. */
+const BASE_FIELDS_LABEL: Record<TipoItem, string> = {
+  gema: "color, calidad, procedencia, tipo y corte",
+  bruto: "procedencia y rendimiento",
+  joya: "tipo de joya, técnica, minerales y complementos",
+  lote: "tipo de joya, técnica, minerales y complementos",
+  insumo: "los datos base",
 };
 
 // -----------------------------------------------------------------------------
@@ -1213,6 +1248,30 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const [photos, setPhotos] = useState<DropzonePhoto[]>([]);
   const [certificadoFile, setCertificadoFile] = useState<File | null>(null);
 
+  // "Repetir datos base" — when on, saving an item keeps its base fields for the
+  // next one (auto-⌘D), so the operator only re-enters what's unique per piece.
+  // Persisted per lote so reopening the capture remembers the choice.
+  const reuseBaseStorageKey = `${STORAGE_KEYS.FOTO_REUSE_BASE_PREFIX}${loteId}`;
+  const [reuseBaseData, setReuseBaseData] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem(reuseBaseStorageKey) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleReuseBaseData = useCallback(
+    (next: boolean) => {
+      setReuseBaseData(next);
+      try {
+        window.localStorage.setItem(reuseBaseStorageKey, next ? "1" : "0");
+      } catch {
+        /* private mode — keep the in-memory choice */
+      }
+    },
+    [reuseBaseStorageKey],
+  );
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -1304,6 +1363,19 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     setGema(EMPTY_GEMA_DRAFT);
     setBruto(EMPTY_BRUTO_DRAFT);
     setJoya(EMPTY_JOYA_DRAFT);
+    setObservacion("");
+    setPhotos([]);
+    setCertificadoFile(null);
+    setReservaOculta(true);
+  }, []);
+
+  // Like resetItemDraft, but preserves each draft's base fields so the next item
+  // inherits them. Per-item fields (foto, certificado, observación, reserva)
+  // always clear. Used after save when "repetir datos base" is on.
+  const resetItemDraftKeepingBase = useCallback(() => {
+    setGema(carryGemaBase);
+    setBruto(carryBrutoBase);
+    setJoya(carryJoyaBase);
     setObservacion("");
     setPhotos([]);
     setCertificadoFile(null);
@@ -1408,7 +1480,11 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         });
       }
 
-      resetItemDraft();
+      if (reuseBaseData) {
+        resetItemDraftKeepingBase();
+      } else {
+        resetItemDraft();
+      }
       notify(`Ítem ${result.itemId} guardado`, "success");
     } catch (err) {
       setError(
@@ -1432,7 +1508,9 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     reservaOculta,
     photos,
     certificadoFile,
+    reuseBaseData,
     resetItemDraft,
+    resetItemDraftKeepingBase,
     notify,
   ]);
 
@@ -1513,28 +1591,11 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
   const handleDuplicate = useCallback(() => {
     if (tipo === "bruto") {
-      setBruto((prev) => ({
-        ...EMPTY_BRUTO_DRAFT,
-        procedencia: prev.procedencia,
-        rendimientoEsperado: prev.rendimientoEsperado,
-      }));
+      setBruto(carryBrutoBase);
     } else if (tipo === "gema") {
-      setGema((prev) => ({
-        ...EMPTY_GEMA_DRAFT,
-        color: prev.color,
-        calidad: prev.calidad,
-        procedencia: prev.procedencia,
-        tipoEsmeralda: prev.tipoEsmeralda,
-        corte: prev.corte,
-      }));
+      setGema(carryGemaBase);
     } else {
-      setJoya((prev) => ({
-        ...EMPTY_JOYA_DRAFT,
-        tipoJoya: prev.tipoJoya,
-        tecnica: prev.tecnica,
-        minerales: [...prev.minerales],
-        complementos: [...prev.complementos],
-      }));
+      setJoya(carryJoyaBase);
     }
   }, [tipo]);
 
@@ -1807,6 +1868,62 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
             </Box>
 
             <TypeSelector value={subtipo} onChange={setSubtipo} />
+
+            {/* Repetir datos base — sticky base fields across the lote */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "12px",
+                padding: "10px 12px",
+                background: reuseBaseData
+                  ? foto.accent.soft
+                  : foto.surfaces.inset,
+                border: `1px solid ${
+                  reuseBaseData ? foto.accent.primary : foto.surfaces.edge
+                }`,
+                borderRadius: "10px",
+                transition: "background 120ms ease, border-color 120ms ease",
+              }}
+            >
+              <Box
+                sx={{ display: "flex", flexDirection: "column", gap: "2px" }}
+              >
+                <Box
+                  component="label"
+                  htmlFor="reuse-base-data"
+                  sx={{
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: foto.ink.primary,
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  Repetir datos base en cada ítem
+                </Box>
+                <Box
+                  sx={{
+                    fontSize: 10.5,
+                    color: foto.ink.tertiary,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  Al guardar, conservá {BASE_FIELDS_LABEL[tipo]} para el
+                  siguiente ítem. Editás un campo base y se aplica a los
+                  próximos (no a los ya guardados).
+                </Box>
+              </Box>
+              <Switch
+                id="reuse-base-data"
+                checked={reuseBaseData}
+                onChange={(e) => toggleReuseBaseData(e.target.checked)}
+                inputProps={{
+                  "aria-checked": reuseBaseData,
+                  "aria-label": "Repetir datos base en cada ítem",
+                }}
+              />
+            </Box>
 
             {tipo === "bruto" ? (
               <BrutoFields

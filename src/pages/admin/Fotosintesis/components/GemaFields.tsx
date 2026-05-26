@@ -291,6 +291,7 @@ export function GemaFields({
             options={COLORS}
             placeholder="Elegir color…"
             disabled={disabled}
+            vocabularyKey="color"
             onChange={(next) => onChange({ color: next })}
           />
         </Box>
@@ -310,6 +311,7 @@ export function GemaFields({
           options={TIPOS_ESMERALDA}
           placeholder="Elegir tipo…"
           disabled={disabled}
+          vocabularyKey="tipoEsmeralda"
           onChange={(next) =>
             onChange({ tipoEsmeralda: next as TipoEsmeralda | "" })
           }
@@ -321,6 +323,7 @@ export function GemaFields({
           options={CORTES}
           placeholder="Elegir corte…"
           disabled={disabled}
+          vocabularyKey="corte"
           onChange={(next) => onChange({ corte: next as Corte | "" })}
         />
       </Box>
@@ -421,6 +424,7 @@ export function GemaFields({
         options={CALIDADES}
         placeholder="Elegir calidad…"
         disabled={disabled}
+        vocabularyKey="calidad"
         onChange={(next) => onChange({ calidad: next as GemaCalidad })}
       />
 
