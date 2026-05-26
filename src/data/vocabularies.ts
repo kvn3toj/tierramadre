@@ -533,6 +533,7 @@ export type Complemento = (typeof COMPLEMENTOS)[number];
 
 /** Colombian emerald sources, for the Procedencia field (gema + bruto). */
 export const PROCEDENCIAS = [
+  "Boyacá",
   "Muzo",
   "Chivor",
   "Coscuez",

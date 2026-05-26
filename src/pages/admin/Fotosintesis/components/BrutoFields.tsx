@@ -21,7 +21,7 @@ export interface BrutoDraft {
 export const EMPTY_BRUTO_DRAFT: BrutoDraft = {
   nombre: "",
   pesoTotal: "",
-  procedencia: "Muzo",
+  procedencia: "Boyacá",
   cantidadEstimada: "",
   rendimientoEsperado: "",
   preponderancia: "",

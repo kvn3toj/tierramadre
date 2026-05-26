@@ -52,7 +52,7 @@ export const EMPTY_GEMA_DRAFT: GemaDraft = {
   peso: "",
   color: "",
   calidad: DEFAULT_CALIDAD,
-  procedencia: "Muzo",
+  procedencia: "Boyacá",
   preponderancia: "",
   precioPublicoCOP: "",
   cantidad: 1,
