@@ -42,7 +42,14 @@ export const COLUMN_MAPS: Record<FotoTable, readonly string[]> = {
     "numeroFactura",
     "urlFactura",
     "notas",
-    "estado",
+    "estado", // N
+    // ── Fotosíntesis form fields (append-only, O onward) ──
+    "renombreLote", // O — alias interno
+    "tratamiento", // P
+    "mina", // Q
+    "sede", // R — bóveda / loteId prefix
+    "operadorNombre", // S
+    "operadorRol", // T
   ],
   clients: [
     "nombre", // A — natural key

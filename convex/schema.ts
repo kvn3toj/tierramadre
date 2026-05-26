@@ -122,9 +122,9 @@ export default defineSchema({
     preponderancia: v.optional(v.number()),
     costoBaseCOP: v.optional(v.number()),
     mostrarEnCatalogo: v.optional(v.boolean()),
-    // Convex-only metadata (not synced to Sheets yet — extending the legacy
-    // sheet with two new columns is its own slice). Captured at lotItems.create
-    // and editable via lotItems.updateGemaFields. Surfaced in admin UI only.
+    // Captured at lotItems.create, editable via lotItems.updateGemaFields, and
+    // synced to the SOT "Inventario" tab (target="fotosintesis") through the
+    // extended layout in api/_lib/fotosintesis-inventory-columns.js.
     procedencia: v.optional(v.string()),
     observacion: v.optional(v.string()),
     // Bruto (rough/unworked parcel) metadata — populated only for tipo "bruto"

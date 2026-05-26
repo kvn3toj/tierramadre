@@ -58,10 +58,17 @@ export const TABLE_CONFIGS: Record<FotoTable, TableConfig> = {
       "numeroFactura",
       "urlFactura",
       "notas",
-      "estado",
+      "estado", // N
+      // ── Fotosíntesis form fields (append-only, O onward) ──
+      "renombreLote", // O
+      "tratamiento", // P
+      "mina", // Q
+      "sede", // R
+      "operadorNombre", // S
+      "operadorRol", // T
     ],
     idColumn: "loteId",
-    lastColumnLetter: "N",
+    lastColumnLetter: "T",
   },
   clients: {
     sheetTabPatterns: ["clientes", "clients"],

@@ -13,6 +13,7 @@ import { sheets_v4 } from "@googleapis/sheets";
 import { drive_v3 } from "@googleapis/drive";
 import dotenv from "dotenv";
 import fs from "fs";
+import { FOTO_INVENTARIO_HEADERS } from "../api/_lib/fotosintesis-inventory-columns.js";
 
 // Prefer .env.local (developer machine) over .env.production.local (Vercel)
 dotenv.config({ path: ".env.local" });
@@ -61,30 +62,17 @@ const LOTES_HEADERS = [
   "urlFactura",
   "notas",
   "estado",
+  // Fotosíntesis form fields (must match COLUMN_MAPS.lots / TABLE_CONFIGS.lots)
+  "renombreLote",
+  "tratamiento",
+  "mina",
+  "sede",
+  "operadorNombre",
+  "operadorRol",
 ];
-const INVENTARIO_HEADERS = [
-  "Item",
-  "FECHA INGRESO INVENTARIO",
-  "Nombre",
-  "Peso (ct)",
-  "Color",
-  "Calidad",
-  "Cant.",
-  "Talla",
-  "Medidas",
-  "Medidas",
-  "Categoría",
-  "Precio COP",
-  "UBICACIÓN",
-  "ASESOR",
-  "ESTADO",
-  "QR",
-  "Colección",
-  "CAJA",
-  "preponderancia",
-  "ASESOR ACTUAL",
-  "ESTADO ASESOR",
-];
+// Full Inventario layout — single source of truth shared with
+// api/admin-product-update.ts and scripts/extend-fotosintesis-headers.mjs.
+const INVENTARIO_HEADERS = FOTO_INVENTARIO_HEADERS;
 const CLIENTES_HEADERS = [
   "nombre",
   "nit",
@@ -265,7 +253,11 @@ async function main() {
         {
           properties: {
             title: "Inventario",
-            gridProperties: { frozenRowCount: 1 },
+            gridProperties: {
+              frozenRowCount: 1,
+              // Wide layout (A:AQ) — must fit every FOTO_INVENTARIO header.
+              columnCount: Math.max(26, INVENTARIO_HEADERS.length),
+            },
           },
         },
         {
