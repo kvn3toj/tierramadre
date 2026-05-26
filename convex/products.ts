@@ -71,13 +71,57 @@ export const list = query({
         })
       : rows;
 
-    // Numeric sort on itemId
-    return filtered.sort((a, b) => {
+    // Numeric sort on itemId (unchanged — preserves the existing ordering).
+    const sorted = filtered.sort((a, b) => {
       const an = Number(a.itemId);
       const bn = Number(b.itemId);
       if (!isNaN(an) && !isNaN(bn)) return an - bn;
       return a.itemId.localeCompare(b.itemId);
     });
+
+    // BANDWIDTH: project to ONLY the fields the admin list/table actually
+    // renders. This query is subscribed reactively by every admin on
+    // `/admin/products`, the Fotosíntesis Home, and the ⌘K spotlight, so it
+    // re-runs on every productInventory write and ships the whole list each
+    // time. Full docs carry 40+ fields — heavy/internal ones the list never
+    // reads (costoBaseCOP, precioEmbajadorCOP, precioPotencialCOP,
+    // precioConscienteCOP, formulaGema/formulaJoya, minerales, complementos,
+    // medidasValores, procedencia, observacion, preponderancia, tipoEsmeralda,
+    // subtipoForm, tipoJoya, tecnicaJoya, qr, asesor, asesorActual,
+    // estadoAsesor, certificadoUrl, nivelRareza, calificacion, lastPulledAt,
+    // _creationTime, …). Projecting them away shrinks the reactive payload.
+    //
+    // SAFE — the union of fields every consumer reads is exactly this set:
+    //   * ProductManagementPage → InventoryRow (toRow) + EditDrawer
+    //     (toDrawerProduct, fed FROM this list array via props, NOT a
+    //     separate products.get) + Bandeja inspector.
+    //   * Fotosíntesis HomePage → only `estado`.
+    //   * ProductoSpotlight → itemId, nombre, fotoUrl, precioCOP, loteId, estado.
+    // The edit drawer never touches the heavy fields; saveEdit/pushToSheet
+    // re-read the full row server-side, so the push is unaffected.
+    return sorted.map((row) => ({
+      _id: row._id,
+      itemId: row.itemId,
+      rowIndex: row.rowIndex,
+      nombre: row.nombre,
+      peso: row.peso,
+      color: row.color,
+      calidad: row.calidad,
+      cantidad: row.cantidad,
+      talla: row.talla,
+      medidas: row.medidas,
+      categoria: row.categoria,
+      precioCOP: row.precioCOP,
+      ubicacion: row.ubicacion,
+      coleccion: row.coleccion,
+      caja: row.caja,
+      estado: row.estado,
+      loteId: row.loteId,
+      fotoUrl: row.fotoUrl,
+      syncStatus: row.syncStatus,
+      syncError: row.syncError,
+      lastPushedAt: row.lastPushedAt,
+    }));
   },
 });
 
